@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // lab/bin/gate.mjs <G0|G1|G2|G4> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
-//   [--profile default|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
+//   [--profile default|bounded|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
 //
 // Writes an append-only receipt lab/runs/<gate>/<run-id>.json and raw output under
 // runs/<gate>/<run-id>/ (gitignored). Preimages go to the content-addressed store runs/objects/.
@@ -286,6 +286,9 @@ function packetIdentity() {
 // caller's environment (an unrecorded shell export would change what an obligation means).
 const QLEVER_PROFILES = {
   default: {},
+  // qualification/qlever-live/upstream44-bounded-v2.json: the homebase unchanged44 pass profile.
+  bounded: { QLEVER_AGGREGATE_ANSWER_PLAN: 'bounded' },
+  // planner-budget-wave1.json fixedProfile (with --planner-budget 1): the homebase F arm.
   f1: { QLEVER_AGGREGATE_ANSWER_PLAN: 'bounded', QLEVER_NEGATION_PLAN: 'minus', QLEVER_SOURCE_PLAN: 'persisted', QLEVER_RETIREMENT_PLAN: 'paired' },
 };
 
