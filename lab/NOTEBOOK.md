@@ -603,3 +603,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Ruling Q33a refines Sam's numeric rule for JSON numbers:** accepted only if it reads back as written (0.1 yes; 9007199254740993 no).
   Q33d makes every cross-family ordered comparison a typed preflight error instead of `false`.
 - Oracle follow-up EXP-O03 (after V-O02): decimal `divide`, Q30 wire guards, Q31c coordinates, Q33 rulings.
+
+## 2026-11-07 ~23:35Z: Codex round 3: 11 closed, 2 partial, 5 new, NOT READY (converging: 14 -> 13 -> 7 open)
+- **Learning: any self-declared exemption is forgeable.** Q32e let a receipt say `positionsDense: true` and skip the falsifiers; Q34a
+  replaces it with an allowlist of A0 allocator source hashes checked by the evaluator. Rule for the loop: exemptions are granted by
+  evidence the evaluator checks, never by a field the candidate fills in.
+- **Learning: a value-level guard and the journal share one encoding path.** The journal stores each change as a JSON-valued assertion
+  (transactionMetadata.ts:20, :55), so the Q30a "reject -0 in JSON" guard would have rejected the journal of a valid number -0 assertion.
+  Q34c separates user JSON validation from lossless typed journal encoding; EXP-F02b was told before it shipped the guard.
+- **Learning: gates attached to closure do not protect comparisons.** Screening receipts could still crown a winner without the position
+  and W0 prerequisites; Q34d checks prerequisites when any comparative or promotion claim is admitted.
+- Contract 0.3.4 (Q33, Q34; regenerate twice, byte-identical) waits for a free agent slot (all 10 busy); Codex round 4 after it.
