@@ -1,5 +1,10 @@
 # Start here: independent XTDB/QLever native effort
 
+> **triplex-db-2 scope note (2026-11-07):** goals, scope and performance targets for this checkout are defined only in
+> [`lab/SCOPE.md`](../../lab/SCOPE.md), [`lab/NORTH-STAR.md`](../../lab/NORTH-STAR.md) and [`lab/TARGETS.md`](../../lab/TARGETS.md). Where this
+> file states goals, targets, scale, load profiles, lanes, queues, resource grants or devloop procedure, it is superseded
+> history from the homebase. Read it only for facts about code and evidence.
+
 Read the [scope and evidence](README.md) first. Work only in your own checkout
 and foundations. This source handoff grants no operation on the Codex homebase;
 do not reuse its15442/17019 services, canonical queue, databases, dependencies,

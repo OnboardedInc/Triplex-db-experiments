@@ -1,5 +1,8 @@
 # EXP-F03 falsifier: the five historical retirement-metadata failures, reproduced on our engines
 
+**North star:** correctness floor for P1 (exact past-basis reads, explain and audit) and goal 9.
+**Scope:** goals and targets come only from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; inherited homebase files are for code facts only.
+
 ## Commander's intent
 Turn the inherited "47/52 pass, five NEW historical retirement-metadata checks fail" (configured-entity tiny-v4
 fixture, see lab/research/R6-xtdb-gap-analysis.md section 3) into fresh, reproducible counterexamples on our own

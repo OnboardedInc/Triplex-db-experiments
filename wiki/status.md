@@ -1,5 +1,10 @@
 # Current evidence and next waves
 
+> **triplex-db-2 scope note (2026-11-07):** goals, scope and performance targets for this checkout are defined only in
+> [`lab/SCOPE.md`](../lab/SCOPE.md), [`lab/NORTH-STAR.md`](../lab/NORTH-STAR.md) and [`lab/TARGETS.md`](../lab/TARGETS.md). Where this
+> file states goals, targets, scale, load profiles, lanes, queues, resource grants or devloop procedure, it is superseded
+> history from the homebase. Read it only for facts about code and evidence.
+
 Current evidence update:2026-11-07. References retain their exact as-run source/build scope. All ten outcomes and the10m-entity/100m-active-domain-fact target remain OPEN. No path is promoted and no production SLA or winner is claimed. A CLI `completed_verified_bytes` result establishes its registered checks; later timing/liveness review can still disqualify an observation.
 
 The source-only integration base (before the later Duck withdrawal repair) is

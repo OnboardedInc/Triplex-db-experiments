@@ -30,4 +30,5 @@ Sam's words, verbatim:
    engine design, lives in `lab/TARGETS.md` and may change per database as evidence arrives. This file does not change.
 5. **Both engines stay in.** Sam, 2026-11-07: "do not rule out QLever ... It's ok that it fails on that [exact int64
    and decimal], we can figure out how to handle that some other way." No suggested gate eliminates an engine; a gap
-   becomes a design problem for that engine, solved some other way.
+   becomes a design problem for that engine, solved some other way. Sam later corrected the numeric requirement itself to
+   "no silent precision loss" (`lab/research/SAM-pasted-numbers-2026-11-07.md`; see `lab/SCOPE.md` section 2 item 4).

@@ -372,3 +372,40 @@ Report lab/research/R10-read-only-recursion.md; probes ~/Claude/Projects/triplex
 3. XTDB Tier 2 at scale: a write-path edge index (forward and reverse ref tables, paged per R7); an early-refusal scan budget is the
    interim guard.
 4. C8 covers every read API: the Datalog `rules` path and `makeXtdbMaintainedQueries` must stop writing scratch state from read calls.
+
+## R14 XTDB 2.2.0 correctness hazards (Sonnet xhigh) — PROGRESSED (knowledge)
+Report lab/research/R14-xtdb-correctness-hazards.md (22 hazards). Top five, all reproduced on our dev engine:
+1. SUM over BIGINT wraps silently (workloads 06, 07, 08 sum BIGINT directly); guard `CAST(.. AS DECIMAL(32,0))` is exact and free.
+2. Correlated NOT EXISTS / EXISTS / IN / NOT IN drop or null rows when an inner predicate is unknown (#6313, fix unreleased); hit by
+   workloads 09, 12, 13, `Reachability.ts:196` and the constraint ref check; guard `(p) IS TRUE`, no measured cost.
+3. Mark join with > 100,000 build rows answers false for every row (#6345, unreleased); hits projected or OR-ed IN/EXISTS, i.e. our
+   Datalog `or` and the constraint check; guard: raise XTDB_JOIN_SPILL_THRESHOLD or rewrite as UNION. Matters at year-one scale.
+4. Join pushdown under LIMIT or a window (#6151); TemporalQueries.ts span/island window CTEs unverified.
+5. `col = ANY(x) AND p` misparses (`Sql.g4:753-756`); no builder uses ANY but R7 recommended it (R7 lines 134, 144, 234 are wrong advice).
+- Next tier: NULL-key outer joins (#6339), INTERSECT/EXCEPT miss NULLs (#6340), DISTINCT/GROUP BY over lists with NULL (#6341);
+  our fixtures have no NULL cases that would catch them.
+- Answers R7's open question: after a restart a node plans over L0 until the next transaction (#6174); results stay correct.
+- The Datalog compiler inlines position/valid-time bounds as literals (`compiler.ts:230-234`); each distinct literal adds JVM classes
+  (#5928), a likely contributor to earlier memory exhaustion. Prefer parameters.
+- No exposure: PATCH, UPDATE, FOR PORTION OF, FOR SYSTEM_TIME, default valid time. 19 empty r14_* tables remain in the dev catalog
+  (no DROP TABLE in 2.2.0).
+
+## R15 presence, deletion, cascade (Sonnet xhigh) — PROGRESSED (knowledge)
+Report lab/research/R15-presence-deletion-cascade.md. Options A (retraction only) ⊂ B (valid-time deletion on derived presence)
+⊂ C (explicit opt-in presence carrier plus B). Recommendation C, staged (B planner first, carrier second).
+- Findings: reference enforcement loads every live row of the source and target types on each enforced command: this cannot sit on
+  the P2 commit path at 10m entities without a touch-set check (now a P2 work item). REST DELETE/PUT may raise
+  TransactionConflictError for an entity with a live but expired fact (EntityState compares all live rows; observed set is
+  valid-time filtered): needs a test. No transact operation ends valid time; clipping needs new assertion ids.
+- Provisional orchestrator ruling (flagged to Sam as product decisions): Option C staged; "delete" ends valid time from now while
+  REST DELETE keeps its recorded-retraction contract; undeclared reference action defaults to restrict; cascade is any-parent on
+  card-one references only; explicit presence opt-in per EntityType (+1 fact per entity). PII erasure (crypto-shredding) is IN scope
+  as a requirement (Sam's paste), unlike R15's "deferred" stance.
+
+## SCOPE v2 (Sam, 2026-11-07) — documents rewritten
+- North star = Sam's five ranked priorities (lab/NORTH-STAR.md). Scope = lab/SCOPE.md (Sam confirmed the restatement). Measurements,
+  requirements and 20 real-world golden scenarios = lab/TARGETS.md. PLAN v2 and SCORECARD v2 rewritten around them.
+- Numeric requirement corrected by Sam: "no silent precision loss", not native int64 (lab/research/SAM-pasted-numbers-2026-11-07.md).
+- Anti-leak: repo-root CLAUDE.md points every agent at lab/SCOPE.md; superseded banners added to AGENTS.md, wiki/goals.md,
+  wiki/status.md, handoffs/claude-native/README.md and START-HERE.md, qualification/devloop/PLAN.md, qualification/PLAN.md;
+  RULINGS Q2/Q4/Q11 and the int64 rulings marked superseded. All future briefs carry North star and Scope lines.

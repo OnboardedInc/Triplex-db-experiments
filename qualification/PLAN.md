@@ -1,5 +1,10 @@
 # Triplex temporal backends: XTDB versus QLever
 
+> **triplex-db-2 scope note (2026-11-07):** goals, scope and performance targets for this checkout are defined only in
+> [`lab/SCOPE.md`](../lab/SCOPE.md), [`lab/NORTH-STAR.md`](../lab/NORTH-STAR.md) and [`lab/TARGETS.md`](../lab/TARGETS.md). Where this
+> file states goals, targets, scale, load profiles, lanes, queues, resource grants or devloop procedure, it is superseded
+> history from the homebase. Read it only for facts about code and evidence.
+
 Build two competing implementations of the same complete ten-goal system in this
 independent checkout: **public Triplex-on-XTDB and public Triplex-on-QLever**.
 Triplex supplies the schema/type model, facts, relationships, Datalog and mutation
