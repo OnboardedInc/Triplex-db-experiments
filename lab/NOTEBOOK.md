@@ -115,3 +115,51 @@ Result: PROGRESSED (knowledge). Nothing promoted; no lane gate has run.
   separately advancing views (new B2: one update operation per commit group carrying ledger, projection and
   publication marker); 12 + 3.5x3 GiB residents/slots exceeded the 12 GiB VM (one pool now).
 - Result: PROGRESSED (plan). Round 2 running.
+
+## GEN-0 2026-11-07 Codex plan review round 2 → PLAN v1
+- Round 2 (lab/reviews/plan-review-r2.codex.md): 14 findings, 10 critical; verdict "not ready" until PLAN v1 holds
+  the acceptance matrix with golden vectors and an integrated done predicate; a complete QLever durable-decision,
+  fencing, replay and publication protocol covering every mutator; full R/P/V eligibility with query-wide
+  completeness; frozen conflict, journal, raw-dataset and scope contracts; bounded maintenance, atomic admission,
+  cumulative budgets and retained preimages.
+- Most important correction: my projection selector ignored recorded time R (a read at R=1000 with current P2 would
+  return the corrected value). C1 now covers the whole basis; explicit R takes the exact path until proven.
+- Second: QLever publishes the snapshot inside `modify`, before client verification, so "verify then publish" was
+  impossible. C2 makes the log fsync the irrevocable decision and verification post-publication with a fence.
+- Third: native recursive reads mutate engines (scratch graphs/tables) in both lanes. C8: native reads never mutate;
+  recursion becomes read-only frontier iteration. This removes a mutator class instead of fencing it.
+- Fourth: R9's slim journal removes documented queryable facts (`:_tx/change`, `:_tx/changed-entity`). C6 keeps the
+  logical journal queryable; physical slimming only with synthesized, byte-identical facts. Rejected as default.
+- Codex accepted: the log of record does not violate the handoff (name the profile "QLever 0.6.0 + log of record");
+  ledger fallback for interior XTDB cuts; one scope per engine as a production contract if ownership is enforced;
+  an early repository skeleton (objection withdrawn).
+- Result: PROGRESSED (plan v1 written). Round 3 confirmation running. EXP-R01 entity core dispatched (worktree).
+
+## Hourly learnings pass 2026-11-07 (cron ae766d26)
+- No experiment finished since the round-2 entry. EXP-000 has started `lab/bin` (engine.mjs, lib.mjs, tests);
+  lab/acceptance/ is still empty (EXP-A01 running). Research probes tx2-probe-r7 and tx2-probe-r8 hold 10 GiB of the
+  11 GiB pool, so the harness's dev engines cannot start until they finish. Learning: research probes compete with
+  the harness for the same pool; future research probes are capped at 1.5 GiB and must check the pool first.
+- New research launched from PLAN v1's open questions (Sonnet xhigh):
+  - R10 read-only recursion (contract C8): inventory of recursive tasks, QLever property paths over a current graph,
+    TS-driven frontier iteration with VALUES / array parameters, prior art.
+  - R12 XTQL cookbook: XTQL formulations for all 23 native operations, verified row-identical to SQL on a probe;
+    hard gaps become engine-repair candidates. Unblocks the X2 parity track (57 SQL-only + 3 hybrid tasks).
+  - R13 log of record (contracts C2 to C4): prior art (XTDB 1.x tx-log/doc-store, Datomic, Kafka Streams changelogs),
+    Node durable append, what fsync means inside the colima VZ VM on macOS, N-Quads checkpoints, fencing.
+- Deferred: load-harness research (G7) until the acceptance contract's load-contract.json exists.
+
+## GEN-0 2026-11-07 Codex round 3 → PLAN v1.1 (ready to execute, gated)
+- Verdict: ready to execute as a gated experimental program once five changes land; all five applied in v1.1.
+- Learning worth keeping: Triplex recorded timestamps are NOT monotonic in commit order (each runtime supplies its own
+  clock, `TriplesLive.ts:308`). Any optimization keyed on "R after the newest commit's recorded time" is wrong
+  (P1 at R=2000, P2 at R=1000, read at R=1500 must exclude P1). Explicit R always takes the exact path for now.
+- Learning: a maintenance window that deletes facts in chunks exposes states that match no logical basis; qualified raw
+  reads must refuse during MAINTAINING; chunks must be computed at apply time inside the broker.
+- Learning: "durably committed" and "published" are different outcomes; a lost-ACK retry must not return success before
+  publication (CommitPending / Repairing instead).
+- Learning: receipt carry-forward keyed only on imported files can transfer an 8 GiB load result into a 2 GiB profile;
+  carry-forward now needs every bound identity unchanged, and final acceptance is always fresh.
+- EXP-R01 narrowed (skeleton, spec compiler, codec move); planner/repository behavior moved to EXP-R02 behind reviewed
+  acceptance and golden vectors. Message sent to the running R01 agent.
+- Result: PROGRESSED. Plan phase complete; Codex round 4 diff check running in the background (non-blocking).

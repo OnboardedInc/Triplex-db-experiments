@@ -1,0 +1,257 @@
+OpenAI Codex v0.160.0
+--------
+workdir: /Users/sam/projects/triplex-db-2
+model: gpt-6.1-sol
+provider: openai
+approval: on-request
+sandbox: danger-full-access
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 01a1b72e-26d6-77a1-ac09-6ab8c3b10d43
+--------
+user
+Round 4 (diff check only). The orchestrator applied your round-3 minimal changes to lab/PLAN.md as v1.1; the changelog entry "v1.1" lists them one to one. Read the changed parts (C1 recorded-time row, C2 item 7, C4 items 3 to 6, section 1 item 7, section 9 EXP-R01/EXP-R02 rows). For each of your five minimal changes say APPLIED or NOT APPLIED with the gap. Then give the final verdict in one line. Under 400 words. Read-only.
+
+codex
+I’ll check the specified changes against the five round-3 requirements and give a final verdict.
+exec
+/bin/zsh -lc "nl -ba lab/PLAN.md | sed -n '24,53p;137,158p;170,232p;432,470p'" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+    24	
+    25	**Integrated done predicate.** The goal is complete only when one identified integrated profile per
+    26	surface (source tree, build manifest, engine image and configuration, projection-spec and log-format
+    27	versions) satisfies all of the following at once. A collage of receipts from different profiles does
+    28	not count.
+    29	
+    30	1. Every obligation in `lab/acceptance/obligations.json` is closed by fresh receipts from that profile,
+    31	   with optional capabilities enabled wherever the obligation claims them.
+    32	2. Populations: sparse and representative entity profiles, the query families, history depths and
+    33	   graph topologies (including skew) of `qualification/benchmark-contract.json`, and retained history.
+    34	3. Scale: 10m distinct application entities with 100m representative active domain facts.
+    35	4. Load: 256-logical-client acceptance on the target-scale dataset with steady writes and maintenance
+    36	   overlapping, then 512 and 1024 client stress under a frozen overload policy, then recovery after
+    37	   stress.
+    38	5. Complete application cost is counted: the log, the mutation broker, verification, scratch work,
+    39	   fallbacks, maintenance and clients, with history and write amplification reported separately.
+    40	6. Packaged SDK consumers, migrations, both history contracts (ordinary raw assertion lifetime and the
+    41	   as-of snapshot-assertion target), deletion and cascades, cancellation and drain, and support
+    42	   invalidation all pass.
+    43	7. Receipt applicability: a receipt applies only to the exact profile identity it binds. It carries
+    44	   forward to a later profile only when every bound identity is unchanged (imported source and dist files,
+    45	   engine image and configuration, resource caps, fixture contents, enabled capabilities, gate and oracle
+    46	   versions, acceptance-rule version), checked by an explicit applicability check. The final acceptance of
+    47	   the selected integrated profile is always a fresh run; nothing carries into it.
+    48	
+    49	An engine limit is not completion. When an engine blocks an obligation, the loop opens the
+    50	engine-repair track for that engine; we hold the pinned source of both engines in `references/`.
+    51	
+    52	## 2. What research and review changed
+    53	
+   137	safety depends on unproven engine behavior, the linked falsifier must pass first, and a failed falsifier
+   138	blocks the dependent work.
+   139	
+   140	### C1. Projection eligibility (both lanes)
+   141	
+   142	A read uses the projection only when every condition holds for the whole query; otherwise the whole
+   143	query takes the exact ledger path in the same native language, and the fallback rate is reported.
+   144	
+   145	| Condition | XTDB | QLever |
+   146	| --- | --- | --- |
+   147	| Scope | the engine's ownership record matches the reader's scope (C7) | same |
+   148	| Mapping | the projection's spec generation equals the release the reader requires | same |
+   149	| Recorded time | R absent. Any explicit R takes the exact path (recorded timestamps are not monotonic in commit order: separate runtimes supply their own clocks, `TriplesLive.ts:308`); an explicit-R shortcut needs its own equivalence proof and falsifier | same |
+   150	| Position | latest, or a physical commit boundary (H-X-CUT) | the current publication's P only |
+   151	| Valid time | any V, read natively, for entities whose coordinates are exact | V inside the marker's `[validInstant, nextBoundary)` and the marker not in MAINTAINING |
+   152	| Completeness | no partial, stale or conflicted entity touches an attribute the query references (filter, order, include, aggregate, negation) | same |
+   153	
+   154	Completeness is query-wide. If the per-type partial set intersects the query's referenced attributes,
+   155	the query routes to the exact path before any filtering, ordering, aggregation or pagination. A disjoint
+   156	union of projection and exact branches is a later optimization that needs its own proof.
+   157	
+   158	### C2. QLever durable commit protocol (H-Q-LOG)
+   170	4. **Publication.** QLever's snapshot swap at the end of the operation is publication. Readers may see
+   171	   the group from that moment. The caller's ACK is sent after publication.
+   172	5. **Verification is post-publication.** The broker checks the complete expected effects and required
+   173	   absences of the group. A failure means the published state is known-bad: the broker fences (C3).
+   174	6. **Uncertainty.** Any non-success response, lost connection, process death or verification failure
+   175	   fences the lane. Recovery restarts QLever, confirms the persisted delta matches a log prefix through
+   176	   the complete expected effect sets, re-applies committed groups idempotently, or rebuilds from the
+   177	   newest checkpoint plus log replay. Native reads return a typed "repairing" error while fenced.
+   178	7. **Lost ACK.** Durably committed and published are different states. A retry with the same command id
+   179	   finds the durable claim in the log; it returns the original success receipt only after the broker has
+   180	   established that the group is published. Before that, it returns a typed `CommitPending` outcome (committed,
+   181	   not yet visible) or the lane's `Repairing` error, never an ordinary success. F05 includes the exact case
+   182	   "crash after COMMIT fsync, before apply, then retry".
+   183	8. **Replay and checkpoints.** The log is not an RDF snapshot. Replay is deterministic over a versioned
+   184	   record format; checkpoints are graph-preserving N-Quads exports with a manifest (log prefix, format
+   185	   versions, hashes); a fresh index is built from a checkpoint plus the log suffix; segment retention keeps
+   186	   everything after the newest verified checkpoint. Rebuild publication uses crash-safe generation selection
+   187	   (a new index directory, switched only after its manifest verifies), because the pinned source warns that
+   188	   a failure during directory moves can need repair.
+   189	9. **Profile name.** The qualified profile is "QLever 0.6.0 + log of record". Its native reads, including
+   190	   every fallback, execute through declared SPARQL.
+   191	
+   192	Falsifiers that gate C2: F05 (fault injection between permutations, persistence, publication and
+   193	verification), plus crash tests after every durable transition, competing preconditions in one group,
+   194	duplicate commands within a group, failed children and lost ACKs.
+   195	
+   196	### C3. QLever mutation broker and fence
+   197	
+   198	1. **One mutator.** Every route that modifies QLever goes through the broker: application commits,
+   199	   boundary maintenance, rebuild and checkpointing, administration. Native reads do not mutate (C8).
+   200	2. **Credentials.** QLever runs with an update access token held only by the broker. No other process can
+   201	   mutate the engine.
+   202	3. **Epochs.** The broker holds a lease with an epoch number in the log. A new broker must close the
+   203	   previous epoch (prove the old one is dead and its last group's outcome resolved) before it mutates.
+   204	4. **Fence.** While fenced, no update and no rebuild starts until recovery has established a trustworthy
+   205	   state from complete expected effects. Two successful queries are not that proof.
+   206	
+   207	### C4. Publication marker and temporal-boundary maintenance (QLever)
+   208	
+   209	1. The marker records `(P, validInstant, nextBoundary, state)`, with state `PUBLISHED` or `MAINTAINING`.
+   210	2. Ordinary boundaries are commit groups that advance `validInstant` and `nextBoundary`.
+   211	3. **Bounded operations.** Every update operation has a preconstruction bound on its size (the bound comes
+   212	   from R8's group-commit curve). A boundary larger than the bound sets the marker to `MAINTAINING` with its
+   213	   target boundary, source generation and mapping, applies the boundary in bounded chunks between application
+   214	   commit groups, and returns the marker to `PUBLISHED` when done.
+   215	4. **Chunks are never stale.** The broker computes each chunk inside its critical section immediately before
+   216	   applying it, from the then-published state, for entities whose boundary falls in the target window and that
+   217	   no intervening commit already brought to the target instant. Application commits during `MAINTAINING`
+   218	   project touched entities at the target instant and record them as done. Progress is in the log, so a crash
+   219	   resumes by recomputing the remaining chunks. Falsifiers: concurrent writes to entities in pending chunks, and
+   220	   crash/resume mid-maintenance.
+   221	5. **Reads during `MAINTAINING`.** The in-progress current graph may match no logical basis (two facts with the
+   222	   same expiry, one deleted and one not). C1 sends repository reads to the exact path, and the qualified raw
+   223	   escape hatch (`native.sparql` through Triplex) refuses normal results with a typed `Maintaining` error or runs
+   224	   against the exact ledger relations. Direct SPARQL to the engine that bypasses Triplex is bare inspection: it can
+   225	   read the marker and is explicitly unqualified during maintenance.
+   226	6. Delta growth is bounded by rebuild scheduling plus backpressure: when the forecast delta at rebuild
+   227	   completion exceeds the cap, the broker slows admission of commit groups. A rebuild trigger alone is not
+   228	   a bound.
+   229	
+   230	### C5. Conflict semantics (both lanes)
+   231	
+   232	1. **Equal duplicates are not conflicts.** Several live assertions with the same value form one value with
+   432	| --- | --- | --- | --- |
+   433	| 1 | EXP-A01 | acceptance contract: obligations, load contract, capability matrix, budgets skeleton | none (running) |
+   434	| 1 | EXP-000 | harness: engines, atomic pool, fail-closed bound receipts, retained evidence, homebase coupling replaced | none (running) |
+   435	| 2 | EXP-G01 | golden vectors for competing contracts (raw lifetime vs snapshot metadata, assertion cardinality vs distinct-value decoding, journal vs exact ledger), derived by hand from documentation and independently reviewed | EXP-A01 |
+   436	| 2 | EXP-001, EXP-002 | fresh baselines: unchanged44 and native142 on XTDB (XTQL and SQL tallies) and QLever | EXP-000 |
+   437	| 2 | EXP-R01 | entity core skeleton: interface types for repository, writer and plan IR (stubs that fail clearly), the projection spec compiler (names, declared types, exactness flags, collision checks), and the behavior-preserving codec move from packages/http | none |
+   438	| 4 | EXP-R02 | planner semantics, repository and writer behavior on KV, tested against reviewed golden vectors | EXP-A01 and EXP-G01 reviewed |
+   439	| 3 | EXP-F01, EXP-F02 | XTDB cut mapping; wire exactness for every value type on both engines | EXP-000 |
+   440	| 3 | EXP-F03, EXP-F04 | retirement metadata; duplicate supports and conflicts | EXP-000, EXP-G01 |
+   441	| 3 | EXP-F05 | QLever fault injection and the C2 crash matrix on a tiny dataset | EXP-000, R8 |
+   442	| 4 | EXP-O01 | full independent Python event-replay oracle and mutation controls | EXP-A01, EXP-G01 |
+   443	| 5 | EXP-Q01, EXP-Q02 | compact-ledger round trip; log, broker, fence and publication | EXP-F05 |
+   444	| 5 | EXP-Q03 | QLever order keys and correlation helpers | EXP-002 |
+   445	| 6 | EXP-V01, EXP-V02 | one packaged vertical slice per lane through public entrypoints: write, repository read with projection selection, exact fallback, set-query completeness, authored native read, history, receipt, cursor, reopen | steps 3 to 5 |
+   446	| 7 | later | XTQL parity, C8 recursion, scale ladder, load | step 6 |
+   447	
+   448	## 10. Resume protocol
+   449	
+   450	`lab/STATE.md` is updated at every dispatch and every completion with running agents, branches, slots, pending
+   451	decisions and the next actions. After any context compaction the orchestrator reads `lab/STATE.md`,
+   452	`lab/SCORECARD.md`, the notebook tail and this plan before acting.
+   453	
+   454	## Changelog
+   455	
+   456	- v0, 2026-11-07: first draft, before research and review.
+   457	- v1-pre, 2026-11-07: folded in R1 to R6. The projection became mandatory for scale on both lanes.
+   458	- v1-rc, 2026-11-07: Codex round 1 (16 findings, 8 critical). Receipts bind executed builds and fail closed;
+   459	  acceptance contract moved into `lab/acceptance/`; one resource pool; generation 1 reordered around falsifiers.
+   460	- v1, 2026-11-07: Codex round 2 (14 findings, 10 critical). Added the integrated done predicate (section 1),
+   461	  frozen contracts C1 to C8 (eligibility over the whole basis with query-wide completeness; QLever log decision,
+   462	  group validation, publication and post-publication verification; a mutation broker with credentials, epochs and
+   463	  fence; bounded boundary maintenance; conflict semantics per API; the journal contract kept queryable; one scope
+   464	  per engine with enforced ownership; native reads never mutate), the hypotheses-and-falsifiers table with
+   465	  blocking, frozen profile budgets with cumulative comparison, retained evidence preimages, and golden vectors
+   466	  before the falsifiers that need them. R9's slim journal was rejected as a default because it removes documented
+   467	  queryable facts.
+   468	- v1.1, 2026-11-07: Codex round 3 (`lab/reviews/plan-review-r3.codex.md`) found five remaining gaps and said the plan
+   469	  is ready to execute once they land. Applied one to one: (1) C1 requires R absent, because recorded timestamps are
+   470	  not monotonic in commit order; (2) C4 binds maintenance chunks to their target, computes them just before applying,
+
+exec
+/bin/zsh -lc "rg -n -A 12 -B 3 'EXP-R0[12]|v1\\.1' lab/PLAN.md" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+1:# triplex-db-2 dev-loop plan (v1.1)
+2-
+3:Status: v1.1, 2026-11-07. Ready to execute as a gated experimental program (Codex round 3 verdict, conditional on
+4:the five v1.1 changes in the changelog). Folds in research R1 to R6 and R9 (`lab/research/`) and two rounds of
+5-adversarial review by Codex (`lab/reviews/plan-review-r1.codex.md`, `plan-review-r2.codex.md`, and
+6-the orchestrator's response `plan-review-r1.response.md`). R7 (XTDB indexing and ingest) and R8
+7-(QLever write lifecycle) are still running; their results refine section 4 and are recorded in the
+8-notebook. The changelog at the bottom records what changed and why.
+9-
+10-## 1. Mission and done condition
+11-
+12-**Mission.** Build an efficient triple store where Triplex is the TypeScript interface, used almost
+13-like an ORM, over two engines whose native query languages we maintain:
+14-
+15-| Surface | Engine (pinned) | Native language |
+16-| --- | --- | --- |
+--
+72-The ledger stays the canonical record: exact values, both clocks, assertion identity, retractions,
+73-receipts, journal and claims. Each engine adds a projection in its own idiom, derived from a
+74-release-bound projection spec (EntityTypes and attributes mapped to physical names and declared types).
+75:One engine-neutral planner (`planProjection`, EXP-R01) computes projection changes for both lanes so
+76-their semantics cannot drift. The hook point is each adapter's `persist()` (R9), which already receives
+77-every row of the transaction.
+78-
+79-```
+80-                          Triplex TypeScript API
+81-   +------------------------------------------------------------------+
+82-   | Repository<Model>: at(basis) get getMany find timeline            |
+83-   | Writer -> WritePlan -> commit(plans, {actor, commandId})          |
+84-   | native.xtql`` native.sql`` native.sparql`` + declared contract    |
+85-   +-----------------+--------------------------------+---------------+
+86-                     | eligibility check (C1)          |
+87-        eligible     v                                 v   not eligible
+--
+300-| 5 Scale and load | ladder to 10m; 256 to 1024 clients | same |
+301-| 6 History | both history contracts, presence, corrections, deletion, cascades | same |
+302-
+303:**Shared work stays thin:** the entity core (EXP-R01: projection spec, planner, repository, writer), the
+304-independent oracle and golden vectors, and the fixture generator.
+305-
+306-## 7. The evolutionary loop
+307-
+308-### 7.1 One generation
+309-
+310-```
+311-   +-------------+     +-------------+     +----------------+     +-------------+
+312-   | 1 read      | --> | 2 select    | --> | 3 brief and    | --> | 4 agents    |
+313-   | STATE,      |     | by dep graph|     | dispatch       |     | build and   |
+314-   | SCORECARD,  |     | + progress  |     | (<=10 agents,  |     | run gates   |
+315-   | NOTEBOOK,   |     | obligations,|     |  atomic pool)  |     | in own      |
+--
+434-| 1 | EXP-000 | harness: engines, atomic pool, fail-closed bound receipts, retained evidence, homebase coupling replaced | none (running) |
+435-| 2 | EXP-G01 | golden vectors for competing contracts (raw lifetime vs snapshot metadata, assertion cardinality vs distinct-value decoding, journal vs exact ledger), derived by hand from documentation and independently reviewed | EXP-A01 |
+436-| 2 | EXP-001, EXP-002 | fresh baselines: unchanged44 and native142 on XTDB (XTQL and SQL tallies) and QLever | EXP-000 |
+437:| 2 | EXP-R01 | entity core skeleton: interface types for repository, writer and plan IR (stubs that fail clearly), the projection spec compiler (names, declared types, exactness flags, collision checks), and the behavior-preserving codec move from packages/http | none |
+438:| 4 | EXP-R02 | planner semantics, repository and writer behavior on KV, tested against reviewed golden vectors | EXP-A01 and EXP-G01 reviewed |
+439-| 3 | EXP-F01, EXP-F02 | XTDB cut mapping; wire exactness for every value type on both engines | EXP-000 |
+440-| 3 | EXP-F03, EXP-F04 | retirement metadata; duplicate supports and conflicts | EXP-000, EXP-G01 |
+441-| 3 | EXP-F05 | QLever fault injection and the C2 crash matrix on a tiny dataset | EXP-000, R8 |
+442-| 4 | EXP-O01 | full independent Python event-replay oracle and mutation controls | EXP-A01, EXP-G01 |
+443-| 5 | EXP-Q01, EXP-Q02 | compact-ledger round trip; log, broker, fence and publication | EXP-F05 |
+444-| 5 | EXP-Q03 | QLever order keys and correlation helpers | EXP-002 |
+445-| 6 | EXP-V01, EXP-V02 | one packaged vertical slice per lane through public entrypoints: write, repository read with projection selection, exact fallback, set-query completeness, authored native read, history, receipt, cursor, reopen | steps 3 to 5 |
+446-| 7 | later | XTQL parity, C8 recursion, scale ladder, load | step 6 |
+447-
+448-## 10. Resume protocol
+449-
+450-`lab/STATE.md` is updated at every dispatch and every completion with running agents, branches, slots, pending
+--
+465-  blocking, frozen profile budgets with cumulative comparison, retained evidence preimages, and golden vectors
+466-  before the falsifiers that need them. R9's slim journal was rejected as a default because it removes documented
+467-  queryable facts.
+468:- v1.1, 2026-11-07: Codex round 3 (`lab/reviews/plan-review-r3.codex.md`) found five remaining gaps and said the plan
+469-  is ready to execute once they land. Applied one to one: (1) C1 requires R absent, because recorded timestamps are
+470-  not monotonic in commit order; (2) C4 binds maintenance chunks to their target, computes them just before applying,
+471-  and refuses qualified raw results during `MAINTAINING`; (3) receipts carry forward only when every bound identity
+472-  is unchanged, and final acceptance is always fresh; (4) C2 retries return success only after publication, otherwise
+473:  `CommitPending` or `Repairing`; (5) EXP-R01 is narrowed to the skeleton and spec compiler, and the planner,
+474:  repository and writer behavior moved to EXP-R02 behind reviewed acceptance and golden vectors.
+

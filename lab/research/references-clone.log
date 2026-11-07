@@ -1,0 +1,29 @@
++(eval):3> git clone -q --depth 1 --branch v2.2.0 https://github.com/xtdb/xtdb.git xtdb
++(eval):3> tail -2
+Turn off this advice by setting config variable advice.detachedHead to false
+
++(eval):4> git ls-remote --tags https://github.com/ad-freiburg/qlever.git
++(eval):4> tail -15
+228a5ce83f010ed591ed41504a0e3036301dfcc0	refs/tags/iswc-69
+6a17ca9321b3d16de3ac7544f5518edc2e200722	refs/tags/latest-master
+7ec91f836cb8c98b4e07c906574cb4bf7f6f4e02	refs/tags/v0.5.42
+27eef3308beb2724ccef9069f41cc6fec4fdf23d	refs/tags/v0.5.44
+36ed965616a17c5c90736975b00c18d03804e224	refs/tags/v0.5.45
+b7486a3f2e33503952a5fc54b647e399008abe98	refs/tags/v0.5.46
+b2f2e101de954c81794a5c4167f9f404da689ff0	refs/tags/v0.5.47
+1071b83092e97f6715f68b117807ca81f1b624b3	refs/tags/v0.5.48
+15bbdad052a183ddf3a853dab562c741dbf5ee0c	refs/tags/v0.5.48^{}
+5e9c0f7a174a9b404d6dbcd3c385cdc7428e3e84	refs/tags/v0.5.49
+305daf359d08c3a301f2b4d34c7df033108f3e12	refs/tags/v0.5.49^{}
+b397faa0cdf79ae98ac84a5a7a8379b774c3a507	refs/tags/v0.5.50
+cba194e5587996a271500200cc5a7f516c7a4258	refs/tags/v0.5.50^{}
+b695d9c3f06d7b9fe0f2094cce22a7b366ebb9fb	refs/tags/v0.6.0
+6c5861a6526d7d7ae77735d09339ee0825f0c001	refs/tags/v0.6.0^{}
++(eval):5> git clone -q --depth 1 https://github.com/ad-freiburg/qlever-control.git qlever-control
++(eval):6> git clone -q --depth 1 https://github.com/w3c/rdf-tests.git rdf-tests
++(eval):7> git clone -q --depth 1 https://github.com/karelklima/ldkit.git ldkit
++(eval):8> git clone -q --depth 1 https://github.com/drizzle-team/drizzle-orm.git drizzle-orm
++(eval):9> git clone -q --depth 1 https://github.com/RubenVerborgh/SPARQL.js.git sparqljs
++(eval):10> git clone -q --depth 1 https://github.com/oxigraph/oxigraph.git oxigraph
++(eval):11> git clone -q --depth 1 https://github.com/xtdb/driver-examples.git xtdb-driver-examples
++(eval):12> git clone -q --depth 1 https://github.com/tonsky/datascript.git datascript

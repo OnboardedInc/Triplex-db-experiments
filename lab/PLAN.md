@@ -1,297 +1,409 @@
-# triplex-db-2 dev-loop plan (v1-rc, between review rounds)
+# triplex-db-2 dev-loop plan (v1.1)
 
-Status: v1-rc, 2026-11-07. Folds in research wave R1 to R6 (`lab/research/`) and the accepted
-decisions from Codex review round 1 (`lab/reviews/plan-review-r1.response.md`). Review round 2 and
-follow-up research R7 (XTDB indexing and ingest), R8 (QLever write lifecycle) and R9 (core
-plumbing) are running. The changelog at the bottom records what changed between versions and why.
+Status: v1.1, 2026-11-07. Ready to execute as a gated experimental program (Codex round 3 verdict, conditional on
+the five v1.1 changes in the changelog). Folds in research R1 to R6 and R9 (`lab/research/`) and two rounds of
+adversarial review by Codex (`lab/reviews/plan-review-r1.codex.md`, `plan-review-r2.codex.md`, and
+the orchestrator's response `plan-review-r1.response.md`). R7 (XTDB indexing and ingest) and R8
+(QLever write lifecycle) are still running; their results refine section 4 and are recorded in the
+notebook. The changelog at the bottom records what changed and why.
 
 ## 1. Mission and done condition
 
 **Mission.** Build an efficient triple store where Triplex is the TypeScript interface, used almost
 like an ORM, over two engines whose native query languages we maintain:
 
-| Lane | Engine (pinned) | Native language | Named alternative |
-| --- | --- | --- | --- |
-| X | XTDB 2.2.0, image digest `a6a42650...` | XTQL (primary) | XTDB SQL |
-| Q | QLever 0.6.0, image digest `37d5ede1...` | SPARQL | none |
+| Surface | Engine (pinned) | Native language |
+| --- | --- | --- |
+| X-XTQL | XTDB 2.2.0, image digest `a6a42650...` | XTQL (primary) |
+| X-SQL | XTDB 2.2.0, same foundation | XTDB SQL (named alternative) |
+| Q-SPARQL | QLever 0.6.0, image digest `37d5ede1...`, plus the durable log of record (section 4.2) | SPARQL |
 
 **Raw queries must make sense.** A developer who knows only XTQL, SQL or SPARQL, and has never read
-Triplex source, can query the stored data and get answers that match what the Triplex entity API
-returns at the same basis.
+Triplex source, can query the stored domain data and get answers that match what the Triplex entity
+API returns at the same basis, within the documented raw-dataset contract (C7).
 
-**Done condition.** The goal is complete when both lanes reach the scope, scale and ambition in the
-handoff context (`handoffs/claude-native/README.md`, `wiki/goals.md`):
+**Integrated done predicate.** The goal is complete only when one identified integrated profile per
+surface (source tree, build manifest, engine image and configuration, projection-spec and log-format
+versions) satisfies all of the following at once. A collage of receipts from different profiles does
+not count.
 
-1. All ten goals in `wiki/goals.md` pass for `xtdb-native` (XTQL and SQL counted separately) and
-   for `qlever-native`, with fresh evidence from this checkout's own engines.
-2. Scale target is 10m distinct application entities with 100m representative active domain facts,
-   in sparse and representative profiles, with history and write amplification reported separately.
-3. Load acceptance uses 256 logical clients with steady writes, then 512 and 1024 client stress under
-   a frozen overload policy.
-4. The Triplex entity API (the "ORM") and the raw native escape hatch both pass the entity suite on
-   both lanes.
+1. Every obligation in `lab/acceptance/obligations.json` is closed by fresh receipts from that profile,
+   with optional capabilities enabled wherever the obligation claims them.
+2. Populations: sparse and representative entity profiles, the query families, history depths and
+   graph topologies (including skew) of `qualification/benchmark-contract.json`, and retained history.
+3. Scale: 10m distinct application entities with 100m representative active domain facts.
+4. Load: 256-logical-client acceptance on the target-scale dataset with steady writes and maintenance
+   overlapping, then 512 and 1024 client stress under a frozen overload policy, then recovery after
+   stress.
+5. Complete application cost is counted: the log, the mutation broker, verification, scratch work,
+   fallbacks, maintenance and clients, with history and write amplification reported separately.
+6. Packaged SDK consumers, migrations, both history contracts (ordinary raw assertion lifetime and the
+   as-of snapshot-assertion target), deletion and cascades, cancellation and drain, and support
+   invalidation all pass.
+7. Receipt applicability: a receipt applies only to the exact profile identity it binds. It carries
+   forward to a later profile only when every bound identity is unchanged (imported source and dist files,
+   engine image and configuration, resource caps, fixture contents, enabled capabilities, gate and oracle
+   versions, acceptance-rule version), checked by an explicit applicability check. The final acceptance of
+   the selected integrated profile is always a fresh run; nothing carries into it.
 
-An engine limit is not completion. When an engine blocks a goal, the loop opens the engine-repair
-track for that engine; we hold the pinned source of both engines in `references/`.
+An engine limit is not completion. When an engine blocks an obligation, the loop opens the
+engine-repair track for that engine; we hold the pinned source of both engines in `references/`.
 
-## 2. What the research changed
-
-The first research wave turned the projection from a nice-to-have into a requirement on both lanes.
+## 2. What research and review changed
 
 | Finding | Source | Consequence |
 | --- | --- | --- |
-| XTDB 2.2 indexes only `_id`. Other predicates are column scans at about 0.27 s per million rows. | R1 Q7 | The EAV ledger (`_id` = assertion id) turns entity and attribute lookups into full ledger scans. At 100m facts that is tens of seconds per query. Hot reads must resolve through `_id`. |
-| QLever's real reified layout is about 30 triples and 724 B per fact; with the journal, `54A + 27E + 63` triples per transaction. | R2, R4 | 3 to 5.7 billion triples at 100m facts, beyond the 60 GiB VM. A compact ledger (about 7 triples) plus a plain current graph (about 1.2) is about 0.8 billion triples and 17 GB. |
-| QLever updates cost O(total delta) per request and have no rollback. | R2 Q1 | Writes need one operation per request, a bounded delta with online `rebuild-index`, and roll-forward recovery. |
-| XTDB client-set system time is fragile: one abort moves the head to wall-clock. | R1 Q1 | Never set system time. Map commit positions to the system time the engine assigned (hypothesis H-X-CUT below). |
-| QLever string order is ICU; a 6-hex-digit-per-codepoint key sorts in codepoint order under the pinned engine, proven exhaustively. | R5 | The string-order blocker has a measured fix: +1 triple and about 58 B per text assertion. |
-| QLever EXISTS is planned uncorrelated; re-binding correlated variables inside the group fixes the counterexamples. | R5 | The correlation blocker has a verified authoring fix; planner memory per EXISTS must be costed. |
-| XTQL covers 11 of 71 native tasks today, all `state_at`. 57 tasks are SQL only. | R6 | XTQL parity is the largest single body of work in lane X. |
-| The XTDB native library has no task-wide fixed cut; XTDB snapshot tokens and fixed-basis read-only transactions work. | R6, R1 Q5 | Multi-call native tasks can pin one cut natively. |
+| XTDB indexes only `_id`; other predicates are column scans at about 0.27 s per million rows. | R1 | The EAV ledger cannot serve entity or attribute lookups at scale. Hot reads resolve through `_id`. |
+| QLever's reified layout is about 30 triples per fact, `54A + 27E + 63` per transaction with the journal. | R2, R4 | 3 to 5.7 billion triples at 100m facts. The compact ledger and plain current graph are required. |
+| QLever updates cost O(total delta) and have no rollback; a timed-out operation can leave permutations inconsistent. | R2, review r1 #7 | QLever cannot be the only durable copy. A log of record plus a fenced mutation broker (C2, C3). |
+| One XTDB transaction can hold several Triplex positions (nested transacts). | review r1 #6 | Engine system time maps only physical commit boundaries; interior cuts take the exact path. |
+| A basis carries recorded time R separately from position P. | review r2 #4 | Projection eligibility is over the whole basis (C1). Explicit R takes the exact path until proven. |
+| QLever publishes a snapshot inside `modify`, before any client verification. | review r2 #5 | The log decision is the commit; the snapshot swap is publication; verification is post-publication (C2). |
+| Native recursive reads write scratch graphs and tables in both lanes. | review r2 #2, R6 | Native reads must never mutate engine state (C8). |
+| Journal facts `:_tx/change` and `:_tx/changed-entity` are a documented, queryable contract. | review r2 #10 | The journal stays logically queryable; any physical slimming must synthesize those facts (C6). |
+| QLever string order is ICU; a 6-hex-digit codepoint key sorts correctly under the pinned engine. | R5 | Proven fix for ordered text access; raw `ORDER BY STR` remains a documented engine limit. |
+| QLever EXISTS is planned uncorrelated; re-binding correlated variables fixes the counterexamples. | R5 | Proven authoring fix within stated equivalence conditions. |
+| XTQL covers 11 of 71 native tasks; 3 more are hybrid; 57 are SQL only. | R6 | XTQL parity is the largest body of work in lane X. |
 
-## 3. Architecture thesis
+## 3. Architecture
 
-### 3.1 T1: ledger plus idiomatic entity projection, written in one atomic step
+### 3.1 T1: ledger plus idiomatic entity projection
 
 The ledger stays the canonical record: exact values, both clocks, assertion identity, retractions,
 receipts, journal and claims. Each engine adds a projection in its own idiom, derived from a
-content-addressed **projection spec** (EntityTypes and attributes mapped to physical names and
-types), and written in the same atomic step as the ledger.
+release-bound projection spec (EntityTypes and attributes mapped to physical names and declared types).
+One engine-neutral planner (`planProjection`, EXP-R01) computes projection changes for both lanes so
+their semantics cannot drift. The hook point is each adapter's `persist()` (R9), which already receives
+every row of the transaction.
 
 ```
                           Triplex TypeScript API
    +------------------------------------------------------------------+
-   | Repository<Model> (typed from EntityType): at(basis) get getMany |
-   | find({where, include, limit, cursor}) timeline                   |
+   | Repository<Model>: at(basis) get getMany find timeline            |
    | Writer -> WritePlan -> commit(plans, {actor, commandId})          |
    | native.xtql`` native.sql`` native.sparql`` + declared contract    |
-   +--------------------------------+---------------------------------+
-                                    |
-         current-basis reads, raw   |   exact temporal reads, history,
-         queries, index lookups     |   receipts, journal, claims
-                     v              |              v
-   +--------------------------------+---------------------------------+
-   |        ENTITY PROJECTION         |       ASSERTION LEDGER          |
-   |                                  |                                 |
-   | XTDB                             | XTDB                            |
-   |  table per EntityType            |  tx_assertions, tx_meta,        |
-   |   _id = entity id                |  tx_claims, tx_attempts         |
-   |   ns$attr column per attribute,  |  (existing), plus an entity-    |
-   |   one declared type each         |  keyed access path so history   |
-   |   native valid time = business   |  reads avoid a ledger scan      |
-   |   time                           |                                 |
-   |  index tables keyed by value:    | QLever                          |
-   |   unique attrs, attr-value,      |  compact assertion nodes        |
-   |   reverse refs                   |  (target about 7 triples),      |
-   |                                  |  field predicates in their own  |
-   | QLever                           |  namespace, order keys for text |
-   |  current graph per scope         |  and numbers                    |
-   |   <e> rdf:type <Type>            |                                 |
-   |   <e> <attr> typed literal       |                                 |
-   |   native types only where exact  |                                 |
-   +----------------------------------+---------------------------------+
-     XTDB: one transaction for ledger, projection and index tables.
-     QLever: roll-forward protocol (ledger, verify, watermark, projection).
+   +-----------------+--------------------------------+---------------+
+                     | eligibility check (C1)          |
+        eligible     v                                 v   not eligible
+   +----------------------------------+  +-------------------------------+
+   | ENTITY PROJECTION                |  | EXACT LEDGER PATH             |
+   | XTDB: table per type, _id =      |  | same native language, closed  |
+   |  entity id, ns$attr columns,     |  | basis relations over the      |
+   |  native valid time; index tables |  | ledger (facts, history,       |
+   |  keyed by value (hypothesis)     |  | values)                       |
+   | QLever: current graph of plain   |  |                               |
+   |  typed triples + publication     |  |                               |
+   |  marker                          |  |                               |
+   +----------------------------------+  +-------------------------------+
+        XTDB: ledger + projection in one engine transaction.
+        QLever: log decision, then one update operation per commit group (C2).
 ```
-
-**Why T1:**
-
-| Option | Raw queries make sense | Exact semantics | Meets 100m-fact scale | Role |
-| --- | --- | --- | --- | --- |
-| A0: ledger only (status quo) | no: EAV pivots, reified joins | yes | no (scans in XTDB; 3 to 5.7B triples in QLever) | control baseline |
-| A1: projection only | yes | no: loses assertion identity and exact recorded cuts | maybe | rejected after research |
-| T1: ledger plus projection | yes | yes | target | primary |
 
 ### 3.2 Lane X physical design
 
-1. **Every hot read resolves through `_id`.** Projection tables use `_id` = entity id. Lookups by
-   value go through maintained index tables whose `_id` is a canonical value key: unique-attribute
-   tables (also used for uniqueness enforcement in place of a 1.8 s column-scan `ASSERT`),
-   attribute-value tables, and reverse-reference tables (`_id` = target entity id). R7 measures the
-   shapes before this is fixed.
-2. **Projection writer, two rivals.** X3a patches only the affected attribute segments
-   (`PATCH`/`UPDATE ... FOR PORTION OF VALID_TIME`, values computed from the ledger), so cost grows
-   with the slices touched. X3b rewrites the entity's whole valid-time timeline, which is simplest
-   but adds O(history) row versions per write. The scale ladder decides.
-3. **Correctness oracle for the projection.** The projection must equal a pure function of the
-   ledger at the newest position. The entity suite recomputes it from the ledger and compares.
-4. **Hypothesis H-X-CUT (exact recorded cut without setting system time).** Every row written in
-   one XTDB transaction shares that transaction's `_system_from`, and system time strictly increases
-   per transaction. So commit position P maps exactly to the `_system_from` of the `tx_meta` row
-   version written in P's transaction, and a Triplex read at recorded cut P can run as
-   `FOR SYSTEM_TIME AS OF` that instant. This must be proven, including after aborts, restarts and
-   same-millisecond commits, before any read depends on it.
-5. **Types.** Each projection column has exactly one declared type; int64 is always BIGINT;
-   mixed-type columns are forbidden because they reach Node as JSON and lose integer precision.
-   Valid-time coordinates that cannot be represented exactly in microseconds route that entity's
-   reads to the ledger.
-6. **Card-one conflicts.** When the ledger holds two live, overlapping values for a cardinality-one
-   attribute (possible when enforcement is off), the projection writes NULL and records the attribute
-   in a `_triplex_conflicts` column; the repository surfaces a typed conflict error. Raw queries see
-   the NULL and the marker, never an arbitrary pick.
-7. **Engine bugs to route around.** `SUM` over BIGINT wraps silently; XTQL `union-all` cannot be
-   planned; window functions hit `AbstractMethodError`. Native helpers reject or rewrite these shapes.
+1. **`_id`-first is a hypothesis (H-X-ID).** Projection tables use `_id` = entity id. Value lookups go
+   through maintained index tables keyed by value, reverse references through tables keyed by target id.
+   R7 is falsifying these shapes under skew, ~1M-posting values, ranges, ordered pages and history.
+   Raw predicates that ignore the index tables pay a column scan, and that cost is documented.
+2. **Projection writer rivals.** X3a patches only affected attribute segments (`PATCH` and `UPDATE ... FOR
+   PORTION OF VALID_TIME`). X3b rewrites the entity's timeline. Both consume the shared plan.
+3. **Recorded cuts (H-X-CUT, narrowed).** A basis whose position is the last position of its XTDB
+   transaction, with no explicit R, may read `FOR SYSTEM_TIME AS OF` that transaction's system time.
+   Interior positions of nested transactions and explicit R take the exact path. Timestamps decode as
+   strings so microseconds survive.
+4. **Types.** One declared physical type per column; int64 is BIGINT; values the column cannot hold
+   exactly stay ledger-only and mark the entity partial (C1). Valid writes are never rejected for the
+   projection's sake.
+5. **Engine bugs to route around.** `SUM` over BIGINT wraps silently; XTQL `union-all` cannot be planned;
+   window functions fail. The capability matrix records each; helpers reject or rewrite shapes, and a goal
+   that needs the behavior gets another implementation or an engine repair.
 
 ### 3.3 Lane Q physical design
 
-1. **Compact ledger.** Assertion nodes shrink from about 30 triples to about 7: entity, attribute,
-   value (exact lexical form), valid-from key, optional valid-to key, transaction node, plus a text
-   order key where the attribute is orderable. Recorded time, actor and command live once on the
-   transaction node. The journal is derived from assertion nodes (created or retracted per position)
-   instead of stored change JSON, if R9 confirms core can accept a native journal.
-2. **Current graph.** Plain triples (`rdf:type`, attribute predicates, typed literals only inside the
-   engine's exact ranges) for facts live at the newest position and valid at the graph's declared
-   valid instant. Plain attribute-predicate triples exist nowhere else, so raw queries over QLever's
-   union default graph never see historical values. A boundary maintainer applies due changes when
-   validity starts or ends; every read reports the graph's position and valid instant.
-3. **Rival H-Q3b.** Plain triples inside per-assertion named graphs (R3's preference, exact at any
-   basis). Kept as a measured rival because 100m named graphs are an unmeasured cost and the union
-   default graph would expose historical values to raw queries.
-4. **Roll-forward write protocol.** One operation per request; ledger triples applied idempotently;
-   read-back verification; a position watermark published only after verification; readers bound
-   every ledger read by the watermark; a reconciler re-applies positions above the watermark after a
-   crash; the projection follows its own watermark. Delta is bounded by online `rebuild-index`
-   (first trigger near 1M delta triples). R8 measures each step.
-5. **Semantic fixes.** Text order keys (R5, proven). `ctx.notExists`/`ctx.exists` helpers that
-   re-bind correlated variables plus a static check (R5, verified). `query-planning-budget` set low
-   after costing it on the native packet.
+1. **Compact ledger (H-Q-COMPACT).** Assertion nodes shrink from about 30 triples toward about 7, under a
+   field-by-field encode/decode specification that covers every public field (per-assertion `createdBy`,
+   `entityType`, retraction transaction and position, schema version, full causal envelope, the typed
+   value domain). Sparse encoding only where the spec proves a lossless default. Storage numbers are
+   recomputed after compatibility passes.
+2. **Current graph (H-Q-CURRENT)** of plain typed triples, with native literal types only inside the
+   engine's exact ranges, plus a publication marker. Rival H-Q3b (plain triples in per-assertion named
+   graphs) is compared under the same raw-dataset contract (C7).
+3. **Order keys and correlation helpers** from R5, within their stated equivalence conditions.
+4. **Writes go through the log of record and the mutation broker** (C2, C3).
 
-### 3.4 T2: fix semantic gaps at the cheapest correct layer
+## 4. Frozen contracts
 
-Ranked order for every counterexample, cheapest first: authoring rewrite in our helpers with written
-equivalence conditions; a maintained key whose order the pinned engine provably respects; engine
-configuration; engine repair as a separately named patched image; TypeScript evaluation over a
-bounded set, counted, never by re-sorting a returned page. No casefolding, no page re-sorting, no
-oracle rewrites.
+These contracts are fixed before dependent implementation. Each is a design commitment; where its
+safety depends on unproven engine behavior, the linked falsifier must pass first, and a failed falsifier
+blocks the dependent work.
 
-### 3.5 T3: scale is climbed rung by rung
+### C1. Projection eligibility (both lanes)
 
-Rungs are 10k, 100k, 1m and 10m entities, about 10 active facts per entity in the representative
-profile. A rung opens only after the previous rung passes its correctness subsample. Each rung
-reports bytes per entity, ingest rate, query-mix latency (p50, p95, p99), write amplification,
-rebuild or compaction time and peak memory. Disk is the first limit above 100k entities, so every
-rung starts with a disk forecast.
+A read uses the projection only when every condition holds for the whole query; otherwise the whole
+query takes the exact ledger path in the same native language, and the fallback rate is reported.
 
-## 4. Lanes and tracks
-
-Sam limited active work to two core lanes. Tracks are experiment threads inside a lane.
-
-| Track | Lane X (XTDB) | Lane Q (QLever) |
+| Condition | XTDB | QLever |
 | --- | --- | --- |
-| 1 Baseline | own engine; unchanged44; native142 with separate XTQL and SQL tallies; harness fixes | own engine; unchanged44; native142; harness fixes |
-| 2 Language | XTQL parity for 57 SQL-only tasks; task-wide fixed cut via snapshot tokens; XTQL helper coverage (unify, aggregate, order, exists, unnest) | order keys; correlated EXISTS helpers; planner budget; numeric and datetime exactness channels |
-| 3 Projection and ORM | table per type; X3a vs X3b; index tables; H-X-CUT; XTQL repository compiler | compact ledger; current graph; H-Q3b rival; SPARQL repository compiler |
-| 4 Writes | CAS through index tables; unknown outcomes; writer liveness | roll-forward protocol; delta bound and rebuild; unknown outcomes |
-| 5 Scale and load | ladder to 10m; 256 to 1024 clients | ladder to 10m; 256 to 1024 clients |
-| 6 History | presence, corrections, retirement metadata, cascades (goal 9) | same |
+| Scope | the engine's ownership record matches the reader's scope (C7) | same |
+| Mapping | the projection's spec generation equals the release the reader requires | same |
+| Recorded time | R absent. Any explicit R takes the exact path (recorded timestamps are not monotonic in commit order: separate runtimes supply their own clocks, `TriplesLive.ts:308`); an explicit-R shortcut needs its own equivalence proof and falsifier | same |
+| Position | latest, or a physical commit boundary (H-X-CUT) | the current publication's P only |
+| Valid time | any V, read natively, for entities whose coordinates are exact | V inside the marker's `[validInstant, nextBoundary)` and the marker not in MAINTAINING |
+| Completeness | no partial, stale or conflicted entity touches an attribute the query references (filter, order, include, aggregate, negation) | same |
 
-**Shared work stays thin.** The repository types and descriptors (engine independent, a new core
-subpath), the projection spec compiler (names, types, collision checks), and the fixture generator.
+Completeness is query-wide. If the per-type partial set intersects the query's referenced attributes,
+the query routes to the exact path before any filtering, ordering, aggregation or pagination. A disjoint
+union of projection and exact branches is a later optimization that needs its own proof.
 
-**The oracle is the in-memory KV runtime.** Triplex's KV backend is a supported reference
-implementation. The entity suite applies one command stream to the KV runtime and to a lane engine,
-then compares reads at the same bases. Native task oracles stay the independent ones already in
-`qualification/workloads` (`event_oracles.py`).
+### C2. QLever durable commit protocol (H-Q-LOG)
 
-## 5. The evolutionary loop
+1. **Commit decision.** The broker appends a COMMIT record for a commit group to an append-only log and
+   fsyncs it. That fsync is the linearization point and the irrevocable decision: after it, recovery must
+   make the group visible; a committed command can never disappear.
+2. **Group validation before the decision.** Members are validated in order against a staged state equal
+   to the published state plus the earlier accepted members of the same group, including `EntityState`
+   and `TripleLive` preconditions, command claims, and unresolved durable claims from the log. A member
+   that fails is rejected alone. Nested savepoints and pending claims keep today's semantics.
+3. **Apply.** The broker applies the group as one SPARQL update operation carrying ledger insertions,
+   current-graph changes and the publication marker. The broker never cancels or times out its own
+   updates; it watches progress instead, because partial permutation states arise from cancellation.
+4. **Publication.** QLever's snapshot swap at the end of the operation is publication. Readers may see
+   the group from that moment. The caller's ACK is sent after publication.
+5. **Verification is post-publication.** The broker checks the complete expected effects and required
+   absences of the group. A failure means the published state is known-bad: the broker fences (C3).
+6. **Uncertainty.** Any non-success response, lost connection, process death or verification failure
+   fences the lane. Recovery restarts QLever, confirms the persisted delta matches a log prefix through
+   the complete expected effect sets, re-applies committed groups idempotently, or rebuilds from the
+   newest checkpoint plus log replay. Native reads return a typed "repairing" error while fenced.
+7. **Lost ACK.** Durably committed and published are different states. A retry with the same command id
+   finds the durable claim in the log; it returns the original success receipt only after the broker has
+   established that the group is published. Before that, it returns a typed `CommitPending` outcome (committed,
+   not yet visible) or the lane's `Repairing` error, never an ordinary success. F05 includes the exact case
+   "crash after COMMIT fsync, before apply, then retry".
+8. **Replay and checkpoints.** The log is not an RDF snapshot. Replay is deterministic over a versioned
+   record format; checkpoints are graph-preserving N-Quads exports with a manifest (log prefix, format
+   versions, hashes); a fresh index is built from a checkpoint plus the log suffix; segment retention keeps
+   everything after the newest verified checkpoint. Rebuild publication uses crash-safe generation selection
+   (a new index directory, switched only after its manifest verifies), because the pinned source warns that
+   a failure during directory moves can need repair.
+9. **Profile name.** The qualified profile is "QLever 0.6.0 + log of record". Its native reads, including
+   every fallback, execute through declared SPARQL.
 
-### 5.1 One generation
+Falsifiers that gate C2: F05 (fault injection between permutations, persistence, publication and
+verification), plus crash tests after every durable transition, competing preconditions in one group,
+duplicate commands within a group, failed children and lost ACKs.
+
+### C3. QLever mutation broker and fence
+
+1. **One mutator.** Every route that modifies QLever goes through the broker: application commits,
+   boundary maintenance, rebuild and checkpointing, administration. Native reads do not mutate (C8).
+2. **Credentials.** QLever runs with an update access token held only by the broker. No other process can
+   mutate the engine.
+3. **Epochs.** The broker holds a lease with an epoch number in the log. A new broker must close the
+   previous epoch (prove the old one is dead and its last group's outcome resolved) before it mutates.
+4. **Fence.** While fenced, no update and no rebuild starts until recovery has established a trustworthy
+   state from complete expected effects. Two successful queries are not that proof.
+
+### C4. Publication marker and temporal-boundary maintenance (QLever)
+
+1. The marker records `(P, validInstant, nextBoundary, state)`, with state `PUBLISHED` or `MAINTAINING`.
+2. Ordinary boundaries are commit groups that advance `validInstant` and `nextBoundary`.
+3. **Bounded operations.** Every update operation has a preconstruction bound on its size (the bound comes
+   from R8's group-commit curve). A boundary larger than the bound sets the marker to `MAINTAINING` with its
+   target boundary, source generation and mapping, applies the boundary in bounded chunks between application
+   commit groups, and returns the marker to `PUBLISHED` when done.
+4. **Chunks are never stale.** The broker computes each chunk inside its critical section immediately before
+   applying it, from the then-published state, for entities whose boundary falls in the target window and that
+   no intervening commit already brought to the target instant. Application commits during `MAINTAINING`
+   project touched entities at the target instant and record them as done. Progress is in the log, so a crash
+   resumes by recomputing the remaining chunks. Falsifiers: concurrent writes to entities in pending chunks, and
+   crash/resume mid-maintenance.
+5. **Reads during `MAINTAINING`.** The in-progress current graph may match no logical basis (two facts with the
+   same expiry, one deleted and one not). C1 sends repository reads to the exact path, and the qualified raw
+   escape hatch (`native.sparql` through Triplex) refuses normal results with a typed `Maintaining` error or runs
+   against the exact ledger relations. Direct SPARQL to the engine that bypasses Triplex is bare inspection: it can
+   read the marker and is explicitly unqualified during maintenance.
+6. Delta growth is bounded by rebuild scheduling plus backpressure: when the forecast delta at rebuild
+   completion exceeds the cap, the broker slows admission of commit groups. A rebuild trigger alone is not
+   a bound.
+
+### C5. Conflict semantics (both lanes)
+
+1. **Equal duplicates are not conflicts.** Several live assertions with the same value form one value with
+   several supports, as the existing `EntityCodec` decodes them (`packages/http/src/EntityCodec.ts:203`).
+   Write-time cardinality enforcement keeps counting assertions (`Constraint.ts:193`); that rule is unchanged.
+2. **A conflict** is a cardinality-one attribute with two or more distinct live values at the basis. It can
+   exist with enforcement off, and also with enforcement on when it predates the enforcing write (enforcement
+   rejects only new or worsened violations).
+3. **Repository outcomes.** `get` and `getMany` fail with `ConflictingValuesError` listing every conflicted
+   entity and attribute. `find`, counts, ordering, includes and negation fail with the same error when a
+   referenced attribute is conflicted for any candidate entity; attributes the query does not reference do
+   not affect it. There is no three-valued "unknown".
+4. **Raw convenience shape.** XTDB scalar column NULL plus the attribute in `_triplex_conflicts`; QLever no
+   plain triple plus a conflict marker triple. This shape is documented as not equivalent for conflicted
+   attributes and never certifies ORM equivalence.
+5. **Canonical conflict-aware native relation.** The ledger-derived `values(attribute)` relation in each
+   lane's native context lists every live value with its assertion ids and supports.
+
+### C6. Journal contract
+
+The logical journal stays as documented: `_Transaction` facts, including `:_tx/change` and
+`:_tx/changed-entity`, remain queryable through Datalog and `match`, and `transactions()`,
+`transactionsForEntity` and `transactionByCommand` keep their outputs, order and `-0` behavior. Physical
+slimming is allowed only if the adapter synthesizes those facts on read with byte-identical results, tested by
+direct audit queries beyond the shared 44. A profile that drops them is a separately named breaking profile and
+cannot claim unchanged functionality. Until then the journal is stored as today and its cost is counted.
+
+### C7. Raw dataset and scope ownership
+
+1. **Production profile: one Triplex database scope per engine.** At initialization the engine stores an
+   ownership record (XTDB: `triplex_engine_owner`; QLever: a meta triple). The adapter refuses a mismatched
+   scope before touching unqualified projection storage.
+2. **Domain queries.** In QLever, domain predicates (`urn:triplex:attr:*`) and domain classes (`rdf:type
+   urn:triplex:type:*`) appear only in the current graph, so domain-pattern queries over the default union
+   graph match only current state. Unrestricted inspection such as `SELECT ?s ?p ?o` also sees ledger and meta
+   triples; that is documented. No staging graph ever holds domain predicates. In XTDB, domain tables carry plain
+   type names; ledger and metadata tables are `tx_*` and `triplex_*`.
+3. **Shared-engine profile (tests, multi-tenant dev).** Projection storage is scope-qualified, raw queries must
+   select their scope, and collision tests with identical entity ids in two scopes must show no leakage.
+
+### C8. Native reads never mutate
+
+Recursive and reachability native reads stop materializing scratch graphs or tables. They evaluate read-only:
+iterative frontier expansion in TypeScript, one native query per round with the frontier bound as parameters,
+under `maxRounds` and `maxRecursiveRows`. This removes a mutator class from both lanes. The affected native tasks
+are re-qualified under G2.
+
+## 5. Hypotheses and falsifiers
+
+| Hypothesis | Falsifier | Blocks |
+| --- | --- | --- |
+| H-X-CUT: physical commit boundary maps to engine system time | EXP-F01 | XTDB recorded-cut reads on the projection |
+| H-X-ID: `_id`-keyed projection and index tables serve the query families at 10m | R7, then scale rungs | XTDB index tables; XTDB scale claims |
+| H-Q-LOG: log decision plus broker gives atomic, recoverable writes | EXP-F05 and the C2 crash tests | every QLever write path change |
+| H-Q-COMPACT: about 7 triples per assertion, lossless | encode/decode spec round trip (EXP-Q01) | QLever storage and scale claims |
+| H-Q-CURRENT vs H-Q3b | same raw-dataset contract, measured cost | QLever projection choice |
+| Wire exactness per type | EXP-F02 | native column and literal types |
+| Duplicate supports and conflicts behave per C5 | EXP-F04 against golden vectors | planner support counting |
+| Retirement metadata contract | EXP-F03 against golden vectors | goal 9 history work |
+
+## 6. Lanes and tracks
+
+Two core lanes, as Sam set. Tracks are experiment threads inside a lane.
+
+| Track | Lane X (XTDB) | Lane Q (QLever + log) |
+| --- | --- | --- |
+| 1 Baseline | own engine; unchanged44; native142 with XTQL and SQL tallies | own engine; unchanged44; native142 |
+| 2 Language | XTQL parity (57 SQL-only, 3 hybrid); task-wide fixed cut; C8 recursion | order keys; correlation helpers; planner budget; exactness channels; C8 recursion |
+| 3 Projection and ORM | table per type, X3a vs X3b, index tables, H-X-CUT, XTQL repository compiler | compact ledger, current graph, H-Q3b rival, SPARQL repository compiler |
+| 4 Writes | CAS through index tables; unknown outcomes; writer liveness | log, broker, fence, publication, maintenance (C2 to C4) |
+| 5 Scale and load | ladder to 10m; 256 to 1024 clients | same |
+| 6 History | both history contracts, presence, corrections, deletion, cascades | same |
+
+**Shared work stays thin:** the entity core (EXP-R01: projection spec, planner, repository, writer), the
+independent oracle and golden vectors, and the fixture generator.
+
+## 7. The evolutionary loop
+
+### 7.1 One generation
 
 ```
    +-------------+     +-------------+     +----------------+     +-------------+
    | 1 read      | --> | 2 select    | --> | 3 brief and    | --> | 4 agents    |
-   | STATE,      |     | bottleneck  |     | dispatch       |     | build and   |
-   | SCORECARD,  |     | per lane,   |     | (<=10 agents,  |     | run gates   |
-   | NOTEBOOK    |     | 2-3 rival   |     |  <=3 engine    |     | in own      |
-   +-------------+     | hypotheses  |     |  slots)        |     | worktrees   |
-         ^             +-------------+     +----------------+     +------+------+
-         |                                                               |
+   | STATE,      |     | by dep graph|     | dispatch       |     | build and   |
+   | SCORECARD,  |     | + progress  |     | (<=10 agents,  |     | run gates   |
+   | NOTEBOOK,   |     | obligations,|     |  atomic pool)  |     | in own      |
+   | acceptance  |     | 2-3 rivals  |     |                |     | worktrees   |
+   +-------------+     +-------------+     +----------------+     +------+------+
+         ^                                                               |
    +-----+-------+     +-------------+     +----------------+            |
    | 7 next      | <-- | 6 select:   | <-- | 5 independent  | <----------+
-   | generation: |     | promote,    |     | verifier       |
-   | mutate      |     | mutate or   |     | reruns gates   |
-   | winners,    |     | abandon;    |     | on the branch  |
-   | retire      |     | NOTEBOOK +  |     | (never the     |
-   | losers      |     | SCORECARD   |     |  author)       |
+   | generation  |     | promote on  |     | verifier on    |
+   |             |     | frozen      |     | the integrated |
+   |             |     | budgets     |     | candidate      |
    +-------------+     +-------------+     +----------------+
 ```
 
-1. **Read state.** `lab/STATE.md`, `lab/SCORECARD.md`, and the tail of `lab/NOTEBOOK.md`.
-2. **Select.** Per lane, pick the lowest-scoring goal that has a feasible next experiment; keep two or
-   three rival hypotheses alive for that bottleneck.
-3. **Brief and dispatch.** Each experiment gets `lab/experiments/EXP-NNN-slug/BRIEF.md`.
-4. **Build and run.** Coding agents work in their own git worktree on `exp/NNN-slug` and run gates
-   through `lab/bin`.
-5. **Verify.** A different agent reruns the gates on the branch and tries to break the claim.
-6. **Select.** Promote to `main` only when the target gate improves and no lane gate regresses
-   against the last `main` receipt. Losers stay in the notebook with the reason.
-7. **Next generation.** Mutate winners, combine partial winners, retire hypotheses that failed twice
-   for the same reason.
+1. **Read state:** `lab/STATE.md`, `lab/SCORECARD.md`, the notebook tail, and obligation status computed from
+   `lab/acceptance/obligations.json` and receipts.
+2. **Select by dependency graph.** Every OPEN obligation has an experiment within three generations; an
+   obligation with no progress for two generations escalates (new research, engine repair, or a design
+   change); at most two unintegrated branches per lane; two or three rivals per measured bottleneck.
+3. **Brief and dispatch** with the template in 7.3.
+4. **Build and run** in the agent's own worktree on `exp/<id>-<slug>`, gates through `lab/bin`.
+5. **Verify** on the integrated candidate (main plus the branch), by an agent that did not write it.
+6. **Promote** only when hard semantic invariants hold (binary, never traded) and the integrated candidate's
+   cumulative cost stays inside the frozen profile budgets (7.4). Losers stay in the notebook with the reason.
+7. **Next generation:** mutate winners, combine partial winners, retire hypotheses that failed twice for the
+   same reason. A failed falsifier blocks its dependents until a new design passes it.
 
-**Hourly learnings pass.** A session cron (job `ae766d26`, hourly at :07) makes the orchestrator
-update the notebook from finished experiments and launch Sonnet research where the learnings expose
-a question that the next generation needs answered.
+**Hourly learnings pass.** A session cron (job `ae766d26`, hourly at :07) updates the notebook from finished
+experiments and launches Sonnet research where the learnings raise a question the next generation needs answered.
 
-### 5.2 Agent roles
+### 7.2 Agent roles
 
 | Role | Model and effort | Job |
 | --- | --- | --- |
 | Research | Sonnet, xhigh | go wide on the web and in pinned source, probe engines, write `lab/research/*.md` |
-| Coding | Opus, high | one experiment per agent, in its own worktree, from a commander's-intent brief |
-| Verifier | Opus, high | rerun gates on a branch, try to break the claim, write a verdict |
-| Adversarial review | Codex `gpt-6.1-sol`, xhigh | multi-round critique of plans and major promotions |
+| Coding | Opus, high | one experiment per agent from a commander's-intent brief |
+| Verifier | Opus, high | rerun gates on the integrated candidate, try to break the claim |
+| Adversarial review | Codex `gpt-6.1-sol`, xhigh | plans, contracts, gate or oracle changes, major promotions |
 
-### 5.3 Brief template
+### 7.3 Brief template
 
-1. **Commander's intent.** The end state, why it matters to the mission, and what success lets the
-   next generation do.
-2. **Point of view.** The technique to pursue and why the orchestrator believes it, the rejected
-   alternatives with reasons, and what not to do.
-3. **Boundaries.** Files and packages in scope, the branch, the engine slot.
-4. **Gates.** The `lab/bin` commands that define done and the receipts to produce.
-5. **Report.** `REPORT.md` with result class, evidence, surprises, and the reasoning kept in code
-   comments.
+1. **Commander's intent:** the end state, why it matters, what success lets the next generation do.
+2. **Point of view:** the technique to pursue and why, the rejected alternatives with reasons, what not to do.
+3. **Boundaries:** files and packages in scope, branch, engine slot.
+4. **Gates:** the `lab/bin` commands that define done, and the receipts to produce.
+5. **Report:** `REPORT.md` with result class, evidence, surprises, and the reasoning kept in code comments.
 
-### 5.4 Gates and receipts
+### 7.4 Budgets and comparisons
 
-Every gate writes a JSON receipt to `lab/runs/<gate>/<run-id>.json` (small, committed) and keeps raw
-output under `runs/` (ignored by git, kept on disk).
+1. **Hard invariants** (exact values, cuts, identity, history, receipts, journal contract, conflicts per C5)
+   are binary and never traded for performance.
+2. **Profile budgets are frozen before candidates** in `lab/acceptance/budgets.json` (write bytes per fact,
+   ingest rate, latency per query family per rung, memory and disk peaks). A hypothesis's predicted cost is
+   recorded separately and never sets its own allowance. Changing a budget creates a new profile version.
+3. **Cumulative cost.** Each promotion compares the integrated candidate against frozen controls (the A0
+   baseline at the same rung), so a series of individually small regressions cannot exhaust capacity.
+4. **Matched comparisons:** same slot configuration, fixture, co-runner set, three runs, and a conservative
+   separation beyond the observed spread; no formal confidence claim.
 
-| Gate | What it proves | Needs engine |
+### 7.5 Gates, receipts and retained evidence
+
+| Gate | What it runs | Needs engine |
 | --- | --- | --- |
 | G0 | typecheck and pure unit tests for core, xtdb, qlever, qualification | no |
 | G1 | unchanged44 shared conformance, current and reopen | yes |
-| G2 | native142 (71 tasks, current and reopen); lane X tallies XTQL and SQL separately | yes |
-| G3 | entity suite: repository and raw queries against the KV oracle; projection equals its ledger function | yes |
+| G2 | native142 (71 tasks, current and reopen); X tallies XTQL and SQL separately | yes |
+| G3 | entity suite: repository and raw queries against the independent oracle, plus mutation controls | yes |
 | G4 | semantic counterexamples with original expected answers | yes |
-| G5 | write semantics: duplicate command, CAS conflict, unknown outcome, crash and reopen | yes |
+| G5 | write semantics: duplicates, CAS conflicts, unknown outcomes, crash and reopen, C2 crash matrix | yes |
 | G6 | scale rung (10k, 100k, 1m, 10m) | yes, scale window |
-| G7 | load: 64, 256, then 512 and 1024 clients with steady writes | yes, scale window |
+| G7 | load per the frozen load contract | yes, scale window |
 
-**Receipts bind what actually executed** (review r1 finding 4). Each receipt records the source tree
-hash including uncommitted changes, the lockfile hash, Node and pnpm versions, hashes of the built
-`dist` files the gate imported (the gate builds first), gate script and oracle file hashes,
-schema and projection-spec ids, fixture content hashes, raw-result hashes, the endpoint actually
-contacted (it must equal the slot's), engine image digest and config hash, start and end time,
-pass, fail and skip counts, first failures (kept, never overwritten), timings, co-running
-containers, and peak container memory, CPU and volume bytes.
+Gates are runners. Whether an obligation is closed is decided by `lab/acceptance/` (EXP-A01).
 
-**Gates fail closed.** A gate fails on any skip, zero executed cases, a missing identity or a wrong
-endpoint. Lane X claims need 142 named executions per language with every read substep's language
-recorded; a hybrid task counts for neither language until it is pure. A change to a gate script or
-an oracle needs a verifier review recorded in the commit.
+**Receipts bind what executed.** Source tree identity including uncommitted and untracked executed inputs,
+lockfile, Node and pnpm versions, hashes of the built `dist` files imported (the gate builds first), gate and
+oracle file hashes, spec and log-format versions, fixture contents, raw-result hashes, the endpoint actually
+contacted, engine image and configuration, counts, first failures, timings, co-runners, and resource peaks.
 
-**The goal-to-gate matrix is `lab/acceptance/`** (EXP-A01): every obligation in the ten goals, the
-ORM and raw-query requirement, scale and load has named cases, an independent oracle, a public
-entrypoint, a profile and a binary closure rule over receipts. Gates G0 to G7 are the runners; the
-acceptance files decide whether a goal is closed.
+**Gates fail closed** on skips, zero executed cases, missing identities or wrong endpoints. Lane X counts a task
+for a language only when every read substep ran in that language.
 
-### 5.5 Notebook and code comments
+**Retained evidence.** Hashes are not enough. A content-addressed object store under `runs/objects/` keeps the
+bytes of runner scripts, executed inputs not in git, build manifests and raw outcomes; receipts list them. No
+credentials or dependency caches are retained.
 
-`lab/NOTEBOOK.md` is append-only. Each entry records the experiment id, lane and track, hypothesis,
-mechanism with pinned source inspiration, result class (PROGRESSED, NO-CHANGE, REGRESSED, FAILED,
-INCONCLUSIVE), receipts, decision, and notes for the next generation. Code comments carry the
-reasoning in a fixed form:
+**Gate and oracle changes** need verifier review recorded in the commit, and Codex review when they change what
+an obligation accepts.
+
+### 7.6 Notebook and code comments
+
+`lab/NOTEBOOK.md` is append-only: experiment id, lane and track, hypothesis, mechanism with pinned source
+inspiration, result class (PROGRESSED, NO-CHANGE, REGRESSED, FAILED, INCONCLUSIVE), receipts, decision, notes for
+the next generation. Code comments carry the reasoning in a fixed form:
 
 ```ts
 // [EXP-012] Why: segment patch touches only affected slices; rewrite cost grew O(history).
@@ -299,82 +411,64 @@ reasoning in a fixed form:
 // Rejected: full timeline rewrite X3b (EXP-019: 3x bytes per write at 50 versions).
 ```
 
-## 6. Harness facts and fixes (from R4)
-
-1. Live tests skip unless `XTDB_INTEGRATION=1` or `QLEVER_INTEGRATION=1`, then read `XTDB_URL` and
-   `QLEVER_URL`. A green default run says nothing about an engine.
-2. `packages/qualification/workloads/runner.ts` lines 61 to 110 require a homebase controller or
-   containers named `triplex-*-local`; QLever entry scripts hard-code port 17019 and
-   `verify-xtdb-entry.ts` hard-codes 15442. EXP-000 replaces these with `lab/bin` slot environment.
-3. Two things are broken in this checkout: qualification vitest picks up `node:test` files and needs
-   a missing duckdb `dist`; `test_engine_cases.mjs` needs a missing `qualification/adapter/scale-fixture.mjs`.
-4. Reusable homebase pieces: `io.mjs`, `evidence.mjs`, `preimages.mjs`, the 142-identity check idea
-   in `compare.mjs`, and `runner.ts` itself. The rest of the homebase controller is not reused.
-
-## 7. Resource envelope
+## 8. Resources and admission
 
 | Resource | Envelope | Rule |
 | --- | --- | --- |
 | Docker VM | colima profile `triplex2`: 6 CPU, 12 GiB, 60 GiB disk | always `DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock`; after any colima command run `docker context use colima` |
-| Reservation pool | 11 GiB of the VM's 12 GiB, shared by residents, slots and research probes | admission sums the memory caps of every running `tx2-*` container; residents count once |
-| Resident dev engines | `tx2-xtdb-dev` (3 GiB), `tx2-qlever-dev` (2.5 GiB), inside the pool | correctness work shares them through disjoint database scopes |
-| Heavy slots | `s1` to `s3`, 3.5 GiB caps each, admitted only while the pool has room | performance, destructive and crash tests; a scale window stops the residents |
-| Peak forecast | admission forecasts peak memory and disk per run: QLever rebuild overlap (`previous.*`), delta growth during rebuild, XTDB pre-GC growth (about 5.5x seen), replay peaks, host clients | runs that do not fit are refused or queued (backpressure) |
-| Scale window | one at a time; stops other slots | rungs 1m and 10m, load tests |
-| Disk | VM 60 GiB hard; stop new heavy runs at 50 GiB used; repo plus references under 5 GB | measured per receipt |
-| Agents | at most 10 concurrent; at most 4 concurrent heavy local test or typecheck runs | `lab/bin/heavy` lock |
+| Reservation pool | 11 GiB memory of the VM's 12 GiB, plus CPU and disk forecasts | one ledger updated atomically under one lock; residents, slots and research probes all count; release only after proven cleanup |
+| Residents | `tx2-xtdb-dev` (3 GiB), `tx2-qlever-dev` (2.5 GiB) | correctness work shares them through disjoint scopes (shared-engine profile, C7) |
+| Heavy slots | `s1` to `s3`, 3.5 GiB caps each | admitted only while the pool has room; a scale window stops the residents |
+| Peak forecast | QLever rebuild overlap, delta growth during rebuild, log, checkpoints and export scratch; XTDB pre-GC growth (about 5.5x seen); replay peaks; host clients | runs that do not fit are refused or queued |
+| Agents | at most 10 concurrent; at most 4 concurrent heavy local commands | `lab/bin/heavy` |
 
-The VM can grow (Sam's Mac has 36 GiB RAM and about 93 GB free disk) when a rung measures the need;
-the change and its justification go in the notebook. Sam's default Docker VM is never touched.
+**Capacity risk recorded now.** At the 10m rung, QLever's compact ledger plus current graph plus the journal
+plus the log and a rebuild overlap may exceed 60 GiB. Scale rungs run one engine at a time. Any VM change needs
+its own capacity qualification. Sam's default Docker VM is never touched.
 
-## 8. First generation (gen-1), reordered after review round 1
-
-Falsifiers and contracts come before abstractions (review r1 finding 16).
+## 9. Generation 1
 
 | Step | Id | Experiment | Depends on |
 | --- | --- | --- | --- |
-| 1 | EXP-A01 | acceptance contract: goal-to-gate matrix, load contract, capability matrix skeleton | none |
-| 2 | EXP-000 | loop harness: `lab/bin` engines, slots, pool admission, fail-closed bound receipts, scorecard; homebase coupling replaced | none |
-| 2 | EXP-001, EXP-002 | fresh baselines: unchanged44 and native142 on our XTDB (XTQL and SQL tallies) and QLever | EXP-000 |
-| 3 | EXP-F01 to F05 | tiny falsifiers in parallel: XTDB nested positions and H-X-CUT edges; eight-type wire round trips on both engines; historical retirement metadata; duplicate supports; QLever fault injection between permutations, persistence and publication | EXP-000 |
-| 4 | EXP-O01 | independent Python event-replay oracle plus mutation controls | EXP-A01 |
-| 5 | EXP-Q01, EXP-Q02 | QLever compact-ledger round-trip compatibility; QLever write and publication protocol (H-Q-LOG) | EXP-F05, R8 |
-| 6 | EXP-V01, EXP-V02 | one packaged vertical slice per lane: write, repository read, authored native read, history, receipt, cursor, reopen | steps 3 to 5 |
-| 7 | later | XTQL parity, scale ladder, load | step 6 |
-
-The QLever semantic fixes (text order keys, correlated EXISTS helpers) are small and already
-proven on a probe, so they run as soon as the QLever baseline exists.
-
-## 9. Risks the review should attack
-
-1. The projection doubles write volume on both engines. QLever's O(delta) update cost may make the
-   current graph too expensive to maintain at 256 clients with steady writes.
-2. H-X-CUT may fail on an edge (aborted transactions, restarts, compaction), leaving recorded-time
-   reads on the slow ledger.
-3. Index tables in XTDB turn every write into several documents in the single writer, which may cap
-   write throughput below the load target.
-4. The KV oracle shares Triplex core code with the system under test, so a core bug can pass the
-   entity suite on both sides.
-5. The 60 GiB VM disk and 12 GiB RAM may not hold the 10m-entity rung for either engine.
-6. Scope: 57 XTQL task ports, two projections, two write protocols, two scale ladders and a load
-   harness is a lot of work; the loop may spread thin across tracks.
+| 1 | EXP-A01 | acceptance contract: obligations, load contract, capability matrix, budgets skeleton | none (running) |
+| 1 | EXP-000 | harness: engines, atomic pool, fail-closed bound receipts, retained evidence, homebase coupling replaced | none (running) |
+| 2 | EXP-G01 | golden vectors for competing contracts (raw lifetime vs snapshot metadata, assertion cardinality vs distinct-value decoding, journal vs exact ledger), derived by hand from documentation and independently reviewed | EXP-A01 |
+| 2 | EXP-001, EXP-002 | fresh baselines: unchanged44 and native142 on XTDB (XTQL and SQL tallies) and QLever | EXP-000 |
+| 2 | EXP-R01 | entity core skeleton: interface types for repository, writer and plan IR (stubs that fail clearly), the projection spec compiler (names, declared types, exactness flags, collision checks), and the behavior-preserving codec move from packages/http | none |
+| 4 | EXP-R02 | planner semantics, repository and writer behavior on KV, tested against reviewed golden vectors | EXP-A01 and EXP-G01 reviewed |
+| 3 | EXP-F01, EXP-F02 | XTDB cut mapping; wire exactness for every value type on both engines | EXP-000 |
+| 3 | EXP-F03, EXP-F04 | retirement metadata; duplicate supports and conflicts | EXP-000, EXP-G01 |
+| 3 | EXP-F05 | QLever fault injection and the C2 crash matrix on a tiny dataset | EXP-000, R8 |
+| 4 | EXP-O01 | full independent Python event-replay oracle and mutation controls | EXP-A01, EXP-G01 |
+| 5 | EXP-Q01, EXP-Q02 | compact-ledger round trip; log, broker, fence and publication | EXP-F05 |
+| 5 | EXP-Q03 | QLever order keys and correlation helpers | EXP-002 |
+| 6 | EXP-V01, EXP-V02 | one packaged vertical slice per lane through public entrypoints: write, repository read with projection selection, exact fallback, set-query completeness, authored native read, history, receipt, cursor, reopen | steps 3 to 5 |
+| 7 | later | XTQL parity, C8 recursion, scale ladder, load | step 6 |
 
 ## 10. Resume protocol
 
-`lab/STATE.md` is updated at every dispatch and every completion with running agents, branches and
-slots, pending decisions and the next three actions. After any context compaction the orchestrator
-reads `lab/STATE.md`, `lab/SCORECARD.md` and the notebook tail before acting.
+`lab/STATE.md` is updated at every dispatch and every completion with running agents, branches, slots, pending
+decisions and the next actions. After any context compaction the orchestrator reads `lab/STATE.md`,
+`lab/SCORECARD.md`, the notebook tail and this plan before acting.
 
 ## Changelog
 
 - v0, 2026-11-07: first draft, before research and review.
-- v1-pre, 2026-11-07: folded in R1 to R6. The projection became mandatory for scale on both lanes;
-  added the `_id`-first XTDB design with index tables, H-X-CUT, card-one conflict policy, the QLever
-  compact ledger, current graph, roll-forward write protocol, and the two proven QLever semantic
-  fixes; XTQL parity scoped at 57 tasks; harness breakages listed; decisions D1 to D5 taken.
-- v1-rc, 2026-11-07: Codex review round 1 (`lab/reviews/plan-review-r1.codex.md`, 16 findings,
-  decisions in `lab/reviews/plan-review-r1.response.md`). Receipts now bind executed builds and fail
-  closed; the acceptance contract moved into `lab/acceptance/`; the resource pool counts residents
-  once and forecasts peaks; gen-1 reordered around falsifiers. Sections 3.2 to 3.3 (H-X-CUT, QLever
-  write and publication, scope, conflicts, compact ledger) are superseded by the response file's
-  section B until round 2 settles them in v1.
+- v1-pre, 2026-11-07: folded in R1 to R6. The projection became mandatory for scale on both lanes.
+- v1-rc, 2026-11-07: Codex round 1 (16 findings, 8 critical). Receipts bind executed builds and fail closed;
+  acceptance contract moved into `lab/acceptance/`; one resource pool; generation 1 reordered around falsifiers.
+- v1, 2026-11-07: Codex round 2 (14 findings, 10 critical). Added the integrated done predicate (section 1),
+  frozen contracts C1 to C8 (eligibility over the whole basis with query-wide completeness; QLever log decision,
+  group validation, publication and post-publication verification; a mutation broker with credentials, epochs and
+  fence; bounded boundary maintenance; conflict semantics per API; the journal contract kept queryable; one scope
+  per engine with enforced ownership; native reads never mutate), the hypotheses-and-falsifiers table with
+  blocking, frozen profile budgets with cumulative comparison, retained evidence preimages, and golden vectors
+  before the falsifiers that need them. R9's slim journal was rejected as a default because it removes documented
+  queryable facts.
+- v1.1, 2026-11-07: Codex round 3 (`lab/reviews/plan-review-r3.codex.md`) found five remaining gaps and said the plan
+  is ready to execute once they land. Applied one to one: (1) C1 requires R absent, because recorded timestamps are
+  not monotonic in commit order; (2) C4 binds maintenance chunks to their target, computes them just before applying,
+  and refuses qualified raw results during `MAINTAINING`; (3) receipts carry forward only when every bound identity
+  is unchanged, and final acceptance is always fresh; (4) C2 retries return success only after publication, otherwise
+  `CommitPending` or `Repairing`; (5) EXP-R01 is narrowed to the skeleton and spec compiler, and the planner,
+  repository and writer behavior moved to EXP-R02 behind reviewed acceptance and golden vectors.

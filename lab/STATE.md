@@ -15,8 +15,9 @@ Updated: 2026-11-07 (gen-0, planning)
 - [x] read context  - [x] PLAN v0  - [x] research R1-R6 folded in (PLAN v1-pre)
 - [x] Codex review round 1 (session 01a1b72e-26d6-77a1-ac09-6ab8c3b10d43): lab/reviews/plan-review-r1.codex.md,
       response lab/reviews/plan-review-r1.response.md; PLAN v1-rc committed d22ba76
-- [ ] Codex round 2 running (resume same session) -> lab/reviews/plan-review-r2.codex.md
-- [ ] PLAN v1 final  - [~] build loop: EXP-000 harness RUNNING on main; EXP-A01 acceptance contract RUNNING
+- [x] Codex round 2 -> lab/reviews/plan-review-r2.codex.md; PLAN v1 written (contracts C1-C8, integrated done predicate)
+- [ ] Codex round 3 confirmation running -> lab/reviews/plan-review-r3.codex.md
+- [ ] PLAN v1 final verdict  - [~] build loop: EXP-000 harness RUNNING on main; EXP-A01 acceptance contract RUNNING
 - Hourly cron ae766d26 (:07): update learnings in NOTEBOOK, launch Sonnet research if learnings raise questions.
 
 ## Running agents
@@ -26,13 +27,16 @@ Updated: 2026-11-07 (gen-0, planning)
 | EXP-A01 (opus high) | acceptance contract lab/acceptance/* (no commit; orchestrator commits) | lab/experiments/EXP-A01-acceptance-contract/REPORT.md |
 | R7 (sonnet xhigh) | XTDB pruning/IID/index-table shapes (+skew/ranges/ordered pages, extended), ingest | lab/research/R7-xtdb-indexing-ingest.md |
 | R8 (sonnet xhigh) | QLever reapply/rebuild under load/group commit/durability | lab/research/R8-qlever-write-lifecycle.md |
-| Codex r2 | plan review round 2 | lab/reviews/plan-review-r2.codex.md |
+| Codex r3 | plan confirmation | lab/reviews/plan-review-r3.codex.md |
+| EXP-R01 (opus high, worktree, branch exp/R01-entity-core) | entity core: spec, planner, repository, writer on KV | lab/experiments/EXP-R01-entity-core/REPORT.md |
+| R10 (sonnet xhigh) | read-only recursion (C8); probe tx2-probe-r10 7063/5465 max 1.5 GiB | lab/research/R10-read-only-recursion.md |
+| R12 (sonnet xhigh) | XTQL cookbook, 23 operations verified vs SQL; probe tx2-probe-r12 5464 max 1.5 GiB | lab/research/R12-xtql-cookbook.md |
+| R13 (sonnet xhigh) | log of record + fsync durability on colima/macOS | lab/research/R13-log-of-record.md |
 | DONE | R1-R6, R9 | lab/research/ |
 
 ## Briefs ready, not dispatched
-- EXP-R01 entity core (worktree, engine-free) - dispatch after Codex r2 (pushback C2 about skeleton timing).
 - EXP-F01 (needs exclusive xtdb slot), F02/F03/F04 (dev slots) - dispatch once EXP-000 has dev engines up.
-- To write: EXP-F05 QLever fault injection (after R8), EXP-O01 oracle (after A01), EXP-001/002 baselines (after EXP-000),
+- To write: EXP-G01 golden vectors (after A01; gates F03/F04), EXP-F05 QLever fault injection (after R8), EXP-O01 oracle (after A01), EXP-001/002 baselines (after EXP-000),
   EXP-Q03 QLever order keys + EXISTS helpers (after QLever baseline).
 
 ## Engine slots

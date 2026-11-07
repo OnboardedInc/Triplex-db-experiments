@@ -1,0 +1,4 @@
+Round 3 (confirmation). The orchestrator rewrote lab/PLAN.md as v1 in response to your round-2 findings (your round-2 output is lab/reviews/plan-review-r2.codex.md). Read lab/PLAN.md in full. Stay adversarial and read-only.
+1. For each item in your round-2 "Before implementation starts, PLAN v1 must contain" list, and for each of your round-2 findings 1 to 14, state RESOLVED, PARTIAL or UNRESOLVED with the PLAN section that resolves it and, if not resolved, the precise remaining gap.
+2. List any NEW critical problem that v1 introduces (for example in C1 eligibility, C2 commit protocol, C3 broker, C4 maintenance, C5 conflicts, C6 journal, C7 scope, C8 read-only recursion, or the integrated done predicate).
+3. Give a final verdict: READY TO EXECUTE (as a gated experimental program where failed falsifiers block dependents), or NOT READY with the minimal list of changes. Do not re-raise points that v1 resolves. Be concise: under 1,500 words.
