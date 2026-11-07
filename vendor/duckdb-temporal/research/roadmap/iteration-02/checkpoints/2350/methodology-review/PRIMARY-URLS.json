@@ -1,0 +1,34 @@
+{
+  "scope": "Fresh primary browser inspection only; URLs/symbols/limits retained, no full third-party paper/page downloaded into this report",
+  "sources": [
+    {
+      "url": "https://kar.kent.ac.uk/33611/45/p63-kaliber.pdf",
+      "pin": "Kalibera/Jones, ISMM2013 author accepted manuscript",
+      "examined": "Repetition levels and independent/initialized state, Sections6\u20139",
+      "supports": "Execution-level clusters and uncertainty; does not prove this study steady-state, optimal replication, i.i.d. pairs or bootstrap coverage."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/python/cpython/v3.12.14/Doc/reference/simple_stmts.rst",
+      "pin": "CPythonv3.12.14",
+      "examined": "Assignment rebinding/reference deallocation; assert optimization semantics",
+      "supports": "Statement-level result-disposal caveat and ordinary exception gates."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/python/cpython/v3.12.14/Doc/library/time.rst",
+      "pin": "CPythonv3.12.14",
+      "examined": "perf_counter/perf_counter_ns",
+      "supports": "Elapsed differences including scheduling/sleep, not exclusive CPU."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/python/cpython/v3.12.14/Doc/library/profile.rst",
+      "pin": "CPythonv3.12.14",
+      "examined": "Profiler introduction note",
+      "supports": "Diagnostic call counts; profiling Python/C overhead invalidates benchmarking interpretation."
+    }
+  ],
+  "retrieval_negative": {
+    "url": "https://docs.python.org/release/3.12.14/reference/simple_stmts.html",
+    "outcome": "Web access unavailable; no source absence inferred. Exact pinned primary raw source retrieved instead."
+  },
+  "web_content_sha256_claimed": false
+}

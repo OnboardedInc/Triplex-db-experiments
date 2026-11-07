@@ -1,0 +1,32 @@
+SELECT DISTINCT (?q_v_type AS ?domain0) WHERE { { SELECT ?q_view_value ("string" AS ?q_view_type) (?q_view_value AS ?q_view_order) (IF(?w0_storage_type IN ("number","datetime"),"number",IF(?w0_storage_type="integer","integer",IF(?w0_storage_type="boolean","boolean","string"))) AS ?q_session_type) (IF(?w0_storage_type IN ("number","datetime") && ?w0_payload="-0","0",?w0_payload) AS ?q_session_value) (IF(?w0_storage_type IN ("number","datetime","integer"),COALESCE(?w0_number_order,?w0_datetime_order,?w0_integer_order),IF(?w0_storage_type IN ("number","datetime") && ?w0_payload="-0","0",?w0_payload)) AS ?q_session_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJ3aWRlLWZ1bm5lbDo5NzdlNjVkZS02OTQ1LTQxYmItYTE3ZS02MGFiMmJhZThkYmMiLDBd> { ?w0 <urn:triplex:field:valid_from_order> ?w0_vf ; <urn:triplex:field:recorded_position_order> ?w0_rp . ?w0 <urn:triplex:field:recorded_at_order> ?w0_ra .
+OPTIONAL { ?w0 <urn:triplex:field:valid_to_order> ?w0_vt }
+OPTIONAL { ?w0 <urn:triplex:field:retracted_position_order> ?w0_xp }
+OPTIONAL { ?w0 <urn:triplex:field:retracted_at_order> ?w0_xa }
+?w0 <urn:triplex:field:entity_id> ?q_view_value .
+?w0 <urn:triplex:field:attribute> ":w17/a73657373696f6e" .
+?w0 <urn:triplex:field:value_type> ?w0_storage_type ; ?w0_payload_property ?w0_payload .
+OPTIONAL { ?w0 <urn:triplex:field:value_number_order> ?w0_number_order . }
+OPTIONAL { ?w0 <urn:triplex:field:value_datetime_order> ?w0_datetime_order . }
+OPTIONAL { ?w0 <urn:triplex:field:value_integer_order> ?w0_integer_order . } FILTER(?w0_vf <= "c12e84e400000000" && (!BOUND(?w0_vt) || ?w0_vt > "c12e84e400000000") && ?w0_rp <= "bff0000000000000" && (!BOUND(?w0_xp) || ?w0_xp > "bff0000000000000" || ?w0_xa > "c08f480000000000") && ?w0_ra <= "c08f480000000000" && ((?w0_storage_type IN ("string","ref","integer","blob") && ?w0_payload_property = <urn:triplex:field:value_string>) || (?w0_storage_type = "number" && ?w0_payload_property = <urn:triplex:field:value_number>) || (?w0_storage_type = "datetime" && ?w0_payload_property = <urn:triplex:field:value_datetime>) || (?w0_storage_type = "boolean" && ?w0_payload_property = <urn:triplex:field:value_boolean>) || (?w0_storage_type = "json" && ?w0_payload_property = <urn:triplex:field:value_json>))) } } }
+{ SELECT ?q_view_value ("string" AS ?q_view_type) (?q_view_value AS ?q_view_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJ3aWRlLWZ1bm5lbDo5NzdlNjVkZS02OTQ1LTQxYmItYTE3ZS02MGFiMmJhZThkYmMiLDBd> { ?w1 <urn:triplex:field:valid_from_order> ?w1_vf ; <urn:triplex:field:recorded_position_order> ?w1_rp . ?w1 <urn:triplex:field:recorded_at_order> ?w1_ra .
+OPTIONAL { ?w1 <urn:triplex:field:valid_to_order> ?w1_vt }
+OPTIONAL { ?w1 <urn:triplex:field:retracted_position_order> ?w1_xp }
+OPTIONAL { ?w1 <urn:triplex:field:retracted_at_order> ?w1_xa }
+?w1 <urn:triplex:field:entity_id> ?q_view_value .
+?w1 <urn:triplex:field:attribute> ":w17/a73746570" .
+?w1 <urn:triplex:field:value_type> ?w1_storage_type ; ?w1_payload_property ?w1_payload .
+OPTIONAL { ?w1 <urn:triplex:field:value_number_order> ?w1_number_order . }
+OPTIONAL { ?w1 <urn:triplex:field:value_datetime_order> ?w1_datetime_order . }
+OPTIONAL { ?w1 <urn:triplex:field:value_integer_order> ?w1_integer_order . } FILTER(?w1_vf <= "c12e84e400000000" && (!BOUND(?w1_vt) || ?w1_vt > "c12e84e400000000") && ?w1_rp <= "bff0000000000000" && (!BOUND(?w1_xp) || ?w1_xp > "bff0000000000000" || ?w1_xa > "c08f480000000000") && ?w1_ra <= "c08f480000000000" && ((?w1_storage_type IN ("string","ref","integer","blob") && ?w1_payload_property = <urn:triplex:field:value_string>) || (?w1_storage_type = "number" && ?w1_payload_property = <urn:triplex:field:value_number>) || (?w1_storage_type = "datetime" && ?w1_payload_property = <urn:triplex:field:value_datetime>) || (?w1_storage_type = "boolean" && ?w1_payload_property = <urn:triplex:field:value_boolean>) || (?w1_storage_type = "json" && ?w1_payload_property = <urn:triplex:field:value_json>)) && (IF(?w1_storage_type IN ("number","datetime"),"number",IF(?w1_storage_type="integer","integer",IF(?w1_storage_type="boolean","boolean","string"))) = "string" && IF(?w1_storage_type IN ("number","datetime") && ?w1_payload="-0","0",?w1_payload) = "view")) } } }
+{ SELECT ?q_view_value ("string" AS ?q_view_type) (?q_view_value AS ?q_view_order) (IF(?w2_storage_type IN ("number","datetime"),"number",IF(?w2_storage_type="integer","integer",IF(?w2_storage_type="boolean","boolean","string"))) AS ?q_v_type) (IF(?w2_storage_type IN ("number","datetime") && ?w2_payload="-0","0",?w2_payload) AS ?q_v_value) (IF(?w2_storage_type IN ("number","datetime","integer"),COALESCE(?w2_number_order,?w2_datetime_order,?w2_integer_order),IF(?w2_storage_type IN ("number","datetime") && ?w2_payload="-0","0",?w2_payload)) AS ?q_v_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJ3aWRlLWZ1bm5lbDo5NzdlNjVkZS02OTQ1LTQxYmItYTE3ZS02MGFiMmJhZThkYmMiLDBd> { ?w2 <urn:triplex:field:valid_from_order> ?w2_vf ; <urn:triplex:field:recorded_position_order> ?w2_rp . ?w2 <urn:triplex:field:recorded_at_order> ?w2_ra .
+OPTIONAL { ?w2 <urn:triplex:field:valid_to_order> ?w2_vt }
+OPTIONAL { ?w2 <urn:triplex:field:retracted_position_order> ?w2_xp }
+OPTIONAL { ?w2 <urn:triplex:field:retracted_at_order> ?w2_xa }
+?w2 <urn:triplex:field:entity_id> ?q_view_value .
+?w2 <urn:triplex:field:attribute> ":w17/a6174" .
+?w2 <urn:triplex:field:value_type> ?w2_storage_type ; ?w2_payload_property ?w2_payload .
+OPTIONAL { ?w2 <urn:triplex:field:value_number_order> ?w2_number_order . }
+OPTIONAL { ?w2 <urn:triplex:field:value_datetime_order> ?w2_datetime_order . }
+OPTIONAL { ?w2 <urn:triplex:field:value_integer_order> ?w2_integer_order . } FILTER(?w2_vf <= "c12e84e400000000" && (!BOUND(?w2_vt) || ?w2_vt > "c12e84e400000000") && ?w2_rp <= "bff0000000000000" && (!BOUND(?w2_xp) || ?w2_xp > "bff0000000000000" || ?w2_xa > "c08f480000000000") && ?w2_ra <= "c08f480000000000" && ((?w2_storage_type IN ("string","ref","integer","blob") && ?w2_payload_property = <urn:triplex:field:value_string>) || (?w2_storage_type = "number" && ?w2_payload_property = <urn:triplex:field:value_number>) || (?w2_storage_type = "datetime" && ?w2_payload_property = <urn:triplex:field:value_datetime>) || (?w2_storage_type = "boolean" && ?w2_payload_property = <urn:triplex:field:value_boolean>) || (?w2_storage_type = "json" && ?w2_payload_property = <urn:triplex:field:value_json>))) } } }
+
+ } LIMIT 1001

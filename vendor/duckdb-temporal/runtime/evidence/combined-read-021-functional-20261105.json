@@ -1,0 +1,126 @@
+{
+  "schema": "combined-read-functional/1",
+  "status": "passed",
+  "timestamp_utc": "2026-11-05T15:06:33.539410+00:00",
+  "base_commit": "5d179f5a",
+  "base_version": "0.21.0",
+  "variants": [
+    {
+      "name": "baseline",
+      "core_extension_sha256": "862d7ef29185888cee14ecb921afc86716c7a017398fde37d5a792f57e1a4059",
+      "companion_extension_sha256": "b08812c24854fcc543620d72427ec7f614f0fc6c14f75540076ea9a021e6c4b0",
+      "catalog_sql_sha256": "52bf5736155afda31b6c37bf896ed7789fc41f2d4e063c1ce086cc8c9aea39fd",
+      "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "flags": {
+        "identity_count": false,
+        "current_unique": false,
+        "injective_projection": false
+      },
+      "suites": [
+        {
+          "name": "cap_projection",
+          "exit_code": 0,
+          "elapsed_seconds": 1.3680995828472078,
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "log_sha256": "7087e14f622754a24f0b519209f2f68465419c13e61267562d0c2989839953ec"
+        }
+      ]
+    },
+    {
+      "name": "candidate",
+      "core_extension_sha256": "a9921da0eff3932dfc74682c956259d9945fe8e7a490669aa63b08dc3aed803d",
+      "companion_extension_sha256": "7da25796e58feb5f9bbc178b727528f3ef1a365723e1033d611c702e19c7a30e",
+      "catalog_sql_sha256": "52bf5736155afda31b6c37bf896ed7789fc41f2d4e063c1ce086cc8c9aea39fd",
+      "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "flags": {
+        "identity_count": false,
+        "current_unique": true,
+        "injective_projection": true
+      },
+      "suites": [
+        {
+          "name": "cap_projection",
+          "exit_code": 0,
+          "elapsed_seconds": 1.3322232079226524,
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "log_sha256": "888c55852b06a4522dcb3a445a81941d80806cad2f33a43502312e5367d2de82"
+        },
+        {
+          "name": "owner_19",
+          "exit_code": 0,
+          "elapsed_seconds": 8.918941124808043,
+          "tests": 19,
+          "pass": 19,
+          "fail": 0,
+          "log_sha256": "6e288f66bb49e019315819f77368c4271f289bbbb3fb008b76682bffb0e54c79"
+        },
+        {
+          "name": "host_patch_16_retry",
+          "exit_code": 0,
+          "elapsed_seconds": 8.624405124923214,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "log_sha256": "be3e2879b0b0791c812c3710684728ca99c5b403699ddbd8302d0abafc9cb4b2"
+        },
+        {
+          "name": "native_6",
+          "exit_code": 0,
+          "elapsed_seconds": 19.499464666936547,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "log_sha256": "d15e5db91290efe1c815b94334b72b3743abafee27826e0e6bc2b17fba0eb2ce"
+        },
+        {
+          "name": "pairing_3",
+          "exit_code": 0,
+          "elapsed_seconds": 0.09009033301845193,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "log_sha256": "8b99f6bf53baecb61538cb08c6b8104697dfbf11f9478218e7606912933c5dad"
+        }
+      ]
+    }
+  ],
+  "native_ingested_assertions": 1003529,
+  "helper": {
+    "source_commit": "a1dc8277",
+    "tests": 8,
+    "pass": 8,
+    "fail": 0,
+    "log_sha256": "392ddc2ec83055462323b0eb1c4e395bf2e1fdfe5537b9e4650dab31a00df17b"
+  },
+  "initial_failure": {
+    "suite": "host_patch_16",
+    "tests": 16,
+    "pass": 14,
+    "fail": 2,
+    "cause": "The isolated runtime omitted source adapter access and a local Python package copy needed by existing integration tests. Both tests failed on missing files before their target assertions.",
+    "resolution": "The experiment builder now provides the source adapter link and copies the Python package into each stage. The full16-method host/patch suite was rerun with fresh fixtures and passed.",
+    "raw_log_sha256": "936fd83d791926f1467ab085428ee53709d796ab38a54a9528a01a7ae5a6ac9e",
+    "normalized_log": "combined-read-021-initial-staging-failure-20261105.txt"
+  },
+  "sources_sha256": {
+    "build_identity_count_spike.py": "bc12daf70fc1ed66747dd8d3b13f957e2fa188cea10ac279c6e61cca60f7c4de",
+    "adapter/benchmark-identity-count.mjs": "eebe7f2d5295ec5bd01dddfa7072be5509138516baa4f07711292e87e1f1bcb2",
+    "adapter/test-current-unique.mjs": "8ad3bf79623591150e1d5aa29af04612af2ab6d3e0a2edbd88eda62c35139e18",
+    "adapter/test-identity-count.mjs": "34a451f33d162cf91ea923e70475de24ef1b6ea6dfb3b2f3d16c285e044e4e2c",
+    "adapter/test-owned-store.ts": "850b31c0fb17285b47dc9c09d8b8d3786263abbf16c6662c5cd29c9f70c194db",
+    "adapter/test-interval-patch.ts": "97a8232f1e020e31a3dbb2f95fdb79353ef0d7ccde3dc0a98a4e1d2a9494fecf",
+    "adapter/benchmark-scale.mjs": "d41bc766dd644ef6dc6cb99ff4af68e0f26a8585760d7d63105ce39710f3bf87",
+    "adapter/test-scale-fixture.mjs": "863e4195deb58c57bfc0c477a24d26e0e1ee38dc61f26c0c9531420dbe2d9bdf"
+  },
+  "scope": [
+    "Both native optimization flags enabled together with identity-count disabled. All production defaults remain disabled.",
+    "The combined candidate passed5capability,4projection,19owner,8host-owned,8interval-patch,6native-scale and3pairing methods. The disabled baseline passed5capability and4projection methods.",
+    "The interval-patch test requires the latest unique reason immediately after a native patch and after revalidation. Explicit historical reads retain the ordinary owned reason.",
+    "No performance comparison or promotion decision is included.",
+    "Ownership remains conditional on exclusive native writes and synchronous quiescent invalidation before raw dispatch."
+  ]
+}

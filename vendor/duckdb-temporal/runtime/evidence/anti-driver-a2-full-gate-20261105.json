@@ -1,0 +1,278 @@
+{
+  "schema": "td.anti-driver-full-gate/1",
+  "result": "UNPROMOTED_FAILED_SCREEN",
+  "recordedUtc": "2026-11-06T01:33:59.000874+00:00",
+  "source_checkpoint": "15a800c7",
+  "native_source_commit": "2bef891f05af1eefc1c00db238a90bb544c9dc8d",
+  "readContractVersion": 1,
+  "attempts": 1,
+  "retries": 0,
+  "originalBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+  "bindingSha256": "79a302bfa53e2c3c48e82f03cb7f85b9763372b56f0ae7c05b0483970abda483",
+  "configuration": {
+    "readers": [
+      1,
+      16
+    ],
+    "samples": 20,
+    "warmup": 1,
+    "durationSeconds": 60,
+    "maxWrites": 12000,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "antiDriverBinding": "evidence/anti-driver-a2-binding-20261105.json"
+  },
+  "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+  "runtimePinsBefore": {
+    "core_extension": "000def11b9907b4733c80a399a2bbee813abf627386478d33f762035ac8b27de",
+    "companion_extension": "593315c03fc502aa7af0a9e63242d6fd5fac0da4820b52270b2da1dbf02604d4",
+    "control_bridge": "c886d7cd2e950aa4f73d552ae10a80ce724bcc4d676bc2ff94c5b50b1d118b1f",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "runtimePinsAfter": {
+    "core_extension": "000def11b9907b4733c80a399a2bbee813abf627386478d33f762035ac8b27de",
+    "companion_extension": "593315c03fc502aa7af0a9e63242d6fd5fac0da4820b52270b2da1dbf02604d4",
+    "control_bridge": "c886d7cd2e950aa4f73d552ae10a80ce724bcc4d676bc2ff94c5b50b1d118b1f",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "actualIdentityBeforeEqualsAfter": true,
+  "source": {
+    "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+    "bytes": 3905433600,
+    "mtimeMs": 1793911060600.3289,
+    "ctimeMs": 1793911060600.3289,
+    "sha256Before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "sha256After": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3"
+  },
+  "sourceUnchanged": true,
+  "numericChecksPassed": 14,
+  "numericChecksTotal": 16,
+  "profiles": [
+    {
+      "readers": 1,
+      "correctness": "passed",
+      "numeric": {
+        "status": "passed",
+        "gates": {
+          "fixedP50": true,
+          "fixedP99": true,
+          "mixedQPS": true,
+          "mixedP50": true,
+          "mixedP99": true,
+          "writes": true,
+          "writesPerSecond": true,
+          "sampledRss": true
+        },
+        "limits": {
+          "readers": 1,
+          "maxFixedP50Ms": 1500,
+          "maxFixedP99Ms": 2500,
+          "minMixedQueriesPerSecond": 0.75,
+          "maxMixedP50Ms": 1500,
+          "maxMixedP99Ms": 3000,
+          "minAcknowledgedWrites": 40,
+          "minAcknowledgedWritesPerSecond": 0.5,
+          "maxSampledRssBytes": 3500000000
+        },
+        "writesPerSecond": 8.298149869814381
+      },
+      "fixed": {
+        "samples": 20,
+        "latencyMs": {
+          "count": 20,
+          "min": 180.99829200000022,
+          "p50": 189.89979200000016,
+          "p95": 211.66095799999857,
+          "p99": 214.38433299999997,
+          "max": 214.38433299999997
+        },
+        "QPS": 5.209919486537261,
+        "wallMs": 3838.8309169999993
+      },
+      "mixed": {
+        "samples": 250,
+        "latencyMs": {
+          "count": 250,
+          "min": 187.95091599999796,
+          "p50": 238.88737499999843,
+          "p95": 258.6497500000005,
+          "p99": 275.356832999998,
+          "max": 302.6256250000006
+        },
+        "QPS": 4.152590360028338,
+        "wallMs": 60203.38591700001,
+        "ACKs": 498,
+        "writeBurstMs": 60013.37741700001,
+        "drainMs": 203.38591700000688,
+        "writesPerComplete10sWindow": [
+          82,
+          84,
+          84,
+          84,
+          83,
+          80
+        ]
+      },
+      "maxSampledRssBytes": 2797649920,
+      "cpuUsage": [
+        {
+          "userMicroseconds": 14128036,
+          "systemMicroseconds": 142403,
+          "totalMicroseconds": 14270439,
+          "averageCores": 3.717391911377065,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        },
+        {
+          "userMicroseconds": 238084894,
+          "systemMicroseconds": 3147849,
+          "totalMicroseconds": 241232743,
+          "averageCores": 4.006963052419973,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        }
+      ],
+      "inputAdmission": {
+        "scopedInputFacts": 1680202,
+        "rightSideFacts": "1679946",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "first_and_reuse_reopen_typed_answers_checked_inline": true,
+      "healthyReuseCalls": 1,
+      "reopenCuts": 5,
+      "old_and_current_native_receipts_consecutive": true,
+      "allLeasesReturned": true
+    },
+    {
+      "readers": 16,
+      "correctness": "passed",
+      "numeric": {
+        "status": "failed",
+        "gates": {
+          "fixedP50": true,
+          "fixedP99": false,
+          "mixedQPS": true,
+          "mixedP50": true,
+          "mixedP99": true,
+          "writes": false,
+          "writesPerSecond": true,
+          "sampledRss": true
+        },
+        "limits": {
+          "readers": 16,
+          "maxFixedP50Ms": 3500,
+          "maxFixedP99Ms": 6500,
+          "minMixedQueriesPerSecond": 4.8,
+          "maxMixedP50Ms": 3200,
+          "maxMixedP99Ms": 6500,
+          "minAcknowledgedWrites": 40,
+          "minAcknowledgedWritesPerSecond": 0.5,
+          "maxSampledRssBytes": 3500000000
+        },
+        "writesPerSecond": 0.5363903599695711
+      },
+      "fixed": {
+        "samples": 320,
+        "latencyMs": {
+          "count": 320,
+          "min": 1171.9428749999934,
+          "p50": 2137.0472499999996,
+          "p95": 4108.061291000002,
+          "p99": 6975.631875000003,
+          "max": 7341.259249999999
+        },
+        "QPS": 6.427603740719117,
+        "wallMs": 49785.271916
+      },
+      "mixed": {
+        "samples": 345,
+        "latencyMs": {
+          "count": 345,
+          "min": 677.9849580000009,
+          "p50": 2594.3012089999975,
+          "p95": 4765.592958000008,
+          "p99": 5545.652625000002,
+          "max": 5939.750083000006
+        },
+        "QPS": 5.579268363309779,
+        "wallMs": 61836.064791,
+        "ACKs": 33,
+        "writeBurstMs": 61522.35845900001,
+        "drainMs": 1836.064790999997,
+        "writesPerComplete10sWindow": [
+          4,
+          5,
+          5,
+          4,
+          7,
+          7
+        ]
+      },
+      "maxSampledRssBytes": 2806267904,
+      "cpuUsage": [
+        {
+          "userMicroseconds": 266589324,
+          "systemMicroseconds": 23223193,
+          "totalMicroseconds": 289812517,
+          "averageCores": 5.821250057426321,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        },
+        {
+          "userMicroseconds": 313383364,
+          "systemMicroseconds": 33436138,
+          "totalMicroseconds": 346819502,
+          "averageCores": 5.608692971847689,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        }
+      ],
+      "inputAdmission": {
+        "scopedInputFacts": 1680202,
+        "rightSideFacts": "1679946",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "first_and_reuse_reopen_typed_answers_checked_inline": true,
+      "healthyReuseCalls": 16,
+      "reopenCuts": 5,
+      "old_and_current_native_receipts_consecutive": true,
+      "allLeasesReturned": true
+    }
+  ],
+  "raw": {
+    "file": "evidence/anti-driver-a2-full-gate-20261105.raw.json",
+    "sha256": "666b292b8646194007c51a2142588b2cc27c128c18b886552923f2f4847b006a",
+    "bytes": 1560737
+  },
+  "logs": {
+    "a2-10m-1-16-01.log": {
+      "file": "evidence/anti-driver-a2-10m-1-16-01.log",
+      "sha256": "c3a0f03c8c59fa2860a1cc74ef63a10202536f614cdc5c66c239541c8dd7adca"
+    }
+  },
+  "retainedArtifact": {
+    "runtime": "build/anti-driver-gate-20261105/retained-a2-runtime",
+    "SHA256SUMSSha256": "441cfa680354cfd04f001bc0ebf46126cd94feebf925211dd8b60b6ddee17a8e",
+    "files": 177
+  },
+  "decision": "No promotion of the unconditional anti-pruning candidate. Keep native physical-plan proof and all first raw outcomes; proceed with C2 fairness confirmation separately.",
+  "limitations": [
+    "One order-unbalanced absolute screen, not a matched/reversed B0 comparison.",
+    "1reader8/8 passed;16reader6/8 missed fixedp99 and minimumACKcount. No thresholds, retries or source changes were used.",
+    "Full logical input1,680,202 remains admitted with exact/minusone proof. RHSbuildcardinality reduction alone does not establish a throughput win.",
+    "RSS is sampled; CPU covers all child process threads including oracle/sampling/drain, not engine-only.",
+    "Broad32768 reversed-selectivity engine control was not started; candidate performance scope remains unqualified there.",
+    "Engine lease was explicitly released after native/harness/budget/source after-checks; no engine or broader run followed."
+  ]
+}

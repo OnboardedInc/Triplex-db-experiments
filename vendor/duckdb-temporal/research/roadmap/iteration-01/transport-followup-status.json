@@ -1,0 +1,110 @@
+{
+  "format": "actual-v2-transport-renewed-research-gate-v1",
+  "status": "COMPLETE_WITH_QUALIFIED_NEGATIVE_ATTRIBUTION",
+  "sealed_at_utc": "2026-10-30T19:27:31.698816+00:00",
+  "decision": "Initial process-isolated losses are retained, but a large causal ABI regression is not established by the tighter serial paired diagnostic.",
+  "roadmap_item_1": "NO_COMPLETION_CLAIM",
+  "original_balanced_archive": {
+    "path": "sql-typed-contract-real-acceptance-benchmark-1906.tar.gz",
+    "sha256": "f3da62e6362e18264e93e2befdb7826e06967f5f156b61151dc4e1f78d985b1c",
+    "unchanged": true
+  },
+  "paired_diagnostic": {
+    "status": "PASS",
+    "processes": 4,
+    "load_orders": [
+      "AB",
+      "BA"
+    ],
+    "process_replications": 2,
+    "cpu_affinity": [
+      0
+    ],
+    "serial_pairs": 756,
+    "measured_samples": 1512,
+    "all_ordered_answers_and_counters_equal": true,
+    "direct_ranges": {
+      "strings_unique_short": {
+        "median_paired_B_over_A_min": 0.9712166565063621,
+        "median_paired_B_over_A_max": 0.997606100924315
+      },
+      "strings_recursive_chain": {
+        "median_paired_B_over_A_min": 0.968480280214523,
+        "median_paired_B_over_A_max": 1.0248468927635752
+      },
+      "strings_512_byte_carrier": {
+        "median_paired_B_over_A_min": 0.9597853157669362,
+        "median_paired_B_over_A_max": 0.9843047933873192
+      }
+    },
+    "report": "paired-serial-pinned/status.json",
+    "summary": "paired-serial-pinned/summary.json",
+    "scope": "Exact reviewed LOCAL-table artifacts/host, serial independent database instances only; not arbitrary-build or concurrent LOAD certification"
+  },
+  "split_diagnostic": {
+    "status": "PASS",
+    "processes": 18,
+    "samples": 1134,
+    "report": "split-execute-fetch/status.json"
+  },
+  "operator_profiles": {
+    "status": "PASS",
+    "processes": 12,
+    "samples": 84,
+    "report": "operator-profiles/status.json",
+    "scope": "Profiler-reported callback-bearing projection, aggregate and result-collector timing; not instrumented admission/output phases"
+  },
+  "standalone_frozen_core": {
+    "status": "PASS",
+    "processes": 4,
+    "samples": 1212,
+    "scope": "Two inherited-affinity and two CPU-0 runs of identical core binary; source/output checks pass; marked drift retained"
+  },
+  "fresh_primary_evidence": {
+    "files": 19,
+    "technical_sources": 17,
+    "mit_licenses": 2,
+    "git_blob_and_sha256_verified": true,
+    "duckdb_commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "duckdb_python_release_commit": "83c719961098611e769dc4bab0bda2bf149a2d1e",
+    "manifest": "primary/source-provenance-combined.json"
+  },
+  "payload_negative_result": {
+    "unique_output_bytes_per_cell": 7,
+    "recursive_output_bytes_per_cell": 5,
+    "long_output_strings_in_regressed_cases": 0,
+    "conclusion": "Per-long-string arena calls cannot explain those observations"
+  },
+  "T_separate_result": {
+    "recursive_complete_fetch_ms": [
+      4.533,
+      7.845
+    ],
+    "recursive_callback_projection_ms": [
+      1.728,
+      2.324
+    ],
+    "conclusion": "Wider nested Value/Python conversion is material; not attributed to ABI-only B/A difference"
+  },
+  "source_review_controls": {
+    "dual_instance_calls": 136,
+    "expected_limit_rejections": 8,
+    "survivor_calls": 16,
+    "size_mask_probe": "PASS: 8193 STRUCT rows propagate; writable mask materializes; repeated size at capacity retains data pointer; nested NULL propagates"
+  },
+  "limitations": [
+    "Shared host, no CPU isolation/frequency guarantee",
+    "Single outer nested scalar result, not streaming or general relational workload",
+    "Execute/fetch split includes native chunk drain/flatten/Value conversion, not pure Python time",
+    "Different diagnostic paths cannot be subtracted to invent kernel phases",
+    "Python upstream release source is not a reproduced wheel-build proof",
+    "perf executable unavailable; no hardware-counter/stack-sampling claim"
+  ],
+  "implementation_edits": false,
+  "tested_extension_binary_edits": false,
+  "git_pr_page_writes": false,
+  "codex_tasks": false,
+  "dependency_installs": false,
+  "next_step": "No more profiling merely to repeat this outcome. Coordinator may evaluate separately versioned, one-change candidates or the independent typed host-projection experiment.",
+  "report": "REGRESSION-GATE.md"
+}

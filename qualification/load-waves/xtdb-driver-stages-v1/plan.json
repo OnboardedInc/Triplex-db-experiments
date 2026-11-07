@@ -1,0 +1,94 @@
+{
+  "format": "triplex-driver-stage-experiment/1",
+  "id": "xtdb-driver-stages-v1",
+  "purpose": "Measure current public driver stages without optimization or product/core/driver edits",
+  "sourceAuthority": "Real local checkpoint HEAD plus explicitly pinned dirty/untracked helper CAS bytes; no clean-tree or historical Git-origin claim",
+  "apparatusGates": [
+    "eight independent real-Query transparency/redaction component checks",
+    "xtdb-native-f64-observed-v2/0001 unchanged24+10",
+    "xtdb-native-entry-observed-v2/0001 unchanged13",
+    "independent observer clearance",
+    "independent cohort/preparer clearance"
+  ],
+  "fixture": {
+    "entities": 1000,
+    "activeDomainFactsPerEntity": 1,
+    "instances": 1,
+    "batchFacts": 500,
+    "probeEntities": 64,
+    "maximumWriterCommands": 6,
+    "validAt": 1.25,
+    "configuredEntityPresenceAndTypeVersionCoverage": false,
+    "authority": "Shared TypeExpr schema/attribute handles and independent generator oracle; actual seed receipts provide P/R/IDs only"
+  },
+  "profile": {
+    "queryPath": "xtdb-datalog",
+    "clients": 256,
+    "mode": "open-loop",
+    "durationMilliseconds": 30000,
+    "readRate": 16,
+    "dispatch": 16,
+    "pending": 4096,
+    "readTimeoutMilliseconds": 30000,
+    "maximumReads": 10000,
+    "offeredReads": 480,
+    "writerMode": "rate",
+    "writeRate": 0.2,
+    "writerCommands": 6,
+    "correctedEntitiesPerCommand": 10,
+    "operationsPerCommand": 20,
+    "additionalWarmupOrRetries": false
+  },
+  "resources": {
+    "clientMemoryBytes": 939524096,
+    "clientCpuUnits": 1,
+    "sourceXtdbResidentBytes": 3221225472,
+    "sourceXtdbCpuUnits": 2,
+    "otherQleverResidentBytes": 2147483648,
+    "otherQleverCpuUnits": 1.5,
+    "clientDiskReservationBytes": 268435456,
+    "maximumTraceBytes": 16777216,
+    "maximumWorkerMilliseconds": 180000,
+    "maximumAdmissionWaitMilliseconds": 120000,
+    "maximumStartupMilliseconds": 30000
+  },
+  "cohort": {
+    "name": "no-other-heavy-client-groups-stage-attribution-v1",
+    "otherHeavyClientGroups": [],
+    "commissionedReservations": ["foundation-xtdb", "foundation-qlever"],
+    "samplingMilliseconds": 250,
+    "completeCanonicalAttemptOverlapCheckRequired": true,
+    "nativeEnginesIdleClaimed": false,
+    "startupViolation": "Reject before importing the load runner or touching the fixture",
+    "laterViolation": "Invalidate the diagnostic while bounded existing writes reconcile/drain; do not discard or reclassify the overlap"
+  },
+  "measures": [
+    "pool reservation callback wait",
+    "driver issue to lazy handler-dispatch",
+    "driver handler-dispatch to original resolve/reject callback",
+    "basis and integer-presence SELECT counts",
+    "identity lookup SELECT counts",
+    "BEGIN/ASSERT/INSERT/COMMIT SYNC/SHOW AWAIT_TOKEN/receipt callback counts and spans",
+    "public ACK and visibility spans joined through one process monotonic clock",
+    "all returned rows and actual cuts against frozen independent oracle"
+  ],
+  "hypotheses": [
+    {
+      "id": "staging-lookups",
+      "prediction": "Repeated selective retraction lookups dominate public ACK before submit",
+      "sourceNormalPathOnly": "source cut+claim+two lookups per10retractions=22SELECT calls before one submit; not an observed wire count"
+    },
+    {
+      "id": "submit-commit-composite",
+      "prediction": "ASSERT/INSERT or COMMIT SYNC callbacks dominate ACK after staging",
+      "boundary": "COMMIT SYNC is a composite commit/indexing/driver wait; no independently observed indexing instant is invented"
+    },
+    {
+      "id": "pool-or-visibility",
+      "prediction": "Pool reservation or post-ACK visibility dominates despite separate public service roots",
+      "boundary": "Host dispatch, driver callbacks and public visibility remain distinct; the trace does not prove physical engine execution timing"
+    }
+  ],
+  "decision": "Instrumentation-only diagnostic. Preserve read/liveness failures and all original wave outcomes. No capacity calibration, performance promotion, layout adoption, Rust bottleneck or all-scale claim.",
+  "executionHold": "No seed/load execution until root reviews frozen contracts and grants the finite window after existing expensive jobs finish normally"
+}

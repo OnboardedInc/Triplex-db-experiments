@@ -1,0 +1,55 @@
+{
+  "schema": "temporal-datalog/single-strategy-verification-review/1",
+  "result": "PASS",
+  "source_commit": "75f3aa959f8b6b67b6fa451b4b376c365f4c9694",
+  "verification": {
+    "path": "evidence/verification.json",
+    "sha256": "53372380403e0f143860f62270d695ef5bee2821b5fbc259c422035b7c9eab9b",
+    "completed_at_utc": "2026-11-05T17:37:17.433854+00:00",
+    "review_method": "Independent count reconciliation and file hash comparison against the completed run.",
+    "profile": {
+      "owner": true,
+      "direct_compatibility": true
+    },
+    "scoped_checks": 298,
+    "breakdown": {
+      "python_integration": 29,
+      "triplex_conformance": 44,
+      "supplemental_suites": 140,
+      "named_suites": 85
+    },
+    "typescript_semantic_check": "PASS",
+    "workload_contracts": {
+      "workloads": 20,
+      "checked_cases": 71
+    }
+  },
+  "source_hashes": {
+    "checked_paths": 157,
+    "mismatched_paths": 0,
+    "missing_paths": 0,
+    "unrecorded_paths": 0
+  },
+  "artifact_identity": {
+    "engine_version": "2.0.0",
+    "core_extension_version": "0.24.0",
+    "duckdb_source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "core_manifest_matches_verification": true,
+    "owner_manifest_matches_verification": true,
+    "owner_core_pair_matches": true,
+    "core_source_manifest_mismatches": 0,
+    "owner_source_manifest_mismatches": 0,
+    "matched_sha256": {
+      "core_manifest": "bb94d418f315121c5105572aed7e9bdca4f4791f30685ae8e975338505171a19",
+      "core_extension": "6086cafdcb344cbfcfeb8b24b15957e34a0c65c04b0eed39819e915422371aaf",
+      "core_library": "6700a5ada14e6f9cf00dfe00b875f990b77762db7e95c90302e8288c5ad69025",
+      "control_bridge": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+      "owner_manifest": "af8abbd6ef08a90012b27f813087c617238bebb43fb5cf72a8e6c48c95abb1c3",
+      "owner_extension": "9aea136f073be9063f95fb1808b1c6f7d99c863d6fdce4e21f6a59df12ec877a",
+      "owner_library": "43adcd8fa04deb1074b79d7a5143b5eced0a14a2242df38960033fc8318d6800",
+      "sdk_resolved_darwin_arm64_engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "compiled_catalog_header": "c110824fdfbc48ca8532595e84a0869d104a018124a0c5bba565c66e21ee1737",
+      "owner_probe_source": "d9e7bb5f038fb25d05160fdd25ddf5aa78a3bd1d54da9470fd37c8ef14667c95"
+    }
+  }
+}

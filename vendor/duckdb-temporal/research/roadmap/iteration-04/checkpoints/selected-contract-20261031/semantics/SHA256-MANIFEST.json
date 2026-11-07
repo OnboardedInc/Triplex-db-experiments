@@ -1,0 +1,32 @@
+{
+  "schema": "goal4-semantic-contract-research-manifest-v1",
+  "frozen_utc": "2026-10-31T17:34:22Z",
+  "scope": "New source-only pre-code semantic contract proposal; no implementation or integration approval",
+  "case_obligations": 40,
+  "all_cases": "UNRUN",
+  "self_excluded": true,
+  "files": [
+    {
+      "path": "SEMANTIC-CONTRACT.md",
+      "size_bytes": 20633,
+      "sha256": "02a4fb1f44133c82c84531752f6621505de6d49efc56afd10e12f4b22a3d4927",
+      "words": 2736
+    },
+    {
+      "path": "ACCEPTANCE-OBLIGATIONS.md",
+      "size_bytes": 9275,
+      "sha256": "d55a99b2f1c220c89eb5486cda9cb888f6c744b68b8f1e3272cd1aa88a2d6cf0",
+      "words": 1313
+    },
+    {
+      "path": "SOURCE-READBACK.json",
+      "size_bytes": 7949,
+      "sha256": "c5cfb3e403def9de524ffb397bcd2feebb3de17e9ae4d1eb9b553cf78bdc6329"
+    },
+    {
+      "path": "progress.jsonl",
+      "size_bytes": 4190,
+      "sha256": "0f1f92430d05676a9746358aef2f0c33ecee87e937ec7b48eb90c2894334e74c"
+    }
+  ]
+}

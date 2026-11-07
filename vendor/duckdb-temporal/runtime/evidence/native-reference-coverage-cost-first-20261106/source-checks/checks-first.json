@@ -1,0 +1,59 @@
+{
+  "schema": "td.reference-coverage-cost-source-checks/1",
+  "sourceCommit": "cf7f0d86645383944cac77c2f49e331428c75a33",
+  "status": "passed",
+  "checks": [
+    {
+      "command": [
+        "<pinned-node-installation>/bin/node",
+        "--check",
+        "adapter/benchmark-reference-coverage-cost.mjs"
+      ],
+      "startedUtc": "2026-11-06T11:01:26.228325+00:00",
+      "completedUtc": "2026-11-06T11:01:26.258222+00:00",
+      "elapsedMs": 29.810457956045866,
+      "code": 0,
+      "stdout": "syntax-1-first.stdout.log",
+      "stderr": "syntax-1-first.stderr.log"
+    },
+    {
+      "command": [
+        "<pinned-node-installation>/bin/node",
+        "--check",
+        "adapter/reference-coverage-cost-fixture.mjs"
+      ],
+      "startedUtc": "2026-11-06T11:01:26.258291+00:00",
+      "completedUtc": "2026-11-06T11:01:26.286679+00:00",
+      "elapsedMs": 28.417999856173992,
+      "code": 0,
+      "stdout": "syntax-2-first.stdout.log",
+      "stderr": "syntax-2-first.stderr.log"
+    },
+    {
+      "command": [
+        "<pinned-node-installation>/bin/node",
+        "--check",
+        "adapter/test-reference-coverage-cost-fixture.mjs"
+      ],
+      "startedUtc": "2026-11-06T11:01:26.286724+00:00",
+      "completedUtc": "2026-11-06T11:01:26.314435+00:00",
+      "elapsedMs": 27.764708967879415,
+      "code": 0,
+      "stdout": "syntax-3-first.stdout.log",
+      "stderr": "syntax-3-first.stderr.log"
+    },
+    {
+      "command": [
+        "<pinned-node-installation>/bin/node",
+        "--test",
+        "adapter/test-reference-coverage-cost-fixture.mjs"
+      ],
+      "startedUtc": "2026-11-06T11:01:26.314501+00:00",
+      "completedUtc": "2026-11-06T11:01:26.413342+00:00",
+      "elapsedMs": 98.89116697013378,
+      "code": 0,
+      "stdout": "pure-first.stdout.log",
+      "stderr": "pure-first.stderr.log"
+    }
+  ]
+}

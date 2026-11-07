@@ -1,0 +1,45 @@
+{
+  "schema": "td.native-writer-broad-postack-audit/1",
+  "recordedAtUtc": "2026-11-06T07:21:11.254111+00:00",
+  "status": "PASS",
+  "rules": "latest K >= public ACK frontier at invocation; all K <= issued-write frontier at returned-public-call bound; explicit fixed K remains39087",
+  "roles": {
+    "sdk_control": {
+      "latestChecked": 272,
+      "fixedChecked": 80,
+      "nativeAcknowledgements": 50,
+      "consecutivePositionsAndIndices": true,
+      "uniqueNativeEntitiesAndCommandIds": true,
+      "postAckFrontierViolations": 0,
+      "issuedFrontierViolations": 0,
+      "full10sAckWindows": [
+        7,
+        8,
+        9,
+        8,
+        9,
+        8
+      ],
+      "rawSha256": "719be7553d13d5c85b3326b4eaddf6467e591e2d1b2094bdbc3a32686ae1c217"
+    },
+    "cpp_candidate": {
+      "latestChecked": 273,
+      "fixedChecked": 80,
+      "nativeAcknowledgements": 1163,
+      "consecutivePositionsAndIndices": true,
+      "uniqueNativeEntitiesAndCommandIds": true,
+      "postAckFrontierViolations": 0,
+      "issuedFrontierViolations": 0,
+      "full10sAckWindows": [
+        186,
+        197,
+        201,
+        203,
+        187,
+        188
+      ],
+      "rawSha256": "6982ce846138e242cd4fddfd6edf6ac000c5c3a766da07e9cdb208be9181e74b"
+    }
+  },
+  "limitation": "Public call offsets include queue/transfer; this is temporal visibility evidence, not native execution-overlap or commit-phase timing."
+}

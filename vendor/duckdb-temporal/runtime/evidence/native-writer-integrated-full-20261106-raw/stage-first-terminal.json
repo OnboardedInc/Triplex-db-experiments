@@ -1,0 +1,13 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/integration-native-writer-20261106-01/stage.py",
+    "--source-commit",
+    "1d6378e2c6e9b74b024fe5ba89c6b26355990dea"
+  ],
+  "pid": 38836,
+  "startedAtUtc": "2026-11-06T10:05:08.106459+00:00",
+  "exitedAtUtc": "2026-11-06T10:05:13.154425+00:00",
+  "exitCode": 0,
+  "elapsedMs": 5047.812958015129
+}

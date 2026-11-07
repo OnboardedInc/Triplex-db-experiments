@@ -1,0 +1,8 @@
+{
+  "remote_commit": "e42a8adc0f6f6f3c0b4eca903016a61bab4c3f67",
+  "local_commit": "78d157ee688058e324735141ab3157d9d7c10445",
+  "exact_source_tree": "58931fcd2e09776f55bdf87f965540de1cbcc7df",
+  "remote_source_tree": "58931fcd2e09776f55bdf87f965540de1cbcc7df",
+  "verified_240_source_files": true,
+  "purpose": "Local immutable baseline before iteration2; source bytes and remote refs unchanged"
+}

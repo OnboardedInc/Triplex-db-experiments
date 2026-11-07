@@ -1,0 +1,45 @@
+{
+  "schema": "td.native-batch-recovery-qualification/1",
+  "observed_utc": "2026-11-05T19:22:26Z",
+  "tested_source": "fddd0f7f96f0be8ab82477c61e65f9b455ad7cd8",
+  "result": "PASS",
+  "platform": "macOS arm64",
+  "artifact": {
+    "extension_version": "0.27.0",
+    "core_sha256": "8c30aae8062716edebcddcdf62266b496000672b537ab4fbfcfad55181718231",
+    "owner_sha256": "3e9327da24f48a653703c50879a1f2e23a51cbad5c3aae4dd8db8fbce7eec347",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "compiled_test_sha256": "f7ac891743fbfb45f4496baa3694e76ad7e32adeb8a52c6e32b988b73b872727"
+  },
+  "gate": {
+    "typecheck": "PASS",
+    "pass": 2,
+    "fail": 0,
+    "skip": 0,
+    "elapsed_ms": 6143.124333,
+    "command": "node --test --test-concurrency=1 --test-reporter=tap build/adapter/test-batch-recovery.js",
+    "tap_sha256": "813094a03e15ccfc7eb3c77d04246cc9b7a582539bba64b61c61860079ae80ae"
+  },
+  "backup": {
+    "format": 9,
+    "revision": 3,
+    "checkpoint_position": 2,
+    "retained_assertions": 32,
+    "interval_provenance_rows": 16,
+    "cut_oracles": 36,
+    "sha256_source_and_backup_before_and_after": "6e290851d3ae91e0c53277c0812bb1b82f162859f465e1f1a4735377c4fd8f68",
+    "procedure": "Drain and close store, execute CHECKPOINT through the owned port, close the port, require WAL absence, and copy to exclusive backup and restore paths.",
+    "reopened_target": "Matched typed history and receipts, replayed both original batch commands exactly, and persisted the healthy next write at position 3."
+  },
+  "torn_wal": {
+    "failpoint": "PRAGMA debug_checkpoint_abort='before_wal_flush'",
+    "phase": "After writing uncommitted WAL records and before WAL_FLUSH, during explicit COMMIT.",
+    "observed_wal_bytes": 12224,
+    "observed_wal_sha256": "1c08cc5a6a0290d2d63a0e3db55fc32eb2c08594a4cf267475f2d9e9d1f0a4e9",
+    "reopened_target": "Matched the last committed history and 36 typed cuts, excluded the interrupted receipt, and matched the staged receipt on exact retry at position 3."
+  },
+  "open_failure_modes": [
+    "Filesystem ENOSPC on database or WAL write",
+    "Native batch spill quota exhaustion"
+  ]
+}

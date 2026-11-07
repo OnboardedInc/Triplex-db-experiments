@@ -1,0 +1,103 @@
+{
+  "schema": "goal4.research.local-sources/1",
+  "utc": "2026-10-31T16:25:58.491685+00:00",
+  "published_branch": "dot/temporal-datalog-prototype-20261030",
+  "published_head": "52b1e81f1d71590bdefb376e62924c9f717d4344",
+  "snapshot_manifest_sha256": "5e30c8b2dfaaac103c647a42440fb7d6c39d83846cc107913452b4e62db2c384",
+  "records": [
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/storage/planner_v1.py",
+      "published_path": "storage/planner_v1.py",
+      "bytes": 36205,
+      "sha256": "d95145f39b214b61f7acfc9ad0fd682a42e72362321302183ea76ac20b5548f4",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/storage/typed_store.py",
+      "published_path": "storage/typed_store.py",
+      "bytes": 37740,
+      "sha256": "7edd1b26428b60268c2d677e1cea8efe2635b1f850b3b02fd641e2e3f7b59a87",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_plan_ir.hpp",
+      "published_path": "engine/src/temporal_plan_ir.hpp",
+      "bytes": 1895,
+      "sha256": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_core.cpp",
+      "published_path": "engine/src/temporal_core.cpp",
+      "bytes": 41463,
+      "sha256": "c583da8f2d885b28396e74771697601b6ba1a33828690ebdd62a95b33653be84",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_typed_core.hpp",
+      "published_path": "engine/src/temporal_typed_core.hpp",
+      "bytes": 1698,
+      "sha256": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_expression.hpp",
+      "published_path": "engine/src/temporal_expression.hpp",
+      "bytes": 7310,
+      "sha256": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_value_domain.hpp",
+      "published_path": "engine/src/temporal_value_domain.hpp",
+      "bytes": 8863,
+      "sha256": "e41516e1c8b761b25935049fbb19e75ebca0789c2b95b6d4cfbd65cea6409a63",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/ITERATION-02.md",
+      "published_path": "engine/ITERATION-02.md",
+      "bytes": 17213,
+      "sha256": "77ed4f1f2ae24a98d1ef9b0810e11db97dc6b67ad134e7e50f51f14ae4a68a58",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/SOURCES.md",
+      "published_path": "engine/SOURCES.md",
+      "bytes": 3635,
+      "sha256": "2368a2ed3d2f1cf4d16acc19ef43a195e305973a2ef9164249f882910beff291",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/README.md",
+      "published_path": "README.md",
+      "bytes": 12763,
+      "sha256": "768c6e192e8830bd651b4ab5b136364a3df95eb6677229c8dc43ba60e1b2031b",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/README.md",
+      "published_path": "engine/README.md",
+      "bytes": 8776,
+      "sha256": "38dbe5501b53446da4a3cd020e324d3bcfa32de864cb7ccda12e57817b7ae84f",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/storage/README.md",
+      "published_path": "storage/README.md",
+      "bytes": 10877,
+      "sha256": "36ed250d9778bbe7a920e799fbeba41493fb36e75a324c0eca1a6f26e65b8af8",
+      "status": "read-only narrow source inspection; no execution"
+    },
+    {
+      "path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_datalog.cpp",
+      "published_path": "engine/src/temporal_datalog.cpp",
+      "bytes": 23210,
+      "sha256": "651af8794e68eecebb73ac0762db27f56c47aea9b438feef80284b1e378f2629",
+      "status": "read-only narrow source inspection; no execution"
+    }
+  ],
+  "notes": [
+    "engine/README.md includes historical stable-v1 text; current selected API was established from root README, engine/SOURCES.md and actual temporal_datalog.cpp v2 binding, not inferred from that old section."
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "schema": "td.dag-single-update-overhead-review/1",
+  "result": "NO_PROMOTION",
+  "nativeSource": "5168fb6a",
+  "focusedTestSource": "d5bc54de",
+  "focusedChecks": 6,
+  "fullVerifierOnThisOptimizedNativeSource": "UNRUN",
+  "coreSha256": "4f05f6726102cec13e8b4715397e6112198c0a440aa3e87ae5b21de47b13fd9e",
+  "rawEvidence": {
+    "worktree": "temporal-combined-030-20261105",
+    "file": "build/dag-single-update-033-20261105/paired.json",
+    "sha256": "c46551e04c2a0ee1100439a0727a476f71698ebe5bbf5c0eff1649fe967f51e5"
+  },
+  "exactCanonicalSha256": "5d8babf0297e5525bf14f75f828a2cb4e635253b21f01ae86b1dc21833ab68c8",
+  "all4RecordedRuntimePinsUnchanged": true,
+  "checks": [
+    {
+      "pair": 0,
+      "kind": "writes",
+      "quantile": "p50",
+      "ratio": 1.388976827949563,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "kind": "writes",
+      "quantile": "p95",
+      "ratio": 1.1747591023286106,
+      "maximum": 1.15,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "kind": "put",
+      "quantile": "p50",
+      "ratio": 1.3220101975448808,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "kind": "put",
+      "quantile": "p95",
+      "ratio": 1.3446208562782176,
+      "maximum": 1.15,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "kind": "patch",
+      "quantile": "p50",
+      "ratio": 1.1693187571858163,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "kind": "patch",
+      "quantile": "p95",
+      "ratio": 1.1699318135087564,
+      "maximum": 1.15,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "kind": "populatedOpen",
+      "quantile": "p50",
+      "ratio": 1.0842303028371174,
+      "maximum": 1.15,
+      "passed": true
+    },
+    {
+      "pair": 1,
+      "kind": "writes",
+      "quantile": "p50",
+      "ratio": 1.486101265405439,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "kind": "writes",
+      "quantile": "p95",
+      "ratio": 1.1577998907028024,
+      "maximum": 1.15,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "kind": "put",
+      "quantile": "p50",
+      "ratio": 1.3218099989385406,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "kind": "put",
+      "quantile": "p95",
+      "ratio": 1.2485369247726552,
+      "maximum": 1.15,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "kind": "patch",
+      "quantile": "p50",
+      "ratio": 1.1662992983367544,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "kind": "patch",
+      "quantile": "p95",
+      "ratio": 1.1451519457969066,
+      "maximum": 1.15,
+      "passed": true
+    },
+    {
+      "pair": 1,
+      "kind": "populatedOpen",
+      "quantile": "p50",
+      "ratio": 1.0695922682077506,
+      "maximum": 1.15,
+      "passed": true
+    }
+  ],
+  "passed": 3,
+  "failed": 11,
+  "decision": "No promotion; preserve both failed implementations. Prepared-plan boundary investigation is source-only and deferred during the common concurrent-ingestion cohort."
+}

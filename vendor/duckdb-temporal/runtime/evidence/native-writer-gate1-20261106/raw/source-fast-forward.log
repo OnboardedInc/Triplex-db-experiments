@@ -1,0 +1,11 @@
+Updating 05cfbda1..74467cb0
+Fast-forward
+ .../runtime/adapter/test-native-writer-controls.ts | 190 +++++++++++++++++++++
+ .../runtime/adapter/test-native-writer-delivery.ts | 101 +++++++++++
+ .../first.tap                                      |  17 ++
+ .../receipt.json                                   | 139 +++++++++++++++
+ 4 files changed, 447 insertions(+)
+ create mode 100644 projects/temporal-datalog/runtime/adapter/test-native-writer-controls.ts
+ create mode 100644 projects/temporal-datalog/runtime/adapter/test-native-writer-delivery.ts
+ create mode 100644 projects/temporal-datalog/runtime/evidence/native-writer-factory-targeted-20261106/first.tap
+ create mode 100644 projects/temporal-datalog/runtime/evidence/native-writer-factory-targeted-20261106/receipt.json

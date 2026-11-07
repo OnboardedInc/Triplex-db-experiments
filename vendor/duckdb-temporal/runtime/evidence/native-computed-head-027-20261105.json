@@ -1,0 +1,69 @@
+{
+  "schema": "td.native-computed-head-qualification/1",
+  "observed_utc": "2026-11-05T19:31:11Z",
+  "tested_source": "74fd07aa39e97a4c0361c4ea1c4d69bdc15564ad",
+  "result": "PASS",
+  "artifact": {
+    "extension_version": "0.27.0",
+    "platform": "macOS arm64",
+    "core_sha256": "75c83fd71595a091973ffb7b53c5fdf873bf4617d12ddbb6f490f583517f6842",
+    "owner_sha256": "c56f29f5dd51a418a78283507ab140a03a29f7240e2eb8c3d2d09381db4ec417",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_sha256": "efc3e8225da5a76f0835a27c381cadc3d95961edde4869af966532a00df34fbe",
+    "compiled_test_sha256": "b817acc9da04307e722f97569afbff08e1df85f3729196571aba1f3d210ecf5e"
+  },
+  "public_gate": {
+    "typecheck": "PASS",
+    "pass": 4,
+    "fail": 0,
+    "skip": 0,
+    "elapsed_ms": 1633.460084,
+    "tap_sha256": "2030a66b6684e3548662df57f2a3587f4ce121de0ec6de778d8a00f9ce57cea5",
+    "test": "node --test --test-concurrency=1 --test-reporter=tap build/adapter/test-computed-head.js"
+  },
+  "refund_workload": {
+    "runner_source": "05e6108898278432b22241841cf877b8447a9dc2",
+    "packet_sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "raw_receipt_sha256": "496f0caba0c8132d165939d728f077638fc7d4d9672fff3c8b766615c62d98c4",
+    "workload_id": "08",
+    "samples": 1,
+    "warmup": 0,
+    "cases": 3,
+    "passed_engine_cases": 9,
+    "successful_reopens": 3,
+    "native": [
+      {
+        "id": "net700",
+        "known_at": "3",
+        "valid_at": "30",
+        "value_i64": "700",
+        "reason": "bounded_native_store"
+      },
+      {
+        "id": "one-refund",
+        "known_at": "2",
+        "valid_at": "30",
+        "value_i64": "900",
+        "reason": "bounded_native_store"
+      },
+      {
+        "id": "no-refunds",
+        "known_at": "1",
+        "valid_at": "30",
+        "value_i64": "1000",
+        "reason": "bounded_native_store"
+      }
+    ]
+  },
+  "legacy_ir": {
+    "archived_core_sha256": "47f2775c53267dc4ad4645ed03324e22d5121304f8cbd4a091dc7307814c9340",
+    "versions": [
+      "v1",
+      "v2"
+    ],
+    "byte_identical_outputs": 11,
+    "comparison_log_sha256": "d387b0f996d1348d3aa8a196f00265e714f8e3cae71ac23efb1fafed1eb2bbd2",
+    "scope": "Facts, relational rules, eager filters, recursion, negation and aggregates. Legacy public IR kept its four-tag grammar."
+  },
+  "qualification_scope": "Bounded native projection and small exact refund workload screen."
+}

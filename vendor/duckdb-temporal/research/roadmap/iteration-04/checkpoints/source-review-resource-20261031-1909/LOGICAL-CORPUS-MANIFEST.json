@@ -1,0 +1,301 @@
+{
+  "utc": "2026-10-31T19:10:00.940731+00:00",
+  "scope": "NEW item4 source review/resource research only",
+  "source_commit": "09138d32a31fec5c9812b7cf239a60447afcd453",
+  "selected_contract_main": "6d7f2a89ad1ba9ac0f83fd2d3bb5fa0a58e39022",
+  "corpora": [
+    {
+      "corpus": "core-review",
+      "source_folder": ".agent-logs/goal4-core-review/revision-001",
+      "logical_files": 13,
+      "logical_bytes": 87427,
+      "files": [
+        {
+          "path": "FINAL-CORE-REVIEW.md",
+          "bytes": 12423,
+          "sha256": "8d7be0f4a6598d197c8e8f535a518804f717d74a5675b9d223e26d65e1678ea3"
+        },
+        {
+          "path": "INPUT-READ-IDENTITIES.tsv",
+          "bytes": 5392,
+          "sha256": "f5c2728e12c83673caecd1f1548244a370a038042f371069bb54258c2fcdafc3"
+        },
+        {
+          "path": "OUTPUT-MANIFEST.tsv",
+          "bytes": 1200,
+          "sha256": "41ac5cca308e58beaa9f9a407179a60be700f38d4d860ed78dac8511d8e0aad9"
+        },
+        {
+          "path": "REVIEW-CHECKLIST.md",
+          "bytes": 2123,
+          "sha256": "bae92df6fbc1258d561be4a33e0240bf65e30c83e6ad23d814c687e82587002a"
+        },
+        {
+          "path": "REVIEW-EVIDENCE.json",
+          "bytes": 916,
+          "sha256": "4c45c669816102b6d09d6b21c2f89b6f2f746cf72d57b63034018a27db20926b"
+        },
+        {
+          "path": "REVIEW-FROZEN-READY.json",
+          "bytes": 520,
+          "sha256": "c8bbd1207d2d7329d024ad4a1f47ef77829fc4960cdf59f772f7619923b4f7d4"
+        },
+        {
+          "path": "baseline-read-identities.sha256",
+          "bytes": 1046,
+          "sha256": "c625cac8ac5e2c3a138a81a95eed19b4e21ef773f93224c07d04f34f6d872bf8"
+        },
+        {
+          "path": "contract-read-identities.sha256",
+          "bytes": 1285,
+          "sha256": "aa2da4221bbcaa16909b1ddba3da6479194e6654b7012554cb40ae2b8904d4d7"
+        },
+        {
+          "path": "core-source52-to-freeze002.diff",
+          "bytes": 53307,
+          "sha256": "f81dc7211934261981356df2d0086df99cc22941ee228c3724fe77a6817c43a6"
+        },
+        {
+          "path": "legacy-fragment-comparisons-attempt-invalid.tsv",
+          "bytes": 2052,
+          "sha256": "96b8e2de5cc92d811bbf7fa97e095e490ff5fbf85c914933e42b11d6e603413f"
+        },
+        {
+          "path": "legacy-fragment-comparisons.tsv",
+          "bytes": 2107,
+          "sha256": "c696c6bce840aa73bb36aec7ad7d0a929703ace7ec80bfe79cb4aa743775ff19"
+        },
+        {
+          "path": "progress.jsonl",
+          "bytes": 4755,
+          "sha256": "04980a9d53b9949715ac96462ecf3a8c1cbe5df914587a728d416fc3dc1c6425"
+        },
+        {
+          "path": "released-header-read-identities.sha256",
+          "bytes": 301,
+          "sha256": "f10b3dff9f833fe04b058395584067615238b2895c5504b57861aa6d5b49b2ad"
+        }
+      ]
+    },
+    {
+      "corpus": "binding-review",
+      "source_folder": ".agent-logs/goal4-binding-review/revision-001",
+      "logical_files": 9,
+      "logical_bytes": 45016,
+      "files": [
+        {
+          "path": "BINDING-CORRECTION-002-CHECK.json",
+          "bytes": 2660,
+          "sha256": "0477a8e82777864842ee5018e3e1bc16afe92ed4ec60aecc0f7e9ff4875f6e4a"
+        },
+        {
+          "path": "FINAL-READBACK.json",
+          "bytes": 1411,
+          "sha256": "b7d86922ac87daad0618de5aa05f259d2436b06e3bf19abb0e9fe4f857e6183f"
+        },
+        {
+          "path": "HEADER-SUPERSESSION-CHECK.json",
+          "bytes": 966,
+          "sha256": "b0a821affc88c03937bceba5600dd2576302f85d5fb8fea78fc4c97a2e1cfddb"
+        },
+        {
+          "path": "INITIAL-REVIEW-BINDING-001.md",
+          "bytes": 11802,
+          "sha256": "507a3755611bb557ebd58ef9fd0471cdc59676b6da789fabf57b88a8196b4fac"
+        },
+        {
+          "path": "READ-IDENTITIES.json",
+          "bytes": 13496,
+          "sha256": "6e20e8f1e7ede3f5551a2e3a955700db0248c2b97ba566206a9bc39b139cb5b5"
+        },
+        {
+          "path": "REVIEW-EVIDENCE-MANIFEST.json",
+          "bytes": 2558,
+          "sha256": "98fc91cc3fab92347f1e3f940ed381a4d05d43b989a77bf20a03973516ee0781"
+        },
+        {
+          "path": "REVIEW.md",
+          "bytes": 5646,
+          "sha256": "b0c646444937d3839260ba791d6e62e78040ecb9850a041a2c15bb06bfe6c316"
+        },
+        {
+          "path": "STATIC-TEXT-CHECKS.json",
+          "bytes": 3828,
+          "sha256": "1fb05799ba460ff31f7e84a2c23613058006834bd5fe3b8d9afd7c7c755ade00"
+        },
+        {
+          "path": "progress.jsonl",
+          "bytes": 2649,
+          "sha256": "818bf1a35a1f96351bc204c74f49e04ea4e309a9833f89953bd7e9917f1a2a61"
+        }
+      ]
+    },
+    {
+      "corpus": "export-review",
+      "source_folder": ".agent-logs/goal4-export-review/revision-001",
+      "logical_files": 8,
+      "logical_bytes": 36806,
+      "files": [
+        {
+          "path": "CORRECTION003-STATIC-CHECKS.json",
+          "bytes": 2882,
+          "sha256": "ae89d3e90a3c1b038e2c8ccce494a78f7f73ba2766aff3612a8e728224521862"
+        },
+        {
+          "path": "FINAL-READBACK.json",
+          "bytes": 1538,
+          "sha256": "3aabde7f59403ce6b5ad288a8104f0aac720088eeb1189225ce47caca1cbdf79"
+        },
+        {
+          "path": "INITIAL-REVIEW-EXPORT-002.md",
+          "bytes": 5411,
+          "sha256": "3bd6a57268ef7ea0fb6e51e0170f15b5336cbed3ac8dbadeb78676e253b6a6af"
+        },
+        {
+          "path": "READ-IDENTITIES.json",
+          "bytes": 8187,
+          "sha256": "af8a1627b32878585f0c6183e2d5b164b67a889a2873266269fd68ae2b7088fb"
+        },
+        {
+          "path": "REVIEW-EVIDENCE-MANIFEST.json",
+          "bytes": 2637,
+          "sha256": "5bd6c789b08610110e52069d6778953e3928d7c83dd18247b02b7735acd85e05"
+        },
+        {
+          "path": "REVIEW.md",
+          "bytes": 7613,
+          "sha256": "6a3bb26008ce1a75603a296e8e8f5e6298a9de32fa7d290554b281ce9ecf5604"
+        },
+        {
+          "path": "STATIC-REVIEW-CHECKS.json",
+          "bytes": 5798,
+          "sha256": "8cdaf26f1e18f117c7f072b925adfcd7db204463c49ec5857065a502b3b3d228"
+        },
+        {
+          "path": "progress.jsonl",
+          "bytes": 2740,
+          "sha256": "07590575bcb1d8ef238be917baba7c03325f75b184a62ac29ed0b88cb8decbd0"
+        }
+      ]
+    },
+    {
+      "corpus": "resource-research",
+      "source_folder": ".agent-logs/goal4-execution-gate-research/revision-001",
+      "logical_files": 10,
+      "logical_bytes": 47913,
+      "files": [
+        {
+          "path": "CONTRACT-INPUTS.sha256",
+          "bytes": 663,
+          "sha256": "8babfc020be999cfeef6ac103f6558ab12ecd7d8e900b4bde5024dc6d94456a1"
+        },
+        {
+          "path": "ENVIRONMENT-SNAPSHOT.txt",
+          "bytes": 14637,
+          "sha256": "70675fd429c956d387162e0b41b112f2e4dec1c93cf1cd7e93cd10006fd4667e"
+        },
+        {
+          "path": "EXECUTION-TOOL-SCHEMAS.json",
+          "bytes": 3433,
+          "sha256": "0b08793c3fb944ad3fa0545bd68d30fc0ee02c997900cae3d85c3e8ac386e934"
+        },
+        {
+          "path": "FREEZE-VERIFICATION.json",
+          "bytes": 3960,
+          "sha256": "19aca83a29bb33c628d4264e8de769d8c55f949fec3453424980edd4ec066b88"
+        },
+        {
+          "path": "FROZEN-MANIFEST.sha256",
+          "bytes": 685,
+          "sha256": "3327647d051ebab47ba8c0def6eb4dce7af358ff0daf64787ddbb482c1395f93"
+        },
+        {
+          "path": "PROGRESS.md",
+          "bytes": 2469,
+          "sha256": "a67bd27efbea99cd28471908d6c28bcf5a55b2d4bd7cc222b9b9a408f1dd6135"
+        },
+        {
+          "path": "READ-CALLS.json",
+          "bytes": 3761,
+          "sha256": "73977b04a4fa07bb61abf0e0a2c3567779583932b76a47d26ce7815a785341bd"
+        },
+        {
+          "path": "REPORT.md",
+          "bytes": 11511,
+          "sha256": "f1a814d5b897090975b6d9e5303a726d396d7d2a76c02d0b6efe03a2554c57d2"
+        },
+        {
+          "path": "SHELL-DOCUMENTATION.md",
+          "bytes": 1284,
+          "sha256": "69ae897361e0c371c77b5708adc5ab1a1e7011abde52d4e0323e89f35782f5f2"
+        },
+        {
+          "path": "SOURCE-INVENTORY.md",
+          "bytes": 5510,
+          "sha256": "b77453aa8e628123ee493d82d3d31e20f4a8e80b3f1e9968c06bb461a70fd5ab"
+        }
+      ]
+    },
+    {
+      "corpus": "uid-namespace-review",
+      "source_folder": ".agent-logs/goal4-execution-gate-research/uid-namespace-review-001",
+      "logical_files": 9,
+      "logical_bytes": 40890,
+      "files": [
+        {
+          "path": "EXACT-CITATIONS.json",
+          "bytes": 11223,
+          "sha256": "459ecb3cf5f475281fbe756e02bb322e30b0bb0ee2ed6a0b4c6f223a3562e7e7"
+        },
+        {
+          "path": "FREEZE-VERIFICATION.json",
+          "bytes": 3858,
+          "sha256": "1635d1b998e20e8058c6c85352ea8fd4fc395742c8bad24511f9e3c438f2e1b1"
+        },
+        {
+          "path": "FROZEN-MANIFEST.sha256",
+          "bytes": 567,
+          "sha256": "8f965f1e99f21cb0c287e130576f437b198683f0c1f48b045ae6e504becc6262"
+        },
+        {
+          "path": "INPUTS.json",
+          "bytes": 800,
+          "sha256": "5da6dc8a148b5669107de1d3be7979b06c2867579822b72b83c7259047d7bd3d"
+        },
+        {
+          "path": "INPUTS.sha256",
+          "bytes": 416,
+          "sha256": "744774e13ad00a9472ac6ba1c5581e75d6571abf7e1b281ad91ea353ff5120c8"
+        },
+        {
+          "path": "PROGRESS.md",
+          "bytes": 2926,
+          "sha256": "1467a839b85431ced411b529d7bb025fee813bee0f00c68f9ece878eabeff24b"
+        },
+        {
+          "path": "READ-CALLS.json",
+          "bytes": 5817,
+          "sha256": "df4ef0a679acc5d54346b4fda3bdc59b5d466ee6f0592d296faee795323b19f5"
+        },
+        {
+          "path": "REPORT.md",
+          "bytes": 11378,
+          "sha256": "8efd69fe171ca7cd58ffa9e19d248478d260626999af3587753b91d329c592ea"
+        },
+        {
+          "path": "SOURCE-INVENTORY.md",
+          "bytes": 3905,
+          "sha256": "f6bc0c4d2cad951680fcba4dcaffbea37e6a04f3a43df44ee5f71b79b2a449d2"
+        }
+      ]
+    }
+  ],
+  "logical_files": 49,
+  "logical_bytes": 258052,
+  "all_restored_bytes_and_hashes_verified": true,
+  "source52_and_all_protected_artifacts_unchanged": true,
+  "stopped_item3_material_included": false,
+  "all_execution": "UNRUN; gate CLOSED",
+  "original_true_control": "UNATTEMPTED; premise unestablished, no tool denial",
+  "active_new_research_excluded_from_this_frozen_snapshot": true
+}

@@ -1,0 +1,52 @@
+{
+  "finishedAt": "2026-11-06T02:07:24.554368+00:00",
+  "sourceCommit": "2bb4ca2adb63c784e53b3d5c3b24664d3c5ed043",
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime",
+  "archiveManifestSha256": "8f1bfbcb69409f308a74a32a62f787693739798cc0c72df3710d92dba3798d71",
+  "archiveCount": 445,
+  "baselineArchiveAfterCount": 445,
+  "sourceAndRecipeAfterUnchanged": true,
+  "productionSdk": {
+    "native-entity.js": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+    "native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "sdkChain": {
+    "api": {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime/node_modules/@duckdb/node-api/lib/index.js",
+      "sha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+    },
+    "bindings": {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+      "sha256": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce"
+    },
+    "platform": {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+      "sha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+    },
+    "engine": {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+      "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    }
+  },
+  "checks": {
+    "typecheck": "pass",
+    "ownMethods": 5,
+    "independentMethods": 5,
+    "existingMethods": 27,
+    "failedFinal": 0
+  },
+  "sourceFiles": {
+    "adapter/native-entity.ts": "73615c1b50f1f48e83a563a0db724990eb9827dd5a4ff6fb39ba1ea9265bc6f0",
+    "adapter/test-sdk-admission.ts": "de6fd6cb4b3c37e5d694aa9ca15268cfa4d43f017bb8749b0f031b9461c81b9f",
+    "adapter/test-sdk-admission-independent.ts": "a2feb71443ed74c90cda745451685890257c80a6cfca3f8d0fe1b8f9f317fc31",
+    "adapter/test-readers.ts": "1b57be0dcf21cfcc5c1d38e3eca6d78259cf9c04066c9fcb2bf561c757b72c09",
+    "adapter/test-fatal.ts": "0462c3dc85c4cf94a046b7074ab6586d14fea37f0353bfc5346abe4651ffc5dc"
+  },
+  "freezeFirstDiagnostic": {
+    "status": "source-only packaging assertion",
+    "expectedCount": 445,
+    "observedCount": 405,
+    "fix": "Included40 unchanged native/build source-reference files from original archive/source; no runtime bytes changed"
+  }
+}

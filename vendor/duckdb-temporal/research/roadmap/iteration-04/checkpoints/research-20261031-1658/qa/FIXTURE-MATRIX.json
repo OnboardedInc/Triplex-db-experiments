@@ -1,0 +1,167 @@
+{
+  "kind": "Original proposed item4 QA obligations, not executable tests",
+  "status": "ALL UNRUN",
+  "oracle": "Independent tiny tagged-domain and stratum-assignment/naive model; not production helpers",
+  "cases": [
+    {
+      "id": "N01",
+      "focus": "defined-empty",
+      "obligation": "A defined but empty lower relation permits each positively bound nonmember; undefined lower name is separately rejected"
+    },
+    {
+      "id": "N02",
+      "focus": "no-positive-universe",
+      "obligation": "An empty positive person relation yields no people, even if all negative relations are empty"
+    },
+    {
+      "id": "N03",
+      "focus": "unsafe-neg-only-variable",
+      "obligation": "Reject a variable occurring only in a negative atom, whether or not projected in the head"
+    },
+    {
+      "id": "N04",
+      "focus": "ground-negative-only",
+      "obligation": "Evaluate one empty binding after lower completion; do not seed as an unconditional fact"
+    },
+    {
+      "id": "N05",
+      "focus": "self-negative-cycle",
+      "obligation": "Reject negative self edge even with a ground fact for the same predicate"
+    },
+    {
+      "id": "N06",
+      "focus": "mixed-sign-cycle",
+      "obligation": "Reject cycle with one negative edge and otherwise positive edges"
+    },
+    {
+      "id": "N07",
+      "focus": "unreachable-cycle",
+      "obligation": "An unused negative cycle remains statically invalid"
+    },
+    {
+      "id": "N08",
+      "focus": "positive-recursion-lower-negative",
+      "obligation": "Saturate recursive SCC with frozen completed lower negative inputs"
+    },
+    {
+      "id": "N09",
+      "focus": "completed-lower-positive",
+      "obligation": "Higher base rule sees full completed lower relation even after its delta was consumed"
+    },
+    {
+      "id": "N10",
+      "focus": "endpoint-not-path",
+      "obligation": "Reachability a-b-c with blocked b still permits endpoint c; do not push anti-filter into traversal"
+    },
+    {
+      "id": "N11",
+      "focus": "all-definitions",
+      "obligation": "A negated predicate with several defining rules is complete only after all definitions finish"
+    },
+    {
+      "id": "N12",
+      "focus": "filter-before-anti-zero",
+      "obligation": "A positive candidate with division by zero must still fault if a negative atom would reject it"
+    },
+    {
+      "id": "N13",
+      "focus": "filter-before-anti-type",
+      "obligation": "A relationally bound bool/string used in unsupported arithmetic faults; oracle must not prefilter its type"
+    },
+    {
+      "id": "N14",
+      "focus": "false-is-not-guard",
+      "obligation": "A false filter does not hide another filter fault or allow anti-probe to do so"
+    },
+    {
+      "id": "N15",
+      "focus": "head-already-present",
+      "obligation": "A previously derived/projected head does not permit skipping required filter faults"
+    },
+    {
+      "id": "N16",
+      "focus": "derived-safe-helper",
+      "obligation": "A distinct positive helper may remove bad arithmetic candidates; optimizer must not inline away this boundary"
+    },
+    {
+      "id": "N17",
+      "focus": "typed-identity",
+      "obligation": "bool true, i64 1, f64 1.0, and string1 are distinct negative keys"
+    },
+    {
+      "id": "N18",
+      "focus": "float-bits",
+      "obligation": "Finite subnormals survive anti-membership; canonical signed-zero identity matches existing admission"
+    },
+    {
+      "id": "N19",
+      "focus": "strings",
+      "obligation": "Admitted NUL-free UTF8 case, empty and non-ASCII strings retain exact byte identity; logical text/program NUL is rejected, including inactive retained history. Physical BLOB binary zeros are distinct from logical text."
+    },
+    {
+      "id": "N20",
+      "focus": "duplicates",
+      "obligation": "Duplicate retained facts and derivation paths do not become bag multiplicities or duplicate answers"
+    },
+    {
+      "id": "N21",
+      "focus": "repeated-variables",
+      "obligation": "Repeated variables/constant columns produce fully grounded complete tuple anti-keys"
+    },
+    {
+      "id": "N22",
+      "focus": "history-old-new",
+      "obligation": "The original correction fixture changes answer at valid4 across known2 versus known3"
+    },
+    {
+      "id": "N23",
+      "focus": "half-open-boundaries",
+      "obligation": "Original correction fixture at valid7 distinguishes old exclusive endpoint from replacement coverage"
+    },
+    {
+      "id": "N24",
+      "focus": "precommit-empty",
+      "obligation": "Known_at before positive membership is not an unbounded complement"
+    },
+    {
+      "id": "N25",
+      "focus": "same-point-all-strata",
+      "obligation": "No stratum repins a newer position or uses a cached relation from another valid/known pair"
+    },
+    {
+      "id": "N26",
+      "focus": "retained-invalid-invisible",
+      "obligation": "Malformed retained carrier data rejects even if invisible; all supplied row loading finishes before any rule evaluation/result. Per-row validation and visibility selection may interleave."
+    },
+    {
+      "id": "N27",
+      "focus": "native-vs-store-known",
+      "obligation": "Distinguish full int64 native point handling from store known_at0..snapshot_position admission"
+    },
+    {
+      "id": "N28",
+      "focus": "global-budgets",
+      "obligation": "Many small strata cannot each receive a fresh max_work/max_facts/dictionary budget"
+    },
+    {
+      "id": "N29",
+      "focus": "legacy-compatibility",
+      "obligation": "Old positive query and IR1 APIs/counters remain unchanged; no signed fields smuggled into strict schema1"
+    },
+    {
+      "id": "N30",
+      "focus": "rule-permutations",
+      "obligation": "Valid source rule/body order variants agree with independent naive oracle under generous budgets"
+    },
+    {
+      "id": "N31",
+      "focus": "stable-single-error",
+      "obligation": "Each single invalid class has stable selected diagnostic code without inventing multi-error precedence"
+    },
+    {
+      "id": "N32",
+      "focus": "catalog-quarantine",
+      "obligation": "New native-core evidence cannot certify item3 store/planner authority or activate SQL anti-joins"
+    }
+  ]
+}

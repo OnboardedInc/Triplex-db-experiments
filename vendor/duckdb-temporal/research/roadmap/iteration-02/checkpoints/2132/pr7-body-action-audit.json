@@ -1,0 +1,17 @@
+{
+  "submitted_at_utc": "2026-10-30T21:28:43.293Z",
+  "returned_at_utc": "2026-10-30T21:28:56.557Z",
+  "reread_at_utc": "2026-10-30T21:29:02.219Z",
+  "returned_updated_at": "2026-10-30T21:28:55Z",
+  "reread_updated_at": "2026-10-30T21:28:55Z",
+  "submitted_sha256": "f969f15cc07093111376b974f4c2f5b37d63f6c662db55758e2ae1cff9464198",
+  "submitted_bytes": 5421,
+  "head": "f9b61f11d481445cf06620368523d9a6180c8f89",
+  "base": "main",
+  "draft": true,
+  "body_equal_all": true,
+  "returned_sha256": "f969f15cc07093111376b974f4c2f5b37d63f6c662db55758e2ae1cff9464198",
+  "returned_bytes": 5421,
+  "reread_sha256": "f969f15cc07093111376b974f4c2f5b37d63f6c662db55758e2ae1cff9464198",
+  "reread_bytes": 5421
+}

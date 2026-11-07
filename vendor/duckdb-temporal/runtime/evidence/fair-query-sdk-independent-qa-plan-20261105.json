@@ -1,0 +1,42 @@
+{
+  "schema": "td.fair-query-sdk-independent-qa-plan/1",
+  "status": "SOURCE_ONLY_WAITING_ROOT_APPROVED_SDK_CONTRACT",
+  "implementationStarted": false,
+  "referenceNativeSource": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+  "frozenReference": "Existing fe9 helper, B source root and read-only f44/55/af archive remain byte unchanged. Test implementation uses a new isolated branch/worktree after approval.",
+  "coreTrace": {
+    "setup": "Fresh CoW fork of approved100k eight-type source; actual NativeEntityStore,16 readers,threads4,2GBmemory,4GBspill; define Probe and seed256entities via8native batches.",
+    "sourceDatabaseSha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "sourceRecipeSha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4",
+    "commands": "512 actual patchRecord commands: first set all256 i=0, then restore all256 i=1; every complete record retains probe_member=0 and the original valid interval.",
+    "independentOracle": "Own immutable event list plus Map replay; do not import benchmark antiJoinRowsAfter or derive expected values from stored assertions. At each returned K, replay the prefix and compare the complete typed entity set.",
+    "requiredCuts": ["initialProbeK: all256", "initialProbeK+256: empty", "initialProbeK+512: all256 restored"],
+    "readers": "16 closed-loop public readers continue until all512 writer acknowledgments; rotate latest and explicit historical cuts. Store bounded counters, not unbounded full-result samples.",
+    "clockAndReceipts": "Use actual acknowledged positions; verify consecutive native receipts,2asserted/2retracted each. Latest queries may observe committed K before ACK callback arrival; bound by issued events rather than last callback alone.",
+    "completion": "Compare post-ACK latest and all three exact cuts, presence/history/receipts as applicable, drained revalidation, close/reopen and old cuts again. Source fork never overwrites original.",
+    "bound": "Functional correctness/liveness trace, not a timed qualification or SLO. Proposed whole-test ceiling240s and controlled per-call budgets, pending contract approval. No throughput threshold invented."
+  },
+  "conditionMatrix": [
+    {"case":"v1 writer barrier and post-ACK","conditions":"Hold a real native patch before dispatch; invoke latest reads, then release. Separately invoke reads after actual ACK. Require prior submitted writes and exact old cuts; no stale A2-style contract change."},
+    {"case":"real heavy admission","conditions":"Hold three real SDK query result streams before transport consumption, submit thirteen further readers. Observe actual control scopes and connection IDs; do not fake owner or answers. Check maximum heavy scopes, accepted capacity and FIFO order under approved contract."},
+    {"case":"queued cancel/deadline isolation","conditions":"With three real scopes held, cancel or expire a queued request. Assert no token/interrupt on another invocation, no listener leak, settled capacity reusable and writer/healthy readers exact. Settlement timing awaits approved deadline contract."},
+    {"case":"active cancel and resource errors","conditions":"Cancel one real active query while another completes; trigger an actual native scale limit/static compile failure. Every admitted slot and connection must retire or recover exactly once, publish no partial result and allow healthy reuse."},
+    {"case":"bounded accepted queue","conditions":"Use maxQueuedReads0 and sixteen accepted callers under the approved counting definition; assert the seventeenth rejects, then queued cancellation/rejection permits a replacement without leaking capacity."},
+    {"case":"close and revalidate","conditions":"Three held active results plus thirteen accepted queue entries. Invoke close or revalidate; verify new requests reject, accepted work follows the existing approved drain contract, no deadlock, audit runs after drain and close retries retain original errors."},
+    {"case":"real cleanup failure","conditions":"Wrap real SDK close with one injected cleanup failure after actual query execution. Verify fenced port handling, no fair-slot leak, unaffected writer/healthy readers and eventual complete teardown; retain expected AggregateError."},
+    {"case":"method and small-read scope","conditions":"After scope approval, exercise query/native+SQL,queryScalable,queryIntervals,queryCuts,queryLookupAt under shared heavy pressure; verify at/history/receipt/presence/resource behavior and exact original result/error shapes."}
+  ],
+  "existingRegressionTranches": {
+    "targeted": ["adapter/test-readers.ts (10 methods)","adapter/test-control.ts (7 methods)","adapter/test-single-strategy.ts (2 existing ownership methods,unchanged)"],
+    "queryFamiliesAndTypes": ["adapter/test-store-query.ts","adapter/test-native-interval-query.ts","adapter/test-native-temporal-lookup.ts","adapter/test-native-datetime-reference.ts","adapter/test-native-json-blob.ts","existing scalable/aggregate/cut suites selected by actual API scope"],
+    "nativeWriteStability": "Existing2pruning+8interval+2independent interval oracle+6batch cases remain relevant; native core is frozen, no new hash formula copied into independent tests."
+  },
+  "contractDecisionsRequired": [
+    "Exact heavy method set and whether small stored reads/resourceStats consume heavy admission",
+    "Writer-barrier capture versus heavy queue versus physical lease placement; preserve v1 snapshot/post-ACK semantics",
+    "When timeoutMs starts and which waits consume it; queued abort settlement/error code and listener/control ownership",
+    "Total accepted-capacity semantics with maxQueuedReads and unchanged readerStats physical lease scope",
+    "Accepted queue drain on close/revalidate, failure cleanup, retry behavior and no pump deadlock while closed/revalidating"
+  ],
+  "testBoundary": "No implementation,compiler,engine or tests executed for this plan. Deterministic hooks only delay/observe real SDK work; test truth comes from the independent event trace. No unrelated goals or security investigation."
+}

@@ -1,0 +1,17 @@
+{
+  "archive": "fp-addendum.tar.gz",
+  "bytes": 23041,
+  "sha256": "077509101058b5639085890881f34b55225d525eee538a7426319d5c05e89b45",
+  "entries": 30,
+  "part_bytes": 30725,
+  "part_sha256": "e39a3362bf4c4a87ef4c9003e69bbdf154e8f7733b309b156dc4eafd16bfa2e9",
+  "all_text_only": true,
+  "extract_or_execute": false,
+  "parts": [
+    {
+      "path": "archive.b64",
+      "bytes": 30725,
+      "sha256": "e39a3362bf4c4a87ef4c9003e69bbdf154e8f7733b309b156dc4eafd16bfa2e9"
+    }
+  ]
+}

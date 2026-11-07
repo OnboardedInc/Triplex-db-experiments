@@ -1,0 +1,188 @@
+{
+  "schema": "td.native-writer-broad-role-checkpoint/1",
+  "status": "passed",
+  "atUtc": "2026-11-06T08:25:47.123713+00:00",
+  "role": "sdk_control",
+  "nodePid": 96731,
+  "wrapperPid": 96721,
+  "wrapperArgv": [
+    "<task-workspace>/.venv/bin/python",
+    "<writer-source-runtime>/build/native-writer-lab-broad-20261106/reverse-01/launcher.py",
+    "sdk_control"
+  ],
+  "wrapperPidSource": "Actual ready/exit parentPid; wrapper command from recorded launch, not an inferred native executor ID",
+  "terminal": {
+    "role": "sdk_control",
+    "pid": 96731,
+    "argv": [
+      "node",
+      "<qualified-build02-runtime>/adapter/benchmark-scale.mjs",
+      "--runtime",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+      "--sizes",
+      "10000000",
+      "--readers",
+      "1,4,16",
+      "--samples",
+      "5",
+      "--warmup",
+      "1",
+      "--writes",
+      "8",
+      "--group-size",
+      "256",
+      "--fixture-mode",
+      "mixed",
+      "--threads",
+      "4",
+      "--memory-limit",
+      "2GB",
+      "--max-temp-directory-size",
+      "4GB",
+      "--max-intermediate-bytes",
+      "4294967296",
+      "--duration-seconds",
+      "60",
+      "--read-duration-seconds",
+      "0",
+      "--max-writes",
+      "12000",
+      "--clone-database",
+      "<accepted-project-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "--clone-evidence",
+      "<accepted-project-runtime>/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "<writer-source-runtime>/build/native-writer-lab-broad-20261106/reverse-01/sdk_control/result.json"
+    ],
+    "startedAtUtc": "2026-11-06T08:20:58.296220+00:00",
+    "status": "terminal",
+    "exitCode": 0,
+    "exitedAtUtc": "2026-11-06T08:25:30.276297+00:00",
+    "elapsedMs": 272001.1422501411
+  },
+  "rawSha256": "51930789598609261e9c70bfd39f54a1633e4b8b59f8a898bb9a662f9a2f4434",
+  "exactSixImages": [
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+  ],
+  "routes": {
+    "nativeEnrollment": 11,
+    "nativeGenerated": 0,
+    "sdkGenerated": 78,
+    "errors": 0,
+    "unknown": 0
+  },
+  "afterCleanup": {
+    "liveHandles": 0,
+    "pendingCompletions": 0,
+    "asyncContexts": 0,
+    "asyncResources": 0,
+    "lifecycleOwners": 0
+  },
+  "clone": {
+    "path": "<qualified-build02-runtime>/build/scale-runs/20261106T082058426Z-df19056c/facts-10000000.duckdb",
+    "bytes": 3905433600,
+    "mtimeNs": "1793953530188438076",
+    "closedWithoutWal": true
+  },
+  "cells": [
+    {
+      "readers": 1,
+      "kind": "count",
+      "mixed": false,
+      "samples": 5,
+      "acks": 0,
+      "maxActive": 1
+    },
+    {
+      "readers": 1,
+      "kind": "grouped_count",
+      "mixed": false,
+      "samples": 5,
+      "acks": 0,
+      "maxActive": 1
+    },
+    {
+      "readers": 1,
+      "kind": "projection",
+      "mixed": false,
+      "samples": 5,
+      "acks": 0,
+      "maxActive": 1
+    },
+    {
+      "readers": 4,
+      "kind": "count",
+      "mixed": false,
+      "samples": 20,
+      "acks": 0,
+      "maxActive": 4
+    },
+    {
+      "readers": 4,
+      "kind": "grouped_count",
+      "mixed": false,
+      "samples": 20,
+      "acks": 0,
+      "maxActive": 4
+    },
+    {
+      "readers": 4,
+      "kind": "projection",
+      "mixed": false,
+      "samples": 20,
+      "acks": 0,
+      "maxActive": 4
+    },
+    {
+      "readers": 16,
+      "kind": "count",
+      "mixed": false,
+      "samples": 80,
+      "acks": 0,
+      "maxActive": 16
+    },
+    {
+      "readers": 16,
+      "kind": "grouped_count",
+      "mixed": false,
+      "samples": 80,
+      "acks": 0,
+      "maxActive": 16
+    },
+    {
+      "readers": 16,
+      "kind": "projection",
+      "mixed": false,
+      "samples": 80,
+      "acks": 0,
+      "maxActive": 16
+    },
+    {
+      "readers": 16,
+      "kind": "count",
+      "mixed": true,
+      "samples": 348,
+      "acks": 48,
+      "maxActive": 16
+    }
+  ],
+  "totalSamples": 663,
+  "mixedReads": 348,
+  "nativeACKs": 48,
+  "ackWindows": [
+    7,
+    8,
+    8,
+    8,
+    8,
+    8
+  ],
+  "latestFrontierViolations": [],
+  "finalK": "39135",
+  "typedAnswerProof": "Exact full tuples checked by unchanged public driver in flight; raw samples retain row counts, not complete answer tuples"
+}

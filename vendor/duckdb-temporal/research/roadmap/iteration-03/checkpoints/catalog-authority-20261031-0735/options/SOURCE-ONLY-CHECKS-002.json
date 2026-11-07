@@ -1,0 +1,40 @@
+{
+  "schema": "td.catalog_contract_options_source_checks/2",
+  "utc": "2026-10-31T07:30:41.625518+00:00",
+  "scope": "stdlib file/receipt/source-link review only; no project imports/DB/native/FP/build/timing/runtime",
+  "primary_implementation_files": 58,
+  "primary_bytes": 2231926,
+  "unique_paths": 58,
+  "recorded_returned_blob_matches": true,
+  "pinned_report_source_links": 42,
+  "license_copy_exact_documented_appendedLF": true,
+  "first_check_failure_preserved": "SOURCE-ONLY-CHECK-001-FIRST-FAILURE.json (license-copy byte equality assumption, not app/engine failure)",
+  "frozen_app_sources": [
+    {
+      "path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/integration/candidate-002/storage/planner_v1.py",
+      "bytes": 36205,
+      "sha256": "d95145f39b214b61f7acfc9ad0fd682a42e72362321302183ea76ac20b5548f4",
+      "matches": true
+    },
+    {
+      "path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/integration/candidate-002/storage/typed_store.py",
+      "bytes": 37740,
+      "sha256": "7edd1b26428b60268c2d677e1cea8efe2635b1f850b3b02fd641e2e3f7b59a87",
+      "matches": true
+    },
+    {
+      "path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/integration/candidate-002/storage/store.py",
+      "bytes": 15286,
+      "sha256": "10fe4928a74ac0230b07d4ea8871399651fcb82a54c43ffa94c47dfb350c6552",
+      "matches": true
+    }
+  ],
+  "v2_vendor_header": {
+    "path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/integration/candidate-002/engine/vendor/duckdb_extension_v2.h",
+    "bytes": 205461,
+    "sha256": "fa0871d3f5b8e5da9a686c019fcaf8210349440831d5e9228720cbba31ccaa51"
+  },
+  "v2_vendor_header_matches_exact_pinned_source": true,
+  "runtime_checks": "UNRUN_NOT_AUTHORIZED_IN_THIS_ROUND",
+  "conclusions": "A blocked on actual authority integration proof; B requires explicit changed property selection; no automatic implementation release"
+}

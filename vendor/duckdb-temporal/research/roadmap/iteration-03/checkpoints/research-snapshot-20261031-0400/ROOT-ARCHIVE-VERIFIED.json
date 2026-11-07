@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-31T04:05:50.040374+00:00",
+  "status": "PASS_RESTORED_RESEARCH_SNAPSHOT_ALL_103_MEMBERS",
+  "archive_sha256": "22a254e30fba599ff791d4e89d9b83c3211497ed8781f8b7454081eb23d80633",
+  "members": 103,
+  "bytes": 575075,
+  "all_safe_regular0644_UTF8_noNUL_exactlengthsha_uidgidmtime0": true,
+  "final_evidence_QA": "ONGOING_IN_DISTINCT_PATHS",
+  "architecture_selected": false,
+  "implementation_or_performance_execution": false
+}

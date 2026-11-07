@@ -1,0 +1,13 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/build/qualification-reference-coverage-policy-view-20261106-01/stage-selected.py"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+  "pid": 90598,
+  "startedAtUtc": "2026-11-06T12:05:59.265262+00:00",
+  "endedAtUtc": "2026-11-06T12:06:00.797603+00:00",
+  "exitCode": 0,
+  "elapsedMs": 1532.1878748945892,
+  "helperSha256": "ebac4aff2a49df9bde44e50afa5f1ed5d77cbe8c620fc62c6316511d3dd38ab6"
+}

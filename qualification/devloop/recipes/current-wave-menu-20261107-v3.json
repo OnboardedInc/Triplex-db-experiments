@@ -1,0 +1,548 @@
+{
+  "format": "triplex-current-wave-source-menu/2",
+  "at": "2026-11-07T09:49:00.390962+00:00",
+  "status": "PROPOSAL_ONLY_NO_ENQUEUE_CANCEL_OR_EXECUTION",
+  "stateRevisionObserved": 899,
+  "gateReferences": {
+    "duckLive": {
+      "path": "qualification/reviews/duckdb-withdrawal-final-independent.json",
+      "sha256": "ff48fe062632f2d22e6d9c373b1ca2585101a10af571818a5d7e3d2a057c706c",
+      "bytes": 4571
+    },
+    "duckA": {
+      "path": "qualification/reviews/duckdb-owner-a-packet142-v3-independent.json",
+      "sha256": "e382a6f84bb5a9af2438cf79b72270a94eacb48964c31fdd9d71cfaa99aabb56",
+      "bytes": 6842
+    },
+    "xtdbHandoff": {
+      "path": "qualification/reviews/xtdb-handoff-observed-focused-v2-independent.json",
+      "sha256": "b7f70eaf6a95313f31c4d90e0e7ed8f28ad30a2d03b11dea5ba97544fccd018c",
+      "bytes": 10680
+    },
+    "xtdbDriver": {
+      "path": "qualification/reviews/xtdb-driver-stages-observed-v1-trace-independent.json",
+      "sha256": "42f9bc798d7b0d4ccb4f07391aa189d6f58f0bb24cd0252fa612b425699bb081",
+      "bytes": 8267
+    },
+    "metadataTarget": {
+      "path": "qualification/reviews/configured-entity-xtdb-tiny-v4-terminal-independent.json",
+      "sha256": "a79d1ad96d80dc3b013cc181233e75f1a4ba08560ae6e8b45510a2c6543a95c1",
+      "bytes": 8076
+    },
+    "qFoundation": {
+      "path": "qualification/reviews/qlever-combined-final-functional-independent.json",
+      "sha256": "6ecc15a4c5baa771b2125ac64dc760f45b4121b64a4e79ddd86b30536f7418e5",
+      "bytes": 2692
+    },
+    "qLowercase": {
+      "path": "qualification/reviews/qlever-wrapper-lowercase-v1-actual-independent.json",
+      "sha256": "6580ccd8ee5735aff51f2d25e420654c0daf3f647a5d1d5c02ef153f333fe82b",
+      "bytes": 9533
+    },
+    "qMixed": {
+      "path": "qualification/reviews/qlever-wrapper-mixed-v1-actual-independent.json",
+      "sha256": "eadcbd398707d6483b24cc9583b8e0943fcb7777f4b3c10b30ffd45bb9089a6b",
+      "bytes": 24965
+    }
+  },
+  "sharedMechanisms": {
+    "duck-owner-combined-scope": {
+      "problem": "Measured duplicate complete owner activation around basis+answer",
+      "evidence": [
+        "duckA",
+        "duckLive"
+      ],
+      "mechanism": "Explicit optional same-bundle basis+answer scope, preserving native validation/ACK. Current isolated44+142 and194calls388\u2192194 scopes are functional mechanism evidence; acquired public resource contrasts remain separately open.",
+      "state": "ISOLATED_FUNCTIONAL_MECHANISM_OBSERVED_NOT_DEFAULT_NOT_PERFORMANCE"
+    },
+    "duck-owner-validated-epoch": {
+      "problem": "Same measured complete owner audit stage",
+      "evidence": [
+        "duckLive"
+      ],
+      "mechanism": "Reuse validation only under a proven unchanged native physical/catalog/context/mutation epoch; foreign writes and poison invalidate/fence. No validation obligation removed.",
+      "state": "SOURCE_ONLY_UNEXECUTED"
+    },
+    "duck-owner-complete-audit-cost": {
+      "problem": "Same measured complete owner audit stage",
+      "evidence": [
+        "duckLive"
+      ],
+      "mechanism": "Measure finer internal audit obligations, then reduce full-scan/planning cost while preserving every complete owner invariant. No cache/validation removal is presumed.",
+      "state": "SOURCE_ONLY_UNEXECUTED"
+    },
+    "xtdb-writer-one-shot-handoff": {
+      "problem": "20 repeated source identity callbacks for10-target correction",
+      "evidence": [
+        "xtdbDriver",
+        "xtdbHandoff"
+      ],
+      "mechanism": "One consumable\u226464KiB private transaction handoff with exact sourceK/id/scope/pending proof and fallback. Actual seven-case20\u219210 +44 accepted only on isolated builds; translated/native142 and calibrated load remain open.",
+      "state": "ISOLATED_FOCUSED_MECHANISM_OBSERVED_NOT_DEFAULT_NOT142_NOT_PERFORMANCE"
+    },
+    "xtdb-writer-native-document-key": {
+      "problem": "Same source identity lookup path",
+      "evidence": [
+        "xtdbDriver"
+      ],
+      "mechanism": "Keep the same20 callbacks and original predicates/overlay; add the existing complete native document key only after owning-writer/legacy coverage proves it. Measure any access benefit rather than infer it.",
+      "state": "SOURCE_ONLY_UNEXECUTED"
+    },
+    "xtdb-writer-target-prefetch": {
+      "problem": "Same bounded transaction target lookup path",
+      "evidence": [
+        "xtdbDriver"
+      ],
+      "mechanism": "Optional internal transaction-bounded target-ID prefetch, preserving operation order and current pending overlays; needs shared SPI/fallback and full byte/resource bounds. No whole-store host evaluation.",
+      "state": "SOURCE_ONLY_UNEXECUTED"
+    },
+    "q-text-native-evaluation": {
+      "problem": "Mixed ASCII/native Unicode ordering and STR ranges fail unchanged oracle",
+      "evidence": [
+        "qMixed",
+        "qLowercase"
+      ],
+      "mechanism": "Repair native semantic comparison/evaluation consistently with physical access/index interactions. Prove sort/filter/cursor agreement on fixed cuts; independently qualified lowercase wrapper-family repair is a separate prerequisite, not general collation acceptance.",
+      "state": "SOURCE_ONLY_UNEXECUTED_NATIVE_BINARY_OR_HELPER_CHANGE_NEEDS_NEW_GRANT"
+    },
+    "q-text-coherent-byte-vocabulary": {
+      "problem": "Same string semantic blocker",
+      "evidence": [
+        "qMixed"
+      ],
+      "mechanism": "Coherent byte-ordered vocabulary/comparator/index rebuild. Account for source/binary/index compatibility, backups/rebuild peaks, ingestion and all lexical identities. Do not toggle only one comparator or call current raw opaque ordering codepoint-correct.",
+      "state": "SOURCE_ONLY_UNEXECUTED_REBUILD_CAPACITY_UNKNOWN"
+    },
+    "q-text-schema-maintained-order-key": {
+      "problem": "Same string semantic blocker on schema-qualified query paths",
+      "evidence": [
+        "qMixed"
+      ],
+      "mechanism": "Schema-derived maintained scalar-order key with explicit helper/compiler mapping. Prove the encoded alphabet/order under actual ICU rather than assume hexadecimal or ASCII behaves correctly; charge transactional publication, history/retirement cuts, freshness, cursor identity, write amplification and storage. Arbitrary STR/native text stays unqualified.",
+      "state": "SOURCE_ONLY_UNEXECUTED_QUALIFIED_HELPERS_ONLY"
+    }
+  },
+  "lanes": [
+    {
+      "queryPath": "duckdb-datalog",
+      "foundation": "duckdb",
+      "menu": [
+        {
+          "id": "current-wave-20261107-duckdb-datalog-duck-owner-combined-scope",
+          "mechanismId": "duck-owner-combined-scope",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-duckdb-datalog-duck-owner-validated-epoch",
+          "mechanismId": "duck-owner-validated-epoch",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-duckdb-datalog-duck-owner-complete-audit-cost",
+          "mechanismId": "duck-owner-complete-audit-cost",
+          "runnable": false
+        }
+      ],
+      "sharedFoundationMeaning": "Sibling query paths share physical writes/history and the foundation reservation; these menu aliases do not create another engine/data copy.",
+      "gatesBeforeAnyPerformance": "Exact candidate semantics/publicbuild + applicable44/142 and new extension gates, read availability/writer liveness and lifecycle, then real matched adequate-sample calibration; no absolute SLA or adoption from one diagnostic.",
+      "id": "current-wave-20261107-duckdb-datalog",
+      "runnable": false
+    },
+    {
+      "queryPath": "xtdb-datalog",
+      "foundation": "xtdb",
+      "menu": [
+        {
+          "id": "current-wave-20261107-xtdb-datalog-xtdb-writer-one-shot-handoff",
+          "mechanismId": "xtdb-writer-one-shot-handoff",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-xtdb-datalog-xtdb-writer-native-document-key",
+          "mechanismId": "xtdb-writer-native-document-key",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-xtdb-datalog-xtdb-writer-target-prefetch",
+          "mechanismId": "xtdb-writer-target-prefetch",
+          "runnable": false
+        }
+      ],
+      "sharedFoundationMeaning": "Sibling query paths share physical writes/history and the foundation reservation; these menu aliases do not create another engine/data copy.",
+      "gatesBeforeAnyPerformance": "Exact candidate semantics/publicbuild + applicable44/142 and new extension gates, read availability/writer liveness and lifecycle, then real matched adequate-sample calibration; no absolute SLA or adoption from one diagnostic.",
+      "id": "current-wave-20261107-xtdb-datalog",
+      "runnable": false
+    },
+    {
+      "queryPath": "xtdb-native",
+      "foundation": "xtdb",
+      "menu": [
+        {
+          "id": "current-wave-20261107-xtdb-native-xtdb-writer-one-shot-handoff",
+          "mechanismId": "xtdb-writer-one-shot-handoff",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-xtdb-native-xtdb-writer-native-document-key",
+          "mechanismId": "xtdb-writer-native-document-key",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-xtdb-native-xtdb-writer-target-prefetch",
+          "mechanismId": "xtdb-writer-target-prefetch",
+          "runnable": false
+        }
+      ],
+      "sharedFoundationMeaning": "Sibling query paths share physical writes/history and the foundation reservation; these menu aliases do not create another engine/data copy.",
+      "gatesBeforeAnyPerformance": "Exact candidate semantics/publicbuild + applicable44/142 and new extension gates, read availability/writer liveness and lifecycle, then real matched adequate-sample calibration; no absolute SLA or adoption from one diagnostic.",
+      "id": "current-wave-20261107-xtdb-native",
+      "runnable": false
+    },
+    {
+      "queryPath": "qlever-datalog",
+      "foundation": "qlever",
+      "menu": [
+        {
+          "id": "current-wave-20261107-qlever-datalog-q-text-native-evaluation",
+          "mechanismId": "q-text-native-evaluation",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-qlever-datalog-q-text-coherent-byte-vocabulary",
+          "mechanismId": "q-text-coherent-byte-vocabulary",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-qlever-datalog-q-text-schema-maintained-order-key",
+          "mechanismId": "q-text-schema-maintained-order-key",
+          "runnable": false
+        }
+      ],
+      "sharedFoundationMeaning": "Sibling query paths share physical writes/history and the foundation reservation; these menu aliases do not create another engine/data copy.",
+      "gatesBeforeAnyPerformance": "Exact candidate semantics/publicbuild + applicable44/142 and new extension gates, read availability/writer liveness and lifecycle, then real matched adequate-sample calibration; no absolute SLA or adoption from one diagnostic.",
+      "id": "current-wave-20261107-qlever-datalog",
+      "runnable": false
+    },
+    {
+      "queryPath": "qlever-native",
+      "foundation": "qlever",
+      "menu": [
+        {
+          "id": "current-wave-20261107-qlever-native-q-text-native-evaluation",
+          "mechanismId": "q-text-native-evaluation",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-qlever-native-q-text-coherent-byte-vocabulary",
+          "mechanismId": "q-text-coherent-byte-vocabulary",
+          "runnable": false
+        },
+        {
+          "id": "current-wave-20261107-qlever-native-q-text-schema-maintained-order-key",
+          "mechanismId": "q-text-schema-maintained-order-key",
+          "runnable": false
+        }
+      ],
+      "sharedFoundationMeaning": "Sibling query paths share physical writes/history and the foundation reservation; these menu aliases do not create another engine/data copy.",
+      "gatesBeforeAnyPerformance": "Exact candidate semantics/publicbuild + applicable44/142 and new extension gates, read availability/writer liveness and lifecycle, then real matched adequate-sample calibration; no absolute SLA or adoption from one diagnostic.",
+      "id": "current-wave-20261107-qlever-native",
+      "runnable": false
+    }
+  ],
+  "mandatoryCorrectnessAndCapacityPrerequisites": [
+    {
+      "id": "current-20261107-historical-assertion-projection",
+      "source": "qualification/capacity/historical-assertion-metadata-v1/reproducers.json",
+      "state": "SOURCE_ONLY_A_AND_B_SEVEN_PURE_TESTS_UNEXECUTED",
+      "blocker": "metadataTarget",
+      "rule": "Tiny V4 strict FAIL stays unchanged. Larger configured-entity stages blocked until a NEW explicit qualified snapshot surface plus recipe/resource gates pass."
+    },
+    {
+      "id": "current-20261107-q-wrapper-public-qualification",
+      "state": "PREPARE_ONLY_NOT_DEFAULT",
+      "rule": "Same private adapter needs fresh unchanged44/translated142/native142 before even narrow integration. Lowercase17-pass does not close mixed/Unicode extension failures."
+    },
+    {
+      "id": "current-20261107-five-surface-calibration",
+      "state": "OPEN_BLOCKED_NOT_RUNNABLE",
+      "rule": "PHASE1 CALIBRATION: keep this GLOBAL objective OPEN; obtain three actual correct256-client capacity controls for EACH of the five query surfaces plus writer-progress evidence, then freeze the writer schedule/floor. Candidate runs and10k tail samples are NOT calibration prerequisites. PHASE2 COMPARISON/PROMOTION after calibration: at least three independent controls AND three independent candidates, with at least10000 observations per required class in each run, independently correct returned-cut results and matching runner/resource/cohort/profile identities. The existing600000ms load-duration cap/default timeout is not a minimum; a16RPS two-class workload needs1250s for10000 observations/class, so the current cap cannot supply that per-run comparison population without a separately reviewed extension or separately measured higher rate."
+    },
+    {
+      "id": "current-20261107-configured-capacity",
+      "state": "100K_AND10M_BLOCKED",
+      "rule": "Tiny8 remains strictfailed. Domain facts/presence/type versions/schema/commands/history/metadata/WAL/spill/rebuild/backup peaks remain separately charged before100k and10m admission."
+    }
+  ],
+  "oldQueuedPlaceholders": [
+    {
+      "id": "foundation-duckdb-public",
+      "enqueuedAt": "2026-11-06T22:33:09.163Z",
+      "manifestSha256": "9f893e3f7a5b2e43bb1f7751e516ae54e658fbb4ccf59c9a63c6a3e75c498f42",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-duckdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted. Narrow actual foundation/controller receipts replace this stale prerequisite envelope; full-goal/capacity qualification remains incomplete.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "foundation-xtdb-public",
+      "enqueuedAt": "2026-11-06T22:33:09.224Z",
+      "manifestSha256": "bf666f2184c34bfedb00068199916f89faddb8b157c6efed7d31edefc2900dbd",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-xtdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted. Narrow actual foundation/controller receipts replace this stale prerequisite envelope; full-goal/capacity qualification remains incomplete.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "foundation-qlever-public",
+      "enqueuedAt": "2026-11-06T22:33:09.281Z",
+      "manifestSha256": "51201cb4a9a00241b63c8f28ba4eea9d1deff0e962888f5c871faec9c9b828d7",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-qlever-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted. Narrow actual foundation/controller receipts replace this stale prerequisite envelope; full-goal/capacity qualification remains incomplete.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "controller-independent-review",
+      "enqueuedAt": "2026-11-06T22:33:09.343Z",
+      "manifestSha256": "60074c9ebfe9244b7e4fb6e7229f187a19ba608b2cbbc8f04003a6bd385d8512",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-duckdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted. Narrow actual foundation/controller receipts replace this stale prerequisite envelope; full-goal/capacity qualification remains incomplete.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "calibration-five-paths",
+      "enqueuedAt": "2026-11-06T22:33:09.407Z",
+      "manifestSha256": "2c5118a7d47574fef8157aafbfc06132bfadb78a8188de190ad2501f66c247e6",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-xtdb-native",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted. The calibration objective is still OPEN/BLOCKED, retained as a current cross-path milestone with all failed feasibility outcomes.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "xtdb-datalog-native-plan-shape",
+      "enqueuedAt": "2026-11-06T22:33:09.667Z",
+      "manifestSha256": "9c68d397d24d0afb599bd0de922150236e83b414cac9d83a8cdfcc2e5a25a6b1",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-xtdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "xtdb-datalog-source-reuse",
+      "enqueuedAt": "2026-11-06T22:33:09.730Z",
+      "manifestSha256": "2763c3d815fe422ebdee0a0fd730c14be50b1cbbeee7b8a160fe3ab342f65571",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-xtdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "xtdb-datalog-typed-projection",
+      "enqueuedAt": "2026-11-06T22:33:09.787Z",
+      "manifestSha256": "8aeece946e0ba41636c23b62ad3c16aa846572e67d4a40978c68759a2b989736",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-xtdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "qlever-datalog-translation-size",
+      "enqueuedAt": "2026-11-06T22:33:09.849Z",
+      "manifestSha256": "74b2f6ffdfc3157d72bd332c187588704500b2c4ac3391cb90f591605e2baf2f",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-qlever-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "qlever-datalog-typed-domain-pruning",
+      "enqueuedAt": "2026-11-06T22:33:09.909Z",
+      "manifestSha256": "d32c42e9b19c99b5f2cf408a42406c0a3a96d5f793fcb48fc14f788b505bbd61",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-qlever-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "qlever-datalog-narrow-source",
+      "enqueuedAt": "2026-11-06T22:33:09.975Z",
+      "manifestSha256": "125ae04c8c8de8e428bdb4efd8029b00527b80863402caedd5ae80d009cc9a3d",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-qlever-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "xtdb-native-authored-native-plan",
+      "enqueuedAt": "2026-11-06T22:33:10.038Z",
+      "manifestSha256": "de42d15e7df03c5cf0799b074067768e6137a6f0d2b4a5ef7ad83b0352185082",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-xtdb-native",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "xtdb-native-native-layout",
+      "enqueuedAt": "2026-11-06T22:33:10.099Z",
+      "manifestSha256": "4fab0ecbce6541b598b3c120e2e62a44770074c223f37bff129616d3c19e97f5",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-xtdb-native",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "xtdb-native-native-maintenance",
+      "enqueuedAt": "2026-11-06T22:33:10.160Z",
+      "manifestSha256": "d3fb8af7a411ff333073b7f850ff1c1d063c631846ec631664c8497f5a2388da",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-xtdb-native",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "qlever-native-authored-sparql-shape",
+      "enqueuedAt": "2026-11-06T22:33:10.228Z",
+      "manifestSha256": "50280c9f602deccb70c10fb17366412d83e355b6ecbb19f4baf6c2206834f81e",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-qlever-native",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "qlever-native-native-scan-strategy",
+      "enqueuedAt": "2026-11-06T22:33:10.291Z",
+      "manifestSha256": "8b53d474fb5080ea221fd9b566f7185575c408300d240c9d0b4c38a10ba69ec3",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-qlever-native",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "qlever-native-native-maintenance",
+      "enqueuedAt": "2026-11-06T22:33:10.371Z",
+      "manifestSha256": "8aac62cc537d4a516ff034360ac68ba2fd479f79f557d7fa3499a048e4c71a54",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-qlever-native",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "duckdb-owner-audit-a-read-scope",
+      "enqueuedAt": "2026-11-07T02:36:44.452Z",
+      "manifestSha256": "65ab208ca7e8da5a09d7983779355d1a745b4299a2c9b66f8e763114ca041175",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-duckdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "duckdb-owner-audit-b-read-epoch",
+      "enqueuedAt": "2026-11-07T02:36:44.522Z",
+      "manifestSha256": "aeedde83546601e819a5a2cae44531c2033cba4723f368672f34505ff97f70cc",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-duckdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "duckdb-owner-audit-c-complete-cost",
+      "enqueuedAt": "2026-11-07T02:36:44.592Z",
+      "manifestSha256": "d3aca58774d70a76e24bb41b46a6bfad75e44b10a2839d839f962c70872d1cd9",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-duckdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    },
+    {
+      "id": "duckdb-read-acquisition-withdrawal",
+      "enqueuedAt": "2026-11-07T02:36:44.659Z",
+      "manifestSha256": "0c4bc6e1a71e68cd3612afac77e84768f4a484b098451b8fc2b5b1a487cb9456",
+      "attempts": 0,
+      "command": null,
+      "proposedDisposition": "RETAIN_UNTIL_EXPLICIT_REPLACEMENTS_PUBLISHED_AND_REVIEWED",
+      "redirect": "current-wave-20261107-duckdb-datalog",
+      "reason": "Unexecuted execution-contract-required placeholder is superseded by current measured mechanism menus and named actual attempts; no historical PASS, grant or completed outcome is adopted. Scoped queued-withdrawal has actual independent acceptance; already-acquired standalone metadata interruption stays a separate open branch.",
+      "retirementPrecondition": "No cancellation until the exact replacement hypotheses AND still-open canonical prerequisites have actually been enqueued and verified. If this objective has no explicit published successor, retain this old queued placeholder."
+    }
+  ],
+  "operatingPolicy": [
+    "No old job becomes PASSED or overwritten. Retain every first/partial outcome and immutable envelope.",
+    "Root reviews dispositions before any canonical cancel-with-reason; no cancellation is executed by this source proposal.",
+    "New hypotheses are source-only, not fabricated runnable contracts; actual work needs exact inputs/oracle/resources and grant.",
+    "Preserve aged fairness of READY runnable jobs, at most3heavy systemwide and one canonical vector queue,50GBhard/46GBoperational owned storage. No blanket all-heavy serial performance rule.",
+    "Shared mechanisms may qualify sibling query paths independently while sharing a physical foundation; do not claim universal native/Datalog equivalence.",
+    "A native-backed assertion-view helper is its own declared SDK entrypoint, not Datalog-translator semantic or performance acceptance. Charge its native queries and decoding; sibling query paths require their own qualification.",
+    "No600s minimum is claimed. Use actual3-run/10000-per-required-class sample gates;600000ms currently limits duration/default timeout. Correct source proposals never retroactively strengthen old diagnostics."
+  ],
+  "supersedes": {
+    "path": "qualification/devloop/recipes/current-wave-menu-20261107.json",
+    "sha256": "e3089829f6fbc97f01e6691004c518cca64d8538d8fe2dafa66e42d12bce5e36",
+    "scope": "The old source proposal remains unchanged but its phrase existing600s promotion policy was false. This successor is the current source menu; it is not enqueued or an execution grant."
+  },
+  "policyCorrection": {
+    "minimumIndependentMatchedRuns": 3,
+    "minimumObservationsPerRequiredClassPerRun": 10000,
+    "writerFloor": "Calibrate and freeze; no invented absolute SLA or zero-progress waiver.",
+    "noMinimumDurationSeconds": true,
+    "duration600000Milliseconds": "Existing load-runner maximum and default job timeout, not a source-enforced promotion minimum.",
+    "sourceReferences": [
+      "qualification/devloop/policy.json:23-24",
+      "qualification/devloop/compare.mjs:159-169"
+    ],
+    "diagnosticMeaning": "Thirty-second/480-read diagnostics do not establish adequate promotion sample size; elapsed duration alone is not the gate."
+  },
+  "replacementPublicationPolicy": {
+    "hypotheses": 15,
+    "prerequisites": "Prepare explicit command:null canonical replacements for all still-open foundation/calibration/capacity/metadata/repair objectives. Source-only recipe IDs do not substitute for actual queue records.",
+    "sequence": [
+      "Prepare and validate exact non-runnable manifests with existing validateManifest.",
+      "Obtain separate root publication grant.",
+      "Enqueue replacements through existing canonical enqueue, verify exact new IDs/headers/dependsOn/command:null.",
+      "Only then review a bounded old-placeholder cancel-with-reason set; retain any old objective lacking an actual successor."
+    ],
+    "executionGranted": false,
+    "queueWritesGranted": false,
+    "controllerChanges": false
+  }
+}

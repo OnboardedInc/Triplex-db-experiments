@@ -1,0 +1,46 @@
+{
+  "status": "CONDITIONAL_DRAFT_ARITHMETIC_NOT_APP_EXECUTION",
+  "timestamp_utc": "2026-10-31T17:43:07Z",
+  "budget_source": {
+    "path": ".agent-logs/goal4-contract-execution/revision-001/BUDGET-MODEL.json",
+    "sha256_observed": "45a0cf56a1656cd8cc6cd45985226e6c5e90f49792f736630ff385c6e8c18d73",
+    "frozen": false
+  },
+  "derivation_source": {
+    "path": ".agent-logs/goal4-contract-coordinator/draft-001/IR2-SIZE-BOUND-DRAFT.md",
+    "sha256_observed": "33ce45794f6a27b258741915266e85db5b488464b601230976d8807cc0826922"
+  },
+  "method": "Independent compact ASCII JSON shape construction and string-length arithmetic in orchestration only; no app import, compiler, native module, DB, tests or serializer execution.",
+  "preconditions": [
+    "Exact final compact IR2 without discretionary whitespace",
+    "No facts duplication, comments, snapshots, traces or arbitrary metadata",
+    "Full relation/rule component partitions",
+    "Fixed budget schema remains within8192 compact bytes",
+    "All string-literal decoded occurrence bytes combined <=65536 source bytes; <=6x escaped expansion",
+    "Filter dependency entries globally <=4096 variable nodes"
+  ],
+  "budgetKeys": 45,
+  "compactBudgetBytes": 1511,
+  "shapeBytesIncludingOneComma": {
+    "variableTerm": 11,
+    "stringConstantTerm": 29,
+    "int64ConstantTerm": 49,
+    "floatConstantTerm": 45,
+    "boolConstantTerm": 33,
+    "stringLiteralNode": 44,
+    "int64LiteralNode": 64,
+    "floatLiteralNode": 60,
+    "boolLiteralNode": 48,
+    "variableNode": 27,
+    "longestOperatorNode": 23,
+    "signedAtomShell": 45,
+    "relationObject": 201,
+    "signedDependency": 41,
+    "filterShell": 31,
+    "componentShell": 69,
+    "ruleShell": 62
+  },
+  "ledgerTotal": 2510848,
+  "margin": 1683456,
+  "sourceReadShellChunk": "9f27b8"
+}

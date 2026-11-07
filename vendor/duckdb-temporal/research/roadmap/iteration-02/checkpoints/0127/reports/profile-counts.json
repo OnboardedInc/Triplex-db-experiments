@@ -1,0 +1,642 @@
+{
+  "status": "PASS_FULL_PROFILE_EXIT_STATUS_PROVENANCE_SEQUENCE_RESULTS_AND_6_7_COUNTS",
+  "study_manifest_sha256": "5a8277b3fdb12a4fd4f79ebad4e49504db1671aabc4a083d5af0b0bf46ca87b2",
+  "variants": [
+    {
+      "variant": "accepted-item1",
+      "metadata": {
+        "status": "PASS",
+        "failure": null,
+        "mode": "profile",
+        "variant": "accepted-item1",
+        "comparison": null,
+        "block": null,
+        "provenance": {
+          "preparation_manifest_sha256": "79a386fd0a9f84722024189081eaa00fea5968284580dbe5f08c463acbdd5b52",
+          "study_manifest_sha256": "5a8277b3fdb12a4fd4f79ebad4e49504db1671aabc4a083d5af0b0bf46ca87b2",
+          "candidate_admission_sha256": "1c1c9332e2af4c08fc1db8c3a4461cd77fdbca54f118efe8f248a77f8c50ca55",
+          "source_registry_sha256": "cb694ddaa9dd2f0c890338b567f8e93d4a6d9bb09bd48bc609e0513f68391afa",
+          "root_candidate_authorization_sha256": "ef90d0e2eb221afcaedc22f159743531efeea2f91ad3df27495078b24f9c1069",
+          "execution_gate_sha256": "a89e6b8c4e292e42f4f0af3dd56062b890829db6bda31cfdc2736e5a3c6f015f",
+          "artifact_sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+          "runtime_native_module_sha256": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+          "template_sha256": "9a22f33e305134cb05f52cb4829039e14869073c76075042f9c7146208621183",
+          "history_checksum_from_exact_template_receipt": "2fe50bd9fa8cd1a29fea8633241b602f6635f3235fd15f4f179489d76e31d642",
+          "controls_sha256": "6e0a998200d3ec2ab10dbf81c8cc22249246719161556709aeef19b10ae167b8",
+          "schedule_sha256": "b8293ba38dac49d30b5af5018b229d840da634f3ddf2f98f9abf154d3675ef8a",
+          "settings_sha256": "beb038d47dd7c63f53e9e5faef904649236a50858734e87df33f42e5d6eb7089"
+        },
+        "runtime": {
+          "optimization": 0,
+          "debug": true,
+          "environment": {
+            "PYTHONOPTIMIZE": "0",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONHASHSEED": "0",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "LD_PRELOAD": null,
+            "LD_AUDIT": null,
+            "LD_LIBRARY_PATH": null,
+            "PYTHONHOME": null,
+            "PYTHONPATH": "/tmp/temporal-datalog-20261030/engine/python2"
+          },
+          "python_version": [
+            3,
+            12,
+            14
+          ],
+          "python_full_version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+          "python_implementation": "cpython",
+          "libc_version": "glibc 2.41",
+          "python_executable_invoked": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "python_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "python_executable_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "affinity": [
+            8
+          ],
+          "gc_enabled": true
+        },
+        "started_utc": "2026-10-31T01:20:31.082493+00:00",
+        "setup_ns": {
+          "source_import_ns": 64904347,
+          "physical_template_copy_ns": 1740826,
+          "store_open_ns": 114514521
+        },
+        "caps": {
+          "MAX_FACTS": 512,
+          "MAX_COMMITS": 256,
+          "MAX_OPERATIONS": 32,
+          "MAX_TEXT_BYTES": 512,
+          "MAX_DATA_BYTES": 16777216
+        },
+        "duckdb_pragma_version_before": [
+          [
+            "v2.0.0",
+            "d54cbbe3df",
+            "Cyanoptera"
+          ]
+        ],
+        "actual_threads_before": 1,
+        "fp_controls_before": {
+          "round": 0,
+          "mxcsr": 8099,
+          "x87": 895
+        },
+        "imports": {
+          "typed_store": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/accepted-item1/storage/typed_store.py",
+          "legacy_store": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/accepted-item1/storage/store.py",
+          "fp_environment": null,
+          "duckdb_package": "/tmp/temporal-datalog-20261030/engine/python2/duckdb/__init__.py",
+          "duckdb_native": "/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so"
+        },
+        "duckdb_module_version": "2.0.0",
+        "duckdb_pragma_version_after": [
+          [
+            "v2.0.0",
+            "d54cbbe3df",
+            "Cyanoptera"
+          ]
+        ],
+        "actual_threads_after": 1,
+        "mapped_native_paths": {
+          "python_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "duckdb_native": "/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so",
+          "native_extension": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/accepted-item1/engine/build/temporal_datalog.duckdb_extension",
+          "libc": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+          "libm": "/usr/lib/x86_64-linux-gnu/libm.so.6"
+        },
+        "mapped_native_file_sha256": {
+          "python_executable": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "duckdb_native": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+          "native_extension": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+          "libc": "9792e3cbb541c8f44c7acf5f14f4022ea62998ecc787d326bed4d8b6547dfd92",
+          "libm": "6d567d53e895273ca14a1f9dc164fc6c8d39aed2f60aa46a733c2784228915f3"
+        },
+        "fp_controls_after": {
+          "round": 0,
+          "mxcsr": 8099,
+          "x87": 895
+        },
+        "observations": 98,
+        "measured": 0,
+        "profiled": 70,
+        "peak_rss_kib": 201000,
+        "finished_utc": "2026-10-31T01:20:32.028659+00:00"
+      },
+      "controls": [
+        {
+          "control": "float256-query",
+          "api": "query",
+          "F": 256,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "float256-query_json",
+          "api": "query_json",
+          "F": 256,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "mixed64-query",
+          "api": "query",
+          "F": 16,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "mixed64-query_json",
+          "api": "query_json",
+          "F": 16,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "empty-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "empty-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "no_float64-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "no_float64-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "tiny_float1-query",
+          "api": "query",
+          "F": 1,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "tiny_float1-query_json",
+          "api": "query_json",
+          "F": 1,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "tiny_no_float1-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "tiny_no_float1-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "wide_float256-query",
+          "api": "query",
+          "F": 1024,
+          "reads_per_public_call": 0.0
+        },
+        {
+          "control": "wide_float256-query_json",
+          "api": "query_json",
+          "F": 1024,
+          "reads_per_public_call": 0.0
+        }
+      ]
+    },
+    {
+      "variant": "ffc-current-reader",
+      "metadata": {
+        "status": "PASS",
+        "failure": null,
+        "mode": "profile",
+        "variant": "ffc-current-reader",
+        "comparison": null,
+        "block": null,
+        "provenance": {
+          "preparation_manifest_sha256": "79a386fd0a9f84722024189081eaa00fea5968284580dbe5f08c463acbdd5b52",
+          "study_manifest_sha256": "5a8277b3fdb12a4fd4f79ebad4e49504db1671aabc4a083d5af0b0bf46ca87b2",
+          "candidate_admission_sha256": "1c1c9332e2af4c08fc1db8c3a4461cd77fdbca54f118efe8f248a77f8c50ca55",
+          "source_registry_sha256": "cb694ddaa9dd2f0c890338b567f8e93d4a6d9bb09bd48bc609e0513f68391afa",
+          "root_candidate_authorization_sha256": "ef90d0e2eb221afcaedc22f159743531efeea2f91ad3df27495078b24f9c1069",
+          "execution_gate_sha256": "a89e6b8c4e292e42f4f0af3dd56062b890829db6bda31cfdc2736e5a3c6f015f",
+          "artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+          "runtime_native_module_sha256": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+          "template_sha256": "9a22f33e305134cb05f52cb4829039e14869073c76075042f9c7146208621183",
+          "history_checksum_from_exact_template_receipt": "2fe50bd9fa8cd1a29fea8633241b602f6635f3235fd15f4f179489d76e31d642",
+          "controls_sha256": "6e0a998200d3ec2ab10dbf81c8cc22249246719161556709aeef19b10ae167b8",
+          "schedule_sha256": "b8293ba38dac49d30b5af5018b229d840da634f3ddf2f98f9abf154d3675ef8a",
+          "settings_sha256": "beb038d47dd7c63f53e9e5faef904649236a50858734e87df33f42e5d6eb7089"
+        },
+        "runtime": {
+          "optimization": 0,
+          "debug": true,
+          "environment": {
+            "PYTHONOPTIMIZE": "0",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONHASHSEED": "0",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "LD_PRELOAD": null,
+            "LD_AUDIT": null,
+            "LD_LIBRARY_PATH": null,
+            "PYTHONHOME": null,
+            "PYTHONPATH": "/tmp/temporal-datalog-20261030/engine/python2"
+          },
+          "python_version": [
+            3,
+            12,
+            14
+          ],
+          "python_full_version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+          "python_implementation": "cpython",
+          "libc_version": "glibc 2.41",
+          "python_executable_invoked": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "python_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "python_executable_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "affinity": [
+            8
+          ],
+          "gc_enabled": true
+        },
+        "started_utc": "2026-10-31T01:20:36.719041+00:00",
+        "setup_ns": {
+          "source_import_ns": 64885209,
+          "physical_template_copy_ns": 1745093,
+          "store_open_ns": 117055430
+        },
+        "caps": {
+          "MAX_FACTS": 512,
+          "MAX_COMMITS": 256,
+          "MAX_OPERATIONS": 32,
+          "MAX_TEXT_BYTES": 512,
+          "MAX_DATA_BYTES": 16777216
+        },
+        "duckdb_pragma_version_before": [
+          [
+            "v2.0.0",
+            "d54cbbe3df",
+            "Cyanoptera"
+          ]
+        ],
+        "actual_threads_before": 1,
+        "fp_controls_before": {
+          "round": 0,
+          "mxcsr": 8099,
+          "x87": 895
+        },
+        "imports": {
+          "typed_store": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/ffc-current-reader/storage/typed_store.py",
+          "legacy_store": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/ffc-current-reader/storage/store.py",
+          "fp_environment": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/ffc-current-reader/storage/fp_environment.py",
+          "duckdb_package": "/tmp/temporal-datalog-20261030/engine/python2/duckdb/__init__.py",
+          "duckdb_native": "/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so"
+        },
+        "duckdb_module_version": "2.0.0",
+        "duckdb_pragma_version_after": [
+          [
+            "v2.0.0",
+            "d54cbbe3df",
+            "Cyanoptera"
+          ]
+        ],
+        "actual_threads_after": 1,
+        "mapped_native_paths": {
+          "python_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "duckdb_native": "/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so",
+          "native_extension": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/ffc-current-reader/engine/build/temporal_datalog.duckdb_extension",
+          "libc": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+          "libm": "/usr/lib/x86_64-linux-gnu/libm.so.6"
+        },
+        "mapped_native_file_sha256": {
+          "python_executable": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "duckdb_native": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+          "native_extension": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+          "libc": "9792e3cbb541c8f44c7acf5f14f4022ea62998ecc787d326bed4d8b6547dfd92",
+          "libm": "6d567d53e895273ca14a1f9dc164fc6c8d39aed2f60aa46a733c2784228915f3"
+        },
+        "fp_controls_after": {
+          "round": 0,
+          "mxcsr": 8099,
+          "x87": 895
+        },
+        "observations": 98,
+        "measured": 0,
+        "profiled": 70,
+        "peak_rss_kib": 200008,
+        "finished_utc": "2026-10-31T01:20:37.751632+00:00"
+      },
+      "controls": [
+        {
+          "control": "float256-query",
+          "api": "query",
+          "F": 256,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "float256-query_json",
+          "api": "query_json",
+          "F": 256,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "mixed64-query",
+          "api": "query",
+          "F": 16,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "mixed64-query_json",
+          "api": "query_json",
+          "F": 16,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "empty-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "empty-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "no_float64-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "no_float64-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "tiny_float1-query",
+          "api": "query",
+          "F": 1,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "tiny_float1-query_json",
+          "api": "query_json",
+          "F": 1,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "tiny_no_float1-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "tiny_no_float1-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "wide_float256-query",
+          "api": "query",
+          "F": 1024,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "wide_float256-query_json",
+          "api": "query_json",
+          "F": 1024,
+          "reads_per_public_call": 7.0
+        }
+      ]
+    },
+    {
+      "variant": "reader-only",
+      "metadata": {
+        "status": "PASS",
+        "failure": null,
+        "mode": "profile",
+        "variant": "reader-only",
+        "comparison": null,
+        "block": null,
+        "provenance": {
+          "preparation_manifest_sha256": "79a386fd0a9f84722024189081eaa00fea5968284580dbe5f08c463acbdd5b52",
+          "study_manifest_sha256": "5a8277b3fdb12a4fd4f79ebad4e49504db1671aabc4a083d5af0b0bf46ca87b2",
+          "candidate_admission_sha256": "1c1c9332e2af4c08fc1db8c3a4461cd77fdbca54f118efe8f248a77f8c50ca55",
+          "source_registry_sha256": "cb694ddaa9dd2f0c890338b567f8e93d4a6d9bb09bd48bc609e0513f68391afa",
+          "root_candidate_authorization_sha256": "ef90d0e2eb221afcaedc22f159743531efeea2f91ad3df27495078b24f9c1069",
+          "execution_gate_sha256": "a89e6b8c4e292e42f4f0af3dd56062b890829db6bda31cfdc2736e5a3c6f015f",
+          "artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+          "runtime_native_module_sha256": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+          "template_sha256": "9a22f33e305134cb05f52cb4829039e14869073c76075042f9c7146208621183",
+          "history_checksum_from_exact_template_receipt": "2fe50bd9fa8cd1a29fea8633241b602f6635f3235fd15f4f179489d76e31d642",
+          "controls_sha256": "6e0a998200d3ec2ab10dbf81c8cc22249246719161556709aeef19b10ae167b8",
+          "schedule_sha256": "b8293ba38dac49d30b5af5018b229d840da634f3ddf2f98f9abf154d3675ef8a",
+          "settings_sha256": "beb038d47dd7c63f53e9e5faef904649236a50858734e87df33f42e5d6eb7089"
+        },
+        "runtime": {
+          "optimization": 0,
+          "debug": true,
+          "environment": {
+            "PYTHONOPTIMIZE": "0",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONHASHSEED": "0",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "LD_PRELOAD": null,
+            "LD_AUDIT": null,
+            "LD_LIBRARY_PATH": null,
+            "PYTHONHOME": null,
+            "PYTHONPATH": "/tmp/temporal-datalog-20261030/engine/python2"
+          },
+          "python_version": [
+            3,
+            12,
+            14
+          ],
+          "python_full_version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+          "python_implementation": "cpython",
+          "libc_version": "glibc 2.41",
+          "python_executable_invoked": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "python_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "python_executable_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "affinity": [
+            8
+          ],
+          "gc_enabled": true
+        },
+        "started_utc": "2026-10-31T01:20:42.489690+00:00",
+        "setup_ns": {
+          "source_import_ns": 69606580,
+          "physical_template_copy_ns": 1721607,
+          "store_open_ns": 129085023
+        },
+        "caps": {
+          "MAX_FACTS": 512,
+          "MAX_COMMITS": 256,
+          "MAX_OPERATIONS": 32,
+          "MAX_TEXT_BYTES": 512,
+          "MAX_DATA_BYTES": 16777216
+        },
+        "duckdb_pragma_version_before": [
+          [
+            "v2.0.0",
+            "d54cbbe3df",
+            "Cyanoptera"
+          ]
+        ],
+        "actual_threads_before": 1,
+        "fp_controls_before": {
+          "round": 0,
+          "mxcsr": 8099,
+          "x87": 895
+        },
+        "imports": {
+          "typed_store": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/reader-only/storage/typed_store.py",
+          "legacy_store": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/reader-only/storage/store.py",
+          "fp_environment": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/reader-only/storage/fp_environment.py",
+          "duckdb_package": "/tmp/temporal-datalog-20261030/engine/python2/duckdb/__init__.py",
+          "duckdb_native": "/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so"
+        },
+        "duckdb_module_version": "2.0.0",
+        "duckdb_pragma_version_after": [
+          [
+            "v2.0.0",
+            "d54cbbe3df",
+            "Cyanoptera"
+          ]
+        ],
+        "actual_threads_after": 1,
+        "mapped_native_paths": {
+          "python_executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12",
+          "duckdb_native": "/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so",
+          "native_extension": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2/variants/reader-only/engine/build/temporal_datalog.duckdb_extension",
+          "libc": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+          "libm": "/usr/lib/x86_64-linux-gnu/libm.so.6"
+        },
+        "mapped_native_file_sha256": {
+          "python_executable": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+          "duckdb_native": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+          "native_extension": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+          "libc": "9792e3cbb541c8f44c7acf5f14f4022ea62998ecc787d326bed4d8b6547dfd92",
+          "libm": "6d567d53e895273ca14a1f9dc164fc6c8d39aed2f60aa46a733c2784228915f3"
+        },
+        "fp_controls_after": {
+          "round": 0,
+          "mxcsr": 8099,
+          "x87": 895
+        },
+        "observations": 98,
+        "measured": 0,
+        "profiled": 70,
+        "peak_rss_kib": 200668,
+        "finished_utc": "2026-10-31T01:20:43.476965+00:00"
+      },
+      "controls": [
+        {
+          "control": "float256-query",
+          "api": "query",
+          "F": 256,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "float256-query_json",
+          "api": "query_json",
+          "F": 256,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "mixed64-query",
+          "api": "query",
+          "F": 16,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "mixed64-query_json",
+          "api": "query_json",
+          "F": 16,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "empty-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "empty-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "no_float64-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "no_float64-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "tiny_float1-query",
+          "api": "query",
+          "F": 1,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "tiny_float1-query_json",
+          "api": "query_json",
+          "F": 1,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "tiny_no_float1-query",
+          "api": "query",
+          "F": 0,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "tiny_no_float1-query_json",
+          "api": "query_json",
+          "F": 0,
+          "reads_per_public_call": 7.0
+        },
+        {
+          "control": "wide_float256-query",
+          "api": "query",
+          "F": 1024,
+          "reads_per_public_call": 6.0
+        },
+        {
+          "control": "wide_float256-query_json",
+          "api": "query_json",
+          "F": 1024,
+          "reads_per_public_call": 7.0
+        }
+      ]
+    }
+  ],
+  "fresh_processes": 3,
+  "all_exact_public_results": 294,
+  "profiled": 210,
+  "warmup": 84,
+  "profiled_seconds_diagnostic_only": true,
+  "no_exclusive_cause_or_macro_recovery_claim": true
+}

@@ -1,0 +1,1121 @@
+{
+  "schema": "td.native-patch-diagnostic-receipt/1",
+  "status": "passed",
+  "testedSource": "dabbba76",
+  "base": "773f7746466caf0ba4eff70a741e9594d07f39cc",
+  "productionChanges": false,
+  "raw": {
+    "file": "build/patch-diagnostic-logs/100k-01.json",
+    "sha256": "cf896ea0232553632ad03c34664797e10bd2d5de88ebe135ebe59f48d184e288"
+  },
+  "startedUtc": "2026-11-06T00:02:17.092Z",
+  "completedUtc": "2026-11-06T00:02:25.233Z",
+  "scope": "One100k patch per fresh clone in four separate sequential observations; controlled diagnostic may overlap cohortA correctness, never promotable timing",
+  "configuration": {
+    "samples": 1,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB"
+  },
+  "fixture": {
+    "size": 100000,
+    "initialAdded": 184,
+    "position": "577",
+    "identity": {
+      "bytes": 52178944,
+      "inode": 673879026,
+      "mtimeMs": 1793904791622.1863,
+      "ctimeMs": 1793904791622.1863
+    },
+    "sourceEvidenceSha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4"
+  },
+  "pins": {
+    "core_manifest": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+    "companion_manifest": "0fd59063a4ad3cf3f25cac4f28961f94b5ee9b9e25631b2dddf3e84e4469a571",
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "benchmark_driver": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "benchmark_clone_helper": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+    "benchmark_clone_module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "benchmark/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "source_evidence": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4"
+  },
+  "driverSha256": "077e89a629a92f73d57d263207b49f0cd1814f5f8fc099b856cab244a3712c78",
+  "helperSha256": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24",
+  "emitter": {
+    "binarySha256": "026b8127d570445e747d44a9ccade81342aa777e108b7798c087b399bc7c679d",
+    "helperSha256": "e37638cb62615a3410284ea449db0d743dacf8069607a3878cb8a3abf7f12dc0",
+    "builderSha256": "022ae67bace8bdbaf7258158ed6b718063c90ff6f4b038deab64e836dacd3e73",
+    "coreManifestSha256": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+    "catalogHeaderSha256": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+  },
+  "checks": {
+    "syntax": true,
+    "pureCases": 5,
+    "exactReceiptsAcrossProfiles": true,
+    "exactHistoryAcrossProfiles": true,
+    "exactOldAndCurrentAnswers": true,
+    "reopenFullAudit": true,
+    "sourceUnchanged": true,
+    "artifactsBeforeAfterUnchanged": true
+  },
+  "cells": [
+    {
+      "kind": "public",
+      "status": "passed",
+      "canonicalState": [
+        "586",
+        "100698",
+        "8250305",
+        "586"
+      ],
+      "reopenAndOldCutExact": true,
+      "historySha256": "5ceb930a8586d51e4d6ed05d4e20995dc3fa131aa9aa748b815268a110af217e",
+      "samples": [
+        {
+          "publicWallMs": 199.90041699999983
+        }
+      ]
+    },
+    {
+      "kind": "generated",
+      "status": "passed",
+      "canonicalState": [
+        "586",
+        "100698",
+        "8250305",
+        "586"
+      ],
+      "reopenAndOldCutExact": true,
+      "historySha256": "5ceb930a8586d51e4d6ed05d4e20995dc3fa131aa9aa748b815268a110af217e",
+      "samples": [
+        {
+          "generatedProgramMs": 182.6479159999999,
+          "statementSequenceWallMs": 182.65420799999993,
+          "beginMs": 0.14704200000005585,
+          "commitMs": 2.4553329999998823
+        }
+      ]
+    },
+    {
+      "kind": "phased",
+      "status": "passed",
+      "canonicalState": [
+        "586",
+        "100698",
+        "8250305",
+        "586"
+      ],
+      "reopenAndOldCutExact": true,
+      "historySha256": "5ceb930a8586d51e4d6ed05d4e20995dc3fa131aa9aa748b815268a110af217e",
+      "samples": [
+        {
+          "statementSequenceWallMs": 255.8547920000001,
+          "beginMs": 0.1620840000005046,
+          "commitMs": 2.7818749999996726
+        }
+      ]
+    },
+    {
+      "kind": "explain",
+      "status": "passed",
+      "canonicalState": [
+        "586",
+        "100698",
+        "8250305",
+        "586"
+      ],
+      "reopenAndOldCutExact": true,
+      "historySha256": "5ceb930a8586d51e4d6ed05d4e20995dc3fa131aa9aa748b815268a110af217e",
+      "samples": [
+        {
+          "statementSequenceWallMs": 291.8074999999999,
+          "beginMs": 0.19662500000049477,
+          "commitMs": 2.4780839999993987
+        }
+      ]
+    }
+  ],
+  "phasedStages": [
+    {
+      "phase": "owner_guard",
+      "prepareWallMs": 2.533792000000176,
+      "executeAndExtractWallMs": 3.112583000000086
+    },
+    {
+      "phase": "input",
+      "prepareWallMs": 0.459791000000223,
+      "executeAndExtractWallMs": 0.7088750000002619
+    },
+    {
+      "phase": "plan",
+      "prepareWallMs": 0.6981669999995574,
+      "executeAndExtractWallMs": 2.589708999999857
+    },
+    {
+      "phase": "ctx",
+      "prepareWallMs": 1.563708000000588,
+      "executeAndExtractWallMs": 1.7734580000005735
+    },
+    {
+      "phase": "pending",
+      "prepareWallMs": 1.3905420000000959,
+      "executeAndExtractWallMs": 1.1505420000003141
+    },
+    {
+      "phase": "old",
+      "prepareWallMs": 0.5846659999997428,
+      "executeAndExtractWallMs": 0.9432079999996859
+    },
+    {
+      "phase": "patch_admission",
+      "prepareWallMs": 26.68737500000043,
+      "executeAndExtractWallMs": 137.33120899999994
+    },
+    {
+      "phase": "insert_into:__td_native_pending",
+      "prepareWallMs": 2.279874999999265,
+      "executeAndExtractWallMs": 1.5765830000000278
+    },
+    {
+      "phase": "guard",
+      "prepareWallMs": 18.33533299999999,
+      "executeAndExtractWallMs": 19.490375000000313
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_owners",
+      "prepareWallMs": 0.899916000000303,
+      "executeAndExtractWallMs": 1.0089170000001104
+    },
+    {
+      "phase": "insert_into:main.commands",
+      "prepareWallMs": 1.708875000000262,
+      "executeAndExtractWallMs": 2.833499999999731
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_commands",
+      "prepareWallMs": 0.6528749999997672,
+      "executeAndExtractWallMs": 0.5714579999994385
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_presence_edits",
+      "prepareWallMs": 0.4342499999993379,
+      "executeAndExtractWallMs": 0.3714169999993828
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_patch_commands",
+      "prepareWallMs": 0.241041000000223,
+      "executeAndExtractWallMs": 0.8116250000002765
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_assertion_sources",
+      "prepareWallMs": 0.30408299999999144,
+      "executeAndExtractWallMs": 0.3272080000006099
+    },
+    {
+      "phase": "update:main.store_meta",
+      "prepareWallMs": 0.5305419999995138,
+      "executeAndExtractWallMs": 0.5858340000004318
+    },
+    {
+      "phase": "update:main.assertions",
+      "prepareWallMs": 0.9948330000006536,
+      "executeAndExtractWallMs": 3.0640000000003056
+    },
+    {
+      "phase": "insert_into:main.assertions",
+      "prepareWallMs": 1.3862920000001395,
+      "executeAndExtractWallMs": 3.042250000000422
+    },
+    {
+      "phase": "update:main.storage_usage",
+      "prepareWallMs": 0.9444579999999405,
+      "executeAndExtractWallMs": 1.11974999999984
+    },
+    {
+      "phase": "update:main.clock",
+      "prepareWallMs": 0.6165000000000873,
+      "executeAndExtractWallMs": 0.5862090000000535
+    },
+    {
+      "phase": "drop_table:__td_native_guard",
+      "prepareWallMs": 0.1329169999999067,
+      "executeAndExtractWallMs": 0.09799999999995634
+    },
+    {
+      "phase": "drop_table:__td_native_patch_admission",
+      "prepareWallMs": 0.12308299999949668,
+      "executeAndExtractWallMs": 0.08424999999988358
+    },
+    {
+      "phase": "drop_table:__td_native_old",
+      "prepareWallMs": 0.12687499999992724,
+      "executeAndExtractWallMs": 0.09475000000020373
+    },
+    {
+      "phase": "drop_table:__td_native_pending",
+      "prepareWallMs": 0.09329200000047422,
+      "executeAndExtractWallMs": 0.08170800000061718
+    },
+    {
+      "phase": "drop_table:__td_native_ctx",
+      "prepareWallMs": 0.08820800000012241,
+      "executeAndExtractWallMs": 0.07204099999944447
+    },
+    {
+      "phase": "drop_table:__td_native_plan",
+      "prepareWallMs": 0.09933300000011513,
+      "executeAndExtractWallMs": 0.06837499999983265
+    },
+    {
+      "phase": "drop_table:__td_native_input",
+      "prepareWallMs": 0.0790419999993901,
+      "executeAndExtractWallMs": 0.08416599999964092
+    },
+    {
+      "phase": "drop_table:__td_native_owner_guard",
+      "prepareWallMs": 0.0843749999994543,
+      "executeAndExtractWallMs": 0.07333399999970425
+    },
+    {
+      "phase": "receipt",
+      "prepareWallMs": 3.3168329999998605,
+      "executeAndExtractWallMs": 3.178125000000364
+    }
+  ],
+  "explainStages": [
+    {
+      "phase": "owner_guard",
+      "prepareWallMs": 2.825166999999965,
+      "executeAndExtractWallMs": 3.4539590000003955,
+      "operatorCount": 50,
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0.0.0",
+          "type": "ORDER_BY",
+          "timingMs": 0.029208,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Order By\":\"seq ASC\",\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0",
+          "type": "CREATE_TABLE_AS",
+          "timingMs": 0.020499999999999997,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.015959,
+          "rowsProduced": 3,
+          "rowsScanned": 0,
+          "detail": "{\"Function\":\"DUCKDB_DATABASES\",\"Estimated Cardinality\":\"1\"}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "7dd64052cd7d9c7a62a4c10911307d6ae89f64170cf5ee676baba0e6c50cefd7"
+    },
+    {
+      "phase": "input",
+      "prepareWallMs": 0.7647500000002765,
+      "executeAndExtractWallMs": 0.8161669999999503,
+      "operatorCount": 6,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "BATCH_CREATE_TABLE_AS",
+          "timingMs": 0.045250000000000005,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.004125,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "detail": "{\"Table\":\"\\\"temp\\\".main.__td_native_owner_guard\",\"Type\":\"Sequential Scan\",\"Projections\":\"\",\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0",
+          "type": "PROJECTION",
+          "timingMs": 0.002,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Projections\":[\"schema_name\",\"schema_version\",\"entity_type\",\"entity_id\",\"command_id\",\"record_text\",\"valid_from\",\"valid_to\"],\"Estimated Cardinality\":\"1\"}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "d316cf24f3b14d3a93ccd6ba888cbad33ce07cad0a4d0a92979bda0aeea6e21d"
+    },
+    {
+      "phase": "plan",
+      "prepareWallMs": 0.846667000000707,
+      "executeAndExtractWallMs": 2.278124999999818,
+      "operatorCount": 10,
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0.1.1",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.403416,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "detail": "{\"Table\":\"\\\"explain\\\".td_catalog_v1.schema_type_modes\",\"Type\":\"Sequential Scan\",\"Projections\":[\"schema_name\",\"entity_type\",\"is_live\"],\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.1",
+          "type": "HASH_JOIN",
+          "timingMs": 0.050082,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"LEFT\",\"Conditions\":[\"schema_name = schema_name\",\"entity_type = entity_type\"],\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0",
+          "type": "CREATE_TABLE_AS",
+          "timingMs": 0.048125,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "d5fc7e2fbfd882a200f65b414f963ae8296934241272b56018a0a01430d3d1b0"
+    },
+    {
+      "phase": "ctx",
+      "prepareWallMs": 1.421291999999994,
+      "executeAndExtractWallMs": 1.6335840000001554,
+      "operatorCount": 11,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "CREATE_TABLE_AS",
+          "timingMs": 0.047459,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0",
+          "type": "HASH_JOIN",
+          "timingMs": 0.038583,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"RIGHT\",\"Conditions\":\"command_id = command_id\",\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0",
+          "type": "PROJECTION",
+          "timingMs": 0.016,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Projections\":[\"schema_name\",\"schema_version\",\"entity_type\",\"entity_id\",\"command_id\",\"record_text\",\"valid_from\",\"valid_to\",\"schema_hash\",\"is_live_type\",\"prepared\",\"recorded_at\",\"request_hash\",\"previous_hash\",\"is_replay\",\"position\"],\"Estimated Cardinality\":\"1\"}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "80cb155ea8ceaf33ee4951f5421d83ed217951d963c1f933e415aa68115e7ef9"
+    },
+    {
+      "phase": "pending",
+      "prepareWallMs": 1.585041000000274,
+      "executeAndExtractWallMs": 1.4429169999993974,
+      "operatorCount": 13,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "BATCH_CREATE_TABLE_AS",
+          "timingMs": 0.05574900000000001,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0",
+          "type": "PROJECTION",
+          "timingMs": 0.02675,
+          "rowsProduced": 2,
+          "rowsScanned": null,
+          "detail": "{\"Projections\":[\"ordinal\",\"assertion_id\",\"e\",\"a\",\"tag\",\"payload\",\"v_tag\",\"v_s\",\"v_b\",\"v_i\",\"v_f\",\"reference_type\",\"extra_json\",\"valid_from\",\"valid_to\",\"source_assertion_id\",\"validation_command_id\",\"side\"],\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0",
+          "type": "CROSS_PRODUCT",
+          "timingMs": 0.012501000000000002,
+          "rowsProduced": 2,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "e6fd546cbb0f9ee2a430c2a3fe3b78a1b71d0cc69a01ef84077c43259485a862"
+    },
+    {
+      "phase": "old",
+      "prepareWallMs": 0.671291000000565,
+      "executeAndExtractWallMs": 0.8497919999999795,
+      "operatorCount": 8,
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.026708000000000003,
+          "rowsProduced": 2,
+          "rowsScanned": 696,
+          "detail": "{\"Table\":\"\\\"explain\\\".main.assertions\",\"Type\":\"Sequential Scan\",\"Projections\":[\"e\",\"assertion_id\"],\"Filters\":\"(tx_to = 9223372036854775807)\",\"Dynamic Filters\":\"(e = 'probe-000')\",\"Estimated Cardinality\":\"50349\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "HASH_JOIN",
+          "timingMs": 0.026208000000000002,
+          "rowsProduced": 2,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"INNER\",\"Conditions\":\"e = entity_id\",\"Estimated Cardinality\":\"30\"}"
+        },
+        {
+          "path": "0.0.0.0",
+          "type": "CREATE_TABLE_AS",
+          "timingMs": 0.008833,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [
+        {
+          "timingMs": 0.026708000000000003,
+          "rowsProduced": 2,
+          "rowsScanned": 696,
+          "filters": "(tx_to = 9223372036854775807)",
+          "dynamicFilters": "(e = 'probe-000')"
+        }
+      ],
+      "rawProfileSha256": "ef2e1702d663b233f3a68d2930bebbc0e5a22f91732fd27b73c6abcdcf12d2f5"
+    },
+    {
+      "phase": "patch_admission",
+      "prepareWallMs": 26.990334000000075,
+      "executeAndExtractWallMs": 144.13737500000025,
+      "operatorCount": 120,
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.0.0.0.1.0.0.1.1.0",
+          "type": "FILTER",
+          "timingMs": 75.52516800000004,
+          "rowsProduced": 100696,
+          "rowsScanned": null,
+          "detail": "{\"Expression\":\"CASE  WHEN (((command_id IS NULL) AND (entity_id IS NULL) AND (NOT COALESCE(((request_hash IS NOT NULL) AND (origin = 'triplex')), false)))) THEN (false) WHEN ((command_id IS NULL)) THEN (CAST(\\\"error\\\"('TD_E_COMMAND_HISTORY: native creator binding is missing') AS BOOLEAN)) WHEN ((command_id IS NULL)) THEN (CAST(\\\"error\\\"('TD_E_COMMAND_HISTORY: native validation binding is missing') AS BOOLEAN)) WHEN ((((content_hash = schema_hash) AND (position = position) AND (tx_from = position) AND (e = entity_id) AND (entity_type = entity_type) AND (payload_hash = sha256(payload)) AND (schema_name = schema_name) AND (entity_type = entity_type) AND (schema_name = schema_name) AND (entity_t"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.0.0.0.1.0.0.1.1.0.0.1.1.0.0.0.0.0.0.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 9.265500999999999,
+          "rowsProduced": 100696,
+          "rowsScanned": 100696,
+          "detail": "{\"Table\":\"\\\"explain\\\".main.assertions\",\"Type\":\"Sequential Scan\",\"Projections\":[\"command_id\",\"e\",\"assertion_id\",\"a\",\"v_s\",\"tx_from\",\"entity_type\",\"payload_hash\",\"payload\",\"v_tag\",\"valid_from\",\"valid_to\",\"tag\",\"extra_json\",\"v_b\",\"v_i\",\"v_f\"],\"Estimated Cardinality\":\"100697\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.0.0.0.1.0.0.1.1.0.0.1.1.0.0.0.0.0.0.0.0",
+          "type": "HASH_JOIN",
+          "timingMs": 3.7362119999999996,
+          "rowsProduced": 100696,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"LEFT\",\"Conditions\":\"source_assertion_id = assertion_id\",\"Estimated Cardinality\":\"100697\"}"
+        }
+      ],
+      "assertionScans": [
+        {
+          "timingMs": 0.032042,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "filters": null,
+          "dynamicFilters": "(assertion_id = '8196c71bfcbd6b381f97d27ebf11e1179845235952d4a90b642e8e945867f149')"
+        },
+        {
+          "timingMs": 9.265500999999999,
+          "rowsProduced": 100696,
+          "rowsScanned": 100696,
+          "filters": null,
+          "dynamicFilters": null
+        },
+        {
+          "timingMs": 0.016123999999999996,
+          "rowsProduced": 2,
+          "rowsScanned": 696,
+          "filters": "(tx_to = 9223372036854775807)",
+          "dynamicFilters": "(e = 'probe-000')"
+        }
+      ],
+      "rawProfileSha256": "f7e8375beb5f7d58fa6edb5c5ea12620bff2d89739215913505011ccc322388b"
+    },
+    {
+      "phase": "insert_into:__td_native_pending",
+      "prepareWallMs": 2.1787500000000364,
+      "executeAndExtractWallMs": 1.7591659999998228,
+      "operatorCount": 9,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "BATCH_INSERT",
+          "timingMs": 0.000541,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0",
+          "type": "EMPTY_RESULT",
+          "timingMs": 0.000292,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0",
+          "type": "WINDOW",
+          "timingMs": 0.000084,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{\"Projections\":\"row_number() OVER (ORDER BY source_assertion_id ASC NULLS LAST, side ASC NULLS LAST)\",\"Estimated Cardinality\":\"2\"}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "48be169f304627e95c77d0a3bafb4207da620bda532349f2b05b79c293d58704"
+    },
+    {
+      "phase": "guard",
+      "prepareWallMs": 19.17175000000043,
+      "executeAndExtractWallMs": 24.04399999999987,
+      "operatorCount": 129,
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0.1.0.0.1.1.0.0.0.1.1.0.0.0.0.1.1.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.355333,
+          "rowsProduced": 2047,
+          "rowsScanned": 2047,
+          "detail": "{\"Table\":\"\\\"explain\\\".main.assertions\",\"Type\":\"Sequential Scan\",\"Projections\":[\"e\",\"a\",\"v_tag\",\"v_s\",\"v_b\",\"v_i\",\"v_f\",\"valid_to\",\"valid_from\",\"tx_from\",\"tx_to\",\"assertion_id\"],\"Filters\":\"\",\"Estimated Cardinality\":\"100697\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.0.1",
+          "type": "HASH_JOIN",
+          "timingMs": 0.15629099999999999,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"MARK\",\"Conditions\":[\"entity_type IS NOT DISTINCT FROM entity_type\",\"schema_name IS NOT DISTINCT FROM schema_name\",\"entity_id IS NOT DISTINCT FROM entity_id\"],\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.1.1.1.0.0.1.0.0.1.0.1",
+          "type": "HASH_JOIN",
+          "timingMs": 0.135167,
+          "rowsProduced": 256,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"INNER\",\"Conditions\":\"command_id = command_id\",\"Estimated Cardinality\":\"3\"}"
+        }
+      ],
+      "assertionScans": [
+        {
+          "timingMs": 0.012459000000000001,
+          "rowsProduced": 2,
+          "rowsScanned": 696,
+          "filters": "(tx_to = 9223372036854775807)",
+          "dynamicFilters": "(e = 'probe-000')"
+        },
+        {
+          "timingMs": 0.355333,
+          "rowsProduced": 2047,
+          "rowsScanned": 2047,
+          "filters": "",
+          "dynamicFilters": null
+        }
+      ],
+      "rawProfileSha256": "6f05a61b751be84b7e999a44b7d8c25a8e970c8d1c2e4d0bfec75ef70a657be2"
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_owners",
+      "prepareWallMs": 1.142707999999402,
+      "executeAndExtractWallMs": 1.2043329999996786,
+      "operatorCount": 16,
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "HASH_JOIN",
+          "timingMs": 0.034083,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"RIGHT\",\"Conditions\":\"entity_id = entity_id\",\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.1.0.0",
+          "type": "HASH_GROUP_BY",
+          "timingMs": 0.030085,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Groups\":\"#0\",\"Aggregates\":[\"\\\"first\\\"(#1)\",\"\\\"first\\\"(#2)\"],\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.009416,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "detail": "{\"Table\":\"\\\"explain\\\".td_catalog_v1.entity_owners\",\"Type\":\"Index Scan\",\"Projections\":\"entity_id\",\"Dynamic Filters\":\"(entity_id = 'probe-000')\",\"Estimated Cardinality\":\"832\"}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "69615e0711e452d7c11a5c7c41be9cce6db74bbb0ead9cd997c86cdb504210d7"
+    },
+    {
+      "phase": "insert_into:main.commands",
+      "prepareWallMs": 2.2105000000001382,
+      "executeAndExtractWallMs": 3.1616250000006403,
+      "operatorCount": 25,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "INSERT",
+          "timingMs": 0.577083,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.1.0.0.0.1",
+          "type": "UNGROUPED_AGGREGATE",
+          "timingMs": 0.051208000000000004,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Aggregates\":\"list(#0, #1)\",\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "CTE",
+          "timingMs": 0.045083000000000005,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{\"CTE Name\":\"__duckdb_delim_33\",\"Table Index\":\"33\",\"Execution Mode\":\"HYBRID_FANOUT\",\"Fanout Mode\":\"DIRECT\",\"Consumers\":\"1\",\"Direct Consumers\":\"1\",\"Buffered Consumers\":\"0\",\"Chunk Storage\":\"NONE\",\"Order Mode\":\"BATCH_INDEX\",\"Materialized Consumers\":\"1\",\"Estimated Cardinality\":\"1\"}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "f37079ee2e640d34abf34c6bdfe9e7fce60d2525e851981514b5574ff216add1"
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_commands",
+      "prepareWallMs": 0.7434590000002572,
+      "executeAndExtractWallMs": 1.3882919999996375,
+      "operatorCount": 5,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "BATCH_INSERT",
+          "timingMs": 0.508625,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.014166,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "detail": "{\"Table\":\"\\\"temp\\\".main.__td_native_ctx\",\"Type\":\"Sequential Scan\",\"Projections\":[\"command_id\",\"schema_name\",\"schema_version\",\"entity_type\",\"entity_id\",\"position\",\"schema_hash\"],\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0",
+          "type": "EXPLAIN_ANALYZE",
+          "timingMs": 0.000125,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "ab31e0ffe531787d3373ec8fcb3b93437e0c5b6bc529da56afa55625afa3db8d"
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_presence_edits",
+      "prepareWallMs": 0.8135830000001079,
+      "executeAndExtractWallMs": 0.5912499999994907,
+      "operatorCount": 5,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "BATCH_INSERT",
+          "timingMs": 0.000542,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0",
+          "type": "EMPTY_RESULT",
+          "timingMs": 0.000125,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0",
+          "type": "EXPLAIN_ANALYZE",
+          "timingMs": 0.000041,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "0548f52f046f213657e598888a6407deb64a1b7223f08265a8521b236ac7c89d"
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_patch_commands",
+      "prepareWallMs": 0.6703330000000278,
+      "executeAndExtractWallMs": 1.0610420000002705,
+      "operatorCount": 5,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "BATCH_INSERT",
+          "timingMs": 0.474166,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.009958,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "detail": "{\"Table\":\"\\\"temp\\\".main.__td_native_ctx\",\"Type\":\"Sequential Scan\",\"Projections\":[\"command_id\",\"valid_from\",\"valid_to\"],\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0",
+          "type": "EXPLAIN_ANALYZE",
+          "timingMs": 0.000042,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "3c3d5c7486308660cc3dbd1be4d794dc953bd7dc340d20609e367f639f17984e"
+    },
+    {
+      "phase": "insert_into:td_catalog_v1.entity_assertion_sources",
+      "prepareWallMs": 0.46504100000038306,
+      "executeAndExtractWallMs": 0.4499999999998181,
+      "operatorCount": 5,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "BATCH_INSERT",
+          "timingMs": 0.000375,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0",
+          "type": "EMPTY_RESULT",
+          "timingMs": 0.000209,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0",
+          "type": "EXPLAIN_ANALYZE",
+          "timingMs": 0.000042,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "a05e695a42c4ea8950b7fcf2646cf7ec3546da909e57f0857e592966bc5f0eb3"
+    },
+    {
+      "phase": "update:main.store_meta",
+      "prepareWallMs": 0.6767079999999623,
+      "executeAndExtractWallMs": 0.7686669999993683,
+      "operatorCount": 13,
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0.1.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.008,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "detail": "{\"Table\":\"\\\"temp\\\".main.__td_native_ctx\",\"Type\":\"Sequential Scan\",\"Projections\":\"is_replay\",\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.1",
+          "type": "FILTER",
+          "timingMs": 0.003875,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Expression\":\"SUBQUERY\",\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "CROSS_PRODUCT",
+          "timingMs": 0.0031249999999999997,
+          "rowsProduced": 0,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "c120f97174e9eed030b6b7e8c3dafe0b053d333d8899d8c1f5f1c1688013fcd6"
+    },
+    {
+      "phase": "update:main.assertions",
+      "prepareWallMs": 1.1238750000002256,
+      "executeAndExtractWallMs": 3.8779590000003736,
+      "operatorCount": 10,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "UPDATE",
+          "timingMs": 0.29387500000000005,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "HASH_JOIN",
+          "timingMs": 0.07774999999999999,
+          "rowsProduced": 2,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"INNER\",\"Conditions\":\"assertion_id = assertion_id\",\"Estimated Cardinality\":\"2\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.06912399999999999,
+          "rowsProduced": 2,
+          "rowsScanned": 2,
+          "detail": "{\"Table\":\"\\\"explain\\\".main.assertions\",\"Type\":\"Index Scan\",\"Projections\":[\"assertion_id\",\"tx_from\",\"origin\",\"valid_from\",\"valid_to\",\"external_valid_from\",\"external_valid_to\",\"interop\",\"extra_json\",\"transaction_id\",\"entity_type\",\"created_by\",\"recorded_at\",\"v_f\",\"v_i\",\"v_b\",\"v_s\",\"v_tag\",\"payload_hash\",\"command_id\",\"payload\",\"tag\",\"a\",\"e\",\"assertion_id\"],\"Dynamic Filters\":\"(optional: (assertion_id IN ('f1771c68465ebdc42ddbd93d2d02fd8b99ed8df6c65fa1885f94d941ed3e6488', '21aab5727a75d13d794de783ff3b2f527a51799b0193532e0524eb74b690c341')) AND optional: assertion_id IN BF(assertion_id))\",\"Estimated Cardinality\":\"100697\"}"
+        }
+      ],
+      "assertionScans": [
+        {
+          "timingMs": 0.06912399999999999,
+          "rowsProduced": 2,
+          "rowsScanned": 2,
+          "filters": null,
+          "dynamicFilters": "(optional: (assertion_id IN ('f1771c68465ebdc42ddbd93d2d02fd8b99ed8df6c65fa1885f94d941ed3e6488', '21aab5727a75d13d794de783ff3b2f527a51799b0193532e0524eb74b690c341')) AND optional: assertion_id IN BF(assertion_id))"
+        }
+      ],
+      "rawProfileSha256": "d76f74ccf640354b70b9eca92b0bf3e1a3b5584a226afa8109ed66d924638317"
+    },
+    {
+      "phase": "insert_into:main.assertions",
+      "prepareWallMs": 1.840874999999869,
+      "executeAndExtractWallMs": 3.0555829999993875,
+      "operatorCount": 10,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "BATCH_INSERT",
+          "timingMs": 0.9397089999999999,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0",
+          "type": "CROSS_PRODUCT",
+          "timingMs": 0.035959,
+          "rowsProduced": 2,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.1",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.022708,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "detail": "{\"Table\":\"\\\"temp\\\".main.__td_native_ctx\",\"Type\":\"Sequential Scan\",\"Projections\":[\"position\",\"command_id\",\"recorded_at\",\"entity_type\"],\"Estimated Cardinality\":\"1\"}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "5b271211e61170308fe7bdef395054e317c924b0196730778d28a8f831b41619"
+    },
+    {
+      "phase": "update:main.storage_usage",
+      "prepareWallMs": 1.2997919999997976,
+      "executeAndExtractWallMs": 1.2175420000003214,
+      "operatorCount": 21,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "UPDATE",
+          "timingMs": 0.024666999999999998,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "CROSS_PRODUCT",
+          "timingMs": 0.007251,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.1.0",
+          "type": "CROSS_PRODUCT",
+          "timingMs": 0.004417,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "a3489a4080acc22f7489cc826a5872fbe6c538113684afa8d8366153d9f44b90"
+    },
+    {
+      "phase": "update:main.clock",
+      "prepareWallMs": 0.5259169999999358,
+      "executeAndExtractWallMs": 0.7546659999998155,
+      "operatorCount": 18,
+      "topOperators": [
+        {
+          "path": "0.0.0.0",
+          "type": "UPDATE",
+          "timingMs": 0.014374,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "CROSS_PRODUCT",
+          "timingMs": 0.004666,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        },
+        {
+          "path": "0.0.0.0.0.0.1",
+          "type": "CROSS_PRODUCT",
+          "timingMs": 0.002375,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "e22e0843b02827888d32b09fe73d7d580601457e0f475253f87ec69d9b71e8b3"
+    },
+    {
+      "phase": "drop_table:__td_native_guard",
+      "prepareWallMs": 0.1279580000000351,
+      "executeAndExtractWallMs": 0.10329099999944447
+    },
+    {
+      "phase": "drop_table:__td_native_patch_admission",
+      "prepareWallMs": 0.09825000000000728,
+      "executeAndExtractWallMs": 0.07754100000056496
+    },
+    {
+      "phase": "drop_table:__td_native_old",
+      "prepareWallMs": 0.08833400000003166,
+      "executeAndExtractWallMs": 0.14274999999997817
+    },
+    {
+      "phase": "drop_table:__td_native_pending",
+      "prepareWallMs": 0.16625000000021828,
+      "executeAndExtractWallMs": 0.1482079999996131
+    },
+    {
+      "phase": "drop_table:__td_native_ctx",
+      "prepareWallMs": 0.14379099999950995,
+      "executeAndExtractWallMs": 0.09579200000007404
+    },
+    {
+      "phase": "drop_table:__td_native_plan",
+      "prepareWallMs": 0.1549170000007507,
+      "executeAndExtractWallMs": 0.1126670000003287
+    },
+    {
+      "phase": "drop_table:__td_native_input",
+      "prepareWallMs": 0.13508299999921292,
+      "executeAndExtractWallMs": 0.1492499999994834
+    },
+    {
+      "phase": "drop_table:__td_native_owner_guard",
+      "prepareWallMs": 0.15974999999980355,
+      "executeAndExtractWallMs": 0.11287499999980355
+    },
+    {
+      "phase": "receipt",
+      "prepareWallMs": 3.442207999999482,
+      "executeAndExtractWallMs": 4.293042000000241,
+      "operatorCount": 62,
+      "topOperators": [
+        {
+          "path": "0.0.0.0.1.0.0",
+          "type": "HASH_JOIN",
+          "timingMs": 0.059290999999999996,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"RIGHT\",\"Conditions\":\"command_id = command_id\",\"Estimated Cardinality\":\"2\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0",
+          "type": "ORDER_BY",
+          "timingMs": 0.034665999999999995,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Order By\":\"seq ASC\",\"Estimated Cardinality\":\"1\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "PROJECTION",
+          "timingMs": 0.0155,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{\"Projections\":\"ok\",\"Estimated Cardinality\":\"1\"}"
+        }
+      ],
+      "assertionScans": [],
+      "rawProfileSha256": "505a669740d327348b792d5b49d3bfb5382bf9ac5ac4cf921be1636bcc2dfb1f"
+    }
+  ],
+  "firstSetupFailure": {
+    "stage": "emitter header validation",
+    "outcome": "FileNotFoundError: archived runtime did not retain build/catalog_sql.hpp; no compiler or engine ran",
+    "fixSource": "dabbba76",
+    "fix": "Reconstruct production header byte-for-byte and require archived manifest SHA before helper compilation"
+  },
+  "finding": "Patch admission validates all100696 history rows before joining two old assertion IDs. Dynamic e filtering already narrows old-target selection. Confirm at10m before choosing a literal history predicate.",
+  "limitations": [
+    "No mixed/concurrent throughput qualification. This diagnostic is sequential and changes request boundaries for phased observations.",
+    "RSS is sampled process RSS, not allocator containment. Fixture SHA is linked from prior evidence; no full database hash is calculated here.",
+    "A diagnostic failure is retained and terminates this attempt; no changed settings or automatic fallback."
+  ],
+  "timingScopes": {
+    "public": "Full public patchRecord ACK including queue, generated PRAGMA bind/execute, transport and receipt decoding.",
+    "generated": "Exact C++-generated program via one raw SDK run in an explicit transaction. Separate scope from public request.",
+    "phased": "The same emitted statements prepared/executed individually inside an explicit transaction. SDK and inter-statement scheduling overhead differ from the production PRAGMA.",
+    "explain": "Separate fresh-clone EXPLAIN ANALYZE executions of each emitted statement. They mutate that diagnostic clone and include profiling overhead; final receipt is read again separately for exact equality.",
+    "overlap": "Operator timing may overlap across threads and contains extension callback work. Do not sum/subtract these timers as exclusive phases.",
+    "compilation": "Emitter process wall is not pure C++ compiler time or production PRAGMA bind time."
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "utc": "2026-10-31T17:47:41Z",
+  "kind": "disjoint source-only final companion/merged-proposal consistency review",
+  "status": "No unresolved semantic mismatch in final execution4615f5; root merged proposal1230df reviewed as a proposal only",
+  "final_execution_manifest": {
+    "path": ".agent-logs/goal4-contract-execution/revision-001/SHA256-MANIFEST.json",
+    "size_bytes": 1512,
+    "sha256": "4615f510898a14ffd3cc1145e826113b42cf41d0b4891e0e10922a73b405deb5",
+    "members_verified": [
+      {
+        "path": ".agent-logs/goal4-contract-execution/revision-001/BUDGET-MODEL.json",
+        "size_bytes": 1741,
+        "sha256": "45a0cf56a1656cd8cc6cd45985226e6c5e90f49792f736630ff385c6e8c18d73"
+      },
+      {
+        "path": ".agent-logs/goal4-contract-execution/revision-001/DIAGNOSTICS.md",
+        "size_bytes": 8690,
+        "sha256": "1465cc039786db2bb5699f7f275b4afafa15daad6bbd2b04c11baed1f2a29aae"
+      },
+      {
+        "path": ".agent-logs/goal4-contract-execution/revision-001/FROZEN-READY.json",
+        "size_bytes": 1260,
+        "sha256": "5daaf8a36a03b9d6e05560384483428433df4816b3f0d4fdd5dc6aa2a4dd92d4"
+      },
+      {
+        "path": ".agent-logs/goal4-contract-execution/revision-001/IR2-CONTRACT.md",
+        "size_bytes": 9890,
+        "sha256": "c680654909a0b480889feb193e4d30395ea525ef1466fca070f1744b09314bd6"
+      },
+      {
+        "path": ".agent-logs/goal4-contract-execution/revision-001/NATIVE-CONTRACT.md",
+        "size_bytes": 31269,
+        "sha256": "1160eb56cabf5468c1115931d95395be3350f45e8448f45f417cf49e4d55822e"
+      },
+      {
+        "path": ".agent-logs/goal4-contract-execution/revision-001/SOURCE-INVENTORY.json",
+        "size_bytes": 4376,
+        "sha256": "9d09c5f25536334ec1a7ac7bb0331472c100ecdd37d8864c30d58f2e46b21021"
+      },
+      {
+        "path": ".agent-logs/goal4-contract-execution/revision-001/SOURCE-MAP.md",
+        "size_bytes": 6708,
+        "sha256": "1fd056708ed475545abc81cd66a82934b45c04407d02d64e722fa27d29bcef64"
+      },
+      {
+        "path": ".agent-logs/goal4-contract-execution/revision-001/progress.jsonl",
+        "size_bytes": 5267,
+        "sha256": "5ee302ff66bba6482023978da94fce093c81e94d693ae14bc430aaf520574afb"
+      }
+    ]
+  },
+  "semantic_packet_unchanged": {
+    "path": ".agent-logs/goal4-contract-semantics/revision-001/SHA256-MANIFEST.json",
+    "sha256": "0bf35021d0cd7d57bfcb465213cb945d02a93b60492e4d611a736c8d35375a26",
+    "all_four_members_verified": true
+  },
+  "root_proposal_read": {
+    "path": ".agent-logs/goal4-contract-coordinator/proposal-001/CONTRACT.md",
+    "observed_reviewed_sha256": "1230df6e474341cabcf277fae4b170796b5a6927b0010edf760e88fb9c92d3c6",
+    "current_hash_at_evidence_write": "1230df6e474341cabcf277fae4b170796b5a6927b0010edf760e88fb9c92d3c6",
+    "status": "not an immutable adoption or implementation permission; any later bytes require own review"
+  },
+  "actual_semantic_read_scope": [
+    "Full native draft atd8cd1015 plus final corrected sections2,5-8 at1160eb56",
+    "Full final IR2c6806549",
+    "Full final DIAGNOSTICS1465cc03 and BUDGET-MODEL45a0cf56",
+    "Root merged selection proposal at1230df6e"
+  ],
+  "initial_proposal_hashes_only": {
+    "native": "d8cd1015100ea7532a328ef1a99c496518a0243cb237640faa2bd6a702a785c8",
+    "IR2": "f97feb77f21383500565b9d786936920767f9763cd207d0442836d766948c630"
+  },
+  "resolved_refinements": [
+    "No new whole-source UTF8/comment pass; inherited raw-byte/NUL/ASCII/typed-value admission",
+    "No new pending-ID sorting or cross-platform candidate/first-fault promise",
+    "Compact NEG_CYCLE edge/member_count witness and accurate phase envelope preserve helper resource categories",
+    "New callback72-byte metric charge is logical accounting, not RSS"
+  ],
+  "proof_limits": [
+    "No actual program/oracle/compiler/runtime test",
+    "Tiny arithmetic ledger checked analytically only",
+    "Ordinary set oracle not exact budget billing oracle",
+    "No arbitrary binary64 arithmetic oracle claim",
+    "No SQL/store authority repair, caller-IR execution, callback cancellation, or item acceptance"
+  ],
+  "author_files_modified": false,
+  "project_source_execution_git_page_external_mutation": false
+}

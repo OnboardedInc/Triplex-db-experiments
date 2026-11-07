@@ -1,0 +1,2075 @@
+{
+  "schema": "td.native-writer-b0-broad-arm/1",
+  "status": "passed",
+  "role": "original_B0",
+  "pid": 22265,
+  "protocolSource": {
+    "commit": "4349accbd5b97e42a01bb10e729cca861cdbcd94",
+    "pins": {
+      "adapter/native-writer-b0-broad.mjs": "ddee99642a4df1cd99af14b851dccd25a0072a9007c8b6fc99f664a66d2714a9",
+      "NATIVE-WRITER-B0-BROAD.md": "c0377b63743c4dc9dbe27063d448ac44d3603eaeeac9cdd40ab6e5ae18d07403"
+    }
+  },
+  "terminal": {
+    "status": "terminal",
+    "argv": [
+      "<pinned-node-installation>/bin/node",
+      "<writer-source-runtime>/adapter/native-writer-b0-observer.mjs",
+      "--admission",
+      "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/admission-first.json",
+      "--admission-sha256",
+      "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+      "--output",
+      "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/role.json",
+      "--result",
+      "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/result.json"
+    ],
+    "parentPid": 22265,
+    "startedAtUtc": "2026-11-06T09:27:15.075Z",
+    "pid": 23036,
+    "code": 0,
+    "signal": null,
+    "exitedAtUtc": "2026-11-06T09:31:29.683Z",
+    "elapsedMs": 254605.380375
+  },
+  "proof": {
+    "status": "passed",
+    "role": "original_B0",
+    "pid": 23036,
+    "runtime": "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime",
+    "actualImages": [
+      "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+      "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/temporal_control.node",
+      "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+      "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+      "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+    ],
+    "roleProof": {
+      "schema": "td.native-writer-b0-process/1",
+      "status": "original_B0_role_and_cleanup_verified",
+      "role": "original_B0_SDK754_owner55",
+      "pid": 23036,
+      "parentPid": 22265,
+      "actualArgv": [
+        "<pinned-node-installation>/bin/node",
+        "<writer-source-runtime>/adapter/native-writer-b0-observer.mjs",
+        "--admission",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/admission-first.json",
+        "--admission-sha256",
+        "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+        "--output",
+        "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/role.json",
+        "--result",
+        "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/result.json"
+      ],
+      "effectiveArgv": [
+        "<pinned-node-installation>/bin/node",
+        "<qualified-build02-runtime>/adapter/benchmark-scale.mjs",
+        "--runtime",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime",
+        "--sizes",
+        "10000000",
+        "--readers",
+        "1,4,16",
+        "--samples",
+        "5",
+        "--warmup",
+        "1",
+        "--writes",
+        "8",
+        "--group-size",
+        "256",
+        "--fixture-mode",
+        "mixed",
+        "--threads",
+        "4",
+        "--memory-limit",
+        "2GB",
+        "--max-temp-directory-size",
+        "4GB",
+        "--max-intermediate-bytes",
+        "4294967296",
+        "--duration-seconds",
+        "60",
+        "--read-duration-seconds",
+        "0",
+        "--max-writes",
+        "12000",
+        "--clone-database",
+        "<accepted-project-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+        "--clone-evidence",
+        "<accepted-project-runtime>/build/combined-028-20261105/mixed-10m-pilot.json",
+        "--output",
+        "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/result.json"
+      ],
+      "entry": "<qualified-build02-runtime>/adapter/benchmark-scale.mjs",
+      "entryKind": "broad_original_entry",
+      "runtime": "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime",
+      "portUrl": "file://<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/adapter/native-duckdb-port.mjs",
+      "output": "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/role.json",
+      "result": "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/result.json",
+      "admissionSha256": "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+      "legacyBindingSha256": "0eaf2187d65289cbbb2902ae58867ab64127d4c973d6fe59341065e50356f963",
+      "sdkQueryContract": 1,
+      "UV_THREADPOOL_SIZE": "4",
+      "NODE_OPTIONS": "",
+      "entrySha256": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+      "observerSha256": "f0f3c5c88a2c2b546b356dbf94078929615284354dfc9289720e911c9f19374d",
+      "events": [
+        {
+          "kind": "port_opened",
+          "atMs": 375.611458,
+          "id": 1,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 375.763875,
+          "id": 2,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 10688.304708,
+          "readers": 1,
+          "openWallMs": 10518.204292,
+          "writerPort": 1
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 13918.27425,
+          "id": 2,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 14926.466375,
+          "id": 1,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 15101.54275,
+          "id": 3,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 15101.596958,
+          "id": 4,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 25113.285625,
+          "readers": 1,
+          "openWallMs": 10186.729749999999,
+          "writerPort": 3
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 28512.602417,
+          "id": 4,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 28521.108042,
+          "id": 3,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 28680.691125,
+          "id": 5,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 28680.735458,
+          "id": 6,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 38768.723167,
+          "readers": 1,
+          "openWallMs": 10247.590417,
+          "writerPort": 5
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 38889.067708,
+          "id": 6,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 38897.915708,
+          "id": 5,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 39076.689667,
+          "id": 7,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 39076.7475,
+          "id": 8,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 39076.818333,
+          "id": 9,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 39076.867833,
+          "id": 10,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 39076.888375,
+          "id": 11,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 49107.523292,
+          "readers": 4,
+          "openWallMs": 10209.574625000001,
+          "writerPort": 7
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 55781.195875,
+          "id": 8,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 55781.198042,
+          "id": 9,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 55781.19875,
+          "id": 10,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 55781.1995,
+          "id": 11,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 55789.55675,
+          "id": 7,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 55959.871667,
+          "id": 12,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 55959.915833,
+          "id": 13,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 55959.938708,
+          "id": 14,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 55959.965875,
+          "id": 15,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 55959.982917,
+          "id": 16,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 65962.357792,
+          "readers": 4,
+          "openWallMs": 10172.764834000001,
+          "writerPort": 12
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 73076.315917,
+          "id": 13,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 73076.318583,
+          "id": 14,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 73076.318917,
+          "id": 15,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 73076.319125,
+          "id": 16,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 73085.1505,
+          "id": 12,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 73247.564333,
+          "id": 17,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 73247.6025,
+          "id": 18,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 73247.618792,
+          "id": 19,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 73247.6355,
+          "id": 20,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 73247.648,
+          "id": 21,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 83360.753208,
+          "readers": 4,
+          "openWallMs": 10275.551791999998,
+          "writerPort": 17
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 83519.729625,
+          "id": 18,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 83519.731583,
+          "id": 19,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 83519.731958,
+          "id": 20,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 83519.732167,
+          "id": 21,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 83528.996333,
+          "id": 17,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.121667,
+          "id": 22,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.176,
+          "id": 23,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.207417,
+          "id": 24,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.225875,
+          "id": 25,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.241208,
+          "id": 26,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.268833,
+          "id": 27,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.292083,
+          "id": 28,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.313333,
+          "id": 29,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.327125,
+          "id": 30,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.338875,
+          "id": 31,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.350583,
+          "id": 32,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.385875,
+          "id": 33,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.401208,
+          "id": 34,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.41675,
+          "id": 35,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.44,
+          "id": 36,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.487792,
+          "id": 37,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 83710.518667,
+          "id": 38,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 93921.033958,
+          "readers": 16,
+          "openWallMs": 10392.009416999994,
+          "writerPort": 22
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.012542,
+          "id": 23,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.014833,
+          "id": 24,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.015333,
+          "id": 25,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.015708,
+          "id": 26,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.016042,
+          "id": 27,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.016417,
+          "id": 28,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.016792,
+          "id": 29,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.017167,
+          "id": 30,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.0175,
+          "id": 31,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.018792,
+          "id": 32,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.026583,
+          "id": 33,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.027083,
+          "id": 34,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.027417,
+          "id": 35,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.027708,
+          "id": 36,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.028042,
+          "id": 37,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118238.028333,
+          "id": 38,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 118248.012583,
+          "id": 22,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.362417,
+          "id": 39,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.421833,
+          "id": 40,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.446792,
+          "id": 41,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.464792,
+          "id": 42,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.506167,
+          "id": 43,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.544792,
+          "id": 44,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.606292,
+          "id": 45,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.6315,
+          "id": 46,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.647292,
+          "id": 47,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.691167,
+          "id": 48,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.886875,
+          "id": 49,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118427.9635,
+          "id": 50,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118428.161125,
+          "id": 51,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118428.231208,
+          "id": 52,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118428.330833,
+          "id": 53,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118428.487167,
+          "id": 54,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 118428.533833,
+          "id": 55,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 128594.775667,
+          "readers": 16,
+          "openWallMs": 10346.729749999999,
+          "writerPort": 39
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.775958,
+          "id": 40,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.777875,
+          "id": 41,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.778167,
+          "id": 42,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.778417,
+          "id": 43,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.778667,
+          "id": 44,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.778958,
+          "id": 45,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.779167,
+          "id": 46,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.779583,
+          "id": 47,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.779792,
+          "id": 48,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.780083,
+          "id": 49,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.780375,
+          "id": 50,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.780708,
+          "id": 51,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.780917,
+          "id": 52,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.781125,
+          "id": 53,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.781292,
+          "id": 54,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154515.7815,
+          "id": 55,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 154525.85675,
+          "id": 39,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.463667,
+          "id": 56,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.534167,
+          "id": 57,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.60025,
+          "id": 58,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.646083,
+          "id": 59,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.684292,
+          "id": 60,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.707875,
+          "id": 61,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.724625,
+          "id": 62,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.737167,
+          "id": 63,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.751917,
+          "id": 64,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.766,
+          "id": 65,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.779333,
+          "id": 66,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.795292,
+          "id": 67,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.811083,
+          "id": 68,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.826417,
+          "id": 69,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.844792,
+          "id": 70,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.85725,
+          "id": 71,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 154695.870667,
+          "id": 72,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 164666.309958,
+          "readers": 16,
+          "openWallMs": 10140.42645900001,
+          "writerPort": 56
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.343958,
+          "id": 57,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.346542,
+          "id": 58,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.346917,
+          "id": 59,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.347375,
+          "id": 60,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.347667,
+          "id": 61,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.348542,
+          "id": 62,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.348833,
+          "id": 63,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.349167,
+          "id": 64,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.349417,
+          "id": 65,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.349708,
+          "id": 66,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.349958,
+          "id": 67,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.350208,
+          "id": 68,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.3505,
+          "id": 69,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.35075,
+          "id": 70,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.351,
+          "id": 71,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165103.351292,
+          "id": 72,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 165111.54725,
+          "id": 56,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.032542,
+          "id": 73,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.072083,
+          "id": 74,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.090833,
+          "id": 75,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.105625,
+          "id": 76,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.12575,
+          "id": 77,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.14,
+          "id": 78,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.16675,
+          "id": 79,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.183625,
+          "id": 80,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.197917,
+          "id": 81,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.209833,
+          "id": 82,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.221583,
+          "id": 83,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.233125,
+          "id": 84,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.243583,
+          "id": 85,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.253875,
+          "id": 86,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.265333,
+          "id": 87,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.276167,
+          "id": 88,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 165277.28725,
+          "id": 89,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 175751.50525,
+          "readers": 16,
+          "openWallMs": 10639.895458999992,
+          "writerPort": 73
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.867458,
+          "id": 74,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.875,
+          "id": 75,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.87575,
+          "id": 76,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.876125,
+          "id": 77,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.876458,
+          "id": 78,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.876875,
+          "id": 79,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.877292,
+          "id": 80,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.877667,
+          "id": 81,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.878333,
+          "id": 82,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.87875,
+          "id": 83,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.879167,
+          "id": 84,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.8795,
+          "id": 85,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.879917,
+          "id": 86,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.880167,
+          "id": 87,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.880375,
+          "id": 88,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 241667.880625,
+          "id": 89,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 242090.292542,
+          "id": 73,
+          "status": "closed"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.178375,
+          "id": 90,
+          "portKind": "writer"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.264583,
+          "id": 91,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.304042,
+          "id": 92,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.327958,
+          "id": 93,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.342958,
+          "id": 94,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.363417,
+          "id": 95,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.388917,
+          "id": 96,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.407292,
+          "id": 97,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.434292,
+          "id": 98,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.46175,
+          "id": 99,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.477083,
+          "id": 100,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.49075,
+          "id": 101,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.5075,
+          "id": 102,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.520792,
+          "id": 103,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.535083,
+          "id": 104,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.551292,
+          "id": 105,
+          "portKind": "reader"
+        },
+        {
+          "kind": "port_opened",
+          "atMs": 242277.578542,
+          "id": 106,
+          "portKind": "reader"
+        },
+        {
+          "kind": "store_opened",
+          "atMs": 252517.451083,
+          "readers": 16,
+          "openWallMs": 10427.111833000003,
+          "writerPort": 90
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.425333,
+          "id": 91,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.4275,
+          "id": 92,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.427875,
+          "id": 93,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.428167,
+          "id": 94,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.428417,
+          "id": 95,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.428667,
+          "id": 96,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.428917,
+          "id": 97,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.429208,
+          "id": 98,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.4295,
+          "id": 99,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.43425,
+          "id": 100,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.434542,
+          "id": 101,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.434833,
+          "id": 102,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.435083,
+          "id": 103,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.435333,
+          "id": 104,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.435625,
+          "id": 105,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254496.435875,
+          "id": 106,
+          "status": "closed"
+        },
+        {
+          "kind": "port_closed",
+          "atMs": 254506.944542,
+          "id": 90,
+          "status": "closed"
+        }
+      ],
+      "transportProof": "Actual source-attested SDK runNative path, no per-job interception or fabricated dispatch counts",
+      "loadedImages": [
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/temporal_control.node",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+      ],
+      "ports": [
+        {
+          "id": 1,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 2,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 3,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 4,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 5,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 6,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 7,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 8,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 9,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 10,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 11,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 12,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 13,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 14,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 15,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 16,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 17,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 18,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 19,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 20,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 21,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 22,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 23,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 24,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 25,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 26,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 27,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 28,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 29,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 30,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 31,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 32,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 33,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 34,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 35,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 36,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 37,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 38,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 39,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 40,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 41,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 42,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 43,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 44,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 45,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 46,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 47,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 48,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 49,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 50,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 51,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 52,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 53,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 54,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 55,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 56,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 57,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 58,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 59,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 60,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 61,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 62,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 63,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 64,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 65,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 66,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 67,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 68,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 69,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 70,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 71,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 72,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 73,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 74,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 75,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 76,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 77,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 78,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 79,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 80,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 81,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 82,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 83,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 84,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 85,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 86,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 87,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 88,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 89,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 90,
+          "kind": "writer",
+          "status": "closed"
+        },
+        {
+          "id": 91,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 92,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 93,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 94,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 95,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 96,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 97,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 98,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 99,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 100,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 101,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 102,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 103,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 104,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 105,
+          "kind": "reader",
+          "status": "closed"
+        },
+        {
+          "id": 106,
+          "kind": "reader",
+          "status": "closed"
+        }
+      ],
+      "stores": [
+        {
+          "readers": 1,
+          "openWallMs": 10518.204292,
+          "writerPort": 1
+        },
+        {
+          "readers": 1,
+          "openWallMs": 10186.729749999999,
+          "writerPort": 3
+        },
+        {
+          "readers": 1,
+          "openWallMs": 10247.590417,
+          "writerPort": 5
+        },
+        {
+          "readers": 4,
+          "openWallMs": 10209.574625000001,
+          "writerPort": 7
+        },
+        {
+          "readers": 4,
+          "openWallMs": 10172.764834000001,
+          "writerPort": 12
+        },
+        {
+          "readers": 4,
+          "openWallMs": 10275.551791999998,
+          "writerPort": 17
+        },
+        {
+          "readers": 16,
+          "openWallMs": 10392.009416999994,
+          "writerPort": 22
+        },
+        {
+          "readers": 16,
+          "openWallMs": 10346.729749999999,
+          "writerPort": 39
+        },
+        {
+          "readers": 16,
+          "openWallMs": 10140.42645900001,
+          "writerPort": 56
+        },
+        {
+          "readers": 16,
+          "openWallMs": 10639.895458999992,
+          "writerPort": 73
+        },
+        {
+          "readers": 16,
+          "openWallMs": 10427.111833000003,
+          "writerPort": 90
+        }
+      ],
+      "originalResultSha256": "327c1c44f8006bcbb0c6b79814f6d9bf6dc7761dafe07b89db74c7eb6b0d3db3",
+      "finishedAtUtc": "2026-11-06T09:31:29.614Z"
+    },
+    "rawSha256": "327c1c44f8006bcbb0c6b79814f6d9bf6dc7761dafe07b89db74c7eb6b0d3db3",
+    "fixedSamples": 315,
+    "mixedSamples": 344,
+    "acks": 49,
+    "closedClone": "<qualified-build02-runtime>/build/scale-runs/20261106T092715203Z-7a94b667/facts-10000000.duckdb"
+  }
+}

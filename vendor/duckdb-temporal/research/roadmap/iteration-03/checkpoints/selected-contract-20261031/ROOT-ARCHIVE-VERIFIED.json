@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-31T04:43:57.082408+00:00",
+  "status": "PASS_RESTORED_ALL_CLOSED_QA_CONTRACT_MEMBERS_MODES_HASHES",
+  "members": 42,
+  "logical_bytes": 176431,
+  "archive_sha256": "dfa75dd852ca7e51e54c32c3994b71d2f9a436203e04303c5a74944d7051e28c",
+  "original0444and0644modes_preserved": true,
+  "regular_safe_UTF8_noNUL_uidgidmtime0_exactlengthsha": true,
+  "implementation_authority": "WITHHELD_UNTIL_REMOTE_READBACK"
+}

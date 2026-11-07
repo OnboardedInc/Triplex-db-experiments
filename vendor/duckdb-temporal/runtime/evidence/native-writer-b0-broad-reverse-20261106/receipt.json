@@ -1,0 +1,594 @@
+{
+  "protocolSourceCommit": "4349accbd5b97e42a01bb10e729cca861cdbcd94",
+  "protocolSourceSha256": "ddee99642a4df1cd99af14b851dccd25a0072a9007c8b6fc99f664a66d2714a9",
+  "b0ObserverAdmissionSourceCommit": "3b9c6f367edd68cf5f21d047d74232c1ca28bf73",
+  "nativeSourceCommit": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "comparison": "Whole-runtime original B0 SDK754/owner55/contract1/17USER baseline versus CPP SDK48c/owner0e4/addon022/contract2/18USER candidate; not matched dispatch-only",
+  "baselineRole": "original_B0",
+  "candidateRole": "cpp_candidate",
+  "b0AdmissionSha256": "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+  "cppBindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "originalCalculatorSha256": "06d188bc21ed6f36c7207aa4249ab4f8ca3ed1d7caadc08b4302645e127d18d8",
+  "adaptedCalculatorSha256": "5e691589ddbf3e0c31faf3f0abe4845e1d16de45ed6d853bfbe3a8028a369d46",
+  "calculatorLabelInputEdits": 3,
+  "numericalEdits": 0,
+  "sourceSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+  "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+  "schema": "td.native-writer-original-b0-broad-reverse-receipt/1",
+  "status": "FIRST_REVERSE_27_OF_27_PASS",
+  "recordedAtUtc": "2026-11-06T10:02:05.882697+00:00",
+  "order": [
+    "cpp_candidate",
+    "original_B0"
+  ],
+  "allSourceArtifactClosuresBeforeAfterMatched": true,
+  "passed": 27,
+  "gates": [
+    {
+      "name": "fixed_count_1_p50_relative",
+      "actual": 455.55570799999987,
+      "limit": 518.2727528499992,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_1_p50_relative",
+      "actual": 489.8554589999985,
+      "limit": 569.4195766999993,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_1_p50_relative",
+      "actual": 14.894499999994878,
+      "limit": 16.712709650005852,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_4_p50_relative",
+      "actual": 1001.5457499999975,
+      "limit": 1140.7875891999988,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_4_p50_relative",
+      "actual": 1003.8580829999992,
+      "limit": 1217.271598300003,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_4_p50_relative",
+      "actual": 16.711999999999534,
+      "limit": 24.12977954999078,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_16_p50_relative",
+      "actual": 3508.1400830000057,
+      "limit": 3903.854256249996,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_16_p50_relative",
+      "actual": 3718.5136660000135,
+      "limit": 4242.095801700011,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_16_p50_relative",
+      "actual": 57.77104199997848,
+      "limit": 69.30316875002462,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_4_p99_relative",
+      "actual": 1353.9590420000022,
+      "limit": 1622.4387504000042,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_4_p99_relative",
+      "actual": 1603.1712079999998,
+      "limit": 1667.030200799997,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_4_p99_relative",
+      "actual": 25.002999999996973,
+      "limit": 32.661600000009635,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_16_p99_relative",
+      "actual": 6087.3583329999965,
+      "limit": 7554.770099999994,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_16_p99_relative",
+      "actual": 6909.258709000016,
+      "limit": 8503.187300400004,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_16_p99_relative",
+      "actual": 86.28516699999454,
+      "limit": 105.68954999997513,
+      "passed": true
+    },
+    {
+      "name": "projection_1_p50_absolute",
+      "actual": 14.894499999994878,
+      "limit": 19,
+      "passed": true
+    },
+    {
+      "name": "projection_16_p50_absolute",
+      "actual": 57.77104199997848,
+      "limit": 115,
+      "passed": true
+    },
+    {
+      "name": "projection_16_p99_absolute",
+      "actual": 86.28516699999454,
+      "limit": 185,
+      "passed": true
+    },
+    {
+      "name": "mixed_qps_relative",
+      "actual": 5.490636543160455,
+      "limit": 5.161008583591638,
+      "passed": true
+    },
+    {
+      "name": "mixed_qps_absolute",
+      "actual": 5.490636543160455,
+      "limit": 4.8,
+      "passed": true
+    },
+    {
+      "name": "mixed_p50_relative",
+      "actual": 2849.211875000008,
+      "limit": 3055.167384649989,
+      "passed": true
+    },
+    {
+      "name": "mixed_p50_absolute",
+      "actual": 2849.211875000008,
+      "limit": 3200,
+      "passed": true
+    },
+    {
+      "name": "mixed_p99_relative",
+      "actual": 4687.181209000002,
+      "limit": 5215.597970450013,
+      "passed": true
+    },
+    {
+      "name": "mixed_p99_absolute",
+      "actual": 4687.181209000002,
+      "limit": 6500,
+      "passed": true
+    },
+    {
+      "name": "ack_rate_relative",
+      "actual": 19.067873988395277,
+      "limit": 0.7748016521475718,
+      "passed": true
+    },
+    {
+      "name": "ack_count_absolute",
+      "actual": 1145,
+      "limit": 40,
+      "passed": true
+    },
+    {
+      "name": "mixed_rss_absolute",
+      "actual": 2555691008,
+      "limit": 3500000000,
+      "passed": true
+    }
+  ],
+  "controlAbsoluteMisses": [],
+  "metrics": {
+    "baseline": {
+      "qps": 5.734453981768486,
+      "p50": 2656.6672909999907,
+      "p99": 4535.3025830000115,
+      "acks": 53,
+      "ackRate": 0.8608907246084131,
+      "rss": 2729656320
+    },
+    "candidate": {
+      "qps": 5.490636543160455,
+      "p50": 2849.211875000008,
+      "p99": 4687.181209000002,
+      "acks": 1145,
+      "ackRate": 19.067873988395277,
+      "rss": 2555691008
+    },
+    "qpsRatio": 0.9574820132163936,
+    "ackRateRatio": 22.14900619015095,
+    "p50Ratio": 1.0724759869827516,
+    "p99Ratio": 1.0334880910855404,
+    "rssRatio": 0.9362684193151466
+  },
+  "totalSavedSamples": 1342,
+  "totalNativeACKs": 1198,
+  "roles": {
+    "cpp_candidate": {
+      "outerPid": 31819,
+      "pid": 32576,
+      "startedAtUtc": "2026-11-06T09:50:04.927Z",
+      "exitedAtUtc": "2026-11-06T09:54:26.363Z",
+      "elapsedMs": 261421.840667,
+      "totalSamples": 663,
+      "mixedReads": 348,
+      "acks": 1145,
+      "wallMs": 63380.62941599998,
+      "drainMs": 3380.6294159999816,
+      "writeBurstDurationMs": 60048.645208,
+      "mixedKinds": {
+        "projection": 114,
+        "count": 119,
+        "grouped_count": 115
+      },
+      "mixedCuts": {
+        "fixed": 80,
+        "latest": 268
+      },
+      "maxObservedActive": 16,
+      "images": [
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "closedClone": "<qualified-build02-runtime>/build/scale-runs/20261106T095005024Z-9ae0b276/facts-10000000.duckdb",
+      "beforeAfterSourceMatched": true,
+      "admissionSha256": "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+      "cppBindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe"
+    },
+    "original_B0": {
+      "outerPid": 34533,
+      "pid": 35293,
+      "startedAtUtc": "2026-11-06T09:55:03.438Z",
+      "exitedAtUtc": "2026-11-06T09:59:23.146Z",
+      "elapsedMs": 259705.348667,
+      "totalSamples": 679,
+      "mixedReads": 364,
+      "acks": 53,
+      "wallMs": 63475.964958,
+      "drainMs": 3475.964957999997,
+      "writeBurstDurationMs": 61564.143375000014,
+      "mixedKinds": {
+        "projection": 119,
+        "count": 124,
+        "grouped_count": 121
+      },
+      "mixedCuts": {
+        "fixed": 80,
+        "latest": 284
+      },
+      "maxObservedActive": 16,
+      "images": [
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/temporal_control.node",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+      ],
+      "closedClone": "<qualified-build02-runtime>/build/scale-runs/20261106T095503568Z-4819f793/facts-10000000.duckdb",
+      "beforeAfterSourceMatched": true,
+      "admissionSha256": "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+      "cppBindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe"
+    }
+  },
+  "postackAudit": {
+    "schema": "td.native-writer-b0-reverse-postack/1",
+    "status": "passed",
+    "atUtc": "2026-11-06T10:01:09.338039+00:00",
+    "roles": {
+      "cpp_candidate": {
+        "totalSamples": 663,
+        "fixedSamples": 315,
+        "mixedReads": 348,
+        "acks": 1145,
+        "ackWindows": [
+          192,
+          194,
+          189,
+          192,
+          193,
+          184
+        ],
+        "latestFrontierViolations": [],
+        "childPid": 32576,
+        "outerPid": 31819,
+        "finalK": "40232",
+        "mixedKinds": {
+          "projection": 114,
+          "count": 119,
+          "grouped_count": 115
+        },
+        "mixedCuts": {
+          "fixed": 80,
+          "latest": 268
+        },
+        "maxObservedActive": 16,
+        "rawSha256": "67a7e71298f387e842dae56be070f43647959ac6bb6c81f39595be3efcd1ed95"
+      },
+      "original_B0": {
+        "totalSamples": 679,
+        "fixedSamples": 315,
+        "mixedReads": 364,
+        "acks": 53,
+        "ackWindows": [
+          8,
+          8,
+          9,
+          8,
+          9,
+          10
+        ],
+        "latestFrontierViolations": [],
+        "childPid": 35293,
+        "outerPid": 34533,
+        "finalK": "39140",
+        "mixedKinds": {
+          "projection": 119,
+          "count": 124,
+          "grouped_count": 121
+        },
+        "mixedCuts": {
+          "fixed": 80,
+          "latest": 284
+        },
+        "maxObservedActive": 16,
+        "rawSha256": "4181b0661b2d6ccee8014cfba6078bc0f19977bddbc37501370109f684599391"
+      }
+    },
+    "totalSavedSamples": 1342,
+    "nativeACKs": 1198,
+    "scope": "Offline raw timestamps, quantiles, positions and saved closure receipts; full typed answers checked in flight by unchanged driver"
+  },
+  "firstOutcomePreserved": true,
+  "engineReruns": 0,
+  "rawDirectory": "build/native-writer-b0-broad-20261106/reverse-01",
+  "rawIndex": {
+    "calculator-mapping.json": {
+      "originalSha256": "5346e2a6a14ebf36e85f2dab2b6efc7ddd452a386d210548e361cd64b692c27a",
+      "projectOnlySha256": "5346e2a6a14ebf36e85f2dab2b6efc7ddd452a386d210548e361cd64b692c27a",
+      "bytes": 1315,
+      "originalMtimeNs": 1793959181672618666
+    },
+    "calculator-original-b0.py": {
+      "originalSha256": "5e691589ddbf3e0c31faf3f0abe4845e1d16de45ed6d853bfbe3a8028a369d46",
+      "projectOnlySha256": "5e691589ddbf3e0c31faf3f0abe4845e1d16de45ed6d853bfbe3a8028a369d46",
+      "bytes": 4884,
+      "originalMtimeNs": 1793959181672279371
+    },
+    "compare.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793959181543564627
+    },
+    "compare.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793959181543467709
+    },
+    "cpp_candidate/after.json": {
+      "originalSha256": "a9c510c42ab3f9967474bbceaa56e2792d388151925b27c5e39f3560b2c83094",
+      "projectOnlySha256": "0aad0ebf15be62d5bbd7a34bf68f85041656d82581950aa17bd6a429100619f0",
+      "bytes": 1321,
+      "originalMtimeNs": 1793958872996548317
+    },
+    "cpp_candidate/arm-start.json": {
+      "originalSha256": "0a3f0f2f42f88a61b3d71b7e2ca6065d8827787d713a51adf9828ebd212364f4",
+      "projectOnlySha256": "0a3f0f2f42f88a61b3d71b7e2ca6065d8827787d713a51adf9828ebd212364f4",
+      "bytes": 435,
+      "originalMtimeNs": 1793958597542265414
+    },
+    "cpp_candidate/arm.json": {
+      "originalSha256": "18e08f041b8239f79dbbbf2cb7ff55c3d2e63ef6db7d9b0b14adf628cd876d9a",
+      "projectOnlySha256": "02b3e67daac57072595532db8439e61eb6dba6b8eddaf8cae202a2fb2cae4997",
+      "bytes": 9602,
+      "originalMtimeNs": 1793958872996950654
+    },
+    "cpp_candidate/before.json": {
+      "originalSha256": "ae2b5db62b5ce268f137263f4f71328c668ccc0c37231f064601697e35032ee8",
+      "projectOnlySha256": "6bbb592a522c4f683cc8519e7a580ca79b3af5278e06d8eab91ab30bca515e81",
+      "bytes": 1321,
+      "originalMtimeNs": 1793958604926753799
+    },
+    "cpp_candidate/process/cpp_candidate-32576-exit.json": {
+      "originalSha256": "35087ea9adee9cb639465afc0ffdbb63b5f59e05f8a446c5ef1b71d42ead7331",
+      "projectOnlySha256": "de48c50d0691220ee3db5a886d6c144cf7b5d199fdabaabb4bf5763cb9b41c02",
+      "bytes": 4897,
+      "originalMtimeNs": 1793958866286319136
+    },
+    "cpp_candidate/process/cpp_candidate-32576-ready.json": {
+      "originalSha256": "9dfe6551e84b66a0604dd02322f5781df3ebd2b10357c3382daa02ff23b9ad37",
+      "projectOnlySha256": "2fcdcd6473dc6970fa07245765b3637b55a3d71ac0659473f219b4365a8793c4",
+      "bytes": 1695,
+      "originalMtimeNs": 1793958605020963949
+    },
+    "cpp_candidate/result.json": {
+      "originalSha256": "67a7e71298f387e842dae56be070f43647959ac6bb6c81f39595be3efcd1ed95",
+      "projectOnlySha256": "67a7e71298f387e842dae56be070f43647959ac6bb6c81f39595be3efcd1ed95",
+      "bytes": 793194,
+      "originalMtimeNs": 1793958866274398521
+    },
+    "cpp_candidate/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793958604927338970
+    },
+    "cpp_candidate/stdout.log": {
+      "originalSha256": "36f1ea1171650250f0caa97324cc47b236efc89e5226dce24b6d0bfa04524891",
+      "projectOnlySha256": "36f1ea1171650250f0caa97324cc47b236efc89e5226dce24b6d0bfa04524891",
+      "bytes": 92,
+      "originalMtimeNs": 1793958866274627273
+    },
+    "cpp_candidate/terminal-start.json": {
+      "originalSha256": "c8afc6fdaa2a8280a80bfa8d36b8f5f1d10e8a2a333ab8877517571f9ac06079",
+      "projectOnlySha256": "2ff785b16b55b913ce72adfde3057d0e663244219563d6c4f4f0adf4c4d4e5cc",
+      "bytes": 1550,
+      "originalMtimeNs": 1793958604928923522
+    },
+    "cpp_candidate/terminal.json": {
+      "originalSha256": "7168a604dbb44f9d73c36e8ac39ba7addd6222099fdf522513838ebe253c0902",
+      "projectOnlySha256": "131a434b0c291eecd1e21130a4273acc5963a1610bf4bfee00ee1310a9b4dc52",
+      "bytes": 1657,
+      "originalMtimeNs": 1793958866364857145
+    },
+    "cpp_candidate-outer.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793958597437707949
+    },
+    "cpp_candidate-outer.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793958597437604532
+    },
+    "original_B0/after.json": {
+      "originalSha256": "489bc063c48a616754ab9c0812592e13327b3790fc65819856b01701fd7cd347",
+      "projectOnlySha256": "55b4b673919162cb97c8cb946746e58319a0c95a2d9629a543c2b837e4f29114",
+      "bytes": 1321,
+      "originalMtimeNs": 1793959169559671982
+    },
+    "original_B0/arm-start.json": {
+      "originalSha256": "b1ecb801486cf0164675b1c54f2099410d8ec5b5c34954e63923d8acf41e096c",
+      "projectOnlySha256": "b1ecb801486cf0164675b1c54f2099410d8ec5b5c34954e63923d8acf41e096c",
+      "bytes": 433,
+      "originalMtimeNs": 1793958896972219057
+    },
+    "original_B0/arm.json": {
+      "originalSha256": "17c184f7226af64b58ba066bc15f0663f27b06bed4dc07552aa6732b379246bc",
+      "projectOnlySha256": "6f891487d88eeac7ad39a64416be3e64b7862902b440a2466de496b8f601f000",
+      "bytes": 51708,
+      "originalMtimeNs": 1793959169563133307
+    },
+    "original_B0/before.json": {
+      "originalSha256": "eacb77eb8a536df56898c2b10f207cc2c8974af8f4bb2423bcbf55815f955fbc",
+      "projectOnlySha256": "4bcc1821789d8555263ed84b0b7790374ead661b0e401280a2d78d14516404e3",
+      "bytes": 1321,
+      "originalMtimeNs": 1793958903437587122
+    },
+    "original_B0/result.json": {
+      "originalSha256": "4181b0661b2d6ccee8014cfba6078bc0f19977bddbc37501370109f684599391",
+      "projectOnlySha256": "4181b0661b2d6ccee8014cfba6078bc0f19977bddbc37501370109f684599391",
+      "bytes": 355470,
+      "originalMtimeNs": 1793959163056010006
+    },
+    "original_B0/role.json": {
+      "originalSha256": "19f55d7c6ead9bd5dc148e15885dc0c8804ec79ade602cd3918e5ee5ef25cf1d",
+      "projectOnlySha256": "18302fdd6c2a97d3504c531e74b62e10b83750b1be55b7f9ba22f2e6d275a513",
+      "bytes": 40227,
+      "originalMtimeNs": 1793959163068635170
+    },
+    "original_B0/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793958903438097876
+    },
+    "original_B0/stdout.log": {
+      "originalSha256": "36f1ea1171650250f0caa97324cc47b236efc89e5226dce24b6d0bfa04524891",
+      "projectOnlySha256": "36f1ea1171650250f0caa97324cc47b236efc89e5226dce24b6d0bfa04524891",
+      "bytes": 92,
+      "originalMtimeNs": 1793959163056477219
+    },
+    "original_B0/terminal-start.json": {
+      "originalSha256": "f007ba2e7dbf4aa18b3eeba6c51c7e28099ecaa6ca5302e54d8d139519e53b85",
+      "projectOnlySha256": "aaf9a43de0466fde7b8e0c8e771b278675629d18c4f43dc6860d02a2e567996e",
+      "bytes": 1051,
+      "originalMtimeNs": 1793958903439560891
+    },
+    "original_B0/terminal.json": {
+      "originalSha256": "9c50fa314259fe400a62966dcc7ee4ab9d7b19196a36680993d8ad895a9f9836",
+      "projectOnlySha256": "db3b667b15f632961d2979b81b704eb2446c9426a42d46aef1a0ff375ee4f6f2",
+      "bytes": 1158,
+      "originalMtimeNs": 1793959163147542849
+    },
+    "original_B0-outer.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793958896855997351
+    },
+    "original_B0-outer.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793958896855889975
+    },
+    "postack-audit-01.py": {
+      "originalSha256": "6987d0d814337667a66454e93a0dd471fa3d9f668136ca63f7fcdaac0a86d079",
+      "projectOnlySha256": "6987d0d814337667a66454e93a0dd471fa3d9f668136ca63f7fcdaac0a86d079",
+      "bytes": 3281,
+      "originalMtimeNs": 1793959269261126742
+    },
+    "postack-audit-01.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793959269264432940
+    },
+    "postack-audit-01.stdout.log": {
+      "originalSha256": "c4de2039fe2cd7df52f2b49ffe62d905b72d18c8c0143f2ac14c1500f3c55a84",
+      "projectOnlySha256": "c4de2039fe2cd7df52f2b49ffe62d905b72d18c8c0143f2ac14c1500f3c55a84",
+      "bytes": 1200,
+      "originalMtimeNs": 1793959269338567490
+    },
+    "postack-audit-first.json": {
+      "originalSha256": "144b19541f2cf2d22c8c59472e4bd9a4c90465f930bc4ea2df458986a92a26cf",
+      "projectOnlySha256": "144b19541f2cf2d22c8c59472e4bd9a4c90465f930bc4ea2df458986a92a26cf",
+      "bytes": 1620,
+      "originalMtimeNs": 1793959269338465656
+    },
+    "summary-first.json": {
+      "originalSha256": "d3a1d53fe7eb07d2d45829db2cd0f6689ffb603afb8a6d006e93baeecd952c6a",
+      "projectOnlySha256": "d3a1d53fe7eb07d2d45829db2cd0f6689ffb603afb8a6d006e93baeecd952c6a",
+      "bytes": 4830,
+      "originalMtimeNs": 1793959181714220943
+    }
+  },
+  "sanitization": "Only explicit task/source/Node prefixes replaced. Original raw bytes/hashes retained; numeric/boolean/null JSON leaves proved unchanged.",
+  "forwardOrderContext": {
+    "status": "FIRST_FORWARD_27_OF_27_PASS",
+    "receiptSha256": "790149316ca7f1448bed580cc995cd2cfb28f2323e50b487669826efb1ced48f",
+    "sourceCheckpoint": "a32b8347b6cf3429998e284e4d32885f7bd77239",
+    "coordinationNote": {
+      "schema": "td.native-writer-b0-broad-coordination-update/1",
+      "recordedAtUtc": "2026-11-06T09:33:44.721477+00:00",
+      "source": "A retainedtoolresults",
+      "commitFastForward": "9a539 to da7cc",
+      "pushWallSeconds": 1.460960667,
+      "remoteReadbackWallSeconds": 0.365246875,
+      "exactActivityUtcInterval": null,
+      "overlapClassification": "possible overlap, unlocated; commit date is not push start",
+      "causalEffect": "Unknown",
+      "furtherActivity": "A reports no furtherpush/check/engine",
+      "action": "Keep original pair and thresholds; no favorable rerun"
+    }
+  },
+  "limitations": [
+    "One trial per order, without favorable reruns; engineering screens, not steady-state latency SLOs.",
+    "Contract1 vs2 timeout scope and17 vs18 USER contexts disclosed; whole-runtime regression comparison, not isolated transport attribution.",
+    "Full typed answer equality checked in flight; saved samples retain rowcounts, not complete answers. Saved ACK/cut frontiers and receipts retained.",
+    "Open/audit/reopen/close included child process wall, excluded per-query; transient open RSS not measured.",
+    "Sampled p99/RSS are descriptive screens, not physical allocation bounds;16 lease samples do not prove16 simultaneous native executions.",
+    "Forward order retains possible brief unlocated source Git push/readback activity; no CPU/stall causality or zero-external-activity claim."
+  ],
+  "remainingBeforePromotion": [
+    "Root independent acceptance of reverse raw pair and exact fresh integrated-source full verification."
+  ]
+}

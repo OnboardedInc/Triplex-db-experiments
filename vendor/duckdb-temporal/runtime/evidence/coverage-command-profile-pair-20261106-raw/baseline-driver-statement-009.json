@@ -1,0 +1,277 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.00000825,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 0.000006584,
+                    "type": "MERGE_INTO",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Projections": [
+                                    "entity_id",
+                                    "schema_name",
+                                    "entity_type",
+                                    "rowid"
+                                ],
+                                "Estimated Cardinality": "1"
+                            },
+                            "intermediate_rows": 1,
+                            "intermediate_size_bytes": 4152,
+                            "timing": 1.67e-7,
+                            "type": "PROJECTION",
+                            "children": [
+                                {
+                                    "extra_info": {
+                                        "Join Type": "RIGHT",
+                                        "Conditions": "entity_id = entity_id",
+                                        "Estimated Cardinality": "1"
+                                    },
+                                    "intermediate_rows": 1,
+                                    "intermediate_size_bytes": 4152,
+                                    "timing": 0.000050917,
+                                    "type": "HASH_JOIN",
+                                    "children": [
+                                        {
+                                            "extra_info": {
+                                                "Table": "facts.td_catalog_v1.entity_owners",
+                                                "Type": "Index Scan",
+                                                "Projections": "entity_id",
+                                                "Dynamic Filters": "(entity_id = 'target-A')",
+                                                "Estimated Cardinality": "10"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 24,
+                                            "row_groups_scanned": 0,
+                                            "rows_scanned": 1,
+                                            "timing": 0.00001,
+                                            "total_row_groups_to_scan": 1,
+                                            "type": "TABLE_SCAN"
+                                        },
+                                        {
+                                            "extra_info": {
+                                                "Projections": [
+                                                    "__internal_decompress_string(#0)",
+                                                    "__internal_decompress_string(#1)",
+                                                    "__internal_decompress_string(#2)"
+                                                ],
+                                                "Estimated Cardinality": "1"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 48,
+                                            "timing": 0.000002583,
+                                            "type": "PROJECTION",
+                                            "children": [
+                                                {
+                                                    "extra_info": {
+                                                        "Projections": [
+                                                            "#0",
+                                                            "#1",
+                                                            "#2"
+                                                        ],
+                                                        "Estimated Cardinality": "1"
+                                                    },
+                                                    "intermediate_rows": 1,
+                                                    "intermediate_size_bytes": 40,
+                                                    "timing": 3.75e-7,
+                                                    "type": "PROJECTION",
+                                                    "children": [
+                                                        {
+                                                            "extra_info": {
+                                                                "Groups": "#0",
+                                                                "Aggregates": [
+                                                                    "\"first\"(#1)",
+                                                                    "\"first\"(#2)"
+                                                                ],
+                                                                "Estimated Cardinality": "1"
+                                                            },
+                                                            "intermediate_rows": 1,
+                                                            "intermediate_size_bytes": 40,
+                                                            "timing": 0.000026832000000000003,
+                                                            "type": "HASH_GROUP_BY",
+                                                            "children": [
+                                                                {
+                                                                    "extra_info": {
+                                                                        "Projections": [
+                                                                            "entity_id",
+                                                                            "#1",
+                                                                            "#2"
+                                                                        ],
+                                                                        "Estimated Cardinality": "1"
+                                                                    },
+                                                                    "intermediate_rows": 1,
+                                                                    "intermediate_size_bytes": 40,
+                                                                    "timing": 8.4e-8,
+                                                                    "type": "PROJECTION",
+                                                                    "children": [
+                                                                        {
+                                                                            "extra_info": {
+                                                                                "Projections": [
+                                                                                    "__internal_compress_string_uhugeint(#0)",
+                                                                                    "__internal_compress_string_uhugeint(#1)",
+                                                                                    "__internal_compress_string_ubigint(#2)"
+                                                                                ],
+                                                                                "Estimated Cardinality": "1"
+                                                                            },
+                                                                            "intermediate_rows": 1,
+                                                                            "intermediate_size_bytes": 40,
+                                                                            "timing": 0.000001166,
+                                                                            "type": "PROJECTION",
+                                                                            "children": [
+                                                                                {
+                                                                                    "extra_info": {
+                                                                                        "Table": "\"temp\".main.__td_native_ctx",
+                                                                                        "Type": "Sequential Scan",
+                                                                                        "Projections": [
+                                                                                            "entity_id",
+                                                                                            "schema_name",
+                                                                                            "entity_type"
+                                                                                        ],
+                                                                                        "Estimated Cardinality": "1"
+                                                                                    },
+                                                                                    "intermediate_rows": 1,
+                                                                                    "intermediate_size_bytes": 48,
+                                                                                    "row_groups_scanned": 1,
+                                                                                    "rows_scanned": 1,
+                                                                                    "timing": 0.000003334,
+                                                                                    "total_row_groups_to_scan": 1,
+                                                                                    "type": "TABLE_SCAN"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "extra_info": {},
+                            "intermediate_rows": 0,
+                            "intermediate_size_bytes": 0,
+                            "timing": 0.0,
+                            "type": "INSERT",
+                            "children": [
+                                {
+                                    "extra_info": {
+                                        "Projections": [
+                                            "#0",
+                                            "#1",
+                                            "#2"
+                                        ],
+                                        "Estimated Cardinality": "1"
+                                    },
+                                    "intermediate_rows": 0,
+                                    "intermediate_size_bytes": 0,
+                                    "timing": 0.0,
+                                    "type": "PROJECTION",
+                                    "children": [
+                                        {
+                                            "extra_info": {
+                                                "Action": "WHEN NOT MATCHED THEN INSERT",
+                                                "Estimated Cardinality": "1"
+                                            },
+                                            "intermediate_rows": 0,
+                                            "intermediate_size_bytes": 0,
+                                            "timing": 0.0000035410000000000005,
+                                            "type": "MERGE_ACTION_SOURCE"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000003667,
+        "aggregate_reuse": 0.000001875,
+        "build_side_probe_side": 0.00000575,
+        "column_lifetime": 0.000005126,
+        "common_aggregate": 5e-7,
+        "common_subexpressions": 0.000001209,
+        "common_subplan": 0.000027541,
+        "cte_filter_pusher": 4.16e-7,
+        "cte_inlining": 3.33e-7,
+        "deliminator": 5.01e-7,
+        "duplicate_groups": 0.000002292,
+        "empty_result_pullup": 2.91e-7,
+        "expression_rewriter": 0.000007875,
+        "filter_pullup": 9.58e-7,
+        "filter_pushdown": 0.000014209,
+        "grouping_sets": 3.75e-7,
+        "in_clause": 4.17e-7,
+        "join_elimination": 0.000002625,
+        "join_filter_pushdown": 0.00001525,
+        "join_order": 0.000051125,
+        "late_materialization": 5e-7,
+        "limit_pushdown": 2.92e-7,
+        "outer_join_simplification": 0.000003125,
+        "partial_aggregate_pushdown": 0.000001083,
+        "partitioned_execution": 2.91e-7,
+        "projection_placement": 0.00000825,
+        "projection_pullup": 0.000001792,
+        "redundant_order_keys": 0.000002167,
+        "regex_range": 2.92e-7,
+        "reorder_filter": 9.17e-7,
+        "row_group_pruner": 2.92e-7,
+        "row_number_rewriter": 3.75e-7,
+        "sampling_pushdown": 3.75e-7,
+        "scalar_fn_pushdown": 3.75e-7,
+        "statistics_propagation": 0.000025959,
+        "top_n": 2.5e-7,
+        "top_n_window_elimination": 0.00000125,
+        "total_time": 0.00023625,
+        "type_pushdown": 4.59e-7,
+        "unnest_rewriter": 7.92e-7,
+        "unused_columns": 0.000016291,
+        "window_self_join": 3.75e-7
+    },
+    "physical_planner": {
+        "column_binding": 0.000003458,
+        "create_plan": 0.000026917,
+        "resolve_types": 2.91e-7,
+        "total_time": 0.000033584
+    },
+    "planner": {
+        "binding_time": 0.000113584,
+        "total_time": 0.000166833
+    },
+    "query": {
+        "cpu_time": 0.00011383299999999999,
+        "sql": "INSERT INTO td_catalog_v1.entity_owners\n SELECT entity_id,schema_name,entity_type FROM __td_native_ctx WHERE NOT is_replay ON CONFLICT(entity_id) DO NOTHING;\n",
+        "total_intermediate_rows": 10,
+        "total_intermediate_size_bytes": 8592,
+        "total_row_groups_scanned": 1,
+        "total_row_groups_to_scan": 2,
+        "total_rows_scanned": 2,
+        "total_time": 0.001027
+    },
+    "system": {
+        "blocked_thread_time": 0.000192,
+        "peak_buffer_memory": 19314400,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 786432
+    }
+}

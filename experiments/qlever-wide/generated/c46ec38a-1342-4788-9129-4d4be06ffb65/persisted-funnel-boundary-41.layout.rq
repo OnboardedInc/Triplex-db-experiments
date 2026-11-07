@@ -1,0 +1,1 @@
+SELECT ?s WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJ3aWRlLWZ1bm5lbDpjNDZlYzM4YS0xMzQyLTQ3ODgtOTEyOS00ZDRiZTA2ZmZiNjUiLDBd> { ?s <urn:triplex:field:id> ?id . FILTER NOT EXISTS { ?s <urn:triplex:field:scalar_family> ?family ; <urn:triplex:field:scalar_lexical> ?lexical ; <urn:triplex:field:scalar_order> ?order } } } LIMIT 1

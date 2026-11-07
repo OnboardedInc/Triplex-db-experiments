@@ -1,0 +1,41 @@
+{
+  "approval": null,
+  "bytes": 10746,
+  "file_count": 4,
+  "files": [
+    {
+      "bytes": 7132,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "INPUT-RECEIPT.json",
+      "sha256": "66c4dd559318562db83a067c9bb428850084826562e4881b0be37abb43b319f6"
+    },
+    {
+      "bytes": 2457,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "REVIEW.md",
+      "sha256": "6517c5a69dd4f6bdd5b5a917fd105d7c0c14e13383f195ea544d88b9d262ba3a"
+    },
+    {
+      "bytes": 375,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "command-exit.jsonl",
+      "sha256": "9ba03a6a7c7eb5652c729d0d6170185e42933076d7e5cf2eebefe28fdce80326"
+    },
+    {
+      "bytes": 782,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "progress.jsonl",
+      "sha256": "8ba14f50bc45de30456d972335b3cf29109fcee2a062c6d7cbfda861940086c7"
+    }
+  ],
+  "pending_call": null,
+  "runtime": "UNRUN",
+  "schema": "closed_static_direction_review/1",
+  "self_excluded": true,
+  "session": null,
+  "utc": "2026-10-31T07:34:24.365403+00:00"
+}

@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "runId": "03e67d57-9e8a-4c31-abb1-e2da1e9d5891",
+  "kind": "correctness-feasibility-not-benchmark",
+  "concurrentCandidates": 2,
+  "independentExpectedPairs": [
+    "a/b",
+    "a/c",
+    "a/d",
+    "b/b",
+    "b/d",
+    "c/b",
+    "c/d",
+    "d/b",
+    "d/d",
+    "e/f"
+  ],
+  "observations": [
+    {
+      "experiment": "bounded-unrolled-sql",
+      "passed": true,
+      "rows": [
+        "a/b",
+        "a/c",
+        "a/d",
+        "b/b",
+        "b/d",
+        "c/b",
+        "c/d",
+        "d/b",
+        "d/d",
+        "e/f"
+      ],
+      "elapsedMs": 57.893917000000016
+    },
+    {
+      "experiment": "server-fixed-point",
+      "passed": true,
+      "rows": [
+        "a/b",
+        "a/c",
+        "a/d",
+        "b/b",
+        "b/d",
+        "c/b",
+        "c/d",
+        "d/b",
+        "d/d",
+        "e/f"
+      ],
+      "elapsedMs": 161.75283400000004
+    },
+    {
+      "experiment": "parallel-negation-shapes",
+      "passed": true,
+      "answers": [
+        {
+          "arg1": "b"
+        },
+        {
+          "arg1": "c"
+        },
+        {
+          "arg1": "e"
+        }
+      ]
+    }
+  ]
+}

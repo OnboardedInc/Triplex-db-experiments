@@ -1,0 +1,33 @@
+✔ independent oracle + native conformance 1: snapshot_before_correction (6.180667ms)
+✔ independent oracle + native conformance 2: snapshot_after_correction (2.476376ms)
+✔ independent oracle + native conformance 3: valid_upper_excluded (1.073975ms)
+✔ independent oracle + native conformance 4: historical_known_late (1.352093ms)
+✔ independent oracle + native conformance 5: valid_future_known_early (0.92417ms)
+✔ independent oracle + native conformance 6: graph_reach_union (0.762066ms)
+✔ independent oracle + native conformance 7: graph_reach_union (1.270842ms)
+✔ independent oracle + native conformance 8: graph_eav_join3 (0.495996ms)
+✔ independent oracle + native conformance 9: graph_self_loop (0.3192ms)
+✔ both half-open axes, including exact endpoints (7.896308ms)
+✔ retroactive correction changes knowledge, not valid time (1.05696ms)
+✔ recursive cycle terminates with set semantics (0.760774ms)
+✔ mutual recursion, ground facts and shared variables (0.368524ms)
+✔ quotes, escapes, unicode and empty strings (1.260376ms)
+✔ join and constants (0.260222ms)
+✔ invalid programs are rejected without partial output (0.61863ms)
+✔ fact validation rejects nulls, empty intervals and unsafe time (0.344708ms)
+✔ fact, work and round caps are all-or-nothing (0.838852ms)
+✔ empty snapshot is a typed empty result (0.363637ms)
+✔ embedded NUL fact values are length-aware, program NUL remains invalid (0.236446ms)
+✔ UTF8 byte ordering agrees with native, not UTF16 ordering (0.223516ms)
+✔ malformed surrogate text and aggregate input memory are rejected (7.553963ms)
+✔ native grammar whitespace and separated rule delimiter match (0.331429ms)
+✔ long shared constants cannot amplify serialized IDB keys without a guard (11.575373ms)
+✔ large repeated answer payload is refused before materializing all answers (6.25597ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 147.406266

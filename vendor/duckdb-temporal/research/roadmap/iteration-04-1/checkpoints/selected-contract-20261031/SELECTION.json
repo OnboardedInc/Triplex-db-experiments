@@ -1,0 +1,40 @@
+{
+  "selected_at": "2026-10-31T22:15:45.726699+00:00",
+  "selected_contract": "item4.1 bounded explicit-graph certificate contract draft v1, frozen revision001",
+  "coordinator": "orchestrate_triple_store",
+  "decision": "select exact reviewed contract for genuinely new SOURCE-ONLY implementation",
+  "independent_review": "no blocking contract defect found; not runtime or implementation evidence",
+  "files": [
+    {
+      "document": "contract.md",
+      "bytes": 29164,
+      "sha256": "e519009062c000b5aa87bbadd400de6c4147c3aadd56c7af0b39f4e0d8c9bf84"
+    },
+    {
+      "document": "proof-and-cost.md",
+      "bytes": 21769,
+      "sha256": "401760f07e78eae45618276c632ff08b1537c38d6f8dac50009c81580baa0f7b"
+    },
+    {
+      "document": "review-notes.md",
+      "bytes": 6733,
+      "sha256": "5cd702f59df0daf4a958e584bca972e8cc6c9bbb805a2a4a41888ddc8b6335c2"
+    },
+    {
+      "document": "independent-contract-review.md",
+      "bytes": 13941,
+      "sha256": "0a4cae40c516bc76167549e759a1b0bf4f774e2102ff8bd0753c6df4b5bfd4fc"
+    }
+  ],
+  "source_scope": [
+    "new neutral graph iterative producer",
+    "new independently implemented certificate checker",
+    "new independent oracle/test source only"
+  ],
+  "execution_gate": "CLOSED: no imports, syntax/compile/runtime/tests/benchmarks/control probes activated",
+  "external_write": "not performed by this selection",
+  "prior_holds": "all old stopped saves and explicitly dependent old native syntax unchanged",
+  "item4": "incomplete/untested",
+  "item4_1": "untested; no Datalog/native/completion acceptance",
+  "privacy": "project data only; no computer-environment snapshots/details"
+}

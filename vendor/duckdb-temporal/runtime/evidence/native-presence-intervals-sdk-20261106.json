@@ -1,0 +1,237 @@
+{
+  "schema": "td.native-presence-intervals-sdk/1",
+  "status": "passed_first_sdk5_after_preserved_delta_bookkeeping_stop",
+  "packagedAtUtc": "2026-11-06T09:49:23.955377+00:00",
+  "measuredSourceCommit": "43c82a834684b2b3ce8022e333de8368b5d3ad6e",
+  "nativeAndRaw5Checkpoint": "63941fac6a9103ec0e245690ab319c685f186cc2",
+  "independentRawQaSource": "9a539b49fceb476d7c0b607a97a56fb96b64496b",
+  "nativeFirstGateReceipt": "native-presence-intervals-first-20261106.json",
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/qualification-presence-sdk-20261106-01",
+  "rawDirectory": "native-presence-intervals-sdk-20261106-raw",
+  "rawFiles": {
+    "before-first.json": {
+      "sha256": "911a28d16a33bb8ddb49b366a46f025101cc633aca316edb3a836360b8cfd27b",
+      "bytes": 98447
+    },
+    "compile-delta-first-failure.json": {
+      "sha256": "3378961d7512f5d31d87145897979aec016ff138d419a0908db302479e521700",
+      "bytes": 1140
+    },
+    "compiled-before-tests-corrected.json": {
+      "sha256": "9ab1dff888780a2407e441db77125b11a77bd7590653a853734ab00a54ca15bd",
+      "bytes": 21196
+    },
+    "post-first.json": {
+      "sha256": "035e1ed14283c21a670619220d64191e869efa0eb65665fa80f0cdfac4c48d6e",
+      "bytes": 95717
+    },
+    "targeted-source-git-first.json": {
+      "sha256": "9962bbb7ee39385df41903b9cbaa1ab81871189f7758fe80280af411d02bf487",
+      "bytes": 4488
+    },
+    "tests-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "tests-first.tap": {
+      "sha256": "c87d9ba668aecf56aabcb8409ed07c51e87e098b5f03d4b5d91a755f6c3a05c8",
+      "bytes": 1732
+    },
+    "tests-first.terminal.json": {
+      "sha256": "027e9a4725d9b1c819e62fa7392494e3f93a7b01cac39f1abd74ab1158061b8b",
+      "bytes": 726
+    },
+    "tsc-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "tsc-first.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "tsc-first.terminal.json": {
+      "sha256": "0060dc00c5ed4a477aca57a1a9834ed44517fdd4bdacf00fc9f0fc22628661ec",
+      "bytes": 460
+    }
+  },
+  "actualOutcomes": {
+    "typescript": "FIRSTPASS",
+    "sdkRealEngineMethods": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "testRetry": false,
+    "typescriptRetry": false,
+    "nativeRebuild": false,
+    "install": false,
+    "raw5Rerun": false,
+    "fullVerifier": false,
+    "performance": false
+  },
+  "preservedSetupStop": {
+    "record": "native-presence-intervals-sdk-20261106-raw/compile-delta-first-failure.json",
+    "toolChunk": "e19628",
+    "testsStartedBeforeStop": false,
+    "reason": "Sorted actual delta compared to unsorted expected lists; exact same path sets and bytes.",
+    "correction": "Normalize both path lists; original before-first/failure unchanged. No source, native, dependency, cap or oracle repair.",
+    "originalProcessPidCaptured": false
+  },
+  "terminals": {
+    "tsc": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "pid": 29377,
+      "startedAtUtc": "2026-11-06T09:41:42.782766+00:00",
+      "endedAtUtc": "2026-11-06T09:41:44.792666+00:00",
+      "exitCode": 0,
+      "elapsedMs": 2009.8095410503447
+    },
+    "tests": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "build/adapter/test-native-presence-intervals-sdk.js"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "pid": 29873,
+      "startedAtUtc": "2026-11-06T09:43:13.816532+00:00",
+      "endedAtUtc": "2026-11-06T09:43:18.679975+00:00",
+      "exitCode": 0,
+      "elapsedMs": 4863.4376670233905,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4"
+      },
+      "settings": {
+        "readers": [
+          0,
+          16,
+          2,
+          16,
+          1
+        ],
+        "memoryLimit": "128MB",
+        "maxTempDirectorySize": "64MB"
+      }
+    }
+  },
+  "staging": {
+    "standardVerifierPatterns": [
+      "adapter/*.mjs",
+      "adapter/*.sql"
+    ],
+    "helpers": 54,
+    "helperSourcesAndGitExact": true,
+    "compiledBefore": 128,
+    "typescriptOutputsAfter": 130,
+    "allCompiledAndHelperFilesAfter": 184,
+    "actualCompilerDelta": {
+      "changed": [
+        "build/adapter/native-entity.d.ts",
+        "build/adapter/native-entity.js"
+      ],
+      "added": [
+        "build/adapter/test-native-presence-intervals-sdk.d.ts",
+        "build/adapter/test-native-presence-intervals-sdk.js"
+      ],
+      "removed": []
+    },
+    "raw5TestSourceAndCompiledUnchanged": true
+  },
+  "sdkCompiledPins": {
+    "build/adapter/native-entity.d.ts": "2a079f5291fd3ac0f8c78fd935cb6d82f24f4735ba76fd2d1d31ae66116d8006",
+    "build/adapter/native-entity.js": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+    "build/adapter/test-native-presence-intervals-sdk.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "build/adapter/test-native-presence-intervals-sdk.js": "524b7153884081190f819e3b243f9322dc32c6e0633d2ad22b14a3e3466683a7"
+  },
+  "nativePinsUnchanged": {
+    "build/artifact.json": "1baa2cc1e17c0ec9ffe4f269625be0144bb30df9296c0ca6ba02009c2d9f0264",
+    "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+    "build/temporal_datalog.duckdb_extension": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+    "build/temporal_datalog.so": "0b6f83bb2c3b25635594f5384a3238e305459513d92bc850deae6ca69e4352b0",
+    "build/temporal_control.node": "9fb218ba0236365c74a088c3a2da93f7ca8d2898dfddd86851f73769a028eea3",
+    "build/owner_probe/artifact.json": "a3075e1c059d72d3f2145fff341f57ebb00da3fc43073a1299f8dc9d55c2c9e3",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+    "build/owner_probe/temporal_owner_probe.so": "8e7b22e289328c9ca6fca8400c1112a58055461d01ac146b39321887ba8fdfa0",
+    "build/owner_probe/temporal_writer.node": "92ab7cb9de0efa47bec982d21b374e9f527fbcb9b244357912f1ca2104b1e840"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "settings": {
+    "readerProfilesByMethod": [
+      0,
+      16,
+      2,
+      16,
+      1
+    ],
+    "threadsDefault": 1,
+    "memoryLimitDefault": "128MB",
+    "maxTempDirectorySizeDefault": "64MB",
+    "UV_THREADPOOL_SIZE": "4",
+    "sdkCapsUnchanged": true
+  },
+  "coverage": {
+    "publicNativeEndpoint": true,
+    "originalInvocationWriterTail": true,
+    "laterHeldWriterDoesNotExtendBarrier": true,
+    "explicitOldAndAcknowledgedLatestK": true,
+    "delayedReplayAuditReopen": true,
+    "unknownLegacyAndUnicodeIds": true,
+    "nativeCapErrorClassCodeCauseAndHealthyReuse": true,
+    "all16PooledOwnersObserved": true,
+    "closeDrainsAcceptedReads": true,
+    "poolHoldScope": "After actual native completion/cleanup, before #read releases its lease; not16 simultaneous native CPU tasks.",
+    "malformedWireCases": 15,
+    "malformedWireInjectionAfterActualEndpointResult": true,
+    "strictFrozenTypedResults": true
+  },
+  "postchecks": {
+    "allBeforeAfterEqual": true,
+    "nativeArtifactCount": 9,
+    "dependencies": 395,
+    "compiledOutputsAndHelpers": 184,
+    "targetedSourceGitPins": 41,
+    "headers": 36,
+    "routes": 5,
+    "compilerEntries": 7,
+    "diskFixtures": [
+      {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-sdk-VmBmvY/facts.duckdb",
+        "bytes": 6565888,
+        "sha256": "3d6c561584c1498a451ff73b1836acb76fee26909a2438b84e6d88d7a3b0ce4d",
+        "walPresent": false
+      },
+      {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-sdk-dUewdo/facts.duckdb",
+        "bytes": 6565888,
+        "sha256": "3af80ee43b6108e2b604e87b6572fcd2573080aa0388b62de02a897fcaad7c68",
+        "walPresent": false
+      }
+    ],
+    "allDiskFixturesClosedNoWal": true,
+    "memoryMethods": 3,
+    "memoryClosure": "NativeEntityStore.close in finally and successful test process exit.",
+    "details": "native-presence-intervals-sdk-20261106-raw/post-first.json"
+  },
+  "claims": {
+    "cppOnlyReconstructionAndAdmission": true,
+    "newSchedulerOrMode": false,
+    "storageOrSchemaChange": false,
+    "fiveIndependentRawTestsModified": false,
+    "nativeMemoryContainment": false,
+    "fullGoalClosure": false
+  },
+  "remaining": [
+    "broader/full verification after integration",
+    "native plan/cardinality qualification",
+    "coverage-policy final-overlay writes and historical audit",
+    "bulk32 and dense-history qualification"
+  ]
+}

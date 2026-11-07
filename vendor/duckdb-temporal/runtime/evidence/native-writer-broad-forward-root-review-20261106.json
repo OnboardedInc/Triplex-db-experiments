@@ -1,0 +1,261 @@
+{
+  "schema": "td.native-writer-broad-forward-root-review/1",
+  "recordedAtUtc": "2026-11-06T07:33:03.945407+00:00",
+  "sourceCommit": "1c5117ff59a3c931d2dd84c37d3f3206610eb8e2",
+  "status": "accepted_forward_slice_not_promotion",
+  "independentChecks": {
+    "rawIndexOriginalAndProjectHashesVerified": 21,
+    "onlyDocumentedPathAliasesVerified": true,
+    "planGitBytesEqual": true,
+    "threeFullBindingMapsSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "threeSourceMetadataAndNoWalEqual": true,
+    "bothActualRolePidArgvSixImagesAndFiveZeroCleanup": true,
+    "all20FunctionalCellsPassed": true,
+    "all27RecomputedFromIndividualSamplesAndAcks": true,
+    "allWindowsReadAndAckCountsRecomputed": true,
+    "latestPostAckAndIssuedCutBounds": true,
+    "rowWidthsVerified": true,
+    "floatingComparisonTolerance": 1e-14
+  },
+  "roles": {
+    "sdk_control": {
+      "pid": 71489,
+      "metrics": {
+        "qps": 5.744189508689785,
+        "p50": 2540.754082999978,
+        "p99": 4640.975166999997,
+        "acks": 50,
+        "ackRate": 0.8276791798042794,
+        "rss": 2803597312
+      },
+      "savedMeasuredSamples": 667,
+      "firstReads": 10,
+      "mixedCuts": {
+        "fixed": 80,
+        "latest": 272
+      },
+      "completeAckWindows": [
+        7,
+        8,
+        9,
+        8,
+        9,
+        8
+      ],
+      "finalK": "39137"
+    },
+    "cpp_candidate": {
+      "pid": 73616,
+      "metrics": {
+        "qps": 5.669545892070055,
+        "p50": 2769.215082999988,
+        "p99": 4715.080124999979,
+        "acks": 1163,
+        "ackRate": 19.363173244489996,
+        "rss": 2808201216
+      },
+      "savedMeasuredSamples": 668,
+      "firstReads": 10,
+      "mixedCuts": {
+        "fixed": 80,
+        "latest": 273
+      },
+      "completeAckWindows": [
+        186,
+        197,
+        201,
+        203,
+        187,
+        188
+      ],
+      "finalK": "40250"
+    }
+  },
+  "gates": [
+    {
+      "name": "fixed_count_1_p50_relative",
+      "actual": 437.91291699999965,
+      "limit": 537.4099016999984,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_1_p50_relative",
+      "actual": 530.6565840000003,
+      "limit": 569.9055954499985,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_1_p50_relative",
+      "actual": 14.572291999997105,
+      "limit": 16.34212330000082,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_4_p50_relative",
+      "actual": 943.4157080000004,
+      "limit": 1200.9125124999998,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_4_p50_relative",
+      "actual": 1041.2738339999923,
+      "limit": 1343.2438437499904,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_4_p50_relative",
+      "actual": 20.63529199999175,
+      "limit": 21.580612499990092,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_16_p50_relative",
+      "actual": 3312.2106249999924,
+      "limit": 4150.486946599989,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_16_p50_relative",
+      "actual": 3747.083292000025,
+      "limit": 4581.45236875,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_16_p50_relative",
+      "actual": 59.409708999999566,
+      "limit": 67.19181705001246,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_4_p99_relative",
+      "actual": 1171.2036660000012,
+      "limit": 1655.2297499999986,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_4_p99_relative",
+      "actual": 1491.1554580000084,
+      "limit": 1833.0613499999977,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_4_p99_relative",
+      "actual": 28.877542000001995,
+      "limit": 29.166249599988802,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_16_p99_relative",
+      "actual": 7185.386833000011,
+      "limit": 8077.103349600005,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_16_p99_relative",
+      "actual": 7405.800749999995,
+      "limit": 8112.312549600005,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_16_p99_relative",
+      "actual": 86.14100000000326,
+      "limit": 103.49524920000694,
+      "passed": true
+    },
+    {
+      "name": "projection_1_p50_absolute",
+      "actual": 14.572291999997105,
+      "limit": 19,
+      "passed": true
+    },
+    {
+      "name": "projection_16_p50_absolute",
+      "actual": 59.409708999999566,
+      "limit": 115,
+      "passed": true
+    },
+    {
+      "name": "projection_16_p99_absolute",
+      "actual": 86.14100000000326,
+      "limit": 185,
+      "passed": true
+    },
+    {
+      "name": "mixed_qps_relative",
+      "actual": 5.669545892070055,
+      "limit": 5.169770557820806,
+      "passed": true
+    },
+    {
+      "name": "mixed_qps_absolute",
+      "actual": 5.669545892070055,
+      "limit": 4.8,
+      "passed": true
+    },
+    {
+      "name": "mixed_p50_relative",
+      "actual": 2769.215082999988,
+      "limit": 2921.8671954499746,
+      "passed": true
+    },
+    {
+      "name": "mixed_p50_absolute",
+      "actual": 2769.215082999988,
+      "limit": 3200,
+      "passed": true
+    },
+    {
+      "name": "mixed_p99_relative",
+      "actual": 4715.080124999979,
+      "limit": 5337.121442049996,
+      "passed": true
+    },
+    {
+      "name": "mixed_p99_absolute",
+      "actual": 4715.080124999979,
+      "limit": 6500,
+      "passed": true
+    },
+    {
+      "name": "ack_rate_relative",
+      "actual": 19.363173244489996,
+      "limit": 0.7449112618238515,
+      "passed": true
+    },
+    {
+      "name": "ack_count_absolute",
+      "actual": 1163,
+      "limit": 40,
+      "passed": true
+    },
+    {
+      "name": "mixed_rss_absolute",
+      "actual": 2808201216,
+      "limit": 3500000000,
+      "passed": true
+    }
+  ],
+  "totals": {
+    "measuredSamples": 1335,
+    "nativeAcks": 1213,
+    "writeRateRatio": 23.39453947490716,
+    "queryRateRatio": 0.9870053701210921
+  },
+  "limitations": [
+    "one order only; source/cache/thermal/order variation remains",
+    "fulltypedanswers compared in-flight by unchanged driver; saved per-query records contain rowcounts not complete typed tuples",
+    "latency through publictypeddecode; oracle excluded from call latency but includedQPS/CPU/drain",
+    "all18context startup/open/audit/reopen/close includedwholeprocess wall, not per-query; full10m exclusiveopen time and transientopenRSSunmeasured",
+    "p99samplecounts andRSSsmoke_only, not serviceobjective or physical ceiling",
+    "instantaneousall16nativeexecution/perportidentity not established by25ms occupancy; separatefunctional tests cover actualports",
+    "not originalSDK754/native55 B0 regression evidence; no fallback/mode/default change"
+  ],
+  "remainingBeforePromotion": [
+    "fresh independentlygranted reverseCPP\u2192SDK broad pair",
+    "fresh separatelygranted anti1/16 original16gates",
+    "fresh separatelylabeled originalB0 regression comparison",
+    "actual active-job environment cleanup",
+    "full435/native/Triplex exactsource verification"
+  ],
+  "independentPeerReview": "A independently recomputed all27 and checked identity/lifecycle, 2026-11-06"
+}

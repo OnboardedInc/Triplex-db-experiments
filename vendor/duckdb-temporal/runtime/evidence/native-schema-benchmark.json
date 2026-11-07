@@ -1,0 +1,215 @@
+{
+  "schema": "native-schema-comparison/1",
+  "timestamp_utc": "2026-11-05T03:26:01.035Z",
+  "warmup_pairs": 2,
+  "measured_pairs": 5,
+  "scope": "512-row real DuckDB/native validation callback plus complete owned Boolean output; connection open excluded; last-row fault checked on every attempt",
+  "before_build": {
+    "engine": "2.0.0",
+    "extension_version": "0.8.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "schema_template_reuse": false,
+    "source_sha256": {
+      "native/src/temporal_control.hpp": "7fc6a2962413303383c98eeb65b5222423c5a351571a7adc0fbe8fff32d49ba8",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_datalog.cpp": "a51488342d7a10148919d71ad9261d2fe689ad6fa33c1b61b3d641916efc9b77",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_schema.cpp": "453835c8d80563dbb5d83a4860e349a0451113c35b8b31fccfa77605124aa25f",
+      "native/src/temporal_schema.hpp": "f4458e90e5b50bd8362a3c69b5f06f234cdb8aa1f61c9e522a4eee26fe2ba72e",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "8968458290acab8380b1ddc0c25ecd47e21b718aca06b59ce464d7ae293ff6cf",
+    "extension_sha256": "eb54a2ba28b744dff7e65ea325e10c7dc7b7cac24817cc9c4a65320c89981a2f"
+  },
+  "after_build": {
+    "engine": "2.0.0",
+    "extension_version": "0.8.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "schema_template_reuse": true,
+    "source_sha256": {
+      "native/src/temporal_control.hpp": "7fc6a2962413303383c98eeb65b5222423c5a351571a7adc0fbe8fff32d49ba8",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_datalog.cpp": "a51488342d7a10148919d71ad9261d2fe689ad6fa33c1b61b3d641916efc9b77",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_schema.cpp": "453835c8d80563dbb5d83a4860e349a0451113c35b8b31fccfa77605124aa25f",
+      "native/src/temporal_schema.hpp": "f4458e90e5b50bd8362a3c69b5f06f234cdb8aa1f61c9e522a4eee26fe2ba72e",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "29102eded2b292d3ee13063bd924413ab87e531e44dd999ae7d83edee8852b5b",
+    "extension_sha256": "5df7da20ccaaea2a5693d1a6f08eeca620ea24a93267872185e7235a82c017f3"
+  },
+  "source_sha256": {
+    "native/src/temporal_datalog.cpp": "a51488342d7a10148919d71ad9261d2fe689ad6fa33c1b61b3d641916efc9b77",
+    "native/src/temporal_schema.cpp": "453835c8d80563dbb5d83a4860e349a0451113c35b8b31fccfa77605124aa25f",
+    "native/src/temporal_schema.hpp": "f4458e90e5b50bd8362a3c69b5f06f234cdb8aa1f61c9e522a4eee26fe2ba72e",
+    "adapter/benchmark-schema.mjs": "5c0455c1f483f45b360342080f51f29df531929a2272a8fd558ee7a80aaadef2"
+  },
+  "summary": [
+    {
+      "width": 2,
+      "before_ms": 1.6739170000000172,
+      "after_ms": 1.1169999999999618,
+      "speedup": 1.4985828111012305
+    },
+    {
+      "width": 64,
+      "before_ms": 20.790374999999926,
+      "after_ms": 9.739625000000046,
+      "speedup": 2.134617605913968
+    }
+  ],
+  "samples": [
+    {
+      "width": 2,
+      "variant": "before",
+      "attempt": 0,
+      "rows": 512,
+      "elapsed_ms": 1.527084000000002
+    },
+    {
+      "width": 2,
+      "variant": "after",
+      "attempt": 0,
+      "rows": 512,
+      "elapsed_ms": 1.1169999999999618
+    },
+    {
+      "width": 2,
+      "variant": "after",
+      "attempt": 1,
+      "rows": 512,
+      "elapsed_ms": 1.0615829999999846
+    },
+    {
+      "width": 2,
+      "variant": "before",
+      "attempt": 1,
+      "rows": 512,
+      "elapsed_ms": 1.6739170000000172
+    },
+    {
+      "width": 2,
+      "variant": "before",
+      "attempt": 2,
+      "rows": 512,
+      "elapsed_ms": 2.3700000000000045
+    },
+    {
+      "width": 2,
+      "variant": "after",
+      "attempt": 2,
+      "rows": 512,
+      "elapsed_ms": 1.3691249999999968
+    },
+    {
+      "width": 2,
+      "variant": "after",
+      "attempt": 3,
+      "rows": 512,
+      "elapsed_ms": 1.41700000000003
+    },
+    {
+      "width": 2,
+      "variant": "before",
+      "attempt": 3,
+      "rows": 512,
+      "elapsed_ms": 1.756666999999993
+    },
+    {
+      "width": 2,
+      "variant": "before",
+      "attempt": 4,
+      "rows": 512,
+      "elapsed_ms": 1.6223750000000337
+    },
+    {
+      "width": 2,
+      "variant": "after",
+      "attempt": 4,
+      "rows": 512,
+      "elapsed_ms": 0.9966660000000047
+    },
+    {
+      "width": 64,
+      "variant": "before",
+      "attempt": 0,
+      "rows": 512,
+      "elapsed_ms": 20.739832999999976
+    },
+    {
+      "width": 64,
+      "variant": "after",
+      "attempt": 0,
+      "rows": 512,
+      "elapsed_ms": 9.937750000000051
+    },
+    {
+      "width": 64,
+      "variant": "after",
+      "attempt": 1,
+      "rows": 512,
+      "elapsed_ms": 9.479917
+    },
+    {
+      "width": 64,
+      "variant": "before",
+      "attempt": 1,
+      "rows": 512,
+      "elapsed_ms": 20.283915999999977
+    },
+    {
+      "width": 64,
+      "variant": "before",
+      "attempt": 2,
+      "rows": 512,
+      "elapsed_ms": 20.790374999999926
+    },
+    {
+      "width": 64,
+      "variant": "after",
+      "attempt": 2,
+      "rows": 512,
+      "elapsed_ms": 9.739625000000046
+    },
+    {
+      "width": 64,
+      "variant": "after",
+      "attempt": 3,
+      "rows": 512,
+      "elapsed_ms": 9.592500000000086
+    },
+    {
+      "width": 64,
+      "variant": "before",
+      "attempt": 3,
+      "rows": 512,
+      "elapsed_ms": 21.75162499999999
+    },
+    {
+      "width": 64,
+      "variant": "before",
+      "attempt": 4,
+      "rows": 512,
+      "elapsed_ms": 21.301042000000052
+    },
+    {
+      "width": 64,
+      "variant": "after",
+      "attempt": 4,
+      "rows": 512,
+      "elapsed_ms": 10.50016699999992
+    }
+  ]
+}

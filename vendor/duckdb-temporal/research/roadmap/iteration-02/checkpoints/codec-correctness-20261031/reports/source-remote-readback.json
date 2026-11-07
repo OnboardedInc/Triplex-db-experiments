@@ -1,0 +1,62 @@
+{
+  "at_utc": "2026-10-31T02:24:37.531Z",
+  "source_commit": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+  "parent": "ae50094cd242c4d46950f8a9a99d1ecdca03b7f8",
+  "root_tree": "64feffa8eebc8535722f6a3ddc904a679f3eefc4",
+  "prototype_tree": "f19311858f30479b63ccbcd948dda5ef94f5dcd1",
+  "all7_changed_leaves_and_unrelated_tree_preserved_by_independent_Git_hash": true,
+  "all269_current_export_members_GitSHA_match_remote_recursive_tree": true,
+  "prototype_blobs": 270,
+  "historical_v1_EXPORT_manifest_unchanged": "20e46bef850353152656c593a554bdf8d314db98",
+  "critical_file_readbacks": [
+    {
+      "path": "projects/temporal-datalog/prototype/README.md",
+      "sha": "5f2509814e230729d7eb0cf624a39b50b84abcf8",
+      "verified": true
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/engine/ITERATION-02.md",
+      "sha": "89f18114e0b400e7b232b268a3529edf057dec3b",
+      "verified": true
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/storage/README.md",
+      "sha": "e025c813d5215d2df2a5d9da9393114bde8bdaf7",
+      "verified": true
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/verify_expressions.sh",
+      "sha": "7d3b2fe78800e0b0c29a783e3aa43b243d306b33",
+      "verified": true
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/storage/typed_store.py",
+      "sha": "145b16eee43c9f6bc4be9837818a2a492b4cfca7",
+      "verified": true
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/storage/tests/test_batch_codec.py",
+      "sha": "2796dcbb59c56f266719914c7c62e8819bdd2985",
+      "verified": true
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/storage/tests/test_native_codec_keys.py",
+      "sha": "0d4e42977fb67ad79142030e3941673c64987275",
+      "verified": true
+    }
+  ],
+  "full_executed_source_manifest": "cb63b5055b4e58dc9a2cfbaaf4d316a107be8c807b4cac6d387d40446151273d",
+  "native_artifact": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+  "pr": {
+    "number": 7,
+    "head": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+    "base": "main",
+    "draft": true,
+    "state": "open",
+    "merged": false
+  },
+  "PR_head_matches": true,
+  "codec_macro_performance": "NOT_RUN",
+  "item2_accepted": false,
+  "pending": null
+}

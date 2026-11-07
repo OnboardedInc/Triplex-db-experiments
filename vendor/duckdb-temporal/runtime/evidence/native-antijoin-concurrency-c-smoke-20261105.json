@@ -1,0 +1,285 @@
+{
+  "schema": "td.antijoin-concurrency-c-smoke/1",
+  "result": "PASS_CORRECTNESS_ONLY",
+  "auditRecordedUtc": "2026-11-05T23:59:29.877336+00:00",
+  "testedSource": "50a5cbf9e7b8d955ac4658822d6c92774f18dfa2",
+  "commonBase": "773f7746466caf0ba4eff70a741e9594d07f39cc",
+  "runtime": "accepted-032-runtime",
+  "runtimePins": {
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "mechanism": "FIFO admission cap3 whole query calls; unchanged DuckDB4/UV4; writer outside FIFO",
+  "publicApiChanged": false,
+  "configuration": {
+    "readers": [
+      1,
+      16
+    ],
+    "samples": 2,
+    "warmup": 0,
+    "durationSeconds": 2,
+    "maxWrites": 12000,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "readAdmission": 3
+  },
+  "qualifications": {
+    "syntaxCheck": "PASS",
+    "pureMethodsPassed": 6,
+    "engineSmoke": "PASS",
+    "largerTimedGateRun": false,
+    "performanceQualified": false,
+    "engineQuiet": true
+  },
+  "rawEvidence": {
+    "file": "build/antijoin-concurrency-c-20261105-01/100k.json",
+    "sha256": "78ced51663b0c9fcac423d8336a23699e08a58b852e8665e2a7d0dfa619f5514",
+    "bytes": 947911
+  },
+  "candidateBudget": {
+    "file": "evidence/antijoin-concurrency-c-10m-budget-20261105.json",
+    "sha256": "3c10dc9f2d0533eaed224a34bbb8c3a25b101871eb739c355c5d677128797f86"
+  },
+  "source": {
+    "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "bytes": 52178944,
+    "mtimeMs": 1793904791622.1863,
+    "ctimeMs": 1793904791622.1863,
+    "sha256Before": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "evidenceSha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4",
+    "sha256After": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1"
+  },
+  "sourceUnchanged": true,
+  "profiles": [
+    {
+      "readers": 1,
+      "correctness": "PASS",
+      "inputAdmissionProof": {
+        "scopedInputFacts": 17331,
+        "rightSideFacts": "17075",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "healthyReuseCalls": 1,
+      "reopenCuts": 5,
+      "reopenVerified": true,
+      "cells": [
+        {
+          "phase": "fixed",
+          "logicalClients": 1,
+          "nativePoolCapacity": 1,
+          "calls": 2,
+          "patchAcks": 0,
+          "admission": {
+            "limit": 1,
+            "active": 0,
+            "waiting": 0,
+            "maxActive": 1,
+            "maxQueued": 0,
+            "admitted": 3,
+            "completed": 3,
+            "rejected": 0,
+            "admissionWaitMs": {
+              "count": 3,
+              "min": 0.009457999999995081,
+              "p50": 0.00958400000013171,
+              "p95": 0.0571669999999358,
+              "p99": 0.0571669999999358,
+              "max": 0.0571669999999358
+            },
+            "scope": "whole public query calls admitted by a test-only FIFO; not native tasks"
+          },
+          "physicalControlScopes": {
+            "calls": 3,
+            "maxActive": 1,
+            "distinctPorts": 1,
+            "portIds": [
+              1
+            ],
+            "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+          },
+          "allPoolLeasesReturned": true,
+          "queryErrors": 0,
+          "acknowledgmentErrors": 0
+        },
+        {
+          "phase": "mixed",
+          "logicalClients": 1,
+          "nativePoolCapacity": 1,
+          "calls": 11,
+          "patchAcks": 11,
+          "admission": {
+            "limit": 1,
+            "active": 0,
+            "waiting": 0,
+            "maxActive": 1,
+            "maxQueued": 0,
+            "admitted": 13,
+            "completed": 13,
+            "rejected": 0,
+            "admissionWaitMs": {
+              "count": 13,
+              "min": 0.005167000000028565,
+              "p50": 0.013624999999592546,
+              "p95": 0.018708000000060565,
+              "p99": 0.018708000000060565,
+              "max": 0.018708000000060565
+            },
+            "scope": "whole public query calls admitted by a test-only FIFO; not native tasks"
+          },
+          "physicalControlScopes": {
+            "calls": 13,
+            "maxActive": 1,
+            "distinctPorts": 1,
+            "portIds": [
+              1
+            ],
+            "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+          },
+          "allPoolLeasesReturned": true,
+          "queryErrors": 0,
+          "acknowledgmentErrors": 0
+        }
+      ]
+    },
+    {
+      "readers": 16,
+      "correctness": "PASS",
+      "inputAdmissionProof": {
+        "scopedInputFacts": 17331,
+        "rightSideFacts": "17075",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "healthyReuseCalls": 16,
+      "reopenCuts": 5,
+      "reopenVerified": true,
+      "cells": [
+        {
+          "phase": "fixed",
+          "logicalClients": 16,
+          "nativePoolCapacity": 16,
+          "calls": 32,
+          "patchAcks": 0,
+          "admission": {
+            "limit": 3,
+            "active": 0,
+            "waiting": 0,
+            "maxActive": 3,
+            "maxQueued": 13,
+            "admitted": 33,
+            "completed": 33,
+            "rejected": 0,
+            "admissionWaitMs": {
+              "count": 33,
+              "min": 0.001583999999866137,
+              "p50": 123.04841699999997,
+              "p95": 187.91495899999995,
+              "p99": 205.363333,
+              "max": 205.363333
+            },
+            "scope": "whole public query calls admitted by a test-only FIFO; not native tasks"
+          },
+          "physicalControlScopes": {
+            "calls": 33,
+            "maxActive": 3,
+            "distinctPorts": 16,
+            "portIds": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16
+            ],
+            "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+          },
+          "allPoolLeasesReturned": true,
+          "queryErrors": 0,
+          "acknowledgmentErrors": 0
+        },
+        {
+          "phase": "mixed",
+          "logicalClients": 16,
+          "nativePoolCapacity": 16,
+          "calls": 46,
+          "patchAcks": 11,
+          "admission": {
+            "limit": 3,
+            "active": 0,
+            "waiting": 0,
+            "maxActive": 3,
+            "maxQueued": 13,
+            "admitted": 48,
+            "completed": 48,
+            "rejected": 0,
+            "admissionWaitMs": {
+              "count": 48,
+              "min": 0.0010419999998703133,
+              "p50": 751.2343340000002,
+              "p95": 949.49975,
+              "p99": 1010.5880420000003,
+              "max": 1010.5880420000003
+            },
+            "scope": "whole public query calls admitted by a test-only FIFO; not native tasks"
+          },
+          "physicalControlScopes": {
+            "calls": 48,
+            "maxActive": 3,
+            "distinctPorts": 16,
+            "portIds": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16
+            ],
+            "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+          },
+          "allPoolLeasesReturned": true,
+          "queryErrors": 0,
+          "acknowledgmentErrors": 0
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Small synthetic100k smoke; no throughput/tail or larger-scale acceptance claim. Controlled correctness jobs could overlap.",
+    "All gateway queue wait remains in full-call measurement; remaining timeout is passed into actual public NativeEntityStore call.",
+    "Logical client IDs, actual native-port control scopes and max admitted public calls are different metrics. Physical control scopes are not native task concurrency.",
+    "Production adapter and public API are unchanged. The gate exists only in the experiment harness."
+  ]
+}

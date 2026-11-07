@@ -1,0 +1,92 @@
+{
+  "schema": "td.item4.1.tiny-observed-result/1",
+  "observed_at": "2026-10-31T23:05:22.991Z",
+  "source_commit": "49786aa027bd8161a6bb7ca359a3c0fa1d6ca1c7",
+  "oracle_revision": "002",
+  "execution_exit_code": 0,
+  "report": {
+    "checks": 8,
+    "complete": true,
+    "failures": 0,
+    "public_calls": 8,
+    "records": [
+      {
+        "actual": "CANONICAL_STRATIFIABLE",
+        "call_outcome": "RETURNED",
+        "checks": 1,
+        "expected": "CANONICAL_STRATIFIABLE",
+        "failures": 0,
+        "public_calls": 1,
+        "scenario_id": "SMOKE_EMPTY_ANALYZE"
+      },
+      {
+        "actual": "VALID_STRATIFIABLE",
+        "call_outcome": "RETURNED",
+        "checks": 1,
+        "expected": "VALID_STRATIFIABLE",
+        "failures": 0,
+        "public_calls": 1,
+        "scenario_id": "SMOKE_EMPTY_CHECK"
+      },
+      {
+        "actual": "CANONICAL_STRATIFIABLE",
+        "call_outcome": "RETURNED",
+        "checks": 1,
+        "expected": "CANONICAL_STRATIFIABLE",
+        "failures": 0,
+        "public_calls": 1,
+        "scenario_id": "SMOKE_POSITIVE_SELF_ANALYZE"
+      },
+      {
+        "actual": "VALID_STRATIFIABLE",
+        "call_outcome": "RETURNED",
+        "checks": 1,
+        "expected": "VALID_STRATIFIABLE",
+        "failures": 0,
+        "public_calls": 1,
+        "scenario_id": "SMOKE_POSITIVE_SELF_CHECK"
+      },
+      {
+        "actual": "CANONICAL_UNSTRATIFIABLE",
+        "call_outcome": "RETURNED",
+        "checks": 1,
+        "expected": "CANONICAL_UNSTRATIFIABLE",
+        "failures": 0,
+        "public_calls": 1,
+        "scenario_id": "SMOKE_NEGATIVE_SELF_ANALYZE"
+      },
+      {
+        "actual": "VALID_UNSTRATIFIABLE",
+        "call_outcome": "RETURNED",
+        "checks": 1,
+        "expected": "VALID_UNSTRATIFIABLE",
+        "failures": 0,
+        "public_calls": 1,
+        "scenario_id": "SMOKE_NEGATIVE_SELF_CHECK"
+      },
+      {
+        "actual": "CANONICAL_UNSTRATIFIABLE",
+        "call_outcome": "RETURNED",
+        "checks": 1,
+        "expected": "CANONICAL_UNSTRATIFIABLE",
+        "failures": 0,
+        "public_calls": 1,
+        "scenario_id": "SMOKE_AGGREGATE_SELF_ANALYZE"
+      },
+      {
+        "actual": "VALID_UNSTRATIFIABLE",
+        "call_outcome": "RETURNED",
+        "checks": 1,
+        "expected": "VALID_UNSTRATIFIABLE",
+        "failures": 0,
+        "public_calls": 1,
+        "scenario_id": "SMOKE_AGGREGATE_SELF_CHECK"
+      }
+    ],
+    "schema": "td.graph.initial-smoke-result/1",
+    "source_revision": "49786aa0-with-oracle002",
+    "status": "PASS"
+  },
+  "original_local_receipt_sha256": "c290ed41841b658b84e26dffd72841123fe34df651bae87e5e1d869fe6918cb6",
+  "scope": "One execution, four n<=1 synthetic graphs; no timing/performance/capacity or broad acceptance claim."
+}

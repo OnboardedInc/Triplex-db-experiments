@@ -1,0 +1,2326 @@
+{
+  "schema": "temporal-scale-benchmark/1",
+  "timestampUtc": "2026-11-05T18:19:55.640Z",
+  "configuration": {
+    "sizes": [
+      1000000
+    ],
+    "readers": [
+      16
+    ],
+    "samples": 2,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 4096,
+    "fixtureMode": "native",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 0,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 100000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "fixtureDirectory": "build/scale-runs/20261105T181955639Z-b33bc083",
+  "limitations": [
+    "SQL-expanded setup is not native ingestion throughput evidence",
+    "Process memory before/after is not a peak or hard memory bound",
+    "Empirical quantiles from small sample counts are smoke measurements"
+  ],
+  "stages": [
+    {
+      "size": 1000000,
+      "database": "facts-1000000.duckdb",
+      "status": "passed",
+      "setupEvents": [],
+      "cells": [
+        {
+          "kind": "count",
+          "mixedIngestion": false,
+          "readerCount": 16,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 4,
+              "round": 0,
+              "elapsedMs": 128.53820800000017,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02120799999988776
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 140.014541,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.009999999999990905
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 140.24866600000018,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.019624999999905413
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 140.45325000000003,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.020332999999936874
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 140.726625,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.020790999999917403
+            },
+            {
+              "reader": 5,
+              "round": 0,
+              "elapsedMs": 140.93274999999994,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.022208000000091488
+            },
+            {
+              "reader": 6,
+              "round": 0,
+              "elapsedMs": 148.22124999999983,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.022625000000061846
+            },
+            {
+              "reader": 8,
+              "round": 0,
+              "elapsedMs": 148.415125,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.023333000000093307
+            },
+            {
+              "reader": 7,
+              "round": 0,
+              "elapsedMs": 150.74258299999997,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02295800000001691
+            },
+            {
+              "reader": 9,
+              "round": 0,
+              "elapsedMs": 151.09249999999997,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02387500000008913
+            },
+            {
+              "reader": 12,
+              "round": 0,
+              "elapsedMs": 151.50837500000011,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.026540999999951964
+            },
+            {
+              "reader": 11,
+              "round": 0,
+              "elapsedMs": 152.1005839999998,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02616600000010294
+            },
+            {
+              "reader": 10,
+              "round": 0,
+              "elapsedMs": 152.43925000000013,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.024290999999948326
+            },
+            {
+              "reader": 13,
+              "round": 0,
+              "elapsedMs": 187.444792,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02691600000002836
+            },
+            {
+              "reader": 14,
+              "round": 0,
+              "elapsedMs": 187.88504199999988,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02729100000010476
+            },
+            {
+              "reader": 15,
+              "round": 0,
+              "elapsedMs": 195.46670900000004,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.027665999999953783
+            },
+            {
+              "reader": 4,
+              "round": 1,
+              "elapsedMs": 151.588708,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 128.5882079999999
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 140.361625,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 140.04554099999996
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 140.48420799999985,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 140.2744580000001
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 147.39629100000002,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 140.47787500000004
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 147.353834,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 140.766666
+            },
+            {
+              "reader": 5,
+              "round": 1,
+              "elapsedMs": 147.36625000000004,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 140.96641599999998
+            },
+            {
+              "reader": 8,
+              "round": 1,
+              "elapsedMs": 140.11895800000002,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 148.445375
+            },
+            {
+              "reader": 7,
+              "round": 1,
+              "elapsedMs": 138.03475000000003,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 150.77495799999997
+            },
+            {
+              "reader": 6,
+              "round": 1,
+              "elapsedMs": 140.81037500000002,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 148.2662499999999
+            },
+            {
+              "reader": 9,
+              "round": 1,
+              "elapsedMs": 138.19016699999997,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 151.12141599999995
+            },
+            {
+              "reader": 12,
+              "round": 1,
+              "elapsedMs": 147.86120800000003,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 151.54758300000003
+            },
+            {
+              "reader": 11,
+              "round": 1,
+              "elapsedMs": 152.0680829999999,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 152.13762500000007
+            },
+            {
+              "reader": 10,
+              "round": 1,
+              "elapsedMs": 169.17383400000017,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 152.47279099999992
+            },
+            {
+              "reader": 13,
+              "round": 1,
+              "elapsedMs": 139.034625,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 187.5017909999999
+            },
+            {
+              "reader": 14,
+              "round": 1,
+              "elapsedMs": 144.179709,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 187.919666
+            },
+            {
+              "reader": 15,
+              "round": 1,
+              "elapsedMs": 139.051917,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 195.5077080000001
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 334.5762500000001,
+          "throughputQueriesPerSecond": 95.64336978491448,
+          "latencyMs": {
+            "count": 32,
+            "min": 128.53820800000017,
+            "p50": 147.353834,
+            "p95": 187.88504199999988,
+            "p99": 195.46670900000004,
+            "max": 195.46670900000004
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 495239168,
+                "heapTotal": 18710528,
+                "heapUsed": 8901744,
+                "external": 69551378,
+                "arrayBuffers": 67205987
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78917584",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 511344640,
+                "heapTotal": 18710528,
+                "heapUsed": 9946392,
+                "external": 69684964,
+                "arrayBuffers": 67310162
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78917584",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 515194880,
+                "heapTotal": 18710528,
+                "heapUsed": 11312392,
+                "external": 69881044,
+                "arrayBuffers": 67506242
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78917584",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 515162112
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 34.752207999999996,
+            "position": "253",
+            "kind": "count",
+            "cut": "latest",
+            "route": "sql",
+            "reason": "owned_allcut_unique_scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "overlapScope": "public_call_intervals_including_queue_wait; not_native_execution_phase_proof",
+          "writeMode": null,
+          "writeLimit": 8,
+          "writeLimitReached": false,
+          "measurementMode": "sample_count",
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 334.5762500000001,
+              "completedReads": 32,
+              "latencyMs": {
+                "count": 32,
+                "min": 128.53820800000017,
+                "p50": 147.353834,
+                "p95": 187.88504199999988,
+                "p99": 195.46670900000004,
+                "max": 195.46670900000004
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": {
+                "maxRssBytes": 515162112,
+                "maxActiveReaders": 16,
+                "maxWaitingReaders": 0,
+                "samples": 13
+              }
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "sum",
+          "mixedIngestion": false,
+          "readerCount": 16,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 159.96537500000022,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.011625000000094587
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 160.6260830000001,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.011167000000114058
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 160.94837499999994,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.006083000000216998
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 187.59479199999987,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.010583000000224274
+            },
+            {
+              "reader": 4,
+              "round": 0,
+              "elapsedMs": 192.5789590000004,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.011958000000049651
+            },
+            {
+              "reader": 5,
+              "round": 0,
+              "elapsedMs": 192.78758400000015,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.012708000000202446
+            },
+            {
+              "reader": 8,
+              "round": 0,
+              "elapsedMs": 197.9451250000002,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.014833000000180618
+            },
+            {
+              "reader": 6,
+              "round": 0,
+              "elapsedMs": 198.231084,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.013083000000278844
+            },
+            {
+              "reader": 9,
+              "round": 0,
+              "elapsedMs": 198.5811660000004,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.015292000000044936
+            },
+            {
+              "reader": 7,
+              "round": 0,
+              "elapsedMs": 198.85220900000013,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01445800000010422
+            },
+            {
+              "reader": 10,
+              "round": 0,
+              "elapsedMs": 199.42154200000004,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01570800000035888
+            },
+            {
+              "reader": 11,
+              "round": 0,
+              "elapsedMs": 199.72295799999984,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01604200000019773
+            },
+            {
+              "reader": 12,
+              "round": 0,
+              "elapsedMs": 200.0635830000001,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.016375000000152795
+            },
+            {
+              "reader": 13,
+              "round": 0,
+              "elapsedMs": 234.57175000000007,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01670800000010786
+            },
+            {
+              "reader": 14,
+              "round": 0,
+              "elapsedMs": 264.0588749999997,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.017042000000401458
+            },
+            {
+              "reader": 15,
+              "round": 0,
+              "elapsedMs": 268.7236250000001,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01741700000002311
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 189.92066699999987,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 160.0038330000002
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 189.6315840000002,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 160.64670800000022
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 195.1845830000002,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 160.96016700000018
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 168.7523339999998,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 187.6270830000003
+            },
+            {
+              "reader": 4,
+              "round": 1,
+              "elapsedMs": 164.07600000000002,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 192.60925000000043
+            },
+            {
+              "reader": 5,
+              "round": 1,
+              "elapsedMs": 164.12445900000012,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 192.8050830000002
+            },
+            {
+              "reader": 8,
+              "round": 1,
+              "elapsedMs": 159.25562499999978,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 197.9741670000003
+            },
+            {
+              "reader": 9,
+              "round": 1,
+              "elapsedMs": 158.88108300000022,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 198.6075420000002
+            },
+            {
+              "reader": 6,
+              "round": 1,
+              "elapsedMs": 159.52241700000013,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 198.2492500000003
+            },
+            {
+              "reader": 7,
+              "round": 1,
+              "elapsedMs": 159.2474159999997,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 198.87154200000032
+            },
+            {
+              "reader": 10,
+              "round": 1,
+              "elapsedMs": 172.1908330000001,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 199.44716700000026
+            },
+            {
+              "reader": 11,
+              "round": 1,
+              "elapsedMs": 187.5663330000002,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 199.74437500000022
+            },
+            {
+              "reader": 12,
+              "round": 1,
+              "elapsedMs": 187.4636660000001,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 200.0852920000002
+            },
+            {
+              "reader": 13,
+              "round": 1,
+              "elapsedMs": 175.88579200000004,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 234.60437500000035
+            },
+            {
+              "reader": 14,
+              "round": 1,
+              "elapsedMs": 151.59079199999996,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 264.09270800000013
+            },
+            {
+              "reader": 15,
+              "round": 1,
+              "elapsedMs": 153.37312499999962,
+              "position": "253",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 268.7524580000004
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 422.1488750000003,
+          "throughputQueriesPerSecond": 75.80264189973259,
+          "latencyMs": {
+            "count": 32,
+            "min": 151.59079199999996,
+            "p50": 187.5663330000002,
+            "p95": 264.0588749999997,
+            "p99": 268.7236250000001,
+            "max": 268.7236250000001
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 600801280,
+                "heapTotal": 18710528,
+                "heapUsed": 9246960,
+                "external": 69580793,
+                "arrayBuffers": 67205991
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78381056",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 603471872,
+                "heapTotal": 18710528,
+                "heapUsed": 10043408,
+                "external": 69691428,
+                "arrayBuffers": 67316626
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78381056",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 614334464,
+                "heapTotal": 18710528,
+                "heapUsed": 11390800,
+                "external": 69899668,
+                "arrayBuffers": 67524866
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78381056",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 614318080
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 40.24529200000006,
+            "position": "253",
+            "kind": "sum",
+            "cut": "latest",
+            "route": "sql",
+            "reason": "owned_allcut_unique_scalable_aggregate",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "overlapScope": "public_call_intervals_including_queue_wait; not_native_execution_phase_proof",
+          "writeMode": null,
+          "writeLimit": 8,
+          "writeLimitReached": false,
+          "measurementMode": "sample_count",
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 422.1488750000003,
+              "completedReads": 32,
+              "latencyMs": {
+                "count": 32,
+                "min": 151.59079199999996,
+                "p50": 187.5663330000002,
+                "p95": 264.0588749999997,
+                "p99": 268.7236250000001,
+                "max": 268.7236250000001
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": {
+                "maxRssBytes": 614318080,
+                "maxActiveReaders": 16,
+                "maxWaitingReaders": 0,
+                "samples": 16
+              }
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "grouped_sum",
+          "mixedIngestion": false,
+          "readerCount": 16,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 5,
+              "round": 0,
+              "elapsedMs": 188.47366699999975,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.01358299999992596
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 189.00391600000012,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.01062499999989086
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 189.45454100000006,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.0062499999999090505
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 198.60970899999984,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.01154099999985192
+            },
+            {
+              "reader": 6,
+              "round": 0,
+              "elapsedMs": 199.183,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.013958000000002357
+            },
+            {
+              "reader": 4,
+              "round": 0,
+              "elapsedMs": 216.46054099999992,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.011874999999690772
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 217.0245420000001,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.011165999999775522
+            },
+            {
+              "reader": 7,
+              "round": 0,
+              "elapsedMs": 217.511125,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.014290999999957421
+            },
+            {
+              "reader": 8,
+              "round": 0,
+              "elapsedMs": 218.68104200000016,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.015415999999731866
+            },
+            {
+              "reader": 9,
+              "round": 0,
+              "elapsedMs": 219.43066700000008,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.01591599999983373
+            },
+            {
+              "reader": 11,
+              "round": 0,
+              "elapsedMs": 219.91358300000002,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.016582999999627646
+            },
+            {
+              "reader": 12,
+              "round": 0,
+              "elapsedMs": 220.49654200000032,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.016957999999704043
+            },
+            {
+              "reader": 10,
+              "round": 0,
+              "elapsedMs": 220.9971660000001,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.016249999999672582
+            },
+            {
+              "reader": 13,
+              "round": 0,
+              "elapsedMs": 266.856542,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.017290999999659107
+            },
+            {
+              "reader": 14,
+              "round": 0,
+              "elapsedMs": 283.53379099999984,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.017624999999952706
+            },
+            {
+              "reader": 15,
+              "round": 0,
+              "elapsedMs": 345.2434589999998,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 0.017915999999786436
+            },
+            {
+              "reader": 5,
+              "round": 1,
+              "elapsedMs": 226.6868330000002,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 188.70599999999968
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 233.01945799999976,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 189.20295799999985
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 233.12383299999965,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 189.66187499999978
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 224.37279199999966,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 198.8652079999997
+            },
+            {
+              "reader": 6,
+              "round": 1,
+              "elapsedMs": 224.26845799999955,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 199.42349999999988
+            },
+            {
+              "reader": 4,
+              "round": 1,
+              "elapsedMs": 207.442,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 216.70687499999985
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 207.37158300000056,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 217.2436249999996
+            },
+            {
+              "reader": 7,
+              "round": 1,
+              "elapsedMs": 207.3244169999998,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 217.72416599999997
+            },
+            {
+              "reader": 8,
+              "round": 1,
+              "elapsedMs": 206.44491699999935,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 219.07433300000002
+            },
+            {
+              "reader": 9,
+              "round": 1,
+              "elapsedMs": 207.48941699999978,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 219.63458300000002
+            },
+            {
+              "reader": 11,
+              "round": 1,
+              "elapsedMs": 208.8159169999999,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 220.19904099999985
+            },
+            {
+              "reader": 12,
+              "round": 1,
+              "elapsedMs": 239.7143329999999,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 220.7138329999998
+            },
+            {
+              "reader": 10,
+              "round": 1,
+              "elapsedMs": 239.7286250000002,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 221.22245799999973
+            },
+            {
+              "reader": 14,
+              "round": 1,
+              "elapsedMs": 202.83154199999944,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 283.77033299999994
+            },
+            {
+              "reader": 13,
+              "round": 1,
+              "elapsedMs": 228.74716599999965,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 267.0859999999998
+            },
+            {
+              "reader": 15,
+              "round": 1,
+              "elapsedMs": 156.88899999999967,
+              "position": "253",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_aggregate",
+              "rows": 253,
+              "startOffsetMs": 345.4901249999998
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 502.596458,
+          "throughputQueriesPerSecond": 63.66937030821654,
+          "latencyMs": {
+            "count": 32,
+            "min": 156.88899999999967,
+            "p50": 217.511125,
+            "p95": 283.53379099999984,
+            "p99": 345.2434589999998,
+            "max": 345.2434589999998
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 640630784,
+                "heapTotal": 18710528,
+                "heapUsed": 9315784,
+                "external": 69580793,
+                "arrayBuffers": 67205991
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78381056",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 649199616,
+                "heapTotal": 28672000,
+                "heapUsed": 13822128,
+                "external": 69927991,
+                "arrayBuffers": 67553189
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78381056",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 621215744,
+                "heapTotal": 47022080,
+                "heapUsed": 12464752,
+                "external": 2973904,
+                "arrayBuffers": 599102
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78381056",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 660684800
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 44.568624999999884,
+            "position": "253",
+            "kind": "grouped_sum",
+            "cut": "latest",
+            "route": "sql",
+            "reason": "owned_allcut_unique_scalable_aggregate",
+            "rows": 253
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "overlapScope": "public_call_intervals_including_queue_wait; not_native_execution_phase_proof",
+          "writeMode": null,
+          "writeLimit": 8,
+          "writeLimitReached": false,
+          "measurementMode": "sample_count",
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 502.596458,
+              "completedReads": 32,
+              "latencyMs": {
+                "count": 32,
+                "min": 156.88899999999967,
+                "p50": 217.511125,
+                "p95": 283.53379099999984,
+                "p99": 345.2434589999998,
+                "max": 345.2434589999998
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": {
+                "maxRssBytes": 660684800,
+                "maxActiveReaders": 16,
+                "maxWaitingReaders": 0,
+                "samples": 19
+              }
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "count",
+          "mixedIngestion": true,
+          "readerCount": 16,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 137.1807090000002,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.009374999999636202
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 147.2335839999996,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.008875000000443833
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 147.50650000000041,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.005458999999973457
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 147.84341700000004,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.009750000000167347
+            },
+            {
+              "reader": 4,
+              "round": 0,
+              "elapsedMs": 148.074834,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.010124999999788997
+            },
+            {
+              "reader": 7,
+              "round": 0,
+              "elapsedMs": 148.2883750000001,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.011542000000190455
+            },
+            {
+              "reader": 6,
+              "round": 0,
+              "elapsedMs": 148.48958299999958,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.011209000000235392
+            },
+            {
+              "reader": 5,
+              "round": 0,
+              "elapsedMs": 153.5301669999999,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.010874999999941792
+            },
+            {
+              "reader": 8,
+              "round": 0,
+              "elapsedMs": 153.83050000000003,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.01187500000014552
+            },
+            {
+              "reader": 10,
+              "round": 0,
+              "elapsedMs": 154.02199999999993,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.012625000000298314
+            },
+            {
+              "reader": 9,
+              "round": 0,
+              "elapsedMs": 154.26645800000006,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.01229200000034325
+            },
+            {
+              "reader": 11,
+              "round": 0,
+              "elapsedMs": 154.47012499999983,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.012917000000015832
+            },
+            {
+              "reader": 12,
+              "round": 0,
+              "elapsedMs": 154.91025000000081,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.013291999999637483
+            },
+            {
+              "reader": 13,
+              "round": 0,
+              "elapsedMs": 156.47054200000002,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.013624999999592546
+            },
+            {
+              "reader": 14,
+              "round": 0,
+              "elapsedMs": 194.3602919999994,
+              "position": "253",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.01391700000021956
+            },
+            {
+              "reader": 15,
+              "round": 0,
+              "elapsedMs": 214.80720800000017,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.01429199999984121
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 133.5590000000002,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 137.2065419999999
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 123.7133329999997,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 147.257834
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 123.70841699999983,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 147.51475000000028
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 123.58129100000042,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 147.86383399999977
+            },
+            {
+              "reader": 4,
+              "round": 1,
+              "elapsedMs": 123.57708300000013,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 148.08733399999983
+            },
+            {
+              "reader": 7,
+              "round": 1,
+              "elapsedMs": 123.59070800000063,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 148.30191699999978
+            },
+            {
+              "reader": 6,
+              "round": 1,
+              "elapsedMs": 123.63075000000026,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 148.50254200000018
+            },
+            {
+              "reader": 5,
+              "round": 1,
+              "elapsedMs": 118.79975000000013,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 153.5477920000003
+            },
+            {
+              "reader": 8,
+              "round": 1,
+              "elapsedMs": 118.72508300000027,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 153.85454200000004
+            },
+            {
+              "reader": 10,
+              "round": 1,
+              "elapsedMs": 132.21383399999922,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 154.03750000000036
+            },
+            {
+              "reader": 9,
+              "round": 1,
+              "elapsedMs": 147.8495409999996,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 154.28133400000024
+            },
+            {
+              "reader": 11,
+              "round": 1,
+              "elapsedMs": 148.36016699999982,
+              "position": "254",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 154.4848750000001
+            },
+            {
+              "reader": 12,
+              "round": 1,
+              "elapsedMs": 169.84529199999997,
+              "position": "255",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 154.92562499999985
+            },
+            {
+              "reader": 13,
+              "round": 1,
+              "elapsedMs": 172.3447500000002,
+              "position": "255",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 156.48645899999974
+            },
+            {
+              "reader": 14,
+              "round": 1,
+              "elapsedMs": 140.9682499999999,
+              "position": "255",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 194.38916700000027
+            },
+            {
+              "reader": 15,
+              "round": 1,
+              "elapsedMs": 127.26441700000032,
+              "position": "255",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "owned_allcut_unique_scalable_count",
+              "rows": 1,
+              "startOffsetMs": 214.89300000000003
+            }
+          ],
+          "errors": [],
+          "writes": [
+            {
+              "index": 0,
+              "entityId": "campaign-e-20261105T181955639Z-b33bc083-00000000",
+              "commandId": "campaign-c-20261105T181955639Z-b33bc083-00000000",
+              "value": 1000008,
+              "position": "254",
+              "reconciled": false,
+              "startOffsetMs": 0.015292000000044936,
+              "elapsedMs": 154.61262499999975
+            },
+            {
+              "index": 1,
+              "entityId": "campaign-e-20261105T181955639Z-b33bc083-00000001",
+              "commandId": "campaign-c-20261105T181955639Z-b33bc083-00000001",
+              "value": 1000009,
+              "position": "255",
+              "reconciled": false,
+              "startOffsetMs": 154.63079199999993,
+              "elapsedMs": 118.00466700000015
+            },
+            {
+              "index": 2,
+              "entityId": "campaign-e-20261105T181955639Z-b33bc083-00000002",
+              "commandId": "campaign-c-20261105T181955639Z-b33bc083-00000002",
+              "value": 1000010,
+              "position": "256",
+              "reconciled": false,
+              "startOffsetMs": 272.63674999999967,
+              "elapsedMs": 52.21504200000072
+            },
+            {
+              "index": 3,
+              "entityId": "campaign-e-20261105T181955639Z-b33bc083-00000003",
+              "commandId": "campaign-c-20261105T181955639Z-b33bc083-00000003",
+              "value": 1000011,
+              "position": "257",
+              "reconciled": false,
+              "startOffsetMs": 324.8529589999998,
+              "elapsedMs": 32.51854100000037
+            },
+            {
+              "index": 4,
+              "entityId": "campaign-e-20261105T181955639Z-b33bc083-00000004",
+              "commandId": "campaign-c-20261105T181955639Z-b33bc083-00000004",
+              "value": 1000012,
+              "position": "258",
+              "reconciled": false,
+              "startOffsetMs": 357.37266699999964,
+              "elapsedMs": 33.10508300000038
+            },
+            {
+              "index": 5,
+              "entityId": "campaign-e-20261105T181955639Z-b33bc083-00000005",
+              "commandId": "campaign-c-20261105T181955639Z-b33bc083-00000005",
+              "value": 1000013,
+              "position": "259",
+              "reconciled": false,
+              "startOffsetMs": 390.47891700000037,
+              "elapsedMs": 31.239791999999397
+            },
+            {
+              "index": 6,
+              "entityId": "campaign-e-20261105T181955639Z-b33bc083-00000006",
+              "commandId": "campaign-c-20261105T181955639Z-b33bc083-00000006",
+              "value": 1000014,
+              "position": "260",
+              "reconciled": false,
+              "startOffsetMs": 421.7197500000002,
+              "elapsedMs": 28.597708999999668
+            },
+            {
+              "index": 7,
+              "entityId": "campaign-e-20261105T181955639Z-b33bc083-00000007",
+              "commandId": "campaign-c-20261105T181955639Z-b33bc083-00000007",
+              "value": 1000015,
+              "position": "261",
+              "reconciled": false,
+              "startOffsetMs": 450.31866700000046,
+              "elapsedMs": 30.7354579999992
+            }
+          ],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 481.06629200000043,
+          "throughputQueriesPerSecond": 66.51889881322212,
+          "latencyMs": {
+            "count": 32,
+            "min": 118.72508300000027,
+            "p50": 147.84341700000004,
+            "p95": 194.3602919999994,
+            "p99": 214.80720800000017,
+            "max": 214.80720800000017
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 658898944,
+                "heapTotal": 44400640,
+                "heapUsed": 8244040,
+                "external": 69584729,
+                "arrayBuffers": 67209927
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78381056",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 660045824,
+                "heapTotal": 44400640,
+                "heapUsed": 9001240,
+                "external": 69688904,
+                "arrayBuffers": 67314102
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "78381056",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 652820480,
+                "heapTotal": 44400640,
+                "heapUsed": 10607480,
+                "external": 69894567,
+                "arrayBuffers": 67519765
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "93781296",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 661356544
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 31.859959000000345,
+            "position": "253",
+            "kind": "count",
+            "cut": "latest",
+            "route": "sql",
+            "reason": "owned_allcut_unique_scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": true,
+          "overlappingQueryWrites": 58,
+          "overlapScope": "public_call_intervals_including_queue_wait; not_native_execution_phase_proof",
+          "writeMode": "bounded_burst",
+          "writeLimit": 8,
+          "writeLimitReached": false,
+          "measurementMode": "sample_count",
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 481.06629200000043,
+              "completedReads": 32,
+              "latencyMs": {
+                "count": 32,
+                "min": 118.72508300000027,
+                "p50": 147.84341700000004,
+                "p95": 194.3602919999994,
+                "p99": 214.80720800000017,
+                "max": 214.80720800000017
+              },
+              "completedWrites": 8,
+              "errors": 0,
+              "resources": {
+                "maxRssBytes": 661356544,
+                "maxActiveReaders": 16,
+                "maxWaitingReaders": 0,
+                "samples": 18
+              }
+            }
+          ],
+          "writeBurstDurationMs": 481.0388329999996,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        }
+      ],
+      "openConfiguration": {
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "retainedLimits": {
+          "maxFacts": 1100008,
+          "maxBytes": 4294967296
+        }
+      },
+      "clone": {
+        "route": "closed_file_required_darwin_clonefile",
+        "elapsedMs": 35.21908300000001,
+        "files": [
+          {
+            "file": "facts-1000000.duckdb",
+            "bytes": 314060800
+          }
+        ]
+      },
+      "fixture": {
+        "size": 1000000,
+        "groupSize": 4096,
+        "groups": 245,
+        "initialAdded": 8,
+        "initialEntityIds": [
+          "write-e-00000000",
+          "write-e-00000001",
+          "write-e-00000002",
+          "write-e-00000003",
+          "write-e-00000004",
+          "write-e-00000005",
+          "write-e-00000006",
+          "write-e-00000007"
+        ],
+        "position": "253",
+        "latestCut": true,
+        "setupRoute": "closed_fixture_clone",
+        "writePrefix": "campaign-e-20261105T181955639Z-b33bc083-",
+        "commandPrefix": "campaign-c-20261105T181955639Z-b33bc083-",
+        "setupMs": 35.277124999999984,
+        "databaseBytes": 314060800
+      }
+    }
+  ],
+  "status": "passed",
+  "clonedFrom": {
+    "database": "scale-1m-native.duckdb",
+    "evidence": "scale-1m-native-20261105-01.json",
+    "evidenceSha256": "591ada89b1f384e05d6424dd474025c296c15beaf4e64c90b90ceb7ceecf0f0c"
+  },
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.25.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "catalog_sql_sha256": "5ee1e9658738267fea9eef9a02bbe0105f2ca2daed406442b8fcba3d7d5bfa8b",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "schema_borrowed_input": true,
+    "experimental_current_unique_fast_path": true,
+    "experimental_injective_projection_fast_path": true,
+    "experimental_identity_count_fast_path": false,
+    "experimental_all_cut_unique_fast_path": true,
+    "experimental_streaming_source_fast_path": true,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "4bef451306e71a99670f9e0fa46ca01264185cb420d83f659289cfb906b2f95b",
+      "native/src/temporal_command.hpp": "a646e8949995fe0652ce1c3b1d508da289368eeeec079c9e33b7bae7d24e8467",
+      "native/src/temporal_compat.cpp": "4e7523b766ab366732f1e3ae5e3aa7d86668969786e793102c2b3a9ed19d6ca4",
+      "native/src/temporal_compat.hpp": "7a58d0d65069782f36b3321020f255569cc25056b9af6ebb9e5792483f285c77",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "b475ca2d41ebbb593e43910cca0334a58af06a8b8f9b7dee35edfed70b29a1cf",
+      "native/src/temporal_core.hpp": "e6b0ed5747898588f045688d2422cecf62ae217a9d1dc5fb537f5c8d39f0e562",
+      "native/src/temporal_count_plan.hpp": "4feb7f38790031bc64c69e3b8b67c45bf52d3bf376bb88b5201990fb953695a4",
+      "native/src/temporal_current_unique.hpp": "2b4b3782bfdad09cae18fad5250a5644a5b9b57f20e53664d478db0f27a90171",
+      "native/src/temporal_datalog.cpp": "f733c19a032f60bd0eda293ae6b659f1e805cefe349adec227904b7c8c62771a",
+      "native/src/temporal_expression.hpp": "20352a3b12bb14cb1700d3f455ead78683a9b7b9de9d0731b0ae1449fb93741b",
+      "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+      "native/src/temporal_integrity.hpp": "6cc384a832507628a5d5f6940beefda9aa67e170ed08484e3f6bd835675db82a",
+      "native/src/temporal_join_plan.hpp": "88a914f6b2e0af300b7083cca1f78147a6fc2b064f261377b3f72e8aa079bf92",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "87e5dd35ed2566a2936453f195ed43b97412e0e6849c196cd0b1d1760a4e0f1d",
+      "native/src/temporal_scan_plan.hpp": "f3ecee01b1ef5ff4464dad924a3f4b214f96fe15ba7798e41879f712d07e4a00",
+      "native/src/temporal_schema.cpp": "6832c0baf816c16c162660f46fb69eff7fe794a63d8a4deeeb4751ce4614c0c8",
+      "native/src/temporal_schema.hpp": "d062dbf0d770bfe9d8307656c89b0efd2e9f3e2c526f16a4594b244ba80a0f26",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "180fb5aaa3ff9d8e8d948949854b56003e397fa04a6819da6a861070dc2302bc",
+      "native/src/temporal_store_query.hpp": "31eb44f84716c084446cb741f3f43a1e7089ee86480318258bb90dffed8a8d9f",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "1df745b06376ca8423727462475221213b75aac10fc3b045651b7e1df86b30a2",
+      "native/src/temporal_value_domain.hpp": "4491801042340a2923d9e46f5641bccd4f07600341c3d51b3adfa7ce3c3ad931"
+    },
+    "library_sha256": "981bcfd07f5c10421de137fb29d9c6574b1ce58b6bc91fa4cfd540abb95d080b",
+    "extension_sha256": "652a864ec192fb2ae14ba50414ca1b477d04c3bf57d3985c19f0bd1e072cc3a3"
+  },
+  "companion": {
+    "engine": "2.0.0",
+    "abi": "CPP",
+    "extensionSha256": "526f7aa483d8e90445941501f8b52f433cc0c3cbcdaf9f8bf6a32af963360c13",
+    "coreExtensionSha256": "652a864ec192fb2ae14ba50414ca1b477d04c3bf57d3985c19f0bd1e072cc3a3",
+    "engineLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "manifestSha256": "5dc3567ef4664c4e300782039769de7e81f507cc04f3c0cf443cc0d5e6d49ab4",
+    "actualExtensionSha256": "526f7aa483d8e90445941501f8b52f433cc0c3cbcdaf9f8bf6a32af963360c13"
+  },
+  "runtimeArtifactSha256": {
+    "build/adapter/native-entity.js": "fe0ce58483dd11e8c269dc42ed8aa45931ef8f58ecff766b28f8d930b1bf0897",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "runtimeSourceSha256": {
+    "adapter/native-entity.ts": "3ffaad5bf51866c376cd61b83b8d2d387063e134681073fd25be0ff69455d561",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "harnessSha256": "3f78182733e1a7d87b9421817ffb7c335ce15e59860c81b799dc6aa103e994be",
+  "fixtureSha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+  "cloneSetupSha256": {
+    "module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "python": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "capabilities": {
+    "scalableQuery": true
+  }
+}

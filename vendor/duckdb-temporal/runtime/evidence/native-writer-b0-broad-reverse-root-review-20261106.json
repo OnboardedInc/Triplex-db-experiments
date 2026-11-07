@@ -1,0 +1,52 @@
+{
+  "schema": "td.native-writer-b0-broad-root-review/1",
+  "status": "accepted_reverse27_exact_integration_pending",
+  "recordedAtUtc": "2026-11-06T10:13:40.625395+00:00",
+  "evidenceCommit": "30ac8260375339b2af80702f4f47b4551be7b0ca",
+  "receiptSha256": "3ae31dbd2ea6679fb578a338178b8019992137b0c38618f236bff35442d0f7b4",
+  "rawFiles": 34,
+  "originalAndPackagedHashesAndFourPathAliasesVerified": true,
+  "gates": 27,
+  "passed": 27,
+  "samples": 1342,
+  "profiles": [
+    {
+      "role": "original_B0",
+      "acks": 53,
+      "ackRate": 0.8608907246084131,
+      "qps": 5.734453981768486,
+      "p50": 2656.6672909999907,
+      "p99": 4535.3025830000115,
+      "rss": 2729656320,
+      "tenSecondWindows": [
+        8,
+        8,
+        9,
+        8,
+        9,
+        10
+      ],
+      "finalK": 39140
+    },
+    {
+      "role": "cpp_candidate",
+      "acks": 1145,
+      "ackRate": 19.067873988395277,
+      "qps": 5.490636543160455,
+      "p50": 2849.211875000008,
+      "p99": 4687.181209000002,
+      "rss": 2555691008,
+      "tenSecondWindows": [
+        192,
+        194,
+        189,
+        192,
+        193,
+        184
+      ],
+      "finalK": 40232
+    }
+  ],
+  "independentPeerReview": "native_read_strategy CLEAR27/PIDs32576+35293/5vs6images/106ports+11stores/CPP11enroll+fivezero cleanup/source371+recipe532+6ea+8fb metadata/cuts/frontiers/reopen",
+  "scope": "OriginalB0 always denominator. Full typed assertions occur in frozen driver; saved samples retain widths. Both orders passed unchanged27; final exact integration still pending."
+}

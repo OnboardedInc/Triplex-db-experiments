@@ -1,0 +1,30 @@
+{
+  "format": "triplex-native-query-wave/1",
+  "predeclaredAtUnix": 1794010159.537149,
+  "problemTag": "qlever.native.latest-revision-correlation",
+  "state": "PREDECLARED_BEFORE_CANDIDATE_EXECUTION",
+  "control": {
+    "receipt": ".devloop/jobs/qlever-native-packet-v1/attempts/0001",
+    "result": "05/revision-wins-arrival current/reopen returns created+paid+shipped instead of shipped; narrower cuts passed",
+    "diagnosis": "Observed correlated native EXISTS answer mismatch; minimal engine correlation reproduction still needed before attributing all cause to engine."
+  },
+  "arms": [
+    {
+      "id": "grouped-max-order-join",
+      "mechanism": "Native grouped MAX of lossless integer order key, positively joined back to every matching maximum-revision status; preserves tied maxima and no-row empty groups.",
+      "status": "PROPOSED_NOT_EXECUTED"
+    },
+    {
+      "id": "ordered-key-then-fixed-cut-join",
+      "mechanism": "Native ordered LIMIT1 consumes only final maximum order key; second native status join reuses returned P and retains all tied statuses.",
+      "cost": "Two charged statements plus final scalar coordination; no ordinary relation materialization.",
+      "status": "QUEUED_ALTERNATIVE_NOT_EXECUTED"
+    }
+  ],
+  "gates": [
+    "Revision order differs from arrival order",
+    "All tied maximum status rows retained",
+    "No source rows when input empty",
+    "Exact signed64 order keys, not native lossy numeric casts"
+  ]
+}

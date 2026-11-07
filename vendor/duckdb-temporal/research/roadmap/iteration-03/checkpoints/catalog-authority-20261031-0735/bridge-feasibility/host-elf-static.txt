@@ -1,0 +1,126 @@
+UTC: 2026-10-31T07:23:09Z
+
+COMMAND: file HOST PY; sha256sum HOST PY
+/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so:                ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, BuildID[sha1]=567b7e0c0b4db4e21d0a1826208e01627e6851fc, stripped
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=315f4da692c3ca93b40412ce784bb95fb60a261e, not stripped
+e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a  /tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so
+fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7  /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12
+
+COMMAND: readelf -h HOST | filtered ELF identity
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  OS/ABI:                            UNIX - System V
+  Type:                              DYN (Shared object file)
+  Machine:                           Advanced Micro Devices X86-64
+  Flags:                             0x0
+
+COMMAND: readelf -d HOST | NEEDED/RPATH/RUNPATH/SONAME
+ 0x0000000000000001 (NEEDED)             Shared library: [libdl.so.2]
+ 0x0000000000000001 (NEEDED)             Shared library: [libpthread.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]
+
+COMMAND: readelf -d PY | NEEDED/RPATH/RUNPATH/SONAME
+ 0x000000000000000f (RPATH)              Library rpath: [$ORIGIN/../lib]
+ 0x0000000000000001 (NEEDED)             Shared library: [libpthread.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libdl.so.2]
+ 0x0000000000000001 (NEEDED)             Shared library: [libutil.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [librt.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+
+COMMAND: nm -D --defined-only HOST | c++filt | exact relevant class patterns
+00000000039b1260 T duckdb::DatabaseManager::GetDatabases(duckdb::ClientContext&, duckdb::optional_idx)
+00000000039d2400 T duckdb::DatabaseManager::GetDatabases()
+00000000039df820 T duckdb::DatabaseManager::GetDefaultDatabase(duckdb::ClientContext&)
+00000000039b9680 T duckdb::DatabaseManager::GetDefaultDatabase()
+00000000039a0b80 T duckdb::DatabaseManager::Get(duckdb::ClientContext&)
+00000000039dbf80 T duckdb::DatabaseManager::Get(duckdb::AttachedDatabase&)
+00000000039b9670 T duckdb::DatabaseManager::Get(duckdb::DatabaseInstance&)
+00000000039b52d0 T duckdb::DatabaseInstance::GetDatabaseManager()
+000000000399d510 T duckdb::ClientContext::TryGetCurrentSetting(duckdb::Identifier const&, duckdb::Value&) const
+000000000399b120 T duckdb::AttachedDatabase::IsTemporary() const
+000000000399b110 T duckdb::AttachedDatabase::IsSystem() const
+
+COMMAND: nm -D --defined-only HOST | c++filt | extra related exports
+00000000039b9b20 T duckdb::ClientData::Get(duckdb::ClientContext const&)
+00000000039b9b00 T duckdb::ClientData::Get(duckdb::ClientContext&)
+00000000039ce5a0 T duckdb::DatabaseInstance::GetDatabase(duckdb::ClientContext const&)
+00000000039acbe0 T duckdb::DatabaseInstance::GetDatabase(duckdb::ClientContext&)
+
+COMMAND: nm -D --defined-only HOST | selected C APIv2 and ABI markers
+00000000039d77a0 T _ZN6duckdb16DatabaseInstance27InvokeExtensionEntrypointV2ERKNS_19ExtensionInitResultERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFvP25duckdb_v2_extension_inputENS_12optional_ptrINS_13ClientContextELb1EEEb
+0000000003a8dd00 T _ZN6duckdb22InvokeCAPIV2EntrypointERNS_16DatabaseInstanceERKNS_19ExtensionInitResultERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFvP25duckdb_v2_extension_inputENS_12optional_ptrINS_13ClientContextELb1EEEb
+000000000390ac60 T _ZN6duckdb6DuckDB25LoadStaticCAPIExtensionV2ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFvP25duckdb_v2_extension_inputE
+0000000000e1ec20 W _ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE11_S_allocateERS3_m
+0000000000e1ec50 W _ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructILb0EEEvPKcm
+0000000000e1ecf0 W _ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructILb1EEEvPKcm
+0000000000e1e976 W _ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE15_M_replace_coldEPcmPKcmm
+0000000000e1ea90 W _ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE6insertEN9__gnu_cxx17__normal_iteratorIPKcS4_EESt16initializer_listIcE
+0000000000e1e7e0 W _ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE7reserveEv
+0000000000e1d5b0 W _ZNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEEC1Ev
+0000000000e1d5b0 W _ZNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEEC2Ev
+0000000000e1d620 W _ZNSt7__cxx1115basic_stringbufIwSt11char_traitsIwESaIwEEC1Ev
+0000000000e1d620 W _ZNSt7__cxx1115basic_stringbufIwSt11char_traitsIwESaIwEEC2Ev
+0000000000e1dd10 W _ZNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEC1Ev
+0000000000e1dba0 W _ZNSt7__cxx1118basic_stringstreamIcSt11char_traitsIcESaIcEEC2Ev
+0000000000e1e5c0 W _ZNSt7__cxx1118basic_stringstreamIwSt11char_traitsIwESaIwEEC1Ev
+0000000000e1e440 W _ZNSt7__cxx1118basic_stringstreamIwSt11char_traitsIwESaIwEEC2Ev
+0000000000e1d7d0 W _ZNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEC1Ev
+0000000000e1d6d0 W _ZNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEC2Ev
+0000000000e1e060 W _ZNSt7__cxx1119basic_istringstreamIwSt11char_traitsIwESaIwEEC1Ev
+0000000000e1df60 W _ZNSt7__cxx1119basic_istringstreamIwSt11char_traitsIwESaIwEEC2Ev
+0000000000e1da40 W _ZNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEC1Ev
+0000000000e1d940 W _ZNSt7__cxx1119basic_ostringstreamIcSt11char_traitsIcESaIcEEC2Ev
+0000000000e1e2e0 W _ZNSt7__cxx1119basic_ostringstreamIwSt11char_traitsIwESaIwEEC1Ev
+0000000000e1e1d0 W _ZNSt7__cxx1119basic_ostringstreamIwSt11char_traitsIwESaIwEEC2Ev
+0000000003a87060 T duckdb_v2_context_get_config
+0000000003a8e5d0 T duckdb_v2_context_get_factory
+0000000003a8e620 T duckdb_v2_context_get_file_system
+0000000003a96470 T duckdb_v2_extension_register_aggregate_function
+0000000003a979e0 T duckdb_v2_extension_register_cast_function
+0000000003a9cc70 T duckdb_v2_extension_register_copy_function
+0000000003a8ae90 T duckdb_v2_extension_register_custom_option
+0000000003a8bd00 T duckdb_v2_extension_register_custom_type
+0000000003ab1980 T duckdb_v2_extension_register_log_sink
+0000000003a9edf0 T duckdb_v2_extension_register_macro_function
+0000000003aad600 T duckdb_v2_extension_register_multi_file_function
+0000000003aa1970 T duckdb_v2_extension_register_pragma_function
+0000000003abd8f0 T duckdb_v2_extension_register_replacement_scan
+0000000003aa4ab0 T duckdb_v2_extension_register_scalar_function
+0000000003aaa4b0 T duckdb_v2_extension_register_table_function
+0000000003ab0b80 T duckdb_v2_library_version
+
+COMMAND: readelf --version-info HOST | unique version requirements
+CXXABI_1.3
+CXXABI_1.3.2
+CXXABI_1.3.3
+CXXABI_1.3.5
+CXXABI_1.3.7
+CXXABI_1.3.8
+CXXABI_1.3.9
+CXXABI_1.3.11
+GLIBCXX_3.4
+GLIBCXX_3.4.9
+GLIBCXX_3.4.11
+GLIBCXX_3.4.14
+GLIBCXX_3.4.15
+GLIBCXX_3.4.17
+GLIBCXX_3.4.18
+GLIBCXX_3.4.19
+GLIBCXX_3.4.20
+GLIBCXX_3.4.21
+GLIBCXX_3.4.22
+GLIBC_2.2.5
+GLIBC_2.3
+GLIBC_2.3.2
+GLIBC_2.3.4
+GLIBC_2.6
+GLIBC_2.10
+GLIBC_2.14
+GLIBC_2.17
+GLIBC_2.23
+GLIBC_2.25

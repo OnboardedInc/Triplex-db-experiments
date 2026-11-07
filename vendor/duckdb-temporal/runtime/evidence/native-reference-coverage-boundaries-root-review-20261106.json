@@ -1,0 +1,32 @@
+{
+  "schema": "td.reference-coverage-boundary-review/1",
+  "sourcePackageCommit": "03b124426a506c212bea54306f5a740831178758",
+  "receipt": "native-reference-coverage-boundaries-first-20261106.json",
+  "receiptSha256": "c254d03fd13d254c9e3d2e6ae73821a1938d25f4eabe856192f5f544345c8e46",
+  "rawFiles": 16,
+  "allHashesAndSizesMatch": true,
+  "sourceReviewedBeforeExecution": true,
+  "accepted": "Only three passing selected methods: oldIR/transaction rollback/oldbinary fence, int64/identity priority,32/33 scope. Together with prior4 focused methods,7 distinct passes; no integrated total.",
+  "failure": {
+    "method": "coverage audits130 entities and4290 cumulative presence events using small per-edge prefixes",
+    "observedError": "Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)",
+    "durationMs": 27702.641458,
+    "exactFailingOperation": "Not identified; test did not emit per-stage progress and DuckDB error omitted a stack. Intended loop totals are not proof all were committed.",
+    "status": "preserved_unrepaired",
+    "healthyReuseAfterFailure": "Unqualified; test finally closed store, no product retry or reopen was run.",
+    "memoryPolicyUnchanged": "128MB memory_limit,64MB max_temp_directory_size; no relaxation",
+    "diagnosticNext": "After a separately granted lease, read-only raw inspection of preserved closed growth database or fresh CoW fork to reconcile last acknowledged command/receipt/clock/events before any product retry. Distinguish setup write, query bind/execute, per-unit proof, audit pages or reopen.",
+    "growthFixture": {
+      "file": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-growth-FPDV3o/facts.duckdb",
+      "sizeBytes": 8663040,
+      "mtimeNs": 1793962267628602865,
+      "sha256": "1c2cd16700e993db513d0c2dad81bca77ef45e5b5ce9579a0ffdb83e614f45b0",
+      "walAbsent": true,
+      "lsofExitCode": 1,
+      "lsofStdout": "",
+      "lsofStderr": ""
+    }
+  },
+  "scope": "First growth failure retained; operation unknown. No growth totals inferred, memory raise, engine rerun, reserved4k execution or production promotion.",
+  "reviewedAtUtc": "2026-11-06T10:55:40.767771+00:00"
+}

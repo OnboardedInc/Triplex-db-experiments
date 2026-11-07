@@ -1,0 +1,541 @@
+{
+  "utc": "2026-10-31T03:59:52.486962+00:00",
+  "status": "FROZEN_ISOLATED_RESEARCH_CONTINUATION_INPUT_AFTER_RECONNECT",
+  "originals_untouched": true,
+  "original_inventory_identical_two_passes": true,
+  "all_external_calls_terminal_per_latest_lane_logs": {
+    "ir-sql-theory": "03:55:26 none",
+    "v2-performance": "03:55:29 none",
+    "correctness-safety": "03:56:12 none"
+  },
+  "copy_count": 75,
+  "bytes": 372185,
+  "scope": "Research reports/primary receipts/alternatives/test matrices/corpus and compact logs only; no implementation/app/DB/native execution or original final-manifest overwrite. Zero-byte skills confirmation omitted as non-project temporary marker.",
+  "files": [
+    {
+      "path": "ir-sql-theory/decision-alternatives.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/ir-sql-theory/decision-alternatives.md",
+      "bytes": 6995,
+      "sha256": "781167900dbcd32b0a1493bc734b7f42f2b070b14a6fd0a76161128326444527",
+      "mode": "0644"
+    },
+    {
+      "path": "ir-sql-theory/local-source-receipts.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/ir-sql-theory/local-source-receipts.json",
+      "bytes": 4465,
+      "sha256": "e19264fe726e3d19e6216184f11917efc285361ede240c0c2dc22f62edad4657",
+      "mode": "0644"
+    },
+    {
+      "path": "ir-sql-theory/operations-audit.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/ir-sql-theory/operations-audit.md",
+      "bytes": 4891,
+      "sha256": "dfb835ee44de41d975946455ad00edf42a9317b810c32d66cb74ae96fc284e37",
+      "mode": "0644"
+    },
+    {
+      "path": "ir-sql-theory/pinned-source-receipts.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/ir-sql-theory/pinned-source-receipts.json",
+      "bytes": 6614,
+      "sha256": "c15cb1054e29b8481b231457da440f7e80c160e7a6e760c32613f641a24711f8",
+      "mode": "0644"
+    },
+    {
+      "path": "ir-sql-theory/progress.jsonl",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/ir-sql-theory/progress.jsonl",
+      "bytes": 2846,
+      "sha256": "af3865bf36ca51e5cd9fa2cc7c4b2c305a5f2f0cc73dda81d30fe2389e4879f8",
+      "mode": "0644"
+    },
+    {
+      "path": "ir-sql-theory/research.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/ir-sql-theory/research.md",
+      "bytes": 36306,
+      "sha256": "bf8cb7469444d40b4b3e8685c06f1c69f596667ae302ae30af6c14f43100480f",
+      "mode": "0644"
+    },
+    {
+      "path": "ir-sql-theory/test-obligations.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/ir-sql-theory/test-obligations.md",
+      "bytes": 13101,
+      "sha256": "23e23667cbe75c919cb7ed7446f22e88c2543b945bd32ed9e155d28d0a7aecb5",
+      "mode": "0644"
+    },
+    {
+      "path": "ir-sql-theory/web-source-receipts.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/ir-sql-theory/web-source-receipts.json",
+      "bytes": 21669,
+      "sha256": "e0ca2bd012bd05d2150290683379da8c41fca8c29f4c00fc4890ed2e390a19bd",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/RESEARCH-AUDIT.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/RESEARCH-AUDIT.json",
+      "bytes": 1153,
+      "sha256": "1c1b5e8cdf449b423cfd6cc68b76164c843a5b0a17b4a4bb4f468cbd8ac68463",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/benchmark-protocol.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/benchmark-protocol.md",
+      "bytes": 14425,
+      "sha256": "af25cca10459f2b030a3abde8ddd57316ef840c8fbbe819a4ba8943715f4ecb1",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/progress.jsonl",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/progress.jsonl",
+      "bytes": 2840,
+      "sha256": "cf975f77e99fd90a545633236f6f1c7b54e83ec79ea47a571d54cc537c1f00da",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/progress.log",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/progress.log",
+      "bytes": 562,
+      "sha256": "d5ac997825c7e92677a36b751fa157d6c35b1734381a2f2e8047a00efbf9347b",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/research.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/research.md",
+      "bytes": 27641,
+      "sha256": "c2c0a51987488fb33a421bb185e538fe75d21f760991f37d723ceb5d4c34ed15",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/README.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/README.md",
+      "bytes": 5089,
+      "sha256": "30e1ffafd556ac0ff24bd70a0bd38c97f9d8cb5857edd35925363df8c9b2695a",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/benchmark-methodology.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/benchmark-methodology.receipt.json",
+      "bytes": 532,
+      "sha256": "5d4d50bf2968a6870d56fc9bac35651a4e042e0495050ee4f3375c3b1dd57d50",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/bind_recursive_cte_node.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/bind_recursive_cte_node.cpp.excerpt.txt",
+      "bytes": 1995,
+      "sha256": "fb04493c92b47dd6e76c7db754a3097c46648c1c8ed0bf682d4ddfb425b040b9",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/bind_recursive_cte_node.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/bind_recursive_cte_node.cpp.receipt.json",
+      "bytes": 937,
+      "sha256": "24cf6a7defdc916b83c4ca20f6e4416f288b397a44248d3eedac2c7942e00048",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_column_data_collection.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_column_data_collection.cpp.excerpt.txt",
+      "bytes": 3124,
+      "sha256": "5f80f1262f7202c1d920dcc1030a491ece18f259e63993e199a9a861822a7b90",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_column_data_collection.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_column_data_collection.cpp.receipt.json",
+      "bytes": 997,
+      "sha256": "39019b3213a1de56980c1607745ca5f33d7e565853822e909c4dbf392f5a017b",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_expression.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_expression.cpp.excerpt.txt",
+      "bytes": 3278,
+      "sha256": "37c9d71a15afb1803c72e146bafd785a65a784b4cf61a29c7e44efb7405118af",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_expression.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_expression.cpp.receipt.json",
+      "bytes": 951,
+      "sha256": "3533df6dcbdfa15733dbeb5a4637fda2dc6668ef64320916e09926b21f1f1230",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_func_properties.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_func_properties.cpp.excerpt.txt",
+      "bytes": 1580,
+      "sha256": "8bb186f16e6e46a93d680972409b62b105bf738e928dc2226808016ea5bd2597",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_func_properties.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_func_properties.cpp.receipt.json",
+      "bytes": 921,
+      "sha256": "008443879dcbd5ee1b5ba2f0ac0320b70637bbb8d804a0887eb57e6b51c2fcf0",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_func_table.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_func_table.cpp.excerpt.txt",
+      "bytes": 2824,
+      "sha256": "4b993c50b5d4486858029b7d229aa73da433863546b84d4f071a3983f6bf5529",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_func_table.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_func_table.cpp.receipt.json",
+      "bytes": 989,
+      "sha256": "b9be0d0a4606ae408cbe295441ec61ab770364f5569c8cdd623ab523709a1245",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_prepared_statement.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_prepared_statement.cpp.excerpt.txt",
+      "bytes": 2677,
+      "sha256": "a28bba544f08188b7c75d4de6bffedf9ce8cc8425efd739c551848200cc62094",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_prepared_statement.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_prepared_statement.cpp.receipt.json",
+      "bytes": 990,
+      "sha256": "381286fdf7030d7a30ce3f643347a43930937d9a73503d43076a8b192ea65e3d",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_replacement_scan.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_replacement_scan.cpp.excerpt.txt",
+      "bytes": 2814,
+      "sha256": "06b24db6fe5069970d252d42908f342b85bf63965e9494224d2c38697cf948d5",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_replacement_scan.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_replacement_scan.cpp.receipt.json",
+      "bytes": 925,
+      "sha256": "4c0fe3a6402bb74d14b403170959f62e23d98b40ca65b8ef656aa7a3f4250047",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_vector.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_vector.cpp.excerpt.txt",
+      "bytes": 2442,
+      "sha256": "7fb893adf77edb8a23fa78f9813b82f01788a863bc28487c955b79f35d83ee8b",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/capi_v2_vector.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/capi_v2_vector.cpp.receipt.json",
+      "bytes": 915,
+      "sha256": "7b6385eaf3bacfafbd82b52320c16bf347137ff424feef08fbdd6708c42adc64",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/column_data_allocator.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/column_data_allocator.cpp.excerpt.txt",
+      "bytes": 860,
+      "sha256": "e5346f460f944fc2871a3441fde398e5c084950fed1139083b24302beea032ad",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/column_data_allocator.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/column_data_allocator.cpp.receipt.json",
+      "bytes": 928,
+      "sha256": "82eaaafc1c7a6d7861414d024f537c111846dcb9ea9da2cff1907c9ee780fe70",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/column_data_collection.hpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/column_data_collection.hpp.excerpt.txt",
+      "bytes": 1227,
+      "sha256": "45685c3026d484de77277dc735ff409465e496069a6e9fbc91881e54fc9198b8",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/column_data_collection.hpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/column_data_collection.hpp.receipt.json",
+      "bytes": 943,
+      "sha256": "b593e4116275901d75b2323cdf0c72d98a62552c1ff56a453ce4b7b284163b36",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/cte_filter_pusher.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/cte_filter_pusher.cpp.excerpt.txt",
+      "bytes": 1880,
+      "sha256": "d34bc0f01ba5cec30f5f5945774ef2820f2dcc83cc4fa442d66927a96f119e6e",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/cte_filter_pusher.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/cte_filter_pusher.cpp.receipt.json",
+      "bytes": 914,
+      "sha256": "23d57ca52f7042e12a5506676995cce0fbc24a9dc05967782b7af837669c789a",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-clients-c-overview.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-clients-c-overview.receipt.json",
+      "bytes": 823,
+      "sha256": "bd86b3b7f5525a623af3efaea686271b94ea23605b09697f0d333e8abbc88de7",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-configuration-pragmas.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-configuration-pragmas.receipt.json",
+      "bytes": 584,
+      "sha256": "b32d011774333d4baedbab46c4a80b6704239e2996ca4fcd02b519f2a2e49775",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-guides-meta-explain.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-guides-meta-explain.receipt.json",
+      "bytes": 796,
+      "sha256": "ca88722e6752c66256ec9e865d8cc1e8c2ee37a6a8d49bf2c0d9e53f9062b3f4",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-guides-meta-explain_analyze.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-guides-meta-explain_analyze.receipt.json",
+      "bytes": 812,
+      "sha256": "3f95d375372989a36e1aa713055c7775bc7244241aa276a7f6eadc5bf2f2bce0",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-guides-performance-how_to_tune_workloads.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-guides-performance-how_to_tune_workloads.receipt.json",
+      "bytes": 919,
+      "sha256": "5a06142d5943bf78c7aafa6551bdcd345f3e44781f7dd8919d170e45cce43965",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-guides-performance-indexing.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-guides-performance-indexing.receipt.json",
+      "bytes": 897,
+      "sha256": "f8deb2144d13cfb4658b50fd66c528d66a20a12f8181d782f982d836683c19e5",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-sql-data_types-typecasting.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-sql-data_types-typecasting.receipt.json",
+      "bytes": 810,
+      "sha256": "f198861e584f918976e3f9016bd2fbc617c0a1854e4c4b7fafaf8dfe7d25564e",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-sql-dialect-order_preservation.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-sql-dialect-order_preservation.receipt.json",
+      "bytes": 818,
+      "sha256": "86e5c45ef8b3f4546c3c62f337a72d64e476b94fb45ff8ae81d354b1639dfb9c",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-sql-expressions-case.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-sql-expressions-case.receipt.json",
+      "bytes": 857,
+      "sha256": "939aaaf67bc2e159479b8b5d42adf72f15255d2dd579137039fed57fa37900b8",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-sql-expressions-try.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-sql-expressions-try.receipt.json",
+      "bytes": 859,
+      "sha256": "8390ec7de5ebdce58ee608793c499946f7009e17085762e86daed157ce739018",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-sql-functions-numeric.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-sql-functions-numeric.receipt.json",
+      "bytes": 607,
+      "sha256": "7b6940137a57c8c922a2040fc55146e2b63c39c1c816c56a4eacb135ac99cb65",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/docs-sql-query_syntax-with.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/docs-sql-query_syntax-with.receipt.json",
+      "bytes": 846,
+      "sha256": "7f427aa5657359fef77258325579917dca3e3b7bb3908326c9a0b1a86c26b01f",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/expression_barrier.hpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/expression_barrier.hpp.excerpt.txt",
+      "bytes": 1020,
+      "sha256": "c36c495c57449af1bc383e7e05f160227366c99b12e66c26f42698838567cfa7",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/expression_barrier.hpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/expression_barrier.hpp.receipt.json",
+      "bytes": 937,
+      "sha256": "d793093c5ba27e7da7ea4b9a72ebe973942400028566bec92ac4da99d2f9c42a",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/filter_pushdown.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/filter_pushdown.cpp.excerpt.txt",
+      "bytes": 1313,
+      "sha256": "39f72d6e9c6491a05e10c1000bcc49e256d75451aecfff360c4a4d2cbfa90961",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/filter_pushdown.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/filter_pushdown.cpp.receipt.json",
+      "bytes": 912,
+      "sha256": "c1a1e1aab79855213e07e2d712613914abff61f55c7e6814a49a920d8b411fdb",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/header-contracts.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/header-contracts.excerpt.txt",
+      "bytes": 14425,
+      "sha256": "34d60a097f4cd02eebd5768e0a27a33bd179dc2cb1e12f57630f701ebc26e433",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/header-inventory.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/header-inventory.receipt.json",
+      "bytes": 960,
+      "sha256": "f755f539d3f2303a0739cd3e4a8339f6b01f342355a30a02fda0e6e1d5f50fe0",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/header-selected-symbols.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/header-selected-symbols.txt",
+      "bytes": 3093,
+      "sha256": "d709d8e55eb7d637f4faa3626cf50799c04a86a0b2533635101bc61ba0cad5b9",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/local-source.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/local-source.receipt.json",
+      "bytes": 2831,
+      "sha256": "7f90f3bc414160c970629a271e1d79dc397d1aa38919c6476913ed54610ab5ba",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/physical_recursive_cte.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/physical_recursive_cte.cpp.excerpt.txt",
+      "bytes": 4304,
+      "sha256": "da4930b2adb81c7165747d1e3c70988adb70b2ac9383ceb9f11947c12639616c",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/physical_recursive_cte.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/physical_recursive_cte.cpp.receipt.json",
+      "bytes": 971,
+      "sha256": "fee9584eaf9021cd0ef89ed94e14559a616d71331121e3aafb16225e0fd35b0e",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/pushdown_get.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/pushdown_get.cpp.excerpt.txt",
+      "bytes": 2817,
+      "sha256": "9d948dc53b94f8835829903f8fae6c2f1e09ffded859d898e5be15c16b45fe36",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/pushdown_get.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/pushdown_get.cpp.receipt.json",
+      "bytes": 917,
+      "sha256": "eba75a803fc551ab981109ff18f1a89f3a2a7ed69996160ddeec511a5e02d7da",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/pushdown_projection.cpp.excerpt.txt",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/pushdown_projection.cpp.excerpt.txt",
+      "bytes": 2578,
+      "sha256": "cda7a036facb543d022212f202e35e77baf58ab6babdc316f99d5def4d896e97",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/pushdown_projection.cpp.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/pushdown_projection.cpp.receipt.json",
+      "bytes": 925,
+      "sha256": "5e57fd6c9af9e10b19e1575a6b4d8083b06e75b919395eaf04d2636508836e31",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/rdf3x.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/rdf3x.receipt.json",
+      "bytes": 540,
+      "sha256": "6c31259f81ec6785421d71666aac572e8fdcf974643289c867a767fc17ddf47b",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/recursive-2.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/recursive-2.receipt.json",
+      "bytes": 568,
+      "sha256": "1e753e0e7a5736b9e173a1de9580540234370ce1feac0b011176bbdb96d061e2",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/using-key-paper.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/using-key-paper.receipt.json",
+      "bytes": 651,
+      "sha256": "1f39e3684d3e442ca17c44770fa257a19bc8a4332a0c3bb4304291a41c9df35b",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/vertical-partitioning.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/vertical-partitioning.receipt.json",
+      "bytes": 618,
+      "sha256": "a8ff89e46d8961b0c8a15f098bbfc5e51a08d05953bc14a523f21039fbe1d09d",
+      "mode": "0644"
+    },
+    {
+      "path": "v2-performance/sources/x100.receipt.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/v2-performance/sources/x100.receipt.json",
+      "bytes": 565,
+      "sha256": "2953854af05565c01a8792e890f12a418eb75133ce900b6f8d1aa034fd1321d9",
+      "mode": "0644"
+    },
+    {
+      "path": "correctness-safety/acceptance-corpus.json",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/correctness-safety/acceptance-corpus.json",
+      "bytes": 45559,
+      "sha256": "098e6e4d5a8992df81ed0072c535ada9742bbad7f42e2463def7a263e1cd6135",
+      "mode": "0644"
+    },
+    {
+      "path": "correctness-safety/acceptance-matrix.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/correctness-safety/acceptance-matrix.md",
+      "bytes": 21919,
+      "sha256": "f2c2319c126c11c4e19fde82ccf2cc653b93314e488737fc2368bfd225dbc080",
+      "mode": "0644"
+    },
+    {
+      "path": "correctness-safety/documentation-receipts.jsonl",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/correctness-safety/documentation-receipts.jsonl",
+      "bytes": 15385,
+      "sha256": "6c12b0542063df4e3ae577452458ce07ea9cdddc868cd767955d966b4fdac11d",
+      "mode": "0644"
+    },
+    {
+      "path": "correctness-safety/hazards.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/correctness-safety/hazards.md",
+      "bytes": 15371,
+      "sha256": "ace76792917b29025ed1bd6b71d1e4c6d616c3d1444501c2ec03769fffac09ca",
+      "mode": "0644"
+    },
+    {
+      "path": "correctness-safety/operations.log",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/correctness-safety/operations.log",
+      "bytes": 1759,
+      "sha256": "6b9cca083dc8dd822a6309cb372215a6a5a4a267cdf77852a2944c953925e883",
+      "mode": "0644"
+    },
+    {
+      "path": "correctness-safety/research.md",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/correctness-safety/research.md",
+      "bytes": 30386,
+      "sha256": "9d760d3e2fe9f831ac3321de1d089e8dded02b57a87369f4d2d0b8b4a708506d",
+      "mode": "0644"
+    },
+    {
+      "path": "correctness-safety/source-receipts.jsonl",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/correctness-safety/source-receipts.jsonl",
+      "bytes": 6993,
+      "sha256": "5f154e21e7c85cd430fba9dd1b1674fb9b26dc83d6df70e8d5cdd6bda091f2c3",
+      "mode": "0644"
+    }
+  ]
+}

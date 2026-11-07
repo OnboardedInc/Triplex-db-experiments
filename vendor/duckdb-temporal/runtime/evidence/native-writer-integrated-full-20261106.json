@@ -1,0 +1,148 @@
+{
+  "schema": "td.native-writer-integrated-full/1",
+  "status": "passed_first435",
+  "sourceCommit": "1d6378e2c6e9b74b024fe5ba89c6b26355990dea",
+  "methods": 391,
+  "triplexCases": 44,
+  "checks": 435,
+  "sourcePins": 216,
+  "reportSha256": "6b072482e20562bf793651579bdcf401d0290eb8e6a3e31d09445d9dacd47560",
+  "terminal": {
+    "command": [
+      "[LOCAL_PATH_0034]",
+      "-B",
+      "verify.py",
+      "--with-direct"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/integration-native-writer-20261106-01/runtime",
+    "pid": 40811,
+    "exitCode": 0,
+    "startedAtUtc": "2026-11-06T10:10:33.855382+00:00",
+    "exitedAtUtc": "2026-11-06T10:17:10.821437+00:00",
+    "elapsedMs": 396962.1532079764
+  },
+  "unchangedRuntimeFiles": 583,
+  "main405Unchanged": true,
+  "scope": "Exact integration Git source; fresh owned stage; reused matching native bytes; no native build or install.",
+  "packagedAtUtc": "2026-11-06T10:26:35.852058+00:00",
+  "rawDirectory": "native-writer-integrated-full-20261106-raw",
+  "rawFiles": {
+    "source-inputs.json": {
+      "sha256": "64b1b381e4c46cb1163a1e87d2be8125654f9898ce556d8499ff101569a05280",
+      "bytes": 3138,
+      "original": "build/integration-native-writer-20261106-01/source-inputs.json"
+    },
+    "stage.py": {
+      "sha256": "b7908de94f2821b4858ab731e3359a08e4a8081024794de872a6c1f5bc7a837d",
+      "bytes": 5588,
+      "original": "build/integration-native-writer-20261106-01/stage.py"
+    },
+    "stage-first.json": {
+      "sha256": "14b25ef401d9b5825199f6d5b38ef6a039058ec9f782c2ad4d943cb912db6d57",
+      "bytes": 113557,
+      "original": "build/integration-native-writer-20261106-01/stage-first.json"
+    },
+    "stage-first.stdout.log": {
+      "sha256": "7c9eb7d74fad1d71fdbad60dfdd9aee80db952a7b66413d3f2ed4fc929b9ac52",
+      "bytes": 271,
+      "original": "build/integration-native-writer-20261106-01/stage-first.stdout.log"
+    },
+    "stage-first.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": "build/integration-native-writer-20261106-01/stage-first.stderr.log"
+    },
+    "stage-first-terminal.json": {
+      "sha256": "d9f0d1861fd4d1e1b18668b652dcce96d0c4dadb4a50f10cb666c25cfd20965d",
+      "bytes": 481,
+      "original": "build/integration-native-writer-20261106-01/stage-first-terminal.json"
+    },
+    "verify_first.py": {
+      "sha256": "490042fafe84b752f9347596312cb31382b3d08d03634f24b811f21cfcd8e26e",
+      "bytes": 4823,
+      "original": "build/integration-native-writer-20261106-01/verify_first.py"
+    },
+    "before-full-first.json": {
+      "sha256": "dd1f8fb165bd4044c43d5421186ee649eb2d12d1e522b63a2958d5193e940c12",
+      "bytes": 98508,
+      "original": "build/integration-native-writer-20261106-01/before-full-first.json"
+    },
+    "after-full-first.json": {
+      "sha256": "2337bb40e882eed88954dfaff916fa31c0382ea9fac55f5cad28eba6c485abff",
+      "bytes": 97844,
+      "original": "build/integration-native-writer-20261106-01/after-full-first.json"
+    },
+    "full-first-start.json": {
+      "sha256": "b754e52c8f9c4e465f07cde4f0286b870b67f737525cd0e6b969ee99d4390b40",
+      "bytes": 358,
+      "original": "build/integration-native-writer-20261106-01/full-first-start.json"
+    },
+    "full-first-terminal.json": {
+      "sha256": "c153500c10435c901558847c7e6b13d914959f8d71302704d73dac9fb0fc6d03",
+      "bytes": 462,
+      "original": "build/integration-native-writer-20261106-01/full-first-terminal.json"
+    },
+    "accepted-full-first.json": {
+      "sha256": "900f28675aac0709276b2bbc4a4958cff2b53891ed838290cae2d9e3cf2437f1",
+      "bytes": 994,
+      "original": "build/integration-native-writer-20261106-01/accepted-full-first.json"
+    },
+    "full-first.stdout.log": {
+      "sha256": "fff7b739daf33f2bc469951bb08cb1cd8983d37d2fa63355dd6394bc078b9046",
+      "bytes": 22687,
+      "original": "build/integration-native-writer-20261106-01/full-first.stdout.log"
+    },
+    "full-first.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": "build/integration-native-writer-20261106-01/full-first.stderr.log"
+    },
+    "owner-output-partition.json": {
+      "sha256": "092898c793ec12d2a7a29e306b6f33e3cfed816842d345dbea1bbad45f90ef67",
+      "bytes": 545,
+      "original": "build/integration-native-writer-20261106-01/owner-output-partition.json"
+    },
+    "actual-verification-first.json": {
+      "sha256": "6b072482e20562bf793651579bdcf401d0290eb8e6a3e31d09445d9dacd47560",
+      "bytes": 48650,
+      "original": "build/integration-native-writer-20261106-01/runtime/evidence/verification.json"
+    },
+    "prior-main405.json": {
+      "sha256": "aced40cd39edf63c2af8bc0a2ff53d76746b9a741ffb089cbbb9e8a9fb1244d6",
+      "bytes": 43066,
+      "original": "evidence/verification.json"
+    },
+    "evidence.json": {
+      "sha256": "1c1b35cc48e5d4a2a4e5a1252eeb7677456ced0881a6901ceb6ecc5dbc4b1e75",
+      "bytes": 39547,
+      "original": "build/integration-native-writer-20261106-01/runtime/build/owner_probe/evidence.json"
+    },
+    "activation-evidence.json": {
+      "sha256": "c767c00d2ab972d82d30f3c889c48d5eee166ebb89542490873059b3a599d1f2",
+      "bytes": 270706,
+      "original": "build/integration-native-writer-20261106-01/runtime/build/owner_probe/activation-evidence.json"
+    }
+  },
+  "independentReview": "native_read_strategy CLEAR: actual435 counts/TSC/empty stderr;216report pins matchGit1d+stage;25selected461sources;583runtimeunchanged; no presence suites counted.",
+  "ownerGeneratedOutputPartition": {
+    "build/owner_probe/evidence.json": {
+      "bytes": 39547,
+      "kind": "owned_test_observation",
+      "sha256": "1c1b35cc48e5d4a2a4e5a1252eeb7677456ced0881a6901ceb6ecc5dbc4b1e75"
+    },
+    "build/owner_probe/activation-evidence.json": {
+      "bytes": 270706,
+      "kind": "owned_test_observation",
+      "sha256": "c767c00d2ab972d82d30f3c889c48d5eee166ebb89542490873059b3a599d1f2"
+    },
+    "build/owner_probe/activation-29136ac3-a918-4245-b3aa-cf3833139864.duckdb": {
+      "bytes": 6041600,
+      "kind": "owned_test_database",
+      "walAbsent": true
+    }
+  },
+  "productionBaseline": "Source1d6378e2 promoted with first435 report and matching default181generatedfiles+395unchangeddependencies. First public7 default-build gate passes; all replaced generated files retained. Prior405 retained in Git/raw.",
+  "platform": "macOS ARM64 verified; Linux unverified",
+  "remaining": "Goals1,3,6,7,8,9,10 and final timed20-workload comparison. Isolated presence raw5+SDK5 not counted in435.",
+  "defaultBuildReceipt": "native-writer-default-build-20261106.json"
+}

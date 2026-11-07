@@ -1,0 +1,76 @@
+{
+  "status": "RESEARCH_COMPLETE_NOT_APPLICATION_ACCEPTANCE",
+  "created_at_utc": "2026-10-31T00:07:03.035Z",
+  "preferred_candidate": [
+    "C1: preserve public carrier key gate and split unchanged shared after-key payload leaf",
+    "C2: immutable frozenset private expected root/carrier field-name metadata"
+  ],
+  "production_source_edited": false,
+  "macro_or_micro_timings": false,
+  "application_imports_or_native_db_execution": false,
+  "fp_controls_inspected_or_changed": false,
+  "source_pins": {
+    "typed_store_sha256": "25e9a4f178144070f85cbf1215dd1e12270ae0efbdd27be1dbf49ba9e76dcfdc",
+    "fp_environment_sha256": "facfc51b6f42a21019d70fef05b2c813e3f6f81e53587c3b80bb09a1b26dfd5c",
+    "cpython_commit": "2abcf904b8dac8c999d2b3aac76681abb333798a",
+    "duckdb_commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "duckdb_python_commit": "83c719961098611e769dc4bab0bda2bf149a2d1e"
+  },
+  "static_per_cell_mechanism": {
+    "C1_removed": "one repeated five-key set, keys-view, equality iterator, and five membership probes on valid cells",
+    "C2_removed": "one remaining private expected-set construction per cell plus one per-result root set; two import-time frozensets replace them",
+    "not_removed": [
+      "private exact-key-type screen",
+      "all initial data/schema validation",
+      "both generators",
+      "both leaf/domain payload tuples",
+      "selected payload exact type/domain checks",
+      "float representation copy / finite / zero logic",
+      "wire result containers",
+      "FP reads"
+    ]
+  },
+  "proofs": {
+    "source_alignment_checks": 6,
+    "valid_order_tag_arity_cases": 512,
+    "carrier_order_tag_nullmask_cases": 7680,
+    "public_custom_key_order_hook_cases": 240,
+    "private_custom_key_no_hook_cases": 480,
+    "public_mutating_or_raising_protocol_cases": 72,
+    "hoist_valid_permutations": 144,
+    "hoist_invalid_missing_extra_replaced_cases": 4320,
+    "hoist_wrong_key_cases": 1152,
+    "hoist_invalid_container_cases": 12,
+    "mixed_keytype_nohook_cases": 2784,
+    "separate_hash_seed_process_runs": 16
+  },
+  "unchanged_boundaries": [
+    "public key/protocol/subtype behavior",
+    "fresh independent public guards",
+    "successful private entry/exit full FP guards",
+    "continuously supported-controls/trusted-callee premise",
+    "private exact native shapes and types",
+    "shared domain validation",
+    "no-prefix eager return",
+    "Query six-field snapshot/readiness/budget/transaction order",
+    "known_at=None late snapshot semantics",
+    "no newly imposed program cap"
+  ],
+  "risks": [
+    "new shared-leaf call adds a frame to public from_carrier path",
+    "allocation reduction can change GC scheduling; no arbitrary hostile mutable-graph atomicity or callback-freedom claim",
+    "no evidence yet that this closes accepted-item1 empty/tiny/wide performance blocker",
+    "DuckDB V2 C API remains unstable and version-tied"
+  ],
+  "deferred": [
+    "ASCII exact-builtin text branch",
+    "generator/null-check rewrites",
+    "different shared leaf return arity",
+    "byte-level float classifier or buffers",
+    "native/Arrow egress"
+  ],
+  "report": "RESEARCH.md",
+  "source_index": "SOURCE-INDEX.json",
+  "replay_verifier": "verify_research_bundle.py",
+  "root_actions_needed": "Implement selected candidate only in coordinator's authorized lane; independently review exact call graph/source diff; run current real-store/FP/adversarial suites and original paired-process acceptance studies; preserve every raw outcome/provenance before deciding."
+}

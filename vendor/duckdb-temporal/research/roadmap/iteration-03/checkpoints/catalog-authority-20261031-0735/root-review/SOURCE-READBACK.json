@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-31T07:19:26.016273+00:00",
+  "exact_commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "route": "official DuckDB repository immutable source via GitHub connector; browser cache misses retained as unavailable, not positive reads",
+  "source_bodies_retained": false,
+  "receipts": [
+    {
+      "path": "src/catalog/catalog.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/catalog/catalog.cpp",
+      "bytes": 71643,
+      "sha256": "cd1c90b08289e9315627594696cfb5036e25d9d2dc5bf6f1697ba6a0f52736db",
+      "git_blob_sha1": "99bb2d221de3c555328027c8ecb89e70e808a777"
+    },
+    {
+      "path": "src/planner/binder/expression/bind_type_expression.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/planner/binder/expression/bind_type_expression.cpp",
+      "bytes": 5140,
+      "sha256": "3f52b4804b3a521960f550f1d8fe43a6408e5e96bba118b5cc7ddf70e6b15d1b",
+      "git_blob_sha1": "12c63762b58d68b72aa8f576db7cab7c601a93af"
+    },
+    {
+      "path": "src/function/table/system/duckdb_types.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/function/table/system/duckdb_types.cpp",
+      "bytes": 8830,
+      "sha256": "e8670b94c086b64786c032bb3a3a62b6a51a0331bcbe2532e6f26337f32251fd",
+      "git_blob_sha1": "dc5fb6bbb92b9f262d6fcc17d801cd9d403ab610"
+    }
+  ]
+}

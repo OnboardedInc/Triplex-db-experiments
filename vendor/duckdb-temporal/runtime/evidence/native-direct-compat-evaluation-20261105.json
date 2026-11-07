@@ -1,0 +1,213 @@
+{
+  "schema": "temporal-direct-compatibility-evaluation/1",
+  "decision": "retain_experimental",
+  "scope": "Two short synthetic complete-path screens. Runtime method correctness gates passed separately. Default factory and companion build flag remain unchanged.",
+  "runs": [
+    {
+      "file": "native-direct-three-way-owned-20261105.json",
+      "baseline_integrity": "owned",
+      "correctness_cells_passed": 8,
+      "measured_samples": 120,
+      "cells": [
+        {
+          "seed_retained": 0,
+          "batch_rows": 1,
+          "appender_ms": 4.355584000000022,
+          "direct_cpp_ms": 3.302249999999958,
+          "expanded_json_ms": 25.156125000000088,
+          "appender_over_cpp": 1.3189746385040735,
+          "cpp_change_percent": -24.183530842248903
+        },
+        {
+          "seed_retained": 0,
+          "batch_rows": 16,
+          "appender_ms": 4.310083999999961,
+          "direct_cpp_ms": 3.521583999999848,
+          "expanded_json_ms": 25.893125000000055,
+          "appender_over_cpp": 1.2239049246021525,
+          "cpp_change_percent": -18.29430702510949
+        },
+        {
+          "seed_retained": 0,
+          "batch_rows": 128,
+          "appender_ms": 6.445541999999932,
+          "direct_cpp_ms": 4.3751250000000255,
+          "expanded_json_ms": 52.89141699999982,
+          "appender_over_cpp": 1.473224650724241,
+          "cpp_change_percent": -32.12168968877913
+        },
+        {
+          "seed_retained": 0,
+          "batch_rows": 1024,
+          "appender_ms": 15.845582999999806,
+          "direct_cpp_ms": 12.889917000000423,
+          "expanded_json_ms": 398.808583,
+          "appender_over_cpp": 1.2293006231148955,
+          "cpp_change_percent": -18.65293312337841
+        },
+        {
+          "seed_retained": 4096,
+          "batch_rows": 1,
+          "appender_ms": 4.495249999999942,
+          "direct_cpp_ms": 3.1144580000000133,
+          "expanded_json_ms": 24.440458000000035,
+          "appender_over_cpp": 1.443349051424011,
+          "cpp_change_percent": -30.716689839273602
+        },
+        {
+          "seed_retained": 4096,
+          "batch_rows": 16,
+          "appender_ms": 4.539082999999664,
+          "direct_cpp_ms": 3.0232499999992797,
+          "expanded_json_ms": 25.798791000000165,
+          "appender_over_cpp": 1.501391879600015,
+          "cpp_change_percent": -33.39513729976951
+        },
+        {
+          "seed_retained": 4096,
+          "batch_rows": 128,
+          "appender_ms": 5.633250000000771,
+          "direct_cpp_ms": 4.3000409999986005,
+          "expanded_json_ms": 54.16649999999936,
+          "appender_over_cpp": 1.3100456484025629,
+          "cpp_change_percent": -23.66678205302425
+        },
+        {
+          "seed_retained": 4096,
+          "batch_rows": 1024,
+          "appender_ms": 14.294584000001123,
+          "direct_cpp_ms": 12.317375000000538,
+          "expanded_json_ms": 391.24141600000075,
+          "appender_over_cpp": 1.1605219456256304,
+          "cpp_change_percent": -13.83187506541239
+        }
+      ],
+      "startup_medians_ms": {
+        "appender": {
+          "open_ms": 80.24966649999965,
+          "initialize_ms": 3.4264789999994605,
+          "feature_check_ms": 0.00641700000005585
+        },
+        "native-compat": {
+          "open_ms": 78.51772899999997,
+          "initialize_ms": 2.9912499999996953,
+          "feature_check_ms": 0.0025834999999290176
+        },
+        "native-direct": {
+          "open_ms": 78.86087499999985,
+          "initialize_ms": 3.4293545000002723,
+          "feature_check_ms": 14.325604000000055
+        }
+      }
+    },
+    {
+      "file": "native-direct-versus-strict-appender-20261105.json",
+      "baseline_integrity": "strict",
+      "correctness_cells_passed": 8,
+      "measured_samples": 120,
+      "cells": [
+        {
+          "seed_retained": 0,
+          "batch_rows": 1,
+          "appender_ms": 4.063500000000033,
+          "direct_cpp_ms": 2.942083000000025,
+          "expanded_json_ms": 25.236374999999953,
+          "appender_over_cpp": 1.3811642975402116,
+          "cpp_change_percent": -27.597317583364067
+        },
+        {
+          "seed_retained": 0,
+          "batch_rows": 16,
+          "appender_ms": 5.784834000000046,
+          "direct_cpp_ms": 4.931375000000116,
+          "expanded_json_ms": 31.071334000000206,
+          "appender_over_cpp": 1.173067146586887,
+          "cpp_change_percent": -14.753387910524706
+        },
+        {
+          "seed_retained": 0,
+          "batch_rows": 128,
+          "appender_ms": 5.773874999999862,
+          "direct_cpp_ms": 4.864916999999878,
+          "expanded_json_ms": 53.64637499999981,
+          "appender_over_cpp": 1.1868393643714799,
+          "cpp_change_percent": -15.742599207637953
+        },
+        {
+          "seed_retained": 0,
+          "batch_rows": 1024,
+          "appender_ms": 15.992583000000195,
+          "direct_cpp_ms": 11.83520899999985,
+          "expanded_json_ms": 399.04891600000064,
+          "appender_over_cpp": 1.3512717012433324,
+          "cpp_change_percent": -25.99563810298996
+        },
+        {
+          "seed_retained": 4096,
+          "batch_rows": 1,
+          "appender_ms": 3.6953330000005735,
+          "direct_cpp_ms": 2.878082999999606,
+          "expanded_json_ms": 24.20245799999975,
+          "appender_over_cpp": 1.283956369569981,
+          "cpp_change_percent": -22.115733548257786
+        },
+        {
+          "seed_retained": 4096,
+          "batch_rows": 16,
+          "appender_ms": 3.7989589999997406,
+          "direct_cpp_ms": 3.267707999999402,
+          "expanded_json_ms": 25.584874999998647,
+          "appender_over_cpp": 1.1625760318854792,
+          "cpp_change_percent": -13.984120386673682
+        },
+        {
+          "seed_retained": 4096,
+          "batch_rows": 128,
+          "appender_ms": 4.6512500000008,
+          "direct_cpp_ms": 4.099458000000595,
+          "expanded_json_ms": 53.254791999999725,
+          "appender_over_cpp": 1.1346012082573171,
+          "cpp_change_percent": -11.863305563023063
+        },
+        {
+          "seed_retained": 4096,
+          "batch_rows": 1024,
+          "appender_ms": 11.973082999998951,
+          "direct_cpp_ms": 12.859791000000769,
+          "expanded_json_ms": 394.95700000000033,
+          "appender_over_cpp": 0.9310480240307354,
+          "cpp_change_percent": 7.405845261424271
+        }
+      ],
+      "startup_medians_ms": {
+        "appender": {
+          "open_ms": 42.692770499999824,
+          "initialize_ms": 2.623249499999474,
+          "feature_check_ms": 0.003187499999967258
+        },
+        "native-compat": {
+          "open_ms": 80.01870849999978,
+          "initialize_ms": 3.7225625000001656,
+          "feature_check_ms": 0.002583499999502692
+        },
+        "native-direct": {
+          "open_ms": 79.21058300000001,
+          "initialize_ms": 3.207937500000071,
+          "feature_check_ms": 14.463979499999965
+        }
+      }
+    }
+  ],
+  "interpretation": [
+    "The direct C++ kernel eliminated expanded JSON SQL lowering cost and improved every matched-owned write cell.",
+    "The actual strict-default comparison improved seven cells and regressed the retained4096/batch1024 cell by about7.4percent.",
+    "The direct factory loads the owner companion and executes a capability probe. Its measured open and probe cost exceeds the strict baseline startup.",
+    "These queued-read call latencies use the same serialized backend. They do not demonstrate simultaneous engine reader execution.",
+    "No sustained or large retained-history performance qualification is claimed. The next exact4096-row acceptance assertion is source-prepared and unrun."
+  ],
+  "artifact_pair": {
+    "core_extension_sha256": "7cff5d5bb30d3ea5d807b479bbe4583f07838a47dc0ef4f21ada934dbba95b7c",
+    "owner_extension_sha256": "1b9d3bad6652002672624171f463ab6dead65fd99f0cd6a803baa8e30f744eff",
+    "owner_engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "schema": "td.native-memory-owner-probe-second-repaired/1",
+  "result": "PASS_SECOND_LIFETIME_METHOD_AFTER_FIXTURE_REPAIR",
+  "repairedAttempts": 1,
+  "totalSecondMethodAttempts": 2,
+  "exitCode": 0,
+  "sourceCommit": "0c8810e097ae2423d6304ba7e76d1dcb8d5aed51",
+  "nativeSourceCommit": "fd034365bf34a3c3509a8c4c445985f1bb84c703",
+  "originalFailure": "native-memory-owner-probe-second-first-failure-032-20261105.json",
+  "originalFailureCommit": "de58fd6271ba9604c95627fa4613b89e505afe58",
+  "repair": "Only test fixture artifact path spelling plus rationale; bridge/SDK/native assertions and policy unchanged.",
+  "command": "node --test --test-name-pattern='public unbounded and timed' build/adapter/test-native-memory-owner-probe.js",
+  "typescript": "PASS",
+  "compiledFilesCompared": 160,
+  "onlyCompilationChange": [
+    "build/adapter/test-native-memory-owner-probe.js"
+  ],
+  "productionSdkAndNativeArtifactsUnchanged": true,
+  "runtime": {
+    "coreSha256": "7f98f400cb14d39e5d7fb2279c77327901b1529f058968bddb4f22d461033a18",
+    "controlSha256": "303906e556517d9504c6645d44aaeae06e3aaa212bc179d7f3677d5f69a6a1a1",
+    "companionSha256": "edaa59146751b0d5aa9f7de914da94927707931fd1febb0d30b77a5e754eb7b0",
+    "engineLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "diagnosticNativeMemoryOwnerProbe": true,
+    "retainedDefaultBytes": 67108864
+  },
+  "test": {
+    "matchedMethods": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "methodMs": 1197.714667,
+    "processMs": 1328.888292,
+    "verifiedAssertions": [
+      "Actual public NativeEntityStore16reader fixture stores4096int64values atK1 through native command;16complete forced-native query answers equal i64rows0..4095.",
+      "Calls without a timeout and with a timeout both use the existing stage-two invocation controls; no public tokenzero behavior is invented.",
+      "A real callback is observed live before cancellation and close; public request rejectsTD_E_CANCELED, close drains actual work and final owner/callback/wrapper release remains balanced.",
+      "Reopening the original closed file and a fresh closed-file copy creates distinct new instance owners and preserves both complete historicalK1answers.",
+      "The copied instance closes independently while the reopened original remains live; final owner destruction occurs exactly once after callbacks and wrappers retire."
+    ],
+    "observationBoundary": "Lifetime counters/owner identities were source-bound assertions in-process, not dumped numeric telemetry. No exact unsaved per-owner sample or concurrent native-core count is claimed."
+  },
+  "pins": {
+    "sourceInputsMatched": 42,
+    "compiledInputsMatchedBeforeAfterTest": 160,
+    "artifactInputsMatched": 12,
+    "reference": "native-memory-owner-probe-first-032-20261105.pins.json"
+  },
+  "rawFileSha256": {
+    "testOutput": "69e44169c65b37daad9197225cbd1c721103adfec84eaa92735f7029de24d5ab",
+    "typescriptLog": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preTsc": "74443a194793cef1ad104e7f332d7e8cca51bdefb2ac596e15b93138ff3b7035",
+    "beforeTest": "4edc6bc9f0ba30643aff4dcb5bc31586fe5d77fd7d8ee2a4bf306e06ff3d4cce",
+    "afterTest": "c380d9978c5e3a6b4603d7aa8a27fde46751bac53c51a68edcf2629231aeb13b"
+  },
+  "savedOutput": {
+    "file": "native-memory-owner-probe-second-repaired-032-20261105.output.txt",
+    "sha256": "b80e38230da7500ed37669f1a9d911f1c73a445daec57467afd3fd7c5bc721e4",
+    "sanitization": "Only owned-runtime host prefix replaced by project-relative path"
+  },
+  "savedPins": {
+    "file": "native-memory-owner-probe-second-repaired-032-20261105.pins.json",
+    "sha256": "7402fefafece6e19a8a0cc24d4321c4adf685337d4a947e85808a523ec8d1f4b"
+  },
+  "ownedFixture": "build/memory-owner-public-oyqEzI",
+  "remainingGates": [
+    "No partialLOADfailure/retry, registration replacement, cumulative diagnostic-capacity overflow, or deliberately held prepared handles after final teardown qualification.",
+    "No same-process fullfile run or first-method repeat; first raw lifetime method is accepted on its separate original receipt.",
+    "No shared requested-capacity byte policy, compiler/import/preLIST/engine/SDK/V8 containment or Goal6 completion.",
+    "Current qualified SDK8240 uncontrolled tokenzero remains unchanged; later allocator integration must preserve that transport rather than silently inherit isolated stage-two always-control."
+  ],
+  "executionBoundary": "One authorized repaired second-method attempt; no native rebuild/first-method repeat/fullfile/cap/policy/install change. Original setup failure and fresh repaired result preserved. Engine lease released at first repaired terminal PASS."
+}

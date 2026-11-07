@@ -1,0 +1,19 @@
+{
+  "pid": 68394,
+  "parentPid": 68390,
+  "argv": [
+    "[LOCAL_PATH_0043]",
+    "--check",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+  "startedAtUtc": "2026-11-06T11:29:44.552268+00:00",
+  "environment": {
+    "UV_THREADPOOL_SIZE": "4",
+    "NODE_OPTIONS": "absent",
+    "TD_NATIVE_WRITER_LAB_*": "absent"
+  },
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T11:29:44.582904+00:00",
+  "elapsedMs": 30.482499860227108
+}

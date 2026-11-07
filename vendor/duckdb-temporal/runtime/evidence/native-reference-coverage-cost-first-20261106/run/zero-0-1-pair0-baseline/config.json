@@ -1,0 +1,11 @@
+{
+  "scenario": "zero",
+  "noiseEntities": 0,
+  "noiseRevisions": 1,
+  "samples": 16,
+  "warmup": 4,
+  "opens": 3,
+  "role": "baseline",
+  "runtime": "<presence-intervals-runtime>",
+  "sourceCommit": "4674135bafce0cb5d50e3773c1391848974e9079"
+}

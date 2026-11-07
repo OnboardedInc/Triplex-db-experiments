@@ -1,0 +1,59 @@
+{
+  "actual_app_imports": 0,
+  "actual_db_calls": 0,
+  "actual_native_calls": 0,
+  "actual_timers": 0,
+  "all_returned_git_blob_hashes_match": true,
+  "application_source_modifications": 0,
+  "approvals": null,
+  "backup_actions": 0,
+  "benchmarks": 0,
+  "binary_symbol_inspection": 0,
+  "builds": 0,
+  "cap4": "Independent integer model only, not DuckDB/project execution. Source starts count at2 and copies at most2 manager entries; cardinality3 iff one attachment. Owned identity must additionally be checked.",
+  "cap4_examples": [
+    {
+      "cap4_result_count": 2,
+      "exactly_one_attachment": false,
+      "manager_attachments": 0
+    },
+    {
+      "cap4_result_count": 3,
+      "exactly_one_attachment": true,
+      "manager_attachments": 1
+    },
+    {
+      "cap4_result_count": 4,
+      "exactly_one_attachment": false,
+      "manager_attachments": 2
+    },
+    {
+      "cap4_result_count": 4,
+      "exactly_one_attachment": false,
+      "manager_attachments": 3
+    },
+    {
+      "cap4_result_count": 4,
+      "exactly_one_attachment": false,
+      "manager_attachments": 4
+    },
+    {
+      "cap4_result_count": 4,
+      "exactly_one_attachment": false,
+      "manager_attachments": 5
+    }
+  ],
+  "cleanup_actions": 0,
+  "complete_public_function_set_equals_extension_vtable": 620,
+  "exact_pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "exit": 0,
+  "hash_vectors": "empty/abc SHA1 and SHA256 passed in functions JS; source bodies only in tool memory",
+  "pending_calls": null,
+  "primary_files": 28,
+  "primary_utf8_bytes": 1574279,
+  "remote_writes": 0,
+  "runtime_abi_build_load_viability": "UNRUN; no authority granted",
+  "schema": "source_only_api_audit_checks/1",
+  "sessions": null,
+  "utc": "2026-10-31T07:25:21.984581+00:00"
+}

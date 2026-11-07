@@ -1,0 +1,44 @@
+{
+  "schema": "td.native-multi-cut-focused/1",
+  "result": "PASS",
+  "platform": "macOS ARM64",
+  "receiptUtc": "2026-11-05T20:22:20.051139+00:00",
+  "source": "5a52fd1c62d016e81e736d93cab5f9f68b49ab08",
+  "coreSha256": "b941e870abb364cdbbf2b511f941f7cf07ec12f16e057fd0f5d2fdaa26eac582",
+  "ownerSha256": "852e7e838ba9764e0bf3a8d4d60e59f325d427603122c5aad11ef860360f1fe8",
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "controlBridgeSha256": "57557b073784a65295449d21ebb9e98be939e5862e3df23728d4574339a10c3c",
+  "checks": {
+    "multiCut": 6,
+    "intervalRegression": 4,
+    "typedUnionRegression": 3,
+    "computedHeadRegression": 4
+  },
+  "typecheck": "PASS",
+  "scope": [
+    "caller order, duplicate coordinates, empty groups and correction cuts compared with independent expected answers and point evaluation",
+    "one audited statement resolves a shared latest clock with overlapping read and write submissions",
+    "all eight exact carriers and future knowledge rejection on an empty source",
+    "wide escaped JSON rejected at the pre-encoding limit and smaller request succeeds",
+    "pre-abort and active-lease cancellation, followed by healthy reader reuse"
+  ],
+  "firstRuns": [
+    "TypeScript indexed access required an undefined guard, fixed before initial 14-case pass.",
+    "Pre-encoding gate run passed 15 of 17. Zero-arity terms are outside existing grammar, and the escaped fixture exceeded the batch wire cap.",
+    "Second run passed 16 of 17. The fixture batches still exceeded the 96 KiB limit. Four-member batches preserve 200 retained facts and pass."
+  ],
+  "limits": [
+    "Native per-vector allocation and logical fact/work limits still apply before the SQL wire gate.",
+    "No correlated driver cuts or throughput claim. Focused verification during setup of a separate frozen pilot."
+  ],
+  "logSha256": {
+    "core.log": "e69862cea4359c59ae9de270ec62d8e93e50b52cb96afb8a6e30be450e0a3b81",
+    "first.tap": "b1792bac65a2be253686d02c47ef6a691b748a5942c1d304cdceb18d6e886270",
+    "owner.log": "2342dfd3557aeda9845889d5a848752e262dc4b62f039f7e78a7b40aa07a36d1",
+    "second.tap": "aa4f1a490f13e51f8df5548ad00b0ddaea422e8b0fc02eb5eb4a0b706155dbb7",
+    "third.tap": "bd7fb964dc7c33505eeb1efe5bd0d1319b31e6999e7798395fde5436577ebf72",
+    "tsc-second.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tsc-third.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tsc.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

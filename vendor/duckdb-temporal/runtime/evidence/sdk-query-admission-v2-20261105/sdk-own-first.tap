@@ -1,0 +1,29 @@
+✖ all five heavy APIs share one FIFO while retaining all16 physical readers (5952.417292ms)
+✔ heavy capacity follows configured one/two reader pools without changing admission limits (729.563ms)
+✖ canceling a heavy lease waiter cannot consume or interrupt a light-read connection (5321.023791ms)
+✔ all heavy controls validate before queuing and invocation deadlines own no queued token (482.138542ms)
+✔ native query failures release heavy admission before healthy mixed-family reuse (565.668792ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 3
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14445.95025
+
+✖ failing tests:
+
+test at build/adapter/test-sdk-admission.js:101:1
+✖ all five heavy APIs share one FIFO while retaining all16 physical readers (5952.417292ms)
+  Error: SDK admission condition did not occur
+      at Timeout.<anonymous> (file://__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-20261105-01/runtime/build/adapter/test-sdk-admission.js:20:49)
+      at listOnTimeout (node:internal/timers:605:17)
+      at process.processTimers (node:internal/timers:541:7)
+
+test at build/adapter/test-sdk-admission.js:154:1
+✖ canceling a heavy lease waiter cannot consume or interrupt a light-read connection (5321.023791ms)
+  Error: SDK admission condition did not occur
+      at Timeout.<anonymous> (file://__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-20261105-01/runtime/build/adapter/test-sdk-admission.js:20:49)
+      at listOnTimeout (node:internal/timers:605:17)
+      at process.processTimers (node:internal/timers:541:7)

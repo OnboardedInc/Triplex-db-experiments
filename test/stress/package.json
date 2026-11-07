@@ -1,0 +1,35 @@
+{
+  "name": "triplex-stress",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Performance and stress tests for Triplex data backends",
+  "type": "module",
+  "scripts": {
+    "stress-test": "vitest run",
+    "stress-test:smoke": "STRESS_BACKEND=sqlite STRESS_EMPLOYEE_COUNT=10000 STRESS_UPDATE_ROUNDS=0 STRESS_ASSERT_PERFORMANCE=false vitest run",
+    "stress-test:kv": "STRESS_BACKEND=kv STRESS_UPDATE_ROUNDS=0 NODE_OPTIONS='--max-old-space-size=4096' vitest run",
+    "stress-test:fdb": "STRESS_BACKEND=fdb STRESS_UPDATE_ROUNDS=0 NODE_OPTIONS='--max-old-space-size=4096' vitest run",
+    "benchmark:datalog": "tsx scripts/datalog-pagination.ts",
+    "benchmark": "tsx scripts/generate-benchmark-report.ts",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist stress-data benchmark-results-*.json"
+  },
+  "dependencies": {
+    "@effect/platform-node": "catalog:",
+    "@effect/sql-pg": "catalog:",
+    "@effect/sql-sqlite-node": "catalog:",
+    "@triplex-build/triplex": "workspace:^",
+    "@triplex-build/triplex-foundationdb": "workspace:^",
+    "@triplex-build/triplex-postgres": "workspace:^",
+    "@triplex-build/triplex-sql": "workspace:^",
+    "@triplex-build/triplex-sqlite": "workspace:^",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "testcontainers": "catalog:",
+    "tsx": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "status": "UNAVAILABLE",
+  "request": "https://api.github.com/repos/ad-freiburg/qlever/git/trees/6c5861a?recursive=1",
+  "error": "HTTP504",
+  "fallback": "Pinned src/engine/Server.cpp and Server.h fetched directly"
+}

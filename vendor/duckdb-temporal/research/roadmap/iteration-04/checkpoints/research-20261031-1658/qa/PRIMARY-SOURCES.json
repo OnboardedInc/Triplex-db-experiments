@@ -1,0 +1,34 @@
+{
+  "read_utc": "2026-10-31T16:28:48.318005+00:00",
+  "sources": [
+    {
+      "url": "https://webdam.di.ens.fr/Alice/pdfs/Chapter-15.pdf",
+      "title": "Abiteboul Hull Vianu, Foundations of Databases chapter15",
+      "actual_read": "application/pdf,41pages/1617parsedlines; definitions15.2.4, proposition15.2.7, theorem15.2.10 inspected",
+      "limits": "No screenshot/runtime proof; no upstream-byte hash claimed"
+    },
+    {
+      "url": "https://souffle-lang.github.io/rules",
+      "title": "Souffle rules official documentation",
+      "actual_read": "Grounded-variable and negation sections inspected; current site2026",
+      "limits": "Corroborative semantics only; richer functors/types not adopted"
+    },
+    {
+      "url": "https://duckdb.org/docs/2.0/sql/statements/transactions",
+      "title": "DuckDB2.0 transaction management",
+      "actual_read": "Full page isolation/explicit transaction sections inspected",
+      "limits": "Search snippet differed on implicit batches; explicit BEGIN avoids reliance; docs not hidden-catalog authority proof"
+    }
+  ],
+  "retrieval_failure": {
+    "url": "https://webdam.inria.fr/Alice/pdfs/Chapter-15.pdf",
+    "result": "502; working authorhost at webdam.di.ens.fr independently inspected; no failed route claimed read"
+  },
+  "tools": [
+    "g3:309",
+    "g3:310",
+    "g3:312",
+    "g3:313"
+  ],
+  "quotes": "No verbatim source extracts or raw upstream corpus copied"
+}

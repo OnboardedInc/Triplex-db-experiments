@@ -1,0 +1,29 @@
+{
+  "schema": "td.candidate-root-evidence-review/1",
+  "staticFour": {
+    "source": "eb32f43544eb9e24b2c624fc41f9c61eb61dbff0",
+    "rawHashesVerified": 5,
+    "fixed407MapsEqual": true,
+    "sourceGitPinsVerified": 6,
+    "nativeSdkMapsEqual": true,
+    "clients": 16,
+    "exactConcurrentReads": 7123,
+    "patchAcks": 512,
+    "actualMethods": 1,
+    "sourceAndRecipeRecordedPinsEqual": true,
+    "qualification": "One independent stress trace; no performance or full-suite claim."
+  },
+  "workConserving": {
+    "source": "a37ee6e45aab2a0da334114669c51d1556e911a1",
+    "rawHashesVerified": 8,
+    "sourceGitPinsVerified": 5,
+    "actualMethods": 6,
+    "tscExit": 0,
+    "qualification": "Initial six actual-engine methods only; subsequent private inspection source revision remains unrun.",
+    "postTscRuntimeAndCompiledMapsEqual": true,
+    "sdk395MapsEqual": true,
+    "selectedExternalMapsEqual": true
+  },
+  "engineInvoked": false,
+  "productionPromoted": false
+}

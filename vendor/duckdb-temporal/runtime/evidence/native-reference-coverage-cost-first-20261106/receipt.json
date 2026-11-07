@@ -1,0 +1,836 @@
+{
+  "schema": "td.reference-coverage-cost-first-receipt/1",
+  "status": "FIRST_FUNCTIONAL_PASS_WITH_NO_POLICY_COST_REGRESSION",
+  "recordedAtUtc": "2026-11-06T11:11:18.262686+00:00",
+  "sourceCommit": "cf7f0d86645383944cac77c2f49e331428c75a33",
+  "unrunInitialSource": "5d4a361a80cbdab9c4ff4a7f1c56be83955e333a",
+  "sourcePins": {
+    "commit": "cf7f0d86645383944cac77c2f49e331428c75a33",
+    "pins": {
+      "adapter/benchmark-reference-coverage-cost.mjs": "1a20c9fd585643752a8692b8c6a07d247f33723e53d0a62208f85c9b8dab6cd4",
+      "adapter/reference-coverage-cost-fixture.mjs": "c6e217eed0f447447739916084141939d617d600d471534a44e8c242a7634a0a",
+      "adapter/test-reference-coverage-cost-fixture.mjs": "9e03984650a5f0abc38b601fae3094cedc3beb9a93d27a15c9777e65654923e8",
+      "NATIVE-REFERENCE-COVERAGE-COST.md": "08eb308b8c72df07fff4a8d68300ab2ef3d120934dff9fec845f290f43838b34"
+    }
+  },
+  "configuration": {
+    "noiseEntities": 0,
+    "noiseRevisions": 1,
+    "warmup": 4,
+    "samples": 16,
+    "populatedOpens": 3,
+    "zeroPolicyPairs": 2,
+    "children": 6,
+    "readers": 1,
+    "threads": 4,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "UV_THREADPOOL_SIZE": "4",
+    "retainedLimits": "unchanged defaults"
+  },
+  "identities": {
+    "baseline": {
+      "core": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+      "control": "9fb218ba0236365c74a088c3a2da93f7ca8d2898dfddd86851f73769a028eea3",
+      "owner": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+      "addon": "92ab7cb9de0efa47bec982d21b374e9f527fbcb9b244357912f1ca2104b1e840",
+      "sourceCommit": "4674135bafce0cb5d50e3773c1391848974e9079"
+    },
+    "candidate": {
+      "core": "a562ddf6d7f3ebb8189efd785ad312143d940c9ca6d95049ced357a78149c66b",
+      "control": "6358b3f085e3f41cf66729b890d53121f2f23ddcbd4e679b307e302e8da9199e",
+      "owner": "286694a1225384bedff88aa462d9ad03a48b4eac5e2b135a69c84014f24f258b",
+      "addon": "7c6da97f4421db1fa3737e7b2a072f928c1f84ef9a56722533d90b163304c94f",
+      "sourceCommit": "229121424e63729867b2c71c9b1eacb0ba35a4e8"
+    },
+    "entityJS": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+    "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "checks": {
+    "syntax": 3,
+    "pure": 4,
+    "realChildren": 6,
+    "measuredACKs": 96,
+    "warmupACKs": 24,
+    "newDataCommands": 132,
+    "exactReplays": 6,
+    "expectedRejectedShrink": 1,
+    "populatedOpens": 18,
+    "revalidations": 18,
+    "fullTypedPointHistoryReplayAndReopenPassed": true,
+    "pairedOldSchemaReceiptsCanonicalStateAndSDKBytesExact": true,
+    "allNativeSourceArtifactBeforeAfterMatched": true,
+    "actualImagesPerChild": 6,
+    "actualEnrolledContextsPerChild": 3,
+    "afterCleanupFiveCountersZero": true,
+    "allOwnedDatabasesClosedWithoutWal": true
+  },
+  "children": [
+    {
+      "name": "zero-0-1-pair0-baseline",
+      "pid": 57038,
+      "role": "baseline",
+      "scenario": "zero",
+      "pair": 0,
+      "summary": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 73.47795899999983,
+          "p50": 78.92374999999811,
+          "p95": 111.18445799999972,
+          "p99": 111.18445799999972,
+          "max": 111.18445799999972
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 73.303666,
+          "p50": 78.75275,
+          "p95": 110.924,
+          "p99": 110.924,
+          "max": 110.924
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 291.77816600000006,
+          "p50": 300.71199999999953,
+          "p95": 336.4048330000005,
+          "p99": 336.4048330000005,
+          "max": 336.4048330000005
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 159.2612079999999,
+          "p50": 161.6828749999986,
+          "p95": 167.56125000000247,
+          "p99": 167.56125000000247,
+          "max": 167.56125000000247
+        }
+      },
+      "rawSha256": "2c55ee960b7615778d5afd41546001632fe0b42a35e03f9ce928369d74e2b121",
+      "wholeChildMaxSampledRssBytes": 550682624,
+      "databaseBytes": 9711616
+    },
+    {
+      "name": "zero-0-1-pair0-candidate",
+      "pid": 57722,
+      "role": "candidate",
+      "scenario": "zero",
+      "pair": 0,
+      "summary": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 105.41437500000029,
+          "p50": 112.1678750000001,
+          "p95": 121.84233400000085,
+          "p99": 121.84233400000085,
+          "max": 121.84233400000085
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 105.256959,
+          "p50": 111.969667,
+          "p95": 121.595,
+          "p99": 121.595,
+          "max": 121.595
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 292.5859580000033,
+          "p50": 302.73670800000036,
+          "p95": 316.72970799999894,
+          "p99": 316.72970799999894,
+          "max": 316.72970799999894
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 166.41599999999744,
+          "p50": 167.71016599999712,
+          "p95": 170.2274580000012,
+          "p99": 170.2274580000012,
+          "max": 170.2274580000012
+        }
+      },
+      "rawSha256": "b2bb48f56197bb8652c78ef0bbdf8a89e9ec404728d08f17d4cc2da04337d1a3",
+      "wholeChildMaxSampledRssBytes": 556253184,
+      "databaseBytes": 9711616
+    },
+    {
+      "name": "zero-0-1-pair1-candidate",
+      "pid": 58454,
+      "role": "candidate",
+      "scenario": "zero",
+      "pair": 1,
+      "summary": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 107.35062500000095,
+          "p50": 110.37895800000115,
+          "p95": 116.84054200000173,
+          "p99": 116.84054200000173,
+          "max": 116.84054200000173
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 107.146625,
+          "p50": 110.180041,
+          "p95": 116.59425,
+          "p99": 116.59425,
+          "max": 116.59425
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 284.34741700000086,
+          "p50": 303.66041600000244,
+          "p95": 306.79808299999786,
+          "p99": 306.79808299999786,
+          "max": 306.79808299999786
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 166.34879200000069,
+          "p50": 167.9495420000021,
+          "p95": 168.32554200000232,
+          "p99": 168.32554200000232,
+          "max": 168.32554200000232
+        }
+      },
+      "rawSha256": "3509a997a28dc6f698e791ea0e1c9027386442d3ae4584634d818afbdbd61bb7",
+      "wholeChildMaxSampledRssBytes": 545161216,
+      "databaseBytes": 9711616
+    },
+    {
+      "name": "zero-0-1-pair1-baseline",
+      "pid": 59131,
+      "role": "baseline",
+      "scenario": "zero",
+      "pair": 1,
+      "summary": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 70.66858299999967,
+          "p50": 77.92170899999837,
+          "p95": 93.62120900000082,
+          "p99": 93.62120900000082,
+          "max": 93.62120900000082
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 70.443,
+          "p50": 77.722333,
+          "p95": 93.366458,
+          "p99": 93.366458,
+          "max": 93.366458
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 296.09670899999765,
+          "p50": 299.8993330000012,
+          "p95": 305.7324579999986,
+          "p99": 305.7324579999986,
+          "max": 305.7324579999986
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 159.50366700000086,
+          "p50": 162.4772499999999,
+          "p95": 168.32795800000167,
+          "p99": 168.32795800000167,
+          "max": 168.32795800000167
+        }
+      },
+      "rawSha256": "1f8d1a0f409e83d907aabb453567bfc17a052199990ebb2e1d27bc8b6a1f3652",
+      "wholeChildMaxSampledRssBytes": 559513600,
+      "databaseBytes": 9711616
+    },
+    {
+      "name": "unrelated-0-1-pair0-candidate",
+      "pid": 59802,
+      "role": "candidate",
+      "scenario": "unrelated",
+      "pair": 0,
+      "summary": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 106.57608299999993,
+          "p50": 113.90137499999764,
+          "p95": 124.76324999999997,
+          "p99": 124.76324999999997,
+          "max": 124.76324999999997
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 106.366375,
+          "p50": 113.753916,
+          "p95": 124.594,
+          "p99": 124.594,
+          "max": 124.594
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 405.86912499999744,
+          "p50": 412.072874999998,
+          "p95": 421.536709,
+          "p99": 421.536709,
+          "max": 421.536709
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 285.7486659999995,
+          "p50": 293.2517919999991,
+          "p95": 296.1401670000014,
+          "p99": 296.1401670000014,
+          "max": 296.1401670000014
+        }
+      },
+      "rawSha256": "d8575a3e99a394f471d63877e81d685a2f27a086795a1e5508f1fdb6f619ba66",
+      "wholeChildMaxSampledRssBytes": 601178112,
+      "databaseBytes": 9711616
+    },
+    {
+      "name": "incoming-0-1-pair0-candidate",
+      "pid": 60471,
+      "role": "candidate",
+      "scenario": "incoming",
+      "pair": 0,
+      "summary": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 110.90495899999951,
+          "p50": 114.76591600000029,
+          "p95": 121.66779099999985,
+          "p99": 121.66779099999985,
+          "max": 121.66779099999985
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 110.713583,
+          "p50": 114.56725,
+          "p95": 121.426416,
+          "p99": 121.426416,
+          "max": 121.426416
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 1847.0587080000041,
+          "p50": 1935.8194579999981,
+          "p95": 2101.2567500000005,
+          "p99": 2101.2567500000005,
+          "max": 2101.2567500000005
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 1994.9974169999987,
+          "p50": 2066.8834999999963,
+          "p95": 2085.596625000002,
+          "p99": 2085.596625000002,
+          "max": 2085.596625000002
+        }
+      },
+      "rawSha256": "cdbe8de1d5bc49dcb75af85a9f70f27558433a77fc9f65cff884f124b3749921",
+      "wholeChildMaxSampledRssBytes": 536018944,
+      "databaseBytes": 9711616
+    }
+  ],
+  "zeroPolicyComparison": [
+    {
+      "scenario": "zero",
+      "profile": {
+        "noiseEntities": 0,
+        "noiseRevisions": 1
+      },
+      "pair": 0,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "ackP50Ratio": 1.4212182644641542,
+      "ackP95Ratio": 1.095857606285234,
+      "nativeSqlP50Ratio": 1.421787391551406,
+      "openP50Ratio": 1.006733046902022,
+      "revalidateP50Ratio": 1.0372784749157793,
+      "baseline": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 73.47795899999983,
+          "p50": 78.92374999999811,
+          "p95": 111.18445799999972,
+          "p99": 111.18445799999972,
+          "max": 111.18445799999972
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 73.303666,
+          "p50": 78.75275,
+          "p95": 110.924,
+          "p99": 110.924,
+          "max": 110.924
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 291.77816600000006,
+          "p50": 300.71199999999953,
+          "p95": 336.4048330000005,
+          "p99": 336.4048330000005,
+          "max": 336.4048330000005
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 159.2612079999999,
+          "p50": 161.6828749999986,
+          "p95": 167.56125000000247,
+          "p99": 167.56125000000247,
+          "max": 167.56125000000247
+        }
+      },
+      "candidate": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 105.41437500000029,
+          "p50": 112.1678750000001,
+          "p95": 121.84233400000085,
+          "p99": 121.84233400000085,
+          "max": 121.84233400000085
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 105.256959,
+          "p50": 111.969667,
+          "p95": 121.595,
+          "p99": 121.595,
+          "max": 121.595
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 292.5859580000033,
+          "p50": 302.73670800000036,
+          "p95": 316.72970799999894,
+          "p99": 316.72970799999894,
+          "max": 316.72970799999894
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 166.41599999999744,
+          "p50": 167.71016599999712,
+          "p95": 170.2274580000012,
+          "p99": 170.2274580000012,
+          "max": 170.2274580000012
+        }
+      }
+    },
+    {
+      "scenario": "zero",
+      "profile": {
+        "noiseEntities": 0,
+        "noiseRevisions": 1
+      },
+      "pair": 1,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "ackP50Ratio": 1.416536667592897,
+      "ackP95Ratio": 1.248013599140775,
+      "nativeSqlP50Ratio": 1.4176110874077852,
+      "openP50Ratio": 1.0125411516003646,
+      "revalidateP50Ratio": 1.0336803583271024,
+      "baseline": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 70.66858299999967,
+          "p50": 77.92170899999837,
+          "p95": 93.62120900000082,
+          "p99": 93.62120900000082,
+          "max": 93.62120900000082
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 70.443,
+          "p50": 77.722333,
+          "p95": 93.366458,
+          "p99": 93.366458,
+          "max": 93.366458
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 296.09670899999765,
+          "p50": 299.8993330000012,
+          "p95": 305.7324579999986,
+          "p99": 305.7324579999986,
+          "max": 305.7324579999986
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 159.50366700000086,
+          "p50": 162.4772499999999,
+          "p95": 168.32795800000167,
+          "p99": 168.32795800000167,
+          "max": 168.32795800000167
+        }
+      },
+      "candidate": {
+        "ackWallMs": {
+          "count": 16,
+          "min": 107.35062500000095,
+          "p50": 110.37895800000115,
+          "p95": 116.84054200000173,
+          "p99": 116.84054200000173,
+          "max": 116.84054200000173
+        },
+        "nativeSqlCallMs": {
+          "count": 16,
+          "min": 107.146625,
+          "p50": 110.180041,
+          "p95": 116.59425,
+          "p99": 116.59425,
+          "max": 116.59425
+        },
+        "populatedOpenMs": {
+          "count": 3,
+          "min": 284.34741700000086,
+          "p50": 303.66041600000244,
+          "p95": 306.79808299999786,
+          "p99": 306.79808299999786,
+          "max": 306.79808299999786
+        },
+        "revalidateMs": {
+          "count": 3,
+          "min": 166.34879200000069,
+          "p50": 167.9495420000021,
+          "p95": 168.32554200000232,
+          "p99": 168.32554200000232,
+          "max": 168.32554200000232
+        }
+      }
+    }
+  ],
+  "scope": {
+    "publicACK": "Full actual public patch receipt decoding plus symmetric observation wrapper; verification/crypto/report I/O follow stopped clock.",
+    "native": "sqlCallNs includes parse/bind/execute and overlaps public wall; not exclusive operators.",
+    "RSS": "Whole child sampled RSS includes preflight/postflight hashes, setup, calls and lifecycle; not query-only or physical containment.",
+    "source": "Every tracked native core/probe/writer/compat input matches declared Git source and paired approved actual artifacts. Same compiled SDK and dependency package bytes preflight plus all child postflight.",
+    "operatorProfile": "NOT_RUN",
+    "largeHistory": "NOT_RUN; separate unchanged128MB growth qualification OOM remains preserved in its own receipt."
+  },
+  "firstOutcomePreserved": true,
+  "engineReruns": 0,
+  "productionPromotion": false,
+  "rawDirectory": "build/reference-coverage-cost-20261106-01",
+  "checksDirectory": "build/reference-coverage-cost-source-20261106-01",
+  "rawIndex": {
+    "run/incoming-0-1-pair0-candidate/config.json": {
+      "originalSha256": "9dc2b86af1f25573ca8420678be636d49d91c361848d0a48a407cce4e5e460b4",
+      "projectOnlySha256": "bb9c350150528350e016ea72f59148d317bff2c850a304993f5c76cdfa0c7db5",
+      "bytes": 335,
+      "originalMtimeNs": 1793963110359068489
+    },
+    "run/incoming-0-1-pair0-candidate/result.json": {
+      "originalSha256": "cdbe8de1d5bc49dcb75af85a9f70f27558433a77fc9f65cff884f124b3749921",
+      "projectOnlySha256": "5fe9b6e7a42cc89c073d8b82294385bc19e93f2c5f9e2d0cc37803fecb53024b",
+      "bytes": 230853,
+      "originalMtimeNs": 1793963159679432580
+    },
+    "run/incoming-0-1-pair0-candidate/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793963110360743583
+    },
+    "run/incoming-0-1-pair0-candidate/stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793963110360733083
+    },
+    "run/incoming-0-1-pair0-candidate/terminal-start.json": {
+      "originalSha256": "b1a49ca4f1e6a5e0c9154f8c1776580f17f7e202aee4bf0eec723c0410e81beb",
+      "projectOnlySha256": "b0e58a0f75d265375b024b6da1631d19564ea3646b2691f5aeeec01d53310768",
+      "bytes": 1138,
+      "originalMtimeNs": 1793963110360840750
+    },
+    "run/incoming-0-1-pair0-candidate/terminal.json": {
+      "originalSha256": "cdbbca2153b5dd0824782a105e96771236060395b1977d34a924b2365c577336",
+      "projectOnlySha256": "d4b1805a8317acf1e261857002d4adb358a170f48f7830f73311180b064153cb",
+      "bytes": 1252,
+      "originalMtimeNs": 1793963159717477154
+    },
+    "run/independent-quantiles-first.json": {
+      "originalSha256": "5992af7b035a24ff6517cfb0af29c2876068ece17008dda050991db7ecf89ae6",
+      "projectOnlySha256": "5992af7b035a24ff6517cfb0af29c2876068ece17008dda050991db7ecf89ae6",
+      "bytes": 12677,
+      "originalMtimeNs": 1793963261169942795
+    },
+    "run/report.json": {
+      "originalSha256": "9aa47b2db684daa2e0b0c4a0b30c28cb611dbd581d9c0edc27487dcc670671c7",
+      "projectOnlySha256": "90bd3ce9112a85ecc42b3192843cc68000bc89845c3a4998274b41f6ff420a5a",
+      "bytes": 144776,
+      "originalMtimeNs": 1793963159866466472
+    },
+    "run/unrelated-0-1-pair0-candidate/config.json": {
+      "originalSha256": "37b1a1745e518a3db3a774982b83ff5e613b65726a248dafb9311dd5a6ae721d",
+      "projectOnlySha256": "7bfd52ddde1f4f41d5375c6f51b1fe86de99c802ff9bd63f8dd0e222212e8713",
+      "bytes": 336,
+      "originalMtimeNs": 1793963072862569718
+    },
+    "run/unrelated-0-1-pair0-candidate/result.json": {
+      "originalSha256": "d8575a3e99a394f471d63877e81d685a2f27a086795a1e5508f1fdb6f619ba66",
+      "projectOnlySha256": "b8561eb221a2d11c8a95079ced7a6c5b272299c872ffeb80c0cbdb3739830deb",
+      "bytes": 230738,
+      "originalMtimeNs": 1793963110337395102
+    },
+    "run/unrelated-0-1-pair0-candidate/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793963072864311062
+    },
+    "run/unrelated-0-1-pair0-candidate/stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793963072864294062
+    },
+    "run/unrelated-0-1-pair0-candidate/terminal-start.json": {
+      "originalSha256": "070853caf4c16f6228ed730afa3f0dc0da9b0e6bd43f98b4924c179eded58115",
+      "projectOnlySha256": "92c597769a60892bc6765abeacdf124abdab20ad934db3f51339b426d23d2995",
+      "bytes": 1141,
+      "originalMtimeNs": 1793963072864385938
+    },
+    "run/unrelated-0-1-pair0-candidate/terminal.json": {
+      "originalSha256": "7e11615080581f9dc79d6fc72102508523472e638a3cdcb405f6122025aefb38",
+      "projectOnlySha256": "c2cafbe11d3e93f464c2c3a3f7da873b28a1301950b1618a2282511d1e390239",
+      "bytes": 1256,
+      "originalMtimeNs": 1793963110354554919
+    },
+    "run/zero-0-1-pair0-baseline/config.json": {
+      "originalSha256": "4374b741b2b4ec0427407ab0d5306eac9f238c735bc2465a3c2c13e7f22fa578",
+      "projectOnlySha256": "90d701d3099a392d4f1cc534a2ed3c8a5baa66f93ae2c40f8269022dad3f41a7",
+      "bytes": 330,
+      "originalMtimeNs": 1793962931057862235
+    },
+    "run/zero-0-1-pair0-baseline/result.json": {
+      "originalSha256": "2c55ee960b7615778d5afd41546001632fe0b42a35e03f9ce928369d74e2b121",
+      "projectOnlySha256": "ee801494f1ee094aa6846f665f47e526517c60e2d13daca8748a060e674e5feb",
+      "bytes": 229723,
+      "originalMtimeNs": 1793962965676026168
+    },
+    "run/zero-0-1-pair0-baseline/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962931060801628
+    },
+    "run/zero-0-1-pair0-baseline/stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962931060756295
+    },
+    "run/zero-0-1-pair0-baseline/terminal-start.json": {
+      "originalSha256": "034e55457d8c35f75c81ccae46b8b65e690fad5977eec21350513db471e9c8db",
+      "projectOnlySha256": "dc4478951bc5e2880b83147e418bb6650b11b24cb70978073b5196f2f30109c1",
+      "bytes": 1122,
+      "originalMtimeNs": 1793962931060837420
+    },
+    "run/zero-0-1-pair0-baseline/terminal.json": {
+      "originalSha256": "7df4b2a8f23bbd81e0da1b8fc8e204307b5904a28c955f48158032ed5ea66d44",
+      "projectOnlySha256": "4fd2c51bb28155d538650e0c4e7af056d2beae945583ec9363437e12468b3ed6",
+      "bytes": 1231,
+      "originalMtimeNs": 1793962965693855239
+    },
+    "run/zero-0-1-pair0-candidate/config.json": {
+      "originalSha256": "d6028ab1367b8aa6acad25def248fea54d5c05fd742a372ee0e27622e8e3c5a7",
+      "projectOnlySha256": "c33c213021d5d4db70b495996995381b56ef1bb36d2183246f1591f6ce6aedcf",
+      "bytes": 331,
+      "originalMtimeNs": 1793962965695992585
+    },
+    "run/zero-0-1-pair0-candidate/result.json": {
+      "originalSha256": "b2bb48f56197bb8652c78ef0bbdf8a89e9ec404728d08f17d4cc2da04337d1a3",
+      "projectOnlySha256": "325dd627782bf8a9388dafbed4be95a1dd384c0c1de622d8bc254973ded6c78b",
+      "bytes": 230779,
+      "originalMtimeNs": 1793963002364552534
+    },
+    "run/zero-0-1-pair0-candidate/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962965697478428
+    },
+    "run/zero-0-1-pair0-candidate/stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962965697484720
+    },
+    "run/zero-0-1-pair0-candidate/terminal-start.json": {
+      "originalSha256": "67d7679ba0bd755e83a7d109f4d1d51eec6e9283a002baea2902781f3beac0bb",
+      "projectOnlySha256": "df8aff5de674fac2670b86ad991f0bd6ae34f06be8fb049f5389e6a82f8c7867",
+      "bytes": 1126,
+      "originalMtimeNs": 1793962965697524928
+    },
+    "run/zero-0-1-pair0-candidate/terminal.json": {
+      "originalSha256": "29672d5c54b17cc58373ba14f936a269e48fa85ab4a41272d05d5bf36d76f57b",
+      "projectOnlySha256": "32a48412c837a7de5cfdf0c8fa400c35602aa99c864963f8549007c33d932830",
+      "bytes": 1235,
+      "originalMtimeNs": 1793963002380240592
+    },
+    "run/zero-0-1-pair1-baseline/config.json": {
+      "originalSha256": "4374b741b2b4ec0427407ab0d5306eac9f238c735bc2465a3c2c13e7f22fa578",
+      "projectOnlySha256": "90d701d3099a392d4f1cc534a2ed3c8a5baa66f93ae2c40f8269022dad3f41a7",
+      "bytes": 330,
+      "originalMtimeNs": 1793963038585850737
+    },
+    "run/zero-0-1-pair1-baseline/result.json": {
+      "originalSha256": "1f8d1a0f409e83d907aabb453567bfc17a052199990ebb2e1d27bc8b6a1f3652",
+      "projectOnlySha256": "91c73df963523c0bff50b4e64571e91ff5b3aa6c801bd9993e77fa82186fe33e",
+      "bytes": 229708,
+      "originalMtimeNs": 1793963072839378696
+    },
+    "run/zero-0-1-pair1-baseline/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793963038587851250
+    },
+    "run/zero-0-1-pair1-baseline/stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793963038587820958
+    },
+    "run/zero-0-1-pair1-baseline/terminal-start.json": {
+      "originalSha256": "9d72a690f6fb365d2d502f994ff32ea4b8209f66229b7bdb70f0fbb13fde7ab7",
+      "projectOnlySha256": "9262fc4b36046b1a6588393b82df664ce62f373155e2d628f47188f52278a014",
+      "bytes": 1122,
+      "originalMtimeNs": 1793963038587960542
+    },
+    "run/zero-0-1-pair1-baseline/terminal.json": {
+      "originalSha256": "1da723470de6356e7a4dffb8cd23c676438a1a87eda67795c545c036ceca1a3a",
+      "projectOnlySha256": "8326676ed8ba2ba7649f15087b4caf5bcbea1a0018509ccc04b6d9dccc648bdc",
+      "bytes": 1228,
+      "originalMtimeNs": 1793963072858778152
+    },
+    "run/zero-0-1-pair1-candidate/config.json": {
+      "originalSha256": "d6028ab1367b8aa6acad25def248fea54d5c05fd742a372ee0e27622e8e3c5a7",
+      "projectOnlySha256": "c33c213021d5d4db70b495996995381b56ef1bb36d2183246f1591f6ce6aedcf",
+      "bytes": 331,
+      "originalMtimeNs": 1793963002383490988
+    },
+    "run/zero-0-1-pair1-candidate/result.json": {
+      "originalSha256": "3509a997a28dc6f698e791ea0e1c9027386442d3ae4584634d818afbdbd61bb7",
+      "projectOnlySha256": "196cecfc91d72c7d65ef03badcbf42947fe7803e8872fcb87814e9b820d36e69",
+      "bytes": 230814,
+      "originalMtimeNs": 1793963038568800879
+    },
+    "run/zero-0-1-pair1-candidate/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793963002385311832
+    },
+    "run/zero-0-1-pair1-candidate/stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793963002385287582
+    },
+    "run/zero-0-1-pair1-candidate/terminal-start.json": {
+      "originalSha256": "f480c0a65b1c9afc7ae81b9c43525ba4bd1993772d8d274c6696547a6762ff7a",
+      "projectOnlySha256": "3f297f2904ab396107d5168253c7d26a331e3b281818d927900f673ab2f8ceb7",
+      "bytes": 1126,
+      "originalMtimeNs": 1793963002386239422
+    },
+    "run/zero-0-1-pair1-candidate/terminal.json": {
+      "originalSha256": "b4f638b25d4819b5948eda51dc33d2a91c9819a488e7aba3ee199b7d850d78ae",
+      "projectOnlySha256": "f7b9e0acea6b3e56d748249803e05d322e14a9c45e45c6dc7664535408faf6cb",
+      "bytes": 1241,
+      "originalMtimeNs": 1793963038583348346
+    },
+    "source-checks/benchmark-first.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962928511932707
+    },
+    "source-checks/benchmark-first.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962928511806373
+    },
+    "source-checks/benchmark-terminal-first.json": {
+      "originalSha256": "5e84d4a403a41bf6cf96548385c919b7d7b62820c7b49121bf85eb1a4a4d2591",
+      "projectOnlySha256": "78415e53cde00d0ea3777cf5a2ca9d5bface10811264d1596740d17c6189e142",
+      "bytes": 958,
+      "originalMtimeNs": 1793963159873410891
+    },
+    "source-checks/benchmark-terminal-start.json": {
+      "originalSha256": "1ee43a367c029332976fe6e55488bfdea5d6fee00d5f718cfd34b2ec56310ca7",
+      "projectOnlySha256": "87946c05fc7c74f406223bce8d4fc9a1e557aad714a493d2015da8cb9c058583",
+      "bytes": 855,
+      "originalMtimeNs": 1793962928514060971
+    },
+    "source-checks/checks-first.json": {
+      "originalSha256": "42c2b9348c4d52983fa36de3875862e76af01bc343f7f41d4774a6c3b7e6e640",
+      "projectOnlySha256": "1c3dc2346d4f988552ee29c249e0efcdeb6d36ef1c140213a5db0c9689a6f2da",
+      "bytes": 1945,
+      "originalMtimeNs": 1793962886413781192
+    },
+    "source-checks/pure-first.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962886314849150
+    },
+    "source-checks/pure-first.stdout.log": {
+      "originalSha256": "31350426ba595f16dd50195eed71da500d7495982aa06e42ca8b6de2b3948cbb",
+      "projectOnlySha256": "31350426ba595f16dd50195eed71da500d7495982aa06e42ca8b6de2b3948cbb",
+      "bytes": 482,
+      "originalMtimeNs": 1793962886410352754
+    },
+    "source-checks/syntax-1-first.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962886228590521
+    },
+    "source-checks/syntax-1-first.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962886228510354
+    },
+    "source-checks/syntax-2-first.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962886258648836
+    },
+    "source-checks/syntax-2-first.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962886258489669
+    },
+    "source-checks/syntax-3-first.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962886287076558
+    },
+    "source-checks/syntax-3-first.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793962886286906724
+    }
+  },
+  "sanitization": "Only explicit local task/runtime/Node prefixes replaced; numeric/boolean/null JSON leaves proved unchanged; raw original bytes/hashes retained locally.",
+  "limitations": [
+    "Six fresh small-data processes; sixteen measured ACKs perchild and three populated opens/revalidations are diagnostic samples, not tail SLO evidence.",
+    "Only noise0:1 was executed. Larger retained history, global coverage row counts, OOM attribution and hard-cap qualification are separate gates.",
+    "Candidate-only unrelated/incoming schema5 are not baseline equivalents: the baseline cannot parse coverage.",
+    "Point equality is checked in flight by the independent event oracle; saved recipe, complete semantic history and canonical snapshots are retained.",
+    "No statement/operator trace was collected; no empty-CTAS parse/bind cause or exclusive-time subtraction is claimed."
+  ],
+  "next": "Review exact generated SQL trace, then compare three native overhead hypotheses on unchanged small matrix; no optimization or cap increase yet."
+}

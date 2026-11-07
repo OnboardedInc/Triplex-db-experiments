@@ -1,0 +1,323 @@
+{
+  "schema": "native-write-comparison/2",
+  "timestamp_utc": "2026-11-05T02:47:35.694Z",
+  "warmup_pairs": 2,
+  "measured_pairs": 5,
+  "scope": "complete public command, claim, clock, retained-usage accounting and commit; full follow-up read separately charged and verified",
+  "source_sha256": {
+    "adapter/benchmark-write.mjs": "436331732ac82e7378e61b789b840224781ad0d463ce0d120d2e72db6ef2d694",
+    "adapter/native-duckdb-port.mjs": "48e3400256f7108b9e354257214d2547e0e70d8eec89196b1dc3c3fddf0229c8",
+    "adapter/public-backend.mjs": "ad35edcc9df75f4f89fbbaa517474bfbb953204031bc17589263a658e38f24c2",
+    "adapter/transaction-owner.mjs": "5f9c762033d8916f054c7aed10457856fed1f91ace87a8a12147c7279cac4feb"
+  },
+  "summary": [
+    {
+      "size": 32,
+      "sql": {
+        "write_ms": 13.575333999999998,
+        "read_ms": 3.407916
+      },
+      "append": {
+        "write_ms": 4.925583000000017,
+        "read_ms": 3.4612500000000637
+      },
+      "write_speedup": 2.7560867414070476
+    },
+    {
+      "size": 512,
+      "sql": {
+        "write_ms": 164.7901670000001,
+        "read_ms": 5.652332999999999
+      },
+      "append": {
+        "write_ms": 9.103875000000016,
+        "read_ms": 5.192416999999978
+      },
+      "write_speedup": 18.101101673737812
+    },
+    {
+      "size": 4096,
+      "sql": {
+        "write_ms": 1249.513583,
+        "read_ms": 25.15995799999928
+      },
+      "append": {
+        "write_ms": 32.77050000000054,
+        "read_ms": 21.078625000000102
+      },
+      "write_speedup": 38.12921935887397
+    }
+  ],
+  "samples": [
+    {
+      "size": 32,
+      "mode": "sql",
+      "attempt": 0,
+      "write_ms": 12.456666999999982,
+      "read_ms": 3.1564169999999763,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "append",
+      "attempt": 0,
+      "write_ms": 3.99170799999996,
+      "read_ms": 2.71225000000004,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "append",
+      "attempt": 1,
+      "write_ms": 4.925583000000017,
+      "read_ms": 3.5782500000000255,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "sql",
+      "attempt": 1,
+      "write_ms": 13.927791000000013,
+      "read_ms": 4.652416999999957,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "sql",
+      "attempt": 2,
+      "write_ms": 13.575333999999998,
+      "read_ms": 3.244665999999995,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "append",
+      "attempt": 2,
+      "write_ms": 5.238999999999976,
+      "read_ms": 3.2877919999999676,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "append",
+      "attempt": 3,
+      "write_ms": 4.744875000000093,
+      "read_ms": 3.575790999999981,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "sql",
+      "attempt": 3,
+      "write_ms": 14.142542000000049,
+      "read_ms": 4.488417000000027,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "sql",
+      "attempt": 4,
+      "write_ms": 12.501541999999972,
+      "read_ms": 3.407916,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 32,
+      "mode": "append",
+      "attempt": 4,
+      "write_ms": 4.991958999999952,
+      "read_ms": 3.4612500000000637,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 512,
+      "mode": "sql",
+      "attempt": 0,
+      "write_ms": 167.73108300000013,
+      "read_ms": 5.652332999999999,
+      "trace_complete": true,
+      "insert_operations_in_trace": 16
+    },
+    {
+      "size": 512,
+      "mode": "append",
+      "attempt": 0,
+      "write_ms": 9.103875000000016,
+      "read_ms": 4.8237920000001395,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 512,
+      "mode": "append",
+      "attempt": 1,
+      "write_ms": 9.11541699999998,
+      "read_ms": 5.192416999999978,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 512,
+      "mode": "sql",
+      "attempt": 1,
+      "write_ms": 164.7901670000001,
+      "read_ms": 7.7032500000000255,
+      "trace_complete": true,
+      "insert_operations_in_trace": 16
+    },
+    {
+      "size": 512,
+      "mode": "sql",
+      "attempt": 2,
+      "write_ms": 167.55966599999988,
+      "read_ms": 4.89262500000018,
+      "trace_complete": true,
+      "insert_operations_in_trace": 16
+    },
+    {
+      "size": 512,
+      "mode": "append",
+      "attempt": 2,
+      "write_ms": 9.893082999999933,
+      "read_ms": 5.53975000000014,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 512,
+      "mode": "append",
+      "attempt": 3,
+      "write_ms": 8.148290999999972,
+      "read_ms": 5.844209000000092,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 512,
+      "mode": "sql",
+      "attempt": 3,
+      "write_ms": 161.626708,
+      "read_ms": 4.960833000000093,
+      "trace_complete": true,
+      "insert_operations_in_trace": 16
+    },
+    {
+      "size": 512,
+      "mode": "sql",
+      "attempt": 4,
+      "write_ms": 158.43170800000007,
+      "read_ms": 7.2394170000002305,
+      "trace_complete": true,
+      "insert_operations_in_trace": 16
+    },
+    {
+      "size": 512,
+      "mode": "append",
+      "attempt": 4,
+      "write_ms": 8.22833300000002,
+      "read_ms": 4.823583999999755,
+      "trace_complete": true,
+      "insert_operations_in_trace": 1
+    },
+    {
+      "size": 4096,
+      "mode": "sql",
+      "attempt": 0,
+      "write_ms": 1251.5011669999994,
+      "read_ms": 25.99316699999963,
+      "trace_complete": false,
+      "insert_operations_in_trace": 84
+    },
+    {
+      "size": 4096,
+      "mode": "append",
+      "attempt": 0,
+      "write_ms": 28.147624999999607,
+      "read_ms": 18.79070800000045,
+      "trace_complete": true,
+      "insert_operations_in_trace": 2
+    },
+    {
+      "size": 4096,
+      "mode": "append",
+      "attempt": 1,
+      "write_ms": 26.92433400000027,
+      "read_ms": 17.98725000000013,
+      "trace_complete": true,
+      "insert_operations_in_trace": 2
+    },
+    {
+      "size": 4096,
+      "mode": "sql",
+      "attempt": 1,
+      "write_ms": 1228.5471249999991,
+      "read_ms": 25.15995799999928,
+      "trace_complete": false,
+      "insert_operations_in_trace": 84
+    },
+    {
+      "size": 4096,
+      "mode": "sql",
+      "attempt": 2,
+      "write_ms": 1249.513583,
+      "read_ms": 19.636000000000422,
+      "trace_complete": false,
+      "insert_operations_in_trace": 84
+    },
+    {
+      "size": 4096,
+      "mode": "append",
+      "attempt": 2,
+      "write_ms": 32.77050000000054,
+      "read_ms": 28.331083999999464,
+      "trace_complete": true,
+      "insert_operations_in_trace": 2
+    },
+    {
+      "size": 4096,
+      "mode": "append",
+      "attempt": 3,
+      "write_ms": 91.4612079999988,
+      "read_ms": 31.869167000000743,
+      "trace_complete": true,
+      "insert_operations_in_trace": 2
+    },
+    {
+      "size": 4096,
+      "mode": "sql",
+      "attempt": 3,
+      "write_ms": 1236.4607079999987,
+      "read_ms": 21.93774999999914,
+      "trace_complete": false,
+      "insert_operations_in_trace": 84
+    },
+    {
+      "size": 4096,
+      "mode": "sql",
+      "attempt": 4,
+      "write_ms": 1268.5978329999998,
+      "read_ms": 51.12937499999862,
+      "trace_complete": false,
+      "insert_operations_in_trace": 84
+    },
+    {
+      "size": 4096,
+      "mode": "append",
+      "attempt": 4,
+      "write_ms": 34.8002919999999,
+      "read_ms": 21.078625000000102,
+      "trace_complete": true,
+      "insert_operations_in_trace": 2
+    }
+  ]
+}

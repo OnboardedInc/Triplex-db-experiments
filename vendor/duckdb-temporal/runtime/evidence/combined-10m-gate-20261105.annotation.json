@@ -1,0 +1,531 @@
+{
+  "schema": "combined-read-10m-annotation/1",
+  "source": "combined-10m-gate-20261105.json",
+  "timestamp_utc": "2026-11-05T15:27:04.761989+00:00",
+  "timing_validity": "diagnostic_only_due_to_possible_host_test_overlap",
+  "contamination": {
+    "reported_by": "acceptance_and_benchmarks agent",
+    "command": "node --test projects/temporal-datalog/runtime/workloads/test_engine_cases.mjs",
+    "scope": "Five pure/mock tests without DuckDB import or engine execution. Host CPU usage was not measured.",
+    "known_invocations": [
+      {
+        "commit": "e91c1657",
+        "completion_upper_bound_utc": "2026-11-05T15:20:09Z",
+        "node_reported_duration_ms": 71.789
+      },
+      {
+        "commit": "83748eac",
+        "completion_upper_bound_utc": "2026-11-05T15:21:22Z",
+        "node_reported_duration_ms": 57.955
+      },
+      {
+        "commit": "ff91cbbc",
+        "completion_upper_bound_utc": "2026-11-05T15:23:16Z",
+        "node_reported_duration_ms": 59.674
+      }
+    ],
+    "earlier_invocation": {
+      "node_reported_duration_ms": 54.552,
+      "time": "Before the first known invocation; exact timestamp unavailable."
+    },
+    "uncertainty": "Commit times are upper bounds on test completion. Individual start/end times were not instrumented. Each containing edit/test/git tool call reported about0.3seconds. Both short cells and mixed phase may be affected. A passing result would require a clean repeat."
+  },
+  "fixed_budgets": {
+    "threads": 4,
+    "engine_memory": "2GB",
+    "temporary_storage": "4GB",
+    "logical_intermediate_bytes": 4294967296,
+    "requested_mixed_duration_seconds": 180,
+    "reader_count": 16
+  },
+  "summary": {
+    "completed_reads": 497,
+    "acknowledged_native_writes": 71,
+    "errors": [
+      {
+        "reader": 15,
+        "round": 30,
+        "phase": "measured",
+        "startOffsetMs": 147069.249,
+        "error": {
+          "name": "NativeCommandError",
+          "code": "TD_E_DEADLINE",
+          "message": "TD_E_DEADLINE: whole-query timeout exceeded"
+        },
+        "cut": "fixed",
+        "kind": "count"
+      },
+      {
+        "reader": 3,
+        "round": 30,
+        "phase": "measured",
+        "startOffsetMs": 147051.23766699998,
+        "error": {
+          "name": "NativeCommandError",
+          "code": "TD_E_DEADLINE",
+          "message": "TD_E_DEADLINE: whole-query timeout exceeded"
+        },
+        "cut": "fixed",
+        "kind": "count"
+      },
+      {
+        "reader": 13,
+        "round": 31,
+        "phase": "measured",
+        "startOffsetMs": 154523.36554199998,
+        "error": {
+          "name": "NativeCommandError",
+          "code": "TD_E_DEADLINE",
+          "message": "TD_E_DEADLINE: whole-query timeout exceeded"
+        },
+        "cut": "latest",
+        "kind": "grouped_sum"
+      },
+      {
+        "reader": 8,
+        "round": 31,
+        "phase": "measured",
+        "startOffsetMs": 155056.97312500002,
+        "error": {
+          "name": "NativeCommandError",
+          "code": "TD_E_DEADLINE",
+          "message": "TD_E_DEADLINE: whole-query timeout exceeded"
+        },
+        "cut": "latest",
+        "kind": "count"
+      },
+      {
+        "reader": 2,
+        "round": 31,
+        "phase": "measured",
+        "startOffsetMs": 154963.03675000003,
+        "error": {
+          "name": "NativeCommandError",
+          "code": "TD_E_DEADLINE",
+          "message": "TD_E_DEADLINE: whole-query timeout exceeded"
+        },
+        "cut": "latest",
+        "kind": "count"
+      },
+      {
+        "reader": 11,
+        "round": 30,
+        "phase": "measured",
+        "startOffsetMs": 154510.925125,
+        "error": {
+          "name": "NativeCommandError",
+          "code": "TD_E_DEADLINE",
+          "message": "TD_E_DEADLINE: whole-query timeout exceeded"
+        },
+        "cut": "fixed",
+        "kind": "grouped_sum"
+      },
+      {
+        "reader": 6,
+        "round": 30,
+        "phase": "measured",
+        "startOffsetMs": 154541.839125,
+        "error": {
+          "name": "NativeCommandError",
+          "code": "TD_E_DEADLINE",
+          "message": "TD_E_DEADLINE: whole-query timeout exceeded"
+        },
+        "cut": "fixed",
+        "kind": "count"
+      }
+    ],
+    "latency_ms": {
+      "count": 497,
+      "min": 1633.793875000003,
+      "p50": 4188.779083000001,
+      "p95": 13273.959959,
+      "p99": 62225.744209000026,
+      "max": 67373.08758400002
+    },
+    "queries_per_second": 2.172127080507792,
+    "wall_ms": 228807.975583,
+    "drain_ms": 48807.97558299999,
+    "peak_sampled_rss_bytes": 3029024768,
+    "gates": {
+      "at_least_1000_reads": false,
+      "p50_at_most_5000ms": true,
+      "p99_at_most_15000ms": false,
+      "at_least_5_queries_per_second": false,
+      "rss_at_most_3500000000_bytes": true,
+      "sixteen_readers_observed": true,
+      "no_query_errors": false,
+      "no_write_or_cleanup_errors": true,
+      "every_complete_ten_second_window_has_write": false,
+      "write_bound_not_reached": true,
+      "final_and_reopened_answers_verified": true
+    },
+    "all_gates_passed": false
+  },
+  "latency_by_cut_and_kind": [
+    {
+      "cut": "fixed",
+      "kind": "count",
+      "latency_ms": {
+        "count": 34,
+        "min": 4063.227041999984,
+        "p50": 8255.481333000003,
+        "p95": 15431.794332999998,
+        "p99": 58173.150417,
+        "max": 58173.150417
+      }
+    },
+    {
+      "cut": "fixed",
+      "kind": "sum",
+      "latency_ms": {
+        "count": 37,
+        "min": 3178.3787500000035,
+        "p50": 7686.5139590000035,
+        "p95": 16504.138999999996,
+        "p99": 16601.697749999992,
+        "max": 16601.697749999992
+      }
+    },
+    {
+      "cut": "fixed",
+      "kind": "grouped_sum",
+      "latency_ms": {
+        "count": 35,
+        "min": 3541.5486669999955,
+        "p50": 7993.671499999997,
+        "p95": 15524.955833999993,
+        "p99": 16635.028583000007,
+        "max": 16635.028583000007
+      }
+    },
+    {
+      "cut": "latest",
+      "kind": "count",
+      "latency_ms": {
+        "count": 130,
+        "min": 1893.7117499999877,
+        "p50": 3787.9622919999965,
+        "p95": 7508.849917000014,
+        "p99": 58155.354374999995,
+        "max": 67373.08758400002
+      }
+    },
+    {
+      "cut": "latest",
+      "kind": "sum",
+      "latency_ms": {
+        "count": 129,
+        "min": 1775.7430420000164,
+        "p50": 3453.846666999976,
+        "p95": 8718.959459000005,
+        "p99": 58175.719125,
+        "max": 58176.51679200004
+      }
+    },
+    {
+      "cut": "latest",
+      "kind": "grouped_sum",
+      "latency_ms": {
+        "count": 132,
+        "min": 1633.793875000003,
+        "p50": 3477.7396660000086,
+        "p95": 12253.885917000007,
+        "p99": 65042.61412500002,
+        "max": 65316.366708000016
+      }
+    }
+  ],
+  "zero_write_full_windows": [
+    {
+      "start_ms": 0,
+      "end_ms": 10000
+    },
+    {
+      "start_ms": 170000,
+      "end_ms": 180000
+    }
+  ],
+  "slowest_successful_reads": [
+    {
+      "reader": 4,
+      "round": 32,
+      "elapsedMs": 67373.08758400002,
+      "position": "2513",
+      "kind": "count",
+      "cut": "latest",
+      "route": "sql",
+      "reason": "owned_unique_scalable_count",
+      "rows": 1,
+      "startOffsetMs": 160162.345583
+    },
+    {
+      "reader": 0,
+      "round": 29,
+      "elapsedMs": 65316.366708000016,
+      "position": "2511",
+      "kind": "grouped_sum",
+      "cut": "latest",
+      "route": "sql",
+      "reason": "owned_unique_scalable_aggregate",
+      "rows": 2511,
+      "startOffsetMs": 147796.112625
+    },
+    {
+      "reader": 1,
+      "round": 31,
+      "elapsedMs": 65042.61412500002,
+      "position": "2513",
+      "kind": "grouped_sum",
+      "cut": "latest",
+      "route": "sql",
+      "reason": "owned_unique_scalable_aggregate",
+      "rows": 2513,
+      "startOffsetMs": 154517.586375
+    },
+    {
+      "reader": 7,
+      "round": 31,
+      "elapsedMs": 63593.07066699996,
+      "position": "2513",
+      "kind": "grouped_sum",
+      "cut": "latest",
+      "route": "sql",
+      "reason": "owned_unique_scalable_aggregate",
+      "rows": 2513,
+      "startOffsetMs": 154510.15758300002
+    },
+    {
+      "reader": 10,
+      "round": 31,
+      "elapsedMs": 62225.744209000026,
+      "position": "2513",
+      "kind": "grouped_sum",
+      "cut": "latest",
+      "route": "sql",
+      "reason": "owned_unique_scalable_aggregate",
+      "rows": 2513,
+      "startOffsetMs": 154515.996208
+    },
+    {
+      "reader": 14,
+      "round": 29,
+      "elapsedMs": 58176.51679200004,
+      "position": "2513",
+      "kind": "sum",
+      "cut": "latest",
+      "route": "sql",
+      "reason": "owned_unique_scalable_aggregate",
+      "rows": 1,
+      "startOffsetMs": 154523.46133299998
+    },
+    {
+      "reader": 9,
+      "round": 31,
+      "elapsedMs": 58175.719125,
+      "position": "2513",
+      "kind": "sum",
+      "cut": "latest",
+      "route": "sql",
+      "reason": "owned_unique_scalable_aggregate",
+      "rows": 1,
+      "startOffsetMs": 154525.333875
+    },
+    {
+      "reader": 12,
+      "round": 30,
+      "elapsedMs": 58173.150417,
+      "position": "2442",
+      "kind": "count",
+      "cut": "fixed",
+      "route": "sql",
+      "reason": "owned_scalable_count",
+      "rows": 1,
+      "startOffsetMs": 154531.79158299998
+    },
+    {
+      "reader": 5,
+      "round": 31,
+      "elapsedMs": 58155.354374999995,
+      "position": "2513",
+      "kind": "count",
+      "cut": "latest",
+      "route": "sql",
+      "reason": "owned_unique_scalable_count",
+      "rows": 1,
+      "startOffsetMs": 154546.838917
+    },
+    {
+      "reader": 2,
+      "round": 15,
+      "elapsedMs": 16635.028583000007,
+      "position": "2442",
+      "kind": "grouped_sum",
+      "cut": "fixed",
+      "route": "sql",
+      "reason": "owned_scalable_aggregate",
+      "rows": 2442,
+      "startOffsetMs": 70241.206417
+    },
+    {
+      "reader": 7,
+      "round": 15,
+      "elapsedMs": 16601.697749999992,
+      "position": "2442",
+      "kind": "sum",
+      "cut": "fixed",
+      "route": "sql",
+      "reason": "owned_scalable_aggregate",
+      "rows": 1,
+      "startOffsetMs": 70243.12995799999
+    },
+    {
+      "reader": 10,
+      "round": 15,
+      "elapsedMs": 16504.138999999996,
+      "position": "2442",
+      "kind": "sum",
+      "cut": "fixed",
+      "route": "sql",
+      "reason": "owned_scalable_aggregate",
+      "rows": 1,
+      "startOffsetMs": 70344.40699999999
+    },
+    {
+      "reader": 14,
+      "round": 0,
+      "elapsedMs": 15524.955833999993,
+      "position": "2442",
+      "kind": "grouped_sum",
+      "cut": "fixed",
+      "route": "sql",
+      "reason": "owned_scalable_aggregate",
+      "rows": 2442,
+      "startOffsetMs": 0.035707999995793216
+    },
+    {
+      "reader": 15,
+      "round": 0,
+      "elapsedMs": 15431.794332999998,
+      "position": "2442",
+      "kind": "count",
+      "cut": "fixed",
+      "route": "sql",
+      "reason": "owned_scalable_count",
+      "rows": 1,
+      "startOffsetMs": 0.0362499999901047
+    },
+    {
+      "reader": 8,
+      "round": 10,
+      "elapsedMs": 14724.210749999998,
+      "position": "2442",
+      "kind": "count",
+      "cut": "fixed",
+      "route": "sql",
+      "reason": "owned_scalable_count",
+      "rows": 1,
+      "startOffsetMs": 45866.08820799999
+    },
+    {
+      "reader": 15,
+      "round": 10,
+      "elapsedMs": 14475.737458000018,
+      "position": "2442",
+      "kind": "sum",
+      "cut": "fixed",
+      "route": "sql",
+      "reason": "owned_scalable_aggregate",
+      "rows": 1,
+      "startOffsetMs": 45859.07979199999
+    }
+  ],
+  "slowest_writes": [
+    {
+      "index": 70,
+      "entityId": "campaign-e-20261105T151947367Z-1790597d-00000070",
+      "commandId": "campaign-c-20261105T151947367Z-1790597d-00000070",
+      "value": 10000070,
+      "position": "2513",
+      "reconciled": false,
+      "startOffsetMs": 160152.992042,
+      "elapsedMs": 52518.12341599999
+    },
+    {
+      "index": 0,
+      "entityId": "campaign-e-20261105T151947367Z-1790597d-00000000",
+      "commandId": "campaign-c-20261105T151947367Z-1790597d-00000000",
+      "value": 10000000,
+      "position": "2443",
+      "reconciled": false,
+      "startOffsetMs": 0.06733299999905284,
+      "elapsedMs": 11914.625333999997
+    },
+    {
+      "index": 21,
+      "entityId": "campaign-e-20261105T151947367Z-1790597d-00000021",
+      "commandId": "campaign-c-20261105T151947367Z-1790597d-00000021",
+      "value": 10000021,
+      "position": "2464",
+      "reconciled": false,
+      "startOffsetMs": 45714.808999999994,
+      "elapsedMs": 7739.561083000008
+    },
+    {
+      "index": 68,
+      "entityId": "campaign-e-20261105T151947367Z-1790597d-00000068",
+      "commandId": "campaign-c-20261105T151947367Z-1790597d-00000068",
+      "value": 10000068,
+      "position": "2511",
+      "reconciled": false,
+      "startOffsetMs": 147716.00283299998,
+      "elapsedMs": 6786.788208999991
+    },
+    {
+      "index": 35,
+      "entityId": "campaign-e-20261105T151947367Z-1790597d-00000035",
+      "commandId": "campaign-c-20261105T151947367Z-1790597d-00000035",
+      "value": 10000035,
+      "position": "2478",
+      "reconciled": false,
+      "startOffsetMs": 81870.47470800001,
+      "elapsedMs": 6415.371208999975
+    },
+    {
+      "index": 69,
+      "entityId": "campaign-e-20261105T151947367Z-1790597d-00000069",
+      "commandId": "campaign-c-20261105T151947367Z-1790597d-00000069",
+      "value": 10000069,
+      "position": "2512",
+      "reconciled": false,
+      "startOffsetMs": 154503.81633300002,
+      "elapsedMs": 5648.145833999966
+    },
+    {
+      "index": 34,
+      "entityId": "campaign-e-20261105T151947367Z-1790597d-00000034",
+      "commandId": "campaign-c-20261105T151947367Z-1790597d-00000034",
+      "value": 10000034,
+      "position": "2477",
+      "reconciled": false,
+      "startOffsetMs": 77189.08487499999,
+      "elapsedMs": 4681.062957999995
+    },
+    {
+      "index": 44,
+      "entityId": "campaign-e-20261105T151947367Z-1790597d-00000044",
+      "commandId": "campaign-c-20261105T151947367Z-1790597d-00000044",
+      "value": 10000044,
+      "position": "2487",
+      "reconciled": false,
+      "startOffsetMs": 103106.15208300001,
+      "elapsedMs": 4578.51679199998
+    }
+  ],
+  "diagnosis": [
+    "All9short read cells passed exact answers. Mixed final and reopened answers passed after all71nativewrite acknowledgements.",
+    "Historical reads are slower in the median, but both latest and historical reads participate in the late tail.",
+    "Native write70 started at160.153seconds and took52.518seconds while several reads started around147\u2013160seconds later reached deadlines or took58\u201367seconds.",
+    "The correlation does not establish whether historical DISTINCT, memory/spill contention, checkpointing, query scheduling or another mechanism caused the pause.",
+    "All-cut uniqueness is a bounded next pressure-reduction experiment. Promotion needs fresh profiling and clean measurement."
+  ]
+}

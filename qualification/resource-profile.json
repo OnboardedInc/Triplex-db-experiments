@@ -1,0 +1,190 @@
+{
+  "format": "triplex-backends-resource-profile/3",
+  "name": "local-shared-development-v2",
+  "status": "resource-caps-fixed-slos-await-calibration",
+  "localResourcesOnly": true,
+  "container": "triplex-xtdb-local",
+  "composeProject": "triplex-xtdb",
+  "server": {
+    "cpuMaximum": 4,
+    "containerMemoryBytes": 8589934592,
+    "jvmHeapMaximumBytes": 3221225472,
+    "directMemoryMaximumBytes": 2147483648,
+    "swapMaximumBytes": 0,
+    "nativeMemoryCacheMaximumBytes": 536870912,
+    "jvmOptions": "-Xmx3g -XX:MaxDirectMemorySize=2g"
+  },
+  "adapterTotalMemoryMaximumBytes": 2147483648,
+  "ownedDiskMaximumBytes": 12884901888,
+  "hostFreeReserveBytes": 12884901888,
+  "dockerGuestFreeReserveBytes": 2147483648,
+  "backends": {
+    "xtdb": {
+      "container": "triplex-xtdb-local",
+      "composeProject": "triplex-xtdb",
+      "dataPath": ".xtdb/data",
+      "containerDataPath": "/var/lib/xtdb",
+      "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "developmentMemoryBytes": 8589934592,
+      "cpuMaximum": 4,
+      "serverType": "JVM"
+    },
+    "qlever": {
+      "container": "triplex-qlever-local",
+      "composeProject": "triplex-qlever",
+      "dataPath": ".qlever/data",
+      "containerDataPath": "/data",
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "developmentMemoryBytes": 4294967296,
+      "cpuMaximum": 4,
+      "serverType": "native-C++"
+    }
+  },
+  "fairComparisonProfile": {
+    "name": "local-serial-fair-v1",
+    "memoryBytesPerActiveBackend": 8589934592,
+    "cpuPerActiveBackend": 4,
+    "serialized": true,
+    "otherBackendMustBeStopped": true,
+    "status": "declared-not-run",
+    "note": "Development4GiBQLever and8GiBXTDB measurements cannot be presented as a fair performance comparison. No container resource change happens automatically."
+  },
+  "diskIncludes": [
+    "independent checkout and dependencies",
+    "owned image layers and container writable layer",
+    "owned database logs, buffers and retained history",
+    "backup/restore and compaction overlap",
+    "artifacts, evidence and experiment scratch",
+    "bounded Docker daemon stdout/stderr log rotation reservations"
+  ],
+  "semantics": "Owned disk12GiB and host reserve12GiB apply to BOTH backends together, including retained prior fixtures. Adapter2GiB budget is separate from server/JVM budgets. Development may runXTDB8GiB+QLever4GiB; fair performance requires serialized8GiB/4CPU per backend. Heap/direct settings are partial JVM budgets; container cap is the hard process boundary. No deletion, global Docker changes, remote capacity or silent budget increase.",
+  "experimentalOwners": {
+    "qlever-candidate-a": {
+      "backend": "qlever",
+      "container": "triplex-qlever-candidate-a",
+      "composeProject": "triplex-qlever-experiments",
+      "dataPath": ".qlever/experiments/oom-wave-20261106T145730/a",
+      "containerDataPath": "/data",
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "developmentMemoryBytes": 2147483648,
+      "cpuMaximum": 2,
+      "serverType": "native-C++",
+      "requiredLabels": {
+        "triplex.owner": "triplex-db",
+        "triplex.experiment": "oom-wave-20261106T145730",
+        "triplex.candidate": "a"
+      }
+    },
+    "qlever-candidate-b": {
+      "backend": "qlever",
+      "container": "triplex-qlever-candidate-b",
+      "composeProject": "triplex-qlever-experiments",
+      "dataPath": ".qlever/experiments/oom-wave-20261106T145730/b",
+      "containerDataPath": "/data",
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "developmentMemoryBytes": 2147483648,
+      "cpuMaximum": 2,
+      "serverType": "native-C++",
+      "requiredLabels": {
+        "triplex.owner": "triplex-db",
+        "triplex.experiment": "oom-wave-20261106T145730",
+        "triplex.candidate": "b"
+      }
+    },
+    "qlever-compact-v3": {
+      "backend": "qlever",
+      "container": "triplex-qlever-compact-v3",
+      "composeProject": "triplex-qlever-compact-v3",
+      "dataPath": ".qlever/compact-v3/data",
+      "containerDataPath": "/data",
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "developmentMemoryBytes": 4294967296,
+      "cpuMaximum": 4,
+      "serverType": "native-C++",
+      "requiredLabels": {
+        "triplex.owner": "triplex-db",
+        "triplex.experiment": "compact-v3",
+        "triplex.profile": "compact-v3"
+      },
+      "requiredNativeArguments": {
+        "-m": "512M",
+        "-j": "4",
+        "-c": "64M",
+        "-e": "32M"
+      },
+      "readinessPath": ".qlever/compact-v3/readiness.json",
+      "requiredPlannerBudget": 100
+    }
+  },
+  "experimentalProfiles": {
+    "qlever-two-candidates-v1": {
+      "name": "qlever-two-candidates-v1",
+      "backend": "qlever",
+      "activeOwners": ["qlever-candidate-a", "qlever-candidate-b"],
+      "stoppedOwners": ["qlever"],
+      "exactMemoryBytesPerOwner": 2147483648,
+      "exactCpuPerOwner": 2,
+      "combinedBackendMemoryMaximumBytes": 4294967296,
+      "copyReceipt": "qualification/evidence/qlever-two-candidate-copy-20261106T145730.json",
+      "nativeAllocatorBytes": 536870912,
+      "cacheBytes": 67108864,
+      "eagerCacheBytes": 33554432,
+      "nativeThreads": 4,
+      "plannerBudget": 100,
+      "status": "declared-feasibility-only",
+      "semantics": "Two independent 2 GiB/2 CPU servers temporarily replace one 4 GiB development server. The combined QLever allowance is unchanged. This profile does not qualify the 4 GiB baseline or the fair 8 GiB comparison."
+    },
+    "qlever-compact-v3": {
+      "name": "qlever-compact-v3",
+      "backend": "qlever",
+      "activeOwners": ["qlever-compact-v3"],
+      "stoppedOwners": ["qlever", "qlever-candidate-a", "qlever-candidate-b"],
+      "exactMemoryBytesPerOwner": 4294967296,
+      "exactCpuPerOwner": 4,
+      "combinedBackendMemoryMaximumBytes": 4294967296,
+      "nativeAllocatorBytes": 536870912,
+      "cacheBytes": 67108864,
+      "eagerCacheBytes": 33554432,
+      "nativeThreads": 4,
+      "plannerBudget": 100,
+      "status": "declared-public-candidate-not-qualified",
+      "semantics": "A separately owned new4GiB/4CPU compact-v3 profile with512M allocator/j4/cache64M/eager32M/planner100. Original native2G/j16 profile and both2GiB candidates remain stopped and retained. This profile does not turn prior OOM gates into passes and is not the fair8GiB comparison."
+    }
+  },
+  "auxiliaryOwners": {
+    "postgres-regression": {
+      "backend": "auxiliary-postgres",
+      "container": "triplex-postgres-regression",
+      "dataPath": ".experiments/postgres-regression-20261106",
+      "containerDataPath": "/var/lib/postgresql/data",
+      "image": "postgres@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193",
+      "developmentMemoryBytes": 536870912,
+      "cpuMaximum": 1,
+      "serverType": "auxiliary-PostgreSQL-regression",
+      "requiredLabels": {
+        "triplex.owner": "triplex-db",
+        "triplex.purpose": "regression-only"
+      }
+    }
+  },
+  "auxiliaryBudgets": {
+    "auxiliary-postgres": {
+      "memoryMaximumBytes": 536870912,
+      "cpuMaximum": 1,
+      "purpose": "Required existing adapter regression only; never a third competitor. Container and data are retained after it is stopped."
+    }
+  },
+  "adapterRunProfiles": {
+    "single-controller-2GiB-v1": {
+      "reservedBytesPerController": 2147483648,
+      "maximumConcurrentControllers": 1,
+      "otherNativeClients": "held"
+    },
+    "paired-correctness-1GiB-each-v1": {
+      "reservedBytesPerController": 1073741824,
+      "maximumConcurrentControllers": 2,
+      "otherNativeClients": "held",
+      "semantics": "Two per-controller1GiB sampled RSS reservations sum to the unchanged2GiB adapter budget. Includes each launched child group and its controller; no physical aggregate containment guarantee. Correctness only; fair performance remains exclusive."
+    }
+  }
+}

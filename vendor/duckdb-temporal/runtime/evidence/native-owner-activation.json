@@ -1,0 +1,828 @@
+{
+  "schema": "native-owner-activation/1",
+  "scope": "Isolated C++ activation experiment over the selected packaged Node engine. The shared retained-carrier and entity-history audit runs before live owner activation. Production queries still execute strict validation.",
+  "build": {
+    "schema": "native-owner-probe-build/1",
+    "engine": "2.0.0",
+    "abi": "CPP",
+    "test_command": [
+      "node",
+      "adapter/test-owner-probe.mjs"
+    ],
+    "source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "source_archive_sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+    "headers_sha256": {
+      "duckdb/common/exception.hpp": "225053a2f1bb4171d3fa066e78783800210041b31f5c06ecb839239ea59c4e51",
+      "duckdb/common/types/data_chunk.hpp": "2a4201a20b74f0dfe17d92e0d1d9b52684a11e0c7010cdc21ce11510f43cb649",
+      "duckdb/common/types/value.hpp": "2bf173b58b09f1292abaa89da509860cce7c9d2ae01f4c7909dc0f0f8b0a32fe",
+      "duckdb/function/scalar_function.hpp": "e4c44b31c3c853a13160da48d69c8209deec936fe0e4d14e94e31adf9e4fb7dd",
+      "duckdb/main/client_context.hpp": "c753b9242ec947e56db73881caa12476648dc44b38711a9aa829493cf4438691",
+      "duckdb/main/client_context_state.hpp": "a4ec23711715d9163f86cd7533c58fbbb8a3d5f2934b7a2e563ee31b94056447",
+      "duckdb/main/connection_manager.hpp": "66a506a2a6fcdc927a4caadf5709bda6affdf180b23544ab6d7180457408f20d",
+      "duckdb/main/database.hpp": "45834eb51cdb83e6ead27c580399331186289fbca2fb3500a15dccadc55fbb68",
+      "duckdb/main/connection.hpp": "bf2c26ff4b8c26e1e6bf58a1944a40db9bf237f4db979d4c0fc106b175ca1556",
+      "duckdb/main/query_result.hpp": "d614035b27d91e08e98f1caffca22e3f1518feb67a975a37097b495c50ab50b3",
+      "duckdb/main/query_parameters.hpp": "dadc90d8f8b820966affe3cae9af05e8ae2a7cb177c3f95b652b7b209be8a326",
+      "duckdb/common/enums/query_result_state.hpp": "9a8551fb1c73f1c43f4d1232c95283c4f50bccffc26775f9672d5445c940fa5f",
+      "duckdb/main/extension/extension_loader.hpp": "8518760b6c391ace37c9ede72f0e4fbcc63cdb1cf750a06427849af297f490dd",
+      "duckdb/planner/extension_callback.hpp": "39a1227729d44d73da36f03f246d4602a0c5216fb46a8c2fb272b86fadca4599",
+      "duckdb/transaction/meta_transaction.hpp": "1a5d1f9fbde38dfb541dea6b2774ca6360450e0b6ff983bcc97163bd9a60e2fa"
+    },
+    "dependency_license_sha256": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3",
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "probe_source_sha256": "da1fadf6f096cace777e2c116c7fab303f9c7e21b3d01b13f9f93a131d918846",
+    "integrity_sources_sha256": {
+      "native/src/temporal_integrity.hpp": "aee255b7d3632577e4e4b8eba686ad9e2e62d23765f34ca02caebc375220948e",
+      "native/retained_validity.sql": "c9f862a4c7b7d4fe5910c8687799c79c35ffbe49f2e188aefb628395162eb54b",
+      "native/catalog.sql": "ac0c79e9ebfbacd752cfc7e7c266f7a6a2443d59d2964c0cfd549e9f251e0a04",
+      "build/catalog_sql.hpp": "dd6601e31c17a6f3af115cc9045d25198b5492dc62bd197c97b3eae2bdf80ced"
+    },
+    "library_sha256": "1fdaa7782050f4d638646b93be15d54448b8738bd551875340006ea68155a7f3",
+    "extension_sha256": "c05f2fd377ec090a89377f4522ec41af9e852ddf60f1d840e4e48b853094e8fb"
+  },
+  "verification": {
+    "cpp_command": "node --test --test-reporter=tap adapter/test-owner-probe.mjs adapter/test-owner-activation.mjs",
+    "cpp_tests_passed": 13,
+    "cpp_tests_failed": 0,
+    "cpp_duration_ms": 8137.238875,
+    "cpp_test_names": [
+      "actual retained audit activates only after the caller query and transaction acknowledge",
+      "inactive corrupt history and outer query failure cannot publish an audited owner",
+      "explicit caller and peer transactions reject activation and permit later clean revalidation",
+      "transactions opened before observer installation require fresh enrollment",
+      "unknown connections and fresh peer transactions discard in-progress audit candidates",
+      "outer interruption during delayed activation leaves the owner invalid",
+      "outer interruption is forwarded during a real retained-history audit",
+      "reopen discards live ownership and requires another successful full audit",
+      "CPP companion loads into the packaged Node instance and enrolls real contexts",
+      "an unknown connection invalidates before its first SQL statement",
+      "prepared execution repeats the native owner guard",
+      "explicit dispatch invalidation precedes raw SQL and transaction callbacks are observable",
+      "a fresh instance starts unarmed without inheriting another owner scope"
+    ],
+    "cpp_tap_sha256": "fff0535544136bee36cbea187a8f0ffc2abd41097b745505a70e021ba758b905",
+    "native_command": "python -m unittest -v test_native_scale",
+    "native_tests_passed": 6,
+    "native_tests_failed": 0,
+    "native_duration_seconds": 16.332,
+    "native_log_sha256": "6ca6e09146ffa271d41279b120f20dda8e310ee740469e8df08e931fa9d45b2c",
+    "native_regression_ingestion": "1,003,529 assertions admitted through actual native command calls",
+    "build_attempts": 1,
+    "test_attempts": 1,
+    "prior_probe_load_failure": "evidence/native-owner-probe.json retains the earlier mangled-entrypoint failure and corrected lifecycle test receipt"
+  },
+  "source_sha256": {
+    "native/owner_probe/owner_probe.cpp": "da1fadf6f096cace777e2c116c7fab303f9c7e21b3d01b13f9f93a131d918846",
+    "native/src/temporal_integrity.hpp": "aee255b7d3632577e4e4b8eba686ad9e2e62d23765f34ca02caebc375220948e",
+    "native/src/temporal_store_query.cpp": "314ba7cadebf529e5efd8a0d792c004574aa444cb3b753c4b450966334b3ea2e",
+    "adapter/test-owner-activation.mjs": "243bbbb012c40642910c5e9acb6870ebff966442595cdba6ed70787da3ec888b",
+    "build_owner_probe.py": "25ac5015cfb7a2deb43bb91726b64ea102f9058de90e2e58e34479928beb9383"
+  },
+  "observations": [
+    {
+      "case": "audited_activation",
+      "generation": 2,
+      "armed": true,
+      "audited": true,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "callback_order": [
+        {
+          "sequence": 3,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 10,
+          "generation": 0
+        },
+        {
+          "sequence": 8,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 11,
+          "generation": 0
+        },
+        {
+          "sequence": 14,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 12,
+          "generation": 0
+        },
+        {
+          "sequence": 20,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 29,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 15,
+          "generation": 2
+        },
+        {
+          "sequence": 30,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 2
+        },
+        {
+          "sequence": 33,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 2
+        },
+        {
+          "sequence": 34,
+          "kind": "transaction_commit",
+          "connection": 4,
+          "transaction": 16,
+          "generation": 2
+        },
+        {
+          "sequence": 36,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 2
+        },
+        {
+          "sequence": 37,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 2
+        },
+        {
+          "sequence": 38,
+          "kind": "audit_awaiting_ack",
+          "connection": 2,
+          "transaction": 15,
+          "generation": 2
+        },
+        {
+          "sequence": 39,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 15,
+          "generation": 2
+        },
+        {
+          "sequence": 41,
+          "kind": "audit_activated",
+          "connection": 2,
+          "transaction": 15,
+          "generation": 2
+        },
+        {
+          "sequence": 45,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 17,
+          "generation": 2
+        }
+      ]
+    },
+    {
+      "case": "corrupt_inactive_history",
+      "generation": 3,
+      "armed": false,
+      "audited": false,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "audit_events": [
+        {
+          "sequence": 19,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 20,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 23,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 26,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 27,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 28,
+          "kind": "audit_awaiting_ack",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 31,
+          "kind": "audit_activated",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 43,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 17,
+          "generation": 3
+        },
+        {
+          "sequence": 44,
+          "kind": "audit_connection_open",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 47,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 50,
+          "kind": "audit_connection_close",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 51,
+          "kind": "audit_failed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        }
+      ]
+    },
+    {
+      "case": "outer_query_failure",
+      "generation": 1,
+      "armed": false,
+      "audited": false,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "audit_events": [
+        {
+          "sequence": 19,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 20,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 23,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 26,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 27,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 28,
+          "kind": "audit_awaiting_ack",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 30,
+          "kind": "audit_transaction_rejected",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 32,
+          "kind": "audit_discarded",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        }
+      ]
+    },
+    {
+      "case": "transaction_rejection",
+      "generation": 1,
+      "armed": true,
+      "audited": true,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "audit_events": [
+        {
+          "sequence": 37,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 16,
+          "generation": 1
+        },
+        {
+          "sequence": 38,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 41,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 44,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 45,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 46,
+          "kind": "audit_awaiting_ack",
+          "connection": 2,
+          "transaction": 16,
+          "generation": 1
+        },
+        {
+          "sequence": 49,
+          "kind": "audit_activated",
+          "connection": 2,
+          "transaction": 16,
+          "generation": 1
+        }
+      ]
+    },
+    {
+      "case": "fresh_enrollment",
+      "generation": 1,
+      "armed": true,
+      "audited": true,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "audit_events": [
+        {
+          "sequence": 24,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 14,
+          "generation": 1
+        },
+        {
+          "sequence": 25,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 28,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 31,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 32,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 33,
+          "kind": "audit_awaiting_ack",
+          "connection": 2,
+          "transaction": 14,
+          "generation": 1
+        },
+        {
+          "sequence": 36,
+          "kind": "audit_activated",
+          "connection": 2,
+          "transaction": 14,
+          "generation": 1
+        }
+      ]
+    },
+    {
+      "case": "peer_during_audit",
+      "generation": 2,
+      "armed": false,
+      "audited": false,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "audit_events": [
+        {
+          "sequence": 19,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 20,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 23,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 26,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 27,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 29,
+          "kind": "audit_peer_transaction",
+          "connection": 3,
+          "transaction": 15,
+          "generation": 2
+        },
+        {
+          "sequence": 33,
+          "kind": "audit_failed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 2
+        }
+      ]
+    },
+    {
+      "case": "unknown_during_audit",
+      "generation": 2,
+      "armed": false,
+      "audited": false,
+      "auditing": false,
+      "live": [
+        2,
+        3,
+        5
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "audit_events": [
+        {
+          "sequence": 19,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 20,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 23,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 26,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 27,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 29,
+          "kind": "audit_failed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 2
+        }
+      ]
+    },
+    {
+      "case": "interrupted_activation",
+      "generation": 1,
+      "armed": false,
+      "audited": false,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "audit_events": [
+        {
+          "sequence": 19,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 1
+        },
+        {
+          "sequence": 20,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 23,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 26,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 27,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 28,
+          "kind": "audit_failed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        }
+      ]
+    },
+    {
+      "case": "interrupted_mid_audit",
+      "generation": 1,
+      "armed": false,
+      "audited": false,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "retained_facts": 524290,
+      "audit_events": [
+        {
+          "sequence": 793,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 271,
+          "generation": 1
+        },
+        {
+          "sequence": 794,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 797,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 800,
+          "kind": "audit_interrupt_forwarded",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 801,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 802,
+          "kind": "audit_failed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        }
+      ]
+    },
+    {
+      "case": "reopened_reaudit",
+      "generation": 1,
+      "armed": true,
+      "audited": true,
+      "auditing": false,
+      "live": [
+        2,
+        3
+      ],
+      "enrolled": [
+        2,
+        3
+      ],
+      "audit_events": [
+        {
+          "sequence": 23,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 14,
+          "generation": 1
+        },
+        {
+          "sequence": 24,
+          "kind": "audit_connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 27,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 30,
+          "kind": "audit_connection_close",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 31,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 32,
+          "kind": "audit_awaiting_ack",
+          "connection": 2,
+          "transaction": 14,
+          "generation": 1
+        },
+        {
+          "sequence": 35,
+          "kind": "audit_activated",
+          "connection": 2,
+          "transaction": 14,
+          "generation": 1
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "The host must hold exclusive native-write ownership of enrolled private handles and preinvalidate before every raw or legacy SQL dispatch. Arbitrary SQL on an enrolled context is not automatically intercepted.",
+    "Activation must be submitted as a standalone trusted command. The probe rejects a persistent mutation in its own activation transaction, but it does not certify a host multi-statement dispatch envelope spanning separate transactions.",
+    "The audit covers canonical retained assertion carriers, intervals, and entity-history bindings. It does not certify every receipt, clock value, or storage-usage counter.",
+    "The owner state is volatile and scoped to the actual DatabaseInstance and context lifecycle. A reopened instance must enroll and audit again.",
+    "Cancellation is forwarded while the internal query task loop runs and checked before publication. Query submission and any individual native task may still delay interrupt observation.",
+    "The worker core artifact uses its existing 0.18.0 build metadata plus the approved shared integrity extraction and root command-capacity source. It is distinct from the integration branch 0.19 artifact.",
+    "The optional companion and focused activation suite are not part of the default build or verification. No production fast-read validation bypass is implemented."
+  ],
+  "review": {
+    "reviewer_role": "independent orchestration operations agent",
+    "result": "No new blocker after source review of pending task cancellation, deferred enrollment, generation fencing, and clean QueryEnd publication. Standalone trusted activation and preinvalidate raw-dispatch host contract required."
+  }
+}

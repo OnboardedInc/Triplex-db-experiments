@@ -1,0 +1,62 @@
+{
+  "format": "official-node-offline-artifacts/1",
+  "version": "v24.13.0",
+  "officialSha256Manifest": {
+    "bytes": 2967,
+    "sha256": "10002931019dcfc77706da05664dc133bdffba06c3bf3571102a7b37cb58f15c",
+    "path": "node/SHASUMS256.txt",
+    "sriVerified": [],
+    "url": "https://nodejs.org/dist/v24.13.0/SHASUMS256.txt",
+    "downloadedAtUtc": "2026-11-06T16:37:47Z"
+  },
+  "artifacts": [
+    {
+      "name": "node-v24.13.0-headers.tar.gz",
+      "status": "VERIFIED",
+      "bytes": 10210225,
+      "sha256": "f5589e2b4b962af05381a31d11c3c9b004daf8bd63c95c0e1a406600daa8ae88",
+      "path": "node/node-v24.13.0-headers.tar.gz",
+      "sriVerified": [],
+      "url": "https://nodejs.org/dist/v24.13.0/node-v24.13.0-headers.tar.gz",
+      "downloadedAtUtc": "2026-11-06T16:37:47Z",
+      "licenseRetainedInsideArchive": true
+    },
+    {
+      "name": "node-v24.13.0-linux-x64.tar.xz",
+      "status": "VERIFIED",
+      "bytes": 30768936,
+      "sha256": "e798599612f4bb71333a3397ab0d095fd62214e115aea45aa858a145fc72d67e",
+      "path": "node/node-v24.13.0-linux-x64.tar.xz",
+      "sriVerified": [],
+      "url": "https://nodejs.org/dist/v24.13.0/node-v24.13.0-linux-x64.tar.xz",
+      "downloadedAtUtc": "2026-11-06T16:37:48Z",
+      "licenseRetainedInsideArchive": true
+    },
+    {
+      "name": "node-v24.13.0-linux-arm64.tar.xz",
+      "status": "VERIFIED",
+      "bytes": 29716468,
+      "sha256": "aa881151bd0f9f154a0424dd60a72e9ce10672619121658c278a24327ef46831",
+      "path": "node/node-v24.13.0-linux-arm64.tar.xz",
+      "sriVerified": [],
+      "url": "https://nodejs.org/dist/v24.13.0/node-v24.13.0-linux-arm64.tar.xz",
+      "downloadedAtUtc": "2026-11-06T16:37:49Z",
+      "licenseRetainedInsideArchive": true
+    },
+    {
+      "name": "node-v24.13.0-darwin-arm64.tar.gz",
+      "status": "VERIFIED",
+      "bytes": 51210463,
+      "sha256": "d595961e563fcae057d4a0fb992f175a54d97fcc4a14dc2d474d92ddeea3b9f8",
+      "path": "node/node-v24.13.0-darwin-arm64.tar.gz",
+      "sriVerified": [],
+      "url": "https://nodejs.org/dist/v24.13.0/node-v24.13.0-darwin-arm64.tar.gz",
+      "downloadedAtUtc": "2026-11-06T16:37:51Z",
+      "licenseRetainedInsideArchive": true
+    }
+  ],
+  "officialSha256CrossCheck": true,
+  "releaseSignatureNotVerified": true,
+  "noRuntimeExecution": true,
+  "noInstall": true
+}

@@ -1,0 +1,180 @@
+{
+  "retrieved_utc": "2026-10-30T22:31:17Z",
+  "tags": [
+    {
+      "repository": "duckdb/duckdb-python",
+      "label": "duckdb-python",
+      "ref": "refs/tags/v2.0.0",
+      "object": {
+        "sha": "83c719961098611e769dc4bab0bda2bf149a2d1e",
+        "type": "commit",
+        "url": "https://api.github.com/repos/duckdb/duckdb-python/git/commits/83c719961098611e769dc4bab0bda2bf149a2d1e"
+      },
+      "url": "https://api.github.com/repos/duckdb/duckdb-python/git/ref/tags/v2.0.0"
+    },
+    {
+      "repository": "duckdb/duckdb",
+      "label": "duckdb",
+      "ref": "refs/tags/v2.0.0",
+      "object": {
+        "sha": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+        "type": "commit",
+        "url": "https://api.github.com/repos/duckdb/duckdb/git/commits/d54cbbe3df17e8e5ce68312f483b4155836112aa"
+      },
+      "url": "https://api.github.com/repos/duckdb/duckdb/git/ref/tags/v2.0.0"
+    }
+  ],
+  "tree": {
+    "repository": "duckdb/duckdb-python",
+    "sha": "83c719961098611e769dc4bab0bda2bf149a2d1e",
+    "truncated": false,
+    "selected_entries": [
+      {
+        "path": "duckdb/_version.py",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "58553cefb3903fa1e03ad9e6db7840c81f9ef86e",
+        "size": 1560,
+        "url": "https://api.github.com/repos/duckdb/duckdb-python/git/blobs/58553cefb3903fa1e03ad9e6db7840c81f9ef86e"
+      },
+      {
+        "path": "external/duckdb",
+        "mode": "160000",
+        "type": "commit",
+        "sha": "d54cbbe3df17e8e5ce68312f483b4155836112aa"
+      },
+      {
+        "path": "src/native/python_conversion.cpp",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "203d685769b18b8b958ffb4c549ea654ad736e19",
+        "size": 46262,
+        "url": "https://api.github.com/repos/duckdb/duckdb-python/git/blobs/203d685769b18b8b958ffb4c549ea654ad736e19"
+      },
+      {
+        "path": "src/native/python_objects.cpp",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "2b476ddd6266d88925d74ef7bc259f0caaa1556e",
+        "size": 28566,
+        "url": "https://api.github.com/repos/duckdb/duckdb-python/git/blobs/2b476ddd6266d88925d74ef7bc259f0caaa1556e"
+      },
+      {
+        "path": "src/pyconnection.cpp",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "78053e6e8c4831a32749e2719a719b55dc7b8ad7",
+        "size": 70198,
+        "url": "https://api.github.com/repos/duckdb/duckdb-python/git/blobs/78053e6e8c4831a32749e2719a719b55dc7b8ad7"
+      },
+      {
+        "path": "src/pyconnection/seam.cpp",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "3163a7e2a9a848654d1379181e9ce5f27fe2190e",
+        "size": 59405,
+        "url": "https://api.github.com/repos/duckdb/duckdb-python/git/blobs/3163a7e2a9a848654d1379181e9ce5f27fe2190e"
+      },
+      {
+        "path": "src/pyresult.cpp",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "2dc02a0af0f68063d2c459b13c4a987674a78e4e",
+        "size": 23544,
+        "url": "https://api.github.com/repos/duckdb/duckdb-python/git/blobs/2dc02a0af0f68063d2c459b13c4a987674a78e4e"
+      },
+      {
+        "path": "src/pystatement.cpp",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "71d85def958c7f785f85a8b02996d481dfb58568",
+        "size": 3974,
+        "url": "https://api.github.com/repos/duckdb/duckdb-python/git/blobs/71d85def958c7f785f85a8b02996d481dfb58568"
+      }
+    ]
+  },
+  "installed_metadata": [
+    {
+      "original_path": "/tmp/temporal-datalog-20261030/engine/python2/duckdb/_build_info.py",
+      "receipt_path": "primary-sources/installed-duckdb-metadata/_build_info.py",
+      "bytes": 140,
+      "sha256": "1417ab01888e8fdf47da78417e35b15015305c231f31644ac0e3a0ecff67a9ce"
+    },
+    {
+      "original_path": "/tmp/temporal-datalog-20261030/engine/python2/duckdb/_version.py",
+      "receipt_path": "primary-sources/installed-duckdb-metadata/_version.py",
+      "bytes": 1560,
+      "sha256": "aa2abcf9c83b9124e380cf18a0e7fd2b2df68b2224ec6ef189576a48b1be920c"
+    },
+    {
+      "original_path": "/tmp/temporal-datalog-20261030/engine/python2/duckdb-2.0.0.dist-info/METADATA",
+      "receipt_path": "primary-sources/installed-duckdb-metadata/METADATA",
+      "bytes": 4147,
+      "sha256": "d52a3ae8a9492d2a1a063800d72e2243fbfdd2f47380bcc3d1532284b1645e0b"
+    },
+    {
+      "original_path": "/tmp/temporal-datalog-20261030/engine/python2/duckdb-2.0.0.dist-info/WHEEL",
+      "receipt_path": "primary-sources/installed-duckdb-metadata/WHEEL",
+      "bytes": 154,
+      "sha256": "dac3cf361864df490a4c88e8eccdd31c5b7f84b49b9f8f030a019dbb6d522fc9"
+    },
+    {
+      "original_path": "/tmp/temporal-datalog-20261030/engine/python2/duckdb-2.0.0.dist-info/RECORD",
+      "receipt_path": "primary-sources/installed-duckdb-metadata/RECORD",
+      "bytes": 9439,
+      "sha256": "b6ef893614963c09d2fcb712fddee338f8a95759fe0c08ce211aa8f1aba1e4a9"
+    }
+  ],
+  "record_integrity_checks": [
+    {
+      "relative_path": "duckdb/_build_info.py",
+      "bytes": 140,
+      "sha256": "1417ab01888e8fdf47da78417e35b15015305c231f31644ac0e3a0ecff67a9ce",
+      "record_sha256_matches": true,
+      "record_bytes_matches": true,
+      "binary_copied": false
+    },
+    {
+      "relative_path": "duckdb/_version.py",
+      "bytes": 1560,
+      "sha256": "aa2abcf9c83b9124e380cf18a0e7fd2b2df68b2224ec6ef189576a48b1be920c",
+      "record_sha256_matches": true,
+      "record_bytes_matches": true,
+      "binary_copied": false
+    },
+    {
+      "relative_path": "duckdb-2.0.0.dist-info/METADATA",
+      "bytes": 4147,
+      "sha256": "d52a3ae8a9492d2a1a063800d72e2243fbfdd2f47380bcc3d1532284b1645e0b",
+      "record_sha256_matches": true,
+      "record_bytes_matches": true,
+      "binary_copied": false
+    },
+    {
+      "relative_path": "_duckdb.abi3.so",
+      "bytes": 67631112,
+      "sha256": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+      "record_sha256_matches": true,
+      "record_bytes_matches": true,
+      "binary_copied": false
+    }
+  ],
+  "saved_owner_runtime_evidence": {
+    "path": "/tmp/temporal-roadmap-research/iteration-02/performance/corrected-method-v2/preflight-candidate-v2/preflight.json",
+    "sha256": "fa71062aa88279917cfeb49694703091379de4bc0ca01422bf3a375352a805be",
+    "runtime_version": [
+      [
+        "v2.0.0",
+        "d54cbbe3df",
+        "Cyanoptera"
+      ]
+    ],
+    "artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+    "reviewer_reexecuted": false
+  },
+  "interpretation": [
+    "Installed distribution METADATA reports package 2.0.0; generated _build_info.py claims Python-client PACKAGE_COMMIT 83c719961098611e769dc4bab0bda2bf149a2d1e. Both files and the installed extension match RECORD hashes/sizes.",
+    "The independently retrieved duckdb-python v2.0.0 tag points to 83c719961098611e769dc4bab0bda2bf149a2d1e; that client tree embeds external/duckdb as engine commit d54cbbe3df17e8e5ce68312f483b4155836112aa. The duckdb engine v2.0.0 tag separately points to the latter commit.",
+    "Saved genuine-runtime preflight reports engine v2.0.0/d54cbbe3df; no new native import or DB call was made in this lane. Build metadata and source/blob matches support the mechanism/provenance bridge, not independent attestation of wheel compilation or an executed subtype compatibility test."
+  ]
+}

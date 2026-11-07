@@ -1,0 +1,36 @@
+✔ only three fixed B-native arms are allowed and numerical baseline labels remain intact (4.043375ms)
+✔ undeclared thread, admission, UV and client changes are rejected (1.546791ms)
+✔ original budgets, profile limits, native binding, fixed artifacts and source recipe cannot drift (1.703417ms)
+✔ small correctness screen preserves each arm and its runtime while changing only declared sample scope (1.679792ms)
+✔ common harness, unchanged native helper and exact reference runtime are bound separately (0.85775ms)
+✔ anti-join cut oracle agrees with an independent sequential map through repeated correction cycles (60.557459ms)
+✔ knowledge oracle distinguishes pre-seed, partial atomic seed batches, pinned old state and later corrections (0.601375ms)
+✔ cost query has no entity or measure literal and every patch preserves both typed probe attributes (0.260875ms)
+✔ CLI and larger-scale numeric budget contract reject omitted profiles and changed inputs (1.686875ms)
+✔ bounded admission is FIFO, includes queue time and recovers after an admitted rejection (0.928042ms)
+✔ queued cancellation and deadline never dispatch or disturb the active read (6.208583ms)
+✔ confirmation selects exactly one untouched original numerical profile (4.182ms)
+✔ declared cap three has effective cap one or three without changing connection counts (1.283666ms)
+✔ mixed profiles, undeclared client or setting changes and wrong profile limits reject (2.824916ms)
+✔ small correctness scope changes only declared sample values and source identity (0.92175ms)
+✔ baseline native artifact recipe and successor harness identities cannot drift (2.2955ms)
+✔ old sixteen-only schema cannot be relabeled as successor one-reader evidence (0.270542ms)
+✔ selected SDK and old SDK control retain separate exact artifacts and original profile limits (2.246ms)
+✔ SDK admission is the only gateway with effective one or three and full reader capacity (2.307083ms)
+✔ merely declaring changed native artifacts dependencies port or schema cannot admit them (2.466666ms)
+✔ baseline reference original budget helpers recipes and actual configuration are immutable (5.283625ms)
+✔ small selected-SDK correctness retains artifact and profile while declining full numeric scope (1.540875ms)
+✔ CLI rejects doubled SDK and harness admission or multiple selected binding schemas (0.483833ms)
+✔ unchanged original budget remains baseline while selected artifact is candidate (1.322208ms)
+✔ altered original bytes, numeric limits, or baseline identities are rejected (3.853708ms)
+✔ declared candidate cannot replace actual artifact or source hashes (0.38575ms)
+✔ extra native changes, changed build switches and SDK are rejected even when declared (0.520583ms)
+✔ engine and application adapter changes are not part of this native-write candidate (0.356542ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 141.705625

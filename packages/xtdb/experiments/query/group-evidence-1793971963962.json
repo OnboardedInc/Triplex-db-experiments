@@ -1,0 +1,40 @@
+{
+  "kind": "parallel-correctness-feasibility",
+  "observations": [
+    {
+      "name": "disjunction-instead-of-IN",
+      "passed": true,
+      "rows": [
+        {
+          "?count": "3",
+          "?value": null,
+          "_triplex_value_0_category": "2",
+          "_triplex_value_0_order_number": null,
+          "_triplex_value_0_order_text": "sha256:dedupe-seven",
+          "_triplex_value_0_type": "string",
+          "_triplex_value_0_string": "sha256:dedupe-seven",
+          "_triplex_value_0_number": null,
+          "_triplex_value_0_boolean": null
+        },
+        {
+          "?count": "2",
+          "?value": null,
+          "_triplex_value_0_category": "0",
+          "_triplex_value_0_order_number": "7",
+          "_triplex_value_0_order_text": null,
+          "_triplex_value_0_type": "number",
+          "_triplex_value_0_string": null,
+          "_triplex_value_0_number": "7",
+          "_triplex_value_0_boolean": null
+        }
+      ],
+      "sql": "SELECT DISTINCT COUNT(DISTINCT xt_group.\"_xt_group_ref_0\") AS \"?count\",\nxt_group.\"?value\" AS \"?value\",\nxt_group.\"_triplex_value_0_category\" AS \"_triplex_value_0_category\",\nxt_group.\"_triplex_value_0_order_number\" AS \"_triplex_value_0_order_number\",\nxt_group.\"_triplex_value_0_order_text\" AS \"_triplex_value_0_order_text\",\nxt_group.\"_triplex_value_0_type\" AS \"_triplex_value_0_type\",\nxt_group.\"_triplex_value_0_string\" AS \"_triplex_value_0_string\",\nxt_group.\"_triplex_value_0_number\" AS \"_triplex_value_0_number\",\nxt_group.\"_triplex_value_0_boolean\" AS \"_triplex_value_0_boolean\"\nFROM (SELECT NULL AS \"?value\",\nCASE WHEN (t0.value_type = 'number' OR t0.value_type = 'datetime') THEN 0 WHEN t0.value_type = 'boolean' THEN 1 ELSE 2 END AS \"_triplex_value_0_category\",\nCOALESCE(t0.value_number, t0.value_datetime) AS \"_triplex_value_0_order_number\",\nCOALESCE(t0.value_string, t0.value_json) AS \"_triplex_value_0_order_text\",\nCASE WHEN (t0.value_type = 'number' OR t0.value_type = 'datetime') THEN 'number' WHEN t0.value_type = 'boolean' THEN 'boolean' WHEN (t0.value_type = 'string' OR t0.value_type = 'ref' OR t0.value_type = 'blob' OR t0.value_type = 'json') THEN 'string' ELSE NULL END AS \"_triplex_value_0_type\",\nCASE WHEN (t0.value_type = 'string' OR t0.value_type = 'ref' OR t0.value_type = 'blob' OR t0.value_type = 'json') THEN COALESCE(t0.value_string, t0.value_json) ELSE NULL END AS \"_triplex_value_0_string\",\nCASE WHEN (t0.value_type = 'number' OR t0.value_type = 'datetime') THEN COALESCE(t0.value_number, t0.value_datetime) ELSE NULL END AS \"_triplex_value_0_number\",\nCASE WHEN t0.value_type = 'boolean' THEN t0.value_boolean ELSE NULL END AS \"_triplex_value_0_boolean\",\nt0.entity_id AS \"_xt_group_ref_0\"\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.retracted_at IS NULL AND t0.attribute = $2) xt_group\nGROUP BY xt_group.\"?value\", xt_group.\"_triplex_value_0_category\", xt_group.\"_triplex_value_0_order_number\", xt_group.\"_triplex_value_0_order_text\", xt_group.\"_triplex_value_0_type\", xt_group.\"_triplex_value_0_string\", xt_group.\"_triplex_value_0_number\", xt_group.\"_triplex_value_0_boolean\""
+    },
+    {
+      "name": "group-projection-aliases",
+      "passed": false,
+      "error": "PostgresError: Errors planning SQL statement:\n  - Missing grouping columns: #{xt_group.13/?value}",
+      "sql": "SELECT DISTINCT COUNT(DISTINCT xt_group.\"_xt_group_ref_0\") AS \"?count\",\nxt_group.\"?value\" AS \"?value\",\nxt_group.\"_triplex_value_0_category\" AS \"_triplex_value_0_category\",\nxt_group.\"_triplex_value_0_order_number\" AS \"_triplex_value_0_order_number\",\nxt_group.\"_triplex_value_0_order_text\" AS \"_triplex_value_0_order_text\",\nxt_group.\"_triplex_value_0_type\" AS \"_triplex_value_0_type\",\nxt_group.\"_triplex_value_0_string\" AS \"_triplex_value_0_string\",\nxt_group.\"_triplex_value_0_number\" AS \"_triplex_value_0_number\",\nxt_group.\"_triplex_value_0_boolean\" AS \"_triplex_value_0_boolean\"\nFROM (SELECT NULL AS \"?value\",\nCASE WHEN t0.value_type IN ('number', 'datetime') THEN 0 WHEN t0.value_type = 'boolean' THEN 1 ELSE 2 END AS \"_triplex_value_0_category\",\nCOALESCE(t0.value_number, t0.value_datetime) AS \"_triplex_value_0_order_number\",\nCOALESCE(t0.value_string, t0.value_json) AS \"_triplex_value_0_order_text\",\nCASE WHEN t0.value_type IN ('number', 'datetime') THEN 'number' WHEN t0.value_type = 'boolean' THEN 'boolean' WHEN t0.value_type IN ('string', 'ref', 'blob', 'json') THEN 'string' ELSE NULL END AS \"_triplex_value_0_type\",\nCASE WHEN t0.value_type IN ('string', 'ref', 'blob', 'json') THEN COALESCE(t0.value_string, t0.value_json) ELSE NULL END AS \"_triplex_value_0_string\",\nCASE WHEN t0.value_type IN ('number', 'datetime') THEN COALESCE(t0.value_number, t0.value_datetime) ELSE NULL END AS \"_triplex_value_0_number\",\nCASE WHEN t0.value_type = 'boolean' THEN t0.value_boolean ELSE NULL END AS \"_triplex_value_0_boolean\",\nt0.entity_id AS \"_xt_group_ref_0\"\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.retracted_at IS NULL AND t0.attribute = $2) xt_group\nGROUP BY \"_triplex_value_0_category\", \"_triplex_value_0_order_number\", \"_triplex_value_0_order_text\", \"_triplex_value_0_type\", \"_triplex_value_0_string\", \"_triplex_value_0_number\", \"_triplex_value_0_boolean\""
+    }
+  ]
+}

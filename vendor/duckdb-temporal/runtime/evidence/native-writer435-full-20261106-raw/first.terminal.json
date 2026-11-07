@@ -1,0 +1,21 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "verify.py",
+    "--with-direct"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime",
+  "pid": 81621,
+  "startedAtUtc": "2026-11-06T07:35:27.973386+00:00",
+  "status": "terminal",
+  "environment": {
+    "PATH": "[LOCAL_PATH_0056] Support/JetBrains/Toolbox/scripts:[LOCAL_PATH_0057]",
+    "UV_THREADPOOL_SIZE": "4",
+    "TD_TEST_PRE_BATCH_BUILD": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/retained-diagnostics-20261105/accepted-026",
+    "TD_SDK_ADMISSION_SOURCE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "TD_SDK_ADMISSION_RECIPE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json"
+  },
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T07:42:44.761970+00:00",
+  "elapsedMs": 436789.6775000263
+}

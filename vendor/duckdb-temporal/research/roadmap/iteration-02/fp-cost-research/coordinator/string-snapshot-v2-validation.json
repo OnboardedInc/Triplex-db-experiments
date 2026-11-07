@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "same_six_case_results_and_runtime_as_original": true,
+  "negative_controls": [
+    {
+      "name": "command-O",
+      "returncode": 1,
+      "correct_rejection": true
+    },
+    {
+      "name": "env-opt",
+      "returncode": 1,
+      "correct_rejection": true
+    }
+  ],
+  "original_source_and_results_unchanged": true
+}

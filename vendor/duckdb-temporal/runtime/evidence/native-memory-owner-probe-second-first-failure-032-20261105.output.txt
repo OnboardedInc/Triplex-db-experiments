@@ -1,0 +1,21 @@
+✖ public unbounded and timed controls retain owner through cancel/drained close and fresh reopen/copy (102.124875ms)
+ℹ Preserved owned fixture: build/memory-owner-public-OHnQ6Y
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 231.719834
+
+✖ failing tests:
+
+test at build/adapter/test-native-memory-owner-probe.js:238:1
+✖ public unbounded and timed controls retain owner through cancel/drained close and fresh reopen/copy (102.124875ms)
+  Error: TD_E_CONTROL: bridge artifact is already pinned
+      at #open (file://build/adapter/native-duckdb-port.mjs:103:15)
+      at async NativeEntityStore.open (file://build/adapter/native-entity.js:196:22)
+      at async TestContext.<anonymous> (file://build/adapter/test-native-memory-owner-probe.js:243:17)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3)

@@ -1,0 +1,4106 @@
+{
+  "format": "temporal-workloads/1",
+  "status": "synthetic_correctness_contracts_unexecuted",
+  "conventions": {
+    "integers": "All i64 values and time bounds are canonical decimal strings. No floating-point conversion.",
+    "typed_values": "Values use str, bool or i64 tags. null appears only for an unbounded interval end or explicit event payload absence.",
+    "intervals": "valid and known intervals are half-open [from,to). A null end means positive infinity. Known bounds are logical committed positions, not wall time.",
+    "cuts": "Every case pins known_at. Point queries also pin valid_at. Interval queries declare from/to parameters.",
+    "events": "Events and source IDs are immutable. semantics distinguishes business_event, assertion_change, and correction. A business reversal is another event.",
+    "projection": "Each workload states how immutable events produce canonical EAV assertions. Assertions contain the normalized projected history; they are not extra input events.",
+    "results": "expected_rows are typed set answers, independent of row order. Aggregate source identity is the complete typed source tuple or event ID as declared by the operation.",
+    "completeness": "closed_fixture covers only the named domain and sources. Workload 10 additionally requires explicit event-time watermarks before concluding absence.",
+    "execution": "These are fixture/oracle contracts. They contain no executed engine results, benchmark timings or claim that every operation has a native implementation.",
+    "knowledge_groups": "Events sharing recorded_at belong to one fixture knowledge group. Runners must preserve grouped visibility at the declared cuts, including when mapping fixture positions to engine receipt positions."
+  },
+  "workloads": [
+    {
+      "id": "01",
+      "title": "Historical order status",
+      "requires": ["bitemporal_state", "event_ordering"],
+      "projection": "Status transitions supersede future valid-time status. Later knowledge retains earlier status intervals and the original earlier-knowledge assertion.",
+      "completeness": {
+        "sources": ["order_status"],
+        "domain": "order and ticks 0 through 40",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "paid",
+          "kind": "order_paid",
+          "subject": "order",
+          "occurred_at": "20",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "status": {"tag": "str", "value": "paid"}
+          }
+        },
+        {
+          "id": "shipped",
+          "kind": "order_shipped",
+          "subject": "order",
+          "occurred_at": "30",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "status": {"tag": "str", "value": "shipped"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "paid-open",
+          "entity": "order",
+          "attribute": "status",
+          "value": {"tag": "str", "value": "paid"},
+          "valid": ["20", null],
+          "known": ["1", "2"],
+          "source_event": "paid",
+          "meaning": "state"
+        },
+        {
+          "id": "paid-final",
+          "entity": "order",
+          "attribute": "status",
+          "value": {"tag": "str", "value": "paid"},
+          "valid": ["20", "30"],
+          "known": ["2", null],
+          "source_event": "paid",
+          "meaning": "state"
+        },
+        {
+          "id": "shipped-final",
+          "entity": "order",
+          "attribute": "status",
+          "value": {"tag": "str", "value": "shipped"},
+          "valid": ["30", null],
+          "known": ["2", null],
+          "source_event": "shipped",
+          "meaning": "state"
+        }
+      ],
+      "cases": [
+        {
+          "id": "paid-after-shipment-known",
+          "kind": "baseline",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "order"},
+            "attribute": {"tag": "str", "value": "status"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "paid"}]
+          ]
+        },
+        {
+          "id": "shipment-boundary",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "order"},
+            "attribute": {"tag": "str", "value": "status"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "30"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "shipped"}]
+          ]
+        },
+        {
+          "id": "earlier-knowledge",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "order"},
+            "attribute": {"tag": "str", "value": "status"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "35"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "paid"}]
+          ]
+        },
+        {
+          "id": "before-first-status",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "order"},
+            "attribute": {"tag": "str", "value": "status"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "19"
+          },
+          "columns": ["status"],
+          "expected_rows": []
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "title": "Corrected customer address",
+      "requires": ["bitemporal_state", "data_correction"],
+      "projection": "The correction closes the original assertion in knowledge time and asserts the backdated replacement. Both immutable arrival events remain.",
+      "completeness": {
+        "sources": ["customer_addresses"],
+        "domain": "customer, address, ticks 0 through 20",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "address-a",
+          "kind": "address_asserted",
+          "subject": "customer",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "address": {"tag": "str", "value": "A"}
+          }
+        },
+        {
+          "id": "address-b",
+          "kind": "address_corrected",
+          "subject": "customer",
+          "occurred_at": "0",
+          "recorded_at": "2",
+          "semantics": "correction",
+          "payload": {
+            "address": {"tag": "str", "value": "B"}
+          },
+          "corrects": "address-a"
+        }
+      ],
+      "assertions": [
+        {
+          "id": "a",
+          "entity": "customer",
+          "attribute": "address",
+          "value": {"tag": "str", "value": "A"},
+          "valid": ["0", null],
+          "known": ["1", "2"],
+          "source_event": "address-a",
+          "meaning": "state"
+        },
+        {
+          "id": "b",
+          "entity": "customer",
+          "attribute": "address",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["0", null],
+          "known": ["2", null],
+          "source_event": "address-b",
+          "meaning": "state"
+        }
+      ],
+      "cases": [
+        {
+          "id": "original-known-address",
+          "kind": "baseline",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "customer"},
+            "attribute": {"tag": "str", "value": "address"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "10"
+          },
+          "columns": ["address"],
+          "expected_rows": [
+            [{"tag": "str", "value": "A"}]
+          ]
+        },
+        {
+          "id": "corrected-same-valid-time",
+          "kind": "baseline",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "customer"},
+            "attribute": {"tag": "str", "value": "address"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "10"
+          },
+          "columns": ["address"],
+          "expected_rows": [
+            [{"tag": "str", "value": "B"}]
+          ]
+        },
+        {
+          "id": "before-any-knowledge",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "customer"},
+            "attribute": {"tag": "str", "value": "address"}
+          },
+          "cut": {
+            "known_at": "0",
+            "valid_at": "10"
+          },
+          "columns": ["address"],
+          "expected_rows": []
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "title": "Price at purchase",
+      "requires": ["interval_join", "typed_i64"],
+      "projection": "Price events declare nonoverlapping price intervals. Purchase events remain immutable. Join each purchase timestamp to the price interval at the requested knowledge cut.",
+      "completeness": {
+        "sources": ["prices", "purchases"],
+        "domain": "product and purchases buy49/buy50; price history has no overlaps",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "price100",
+          "kind": "price_interval",
+          "subject": "product",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "price": {"tag": "i64", "value": "100"},
+            "valid_from": {"tag": "i64", "value": "0"},
+            "valid_to": {"tag": "i64", "value": "50"}
+          }
+        },
+        {
+          "id": "price120",
+          "kind": "price_interval",
+          "subject": "product",
+          "occurred_at": "50",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "price": {"tag": "i64", "value": "120"},
+            "valid_from": {"tag": "i64", "value": "50"},
+            "valid_to": null
+          }
+        },
+        {
+          "id": "buy49",
+          "kind": "purchase",
+          "subject": "buy49",
+          "occurred_at": "49",
+          "recorded_at": "3",
+          "semantics": "business_event",
+          "payload": {
+            "product": {"tag": "str", "value": "product"},
+            "purchased_at": {"tag": "i64", "value": "49"}
+          }
+        },
+        {
+          "id": "buy50",
+          "kind": "purchase",
+          "subject": "buy50",
+          "occurred_at": "50",
+          "recorded_at": "4",
+          "semantics": "business_event",
+          "payload": {
+            "product": {"tag": "str", "value": "product"},
+            "purchased_at": {"tag": "i64", "value": "50"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "p100",
+          "entity": "product",
+          "attribute": "price",
+          "value": {"tag": "i64", "value": "100"},
+          "valid": ["0", "50"],
+          "known": ["1", null],
+          "source_event": "price100",
+          "meaning": "state"
+        },
+        {
+          "id": "p120",
+          "entity": "product",
+          "attribute": "price",
+          "value": {"tag": "i64", "value": "120"},
+          "valid": ["50", null],
+          "known": ["2", null],
+          "source_event": "price120",
+          "meaning": "state"
+        },
+        {
+          "id": "buy49:product",
+          "entity": "buy49",
+          "attribute": "product",
+          "value": {"tag": "str", "value": "product"},
+          "valid": ["49", null],
+          "known": ["3", null],
+          "source_event": "buy49",
+          "meaning": "event"
+        },
+        {
+          "id": "buy49:purchased_at",
+          "entity": "buy49",
+          "attribute": "purchased_at",
+          "value": {"tag": "i64", "value": "49"},
+          "valid": ["49", null],
+          "known": ["3", null],
+          "source_event": "buy49",
+          "meaning": "event"
+        },
+        {
+          "id": "buy50:product",
+          "entity": "buy50",
+          "attribute": "product",
+          "value": {"tag": "str", "value": "product"},
+          "valid": ["50", null],
+          "known": ["4", null],
+          "source_event": "buy50",
+          "meaning": "event"
+        },
+        {
+          "id": "buy50:purchased_at",
+          "entity": "buy50",
+          "attribute": "purchased_at",
+          "value": {"tag": "i64", "value": "50"},
+          "valid": ["50", null],
+          "known": ["4", null],
+          "source_event": "buy50",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "two-purchases",
+          "kind": "baseline",
+          "operation": "price_at_purchase",
+          "parameters": {
+            "product": {"tag": "str", "value": "product"},
+            "purchase_ids": [{"tag": "str", "value": "buy49"}, {"tag": "str", "value": "buy50"}]
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "60"
+          },
+          "columns": ["purchase", "price"],
+          "expected_rows": [
+            [{"tag": "str", "value": "buy49"}, {"tag": "i64", "value": "100"}],
+            [{"tag": "str", "value": "buy50"}, {"tag": "i64", "value": "120"}]
+          ]
+        },
+        {
+          "id": "at-price-boundary",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "product"},
+            "attribute": {"tag": "str", "value": "price"}
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "50"
+          },
+          "columns": ["price"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "120"}]
+          ]
+        },
+        {
+          "id": "before-price-history",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "product"},
+            "attribute": {"tag": "str", "value": "price"}
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "-1"
+          },
+          "columns": ["price"],
+          "expected_rows": []
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "title": "Coverage at claim time",
+      "requires": ["interval_join", "data_correction"],
+      "projection": "Coverage is a half-open relation. Claim timestamps are immutable. The correction changes coverage knowledge without changing claim events.",
+      "completeness": {
+        "sources": ["coverage", "claims"],
+        "domain": "policy, customer and both claims",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "coverage",
+          "kind": "coverage_asserted",
+          "subject": "policy",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "customer": {"tag": "str", "value": "customer"},
+            "valid_from": {"tag": "i64", "value": "10"},
+            "valid_to": {"tag": "i64", "value": "30"}
+          }
+        },
+        {
+          "id": "claim29",
+          "kind": "claim",
+          "subject": "claim29",
+          "occurred_at": "29",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "customer": {"tag": "str", "value": "customer"},
+            "claim_at": {"tag": "i64", "value": "29"}
+          }
+        },
+        {
+          "id": "claim30",
+          "kind": "claim",
+          "subject": "claim30",
+          "occurred_at": "30",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "customer": {"tag": "str", "value": "customer"},
+            "claim_at": {"tag": "i64", "value": "30"}
+          }
+        },
+        {
+          "id": "coverage-fix",
+          "kind": "coverage_corrected",
+          "subject": "policy",
+          "occurred_at": "10",
+          "recorded_at": "2",
+          "semantics": "correction",
+          "payload": {
+            "customer": {"tag": "str", "value": "customer"},
+            "valid_from": {"tag": "i64", "value": "10"},
+            "valid_to": {"tag": "i64", "value": "25"}
+          },
+          "corrects": "coverage"
+        }
+      ],
+      "assertions": [
+        {
+          "id": "cover-old",
+          "entity": "policy",
+          "attribute": "covers",
+          "value": {"tag": "str", "value": "customer"},
+          "valid": ["10", "30"],
+          "known": ["1", "2"],
+          "source_event": "coverage",
+          "meaning": "relation"
+        },
+        {
+          "id": "cover-new",
+          "entity": "policy",
+          "attribute": "covers",
+          "value": {"tag": "str", "value": "customer"},
+          "valid": ["10", "25"],
+          "known": ["2", null],
+          "source_event": "coverage-fix",
+          "meaning": "relation"
+        },
+        {
+          "id": "claim29:customer",
+          "entity": "claim29",
+          "attribute": "customer",
+          "value": {"tag": "str", "value": "customer"},
+          "valid": ["29", null],
+          "known": ["1", null],
+          "source_event": "claim29",
+          "meaning": "event"
+        },
+        {
+          "id": "claim29:claim_at",
+          "entity": "claim29",
+          "attribute": "claim_at",
+          "value": {"tag": "i64", "value": "29"},
+          "valid": ["29", null],
+          "known": ["1", null],
+          "source_event": "claim29",
+          "meaning": "event"
+        },
+        {
+          "id": "claim30:customer",
+          "entity": "claim30",
+          "attribute": "customer",
+          "value": {"tag": "str", "value": "customer"},
+          "valid": ["30", null],
+          "known": ["1", null],
+          "source_event": "claim30",
+          "meaning": "event"
+        },
+        {
+          "id": "claim30:claim_at",
+          "entity": "claim30",
+          "attribute": "claim_at",
+          "value": {"tag": "i64", "value": "30"},
+          "valid": ["30", null],
+          "known": ["1", null],
+          "source_event": "claim30",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "claim29-original",
+          "kind": "baseline",
+          "operation": "coverage_at_claim",
+          "parameters": {
+            "claim": {"tag": "str", "value": "claim29"},
+            "policy": {"tag": "str", "value": "policy"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "29"
+          },
+          "columns": ["covered"],
+          "expected_rows": [
+            [{"tag": "bool", "value": true}]
+          ]
+        },
+        {
+          "id": "claim30-exclusive-end",
+          "kind": "edge",
+          "operation": "coverage_at_claim",
+          "parameters": {
+            "claim": {"tag": "str", "value": "claim30"},
+            "policy": {"tag": "str", "value": "policy"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "30"
+          },
+          "columns": ["covered"],
+          "expected_rows": [
+            [{"tag": "bool", "value": false}]
+          ]
+        },
+        {
+          "id": "claim29-corrected",
+          "kind": "baseline",
+          "operation": "coverage_at_claim",
+          "parameters": {
+            "claim": {"tag": "str", "value": "claim29"},
+            "policy": {"tag": "str", "value": "policy"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "29"
+          },
+          "columns": ["covered"],
+          "expected_rows": [
+            [{"tag": "bool", "value": false}]
+          ]
+        },
+        {
+          "id": "corrected-end",
+          "kind": "edge",
+          "operation": "relation_exists",
+          "parameters": {
+            "entity": {"tag": "str", "value": "policy"},
+            "attribute": {"tag": "str", "value": "covers"},
+            "target": {"tag": "str", "value": "customer"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "columns": ["covered"],
+          "expected_rows": [
+            [{"tag": "bool", "value": false}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "05",
+      "title": "Duplicate and reordered webhooks",
+      "requires": ["event_idempotency", "authoritative_revision"],
+      "projection": "Accept each source event ID once. Full object revisions reconstruct status intervals in authoritative revision order. The late older revision may fill earlier history but cannot replace newer state. Immutable accepted events remain distinct from deliveries.",
+      "completeness": {
+        "sources": ["webhook_deliveries"],
+        "domain": "object, all four listed deliveries",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "E",
+          "kind": "object_revision",
+          "subject": "object",
+          "occurred_at": "20",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "revision": {"tag": "i64", "value": "2"},
+            "status": {"tag": "str", "value": "paid"}
+          }
+        },
+        {
+          "id": "newer",
+          "kind": "object_revision",
+          "subject": "object",
+          "occurred_at": "30",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "revision": {"tag": "i64", "value": "3"},
+            "status": {"tag": "str", "value": "shipped"}
+          }
+        },
+        {
+          "id": "older",
+          "kind": "object_revision",
+          "subject": "object",
+          "occurred_at": "10",
+          "recorded_at": "3",
+          "semantics": "business_event",
+          "payload": {
+            "revision": {"tag": "i64", "value": "1"},
+            "status": {"tag": "str", "value": "created"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "paid-open",
+          "entity": "object",
+          "attribute": "status",
+          "value": {"tag": "str", "value": "paid"},
+          "valid": ["20", null],
+          "known": ["1", "2"],
+          "source_event": "E",
+          "meaning": "state"
+        },
+        {
+          "id": "paid-final",
+          "entity": "object",
+          "attribute": "status",
+          "value": {"tag": "str", "value": "paid"},
+          "valid": ["20", "30"],
+          "known": ["2", null],
+          "source_event": "E",
+          "meaning": "state"
+        },
+        {
+          "id": "shipped",
+          "entity": "object",
+          "attribute": "status",
+          "value": {"tag": "str", "value": "shipped"},
+          "valid": ["30", null],
+          "known": ["2", null],
+          "source_event": "newer",
+          "meaning": "state"
+        },
+        {
+          "id": "E:revision",
+          "entity": "E",
+          "attribute": "revision",
+          "value": {"tag": "i64", "value": "2"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "E",
+          "meaning": "event"
+        },
+        {
+          "id": "E:object",
+          "entity": "E",
+          "attribute": "object",
+          "value": {"tag": "str", "value": "object"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "E",
+          "meaning": "event"
+        },
+        {
+          "id": "newer:revision",
+          "entity": "newer",
+          "attribute": "revision",
+          "value": {"tag": "i64", "value": "3"},
+          "valid": ["30", null],
+          "known": ["2", null],
+          "source_event": "newer",
+          "meaning": "event"
+        },
+        {
+          "id": "newer:object",
+          "entity": "newer",
+          "attribute": "object",
+          "value": {"tag": "str", "value": "object"},
+          "valid": ["30", null],
+          "known": ["2", null],
+          "source_event": "newer",
+          "meaning": "event"
+        },
+        {
+          "id": "older:revision",
+          "entity": "older",
+          "attribute": "revision",
+          "value": {"tag": "i64", "value": "1"},
+          "valid": ["10", null],
+          "known": ["3", null],
+          "source_event": "older",
+          "meaning": "event"
+        },
+        {
+          "id": "older:object",
+          "entity": "older",
+          "attribute": "object",
+          "value": {"tag": "str", "value": "object"},
+          "valid": ["10", null],
+          "known": ["3", null],
+          "source_event": "older",
+          "meaning": "event"
+        },
+        {
+          "id": "created-late",
+          "entity": "object",
+          "attribute": "status",
+          "value": {"tag": "str", "value": "created"},
+          "valid": ["10", "20"],
+          "known": ["3", null],
+          "source_event": "older",
+          "meaning": "state"
+        }
+      ],
+      "cases": [
+        {
+          "id": "duplicate-counts-once",
+          "kind": "baseline",
+          "operation": "accepted_event_count",
+          "parameters": {
+            "subject": {"tag": "str", "value": "object"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "40"
+          },
+          "columns": ["events"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "3"}]
+          ]
+        },
+        {
+          "id": "revision-wins-arrival",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "object"},
+            "attribute": {"tag": "str", "value": "status"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "40"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "shipped"}]
+          ]
+        },
+        {
+          "id": "before-newer",
+          "kind": "baseline",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "object"},
+            "attribute": {"tag": "str", "value": "status"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "40"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "paid"}]
+          ]
+        },
+        {
+          "id": "older-revision-fills-history",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "object"},
+            "attribute": {"tag": "str", "value": "status"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "15"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "created"}]
+          ]
+        }
+      ],
+      "deliveries": [
+        {
+          "id": "delivery1",
+          "event": "E",
+          "received_order": "1",
+          "receipt_position": "1"
+        },
+        {
+          "id": "delivery2",
+          "event": "E",
+          "received_order": "2",
+          "receipt_position": "1"
+        },
+        {
+          "id": "delivery3",
+          "event": "newer",
+          "received_order": "3",
+          "receipt_position": "2"
+        },
+        {
+          "id": "delivery4",
+          "event": "older",
+          "received_order": "4",
+          "receipt_position": "3"
+        }
+      ]
+    },
+    {
+      "id": "06",
+      "title": "Account balance",
+      "requires": ["event_idempotency", "exact_signed_sum", "business_reversal"],
+      "projection": "Each distinct posting contributes its signed amount once in its currency. Reversal is a new posting and leaves the original immutable posting intact.",
+      "completeness": {
+        "sources": ["postings"],
+        "domain": "account and all listed posting IDs",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "p1",
+          "kind": "posting",
+          "subject": "account",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "account": {"tag": "str", "value": "account"},
+            "amount": {"tag": "i64", "value": "500"},
+            "currency": {"tag": "str", "value": "USD"}
+          }
+        },
+        {
+          "id": "p2",
+          "kind": "posting",
+          "subject": "account",
+          "occurred_at": "11",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "account": {"tag": "str", "value": "account"},
+            "amount": {"tag": "i64", "value": "500"},
+            "currency": {"tag": "str", "value": "USD"}
+          }
+        },
+        {
+          "id": "p3",
+          "kind": "posting",
+          "subject": "account",
+          "occurred_at": "12",
+          "recorded_at": "3",
+          "semantics": "business_event",
+          "payload": {
+            "account": {"tag": "str", "value": "account"},
+            "amount": {"tag": "i64", "value": "-200"},
+            "currency": {"tag": "str", "value": "USD"}
+          }
+        },
+        {
+          "id": "reverse-p1",
+          "kind": "posting",
+          "subject": "account",
+          "occurred_at": "13",
+          "recorded_at": "4",
+          "semantics": "business_event",
+          "payload": {
+            "account": {"tag": "str", "value": "account"},
+            "amount": {"tag": "i64", "value": "-500"},
+            "currency": {"tag": "str", "value": "USD"},
+            "reverses": {"tag": "str", "value": "p1"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "p1:account",
+          "entity": "p1",
+          "attribute": "account",
+          "value": {"tag": "str", "value": "account"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "p1",
+          "meaning": "event"
+        },
+        {
+          "id": "p1:amount",
+          "entity": "p1",
+          "attribute": "amount",
+          "value": {"tag": "i64", "value": "500"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "p1",
+          "meaning": "event"
+        },
+        {
+          "id": "p1:currency",
+          "entity": "p1",
+          "attribute": "currency",
+          "value": {"tag": "str", "value": "USD"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "p1",
+          "meaning": "event"
+        },
+        {
+          "id": "p2:account",
+          "entity": "p2",
+          "attribute": "account",
+          "value": {"tag": "str", "value": "account"},
+          "valid": ["11", null],
+          "known": ["2", null],
+          "source_event": "p2",
+          "meaning": "event"
+        },
+        {
+          "id": "p2:amount",
+          "entity": "p2",
+          "attribute": "amount",
+          "value": {"tag": "i64", "value": "500"},
+          "valid": ["11", null],
+          "known": ["2", null],
+          "source_event": "p2",
+          "meaning": "event"
+        },
+        {
+          "id": "p2:currency",
+          "entity": "p2",
+          "attribute": "currency",
+          "value": {"tag": "str", "value": "USD"},
+          "valid": ["11", null],
+          "known": ["2", null],
+          "source_event": "p2",
+          "meaning": "event"
+        },
+        {
+          "id": "p3:account",
+          "entity": "p3",
+          "attribute": "account",
+          "value": {"tag": "str", "value": "account"},
+          "valid": ["12", null],
+          "known": ["3", null],
+          "source_event": "p3",
+          "meaning": "event"
+        },
+        {
+          "id": "p3:amount",
+          "entity": "p3",
+          "attribute": "amount",
+          "value": {"tag": "i64", "value": "-200"},
+          "valid": ["12", null],
+          "known": ["3", null],
+          "source_event": "p3",
+          "meaning": "event"
+        },
+        {
+          "id": "p3:currency",
+          "entity": "p3",
+          "attribute": "currency",
+          "value": {"tag": "str", "value": "USD"},
+          "valid": ["12", null],
+          "known": ["3", null],
+          "source_event": "p3",
+          "meaning": "event"
+        },
+        {
+          "id": "reverse-p1:account",
+          "entity": "reverse-p1",
+          "attribute": "account",
+          "value": {"tag": "str", "value": "account"},
+          "valid": ["13", null],
+          "known": ["4", null],
+          "source_event": "reverse-p1",
+          "meaning": "event"
+        },
+        {
+          "id": "reverse-p1:amount",
+          "entity": "reverse-p1",
+          "attribute": "amount",
+          "value": {"tag": "i64", "value": "-500"},
+          "valid": ["13", null],
+          "known": ["4", null],
+          "source_event": "reverse-p1",
+          "meaning": "event"
+        },
+        {
+          "id": "reverse-p1:currency",
+          "entity": "reverse-p1",
+          "attribute": "currency",
+          "value": {"tag": "str", "value": "USD"},
+          "valid": ["13", null],
+          "known": ["4", null],
+          "source_event": "reverse-p1",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "balance800",
+          "kind": "baseline",
+          "operation": "account_balance",
+          "parameters": {
+            "account": {"tag": "str", "value": "account"},
+            "currency": {"tag": "str", "value": "USD"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "12"
+          },
+          "columns": ["balance"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "800"}]
+          ]
+        },
+        {
+          "id": "distinct-equal-postings",
+          "kind": "edge",
+          "operation": "account_balance",
+          "parameters": {
+            "account": {"tag": "str", "value": "account"},
+            "currency": {"tag": "str", "value": "USD"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "11"
+          },
+          "columns": ["balance"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "1000"}]
+          ]
+        },
+        {
+          "id": "business-reversal",
+          "kind": "edge",
+          "operation": "account_balance",
+          "parameters": {
+            "account": {"tag": "str", "value": "account"},
+            "currency": {"tag": "str", "value": "USD"}
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "13"
+          },
+          "columns": ["balance"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "300"}]
+          ]
+        },
+        {
+          "id": "empty-currency",
+          "kind": "edge",
+          "operation": "account_balance",
+          "parameters": {
+            "account": {"tag": "str", "value": "account"},
+            "currency": {"tag": "str", "value": "EUR"}
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "20"
+          },
+          "columns": ["balance"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "0"}]
+          ]
+        }
+      ],
+      "deliveries": [
+        {
+          "id": "p1-first",
+          "event": "p1",
+          "received_order": "1",
+          "receipt_position": "1"
+        },
+        {
+          "id": "p1-retry",
+          "event": "p1",
+          "received_order": "2",
+          "receipt_position": "1"
+        },
+        {
+          "id": "p2-delivery",
+          "event": "p2",
+          "received_order": "3",
+          "receipt_position": "2"
+        },
+        {
+          "id": "p3-delivery",
+          "event": "p3",
+          "received_order": "4",
+          "receipt_position": "3"
+        },
+        {
+          "id": "reverse-delivery",
+          "event": "reverse-p1",
+          "received_order": "5",
+          "receipt_position": "4"
+        }
+      ]
+    },
+    {
+      "id": "07",
+      "title": "Available inventory",
+      "requires": ["exact_signed_sum", "separate_ledger_reducers"],
+      "projection": "Physical stock is the sum of physical deltas. Reserved stock is the sum of reservation deltas. Available equals physical minus reserved; releases never add physical units.",
+      "completeness": {
+        "sources": ["physical_movements", "reservation_movements"],
+        "domain": "sku and all physical/reservation movements",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "receive",
+          "kind": "inventory_movement",
+          "subject": "sku",
+          "occurred_at": "1",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "sku": {"tag": "str", "value": "sku"},
+            "ledger": {"tag": "str", "value": "physical"},
+            "delta": {"tag": "i64", "value": "10"}
+          }
+        },
+        {
+          "id": "reserve",
+          "kind": "inventory_movement",
+          "subject": "sku",
+          "occurred_at": "2",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "sku": {"tag": "str", "value": "sku"},
+            "ledger": {"tag": "str", "value": "reservation"},
+            "delta": {"tag": "i64", "value": "4"}
+          }
+        },
+        {
+          "id": "release",
+          "kind": "inventory_movement",
+          "subject": "sku",
+          "occurred_at": "3",
+          "recorded_at": "3",
+          "semantics": "business_event",
+          "payload": {
+            "sku": {"tag": "str", "value": "sku"},
+            "ledger": {"tag": "str", "value": "reservation"},
+            "delta": {"tag": "i64", "value": "-1"}
+          }
+        },
+        {
+          "id": "cancel-rest",
+          "kind": "inventory_movement",
+          "subject": "sku",
+          "occurred_at": "4",
+          "recorded_at": "4",
+          "semantics": "business_event",
+          "payload": {
+            "sku": {"tag": "str", "value": "sku"},
+            "ledger": {"tag": "str", "value": "reservation"},
+            "delta": {"tag": "i64", "value": "-3"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "receive:sku",
+          "entity": "receive",
+          "attribute": "sku",
+          "value": {"tag": "str", "value": "sku"},
+          "valid": ["1", null],
+          "known": ["1", null],
+          "source_event": "receive",
+          "meaning": "event"
+        },
+        {
+          "id": "receive:ledger",
+          "entity": "receive",
+          "attribute": "ledger",
+          "value": {"tag": "str", "value": "physical"},
+          "valid": ["1", null],
+          "known": ["1", null],
+          "source_event": "receive",
+          "meaning": "event"
+        },
+        {
+          "id": "receive:delta",
+          "entity": "receive",
+          "attribute": "delta",
+          "value": {"tag": "i64", "value": "10"},
+          "valid": ["1", null],
+          "known": ["1", null],
+          "source_event": "receive",
+          "meaning": "event"
+        },
+        {
+          "id": "reserve:sku",
+          "entity": "reserve",
+          "attribute": "sku",
+          "value": {"tag": "str", "value": "sku"},
+          "valid": ["2", null],
+          "known": ["2", null],
+          "source_event": "reserve",
+          "meaning": "event"
+        },
+        {
+          "id": "reserve:ledger",
+          "entity": "reserve",
+          "attribute": "ledger",
+          "value": {"tag": "str", "value": "reservation"},
+          "valid": ["2", null],
+          "known": ["2", null],
+          "source_event": "reserve",
+          "meaning": "event"
+        },
+        {
+          "id": "reserve:delta",
+          "entity": "reserve",
+          "attribute": "delta",
+          "value": {"tag": "i64", "value": "4"},
+          "valid": ["2", null],
+          "known": ["2", null],
+          "source_event": "reserve",
+          "meaning": "event"
+        },
+        {
+          "id": "release:sku",
+          "entity": "release",
+          "attribute": "sku",
+          "value": {"tag": "str", "value": "sku"},
+          "valid": ["3", null],
+          "known": ["3", null],
+          "source_event": "release",
+          "meaning": "event"
+        },
+        {
+          "id": "release:ledger",
+          "entity": "release",
+          "attribute": "ledger",
+          "value": {"tag": "str", "value": "reservation"},
+          "valid": ["3", null],
+          "known": ["3", null],
+          "source_event": "release",
+          "meaning": "event"
+        },
+        {
+          "id": "release:delta",
+          "entity": "release",
+          "attribute": "delta",
+          "value": {"tag": "i64", "value": "-1"},
+          "valid": ["3", null],
+          "known": ["3", null],
+          "source_event": "release",
+          "meaning": "event"
+        },
+        {
+          "id": "cancel-rest:sku",
+          "entity": "cancel-rest",
+          "attribute": "sku",
+          "value": {"tag": "str", "value": "sku"},
+          "valid": ["4", null],
+          "known": ["4", null],
+          "source_event": "cancel-rest",
+          "meaning": "event"
+        },
+        {
+          "id": "cancel-rest:ledger",
+          "entity": "cancel-rest",
+          "attribute": "ledger",
+          "value": {"tag": "str", "value": "reservation"},
+          "valid": ["4", null],
+          "known": ["4", null],
+          "source_event": "cancel-rest",
+          "meaning": "event"
+        },
+        {
+          "id": "cancel-rest:delta",
+          "entity": "cancel-rest",
+          "attribute": "delta",
+          "value": {"tag": "i64", "value": "-3"},
+          "valid": ["4", null],
+          "known": ["4", null],
+          "source_event": "cancel-rest",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "available7",
+          "kind": "baseline",
+          "operation": "inventory_balance",
+          "parameters": {
+            "sku": {"tag": "str", "value": "sku"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "3"
+          },
+          "columns": ["physical", "reserved", "available"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "10"}, {"tag": "i64", "value": "3"}, {"tag": "i64", "value": "7"}]
+          ]
+        },
+        {
+          "id": "before-release",
+          "kind": "baseline",
+          "operation": "inventory_balance",
+          "parameters": {
+            "sku": {"tag": "str", "value": "sku"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "3"
+          },
+          "columns": ["physical", "reserved", "available"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "10"}, {"tag": "i64", "value": "4"}, {"tag": "i64", "value": "6"}]
+          ]
+        },
+        {
+          "id": "canceled-reservation",
+          "kind": "edge",
+          "operation": "inventory_balance",
+          "parameters": {
+            "sku": {"tag": "str", "value": "sku"}
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "4"
+          },
+          "columns": ["physical", "reserved", "available"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "10"}, {"tag": "i64", "value": "0"}, {"tag": "i64", "value": "10"}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "08",
+      "title": "Net revenue by customer",
+      "requires": ["complete_source_aggregate", "join_fanout_control"],
+      "projection": "Sum each capture once and each distinct refund once before joining customer totals. Refund amounts are positive deductions and immutable refund events.",
+      "completeness": {
+        "sources": ["captures", "refunds"],
+        "domain": "customer, capture and both refunds",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "capture",
+          "kind": "capture",
+          "subject": "capture",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "customer": {"tag": "str", "value": "customer"},
+            "amount": {"tag": "i64", "value": "1000"},
+            "currency": {"tag": "str", "value": "USD"}
+          }
+        },
+        {
+          "id": "refund1",
+          "kind": "refund",
+          "subject": "refund1",
+          "occurred_at": "20",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "capture": {"tag": "str", "value": "capture"},
+            "amount": {"tag": "i64", "value": "100"},
+            "currency": {"tag": "str", "value": "USD"}
+          }
+        },
+        {
+          "id": "refund2",
+          "kind": "refund",
+          "subject": "refund2",
+          "occurred_at": "21",
+          "recorded_at": "3",
+          "semantics": "business_event",
+          "payload": {
+            "capture": {"tag": "str", "value": "capture"},
+            "amount": {"tag": "i64", "value": "200"},
+            "currency": {"tag": "str", "value": "USD"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "capture:customer",
+          "entity": "capture",
+          "attribute": "customer",
+          "value": {"tag": "str", "value": "customer"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "capture",
+          "meaning": "event"
+        },
+        {
+          "id": "capture:amount",
+          "entity": "capture",
+          "attribute": "amount",
+          "value": {"tag": "i64", "value": "1000"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "capture",
+          "meaning": "event"
+        },
+        {
+          "id": "capture:currency",
+          "entity": "capture",
+          "attribute": "currency",
+          "value": {"tag": "str", "value": "USD"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "capture",
+          "meaning": "event"
+        },
+        {
+          "id": "refund1:capture",
+          "entity": "refund1",
+          "attribute": "capture",
+          "value": {"tag": "str", "value": "capture"},
+          "valid": ["20", null],
+          "known": ["2", null],
+          "source_event": "refund1",
+          "meaning": "event"
+        },
+        {
+          "id": "refund1:amount",
+          "entity": "refund1",
+          "attribute": "amount",
+          "value": {"tag": "i64", "value": "100"},
+          "valid": ["20", null],
+          "known": ["2", null],
+          "source_event": "refund1",
+          "meaning": "event"
+        },
+        {
+          "id": "refund1:currency",
+          "entity": "refund1",
+          "attribute": "currency",
+          "value": {"tag": "str", "value": "USD"},
+          "valid": ["20", null],
+          "known": ["2", null],
+          "source_event": "refund1",
+          "meaning": "event"
+        },
+        {
+          "id": "refund2:capture",
+          "entity": "refund2",
+          "attribute": "capture",
+          "value": {"tag": "str", "value": "capture"},
+          "valid": ["21", null],
+          "known": ["3", null],
+          "source_event": "refund2",
+          "meaning": "event"
+        },
+        {
+          "id": "refund2:amount",
+          "entity": "refund2",
+          "attribute": "amount",
+          "value": {"tag": "i64", "value": "200"},
+          "valid": ["21", null],
+          "known": ["3", null],
+          "source_event": "refund2",
+          "meaning": "event"
+        },
+        {
+          "id": "refund2:currency",
+          "entity": "refund2",
+          "attribute": "currency",
+          "value": {"tag": "str", "value": "USD"},
+          "valid": ["21", null],
+          "known": ["3", null],
+          "source_event": "refund2",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "net700",
+          "kind": "baseline",
+          "operation": "customer_net_revenue",
+          "parameters": {
+            "customer": {"tag": "str", "value": "customer"},
+            "currency": {"tag": "str", "value": "USD"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "30"
+          },
+          "columns": ["net_revenue"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "700"}]
+          ]
+        },
+        {
+          "id": "one-refund",
+          "kind": "baseline",
+          "operation": "customer_net_revenue",
+          "parameters": {
+            "customer": {"tag": "str", "value": "customer"},
+            "currency": {"tag": "str", "value": "USD"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "30"
+          },
+          "columns": ["net_revenue"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "900"}]
+          ]
+        },
+        {
+          "id": "no-refunds",
+          "kind": "edge",
+          "operation": "customer_net_revenue",
+          "parameters": {
+            "customer": {"tag": "str", "value": "customer"},
+            "currency": {"tag": "str", "value": "USD"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "30"
+          },
+          "columns": ["net_revenue"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "1000"}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "09",
+      "title": "Paid but unprovisioned subscriptions",
+      "requires": ["positive_join", "stratified_negation"],
+      "projection": "Payment events contribute a paid subscription from occurrence onward. Entitlement validity is independent. Return paid subscriptions with no active entitlement at the same two-time cut.",
+      "completeness": {
+        "sources": ["payments", "entitlements"],
+        "domain": "subscription S, with absence evaluated only at each requested knowledge cut",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "payment",
+          "kind": "payment",
+          "subject": "S",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "subscription": {"tag": "str", "value": "S"},
+            "paid": {"tag": "bool", "value": true}
+          }
+        },
+        {
+          "id": "entitlement",
+          "kind": "entitlement",
+          "subject": "S",
+          "occurred_at": "20",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "entitled": {"tag": "bool", "value": true}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "paid",
+          "entity": "S",
+          "attribute": "paid",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "payment",
+          "meaning": "event"
+        },
+        {
+          "id": "entitled",
+          "entity": "S",
+          "attribute": "entitled",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["20", null],
+          "known": ["2", null],
+          "source_event": "entitlement",
+          "meaning": "state"
+        }
+      ],
+      "cases": [
+        {
+          "id": "unprovisioned",
+          "kind": "baseline",
+          "operation": "paid_without_entitlement",
+          "parameters": {},
+          "cut": {
+            "known_at": "2",
+            "valid_at": "15"
+          },
+          "columns": ["subscription"],
+          "expected_rows": [
+            [{"tag": "str", "value": "S"}]
+          ]
+        },
+        {
+          "id": "entitlement-boundary",
+          "kind": "edge",
+          "operation": "paid_without_entitlement",
+          "parameters": {},
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "columns": ["subscription"],
+          "expected_rows": []
+        },
+        {
+          "id": "before-entitlement-known",
+          "kind": "baseline",
+          "operation": "paid_without_entitlement",
+          "parameters": {},
+          "cut": {
+            "known_at": "1",
+            "valid_at": "25"
+          },
+          "columns": ["subscription"],
+          "expected_rows": [
+            [{"tag": "str", "value": "S"}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "title": "Stuck workflow with source completeness",
+      "requires": ["stratified_negation", "source_watermarks"],
+      "projection": "A watermark T certifies terminal events with occurrence strictly before T. Missing terminal knowledge is pending until watermark reaches the deadline. Missing completion at/after deadline then is overdue. A later completion remains a business event.",
+      "completeness": {
+        "sources": ["workflow_starts", "terminal-feed", "terminal-feed-watermarks"],
+        "domain": "W; terminal-feed completeness is watermark-gated, never inferred from an empty relation",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "start",
+          "kind": "workflow_started",
+          "subject": "W",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "started_at": {"tag": "i64", "value": "10"},
+            "deadline": {"tag": "i64", "value": "20"},
+            "source": {"tag": "str", "value": "terminal-feed"}
+          }
+        },
+        {
+          "id": "watermark15",
+          "kind": "watermark",
+          "subject": "terminal-feed",
+          "occurred_at": "15",
+          "recorded_at": "2",
+          "semantics": "assertion_change",
+          "payload": {
+            "through": {"tag": "i64", "value": "15"}
+          }
+        },
+        {
+          "id": "watermark20",
+          "kind": "watermark",
+          "subject": "terminal-feed",
+          "occurred_at": "20",
+          "recorded_at": "3",
+          "semantics": "assertion_change",
+          "payload": {
+            "through": {"tag": "i64", "value": "20"}
+          }
+        },
+        {
+          "id": "done",
+          "kind": "workflow_completed",
+          "subject": "W",
+          "occurred_at": "22",
+          "recorded_at": "4",
+          "semantics": "business_event",
+          "payload": {
+            "completed_at": {"tag": "i64", "value": "22"},
+            "source": {"tag": "str", "value": "terminal-feed"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "start:started_at",
+          "entity": "W",
+          "attribute": "started_at",
+          "value": {"tag": "i64", "value": "10"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "start",
+          "meaning": "event"
+        },
+        {
+          "id": "start:deadline",
+          "entity": "W",
+          "attribute": "deadline",
+          "value": {"tag": "i64", "value": "20"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "start",
+          "meaning": "event"
+        },
+        {
+          "id": "start:source",
+          "entity": "W",
+          "attribute": "source",
+          "value": {"tag": "str", "value": "terminal-feed"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "start",
+          "meaning": "event"
+        },
+        {
+          "id": "wm15",
+          "entity": "terminal-feed",
+          "attribute": "watermark",
+          "value": {"tag": "i64", "value": "15"},
+          "valid": ["0", null],
+          "known": ["2", "3"],
+          "source_event": "watermark15",
+          "meaning": "watermark"
+        },
+        {
+          "id": "wm20",
+          "entity": "terminal-feed",
+          "attribute": "watermark",
+          "value": {"tag": "i64", "value": "20"},
+          "valid": ["0", null],
+          "known": ["3", null],
+          "source_event": "watermark20",
+          "meaning": "watermark"
+        },
+        {
+          "id": "done",
+          "entity": "W",
+          "attribute": "completed_at",
+          "value": {"tag": "i64", "value": "22"},
+          "valid": ["22", null],
+          "known": ["4", null],
+          "source_event": "done",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "incomplete-source",
+          "kind": "baseline",
+          "operation": "workflow_status",
+          "parameters": {
+            "workflow": {"tag": "str", "value": "W"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "pending_knowledge"}]
+          ]
+        },
+        {
+          "id": "complete-source-overdue",
+          "kind": "baseline",
+          "operation": "workflow_status",
+          "parameters": {
+            "workflow": {"tag": "str", "value": "W"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "25"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "overdue"}]
+          ]
+        },
+        {
+          "id": "deadline-boundary",
+          "kind": "edge",
+          "operation": "workflow_status",
+          "parameters": {
+            "workflow": {"tag": "str", "value": "W"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "20"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "overdue"}]
+          ]
+        },
+        {
+          "id": "completed-late",
+          "kind": "edge",
+          "operation": "workflow_status",
+          "parameters": {
+            "workflow": {"tag": "str", "value": "W"}
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "25"
+          },
+          "columns": ["status"],
+          "expected_rows": [
+            [{"tag": "str", "value": "completed_late"}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "title": "Inherited access",
+      "requires": ["recursive_membership", "recursive_resource_ancestry", "temporal_edges"],
+      "projection": "Follow transitive member_of edges to principals, then can_read grants on the resource or its ancestors. All supporting edges must be active at one shared cut. Duplicate identical grant assertions do not duplicate authorization answers.",
+      "completeness": {
+        "sources": ["memberships", "grants", "resource_parents"],
+        "domain": "listed user/principals/document; full reachable principal/resource closure included",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "member",
+          "kind": "membership",
+          "subject": "user",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "member_of": {"tag": "str", "value": "team"},
+            "valid_to": {"tag": "i64", "value": "50"}
+          }
+        },
+        {
+          "id": "org",
+          "kind": "membership",
+          "subject": "team",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "member_of": {"tag": "str", "value": "org"}
+          }
+        },
+        {
+          "id": "grant",
+          "kind": "grant",
+          "subject": "org",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "can_read": {"tag": "str", "value": "folder"}
+          }
+        },
+        {
+          "id": "parent",
+          "kind": "resource_parent",
+          "subject": "document",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "parent": {"tag": "str", "value": "folder"}
+          }
+        },
+        {
+          "id": "duplicate-grant",
+          "kind": "grant",
+          "subject": "org",
+          "occurred_at": "0",
+          "recorded_at": "2",
+          "semantics": "assertion_change",
+          "payload": {
+            "can_read": {"tag": "str", "value": "folder"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "member",
+          "entity": "user",
+          "attribute": "member_of",
+          "value": {"tag": "str", "value": "team"},
+          "valid": ["0", "50"],
+          "known": ["1", null],
+          "source_event": "member",
+          "meaning": "relation"
+        },
+        {
+          "id": "org",
+          "entity": "team",
+          "attribute": "member_of",
+          "value": {"tag": "str", "value": "org"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "org",
+          "meaning": "relation"
+        },
+        {
+          "id": "grant",
+          "entity": "org",
+          "attribute": "can_read",
+          "value": {"tag": "str", "value": "folder"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "grant",
+          "meaning": "relation"
+        },
+        {
+          "id": "parent",
+          "entity": "document",
+          "attribute": "parent",
+          "value": {"tag": "str", "value": "folder"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "parent",
+          "meaning": "relation"
+        },
+        {
+          "id": "grant-again",
+          "entity": "org",
+          "attribute": "can_read",
+          "value": {"tag": "str", "value": "folder"},
+          "valid": ["0", null],
+          "known": ["2", null],
+          "source_event": "duplicate-grant",
+          "meaning": "relation"
+        }
+      ],
+      "cases": [
+        {
+          "id": "inherited-allow",
+          "kind": "baseline",
+          "operation": "inherited_access",
+          "parameters": {
+            "user": {"tag": "str", "value": "user"},
+            "resource": {"tag": "str", "value": "document"},
+            "action": {"tag": "str", "value": "read"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "49"
+          },
+          "columns": ["allowed"],
+          "expected_rows": [
+            [{"tag": "bool", "value": true}]
+          ]
+        },
+        {
+          "id": "expired-membership",
+          "kind": "edge",
+          "operation": "inherited_access",
+          "parameters": {
+            "user": {"tag": "str", "value": "user"},
+            "resource": {"tag": "str", "value": "document"},
+            "action": {"tag": "str", "value": "read"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "50"
+          },
+          "columns": ["allowed"],
+          "expected_rows": [
+            [{"tag": "bool", "value": false}]
+          ]
+        },
+        {
+          "id": "unknown-user",
+          "kind": "edge",
+          "operation": "inherited_access",
+          "parameters": {
+            "user": {"tag": "str", "value": "nobody"},
+            "resource": {"tag": "str", "value": "document"},
+            "action": {"tag": "str", "value": "read"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "10"
+          },
+          "columns": ["allowed"],
+          "expected_rows": [
+            [{"tag": "bool", "value": false}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "title": "Explicit deny over inherited access",
+      "requires": ["recursive_allow", "stratified_negation", "data_correction", "alternate_support"],
+      "projection": "An active user/resource block overrides every allow path. The correction removes erroneous block knowledge. Removing one of two independent grants leaves the other allow path.",
+      "completeness": {
+        "sources": ["memberships", "grants", "blocks"],
+        "domain": "user and document, both grant paths and complete block source",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "edges",
+          "kind": "access_edges",
+          "subject": "user",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "team_a": {"tag": "str", "value": "A"},
+            "team_b": {"tag": "str", "value": "B"},
+            "resource": {"tag": "str", "value": "document"}
+          }
+        },
+        {
+          "id": "block",
+          "kind": "access_block",
+          "subject": "user",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "blocked_resource": {"tag": "str", "value": "document"},
+            "valid_to": {"tag": "i64", "value": "30"}
+          }
+        },
+        {
+          "id": "block-fix",
+          "kind": "block_corrected",
+          "subject": "user",
+          "occurred_at": "10",
+          "recorded_at": "2",
+          "semantics": "correction",
+          "payload": {
+            "retracted_block": {"tag": "str", "value": "block"}
+          },
+          "corrects": "block"
+        },
+        {
+          "id": "remove-A",
+          "kind": "grant_retracted",
+          "subject": "A",
+          "occurred_at": "0",
+          "recorded_at": "3",
+          "semantics": "assertion_change",
+          "payload": {
+            "resource": {"tag": "str", "value": "document"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "uA",
+          "entity": "user",
+          "attribute": "member_of",
+          "value": {"tag": "str", "value": "A"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "edges",
+          "meaning": "relation"
+        },
+        {
+          "id": "uB",
+          "entity": "user",
+          "attribute": "member_of",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "edges",
+          "meaning": "relation"
+        },
+        {
+          "id": "gA",
+          "entity": "A",
+          "attribute": "can_read",
+          "value": {"tag": "str", "value": "document"},
+          "valid": ["0", null],
+          "known": ["1", "3"],
+          "source_event": "edges",
+          "meaning": "relation"
+        },
+        {
+          "id": "gB",
+          "entity": "B",
+          "attribute": "can_read",
+          "value": {"tag": "str", "value": "document"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "edges",
+          "meaning": "relation"
+        },
+        {
+          "id": "block",
+          "entity": "user",
+          "attribute": "blocked",
+          "value": {"tag": "str", "value": "document"},
+          "valid": ["10", "30"],
+          "known": ["1", "2"],
+          "source_event": "block",
+          "meaning": "relation"
+        }
+      ],
+      "cases": [
+        {
+          "id": "deny-two-allows",
+          "kind": "baseline",
+          "operation": "access_with_deny",
+          "parameters": {
+            "user": {"tag": "str", "value": "user"},
+            "resource": {"tag": "str", "value": "document"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "20"
+          },
+          "columns": ["allowed"],
+          "expected_rows": [
+            [{"tag": "bool", "value": false}]
+          ]
+        },
+        {
+          "id": "corrected-block",
+          "kind": "baseline",
+          "operation": "access_with_deny",
+          "parameters": {
+            "user": {"tag": "str", "value": "user"},
+            "resource": {"tag": "str", "value": "document"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "columns": ["allowed"],
+          "expected_rows": [
+            [{"tag": "bool", "value": true}]
+          ]
+        },
+        {
+          "id": "exclusive-block-end",
+          "kind": "edge",
+          "operation": "access_with_deny",
+          "parameters": {
+            "user": {"tag": "str", "value": "user"},
+            "resource": {"tag": "str", "value": "document"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "30"
+          },
+          "columns": ["allowed"],
+          "expected_rows": [
+            [{"tag": "bool", "value": true}]
+          ]
+        },
+        {
+          "id": "one-allow-remains",
+          "kind": "edge",
+          "operation": "access_with_deny",
+          "parameters": {
+            "user": {"tag": "str", "value": "user"},
+            "resource": {"tag": "str", "value": "document"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "20"
+          },
+          "columns": ["allowed"],
+          "expected_rows": [
+            [{"tag": "bool", "value": true}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "13",
+      "title": "Nested pallet contents",
+      "requires": ["recursive_containment", "set_answers", "temporal_move"],
+      "projection": "Return leaf items reached through contains edges. The pallet/tray/case diamond gives duplicate paths to each item. Moving B changes valid containment from tick 10 while preserving earlier knowledge.",
+      "completeness": {
+        "sources": ["containment"],
+        "domain": "listed containers/items and their complete descendant closure",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "load",
+          "kind": "containment_asserted",
+          "subject": "pallet",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "edges": [
+              {
+                "from": {"tag": "str", "value": "pallet"},
+                "to": {"tag": "str", "value": "case"}
+              },
+              {
+                "from": {"tag": "str", "value": "pallet"},
+                "to": {"tag": "str", "value": "tray"}
+              },
+              {
+                "from": {"tag": "str", "value": "tray"},
+                "to": {"tag": "str", "value": "case"}
+              },
+              {
+                "from": {"tag": "str", "value": "case"},
+                "to": {"tag": "str", "value": "A"}
+              },
+              {
+                "from": {"tag": "str", "value": "case"},
+                "to": {"tag": "str", "value": "B"}
+              }
+            ]
+          }
+        },
+        {
+          "id": "move-B",
+          "kind": "item_moved",
+          "subject": "B",
+          "occurred_at": "10",
+          "recorded_at": "2",
+          "semantics": "assertion_change",
+          "payload": {
+            "from": {"tag": "str", "value": "case"},
+            "to": {"tag": "str", "value": "other"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "pc",
+          "entity": "pallet",
+          "attribute": "contains",
+          "value": {"tag": "str", "value": "case"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "load",
+          "meaning": "relation"
+        },
+        {
+          "id": "pt",
+          "entity": "pallet",
+          "attribute": "contains",
+          "value": {"tag": "str", "value": "tray"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "load",
+          "meaning": "relation"
+        },
+        {
+          "id": "tc",
+          "entity": "tray",
+          "attribute": "contains",
+          "value": {"tag": "str", "value": "case"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "load",
+          "meaning": "relation"
+        },
+        {
+          "id": "ca",
+          "entity": "case",
+          "attribute": "contains",
+          "value": {"tag": "str", "value": "A"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "load",
+          "meaning": "relation"
+        },
+        {
+          "id": "cb-old",
+          "entity": "case",
+          "attribute": "contains",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["0", null],
+          "known": ["1", "2"],
+          "source_event": "load",
+          "meaning": "relation"
+        },
+        {
+          "id": "cb-known",
+          "entity": "case",
+          "attribute": "contains",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["0", "10"],
+          "known": ["2", null],
+          "source_event": "load",
+          "meaning": "relation"
+        },
+        {
+          "id": "ob",
+          "entity": "other",
+          "attribute": "contains",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["10", null],
+          "known": ["2", null],
+          "source_event": "move-B",
+          "meaning": "relation"
+        }
+      ],
+      "cases": [
+        {
+          "id": "nested-items",
+          "kind": "baseline",
+          "operation": "container_items",
+          "parameters": {
+            "container": {"tag": "str", "value": "pallet"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "5"
+          },
+          "columns": ["item"],
+          "expected_rows": [
+            [{"tag": "str", "value": "A"}],
+            [{"tag": "str", "value": "B"}]
+          ]
+        },
+        {
+          "id": "move-boundary",
+          "kind": "edge",
+          "operation": "container_items",
+          "parameters": {
+            "container": {"tag": "str", "value": "pallet"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "10"
+          },
+          "columns": ["item"],
+          "expected_rows": [
+            [{"tag": "str", "value": "A"}]
+          ]
+        },
+        {
+          "id": "move-not-yet-known",
+          "kind": "baseline",
+          "operation": "container_items",
+          "parameters": {
+            "container": {"tag": "str", "value": "pallet"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "10"
+          },
+          "columns": ["item"],
+          "expected_rows": [
+            [{"tag": "str", "value": "A"}],
+            [{"tag": "str", "value": "B"}]
+          ]
+        },
+        {
+          "id": "destination",
+          "kind": "edge",
+          "operation": "container_items",
+          "parameters": {
+            "container": {"tag": "str", "value": "other"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "10"
+          },
+          "columns": ["item"],
+          "expected_rows": [
+            [{"tag": "str", "value": "B"}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "14",
+      "title": "Product recall",
+      "requires": ["recursive_genealogy", "shipment_join", "data_correction"],
+      "projection": "Follow input_of transitively from contaminated lots, then collect customers of resulting shipped lots. Correcting the erroneous input edge removes the implication and retains the immutable shipment.",
+      "completeness": {
+        "sources": ["production_inputs", "contamination", "shipments"],
+        "domain": "A, clean, B and every shipment of B",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "manufacture",
+          "kind": "production_record",
+          "subject": "B",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "input": {"tag": "str", "value": "A"},
+            "output": {"tag": "str", "value": "B"},
+            "contaminated_input": {"tag": "bool", "value": true}
+          }
+        },
+        {
+          "id": "shipment",
+          "kind": "shipment",
+          "subject": "B",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "customer": {"tag": "str", "value": "C"}
+          }
+        },
+        {
+          "id": "input-fix",
+          "kind": "input_corrected",
+          "subject": "B",
+          "occurred_at": "0",
+          "recorded_at": "2",
+          "semantics": "correction",
+          "payload": {
+            "old_input": {"tag": "str", "value": "A"},
+            "new_input": {"tag": "str", "value": "clean"}
+          },
+          "corrects": "manufacture"
+        }
+      ],
+      "assertions": [
+        {
+          "id": "dirty",
+          "entity": "A",
+          "attribute": "contaminated",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "manufacture",
+          "meaning": "state"
+        },
+        {
+          "id": "input-old",
+          "entity": "A",
+          "attribute": "input_of",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["0", null],
+          "known": ["1", "2"],
+          "source_event": "manufacture",
+          "meaning": "relation"
+        },
+        {
+          "id": "input-new",
+          "entity": "clean",
+          "attribute": "input_of",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["0", null],
+          "known": ["2", null],
+          "source_event": "input-fix",
+          "meaning": "relation"
+        },
+        {
+          "id": "customer",
+          "entity": "B",
+          "attribute": "shipped_to",
+          "value": {"tag": "str", "value": "C"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "shipment",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "affected-customer",
+          "kind": "baseline",
+          "operation": "recalled_customers",
+          "parameters": {
+            "contaminated_lot": {"tag": "str", "value": "A"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "20"
+          },
+          "columns": ["customer"],
+          "expected_rows": [
+            [{"tag": "str", "value": "C"}]
+          ]
+        },
+        {
+          "id": "corrected-genealogy",
+          "kind": "baseline",
+          "operation": "recalled_customers",
+          "parameters": {
+            "contaminated_lot": {"tag": "str", "value": "A"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "columns": ["customer"],
+          "expected_rows": []
+        },
+        {
+          "id": "before-shipment",
+          "kind": "edge",
+          "operation": "recalled_customers",
+          "parameters": {
+            "contaminated_lot": {"tag": "str", "value": "A"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "9"
+          },
+          "columns": ["customer"],
+          "expected_rows": []
+        }
+      ]
+    },
+    {
+      "id": "15",
+      "title": "Vulnerable deployed dependencies",
+      "requires": ["recursive_dependencies", "cycle_termination", "set_answers"],
+      "projection": "Traverse depends_on with visited tuple semantics. The diamond and Y/Z cycle yield one affected deployment, regardless of path count. Vulnerability is active only on its interval.",
+      "completeness": {
+        "sources": ["dependency_edges", "deployments", "vulnerabilities"],
+        "domain": "X deployment and complete transitive dependency graph",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "deps",
+          "kind": "dependency_snapshot",
+          "subject": "X",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "edges": [
+              {
+                "from": {"tag": "str", "value": "X"},
+                "to": {"tag": "str", "value": "Y"}
+              },
+              {
+                "from": {"tag": "str", "value": "X"},
+                "to": {"tag": "str", "value": "W"}
+              },
+              {
+                "from": {"tag": "str", "value": "Y"},
+                "to": {"tag": "str", "value": "Z"}
+              },
+              {
+                "from": {"tag": "str", "value": "W"},
+                "to": {"tag": "str", "value": "Z"}
+              },
+              {
+                "from": {"tag": "str", "value": "Z"},
+                "to": {"tag": "str", "value": "Y"}
+              }
+            ]
+          }
+        },
+        {
+          "id": "deploy",
+          "kind": "deployment",
+          "subject": "X",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "environment": {"tag": "str", "value": "prod"}
+          }
+        },
+        {
+          "id": "vuln",
+          "kind": "vulnerability_interval",
+          "subject": "Z",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "vulnerable": {"tag": "bool", "value": true},
+            "valid_to": {"tag": "i64", "value": "20"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "dep0",
+          "entity": "X",
+          "attribute": "depends_on",
+          "value": {"tag": "str", "value": "Y"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "deps",
+          "meaning": "relation"
+        },
+        {
+          "id": "dep1",
+          "entity": "X",
+          "attribute": "depends_on",
+          "value": {"tag": "str", "value": "W"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "deps",
+          "meaning": "relation"
+        },
+        {
+          "id": "dep2",
+          "entity": "Y",
+          "attribute": "depends_on",
+          "value": {"tag": "str", "value": "Z"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "deps",
+          "meaning": "relation"
+        },
+        {
+          "id": "dep3",
+          "entity": "W",
+          "attribute": "depends_on",
+          "value": {"tag": "str", "value": "Z"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "deps",
+          "meaning": "relation"
+        },
+        {
+          "id": "dep4",
+          "entity": "Z",
+          "attribute": "depends_on",
+          "value": {"tag": "str", "value": "Y"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "deps",
+          "meaning": "relation"
+        },
+        {
+          "id": "deploy",
+          "entity": "X",
+          "attribute": "deployed_in",
+          "value": {"tag": "str", "value": "prod"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "deploy",
+          "meaning": "event"
+        },
+        {
+          "id": "vuln",
+          "entity": "Z",
+          "attribute": "vulnerable",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["0", "20"],
+          "known": ["1", null],
+          "source_event": "vuln",
+          "meaning": "state"
+        }
+      ],
+      "cases": [
+        {
+          "id": "diamond-cycle",
+          "kind": "baseline",
+          "operation": "vulnerable_deployments",
+          "parameters": {
+            "environment": {"tag": "str", "value": "prod"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "10"
+          },
+          "columns": ["application"],
+          "expected_rows": [
+            [{"tag": "str", "value": "X"}]
+          ]
+        },
+        {
+          "id": "vulnerability-end",
+          "kind": "edge",
+          "operation": "vulnerable_deployments",
+          "parameters": {
+            "environment": {"tag": "str", "value": "prod"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "20"
+          },
+          "columns": ["application"],
+          "expected_rows": []
+        },
+        {
+          "id": "dependency-set",
+          "kind": "edge",
+          "operation": "dependency_closure",
+          "parameters": {
+            "application": {"tag": "str", "value": "X"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "10"
+          },
+          "columns": ["dependency"],
+          "expected_rows": [
+            [{"tag": "str", "value": "W"}],
+            [{"tag": "str", "value": "Y"}],
+            [{"tag": "str", "value": "Z"}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "16",
+      "title": "Historical data lineage",
+      "requires": ["versioned_lineage", "additive_metadata", "knowledge_time"],
+      "projection": "Run R outputs D at code version 7. Later input metadata is additive and preserves A/B. Resolve lineage using the requested knowledge cut, retaining the original run event.",
+      "completeness": {
+        "sources": ["runs", "lineage_metadata"],
+        "domain": "R, D and all input/code declarations",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "run",
+          "kind": "run_completed",
+          "subject": "R",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "output": {"tag": "str", "value": "D"},
+            "input_a": {"tag": "str", "value": "A"},
+            "input_b": {"tag": "str", "value": "B"},
+            "code_version": {"tag": "i64", "value": "7"}
+          }
+        },
+        {
+          "id": "add-C",
+          "kind": "lineage_metadata_added",
+          "subject": "R",
+          "occurred_at": "10",
+          "recorded_at": "2",
+          "semantics": "assertion_change",
+          "payload": {
+            "input": {"tag": "str", "value": "C"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "run:output",
+          "entity": "R",
+          "attribute": "output",
+          "value": {"tag": "str", "value": "D"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "run",
+          "meaning": "event"
+        },
+        {
+          "id": "run:code_version",
+          "entity": "R",
+          "attribute": "code_version",
+          "value": {"tag": "i64", "value": "7"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "run",
+          "meaning": "event"
+        },
+        {
+          "id": "inA",
+          "entity": "R",
+          "attribute": "input",
+          "value": {"tag": "str", "value": "A"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "run",
+          "meaning": "relation"
+        },
+        {
+          "id": "inB",
+          "entity": "R",
+          "attribute": "input",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "run",
+          "meaning": "relation"
+        },
+        {
+          "id": "inC",
+          "entity": "R",
+          "attribute": "input",
+          "value": {"tag": "str", "value": "C"},
+          "valid": ["10", null],
+          "known": ["2", null],
+          "source_event": "add-C",
+          "meaning": "relation"
+        }
+      ],
+      "cases": [
+        {
+          "id": "original-lineage",
+          "kind": "baseline",
+          "operation": "output_lineage",
+          "parameters": {
+            "output": {"tag": "str", "value": "D"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "20"
+          },
+          "columns": ["input", "code_version"],
+          "expected_rows": [
+            [{"tag": "str", "value": "A"}, {"tag": "i64", "value": "7"}],
+            [{"tag": "str", "value": "B"}, {"tag": "i64", "value": "7"}]
+          ]
+        },
+        {
+          "id": "metadata-added",
+          "kind": "baseline",
+          "operation": "output_lineage",
+          "parameters": {
+            "output": {"tag": "str", "value": "D"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "columns": ["input", "code_version"],
+          "expected_rows": [
+            [{"tag": "str", "value": "A"}, {"tag": "i64", "value": "7"}],
+            [{"tag": "str", "value": "B"}, {"tag": "i64", "value": "7"}],
+            [{"tag": "str", "value": "C"}, {"tag": "i64", "value": "7"}]
+          ]
+        },
+        {
+          "id": "unknown-output",
+          "kind": "edge",
+          "operation": "output_lineage",
+          "parameters": {
+            "output": {"tag": "str", "value": "missing"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "columns": ["input", "code_version"],
+          "expected_rows": []
+        }
+      ]
+    },
+    {
+      "id": "17",
+      "title": "Ordered conversion funnel",
+      "requires": ["ordered_event_join", "window_boundaries", "distinct_sessions"],
+      "projection": "Qualify a session if it has event times view < checkout < payment, all within the half-open query window. Event arrival order and equal timestamps do not establish sequence.",
+      "completeness": {
+        "sources": ["session_events"],
+        "domain": "S, T, U and equal; every event in windows [0,41)",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "S-0",
+          "kind": "view",
+          "subject": "S",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "S"},
+            "step": {"tag": "str", "value": "view"},
+            "at": {"tag": "i64", "value": "10"}
+          }
+        },
+        {
+          "id": "S-1",
+          "kind": "checkout",
+          "subject": "S",
+          "occurred_at": "20",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "S"},
+            "step": {"tag": "str", "value": "checkout"},
+            "at": {"tag": "i64", "value": "20"}
+          }
+        },
+        {
+          "id": "S-2",
+          "kind": "payment",
+          "subject": "S",
+          "occurred_at": "30",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "S"},
+            "step": {"tag": "str", "value": "payment"},
+            "at": {"tag": "i64", "value": "30"}
+          }
+        },
+        {
+          "id": "T-0",
+          "kind": "view",
+          "subject": "T",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "T"},
+            "step": {"tag": "str", "value": "view"},
+            "at": {"tag": "i64", "value": "10"}
+          }
+        },
+        {
+          "id": "T-1",
+          "kind": "payment",
+          "subject": "T",
+          "occurred_at": "20",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "T"},
+            "step": {"tag": "str", "value": "payment"},
+            "at": {"tag": "i64", "value": "20"}
+          }
+        },
+        {
+          "id": "T-2",
+          "kind": "checkout",
+          "subject": "T",
+          "occurred_at": "30",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "T"},
+            "step": {"tag": "str", "value": "checkout"},
+            "at": {"tag": "i64", "value": "30"}
+          }
+        },
+        {
+          "id": "U-0",
+          "kind": "view",
+          "subject": "U",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "U"},
+            "step": {"tag": "str", "value": "view"},
+            "at": {"tag": "i64", "value": "0"}
+          }
+        },
+        {
+          "id": "U-1",
+          "kind": "checkout",
+          "subject": "U",
+          "occurred_at": "5",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "U"},
+            "step": {"tag": "str", "value": "checkout"},
+            "at": {"tag": "i64", "value": "5"}
+          }
+        },
+        {
+          "id": "U-2",
+          "kind": "payment",
+          "subject": "U",
+          "occurred_at": "40",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "U"},
+            "step": {"tag": "str", "value": "payment"},
+            "at": {"tag": "i64", "value": "40"}
+          }
+        },
+        {
+          "id": "equal-0",
+          "kind": "view",
+          "subject": "equal",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "equal"},
+            "step": {"tag": "str", "value": "view"},
+            "at": {"tag": "i64", "value": "10"}
+          }
+        },
+        {
+          "id": "equal-1",
+          "kind": "checkout",
+          "subject": "equal",
+          "occurred_at": "20",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "equal"},
+            "step": {"tag": "str", "value": "checkout"},
+            "at": {"tag": "i64", "value": "20"}
+          }
+        },
+        {
+          "id": "equal-2",
+          "kind": "payment",
+          "subject": "equal",
+          "occurred_at": "20",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "session": {"tag": "str", "value": "equal"},
+            "step": {"tag": "str", "value": "payment"},
+            "at": {"tag": "i64", "value": "20"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "S-0:session",
+          "entity": "S-0",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "S"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "S-0",
+          "meaning": "event"
+        },
+        {
+          "id": "S-0:step",
+          "entity": "S-0",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "view"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "S-0",
+          "meaning": "event"
+        },
+        {
+          "id": "S-0:at",
+          "entity": "S-0",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "10"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "S-0",
+          "meaning": "event"
+        },
+        {
+          "id": "S-1:session",
+          "entity": "S-1",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "S"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "S-1",
+          "meaning": "event"
+        },
+        {
+          "id": "S-1:step",
+          "entity": "S-1",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "checkout"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "S-1",
+          "meaning": "event"
+        },
+        {
+          "id": "S-1:at",
+          "entity": "S-1",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "20"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "S-1",
+          "meaning": "event"
+        },
+        {
+          "id": "S-2:session",
+          "entity": "S-2",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "S"},
+          "valid": ["30", null],
+          "known": ["1", null],
+          "source_event": "S-2",
+          "meaning": "event"
+        },
+        {
+          "id": "S-2:step",
+          "entity": "S-2",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "payment"},
+          "valid": ["30", null],
+          "known": ["1", null],
+          "source_event": "S-2",
+          "meaning": "event"
+        },
+        {
+          "id": "S-2:at",
+          "entity": "S-2",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "30"},
+          "valid": ["30", null],
+          "known": ["1", null],
+          "source_event": "S-2",
+          "meaning": "event"
+        },
+        {
+          "id": "T-0:session",
+          "entity": "T-0",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "T"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "T-0",
+          "meaning": "event"
+        },
+        {
+          "id": "T-0:step",
+          "entity": "T-0",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "view"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "T-0",
+          "meaning": "event"
+        },
+        {
+          "id": "T-0:at",
+          "entity": "T-0",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "10"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "T-0",
+          "meaning": "event"
+        },
+        {
+          "id": "T-1:session",
+          "entity": "T-1",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "T"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "T-1",
+          "meaning": "event"
+        },
+        {
+          "id": "T-1:step",
+          "entity": "T-1",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "payment"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "T-1",
+          "meaning": "event"
+        },
+        {
+          "id": "T-1:at",
+          "entity": "T-1",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "20"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "T-1",
+          "meaning": "event"
+        },
+        {
+          "id": "T-2:session",
+          "entity": "T-2",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "T"},
+          "valid": ["30", null],
+          "known": ["1", null],
+          "source_event": "T-2",
+          "meaning": "event"
+        },
+        {
+          "id": "T-2:step",
+          "entity": "T-2",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "checkout"},
+          "valid": ["30", null],
+          "known": ["1", null],
+          "source_event": "T-2",
+          "meaning": "event"
+        },
+        {
+          "id": "T-2:at",
+          "entity": "T-2",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "30"},
+          "valid": ["30", null],
+          "known": ["1", null],
+          "source_event": "T-2",
+          "meaning": "event"
+        },
+        {
+          "id": "U-0:session",
+          "entity": "U-0",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "U"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "U-0",
+          "meaning": "event"
+        },
+        {
+          "id": "U-0:step",
+          "entity": "U-0",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "view"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "U-0",
+          "meaning": "event"
+        },
+        {
+          "id": "U-0:at",
+          "entity": "U-0",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "0"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "U-0",
+          "meaning": "event"
+        },
+        {
+          "id": "U-1:session",
+          "entity": "U-1",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "U"},
+          "valid": ["5", null],
+          "known": ["1", null],
+          "source_event": "U-1",
+          "meaning": "event"
+        },
+        {
+          "id": "U-1:step",
+          "entity": "U-1",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "checkout"},
+          "valid": ["5", null],
+          "known": ["1", null],
+          "source_event": "U-1",
+          "meaning": "event"
+        },
+        {
+          "id": "U-1:at",
+          "entity": "U-1",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "5"},
+          "valid": ["5", null],
+          "known": ["1", null],
+          "source_event": "U-1",
+          "meaning": "event"
+        },
+        {
+          "id": "U-2:session",
+          "entity": "U-2",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "U"},
+          "valid": ["40", null],
+          "known": ["1", null],
+          "source_event": "U-2",
+          "meaning": "event"
+        },
+        {
+          "id": "U-2:step",
+          "entity": "U-2",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "payment"},
+          "valid": ["40", null],
+          "known": ["1", null],
+          "source_event": "U-2",
+          "meaning": "event"
+        },
+        {
+          "id": "U-2:at",
+          "entity": "U-2",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "40"},
+          "valid": ["40", null],
+          "known": ["1", null],
+          "source_event": "U-2",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-0:session",
+          "entity": "equal-0",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "equal"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "equal-0",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-0:step",
+          "entity": "equal-0",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "view"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "equal-0",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-0:at",
+          "entity": "equal-0",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "10"},
+          "valid": ["10", null],
+          "known": ["1", null],
+          "source_event": "equal-0",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-1:session",
+          "entity": "equal-1",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "equal"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "equal-1",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-1:step",
+          "entity": "equal-1",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "checkout"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "equal-1",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-1:at",
+          "entity": "equal-1",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "20"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "equal-1",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-2:session",
+          "entity": "equal-2",
+          "attribute": "session",
+          "value": {"tag": "str", "value": "equal"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "equal-2",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-2:step",
+          "entity": "equal-2",
+          "attribute": "step",
+          "value": {"tag": "str", "value": "payment"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "equal-2",
+          "meaning": "event"
+        },
+        {
+          "id": "equal-2:at",
+          "entity": "equal-2",
+          "attribute": "at",
+          "value": {"tag": "i64", "value": "20"},
+          "valid": ["20", null],
+          "known": ["1", null],
+          "source_event": "equal-2",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "ordered-not-reordered",
+          "kind": "baseline",
+          "operation": "conversion_funnel",
+          "parameters": {
+            "from": {"tag": "i64", "value": "0"},
+            "to": {"tag": "i64", "value": "40"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "50"
+          },
+          "columns": ["session"],
+          "expected_rows": [
+            [{"tag": "str", "value": "S"}]
+          ]
+        },
+        {
+          "id": "include-exclusive-boundary",
+          "kind": "edge",
+          "operation": "conversion_funnel",
+          "parameters": {
+            "from": {"tag": "i64", "value": "0"},
+            "to": {"tag": "i64", "value": "41"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "50"
+          },
+          "columns": ["session"],
+          "expected_rows": [
+            [{"tag": "str", "value": "S"}],
+            [{"tag": "str", "value": "U"}]
+          ]
+        },
+        {
+          "id": "equal-steps-fail",
+          "kind": "edge",
+          "operation": "session_conversion",
+          "parameters": {
+            "session": {"tag": "str", "value": "equal"},
+            "from": {"tag": "i64", "value": "0"},
+            "to": {"tag": "i64", "value": "40"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "50"
+          },
+          "columns": ["qualified"],
+          "expected_rows": [
+            [{"tag": "bool", "value": false}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "18",
+      "title": "Machine uptime interval union",
+      "requires": ["interval_union", "gap_preservation", "duplicate_support"],
+      "projection": "Measure the union of visible up intervals clipped to the requested window. Duplicate observations and overlap add no duration. A later bridging interval fills the original gap.",
+      "completeness": {
+        "sources": ["uptime_observations"],
+        "domain": "M and every interval intersecting [0,12)",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "u1",
+          "kind": "uptime_observed",
+          "subject": "M",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "from": {"tag": "i64", "value": "0"},
+            "to": {"tag": "i64", "value": "5"}
+          }
+        },
+        {
+          "id": "u2",
+          "kind": "uptime_observed",
+          "subject": "M",
+          "occurred_at": "3",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "from": {"tag": "i64", "value": "3"},
+            "to": {"tag": "i64", "value": "8"}
+          }
+        },
+        {
+          "id": "u3",
+          "kind": "uptime_observed",
+          "subject": "M",
+          "occurred_at": "10",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "from": {"tag": "i64", "value": "10"},
+            "to": {"tag": "i64", "value": "12"}
+          }
+        },
+        {
+          "id": "duplicate",
+          "kind": "uptime_observed",
+          "subject": "M",
+          "occurred_at": "0",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "from": {"tag": "i64", "value": "0"},
+            "to": {"tag": "i64", "value": "5"}
+          }
+        },
+        {
+          "id": "bridge",
+          "kind": "uptime_observed",
+          "subject": "M",
+          "occurred_at": "8",
+          "recorded_at": "3",
+          "semantics": "business_event",
+          "payload": {
+            "from": {"tag": "i64", "value": "8"},
+            "to": {"tag": "i64", "value": "10"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "u1",
+          "entity": "M",
+          "attribute": "up",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["0", "5"],
+          "known": ["1", null],
+          "source_event": "u1",
+          "meaning": "state"
+        },
+        {
+          "id": "u2",
+          "entity": "M",
+          "attribute": "up",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["3", "8"],
+          "known": ["1", null],
+          "source_event": "u2",
+          "meaning": "state"
+        },
+        {
+          "id": "u3",
+          "entity": "M",
+          "attribute": "up",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["10", "12"],
+          "known": ["1", null],
+          "source_event": "u3",
+          "meaning": "state"
+        },
+        {
+          "id": "duplicate",
+          "entity": "M",
+          "attribute": "up",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["0", "5"],
+          "known": ["2", null],
+          "source_event": "duplicate",
+          "meaning": "state"
+        },
+        {
+          "id": "bridge",
+          "entity": "M",
+          "attribute": "up",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["8", "10"],
+          "known": ["3", null],
+          "source_event": "bridge",
+          "meaning": "state"
+        }
+      ],
+      "cases": [
+        {
+          "id": "union10",
+          "kind": "baseline",
+          "operation": "uptime_duration",
+          "parameters": {
+            "machine": {"tag": "str", "value": "M"},
+            "from": {"tag": "i64", "value": "0"},
+            "to": {"tag": "i64", "value": "12"}
+          },
+          "cut": {
+            "known_at": "1"
+          },
+          "columns": ["duration"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "10"}]
+          ]
+        },
+        {
+          "id": "duplicate-stays10",
+          "kind": "edge",
+          "operation": "uptime_duration",
+          "parameters": {
+            "machine": {"tag": "str", "value": "M"},
+            "from": {"tag": "i64", "value": "0"},
+            "to": {"tag": "i64", "value": "12"}
+          },
+          "cut": {
+            "known_at": "2"
+          },
+          "columns": ["duration"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "10"}]
+          ]
+        },
+        {
+          "id": "clipped",
+          "kind": "edge",
+          "operation": "uptime_duration",
+          "parameters": {
+            "machine": {"tag": "str", "value": "M"},
+            "from": {"tag": "i64", "value": "4"},
+            "to": {"tag": "i64", "value": "11"}
+          },
+          "cut": {
+            "known_at": "2"
+          },
+          "columns": ["duration"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "5"}]
+          ]
+        },
+        {
+          "id": "gap",
+          "kind": "edge",
+          "operation": "uptime_duration",
+          "parameters": {
+            "machine": {"tag": "str", "value": "M"},
+            "from": {"tag": "i64", "value": "8"},
+            "to": {"tag": "i64", "value": "10"}
+          },
+          "cut": {
+            "known_at": "2"
+          },
+          "columns": ["duration"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "0"}]
+          ]
+        },
+        {
+          "id": "bridge-known",
+          "kind": "edge",
+          "operation": "uptime_duration",
+          "parameters": {
+            "machine": {"tag": "str", "value": "M"},
+            "from": {"tag": "i64", "value": "0"},
+            "to": {"tag": "i64", "value": "12"}
+          },
+          "cut": {
+            "known_at": "3"
+          },
+          "columns": ["duration"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "12"}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "19",
+      "title": "Point-in-time ML features and labels",
+      "requires": ["per_example_two_time_join", "no_future_knowledge_leakage", "separate_label_cut"],
+      "projection": "Feature valid time is predicted_at and feature knowledge time is the prediction-recorded feature_known_at. Labels use the query knowledge cut. Completed examples require a known label. Later feature restatement is a distinct query.",
+      "completeness": {
+        "sources": ["features", "predictions", "labels"],
+        "domain": "customer balance intervals, prediction P and its outcome label",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "feature10",
+          "kind": "feature_interval",
+          "subject": "customer",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "balance": {"tag": "i64", "value": "10"},
+            "valid_to": {"tag": "i64", "value": "11"}
+          }
+        },
+        {
+          "id": "future99",
+          "kind": "feature_interval",
+          "subject": "customer",
+          "occurred_at": "11",
+          "recorded_at": "1",
+          "semantics": "business_event",
+          "payload": {
+            "balance": {"tag": "i64", "value": "99"}
+          }
+        },
+        {
+          "id": "prediction",
+          "kind": "prediction",
+          "subject": "P",
+          "occurred_at": "10",
+          "recorded_at": "2",
+          "semantics": "business_event",
+          "payload": {
+            "customer": {"tag": "str", "value": "customer"},
+            "predicted_at": {"tag": "i64", "value": "10"},
+            "feature_known_at": {"tag": "i64", "value": "2"}
+          }
+        },
+        {
+          "id": "feature-fix",
+          "kind": "feature_corrected",
+          "subject": "customer",
+          "occurred_at": "0",
+          "recorded_at": "3",
+          "semantics": "correction",
+          "payload": {
+            "balance": {"tag": "i64", "value": "20"},
+            "valid_to": {"tag": "i64", "value": "11"}
+          },
+          "corrects": "feature10"
+        },
+        {
+          "id": "label",
+          "kind": "outcome_label",
+          "subject": "P",
+          "occurred_at": "20",
+          "recorded_at": "4",
+          "semantics": "business_event",
+          "payload": {
+            "fraud": {"tag": "bool", "value": true}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "ten",
+          "entity": "customer",
+          "attribute": "balance",
+          "value": {"tag": "i64", "value": "10"},
+          "valid": ["0", "11"],
+          "known": ["1", "3"],
+          "source_event": "feature10",
+          "meaning": "state"
+        },
+        {
+          "id": "twenty",
+          "entity": "customer",
+          "attribute": "balance",
+          "value": {"tag": "i64", "value": "20"},
+          "valid": ["0", "11"],
+          "known": ["3", null],
+          "source_event": "feature-fix",
+          "meaning": "state"
+        },
+        {
+          "id": "future",
+          "entity": "customer",
+          "attribute": "balance",
+          "value": {"tag": "i64", "value": "99"},
+          "valid": ["11", null],
+          "known": ["1", null],
+          "source_event": "future99",
+          "meaning": "state"
+        },
+        {
+          "id": "prediction:customer",
+          "entity": "P",
+          "attribute": "customer",
+          "value": {"tag": "str", "value": "customer"},
+          "valid": ["10", null],
+          "known": ["2", null],
+          "source_event": "prediction",
+          "meaning": "event"
+        },
+        {
+          "id": "prediction:predicted_at",
+          "entity": "P",
+          "attribute": "predicted_at",
+          "value": {"tag": "i64", "value": "10"},
+          "valid": ["10", null],
+          "known": ["2", null],
+          "source_event": "prediction",
+          "meaning": "event"
+        },
+        {
+          "id": "prediction:feature_known_at",
+          "entity": "P",
+          "attribute": "feature_known_at",
+          "value": {"tag": "i64", "value": "2"},
+          "valid": ["10", null],
+          "known": ["2", null],
+          "source_event": "prediction",
+          "meaning": "event"
+        },
+        {
+          "id": "label",
+          "entity": "P",
+          "attribute": "fraud",
+          "value": {"tag": "bool", "value": true},
+          "valid": ["20", null],
+          "known": ["4", null],
+          "source_event": "label",
+          "meaning": "event"
+        }
+      ],
+      "cases": [
+        {
+          "id": "historical-training-example",
+          "kind": "baseline",
+          "operation": "training_example",
+          "parameters": {
+            "prediction": {"tag": "str", "value": "P"},
+            "feature": {"tag": "str", "value": "balance"}
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "30"
+          },
+          "columns": ["prediction", "feature", "label"],
+          "expected_rows": [
+            [{"tag": "str", "value": "P"}, {"tag": "i64", "value": "10"}, {"tag": "bool", "value": true}]
+          ]
+        },
+        {
+          "id": "label-not-known",
+          "kind": "edge",
+          "operation": "training_example",
+          "parameters": {
+            "prediction": {"tag": "str", "value": "P"},
+            "feature": {"tag": "str", "value": "balance"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "30"
+          },
+          "columns": ["prediction", "feature", "label"],
+          "expected_rows": []
+        },
+        {
+          "id": "restated-feature-separate",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "customer"},
+            "attribute": {"tag": "str", "value": "balance"}
+          },
+          "cut": {
+            "known_at": "4",
+            "valid_at": "10"
+          },
+          "columns": ["balance"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "20"}]
+          ]
+        },
+        {
+          "id": "future-valid-feature",
+          "kind": "edge",
+          "operation": "state_at",
+          "parameters": {
+            "entity": {"tag": "str", "value": "customer"},
+            "attribute": {"tag": "str", "value": "balance"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "11"
+          },
+          "columns": ["balance"],
+          "expected_rows": [
+            [{"tag": "i64", "value": "99"}]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "20",
+      "title": "Incremental alternate support",
+      "requires": ["recursive_reachability", "incremental_deletion", "alternate_support"],
+      "projection": "Answers are sets. For this acyclic fixture, support count is the number of distinct node-sequence paths. Removing B>D leaves the C path; removing C>D removes the answer. A maintained view must equal full recomputation at each cut.",
+      "completeness": {
+        "sources": ["edge_changes"],
+        "domain": "A/B/C/D, both paths and all edge removals",
+        "coverage": "closed_fixture"
+      },
+      "events": [
+        {
+          "id": "graph",
+          "kind": "edges_asserted",
+          "subject": "A",
+          "occurred_at": "0",
+          "recorded_at": "1",
+          "semantics": "assertion_change",
+          "payload": {
+            "edges": [
+              {
+                "from": {"tag": "str", "value": "A"},
+                "to": {"tag": "str", "value": "B"}
+              },
+              {
+                "from": {"tag": "str", "value": "A"},
+                "to": {"tag": "str", "value": "C"}
+              },
+              {
+                "from": {"tag": "str", "value": "B"},
+                "to": {"tag": "str", "value": "D"}
+              },
+              {
+                "from": {"tag": "str", "value": "C"},
+                "to": {"tag": "str", "value": "D"}
+              }
+            ]
+          }
+        },
+        {
+          "id": "remove-BD",
+          "kind": "edge_retracted",
+          "subject": "B",
+          "occurred_at": "0",
+          "recorded_at": "2",
+          "semantics": "assertion_change",
+          "payload": {
+            "target": {"tag": "str", "value": "D"}
+          }
+        },
+        {
+          "id": "remove-CD",
+          "kind": "edge_retracted",
+          "subject": "C",
+          "occurred_at": "0",
+          "recorded_at": "3",
+          "semantics": "assertion_change",
+          "payload": {
+            "target": {"tag": "str", "value": "D"}
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "id": "AB",
+          "entity": "A",
+          "attribute": "edge",
+          "value": {"tag": "str", "value": "B"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "graph",
+          "meaning": "relation"
+        },
+        {
+          "id": "AC",
+          "entity": "A",
+          "attribute": "edge",
+          "value": {"tag": "str", "value": "C"},
+          "valid": ["0", null],
+          "known": ["1", null],
+          "source_event": "graph",
+          "meaning": "relation"
+        },
+        {
+          "id": "BD",
+          "entity": "B",
+          "attribute": "edge",
+          "value": {"tag": "str", "value": "D"},
+          "valid": ["0", null],
+          "known": ["1", "2"],
+          "source_event": "graph",
+          "meaning": "relation"
+        },
+        {
+          "id": "CD",
+          "entity": "C",
+          "attribute": "edge",
+          "value": {"tag": "str", "value": "D"},
+          "valid": ["0", null],
+          "known": ["1", "3"],
+          "source_event": "graph",
+          "meaning": "relation"
+        }
+      ],
+      "cases": [
+        {
+          "id": "two-supports",
+          "kind": "baseline",
+          "operation": "reachability_supports",
+          "parameters": {
+            "from": {"tag": "str", "value": "A"},
+            "to": {"tag": "str", "value": "D"}
+          },
+          "cut": {
+            "known_at": "1",
+            "valid_at": "0"
+          },
+          "columns": ["reachable", "paths"],
+          "expected_rows": [
+            [{"tag": "bool", "value": true}, {"tag": "i64", "value": "2"}]
+          ]
+        },
+        {
+          "id": "one-support",
+          "kind": "edge",
+          "operation": "reachability_supports",
+          "parameters": {
+            "from": {"tag": "str", "value": "A"},
+            "to": {"tag": "str", "value": "D"}
+          },
+          "cut": {
+            "known_at": "2",
+            "valid_at": "0"
+          },
+          "columns": ["reachable", "paths"],
+          "expected_rows": [
+            [{"tag": "bool", "value": true}, {"tag": "i64", "value": "1"}]
+          ]
+        },
+        {
+          "id": "last-support-removed",
+          "kind": "edge",
+          "operation": "reachability_supports",
+          "parameters": {
+            "from": {"tag": "str", "value": "A"},
+            "to": {"tag": "str", "value": "D"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "0"
+          },
+          "columns": ["reachable", "paths"],
+          "expected_rows": [
+            [{"tag": "bool", "value": false}, {"tag": "i64", "value": "0"}]
+          ]
+        },
+        {
+          "id": "remaining-closure",
+          "kind": "edge",
+          "operation": "reachability_closure",
+          "parameters": {
+            "from": {"tag": "str", "value": "A"}
+          },
+          "cut": {
+            "known_at": "3",
+            "valid_at": "0"
+          },
+          "columns": ["node"],
+          "expected_rows": [
+            [{"tag": "str", "value": "B"}],
+            [{"tag": "str", "value": "C"}]
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,912 @@
+{
+  "schema": "td.native-antijoin-cost-large/1",
+  "result": "PARTIAL_SCALE_GATE_FAILURE",
+  "auditRecordedUtc": "2026-11-05T23:51:43.789950+00:00",
+  "testedHarnessSource": "1dbfe13735607573e8a78de259e131d2f165ecb0",
+  "runtime": "accepted-032-runtime",
+  "query": "answer(?target) :- triple(?target,'probe_member',?measure), !triple(?target,'i',?measure).",
+  "qualification": {
+    "syntax": "PASS",
+    "pureMethodsPassed": 4,
+    "thresholdsChanged": false,
+    "engineLeaseReleased": true,
+    "furtherRunsStarted": false
+  },
+  "cpuScope": "process.cpuUsage deltas across all process threads during the measured phase, including typed oracle, sampling and drain; not engine-only",
+  "oracleScope": "Harness asserts full typed answers after every stopped public-call sample. This independent receipt recomputes every persisted sample width/cut, all stored first/reuse/reopen full typed rows, receipt chains, admission counts, quantiles, CPU arithmetic and fixed numeric gates.",
+  "profiles": [
+    {
+      "size": 1000000,
+      "readers": 1,
+      "status": "PASS",
+      "rawEvidence": {
+        "file": "build/antijoin-runs/run-zmjzKZ/readers-1.json",
+        "sha256": "ee763a7544ecb229d23db59ddd71128a85972b5f223e0396d836b6c63d9b5254",
+        "bytes": 283947
+      },
+      "runtimePinsMatch": true,
+      "openAuditMs": 1406.594666,
+      "reopenAuditMs": 1246.2469999999958,
+      "probePosition": "4053",
+      "lastPosition": "4207",
+      "rightSideFactsBeforeProbes": 167985,
+      "admissionProof": {
+        "scopedInputFacts": 168497,
+        "rightSideFacts": "168241",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "metrics": [
+        {
+          "phase": "fixed",
+          "samples": 20,
+          "latencyMs": {
+            "count": 20,
+            "min": 33.94154200000003,
+            "p50": 34.79466699999966,
+            "p95": 36.382084000000305,
+            "p99": 38.076082999999926,
+            "max": 38.076082999999926
+          },
+          "queriesPerSecond": 28.412620612178262,
+          "wallMs": 703.912542,
+          "writes": 0,
+          "writeBurstDurationMs": null,
+          "writeAckLatencyMs": null,
+          "writesPerComplete10sWindow": null,
+          "drainMs": null,
+          "sampledMaxRssBytes": 795492352,
+          "duckdbSnapshotBefore": {
+            "available": true,
+            "memoryBytes": "216005680",
+            "temporaryStorageBytes": "0"
+          },
+          "duckdbSnapshotAfter": {
+            "available": true,
+            "memoryBytes": "216005680",
+            "temporaryStorageBytes": "0"
+          },
+          "cpuUsage": {
+            "userMicroseconds": 1888494,
+            "systemMicroseconds": 39017,
+            "totalMicroseconds": 1927511,
+            "averageCores": 2.738281938440017,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          }
+        },
+        {
+          "phase": "mixed",
+          "samples": 155,
+          "latencyMs": {
+            "count": 155,
+            "min": 35.16404199999988,
+            "p50": 390.53391699999975,
+            "p95": 405.7828329999975,
+            "p99": 459.47741600000154,
+            "max": 524.2074159999975
+          },
+          "queriesPerSecond": 2.56760241610624,
+          "wallMs": 60367.601708,
+          "writes": 154,
+          "writeBurstDurationMs": 60332.225959,
+          "writeAckLatencyMs": {
+            "p50": 390.7532919999994,
+            "p99": 459.2828329999975
+          },
+          "writesPerComplete10sWindow": [
+            25,
+            25,
+            26,
+            26,
+            25,
+            26
+          ],
+          "drainMs": 367.60170800000196,
+          "sampledMaxRssBytes": 822214656,
+          "duckdbSnapshotBefore": {
+            "available": true,
+            "memoryBytes": "216005680",
+            "temporaryStorageBytes": "0"
+          },
+          "duckdbSnapshotAfter": {
+            "available": true,
+            "memoryBytes": "234134416",
+            "temporaryStorageBytes": "0"
+          },
+          "cpuUsage": {
+            "userMicroseconds": 199032654,
+            "systemMicroseconds": 1832255,
+            "totalMicroseconds": 200864909,
+            "averageCores": 3.32736274618942,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          }
+        }
+      ],
+      "writesPerSecond": 2.5525330377276956,
+      "numericGates": {
+        "fixedP50": true,
+        "fixedP99": true,
+        "mixedQPS": true,
+        "mixedP50": true,
+        "mixedP99": true,
+        "writes": true,
+        "writesPerSecond": true,
+        "sampledRss": true
+      },
+      "limits": {
+        "readers": 1,
+        "maxFixedP50Ms": 250,
+        "maxFixedP99Ms": 350,
+        "minMixedQueriesPerSecond": 2,
+        "maxMixedP50Ms": 500,
+        "maxMixedP99Ms": 1000,
+        "minAcknowledgedWrites": 40,
+        "minAcknowledgedWritesPerSecond": 0.5,
+        "maxSampledRssBytes": 3500000000
+      },
+      "correctness": {
+        "typedAnswersInline": true,
+        "independentStoredAnswerAndWidthChecks": true,
+        "positionOracle": true,
+        "consecutiveAckReceipts": true,
+        "assertedAndRetractedPerWrite": [
+          2,
+          2
+        ],
+        "zeroQueryAndAckErrors": true,
+        "allReaderIdsUsed": true,
+        "allLeasesReturned": true,
+        "healthyReuseCalls": 1,
+        "reopenCuts": 5,
+        "writeInEachFullWindow": true
+      },
+      "firstReads": [
+        {
+          "stage": "beforeProbe",
+          "elapsedMs": 49.57024999999999,
+          "position": "4045",
+          "rows": 0
+        },
+        {
+          "stage": "afterProbe",
+          "elapsedMs": 47.48333300000013,
+          "position": "4053",
+          "rows": 256
+        }
+      ]
+    },
+    {
+      "size": 1000000,
+      "readers": 16,
+      "status": "PASS",
+      "rawEvidence": {
+        "file": "build/antijoin-runs/run-zmjzKZ/readers-16.json",
+        "sha256": "4a5e276ecc0c98a5a5a8bab98c678c5e0d45adba1647b265e859a22ca0d13647",
+        "bytes": 1331294
+      },
+      "runtimePinsMatch": true,
+      "openAuditMs": 1307.577208,
+      "reopenAuditMs": 1227.8029999999999,
+      "probePosition": "4053",
+      "lastPosition": "4179",
+      "rightSideFactsBeforeProbes": 167985,
+      "admissionProof": {
+        "scopedInputFacts": 168497,
+        "rightSideFacts": "168241",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "metrics": [
+        {
+          "phase": "fixed",
+          "samples": 320,
+          "latencyMs": {
+            "count": 320,
+            "min": 159.15379100000018,
+            "p50": 206.02108299999963,
+            "p95": 252.50737500000014,
+            "p99": 267.50700000000006,
+            "max": 303.5003340000003
+          },
+          "queriesPerSecond": 75.48627016795577,
+          "wallMs": 4239.1815,
+          "writes": 0,
+          "writeBurstDurationMs": null,
+          "writeAckLatencyMs": null,
+          "writesPerComplete10sWindow": null,
+          "drainMs": null,
+          "sampledMaxRssBytes": 1145044992,
+          "duckdbSnapshotBefore": {
+            "available": true,
+            "memoryBytes": "222297136",
+            "temporaryStorageBytes": "0"
+          },
+          "duckdbSnapshotAfter": {
+            "available": true,
+            "memoryBytes": "222297136",
+            "temporaryStorageBytes": "0"
+          },
+          "cpuUsage": {
+            "userMicroseconds": 28854265,
+            "systemMicroseconds": 319816,
+            "totalMicroseconds": 29174081,
+            "averageCores": 6.882008000836954,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          }
+        },
+        {
+          "phase": "mixed",
+          "samples": 2016,
+          "latencyMs": {
+            "count": 2016,
+            "min": 204.89966600000025,
+            "p50": 480.6427909999984,
+            "p95": 607.4129589999993,
+            "p99": 659.4880830000002,
+            "max": 951.5490419999987
+          },
+          "queriesPerSecond": 33.40276232518592,
+          "wallMs": 60354.289875,
+          "writes": 126,
+          "writeBurstDurationMs": 60354.135875,
+          "writeAckLatencyMs": {
+            "p50": 480.2595829999991,
+            "p99": 630.627499999995
+          },
+          "writesPerComplete10sWindow": [
+            20,
+            22,
+            21,
+            20,
+            20,
+            22
+          ],
+          "drainMs": 354.2898750000022,
+          "sampledMaxRssBytes": 1578450944,
+          "duckdbSnapshotBefore": {
+            "available": true,
+            "memoryBytes": "222297136",
+            "temporaryStorageBytes": "0"
+          },
+          "duckdbSnapshotAfter": {
+            "available": true,
+            "memoryBytes": "239377296",
+            "temporaryStorageBytes": "0"
+          },
+          "cpuUsage": {
+            "userMicroseconds": 321856365,
+            "systemMicroseconds": 3615068,
+            "totalMicroseconds": 325471433,
+            "averageCores": 5.392681011972556,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          }
+        }
+      ],
+      "writesPerSecond": 2.087677972243025,
+      "numericGates": {
+        "fixedP50": true,
+        "fixedP99": true,
+        "mixedQPS": true,
+        "mixedP50": true,
+        "mixedP99": true,
+        "writes": true,
+        "writesPerSecond": true,
+        "sampledRss": true
+      },
+      "limits": {
+        "readers": 16,
+        "maxFixedP50Ms": 800,
+        "maxFixedP99Ms": 1200,
+        "minMixedQueriesPerSecond": 15,
+        "maxMixedP50Ms": 1000,
+        "maxMixedP99Ms": 2000,
+        "minAcknowledgedWrites": 40,
+        "minAcknowledgedWritesPerSecond": 0.5,
+        "maxSampledRssBytes": 3500000000
+      },
+      "correctness": {
+        "typedAnswersInline": true,
+        "independentStoredAnswerAndWidthChecks": true,
+        "positionOracle": true,
+        "consecutiveAckReceipts": true,
+        "assertedAndRetractedPerWrite": [
+          2,
+          2
+        ],
+        "zeroQueryAndAckErrors": true,
+        "allReaderIdsUsed": true,
+        "allLeasesReturned": true,
+        "healthyReuseCalls": 16,
+        "reopenCuts": 5,
+        "writeInEachFullWindow": true
+      },
+      "firstReads": [
+        {
+          "stage": "beforeProbe",
+          "elapsedMs": 50.45558299999993,
+          "position": "4045",
+          "rows": 0
+        },
+        {
+          "stage": "afterProbe",
+          "elapsedMs": 47.72608299999956,
+          "position": "4053",
+          "rows": 256
+        }
+      ]
+    },
+    {
+      "size": 10000000,
+      "readers": 1,
+      "status": "FAIL_NUMERIC_BUDGET",
+      "rawEvidence": {
+        "file": "build/antijoin-runs/run-AKX0AU/readers-1.json",
+        "sha256": "0cbf13f5715176534377c9696a03e827be65b7417991b6d11c40edec40a6bf25",
+        "bytes": 194529
+      },
+      "runtimePinsMatch": true,
+      "openAuditMs": 10732.338708,
+      "reopenAuditMs": 11656.30975,
+      "probePosition": "39095",
+      "lastPosition": "39116",
+      "rightSideFactsBeforeProbes": 1679690,
+      "admissionProof": {
+        "scopedInputFacts": 1680202,
+        "rightSideFacts": "1679946",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "metrics": [
+        {
+          "phase": "fixed",
+          "samples": 20,
+          "latencyMs": {
+            "count": 20,
+            "min": 190.70933400000104,
+            "p50": 197.3169999999991,
+            "p95": 209.6447909999988,
+            "p99": 216.2874159999992,
+            "max": 216.2874159999992
+          },
+          "queriesPerSecond": 4.996944731824219,
+          "wallMs": 4002.4457089999996,
+          "writes": 0,
+          "writeBurstDurationMs": null,
+          "writeAckLatencyMs": null,
+          "writesPerComplete10sWindow": null,
+          "drainMs": null,
+          "sampledMaxRssBytes": 2592030720,
+          "duckdbSnapshotBefore": {
+            "available": true,
+            "memoryBytes": "488635440",
+            "temporaryStorageBytes": "0"
+          },
+          "duckdbSnapshotAfter": {
+            "available": true,
+            "memoryBytes": "488635440",
+            "temporaryStorageBytes": "0"
+          },
+          "cpuUsage": {
+            "userMicroseconds": 14757167,
+            "systemMicroseconds": 170569,
+            "totalMicroseconds": 14927736,
+            "averageCores": 3.729653588163137,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          }
+        },
+        {
+          "phase": "mixed",
+          "samples": 21,
+          "latencyMs": {
+            "count": 21,
+            "min": 304.4002920000021,
+            "p50": 2913.892040999999,
+            "p95": 3445.725624999999,
+            "p99": 4099.558916000002,
+            "max": 4099.558916000002
+          },
+          "queriesPerSecond": 0.3347713678741444,
+          "wallMs": 62729.378958999994,
+          "writes": 21,
+          "writeBurstDurationMs": 62729.29216699999,
+          "writeAckLatencyMs": {
+            "p50": 2912.697957999997,
+            "p99": 3568.115458
+          },
+          "writesPerComplete10sWindow": [
+            3,
+            3,
+            4,
+            3,
+            3,
+            4
+          ],
+          "drainMs": 2729.378958999994,
+          "sampledMaxRssBytes": 2597765120,
+          "duckdbSnapshotBefore": {
+            "available": true,
+            "memoryBytes": "488635440",
+            "temporaryStorageBytes": "0"
+          },
+          "duckdbSnapshotAfter": {
+            "available": true,
+            "memoryBytes": "1402248080",
+            "temporaryStorageBytes": "0"
+          },
+          "cpuUsage": {
+            "userMicroseconds": 243035534,
+            "systemMicroseconds": 3166976,
+            "totalMicroseconds": 246202510,
+            "averageCores": 3.924835764130844,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          }
+        }
+      ],
+      "writesPerSecond": 0.33477183106248204,
+      "numericGates": {
+        "fixedP50": true,
+        "fixedP99": true,
+        "mixedQPS": false,
+        "mixedP50": false,
+        "mixedP99": false,
+        "writes": false,
+        "writesPerSecond": false,
+        "sampledRss": true
+      },
+      "limits": {
+        "readers": 1,
+        "maxFixedP50Ms": 1500,
+        "maxFixedP99Ms": 2500,
+        "minMixedQueriesPerSecond": 0.75,
+        "maxMixedP50Ms": 1500,
+        "maxMixedP99Ms": 3000,
+        "minAcknowledgedWrites": 40,
+        "minAcknowledgedWritesPerSecond": 0.5,
+        "maxSampledRssBytes": 3500000000
+      },
+      "correctness": {
+        "typedAnswersInline": true,
+        "independentStoredAnswerAndWidthChecks": true,
+        "positionOracle": true,
+        "consecutiveAckReceipts": true,
+        "assertedAndRetractedPerWrite": [
+          2,
+          2
+        ],
+        "zeroQueryAndAckErrors": true,
+        "allReaderIdsUsed": true,
+        "allLeasesReturned": true,
+        "healthyReuseCalls": 1,
+        "reopenCuts": 5,
+        "writeInEachFullWindow": true
+      },
+      "firstReads": [
+        {
+          "stage": "beforeProbe",
+          "elapsedMs": 233.63616700000057,
+          "position": "39087",
+          "rows": 0
+        },
+        {
+          "stage": "afterProbe",
+          "elapsedMs": 225.6398339999996,
+          "position": "39095",
+          "rows": 256
+        }
+      ]
+    },
+    {
+      "size": 10000000,
+      "readers": 16,
+      "status": "FAIL_NUMERIC_BUDGET",
+      "rawEvidence": {
+        "file": "build/antijoin-runs/run-AKX0AU/readers-16.json",
+        "sha256": "04aa0cbf396d9a8129241d102feaa81ff5f4bc6381f6f4a1c2d8fab680a951e6",
+        "bytes": 755942
+      },
+      "runtimePinsMatch": true,
+      "openAuditMs": 10482.543792,
+      "reopenAuditMs": 9906.056416000007,
+      "probePosition": "39095",
+      "lastPosition": "39110",
+      "rightSideFactsBeforeProbes": 1679690,
+      "admissionProof": {
+        "scopedInputFacts": 1680202,
+        "rightSideFacts": "1679946",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "metrics": [
+        {
+          "phase": "fixed",
+          "samples": 320,
+          "latencyMs": {
+            "count": 320,
+            "min": 1343.829875000003,
+            "p50": 2237.381416000004,
+            "p95": 3335.084291000003,
+            "p99": 4660.104750000002,
+            "max": 5250.034
+          },
+          "queriesPerSecond": 6.662613305126946,
+          "wallMs": 48029.201958000005,
+          "writes": 0,
+          "writeBurstDurationMs": null,
+          "writeAckLatencyMs": null,
+          "writesPerComplete10sWindow": null,
+          "drainMs": null,
+          "sampledMaxRssBytes": 2603958272,
+          "duckdbSnapshotBefore": {
+            "available": true,
+            "memoryBytes": "484965424",
+            "temporaryStorageBytes": "0"
+          },
+          "duckdbSnapshotAfter": {
+            "available": true,
+            "memoryBytes": "484441136",
+            "temporaryStorageBytes": "524288"
+          },
+          "cpuUsage": {
+            "userMicroseconds": 268163786,
+            "systemMicroseconds": 26792737,
+            "totalMicroseconds": 294956523,
+            "averageCores": 6.141191420543069,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          }
+        },
+        {
+          "phase": "mixed",
+          "samples": 205,
+          "latencyMs": {
+            "count": 205,
+            "min": 2868.2375829999946,
+            "p50": 4121.2988329999935,
+            "p95": 7781.4131659999985,
+            "p99": 7998.524874999988,
+            "max": 8085.613500000007
+          },
+          "queriesPerSecond": 3.2385476906656936,
+          "wallMs": 63299.97875000001,
+          "writes": 15,
+          "writeBurstDurationMs": 63299.86229199999,
+          "writeAckLatencyMs": {
+            "p50": 3939.4426670000103,
+            "p99": 5828.341375000004
+          },
+          "writesPerComplete10sWindow": [
+            2,
+            2,
+            3,
+            3,
+            2,
+            2
+          ],
+          "drainMs": 3299.9787500000093,
+          "sampledMaxRssBytes": 2663366656,
+          "duckdbSnapshotBefore": {
+            "available": true,
+            "memoryBytes": "483916848",
+            "temporaryStorageBytes": "622592"
+          },
+          "duckdbSnapshotAfter": {
+            "available": true,
+            "memoryBytes": "1133550480",
+            "temporaryStorageBytes": "32768"
+          },
+          "cpuUsage": {
+            "userMicroseconds": 365859795,
+            "systemMicroseconds": 28697484,
+            "totalMicroseconds": 394557279,
+            "averageCores": 6.233134462150194,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          }
+        }
+      ],
+      "writesPerSecond": 0.23696734016269322,
+      "numericGates": {
+        "fixedP50": true,
+        "fixedP99": true,
+        "mixedQPS": false,
+        "mixedP50": false,
+        "mixedP99": false,
+        "writes": false,
+        "writesPerSecond": false,
+        "sampledRss": true
+      },
+      "limits": {
+        "readers": 16,
+        "maxFixedP50Ms": 3500,
+        "maxFixedP99Ms": 6500,
+        "minMixedQueriesPerSecond": 4.8,
+        "maxMixedP50Ms": 3200,
+        "maxMixedP99Ms": 6500,
+        "minAcknowledgedWrites": 40,
+        "minAcknowledgedWritesPerSecond": 0.5,
+        "maxSampledRssBytes": 3500000000
+      },
+      "correctness": {
+        "typedAnswersInline": true,
+        "independentStoredAnswerAndWidthChecks": true,
+        "positionOracle": true,
+        "consecutiveAckReceipts": true,
+        "assertedAndRetractedPerWrite": [
+          2,
+          2
+        ],
+        "zeroQueryAndAckErrors": true,
+        "allReaderIdsUsed": true,
+        "allLeasesReturned": true,
+        "healthyReuseCalls": 16,
+        "reopenCuts": 5,
+        "writeInEachFullWindow": true
+      },
+      "firstReads": [
+        {
+          "stage": "beforeProbe",
+          "elapsedMs": 227.872374999999,
+          "position": "39087",
+          "rows": 0
+        },
+        {
+          "stage": "afterProbe",
+          "elapsedMs": 343.3135829999992,
+          "position": "39095",
+          "rows": 256
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "size": 1000000,
+      "status": "passed",
+      "rawEvidence": {
+        "file": "build/antijoin-qualification-20261105-03/1m.json",
+        "sha256": "fe36806cd381994b0d3ab33658c33ce5e43707bca8b1cf0cdfedad02034dd1d7",
+        "bytes": 1893480
+      },
+      "startedUtc": "2026-11-05T23:42:34.385Z",
+      "source": {
+        "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T190009774Z-db30ee04/facts-1000000.duckdb",
+        "bytes": 417083392,
+        "mtimeMs": 1793905477538.9526,
+        "ctimeMs": 1793905477538.9526,
+        "sha256Before": "1f3dc5123ae349c7831d8082f310854fc2d2749fe91f5e2671bf3ac14e07a4f2",
+        "evidenceSha256": "fa0f111fe41ecaa2c7d791f42c30a16595d6114670831c212e39db8054fff0e5",
+        "sha256After": "1f3dc5123ae349c7831d8082f310854fc2d2749fe91f5e2671bf3ac14e07a4f2"
+      },
+      "sourceFixture": {
+        "size": 1000000,
+        "groupSize": 256,
+        "groups": 3907,
+        "initialAdded": 136,
+        "position": "4045",
+        "latestCut": true
+      },
+      "sourceUnchanged": true,
+      "predeclaredBudget": {
+        "file": "evidence/antijoin-cost-1m-budget-20261105.json",
+        "sha256": "37e492ff0bc6e53c196c59477c4d25d915ca3b7969e4e63bb9d056a552488424"
+      },
+      "profileReaders": [
+        1,
+        16
+      ]
+    },
+    {
+      "size": 10000000,
+      "status": "failed_budget",
+      "rawEvidence": {
+        "file": "build/antijoin-qualification-20261105-04/10m.json",
+        "sha256": "8da3ec523841a4fd5bea597e0641fa40a5192fc91474c1219fb6fc146bc0596f",
+        "bytes": 1150232
+      },
+      "startedUtc": "2026-11-05T23:45:30.158Z",
+      "source": {
+        "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+        "bytes": 3905433600,
+        "mtimeMs": 1793911060600.3289,
+        "ctimeMs": 1793911060600.3289,
+        "sha256Before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+        "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+        "sha256After": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3"
+      },
+      "sourceFixture": {
+        "size": 10000000,
+        "groupSize": 256,
+        "groups": 39063,
+        "initialAdded": 22,
+        "position": "39087",
+        "latestCut": true
+      },
+      "sourceUnchanged": true,
+      "predeclaredBudget": {
+        "file": "evidence/antijoin-cost-10m-budget-20261105.json",
+        "sha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43"
+      },
+      "profileReaders": [
+        1,
+        16
+      ]
+    }
+  ],
+  "firstDiagnosticFailure": {
+    "source": "b4f0b9408a0dcebc04d6b289ec75d71dea645ed4",
+    "file": "build/antijoin-qualification-20261105-01/100k.json",
+    "cause": "Count diagnostic used unsupported direct constant-attribute aggregate grammar; anti-join empty read had passed and no seed/timed samples occurred. Corrected in84f58b31; preserved in100k baseline receipt."
+  },
+  "limitations": [
+    "Logical scoped admission is demonstrated, not physical operator scan cardinality.",
+    "All writes/read intervals are public calls and include queue/barrier waits; sampled active leases do not establish simultaneous native tasks.",
+    "The large run was not order-balanced or repeated. No performance default is changed.",
+    "RSS is25ms sampled process RSS; pre/post DuckDB memory/spill counters are not a physical peak guarantee.",
+    "Neither larger run completes a256-command removal sweep, so restoration phases remain covered by the100k baseline and pure oracle rather than these large timed samples.",
+    "The harness finishes both reader tiers before assigning aggregate failed_budget, so16-reader10m was already launched when1-reader failure became inspectable. No further scale/run followed."
+  ],
+  "runtimePins": {
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "summary": {
+    "oneMillion": "PASS_ALL16_NUMERIC_GATES_AND_CORRECTNESS",
+    "tenMillion": "FAIL10_OF16_NUMERIC_GATES; correctness/lifecycle/source gates pass",
+    "largerTargetMet": false,
+    "measuredCalls": 3077,
+    "mixedCalls": 2397,
+    "acknowledgedPatches": 316
+  },
+  "diagnosis": {
+    "observation": "10m fixed reads pass while native patch ACK and concurrent read latencies grow together. The deployed public pool intentionally waits for the captured writer tail before leasing a read (accepted032 native-entity.js:265\u2013292), so mixed public-call latency includes writer-barrier waits.",
+    "limit": "This run does not isolate native patch planning/execution, DuckDB scheduling, checkpoint work or barrier contributions. No cause-specific optimization is justified from aggregate timing alone.",
+    "nextBoundedProof": "On a fresh10m clone, separately time a bounded patch sequence and latest/pinned read calls with existing phase hooks before changing the anti-join planner or admission policy."
+  }
+}

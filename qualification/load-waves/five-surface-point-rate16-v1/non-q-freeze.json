@@ -1,0 +1,93 @@
+{
+  "format": "triplex-matched-feasibility-freeze/1",
+  "at": "2026-11-07T01:56:14.371Z",
+  "plan": "qualification/load-waves/five-surface-point-rate16-v1/plan.json",
+  "stages": [
+    {
+      "queryPath": "duckdb-datalog",
+      "manifest": "qualification/load-jobs/five-surface-rate16-duckdb-datalog-v1/manifest.json",
+      "manifestSha256": "7fea30783a6d3884677e84c5ee48938bbf36283e1ab0b8eeca08d031181a3200",
+      "profileId": "point-current-history-rate16-feasibility-d486092de458a3f38200a75e",
+      "readOracle": {
+        "path": "qualification/load-jobs/five-surface-rate16-duckdb-seed-v1/read-oracle-duckdb.json",
+        "role": "oracle",
+        "sha256": "5a1d5d85c18162c4cd13481184ed4efc41813fcecf40e0ffa626ae27c730b009"
+      },
+      "plan": {
+        "id": "five-surface-point-rate16-v1",
+        "plan": "qualification/load-waves/five-surface-point-rate16-v1/plan.json",
+        "sha256": "920fb967083676e30e5cf1ac9782f45b3e0b3d284e4cc9d2ce75abdbf794732e"
+      },
+      "resources": {
+        "heavy": true,
+        "memoryBytes": 2147483648,
+        "cpuUnits": 2,
+        "diskBytes": 268435456,
+        "timeoutMilliseconds": 600000,
+        "maximumLogBytes": 8388608
+      },
+      "actualScopeSelection": [
+        "--instance",
+        "0"
+      ]
+    },
+    {
+      "queryPath": "xtdb-datalog",
+      "manifest": "qualification/load-jobs/five-surface-rate16-xtdb-datalog-v1/manifest.json",
+      "manifestSha256": "dd1498e150dd9cde23ff1b7b257464354ec56b7469e2458ec88c9beca87a9d17",
+      "profileId": "point-current-history-rate16-feasibility-d486092de458a3f38200a75e",
+      "readOracle": {
+        "path": "qualification/load-jobs/five-surface-rate16-xtdb-seed-v1/read-oracle-xtdb.json",
+        "role": "oracle",
+        "sha256": "804988eb5dd4ac75cc652df6b21056e6a88170995199431ad28635d64bc26d16"
+      },
+      "plan": {
+        "id": "five-surface-point-rate16-v1",
+        "plan": "qualification/load-waves/five-surface-point-rate16-v1/plan.json",
+        "sha256": "920fb967083676e30e5cf1ac9782f45b3e0b3d284e4cc9d2ce75abdbf794732e"
+      },
+      "resources": {
+        "heavy": true,
+        "memoryBytes": 939524096,
+        "cpuUnits": 1,
+        "diskBytes": 268435456,
+        "timeoutMilliseconds": 600000,
+        "maximumLogBytes": 8388608
+      },
+      "actualScopeSelection": [
+        "--instance",
+        "0"
+      ]
+    },
+    {
+      "queryPath": "xtdb-native",
+      "manifest": "qualification/load-jobs/five-surface-rate16-xtdb-native-v1/manifest.json",
+      "manifestSha256": "a31f907b28fb10f9c392b3946bb1eb09beccd67bc68d4be09c15559300b91050",
+      "profileId": "point-current-history-rate16-feasibility-d486092de458a3f38200a75e",
+      "readOracle": {
+        "path": "qualification/load-jobs/five-surface-rate16-xtdb-seed-v1/read-oracle-xtdb.json",
+        "role": "oracle",
+        "sha256": "804988eb5dd4ac75cc652df6b21056e6a88170995199431ad28635d64bc26d16"
+      },
+      "plan": {
+        "id": "five-surface-point-rate16-v1",
+        "plan": "qualification/load-waves/five-surface-point-rate16-v1/plan.json",
+        "sha256": "920fb967083676e30e5cf1ac9782f45b3e0b3d284e4cc9d2ce75abdbf794732e"
+      },
+      "resources": {
+        "heavy": true,
+        "memoryBytes": 939524096,
+        "cpuUnits": 1,
+        "diskBytes": 268435456,
+        "timeoutMilliseconds": 600000,
+        "maximumLogBytes": 8388608
+      },
+      "actualScopeSelection": [
+        "--instance",
+        "1"
+      ]
+    }
+  ],
+  "remaining": "Q source/seed/load contracts wait final F/native packet and default planner100 restoration; numeric profile already frozen in plan",
+  "claim": "Prepared bytes only; no load result or performance comparison"
+}

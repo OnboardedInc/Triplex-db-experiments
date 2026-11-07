@@ -1,0 +1,481 @@
+{
+  "schema": "td.native-reference-identity-growth-pair-first/1",
+  "status": "both_children_failed_revalidation_memory_boundary",
+  "packagedAtUtc": "2026-11-06T11:39:17.496094+00:00",
+  "sourceCommit": "b5f13624738e3cdd13187c4ec6c0139bdd823e96",
+  "sourceSha256": "6ed2ec50f447b4600200ba20d892229a64afc7cb554cb29b82fffb2a287b68cc",
+  "preservedUnrunDraft": "5d60f419168aa8657e98115a66332f9431ca7236",
+  "preEngineGeneratedHeaderFix": "b5f13624738e3cdd13187c4ec6c0139bdd823e96",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01",
+  "rawDirectory": "evidence/native-reference-identity-growth-pair-first-20261106-raw",
+  "rawFiles": {
+    "after-first.json": {
+      "sha256": "9930d6a01534ffcc6a20157d6a36a9f03901cd675967f2e9055cc6cf55e13092",
+      "sizeBytes": 79084
+    },
+    "before-first.json": {
+      "sha256": "1b0452613cd5516131cf1b2a8bdf3da8a3b43541f18d2a51acd82222745c6cbd",
+      "sizeBytes": 76717
+    },
+    "pair/baseline/build/reference-coverage-growth-trace-wYsYAN/events.jsonl": {
+      "sha256": "cfb152623619e468f9d85d2a5dfb51cbbc91950bd6eba4f58ac2e65b28e1e2ad",
+      "sizeBytes": 162236
+    },
+    "pair/baseline/growth.mjs": {
+      "sha256": "dbab42ca1f4160555c142a15c3d481aa755fb08cda69d43452cb6105949a4817",
+      "sizeBytes": 12690
+    },
+    "pair/baseline/lifecycle.json": {
+      "sha256": "77fc7451a91d6229e09f4722c4cbd9f2a47ffaad053803fcf5da3fb0aa441dd1",
+      "sizeBytes": 2122
+    },
+    "pair/baseline/schema-proof.json": {
+      "sha256": "a72ba961b17cb33362df45aa1fe86d9fd14565e3ab2e81d2a513a9a6fffdba95",
+      "sizeBytes": 448
+    },
+    "pair/baseline/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "pair/baseline/stdout.tap": {
+      "sha256": "5669efbd79ef2796717f75a3879939b897067dbf6ac20316627d1bb8530c614c",
+      "sizeBytes": 1369
+    },
+    "pair/baseline/terminal.json": {
+      "sha256": "e503544e7a89b81703562c6148d3eceb0e4d4d8e36d4b122fc9f38b712edeefb",
+      "sizeBytes": 502
+    },
+    "pair/candidate/build/reference-coverage-growth-trace-PJ6fcR/events.jsonl": {
+      "sha256": "a0dd69150a48e83374b464c5d9bf9fdc7d483645d46d9f0120ed3443f132632f",
+      "sizeBytes": 162236
+    },
+    "pair/candidate/growth.mjs": {
+      "sha256": "5313239f772d07454bccc25ef22decfe5d3deeea74739e81cfa6d40bb106f880",
+      "sizeBytes": 12693
+    },
+    "pair/candidate/lifecycle.json": {
+      "sha256": "b93ba901c171a8e3d4b3333214e4ef3f48eb41961bc0c5838c602f533ad5a265",
+      "sizeBytes": 2122
+    },
+    "pair/candidate/schema-proof.json": {
+      "sha256": "a72ba961b17cb33362df45aa1fe86d9fd14565e3ab2e81d2a513a9a6fffdba95",
+      "sizeBytes": 448
+    },
+    "pair/candidate/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "pair/candidate/stdout.tap": {
+      "sha256": "5826c899c7efc16dce7024fbb7df0f34e10e31be8008fb77af69c3fd3bb1e772",
+      "sizeBytes": 1367
+    },
+    "pair/candidate/terminal.json": {
+      "sha256": "7546dcd4b62418f362efccb342f24b4900e4a7939f08a42944ba978134c67a60",
+      "sizeBytes": 503
+    },
+    "pair/report.json": {
+      "sha256": "26a6d715b073bc9f1df4fb84ecb2f889ae3fe18198dbe7787e01361f93fa568e",
+      "sizeBytes": 362314
+    },
+    "pair-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "pair-first.stdout": {
+      "sha256": "78a70e3898797a8c7f034436e495bf9f42b9c0024af5522bc589363cd2d8d5f0",
+      "sizeBytes": 902
+    },
+    "pair-first.terminal.json": {
+      "sha256": "10d55194220e174e1830e3a397bc582f9b641352ba6536d5685a132de9548517",
+      "sizeBytes": 855
+    },
+    "syntax-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "syntax-first.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "syntax-first.terminal.json": {
+      "sha256": "0c2909ba8692bd7128829cf3d4e29b239d7ba061a3484726446b2cab86ed2447",
+      "sizeBytes": 582
+    }
+  },
+  "terminals": {
+    "syntax": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--check",
+        "adapter/diagnose-reference-identity-growth.mjs"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 72397,
+      "startedAtUtc": "2026-11-06T11:35:18.527574+00:00",
+      "endedAtUtc": "2026-11-06T11:35:18.561291+00:00",
+      "exitCode": 0,
+      "elapsedMs": 33.74799992889166,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4",
+        "NODE_OPTIONS": "",
+        "TD_NATIVE_WRITER_LAB_prefix": "removed"
+      }
+    },
+    "parent": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "adapter/diagnose-reference-identity-growth.mjs",
+        "--sourceCommit",
+        "b5f13624738e3cdd13187c4ec6c0139bdd823e96",
+        "--output",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/report.json"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 72399,
+      "startedAtUtc": "2026-11-06T11:35:18.561724+00:00",
+      "endedAtUtc": "2026-11-06T11:36:17.099235+00:00",
+      "exitCode": 0,
+      "elapsedMs": 58537.991042016074,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4",
+        "NODE_OPTIONS": "",
+        "TD_NATIVE_WRITER_LAB_prefix": "removed"
+      }
+    }
+  },
+  "exitSemantics": "Parent exit0/diagnostic_complete means both authorized outcomes were captured. Each child exited1 with a failed growth method; no pass or promotion is inferred.",
+  "profile": {
+    "readers": 2,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "UV_THREADPOOL_SIZE": "4",
+    "productCommands": 260
+  },
+  "roles": [
+    {
+      "role": "baseline",
+      "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "declaredNativeSource": "4674135bafce0cb5d50e3773c1391848974e9079",
+      "status": "failed_revalidation_oom",
+      "terminal": {
+        "pid": 72739,
+        "argv": [
+          "[LOCAL_PATH_0043]",
+          "--test",
+          "--test-concurrency=1",
+          "--test-reporter=tap",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/baseline/growth.mjs"
+        ],
+        "startedAtUtc": "2026-11-06T11:35:19.911Z",
+        "code": 1,
+        "signal": null,
+        "endedAtUtc": "2026-11-06T11:35:42.835Z"
+      },
+      "firstError": {
+        "sequence": 1055,
+        "atUtc": "2026-11-06T11:35:42.754Z",
+        "stage": "revalidate:error",
+        "details": {
+          "name": "Error",
+          "message": "Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads",
+          "stack": "Error: Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"
+        }
+      },
+      "actualAcks": {
+        "targetBatches": 195,
+        "sourcePuts": 65,
+        "positions": [
+          2,
+          261
+        ]
+      },
+      "countChecks": [
+        {
+          "sequence": 1049,
+          "atUtc": "2026-11-06T11:35:42.536Z",
+          "stage": "first_count:native:end",
+          "details": {
+            "position": "261",
+            "route": "native",
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "65"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "sequence": 1051,
+          "atUtc": "2026-11-06T11:35:42.557Z",
+          "stage": "first_count:scalable:end",
+          "details": {
+            "position": "261",
+            "route": "sql",
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "65"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "sequence": 1053,
+          "atUtc": "2026-11-06T11:35:42.567Z",
+          "stage": "first_count:automatic:end",
+          "details": {
+            "position": "261",
+            "route": "native",
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "65"
+                }
+              ]
+            ]
+          }
+        }
+      ],
+      "schemaIrHash": "ec1baeb2b4aabfc575424ca865170f1d115f27fbb5ea207a9c8ff914138d5a8f",
+      "schemaIrFormat": "td.schema/4",
+      "schemaDsl": "schema coverage_boundary version 1 {entity T live {} entity S live {to:ref_value(T) many;}}",
+      "actualImages": [
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_control.node",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_datalog.duckdb_extension",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "zeroWriterOwnership": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "prePostNativeSourcesDependenciesSdkExact": true,
+      "rawNativeArtifactCount": 9,
+      "sdkDependencyCount": 395,
+      "actualSdkEntitySha256": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+      "engineLibrary": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+      "firstSubAuditUnknown": true
+    },
+    {
+      "role": "candidate",
+      "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/",
+      "declaredNativeSource": "229121424e63729867b2c71c9b1eacb0ba35a4e8",
+      "status": "failed_revalidation_oom",
+      "terminal": {
+        "pid": 73503,
+        "argv": [
+          "[LOCAL_PATH_0043]",
+          "--test",
+          "--test-concurrency=1",
+          "--test-reporter=tap",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/candidate/growth.mjs"
+        ],
+        "startedAtUtc": "2026-11-06T11:35:45.470Z",
+        "code": 1,
+        "signal": null,
+        "endedAtUtc": "2026-11-06T11:36:15.602Z"
+      },
+      "firstError": {
+        "sequence": 1055,
+        "atUtc": "2026-11-06T11:36:15.536Z",
+        "stage": "revalidate:error",
+        "details": {
+          "name": "Error",
+          "message": "Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads",
+          "stack": "Error: Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"
+        }
+      },
+      "actualAcks": {
+        "targetBatches": 195,
+        "sourcePuts": 65,
+        "positions": [
+          2,
+          261
+        ]
+      },
+      "countChecks": [
+        {
+          "sequence": 1049,
+          "atUtc": "2026-11-06T11:36:15.329Z",
+          "stage": "first_count:native:end",
+          "details": {
+            "position": "261",
+            "route": "native",
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "65"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "sequence": 1051,
+          "atUtc": "2026-11-06T11:36:15.352Z",
+          "stage": "first_count:scalable:end",
+          "details": {
+            "position": "261",
+            "route": "sql",
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "65"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "sequence": 1053,
+          "atUtc": "2026-11-06T11:36:15.364Z",
+          "stage": "first_count:automatic:end",
+          "details": {
+            "position": "261",
+            "route": "native",
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "65"
+                }
+              ]
+            ]
+          }
+        }
+      ],
+      "schemaIrHash": "ec1baeb2b4aabfc575424ca865170f1d115f27fbb5ea207a9c8ff914138d5a8f",
+      "schemaIrFormat": "td.schema/4",
+      "schemaDsl": "schema coverage_boundary version 1 {entity T live {} entity S live {to:ref_value(T) many;}}",
+      "actualImages": [
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/temporal_control.node",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/temporal_datalog.duckdb_extension",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "zeroWriterOwnership": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "prePostNativeSourcesDependenciesSdkExact": true,
+      "rawNativeArtifactCount": 9,
+      "sdkDependencyCount": 395,
+      "actualSdkEntitySha256": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+      "engineLibrary": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+      "firstSubAuditUnknown": true
+    }
+  ],
+  "sameRecipeProof": {
+    "emittedTemplateSha256": "1d9434c1f62b0539a97f2f807b3b3749d72014d68fd47407cada8d121c43c498",
+    "templateReference": "9a80186d2f44ce294abab3788c55c474f1505a19",
+    "transformations": "Two actualSDK import URLs, fresh owned root, one explicitcoverage modifier removed, plus forward-only IR/lifecycle observer. Same phase/oracle body and260command inputs.",
+    "sameNativeCanonicalSchema4IrBytesAndHash": true,
+    "schemaHash": "ec1baeb2b4aabfc575424ca865170f1d115f27fbb5ea207a9c8ff914138d5a8f",
+    "commonPublicReceiptAndCountObservationsEqual": true,
+    "noNativeOrSdkBuild": true,
+    "noInstall": true,
+    "noOriginalFailureDatabaseOpened": true,
+    "noRetryOrCapIncrease": true
+  },
+  "diagnosis": {
+    "established": "The earlier2f binary also fails revalidation on the same identity-only schema4/history at128MB, after all260 publicACKs and three exact65n count checks. Explicitcoverage semantics and format12 are not necessary to reproduce this memory boundary.",
+    "unresolved": "The failing internal audit stage remains unknown. Both-role failure does not rule out different or additional regressions, and it does not qualify covered-reference auditability, later presence/replay/reopen stages, memory containment or production readiness.",
+    "notPerformanceEvidence": "Whole-child durations include logging, hashing and setup; this diagnostic is not a latency or throughput comparison."
+  },
+  "continuation": {
+    "baselineOomPreserved": true,
+    "candidateLaunchedAfterBaselineTerminalAndCleanup": true,
+    "expectedNativeOomOnly": true,
+    "allUnknownOracleIdentityCleanupFailuresWouldStop": true,
+    "automaticRetry": false
+  },
+  "postchecks": {
+    "candidateNative9Dependencies395Compiled190Exact": true,
+    "sourceUnchangedAndGitClean": true,
+    "eachRoleRuntimeBeforeAfterExact": true,
+    "generatedModulesAnd1060EventTraceHashesExact": true,
+    "eachRoleClosedNoWal": true,
+    "details": "after-first.json",
+    "databases": [
+      {
+        "role": "baseline",
+        "runtimePinsBeforeAfterExact": true,
+        "generatedModuleSha256": "dbab42ca1f4160555c142a15c3d481aa755fb08cda69d43452cb6105949a4817",
+        "traceSha256": "cfb152623619e468f9d85d2a5dfb51cbbc91950bd6eba4f58ac2e65b28e1e2ad",
+        "traceEvents": 1060,
+        "actualAcks": [
+          195,
+          65
+        ],
+        "failureStage": "revalidate:error",
+        "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/baseline/build/reference-coverage-growth-trace-wYsYAN/facts.duckdb",
+        "sizeBytes": 8663040,
+        "mtimeNs": 1793964942783484077,
+        "sha256": "dc74b1eb7a8de95c92cc118ec694c01f982ae8a75febde1103e11726c43d680c",
+        "walAbsent": true,
+        "lsofExitCode": 1,
+        "lsofStdout": "",
+        "lsofStderr": "",
+        "cleanupSnapshot": {
+          "liveHandles": 0,
+          "pendingCompletions": 0,
+          "asyncContexts": 0,
+          "asyncResources": 0,
+          "lifecycleOwners": 0
+        }
+      },
+      {
+        "role": "candidate",
+        "runtimePinsBeforeAfterExact": true,
+        "generatedModuleSha256": "5313239f772d07454bccc25ef22decfe5d3deeea74739e81cfa6d40bb106f880",
+        "traceSha256": "a0dd69150a48e83374b464c5d9bf9fdc7d483645d46d9f0120ed3443f132632f",
+        "traceEvents": 1060,
+        "actualAcks": [
+          195,
+          65
+        ],
+        "failureStage": "revalidate:error",
+        "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/candidate/build/reference-coverage-growth-trace-PJ6fcR/facts.duckdb",
+        "sizeBytes": 8663040,
+        "mtimeNs": 1793964975558822623,
+        "sha256": "7235673777025d7cfa2a81b40b2bd5e13400b756fb5b0c6b54303eee23fcf754",
+        "walAbsent": true,
+        "lsofExitCode": 1,
+        "lsofStdout": "",
+        "lsofStderr": "",
+        "cleanupSnapshot": {
+          "liveHandles": 0,
+          "pendingCompletions": 0,
+          "asyncContexts": 0,
+          "asyncResources": 0,
+          "lifecycleOwners": 0
+        }
+      }
+    ]
+  },
+  "remaining": [
+    "Identify the revalidation subaudit/plan responsible under128MB without relaxing limits",
+    "Covered-history audit growth remains failed",
+    "No-policy completeACK cost regression remains separate and open",
+    "No full449 verifier/cap tests/newnativebuild in this gate"
+  ]
+}

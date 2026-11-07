@@ -1,0 +1,28 @@
+{
+  "schema": "td.reference-coverage-fusion-first.root-review/1",
+  "reviewedAtUtc": "2026-11-06T12:21:30.155211+00:00",
+  "status": "ACCEPT_FOCUSED_EVIDENCE_ONLY",
+  "sourceCommit": "1a1e261ff3a52ab4b1500247b2cfcc1478ad8765",
+  "receipt": "evidence/native-reference-coverage-fusion-first-20261106/receipt.json",
+  "receiptSha256": "5637fcbaa43872882dba0f6ed2b2966759d6c60e20bbea3997400b51efef134f",
+  "checks": {
+    "rawFiles": 28,
+    "projectedHashesAndSizes": true,
+    "allOriginalToProjectionDerivationsPreviouslyRecomputed": true,
+    "actualSpecReporterStdout": {
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "allPhaseExitsZero": true,
+    "prePostMapsUnchangedExceptCaptureTimestamp": true,
+    "closedFixturesNoWal": 4
+  },
+  "reviewCorrection": "Prior offline assertions assumed a .tap file and TAP markers. Actual captured stdout uses Node spec reporter; inspected and verified its counts. Pin captures differ only in capture timestamp. No engine retry, byte changes or recopy.",
+  "limits": [
+    "Focused four independent methods only. No cost, full regression, cap-boundary or production promotion claim.",
+    "Inherited revalidation OOM remains open."
+  ]
+}

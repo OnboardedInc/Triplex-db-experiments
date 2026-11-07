@@ -1,0 +1,104 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.00002375,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 8.3e-8,
+                    "type": "BATCH_INSERT",
+                    "children": [
+                        {
+                            "extra_info": {},
+                            "intermediate_rows": 0,
+                            "intermediate_size_bytes": 0,
+                            "timing": 8.3e-8,
+                            "type": "EMPTY_RESULT"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000002917,
+        "aggregate_reuse": 5.83e-7,
+        "build_side_probe_side": 4.17e-7,
+        "column_lifetime": 5.42e-7,
+        "common_aggregate": 8.3e-8,
+        "common_subexpressions": 2.09e-7,
+        "common_subplan": 0.000003083,
+        "cte_filter_pusher": 1.25e-7,
+        "cte_inlining": 1.24e-7,
+        "deliminator": 1.67e-7,
+        "duplicate_groups": 5e-7,
+        "empty_result_pullup": 8.4e-8,
+        "expression_rewriter": 0.0000065,
+        "filter_pullup": 2.5e-7,
+        "filter_pushdown": 0.000004875,
+        "grouping_sets": 2.09e-7,
+        "in_clause": 2.08e-7,
+        "join_elimination": 3.33e-7,
+        "join_filter_pushdown": 8.3e-8,
+        "join_order": 0.000021667,
+        "late_materialization": 2.08e-7,
+        "limit_pushdown": 4.1e-8,
+        "outer_join_simplification": 0.000001125,
+        "partial_aggregate_pushdown": 2.5e-7,
+        "partitioned_execution": 1.25e-7,
+        "projection_placement": 2.5e-7,
+        "projection_pullup": 0.000001083,
+        "redundant_order_keys": 0.000001083,
+        "regex_range": 1.25e-7,
+        "reorder_filter": 8.3e-8,
+        "row_group_pruner": 4.1e-8,
+        "row_number_rewriter": 8.3e-8,
+        "sampling_pushdown": 4.1e-8,
+        "scalar_fn_pushdown": 8.3e-8,
+        "statistics_propagation": 0.000008958,
+        "top_n": 8.3e-8,
+        "top_n_window_elimination": 3.75e-7,
+        "total_time": 0.000082583,
+        "type_pushdown": 8.3e-8,
+        "unnest_rewriter": 1.66e-7,
+        "unused_columns": 0.000002667,
+        "window_self_join": 1.25e-7
+    },
+    "physical_planner": {
+        "column_binding": 2.92e-7,
+        "create_plan": 0.000002541,
+        "resolve_types": 8.3e-8,
+        "total_time": 0.000003833
+    },
+    "planner": {
+        "binding_time": 0.00005525,
+        "total_time": 0.00008125
+    },
+    "query": {
+        "cpu_time": 0.000023916,
+        "sql": "INSERT INTO td_catalog_v1.entity_assertion_sources\n SELECT assertion_id,source_assertion_id,validation_command_id,side FROM __td_native_pending WHERE source_assertion_id IS NOT NULL;\n",
+        "total_intermediate_rows": 1,
+        "total_intermediate_size_bytes": 8,
+        "total_row_groups_scanned": 0,
+        "total_row_groups_to_scan": 0,
+        "total_rows_scanned": 0,
+        "total_time": 0.000277834
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 19191200,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 0
+    }
+}

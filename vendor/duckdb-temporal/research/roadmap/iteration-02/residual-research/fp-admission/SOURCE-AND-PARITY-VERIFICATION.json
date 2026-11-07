@@ -1,0 +1,446 @@
+{
+  "verified_utc": "2026-10-30T23:53:15.002359+00:00",
+  "candidate_source": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-performance/candidate-snapshot-ffc524",
+  "candidate_source_readonly": true,
+  "source_files": [
+    {
+      "path": "storage/fp_environment.py",
+      "bytes": 4299,
+      "sha256": "facfc51b6f42a21019d70fef05b2c813e3f6f81e53587c3b80bb09a1b26dfd5c"
+    },
+    {
+      "path": "storage/typed_store.py",
+      "bytes": 35815,
+      "sha256": "25e9a4f178144070f85cbf1215dd1e12270ae0efbdd27be1dbf49ba9e76dcfdc"
+    },
+    {
+      "path": "storage/store.py",
+      "bytes": 15286,
+      "sha256": "10fe4928a74ac0230b07d4ea8871399651fcb82a54c43ffa94c47dfb350c6552"
+    },
+    {
+      "path": "storage/tests/test_fp_environment.py",
+      "bytes": 22663,
+      "sha256": "3544459f7a197a59233e5707dad279287326273436543f8a0312b16e13034598"
+    },
+    {
+      "path": "storage/tests/test_batch_codec.py",
+      "bytes": 27459,
+      "sha256": "187e3588c010742e83f12892dde9437f7d16e575d899c4493f26497481b84732"
+    },
+    {
+      "path": "storage/tests/fp_environment_helper.cpp",
+      "bytes": 2201,
+      "sha256": "99e769a597fc51ce2fdfecbabb05fe50bf10ff836c703f57d87902b209612e9c"
+    },
+    {
+      "path": "EXPORT-MANIFEST.json",
+      "bytes": 45961,
+      "sha256": "eb52a0acd82a49d82e03c633793b8337e9c9c94cbab73a580227d3ec78e81b04"
+    }
+  ],
+  "fresh_pinned_source_receipts": 21,
+  "fresh_source_receipts_hashes_verified": true,
+  "child_records_independently_closed": 79,
+  "all_children_pass": true,
+  "all_full_status_equal_observed": true,
+  "native_control_setters_only_in_authorized_isolated_children": true,
+  "no_performance_acceptance_claim": true,
+  "children": [
+    {
+      "index": 0,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 1,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 2,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 3,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 4,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 5,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 6,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 7,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 8,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 9,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 10,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 11,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 12,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 13,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 14,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 15,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 16,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 17,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 18,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 19,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 20,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 21,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 22,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 23,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 24,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 25,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 26,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 27,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 28,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 29,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 30,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 31,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 32,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 33,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 34,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 35,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 36,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 37,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 38,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 39,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 40,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 41,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 42,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 43,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 44,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 45,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 46,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 47,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 48,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 49,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 50,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 51,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 52,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 53,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 54,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 55,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 56,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 57,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 58,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 59,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 60,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 61,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 62,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 63,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 64,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 65,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 66,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 67,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 68,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 69,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 70,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 71,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 72,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 73,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 74,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 75,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 76,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 77,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    },
+    {
+      "index": 78,
+      "status": "PASS",
+      "full_status_equal_observed": true
+    }
+  ]
+}

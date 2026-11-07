@@ -1,0 +1,24 @@
+{
+  "schema": "native-previous-binary-upgrade/1",
+  "status": "passed",
+  "source": "68fede1d2a195971af3868405308019753cd534b",
+  "test": "adapter/test-json-blob-upgrade.mjs",
+  "testSha256": "db96074314aa1eb12578a1a85a8bf23362a3de1da51cb90a34760acaeb0b57a4",
+  "artifactSha256": {
+    "core": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b",
+    "companion": "5ab96770afbed986b33eaa6b75f0f64c843045a636edcb9ff5922a6498d58a68",
+    "sdkEngine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "priorArtifactSha256": {
+    "core": "652a864ec192fb2ae14ba50414ca1b477d04c3bf57d3985c19f0bd1e072cc3a3",
+    "companion": "526f7aa483d8e90445941501f8b52f433cc0c3cbcdaf9f8bf6a32af963360c13"
+  },
+  "scope": [
+    "actual 0.25 format-eight creation, writes and correction",
+    "format-nine activation preserves all six prior wire tags, schema, receipts and history",
+    "old initialization, activation and mutation reject after upgrade with unchanged logical snapshot"
+  ],
+  "methods": 1,
+  "localTranscript": "build/expanded-value-integration/v026-checkpoint-real-upgrade.log",
+  "localTranscriptSha256": "f44e617037e7c848fe93815d1ee8b6b9b4103a92e2918566133e2a9849f3c377"
+}

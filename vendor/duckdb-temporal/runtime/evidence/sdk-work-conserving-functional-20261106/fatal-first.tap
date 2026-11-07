@@ -1,0 +1,12 @@
+✔ an SDK fatal fences writer, active readers and queued readers with its original cause (420.369916ms)
+✔ ordinary SDK OOM and an embedded fatal phrase preserve healthy instance reuse (342.018ms)
+✔ fatal primary survives cleanup errors and close still attempts connection and instance (81.89375ms)
+✔ fatal native appender failures fence every connection sharing the instance (83.703916ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1054.090792

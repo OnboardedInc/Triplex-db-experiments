@@ -1,0 +1,1551 @@
+{
+  "schema": "three-engine-workload-screen/1",
+  "status": "passed",
+  "timestampUtc": "2026-11-05T18:43:55.309Z",
+  "runDirectory": "20261105T184355308Z-d8f6e025",
+  "configuration": {
+    "workloads": [
+      "09",
+      "10"
+    ],
+    "samples": 1,
+    "warmup": 0,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "python": "python"
+  },
+  "packetSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "oracleValidation": {
+    "workloads": 20,
+    "cases": 71,
+    "small_oracle_checks": 31,
+    "event_oracle_checks": 66,
+    "checked_cases": 71,
+    "assertion_only_case_ids": [
+      "18/bridge-known",
+      "18/clipped",
+      "18/duplicate-stays10",
+      "18/gap",
+      "18/union10"
+    ],
+    "unchecked_case_ids": [],
+    "new_event_checked_case_ids": [
+      "03/two-purchases",
+      "04/claim29-corrected",
+      "04/claim29-original",
+      "04/claim30-exclusive-end",
+      "08/net700",
+      "08/no-refunds",
+      "08/one-refund",
+      "09/before-entitlement-known",
+      "09/entitlement-boundary",
+      "09/unprovisioned",
+      "10/complete-source-overdue",
+      "10/completed-late",
+      "10/deadline-boundary",
+      "10/incomplete-source",
+      "11/expired-membership",
+      "11/inherited-allow",
+      "11/unknown-user",
+      "12/corrected-block",
+      "12/deny-two-allows",
+      "12/exclusive-block-end",
+      "12/one-allow-remains",
+      "13/destination",
+      "13/move-boundary",
+      "13/move-not-yet-known",
+      "13/nested-items",
+      "14/affected-customer",
+      "14/before-shipment",
+      "14/corrected-genealogy",
+      "15/dependency-set",
+      "15/diamond-cycle",
+      "15/vulnerability-end",
+      "16/metadata-added",
+      "16/original-lineage",
+      "16/unknown-output",
+      "17/equal-steps-fail",
+      "17/include-exclusive-boundary",
+      "17/ordered-not-reordered",
+      "19/historical-training-example",
+      "19/label-not-known",
+      "20/remaining-closure"
+    ],
+    "result": "PASS",
+    "scope": "synthetic contract validation; no database execution or benchmark"
+  },
+  "scope": "Selected synthetic workloads through three complete read paths.",
+  "timingScope": "Query through complete typed decoding and inventory projection where applicable. Exact answer comparison and warmup excluded.",
+  "inputScope": "One accepted immutable event per source ID. Network deliveries and deduplication intake cost are outside this tranche.",
+  "limitations": [
+    "Small functional timing screen limited to the selected workload cases.",
+    "SQL preparation is cached per connection. Cold first calls include their query preparation.",
+    "The temporal store uses mandatory audited native ownership. Its startup audit is included in openMs and each query validates the audited generation. Direct SQL baselines use their own query contracts.",
+    "Memory/spill samples occur before and after cells, not at the physical allocation peak."
+  ],
+  "setupScope": "Schema initialization, per-event ingestion and knowledge-group commit cost reported separately; projections receive no uncharged refresh.",
+  "cutScope": "Native cut maps each logical event knowledge group to its last acknowledged native command. No reads occur inside groups.",
+  "unimplementedWorkloads": [
+    "03",
+    "04",
+    "05",
+    "08",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20"
+  ],
+  "runs": [
+    {
+      "workload": "09",
+      "profile": "naive_sql",
+      "database": "09-naive_sql.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "unprovisioned",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "15"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 1.0917499999999905,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "S"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 3.5037920000000042,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "S"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 1.1124580000000037,
+          "latencyMs": {
+            "count": 1,
+            "min": 1.0917499999999905,
+            "p50": 1.0917499999999905,
+            "p95": 1.0917499999999905,
+            "p99": 1.0917499999999905,
+            "max": 1.0917499999999905
+          }
+        },
+        {
+          "id": "entitlement-boundary",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.7982499999999959,
+              "rows": [],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 1.1090839999999957,
+            "rows": [],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.8121670000000165,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.7982499999999959,
+            "p50": 0.7982499999999959,
+            "p95": 0.7982499999999959,
+            "p99": 0.7982499999999959,
+            "max": 0.7982499999999959
+          }
+        },
+        {
+          "id": "before-entitlement-known",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 1.1282080000000008,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "S"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 1.1087500000000148,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "S"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 1.144207999999992,
+          "latencyMs": {
+            "count": 1,
+            "min": 1.1282080000000008,
+            "p50": 1.1282080000000008,
+            "p95": 1.1282080000000008,
+            "p99": 1.1282080000000008,
+            "max": 1.1282080000000008
+          }
+        }
+      ],
+      "openMs": 18.275541000000004,
+      "schemaMs": 2.7999580000000037,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 3.7772919999999885
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.7609159999999804
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "payment",
+            "logicalPosition": "1",
+            "elapsedMs": 2.7415420000000097
+          },
+          {
+            "eventId": "entitlement",
+            "logicalPosition": "2",
+            "elapsedMs": 0.45837499999998954
+          }
+        ]
+      },
+      "ingestionMs": 4.652208000000002,
+      "resourcesBefore": {
+        "rssBytes": 179535872,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 182845440,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 8.137500000000017,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720
+    },
+    {
+      "workload": "09",
+      "profile": "direct_duckdb",
+      "database": "09-direct_duckdb.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "unprovisioned",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "15"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.6612089999999853,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "S"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 1.471541000000002,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "S"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.6913749999999936,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.6612089999999853,
+            "p50": 0.6612089999999853,
+            "p95": 0.6612089999999853,
+            "p99": 0.6612089999999853,
+            "max": 0.6612089999999853
+          }
+        },
+        {
+          "id": "entitlement-boundary",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.6174579999999992,
+              "rows": [],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.6557080000000042,
+            "rows": [],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.6245409999999936,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.6174579999999992,
+            "p50": 0.6174579999999992,
+            "p95": 0.6174579999999992,
+            "p99": 0.6174579999999992,
+            "max": 0.6174579999999992
+          }
+        },
+        {
+          "id": "before-entitlement-known",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.593041999999997,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "S"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.612417000000022,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "S"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.6005419999999901,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.593041999999997,
+            "p50": 0.593041999999997,
+            "p95": 0.593041999999997,
+            "p99": 0.593041999999997,
+            "max": 0.593041999999997
+          }
+        }
+      ],
+      "openMs": 7.8225419999999986,
+      "schemaMs": 1.1427499999999782,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.105542000000014
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.7185829999999953
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "payment",
+            "logicalPosition": "1",
+            "elapsedMs": 0.6210829999999987
+          },
+          {
+            "eventId": "entitlement",
+            "logicalPosition": "2",
+            "elapsedMs": 0.46041700000000674
+          }
+        ]
+      },
+      "ingestionMs": 1.8425000000000011,
+      "resourcesBefore": {
+        "rssBytes": 184811520,
+        "duckdb": {
+          "memoryBytes": "565088",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 185286656,
+        "duckdb": {
+          "memoryBytes": "565088",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 7.730624999999975,
+      "reopenChecksPassed": true,
+      "databaseBytes": 1323008
+    },
+    {
+      "workload": "09",
+      "profile": "temporal_store",
+      "database": "09-temporal_store.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "unprovisioned",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "15"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 5.623208999999974,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "S"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "2"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 10.614125000000001,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "S"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "2"
+          },
+          "wallMs": 5.644125000000031,
+          "latencyMs": {
+            "count": 1,
+            "min": 5.623208999999974,
+            "p50": 5.623208999999974,
+            "p95": 5.623208999999974,
+            "p99": 5.623208999999974,
+            "max": 5.623208999999974
+          }
+        },
+        {
+          "id": "entitlement-boundary",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 6.064082999999982,
+              "rows": [],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "2"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 9.548749999999984,
+            "rows": [],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "2"
+          },
+          "wallMs": 6.083333000000039,
+          "latencyMs": {
+            "count": 1,
+            "min": 6.064082999999982,
+            "p50": 6.064082999999982,
+            "p95": 6.064082999999982,
+            "p99": 6.064082999999982,
+            "max": 6.064082999999982
+          }
+        },
+        {
+          "id": "before-entitlement-known",
+          "operation": "paid_without_entitlement",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 4.9642089999999826,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "S"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "1"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 9.079834000000005,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "S"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "1"
+          },
+          "wallMs": 4.977666999999997,
+          "latencyMs": {
+            "count": 1,
+            "min": 4.9642089999999826,
+            "p50": 4.9642089999999826,
+            "p95": 4.9642089999999826,
+            "p99": 4.9642089999999826,
+            "max": 4.9642089999999826
+          }
+        }
+      ],
+      "openMs": 159.462584,
+      "schemaReceipt": {
+        "name": "workload_09",
+        "version": 1,
+        "hash": "ee7726ab45d3289fcb906ef868d446cb726d4e578e7c127f046fe77c292ac121"
+      },
+      "schemaMs": 7.553875000000005,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "events": 1,
+            "elapsedMs": 26.595416999999998
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "events": 1,
+            "elapsedMs": 26.224207999999976
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "payment",
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "elapsedMs": 26.58766700000001,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "681248db29bae1e922fd81e7bbf81cfead4ef08b960b6818f92a70a07c310b37"
+          },
+          {
+            "eventId": "entitlement",
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "elapsedMs": 26.219583,
+            "asserted": 2,
+            "retracted": 0,
+            "requestHash": "6450b997519e5450023dbbaa7b5276446026d436fd79c410ef9ea61a14f71887"
+          }
+        ]
+      },
+      "ingestionMs": 52.846834,
+      "resourcesBefore": {
+        "rssBytes": 267993088,
+        "duckdb": {
+          "memoryBytes": "7851104",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 277069824,
+        "duckdb": {
+          "memoryBytes": "7851104",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 144.65316600000006,
+      "reopenChecksPassed": true,
+      "databaseBytes": 5255168
+    },
+    {
+      "workload": "10",
+      "profile": "direct_duckdb",
+      "database": "10-direct_duckdb.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "incomplete-source",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 2.0000840000000153,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "pending_knowledge"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 3.8954579999999623,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "pending_knowledge"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 2.0157500000000255,
+          "latencyMs": {
+            "count": 1,
+            "min": 2.0000840000000153,
+            "p50": 2.0000840000000153,
+            "p95": 2.0000840000000153,
+            "p99": 2.0000840000000153,
+            "max": 2.0000840000000153
+          }
+        },
+        {
+          "id": "complete-source-overdue",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 1.8388749999999163,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "overdue"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 2.052250000000072,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "overdue"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 1.857582999999977,
+          "latencyMs": {
+            "count": 1,
+            "min": 1.8388749999999163,
+            "p50": 1.8388749999999163,
+            "p95": 1.8388749999999163,
+            "p99": 1.8388749999999163,
+            "max": 1.8388749999999163
+          }
+        },
+        {
+          "id": "deadline-boundary",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 1.8427910000000338,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "overdue"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 2.0554579999999305,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "overdue"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 1.8549580000000105,
+          "latencyMs": {
+            "count": 1,
+            "min": 1.8427910000000338,
+            "p50": 1.8427910000000338,
+            "p95": 1.8427910000000338,
+            "p99": 1.8427910000000338,
+            "max": 1.8427910000000338
+          }
+        },
+        {
+          "id": "completed-late",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 2.22787500000004,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "completed_late"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 1.9518749999999727,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "completed_late"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 2.247792000000004,
+          "latencyMs": {
+            "count": 1,
+            "min": 2.22787500000004,
+            "p50": 2.22787500000004,
+            "p95": 2.22787500000004,
+            "p99": 2.22787500000004,
+            "max": 2.22787500000004
+          }
+        }
+      ],
+      "openMs": 8.24858299999994,
+      "schemaMs": 1.3237920000000258,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.9502079999999751
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.5266249999999673
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.47925000000009277
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.6822919999999613
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "start",
+            "logicalPosition": "1",
+            "elapsedMs": 0.5761250000000473
+          },
+          {
+            "eventId": "watermark15",
+            "logicalPosition": "2",
+            "elapsedMs": 0.3485410000000684
+          },
+          {
+            "eventId": "watermark20",
+            "logicalPosition": "3",
+            "elapsedMs": 0.2191249999999627
+          },
+          {
+            "eventId": "done",
+            "logicalPosition": "4",
+            "elapsedMs": 0.47229200000003857
+          }
+        ]
+      },
+      "ingestionMs": 2.665040999999974,
+      "resourcesBefore": {
+        "rssBytes": 294993920,
+        "duckdb": {
+          "memoryBytes": "1380080",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 295223296,
+        "duckdb": {
+          "memoryBytes": "1380080",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 7.757041999999956,
+      "reopenChecksPassed": true,
+      "databaseBytes": 1847296
+    },
+    {
+      "workload": "10",
+      "profile": "temporal_store",
+      "database": "10-temporal_store.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "incomplete-source",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 6.195999999999913,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "pending_knowledge"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "2"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 9.880957999999964,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "pending_knowledge"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "2"
+          },
+          "wallMs": 6.222791999999799,
+          "latencyMs": {
+            "count": 1,
+            "min": 6.195999999999913,
+            "p50": 6.195999999999913,
+            "p95": 6.195999999999913,
+            "p99": 6.195999999999913,
+            "max": 6.195999999999913
+          }
+        },
+        {
+          "id": "complete-source-overdue",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 5.313083000000006,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "overdue"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "3"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 9.385208999999804,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "overdue"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "3"
+          },
+          "wallMs": 5.346459000000095,
+          "latencyMs": {
+            "count": 1,
+            "min": 5.313083000000006,
+            "p50": 5.313083000000006,
+            "p95": 5.313083000000006,
+            "p99": 5.313083000000006,
+            "max": 5.313083000000006
+          }
+        },
+        {
+          "id": "deadline-boundary",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 5.589500000000044,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "overdue"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "3"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 8.833292000000029,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "overdue"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "3"
+          },
+          "wallMs": 5.606375000000071,
+          "latencyMs": {
+            "count": 1,
+            "min": 5.589500000000044,
+            "p50": 5.589500000000044,
+            "p95": 5.589500000000044,
+            "p99": 5.589500000000044,
+            "max": 5.589500000000044
+          }
+        },
+        {
+          "id": "completed-late",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 5.776042000000189,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "completed_late"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "4"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 9.271584000000075,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "completed_late"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "4"
+          },
+          "wallMs": 5.796959000000015,
+          "latencyMs": {
+            "count": 1,
+            "min": 5.776042000000189,
+            "p50": 5.776042000000189,
+            "p95": 5.776042000000189,
+            "p99": 5.776042000000189,
+            "max": 5.776042000000189
+          }
+        }
+      ],
+      "openMs": 144.38037499999996,
+      "schemaReceipt": {
+        "name": "workload_10",
+        "version": 1,
+        "hash": "dcd79067f45f866d04fa75e01b34dd8903de59e54e79dd3432c5f4a56c7734e3"
+      },
+      "schemaMs": 6.466458000000102,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "events": 1,
+            "elapsedMs": 26.323208000000022
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "events": 1,
+            "elapsedMs": 24.70387500000004
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": "3",
+            "events": 1,
+            "elapsedMs": 24.834749999999985
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": "4",
+            "events": 1,
+            "elapsedMs": 26.18591600000002
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "start",
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "elapsedMs": 26.321083000000044,
+            "asserted": 4,
+            "retracted": 0,
+            "requestHash": "b3ea7c0015ed93acdf976e9a35ba60ffa515d419da1e2739f181dfb34c670653"
+          },
+          {
+            "eventId": "watermark15",
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "elapsedMs": 24.70245799999998,
+            "asserted": 2,
+            "retracted": 0,
+            "requestHash": "e0f85540fe2dde2304f53282eaf87cf6ca6c10e8aee96687d00f933dabf722bc"
+          },
+          {
+            "eventId": "watermark20",
+            "logicalPosition": "3",
+            "nativePosition": "3",
+            "elapsedMs": 24.833374999999933,
+            "asserted": 2,
+            "retracted": 0,
+            "requestHash": "ba842be1b624353ac1d0f38a0ba2df029205492eac06809c23695e9de68031ad"
+          },
+          {
+            "eventId": "done",
+            "logicalPosition": "4",
+            "nativePosition": "4",
+            "elapsedMs": 26.18425000000002,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "0ef6aaa3716d4c29c7a457bdd7fb1fa0ae3f7fc0a9eb057dcdd56f38e066a5be"
+          }
+        ]
+      },
+      "ingestionMs": 102.08520799999997,
+      "resourcesBefore": {
+        "rssBytes": 298860544,
+        "duckdb": {
+          "memoryBytes": "8113248",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 299384832,
+        "duckdb": {
+          "memoryBytes": "8113248",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 142.12537500000008,
+      "reopenChecksPassed": true,
+      "databaseBytes": 5255168
+    },
+    {
+      "workload": "10",
+      "profile": "naive_sql",
+      "database": "10-naive_sql.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "incomplete-source",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 2.583458000000064,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "pending_knowledge"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 5.199833000000126,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "pending_knowledge"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 2.599166999999852,
+          "latencyMs": {
+            "count": 1,
+            "min": 2.583458000000064,
+            "p50": 2.583458000000064,
+            "p95": 2.583458000000064,
+            "p99": 2.583458000000064,
+            "max": 2.583458000000064
+          }
+        },
+        {
+          "id": "complete-source-overdue",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 2.668875000000071,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "overdue"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 2.3892499999999472,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "overdue"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 2.6866660000000593,
+          "latencyMs": {
+            "count": 1,
+            "min": 2.668875000000071,
+            "p50": 2.668875000000071,
+            "p95": 2.668875000000071,
+            "p99": 2.668875000000071,
+            "max": 2.668875000000071
+          }
+        },
+        {
+          "id": "deadline-boundary",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 2.7949999999998454,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "overdue"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 2.6200000000001182,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "overdue"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 2.8191669999998794,
+          "latencyMs": {
+            "count": 1,
+            "min": 2.7949999999998454,
+            "p50": 2.7949999999998454,
+            "p95": 2.7949999999998454,
+            "p99": 2.7949999999998454,
+            "max": 2.7949999999998454
+          }
+        },
+        {
+          "id": "completed-late",
+          "operation": "workflow_status",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 2.6817920000000868,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "completed_late"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 2.663958999999977,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "completed_late"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 2.698375000000169,
+          "latencyMs": {
+            "count": 1,
+            "min": 2.6817920000000868,
+            "p50": 2.6817920000000868,
+            "p95": 2.6817920000000868,
+            "p99": 2.6817920000000868,
+            "max": 2.6817920000000868
+          }
+        }
+      ],
+      "openMs": 8.555374999999913,
+      "schemaMs": 0.8339590000000499,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.1887090000000171
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.5513329999998859
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.585582999999815
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.55987499999992
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "start",
+            "logicalPosition": "1",
+            "elapsedMs": 0.693042000000105
+          },
+          {
+            "eventId": "watermark15",
+            "logicalPosition": "2",
+            "elapsedMs": 0.2907909999998992
+          },
+          {
+            "eventId": "watermark20",
+            "logicalPosition": "3",
+            "elapsedMs": 0.3032909999999447
+          },
+          {
+            "eventId": "done",
+            "logicalPosition": "4",
+            "elapsedMs": 0.3251669999999649
+          }
+        ]
+      },
+      "ingestionMs": 2.9099169999999503,
+      "resourcesBefore": {
+        "rssBytes": 304726016,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 304742400,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 7.961958999999979,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720
+    }
+  ],
+  "sourceSha256": {
+    "workloads/run_three_engines.mjs": "f83467e30e72db703a96c4a3f4d78ab7d053d6997042d2dc752726d9c7b0f752",
+    "workloads/engine_cases.mjs": "6a4b9010bc2902699bb1869be07c7abc707d927d1b2bc19ede5c123752fd0460",
+    "workloads/event_oracles.py": "a12fcbc373865e05b00c53b02136796c003106fa923c6762cf7a0a93f59d2b4d",
+    "workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+  },
+  "runtimeArtifactSha256": {
+    "build/artifact.json": "3e8a24cbc378455d08c8b864ea011c033d197c4f471d68e877e238c2c1a4a24a",
+    "build/temporal_datalog.duckdb_extension": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b",
+    "build/temporal_control.node": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "build/adapter/native-entity.js": "86d36a999928ec656a7c58419de83fd3bc3c7cf3610b9c1972400bc65ea36c3b",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/owner_probe/artifact.json": "8dad69e642b374f3e3a755bd039ddcd1ea79cce60db87673728a9fc711e32c02",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "68a4f021b8bc9ec38c2ddda4370460ed0d9aa6bdd81d847e30205b67486b1af6"
+  },
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.26.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "catalog_sql_sha256": "3ff4165c48ad45c70b510f0664b896e74f3fe16a1a41b4a42d686a737d833562",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "schema_borrowed_input": true,
+    "experimental_current_unique_fast_path": true,
+    "experimental_injective_projection_fast_path": true,
+    "experimental_identity_count_fast_path": false,
+    "experimental_all_cut_unique_fast_path": true,
+    "experimental_streaming_source_fast_path": true,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "a740182ab07ceb176e9a253d0c4fbfa48bcd8d1c362cf7263b57ca406b4671a2",
+      "native/src/temporal_command.hpp": "a646e8949995fe0652ce1c3b1d508da289368eeeec079c9e33b7bae7d24e8467",
+      "native/src/temporal_compat.cpp": "4e7523b766ab366732f1e3ae5e3aa7d86668969786e793102c2b3a9ed19d6ca4",
+      "native/src/temporal_compat.hpp": "7a58d0d65069782f36b3321020f255569cc25056b9af6ebb9e5792483f285c77",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "d022a12706b5abf9493df41d72657b0f84e8668e9a645788ce625d09c482bb31",
+      "native/src/temporal_core.hpp": "bf476bf4328996f931045db8b7ead9e532ea1fbfc90759a4164a3a232465943f",
+      "native/src/temporal_count_plan.hpp": "db34d5b54e64e5046cff7cc765e21eb849e12ac1ec81323f4dc929b204c2cd05",
+      "native/src/temporal_current_unique.hpp": "2b4b3782bfdad09cae18fad5250a5644a5b9b57f20e53664d478db0f27a90171",
+      "native/src/temporal_datalog.cpp": "cfab48c1cc2150267eb734ab24d56b03f93e4e7c3487cfd3dd11131fa142c676",
+      "native/src/temporal_expression.hpp": "2c09926cba3764fbfdffd9ca98737853e3a159f763a32ff76586f1a5023938f2",
+      "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+      "native/src/temporal_integrity.hpp": "b211163d91c0ce8d243470ff3f32a5d9fd81cd1cfe11673079d5a5ae8a7032c6",
+      "native/src/temporal_join_plan.hpp": "663e0ed5a2c1982b14b965ab832a9b21e6f6d441ec68fbc796a1db85176f609e",
+      "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "87e5dd35ed2566a2936453f195ed43b97412e0e6849c196cd0b1d1760a4e0f1d",
+      "native/src/temporal_scan_plan.hpp": "f4c6fa376d89bdd58c6e4c9e1638b824358042e178660c22c2d58ba42dce42fe",
+      "native/src/temporal_schema.cpp": "b5befcc9c60fbeced1c8c2037bc4fc16279394133105276bb92da4048fe3fd4e",
+      "native/src/temporal_schema.hpp": "5ba7657d14d0b130a1c252483f40b696397c21d919f5e887ee96ceae86c3129a",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "6b51545ca37f0c404458af4a5014092dfc0ace664c1b157d7339db375ca3581e",
+      "native/src/temporal_store_query.hpp": "31eb44f84716c084446cb741f3f43a1e7089ee86480318258bb90dffed8a8d9f",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+      "native/src/temporal_value_domain.hpp": "22330d5f9a201293d902a0e06b3d247bade4ab6b61921a1cbbebe23aa66febba"
+    },
+    "library_sha256": "9de5796973f4c02af80b336a56c5803972fbc93da8dda507c379daad02279d71",
+    "extension_sha256": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b"
+  },
+  "duckdbApiSha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3",
+  "duckdbBindingSha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902",
+  "duckdbLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "duckdbVersion": "v2.0.0",
+  "selectedCaseCount": 7,
+  "executedEngineCaseCount": 21,
+  "passedEngineCaseCount": 21
+}

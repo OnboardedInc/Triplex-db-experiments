@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "completed_readback_utc": "2026-10-31T02:17:35.972119+00:00",
+  "actual_aggregate_exit_code": 0,
+  "source_files_verified_pre_post": 269,
+  "all_export_source_equals_working": true,
+  "export_manifest_sha256": "cb63b5055b4e58dc9a2cfbaaf4d316a107be8c807b4cac6d387d40446151273d",
+  "typed_store_sha256": "57869b41ffa95eb19ff4a34fe842652c4c658dff81230c6257556a355387d1fd",
+  "FP_sha256": "92169be543692ff30a1824fa0add9cdb7e3139c864bdef8fdc5d1b0ec9710164",
+  "native_artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+  "native_artifact_bytes": 202678,
+  "protected_working_native_unchanged": true,
+  "reports": {
+    "engine/build/core-verification/verification.json": {
+      "status": "PASS",
+      "sha256": "62a27a53eee27370b957d2b2e2e2c8436588059be9a4de06e00b795dc0e41372"
+    },
+    "engine/build/item2-core-verification/verification.json": {
+      "status": "PASS",
+      "sha256": "7ba6e12af8de68e50eba1c4843a0b759b11c410913cc636445e0ab3e1952d5d6"
+    },
+    "engine/build/item2-core-verification-sanitized/verification.json": {
+      "status": "PASS",
+      "sha256": "99e701e89d467df859f11081d049e53ce5eba3d22d05203b9f071d36ea4cfb4f"
+    },
+    "engine/build/item2-store-verification.json": {
+      "status": "PASS",
+      "sha256": "b610f83755af310542b53c3c93d1959291932e9c06b1c4370d599a47eec41f8e"
+    },
+    "engine/tests/typed-verification.json": {
+      "status": "PASS",
+      "sha256": "84506d635d9146fcca3d70cd00c06d50f144f5caf0b03391b51a4f35fcd68f85"
+    }
+  },
+  "new_codec_suite": "13methods PASS; default hashseed run; writer fixed4seed repetitions separately retained",
+  "batch_suite": "11methods/115existing isolated child specifications, no unavailable skip; not115 independently captured rawchildrecords",
+  "reader_suite": "16methods/79isolated captured children/native6or7reads, zero unavailable skips",
+  "real_expression_store": "13methods,zero skips",
+  "typed_present_absence_arm": "one accurately retained inapplicable absence-arm skip; root full no-engine closure next",
+  "scope": "Fullcleanexport normal/native/header/store/browser/directcoreSAN/accepted+frozen differential; not new full-binding/hostSAN or roadmap acceptance",
+  "codec_macro_performance": "NOT_RUN"
+}

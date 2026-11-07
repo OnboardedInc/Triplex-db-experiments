@@ -1,0 +1,62 @@
+{
+  "status": "PREPARATION_CHECKED_NATIVE_UNRUN",
+  "scope": "Isolated native acceptance tests/spec only; not a typed Datalog implementation or native conformance result",
+  "python": "3.12.14",
+  "syntax_compile": {
+    "files": [
+      "native_acceptance.py",
+      "selftest_harness.py"
+    ],
+    "status": "passed",
+    "writes_bytecode": false
+  },
+  "harness_self_tests": {
+    "run": 8,
+    "passed": 8,
+    "native_evaluator_tests": 0,
+    "log": "harness-selftest.log"
+  },
+  "fixture_snapshot": {
+    "answers": 20,
+    "native_program_rejections_unexecuted": 8,
+    "harness_source_rejections_checked": 7,
+    "sha256": "247e80d77a51f3a6287f40b078c5b090690992a64b15101779e64a006a796edf"
+  },
+  "integration": {
+    "status": "UNRUN",
+    "real_extension_loads": 0,
+    "real_native_tests_run": 0,
+    "selected_default_tests": 56,
+    "selected_with_large_cases": 57,
+    "reason": "Implementation ownership handoff pending; no real td_query_v2 binary selected or loaded"
+  },
+  "availability_paths": {
+    "no_extension_actual": {
+      "status": "UNAVAILABLE",
+      "exit_code": 2,
+      "native_tests_run": 0
+    },
+    "missing_v2_catalog_mock": {
+      "status": "UNAVAILABLE",
+      "exit_code": 2,
+      "native_tests_run": 0,
+      "note": "Harness control-flow mock only, no database/native evaluator"
+    }
+  },
+  "selected_contract": {
+    "path": "../API-v2-decisions.md",
+    "sha256": "7be771e34ba0738f2e9c0a11d04e7f41c7417f9ca61ced8e03af86ac2a17ed22",
+    "json_i64": "canonical decimal strings reject -0, +1 and leading zeroes",
+    "datalog_minus_zero": "accepted and normalized"
+  },
+  "untested": [
+    "real LOAD/evaluation",
+    "all real native acceptance cases",
+    "production source adapters",
+    "store migration/crash/reopen",
+    "full legacy suite",
+    "SQL/reference parity",
+    "performance",
+    "complete typed dictionary/output memory accounting"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "goal4-semantic-companion-review-manifest-v1",
+  "frozen_utc": "2026-10-31T17:47:41Z",
+  "scope": "New disjoint pre-code companion/merged-proposal source-only review; no implementation or runtime authority",
+  "self_excluded": true,
+  "files": [
+    {
+      "path": "COMPANION-REVIEW.md",
+      "size_bytes": 7343,
+      "sha256": "bbe7b26cd8d0e64236b7fe8e07873f2a22f3c1ee71f4980dc3b1739e71bdfbbc"
+    },
+    {
+      "path": "EVIDENCE.json",
+      "size_bytes": 4211,
+      "sha256": "08a66e5a6a004fc85c50fa7ce56fd6032980ae221d4fea9b68c9ca5589a0b51a"
+    },
+    {
+      "path": "progress.jsonl",
+      "size_bytes": 5544,
+      "sha256": "ea15e7fb5e9bb0628e393fba5e84c683a8d5a1752dcb42f9a1237ba9bedee8e4"
+    }
+  ]
+}

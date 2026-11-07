@@ -1,0 +1,14 @@
+✔ pruned anti membership retains all eight tags, repeated bindings and duplicate head support (1233.991625ms)
+✔ positive-driven membership leaves full RHS logical row/byte admission and output bounds intact (797.551084ms)
+✔ a prunable wide RHS still faults before membership, including an empty positive side, and readers recover (478.858875ms)
+✔ anti membership is exact across typed values and both correction cuts (1316.532875ms)
+✔ blocking one positive support preserves the set answer until the final support is blocked (792.083083ms)
+✔ repeated variables and ground negatives retain typed keys and preconstruction bounds (984.612208ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3238.921458

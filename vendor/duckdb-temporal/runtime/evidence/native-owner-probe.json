@@ -1,0 +1,1271 @@
+{
+  "schema": "native-owner-probe/1",
+  "scope": "Actual packaged Node engine loading and lifecycle observations. No data-validation bypass or trust certification.",
+  "build": {
+    "schema": "native-owner-probe-build/1",
+    "engine": "2.0.0",
+    "abi": "CPP",
+    "test_command": [
+      "node",
+      "adapter/test-owner-probe.mjs"
+    ],
+    "source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "source_archive_sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+    "dependency_license_sha256": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3",
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "probe_source_sha256": "5b3477f9c66a569fa559091e7c6b54030a730b4495bf8e00128d1ab88f6e80a1",
+    "library_sha256": "0217d1a58a8bb7b78c4843044dce3b1ae06c9e56d0c2d9a992b7ca7c11668935",
+    "extension_sha256": "61adb77f6fea0ad5e795711a901fe986772f51be5cfe072ca053432f85a46cf7",
+    "headers_sha256": {
+      "duckdb/common/exception.hpp": "225053a2f1bb4171d3fa066e78783800210041b31f5c06ecb839239ea59c4e51",
+      "duckdb/common/types/data_chunk.hpp": "2a4201a20b74f0dfe17d92e0d1d9b52684a11e0c7010cdc21ce11510f43cb649",
+      "duckdb/common/types/value.hpp": "2bf173b58b09f1292abaa89da509860cce7c9d2ae01f4c7909dc0f0f8b0a32fe",
+      "duckdb/function/scalar_function.hpp": "e4c44b31c3c853a13160da48d69c8209deec936fe0e4d14e94e31adf9e4fb7dd",
+      "duckdb/main/client_context.hpp": "c753b9242ec947e56db73881caa12476648dc44b38711a9aa829493cf4438691",
+      "duckdb/main/client_context_state.hpp": "a4ec23711715d9163f86cd7533c58fbbb8a3d5f2934b7a2e563ee31b94056447",
+      "duckdb/main/connection_manager.hpp": "66a506a2a6fcdc927a4caadf5709bda6affdf180b23544ab6d7180457408f20d",
+      "duckdb/main/database.hpp": "45834eb51cdb83e6ead27c580399331186289fbca2fb3500a15dccadc55fbb68",
+      "duckdb/main/extension/extension_loader.hpp": "8518760b6c391ace37c9ede72f0e4fbcc63cdb1cf750a06427849af297f490dd",
+      "duckdb/planner/extension_callback.hpp": "39a1227729d44d73da36f03f246d4602a0c5216fb46a8c2fb272b86fadca4599",
+      "duckdb/transaction/meta_transaction.hpp": "1a5d1f9fbde38dfb541dea6b2774ca6360450e0b6ff983bcc97163bd9a60e2fa"
+    }
+  },
+  "observations": [
+    {
+      "case": "shared_instance",
+      "snapshot": {
+        "connection": 2,
+        "generation": 1,
+        "armed": true,
+        "live": [
+          2,
+          3
+        ],
+        "enrolled": [
+          2,
+          3
+        ],
+        "events": [
+          {
+            "sequence": 1,
+            "kind": "initial_connection",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 2,
+            "kind": "initial_connection",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 3,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 1,
+            "generation": 0
+          },
+          {
+            "sequence": 4,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 5,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 6,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 7,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 8,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 9,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 3,
+            "generation": 0
+          },
+          {
+            "sequence": 10,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 11,
+            "kind": "transaction_commit",
+            "connection": 3,
+            "transaction": 3,
+            "generation": 0
+          },
+          {
+            "sequence": 12,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 13,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 4,
+            "generation": 0
+          },
+          {
+            "sequence": 14,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 15,
+            "kind": "transaction_rollback",
+            "connection": 2,
+            "transaction": 4,
+            "generation": 0
+          },
+          {
+            "sequence": 16,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 17,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 5,
+            "generation": 0
+          },
+          {
+            "sequence": 18,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 19,
+            "kind": "enroll",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 20,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 5,
+            "generation": 0
+          },
+          {
+            "sequence": 21,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 22,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 6,
+            "generation": 0
+          },
+          {
+            "sequence": 23,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 24,
+            "kind": "enroll",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 25,
+            "kind": "transaction_commit",
+            "connection": 3,
+            "transaction": 6,
+            "generation": 0
+          },
+          {
+            "sequence": 26,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 27,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 7,
+            "generation": 0
+          },
+          {
+            "sequence": 28,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 29,
+            "kind": "arm",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 30,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 7,
+            "generation": 1
+          },
+          {
+            "sequence": 31,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 32,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 8,
+            "generation": 1
+          },
+          {
+            "sequence": 33,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 34,
+            "kind": "check",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 35,
+            "kind": "transaction_commit",
+            "connection": 3,
+            "transaction": 8,
+            "generation": 1
+          },
+          {
+            "sequence": 36,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 37,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 9,
+            "generation": 1
+          },
+          {
+            "sequence": 38,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          }
+        ]
+      }
+    },
+    {
+      "case": "invalidate_before_use",
+      "snapshot": {
+        "connection": 2,
+        "generation": 2,
+        "armed": false,
+        "live": [
+          2,
+          3,
+          4
+        ],
+        "enrolled": [
+          2,
+          3
+        ],
+        "events": [
+          {
+            "sequence": 1,
+            "kind": "initial_connection",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 2,
+            "kind": "initial_connection",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 3,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 1,
+            "generation": 0
+          },
+          {
+            "sequence": 4,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 5,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 6,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 7,
+            "kind": "enroll",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 8,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 9,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 10,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 3,
+            "generation": 0
+          },
+          {
+            "sequence": 11,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 12,
+            "kind": "enroll",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 13,
+            "kind": "transaction_commit",
+            "connection": 3,
+            "transaction": 3,
+            "generation": 0
+          },
+          {
+            "sequence": 14,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 15,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 4,
+            "generation": 0
+          },
+          {
+            "sequence": 16,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 17,
+            "kind": "arm",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 18,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 4,
+            "generation": 1
+          },
+          {
+            "sequence": 19,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 20,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 5,
+            "generation": 1
+          },
+          {
+            "sequence": 21,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 22,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 5,
+            "generation": 1
+          },
+          {
+            "sequence": 23,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 24,
+            "kind": "connection_open",
+            "connection": 4,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 25,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 6,
+            "generation": 2
+          },
+          {
+            "sequence": 26,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 27,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 6,
+            "generation": 2
+          },
+          {
+            "sequence": 28,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 29,
+            "kind": "transaction_begin",
+            "connection": 4,
+            "transaction": 7,
+            "generation": 2
+          },
+          {
+            "sequence": 30,
+            "kind": "query_begin",
+            "connection": 4,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 31,
+            "kind": "transaction_commit",
+            "connection": 4,
+            "transaction": 7,
+            "generation": 2
+          },
+          {
+            "sequence": 32,
+            "kind": "query_end",
+            "connection": 4,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 33,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 8,
+            "generation": 2
+          },
+          {
+            "sequence": 34,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          }
+        ]
+      }
+    },
+    {
+      "case": "prepared_guard",
+      "snapshot": {
+        "connection": 2,
+        "generation": 2,
+        "armed": false,
+        "live": [
+          2,
+          3,
+          4
+        ],
+        "enrolled": [
+          2,
+          3
+        ],
+        "events": [
+          {
+            "sequence": 1,
+            "kind": "initial_connection",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 2,
+            "kind": "initial_connection",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 3,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 1,
+            "generation": 0
+          },
+          {
+            "sequence": 4,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 5,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 6,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 7,
+            "kind": "enroll",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 8,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 9,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 10,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 3,
+            "generation": 0
+          },
+          {
+            "sequence": 11,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 12,
+            "kind": "enroll",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 13,
+            "kind": "transaction_commit",
+            "connection": 3,
+            "transaction": 3,
+            "generation": 0
+          },
+          {
+            "sequence": 14,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 15,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 4,
+            "generation": 0
+          },
+          {
+            "sequence": 16,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 17,
+            "kind": "arm",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 18,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 4,
+            "generation": 1
+          },
+          {
+            "sequence": 19,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 20,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 5,
+            "generation": 1
+          },
+          {
+            "sequence": 21,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 22,
+            "kind": "transaction_commit",
+            "connection": 3,
+            "transaction": 5,
+            "generation": 1
+          },
+          {
+            "sequence": 23,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 24,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 6,
+            "generation": 1
+          },
+          {
+            "sequence": 25,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 26,
+            "kind": "check",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 27,
+            "kind": "transaction_commit",
+            "connection": 3,
+            "transaction": 6,
+            "generation": 1
+          },
+          {
+            "sequence": 28,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 29,
+            "kind": "connection_open",
+            "connection": 4,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 30,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 7,
+            "generation": 2
+          },
+          {
+            "sequence": 31,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 32,
+            "kind": "check",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 33,
+            "kind": "transaction_rollback",
+            "connection": 3,
+            "transaction": 7,
+            "generation": 2
+          },
+          {
+            "sequence": 34,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 35,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 8,
+            "generation": 2
+          },
+          {
+            "sequence": 36,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          }
+        ]
+      }
+    },
+    {
+      "case": "explicit_invalidation_and_transactions",
+      "snapshot": {
+        "connection": 2,
+        "generation": 2,
+        "armed": false,
+        "live": [
+          2,
+          3
+        ],
+        "enrolled": [
+          2,
+          3
+        ],
+        "events": [
+          {
+            "sequence": 1,
+            "kind": "initial_connection",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 2,
+            "kind": "initial_connection",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 3,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 1,
+            "generation": 0
+          },
+          {
+            "sequence": 4,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 5,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 6,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 7,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 8,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 9,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 3,
+            "generation": 0
+          },
+          {
+            "sequence": 10,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 11,
+            "kind": "enroll",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 12,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 3,
+            "generation": 0
+          },
+          {
+            "sequence": 13,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 14,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 4,
+            "generation": 0
+          },
+          {
+            "sequence": 15,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 16,
+            "kind": "enroll",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 17,
+            "kind": "transaction_commit",
+            "connection": 3,
+            "transaction": 4,
+            "generation": 0
+          },
+          {
+            "sequence": 18,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 19,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 5,
+            "generation": 0
+          },
+          {
+            "sequence": 20,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 21,
+            "kind": "arm",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 22,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 5,
+            "generation": 1
+          },
+          {
+            "sequence": 23,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 24,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 6,
+            "generation": 1
+          },
+          {
+            "sequence": 25,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 1
+          },
+          {
+            "sequence": 26,
+            "kind": "dispatch_invalidate",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 27,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 6,
+            "generation": 2
+          },
+          {
+            "sequence": 28,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 29,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 7,
+            "generation": 2
+          },
+          {
+            "sequence": 30,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 31,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 32,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 33,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 34,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 35,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 7,
+            "generation": 2
+          },
+          {
+            "sequence": 36,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 37,
+            "kind": "transaction_begin",
+            "connection": 3,
+            "transaction": 8,
+            "generation": 2
+          },
+          {
+            "sequence": 38,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 39,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 40,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 41,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 42,
+            "kind": "query_begin",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 43,
+            "kind": "transaction_rollback",
+            "connection": 3,
+            "transaction": 8,
+            "generation": 2
+          },
+          {
+            "sequence": 44,
+            "kind": "query_end",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 2
+          },
+          {
+            "sequence": 45,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 9,
+            "generation": 2
+          },
+          {
+            "sequence": 46,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 2
+          }
+        ]
+      }
+    },
+    {
+      "case": "independent_instance",
+      "snapshot": {
+        "connection": 2,
+        "generation": 0,
+        "armed": false,
+        "live": [
+          2,
+          3
+        ],
+        "enrolled": [],
+        "events": [
+          {
+            "sequence": 1,
+            "kind": "initial_connection",
+            "connection": 3,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 2,
+            "kind": "initial_connection",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 3,
+            "kind": "transaction_commit",
+            "connection": 2,
+            "transaction": 1,
+            "generation": 0
+          },
+          {
+            "sequence": 4,
+            "kind": "query_end",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          },
+          {
+            "sequence": 5,
+            "kind": "transaction_begin",
+            "connection": 2,
+            "transaction": 2,
+            "generation": 0
+          },
+          {
+            "sequence": 6,
+            "kind": "query_begin",
+            "connection": 2,
+            "transaction": 0,
+            "generation": 0
+          }
+        ]
+      }
+    }
+  ],
+  "result": "PASS",
+  "checks": 5,
+  "first_attempt": {
+    "result": "FAIL",
+    "checks": 5,
+    "failures": 5,
+    "stage": "LOAD",
+    "diagnostic": "Expected entrypoint temporal_owner_probe_duckdb_cpp_init was absent because it was exported with C++ linkage.",
+    "probe_source_sha256": "ca1913a5429d21a4c9b8fb33b30ff42642577ba26e1ba2ceb31e4c4c7b1372f2",
+    "extension_sha256": "bf80afc92168e8dd9736fa79ab7e9a4194683a1b5088d8ccef6955a65332adce",
+    "correction": "Give the DuckDB C++ extension entrypoint C linkage. No runtime or dependency replacement."
+  },
+  "limitations": [
+    "Lifecycle feasibility only. No fact-store validation checks were removed or bypassed.",
+    "Enrolled connections may execute raw SQL without automatic invalidation; explicit dispatch invalidation remains a caller obligation.",
+    "The arm operation proves enrollment only and is not a data-integrity certificate.",
+    "Transaction-commit callbacks are observed after commit; they are not a pre-commit invalidation barrier.",
+    "Executed only against the selected macOS arm64 Node DuckDB 2.0.0-r.1 runtime."
+  ],
+  "test_run_ms": 194.327167,
+  "test_command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "adapter/test-owner-probe.mjs"
+  ],
+  "test_source_sha256": "b4b656fbb38519a7a3479e7d5211b54734665b4e87b9363d03a6e268fa0b2537"
+}

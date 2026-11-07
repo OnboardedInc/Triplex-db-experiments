@@ -1,0 +1,66 @@
+{
+  "schema": "td.native-writer-b0-broad-root-review/1",
+  "status": "accepted_forward27_engineering_screen_reverse_pending",
+  "recordedAtUtc": "2026-11-06T09:53:12.977235+00:00",
+  "evidenceCommit": "a32b8347b6cf3429998e284e4d32885f7bd77239",
+  "receiptSha256": "790149316ca7f1448bed580cc995cd2cfb28f2323e50b487669826efb1ced48f",
+  "originalAndPackagedHashesAndFourPathAliasesVerified": true,
+  "rawFiles": 38,
+  "gates": 27,
+  "passed": 27,
+  "profiles": [
+    {
+      "role": "original_B0",
+      "savedSamples": 659,
+      "acks": 49,
+      "qps": 5.605161955529744,
+      "p50": 2624.993709000002,
+      "p99": 4910.92620799999,
+      "ackRate": 0.808570264494412,
+      "rss": 2722316288,
+      "fullWindows": [
+        6,
+        9,
+        9,
+        8,
+        8,
+        8
+      ],
+      "finalK": 39136
+    },
+    {
+      "role": "cpp_candidate",
+      "savedSamples": 666,
+      "acks": 1198,
+      "qps": 5.664412300787071,
+      "p50": 2767.701665999979,
+      "p99": 4164.955665999994,
+      "ackRate": 19.96237440948873,
+      "rss": 2647359488,
+      "fullWindows": [
+        199,
+        199,
+        199,
+        198,
+        200,
+        202
+      ],
+      "finalK": 40285
+    }
+  ],
+  "independentPeerReview": "native_read_strategy CLEAR27 plus actual PID/5vs6 images/106 closed B0 ports/CPP cleanup/cuts/371+532+6ea closure",
+  "coordinationNote": {
+    "schema": "td.native-writer-b0-broad-coordination-update/1",
+    "recordedAtUtc": "2026-11-06T09:33:44.721477+00:00",
+    "source": "A retainedtoolresults",
+    "commitFastForward": "9a539 to da7cc",
+    "pushWallSeconds": 1.460960667,
+    "remoteReadbackWallSeconds": 0.365246875,
+    "exactActivityUtcInterval": null,
+    "overlapClassification": "possible overlap, unlocated; commit date is not push start",
+    "causalEffect": "Unknown",
+    "furtherActivity": "A reports no furtherpush/check/engine",
+    "action": "Keep original pair and thresholds; no favorable rerun"
+  },
+  "scope": "Full typed assertions in frozen driver; saved widths and knowledge frontiers independently audited. Small source Git checkpoint may have overlapped at an unrecorded UTC interval; no CPU effect inferred. Reverse and final exact-snapshot integration remain required."
+}

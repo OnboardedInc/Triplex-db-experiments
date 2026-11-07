@@ -1,0 +1,440 @@
+{
+  "label": "Distinct persisted public typed-store query/query_json method return, not native SQL invocation",
+  "manifest_sha256": "e8d88d87832abefbeb9074f9c6a2abff8a07c646264aaa506fc15a3c35400ed3",
+  "fresh_processes": 24,
+  "paired_blocks": 12,
+  "all480_outcomes_pass": true,
+  "measured": 288,
+  "warmup": 192,
+  "same_physical_history_template": {
+    "database_relative_path": "variants/accepted-item1/storage/data/template.duckdb",
+    "database_sha256": "9a22f33e305134cb05f52cb4829039e14869073c76075042f9c7146208621183",
+    "history_checksum": "2fe50bd9fa8cd1a29fea8633241b602f6635f3235fd15f4f179489d76e31d642",
+    "position": 10,
+    "facts": 320,
+    "public_caps_unmodified": true
+  },
+  "controls": [
+    {
+      "control_id": 0,
+      "dataset": "float",
+      "api": "query",
+      "accepted_median_ns": 3473721.0,
+      "candidate_median_ns": 4221123.5,
+      "median_paired_ratio": 1.272933392695905,
+      "bootstrap95_interval": [
+        1.14393196142052,
+        1.3261486552732507
+      ],
+      "load_order_medians": {
+        "accepted-item1": 1.3147284015896257,
+        "candidate-item2": 1.2710451096537723
+      },
+      "pairs": [
+        {
+          "block": 0,
+          "first": "candidate-item2",
+          "accepted_ns": 3259135,
+          "candidate_ns": 4204218,
+          "ratio": 1.2899797032034575
+        },
+        {
+          "block": 1,
+          "first": "candidate-item2",
+          "accepted_ns": 3270635,
+          "candidate_ns": 4230878,
+          "ratio": 1.2935952804271953
+        },
+        {
+          "block": 2,
+          "first": "accepted-item1",
+          "accepted_ns": 3324977,
+          "candidate_ns": 4517653,
+          "ratio": 1.358702030119306
+        },
+        {
+          "block": 3,
+          "first": "accepted-item1",
+          "accepted_ns": 3636736,
+          "candidate_ns": 4168147,
+          "ratio": 1.1461230619984513
+        },
+        {
+          "block": 4,
+          "first": "candidate-item2",
+          "accepted_ns": 3514152,
+          "candidate_ns": 4452354,
+          "ratio": 1.26697820697568
+        },
+        {
+          "block": 5,
+          "first": "candidate-item2",
+          "accepted_ns": 3594032,
+          "candidate_ns": 4069969,
+          "ratio": 1.132424252204766
+        },
+        {
+          "block": 6,
+          "first": "candidate-item2",
+          "accepted_ns": 3640001,
+          "candidate_ns": 4641409,
+          "ratio": 1.2751120123318647
+        },
+        {
+          "block": 7,
+          "first": "accepted-item1",
+          "accepted_ns": 4517994,
+          "candidate_ns": 3922196,
+          "ratio": 0.86812775758445
+        },
+        {
+          "block": 8,
+          "first": "accepted-item1",
+          "accepted_ns": 3433290,
+          "candidate_ns": 4951437,
+          "ratio": 1.4421843188312085
+        },
+        {
+          "block": 9,
+          "first": "candidate-item2",
+          "accepted_ns": 3646288,
+          "candidate_ns": 4163116,
+          "ratio": 1.1417408608425883
+        },
+        {
+          "block": 10,
+          "first": "accepted-item1",
+          "accepted_ns": 3314069,
+          "candidate_ns": 4211369,
+          "ratio": 1.2707547730599453
+        },
+        {
+          "block": 11,
+          "first": "accepted-item1",
+          "accepted_ns": 3183983,
+          "candidate_ns": 4710259,
+          "ratio": 1.4793605996011914
+        }
+      ]
+    },
+    {
+      "control_id": 1,
+      "dataset": "float",
+      "api": "query_json",
+      "accepted_median_ns": 3480967.0,
+      "candidate_median_ns": 4410330.0,
+      "median_paired_ratio": 1.263223573059785,
+      "bootstrap95_interval": [
+        1.1781767821231617,
+        1.3423732137743545
+      ],
+      "load_order_medians": {
+        "accepted-item1": 1.2815282710493217,
+        "candidate-item2": 1.2522475187689082
+      },
+      "pairs": [
+        {
+          "block": 0,
+          "first": "candidate-item2",
+          "accepted_ns": 3275730,
+          "candidate_ns": 4465902,
+          "ratio": 1.3633303111062267
+        },
+        {
+          "block": 1,
+          "first": "candidate-item2",
+          "accepted_ns": 3446730,
+          "candidate_ns": 4154904,
+          "ratio": 1.2054625688696243
+        },
+        {
+          "block": 2,
+          "first": "accepted-item1",
+          "accepted_ns": 3346220,
+          "candidate_ns": 4450983,
+          "ratio": 1.3301525303177915
+        },
+        {
+          "block": 3,
+          "first": "accepted-item1",
+          "accepted_ns": 3675945,
+          "candidate_ns": 4230612,
+          "ratio": 1.150890995376699
+        },
+        {
+          "block": 4,
+          "first": "candidate-item2",
+          "accepted_ns": 3265798,
+          "candidate_ns": 4413937,
+          "ratio": 1.3515646099360707
+        },
+        {
+          "block": 5,
+          "first": "candidate-item2",
+          "accepted_ns": 4018206,
+          "candidate_ns": 4194226,
+          "ratio": 1.043805618726367
+        },
+        {
+          "block": 6,
+          "first": "candidate-item2",
+          "accepted_ns": 3515204,
+          "candidate_ns": 4547068,
+          "ratio": 1.2935431343387183
+        },
+        {
+          "block": 7,
+          "first": "accepted-item1",
+          "accepted_ns": 4614309,
+          "candidate_ns": 4343461,
+          "ratio": 0.9413025872346217
+        },
+        {
+          "block": 8,
+          "first": "accepted-item1",
+          "accepted_ns": 4151822,
+          "candidate_ns": 5118798,
+          "ratio": 1.2329040117808518
+        },
+        {
+          "block": 9,
+          "first": "candidate-item2",
+          "accepted_ns": 3639057,
+          "candidate_ns": 4406723,
+          "ratio": 1.210951903199098
+        },
+        {
+          "block": 10,
+          "first": "accepted-item1",
+          "accepted_ns": 3194388,
+          "candidate_ns": 4258700,
+          "ratio": 1.3331818176126382
+        },
+        {
+          "block": 11,
+          "first": "accepted-item1",
+          "accepted_ns": 3234108,
+          "candidate_ns": 4454204,
+          "ratio": 1.3772588917871635
+        }
+      ]
+    },
+    {
+      "control_id": 2,
+      "dataset": "mixed",
+      "api": "query",
+      "accepted_median_ns": 2464782.0,
+      "candidate_median_ns": 2449863.0,
+      "median_paired_ratio": 1.0384247926421017,
+      "bootstrap95_interval": [
+        0.8811142749063354,
+        1.0841771722406115
+      ],
+      "load_order_medians": {
+        "accepted-item1": 1.0314899083986173,
+        "candidate-item2": 1.0384247926421017
+      },
+      "pairs": [
+        {
+          "block": 0,
+          "first": "candidate-item2",
+          "accepted_ns": 2260772,
+          "candidate_ns": 2402636,
+          "ratio": 1.0627502463760168
+        },
+        {
+          "block": 1,
+          "first": "candidate-item2",
+          "accepted_ns": 2403560,
+          "candidate_ns": 2497890,
+          "ratio": 1.0392459518381068
+        },
+        {
+          "block": 2,
+          "first": "accepted-item1",
+          "accepted_ns": 2290659,
+          "candidate_ns": 2620076,
+          "ratio": 1.1438088340516857
+        },
+        {
+          "block": 3,
+          "first": "accepted-item1",
+          "accepted_ns": 2638082,
+          "candidate_ns": 2374445,
+          "ratio": 0.9000648956325088
+        },
+        {
+          "block": 4,
+          "first": "candidate-item2",
+          "accepted_ns": 2172321,
+          "candidate_ns": 2401727,
+          "ratio": 1.1056040981052064
+        },
+        {
+          "block": 5,
+          "first": "candidate-item2",
+          "accepted_ns": 2982281,
+          "candidate_ns": 2382127,
+          "ratio": 0.7987600765990864
+        },
+        {
+          "block": 6,
+          "first": "candidate-item2",
+          "accepted_ns": 2557572,
+          "candidate_ns": 2653746,
+          "ratio": 1.0376036334460965
+        },
+        {
+          "block": 7,
+          "first": "accepted-item1",
+          "accepted_ns": 3130334,
+          "candidate_ns": 2528518,
+          "ratio": 0.8077470327447487
+        },
+        {
+          "block": 8,
+          "first": "accepted-item1",
+          "accepted_ns": 2526004,
+          "candidate_ns": 3025235,
+          "ratio": 1.1976366624914292
+        },
+        {
+          "block": 9,
+          "first": "candidate-item2",
+          "accepted_ns": 2874757,
+          "candidate_ns": 2478511,
+          "ratio": 0.862163654180162
+        },
+        {
+          "block": 10,
+          "first": "accepted-item1",
+          "accepted_ns": 2268445,
+          "candidate_ns": 2302135,
+          "ratio": 1.0148515833533545
+        },
+        {
+          "block": 11,
+          "first": "accepted-item1",
+          "accepted_ns": 2310037,
+          "candidate_ns": 2421215,
+          "ratio": 1.04812823344388
+        }
+      ]
+    },
+    {
+      "control_id": 3,
+      "dataset": "mixed",
+      "api": "query_json",
+      "accepted_median_ns": 2466398.0,
+      "candidate_median_ns": 2633921.5,
+      "median_paired_ratio": 1.0847496333844653,
+      "bootstrap95_interval": [
+        0.9596726548493439,
+        1.106613128499614
+      ],
+      "load_order_medians": {
+        "accepted-item1": 1.028537027265521,
+        "candidate-item2": 1.093929059125525
+      },
+      "pairs": [
+        {
+          "block": 0,
+          "first": "candidate-item2",
+          "accepted_ns": 2337458,
+          "candidate_ns": 2687265,
+          "ratio": 1.1496527424236072
+        },
+        {
+          "block": 1,
+          "first": "candidate-item2",
+          "accepted_ns": 2440586,
+          "candidate_ns": 2663018,
+          "ratio": 1.091138767492725
+        },
+        {
+          "block": 2,
+          "first": "accepted-item1",
+          "accepted_ns": 2304671,
+          "candidate_ns": 2579614,
+          "ratio": 1.1192981557888306
+        },
+        {
+          "block": 3,
+          "first": "accepted-item1",
+          "accepted_ns": 2743721,
+          "candidate_ns": 2244029,
+          "ratio": 0.8178779839495343
+        },
+        {
+          "block": 4,
+          "first": "candidate-item2",
+          "accepted_ns": 2235716,
+          "candidate_ns": 2451953,
+          "ratio": 1.0967193507583253
+        },
+        {
+          "block": 5,
+          "first": "candidate-item2",
+          "accepted_ns": 2487646,
+          "candidate_ns": 2756502,
+          "ratio": 1.1080764706875497
+        },
+        {
+          "block": 6,
+          "first": "candidate-item2",
+          "accepted_ns": 2680517,
+          "candidate_ns": 2624332,
+          "ratio": 0.9790394912623199
+        },
+        {
+          "block": 7,
+          "first": "accepted-item1",
+          "accepted_ns": 3131937,
+          "candidate_ns": 2643511,
+          "ratio": 0.8440498643491232
+        },
+        {
+          "block": 8,
+          "first": "accepted-item1",
+          "accepted_ns": 2819165,
+          "candidate_ns": 2759155,
+          "ratio": 0.978713555254836
+        },
+        {
+          "block": 9,
+          "first": "candidate-item2",
+          "accepted_ns": 2751892,
+          "candidate_ns": 2588517,
+          "ratio": 0.9406317544438517
+        },
+        {
+          "block": 10,
+          "first": "accepted-item1",
+          "accepted_ns": 2254784,
+          "candidate_ns": 2431470,
+          "ratio": 1.0783604992762057
+        },
+        {
+          "block": 11,
+          "first": "accepted-item1",
+          "accepted_ns": 2445150,
+          "candidate_ns": 2702257,
+          "ratio": 1.1051497863116782
+        }
+      ]
+    }
+  ],
+  "setup_separate": {
+    "accepted-item1": {
+      "source_import_ns": 72009829.0,
+      "store_open_ns": 116650594.0,
+      "peak_rss_kib": 79484.0
+    },
+    "candidate-item2": {
+      "source_import_ns": 74297620.0,
+      "store_open_ns": 124775057.5,
+      "peak_rss_kib": 79498.0
+    }
+  },
+  "limitations": "One small single-round physical history/build pair/default FP,12 pairs, intentional guard/normalization cost included, no universal regression/acceptance claim"
+}

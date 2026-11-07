@@ -1,0 +1,32 @@
+{
+  "status": "NO_KNOWN_REMAINING_STATIC_MUST_FIX_UNDER_SELECTED_CONDITIONAL_IMMUTABLE_GATE",
+  "candidate_or_execution_or_item2_acceptance": false,
+  "findings": [
+    {
+      "id": "RRM01",
+      "kind": "operational_immutable_provenance_constraint",
+      "reported_to_root": true,
+      "paths_lines": ["common.py:285-292", "validation.py:253", "run_study.py:20-22", "controller.py:73-76", "worker.py:30-33", "validation.py:246-282"],
+      "consequence": "Changing profiles_authorized after timing changes the full execution-gate SHA and invalidates completed timing provenance; it does not create an unnoticed successful profile bypass.",
+      "resolution": "Root selected one initial immutable gate granting profile permission conditionally only after both strict A/B timing closures PASS; separate later profile invocation is enforced before profile setup/import/execution.",
+      "production_or_method_edit": false,
+      "remaining_blocker": false
+    },
+    {
+      "id": "RRM02",
+      "kind": "preserved_prior_invalid_freeze_not_new_defect",
+      "paths_lines": ["references/FREEZE-SELF-CAPTURE-DEFECT.json", "freeze_preparation.py:41-47", "POST-FREEZE-READBACK.json"],
+      "consequence": "First7696cc12 preparation included a changing own stdout and is invalid. Distinct selected v2 excludes active outputs and has a post-exit closed-file receipt.",
+      "remaining_blocker": false
+    }
+  ],
+  "known_limits": [
+    "Static-only and bounded text identity subset; no full190 runtime/template byte closure performed by this reviewer.",
+    "397 recorded stdlib controls are synthetic;9 missing-gate CLIs stop at pre-freeze first gate, not all later dynamic stages.",
+    "Synthetic uniform durations and shared derive verification are not an independent heterogeneous estimator implementation.",
+    "Original assignment endpoint can include previous-result disposal; elapsed wall time is not native-only/body-only CPU time.",
+    "42 paired clusters per control do not establish shared-host independence or family-wise/equivalence/universal claims.",
+    "Observed runtime/import/mapping/threads/FP metadata and receipt-derived history are not historical attestation or continuous monitoring.",
+    "Actual correctness/preflight/final-freeze/execution gates, root-captured outer-runner exit and independent postrun closure remain root-owned obligations."
+  ]
+}

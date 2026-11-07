@@ -1,0 +1,348 @@
+{
+  "schema": "td.read-scheduling-cohort-a-screen/1",
+  "result": "REJECTED_NUMERIC_GATE_FAILURE",
+  "source_commit": "28f189d7eb84131569c903a0e6bdb9663cf5e6f5",
+  "recorded_utc": "2026-11-06T00:28:10.811040+00:00",
+  "read_contract": {
+    "cohort": "A",
+    "version": 2,
+    "baselineVersion": 1,
+    "equivalentToV1": false,
+    "pooledRead": "One committed MVCC snapshot at statement execution; an earlier unacknowledged write need not block",
+    "postAck": "A latest read invoked after an ACK must include that committed position",
+    "explicitKnownCut": "Exact historical K, exempt from the latest-read post-ACK lower bound",
+    "writes": "Unchanged FIFO native patches",
+    "publicModeToggle": false,
+    "fullPromotionEligible": false
+  },
+  "decision": "Reject isolated candidate2; original one production v1 strategy remains. No equivalent-v1 speedup or promotion claim.",
+  "configuration": {
+    "readers": [
+      16
+    ],
+    "samples": 20,
+    "warmup": 1,
+    "durationSeconds": 60,
+    "maxWrites": 12000,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296
+  },
+  "query_sha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+  "budget": {
+    "file": "evidence/antijoin-read-scheduling-a-10m-16-budget-20261105.json",
+    "sha256": "f559ddeab71671daeccc0a39ad31ed347680835abe1da90f8414ecfda7dbfb30",
+    "thresholds_changed": false,
+    "control_identity_kept_separate": true
+  },
+  "artifacts": {
+    "runtime_pins": {
+      "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+      "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+      "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+      "adapter/native-entity.js": "6f466cee4993875914e75e7d00858d665424cec75f9ae050cd615998a273cc32",
+      "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+    },
+    "control_runtime_pins": {
+      "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+      "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+      "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+      "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+      "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+    },
+    "harness_source_after": {
+      "adapter/benchmark-read-scheduling.mjs": "d447daf410aafd6c006bc3b080a0df9ce3e709abfe85ce3d8751dedf1684afc8",
+      "adapter/benchmark-antijoin-cost.mjs": "144c16218379581b518da57d910296d6067e921d10fa5fc8447bf3f595772a33",
+      "adapter/benchmark-scale.mjs": "40a8fce06a9d37820c6e054e3ebd937116b8e5ee69430bc7a4e16137dab507c1",
+      "adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+      "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+      "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+      "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+      "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+    },
+    "source_after_all_pins_match": true,
+    "native_source_manifest_mismatches": 0,
+    "native_build_performed": false,
+    "typescript_repeated": false,
+    "typescript_reason": "No app source or compiled app changed since first4/4 controlled qualification; frozen compiledstore6f466cee used"
+  },
+  "qualification": {
+    "pure_freshness_first_attempt": {
+      "pass": 5,
+      "fail": 0,
+      "log_sha256": "8fb41c8c2f3cbfe9348f188da9fd23e018ed5db90cbfe10280d5102abc7ddc1e"
+    },
+    "syntax_first_attempt": {
+      "pass": 3,
+      "fail": 0
+    },
+    "small_first_attempt": {
+      "status": "passed",
+      "timings": "unqualified correctness only",
+      "fixed_calls": 32,
+      "mixed_calls": 379,
+      "ACKs": 8,
+      "freshness": {
+        "measuredReads": 379,
+        "latestReads": 299,
+        "explicitHistoricalReads": 80,
+        "latestPostAckViolations": 0,
+        "latestPendingWriteOverlap": 299,
+        "latestReadsOmittingPendingWriteAtInvocation": 224,
+        "latestAheadOfAckAtReturn": 0,
+        "latestBehindAckAtReturn": 13,
+        "latestStalenessPositionsAtReturn": {
+          "count": 299,
+          "min": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 1,
+          "max": 1
+        },
+        "latestLatencyMs": {
+          "count": 299,
+          "min": 58.10358300000007,
+          "p50": 78.55524999999989,
+          "p95": 106.2027909999997,
+          "p99": 116.7861670000002,
+          "max": 118.75112499999977
+        },
+        "historicalLatencyMs": {
+          "count": 80,
+          "min": 60.77454200000011,
+          "p50": 78.27695799999992,
+          "p95": 201.10666700000002,
+          "p99": 250.413542,
+          "max": 250.413542
+        },
+        "pendingWritesAfterCell": 0,
+        "submittedPosition": "593",
+        "acknowledgedPosition": "593"
+      },
+      "source_unchanged": true,
+      "reopen": true
+    },
+    "independent_source_review": "Operations reviewed28f189d7; no correctness/measurement blocker. Two optional purephase/explicitport assertions deferred, actualsaveddata confirms16ports.",
+    "large_attempts": 1,
+    "retry": false,
+    "parent_exit_code": 1,
+    "parent_exit_reason": "failed_budget; child completed correctness exit0"
+  },
+  "large": {
+    "status": "failed_budget",
+    "probe_K": "39095",
+    "final_K": "39107",
+    "open_audit_ms": 10870.825084,
+    "reopen_audit_ms": 12057.525375000027,
+    "fixed": {
+      "samples": 320,
+      "latency_ms": {
+        "count": 320,
+        "min": 932.978541000004,
+        "p50": 2178.371957999996,
+        "p95": 3652.162333,
+        "p99": 4405.390875000001,
+        "max": 4638.078665999998
+      },
+      "queries_per_second": 6.760212813212229,
+      "wall_ms": 47335.787916999994
+    },
+    "mixed": {
+      "samples": 275,
+      "latency_ms": {
+        "count": 275,
+        "min": 2021.245624999996,
+        "p50": 3639.968875000006,
+        "p95": 5638.8632910000015,
+        "p99": 6704.296833,
+        "max": 8036.828500000003
+      },
+      "queries_per_second": 4.343918734938944,
+      "wall_ms": 63306.893333,
+      "drain_ms": 3306.893333,
+      "ACKs": 12,
+      "writes_per_second": 0.1901201638133958,
+      "write_ACK_latency_ms": {
+        "count": 12,
+        "min": 3779.6877499999973,
+        "p50": 5484.597542000003,
+        "p95": 6265.030249999996,
+        "p99": 6265.030249999996,
+        "max": 6265.030249999996
+      },
+      "ACKs_per_complete_10s_window": [
+        1,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "freshness": {
+        "measuredReads": 275,
+        "latestReads": 211,
+        "explicitHistoricalReads": 64,
+        "latestPostAckViolations": 0,
+        "latestPendingWriteOverlap": 211,
+        "latestReadsOmittingPendingWriteAtInvocation": 95,
+        "latestAheadOfAckAtReturn": 0,
+        "latestBehindAckAtReturn": 30,
+        "latestStalenessPositionsAtReturn": {
+          "count": 211,
+          "min": 0,
+          "p50": 0,
+          "p95": 1,
+          "p99": 1,
+          "max": 1
+        },
+        "latestLatencyMs": {
+          "count": 211,
+          "min": 2021.245624999996,
+          "p50": 3590.5942080000095,
+          "p95": 5397.262000000002,
+          "p99": 6628.535208000001,
+          "max": 6812.097874999992
+        },
+        "historicalLatencyMs": {
+          "count": 64,
+          "min": 2033.6946250000037,
+          "p50": 3897.0136249999923,
+          "p95": 6117.366957999999,
+          "p99": 8036.828500000003,
+          "max": 8036.828500000003
+        },
+        "pendingWritesAfterCell": 0,
+        "submittedPosition": "39107",
+        "acknowledgedPosition": "39107"
+      },
+      "physical_ports": {
+        "calls": 293,
+        "distinctPorts": 16,
+        "portIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "maxActive": 16,
+        "scope": "Actual NativeDuckDBPort control-scope IDs, distinct from logical client numbers; not simultaneous native task proof"
+      }
+    },
+    "numeric_gates": {
+      "status": "failed",
+      "gates": {
+        "fixedP50": true,
+        "fixedP99": true,
+        "mixedQPS": false,
+        "mixedP50": false,
+        "mixedP99": false,
+        "writes": false,
+        "writesPerSecond": false,
+        "sampledRss": true
+      },
+      "limits": {
+        "readers": 16,
+        "maxFixedP50Ms": 3500,
+        "maxFixedP99Ms": 6500,
+        "minMixedQueriesPerSecond": 4.8,
+        "maxMixedP50Ms": 3200,
+        "maxMixedP99Ms": 6500,
+        "minAcknowledgedWrites": 40,
+        "minAcknowledgedWritesPerSecond": 0.5,
+        "maxSampledRssBytes": 3500000000
+      },
+      "writesPerSecond": 0.1901201638133958
+    },
+    "max_sampled_rss_bytes": 2646261760,
+    "cpu_usage": [
+      {
+        "userMicroseconds": 262503133,
+        "systemMicroseconds": 27558338,
+        "totalMicroseconds": 290061471,
+        "averageCores": 6.1277414777293355,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      {
+        "userMicroseconds": 366403769,
+        "systemMicroseconds": 31330374,
+        "totalMicroseconds": 397734143,
+        "averageCores": 6.282635619282127,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      }
+    ],
+    "correctness": {
+      "full_typed_answers_checked_inline": true,
+      "per_sample_freshness_and_raw_quantiles_recomputed": true,
+      "zero_query_or_ACK_errors": true,
+      "consecutive_receipts": true,
+      "asserted_and_retracted_per_write": [
+        2,
+        2
+      ],
+      "admission": {
+        "scopedInputFacts": 1680202,
+        "rightSideFacts": "1679946",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "all_leases_returned": true,
+      "all_actual16_ports_observed": true,
+      "healthy_reuse_calls": 16,
+      "reopen_cut_checks": 5,
+      "final_read_verified": true,
+      "write_in_each_complete_10s_window": true
+    },
+    "source": {
+      "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "bytes": 3905433600,
+      "mtimeMs": 1793911060600.3289,
+      "ctimeMs": 1793911060600.3289,
+      "sha256Before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+      "sha256After": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3"
+    },
+    "source_unchanged": true
+  },
+  "raw_evidence": {
+    "small": {
+      "file": "evidence/cohort-a-read-scheduling-100k-screen-20261105.raw.json",
+      "sha256": "e001b99aca7489f2daa27505b5219ebe72c037331bdfb253600c9a8198af1a7c",
+      "bytes": 2172291,
+      "original": "build/cohort-a-screen-20261105/100k-01.json",
+      "child": "build/antijoin-runs/run-7j74yZ/readers-16.json"
+    },
+    "large": {
+      "file": "evidence/cohort-a-read-scheduling-10m16-screen-20261105.raw.json",
+      "sha256": "ba133b553a0750e47cd93b0e33a34f81c395223bffb9a9e1f4b90b5bd461b702",
+      "bytes": 2745992,
+      "original": "build/cohort-a-screen-20261105/10m-16-01.json",
+      "child": "build/antijoin-runs/run-APHtzo/readers-16.json"
+    }
+  },
+  "limitations": [
+    "One non-order-balanced16-reader attempt only; no1-reader outcome or full-scale acceptance.",
+    "Candidate permits pre-ACK snapshots and is not v1 equivalent. Return-time lag is permitted and disclosed; no latest read omitted a pre-invocation ACK.",
+    "RSS is25ms sampled process RSS, not a physical ceiling. CPU covers all process threads, oracle/sampling/drain, not just DuckDB.",
+    "This experiment does not isolate engine scheduling/native patch cost; removing the JS writer barrier alone did not meet unchanged gates.",
+    "After source-after checks the engine lease was explicitly released; no engine/retry/native build followed."
+  ]
+}

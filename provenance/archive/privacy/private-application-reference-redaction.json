@@ -1,0 +1,629 @@
+{
+  "format": "private-application-reference-redaction/1",
+  "scope": "Project-authored direct text and content-addressed variants; original sources unchanged. Account-scoped conversation/document/deep links removed conservatively, without asserting their ownership. Public technical documentation and provenance-verified upstream archives retained.",
+  "files": {
+    "duckdb-temporal/current/status-roadmap-20261030.md": {
+      "priorExportSha256": "c0b1ad6b08d6e77397f8d9850fad99bcfd5c29a79c0e0d9efb7eaceb963db2ba",
+      "exportSha256": "aa88e3f8faec9f05434996aff3958134d6144e75a53ad81c7c17ad93c0d520e9",
+      "bytes": 23727
+    },
+    "duckdb-temporal/current/roadmap-execution-20261030.md": {
+      "priorExportSha256": "838216e53035bdc193d083ca6d7c89c2d7968992de323430ba1e439866582364",
+      "exportSha256": "5c9f75571af281ce11a9ba86e30f5a08dd37667fe8e8d83cf03d0ef260ae33ac",
+      "bytes": 46367
+    },
+    "duckdb-temporal/variant-objects/30953ad64f57de9e7dfb50e432d95a68ca9f6b0bd2a0bd80008be87a3a6bc516": {
+      "priorExportSha256": "30953ad64f57de9e7dfb50e432d95a68ca9f6b0bd2a0bd80008be87a3a6bc516",
+      "exportSha256": "d3a710c3e1512fe9f3607cc3a20797616acd58b37dd80bf6ff94cff77f9a5d12",
+      "bytes": 11835
+    },
+    "duckdb-temporal/variant-objects/e01ad22883db604ce5f835d39fae691aa3375c5086940759cadd020741c10ddd": {
+      "priorExportSha256": "e01ad22883db604ce5f835d39fae691aa3375c5086940759cadd020741c10ddd",
+      "exportSha256": "2743dd6b0a4a0344e2068d6729021a89ed09ec00a6e890e0990d3b3d2a29251c",
+      "bytes": 6747
+    },
+    "duckdb-temporal/variant-objects/0d5615e009dd6d772b95028fc3e722aa59487942959130130b6eb9bf581b19e3": {
+      "priorExportSha256": "0d5615e009dd6d772b95028fc3e722aa59487942959130130b6eb9bf581b19e3",
+      "exportSha256": "c7fa9d0c3cc66b9e84fef5df5a77f71d4b7ddd19c9027a2af2e8997cab436f00",
+      "bytes": 12068
+    },
+    "duckdb-temporal/variant-objects/cb9daa5839bd0536faaf7a82ee180ee98b0b522a07d088d638ce545f149440ef": {
+      "priorExportSha256": "cb9daa5839bd0536faaf7a82ee180ee98b0b522a07d088d638ce545f149440ef",
+      "exportSha256": "be92a9b3395683e867709e0cefcd3c3ec967b9e098469edef784cde342b6a83f",
+      "bytes": 4542
+    },
+    "duckdb-temporal/variant-objects/455d27fc0bb1b1c3f27a1251caf8a6eba7f278635ca0d7498de6b24e82fa0042": {
+      "priorExportSha256": "455d27fc0bb1b1c3f27a1251caf8a6eba7f278635ca0d7498de6b24e82fa0042",
+      "exportSha256": "54afc0d809698ab73140ef128a1d04ca289b705f73422f14ec8ac20a5cbfedbc",
+      "bytes": 5703
+    },
+    "duckdb-temporal/variant-objects/849009c8e7503e8770562254f05fd243e750a6dfa9776579ed5ea081dee17b30": {
+      "priorExportSha256": "849009c8e7503e8770562254f05fd243e750a6dfa9776579ed5ea081dee17b30",
+      "exportSha256": "41159b11f902567deed98d37a4bb79b35d74095e5ae9ffeba653a0f6349d72ff",
+      "bytes": 11896
+    },
+    "duckdb-temporal/variant-objects/512ef3a30aa9599d886436822ba3f7f30ba457326eca50ef51a2e98a7da38ffd": {
+      "priorExportSha256": "512ef3a30aa9599d886436822ba3f7f30ba457326eca50ef51a2e98a7da38ffd",
+      "exportSha256": "7205e14d05c5db8329d1e69bc21329f6bfe3396fcb4d55a05e99519ecac1059c",
+      "bytes": 2327
+    },
+    "duckdb-temporal/variant-objects/d73d510f3858b06bde9e05c8bd578861bacfb67eedfd1817c44375898d208969": {
+      "priorExportSha256": "d73d510f3858b06bde9e05c8bd578861bacfb67eedfd1817c44375898d208969",
+      "exportSha256": "d5bfb877d8a55c8f74a9782e679a456e88315d5071c1aa2287de6b79adc742cc",
+      "bytes": 12230
+    },
+    "duckdb-temporal/variant-objects/931ac42a7724db374010b932d56711c6c08d675450c37df9f08b892e814a68f8": {
+      "priorExportSha256": "931ac42a7724db374010b932d56711c6c08d675450c37df9f08b892e814a68f8",
+      "exportSha256": "96c7bc9694ce436de346b0a5f7a60980ea21bfd734f541d3cb057e6de9555ae5",
+      "bytes": 13848
+    },
+    "duckdb-temporal/variant-objects/42dafdaef1ee84b30448b7e237702a80159572422500ed43659aa34d4bcf8395": {
+      "priorExportSha256": "42dafdaef1ee84b30448b7e237702a80159572422500ed43659aa34d4bcf8395",
+      "exportSha256": "422314a086dd01467fe1fa3233d6a55e9a3cdc00cb4248ac00eefbaa29825391",
+      "bytes": 1823
+    },
+    "duckdb-temporal/variant-objects/8b82b21e369bc04525acc60f897548461fb8b09ec19534248fad8dc27714a473": {
+      "priorExportSha256": "8b82b21e369bc04525acc60f897548461fb8b09ec19534248fad8dc27714a473",
+      "exportSha256": "7bd144bec013d1707795c9e52bc6ec0caf52c09d6d588d52ac519743eb297f9a",
+      "bytes": 20297
+    },
+    "duckdb-temporal/variant-objects/aa1e9e54e957c4f013b1804019a205147d8673a756bb3ae14c96b6e611a15040": {
+      "priorExportSha256": "aa1e9e54e957c4f013b1804019a205147d8673a756bb3ae14c96b6e611a15040",
+      "exportSha256": "6fd294a1612ca31d6f39cd09fd439f6e0e736bd3bb6fac2a7a4b44e857af33cc",
+      "bytes": 12483
+    },
+    "duckdb-temporal/variant-objects/c69a7d233b45e347d8299a549b0ec950f551572a5ea0d804dab76916bc85fa40": {
+      "priorExportSha256": "c69a7d233b45e347d8299a549b0ec950f551572a5ea0d804dab76916bc85fa40",
+      "exportSha256": "47001f61131f85ee4f2c19b7be2ab97dc2ee5bd7d5071b6d88391a83468c6b34",
+      "bytes": 10442
+    },
+    "duckdb-temporal/variant-objects/ff5938d7b6f3cb6fa5345a00486d9cbd4d21e9fb8d90088b9c64944ff22cee27": {
+      "priorExportSha256": "ff5938d7b6f3cb6fa5345a00486d9cbd4d21e9fb8d90088b9c64944ff22cee27",
+      "exportSha256": "e36bca94ef23adea1f6043423ca226c492aefb0563887a2641829b8cfba14b54",
+      "bytes": 3320
+    },
+    "duckdb-temporal/variant-objects/4fd684d18c4b6009a45155236a1b482c04becc30617d9412b99c776a1dc5cd79": {
+      "priorExportSha256": "4fd684d18c4b6009a45155236a1b482c04becc30617d9412b99c776a1dc5cd79",
+      "exportSha256": "f2a8421fcde4c9b5b0f55f43955fd62caff0d497e1ee2fa5dc27a8aa3c01a012",
+      "bytes": 12537
+    },
+    "duckdb-temporal/variant-objects/d72737d707aee2e01984c3c288105275d1495bdbb40bee3ba37be51626391708": {
+      "priorExportSha256": "d72737d707aee2e01984c3c288105275d1495bdbb40bee3ba37be51626391708",
+      "exportSha256": "e38d6cd5c57e3e5f6ca36e02fa66205d45f55de0c5b5a30e1038615422ffa084",
+      "bytes": 59878
+    },
+    "duckdb-temporal/variant-objects/44628bcfd94b0c75abdd42af02e74989df774b9b117385cf3f26903faa4a693a": {
+      "priorExportSha256": "44628bcfd94b0c75abdd42af02e74989df774b9b117385cf3f26903faa4a693a",
+      "exportSha256": "ea8d42017a61cd4b3bd81eedbdacdb8d130aa743fc34af0076cd94d643a8f831",
+      "bytes": 12222
+    },
+    "duckdb-temporal/variant-objects/a940b857626f832bff3e338fa631604cec17becc71322fa359630cb05ed9e97b": {
+      "priorExportSha256": "a940b857626f832bff3e338fa631604cec17becc71322fa359630cb05ed9e97b",
+      "exportSha256": "0afb28c56bcbde83aef7972a72fcfca602bcb122523e5decf8818de6e9d0da09",
+      "bytes": 6353
+    },
+    "duckdb-temporal/variant-objects/1f1d4864ef5f4fa27652128a6a245ac3a7466294c1346b57563a93472caae733": {
+      "priorExportSha256": "1f1d4864ef5f4fa27652128a6a245ac3a7466294c1346b57563a93472caae733",
+      "exportSha256": "0d94e1545341e79c3252f7c0030c96ed1c2add0061fe2a376c8a3d4fcd186ae7",
+      "bytes": 9310
+    },
+    "duckdb-temporal/variant-objects/3e96baece010424fe43bddda012af22ef037e37266a568619c03fbdc14417708": {
+      "priorExportSha256": "3e96baece010424fe43bddda012af22ef037e37266a568619c03fbdc14417708",
+      "exportSha256": "9e9be2aa792e8df167d53b863010b5b81a258fac98ecfee6028b440bc28543ce",
+      "bytes": 5058
+    },
+    "duckdb-temporal/variant-objects/88f8dbc44e4ffb9a31cdde2721510ae0120ff1775d2b1870d53dee86b60ea537": {
+      "priorExportSha256": "88f8dbc44e4ffb9a31cdde2721510ae0120ff1775d2b1870d53dee86b60ea537",
+      "exportSha256": "7702d2860bc41fe7f81c0fd374de850646607838b5f843f5299f3f65459a57da",
+      "bytes": 11996
+    },
+    "duckdb-temporal/variant-objects/244b1334426758e2173a9b4a11d5a126158415d9c4096a5a163b50b19f1b1888": {
+      "priorExportSha256": "244b1334426758e2173a9b4a11d5a126158415d9c4096a5a163b50b19f1b1888",
+      "exportSha256": "74fd315c5e9ec735e80ceb5861abdab4d121d4f4002d39f92117de32cedc9bee",
+      "bytes": 8583
+    },
+    "duckdb-temporal/variant-objects/ae3ef66ed0a4dafbd5eeb6b9c3aab3700e514c2e7c33c662659639082d6d2863": {
+      "priorExportSha256": "ae3ef66ed0a4dafbd5eeb6b9c3aab3700e514c2e7c33c662659639082d6d2863",
+      "exportSha256": "13e3ee7454d44254259b8c04421fa3e183068962ddd633a5ed556d1198ea5ef3",
+      "bytes": 4738
+    },
+    "duckdb-temporal/variant-objects/2fcdc290cf7e64ef7af02f7149a56d9fc62031796cfc85daa1ea15bff04ba761": {
+      "priorExportSha256": "2fcdc290cf7e64ef7af02f7149a56d9fc62031796cfc85daa1ea15bff04ba761",
+      "exportSha256": "dc91cf11a3ca4314363c9e1334c4522e5f623ceffdccdf7c7ea85ccc283148df",
+      "bytes": 6934
+    },
+    "duckdb-temporal/variant-objects/010acbf48252e9e7feff5da7c6e4ee6e12a74646c1bb1aa55fd5b506cebdea59": {
+      "priorExportSha256": "010acbf48252e9e7feff5da7c6e4ee6e12a74646c1bb1aa55fd5b506cebdea59",
+      "exportSha256": "477d535ac496a813c803acfdaa99148c6a7174b2c1ebc1c8f8e99097292679d8",
+      "bytes": 60362
+    },
+    "duckdb-temporal/variant-objects/3b539b101bf781bc520cc80411f700d77eb539127450ff9469fdc54de4b7742f": {
+      "priorExportSha256": "3b539b101bf781bc520cc80411f700d77eb539127450ff9469fdc54de4b7742f",
+      "exportSha256": "d75959b8c07c9898fdf7b663401284dd2f3acbf98e5ca0b8f43d19f7af009a72",
+      "bytes": 5910
+    },
+    "duckdb-temporal/variant-objects/c0b1ad6b08d6e77397f8d9850fad99bcfd5c29a79c0e0d9efb7eaceb963db2ba": {
+      "priorExportSha256": "c0b1ad6b08d6e77397f8d9850fad99bcfd5c29a79c0e0d9efb7eaceb963db2ba",
+      "exportSha256": "aa88e3f8faec9f05434996aff3958134d6144e75a53ad81c7c17ad93c0d520e9",
+      "bytes": 23727
+    },
+    "duckdb-temporal/variant-objects/0a54a4da823ece85a2200e486e38cb4d8e796a060d794e4d52afa4dc2bfd484f": {
+      "priorExportSha256": "0a54a4da823ece85a2200e486e38cb4d8e796a060d794e4d52afa4dc2bfd484f",
+      "exportSha256": "987e0e754dd0a6d245aa550799465d2b29f07837c3d4300333cc1f3f7e63486b",
+      "bytes": 1897
+    },
+    "duckdb-temporal/variant-objects/5c55840551dc4c658a801937a1ab27ba8ee6d3cdfee29cdbd6b91d35b29eefec": {
+      "priorExportSha256": "5c55840551dc4c658a801937a1ab27ba8ee6d3cdfee29cdbd6b91d35b29eefec",
+      "exportSha256": "3da0ef7315e4483c31f4ad720856a287bfb0e41a6b01ad2057c3a6a0ffe0dfb6",
+      "bytes": 14719
+    },
+    "duckdb-temporal/variant-objects/c9c524133ed7da79b52ed899df646f7d045155ec4f985a7d3208aad2ae294dfe": {
+      "priorExportSha256": "c9c524133ed7da79b52ed899df646f7d045155ec4f985a7d3208aad2ae294dfe",
+      "exportSha256": "8da66911faf0adadbfd2ad2df1d8876ebf3d22adb0bb4bacde5504ea48ee3a82",
+      "bytes": 11902
+    },
+    "duckdb-temporal/variant-objects/c1583d4270b5cfab3c66fec63b81ff2cdf97b26f35d26495d0a7d79e00e6ce22": {
+      "priorExportSha256": "c1583d4270b5cfab3c66fec63b81ff2cdf97b26f35d26495d0a7d79e00e6ce22",
+      "exportSha256": "ebeaab82b2fdc7a67105ec694e5292e437cc7d92bb68e540daaa3d5c0a8237c5",
+      "bytes": 3131
+    },
+    "duckdb-temporal/variant-objects/85b35867666576237ff4a13791aba4e24dd6d857ed718c5d003630a8e5ddf0c7": {
+      "priorExportSha256": "85b35867666576237ff4a13791aba4e24dd6d857ed718c5d003630a8e5ddf0c7",
+      "exportSha256": "f20db36843e66c11581f314fe2aeeefc2e0c2fdca68c848d0d6320d3458051a9",
+      "bytes": 39147
+    },
+    "duckdb-temporal/variant-objects/838216e53035bdc193d083ca6d7c89c2d7968992de323430ba1e439866582364": {
+      "priorExportSha256": "838216e53035bdc193d083ca6d7c89c2d7968992de323430ba1e439866582364",
+      "exportSha256": "5c9f75571af281ce11a9ba86e30f5a08dd37667fe8e8d83cf03d0ef260ae33ac",
+      "bytes": 46367
+    },
+    "duckdb-temporal/variant-objects/780a2e3151af529375a50d5050b0bc47d8f7db6f4046d445cf8d010c58c09959": {
+      "priorExportSha256": "780a2e3151af529375a50d5050b0bc47d8f7db6f4046d445cf8d010c58c09959",
+      "exportSha256": "7a094511efe8c6669a52e9b08d774b0e34378fc3be58e16d52e17089a706dfc4",
+      "bytes": 39747
+    },
+    "duckdb-temporal/variant-objects/dcb787ef3f0cb48ac7d36d6a34c815d7eed38fde61fba9e7bb4e897c29e775c9": {
+      "priorExportSha256": "dcb787ef3f0cb48ac7d36d6a34c815d7eed38fde61fba9e7bb4e897c29e775c9",
+      "exportSha256": "dcd60454a7fab35d6a3949cb2b2e3e64b92bb3ce02d21c6ec481ebcc4736cdb7",
+      "bytes": 11702
+    },
+    "duckdb-temporal/variant-objects/f5e296792e8ca7317adb76281da863bc8bf32c902326f4fdeb67e0ecc20695e3": {
+      "priorExportSha256": "f5e296792e8ca7317adb76281da863bc8bf32c902326f4fdeb67e0ecc20695e3",
+      "exportSha256": "0254dc3cd6f79aa2073a75ff7513de059662af3dc610dae7cba772f47b8a131c",
+      "bytes": 3558
+    },
+    "duckdb-temporal/variant-objects/12b837619718413751eb005b763fccc0c3ec349ab08d182e4f34fc82db034252": {
+      "priorExportSha256": "12b837619718413751eb005b763fccc0c3ec349ab08d182e4f34fc82db034252",
+      "exportSha256": "0f49188fa5b8028e0cf70e49c9812eee10d042fa1f2f7eeb9702fcc1c7e6e52a",
+      "bytes": 14689
+    },
+    "duckdb-temporal/variant-objects/2101c5ddacbeaf3420404fdcad0cb11532bca3d2e801ccf3d0c14dfe0c3fb57e": {
+      "priorExportSha256": "2101c5ddacbeaf3420404fdcad0cb11532bca3d2e801ccf3d0c14dfe0c3fb57e",
+      "exportSha256": "38414269bbe15d8b23e8f9e987791b4e32119b5bf232c1527c8357daaa546c5d",
+      "bytes": 6849
+    },
+    "duckdb-temporal/variant-objects/3124dea7b935f614d1f72286f3087afbf94872764fc3e837a39c4d1071cca751": {
+      "priorExportSha256": "3124dea7b935f614d1f72286f3087afbf94872764fc3e837a39c4d1071cca751",
+      "exportSha256": "f2ee406bd0315b9e807c6f8a854bf4c22210272b3d35295577dbc655e26ea80e",
+      "bytes": 12005
+    },
+    "duckdb-temporal/variant-objects/134737fb81da58d495355d5c2bdfa1bb54c0a34117feca88506834a625821d99": {
+      "priorExportSha256": "134737fb81da58d495355d5c2bdfa1bb54c0a34117feca88506834a625821d99",
+      "exportSha256": "d763026b777d6dcf294ca021af92364a000ac5fd370d46137f22acbd1ddf058a",
+      "bytes": 12096
+    },
+    "duckdb-temporal/variant-objects/f36a520e07cfdbcd5c3bbb83c55f24c180a2f422f25beb22d8afae5fb629235b": {
+      "priorExportSha256": "f36a520e07cfdbcd5c3bbb83c55f24c180a2f422f25beb22d8afae5fb629235b",
+      "exportSha256": "d2dd8a5514deadb8cd3da1d78be23a461a193a81c3fd439719d1feb48c6e4367",
+      "bytes": 12483
+    },
+    "duckdb-temporal/variant-objects/ea9d9357f84a6a0ecb9a5dc632e9036917fc3d39d5337faf4d4dc8faf8b3ad96": {
+      "priorExportSha256": "ea9d9357f84a6a0ecb9a5dc632e9036917fc3d39d5337faf4d4dc8faf8b3ad96",
+      "exportSha256": "22076bad07c87c8dbe3534ab013edc9ec493ebd516451f724d511fcebec46fa4",
+      "bytes": 11179
+    },
+    "duckdb-temporal/variant-objects/13b37c2b6144817df8bdb74f6a388031248143d2a752d747bcda175e793a21b3": {
+      "priorExportSha256": "13b37c2b6144817df8bdb74f6a388031248143d2a752d747bcda175e793a21b3",
+      "exportSha256": "a5a9ec19557237352d4c3d5859a17f192ec2faa224eeb21a97093814a82a52b9",
+      "bytes": 11039
+    },
+    "duckdb-temporal/variant-objects/261a6b17688eeabed0962677ad59843eab537d44919c6f9c84684d2bb405dd4b": {
+      "priorExportSha256": "261a6b17688eeabed0962677ad59843eab537d44919c6f9c84684d2bb405dd4b",
+      "exportSha256": "59ea288bca42085f2bf908271f9a1dc8746ef0b0a5ad9d2140f51115232c5b3f",
+      "bytes": 15379
+    },
+    "duckdb-temporal/variant-objects/9082317688ada452e5247a418a87f74d34fe4e88ab7ed853b99f5ac678176e3d": {
+      "priorExportSha256": "9082317688ada452e5247a418a87f74d34fe4e88ab7ed853b99f5ac678176e3d",
+      "exportSha256": "408c67916d0355745f241d5e0b1a69e66866db50a414a3e8d63a353938c8e828",
+      "bytes": 12483
+    },
+    "duckdb-temporal/variant-objects/48b717beb771af6fb46fb13ade6ae1b74f54d10b7cfc5308f5037a09dcf23160": {
+      "priorExportSha256": "48b717beb771af6fb46fb13ade6ae1b74f54d10b7cfc5308f5037a09dcf23160",
+      "exportSha256": "f5da66eb6629a2c8d6072c43fe684dba708acabda06a7266eee2758376636d1e",
+      "bytes": 12657
+    },
+    "duckdb-temporal/recovered-research/status-roadmap-20261030.md": {
+      "priorExportSha256": "8599e9b78daceb8a8892d483c9c66f17c4b475ea773fb3c82d53f3b5b433c3c9",
+      "exportSha256": "b1731536354dcf89e057246283f835c0c2591afca62c07ba131432e776390b6e",
+      "bytes": 8631
+    },
+    "duckdb-temporal/recovered-research/roadmap-execution-20261030.md": {
+      "priorExportSha256": "838216e53035bdc193d083ca6d7c89c2d7968992de323430ba1e439866582364",
+      "exportSha256": "5c9f75571af281ce11a9ba86e30f5a08dd37667fe8e8d83cf03d0ef260ae33ac",
+      "bytes": 46367
+    },
+    "duckdb-temporal/recovered-research/research/duckdb-c-api-v2-20261030.md": {
+      "priorExportSha256": "1f1d4864ef5f4fa27652128a6a245ac3a7466294c1346b57563a93472caae733",
+      "exportSha256": "0d94e1545341e79c3252f7c0030c96ed1c2add0061fe2a376c8a3d4fcd186ae7",
+      "bytes": 9310
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-02/README.md": {
+      "priorExportSha256": "2fcdc290cf7e64ef7af02f7149a56d9fc62031796cfc85daa1ea15bff04ba761",
+      "exportSha256": "dc91cf11a3ca4314363c9e1334c4522e5f623ceffdccdf7c7ea85ccc283148df",
+      "bytes": 6934
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-01/performance.md": {
+      "priorExportSha256": "780a2e3151af529375a50d5050b0bc47d8f7db6f4046d445cf8d010c58c09959",
+      "exportSha256": "7a094511efe8c6669a52e9b08d774b0e34378fc3be58e16d52e17089a706dfc4",
+      "bytes": 39747
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-01/typed-values-research.md": {
+      "priorExportSha256": "85b35867666576237ff4a13791aba4e24dd6d857ed718c5d003630a8e5ddf0c7",
+      "exportSha256": "f20db36843e66c11581f314fe2aeeefc2e0c2fdca68c848d0d6320d3458051a9",
+      "bytes": 39147
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-02/checkpoints/2027/pr7-body-action-audit.json": {
+      "priorExportSha256": "5c55840551dc4c658a801937a1ab27ba8ee6d3cdfee29cdbd6b91d35b29eefec",
+      "exportSha256": "3da0ef7315e4483c31f4ad720856a287bfb0e41a6b01ad2057c3a6a0ffe0dfb6",
+      "bytes": 14719
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-02/checkpoints/2350/README.md": {
+      "priorExportSha256": "f5e296792e8ca7317adb76281da863bc8bf32c902326f4fdeb67e0ecc20695e3",
+      "exportSha256": "0254dc3cd6f79aa2073a75ff7513de059662af3dc610dae7cba772f47b8a131c",
+      "bytes": 3558
+    },
+    "duckdb-temporal/current/research/duckdb-c-api-v2-20261030.md": {
+      "priorExportSha256": "1f1d4864ef5f4fa27652128a6a245ac3a7466294c1346b57563a93472caae733",
+      "exportSha256": "0d94e1545341e79c3252f7c0030c96ed1c2add0061fe2a376c8a3d4fcd186ae7",
+      "bytes": 9310
+    },
+    "duckdb-temporal/current/handoffs/mac-zero-context-takeover-20261105.md": {
+      "priorExportSha256": "010acbf48252e9e7feff5da7c6e4ee6e12a74646c1bb1aa55fd5b506cebdea59",
+      "exportSha256": "477d535ac496a813c803acfdaa99148c6a7174b2c1ebc1c8f8e99097292679d8",
+      "bytes": 60362
+    },
+    "duckdb-temporal/current/handoffs/mac-complete-ten-goals-20261104.md": {
+      "priorExportSha256": "8b82b21e369bc04525acc60f897548461fb8b09ec19534248fad8dc27714a473",
+      "exportSha256": "7bd144bec013d1707795c9e52bc6ec0caf52c09d6d588d52ac519743eb297f9a",
+      "bytes": 20297
+    },
+    "duckdb-temporal/current/handoffs/research-index-20261104.md": {
+      "priorExportSha256": "48b717beb771af6fb46fb13ade6ae1b74f54d10b7cfc5308f5037a09dcf23160",
+      "exportSha256": "f5da66eb6629a2c8d6072c43fe684dba708acabda06a7266eee2758376636d1e",
+      "bytes": 12657
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-2120.md": {
+      "priorExportSha256": "9082317688ada452e5247a418a87f74d34fe4e88ab7ed853b99f5ac678176e3d",
+      "exportSha256": "408c67916d0355745f241d5e0b1a69e66866db50a414a3e8d63a353938c8e828",
+      "bytes": 12483
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1720.md": {
+      "priorExportSha256": "d73d510f3858b06bde9e05c8bd578861bacfb67eedfd1817c44375898d208969",
+      "exportSha256": "d5bfb877d8a55c8f74a9782e679a456e88315d5071c1aa2287de6b79adc742cc",
+      "bytes": 12230
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1620.md": {
+      "priorExportSha256": "849009c8e7503e8770562254f05fd243e750a6dfa9776579ed5ea081dee17b30",
+      "exportSha256": "41159b11f902567deed98d37a4bb79b35d74095e5ae9ffeba653a0f6349d72ff",
+      "bytes": 11896
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-2020.md": {
+      "priorExportSha256": "aa1e9e54e957c4f013b1804019a205147d8673a756bb3ae14c96b6e611a15040",
+      "exportSha256": "6fd294a1612ca31d6f39cd09fd439f6e0e736bd3bb6fac2a7a4b44e857af33cc",
+      "bytes": 12483
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-0720.md": {
+      "priorExportSha256": "261a6b17688eeabed0962677ad59843eab537d44919c6f9c84684d2bb405dd4b",
+      "exportSha256": "59ea288bca42085f2bf908271f9a1dc8746ef0b0a5ad9d2140f51115232c5b3f",
+      "bytes": 15379
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1120.md": {
+      "priorExportSha256": "dcb787ef3f0cb48ac7d36d6a34c815d7eed38fde61fba9e7bb4e897c29e775c9",
+      "exportSha256": "dcd60454a7fab35d6a3949cb2b2e3e64b92bb3ce02d21c6ec481ebcc4736cdb7",
+      "bytes": 11702
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261103-2220.md": {
+      "priorExportSha256": "e01ad22883db604ce5f835d39fae691aa3375c5086940759cadd020741c10ddd",
+      "exportSha256": "2743dd6b0a4a0344e2068d6729021a89ed09ec00a6e890e0990d3b3d2a29251c",
+      "bytes": 6747
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1020.md": {
+      "priorExportSha256": "13b37c2b6144817df8bdb74f6a388031248143d2a752d747bcda175e793a21b3",
+      "exportSha256": "a5a9ec19557237352d4c3d5859a17f192ec2faa224eeb21a97093814a82a52b9",
+      "bytes": 11039
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-0620.md": {
+      "priorExportSha256": "12b837619718413751eb005b763fccc0c3ec349ab08d182e4f34fc82db034252",
+      "exportSha256": "0f49188fa5b8028e0cf70e49c9812eee10d042fa1f2f7eeb9702fcc1c7e6e52a",
+      "bytes": 14689
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1320.md": {
+      "priorExportSha256": "0d5615e009dd6d772b95028fc3e722aa59487942959130130b6eb9bf581b19e3",
+      "exportSha256": "c7fa9d0c3cc66b9e84fef5df5a77f71d4b7ddd19c9027a2af2e8997cab436f00",
+      "bytes": 12068
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-0520.md": {
+      "priorExportSha256": "134737fb81da58d495355d5c2bdfa1bb54c0a34117feca88506834a625821d99",
+      "exportSha256": "d763026b777d6dcf294ca021af92364a000ac5fd370d46137f22acbd1ddf058a",
+      "bytes": 12096
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-0920.md": {
+      "priorExportSha256": "ea9d9357f84a6a0ecb9a5dc632e9036917fc3d39d5337faf4d4dc8faf8b3ad96",
+      "exportSha256": "22076bad07c87c8dbe3534ab013edc9ec493ebd516451f724d511fcebec46fa4",
+      "bytes": 11179
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-0820.md": {
+      "priorExportSha256": "30953ad64f57de9e7dfb50e432d95a68ca9f6b0bd2a0bd80008be87a3a6bc516",
+      "exportSha256": "d3a710c3e1512fe9f3607cc3a20797616acd58b37dd80bf6ff94cff77f9a5d12",
+      "bytes": 11835
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-0420.md": {
+      "priorExportSha256": "3124dea7b935f614d1f72286f3087afbf94872764fc3e837a39c4d1071cca751",
+      "exportSha256": "f2ee406bd0315b9e807c6f8a854bf4c22210272b3d35295577dbc655e26ea80e",
+      "bytes": 12005
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1220.md": {
+      "priorExportSha256": "88f8dbc44e4ffb9a31cdde2721510ae0120ff1775d2b1870d53dee86b60ea537",
+      "exportSha256": "7702d2860bc41fe7f81c0fd374de850646607838b5f843f5299f3f65459a57da",
+      "bytes": 11996
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1920.md": {
+      "priorExportSha256": "f36a520e07cfdbcd5c3bbb83c55f24c180a2f422f25beb22d8afae5fb629235b",
+      "exportSha256": "d2dd8a5514deadb8cd3da1d78be23a461a193a81c3fd439719d1feb48c6e4367",
+      "bytes": 12483
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1520.md": {
+      "priorExportSha256": "c9c524133ed7da79b52ed899df646f7d045155ec4f985a7d3208aad2ae294dfe",
+      "exportSha256": "8da66911faf0adadbfd2ad2df1d8876ebf3d22adb0bb4bacde5504ea48ee3a82",
+      "bytes": 11902
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-0320.md": {
+      "priorExportSha256": "a940b857626f832bff3e338fa631604cec17becc71322fa359630cb05ed9e97b",
+      "exportSha256": "0afb28c56bcbde83aef7972a72fcfca602bcb122523e5decf8818de6e9d0da09",
+      "bytes": 6353
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1420.md": {
+      "priorExportSha256": "c69a7d233b45e347d8299a549b0ec950f551572a5ea0d804dab76916bc85fa40",
+      "exportSha256": "47001f61131f85ee4f2c19b7be2ab97dc2ee5bd7d5071b6d88391a83468c6b34",
+      "bytes": 10442
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-1820.md": {
+      "priorExportSha256": "44628bcfd94b0c75abdd42af02e74989df774b9b117385cf3f26903faa4a693a",
+      "exportSha256": "ea8d42017a61cd4b3bd81eedbdacdb8d130aa743fc34af0076cd94d643a8f831",
+      "bytes": 12222
+    },
+    "duckdb-temporal/current/research/roadmap/progress-check-20261104-2220.md": {
+      "priorExportSha256": "4fd684d18c4b6009a45155236a1b482c04becc30617d9412b99c776a1dc5cd79",
+      "exportSha256": "f2a8421fcde4c9b5b0f55f43955fd62caff0d497e1ee2fa5dc27a8aa3c01a012",
+      "bytes": 12537
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-02/README.md": {
+      "priorExportSha256": "2fcdc290cf7e64ef7af02f7149a56d9fc62031796cfc85daa1ea15bff04ba761",
+      "exportSha256": "dc91cf11a3ca4314363c9e1334c4522e5f623ceffdccdf7c7ea85ccc283148df",
+      "bytes": 6934
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-01/performance.md": {
+      "priorExportSha256": "780a2e3151af529375a50d5050b0bc47d8f7db6f4046d445cf8d010c58c09959",
+      "exportSha256": "7a094511efe8c6669a52e9b08d774b0e34378fc3be58e16d52e17089a706dfc4",
+      "bytes": 39747
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-01/typed-values-research.md": {
+      "priorExportSha256": "85b35867666576237ff4a13791aba4e24dd6d857ed718c5d003630a8e5ddf0c7",
+      "exportSha256": "f20db36843e66c11581f314fe2aeeefc2e0c2fdca68c848d0d6320d3458051a9",
+      "bytes": 39147
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-08/checkpoints/current-planner-cache-split-20261103-1915/SOURCES.json": {
+      "priorExportSha256": "c1583d4270b5cfab3c66fec63b81ff2cdf97b26f35d26495d0a7d79e00e6ce22",
+      "exportSha256": "ebeaab82b2fdc7a67105ec694e5292e437cc7d92bb68e540daaa3d5c0a8237c5",
+      "bytes": 3131
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-08/checkpoints/current-planner-cache-split-20261103-1915/README.md": {
+      "priorExportSha256": "931ac42a7724db374010b932d56711c6c08d675450c37df9f08b892e814a68f8",
+      "exportSha256": "96c7bc9694ce436de346b0a5f7a60980ea21bfd734f541d3cb057e6de9555ae5",
+      "bytes": 13848
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-06/checkpoints/primary-research-20261101/README.md": {
+      "priorExportSha256": "3b539b101bf781bc520cc80411f700d77eb539127450ff9469fdc54de4b7742f",
+      "exportSha256": "d75959b8c07c9898fdf7b663401284dd2f3acbf98e5ca0b8f43d19f7af009a72",
+      "bytes": 5910
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-02/checkpoints/2027/pr7-body-action-audit.json": {
+      "priorExportSha256": "5c55840551dc4c658a801937a1ab27ba8ee6d3cdfee29cdbd6b91d35b29eefec",
+      "exportSha256": "3da0ef7315e4483c31f4ad720856a287bfb0e41a6b01ad2057c3a6a0ffe0dfb6",
+      "bytes": 14719
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-02/checkpoints/2350/README.md": {
+      "priorExportSha256": "f5e296792e8ca7317adb76281da863bc8bf32c902326f4fdeb67e0ecc20695e3",
+      "exportSha256": "0254dc3cd6f79aa2073a75ff7513de059662af3dc610dae7cba772f47b8a131c",
+      "bytes": 3558
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/capability-lifecycle-explain-20261103/REMOTE-RECONCILIATION.json": {
+      "priorExportSha256": "42dafdaef1ee84b30448b7e237702a80159572422500ed43659aa34d4bcf8395",
+      "exportSha256": "422314a086dd01467fe1fa3233d6a55e9a3cdc00cb4248ac00eefbaa29825391",
+      "bytes": 1823
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/capability-lifecycle-explain-20261103/README.md": {
+      "priorExportSha256": "cb9daa5839bd0536faaf7a82ee180ee98b0b522a07d088d638ce545f149440ef",
+      "exportSha256": "be92a9b3395683e867709e0cefcd3c3ec967b9e098469edef784cde342b6a83f",
+      "bytes": 4542
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/cursor-receipt-contract-20261103/PRIMARY-SOURCES.json": {
+      "priorExportSha256": "244b1334426758e2173a9b4a11d5a126158415d9c4096a5a163b50b19f1b1888",
+      "exportSha256": "74fd315c5e9ec735e80ceb5861abdab4d121d4f4002d39f92117de32cedc9bee",
+      "bytes": 8583
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/query-executor-contract-20261103/REMOTE-RECONCILIATION.json": {
+      "priorExportSha256": "ff5938d7b6f3cb6fa5345a00486d9cbd4d21e9fb8d90088b9c64944ff22cee27",
+      "exportSha256": "e36bca94ef23adea1f6043423ca226c492aefb0563887a2641829b8cfba14b54",
+      "bytes": 3320
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/query-executor-contract-20261103/README.md": {
+      "priorExportSha256": "2101c5ddacbeaf3420404fdcad0cb11532bca3d2e801ccf3d0c14dfe0c3fb57e",
+      "exportSha256": "38414269bbe15d8b23e8f9e987791b4e32119b5bf232c1527c8357daaa546c5d",
+      "bytes": 6849
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/typed-value-boundary-20261103/REMOTE-RECONCILIATION.json": {
+      "priorExportSha256": "512ef3a30aa9599d886436822ba3f7f30ba457326eca50ef51a2e98a7da38ffd",
+      "exportSha256": "7205e14d05c5db8329d1e69bc21329f6bfe3396fcb4d55a05e99519ecac1059c",
+      "bytes": 2327
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/typed-value-boundary-20261103/README.md": {
+      "priorExportSha256": "3e96baece010424fe43bddda012af22ef037e37266a568619c03fbdc14417708",
+      "exportSha256": "9e9be2aa792e8df167d53b863010b5b81a258fac98ecfee6028b440bc28543ce",
+      "bytes": 5058
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/write-preconditions-constraints-20261103/README.md": {
+      "priorExportSha256": "ae3ef66ed0a4dafbd5eeb6b9c3aab3700e514c2e7c33c662659639082d6d2863",
+      "exportSha256": "13e3ee7454d44254259b8c04421fa3e183068962ddd633a5ed556d1198ea5ef3",
+      "bytes": 4738
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/database-scope-generation-20261103/REMOTE-RECONCILIATION.json": {
+      "priorExportSha256": "0a54a4da823ece85a2200e486e38cb4d8e796a060d794e4d52afa4dc2bfd484f",
+      "exportSha256": "987e0e754dd0a6d245aa550799465d2b29f07837c3d4300333cc1f3f7e63486b",
+      "bytes": 1897
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-10/checkpoints/database-scope-generation-20261103/README.md": {
+      "priorExportSha256": "455d27fc0bb1b1c3f27a1251caf8a6eba7f278635ca0d7498de6b24e82fa0042",
+      "exportSha256": "54afc0d809698ab73140ef128a1d04ca289b705f73422f14ec8ac20a5cbfedbc",
+      "bytes": 5703
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-01/checkpoints/1950/iteration01-evidence.decoded/research/roadmap-execution-pivot-1808.md": {
+      "priorExportSha256": "ec5185fca149b46584ab54cdc5e7f84f11232a4c19da20fc7cc32ee0271b3efc",
+      "exportSha256": "1a2956d2417ee6d95e562c768916a44fdad7af2a78e54c24af0964bafa2f7c5c",
+      "bytes": 10291
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-01/checkpoints/1950/iteration01-evidence.decoded/research/performance.md": {
+      "priorExportSha256": "780a2e3151af529375a50d5050b0bc47d8f7db6f4046d445cf8d010c58c09959",
+      "exportSha256": "7a094511efe8c6669a52e9b08d774b0e34378fc3be58e16d52e17089a706dfc4",
+      "bytes": 39747
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-01/checkpoints/1950/iteration01-evidence.decoded/research/roadmap-execution-pivot-1543.md": {
+      "priorExportSha256": "868dbceb30487cec26674eb01ae5bf6d190ccf8822e8a8bd97f708962250fdfc",
+      "exportSha256": "f72eb87a4fbdeb671b7057275399ce958ecc351ab9df03c4ee25588424a4de5a",
+      "bytes": 9505
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-01/checkpoints/1950/iteration01-evidence.decoded/research/publication-1455-group-00.json": {
+      "priorExportSha256": "c2dada300e8a289a2d5625c953aab053bed4bdacc92c8da38cc9172e0a914644",
+      "exportSha256": "42f4e58012e69d81ed8dfc178a5edfbc3e364a4733b026f473c1ded7feafd8fa",
+      "bytes": 54927
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-01/checkpoints/1950/iteration01-evidence.decoded/research/typed-values-research.md": {
+      "priorExportSha256": "85b35867666576237ff4a13791aba4e24dd6d857ed718c5d003630a8e5ddf0c7",
+      "exportSha256": "f20db36843e66c11581f314fe2aeeefc2e0c2fdca68c848d0d6320d3458051a9",
+      "bytes": 39147
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-01/checkpoints/1950/iteration01-evidence.decoded/latest/pr7-body-audit-first-reconstructed.txt": {
+      "priorExportSha256": "ed2d2dc31d57543bba3761874daf72d887f5e629c34c1f2cf94293153f27ab3e",
+      "exportSha256": "5ff73861983fc325a98efd89fe55f08388a8f5506b3f402a8e5434b063900111",
+      "bytes": 3896
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-01/checkpoints/1950/iteration01-evidence.decoded/latest/pr7-body-audit-latest.txt": {
+      "priorExportSha256": "80718ca37a4d30e5db3a19ed49fdbf91109f0958038f06380919d3626560167f",
+      "exportSha256": "90b663428aaffe96d2b8c69fa68dfa8ac07b0629fb9474b6efaca6f106df71dc",
+      "bytes": 4040
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/0049/archive.decoded/progress-snapshot/pr7-body-0043-returned.txt": {
+      "priorExportSha256": "774f7d47f1267577a7eff9dc1525f8acbd15d1b1d0cc8a5b4d896dc1b3621be1",
+      "exportSha256": "f926178f58323c12a7945b60882484c2040a298f41cb0675f96857ace72f433d",
+      "bytes": 8508
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/0049/archive.decoded/progress-snapshot/pr7-body-0043-submitted.txt": {
+      "priorExportSha256": "774f7d47f1267577a7eff9dc1525f8acbd15d1b1d0cc8a5b4d896dc1b3621be1",
+      "exportSha256": "f926178f58323c12a7945b60882484c2040a298f41cb0675f96857ace72f433d",
+      "bytes": 8508
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/0049/archive.decoded/progress-snapshot/pr7-body-0043-reread.txt": {
+      "priorExportSha256": "774f7d47f1267577a7eff9dc1525f8acbd15d1b1d0cc8a5b4d896dc1b3621be1",
+      "exportSha256": "f926178f58323c12a7945b60882484c2040a298f41cb0675f96857ace72f433d",
+      "bytes": 8508
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/codec-correctness-20261031/archive.decoded/progress/pr7-body-0228-returned.txt": {
+      "priorExportSha256": "e17ae3890e10852b0107e0144aec0f9bbdca1fffa6d2fe0fb29c933bd3505183",
+      "exportSha256": "99861b4d6860b8a215346cb1b9fca63c6f7fb6b03236eda853149e11fa35f207",
+      "bytes": 9065
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/codec-correctness-20261031/archive.decoded/progress/pr7-body-0228-reread.txt": {
+      "priorExportSha256": "e17ae3890e10852b0107e0144aec0f9bbdca1fffa6d2fe0fb29c933bd3505183",
+      "exportSha256": "99861b4d6860b8a215346cb1b9fca63c6f7fb6b03236eda853149e11fa35f207",
+      "bytes": 9065
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/codec-correctness-20261031/archive.decoded/progress/pr7-body-0228-submitted.txt": {
+      "priorExportSha256": "e17ae3890e10852b0107e0144aec0f9bbdca1fffa6d2fe0fb29c933bd3505183",
+      "exportSha256": "99861b4d6860b8a215346cb1b9fca63c6f7fb6b03236eda853149e11fa35f207",
+      "bytes": 9065
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2223/archive.decoded/source-storage-publication/pr7-body-2149-submitted.txt": {
+      "priorExportSha256": "7a1cf52e81c5eea51280ab571febe0494a3fbd3ccf3cf826ef6786b87327ff8a",
+      "exportSha256": "d962ab1ed473e195cee9a7e54a27afa58daefeb4823343c946b57a4bfa4b8218",
+      "bytes": 6056
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2223/archive.decoded/source-storage-publication/pr7-body-2149-reread.txt": {
+      "priorExportSha256": "7a1cf52e81c5eea51280ab571febe0494a3fbd3ccf3cf826ef6786b87327ff8a",
+      "exportSha256": "d962ab1ed473e195cee9a7e54a27afa58daefeb4823343c946b57a4bfa4b8218",
+      "bytes": 6056
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2223/archive.decoded/source-storage-publication/pr7-body-2149-returned.txt": {
+      "priorExportSha256": "7a1cf52e81c5eea51280ab571febe0494a3fbd3ccf3cf826ef6786b87327ff8a",
+      "exportSha256": "d962ab1ed473e195cee9a7e54a27afa58daefeb4823343c946b57a4bfa4b8218",
+      "bytes": 6056
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2038/archive.decoded/README.md": {
+      "priorExportSha256": "2fcdc290cf7e64ef7af02f7149a56d9fc62031796cfc85daa1ea15bff04ba761",
+      "exportSha256": "dc91cf11a3ca4314363c9e1334c4522e5f623ceffdccdf7c7ea85ccc283148df",
+      "bytes": 6934
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2325/archive.decoded/batch-source-publication/main-ledger-before.txt": {
+      "priorExportSha256": "f73bdb2d8d234bbd2ebacee69072f79991e3523617cf028b159b6f89fd3ea608",
+      "exportSha256": "4c24ace69d2ec99b308fa8e7c5e42d49df8eeac3e1afe6a98b057e8b2c064d11",
+      "bytes": 17460
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2325/archive.decoded/progress-snapshot/pr7-body-2324-returned.json": {
+      "priorExportSha256": "3c5d9d806950f942880ff4ea6e482c524f5fc7b9ed9b68168e0ca318faac5b3d",
+      "exportSha256": "e8ac155b4578372e64af258784eb535b16d5e6a96f3820bc0a258f05bcc2ab47",
+      "bytes": 8193
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2325/archive.decoded/progress-snapshot/pr7-body-2324-returned.txt": {
+      "priorExportSha256": "aa6c055a2aeeeffcb0975c0772a619023bcedb84363073ea53272ed3a8b4301a",
+      "exportSha256": "051eb5977e2bce771d243154a498ba0d96d86f44d3dd0f35c3c2305bddb82d8b",
+      "bytes": 6563
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2325/archive.decoded/progress-snapshot/pr7-body-2324-reread.txt": {
+      "priorExportSha256": "aa6c055a2aeeeffcb0975c0772a619023bcedb84363073ea53272ed3a8b4301a",
+      "exportSha256": "051eb5977e2bce771d243154a498ba0d96d86f44d3dd0f35c3c2305bddb82d8b",
+      "bytes": 6563
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2325/archive.decoded/progress-snapshot/pr7-body-2324-submitted.txt": {
+      "priorExportSha256": "aa6c055a2aeeeffcb0975c0772a619023bcedb84363073ea53272ed3a8b4301a",
+      "exportSha256": "051eb5977e2bce771d243154a498ba0d96d86f44d3dd0f35c3c2305bddb82d8b",
+      "bytes": 6563
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2132/archive.decoded/source-publication/pr7-body-2128-returned.txt": {
+      "priorExportSha256": "f8f59497ec5d2eecd882164b04b42e209b26fbc9d9d4e38549f3a8be4ce10032",
+      "exportSha256": "f9a7c43b7f27126f9496388a3b9bd73cbdf3d9833656f8eff54a99dc95820ae6",
+      "bytes": 5150
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2132/archive.decoded/source-publication/pr7-body-2128-reread.txt": {
+      "priorExportSha256": "f8f59497ec5d2eecd882164b04b42e209b26fbc9d9d4e38549f3a8be4ce10032",
+      "exportSha256": "f9a7c43b7f27126f9496388a3b9bd73cbdf3d9833656f8eff54a99dc95820ae6",
+      "bytes": 5150
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2132/archive.decoded/source-publication/pr7-body-2128-submitted.txt": {
+      "priorExportSha256": "f8f59497ec5d2eecd882164b04b42e209b26fbc9d9d4e38549f3a8be4ce10032",
+      "exportSha256": "f9a7c43b7f27126f9496388a3b9bd73cbdf3d9833656f8eff54a99dc95820ae6",
+      "bytes": 5150
+    }
+  },
+  "remappedContentObjects": 46,
+  "excludedCitationCaptures": 1,
+  "matchedValuesIncluded": false
+}

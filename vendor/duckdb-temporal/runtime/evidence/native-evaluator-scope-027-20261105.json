@@ -1,0 +1,455 @@
+{
+  "schema": "native-evaluator-scope-diagnostic/1",
+  "status": "passed",
+  "timestampUtc": "2026-11-05T19:25:53.735Z",
+  "runtimeVersion": "0.27.0",
+  "integratedBase": "23a34b22906ae8321853ad61986b49f990b8a7fb",
+  "diagnosticSource": "3aede37af0a2c1a48f2ae35d46e12e489dc2a29c",
+  "optInEvaluatorProfile": true,
+  "artifactAndInputSha256": {
+    "core_manifest": "01e778c152c31806cb58716ffa84b2cdb29ef1190fcf7556ff6a15339db3d069",
+    "companion_manifest": "20085e61f2bb24701c05f130718515eebc7b338466f460ea21fcea7d81f1d41b",
+    "core_extension": "28ebe4de1d01867a761cac6378870f2061f77309aef96a96273a8df8f9a6270c",
+    "control_bridge": "1983539726805568c4919126eae224e6b72a81adb2a5d841016a1536f02f5e35",
+    "companion_extension": "5266cd829bcd3cf1a2c1c985d022cbc280b907ff343efe79460b2c373cd93e18",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "dcad01a37ae791e5925f48db12e65a4bf27b4ed046711594779dd7c405a8dfac",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "benchmark_driver": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "benchmark_clone_helper": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+    "benchmark_clone_module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "benchmark/benchmark-scale.mjs": "071b237f4a8e31ada86f438e08bc4b05d436011c53039459561238ef3efe8144",
+    "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "source_evidence": "ccbb26a56d5208ad480ee1530878b5fb66d4868d1dad5899eae6054f63bf57b3"
+  },
+  "sdkEntrySha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3",
+  "harnessSha256": "0b91f91d52c1fb0ac799369b2b6ff503c1a174a8522b2a764cab776e33372712",
+  "fixtureSourceSha256": "2190826e488d21598f272d36309f724f41db275c11134adb565f83d120a39536",
+  "configuration": {
+    "threads": "1",
+    "memory_limit": "128MB",
+    "max_temp_directory_size": "64MB",
+    "queryOptions": {
+      "maxInputFacts": 10000000,
+      "maxIntermediateRows": 10000000,
+      "maxIntermediateBytes": 4294967296,
+      "maxOutputRows": 100000,
+      "maxOutputBytes": 16777216
+    },
+    "kinds": [
+      "tiny_constant",
+      "recursive_chain"
+    ],
+    "validAt": "0",
+    "deadlineMs": 60000,
+    "templateSamples": 5,
+    "parallelCalls": 1,
+    "fixtureMode": "evaluator",
+    "repeats": 7,
+    "boundedOptions": {
+      "maxFacts": 100000,
+      "maxRounds": 1000,
+      "maxWork": 5000000,
+      "deadlineMs": 1000,
+      "forceNative": true
+    }
+  },
+  "fixture": {
+    "recipe": {
+      "chain": 64,
+      "disconnected": 2048,
+      "validAt": 0
+    },
+    "retainedFacts": 2112,
+    "knownAt": "65",
+    "seedWallMs": 1451.17075
+  },
+  "rawOpenAuditWallMs": 173.902083,
+  "publicOpenAuditWallMs": 206.9948750000001,
+  "timingScope": {
+    "templateGeneration": "Wall around the prepared C++ template scalar call and result extraction. Includes DuckDB dispatch, SDK and async scheduling. First and repeated calls are separate samples.",
+    "directExecution": "A separate ordinary prepared execution checks every typed answer at the fixed cut. Prepare and execute-and-extract wall are separate. Public store queue, routing, and JS value decoding are outside this call.",
+    "operatorProfile": "EXPLAIN ANALYZE executes the same generated SQL again with a fresh token and profiling overhead. It returns the profile rather than the answer. Operator timings can overlap across threads and include callbacks executed inside those operators.",
+    "boundary": "The measurements cover overlapping scopes or separate runs. Each wall interval includes any scheduling within that scope.",
+    "cppEvaluator": "Four steady-clock nanosecond scopes cover engine construction and C++ import from a borrowed DuckDB list, fixed-point strata, native answer construction and sort, and result-vector encoding. DuckDB list construction, outer SQL JSON, and SDK decoding are separate work.",
+    "publicPath": "Independent public query calls on the same fixture and cut, including SDK row extraction and typed decoding. First and warm calls are separate. No evaluator profile token is used."
+  },
+  "focusedVerification": {
+    "typescript": "passed",
+    "tests": 3,
+    "failed": 0,
+    "skipped": 0,
+    "raw": "evaluator-profile-027-focused-20261105.tap",
+    "sha256": "87342008df981469544fa7eab72103c741d316330deb321a9376bc07dc40429c",
+    "coverage": [
+      "exact ordinary/profiled answer wire",
+      "one-shot duplicate invalidation",
+      "recursive fixed point and max-round failure",
+      "cancel before/after result, deadline expiry, token retirement and reuse"
+    ]
+  },
+  "retainedRawReceipts": [
+    {
+      "file": "evaluator-profile-027-20261105-01.json",
+      "sha256": "d0997314abc508acb44401b0f021f151d6f58f6b3b00c68a31cfeb3301af83c5",
+      "status": "failed",
+      "harnessSha256": "74812e35bd1ab374f4b201a53f5809a6bf883c953f92f7b9ff5bf305e2765ca4",
+      "error": {
+        "phase": "public_path",
+        "name": "Error",
+        "code": null,
+        "message": "TD_E_CONTROL: bridge artifact is already pinned"
+      }
+    },
+    {
+      "file": "evaluator-profile-027-20261105-02.json",
+      "sha256": "83849b6397bd210be18f7f8351b434489e9c8578464267e296a02762af5a376e",
+      "status": "passed"
+    }
+  ],
+  "cells": [
+    {
+      "kind": "tiny_constant",
+      "program": "answer(7).",
+      "template": {
+        "entry": "td_query_store_values_sql_v2",
+        "prepareWallMs": 0.41862500000002,
+        "generationCallWallMs": [
+          0.5139580000000024,
+          0.25520800000003874,
+          0.18966699999987213,
+          0.23320800000010422,
+          0.1872089999999389
+        ],
+        "sqlSha256": "b706641ec9cd8ecfaa26cd062793556b0592beca46a5836415d565c89d29fe0a",
+        "sqlBytes": 4015
+      },
+      "ordinaryExecution": {
+        "prepareWallMs": 3.7367920000001504,
+        "executeAndExtractWallMs": 5.108749999999873,
+        "route": "native",
+        "reason": "forced_native",
+        "position": "65",
+        "answerRows": 1,
+        "answerWireSha256": "acc23f7058c95f82a009d6783db4a408a51741ab76f880b263286dffaf6f3ca7",
+        "counters": {
+          "rounds": "1",
+          "derivedFacts": "1",
+          "work": "0"
+        }
+      },
+      "profiledExecutions": {
+        "samples": [
+          {
+            "executeAndExtractWallMs": 4.397875000000113,
+            "cppEvaluator": {
+              "buildAndLoadNs": "8125",
+              "fixedPointNs": "1750",
+              "materializeAnswerNs": "500",
+              "encodeResultVectorNs": "1250",
+              "inputRows": "0",
+              "answerRows": "1"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 4.320165999999972,
+            "cppEvaluator": {
+              "buildAndLoadNs": "7167",
+              "fixedPointNs": "1792",
+              "materializeAnswerNs": "542",
+              "encodeResultVectorNs": "917",
+              "inputRows": "0",
+              "answerRows": "1"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 5.319582999999966,
+            "cppEvaluator": {
+              "buildAndLoadNs": "5541",
+              "fixedPointNs": "1459",
+              "materializeAnswerNs": "458",
+              "encodeResultVectorNs": "1250",
+              "inputRows": "0",
+              "answerRows": "1"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 4.1422909999998865,
+            "cppEvaluator": {
+              "buildAndLoadNs": "4500",
+              "fixedPointNs": "833",
+              "materializeAnswerNs": "167",
+              "encodeResultVectorNs": "708",
+              "inputRows": "0",
+              "answerRows": "1"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 5.371583000000101,
+            "cppEvaluator": {
+              "buildAndLoadNs": "14708",
+              "fixedPointNs": "1708",
+              "materializeAnswerNs": "625",
+              "encodeResultVectorNs": "1500",
+              "inputRows": "0",
+              "answerRows": "1"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 4.494459000000006,
+            "cppEvaluator": {
+              "buildAndLoadNs": "5917",
+              "fixedPointNs": "1292",
+              "materializeAnswerNs": "375",
+              "encodeResultVectorNs": "875",
+              "inputRows": "0",
+              "answerRows": "1"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 3.953416999999945,
+            "cppEvaluator": {
+              "buildAndLoadNs": "2500",
+              "fixedPointNs": "583",
+              "materializeAnswerNs": "167",
+              "encodeResultVectorNs": "1041",
+              "inputRows": "0",
+              "answerRows": "1"
+            }
+          }
+        ],
+        "prepareWallMs": 3.6602919999997994
+      },
+      "cppScopeMediansNs": {
+        "buildAndLoadNs": 5917,
+        "fixedPointNs": 1459,
+        "materializeAnswerNs": 458,
+        "encodeResultVectorNs": 1041
+      },
+      "profiledExecutionMedianWallMs": 4.397875000000113,
+      "explainAnalyze": {
+        "prepareWallMs": 3.1065830000000005,
+        "executeAndExtractWallMs": 4.688750000000027,
+        "queryMetrics": {
+          "cpu_time": 0.000473673,
+          "total_intermediate_rows": 70,
+          "total_intermediate_size_bytes": 46191,
+          "total_row_groups_scanned": 3,
+          "total_row_groups_to_scan": 3,
+          "total_rows_scanned": 3,
+          "total_time": 0.003813292
+        },
+        "cppEvaluator": {
+          "buildAndLoadNs": "2416",
+          "fixedPointNs": "458",
+          "materializeAnswerNs": "167",
+          "encodeResultVectorNs": "709",
+          "inputRows": "0",
+          "answerRows": "1"
+        },
+        "callbackOperatorCandidates": [
+          {
+            "path": "0.0.0.0.1.1.1.1.0",
+            "type": "PROJECTION",
+            "timingMs": 0.016082999999999997,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 3170,
+            "detail": {
+              "Projections": [
+                "known",
+                "answer"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          }
+        ]
+      },
+      "publicPath": {
+        "firstCallWallMs": 9.150583000000097,
+        "warmCallWallMs": [
+          6.341917000000194,
+          4.809458000000177,
+          4.903707999999824,
+          5.819792000000234,
+          5.302499999999782,
+          5.106834000000163,
+          4.95141700000022
+        ],
+        "warmMedianWallMs": 5.106834000000163
+      }
+    },
+    {
+      "kind": "recursive_chain",
+      "program": "reach(?n) :- triple('node-000','next',?n).\n      reach(?next) :- reach(?node),triple(?node,'next',?next).\n      answer(?n) :- reach(?n).",
+      "template": {
+        "entry": "td_query_store_values_sql_v2",
+        "prepareWallMs": 1.5289999999999964,
+        "generationCallWallMs": [
+          0.42504200000007586,
+          0.2583340000001044,
+          0.21733399999993708,
+          0.22974999999996726,
+          0.21175000000016553
+        ],
+        "sqlSha256": "bf87cad279c66576d2991e9d0be74768dd79854e012d8d4506f8222da462302a",
+        "sqlBytes": 4195
+      },
+      "ordinaryExecution": {
+        "prepareWallMs": 3.854041999999936,
+        "executeAndExtractWallMs": 6.8444580000000315,
+        "route": "native",
+        "reason": "forced_native",
+        "position": "65",
+        "answerRows": 64,
+        "answerWireSha256": "d171fcc787f5a8d3a8a9b0809dbbf21b6d8ede043daa86c5aa2957d01ad6c553",
+        "counters": {
+          "rounds": "66",
+          "derivedFacts": "128",
+          "work": "192"
+        }
+      },
+      "profiledExecutions": {
+        "samples": [
+          {
+            "executeAndExtractWallMs": 6.481666000000132,
+            "cppEvaluator": {
+              "buildAndLoadNs": "486875",
+              "fixedPointNs": "55041",
+              "materializeAnswerNs": "10167",
+              "encodeResultVectorNs": "3875",
+              "inputRows": "2112",
+              "answerRows": "64"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 5.832875000000058,
+            "cppEvaluator": {
+              "buildAndLoadNs": "439083",
+              "fixedPointNs": "40292",
+              "materializeAnswerNs": "7916",
+              "encodeResultVectorNs": "3333",
+              "inputRows": "2112",
+              "answerRows": "64"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 5.981958999999961,
+            "cppEvaluator": {
+              "buildAndLoadNs": "427709",
+              "fixedPointNs": "37334",
+              "materializeAnswerNs": "7292",
+              "encodeResultVectorNs": "2916",
+              "inputRows": "2112",
+              "answerRows": "64"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 7.716083000000026,
+            "cppEvaluator": {
+              "buildAndLoadNs": "528542",
+              "fixedPointNs": "54542",
+              "materializeAnswerNs": "12000",
+              "encodeResultVectorNs": "3750",
+              "inputRows": "2112",
+              "answerRows": "64"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 6.503959000000123,
+            "cppEvaluator": {
+              "buildAndLoadNs": "463667",
+              "fixedPointNs": "48875",
+              "materializeAnswerNs": "10166",
+              "encodeResultVectorNs": "4500",
+              "inputRows": "2112",
+              "answerRows": "64"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 6.6265840000000935,
+            "cppEvaluator": {
+              "buildAndLoadNs": "455750",
+              "fixedPointNs": "42458",
+              "materializeAnswerNs": "7542",
+              "encodeResultVectorNs": "3417",
+              "inputRows": "2112",
+              "answerRows": "64"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 7.38795899999991,
+            "cppEvaluator": {
+              "buildAndLoadNs": "552375",
+              "fixedPointNs": "66584",
+              "materializeAnswerNs": "10666",
+              "encodeResultVectorNs": "4625",
+              "inputRows": "2112",
+              "answerRows": "64"
+            }
+          }
+        ],
+        "prepareWallMs": 3.6803330000000187
+      },
+      "cppScopeMediansNs": {
+        "buildAndLoadNs": 463667,
+        "fixedPointNs": 48875,
+        "materializeAnswerNs": 10166,
+        "encodeResultVectorNs": 3750
+      },
+      "profiledExecutionMedianWallMs": 6.503959000000123,
+      "explainAnalyze": {
+        "prepareWallMs": 4.158042000000023,
+        "executeAndExtractWallMs": 7.18445799999995,
+        "queryMetrics": {
+          "cpu_time": 0.0013624099999999999,
+          "total_intermediate_rows": 27978,
+          "total_intermediate_size_bytes": 2756327,
+          "total_row_groups_scanned": 5,
+          "total_row_groups_to_scan": 5,
+          "total_rows_scanned": 4227,
+          "total_time": 0.006067458
+        },
+        "cppEvaluator": {
+          "buildAndLoadNs": "467250",
+          "fixedPointNs": "42083",
+          "materializeAnswerNs": "7416",
+          "encodeResultVectorNs": "3500",
+          "inputRows": "2112",
+          "answerRows": "64"
+        },
+        "callbackOperatorCandidates": [
+          {
+            "path": "0.0.0.0.1.1.1.1.1.0",
+            "type": "PROJECTION",
+            "timingMs": 0.597333,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 6320,
+            "detail": {
+              "Projections": [
+                "known",
+                "answer"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          }
+        ]
+      },
+      "publicPath": {
+        "firstCallWallMs": 10.818417000000409,
+        "warmCallWallMs": [
+          7.385499999999865,
+          7.935249999999996,
+          7.775958000000173,
+          7.692207999999937,
+          6.500292000000172,
+          6.919374999999945,
+          6.59887499999968
+        ],
+        "warmMedianWallMs": 7.385499999999865
+      }
+    }
+  ]
+}

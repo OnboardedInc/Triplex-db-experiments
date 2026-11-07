@@ -1,0 +1,41 @@
+{
+  "status": "PRIMARY_SOURCE_RESEARCH_ONLY_NO_CAUSE_OR_REPAIR_NO_EXECUTION_PERMISSION",
+  "files_excludes_self": [
+    {
+      "name": "README.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/compile-nonpass-research-20261101/README.md",
+      "bytes": 2897,
+      "sha256": "690b2617f3d5c2a9306b900e059f6d294ec697afbf6194a0575ad4e0f208871a",
+      "git_blob_sha": "e18f94f56a22bc59f3923cae47af46e23266e941",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "DRIVER-SEARCH-RESEARCH.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/compile-nonpass-research-20261101/DRIVER-SEARCH-RESEARCH.md",
+      "bytes": 6423,
+      "sha256": "4807202367aea76da0db0e50690136e1bc0a183d2f346b940e2f86f0dd7ec723",
+      "git_blob_sha": "3728ff106a38e6b2d2e6ac538f15a3f3aa614d6a",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "CXX-SOURCE-RESEARCH.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/compile-nonpass-research-20261101/CXX-SOURCE-RESEARCH.md",
+      "bytes": 11362,
+      "sha256": "ab3842ea2acbb33a50d013034305fc519325cc97abdde4f479fa1bba989c993b",
+      "git_blob_sha": "7d2800fcb08e6ee8f1e44324d8ff986ef697e048",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "PROJECT-SOURCE-IDENTITIES.json",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/compile-nonpass-research-20261101/PROJECT-SOURCE-IDENTITIES.json",
+      "bytes": 1177,
+      "sha256": "2c06f68f13bd26ab3c5af4bd8005c3a17844134c8655bc5ac38c45fc0f302f18",
+      "git_blob_sha": "30d03a5ca42e841bddf689830704b8627adbdc09",
+      "mode": "100644",
+      "type": "blob"
+    }
+  ]
+}

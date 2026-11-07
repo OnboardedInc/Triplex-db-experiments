@@ -1,0 +1,49 @@
+{
+  "schema": "td.native-memory-owner-probe-second-first-failure/1",
+  "status": "SETUP_FAILURE_NOT_LIFETIME_QUALIFICATION",
+  "attempts": 1,
+  "exitCode": 1,
+  "sourceCommit": "fd034365bf34a3c3509a8c4c445985f1bb84c703",
+  "unchangedArtifactReference": "native-memory-owner-probe-first-032-20261105.pins.json",
+  "command": "node --test --test-name-pattern='public unbounded and timed' build/adapter/test-native-memory-owner-probe.js",
+  "result": {
+    "methods": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "methodMs": 102.124875,
+    "processMs": 231.719834
+  },
+  "stoppedPhase": "NativeEntityStore.open; native port control.initialize after coreLOAD but before td_initialize, companionLOAD, return and any public query",
+  "error": "TD_E_CONTROL: bridge artifact is already pinned",
+  "sourceDiagnosis": {
+    "testPin": "<runtime>/build/temporal_datalog.duckdb_extension",
+    "publicPortPin": "<runtime>//build/temporal_datalog.duckdb_extension",
+    "reason": "Test join(build,...) normalizes the path; the public port retains trailing-root slash plus literal /build. Exact bridge path/hash guard correctly rejects a different string even though both name the same hashed7f98 image.",
+    "callsites": [
+      "adapter/test-native-memory-owner-probe.ts17-18,28-35",
+      "adapter/native-duckdb-port.mjs15,82,91-103,122-124",
+      "native/src/node_control.cpp49-50"
+    ],
+    "instanceCleanupBoundary": "Actual instance and connection were constructed and core loaded before failure. The port catch calls both closeSync operations; the original error, with no AggregateError cleanup failure, is preserved. No post-failure engine reopen/inspection was performed."
+  },
+  "beforeAfter": {
+    "trackedSourceUnchanged": true,
+    "sourceInputs": 42,
+    "artifactInputs": 12,
+    "engineLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "rawSha256": "813c79d5e45322e820562135450be021b828d1407e16450e8adfbc200f2efa3d",
+  "savedOutput": {
+    "file": "native-memory-owner-probe-second-first-failure-032-20261105.output.txt",
+    "sha256": "07ffa2cc9a84726b4c213129da98b78cdb6a9503cfbfd228cd66985379db9726",
+    "sanitization": "Only fresh-owned runtime host prefix replaced with project-relative path"
+  },
+  "savedPins": {
+    "file": "native-memory-owner-probe-second-first-failure-032-20261105.pins.json",
+    "sha256": "e23bd8e0350d4fa7d77e4a2d0df4826e58c4190eb7c41b111c302e85dd00f13f"
+  },
+  "ownedFailureFixture": "build/memory-owner-public-OHnQ6Y",
+  "remaining": "No public read/cancel/drain/reopen/copy lifetime qualification occurred. First independent raw lifetime method remains accepted on its own receipt. No shared quota/Goal6 claim.",
+  "executionBoundary": "One second-method attempt only; no first-method repeat/fullfile/retry/rebuild/install/cap/source/bridge/SDK change. Engine lease released immediately at first terminal; all failed artifacts preserved."
+}

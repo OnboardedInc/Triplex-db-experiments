@@ -1,0 +1,15 @@
+{
+  "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+  "adapter/antijoin-profile-binding.mjs": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4",
+  "adapter/antijoin-sdk-binding.mjs": "74839060c5382ca78cd89629ebf3882db26adbc1febbebdb19aa2961f18b855a",
+  "adapter/benchmark-antijoin-cost.mjs": "1f76395dfe3e4bf91464aee84e80927600e36a11ab5a29c2ebbcc5a62baeded5",
+  "adapter/antijoin-static-four-binding.mjs": "eb5f6e078560c86f3501020d39afdbcd9925663a1a00c0f76b254b89757c524b",
+  "freeze_static_four_runtime.py": "4a524076d42e47bf9c6671650f1446c0e524120cea060c0e283d10c61b298a58",
+  "STATIC-FOUR-PERFORMANCE-PROTOCOL.md": "3afa0ecf118cfb7f603982766a69dbde5957bcc5ddb087776a4a8ec3c693458b",
+  "stage_broad_sdk_runtime.py": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb",
+  "adapter/native-entity.ts": "6101c9eb6059e051520b29fab50cf400bf12d18d24f0fc4714cfd8804b443969",
+  "adapter/native-schema.ts": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0",
+  "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+  "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+  "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b"
+}

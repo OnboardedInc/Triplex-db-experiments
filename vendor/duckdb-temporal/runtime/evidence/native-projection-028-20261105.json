@@ -1,0 +1,67 @@
+{
+  "schema": "td.native-projection-qualification/1",
+  "observed_utc": "2026-11-05T19:54:54.916337+00:00",
+  "tested_source": "b271778c24f715946619e4bd35a16ca268bb0939",
+  "source_sha256": {
+    "native/src/temporal_projection.hpp": "a530b0cb7b18bfacc298b05b92180d7e7f0763d2db7a526f4be87eef918d36b3",
+    "native/src/temporal_datalog.cpp": "f4bb8c20fdd561306d44f6e2c87c4d915c5f8f8a33ce5de0cbd0edc77f094051",
+    "native/src/temporal_store_query.cpp": "ce9c714c6e9ed8a8d4803db883b259d6ac119e45e38e2fb0d4ac2e31779e4255",
+    "native/src/temporal_store_query.hpp": "0d0cf30663ce3e5a5bf90095a2c539928efd7011f9f916943a08bab31bd64c75",
+    "adapter/test-native-projection.mjs": "d903e6584f616f11a35099b4a1a8f4c55bbd9b05f7e95615a1f06a468de94c6f"
+  },
+  "result": "PASS",
+  "platform": "macOS arm64",
+  "artifact": {
+    "extension_version": "0.28.0",
+    "duckdb_version": "2.0.0",
+    "duckdb_source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "duckdb_source_archive_sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+    "core_sha256": "86f7c944c97a1136e5976e91d26aa5a6f23d5e36ba2d0821e16723d923730c62",
+    "core_manifest_sha256": "e336586de03bd5d4ac70a74806b3d76cec9d907ddd7b8d7d2806691896096a4c",
+    "owner_sha256": "9ceae8fb2087af845ffd18cccf5e768d0877faf3dd54600d39fe503c7963e004",
+    "owner_manifest_sha256": "574a70fea1831a1451aaeb944c95298771d23c8343879bb584632fcab6efe4b0",
+    "sdk_engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "native_control_bridge_used": false,
+    "core_build_log_sha256": "5a2a291a23d6f699b23519de2f7fe2f7da39d3febceb02d14847ad4d84ac4a26",
+    "owner_build_log_sha256": "a8552f2ff3044a6ca0edc3438e420e09429c568aa387267006134a3015b0f525"
+  },
+  "gate": {
+    "command": "node --test adapter/test-native-projection.mjs",
+    "attempt": 1,
+    "exit_code": 0,
+    "pass": 4,
+    "fail": 0,
+    "skip": 0,
+    "raw_log_sha256": "f34e7fa0851496231d94e141c42f42f3a1e8b2d2618984405d8c84add4ea24ce",
+    "raw_log": "✔ typed support maintenance survives corrections, replay and caller rollback (1248.434834ms)\n✔ scheduled boundaries remove individual legacy supports and owner generation fences same-K changes (537.062208ms)\n✔ row and byte admission preserve the prior slot, including empty answers (575.808708ms)\n✔ disk checkpoint retains an audited slot and reopen requires explicit rebuild (378.011291ms)\nℹ tests 4\nℹ suites 0\nℹ pass 4\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 2918.370708\n",
+    "cases": [
+      {
+        "name": "typed support maintenance survives corrections, replay and caller rollback",
+        "elapsed_ms": 1248.434834
+      },
+      {
+        "name": "scheduled boundaries remove individual legacy supports and owner generation fences same-K changes",
+        "elapsed_ms": 537.062208
+      },
+      {
+        "name": "row and byte admission preserve the prior slot, including empty answers",
+        "elapsed_ms": 575.808708
+      },
+      {
+        "name": "disk checkpoint retains an audited slot and reopen requires explicit rebuild",
+        "elapsed_ms": 378.011291
+      }
+    ]
+  },
+  "closed_checkpoint_fixture": {
+    "known_at": 1,
+    "sha256": "a1266f438af03ae8366c79b60bbc5ffdbaed139c113a9b235cb9d20ae383bf6f",
+    "bytes": 5255168,
+    "wal_present": false
+  },
+  "scope": "Direct audited native correctness under one writer connection with an isolated TEMP slot and 128MB DuckDB memory setting.",
+  "remaining": [
+    "Measure steady read, refresh and rebuild under a paired operator and application profile.",
+    "Qualify reader-visible managed projection, atomic default writer maintenance, and two-hop witnesses."
+  ]
+}

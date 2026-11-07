@@ -1,0 +1,23 @@
+{
+  "schema": "td.native-presence-intervals-root-review/1",
+  "recordedAtUtc": "2026-11-06T09:23:57.518128+00:00",
+  "status": "accepted_five_method_primitive_not_full_verification",
+  "evidenceCommit": "63941fac6a9103ec0e245690ab319c685f186cc2",
+  "measuredSource": "31cbefd870274a3add6434508c3c5e50b5bc786b",
+  "receiptSha256": "a33e698aa30c940f14cee37480d4e387b0b00b678e2df146ba5bf71d7e60b099",
+  "rawFiles": 22,
+  "packagedHashesAndSizesVerified": true,
+  "actualCounts": {
+    "nativeBuilds": 2,
+    "typescriptSemanticCheck": 1,
+    "realEngineMethods": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "fullVerifierExecuted": false
+  },
+  "pairedCoreHash": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+  "independentReview": "native_read_strategy CLEAR: all four terminals, QA9a539 source,22 raw original hashes,395 dependency/38 source/9 native/128 compiled/36 header/5 route/7 entry maps, five closed no-WAL fixtures",
+  "preservedSetupFailure": "Only ad-hoc SDK provenance resolver used existing duckdb.node subpath; no source/dependency/limits/oracle change. Initial resolver process PID and redirected stderr were not captured; structured observed error/tool chunk preserved. Core build accidentally proceeded after that failed preflight; preserved explicitly.",
+  "scope": "Independently authored five-method real-engine gate at128MB/64MB; no full verifier, dense-history cost, physical memory, concurrency, reference coverage or goal closure."
+}

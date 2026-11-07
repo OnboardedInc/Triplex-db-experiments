@@ -1,0 +1,169 @@
+{
+  "schema": "td.functional-twenty-workload-qualification/1",
+  "result": "PASS",
+  "timestamp_utc": "2026-11-05T21:55:17.919Z",
+  "matching_integration_source": "212b0907f93083f8738640c17da0168d82f54eb7",
+  "build_source": "8b4a802a9a2141f2c4fbb044fc3cfa917428df04",
+  "platform": "macOS arm64",
+  "runtime_artifact_sha256": {
+    "build/artifact.json": "7471052fdcaaec3befcd91e8eee0ac5efbebfb1da016b59276de855de7e6b5b4",
+    "build/temporal_datalog.duckdb_extension": "5191449b92d71209f9739771c8e5d03c6a5525b5e800ffdde91e28db83b4b946",
+    "build/temporal_control.node": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "build/adapter/native-entity.js": "454e17fcc1462b48d9e997351dbfcb44a2600167c7a862fcdbb6e2592704740f",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/owner_probe/artifact.json": "40f6dd2bf74b9e70da401f61ba070d2d7ded468cba8574dc756b17abc92e5442",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "4b872cb97f4c95536f1139e215351c717c03e557476e18fb580ffb21a1f183f4"
+  },
+  "duckdb_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "packet_sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "focused_checks": {
+    "passed": 28,
+    "raw_log_sha256": "a6b5346e5cc9a8740c2a3dc3af5ab493c2ce05a303a1ca30d01e73df866ee48b"
+  },
+  "functional_checks": {
+    "families": 20,
+    "cases_per_engine": 71,
+    "passed_engine_answers": 213,
+    "reopened_profiles": 60,
+    "samples_per_answer": 1,
+    "warmup": 0,
+    "raw_evidence_sha256": "53da18c7ecb339987226de78a4600fe30f84c6354508187b5d890f2d522e4df3",
+    "families_detail": [
+      {
+        "workload": "01",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "02",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "03",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "04",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "05",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "06",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "07",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "08",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "09",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "10",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "11",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "12",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "13",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "14",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "15",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "16",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "17",
+        "cases_per_engine": 3,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "18",
+        "cases_per_engine": 5,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "19",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      },
+      {
+        "workload": "20",
+        "cases_per_engine": 4,
+        "engines": 3,
+        "reopened_profiles": 3
+      }
+    ]
+  },
+  "initial_attempt": {
+    "raw_evidence_sha256": "4d97f0811dd746b81150047479b46ae82e57edc94e6fd76d06c2eab4fe58e4d6",
+    "passed_engine_answers": 213,
+    "failed_reopen_profile": "05/temporal_store",
+    "reason": "The extra post-replay count used an unsupported aggregate form over triple with a literal.",
+    "fix_source": "a370382b",
+    "resolution": "Count through a completed source relation. Targeted repeat and all twenty families pass after the fix."
+  },
+  "scope": [
+    "Exact immutable-event synthetic packet answers and complete-group temporal cuts.",
+    "Webhook native command receipt equality, duplicate replay and reopen.",
+    "Canonical recomputation for recursive graphs. Incremental maintenance and the final timed campaign remain separate gates.",
+    "No throughput claim from these single-sample functional runs."
+  ]
+}

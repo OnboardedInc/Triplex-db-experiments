@@ -1,0 +1,37 @@
+{
+  "schema": "injective-projection-functional/1",
+  "status": "passed",
+  "base_version": "0.20.0",
+  "core_extension_sha256": "8d03a0c8fafbbe66920027fc18b03b454c31373fbcafe5ea3741be11ae9a9398",
+  "companion_extension_sha256": "de74b33e12d9fe6c88ab21896d1d57c5ca654722f6795ce64c8993ae49e5cc4f",
+  "reused_baseline_extension_sha256": "5d7d5ed0baa65359ae6c3b6d56e2f9ca9c7c7e4e247d439bafb068ba8adc0a97",
+  "flags": {
+    "identity_count": false,
+    "current_unique": false,
+    "injective_projection": true
+  },
+  "suites": [
+    {
+      "name": "projection",
+      "passed": 4,
+      "failed": 0,
+      "duration_ms": 1067.414083,
+      "log_sha256": "43e898a6fc4754e6394d81e5ac3da5fb5a723cb1e4084d76c6ec806c1f21b024"
+    },
+    {
+      "name": "owner",
+      "passed": 19,
+      "failed": 0,
+      "duration_ms": 8098.211291,
+      "log_sha256": "e1fa0032c0587898b768ff0c75b3753e557076ba1b64e5fe2f7193647c3ce0c1"
+    },
+    {
+      "name": "native_scale",
+      "passed": 6,
+      "failed": 0,
+      "duration_seconds": 16.67,
+      "native_ingested_assertions": 1003529,
+      "log_sha256": "7356f949d824fa3a859b193a0e94e5129f89e857f967573567431f43e85f3eab"
+    }
+  ]
+}

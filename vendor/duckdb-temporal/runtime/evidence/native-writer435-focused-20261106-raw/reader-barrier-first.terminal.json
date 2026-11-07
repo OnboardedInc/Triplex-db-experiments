@@ -1,0 +1,24 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "--test-name-pattern=^pooled admission includes reads awaiting the writer barrier$",
+    "build/adapter/test-readers.js"
+  ],
+  "pid": 77675,
+  "startedAtUtc": "2026-11-06T07:24:00.234355+00:00",
+  "status": "terminal",
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T07:24:00.750844+00:00",
+  "elapsedMs": 516.498832963407,
+  "tapPass": 1,
+  "expectedSelectedPass": 1,
+  "tapFail": [
+    "0"
+  ],
+  "tapCancelled": [
+    "0"
+  ]
+}

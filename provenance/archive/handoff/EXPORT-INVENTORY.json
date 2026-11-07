@@ -1,0 +1,61 @@
+{
+  "format": "handoff-export-inventory/1",
+  "status": "PAUSED_SOURCE_AND_RESEARCH_HANDOFF",
+  "comparison": "Triplex-on-XTDB versus Triplex-on-QLever; earlier DuckDB project retained as reference",
+  "projectServicesAtLastReadOnlyCheck": "Stopped; no owned temporal workers observed. Unrelated infrastructure left running.",
+  "originalDataDisposition": "Retained in place; no original file, branch, database or container deleted.",
+  "exportResourceProfile": "handoff-export; distinct from all native qualification profiles and old development disk gate",
+  "dependencyPackageIdentities": 872,
+  "publicRepositorySnapshots": 14,
+  "developmentSourceVariants": 53,
+  "archivalBuildTextSnapshots": 54,
+  "decodedResearchFiles": 11045,
+  "publicCitations": {
+    "publicRequested": 764,
+    "downloaded": 750,
+    "unavailable": 14,
+    "HTMLConvertedToInertText": 296,
+    "excludedNonPublicApplicationReferences": 1
+  },
+  "generatedDatabasesAndNativeBuildsIncluded": false,
+  "newComputerNativeStartupQualified": false,
+  "disconnectedBuildQualified": false,
+  "allTenGoalsComplete": false,
+  "largestEntityScaleComplete": false,
+  "contentCountsExcludingThisInventoryAndManifest": {
+    "README.md": {
+      "files": 1,
+      "bytes": 9618
+    },
+    "tools": {
+      "files": 4,
+      "bytes": 19438
+    },
+    "privacy": {
+      "files": 19,
+      "bytes": 9569479
+    },
+    "handoff": {
+      "files": 2,
+      "bytes": 17428
+    },
+    "triplex-backends": {
+      "files": 2286,
+      "bytes": 46979191
+    },
+    "offline": {
+      "files": 56849,
+      "bytes": 4532911310
+    },
+    "duckdb-temporal": {
+      "files": 19019,
+      "bytes": 709046625
+    },
+    "references": {
+      "files": 487,
+      "bytes": 6067039
+    }
+  },
+  "independentContentReviews": "Privacy, completeness/tool safety and paused-state accuracy reviews passed within their documented limits; final ZIP parity is the delivery gate.",
+  "countDefinition": "Excludes only this inventory file and the root export MANIFEST.json; nested upstream files named MANIFEST.json are included."
+}

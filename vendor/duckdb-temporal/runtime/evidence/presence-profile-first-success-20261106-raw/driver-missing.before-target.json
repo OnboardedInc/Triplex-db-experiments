@@ -1,0 +1,58 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.0,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 0,
+                    "intermediate_size_bytes": 0,
+                    "timing": 0.000010208,
+                    "type": "SET"
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "deliminator": 4.17e-7,
+        "total_time": 0.000011125
+    },
+    "parser": {
+        "total_time": 0.000019708
+    },
+    "physical_planner": {
+        "column_binding": 1.67e-7,
+        "create_plan": 5.42e-7,
+        "resolve_types": 1.25e-7,
+        "total_time": 0.000001417
+    },
+    "planner": {
+        "binding_time": 0.000004084,
+        "total_time": 0.000022917
+    },
+    "query": {
+        "cpu_time": 0.000010208,
+        "sql": "SET profiling_output='__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03/missing.automatic.json'",
+        "total_intermediate_rows": 0,
+        "total_intermediate_size_bytes": 0,
+        "total_row_groups_scanned": 0,
+        "total_row_groups_to_scan": 0,
+        "total_rows_scanned": 0,
+        "total_time": 0.000085292
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 12573824,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 0
+    }
+}

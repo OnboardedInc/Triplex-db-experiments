@@ -1,0 +1,259 @@
+{
+  "schema": "td.native-prefilter-public-independent-review/1",
+  "result": "NO_PROMOTION",
+  "auditedUtc": "2026-11-05T22:53:58.930356+00:00",
+  "rawEvidence": {
+    "file": "build/prefilter-public-20261105/comparison.json",
+    "sha256": "3848aab97c4f656c52eb5a641c2197588e436d63b5f18f049b109d1d4a2ab8d1",
+    "bytes": 108900
+  },
+  "candidateSource": "2bdfcb6bb7717ccce0f5217edd9ef1b05600264f",
+  "source": {
+    "database": "build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "bytes": 52178944,
+    "sha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "unchangedAssertedByPinnedHarness": true,
+    "knownAt": "393",
+    "validAt": "0"
+  },
+  "configuration": {
+    "readersExecuted": [
+      1
+    ],
+    "largerReadersExecuted": false,
+    "samplesPerQueryPerChild": 20,
+    "warmupPerQueryPerChild": 2,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "forceNative": true
+  },
+  "predeclaredGates": {
+    "skewMedianRatio": 0.9,
+    "controlMedianRatio": 1.05,
+    "controlP95Ratio": 1.1
+  },
+  "timingScopes": {
+    "ordinary": "Awaited NativeEntityStore.query including public decoding; exact verification follows each stopped sample",
+    "throughput": "Whole measured loop including per-result exact verification",
+    "resources": "Idle snapshots after each case; no peak or containment claim",
+    "evaluatorSpansAvailable": false
+  },
+  "pins": {
+    "baselineCoreSha256": "cf4d2a3563527214df8ffefb6c0a10611ddcf86e41e48c651b1a7f688a2dce57",
+    "baselineCompanionSha256": "4b872cb97f4c95536f1139e215351c717c03e557476e18fb580ffb21a1f183f4",
+    "candidateCoreSha256": "d1a9a20c5ea08143902e55f2da2e0a7321a76a95d0a6d8a3970557d90452c935",
+    "candidateCompanionSha256": "4decfeca80e76327fddf6ea5e9409cbe5e67343c0019ffe36e0e8bc71611aee6",
+    "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "harnessSha256": "7509b9d3080ba44d89d0bfc77066737ca867ed2ceb4a43b478af37e2bcc55039",
+    "onlyChangedCoreSource": "native/src/temporal_core.cpp",
+    "matchedAdapterAndCompanionSources": true
+  },
+  "orders": [
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "passed": true,
+      "comparisons": [
+        {
+          "kind": "skew_256",
+          "baselineP50Ms": 20.048874999999953,
+          "candidateP50Ms": 17.976459000000204,
+          "baselineP95Ms": 25.637333000000012,
+          "candidateP95Ms": 31.225582999999915,
+          "p50Ratio": 0.8966318060240411,
+          "p95Ratio": 1.217973140965946,
+          "passed": true,
+          "p50RatioLimit": 0.9,
+          "p95RatioLimit": null,
+          "answerRows": 256,
+          "counters": {
+            "rounds": "5",
+            "derivedFacts": "552",
+            "work": "11784"
+          }
+        },
+        {
+          "kind": "tiny",
+          "baselineP50Ms": 7.930417000000034,
+          "candidateP50Ms": 5.527125000000069,
+          "baselineP95Ms": 9.206250000000182,
+          "candidateP95Ms": 7.497041000000081,
+          "p50Ratio": 0.6969526318729576,
+          "p95Ratio": 0.8143425390359738,
+          "passed": true,
+          "p50RatioLimit": 1.05,
+          "p95RatioLimit": 1.1,
+          "answerRows": 1,
+          "counters": {
+            "rounds": "1",
+            "derivedFacts": "1",
+            "work": "0"
+          }
+        },
+        {
+          "kind": "one_bound",
+          "baselineP50Ms": 11.808874999999944,
+          "candidateP50Ms": 9.659333999999944,
+          "baselineP95Ms": 16.552332999999862,
+          "candidateP95Ms": 14.393582999999808,
+          "p50Ratio": 0.8179724148151276,
+          "p95Ratio": 0.8695803183756591,
+          "passed": true,
+          "p50RatioLimit": 1.05,
+          "p95RatioLimit": 1.1,
+          "answerRows": 1,
+          "counters": {
+            "rounds": "1",
+            "derivedFacts": "1",
+            "work": "391"
+          }
+        },
+        {
+          "kind": "recursive",
+          "baselineP50Ms": 5.997167000000218,
+          "candidateP50Ms": 6.070457999999917,
+          "baselineP95Ms": 10.640875000000051,
+          "candidateP95Ms": 9.025624999999991,
+          "p50Ratio": 1.0122209369856963,
+          "p95Ratio": 0.8482032727571697,
+          "passed": true,
+          "p50RatioLimit": 1.05,
+          "p95RatioLimit": 1.1,
+          "answerRows": 64,
+          "counters": {
+            "rounds": "67",
+            "derivedFacts": "192",
+            "work": "192"
+          }
+        }
+      ],
+      "childEvidence": [
+        {
+          "variant": "baseline",
+          "file": "build/prefilter-public-20261105/prefilter-yKYX65/baseline-1-0.json",
+          "sha256": "64935efc958fdd94e63bdb5290170a221718e07bdd227ea03b6315baa3657f59"
+        },
+        {
+          "variant": "candidate",
+          "file": "build/prefilter-public-20261105/prefilter-yKYX65/candidate-1-0.json",
+          "sha256": "549c32d39d0951d50c237e1c1b99a37caab0bd8813809acb79241af94cf8d9e9"
+        }
+      ]
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "passed": false,
+      "comparisons": [
+        {
+          "kind": "skew_256",
+          "baselineP50Ms": 18.79145799999992,
+          "candidateP50Ms": 24.444750000000113,
+          "baselineP95Ms": 19.83312500000011,
+          "candidateP95Ms": 28.607166000000007,
+          "p50Ratio": 1.3008437131381831,
+          "p95Ratio": 1.44239326883685,
+          "passed": false,
+          "p50RatioLimit": 0.9,
+          "p95RatioLimit": null,
+          "answerRows": 256,
+          "counters": {
+            "rounds": "5",
+            "derivedFacts": "552",
+            "work": "11784"
+          }
+        },
+        {
+          "kind": "tiny",
+          "baselineP50Ms": 6.592750000000024,
+          "candidateP50Ms": 5.649791999999934,
+          "baselineP95Ms": 7.94991600000003,
+          "candidateP95Ms": 8.538041000000021,
+          "p50Ratio": 0.8569704599749595,
+          "p95Ratio": 1.073978769083848,
+          "passed": true,
+          "p50RatioLimit": 1.05,
+          "p95RatioLimit": 1.1,
+          "answerRows": 1,
+          "counters": {
+            "rounds": "1",
+            "derivedFacts": "1",
+            "work": "0"
+          }
+        },
+        {
+          "kind": "one_bound",
+          "baselineP50Ms": 11.204165999999987,
+          "candidateP50Ms": 10.962375000000065,
+          "baselineP95Ms": 13.751750000000015,
+          "candidateP95Ms": 14.353749999999991,
+          "p50Ratio": 0.9784195450156735,
+          "p95Ratio": 1.0437762466595142,
+          "passed": true,
+          "p50RatioLimit": 1.05,
+          "p95RatioLimit": 1.1,
+          "answerRows": 1,
+          "counters": {
+            "rounds": "1",
+            "derivedFacts": "1",
+            "work": "391"
+          }
+        },
+        {
+          "kind": "recursive",
+          "baselineP50Ms": 6.7224579999999605,
+          "candidateP50Ms": 7.249625000000151,
+          "baselineP95Ms": 8.026749999999993,
+          "candidateP95Ms": 10.19116699999995,
+          "p50Ratio": 1.0784187866997745,
+          "p95Ratio": 1.2696504812034708,
+          "passed": false,
+          "p50RatioLimit": 1.05,
+          "p95RatioLimit": 1.1,
+          "answerRows": 64,
+          "counters": {
+            "rounds": "67",
+            "derivedFacts": "192",
+            "work": "192"
+          }
+        }
+      ],
+      "childEvidence": [
+        {
+          "variant": "baseline",
+          "file": "build/prefilter-public-20261105/prefilter-yKYX65/baseline-1-1.json",
+          "sha256": "82a4599c85fc82f418d2990e36e135be130e8047cca54664c7e2743a92a76f25"
+        },
+        {
+          "variant": "candidate",
+          "file": "build/prefilter-public-20261105/prefilter-yKYX65/candidate-1-1.json",
+          "sha256": "e79609cc7cd639e6c13b4fba62acd1c5e9b4eaa06cfceb9bba7a709792e55b4a"
+        }
+      ]
+    }
+  ],
+  "lifecycle": {
+    "fourChildrenPassed": true,
+    "separateProcessAndFreshClonePerChild": true,
+    "originalRunsRetained": true,
+    "measuredPublicCalls": 320,
+    "fixedPositionAndTypedAnswersAssertedAfterEveryCall": true,
+    "equalCountersAcrossVariants": true,
+    "rawSamplesQuantilesAndThroughputRecomputed": true,
+    "allReaderLeasesReturned": true,
+    "sourceUnchanged": true
+  },
+  "limitations": [
+    "The first order passes all gates; the reverse order fails. Promotion requires both, so the candidate is not promoted.",
+    "The skew target gates p50 only. Its first-order p95 increases 21.8% but is not a separate declared target gate.",
+    "No four- or sixteen-reader tier ran because the one-reader two-order condition failed.",
+    "Raw output records expected-answer hashes and successful exact assertions, not every typed tuple.",
+    "RSS is an idle post-case snapshot; evaluator timing scopes are unavailable on these ordinary artifacts.",
+    "Independent review executed no engine, build or tests."
+  ]
+}

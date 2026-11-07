@@ -1,0 +1,12 @@
+{
+  "status": "terminal",
+  "pid": 10191,
+  "argv": [
+    "<task-workspace>/.venv/bin/python",
+    "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/check-antijoin-02.py"
+  ],
+  "exitCode": 0,
+  "startedAtUtc": "2026-11-06T08:58:06.935753+00:00",
+  "exitedAtUtc": "2026-11-06T08:58:07.089361+00:00",
+  "elapsedMs": 153.3019170165062
+}

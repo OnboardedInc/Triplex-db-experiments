@@ -1,0 +1,1030 @@
+{
+  "schema": "temporal-datalog/public-read-phase-screen/1",
+  "result": "PASS",
+  "cells": [
+    {
+      "name": "tiny_constant",
+      "program": "answer(7).",
+      "route": "native",
+      "reason": "forced_native",
+      "rows": 1,
+      "exact_checks": 10,
+      "first": {
+        "public_ms": 11.132959000000028,
+        "sdk_await_ms": 10.238125000000082,
+        "transport_outside_sdk_await_ms": 0.40345799999977316,
+        "pre_port_ms": 0.2721670000000813,
+        "post_port_ms": 0.2192090000000917,
+        "sdk": {
+          "prepare": {
+            "calls": 1,
+            "ms": 5.489207999999962
+          },
+          "stream": {
+            "calls": 1,
+            "ms": 3.7214590000000953
+          },
+          "fetch": {
+            "calls": 2,
+            "ms": 1.0274580000000242
+          }
+        }
+      },
+      "warm": [
+        {
+          "public_ms": 5.470624999999927,
+          "sdk_await_ms": 5.045876000000135,
+          "transport_outside_sdk_await_ms": 0.36612399999989975,
+          "pre_port_ms": 0.0262079999999969,
+          "post_port_ms": 0.03241699999989578,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 3.738542000000052
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.3073340000000826
+            }
+          }
+        },
+        {
+          "public_ms": 5.558500000000095,
+          "sdk_await_ms": 5.121958999999833,
+          "transport_outside_sdk_await_ms": 0.35724900000013804,
+          "pre_port_ms": 0.021459000000049855,
+          "post_port_ms": 0.0578330000000733,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 4.079459000000043
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.0424999999997908
+            }
+          }
+        },
+        {
+          "public_ms": 5.266624999999976,
+          "sdk_await_ms": 5.02479100000005,
+          "transport_outside_sdk_await_ms": 0.16837499999996908,
+          "pre_port_ms": 0.036166999999977634,
+          "post_port_ms": 0.03729199999997945,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 3.9791660000000775
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.0456249999999727
+            }
+          }
+        },
+        {
+          "public_ms": 4.354708000000073,
+          "sdk_await_ms": 4.2158330000002024,
+          "transport_outside_sdk_await_ms": 0.09754199999974844,
+          "pre_port_ms": 0.018291999999973996,
+          "post_port_ms": 0.023041000000148415,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 3.4114999999999327
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 0.8043330000002697
+            }
+          }
+        },
+        {
+          "public_ms": 4.154625000000124,
+          "sdk_await_ms": 3.987666999999874,
+          "transport_outside_sdk_await_ms": 0.10829100000023573,
+          "pre_port_ms": 0.01704199999994671,
+          "post_port_ms": 0.0416250000000673,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 3.160041999999976
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 0.8276249999998981
+            }
+          }
+        },
+        {
+          "public_ms": 4.090208000000075,
+          "sdk_await_ms": 3.9595409999999447,
+          "transport_outside_sdk_await_ms": 0.07487600000013117,
+          "pre_port_ms": 0.020833000000038737,
+          "post_port_ms": 0.03495799999996052,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 3.224749999999858
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 0.7347910000000866
+            }
+          }
+        },
+        {
+          "public_ms": 4.276166999999987,
+          "sdk_await_ms": 4.1206670000001395,
+          "transport_outside_sdk_await_ms": 0.09249999999997272,
+          "pre_port_ms": 0.021042000000079497,
+          "post_port_ms": 0.04195799999979499,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 3.2521670000000995
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 0.86850000000004
+            }
+          }
+        },
+        {
+          "public_ms": 4.521165999999994,
+          "sdk_await_ms": 4.361709000000019,
+          "transport_outside_sdk_await_ms": 0.09470799999985502,
+          "pre_port_ms": 0.024458000000095126,
+          "post_port_ms": 0.040291000000024724,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 3.525000000000091
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 0.836708999999928
+            }
+          }
+        },
+        {
+          "public_ms": 4.714499999999816,
+          "sdk_await_ms": 4.494042000000036,
+          "transport_outside_sdk_await_ms": 0.12191699999993943,
+          "pre_port_ms": 0.030499999999847205,
+          "post_port_ms": 0.0680409999999938,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 3.565917000000127
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 0.928124999999909
+            }
+          }
+        }
+      ],
+      "summary": {
+        "public_ms": {
+          "min": 4.090208000000075,
+          "median": 4.521165999999994,
+          "max": 5.558500000000095
+        },
+        "sdk_await_ms": {
+          "min": 3.9595409999999447,
+          "median": 4.361709000000019,
+          "max": 5.121958999999833
+        },
+        "transport_outside_sdk_await_ms": {
+          "min": 0.07487600000013117,
+          "median": 0.10829100000023573,
+          "max": 0.36612399999989975
+        },
+        "pre_port_ms": {
+          "min": 0.01704199999994671,
+          "median": 0.021459000000049855,
+          "max": 0.036166999999977634
+        },
+        "post_port_ms": {
+          "min": 0.023041000000148415,
+          "median": 0.040291000000024724,
+          "max": 0.0680409999999938
+        }
+      }
+    },
+    {
+      "name": "empty_scan",
+      "program": "answer(?v) :- triple(?e,'absent-phase-screen',?v).",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_single_atom",
+      "rows": 0,
+      "exact_checks": 10,
+      "first": {
+        "public_ms": 15.169791000000032,
+        "sdk_await_ms": 14.769207999999708,
+        "transport_outside_sdk_await_ms": 0.19187500000020918,
+        "pre_port_ms": 0.14933300000006966,
+        "post_port_ms": 0.059375000000045475,
+        "sdk": {
+          "prepare": {
+            "calls": 1,
+            "ms": 8.188249999999925
+          },
+          "stream": {
+            "calls": 1,
+            "ms": 5.395041999999876
+          },
+          "fetch": {
+            "calls": 2,
+            "ms": 1.1859159999999065
+          }
+        }
+      },
+      "warm": [
+        {
+          "public_ms": 6.231290999999828,
+          "sdk_await_ms": 6.094916999999896,
+          "transport_outside_sdk_await_ms": 0.0914580000001024,
+          "pre_port_ms": 0.026124999999865395,
+          "post_port_ms": 0.018790999999964697,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.197333999999955
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 0.8975829999999405
+            }
+          }
+        },
+        {
+          "public_ms": 6.197791999999936,
+          "sdk_await_ms": 6.063875000000053,
+          "transport_outside_sdk_await_ms": 0.09370899999998983,
+          "pre_port_ms": 0.023500000000012733,
+          "post_port_ms": 0.016707999999880485,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.162458000000015
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 0.9014170000000377
+            }
+          }
+        },
+        {
+          "public_ms": 6.680082999999968,
+          "sdk_await_ms": 6.524209000000155,
+          "transport_outside_sdk_await_ms": 0.12149899999963054,
+          "pre_port_ms": 0.01670800000010786,
+          "post_port_ms": 0.01766700000007404,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.429875000000038
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.0943340000001172
+            }
+          }
+        },
+        {
+          "public_ms": 6.895083000000113,
+          "sdk_await_ms": 6.704583999999841,
+          "transport_outside_sdk_await_ms": 0.13887400000021444,
+          "pre_port_ms": 0.030375000000049113,
+          "post_port_ms": 0.021250000000009095,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.602916999999934
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.1016669999999067
+            }
+          }
+        },
+        {
+          "public_ms": 7.143207999999959,
+          "sdk_await_ms": 6.970458000000008,
+          "transport_outside_sdk_await_ms": 0.1216669999998885,
+          "pre_port_ms": 0.02504100000010112,
+          "post_port_ms": 0.026041999999961263,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.83787499999994
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.1325830000000678
+            }
+          }
+        },
+        {
+          "public_ms": 7.278542000000016,
+          "sdk_await_ms": 7.135291000000052,
+          "transport_outside_sdk_await_ms": 0.09445899999991525,
+          "pre_port_ms": 0.032500000000027285,
+          "post_port_ms": 0.01629200000002129,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.105166000000054
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.0301249999999982
+            }
+          }
+        },
+        {
+          "public_ms": 7.301707999999962,
+          "sdk_await_ms": 7.121000999999978,
+          "transport_outside_sdk_await_ms": 0.13970799999992778,
+          "pre_port_ms": 0.019416000000092026,
+          "post_port_ms": 0.02158299999996416,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.119834000000083
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.0011669999998958
+            }
+          }
+        },
+        {
+          "public_ms": 7.614874999999984,
+          "sdk_await_ms": 7.403667000000269,
+          "transport_outside_sdk_await_ms": 0.1619159999997919,
+          "pre_port_ms": 0.02549999999996544,
+          "post_port_ms": 0.023791999999957625,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.0823340000001735
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 1.3213330000000951
+            }
+          }
+        },
+        {
+          "public_ms": 8.067832999999837,
+          "sdk_await_ms": 7.832290000000057,
+          "transport_outside_sdk_await_ms": 0.1920430000000124,
+          "pre_port_ms": 0.0234579999998914,
+          "post_port_ms": 0.02004199999987577,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.589707999999973
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 2.242582000000084
+            }
+          }
+        }
+      ],
+      "summary": {
+        "public_ms": {
+          "min": 6.197791999999936,
+          "median": 7.143207999999959,
+          "max": 8.067832999999837
+        },
+        "sdk_await_ms": {
+          "min": 6.063875000000053,
+          "median": 6.970458000000008,
+          "max": 7.832290000000057
+        },
+        "transport_outside_sdk_await_ms": {
+          "min": 0.0914580000001024,
+          "median": 0.1216669999998885,
+          "max": 0.1920430000000124
+        },
+        "pre_port_ms": {
+          "min": 0.01670800000010786,
+          "median": 0.02504100000010112,
+          "max": 0.032500000000027285
+        },
+        "post_port_ms": {
+          "min": 0.01629200000002129,
+          "median": 0.02004199999987577,
+          "max": 0.026041999999961263
+        }
+      }
+    },
+    {
+      "name": "broad_count",
+      "program": "source(?e,?v) :- triple(?e,'i',?v). answer(count()) :- source(?e,?v).",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_count",
+      "rows": 1,
+      "exact_checks": 10,
+      "first": {
+        "public_ms": 69.11199999999985,
+        "sdk_await_ms": 68.82524999999987,
+        "transport_outside_sdk_await_ms": 0.17945800000006784,
+        "pre_port_ms": 0.04025000000001455,
+        "post_port_ms": 0.06704199999990124,
+        "sdk": {
+          "prepare": {
+            "calls": 1,
+            "ms": 10.261749999999893
+          },
+          "stream": {
+            "calls": 1,
+            "ms": 7.405999999999949
+          },
+          "fetch": {
+            "calls": 2,
+            "ms": 51.15750000000003
+          }
+        }
+      },
+      "warm": [
+        {
+          "public_ms": 57.88908300000003,
+          "sdk_await_ms": 57.672374999999874,
+          "transport_outside_sdk_await_ms": 0.1472080000000915,
+          "pre_port_ms": 0.02391699999998309,
+          "post_port_ms": 0.045583000000078755,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 7.083374999999933
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 50.58899999999994
+            }
+          }
+        },
+        {
+          "public_ms": 59.537874999999985,
+          "sdk_await_ms": 59.29366700000014,
+          "transport_outside_sdk_await_ms": 0.17037499999992178,
+          "pre_port_ms": 0.023750000000063665,
+          "post_port_ms": 0.05008299999985866,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 7.874207999999953
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 51.41945899999996
+            }
+          }
+        },
+        {
+          "public_ms": 56.74887499999977,
+          "sdk_await_ms": 56.530125999999655,
+          "transport_outside_sdk_await_ms": 0.13808300000050622,
+          "pre_port_ms": 0.030290999999806445,
+          "post_port_ms": 0.05037499999980355,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.678458999999975
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 49.85166699999945
+            }
+          }
+        },
+        {
+          "public_ms": 56.84904199999983,
+          "sdk_await_ms": 56.63470899999993,
+          "transport_outside_sdk_await_ms": 0.1432489999997415,
+          "pre_port_ms": 0.018042000000150438,
+          "post_port_ms": 0.05304200000000492,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.626333000000159
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 50.00837599999977
+            }
+          }
+        },
+        {
+          "public_ms": 58.0659999999998,
+          "sdk_await_ms": 57.835959,
+          "transport_outside_sdk_await_ms": 0.16045699999995122,
+          "pre_port_ms": 0.019584000000122614,
+          "post_port_ms": 0.04999999999972715,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 7.248333000000002
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 50.587626
+            }
+          }
+        },
+        {
+          "public_ms": 58.35900000000038,
+          "sdk_await_ms": 58.15391600000021,
+          "transport_outside_sdk_await_ms": 0.14474999999993088,
+          "pre_port_ms": 0.027167000000190455,
+          "post_port_ms": 0.033167000000048574,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.74225000000024
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 51.41166599999997
+            }
+          }
+        },
+        {
+          "public_ms": 58.78608299999996,
+          "sdk_await_ms": 58.59804200000053,
+          "transport_outside_sdk_await_ms": 0.13887499999964348,
+          "pre_port_ms": 0.01687499999979991,
+          "post_port_ms": 0.032290999999986525,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 7.510792000000038
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 51.087250000000495
+            }
+          }
+        },
+        {
+          "public_ms": 59.07049999999981,
+          "sdk_await_ms": 58.88954100000001,
+          "transport_outside_sdk_await_ms": 0.1300840000003518,
+          "pre_port_ms": 0.01733299999978044,
+          "post_port_ms": 0.033541999999670224,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.803750000000036
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 52.08579099999997
+            }
+          }
+        },
+        {
+          "public_ms": 58.315708000000086,
+          "sdk_await_ms": 58.124917000000096,
+          "transport_outside_sdk_await_ms": 0.14091599999983373,
+          "pre_port_ms": 0.01525000000037835,
+          "post_port_ms": 0.03462499999977808,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 7.019874999999956
+            },
+            "fetch": {
+              "calls": 2,
+              "ms": 51.10504200000014
+            }
+          }
+        }
+      ],
+      "summary": {
+        "public_ms": {
+          "min": 56.74887499999977,
+          "median": 58.315708000000086,
+          "max": 59.537874999999985
+        },
+        "sdk_await_ms": {
+          "min": 56.530125999999655,
+          "median": 58.124917000000096,
+          "max": 59.29366700000014
+        },
+        "transport_outside_sdk_await_ms": {
+          "min": 0.1300840000003518,
+          "median": 0.1432489999997415,
+          "max": 0.17037499999992178
+        },
+        "pre_port_ms": {
+          "min": 0.01525000000037835,
+          "median": 0.019584000000122614,
+          "max": 0.030290999999806445
+        },
+        "post_port_ms": {
+          "min": 0.032290999999986525,
+          "median": 0.045583000000078755,
+          "max": 0.05304200000000492
+        }
+      }
+    },
+    {
+      "name": "projection_40000",
+      "program": "answer(?v) :- triple(?e,'i',?v),[?v < 40000].",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_single_atom",
+      "rows": 40000,
+      "exact_checks": 10,
+      "first": {
+        "public_ms": 208.911208,
+        "sdk_await_ms": 93.87504099999887,
+        "transport_outside_sdk_await_ms": 68.20916800000123,
+        "pre_port_ms": 0.021957999999813183,
+        "post_port_ms": 46.805041000000074,
+        "sdk": {
+          "prepare": {
+            "calls": 1,
+            "ms": 7.749041999999918
+          },
+          "stream": {
+            "calls": 1,
+            "ms": 5.71120800000017
+          },
+          "fetch": {
+            "calls": 21,
+            "ms": 80.41479099999879
+          }
+        }
+      },
+      "warm": [
+        {
+          "public_ms": 172.7544579999999,
+          "sdk_await_ms": 77.94408099999919,
+          "transport_outside_sdk_await_ms": 59.22025300000087,
+          "pre_port_ms": 0.026165999999648193,
+          "post_port_ms": 35.563958000000184,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.029999999999745
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 71.91408099999944
+            }
+          }
+        },
+        {
+          "public_ms": 194.46470799999997,
+          "sdk_await_ms": 84.07045599999901,
+          "transport_outside_sdk_await_ms": 57.419003000000885,
+          "pre_port_ms": 0.03591600000027029,
+          "post_port_ms": 52.939332999999806,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.769708000000264
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 78.30074799999875
+            }
+          }
+        },
+        {
+          "public_ms": 177.42220799999996,
+          "sdk_await_ms": 78.65462400000115,
+          "transport_outside_sdk_await_ms": 58.28920899999912,
+          "pre_port_ms": 0.02358299999968949,
+          "post_port_ms": 40.454792,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.161084000000301
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 72.49354000000085
+            }
+          }
+        },
+        {
+          "public_ms": 170.5367080000001,
+          "sdk_await_ms": 74.46345900000051,
+          "transport_outside_sdk_await_ms": 59.89316599999984,
+          "pre_port_ms": 0.03279199999997218,
+          "post_port_ms": 36.14729099999977,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.596457999999984
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 68.86700100000053
+            }
+          }
+        },
+        {
+          "public_ms": 172.98325000000023,
+          "sdk_await_ms": 78.81491799999912,
+          "transport_outside_sdk_await_ms": 55.71491500000093,
+          "pre_port_ms": 0.027375000000120053,
+          "post_port_ms": 38.42604200000005,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.083458000000064
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 72.73145999999906
+            }
+          }
+        },
+        {
+          "public_ms": 192.56695900000022,
+          "sdk_await_ms": 78.93628899999885,
+          "transport_outside_sdk_await_ms": 56.07183600000144,
+          "pre_port_ms": 0.03125,
+          "post_port_ms": 57.52758399999993,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 6.008499999999913
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 72.92778899999894
+            }
+          }
+        },
+        {
+          "public_ms": 186.11820799999987,
+          "sdk_await_ms": 88.06746100000055,
+          "transport_outside_sdk_await_ms": 59.28658099999939,
+          "pre_port_ms": 0.02562500000021828,
+          "post_port_ms": 38.738540999999714,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 11.91516700000011
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 76.15229400000044
+            }
+          }
+        },
+        {
+          "public_ms": 176.59904099999994,
+          "sdk_await_ms": 82.05400400000235,
+          "transport_outside_sdk_await_ms": 57.84378699999752,
+          "pre_port_ms": 0.025749999999788997,
+          "post_port_ms": 36.675500000000284,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 7.194333999999799
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 74.85967000000255
+            }
+          }
+        },
+        {
+          "public_ms": 175.51749999999993,
+          "sdk_await_ms": 80.96437000000151,
+          "transport_outside_sdk_await_ms": 56.07583799999793,
+          "pre_port_ms": 0.028542000000015832,
+          "post_port_ms": 38.44875000000047,
+          "sdk": {
+            "prepare": {
+              "calls": 0,
+              "ms": 0
+            },
+            "stream": {
+              "calls": 1,
+              "ms": 5.7838330000004134
+            },
+            "fetch": {
+              "calls": 21,
+              "ms": 75.1805370000011
+            }
+          }
+        }
+      ],
+      "summary": {
+        "public_ms": {
+          "min": 170.5367080000001,
+          "median": 176.59904099999994,
+          "max": 194.46470799999997
+        },
+        "sdk_await_ms": {
+          "min": 74.46345900000051,
+          "median": 78.93628899999885,
+          "max": 88.06746100000055
+        },
+        "transport_outside_sdk_await_ms": {
+          "min": 55.71491500000093,
+          "median": 57.84378699999752,
+          "max": 59.89316599999984
+        },
+        "pre_port_ms": {
+          "min": 0.02358299999968949,
+          "median": 0.027375000000120053,
+          "max": 0.03591600000027029
+        },
+        "post_port_ms": {
+          "min": 35.563958000000184,
+          "median": 38.44875000000047,
+          "max": 57.52758399999993
+        }
+      }
+    }
+  ],
+  "artifacts": {
+    "core_sha256": "652a864ec192fb2ae14ba50414ca1b477d04c3bf57d3985c19f0bd1e072cc3a3",
+    "owner_sha256": "526f7aa483d8e90445941501f8b52f433cc0c3cbcdaf9f8bf6a32af963360c13",
+    "sdk_engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "entity_js_sha256": "fe0ce58483dd11e8c269dc42ed8aa45931ef8f58ecff766b28f8d930b1bf0897",
+    "port_mjs_sha256": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "profiler_source_sha256": "ecbb19d43deaaab75c6aa38526abed0d4763cc4072ffa40b2a57ce3a51ea58a0"
+  },
+  "fixture": {
+    "clone": {
+      "mode": "darwin_clonefile",
+      "status": "cloned"
+    },
+    "retained_facts": 1000008,
+    "valid_at": "0",
+    "known_at": "253",
+    "bytes": 314060800,
+    "source_metadata_unchanged": true
+  },
+  "configuration": {
+    "readers": 1,
+    "threads": 1,
+    "memoryLimit": "1GiB",
+    "maxTempDirectorySize": "1GiB",
+    "samples_per_cell": 9,
+    "controlled": false,
+    "parallel_calls": 1
+  },
+  "phase_scope": {
+    "sdk_await": "Awaited SDK prepare, stream and fetch wall intervals including native work, SDK work and async scheduling.",
+    "transport_outside_sdk_await": "Remaining native port wall time, including synchronous SDK row extraction, result admission, copies, binding and cleanup.",
+    "pre_port": "Public admission, query construction and reader acquisition before transport starts.",
+    "post_port": "Public result decoding, reader release and promise completion after transport returns.",
+    "limitations": "Instrumented single-reader wall time on a warm clone. Startup audit excluded from query intervals. Exact-answer checks follow timing."
+  },
+  "startup_ms": 1450.248292
+}

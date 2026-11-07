@@ -1,0 +1,12 @@
+{
+  "phase": "core-build-first",
+  "pid": 87634,
+  "command": [
+    "<task>/.venv/bin/python",
+    "build_native.py"
+  ],
+  "startedAtUtc": "2026-11-06T12:00:36.797048+00:00",
+  "endedAtUtc": "2026-11-06T12:00:49.124691+00:00",
+  "exitCode": 0,
+  "selectedNode": "<node24.13>/bin/node"
+}

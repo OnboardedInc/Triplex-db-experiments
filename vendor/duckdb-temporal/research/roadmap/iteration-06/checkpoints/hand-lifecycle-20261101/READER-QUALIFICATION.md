@@ -1,0 +1,9 @@
+# G6-LIFECYCLE-READER-QUALIFICATION-001
+
+Additive reader note only. G6-ORACLE-DESIGN-001 and G6-LIFECYCLE-DESIGN-001, including their historical wording, remain unchanged.
+
+1. **“Prior teardown ticket” is external hypothetical caller responsibility**, not a new core API, Token, stored field, normative precondition, validation step or work credit. The contract’s existing genuine owner/borrow-end condition for abandonment/release is not replaced or strengthened by that phrase.
+2. **W governs the selected admitted-work bounds, not all performed work.** Carrier construction and trusted core/control bookkeeping are excluded from W. The note introduces no new charge metric or accounting claim. Any covered payload teardown still needs its already-required earlier admitted coverage; this note supplies none.
+3. **LC08 at A=M is only a conditional logical transition.** It does not establish real teardown, successful destruction, extra work credit, total cleanup-work coverage, timing or physical-resource safety. No actual cleanup was performed by these hand specifications.
+4. **79 entrypoint attempts / 78 logical receipts / 76 present snapshots are hypothetical arithmetic**, including eleven separately added logical calls—not run counts, a program or whole-lifecycle completion. B4 remains binding-only, with no logical receipt. Count-zero close retains C and does not retire the carrier, binding or token copies; lifetime-long exclusivity and absence of all old uses/copies before retirement/key reuse remain separate caller obligations.
+5. **Both independent annex reviews closed at their stated source-only limits.** That is not exhaustive correctness, empirical acceptance, full goal6 completion or implementation/execution/publication authority. All empirical stages remain UNRUN.

@@ -1,0 +1,62 @@
+{
+  "schema": "td.item4.1.tiny-source-identities/1",
+  "source_commit": "49786aa027bd8161a6bb7ca359a3c0fa1d6ca1c7",
+  "oracle_revision": "002",
+  "source_identity_limit": "Identified project source content; no runtime-byte attestation or computer inventory. Pre/post content checks agreed.",
+  "files": [
+    {
+      "project_file": "signed_graph_certificate_v1/__init__.py",
+      "bytes": 190,
+      "sha256": "8776f19f0b8f6b21095d3d0c0efabdd84b6243603cdf64c6efdeb806dbcf04b0"
+    },
+    {
+      "project_file": "signed_graph_certificate_v1/producer.py",
+      "bytes": 16735,
+      "sha256": "9d52e81d9869f762de4bd20e486b83feda549df1f99abd8548a7fcba0f6d56b8"
+    },
+    {
+      "project_file": "signed_graph_certificate_v1/checker.py",
+      "bytes": 17522,
+      "sha256": "cbd9ab928769ab985431c0f50ae4c9cc01028d7e874344d3cc717541359642bb"
+    },
+    {
+      "project_file": "item4_1_oracle/__init__.py",
+      "bytes": 78,
+      "sha256": "6799a57770fd21a72e4754d7ca61f52a2c1b7c3e550ecc4d7a12ef00150695ee"
+    },
+    {
+      "project_file": "item4_1_oracle/oracle.py",
+      "bytes": 8683,
+      "sha256": "0a0262c36e2c3d7f42081190bd913512a2319068944dd829c29b98b28c5462f4"
+    },
+    {
+      "project_file": "item4_1_oracle/tests/__init__.py",
+      "bytes": 82,
+      "sha256": "a1a9f56008659d5648f6e687ac514b519d9d268bc33aea4c38754ea1124f1746"
+    },
+    {
+      "project_file": "item4_1_oracle/tests/source_suite.py",
+      "bytes": 28614,
+      "sha256": "977a9a37f5d9cef050effe6a14e608df60e80e00ce32e21757ff3d5cc6409473"
+    },
+    {
+      "project_file": "run_initial_smoke.py",
+      "bytes": 2013,
+      "sha256": "3a6132816e0f458ba6f92a04bc3c0abaad12cd836b89c33e68370cdebc3c73d9"
+    }
+  ],
+  "remote_at_result_checkpoint": {
+    "product_files": [
+      "signed_graph_certificate_v1/__init__.py",
+      "signed_graph_certificate_v1/producer.py",
+      "signed_graph_certificate_v1/checker.py"
+    ],
+    "local_only_test_files": [
+      "item4_1_oracle/__init__.py",
+      "item4_1_oracle/oracle.py",
+      "item4_1_oracle/tests/__init__.py",
+      "item4_1_oracle/tests/source_suite.py",
+      "run_initial_smoke.py"
+    ]
+  }
+}

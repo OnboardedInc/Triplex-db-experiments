@@ -1,0 +1,121 @@
+{
+  "format": "qlever-immutable-bootstrap/1",
+  "description": "One public synthetic bootstrap triple; no application updates, tokens or server telemetry. Native index format coupled to the pinned QLever image; architecture portability unqualified.",
+  "files": [
+    {
+      "path": "bootstrap.nt",
+      "bytes": 51,
+      "sha256": "bd779911275fe2414ad84d59538c2610d90c9fc8b4514a62ada7cda080c465d5"
+    },
+    {
+      "path": "triplex.meta-data.json",
+      "bytes": 725,
+      "sha256": "90681c51925c8e96c2c2c4a9d6045e20c38b7067a0e06db73f9763f8236210a8"
+    },
+    {
+      "path": "triplex.vocabulary.codebooks",
+      "bytes": 4616,
+      "sha256": "a87b62979c591ed8c3c23ea4762d3a865a9d7783b814c78287343b7cf61b3241"
+    },
+    {
+      "path": "triplex.vocabulary.words.external",
+      "bytes": 361,
+      "sha256": "33904a40f321c616433e564f795d3b6c9a69fe618dd081090b6c7f8985e0b53f"
+    },
+    {
+      "path": "triplex.vocabulary.words.external.offsets",
+      "bytes": 96,
+      "sha256": "fb57a3550db503bbe8d98f19ce925406e30294f5b451540852d658bc7314f175"
+    },
+    {
+      "path": "triplex.vocabulary.words.internal",
+      "bytes": 382,
+      "sha256": "064c94191e08a13e492d591069fc99d36c0ca76f78733b917c377cf9bef994a1"
+    },
+    {
+      "path": "triplex.vocabulary.words.internal.ids",
+      "bytes": 48,
+      "sha256": "3d79bba332e49c6d829725f2a728871c770a9975bfa33f66ff22c0a800cbc0ac"
+    },
+    {
+      "path": "triplex.index.ops",
+      "bytes": 325,
+      "sha256": "27791b37ae12a3ce734874e8d3e9e89a6af5e0013a95a580d6769fc535416617"
+    },
+    {
+      "path": "triplex.index.ops.meta",
+      "bytes": 32,
+      "sha256": "72345d3e4997db59879d91729b1bfde8efc675f862cca24f6c12e7fb5ac0fb30"
+    },
+    {
+      "path": "triplex.index.osp",
+      "bytes": 325,
+      "sha256": "03a2ad422bc0eefc1652356ad35bd3d35d1380cb7bb109435fc45a1c98af25cf"
+    },
+    {
+      "path": "triplex.index.osp.meta",
+      "bytes": 32,
+      "sha256": "72345d3e4997db59879d91729b1bfde8efc675f862cca24f6c12e7fb5ac0fb30"
+    },
+    {
+      "path": "triplex.index.pos",
+      "bytes": 325,
+      "sha256": "03fb945cb2fd4c547dd01dc1538be3a853133737a650e40ab3472e98ba651bfa"
+    },
+    {
+      "path": "triplex.index.pos.meta",
+      "bytes": 32,
+      "sha256": "72345d3e4997db59879d91729b1bfde8efc675f862cca24f6c12e7fb5ac0fb30"
+    },
+    {
+      "path": "triplex.index.pso",
+      "bytes": 325,
+      "sha256": "b276ac5c9442c360f1fb4783496a6e3c55f2c34aae23255babcf187ed63bf45e"
+    },
+    {
+      "path": "triplex.index.pso.meta",
+      "bytes": 32,
+      "sha256": "72345d3e4997db59879d91729b1bfde8efc675f862cca24f6c12e7fb5ac0fb30"
+    },
+    {
+      "path": "triplex.index.sop",
+      "bytes": 325,
+      "sha256": "f123120b645d6d3df13d434654144d32e06378d95445db9e5aeaef725039e1f3"
+    },
+    {
+      "path": "triplex.index.sop.meta",
+      "bytes": 32,
+      "sha256": "72345d3e4997db59879d91729b1bfde8efc675f862cca24f6c12e7fb5ac0fb30"
+    },
+    {
+      "path": "triplex.index.spo",
+      "bytes": 325,
+      "sha256": "81bab3e4d2f0e7d85c9cb5a8c507f8c177e99f2a98682ce6475a1fa016c778ea"
+    },
+    {
+      "path": "triplex.index.spo.meta",
+      "bytes": 32,
+      "sha256": "72345d3e4997db59879d91729b1bfde8efc675f862cca24f6c12e7fb5ac0fb30"
+    },
+    {
+      "path": "triplex.internal.index.pos",
+      "bytes": 87,
+      "sha256": "0dea419c831eeb52318e5d37dce6c9511f80ef57eb9ad02c97cb990d54837aba"
+    },
+    {
+      "path": "triplex.internal.index.pos.meta",
+      "bytes": 32,
+      "sha256": "72345d3e4997db59879d91729b1bfde8efc675f862cca24f6c12e7fb5ac0fb30"
+    },
+    {
+      "path": "triplex.internal.index.pso",
+      "bytes": 87,
+      "sha256": "0dea419c831eeb52318e5d37dce6c9511f80ef57eb9ad02c97cb990d54837aba"
+    },
+    {
+      "path": "triplex.internal.index.pso.meta",
+      "bytes": 32,
+      "sha256": "72345d3e4997db59879d91729b1bfde8efc675f862cca24f6c12e7fb5ac0fb30"
+    }
+  ]
+}

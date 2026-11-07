@@ -1,0 +1,34 @@
+{
+  "format": "independent-archive-review/v1",
+  "reviewer": "Independent reviewer A",
+  "auditSubject": "FIRST_COMPLETE_CANDIDATE",
+  "status": "PASS",
+  "isFinalArtifactIdentity": false,
+  "firstCompleteCandidate": {
+    "archiveSha256": "c5996b360a9dcd9f85d43418a6a2809b786c0d63973e1ed47b600c7feaabf652",
+    "archiveBytes": 3305966353,
+    "fileCount": 78668,
+    "decodedPayloadBytes": 5322541060,
+    "allMemberSha256AndLengthsMatchedReviewedStaging": true,
+    "zipCrcReadsCompleted": true,
+    "missingExtraDuplicateOrIntegrityErrors": 0
+  },
+  "normalizedArchiveMetadata": {
+    "rootPrefixes": 1,
+    "rootPrefixMatchesHandoffDirectory": true,
+    "archiveCommentBytes": 0,
+    "memberCommentCount": 0,
+    "unsafePaths": 0,
+    "symlinks": 0,
+    "uidGidOwnershipExtraFields": 0,
+    "zip64OffsetExtraFields": 57218,
+    "zip64OffsetQualification": "Every extra field has tag 1, length 8, a little-endian offset equal to the member header_offset, and header_offset >= Python ZIP64_LIMIT (2147483647).",
+    "unexpectedOrMalformedExtraFields": 0,
+    "independentExactZip64OffsetValidation": "PASS"
+  },
+  "bundledVerifierCorrection": "The bundled verifier initially rejected legitimate ZIP64 offset-only fields. The rebuild narrowly permits the exact qualified offset field while continuing to reject all other extra fields. This was a verifier-policy defect, not a member-byte mismatch.",
+  "finalPackageGate": "The final package contains review receipts, the corrected verifier, and a refreshed manifest. The final whole-ZIP checksum is recorded externally. Independent post-rebuild parity and metadata verification are required before final delivery.",
+  "privacyMeaning": "The first candidate matched the privacy-reviewed source bytes. No claim that this first-candidate hash identifies the rebuilt final artifact is made.",
+  "publicFixtureLimits": "privacy/independent-archive-coverage-exceptions.json",
+  "privateMatchedValuesOrHostPathsIncluded": false
+}

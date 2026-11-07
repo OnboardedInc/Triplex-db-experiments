@@ -1,0 +1,65 @@
+{
+  "status": "RESEARCH_COMPLETE_NOT_APPLICATION_ACCEPTANCE",
+  "utc_date": "2026-10-31",
+  "preferred_candidate": "C1-P private after-key tail clone + C2 private immutable expected-key metadata",
+  "alternative": "C1-S original shared-tail extraction remains ordinarily equivalent in own models but adds a public helper frame",
+  "reason_for_preference": "Keep complete public carrier function verbatim and avoid added public dispatch/stack/recursion cost; accept tiny shape-tail duplication only with actual-suite AST identity regression",
+  "must_preserve": [
+    "Entire public _carrier_payload function verbatim under C1-P",
+    "Private helper body AST equals public body after first key gate, ignoring only signature/name/docstring metadata",
+    "Both selected payload lookups around unchanged unused-NULL checks",
+    "Private exact dict and all-keys exact str screening before keyset comparison",
+    "All initial native schema/key/payload/domain/NULL/finite/zero validation",
+    "Original public protocol acceptance and ordinary error family/text",
+    "Current independent public guards and private entry/exit full guards",
+    "Eager new output containers; no in-place raw graph mutation or published prefix",
+    "Query snapshot/readiness/known_at/budget/transaction/rollback order"
+  ],
+  "fresh_evidence": {
+    "pinned_primary_file_range_gets": 27,
+    "pinned_primary_metadata_gets": 3,
+    "fresh_ranges_verified_against_rehashed_same_blob_prior_bytes": 19,
+    "manual_model_current_ast_alignment_checks": 4,
+    "final_hash_seed_runs": [0, 1, 42, 123456789],
+    "all_final_model_exits": 0,
+    "all_final_model_stderr_bytes": 0,
+    "unique_public_protocol_cases_per_run": 93600,
+    "triggered_public_mutation_or_raise_actions_per_run": 28080,
+    "private_mixed_key_no_protocol_rejections_per_run": 2784,
+    "shape_error_precedence_checks_per_run": 24,
+    "output_container_ownership_toy_assertions_per_run": 9,
+    "negative_controls": [
+      "Capture selected payload once changes ordinary mutation result: baseline changed vs cached original",
+      "Keyset comparison before exact-type screen invokes hostile key hash/equality"
+    ]
+  },
+  "source_pins": {
+    "typed_store_sha256_directly_rehashed": "25e9a4f178144070f85cbf1215dd1e12270ae0efbdd27be1dbf49ba9e76dcfdc",
+    "fp_environment_sha256_directly_rehashed": "92169be543692ff30a1824fa0add9cdb7e3139c864bdef8fdc5d1b0ec9710164",
+    "cpython_commit_fresh_tag_resolution": "2abcf904b8dac8c999d2b3aac76681abb333798a",
+    "duckdb_python_commit": "83c719961098611e769dc4bab0bda2bf149a2d1e",
+    "duckdb_native_commit_fresh_python_gitlink_resolution": "d54cbbe3df17e8e5ce68312f483b4155836112aa"
+  },
+  "scope": {
+    "application_source_imported_compiled_or_executed": false,
+    "application_source_or_git_or_page_edits": false,
+    "native_db_or_float_payload_experiments": false,
+    "hardware_fp_controls_inspected_or_changed": false,
+    "timings_or_profiles": false,
+    "codex_launched": false,
+    "copied_vendor_source_caches": false
+  },
+  "limitations": [
+    "Own stdlib models and source reasoning, not production application or hardware-control acceptance",
+    "C1-S extra public frame can change tracebacks/tracing/stack-sensitive hooks/near-recursion-limit results; preferred C1-P avoids added public frame",
+    "No identical whole-process GC scheduling or arbitrary hostile graph mutation/introspection guarantee",
+    "Ordinary local native materialization ownership does not permit skipping validation",
+    "No latency estimate or proof that accepted-item1 regression closes",
+    "DuckDB V2 C API remains unstable and specific-version-tied"
+  ],
+  "root_next_action": "Select and durably save exact candidate before sourcewriter; review diff/AST invariant; run authorized genuine store/current reader/FP/adversarial tests and original paired-process acceptance method before any item-2 decision",
+  "report": "RESEARCH.md",
+  "source_receipts": "FRESH-PRIMARY-SOURCE-RECEIPTS.json",
+  "final_model_results": "HASH-SEED-SUMMARY.json",
+  "application_ast_receipt": "CURRENT-AST-RECEIPT.json"
+}

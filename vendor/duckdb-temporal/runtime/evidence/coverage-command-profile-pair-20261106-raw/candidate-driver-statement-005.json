@@ -1,0 +1,171 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.0000035,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 0.000009249,
+                    "type": "CREATE_TABLE_AS",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Projections": "assertion_id",
+                                "Estimated Cardinality": "0"
+                            },
+                            "intermediate_rows": 1,
+                            "intermediate_size_bytes": 4112,
+                            "timing": 1.25e-7,
+                            "type": "PROJECTION",
+                            "children": [
+                                {
+                                    "extra_info": {
+                                        "Join Type": "INNER",
+                                        "Conditions": [
+                                            "e = entity_id",
+                                            "valid_from < valid_to",
+                                            "valid_to > valid_from"
+                                        ],
+                                        "Estimated Cardinality": "0"
+                                    },
+                                    "intermediate_rows": 1,
+                                    "intermediate_size_bytes": 4144,
+                                    "timing": 0.000028459000000000003,
+                                    "type": "HASH_JOIN",
+                                    "children": [
+                                        {
+                                            "extra_info": {
+                                                "Table": "facts.main.assertions",
+                                                "Type": "Sequential Scan",
+                                                "Projections": [
+                                                    "e",
+                                                    "valid_from",
+                                                    "valid_to",
+                                                    "assertion_id"
+                                                ],
+                                                "Filters": "(tx_to = 9223372036854775807)",
+                                                "Dynamic Filters": [
+                                                    "(e = 'target-A')",
+                                                    "(valid_from < 80)",
+                                                    "(valid_to > 20)"
+                                                ],
+                                                "Estimated Cardinality": "4"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 48,
+                                            "row_groups_scanned": 1,
+                                            "rows_scanned": 16,
+                                            "timing": 0.000009832999999999999,
+                                            "total_row_groups_to_scan": 1,
+                                            "type": "TABLE_SCAN"
+                                        },
+                                        {
+                                            "extra_info": {
+                                                "Table": "\"temp\".main.__td_native_ctx",
+                                                "Type": "Sequential Scan",
+                                                "Projections": [
+                                                    "entity_id",
+                                                    "valid_to",
+                                                    "valid_from"
+                                                ],
+                                                "Estimated Cardinality": "1"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 32,
+                                            "row_groups_scanned": 1,
+                                            "rows_scanned": 1,
+                                            "timing": 0.0000034169999999999996,
+                                            "total_row_groups_to_scan": 1,
+                                            "type": "TABLE_SCAN"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000003125,
+        "aggregate_reuse": 0.000001709,
+        "build_side_probe_side": 0.000005416,
+        "column_lifetime": 0.000005416,
+        "common_aggregate": 6.25e-7,
+        "common_subexpressions": 6.25e-7,
+        "common_subplan": 0.000026625,
+        "cte_filter_pusher": 3.75e-7,
+        "cte_inlining": 4.17e-7,
+        "deliminator": 5.83e-7,
+        "duplicate_groups": 0.000001292,
+        "empty_result_pullup": 7.5e-7,
+        "expression_rewriter": 0.0000235,
+        "filter_pullup": 6.25e-7,
+        "filter_pushdown": 0.000053583,
+        "grouping_sets": 7.5e-7,
+        "in_clause": 5.42e-7,
+        "join_elimination": 0.000001667,
+        "join_filter_pushdown": 0.000028208,
+        "join_order": 0.000058167,
+        "late_materialization": 4.58e-7,
+        "limit_pushdown": 2.5e-7,
+        "outer_join_simplification": 0.000002958,
+        "partial_aggregate_pushdown": 8.75e-7,
+        "partitioned_execution": 3.33e-7,
+        "projection_placement": 7.09e-7,
+        "projection_pullup": 0.000001625,
+        "redundant_order_keys": 0.000004625,
+        "regex_range": 1.25e-7,
+        "reorder_filter": 9.17e-7,
+        "row_group_pruner": 2.08e-7,
+        "row_number_rewriter": 2.09e-7,
+        "sampling_pushdown": 3.33e-7,
+        "scalar_fn_pushdown": 1.25e-7,
+        "statistics_propagation": 0.000017666,
+        "top_n": 2.92e-7,
+        "top_n_window_elimination": 0.000001084,
+        "total_time": 0.000308375,
+        "type_pushdown": 2.5e-7,
+        "unnest_rewriter": 4.58e-7,
+        "unused_columns": 0.000019416,
+        "window_self_join": 4.16e-7
+    },
+    "physical_planner": {
+        "column_binding": 0.0000025,
+        "create_plan": 0.000010292,
+        "resolve_types": 2.5e-7,
+        "total_time": 0.000015125
+    },
+    "planner": {
+        "binding_time": 0.000081459,
+        "total_time": 0.000128833
+    },
+    "query": {
+        "cpu_time": 0.000054583,
+        "sql": "CREATE TEMP TABLE __td_native_old AS SELECT a.assertion_id FROM main.assertions a,__td_native_ctx c WHERE a.e=c.entity_id AND a.tx_to=9223372036854775807 AND NOT c.is_replay AND a.valid_from<c.valid_to AND a.valid_to>c.valid_from;\n",
+        "total_intermediate_rows": 5,
+        "total_intermediate_size_bytes": 8344,
+        "total_row_groups_scanned": 2,
+        "total_row_groups_to_scan": 2,
+        "total_rows_scanned": 17,
+        "total_time": 0.000841833
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 18044688,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 262144
+    }
+}

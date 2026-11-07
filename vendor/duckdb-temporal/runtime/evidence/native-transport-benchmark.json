@@ -1,0 +1,98 @@
+{
+  "schema": "transport-comparison/1",
+  "timestamp_utc": "2026-11-05T02:17:33.641Z",
+  "warmup_pairs": 2,
+  "measured_pairs": 5,
+  "scope": "complete typed result conversion and round trips; identical SQL; every cell checked; open separately charged",
+  "source_sha256": {
+    "adapter/benchmark-transport.mjs": "5bc55c9424c4a78ec7f560bd5f9e322685320716095353d0bcefedadd7743010",
+    "adapter/native-duckdb-port.mjs": "d3581849975460cc89253f4ff4b7b01a87f527a76e68ec70af7b42e0031000f1",
+    "adapter/owned-duckdb-port.mjs": "65caca13d12022265bb0b45f9d9e69459871e6ab5f986ff84fe29c3958483ae8",
+    "adapter/worker.py": "538f089893e8079740513c798a03cf2a0706718b5b3fa48a19287dddb67414e4",
+    "adapter/build-deps/package-lock.json": "5c6e54fd457433e7348efd0ad3301fa49f93763b0f459d6c7c43abc392b7308b"
+  },
+  "summary": {
+    "reference": {
+      "open_ms": 135.12070799999992,
+      "read_20000_ms": 47.62141699999995,
+      "repeated_100_ms": 21.58983400000011
+    },
+    "native": {
+      "open_ms": 20.498624999999947,
+      "read_20000_ms": 11.551541999999927,
+      "repeated_100_ms": 12.192125000000033
+    }
+  },
+  "samples": [
+    {
+      "variant": "reference",
+      "attempt": 0,
+      "open_ms": 133.2997919999999,
+      "read_20000_ms": 47.62141699999995,
+      "repeated_100_ms": 23.044791000000032
+    },
+    {
+      "variant": "native",
+      "attempt": 0,
+      "open_ms": 20.338416000000052,
+      "read_20000_ms": 10.352374999999938,
+      "repeated_100_ms": 9.85333300000002
+    },
+    {
+      "variant": "native",
+      "attempt": 1,
+      "open_ms": 21.05762500000003,
+      "read_20000_ms": 12.30074999999988,
+      "repeated_100_ms": 11.032875000000104
+    },
+    {
+      "variant": "reference",
+      "attempt": 1,
+      "open_ms": 135.12070799999992,
+      "read_20000_ms": 51.68420900000001,
+      "repeated_100_ms": 18.948499999999967
+    },
+    {
+      "variant": "reference",
+      "attempt": 2,
+      "open_ms": 165.30166600000007,
+      "read_20000_ms": 49.569291999999905,
+      "repeated_100_ms": 21.58983400000011
+    },
+    {
+      "variant": "native",
+      "attempt": 2,
+      "open_ms": 20.465875000000096,
+      "read_20000_ms": 10.581625000000031,
+      "repeated_100_ms": 13.065708000000086
+    },
+    {
+      "variant": "native",
+      "attempt": 3,
+      "open_ms": 20.498624999999947,
+      "read_20000_ms": 11.551541999999927,
+      "repeated_100_ms": 12.192125000000033
+    },
+    {
+      "variant": "reference",
+      "attempt": 3,
+      "open_ms": 140.42849999999999,
+      "read_20000_ms": 42.715875000000096,
+      "repeated_100_ms": 16.495541000000003
+    },
+    {
+      "variant": "reference",
+      "attempt": 4,
+      "open_ms": 130.19562499999984,
+      "read_20000_ms": 45.60804099999996,
+      "repeated_100_ms": 46.24995899999999
+    },
+    {
+      "variant": "native",
+      "attempt": 4,
+      "open_ms": 33.211874999999964,
+      "read_20000_ms": 17.986790999999812,
+      "repeated_100_ms": 25.20287499999995
+    }
+  ]
+}

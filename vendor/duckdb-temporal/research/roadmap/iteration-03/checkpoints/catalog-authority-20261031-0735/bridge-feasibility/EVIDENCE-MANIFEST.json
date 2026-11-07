@@ -1,0 +1,61 @@
+{
+  "schema": "bridge_static_evidence_manifest/1",
+  "utc": "2026-10-31T07:29:20Z",
+  "task": "goal3-internal-bridge-static-feasibility",
+  "worker": "iteration03_internal_bridge_feasibility",
+  "root": ".agent-logs/goal3-catalog-research/bridge-feasibility",
+  "exact_duckdb_pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "status": "static research complete; compile/link/runtime unrun; no option or contract selected",
+  "observed_host_sha256": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+  "protected_artifact_final_sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+  "isolated_candidate_artifact_final_sha256": "260b430a462a66b53e71728e860e9920b524a31c63dd117158e8524d73353a1a",
+  "files": [
+    {
+      "file": "SOURCE-RECEIPTS.json",
+      "bytes": 12009,
+      "sha256": "6fdeb0da1b699d7145420ccfd821033804e257ae8c3004f773eb3dbfc9b15c32"
+    },
+    {
+      "file": "SOURCE-EXCERPTS.json",
+      "bytes": 37916,
+      "sha256": "82b443ebf2322b45e4eff3cb0a811fa14a48eedc99348f7aa03e1460191649fb"
+    },
+    {
+      "file": "host-elf-static.txt",
+      "bytes": 7665,
+      "sha256": "66e41e932b063a4cd4bd6a9ed52c61633442304017ed49e0f17f3d10115b40ca"
+    },
+    {
+      "file": "cpp-dependencies-static.txt",
+      "bytes": 5290,
+      "sha256": "82f058111754e59607eafa4c14f55f49e5b4c41205cfd35ff24eaff6a429e131"
+    },
+    {
+      "file": "host-pin-static.txt",
+      "bytes": 727,
+      "sha256": "231e5d2af46ec86d1e87de732f2ec58693a4e946e76641797eb2eaf588c82b82"
+    },
+    {
+      "file": "build-static.txt",
+      "bytes": 2408,
+      "sha256": "432738e1f8766bec0674c6181d945deff6bcdec81f25e8c2728060e851b5fab6"
+    },
+    {
+      "file": "final-readback-static.txt",
+      "bytes": 769,
+      "sha256": "ea23d773cc7fdd5125e193631fb5f28463752805c8d375f3d11bbb33199e3b09"
+    },
+    {
+      "file": "FEASIBILITY.md",
+      "bytes": 11963,
+      "sha256": "83138061902588c4d68eab1efe72afdad7efcb3bffa3ddaf35b5d3e627ac7439"
+    }
+  ],
+  "mutable_operational_log": "progress.jsonl",
+  "prohibited_executable_gates_performed": false,
+  "source_bodies_full_cache_written": false,
+  "unexpected_observations": [
+    "One optional recursive GitHub tree metadata read returned Transport closed; it was not needed for the completed file-by-file source audit."
+  ],
+  "publication": "Local receipts only. Root owns any authorized durable/Git/PR/Page writes."
+}

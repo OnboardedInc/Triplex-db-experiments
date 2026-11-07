@@ -1,0 +1,28 @@
+{
+  "format": "triplex-controller-heap-profile/1",
+  "name": "controller-oldspace-256-v1",
+  "at": "2026-11-07T00:18:06.864Z",
+  "observedNodeVersion": "v24.13.0",
+  "actualExecArgv": [
+    "--max-old-space-size=256",
+    "--input-type=module"
+  ],
+  "observedHeapSizeLimitBytes": 469762048,
+  "controllerFlag": "--max-old-space-size=256",
+  "childManifestNodeOptions": "--max-old-space-size=384",
+  "unchangedAggregateReservationBytes": 939524096,
+  "unchangedEngineCapBytes": 2147483648,
+  "sourceFailure": ".devloop/jobs/qlever-native-packet-v2/attempts/0001",
+  "sourceFailureBreakdownBytes": {
+    "controller": 755286016,
+    "worker": 51380224,
+    "adapter": 158842880
+  },
+  "mechanism": "Request earlier V8 old-generation collection in controller; no Rust/native rewrite and no engine memory increase.",
+  "limitations": [
+    "Old-generation V8 limit is not an RSS hard cap.",
+    "The owned process-group RSS watchdog still enforces the same declared aggregate reservation.",
+    "This introspection proves the flag on this probe process; the next real controller grant must independently record its execArgv.",
+    "No semantic or performance outcome inferred from heap introspection."
+  ]
+}

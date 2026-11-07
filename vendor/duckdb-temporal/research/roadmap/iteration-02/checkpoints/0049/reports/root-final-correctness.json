@@ -1,0 +1,12 @@
+{
+  "status": "PASS_ROOT_FINAL_CORRECTNESS_CLOSURE",
+  "completed_utc": "2026-10-31T00:31:50.703941+00:00",
+  "all268source_post_full_and_migration_equals_frozen_and_working": true,
+  "normal_native_artifact": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+  "typed_with_engine": "18PASS+1existinginapplicableabsence-armSkip",
+  "typed_without_trusted_engine": "17PASS+2existingnative-onlyUNRUNskips;actualunavailabilitypersistencearmPASS",
+  "independent_migration": "26PASS/0FAIL/0UNRUN",
+  "independent_reader_QA": "run03all79controls/default128/10units/native/noenginePASS;run01wrongcapandrun02overbroadstickyassertretained,notcandidatefailures",
+  "reader_performance": "UNRUN; notitem2acceptance",
+  "native_binding_sanitizer": "Unchanged480456binaryevidenceexisting; no new claim57pass, oldlargecarrierincomplete remains"
+}

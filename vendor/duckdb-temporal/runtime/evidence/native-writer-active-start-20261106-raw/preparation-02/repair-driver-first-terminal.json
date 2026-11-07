@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-active-teardown-20261106/runtime/build/qualification-active-start-20261106-02/repair.py"
+  ],
+  "requestedAtUtc": "2026-11-06T07:55:45.664971+00:00",
+  "launcherPid": 88355,
+  "pid": 88365,
+  "exitCode": 1,
+  "endedAtUtc": "2026-11-06T07:55:48.278165+00:00",
+  "elapsedMs": 2613.101915922016
+}

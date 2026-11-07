@@ -1,0 +1,41 @@
+{
+  "schema": "td.antijoin-selected-sdk-frame/1",
+  "status": "PASSED_PURE_ONLY",
+  "sourceCommit": "6fbb3775",
+  "firstAttempt": true,
+  "syntaxChecks": 3,
+  "pureMethods": {
+    "passed": 28,
+    "failed": 0,
+    "skipped": 0
+  },
+  "logs": {
+    "syntax-helper.log": {
+      "file": "antijoin-sdk-binding-frame-20261105-syntax-helper.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0
+    },
+    "syntax-runner.log": {
+      "file": "antijoin-sdk-binding-frame-20261105-syntax-runner.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0
+    },
+    "syntax-tests.log": {
+      "file": "antijoin-sdk-binding-frame-20261105-syntax-tests.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0
+    },
+    "pure.log": {
+      "file": "antijoin-sdk-binding-frame-20261105-pure.log",
+      "sha256": "531f5e98e41f9477748265dbfe9963854fc8efb28c2f7841d04143856deebdbb",
+      "exitCode": 0
+    }
+  },
+  "scope": "Pure policy/oracle/FIFO and syntax only. No actual selected-artifact inspection, binding generation, engine execution, or full performance qualification.",
+  "oldNativeHelperAndBudgetUnchanged": true,
+  "selectedSdkSource": "d024e9b8e0c2eee16d4e992c7514048115e6f80b",
+  "selectedSdkQualifiedSource": "2bb4ca2adb63c784e53b3d5c3b24664d3c5ed043",
+  "selectedEntitySha256": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+  "selectedArchiveInventorySha256": "8f1bfbcb69409f308a74a32a62f787693739798cc0c72df3710d92dba3798d71",
+  "awaiting": "Root review and actual setup/short engine grant."
+}

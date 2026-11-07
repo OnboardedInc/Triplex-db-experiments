@@ -1,0 +1,26 @@
+{
+  "recordedAtUtc": "2026-11-06T06:39:11.838629+00:00",
+  "results": [
+    {
+      "file": "native-writer-lab-provenance.mjs",
+      "exitCode": 0,
+      "log": "build/native-writer-lab-20261106-01/checks/native-writer-lab-provenance.mjs.log"
+    },
+    {
+      "file": "native-writer-lab-preload.mjs",
+      "exitCode": 0,
+      "log": "build/native-writer-lab-20261106-01/checks/native-writer-lab-preload.mjs.log"
+    },
+    {
+      "file": "native-writer-lab-small.mjs",
+      "exitCode": 0,
+      "log": "build/native-writer-lab-20261106-01/checks/native-writer-lab-small.mjs.log"
+    },
+    {
+      "file": "native-writer-lab-antijoin.mjs",
+      "exitCode": 0,
+      "log": "build/native-writer-lab-20261106-01/checks/native-writer-lab-antijoin.mjs.log"
+    }
+  ],
+  "nativeImports": "none"
+}

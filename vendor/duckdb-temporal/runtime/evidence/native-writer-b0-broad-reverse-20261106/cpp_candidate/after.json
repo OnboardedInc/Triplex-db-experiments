@@ -1,0 +1,28 @@
+{
+  "atUtc": "2026-11-06T09:54:30.160Z",
+  "admissionSha256": "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+  "cppBindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "protocolSource": {
+    "commit": "4349accbd5b97e42a01bb10e729cca861cdbcd94",
+    "pins": {
+      "adapter/native-writer-b0-broad.mjs": "ddee99642a4df1cd99af14b851dccd25a0072a9007c8b6fc99f664a66d2714a9",
+      "NATIVE-WRITER-B0-BROAD.md": "c0377b63743c4dc9dbe27063d448ac44d3603eaeeac9cdd40ab6e5ae18d07403"
+    }
+  },
+  "database": {
+    "path": "<accepted-project-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+    "bytes": 3905433600,
+    "mtimeNs": "1793911060600328880",
+    "ctimeNs": "1793911060600328880",
+    "sha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "closedWithoutWal": true
+  },
+  "recipe": {
+    "path": "<accepted-project-runtime>/build/combined-028-20261105/mixed-10m-pilot.json",
+    "bytes": 350315,
+    "mtimeNs": "1793911060614201524",
+    "ctimeNs": "1793911060614201524",
+    "sha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "closedWithoutWal": true
+  }
+}

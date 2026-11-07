@@ -1,0 +1,237 @@
+{
+  "schema": "td.native-writer435-full/1",
+  "status": "passed_full435_after_preserved_postcheck_bookkeeping_stop",
+  "measuredSourceCommit": "506698215b8bebdf604de2f41d281d3cdc611929",
+  "adaptedTestSourceCommit": "00074169fbd27b4d6fa463feacb0cddb2e1e7814",
+  "productionCodeCommit": "659ace02feaaa4fe1d779644b84c0f6e42fb2097",
+  "productionNativeSource": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "actualCounts": {
+    "python": 31,
+    "fixedNode": 76,
+    "additionalNode": 263,
+    "workloadOracle": 8,
+    "workloadPlans": 13,
+    "triplex": 44,
+    "scopedMethods": 391,
+    "total": 435
+  },
+  "typescriptSemanticCheck": "PASS",
+  "sourcePins": {
+    "count": 226,
+    "allCurrentBytesAndGitObjectsEqual": true,
+    "commit": "506698215b8bebdf604de2f41d281d3cdc611929",
+    "proof": "native-writer435-full-20261106-raw/source-git-object-audit.json"
+  },
+  "firstFullVerifierTerminal": {
+    "command": [
+      "[LOCAL_PATH_0034]",
+      "verify.py",
+      "--with-direct"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime",
+    "pid": 81621,
+    "startedAtUtc": "2026-11-06T07:35:27.973386+00:00",
+    "status": "terminal",
+    "environment": {
+      "PATH": "[LOCAL_PATH_0056] Support/JetBrains/Toolbox/scripts:[LOCAL_PATH_0057]",
+      "UV_THREADPOOL_SIZE": "4",
+      "TD_TEST_PRE_BATCH_BUILD": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/retained-diagnostics-20261105/accepted-026",
+      "TD_SDK_ADMISSION_SOURCE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+      "TD_SDK_ADMISSION_RECIPE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json"
+    },
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T07:42:44.761970+00:00",
+    "elapsedMs": 436789.6775000263
+  },
+  "firstFullVerifierExit": 0,
+  "originalWrapper": {
+    "execSession": 47074,
+    "firstExit": 1,
+    "failureSummary": "native-writer435-full-20261106-raw/first-summary.json",
+    "failureSummarySha256": "ecffdbcd5b3b434c20f60320f05329b4685f0f50a4b72c63b8330ffb24a46064",
+    "unchanged": true,
+    "cause": "The post-check wrapper treated all direct owner_probe files as immutable runtime; the existing tests create exactly these three additional data/evidence files there."
+  },
+  "derivedAcceptance": "native-writer435-full-20261106-raw/derived-acceptance.json",
+  "independentRootReview": "native-writer435-full-20261106-raw/root-prepackage-review.json",
+  "candidateVerification": {
+    "file": "native-writer435-full-20261106-raw/actual-verification-first.json",
+    "sha256": "30aecf908244837b51617eb3aeec752225cf711872c0cc0044092141518afe93",
+    "timestampUtc": "2026-11-06T07:42:44.613915+00:00",
+    "stdoutEqualsReportMinusSources": true,
+    "genericCandidateOutputLeftInPlace": true,
+    "genericCandidateOutputIncludedInThisCommit": false
+  },
+  "immutableRuntime": {
+    "files": 583,
+    "exactBeforeAfterMapEqualAfterSubtractingOnlyDeclaredThree": true
+  },
+  "exactExcludedTestOutputs": {
+    "build/owner_probe/activation-db4dfd91-6139-4dd6-a3e6-082afdbe38e2.duckdb": {
+      "sha256": "b88c0613857e4974f6146a66294c8238bcdf484e863e4dc71f33d497b515f9f8",
+      "bytes": 6041600,
+      "classification": "retained_existing_ownership_test_output",
+      "preservedAt": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/build/owner_probe/activation-db4dfd91-6139-4dd6-a3e6-082afdbe38e2.duckdb",
+      "closedObservation": {
+        "noWal": true,
+        "lsofCommand": [
+          "/usr/sbin/lsof",
+          "-Fpn",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/build/owner_probe/activation-db4dfd91-6139-4dd6-a3e6-082afdbe38e2.duckdb"
+        ],
+        "lsofExitCode": 1,
+        "lsofStdout": "",
+        "lsofStderr": ""
+      }
+    },
+    "build/owner_probe/activation-evidence.json": {
+      "sha256": "c767c00d2ab972d82d30f3c889c48d5eee166ebb89542490873059b3a599d1f2",
+      "bytes": 270706,
+      "classification": "retained_existing_ownership_test_output",
+      "preservedAt": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/build/owner_probe/activation-evidence.json"
+    },
+    "build/owner_probe/evidence.json": {
+      "sha256": "1c1b35cc48e5d4a2a4e5a1252eeb7677456ced0881a6901ceb6ecc5dbc4b1e75",
+      "bytes": 39547,
+      "classification": "retained_existing_ownership_test_output",
+      "preservedAt": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/build/owner_probe/evidence.json"
+    }
+  },
+  "allOtherSectionsExact": true,
+  "nativeSourcePins": 48,
+  "ownedSourceOverlayPins": 132,
+  "sdkDependencyPins": 395,
+  "headerPins": 36,
+  "nativeAndSdkArtifactPins": {
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9",
+    "build/owner_probe/temporal_writer.node": "02270b0840dd4bab9c3beb00986e06bc0e8125c2971f9ac6f9a407f6fe03418c",
+    "build/adapter/native-entity.js": "48c6a5d6443fc706e59e31779437e4b24d7ce6ea6de1b07d22501f54e8b9d8f8",
+    "build/adapter/native-schema.js": "723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226",
+    "build/adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268"
+  },
+  "sdkResolution": {
+    "api": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js",
+    "bindings": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+    "platform": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "nodeExecutable": "[LOCAL_PATH_0043]",
+    "nodeVersion": "v24.13.0"
+  },
+  "mandatoryFixture": {
+    "source": {
+      "file": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+      "sha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+      "bytes": 52178944,
+      "mtimeNs": 1793904791622186339,
+      "ctimeNs": 1793904791622186339
+    },
+    "recipe": {
+      "file": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json",
+      "sha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4",
+      "bytes": 1085833,
+      "mtimeNs": 1793904791633451089,
+      "ctimeNs": 1793904791633451089
+    },
+    "preBatchBuild": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/retained-diagnostics-20261105/accepted-026",
+    "cloneHelperSha256": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "mainVerificationUnchangedSha256": "aced40cd39edf63c2af8bc0a2ff53d76746b9a741ffb089cbbb9e8a9fb1244d6",
+  "full512": {
+    "executedOnceInsideIndependentFive": true,
+    "bodySourceAndEmittedIdentity": "native-writer435-focused-20261106.json#/selected512",
+    "newRunPerClientSampleCountsNotSeparatelyRetained": true
+  },
+  "nativeRebuild": false,
+  "packageInstall": false,
+  "restage": false,
+  "engineRerun": false,
+  "sourceOrTestRepairAfterFirstFullAttempt": false,
+  "engineLease": "explicitly_released_after_verifier_terminal_and_preserved_postcheck_stop",
+  "limitations": [
+    "Full435 correctness plus TSC; no promotion, reverse/broad/anti performance or active-job environment-teardown claim.",
+    "First wrapper exit1 remains preserved; acceptance partitions only three source-proven test outputs, with no application/test change or engine rerun.",
+    "The normal verifier retains its aggregate stdout/report and checks each child TAP; successful per-child TAP is not separately emitted by the frozen verifier.",
+    "The generated activation database remains preserved at its exact owned build path; binary DB is not committed."
+  ],
+  "rawFiles": {
+    "evidence/native-writer435-full-20261106-raw/actual-full-wrapper.py": {
+      "bytes": 8525,
+      "sha256": "e07205c154da27948cbbd1454c1c21d0cac1202e96b6b75ace106ea159a1fa0e"
+    },
+    "evidence/native-writer435-full-20261106-raw/actual-verification-first.json": {
+      "bytes": 49741,
+      "sha256": "30aecf908244837b51617eb3aeec752225cf711872c0cc0044092141518afe93"
+    },
+    "evidence/native-writer435-full-20261106-raw/after-full-first.json": {
+      "bytes": 110720,
+      "sha256": "fa5dce9a90bfcaf462aa6b6e812c022cd91019b0f2154da6ee0d662238f5a115"
+    },
+    "evidence/native-writer435-full-20261106-raw/before-full-first.json": {
+      "bytes": 110347,
+      "sha256": "da9c638ed14a7d7a13ba254007bc1efc49f0b12a96ac3d8aead355f21f0fc112"
+    },
+    "evidence/native-writer435-full-20261106-raw/code-source-before-first.json": {
+      "bytes": 23354,
+      "sha256": "81cf3d1f96bc210d1b2efb49e2a293312368ea518ec9b437b296bb1a4cfa4e90"
+    },
+    "evidence/native-writer435-full-20261106-raw/derived-acceptance.json": {
+      "bytes": 3445,
+      "sha256": "123866844c60304359573451a1586ae7a11fcc54300d1a952a260e45fa119aa0"
+    },
+    "evidence/native-writer435-full-20261106-raw/first-summary.json": {
+      "bytes": 5541,
+      "sha256": "ecffdbcd5b3b434c20f60320f05329b4685f0f50a4b72c63b8330ffb24a46064"
+    },
+    "evidence/native-writer435-full-20261106-raw/first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-writer435-full-20261106-raw/first.stdout": {
+      "bytes": 22687,
+      "sha256": "bce83a199fa6f7a72633ea23bb522ed159d2de2e0e953d513d0e6dfb40e72642"
+    },
+    "evidence/native-writer435-full-20261106-raw/first.terminal.json": {
+      "bytes": 2278,
+      "sha256": "ca2ead5469d7efdf1bd10cf1706b8b6b86d0b471038d88ab7e9446d5d8282a02"
+    },
+    "evidence/native-writer435-full-20261106-raw/generated-activation-evidence.json": {
+      "bytes": 270706,
+      "sha256": "c767c00d2ab972d82d30f3c889c48d5eee166ebb89542490873059b3a599d1f2"
+    },
+    "evidence/native-writer435-full-20261106-raw/generated-evidence.json": {
+      "bytes": 39547,
+      "sha256": "1c1b35cc48e5d4a2a4e5a1252eeb7677456ced0881a6901ceb6ecc5dbc4b1e75"
+    },
+    "evidence/native-writer435-full-20261106-raw/main-verification-before.json": {
+      "bytes": 210,
+      "sha256": "7f44e5350488b70d24877fdab77d95a606c9148015455644c00dc71573f90c93"
+    },
+    "evidence/native-writer435-full-20261106-raw/offline-acceptance-audit.py": {
+      "bytes": 4584,
+      "sha256": "a18234abeb5e2d45cd1abc620be012566d5504d39e930ee0ae7ea95fd8aeb729"
+    },
+    "evidence/native-writer435-full-20261106-raw/post-pin-drift-diagnostic.json": {
+      "bytes": 1910,
+      "sha256": "571ad2e01f2f4e6aef8b98b8e39996e95878df4f64c7c2c832fd7cc9b25b343e"
+    },
+    "evidence/native-writer435-full-20261106-raw/previous-candidate-report-identity.json": {
+      "bytes": 119,
+      "sha256": "f4f089e3191cbf90425ee71b2d28f7aef58de9866cdda04002385d1f08a1cb2b"
+    },
+    "evidence/native-writer435-full-20261106-raw/previous-candidate-verification.json": {
+      "bytes": 44971,
+      "sha256": "d08c0dbfceb007104c656c12b98e3bfe8626ad6f7ae13af6b6099d1e3b9cab0f"
+    },
+    "evidence/native-writer435-full-20261106-raw/root-prepackage-review.json": {
+      "bytes": 4219,
+      "sha256": "1ad84aa7cf94949bc5ecc323a9ae346b3df758e827908bbe1bf3d0bb5f523d34"
+    },
+    "evidence/native-writer435-full-20261106-raw/source-git-object-audit.json": {
+      "bytes": 23887,
+      "sha256": "b533f15710b750867a2ffd9c4a6273629b3dc6f2af8b09c71034991b77e60c6a"
+    }
+  }
+}

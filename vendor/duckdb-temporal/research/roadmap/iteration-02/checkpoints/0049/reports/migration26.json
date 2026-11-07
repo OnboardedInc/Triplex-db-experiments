@@ -1,0 +1,124 @@
+{
+  "format": "temporal-storage-migration-acceptance-v1",
+  "status": "PASS",
+  "source_self_check_is_not_feature_acceptance": true,
+  "cases": [
+    {
+      "name": "migration_preserves_empty_v1",
+      "status": "PASS"
+    },
+    {
+      "name": "migration_preserves_rich_history",
+      "status": "PASS"
+    },
+    {
+      "name": "migration_preserves_at_fact_cap",
+      "status": "PASS"
+    },
+    {
+      "name": "migration_preserves_at_commit_cap",
+      "status": "PASS"
+    },
+    {
+      "name": "idempotent_reopen_and_remigrate",
+      "status": "PASS"
+    },
+    {
+      "name": "old_code_refuses_schema_2",
+      "status": "PASS"
+    },
+    {
+      "name": "rollback_at_after_shadow_create",
+      "status": "PASS"
+    },
+    {
+      "name": "rollback_at_after_history_copy",
+      "status": "PASS"
+    },
+    {
+      "name": "rollback_at_before_metadata_publish",
+      "status": "PASS"
+    },
+    {
+      "name": "rollback_at_before_commit",
+      "status": "PASS"
+    },
+    {
+      "name": "lost_migration_ack_reopens_committed_schema",
+      "status": "PASS"
+    },
+    {
+      "name": "rejects_unknown_version_without_mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "rejects_missing_version_table_without_mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "rejects_missing_version_row_without_mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "rejects_duplicate_version_rows_without_mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "rejects_wrong_singleton_without_mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "rejects_missing_value_column_without_mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "rejects_malformed_version_column_without_mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "typed_write_and_reopen",
+      "status": "PASS"
+    },
+    {
+      "name": "duplicate_command_does_not_apply_twice",
+      "status": "PASS"
+    },
+    {
+      "name": "stale_retraction_rolls_back_whole_command",
+      "status": "PASS"
+    },
+    {
+      "name": "fact_cap_still_counts_retained_duplicates",
+      "status": "PASS"
+    },
+    {
+      "name": "commit_cap_not_reset_by_migration",
+      "status": "PASS"
+    },
+    {
+      "name": "operation_cap_remains_32",
+      "status": "PASS"
+    },
+    {
+      "name": "exactly_32_retractions_allowed",
+      "status": "PASS"
+    },
+    {
+      "name": "sql_typed_payload_constraints",
+      "status": "PASS"
+    }
+  ],
+  "baseline_audit": {
+    "files_verified": 218,
+    "manifest_sha256": "590c7b3d7ed751ae7dc4c5f3b32b5e225051bbb9262bc1b13277a3dbc37040fb",
+    "schema_sha256": "67e06664208b554ad3ed9b56268ca2967711f651123e951ecce8602634e843a6"
+  },
+  "explicit_fixture_root": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/export/item2-reader-full-verification-20261031-0024/storage/reader-migration-0028",
+  "run_directory": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/export/item2-reader-full-verification-20261031-0024/storage/reader-migration-0028/acceptance-851650a75117",
+  "adapter": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/export/item2-reader-full-verification-20261031-0024/storage/tests/migration_adapter.py",
+  "counts": {
+    "PASS": 26,
+    "FAIL": 0,
+    "UNRUN": 0
+  }
+}

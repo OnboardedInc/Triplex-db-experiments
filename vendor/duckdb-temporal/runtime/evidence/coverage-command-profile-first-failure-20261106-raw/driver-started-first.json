@@ -1,0 +1,11 @@
+{
+  "pid": 68398,
+  "parentPid": 68396,
+  "argv": [
+    "[LOCAL_PATH_0043]",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs",
+    "--child",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-01/baseline-zero/config-first.json"
+  ],
+  "startedAtUtc": "2026-11-06T11:29:44.621Z"
+}

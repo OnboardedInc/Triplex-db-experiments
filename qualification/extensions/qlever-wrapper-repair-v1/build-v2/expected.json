@@ -1,0 +1,9 @@
+{
+  "status": "PASS_PRIVATE_SDK_GENERATION_ONLY",
+  "engineCalls": 0,
+  "ordinaryPackageCommands": true,
+  "publicDeclarationWitness": true,
+  "liveSourceOrDistWrites": false,
+  "onlyCompilerExecutableChanged": true,
+  "sourcePatchApplied": true
+}

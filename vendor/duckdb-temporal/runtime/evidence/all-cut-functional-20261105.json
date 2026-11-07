@@ -1,0 +1,143 @@
+{
+  "schema": "all-cut-functional/1",
+  "status": "passed",
+  "timestamp_utc": "2026-11-05T15:33:41.923206+00:00",
+  "base_commit": "601375a7",
+  "build_flag_refactor": "ba731222",
+  "engine": "2.0.0",
+  "core_version": "0.21.0",
+  "variants": [
+    {
+      "name": "baseline",
+      "core_extension_sha256": "5e02b04ed343c2bcc59ca3998511cde6e25117a6f8b9fc00cb15d6959e3d3155",
+      "companion_extension_sha256": "e7bb61ce58b7fd448830889a3bcfd1f865e859bb39b81460c1d6c7c20f4001fa",
+      "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "flags": {
+        "current_unique": true,
+        "all_cut_unique": false,
+        "injective_projection": true,
+        "identity_count": false
+      },
+      "suites": [
+        {
+          "suite": "all_cut_8_retry",
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "elapsed_seconds": 1.7014964579138905,
+          "log_sha256": "d34d52deab8b09c781ec5a773048f48d75f2a136d117eff885ddb29fc6fea187"
+        }
+      ]
+    },
+    {
+      "name": "candidate",
+      "core_extension_sha256": "c89b331b83449acffb121a31760a6618a081a0a13dbefbe83ce5de386460773f",
+      "companion_extension_sha256": "49936a787cbb9843d4eaec8802f5e9e06b473247af2fc110d6eba9e7e2ac3c48",
+      "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "flags": {
+        "current_unique": true,
+        "all_cut_unique": true,
+        "injective_projection": true,
+        "identity_count": false
+      },
+      "suites": [
+        {
+          "suite": "all_cut_8_retry",
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "elapsed_seconds": 2.0523857919033617,
+          "log_sha256": "5234019fe293fc1aed81e4ef33a290f460a1e52b2bc00a0a20eb9b0fbf36f9a6"
+        },
+        {
+          "suite": "current_projection_9",
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "elapsed_seconds": 0.7923395419493318,
+          "log_sha256": "a4d529b759042f42d3098e6bf6ef78c296804f491f47f2c4f6b1764816dd78f8"
+        },
+        {
+          "suite": "owner_19",
+          "tests": 19,
+          "pass": 19,
+          "fail": 0,
+          "elapsed_seconds": 9.103958791820332,
+          "log_sha256": "5872513d211f2347dd27ce24d99a621f10216ae7001dc91b7b500d0536c4f353"
+        },
+        {
+          "suite": "host_patch_16",
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "elapsed_seconds": 6.1684864580165595,
+          "log_sha256": "8e57fc462d8e58c9d1df12050ba822a230692780ee36f79cd84dfda7eec8be3c"
+        },
+        {
+          "suite": "native_6",
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "elapsed_seconds": 19.041780750034377,
+          "log_sha256": "f3265a1804bc70e9d8a52c47d46affe43137b9a0c1ac5ace9ecca7bf290d0d50"
+        },
+        {
+          "suite": "pairing_3",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "elapsed_seconds": 0.34780158288776875,
+          "log_sha256": "8b99f6bf53baecb61538cb08c6b8104697dfbf11f9478218e7606912933c5dad"
+        },
+        {
+          "suite": "provenance_5",
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "elapsed_seconds": 0.28815462510101497,
+          "log_sha256": "a980b40c9e8d305b95fd4cca39122cc04b8151fd2068b8fcb27a7507daf25240"
+        }
+      ]
+    }
+  ],
+  "initial_failure": {
+    "tests": 8,
+    "pass": 6,
+    "fail": 2,
+    "normalized_log": "all-cut-initial-fixture-failure-20261105.txt",
+    "raw_log_sha256": "76077c4b52d641999fdc98cd0f4660319353a82b4158525ce4e235a8019a5556",
+    "causes": [
+      "A synthetic legacy empty rectangle reused an entity with native ownership while clearing its creator command. The strict history audit correctly rejected that fixture. It now uses a separate unowned entity.",
+      "The new test mixed direct bridge initialization and public store initialization with differently spelled paths in one process. Public host testing is now a separate test process. No production bridge behavior was changed."
+    ],
+    "resolution": "The complete8test group passed on fresh baseline and candidate fixtures after both test setup corrections."
+  },
+  "native_ingested_assertions": 1003529,
+  "sources_sha256": {
+    "native/src/temporal_current_unique.hpp": "2b4b3782bfdad09cae18fad5250a5644a5b9b57f20e53664d478db0f27a90171",
+    "native/src/temporal_store_query.cpp": "efa9f8910e1cc090e916eae3e0c8e6437566669a4aa57c0e6f98389b70441aad",
+    "native/owner_probe/owner_probe.cpp": "b131f2f23af1daede1400abfdb3b0c166528ea76dda058ef7d0e163b13920167",
+    "build_native.py": "bb515e66e255d828c24efa5e5747ff53a84b6c6c2d2adadfff24e630146f4aa7",
+    "build_owner_probe.py": "f54be0e0bd564bdf3a9f5f9d1488214bc1f3820f21d3b16ce067822edd7d1284",
+    "build_identity_count_spike.py": "8c79d14c6f16558f2bf6fdce3ddd0b0457c5bcd225c4f7e3c9e77cf2133891fe",
+    "adapter/native-entity.ts": "a6885a5ae224fc5248c40ef49d125e65ed575bf68b6a50da08b74f9460b16879",
+    "adapter/test-all-cut-unique.mjs": "3dc1d4290a3b7ecc69ad8b5621b888197f62dd9c0d08987cebf3875d98749142",
+    "adapter/test-all-cut-store.mjs": "f4cd38f6658ff612fbfb63e50f5534efaa9e9633719e26d2538295d0fbc48f45",
+    "adapter/benchmark-identity-count.mjs": "074fce37d1872a1d068da50376eb68b841b8e791f476f225db95cccf30874224",
+    "adapter/test-read-provenance.mjs": "4b3bfa1c404f4fd5119a24aaf8a607aa610120a6e00b2d9c1d5205a199ec6794",
+    "adapter/test-current-unique.mjs": "51f3a71c0fa18411ce8bc550ca46a9f852291009bea308e7bfb8810672fc97bd",
+    "adapter/test-owned-query.mjs": "452a97a4fd02aed670266ae96bc601631c391cf0d54274ca150ce804b8d56abe",
+    "adapter/test-owned-store.ts": "e09e5225864b50f3c1e41546fa50113c046d0fa1df6678a3bdd77c88559bc137",
+    "adapter/test-interval-patch.ts": "a37b6eaaea95ad2e31c12f2335b296f43201e49c2629091a264a2a4fb61e0ab2"
+  },
+  "proof_scope": [
+    "The full retained carrier and native history audit remains mandatory before either capability can be published.",
+    "For each exact typed EAV key, pairwise nonoverlapping positive transaction intervals imply at most one visible row for every knowledge and valid-time cut. Ignoring valid intervals in this sufficient test may reject geometrically unique data.",
+    "A rectangle empty in either dimension cannot satisfy both half-open visibility predicates at any cut. Such rows are excluded from the new frontier and overlap proof. The existing current-only proof remains unchanged.",
+    "The frontier excludes nonempty retained rectangles with future starts or finite ends beyond the current clock. This is required before using native-write induction.",
+    "Native puts close prior current entity rectangles at the new position before inserting a canonical set. Native patches close affected rectangles and insert disjoint valid-time remnants/replacement rectangles. Both preserve geometric uniqueness under the private native-write contract.",
+    "A later audit may conservatively lose the all-cut capability after valid patch splitting. Current-only capability remains independently available, and historical queries retain DISTINCT.",
+    "One volatile validated generation check returns both bits. The compiled statement captures it once and selects capability-specific reasons or safe DISTINCT fallback on every execution.",
+    "No performance conclusion is included. Both variants retain injective projection and current uniqueness, while identity-count remains disabled. All production defaults remain disabled."
+  ]
+}

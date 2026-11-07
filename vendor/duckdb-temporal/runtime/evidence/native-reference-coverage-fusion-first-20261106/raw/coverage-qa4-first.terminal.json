@@ -1,0 +1,16 @@
+{
+  "phase": "coverage-qa4-first",
+  "pid": 88940,
+  "command": [
+    "<node24.13>/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "build/adapter/test-native-reference-coverage.js"
+  ],
+  "startedAtUtc": "2026-11-06T12:03:00.059098+00:00",
+  "endedAtUtc": "2026-11-06T12:03:11.199972+00:00",
+  "exitCode": 0,
+  "UV_THREADPOOL_SIZE": "4",
+  "NODE_OPTIONS": null,
+  "profile": "unchanged test-owned readers2/threads1/128MB memory/64MB spill"
+}

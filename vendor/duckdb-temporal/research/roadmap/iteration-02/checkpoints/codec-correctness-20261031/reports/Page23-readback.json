@@ -1,0 +1,21 @@
+{
+  "at_utc": "2026-10-31T02:33:28.863Z",
+  "sequence": 23,
+  "blocks": 78,
+  "all78_original_IDs_order_preserved": true,
+  "source_commit": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+  "prior_research_raw_main": "c8e0bc56333541cee22a3f5919387ebb31b11cbb",
+  "codec_correctness_passed": true,
+  "codec_macro_performance": "NOT_RUN",
+  "item2_accepted": false,
+  "hashes": [
+    {
+      "id": "0839035e-d573-5d6e-8107-bcc9e9468023",
+      "hash": "29101e8525e7d8e6690bee736722e5e3845c7cf8a88856891562081d9ad1338e"
+    },
+    {
+      "id": "1d94769e-2c87-5fcd-a1d8-480075701adc",
+      "hash": "d9613070233bcab93926cf376ce475400250d429db023e5a96f699ecd5c96f34"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+TAP version 13
+# Subtest: all-cut capability requires audited activation and is captured once by current and historical queries
+ok 1 - all-cut capability requires audited activation and is captured once by current and historical queries
+  ---
+  duration_ms: 553.904084
+  type: 'test'
+  ...
+# Subtest: closed and live duplicate carriers prevent all-cut certification while preserving set answers
+ok 2 - closed and live duplicate carriers prevent all-cut certification while preserving set answers
+  ---
+  duration_ms: 269.658291
+  type: 'test'
+  ...
+# Subtest: nonempty future starts and finite future ends cannot earn either capability
+ok 3 - nonempty future starts and finite future ends cannot earn either capability
+  ---
+  duration_ms: 202.309208
+  type: 'test'
+  ...
+# Subtest: rectangles empty in either dimension are excluded from the all-cut frontier and overlap proof
+not ok 4 - rectangles empty in either dimension are excluded from the all-cut frontier and overlap proof
+  ---
+  duration_ms: 80.924167
+  type: 'test'
+  location: '<runtime>/adapter/test-all-cut-unique.mjs:93:1'
+  failureType: 'testCodeFailure'
+  error: 'Invalid Input Error: TD_E_COMMAND_HISTORY: native creator binding is missing'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: disjoint valid segments may retain current certification but conservatively lose all-cut certification
+ok 5 - disjoint valid segments may retain current certification but conservatively lose all-cut certification
+  ---
+  duration_ms: 153.1035
+  type: 'test'
+  ...
+# Subtest: native patches preserve all-cut induction and revalidation may downgrade to the current-only proof
+not ok 6 - native patches preserve all-cut induction and revalidation may downgrade to the current-only proof
+  ---
+  duration_ms: 75.996583
+  type: 'test'
+  location: '<runtime>/adapter/test-all-cut-unique.mjs:116:1'
+  failureType: 'testCodeFailure'
+  error: 'TD_E_CONTROL: bridge artifact is already pinned'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    NativeDuckDBPort.open (file://<runtime>/build/native-read-spikes/all-cut-20261105-01/baseline/build/adapter/native-duckdb-port.mjs:90:15)
+    async NativeEntityStore.open (file://<runtime>/build/native-read-spikes/all-cut-20261105-01/baseline/build/adapter/native-entity.js:153:22)
+    async TestContext.<anonymous> (file://<runtime>/adapter/test-all-cut-unique.mjs:118:15)
+    async Test.run (node:internal/test_runner/test:1113:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+  ...
+# Subtest: cached historical plans follow revalidated capability loss and unknown connections invalidate execution
+ok 7 - cached historical plans follow revalidated capability loss and unknown connections invalidate execution
+  ---
+  duration_ms: 132.683167
+  type: 'test'
+  ...
+# Subtest: all-cut typed answers preserve integer endpoints Unicode and exact floating payloads
+ok 8 - all-cut typed answers preserve integer endpoints Unicode and exact floating payloads
+  ---
+  duration_ms: 297.658458
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 6
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2348.953292

@@ -1,0 +1,146 @@
+{
+  "created_at_utc": "2026-10-31T01:38:08.350952+00:00",
+  "source_only": true,
+  "vendor_source_caches_included": false,
+  "full_application_source_included": false,
+  "own_model_includes_manually_transcribed_shape_functions": true,
+  "preferred_candidate": "C1-P private tail clone + C2",
+  "initial_corrected_result_predates_negative_controls": true,
+  "files": [
+    {
+      "path": "CURRENT-AST-RECEIPT.json",
+      "bytes": 2014,
+      "sha256": "6858d4056bd7cff1669d55d878a87e32678caf350ef7fa1143fa2954086ca021"
+    },
+    {
+      "path": "DECISION.json",
+      "bytes": 4099,
+      "sha256": "c4799b982381c684e607e6f929f67f5d4ec5210d8f0bd3b3dcc8e0cdf5aee20d"
+    },
+    {
+      "path": "FRESH-PRIMARY-SOURCE-RECEIPTS.json",
+      "bytes": 31817,
+      "sha256": "a3aef276c094c24372036a0f2183b86625ff212a9dbc68d5f2ef7b45cf431c5a"
+    },
+    {
+      "path": "HASH-SEED-SUMMARY.json",
+      "bytes": 5836,
+      "sha256": "04bc9c8e6286f49e64d50bb78de068807d1a3e636bb88f56e7275780b49a3604"
+    },
+    {
+      "path": "MODEL-ATTEMPT-01-FIXTURE.stderr.txt",
+      "bytes": 962,
+      "sha256": "87b73bc0814a32f487ec4ad246f2a0bf1f25af7208c1647f0652f3bb98778ba9"
+    },
+    {
+      "path": "PROTOCOL-MODEL-RESULT.json",
+      "bytes": 1447,
+      "sha256": "77901827db9362f95f2e6e39cf777249bb754f3cc0ec5b72ef0006ff9f2155e2"
+    },
+    {
+      "path": "PROTOCOL-MODEL.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2460,
+      "sha256": "30d9d233ad3ad371a775748781ce4058422355ab0453e83524056e7d3b85d08d"
+    },
+    {
+      "path": "RESEARCH.md",
+      "bytes": 17930,
+      "sha256": "02c147a30d598ee4a050397bfbca24a25e84d2bf551c421021c52c1d03ad7c23"
+    },
+    {
+      "path": "WEB-RETRIEVAL-NOTE.json",
+      "bytes": 760,
+      "sha256": "33601989254c50559717cda6654c3e9dfa986db91873c03f9c9e4da2bbb43818"
+    },
+    {
+      "path": "WORKER-PROGRESS.md",
+      "bytes": 797,
+      "sha256": "c1771f994c9ff7e8ec3f38e9a669d0b117979bc287bee00271ba1554773b8559"
+    },
+    {
+      "path": "curate_source_receipts.py",
+      "bytes": 5730,
+      "sha256": "d340d5e991268506843118a2b9081559ecf36bd421c89b6699616ccef74619ae"
+    },
+    {
+      "path": "hash-seed-runs/0.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "hash-seed-runs/0.json",
+      "bytes": 2456,
+      "sha256": "4ba78032610bf5f2e4a977f446e4e6e1463bb507be7331a5a0a4555b4628277f"
+    },
+    {
+      "path": "hash-seed-runs/0.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "hash-seed-runs/1.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "hash-seed-runs/1.json",
+      "bytes": 2456,
+      "sha256": "4ba78032610bf5f2e4a977f446e4e6e1463bb507be7331a5a0a4555b4628277f"
+    },
+    {
+      "path": "hash-seed-runs/1.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "hash-seed-runs/123456789.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "hash-seed-runs/123456789.json",
+      "bytes": 2456,
+      "sha256": "4ba78032610bf5f2e4a977f446e4e6e1463bb507be7331a5a0a4555b4628277f"
+    },
+    {
+      "path": "hash-seed-runs/123456789.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "hash-seed-runs/42.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "hash-seed-runs/42.json",
+      "bytes": 2456,
+      "sha256": "4ba78032610bf5f2e4a977f446e4e6e1463bb507be7331a5a0a4555b4628277f"
+    },
+    {
+      "path": "hash-seed-runs/42.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "protocol_model.py",
+      "bytes": 15882,
+      "sha256": "7bac7553afa8918c923ba3dc1d624ee0fb3ed919a5b541adeff8444a45485691"
+    },
+    {
+      "path": "verify_bundle.py",
+      "bytes": 4247,
+      "sha256": "4238b71691d8bca18c3edf500390d6f1afbc8615a8b0581decf4c8ab3a91a9c9"
+    },
+    {
+      "path": "verify_current_ast.py",
+      "bytes": 2440,
+      "sha256": "fe64bc42c32d73280b14c510cbd5d98930da6dd8e573e90c9f34289e48b71b4f"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "goal4.research.ready/1",
+  "utc": "2026-10-31T16:37:31.446823+00:00",
+  "state": "frozen_research_only_ready_for_read_only_review",
+  "revision": "001",
+  "engine": "DuckDB 2.0.0",
+  "duckdb_commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "published_prototype_head": "52b1e81f1d71590bdefb376e62924c9f717d4344",
+  "upstream_sources": 8,
+  "published_sources": 13,
+  "official_web_documents": 13,
+  "paper_retrieval_records": 4,
+  "substantively_inspected_primary_papers": 3,
+  "unrun_benchmark_case_ids": 30,
+  "item3_status": "INCOMPLETE/BLOCKED/UNACCEPTED",
+  "item4_status": "research only; not implemented or accepted",
+  "active_processes_sessions_approvals": null,
+  "verification": "Only source reads and new research-record JSON parsing/hash validation; no project module import, runtime/build/DB/test/benchmark/EXPLAIN or external mutation.",
+  "next_step": "Read-only coordinator/theory review; later corrections must preserve revision-001 and use an explicit later revision."
+}

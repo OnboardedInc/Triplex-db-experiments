@@ -1,0 +1,134 @@
+{
+  "schema": "td.native-writer-lab-small/1",
+  "status": "passed",
+  "role": "cpp_candidate",
+  "pid": 64508,
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/native-writer-lab-20261106-01/runtime",
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "processReceipts": {
+    "ready": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/native-writer-lab-small-20261106-01/cpp_candidate/process/cpp_candidate-64508-ready.json",
+    "exit": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/native-writer-lab-small-20261106-01/cpp_candidate/process/cpp_candidate-64508-exit.json"
+  },
+  "source": "independently authored tiny Probe edits; no fabricated results or hashes",
+  "openAuditMs": 307.82887500000004,
+  "rssBeforeOpen": 95731712,
+  "rssAfterOpen": 222019584,
+  "census": {
+    "phase": "post-open, before any workload",
+    "elapsedMs": 0.9300839999999653,
+    "audited": true,
+    "live": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "enrolled": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "workerConnectionId": "19",
+    "sdkWriterConnection": 2
+  },
+  "receipts": {
+    "first": {
+      "commandId": "first",
+      "position": "1",
+      "asserted": [
+        "b2853bd5d1f1f45352ed1ebefa6dca06926e515a6aea3ab400aa7ac55133d2c9",
+        "bf7954c7dd1063fb743ee9ac57f8374fde5d9271b57baa8d38138df759a16547"
+      ],
+      "retracted": [],
+      "schema": "lab_probe",
+      "version": 1,
+      "type": "Probe",
+      "entityId": "e",
+      "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+      "requestHash": "992cb9c93707283abdb5e787a2482edd2d584adbe6fe4923ec75b606fb994a49"
+    },
+    "patched": {
+      "commandId": "patch",
+      "position": "2",
+      "asserted": [
+        "9f72f378fb29b29e43407424260ff0e1b4a944dff71ddeb27553ed02c50759f4",
+        "44d2f67948d5818370162e097053c9f92670df0347a90be2ffc0d77c13a3f292"
+      ],
+      "retracted": [
+        "b2853bd5d1f1f45352ed1ebefa6dca06926e515a6aea3ab400aa7ac55133d2c9",
+        "bf7954c7dd1063fb743ee9ac57f8374fde5d9271b57baa8d38138df759a16547"
+      ],
+      "schema": "lab_probe",
+      "version": 1,
+      "type": "Probe",
+      "entityId": "e",
+      "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+      "requestHash": "ee939c2cda74b91fccb6a999718b4f0f6e2a406bce1f2cbe3f8b6cdb5ab46308"
+    },
+    "batch": {
+      "commandId": "two-member",
+      "position": "3",
+      "schema": "lab_probe",
+      "version": 1,
+      "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+      "requestHash": "b3533b662ada8e5cb665ea277e7e230271c9e6b98f3e3877df2e4b2bb45409d2",
+      "members": [
+        {
+          "operation": "patch",
+          "type": "Probe",
+          "entityId": "e",
+          "asserted": [
+            "606e1d8a5bbc4c853c8139a5ab525e035265274125f7c45b847297f313d4023d",
+            "c21970198f4baa80c4526b579085b6738a6a60e4e100f8370bcfbee7c6db2692"
+          ],
+          "retracted": [
+            "44d2f67948d5818370162e097053c9f92670df0347a90be2ffc0d77c13a3f292",
+            "9f72f378fb29b29e43407424260ff0e1b4a944dff71ddeb27553ed02c50759f4"
+          ]
+        },
+        {
+          "operation": "put",
+          "type": "Probe",
+          "entityId": "f",
+          "asserted": [
+            "d2764f4821a2bcc191339a1d9626c14a037f26c50d2d7a64598247c2a519febe",
+            "92257da4409f2ff362a46faf94b7c113ca81c4a20b44fd5daacf2e3b5b8daafa"
+          ],
+          "retracted": []
+        }
+      ]
+    }
+  },
+  "exactReads": 21,
+  "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/native-writer-lab-small-20261106-01/cpp_candidate/result-fixture/facts.duckdb",
+  "reopenVerified": true
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "td.native-presence-full-qualification/1",
+  "result": "PASS",
+  "tested_source": "7c33bde8a2822869cfaa1484d3f119e8a004d961",
+  "platform": "macOS arm64",
+  "verification_sha256": "aced40cd39edf63c2af8bc0a2ff53d76746b9a741ffb089cbbb9e8a9fb1244d6",
+  "integrated_methods": 405,
+  "typescript": "PASS",
+  "source_hashes": 202,
+  "functional": {
+    "families": 20,
+    "cases_per_engine": 71,
+    "passed_engine_answers": 213,
+    "reopened_profiles": 60,
+    "samples_per_answer": 1,
+    "warmup": 0,
+    "raw_evidence_sha256": "2e4e8909d4eca8856ea425e2ffa576dfb657e985f45a8d776417a5bd292b965d"
+  },
+  "runtime_artifact_sha256": {
+    "build/artifact.json": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+    "build/temporal_datalog.duckdb_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "build/temporal_control.node": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "build/adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/owner_probe/artifact.json": "0fd59063a4ad3cf3f25cac4f28961f94b5ee9b9e25631b2dddf3e84e4469a571",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16"
+  },
+  "scope": "Managed temporal presence for declared live types, atomic schema activation and native record/batch maintenance. Temporal reference enforcement and deletion remain separate acceptance work."
+}

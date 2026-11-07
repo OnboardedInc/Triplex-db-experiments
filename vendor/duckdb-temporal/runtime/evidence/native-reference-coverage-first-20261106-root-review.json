@@ -1,0 +1,12 @@
+{
+  "schema": "td.research-engine-package-review/1",
+  "reviewedAtUtc": "2026-11-06T10:42:26.260350+00:00",
+  "packageCommit": "f12cba4b41f356399cf5ce78e8d030ed792d4630",
+  "receipt": "native-reference-coverage-first-20261106.json",
+  "receiptSha256": "cff1b2ab99f6fa473ccbc3e3dbee96f9e140d3bfa74dc1c500aa74c83bf6ee37",
+  "rawFiles": 21,
+  "allManifestHashesAndSizesMatch": true,
+  "sourceCommit": "c593a6fc8eafd3dd76eda36b2f245885cfb94425",
+  "acceptance": "Focused gate only; not main code or435 result; no goals1/9 closure.",
+  "review": "First build/owner/TSC and4unchanged independent methods pass; source root/B reviewed prior;128MB/64MB;395deps/native9/compiled186 fixed;4closed fixtures/noWAL. Caps/fence/int64/globalgrowth/full449/cost not inferred."
+}

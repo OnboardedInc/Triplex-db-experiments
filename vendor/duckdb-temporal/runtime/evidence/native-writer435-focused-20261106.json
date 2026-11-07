@@ -1,0 +1,443 @@
+{
+  "schema": "td.native-writer435-focused/1",
+  "status": "passed_focused14_not_full435",
+  "sourceCommit": "659ace02feaaa4fe1d779644b84c0f6e42fb2097",
+  "adaptedTestSourceCommit": "00074169fbd27b4d6fa463feacb0cddb2e1e7814",
+  "baseSourceCommit": "51d4d0f738d6ca6a17413aaf218d2389d39f90f0",
+  "productionNativeSource": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "firstAttempt": true,
+  "firstFailures": [],
+  "scope": {
+    "focusedMethods": 14,
+    "actualPerProcess": [
+      5,
+      4,
+      1,
+      2,
+      2
+    ],
+    "typescript": "PASS",
+    "full512Executed": false,
+    "full435Executed": false,
+    "triplex44Executed": false,
+    "performanceExecuted": false
+  },
+  "stage": {
+    "baseline": {
+      "compiled": 186,
+      "dependencies": 395,
+      "union": 581
+    },
+    "actualDelta": {
+      "removed": [],
+      "added": [
+        "build/adapter/native-writer-test-fault.d.ts",
+        "build/adapter/native-writer-test-fault.js"
+      ],
+      "changed": [
+        "build/adapter/test-fatal.js",
+        "build/adapter/test-owned-store.js",
+        "build/adapter/test-readers.js",
+        "build/adapter/test-sdk-admission-independent.js",
+        "build/adapter/test-sdk-admission.js"
+      ],
+      "compiledCount": 188,
+      "unionCount": 583
+    },
+    "nativeSourcePins": 48,
+    "ownedSourcePins": 132,
+    "headerPins": 36,
+    "selectedExternalRoutes": {
+      "@triplex-build": {
+        "literalTarget": "[LOCAL_PATH_0061]",
+        "resolvedTarget": "[LOCAL_PATH_0061]"
+      },
+      "@types": {
+        "literalTarget": "[LOCAL_PATH_0062]",
+        "resolvedTarget": "[LOCAL_PATH_0062]"
+      },
+      "effect": {
+        "literalTarget": "[LOCAL_PATH_0063]",
+        "resolvedTarget": "[LOCAL_PATH_0063]"
+      },
+      "typescript": {
+        "literalTarget": "[LOCAL_PATH_0064]",
+        "resolvedTarget": "[LOCAL_PATH_0064]"
+      },
+      ".bin/tsc": {
+        "literalTarget": "[LOCAL_PATH_0044]",
+        "resolvedTarget": "[LOCAL_PATH_0044]"
+      }
+    },
+    "acceptedMetadataDeltas": [
+      {
+        "file": "NATIVE-WRITER-VALUES-QUALIFICATION.md",
+        "recorded": "1580e8823a6dfb082027f7100ab3ae561e6a9570b352f6b78601b30aba0c1661",
+        "acceptedA51d": "89b1bff1eb79f1447b1a231075c1258658728071b5000d031d39baf917b579e0"
+      }
+    ]
+  },
+  "artifactPins": {
+    "build/artifact.json": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/owner_probe/artifact.json": "1dcf48f7dfa69262f6b18bdb48ac2020205c9f702a63737cb13299297f749331",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9",
+    "build/owner_probe/temporal_writer.node": "02270b0840dd4bab9c3beb00986e06bc0e8125c2971f9ac6f9a407f6fe03418c",
+    "build/adapter/native-entity.js": "48c6a5d6443fc706e59e31779437e4b24d7ce6ea6de1b07d22501f54e8b9d8f8",
+    "build/adapter/native-schema.js": "723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226",
+    "build/adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268"
+  },
+  "sdkResolution": {
+    "api": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js",
+    "bindings": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+    "platform": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "nodeExecutable": "[LOCAL_PATH_0043]",
+    "nodeVersion": "v24.13.0"
+  },
+  "selected512": {
+    "sourceEqualA51d": true,
+    "compiledEqualA": true,
+    "sourceBlockSha256": "c3c52a5c8a7d8f95cd5baa4d1025d52fd863c319d95bff8d60ead0f952c78012",
+    "compiledBlockSha256": "806b78538a00f0a74758f8789a61322dd976e816e9e1b74c8c0e13482901d511"
+  },
+  "sourceAndRecipe": {
+    "source": {
+      "file": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+      "sha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+      "bytes": 52178944,
+      "mtimeNs": 1793904791622186339,
+      "ctimeNs": 1793904791622186339
+    },
+    "recipe": {
+      "file": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json",
+      "sha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4",
+      "bytes": 1085833,
+      "mtimeNs": 1793904791633451089,
+      "ctimeNs": 1793904791633451089
+    },
+    "preBatchBuild": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/retained-diagnostics-20261105/accepted-026",
+    "cloneHelperSha256": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "tsc": {
+    "command": [
+      "[LOCAL_PATH_0043]",
+      "[LOCAL_PATH_0044]",
+      "-p",
+      "tsconfig.json"
+    ],
+    "pid": 77576,
+    "startedAtUtc": "2026-11-06T07:23:48.863796+00:00",
+    "status": "terminal",
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T07:23:50.873924+00:00",
+    "elapsedMs": 2009.8749999888241
+  },
+  "testProcesses": [
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "build/adapter/test-sdk-admission.js"
+      ],
+      "pid": 77616,
+      "startedAtUtc": "2026-11-06T07:23:51.385284+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:23:56.586145+00:00",
+      "elapsedMs": 5200.8885841351,
+      "tapPass": 5,
+      "expectedSelectedPass": 5,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ],
+      "actualTapCounts": {
+        "tests": 5,
+        "pass": 5,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "stdout": "sdk-admission-first.stdout",
+      "stderr": "sdk-admission-first.stderr"
+    },
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-skip-pattern=^independent full512 native patch trace retains every returned cut and restores all256 entities$",
+        "build/adapter/test-sdk-admission-independent.js"
+      ],
+      "pid": 77648,
+      "startedAtUtc": "2026-11-06T07:23:57.125260+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:23:59.739785+00:00",
+      "elapsedMs": 2614.5500410348177,
+      "tapPass": 4,
+      "expectedSelectedPass": 4,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ],
+      "actualTapCounts": {
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "stdout": "independent-small-first.stdout",
+      "stderr": "independent-small-first.stderr"
+    },
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^pooled admission includes reads awaiting the writer barrier$",
+        "build/adapter/test-readers.js"
+      ],
+      "pid": 77675,
+      "startedAtUtc": "2026-11-06T07:24:00.234355+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:24:00.750844+00:00",
+      "elapsedMs": 516.498832963407,
+      "tapPass": 1,
+      "expectedSelectedPass": 1,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ],
+      "actualTapCounts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "stdout": "reader-barrier-first.stdout",
+      "stderr": "reader-barrier-first.stderr"
+    },
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^(native validation failure and injected writer transport interruption preserve owned reads|required ownership verifies the engine resolved by the SDK with a shadow platform package)$",
+        "build/adapter/test-owned-store.js"
+      ],
+      "pid": 77688,
+      "startedAtUtc": "2026-11-06T07:24:01.277634+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:24:02.299600+00:00",
+      "elapsedMs": 1021.9835829921067,
+      "tapPass": 2,
+      "expectedSelectedPass": 2,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ],
+      "actualTapCounts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "stdout": "owned-transport-abi-first.stdout",
+      "stderr": "owned-transport-abi-first.stderr"
+    },
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^(a native writer transport fatal fences writer, active readers and queued readers with its original cause|ordinary writer transport OOM and an embedded fatal phrase preserve healthy instance reuse)$",
+        "build/adapter/test-fatal.js"
+      ],
+      "pid": 77706,
+      "startedAtUtc": "2026-11-06T07:24:02.799316+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:24:03.735561+00:00",
+      "elapsedMs": 936.24775018543,
+      "tapPass": 2,
+      "expectedSelectedPass": 2,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ],
+      "actualTapCounts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "stdout": "fatal-transport-first.stdout",
+      "stderr": "fatal-transport-first.stderr"
+    }
+  ],
+  "postPins": {
+    "afterEveryProcessEqual": true,
+    "runtimeFiles": 583,
+    "applicationNativeAndSDKUnchanged": true,
+    "sourceAndRecipeUnchanged": true,
+    "noSourceWal": true
+  },
+  "resourceScope": {
+    "publicDefault": "128MB unchanged",
+    "explicitHeld16ResultFixture": "512MB only for reviewed held-result/lease/drain setups",
+    "normal16NativeFailureReuse": "128MB passed"
+  },
+  "faultScope": "Four consumed synthetic pre-dispatch addon.run rejections exercise the original NativeDuckDBPort.runWriter classifier; not actual engine OOM or FATAL generation. All ordinary addon exports/calls delegate to the actual paired native transport, and cache exports restore through test cleanup.",
+  "nativeRebuild": false,
+  "packageInstall": false,
+  "labEnvironmentAbsent": true,
+  "engineLease": "explicitly_released_after_terminal_and_all_postpins",
+  "limitations": [
+    "Focused14 plus TSC only; full435/44Triplex and unchanged512 remain unrun on this adapted source.",
+    "No performance, promotion, active-job environment-teardown or allocation-containment claim."
+  ],
+  "rawFiles": {
+    "evidence/native-writer435-focused-20261106-raw/actual-gate.py": {
+      "bytes": 14896,
+      "sha256": "548c49a594c65a442236ef928b149c6ca83024ff59768d894d381b3d6a263537"
+    },
+    "evidence/native-writer435-focused-20261106-raw/after-tsc-first.json": {
+      "bytes": 110347,
+      "sha256": "da9c638ed14a7d7a13ba254007bc1efc49f0b12a96ac3d8aead355f21f0fc112"
+    },
+    "evidence/native-writer435-focused-20261106-raw/before-stage-tsc.json": {
+      "bytes": 110111,
+      "sha256": "5a616060278352f0693a7f7ac9dc71974dd1654b1221dfa2d14cc57a6807447a"
+    },
+    "evidence/native-writer435-focused-20261106-raw/fatal-transport-first-after-pins.json": {
+      "bytes": 110347,
+      "sha256": "da9c638ed14a7d7a13ba254007bc1efc49f0b12a96ac3d8aead355f21f0fc112"
+    },
+    "evidence/native-writer435-focused-20261106-raw/fatal-transport-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-writer435-focused-20261106-raw/fatal-transport-first.stdout": {
+      "bytes": 653,
+      "sha256": "6a32b508f8360fed8cf28ba2aa9a4072d11fc372d3e3032e13b900c617be5f63"
+    },
+    "evidence/native-writer435-focused-20261106-raw/fatal-transport-first.terminal.json": {
+      "bytes": 722,
+      "sha256": "6106d3392509269016931121b36c3c59bd924f491d45b7c4ec0ee9ef11732864"
+    },
+    "evidence/native-writer435-focused-20261106-raw/first-summary.json": {
+      "bytes": 5257,
+      "sha256": "b529065c0dce22c35ad53e17f0faf5caebbdafb8970b4c43dda24a879476a5b9"
+    },
+    "evidence/native-writer435-focused-20261106-raw/independent-small-first-after-pins.json": {
+      "bytes": 110347,
+      "sha256": "da9c638ed14a7d7a13ba254007bc1efc49f0b12a96ac3d8aead355f21f0fc112"
+    },
+    "evidence/native-writer435-focused-20261106-raw/independent-small-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-writer435-focused-20261106-raw/independent-small-first.stdout": {
+      "bytes": 1030,
+      "sha256": "6f755a1a84b4fb1008d50ab29b414b497c6b921b2363280f775276c9c5ae1b39"
+    },
+    "evidence/native-writer435-focused-20261106-raw/independent-small-first.terminal.json": {
+      "bytes": 642,
+      "sha256": "5b86f2faf113c0730fa4c45f2b7317aba4af32bbff93e6d33653da8582cad1b5"
+    },
+    "evidence/native-writer435-focused-20261106-raw/owned-transport-abi-first-after-pins.json": {
+      "bytes": 110347,
+      "sha256": "da9c638ed14a7d7a13ba254007bc1efc49f0b12a96ac3d8aead355f21f0fc112"
+    },
+    "evidence/native-writer435-focused-20261106-raw/owned-transport-abi-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-writer435-focused-20261106-raw/owned-transport-abi-first.stdout": {
+      "bytes": 621,
+      "sha256": "5d94ebb53f2476b7e887c006c1f44002eaffb2c91337cee6eb79794f94ac62f2"
+    },
+    "evidence/native-writer435-focused-20261106-raw/owned-transport-abi-first.terminal.json": {
+      "bytes": 715,
+      "sha256": "68c2267b1e0e89feebf5a83e224c61ee0d155db32440052efc4e60b46108e43f"
+    },
+    "evidence/native-writer435-focused-20261106-raw/pre-tests-first.json": {
+      "bytes": 110347,
+      "sha256": "da9c638ed14a7d7a13ba254007bc1efc49f0b12a96ac3d8aead355f21f0fc112"
+    },
+    "evidence/native-writer435-focused-20261106-raw/reader-barrier-first-after-pins.json": {
+      "bytes": 110347,
+      "sha256": "da9c638ed14a7d7a13ba254007bc1efc49f0b12a96ac3d8aead355f21f0fc112"
+    },
+    "evidence/native-writer435-focused-20261106-raw/reader-barrier-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-writer435-focused-20261106-raw/reader-barrier-first.stdout": {
+      "bytes": 307,
+      "sha256": "59ba118394e4f81a9b02313cc0f2cdafd3ffd5e1772486f6ee8b462c3e17967a"
+    },
+    "evidence/native-writer435-focused-20261106-raw/reader-barrier-first.terminal.json": {
+      "bytes": 587,
+      "sha256": "2c17d38521761a4ccd97cba53f9e475425540f4b4b99e6fa704034b201fdb6c4"
+    },
+    "evidence/native-writer435-focused-20261106-raw/sdk-admission-first-after-pins.json": {
+      "bytes": 110347,
+      "sha256": "da9c638ed14a7d7a13ba254007bc1efc49f0b12a96ac3d8aead355f21f0fc112"
+    },
+    "evidence/native-writer435-focused-20261106-raw/sdk-admission-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-writer435-focused-20261106-raw/sdk-admission-first.stdout": {
+      "bytes": 1304,
+      "sha256": "f8dc613fbfeed05d5f7f7e955a413ebb0bb787777741ae091c77aeaf920d3214"
+    },
+    "evidence/native-writer435-focused-20261106-raw/sdk-admission-first.terminal.json": {
+      "bytes": 503,
+      "sha256": "d5d80acb1ebc5e343c5f95c1f93990543c224043d868f4d3797cff14242c9be1"
+    },
+    "evidence/native-writer435-focused-20261106-raw/tsc-first-delta.json": {
+      "bytes": 412,
+      "sha256": "505ddf8447a85f3f6487e3d2e9c5652c9d3490fc53a4cc8bc959b492bd33ec4e"
+    },
+    "evidence/native-writer435-focused-20261106-raw/tsc-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-writer435-focused-20261106-raw/tsc-first.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-writer435-focused-20261106-raw/tsc-first.terminal.json": {
+      "bytes": 415,
+      "sha256": "315d866641f2fd533554411a4be6710c3136c58189da47d7eb77f62f63db4bd7"
+    }
+  }
+}

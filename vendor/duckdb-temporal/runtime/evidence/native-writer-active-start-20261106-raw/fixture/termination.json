@@ -1,0 +1,1831 @@
+{
+  "pid": 91745,
+  "threadId": 1,
+  "exitCode": 1,
+  "terminationRequestedNs": "1803552741429583",
+  "observation": {
+    "kind": "active_start_observed",
+    "pid": 91745,
+    "threadId": 1,
+    "atNs": "1803552740695500",
+    "pending": true,
+    "marker": "1",
+    "workerConnectionId": "4",
+    "observerConnectionId": "3",
+    "baselineSequence": 133,
+    "queryBeginSequence": 157,
+    "lastQueryEndSequence": 0,
+    "workerEvents": [
+      {
+        "sequence": 140,
+        "kind": "transaction_begin",
+        "connection": 4,
+        "transaction": 35,
+        "generation": 4
+      },
+      {
+        "sequence": 155,
+        "kind": "transaction_commit",
+        "connection": 4,
+        "transaction": 35,
+        "generation": 4
+      },
+      {
+        "sequence": 156,
+        "kind": "transaction_begin",
+        "connection": 4,
+        "transaction": 40,
+        "generation": 4
+      },
+      {
+        "sequence": 157,
+        "kind": "query_begin",
+        "connection": 4,
+        "transaction": 0,
+        "generation": 4
+      },
+      {
+        "sequence": 164,
+        "kind": "check",
+        "connection": 4,
+        "transaction": 0,
+        "generation": 4
+      }
+    ],
+    "owner": {
+      "connection": 3,
+      "generation": 4,
+      "armed": true,
+      "audited": true,
+      "auditing": false,
+      "checkpointActive": false,
+      "currentUnique": true,
+      "allCutUnique": true,
+      "live": [
+        2,
+        3,
+        4
+      ],
+      "enrolled": [
+        2,
+        3,
+        4
+      ],
+      "events": [
+        {
+          "sequence": 1,
+          "kind": "initial_connection",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 2,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 5,
+          "generation": 0
+        },
+        {
+          "sequence": 3,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 4,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 6,
+          "generation": 0
+        },
+        {
+          "sequence": 5,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 6,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 6,
+          "generation": 0
+        },
+        {
+          "sequence": 7,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 8,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 7,
+          "generation": 0
+        },
+        {
+          "sequence": 9,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 10,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 7,
+          "generation": 0
+        },
+        {
+          "sequence": 11,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 12,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 8,
+          "generation": 0
+        },
+        {
+          "sequence": 13,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 14,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 8,
+          "generation": 0
+        },
+        {
+          "sequence": 15,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 16,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 9,
+          "generation": 0
+        },
+        {
+          "sequence": 17,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 18,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 9,
+          "generation": 0
+        },
+        {
+          "sequence": 19,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 0
+        },
+        {
+          "sequence": 20,
+          "kind": "connection_open",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 21,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 10,
+          "generation": 1
+        },
+        {
+          "sequence": 22,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 23,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 10,
+          "generation": 1
+        },
+        {
+          "sequence": 24,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 25,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 11,
+          "generation": 1
+        },
+        {
+          "sequence": 26,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 27,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 11,
+          "generation": 1
+        },
+        {
+          "sequence": 28,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 1
+        },
+        {
+          "sequence": 29,
+          "kind": "connection_open",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 2
+        },
+        {
+          "sequence": 30,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 12,
+          "generation": 2
+        },
+        {
+          "sequence": 31,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 2
+        },
+        {
+          "sequence": 32,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 12,
+          "generation": 2
+        },
+        {
+          "sequence": 33,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 2
+        },
+        {
+          "sequence": 34,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 2
+        },
+        {
+          "sequence": 35,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 2
+        },
+        {
+          "sequence": 36,
+          "kind": "dispatch_invalidate",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 37,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 13,
+          "generation": 3
+        },
+        {
+          "sequence": 38,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 39,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 14,
+          "generation": 3
+        },
+        {
+          "sequence": 40,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 41,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 14,
+          "generation": 3
+        },
+        {
+          "sequence": 42,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 43,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 15,
+          "generation": 3
+        },
+        {
+          "sequence": 44,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 45,
+          "kind": "enroll_pending",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 46,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 15,
+          "generation": 3
+        },
+        {
+          "sequence": 47,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 48,
+          "kind": "enroll",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 49,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 16,
+          "generation": 3
+        },
+        {
+          "sequence": 50,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 51,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 16,
+          "generation": 3
+        },
+        {
+          "sequence": 52,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 53,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 17,
+          "generation": 3
+        },
+        {
+          "sequence": 54,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 55,
+          "kind": "enroll_pending",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 56,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 17,
+          "generation": 3
+        },
+        {
+          "sequence": 57,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 58,
+          "kind": "enroll",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 59,
+          "kind": "transaction_begin",
+          "connection": 4,
+          "transaction": 18,
+          "generation": 3
+        },
+        {
+          "sequence": 60,
+          "kind": "query_begin",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 61,
+          "kind": "enroll_pending",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 62,
+          "kind": "transaction_commit",
+          "connection": 4,
+          "transaction": 18,
+          "generation": 3
+        },
+        {
+          "sequence": 63,
+          "kind": "query_end",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 64,
+          "kind": "enroll",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 65,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 19,
+          "generation": 3
+        },
+        {
+          "sequence": 66,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 67,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 19,
+          "generation": 3
+        },
+        {
+          "sequence": 68,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 69,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 20,
+          "generation": 3
+        },
+        {
+          "sequence": 70,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 3
+        },
+        {
+          "sequence": 71,
+          "kind": "audit_begin",
+          "connection": 2,
+          "transaction": 20,
+          "generation": 4
+        },
+        {
+          "sequence": 72,
+          "kind": "audit_connection_open",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 73,
+          "kind": "transaction_begin",
+          "connection": 5,
+          "transaction": 21,
+          "generation": 4
+        },
+        {
+          "sequence": 74,
+          "kind": "query_begin",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 75,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 76,
+          "kind": "transaction_commit",
+          "connection": 5,
+          "transaction": 21,
+          "generation": 4
+        },
+        {
+          "sequence": 77,
+          "kind": "query_end",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 78,
+          "kind": "transaction_begin",
+          "connection": 5,
+          "transaction": 22,
+          "generation": 4
+        },
+        {
+          "sequence": 79,
+          "kind": "transaction_commit",
+          "connection": 5,
+          "transaction": 22,
+          "generation": 4
+        },
+        {
+          "sequence": 80,
+          "kind": "transaction_begin",
+          "connection": 5,
+          "transaction": 23,
+          "generation": 4
+        },
+        {
+          "sequence": 81,
+          "kind": "query_begin",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 82,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 83,
+          "kind": "transaction_commit",
+          "connection": 5,
+          "transaction": 23,
+          "generation": 4
+        },
+        {
+          "sequence": 84,
+          "kind": "query_end",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 85,
+          "kind": "transaction_begin",
+          "connection": 5,
+          "transaction": 24,
+          "generation": 4
+        },
+        {
+          "sequence": 86,
+          "kind": "query_begin",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 87,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 88,
+          "kind": "transaction_commit",
+          "connection": 5,
+          "transaction": 24,
+          "generation": 4
+        },
+        {
+          "sequence": 89,
+          "kind": "query_end",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 90,
+          "kind": "transaction_begin",
+          "connection": 5,
+          "transaction": 25,
+          "generation": 4
+        },
+        {
+          "sequence": 91,
+          "kind": "query_begin",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 92,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 93,
+          "kind": "transaction_commit",
+          "connection": 5,
+          "transaction": 25,
+          "generation": 4
+        },
+        {
+          "sequence": 94,
+          "kind": "query_end",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 95,
+          "kind": "audit_current_unique",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 96,
+          "kind": "transaction_begin",
+          "connection": 5,
+          "transaction": 26,
+          "generation": 4
+        },
+        {
+          "sequence": 97,
+          "kind": "query_begin",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 98,
+          "kind": "audit_task_executed",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 99,
+          "kind": "transaction_commit",
+          "connection": 5,
+          "transaction": 26,
+          "generation": 4
+        },
+        {
+          "sequence": 100,
+          "kind": "query_end",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 101,
+          "kind": "audit_all_cut_unique",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 102,
+          "kind": "audit_connection_close",
+          "connection": 5,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 103,
+          "kind": "audit_read_complete",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 104,
+          "kind": "audit_awaiting_ack",
+          "connection": 2,
+          "transaction": 20,
+          "generation": 4
+        },
+        {
+          "sequence": 105,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 20,
+          "generation": 4
+        },
+        {
+          "sequence": 106,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 107,
+          "kind": "audit_activated",
+          "connection": 2,
+          "transaction": 20,
+          "generation": 4
+        },
+        {
+          "sequence": 108,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 27,
+          "generation": 4
+        },
+        {
+          "sequence": 109,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 110,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 27,
+          "generation": 4
+        },
+        {
+          "sequence": 111,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 112,
+          "kind": "transaction_begin",
+          "connection": 2,
+          "transaction": 28,
+          "generation": 4
+        },
+        {
+          "sequence": 113,
+          "kind": "query_begin",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 114,
+          "kind": "check",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 115,
+          "kind": "transaction_commit",
+          "connection": 2,
+          "transaction": 28,
+          "generation": 4
+        },
+        {
+          "sequence": 116,
+          "kind": "query_end",
+          "connection": 2,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 117,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 29,
+          "generation": 4
+        },
+        {
+          "sequence": 118,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 29,
+          "generation": 4
+        },
+        {
+          "sequence": 119,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 30,
+          "generation": 4
+        },
+        {
+          "sequence": 120,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 121,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 30,
+          "generation": 4
+        },
+        {
+          "sequence": 122,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 123,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 31,
+          "generation": 4
+        },
+        {
+          "sequence": 124,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 125,
+          "kind": "check",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 126,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 31,
+          "generation": 4
+        },
+        {
+          "sequence": 127,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 128,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 32,
+          "generation": 4
+        },
+        {
+          "sequence": 129,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 130,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 32,
+          "generation": 4
+        },
+        {
+          "sequence": 131,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 132,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 33,
+          "generation": 4
+        },
+        {
+          "sequence": 133,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 134,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 33,
+          "generation": 4
+        },
+        {
+          "sequence": 135,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 136,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 34,
+          "generation": 4
+        },
+        {
+          "sequence": 137,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 138,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 34,
+          "generation": 4
+        },
+        {
+          "sequence": 139,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 140,
+          "kind": "transaction_begin",
+          "connection": 4,
+          "transaction": 35,
+          "generation": 4
+        },
+        {
+          "sequence": 141,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 36,
+          "generation": 4
+        },
+        {
+          "sequence": 142,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 143,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 36,
+          "generation": 4
+        },
+        {
+          "sequence": 144,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 145,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 37,
+          "generation": 4
+        },
+        {
+          "sequence": 146,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 147,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 37,
+          "generation": 4
+        },
+        {
+          "sequence": 148,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 149,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 38,
+          "generation": 4
+        },
+        {
+          "sequence": 150,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 151,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 38,
+          "generation": 4
+        },
+        {
+          "sequence": 152,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 153,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 39,
+          "generation": 4
+        },
+        {
+          "sequence": 154,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 155,
+          "kind": "transaction_commit",
+          "connection": 4,
+          "transaction": 35,
+          "generation": 4
+        },
+        {
+          "sequence": 156,
+          "kind": "transaction_begin",
+          "connection": 4,
+          "transaction": 40,
+          "generation": 4
+        },
+        {
+          "sequence": 157,
+          "kind": "query_begin",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 158,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 39,
+          "generation": 4
+        },
+        {
+          "sequence": 159,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 160,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 41,
+          "generation": 4
+        },
+        {
+          "sequence": 161,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 162,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 41,
+          "generation": 4
+        },
+        {
+          "sequence": 163,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 164,
+          "kind": "check",
+          "connection": 4,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 165,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 42,
+          "generation": 4
+        },
+        {
+          "sequence": 166,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 167,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 42,
+          "generation": 4
+        },
+        {
+          "sequence": 168,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 169,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 43,
+          "generation": 4
+        },
+        {
+          "sequence": 170,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 171,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 43,
+          "generation": 4
+        },
+        {
+          "sequence": 172,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 173,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 44,
+          "generation": 4
+        },
+        {
+          "sequence": 174,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 175,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 44,
+          "generation": 4
+        },
+        {
+          "sequence": 176,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 177,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 45,
+          "generation": 4
+        },
+        {
+          "sequence": 178,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 179,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 45,
+          "generation": 4
+        },
+        {
+          "sequence": 180,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 181,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 46,
+          "generation": 4
+        },
+        {
+          "sequence": 182,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 183,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 46,
+          "generation": 4
+        },
+        {
+          "sequence": 184,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 185,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 47,
+          "generation": 4
+        },
+        {
+          "sequence": 186,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 187,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 47,
+          "generation": 4
+        },
+        {
+          "sequence": 188,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 189,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 48,
+          "generation": 4
+        },
+        {
+          "sequence": 190,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 191,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 48,
+          "generation": 4
+        },
+        {
+          "sequence": 192,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 193,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 49,
+          "generation": 4
+        },
+        {
+          "sequence": 194,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 195,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 49,
+          "generation": 4
+        },
+        {
+          "sequence": 196,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 197,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 50,
+          "generation": 4
+        },
+        {
+          "sequence": 198,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 199,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 50,
+          "generation": 4
+        },
+        {
+          "sequence": 200,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 201,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 51,
+          "generation": 4
+        },
+        {
+          "sequence": 202,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 203,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 51,
+          "generation": 4
+        },
+        {
+          "sequence": 204,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 205,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 52,
+          "generation": 4
+        },
+        {
+          "sequence": 206,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 207,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 52,
+          "generation": 4
+        },
+        {
+          "sequence": 208,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 209,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 53,
+          "generation": 4
+        },
+        {
+          "sequence": 210,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 211,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 53,
+          "generation": 4
+        },
+        {
+          "sequence": 212,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 213,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 54,
+          "generation": 4
+        },
+        {
+          "sequence": 214,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 215,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 54,
+          "generation": 4
+        },
+        {
+          "sequence": 216,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 217,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 55,
+          "generation": 4
+        },
+        {
+          "sequence": 218,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 219,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 55,
+          "generation": 4
+        },
+        {
+          "sequence": 220,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 221,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 56,
+          "generation": 4
+        },
+        {
+          "sequence": 222,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 223,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 56,
+          "generation": 4
+        },
+        {
+          "sequence": 224,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 225,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 57,
+          "generation": 4
+        },
+        {
+          "sequence": 226,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 227,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 57,
+          "generation": 4
+        },
+        {
+          "sequence": 228,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 229,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 58,
+          "generation": 4
+        },
+        {
+          "sequence": 230,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 231,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 58,
+          "generation": 4
+        },
+        {
+          "sequence": 232,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 233,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 59,
+          "generation": 4
+        },
+        {
+          "sequence": 234,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 235,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 59,
+          "generation": 4
+        },
+        {
+          "sequence": 236,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 237,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 60,
+          "generation": 4
+        },
+        {
+          "sequence": 238,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 239,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 60,
+          "generation": 4
+        },
+        {
+          "sequence": 240,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 241,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 61,
+          "generation": 4
+        },
+        {
+          "sequence": 242,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 243,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 61,
+          "generation": 4
+        },
+        {
+          "sequence": 244,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 245,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 62,
+          "generation": 4
+        },
+        {
+          "sequence": 246,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 247,
+          "kind": "transaction_commit",
+          "connection": 3,
+          "transaction": 62,
+          "generation": 4
+        },
+        {
+          "sequence": 248,
+          "kind": "query_end",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        },
+        {
+          "sequence": 249,
+          "kind": "transaction_begin",
+          "connection": 3,
+          "transaction": 63,
+          "generation": 4
+        },
+        {
+          "sequence": 250,
+          "kind": "query_begin",
+          "connection": 3,
+          "transaction": 0,
+          "generation": 4
+        }
+      ]
+    },
+    "observedAfterMs": 45.84958299999971,
+    "scope": "Real INSERT and unresolved public write observed before termination request; not cleanup-entry activity"
+  },
+  "scope": "Started before termination request only; cleanup-entry activity and per-Worker zero metrics are not observed"
+}

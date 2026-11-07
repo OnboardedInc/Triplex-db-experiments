@@ -1,0 +1,23 @@
+{
+  "archive": "first-integration-evidence.tar.gz",
+  "bytes": 529462,
+  "sha256": "4dcff75dc3693908b7044ec93c3f1fc50c55e402925c3fb19753382024e1d301",
+  "entries": 165,
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 300001,
+      "sha256": "1f167b68f2f2bcd1b016cbf00dd940f58d15e8a1ce3320f7062feb0ad73cedb5"
+    },
+    {
+      "path": "archive.part02.b64",
+      "bytes": 300001,
+      "sha256": "5a141ea8503edea3979339bc1127bccf412e875517d02b6c5423b4af62230a2d"
+    },
+    {
+      "path": "archive.part03.b64",
+      "bytes": 105953,
+      "sha256": "27749975797e2695d704b614447322236cb6b832c565ba0e44b0931c5611f215"
+    }
+  ]
+}

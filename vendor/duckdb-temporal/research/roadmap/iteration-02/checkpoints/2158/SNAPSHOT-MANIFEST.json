@@ -1,0 +1,96 @@
+{
+  "captured_at_utc": "2026-10-30T21:58:03.601Z",
+  "scope": "Compact sanitized reports and inspectable progress snapshot; full final raw source-only archive follows benchmark gate",
+  "files": [
+    {
+      "name": "coordinator.md",
+      "source": "progress/coordinator.md",
+      "bytes": 3623,
+      "sha256": "d25f3b9aa309901b1a52114dc1d9b232c85d1c76249385bc3183a61e3ba14f89"
+    },
+    {
+      "name": "coordinator.jsonl",
+      "source": "progress/coordinator.jsonl",
+      "bytes": 3622,
+      "sha256": "0be569e185757fcc2936b117bb3073f8b3ca5b772142ed2d7e8e5a5a94970b1c"
+    },
+    {
+      "name": "performance-worker.md",
+      "source": "performance/WORKER-PROGRESS.md",
+      "bytes": 2791,
+      "sha256": "0280313970b34a8e8b6c1ad0990c0fd84c62d6983daccb4ce7ed4c2b1fbf3d0a"
+    },
+    {
+      "name": "methodology-reviewer.md",
+      "source": "performance-review/WORKER-PROGRESS.md",
+      "bytes": 3060,
+      "sha256": "dbee27e907642dfff420f8ac8010a9ce6a6153d0e71d53bddfd6e5a3c72ea10b"
+    },
+    {
+      "name": "native-review.md",
+      "source": "native-review/REVIEW.md",
+      "bytes": 8471,
+      "sha256": "e05b5fb5daa6ae31a7fe74a54de5cc4504e30e9a494ececa6c687125eeebe750"
+    },
+    {
+      "name": "python-fp-review.md",
+      "source": "python-fp-review/REVIEW.md",
+      "bytes": 9408,
+      "sha256": "f37afbecc70b505530c7ca925c9703ceb3d9c555797c263f7b918d6b625d6228"
+    },
+    {
+      "name": "python-fp-findings.md",
+      "source": "storage-implementation/FP-IMPLEMENTATION-FINDINGS.md",
+      "bytes": 6400,
+      "sha256": "7c3a51a3e2153dd33d3c7805b2bbf53a327a667b86f3bda839cc427908f17f64"
+    },
+    {
+      "name": "storage-handoff.md",
+      "source": "storage-implementation/HANDOFF.md",
+      "bytes": 3991,
+      "sha256": "40a384ffc10926efc34ed7346aa498c718ee843dbc2e9c22b6729dddfc8436a4"
+    },
+    {
+      "name": "final-native-integration.md",
+      "source": "native-integration-final/curated-evidence/REPORT.md",
+      "bytes": 10319,
+      "sha256": "0faaf21d7cc73caa87c1852f07c501702d9f4ec8de0791c96fb68cd099e71cd7"
+    },
+    {
+      "name": "clean-export-verification.json",
+      "source": "clean-export-verification/SUMMARY.json",
+      "bytes": 1317,
+      "sha256": "aa02426c5e6780ec9ec26c22eb89ee2c0cdabe7720334cd637a814235ba6d043"
+    },
+    {
+      "name": "independent-migration.json",
+      "source": "clean-export-verification/independent-migration.json",
+      "bytes": 3292,
+      "sha256": "8209c88f4d0cf12643ca2621cbbaa3962385132a65b46a8668905901d0c93320"
+    },
+    {
+      "name": "old-host-rejection.json",
+      "source": "clean-export-verification/old-host-rejection.json",
+      "bytes": 527,
+      "sha256": "e2fc88ad04db617afd794c94969c652e53ca1c8e92bfbb493d10951844e1655f"
+    },
+    {
+      "name": "pr7-body-action-audit.json",
+      "source": "source-storage-publication/pr7-body-2149-action-audit.json",
+      "bytes": 703,
+      "sha256": "2f1443ab0c11019c81027aff23fc9b177bd155f46f3b8b2fb83d41b8418ac3d0"
+    },
+    {
+      "name": "page-seq14-readback.json",
+      "source": "source-storage-publication/page-integration-seq14.json",
+      "bytes": 1634,
+      "sha256": "ea0d45ab9057b66f6b03ba1128e1bb80ef1c26bbac254ee07b79dd143e4cd76c"
+    },
+    {
+      "name": "source-readback.json",
+      "source": "source-storage-publication/remote-readback.json",
+      "bytes": 365,
+      "sha256": "2fa74dadca8b7e82b902f732edf87d72fe4ffdde895089ed230a83c064ddc9d8"
+    }
+  ]
+}

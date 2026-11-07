@@ -1,0 +1,56 @@
+[
+  {
+    "phase": "syntax-freezer",
+    "command": [
+      "[LOCAL_PATH_0034]",
+      "-c",
+      "import ast,pathlib; ast.parse(pathlib.Path('freeze_fair_sdk_runtime.py').read_text()); ast.parse(pathlib.Path('stage_broad_sdk_runtime.py').read_text())"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:28:37.070307+00:00"
+  },
+  {
+    "phase": "syntax-fair",
+    "command": [
+      "node",
+      "--check",
+      "adapter/antijoin-fair-sdk-binding.mjs"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:28:37.102522+00:00"
+  },
+  {
+    "phase": "syntax-sdk",
+    "command": [
+      "node",
+      "--check",
+      "adapter/antijoin-sdk-binding.mjs"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:28:37.130804+00:00"
+  },
+  {
+    "phase": "syntax-runner",
+    "command": [
+      "node",
+      "--check",
+      "adapter/benchmark-antijoin-cost.mjs"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:28:37.159921+00:00"
+  },
+  {
+    "phase": "pure-first",
+    "command": [
+      "node",
+      "--test",
+      "adapter/test-antijoin-cost.mjs",
+      "adapter/test-antijoin-config-binding.mjs",
+      "adapter/test-antijoin-profile-binding.mjs",
+      "adapter/test-antijoin-sdk-binding.mjs",
+      "adapter/test-native-write-binding.mjs"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:28:37.317882+00:00"
+  }
+]

@@ -1,0 +1,1378 @@
+{
+  "schema": "td.thread-budget-032-independent-review/1",
+  "result": "NO_PROMOTION",
+  "auditedUtc": "2026-11-05T22:50:53.174253+00:00",
+  "predeclaredBudgetCommit": "f81a87632ee0a5307783f1d11e3dbb845314b4cf",
+  "harnessSourceCommit": "1e30f3e6b831259dd2629bc409621943c2a98f87",
+  "runtime": "build/retained-diagnostics-20261105/accepted-032-runtime",
+  "runtimePins": {
+    "coreSha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companionSha256": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "controlSha256": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "runtimeArtifactSha256": {
+      "build/adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+      "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+    },
+    "harnessSha256": "4e1ea1c620b8604b68590724d442a161c79c6da89f678fda32700c84ea101512",
+    "fixtureSha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "mixedFixtureSha256": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "cloneSetupSha256": {
+      "module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+      "python": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+    }
+  },
+  "source": {
+    "database": "build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+    "bytes": 3905433600,
+    "knownAt": "39087",
+    "baseFixtureFacts": 10000000,
+    "initialAdded": 22,
+    "beforeSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "afterSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "equal": true,
+    "checkScope": "Compared original recorded pre/post checksum files; audit did not rehash the large database during timed execution.",
+    "cloneEvidence": {
+      "database": "facts-10000000.duckdb",
+      "evidence": "mixed-10m-pilot.json",
+      "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7"
+    }
+  },
+  "configuration": {
+    "sizes": [
+      10000000
+    ],
+    "readers": [
+      1,
+      16
+    ],
+    "samples": 5,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": "per_profile",
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null,
+    "UV_THREADPOOL_SIZE": "per_profile_before_child_startup"
+  },
+  "cpuAccounting": {
+    "snapshotsPerMeasuredPhase": 2,
+    "units": "process.cpuUsage user/system microseconds; wallMs milliseconds",
+    "averageCoresFormula": "(userMicroseconds + systemMicroseconds) / (wallMs * 1000)",
+    "scope": "All threads of the benchmark process, including JavaScript, native calls, exact oracle checks, sampling and drain. Excludes setup, warmup, final-read and reopen checks. Not pure engine time or hardware utilization.",
+    "verifiedArithmeticForEveryCell": true
+  },
+  "execution": {
+    "order": [
+      "db4-uv4",
+      "db4-uv16",
+      "db8-uv4",
+      "db1-uv16"
+    ],
+    "profileExitCodes": {
+      "db4-uv4": 0,
+      "db4-uv16": 0,
+      "db8-uv4": 0,
+      "db1-uv16": 0
+    },
+    "matrixExitCode": 0,
+    "matrixExitObservation": "Orchestrator reported original matrix process terminal exit zero.",
+    "freshProcessPerProfile": true,
+    "UVConfiguredBeforeNodeStartup": true,
+    "freshCoWClonePerProfile": true,
+    "originalRunsRetained": true,
+    "retries": 0,
+    "gateChanges": false,
+    "reverseConfirmationRun": false,
+    "defaultsChanged": false
+  },
+  "profiles": [
+    {
+      "profile": "db4-uv4",
+      "purpose": "baseline",
+      "result": "REFERENCE",
+      "promotionQualified": false,
+      "rawEvidence": {
+        "file": "build/thread-budget-032-20261105/db4-uv4.json",
+        "sha256": "431f59add258c587220f807084162e9ca6e85d13ddce32c9945bb7427514b2bf",
+        "bytes": 291504,
+        "logFile": "build/thread-budget-032-20261105/db4-uv4.log",
+        "logSha256": "1fdc7b8cc7e3cd1189f64f7671d5619ea84ab25a0faec27198fd58103fb0c046"
+      },
+      "configuration": {
+        "duckdbThreads": 4,
+        "uvThreadpoolSizeEnvironmentAtHarnessImport": "4",
+        "nodeUvThreadpoolDefaultWhenUnset": 4,
+        "scope": "one_shared_DuckDB_instance; Node_UV_pool_is_process_global_and_configured_before_startup"
+      },
+      "fixtureDirectory": "build/scale-runs/20261105T223103335Z-c8b6805c",
+      "fixed": {
+        "1/count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 469.4285830000008,
+            "p50": 520.8751250000005,
+            "p95": 559.6010839999999,
+            "p99": 559.6010839999999,
+            "max": 559.6010839999999
+          },
+          "wallMs": 2550.7977499999997,
+          "readsPerSecond": 1.9601710876528728,
+          "sampledRssBytes": 2350399488,
+          "cpu": {
+            "userMicroseconds": 9173938,
+            "systemMicroseconds": 81748,
+            "totalMicroseconds": 9255686,
+            "averageCores": 3.6285456187186935
+          }
+        },
+        "1/grouped_count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 498.11633300000176,
+            "p50": 505.3812080000025,
+            "p95": 548.9154589999998,
+            "p99": 548.9154589999998,
+            "max": 548.9154589999998
+          },
+          "wallMs": 2562.7034999999996,
+          "readsPerSecond": 1.95106456911617,
+          "sampledRssBytes": 2485370880,
+          "cpu": {
+            "userMicroseconds": 9662389,
+            "systemMicroseconds": 71763,
+            "totalMicroseconds": 9734152,
+            "averageCores": 3.798391815518261
+          }
+        },
+        "1/projection": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 14.524624999998196,
+            "p50": 15.575250000001688,
+            "p95": 15.879459000003408,
+            "p99": 15.879459000003408,
+            "max": 15.879459000003408
+          },
+          "wallMs": 78.86325000000215,
+          "readsPerSecond": 63.4008869784071,
+          "sampledRssBytes": 2457944064,
+          "cpu": {
+            "userMicroseconds": 157252,
+            "systemMicroseconds": 6155,
+            "totalMicroseconds": 163407,
+            "averageCores": 2.0720297476961136
+          }
+        },
+        "16/count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 2890.8812920000055,
+            "p50": 3664.2929580000055,
+            "p95": 6188.288041000007,
+            "p99": 6362.401917000003,
+            "max": 6362.401917000003
+          },
+          "wallMs": 21048.292292000006,
+          "readsPerSecond": 3.800783402765945,
+          "sampledRssBytes": 2550431744,
+          "cpu": {
+            "userMicroseconds": 142199169,
+            "systemMicroseconds": 867250,
+            "totalMicroseconds": 143066419,
+            "averageCores": 6.797055885354481
+          }
+        },
+        "16/grouped_count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3353.8499579999916,
+            "p50": 4063.6900000000023,
+            "p95": 6942.435125000004,
+            "p99": 7477.85433300001,
+            "max": 7477.85433300001
+          },
+          "wallMs": 23499.875916999998,
+          "readsPerSecond": 3.4042732941465177,
+          "sampledRssBytes": 2202370048,
+          "cpu": {
+            "userMicroseconds": 156242044,
+            "systemMicroseconds": 1082364,
+            "totalMicroseconds": 157324408,
+            "averageCores": 6.694691008397635
+          }
+        },
+        "16/projection": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 36.32170800000313,
+            "p50": 68.74045900000783,
+            "p95": 83.50879200000782,
+            "p99": 107.78454199999396,
+            "max": 107.78454199999396
+          },
+          "wallMs": 369.3990829999966,
+          "readsPerSecond": 216.56794421441683,
+          "sampledRssBytes": 2427518976,
+          "cpu": {
+            "userMicroseconds": 2434877,
+            "systemMicroseconds": 50423,
+            "totalMicroseconds": 2485300,
+            "averageCores": 6.727953896951127
+          }
+        }
+      },
+      "mixed": {
+        "completedReads": 309,
+        "readsPerSecond": 4.903395945750554,
+        "readsPerSecondChangePercent": 0.0,
+        "latencyMs": {
+          "count": 309,
+          "min": 1361.0069170000206,
+          "p50": 2909.3184170000022,
+          "p95": 5126.059291999991,
+          "p99": 5598.520250000001,
+          "max": 5828.105333000014
+        },
+        "acknowledgedWrites": 44,
+        "writesPerSecond": 0.7168070209128035,
+        "writesPerSecondScope": "acknowledged writes / first-write-start through last-write-acknowledgment",
+        "wallMs": 63017.55016700001,
+        "drainMs": 3017.5501670000085,
+        "writeBurstDurationMs": 61383.327334,
+        "sampledRssBytes": 2426732544,
+        "sampledRssChangePercent": 0.0,
+        "cpu": {
+          "userMicroseconds": 421460511,
+          "systemMicroseconds": 3108647,
+          "totalMicroseconds": 424569158,
+          "averageCores": 6.737316142485199
+        },
+        "writesPerCompleteTenSecondWindow": [
+          6,
+          7,
+          8,
+          7,
+          8,
+          7
+        ],
+        "fixedCutReads": 64,
+        "lastAcknowledgedPosition": "39131"
+      },
+      "resources": {
+        "maximumSampledRssAcrossCells": 2550431744,
+        "observedTemporaryStorageBytesAtSnapshots": [
+          0
+        ]
+      },
+      "numericGates": {
+        "mixed_reads_per_second_relative": {
+          "value": 4.903395945750554,
+          "limit": 5.638905337613137,
+          "direction": ">=",
+          "passed": null,
+          "note": "Baseline is the reference; a 15% improvement is not applicable to itself."
+        },
+        "fixed_16_count_p99_relative_ms": {
+          "value": 6362.401917000003,
+          "limit": 6998.6421087000035,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_grouped_count_p99_relative_ms": {
+          "value": 7477.85433300001,
+          "limit": 8225.639766300012,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p99_relative_ms": {
+          "value": 107.78454199999396,
+          "limit": 118.56299619999336,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p99_relative_ms": {
+          "value": 5598.520250000001,
+          "limit": 6158.372275000002,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_count_p50_relative_ms": {
+          "value": 520.8751250000005,
+          "limit": 572.9626375000006,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_grouped_count_p50_relative_ms": {
+          "value": 505.3812080000025,
+          "limit": 555.9193288000029,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_count_p50_relative_ms": {
+          "value": 3664.2929580000055,
+          "limit": 4030.7222538000065,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_grouped_count_p50_relative_ms": {
+          "value": 4063.6900000000023,
+          "limit": 4470.059000000003,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_writes_per_second_relative": {
+          "value": 0.7168070209128035,
+          "limit": 0.6809666698671633,
+          "direction": ">=",
+          "passed": true
+        },
+        "mixed_rss_relative_bytes": {
+          "value": 2426732544,
+          "limit": 2790742425.6,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_rss_absolute_bytes": {
+          "value": 2426732544,
+          "limit": 3500000000,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_projection_p50_absolute_ms": {
+          "value": 15.575250000001688,
+          "limit": 19,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p50_absolute_ms": {
+          "value": 68.74045900000783,
+          "limit": 115,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p99_absolute_ms": {
+          "value": 107.78454199999396,
+          "limit": 185,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p50_absolute_ms": {
+          "value": 2909.3184170000022,
+          "limit": 3200,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p99_absolute_ms": {
+          "value": 5598.520250000001,
+          "limit": 6500,
+          "direction": "<=",
+          "passed": true
+        },
+        "acknowledged_writes_absolute": {
+          "value": 44,
+          "limit": 40,
+          "direction": ">=",
+          "passed": true
+        }
+      },
+      "failedGates": [],
+      "lifecycleGates": {
+        "harnessExactTypedAnswerAssertionsPassed": true,
+        "widthsRoutesCutsAndRoundKindsChecked": true,
+        "queryAndAcknowledgmentErrorsZero": true,
+        "allReadersUsedAndReturned": true,
+        "noQueuedReadersRemaining": true,
+        "receiptPositionsConsecutive": true,
+        "receiptIdentifiersUnique": true,
+        "noReconciledWriteAcknowledgments": true,
+        "writesEveryCompleteTenSecondWindow": true,
+        "finalReadVerified": true,
+        "reopenVerified": true,
+        "freshCloneAndMatchingProvenance": true,
+        "recordedSourceChecksumsEqual": true
+      }
+    },
+    {
+      "profile": "db4-uv16",
+      "purpose": "candidate",
+      "result": "FAIL",
+      "promotionQualified": false,
+      "rawEvidence": {
+        "file": "build/thread-budget-032-20261105/db4-uv16.json",
+        "sha256": "96bfe53def6a1c3dba07f5188087a4dc89124a476560f8104ec3f32883629ec0",
+        "bytes": 452242,
+        "logFile": "build/thread-budget-032-20261105/db4-uv16.log",
+        "logSha256": "93db89ef7905714a8d85704cd2b7a4a53ae28a6524016615623bbe44c1815eb2"
+      },
+      "configuration": {
+        "duckdbThreads": 4,
+        "uvThreadpoolSizeEnvironmentAtHarnessImport": "16",
+        "nodeUvThreadpoolDefaultWhenUnset": 4,
+        "scope": "one_shared_DuckDB_instance; Node_UV_pool_is_process_global_and_configured_before_startup"
+      },
+      "fixtureDirectory": "build/scale-runs/20261105T223448176Z-144d9f5c",
+      "fixed": {
+        "1/count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 469.48712499999965,
+            "p50": 538.2411250000005,
+            "p95": 643.7887090000004,
+            "p99": 643.7887090000004,
+            "max": 643.7887090000004
+          },
+          "wallMs": 2736.500167,
+          "readsPerSecond": 1.8271513593516255,
+          "sampledRssBytes": 2188427264,
+          "cpu": {
+            "userMicroseconds": 10182207,
+            "systemMicroseconds": 115221,
+            "totalMicroseconds": 10297428,
+            "averageCores": 3.7629919136050973
+          }
+        },
+        "1/grouped_count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 506.3392079999976,
+            "p50": 534.7882919999975,
+            "p95": 572.8503749999945,
+            "p99": 572.8503749999945,
+            "max": 572.8503749999945
+          },
+          "wallMs": 2713.9120840000032,
+          "readsPerSecond": 1.8423588698682378,
+          "sampledRssBytes": 2329509888,
+          "cpu": {
+            "userMicroseconds": 10379848,
+            "systemMicroseconds": 74666,
+            "totalMicroseconds": 10454514,
+            "averageCores": 3.852193319612334
+          }
+        },
+        "1/projection": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 15.059666999994079,
+            "p50": 15.716374999996333,
+            "p95": 16.836833000001207,
+            "p99": 16.836833000001207,
+            "max": 16.836833000001207
+          },
+          "wallMs": 81.2086249999993,
+          "readsPerSecond": 61.569814782605214,
+          "sampledRssBytes": 2415673344,
+          "cpu": {
+            "userMicroseconds": 159883,
+            "systemMicroseconds": 6061,
+            "totalMicroseconds": 165944,
+            "averageCores": 2.043428268856928
+          }
+        },
+        "16/count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 1447.4119169999904,
+            "p50": 2937.721000000005,
+            "p95": 3700.7082089999967,
+            "p99": 3819.7855839999975,
+            "max": 3819.7855839999975
+          },
+          "wallMs": 15458.720332999997,
+          "readsPerSecond": 5.175072598294092,
+          "sampledRssBytes": 2585411584,
+          "cpu": {
+            "userMicroseconds": 167007117,
+            "systemMicroseconds": 1841106,
+            "totalMicroseconds": 168848223,
+            "averageCores": 10.922522651474377
+          }
+        },
+        "16/grouped_count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 1778.8215420000051,
+            "p50": 3298.1255829999864,
+            "p95": 4232.369540999993,
+            "p99": 4600.947209000005,
+            "max": 4600.947209000005
+          },
+          "wallMs": 17527.61870800001,
+          "readsPerSecond": 4.5642252568790855,
+          "sampledRssBytes": 3253862400,
+          "cpu": {
+            "userMicroseconds": 184516608,
+            "systemMicroseconds": 2209737,
+            "totalMicroseconds": 186726345,
+            "averageCores": 10.653263749671472
+          }
+        },
+        "16/projection": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 27.105541999990237,
+            "p50": 53.62904200000048,
+            "p95": 71.7096659999952,
+            "p99": 80.72862499998882,
+            "max": 80.72862499998882
+          },
+          "wallMs": 301.7115000000049,
+          "readsPerSecond": 265.1539633060016,
+          "sampledRssBytes": 2464874496,
+          "cpu": {
+            "userMicroseconds": 2896795,
+            "systemMicroseconds": 73039,
+            "totalMicroseconds": 2969834,
+            "averageCores": 9.84329069326145
+          }
+        }
+      },
+      "mixed": {
+        "completedReads": 419,
+        "readsPerSecond": 6.742674339328926,
+        "readsPerSecondChangePercent": 37.51029722925703,
+        "latencyMs": {
+          "count": 419,
+          "min": 32.21812500001397,
+          "p50": 2910.7779580000206,
+          "p95": 4278.213625000004,
+          "p99": 4659.58379199999,
+          "max": 5172.944125000009
+        },
+        "acknowledgedWrites": 334,
+        "writesPerSecond": 5.556242549827545,
+        "writesPerSecondScope": "acknowledged writes / first-write-start through last-write-acknowledgment",
+        "wallMs": 62141.515208000026,
+        "drainMs": 2141.515208000026,
+        "writeBurstDurationMs": 60112.566541999986,
+        "sampledRssBytes": 3225223168,
+        "sampledRssChangePercent": 32.903940155013636,
+        "cpu": {
+          "userMicroseconds": 666463662,
+          "systemMicroseconds": 7684938,
+          "totalMicroseconds": 674148600,
+          "averageCores": 10.848602544426063
+        },
+        "writesPerCompleteTenSecondWindow": [
+          42,
+          57,
+          52,
+          57,
+          66,
+          59
+        ],
+        "fixedCutReads": 90,
+        "lastAcknowledgedPosition": "39421"
+      },
+      "resources": {
+        "maximumSampledRssAcrossCells": 3253862400,
+        "observedTemporaryStorageBytesAtSnapshots": [
+          0
+        ]
+      },
+      "numericGates": {
+        "mixed_reads_per_second_relative": {
+          "value": 6.742674339328926,
+          "limit": 5.638905337613137,
+          "direction": ">=",
+          "passed": true
+        },
+        "fixed_16_count_p99_relative_ms": {
+          "value": 3819.7855839999975,
+          "limit": 6998.6421087000035,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_grouped_count_p99_relative_ms": {
+          "value": 4600.947209000005,
+          "limit": 8225.639766300012,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p99_relative_ms": {
+          "value": 80.72862499998882,
+          "limit": 118.56299619999336,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p99_relative_ms": {
+          "value": 4659.58379199999,
+          "limit": 6158.372275000002,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_count_p50_relative_ms": {
+          "value": 538.2411250000005,
+          "limit": 572.9626375000006,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_grouped_count_p50_relative_ms": {
+          "value": 534.7882919999975,
+          "limit": 555.9193288000029,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_count_p50_relative_ms": {
+          "value": 2937.721000000005,
+          "limit": 4030.7222538000065,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_grouped_count_p50_relative_ms": {
+          "value": 3298.1255829999864,
+          "limit": 4470.059000000003,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_writes_per_second_relative": {
+          "value": 5.556242549827545,
+          "limit": 0.6809666698671633,
+          "direction": ">=",
+          "passed": true
+        },
+        "mixed_rss_relative_bytes": {
+          "value": 3225223168,
+          "limit": 2790742425.6,
+          "direction": "<=",
+          "passed": false
+        },
+        "mixed_rss_absolute_bytes": {
+          "value": 3225223168,
+          "limit": 3500000000,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_projection_p50_absolute_ms": {
+          "value": 15.716374999996333,
+          "limit": 19,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p50_absolute_ms": {
+          "value": 53.62904200000048,
+          "limit": 115,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p99_absolute_ms": {
+          "value": 80.72862499998882,
+          "limit": 185,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p50_absolute_ms": {
+          "value": 2910.7779580000206,
+          "limit": 3200,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p99_absolute_ms": {
+          "value": 4659.58379199999,
+          "limit": 6500,
+          "direction": "<=",
+          "passed": true
+        },
+        "acknowledged_writes_absolute": {
+          "value": 334,
+          "limit": 40,
+          "direction": ">=",
+          "passed": true
+        }
+      },
+      "failedGates": [
+        "mixed_rss_relative_bytes"
+      ],
+      "lifecycleGates": {
+        "harnessExactTypedAnswerAssertionsPassed": true,
+        "widthsRoutesCutsAndRoundKindsChecked": true,
+        "queryAndAcknowledgmentErrorsZero": true,
+        "allReadersUsedAndReturned": true,
+        "noQueuedReadersRemaining": true,
+        "receiptPositionsConsecutive": true,
+        "receiptIdentifiersUnique": true,
+        "noReconciledWriteAcknowledgments": true,
+        "writesEveryCompleteTenSecondWindow": true,
+        "finalReadVerified": true,
+        "reopenVerified": true,
+        "freshCloneAndMatchingProvenance": true,
+        "recordedSourceChecksumsEqual": true
+      }
+    },
+    {
+      "profile": "db8-uv4",
+      "purpose": "candidate",
+      "result": "FAIL",
+      "promotionQualified": false,
+      "rawEvidence": {
+        "file": "build/thread-budget-032-20261105/db8-uv4.json",
+        "sha256": "348ccde986333512a6583be4da0420224c8f3665d0fddc78bc9509892a400022",
+        "bytes": 332313,
+        "logFile": "build/thread-budget-032-20261105/db8-uv4.log",
+        "logSha256": "7f0067e7af984da14f75bd09b6e6b1856f97abbcbd72ac1301dea74f4aa13ef7"
+      },
+      "configuration": {
+        "duckdbThreads": 8,
+        "uvThreadpoolSizeEnvironmentAtHarnessImport": "4",
+        "nodeUvThreadpoolDefaultWhenUnset": 4,
+        "scope": "one_shared_DuckDB_instance; Node_UV_pool_is_process_global_and_configured_before_startup"
+      },
+      "fixtureDirectory": "build/scale-runs/20261105T223827971Z-4da16b8c",
+      "fixed": {
+        "1/count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 289.7062079999996,
+            "p50": 306.50887499999953,
+            "p95": 357.90787499999897,
+            "p99": 357.90787499999897,
+            "max": 357.90787499999897
+          },
+          "wallMs": 1598.6314999999995,
+          "readsPerSecond": 3.127675139642877,
+          "sampledRssBytes": 2511912960,
+          "cpu": {
+            "userMicroseconds": 11153189,
+            "systemMicroseconds": 209932,
+            "totalMicroseconds": 11363121,
+            "averageCores": 7.108030212090781
+          }
+        },
+        "1/grouped_count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 347.4195830000026,
+            "p50": 362.25329200000124,
+            "p95": 373.1543329999986,
+            "p99": 373.1543329999986,
+            "max": 373.1543329999986
+          },
+          "wallMs": 1818.028957999999,
+          "readsPerSecond": 2.750231220464423,
+          "sampledRssBytes": 2938437632,
+          "cpu": {
+            "userMicroseconds": 12829003,
+            "systemMicroseconds": 197453,
+            "totalMicroseconds": 13026456,
+            "averageCores": 7.165153196641221
+          }
+        },
+        "1/projection": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 16.039416999999958,
+            "p50": 16.767916999997396,
+            "p95": 18.77429199999824,
+            "p99": 18.77429199999824,
+            "max": 18.77429199999824
+          },
+          "wallMs": 88.34970799999792,
+          "readsPerSecond": 56.59328268521406,
+          "sampledRssBytes": 2722054144,
+          "cpu": {
+            "userMicroseconds": 202889,
+            "systemMicroseconds": 16627,
+            "totalMicroseconds": 219516,
+            "averageCores": 2.4846262083854898
+          }
+        },
+        "16/count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 2558.0959169999987,
+            "p50": 3107.7820830000055,
+            "p95": 5397.5067079999935,
+            "p99": 5476.799458999994,
+            "max": 5476.799458999994
+          },
+          "wallMs": 17781.921166,
+          "readsPerSecond": 4.4989514492373495,
+          "sampledRssBytes": 3070328832,
+          "cpu": {
+            "userMicroseconds": 177830259,
+            "systemMicroseconds": 2189030,
+            "totalMicroseconds": 180019289,
+            "averageCores": 10.12372551421534
+          }
+        },
+        "16/grouped_count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 2259.8176669999957,
+            "p50": 3477.9035000000003,
+            "p95": 6123.142875000005,
+            "p99": 6276.911999999997,
+            "max": 6276.911999999997
+          },
+          "wallMs": 19639.710124999998,
+          "readsPerSecond": 4.073379876323404,
+          "sampledRssBytes": 2794553344,
+          "cpu": {
+            "userMicroseconds": 191094847,
+            "systemMicroseconds": 2447869,
+            "totalMicroseconds": 193542716,
+            "averageCores": 9.854662557042198
+          }
+        },
+        "16/projection": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 46.11991599999601,
+            "p50": 69.42916600000171,
+            "p95": 83.33170799999789,
+            "p99": 93.08479100000113,
+            "max": 93.08479100000113
+          },
+          "wallMs": 368.1312500000058,
+          "readsPerSecond": 217.3137977283883,
+          "sampledRssBytes": 2692235264,
+          "cpu": {
+            "userMicroseconds": 3134805,
+            "systemMicroseconds": 84419,
+            "totalMicroseconds": 3219224,
+            "averageCores": 8.744772414729663
+          }
+        }
+      },
+      "mixed": {
+        "completedReads": 407,
+        "readsPerSecond": 6.508059743023776,
+        "readsPerSecondChangePercent": 32.72556030609515,
+        "latencyMs": {
+          "count": 407,
+          "min": 274.49874999999884,
+          "p50": 2272.0339999999997,
+          "p95": 4014.9062919999997,
+          "p99": 4400.878708999982,
+          "max": 4661.49683400002
+        },
+        "acknowledgedWrites": 52,
+        "writesPerSecond": 0.8391970890713505,
+        "writesPerSecondScope": "acknowledged writes / first-write-start through last-write-acknowledgment",
+        "wallMs": 62537.84016600001,
+        "drainMs": 2537.840166000009,
+        "writeBurstDurationMs": 61963.989958000006,
+        "sampledRssBytes": 2794536960,
+        "sampledRssChangePercent": 15.156363930973015,
+        "cpu": {
+          "userMicroseconds": 624548671,
+          "systemMicroseconds": 7285140,
+          "totalMicroseconds": 631833811,
+          "averageCores": 10.103224053195069
+        },
+        "writesPerCompleteTenSecondWindow": [
+          8,
+          9,
+          9,
+          8,
+          9,
+          8
+        ],
+        "fixedCutReads": 86,
+        "lastAcknowledgedPosition": "39139"
+      },
+      "resources": {
+        "maximumSampledRssAcrossCells": 3070328832,
+        "observedTemporaryStorageBytesAtSnapshots": [
+          0
+        ]
+      },
+      "numericGates": {
+        "mixed_reads_per_second_relative": {
+          "value": 6.508059743023776,
+          "limit": 5.638905337613137,
+          "direction": ">=",
+          "passed": true
+        },
+        "fixed_16_count_p99_relative_ms": {
+          "value": 5476.799458999994,
+          "limit": 6998.6421087000035,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_grouped_count_p99_relative_ms": {
+          "value": 6276.911999999997,
+          "limit": 8225.639766300012,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p99_relative_ms": {
+          "value": 93.08479100000113,
+          "limit": 118.56299619999336,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p99_relative_ms": {
+          "value": 4400.878708999982,
+          "limit": 6158.372275000002,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_count_p50_relative_ms": {
+          "value": 306.50887499999953,
+          "limit": 572.9626375000006,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_grouped_count_p50_relative_ms": {
+          "value": 362.25329200000124,
+          "limit": 555.9193288000029,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_count_p50_relative_ms": {
+          "value": 3107.7820830000055,
+          "limit": 4030.7222538000065,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_grouped_count_p50_relative_ms": {
+          "value": 3477.9035000000003,
+          "limit": 4470.059000000003,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_writes_per_second_relative": {
+          "value": 0.8391970890713505,
+          "limit": 0.6809666698671633,
+          "direction": ">=",
+          "passed": true
+        },
+        "mixed_rss_relative_bytes": {
+          "value": 2794536960,
+          "limit": 2790742425.6,
+          "direction": "<=",
+          "passed": false
+        },
+        "mixed_rss_absolute_bytes": {
+          "value": 2794536960,
+          "limit": 3500000000,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_projection_p50_absolute_ms": {
+          "value": 16.767916999997396,
+          "limit": 19,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p50_absolute_ms": {
+          "value": 69.42916600000171,
+          "limit": 115,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p99_absolute_ms": {
+          "value": 93.08479100000113,
+          "limit": 185,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p50_absolute_ms": {
+          "value": 2272.0339999999997,
+          "limit": 3200,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p99_absolute_ms": {
+          "value": 4400.878708999982,
+          "limit": 6500,
+          "direction": "<=",
+          "passed": true
+        },
+        "acknowledged_writes_absolute": {
+          "value": 52,
+          "limit": 40,
+          "direction": ">=",
+          "passed": true
+        }
+      },
+      "failedGates": [
+        "mixed_rss_relative_bytes"
+      ],
+      "lifecycleGates": {
+        "harnessExactTypedAnswerAssertionsPassed": true,
+        "widthsRoutesCutsAndRoundKindsChecked": true,
+        "queryAndAcknowledgmentErrorsZero": true,
+        "allReadersUsedAndReturned": true,
+        "noQueuedReadersRemaining": true,
+        "receiptPositionsConsecutive": true,
+        "receiptIdentifiersUnique": true,
+        "noReconciledWriteAcknowledgments": true,
+        "writesEveryCompleteTenSecondWindow": true,
+        "finalReadVerified": true,
+        "reopenVerified": true,
+        "freshCloneAndMatchingProvenance": true,
+        "recordedSourceChecksumsEqual": true
+      }
+    },
+    {
+      "profile": "db1-uv16",
+      "purpose": "candidate",
+      "result": "FAIL",
+      "promotionQualified": false,
+      "rawEvidence": {
+        "file": "build/thread-budget-032-20261105/db1-uv16.json",
+        "sha256": "d23b42a1687f5701a65c29be1d3d53ef53a31657bf3ba85c4e72b8b89e0ea13e",
+        "bytes": 543927,
+        "logFile": "build/thread-budget-032-20261105/db1-uv16.log",
+        "logSha256": "d9230c808886bb0460b670a4d4978866318a0d41467d6a2a73251f15d058aca8"
+      },
+      "configuration": {
+        "duckdbThreads": 1,
+        "uvThreadpoolSizeEnvironmentAtHarnessImport": "16",
+        "nodeUvThreadpoolDefaultWhenUnset": 4,
+        "scope": "one_shared_DuckDB_instance; Node_UV_pool_is_process_global_and_configured_before_startup"
+      },
+      "fixtureDirectory": "build/scale-runs/20261105T224123813Z-a2864aaa",
+      "fixed": {
+        "1/count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 1635.1605410000047,
+            "p50": 1650.0265,
+            "p95": 1677.5861249999944,
+            "p99": 1677.5861249999944,
+            "max": 1677.5861249999944
+          },
+          "wallMs": 8260.781958,
+          "readsPerSecond": 0.6052695768295693,
+          "sampledRssBytes": 2332180480,
+          "cpu": {
+            "userMicroseconds": 8210538,
+            "systemMicroseconds": 61588,
+            "totalMicroseconds": 8272126,
+            "averageCores": 1.0013732407001754
+          }
+        },
+        "1/grouped_count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 1760.896041999993,
+            "p50": 1783.572833000013,
+            "p95": 1811.7788340000116,
+            "p99": 1811.7788340000116,
+            "max": 1811.7788340000116
+          },
+          "wallMs": 8908.702333000008,
+          "readsPerSecond": 0.5612489690534141,
+          "sampledRssBytes": 1911390208,
+          "cpu": {
+            "userMicroseconds": 8827878,
+            "systemMicroseconds": 58290,
+            "totalMicroseconds": 8886168,
+            "averageCores": 0.9974705257670878
+          }
+        },
+        "1/projection": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 21.884042000005138,
+            "p50": 23.007500000006985,
+            "p95": 23.653917000003275,
+            "p99": 23.653917000003275,
+            "max": 23.653917000003275
+          },
+          "wallMs": 116.31645800000115,
+          "readsPerSecond": 42.98617827582018,
+          "sampledRssBytes": 2450997248,
+          "cpu": {
+            "userMicroseconds": 119154,
+            "systemMicroseconds": 2253,
+            "totalMicroseconds": 121407,
+            "averageCores": 1.0437645891865002
+          }
+        },
+        "16/count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 1947.5322089999972,
+            "p50": 2370.1937919999764,
+            "p95": 2627.7242079999996,
+            "p99": 2808.3211670000164,
+            "max": 2808.3211670000164
+          },
+          "wallMs": 12184.249707999988,
+          "readsPerSecond": 6.5658536157112115,
+          "sampledRssBytes": 2162851840,
+          "cpu": {
+            "userMicroseconds": 142480140,
+            "systemMicroseconds": 1394577,
+            "totalMicroseconds": 143874717,
+            "averageCores": 11.808254135298466
+          }
+        },
+        "16/grouped_count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 2283.813916999992,
+            "p50": 2763.787416999985,
+            "p95": 3671.7308750000084,
+            "p99": 3787.5050420000043,
+            "max": 3787.5050420000043
+          },
+          "wallMs": 15347.319292,
+          "readsPerSecond": 5.212636713807153,
+          "sampledRssBytes": 2540273664,
+          "cpu": {
+            "userMicroseconds": 154899236,
+            "systemMicroseconds": 1558832,
+            "totalMicroseconds": 156458068,
+            "averageCores": 10.1944883678517
+          }
+        },
+        "16/projection": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 30.38354199999594,
+            "p50": 44.6835419999843,
+            "p95": 56.66425000000163,
+            "p99": 65.31358399998862,
+            "max": 65.31358399998862
+          },
+          "wallMs": 234.70879199999035,
+          "readsPerSecond": 340.84790483691506,
+          "sampledRssBytes": 2428747776,
+          "cpu": {
+            "userMicroseconds": 2214585,
+            "systemMicroseconds": 81564,
+            "totalMicroseconds": 2296149,
+            "averageCores": 9.782969698042221
+          }
+        }
+      },
+      "mixed": {
+        "completedReads": 577,
+        "readsPerSecond": 9.297897028903959,
+        "readsPerSecondChangePercent": 89.62158332250989,
+        "latencyMs": {
+          "count": 577,
+          "min": 32.01225000002887,
+          "p50": 2345.072790999955,
+          "p95": 2723.995583000011,
+          "p99": 2927.001749999996,
+          "max": 3192.0422499999986
+        },
+        "acknowledgedWrites": 404,
+        "writesPerSecond": 6.727494344772918,
+        "writesPerSecondScope": "acknowledged writes / first-write-start through last-write-acknowledgment",
+        "wallMs": 62057.04345900001,
+        "drainMs": 2057.0434590000077,
+        "writeBurstDurationMs": 60052.07575000002,
+        "sampledRssBytes": 2700115968,
+        "sampledRssChangePercent": 11.265494612330883,
+        "cpu": {
+          "userMicroseconds": 746542912,
+          "systemMicroseconds": 5504393,
+          "totalMicroseconds": 752047305,
+          "averageCores": 12.118645412053256
+        },
+        "writesPerCompleteTenSecondWindow": [
+          40,
+          56,
+          70,
+          79,
+          83,
+          75
+        ],
+        "fixedCutReads": 125,
+        "lastAcknowledgedPosition": "39491"
+      },
+      "resources": {
+        "maximumSampledRssAcrossCells": 2700115968,
+        "observedTemporaryStorageBytesAtSnapshots": [
+          0
+        ]
+      },
+      "numericGates": {
+        "mixed_reads_per_second_relative": {
+          "value": 9.297897028903959,
+          "limit": 5.638905337613137,
+          "direction": ">=",
+          "passed": true
+        },
+        "fixed_16_count_p99_relative_ms": {
+          "value": 2808.3211670000164,
+          "limit": 6998.6421087000035,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_grouped_count_p99_relative_ms": {
+          "value": 3787.5050420000043,
+          "limit": 8225.639766300012,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p99_relative_ms": {
+          "value": 65.31358399998862,
+          "limit": 118.56299619999336,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p99_relative_ms": {
+          "value": 2927.001749999996,
+          "limit": 6158.372275000002,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_count_p50_relative_ms": {
+          "value": 1650.0265,
+          "limit": 572.9626375000006,
+          "direction": "<=",
+          "passed": false
+        },
+        "fixed_1_grouped_count_p50_relative_ms": {
+          "value": 1783.572833000013,
+          "limit": 555.9193288000029,
+          "direction": "<=",
+          "passed": false
+        },
+        "fixed_16_count_p50_relative_ms": {
+          "value": 2370.1937919999764,
+          "limit": 4030.7222538000065,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_grouped_count_p50_relative_ms": {
+          "value": 2763.787416999985,
+          "limit": 4470.059000000003,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_writes_per_second_relative": {
+          "value": 6.727494344772918,
+          "limit": 0.6809666698671633,
+          "direction": ">=",
+          "passed": true
+        },
+        "mixed_rss_relative_bytes": {
+          "value": 2700115968,
+          "limit": 2790742425.6,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_rss_absolute_bytes": {
+          "value": 2700115968,
+          "limit": 3500000000,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_1_projection_p50_absolute_ms": {
+          "value": 23.007500000006985,
+          "limit": 19,
+          "direction": "<=",
+          "passed": false
+        },
+        "fixed_16_projection_p50_absolute_ms": {
+          "value": 44.6835419999843,
+          "limit": 115,
+          "direction": "<=",
+          "passed": true
+        },
+        "fixed_16_projection_p99_absolute_ms": {
+          "value": 65.31358399998862,
+          "limit": 185,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p50_absolute_ms": {
+          "value": 2345.072790999955,
+          "limit": 3200,
+          "direction": "<=",
+          "passed": true
+        },
+        "mixed_p99_absolute_ms": {
+          "value": 2927.001749999996,
+          "limit": 6500,
+          "direction": "<=",
+          "passed": true
+        },
+        "acknowledged_writes_absolute": {
+          "value": 404,
+          "limit": 40,
+          "direction": ">=",
+          "passed": true
+        }
+      },
+      "failedGates": [
+        "fixed_1_count_p50_relative_ms",
+        "fixed_1_grouped_count_p50_relative_ms",
+        "fixed_1_projection_p50_absolute_ms"
+      ],
+      "lifecycleGates": {
+        "harnessExactTypedAnswerAssertionsPassed": true,
+        "widthsRoutesCutsAndRoundKindsChecked": true,
+        "queryAndAcknowledgmentErrorsZero": true,
+        "allReadersUsedAndReturned": true,
+        "noQueuedReadersRemaining": true,
+        "receiptPositionsConsecutive": true,
+        "receiptIdentifiersUnique": true,
+        "noReconciledWriteAcknowledgments": true,
+        "writesEveryCompleteTenSecondWindow": true,
+        "finalReadVerified": true,
+        "reopenVerified": true,
+        "freshCloneAndMatchingProvenance": true,
+        "recordedSourceChecksumsEqual": true
+      }
+    }
+  ],
+  "limitations": [
+    "One sequential order; no profile passed every first-screen gate, so none qualified for reverse-order promotion confirmation.",
+    "The raw harness records widths, cuts, metadata and successful typed-answer oracle assertions, not every returned tuple. This review recomputes available metadata and checks the pinned oracle/harness identities.",
+    "Fixed one-reader cells have five observations; sixteen-reader cells have eighty. Sampled p99 at sixteen is the maximum, not a long-run SLO.",
+    "Sampled process RSS is not an allocator ceiling. Zero before/after temporary-storage samples do not prove zero physical peak spill.",
+    "Mixed write counts differ because the same sequential writer submits as quickly as each profile allows; CPU time includes those different amounts of ingestion.",
+    "No engine, build or test execution was performed for this independent receipt."
+  ],
+  "rawSupportFiles": {
+    "build/thread-budget-032-20261105/run-matrix.sh": {
+      "sha256": "871f52e2fd0d9ea9f01b2e2618aeffb39a477d56eb8ed125011d84ae8be5bcf4",
+      "bytes": 2030
+    },
+    "build/thread-budget-032-20261105/exit-statuses.txt": {
+      "sha256": "ea1193c8325cfc417993600f2bbe3267499f08f56279716548430999a6fd5bfd",
+      "bytes": 42
+    },
+    "build/thread-budget-032-20261105/source-before.sha256": {
+      "sha256": "0d98988c8bbdf15eded89113fa6bc399a563cb12a4967b59164b1dadc9b62200",
+      "bytes": 221
+    },
+    "build/thread-budget-032-20261105/source-after.sha256": {
+      "sha256": "0d98988c8bbdf15eded89113fa6bc399a563cb12a4967b59164b1dadc9b62200",
+      "bytes": 221
+    }
+  },
+  "conclusion": "No configuration is promoted. Both 4/16 and 8/4 fail the unchanged relative mixed-RSS limit; 1/16 fails both one-reader broad-query medians and the absolute one-reader projection median. CPU results justify further bounded configuration work but do not waive these failures."
+}

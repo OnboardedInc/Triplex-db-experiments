@@ -1,0 +1,290 @@
+{
+  "schema": "td.binary-predicate-10m-comparison/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T21:45:10.105292+00:00",
+  "predeclaredBudgetCommit": "d5f2e209",
+  "order": [
+    "control",
+    "candidate"
+  ],
+  "sourceSha256BeforeAndAfter": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+  "budgets": {
+    "1/projection p50": true,
+    "16/projection p50": true,
+    "16/projection p99": true,
+    "1/count p50": true,
+    "1/grouped_count p50": true,
+    "16/count p50": true,
+    "16/count p99": true,
+    "16/grouped_count p50": true,
+    "16/grouped_count p99": true,
+    "mixed reads/s": true,
+    "mixed p50": true,
+    "mixed p99": true,
+    "mixed writes/s": true,
+    "mixed acknowledged writes": true,
+    "mixed RSS": true
+  },
+  "configuration": {
+    "sizes": [
+      10000000
+    ],
+    "readers": [
+      1,
+      16
+    ],
+    "samples": 5,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "runs": [
+    {
+      "profile": "control",
+      "rawEvidence": "build/binary-predicate-10m-20261105/control.json",
+      "rawSha256": "becb47913c9cb88dbbf410697f41d55adb5d40460e144a0146e7be5393630fb8",
+      "coreSha256": "9591d0f226ad13ed26e430e82c744ca09713fd36baed82ca881f42ea1cf937e3",
+      "companionSha256": "fe13a80efe5202d73e34f6a69e1452a8abee35f4e6c4b1b5459bc925e50b37e2",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "runtimeArtifactSha256": {
+        "build/adapter/native-entity.js": "9cbb8482ea054a042519d5bd258ba49912d3c78b453b3cec7a1c131756ddc744",
+        "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      },
+      "cells": {
+        "1/count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 462.7830419999991,
+            "p50": 466.996083,
+            "p95": 476.2642080000005,
+            "p99": 476.2642080000005,
+            "max": 476.2642080000005
+          },
+          "readsPerSecond": 2.131658437797888,
+          "sampledRssBytes": 2398535680
+        },
+        "1/grouped_count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 495.4507909999993,
+            "p50": 500.96729199999754,
+            "p95": 513.0400000000009,
+            "p99": 513.0400000000009,
+            "max": 513.0400000000009
+          },
+          "readsPerSecond": 1.9925743068060724,
+          "sampledRssBytes": 2543616000
+        },
+        "1/projection": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 23.64862500000163,
+            "p50": 27.33458399999654,
+            "p95": 32.582249999999476,
+            "p99": 32.582249999999476,
+            "max": 32.582249999999476
+          },
+          "readsPerSecond": 35.76298084445413,
+          "sampledRssBytes": 1904361472
+        },
+        "16/count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 2915.4681250000067,
+            "p50": 3604.286500000002,
+            "p95": 6047.613167000003,
+            "p99": 6262.170040999998,
+            "max": 6262.170040999998
+          },
+          "readsPerSecond": 3.8483689632587086,
+          "sampledRssBytes": 2385788928
+        },
+        "16/grouped_count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3254.875291999997,
+            "p50": 3903.3516249999957,
+            "p95": 6604.611749999996,
+            "p99": 7192.628874999995,
+            "max": 7192.628874999995
+          },
+          "readsPerSecond": 3.5575394767370825,
+          "sampledRssBytes": 2435661824
+        },
+        "16/projection": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 99.15591599998879,
+            "p50": 139.40904199998477,
+            "p95": 192.35737500002142,
+            "p99": 216.61720799998147,
+            "max": 216.61720799998147
+          },
+          "readsPerSecond": 103.65007509726438,
+          "sampledRssBytes": 2550661120
+        },
+        "mixed": {
+          "samples": 329,
+          "latencyMs": {
+            "count": 329,
+            "min": 513.2481670000125,
+            "p50": 2907.9100000000035,
+            "p95": 4803.554207999987,
+            "p99": 5444.326834000007,
+            "max": 6044.754083000007
+          },
+          "readsPerSecond": 5.272495170759011,
+          "sampledRssBytes": 2325020672,
+          "writes": 45,
+          "writesPerSecond": 0.7211619534472811,
+          "writesPerCompleteWindow": [
+            6,
+            7,
+            8,
+            7,
+            8,
+            8
+          ],
+          "finalReadVerified": true,
+          "reopenVerified": true,
+          "allReadersUsedAndReturned": true
+        }
+      }
+    },
+    {
+      "profile": "candidate",
+      "rawEvidence": "build/binary-predicate-10m-20261105/candidate.json",
+      "rawSha256": "ccfc4ba510457eff21ead39432dfd606399ffd8e1baf8d9a8ddef4be67d3d11a",
+      "coreSha256": "c7f7ae4a7b1cc7b0421f5f00faacfe4ec88ac698490202eda3177ec950f7b1c6",
+      "companionSha256": "e610447b87bfa0b5dd9ab82c4d75fe0dab5c7498ac542bfdff1b63194f84d894",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "runtimeArtifactSha256": {
+        "build/adapter/native-entity.js": "9cbb8482ea054a042519d5bd258ba49912d3c78b453b3cec7a1c131756ddc744",
+        "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      },
+      "cells": {
+        "1/count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 441.7369579999995,
+            "p50": 447.77150000000074,
+            "p95": 457.075417,
+            "p99": 457.075417,
+            "max": 457.075417
+          },
+          "readsPerSecond": 2.2247942900914404,
+          "sampledRssBytes": 2340683776
+        },
+        "1/grouped_count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 492.06162499999846,
+            "p50": 501.58933300000353,
+            "p95": 702.5205829999977,
+            "p99": 702.5205829999977,
+            "max": 702.5205829999977
+          },
+          "readsPerSecond": 1.8395779493102469,
+          "sampledRssBytes": 2185969664
+        },
+        "1/projection": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 13.075749999996333,
+            "p50": 13.73662499999773,
+            "p95": 14.067541999997047,
+            "p99": 14.067541999997047,
+            "max": 14.067541999997047
+          },
+          "readsPerSecond": 70.8908139683233,
+          "sampledRssBytes": 2527264768
+        },
+        "16/count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3002.712249999997,
+            "p50": 3546.5917090000003,
+            "p95": 6498.399041999997,
+            "p99": 6565.381334000005,
+            "max": 6565.381334000005
+          },
+          "readsPerSecond": 3.8118573091302643,
+          "sampledRssBytes": 2626404352
+        },
+        "16/grouped_count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3430.506999999998,
+            "p50": 3917.625165999998,
+            "p95": 7760.309792,
+            "p99": 7980.375416999988,
+            "max": 7980.375416999988
+          },
+          "readsPerSecond": 3.3860301798546866,
+          "sampledRssBytes": 2134704128
+        },
+        "16/projection": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 30.236834000010276,
+            "p50": 68.84087499999441,
+            "p95": 82.40891599998577,
+            "p99": 100.80999999999767,
+            "max": 100.80999999999767
+          },
+          "readsPerSecond": 217.98434438074102,
+          "sampledRssBytes": 2454962176
+        },
+        "mixed": {
+          "samples": 338,
+          "latencyMs": {
+            "count": 338,
+            "min": 633.2987919999869,
+            "p50": 2628.930583999987,
+            "p95": 4822.033750000002,
+            "p99": 5401.540959000005,
+            "max": 5919.186832999985
+          },
+          "readsPerSecond": 5.425380394114528,
+          "sampledRssBytes": 1380679680,
+          "writes": 48,
+          "writesPerSecond": 0.7704682216494004,
+          "writesPerCompleteWindow": [
+            7,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          "finalReadVerified": true,
+          "reopenVerified": true,
+          "allReadersUsedAndReturned": true
+        }
+      }
+    }
+  ],
+  "scope": "Short paired correctness and public latency screen with continuous ingestion. Fixed 16-reader p99 equals the maximum of 80 observations."
+}

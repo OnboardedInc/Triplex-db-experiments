@@ -1,0 +1,514 @@
+{
+  "schema": "td.native-antijoin-cost-100k/1",
+  "result": "PASS_BASELINE_ONLY",
+  "recordedUtc": "2026-11-05T23:28:08.169951+00:00",
+  "testedSource": "84f58b311c93ed28ca94f0ccb650420dca878053",
+  "initialSource": "b4f0b9408a0dcebc04d6b289ec75d71dea645ed4",
+  "runtime": "accepted-032-runtime",
+  "runtimePins": {
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "rawEvidence": {
+    "file": "build/antijoin-qualification-20261105-02/100k.json",
+    "sha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474",
+    "bytes": 2788372
+  },
+  "execution": {
+    "startedUtc": "2026-11-05T23:18:18.665175+00:00",
+    "completedUtc": "2026-11-05T23:20:26.628444+00:00",
+    "elapsedSeconds": 127.96322798728943,
+    "exitCode": 0,
+    "freshCoWCloneAndProcessPerTier": true,
+    "allEnginesClosed": true,
+    "largerRunsExecuted": false,
+    "syntaxCheck": "PASS",
+    "pureTests": 4
+  },
+  "configuration": {
+    "readers": [
+      1,
+      16
+    ],
+    "samples": 20,
+    "warmup": 1,
+    "durationSeconds": 60,
+    "maxWrites": 12000,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296
+  },
+  "UV_THREADPOOL_SIZE": "4",
+  "source": {
+    "database": "main/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "bytes": 52178944,
+    "beforeSha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "afterSha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "unchanged": true,
+    "fixtureBaseSize": 100000,
+    "previousAcknowledgedAdditions": 184,
+    "sourceKnownAt": "577",
+    "proofScope": "Recorded source checksums and metadata are equal; this receipt did not open the source database."
+  },
+  "fixture": {
+    "newProbeEntities": 256,
+    "schema": "Probe {probe_member:int64;i:int64;}",
+    "initialRecord": "{probe_member=0;i=1;}",
+    "seedBatches": 8,
+    "membersPerBatch": 32,
+    "factsPerBatch": 64,
+    "seedPositions": [
+      "578",
+      "579",
+      "580",
+      "581",
+      "582",
+      "583",
+      "584",
+      "585"
+    ],
+    "initialFullProbeKnownAt": "585",
+    "sourceEntitiesModified": false,
+    "query": "answer(?target) :- triple(?target,'probe_member',?measure), !triple(?target,'i',?measure).",
+    "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+    "rightSideFactsBeforeProbes": 16819,
+    "rightSideFactsAfterProbes": 17075,
+    "positiveSideFacts": 256,
+    "logicalScopedInput": 17331,
+    "exactInputCapSucceeded": true,
+    "inputCap17330Rejected": "TD_E_QUERY_SCALE_LIMIT",
+    "physicalRowsScannedMeasured": false
+  },
+  "oracle": {
+    "method": "Independent synthetic state replay from the returned knowledge position. Initial i=1; patches retain probe_member=0 and toggle each target to i=0 then i=1 over 256-command sweeps.",
+    "measuredCalls": 4826,
+    "mixedCalls": 4486,
+    "acknowledgedPatches": 569,
+    "allPatchesAssertTwoAndRetractTwo": true,
+    "exactStoredFirstReuseReopenTuplesRecomputed": true,
+    "sampleWidthAndPositionOracleRecomputed": true,
+    "receiptSequencesAndIdentifiersRecomputed": true,
+    "fixedCutAndHistoricalSeedChecksPassed": true
+  },
+  "profiles": [
+    {
+      "readers": 1,
+      "result": "passed",
+      "childEvidence": {
+        "file": "build/antijoin-runs/run-3pmKyD/readers-1.json",
+        "sha256": "9f12f99a53da882ae52a3a67e3672960bad1cbeec3ef1b11d499bf8931e49564"
+      },
+      "fixed": {
+        "calls": 20,
+        "latencyMs": {
+          "count": 20,
+          "min": 17.694917000000032,
+          "p50": 18.65012499999989,
+          "p95": 19.769542,
+          "p99": 19.785540999999967,
+          "max": 19.785540999999967
+        },
+        "wallMs": 377.4777919999999,
+        "readsPerSecond": 52.98324940927917,
+        "cpu": {
+          "userMicroseconds": 472971,
+          "systemMicroseconds": 25862,
+          "totalMicroseconds": 498833,
+          "averageCores": 1.3214896626289478,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        },
+        "sampledRssBytes": 383434752
+      },
+      "mixed": {
+        "calls": 310,
+        "latencyMs": {
+          "count": 310,
+          "min": 19.17562500000031,
+          "p50": 192.05362500000047,
+          "p95": 214.12520800000038,
+          "p99": 245.56029099999978,
+          "max": 257.3867919999975
+        },
+        "wallMs": 60127.897459,
+        "readsPerSecond": 5.155676700842279,
+        "cpu": {
+          "userMicroseconds": 79044212,
+          "systemMicroseconds": 2285412,
+          "totalMicroseconds": 81329624,
+          "averageCores": 1.3526104759518165,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        },
+        "sampledRssBytes": 522551296,
+        "acknowledgedWrites": 309,
+        "writesPerSecond": 5.140688246501229,
+        "writeRateScope": "first writer start through last acknowledged writer completion",
+        "writesPerCompleteTenSecondWindow": [
+          51,
+          52,
+          51,
+          52,
+          51,
+          51
+        ],
+        "lastAcknowledgedPosition": "894",
+        "drainMs": 127.8974589999998,
+        "fixedCutReads": 62,
+        "latestReadsAfterFirstReadd": 43,
+        "measuredEmptyAnswerReads": 1
+      },
+      "inputAdmissionProof": {
+        "scopedInputFacts": 17331,
+        "rightSideFacts": "17075",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "pool": {
+        "fixed": {
+          "before": {
+            "capacity": 1,
+            "available": 1,
+            "active": 0,
+            "waiting": 0
+          },
+          "after": {
+            "capacity": 1,
+            "available": 1,
+            "active": 0,
+            "waiting": 0
+          },
+          "maxObservedActive": 1,
+          "maxObservedWaiting": 0,
+          "sampleIntervalMs": 25
+        },
+        "mixed": {
+          "before": {
+            "capacity": 1,
+            "available": 1,
+            "active": 0,
+            "waiting": 0
+          },
+          "after": {
+            "capacity": 1,
+            "available": 1,
+            "active": 0,
+            "waiting": 0
+          },
+          "maxObservedActive": 1,
+          "maxObservedWaiting": 0,
+          "sampleIntervalMs": 25
+        }
+      },
+      "reuseChecks": 1,
+      "reopenCuts": [
+        {
+          "knownAt": "577",
+          "rows": 0
+        },
+        {
+          "knownAt": "581",
+          "rows": 128
+        },
+        {
+          "knownAt": "585",
+          "rows": 256
+        },
+        {
+          "knownAt": "739",
+          "rows": 102
+        },
+        {
+          "knownAt": "894",
+          "rows": 53
+        }
+      ],
+      "reopenVerified": true,
+      "temporaryStorageBytesAtSnapshots": [
+        0
+      ],
+      "errors": {
+        "queries": 0,
+        "writeAcknowledgments": 0
+      }
+    },
+    {
+      "readers": 16,
+      "result": "passed",
+      "childEvidence": {
+        "file": "build/antijoin-runs/run-3pmKyD/readers-16.json",
+        "sha256": "64404e9cca4f3b4f3502abcc66f9638e83151dde323edb171aaa138fe25ad59b"
+      },
+      "fixed": {
+        "calls": 320,
+        "latencyMs": {
+          "count": 320,
+          "min": 51.06066699999974,
+          "p50": 62.26820899999984,
+          "p95": 73.05320899999992,
+          "p99": 92.00079199999982,
+          "max": 104.00904200000014
+        },
+        "wallMs": 1307.0743750000001,
+        "readsPerSecond": 244.82156954534432,
+        "cpu": {
+          "userMicroseconds": 8187701,
+          "systemMicroseconds": 157751,
+          "totalMicroseconds": 8345452,
+          "averageCores": 6.384833303766665,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        },
+        "sampledRssBytes": 602914816
+      },
+      "mixed": {
+        "calls": 4176,
+        "latencyMs": {
+          "count": 4176,
+          "min": 60.959542000000056,
+          "p50": 226.5422920000001,
+          "p95": 261.08045800000036,
+          "p99": 316.57283299999835,
+          "max": 414.7405830000007
+        },
+        "wallMs": 60176.434209,
+        "readsPerSecond": 69.39593638094689,
+        "cpu": {
+          "userMicroseconds": 159781525,
+          "systemMicroseconds": 3408375,
+          "totalMicroseconds": 163189900,
+          "averageCores": 2.71185726015639,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        },
+        "sampledRssBytes": 821149696,
+        "acknowledgedWrites": 260,
+        "writesPerSecond": 4.325396821951427,
+        "writeRateScope": "first writer start through last acknowledged writer completion",
+        "writesPerCompleteTenSecondWindow": [
+          40,
+          43,
+          44,
+          44,
+          44,
+          44
+        ],
+        "lastAcknowledgedPosition": "845",
+        "drainMs": 176.4342089999991,
+        "fixedCutReads": 848,
+        "latestReadsAfterFirstReadd": 48,
+        "measuredEmptyAnswerReads": 16
+      },
+      "inputAdmissionProof": {
+        "scopedInputFacts": 17331,
+        "rightSideFacts": "17075",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      },
+      "pool": {
+        "fixed": {
+          "before": {
+            "capacity": 16,
+            "available": 16,
+            "active": 0,
+            "waiting": 0
+          },
+          "after": {
+            "capacity": 16,
+            "available": 16,
+            "active": 0,
+            "waiting": 0
+          },
+          "maxObservedActive": 16,
+          "maxObservedWaiting": 0,
+          "sampleIntervalMs": 25
+        },
+        "mixed": {
+          "before": {
+            "capacity": 16,
+            "available": 16,
+            "active": 0,
+            "waiting": 0
+          },
+          "after": {
+            "capacity": 16,
+            "available": 16,
+            "active": 0,
+            "waiting": 0
+          },
+          "maxObservedActive": 16,
+          "maxObservedWaiting": 0,
+          "sampleIntervalMs": 25
+        }
+      },
+      "reuseChecks": 16,
+      "reopenCuts": [
+        {
+          "knownAt": "577",
+          "rows": 0
+        },
+        {
+          "knownAt": "581",
+          "rows": 128
+        },
+        {
+          "knownAt": "585",
+          "rows": 256
+        },
+        {
+          "knownAt": "715",
+          "rows": 126
+        },
+        {
+          "knownAt": "845",
+          "rows": 4
+        }
+      ],
+      "reopenVerified": true,
+      "temporaryStorageBytesAtSnapshots": [
+        0
+      ],
+      "errors": {
+        "queries": 0,
+        "writeAcknowledgments": 0
+      }
+    }
+  ],
+  "firstFailure": {
+    "rawEvidence": "build/antijoin-qualification-20261105-01/100k.json",
+    "sha256": "4ffc46864a99c7b8db0178e932855e68661620603fc503a459a4bb53a12fd159",
+    "originalExitCode": 1,
+    "code": "TD_E_AGG_BODY",
+    "stage": "pre-seed source-cardinality diagnostic",
+    "timedSamples": 0,
+    "seedBatchesExecuted": 0,
+    "sourceUnchanged": true,
+    "cause": "Diagnostic direct count over a triple with a constant attribute is outside the complete-source aggregate grammar.",
+    "fix": "Use source(?e,?v) :- triple(?e,attribute,?v). answer(count()) :- source(?e,?v).",
+    "freshRepairedInvocation": true,
+    "nativeImplementationChanged": false
+  },
+  "proposedLargerBudgets": [
+    {
+      "schema": "td.antijoin-cost-budget/1",
+      "status": "PROPOSED_UNRUN",
+      "fixtureSize": 1000000,
+      "coreSha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+      "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+      "UV_THREADPOOL_SIZE": "4",
+      "configuration": {
+        "readers": [
+          1,
+          16
+        ],
+        "samples": 20,
+        "warmup": 1,
+        "durationSeconds": 60,
+        "maxWrites": 12000,
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "maxIntermediateBytes": 4294967296
+      },
+      "baseline": {
+        "file": "../build/antijoin-qualification-20261105-02/100k.json",
+        "sha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474"
+      },
+      "profiles": [
+        {
+          "readers": 1,
+          "maxFixedP50Ms": 250,
+          "maxFixedP99Ms": 350,
+          "minMixedQueriesPerSecond": 2,
+          "maxMixedP50Ms": 500,
+          "maxMixedP99Ms": 1000,
+          "minAcknowledgedWrites": 40,
+          "minAcknowledgedWritesPerSecond": 0.5,
+          "maxSampledRssBytes": 3500000000
+        },
+        {
+          "readers": 16,
+          "maxFixedP50Ms": 800,
+          "maxFixedP99Ms": 1200,
+          "minMixedQueriesPerSecond": 15,
+          "maxMixedP50Ms": 1000,
+          "maxMixedP99Ms": 2000,
+          "minAcknowledgedWrites": 40,
+          "minAcknowledgedWritesPerSecond": 0.5,
+          "maxSampledRssBytes": 3500000000
+        }
+      ]
+    },
+    {
+      "schema": "td.antijoin-cost-budget/1",
+      "status": "PROPOSED_UNRUN",
+      "fixtureSize": 10000000,
+      "coreSha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+      "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+      "UV_THREADPOOL_SIZE": "4",
+      "configuration": {
+        "readers": [
+          1,
+          16
+        ],
+        "samples": 20,
+        "warmup": 1,
+        "durationSeconds": 60,
+        "maxWrites": 12000,
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "maxIntermediateBytes": 4294967296
+      },
+      "baseline": {
+        "file": "../build/antijoin-qualification-20261105-02/100k.json",
+        "sha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474"
+      },
+      "profiles": [
+        {
+          "readers": 1,
+          "maxFixedP50Ms": 1500,
+          "maxFixedP99Ms": 2500,
+          "minMixedQueriesPerSecond": 0.75,
+          "maxMixedP50Ms": 1500,
+          "maxMixedP99Ms": 3000,
+          "minAcknowledgedWrites": 40,
+          "minAcknowledgedWritesPerSecond": 0.5,
+          "maxSampledRssBytes": 3500000000
+        },
+        {
+          "readers": 16,
+          "maxFixedP50Ms": 3500,
+          "maxFixedP99Ms": 6500,
+          "minMixedQueriesPerSecond": 4.8,
+          "maxMixedP50Ms": 3200,
+          "maxMixedP99Ms": 6500,
+          "minAcknowledgedWrites": 40,
+          "minAcknowledgedWritesPerSecond": 0.5,
+          "maxSampledRssBytes": 3500000000
+        }
+      ]
+    }
+  ],
+  "budgetDerivation": {
+    "status": "PROPOSED_UNRUN; commit a standalone selected budget before a larger run",
+    "rationale": "The 100k baseline separates fixed read cost from full public mixed cost. One-million limits allow growth of the scoped side while requiring 2/15 mixed queries per second at 1/16 readers. Ten-million targets retain the existing 4.8 QPS and 3.2/6.5 s sixteen-reader mixed envelope, with a slower explicitly bounded one-reader tier. These are proposed qualification targets, not extrapolated measurements.",
+    "commonCorrectness": "Exact typed answer and returned-K oracle after every call; scoped input exact/minus-one proof; zero query or acknowledgment errors; all 16 leases used/returned; reuse; a write in every full 10 s window; consecutive receipts; final/reopen and unchanged source.",
+    "notMachineInputYet": "Extract the selected proposed object into a standalone budget file and pin/copy the referenced raw 100k evidence before execution."
+  },
+  "timingAndLimitations": [
+    "Public call latency ends after typed decoding, before exact harness oracle checks. QPS and process CPU include oracle, sampling and drain.",
+    "CPU is all process threads, not pure engine time. Public call spans include writer-barrier and SDK queue waits.",
+    "17,331 is demonstrated logical input admission, not a physical operator scan/materialization count.",
+    "Read-only fixed samples are20/320 at1/16readers. Mixed samples310/4176 and sampled quantiles do not establish a general service SLO.",
+    "Sampled process RSS and before/after zero spill snapshots do not establish hard allocator or physical peak-spill bounds.",
+    "Each tier completed one full removal sweep and some re-adds, not a full 512-command remove-and-restore cycle.",
+    "No 1m/10m timing result, optimization promotion or configuration-default change is claimed."
+  ]
+}

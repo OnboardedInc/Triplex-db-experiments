@@ -1,0 +1,15 @@
+✔ Node bridge shares the extension invocation registry, pins identity and bounds/retires controls (213.911ms)
+✔ controlled queries preserve native/SQL routes, fresh data and transport validation without listener leaks (566.774208ms)
+✔ whole-query SQL timeout/cancel awaits cleanup, retires tokens and releases connection ownership (144.573084ms)
+✔ native polling observes Node cancellation and independent evaluator/whole-query deadlines publish no partial output (530.480584ms)
+✔ aborting a queued request cannot interrupt the previous invocation (451.220083ms)
+✔ C++ parameterized templates reuse structural SQL with fresh tokens, data, rollback and schema meaning (489.056125ms)
+✔ expanded SQL above the wire limit falls back to the pragma without rejecting the valid program (780.1905ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3322.339

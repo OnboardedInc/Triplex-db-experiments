@@ -1,0 +1,113 @@
+{
+  "schema": "temporal-datalog/public-read-phase-summary/1",
+  "result": "PASS",
+  "artifacts": {
+    "core_sha256": "652a864ec192fb2ae14ba50414ca1b477d04c3bf57d3985c19f0bd1e072cc3a3",
+    "owner_sha256": "526f7aa483d8e90445941501f8b52f433cc0c3cbcdaf9f8bf6a32af963360c13",
+    "sdk_engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "entity_js_sha256": "fe0ce58483dd11e8c269dc42ed8aa45931ef8f58ecff766b28f8d930b1bf0897",
+    "port_mjs_sha256": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "profiler_source_sha256": "ecbb19d43deaaab75c6aa38526abed0d4763cc4072ffa40b2a57ce3a51ea58a0"
+  },
+  "configuration": {
+    "readers": 1,
+    "threads": 1,
+    "memoryLimit": "1GiB",
+    "maxTempDirectorySize": "1GiB",
+    "samples_per_cell": 9,
+    "controlled": false,
+    "parallel_calls": 1
+  },
+  "fixture": {
+    "clone": {
+      "mode": "darwin_clonefile",
+      "status": "cloned"
+    },
+    "retained_facts": 1000008,
+    "valid_at": "0",
+    "known_at": "253",
+    "bytes": 314060800,
+    "source_metadata_unchanged": true
+  },
+  "startup_ms": 1450.248,
+  "exact_calls": 40,
+  "raw_measurement_sha256": "63ba49f78ccbfe330b558d92e13aca0ad5c5c8846c89a979a5d9cc24856125ca",
+  "phase_scope": {
+    "sdk_await": "Awaited SDK prepare, stream and fetch wall intervals including native work, SDK work and async scheduling.",
+    "transport_outside_sdk_await": "Remaining native port wall time, including synchronous SDK row extraction, result admission, copies, binding and cleanup.",
+    "pre_port": "Public admission, query construction and reader acquisition before transport starts.",
+    "post_port": "Public result decoding, reader release and promise completion after transport returns.",
+    "limitations": "Instrumented single-reader wall time on a warm clone. Startup audit excluded from query intervals. Exact-answer checks follow timing."
+  },
+  "projection_bound": "40,000 rows fit the 16 MiB conservative output reservation. 50,000 exceed it at 384 bytes per tuple.",
+  "cells": [
+    {
+      "name": "tiny_constant",
+      "program": "answer(7).",
+      "route": "native",
+      "reason": "forced_native",
+      "rows": 1,
+      "exact_checks": 10,
+      "public_ms": 4.521,
+      "sdk_await_ms": 4.362,
+      "pre_port_ms": 0.021,
+      "transport_outside_sdk_await_ms": 0.108,
+      "post_port_ms": 0.04,
+      "host_outside_sdk_await_percent": 4.019,
+      "first_prepare_ms": 5.489,
+      "warm_prepare_calls": 0,
+      "warm_fetch_calls": 2
+    },
+    {
+      "name": "empty_scan",
+      "program": "answer(?v) :- triple(?e,'absent-phase-screen',?v).",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_single_atom",
+      "rows": 0,
+      "exact_checks": 10,
+      "public_ms": 7.143,
+      "sdk_await_ms": 6.97,
+      "pre_port_ms": 0.025,
+      "transport_outside_sdk_await_ms": 0.122,
+      "post_port_ms": 0.02,
+      "host_outside_sdk_await_percent": 2.418,
+      "first_prepare_ms": 8.188,
+      "warm_prepare_calls": 0,
+      "warm_fetch_calls": 2
+    },
+    {
+      "name": "broad_count",
+      "program": "source(?e,?v) :- triple(?e,'i',?v). answer(count()) :- source(?e,?v).",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_count",
+      "rows": 1,
+      "exact_checks": 10,
+      "public_ms": 58.316,
+      "sdk_await_ms": 58.125,
+      "pre_port_ms": 0.02,
+      "transport_outside_sdk_await_ms": 0.143,
+      "post_port_ms": 0.046,
+      "host_outside_sdk_await_percent": 0.374,
+      "first_prepare_ms": 10.262,
+      "warm_prepare_calls": 0,
+      "warm_fetch_calls": 2
+    },
+    {
+      "name": "projection_40000",
+      "program": "answer(?v) :- triple(?e,'i',?v),[?v < 40000].",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_single_atom",
+      "rows": 40000,
+      "exact_checks": 10,
+      "public_ms": 176.599,
+      "sdk_await_ms": 78.936,
+      "pre_port_ms": 0.027,
+      "transport_outside_sdk_await_ms": 57.844,
+      "post_port_ms": 38.449,
+      "host_outside_sdk_await_percent": 54.882,
+      "first_prepare_ms": 7.749,
+      "warm_prepare_calls": 0,
+      "warm_fetch_calls": 21
+    }
+  ]
+}

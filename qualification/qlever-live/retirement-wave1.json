@@ -1,0 +1,52 @@
+{
+  "format": "triplex-qlever-planner-wave/1",
+  "predeclaredAtUnix": 1794013097.3013818,
+  "problemTag": "qlever.planner-memory.optional-retirement-frames",
+  "state": "PREDECLARED_BEFORE_EXECUTION",
+  "fixedProfile": {
+    "engineMemoryBytes": 2147483648,
+    "planningBudget": 100,
+    "sourcePlan": "persisted",
+    "negationPlan": "minus",
+    "aggregateAnswerPlan": "bounded",
+    "clientBytes": 939524096,
+    "controllerOldSpaceMiB": 256
+  },
+  "control": {
+    "receipt": ".devloop/jobs/qlever-negation-persisted-family12-v1/attempts/0001",
+    "outcome": "PlannerOOM137 at2GiB; scalarcompletenessadmission finished beforemain. No unchangedrepeat."
+  },
+  "arms": [
+    {
+      "id": "D-paired-retirement",
+      "status": "AUTHORED_UNEXECUTED",
+      "singleVariable": "Replace two independent retirement OPTIONALs with one OPTIONAL binding both fields; visibility predicate is unchanged.",
+      "inspiration": [
+        "packages/qlever/src/native/NativeContext.ts",
+        "packages/qlever/src/TemporalQueries.ts"
+      ],
+      "writerInvariant": "QleverStorageAdapter retract sets retracted_at and retracted_position together; rdf rowFields emits both order channels. Actualwriter/retraction/partial-rowfixture required.",
+      "admission": "Native LIMIT1 row-level BOUNDxor check across every assertion-id row and all retainedhistory in the exactscope; detect opposite partial rows even when globalcounts balance. Extra scan fullycharged."
+    },
+    {
+      "id": "E-order-channel-liveness",
+      "status": "QUEUED_HYPOTHESIS_NOT_IMPLEMENTED",
+      "singleVariable": "Prune unused scalar order channels independently of retirement grouping; retain order channels for projected/paged/numeric/aggregate uses.",
+      "limits": "No implementation or execution claim; must not bundle withD during its first trial."
+    }
+  ],
+  "gates": [
+    "ActualTriplexwriter produces two coherent retired rows",
+    "Opposite one-sided order fields detected per-row despite balancedglobalcounts; publicpairedquery rejectsbeforemain",
+    "Historical/currentR masking retainsoriginalanswers",
+    "Family12same8current/reopenchecks",
+    "Full142andunchanged44ifsurvivor",
+    "Independentverificationbeforeanydefaultchange"
+  ],
+  "limits": [
+    "No nativeengineheap increase",
+    "No newdatabasecopy/helpermaterialization",
+    "No general nestedNOT support; owningpublicgrammarrejectsdoubleNOT",
+    "RawSPARQLouterFILTERcorrelation mismatch remains a separate observedenginecounterexample"
+  ]
+}

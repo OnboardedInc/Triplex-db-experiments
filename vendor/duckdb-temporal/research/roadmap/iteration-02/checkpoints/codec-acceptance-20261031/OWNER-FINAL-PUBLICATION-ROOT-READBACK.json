@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-31T03:30:05.406754+00:00",
+  "status": "PASS_ROOT_ALL_1359_IMMUTABLE_CODEC_RESULTS_MEMBERS_AFTER_FREEZER_EXIT",
+  "worker_manifest_sha256": "28648809b4a216449169f8e1ef9d4525be20564df1a995eae14fbe138043cb07",
+  "worker_manifest_members": 1359,
+  "logical_bytes": 16881023,
+  "content_tree_sha256": "03a97580d21cb80e3fe22eb724d2cb2a4a2bd20811457971d5d84e1baa339122",
+  "aggregate_digest_order": "Exact frozen Path-component-sorted manifest row order, not root initial scalar-text-resort assumption.",
+  "all1360_checksums_verified": true,
+  "allregular_UTF8_noNUL_safe_no_symlink": true,
+  "closed_freezer_exit": 0,
+  "freezer_observation": "Owner reported actual source-only freezer exit0 at03:25:28 before registry reconnect; root independently read exit0/empty stderr and every frozen member after reconnect, without rerunning freezer.",
+  "raw_run_files": 978,
+  "all_timing_profile_calls_terminal": true,
+  "publication_durable_main": "PENDING_NEW_RESULTS_CHECKPOINT; existingcorrectness85/preexecution20ad preserved",
+  "no_uncertain_write_retried": true,
+  "verifier_sha256": "0ac67d3ffbadd4148072f70a2f1f2a82f69611b360a1d970553f767a50262a1a"
+}

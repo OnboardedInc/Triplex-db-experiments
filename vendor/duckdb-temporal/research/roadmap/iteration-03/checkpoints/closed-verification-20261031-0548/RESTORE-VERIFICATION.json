@@ -1,0 +1,13 @@
+{
+  "status": "PASS_ALL_MEMBERS_AND_LOGICAL_FILES_RESTORED",
+  "archive_sha256": "13d766c5a99d65c82dfcb5687abb8bbc21fbdcbe34508c686b9b918e713071b1",
+  "archive_members": 1206,
+  "logical_files": 1922,
+  "logical_bytes": 27783298,
+  "unique_payloads": 1202,
+  "evidence_manifest_sha256": "dced2532c60c759c632baef7c0f3d10c05f91133e91459a5fcb1ac59345b05b0",
+  "archive_pathset_bytes_hashes_modes": "all verified",
+  "logical_pathset_bytes_hashes_modes": "all verified",
+  "raw_bytes_repaired_or_normalized": false,
+  "application_code_imported_or_executed": false
+}

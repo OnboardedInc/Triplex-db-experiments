@@ -1,0 +1,382 @@
+{
+  "status": "PASS_ALL_OBSERVATIONS",
+  "comparison": "isolate_wrapper_batch",
+  "study_manifest_sha256": "357664ce0a6af25efc171f5687e917cf4cc4ffd2d37ea580bfc6e89ac4119a0a",
+  "paired_units": 42,
+  "fresh_processes": 84,
+  "measured": 3528,
+  "warmup": 2352,
+  "all5880_outcomes_pass": true,
+  "technical_repetitions_not_independent_samples": true,
+  "ratio_direction": "proposed/baseline; >1 slower",
+  "endpoint": "Complete public persisted query/query_json return with all source checks/normalization/FP guards; not native-only or complete storage performance",
+  "fixed_native_artifact": true,
+  "controls": [
+    {
+      "control": "float256-query",
+      "shape": "float256",
+      "api": "query",
+      "rows": 256,
+      "float_cells": 256,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 4140106.5,
+      "proposed_median_ns": 3643958.5,
+      "median_paired_ratio": 0.8900663454255153,
+      "bootstrap95_interval": [
+        0.8612612001007781,
+        0.9165591352042102
+      ],
+      "round_medians": {
+        "1": 0.8954234728620433,
+        "2": 0.8898222515981625
+      },
+      "load_order_medians": {
+        "hardened8b": 0.8898222515981625,
+        "proposed": 0.8903104392528682
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "float256-query_json",
+      "shape": "float256",
+      "api": "query_json",
+      "rows": 256,
+      "float_cells": 256,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 4124555.0,
+      "proposed_median_ns": 3735827.5,
+      "median_paired_ratio": 0.8869205845160415,
+      "bootstrap95_interval": [
+        0.8576701263038735,
+        0.9315424742757101
+      ],
+      "round_medians": {
+        "1": 0.8716627177448536,
+        "2": 0.8923279408482748
+      },
+      "load_order_medians": {
+        "hardened8b": 0.8923279408482748,
+        "proposed": 0.8815132281838082
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "mixed64-query",
+      "shape": "mixed64",
+      "api": "query",
+      "rows": 64,
+      "float_cells": 16,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 2440626.0,
+      "proposed_median_ns": 2424036.0,
+      "median_paired_ratio": 0.9959304682845925,
+      "bootstrap95_interval": [
+        0.9609553092305196,
+        1.0392130342060932
+      ],
+      "round_medians": {
+        "1": 0.9648299291607532,
+        "2": 1.0059246785254077
+      },
+      "load_order_medians": {
+        "hardened8b": 1.000263563574763,
+        "proposed": 0.9896603650053196
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "mixed64-query_json",
+      "shape": "mixed64",
+      "api": "query_json",
+      "rows": 64,
+      "float_cells": 16,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 2452718.5,
+      "proposed_median_ns": 2454096.5,
+      "median_paired_ratio": 1.0006907152572442,
+      "bootstrap95_interval": [
+        0.9808956957749475,
+        1.0461073976313051
+      ],
+      "round_medians": {
+        "1": 1.0009268401814655,
+        "2": 1.000454590333023
+      },
+      "load_order_medians": {
+        "hardened8b": 1.0329800868080428,
+        "proposed": 0.9947198368221202
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "empty-query",
+      "shape": "empty",
+      "api": "query",
+      "rows": 0,
+      "float_cells": 0,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 2039137.0,
+      "proposed_median_ns": 2075310.0,
+      "median_paired_ratio": 1.0055759032766685,
+      "bootstrap95_interval": [
+        0.962944690422078,
+        1.0640622593996265
+      ],
+      "round_medians": {
+        "1": 1.0233415666707448,
+        "2": 0.9898463583875473
+      },
+      "load_order_medians": {
+        "hardened8b": 0.9898463583875473,
+        "proposed": 1.060658491125728
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "empty-query_json",
+      "shape": "empty",
+      "api": "query_json",
+      "rows": 0,
+      "float_cells": 0,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 1929566.0,
+      "proposed_median_ns": 2046665.5,
+      "median_paired_ratio": 1.0519283075159331,
+      "bootstrap95_interval": [
+        1.0169265434045065,
+        1.090107917045484
+      ],
+      "round_medians": {
+        "1": 1.055712181547364,
+        "2": 1.0516163520213275
+      },
+      "load_order_medians": {
+        "hardened8b": 1.035521084467945,
+        "proposed": 1.0522402630105387
+      },
+      "regression_investigation_signal": true
+    },
+    {
+      "control": "no_float64-query",
+      "shape": "no_float64",
+      "api": "query",
+      "rows": 64,
+      "float_cells": 0,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 2237339.5,
+      "proposed_median_ns": 2332132.5,
+      "median_paired_ratio": 1.0347915805890135,
+      "bootstrap95_interval": [
+        0.9806317022606907,
+        1.0760170161305713
+      ],
+      "round_medians": {
+        "1": 1.038042298951863,
+        "2": 0.9991310211734777
+      },
+      "load_order_medians": {
+        "hardened8b": 1.0018814633995885,
+        "proposed": 1.0545449646753933
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "no_float64-query_json",
+      "shape": "no_float64",
+      "api": "query_json",
+      "rows": 64,
+      "float_cells": 0,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 2201005.5,
+      "proposed_median_ns": 2329714.0,
+      "median_paired_ratio": 1.044715022909775,
+      "bootstrap95_interval": [
+        0.9991672487435435,
+        1.117453327935534
+      ],
+      "round_medians": {
+        "1": 1.065152543304853,
+        "2": 1.0364709164623687
+      },
+      "load_order_medians": {
+        "hardened8b": 1.0364709164623687,
+        "proposed": 1.065152543304853
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "tiny_float1-query",
+      "shape": "tiny_float1",
+      "api": "query",
+      "rows": 1,
+      "float_cells": 1,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 2008010.0,
+      "proposed_median_ns": 2037584.5,
+      "median_paired_ratio": 1.0085451566464128,
+      "bootstrap95_interval": [
+        0.9761646510971552,
+        1.04537844550488
+      ],
+      "round_medians": {
+        "1": 1.0102446391866764,
+        "2": 1.0068456741061491
+      },
+      "load_order_medians": {
+        "hardened8b": 1.0068456741061491,
+        "proposed": 1.0102446391866764
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "tiny_float1-query_json",
+      "shape": "tiny_float1",
+      "api": "query_json",
+      "rows": 1,
+      "float_cells": 1,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 1965035.5,
+      "proposed_median_ns": 2053833.0,
+      "median_paired_ratio": 1.0183641269754702,
+      "bootstrap95_interval": [
+        0.9925116096440331,
+        1.0849605062709167
+      ],
+      "round_medians": {
+        "1": 1.0028963439344367,
+        "2": 1.029162904631037
+      },
+      "load_order_medians": {
+        "hardened8b": 1.0075653493199035,
+        "proposed": 1.0497509624201686
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "tiny_no_float1-query",
+      "shape": "tiny_no_float1",
+      "api": "query",
+      "rows": 1,
+      "float_cells": 0,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 2028285.0,
+      "proposed_median_ns": 2077394.0,
+      "median_paired_ratio": 1.0490778140348782,
+      "bootstrap95_interval": [
+        1.0114968379581146,
+        1.0794818180568773
+      ],
+      "round_medians": {
+        "1": 1.0216906407116877,
+        "2": 1.0626405924347386
+      },
+      "load_order_medians": {
+        "hardened8b": 1.0427239725743376,
+        "proposed": 1.0626405924347386
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "tiny_no_float1-query_json",
+      "shape": "tiny_no_float1",
+      "api": "query_json",
+      "rows": 1,
+      "float_cells": 0,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 2022061.0,
+      "proposed_median_ns": 2119868.5,
+      "median_paired_ratio": 1.024171045699443,
+      "bootstrap95_interval": [
+        0.9708272582874617,
+        1.0817413433108856
+      ],
+      "round_medians": {
+        "1": 0.985275249355763,
+        "2": 1.0321465143138493
+      },
+      "load_order_medians": {
+        "hardened8b": 0.9700565268462221,
+        "proposed": 1.0541265592586013
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "wide_float256-query",
+      "shape": "wide_float256",
+      "api": "query",
+      "rows": 256,
+      "float_cells": 1024,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 10054774.0,
+      "proposed_median_ns": 7771717.0,
+      "median_paired_ratio": 0.7571614921385565,
+      "bootstrap95_interval": [
+        0.7396946005146259,
+        0.8044920844000603
+      ],
+      "round_medians": {
+        "1": 0.7562664848254902,
+        "2": 0.7580564994516228
+      },
+      "load_order_medians": {
+        "hardened8b": 0.7521472678369745,
+        "proposed": 0.7685518946097699
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "wide_float256-query_json",
+      "shape": "wide_float256",
+      "api": "query_json",
+      "rows": 256,
+      "float_cells": 1024,
+      "baseline": "hardened8b",
+      "proposed": "proposed",
+      "baseline_median_ns": 10119954.5,
+      "proposed_median_ns": 7814697.0,
+      "median_paired_ratio": 0.7619321336387561,
+      "bootstrap95_interval": [
+        0.7441528138576419,
+        0.794653679098406
+      ],
+      "round_medians": {
+        "1": 0.7820869490025026,
+        "2": 0.7479763253347347
+      },
+      "load_order_medians": {
+        "hardened8b": 0.7735745358289017,
+        "proposed": 0.758844889298646
+      },
+      "regression_investigation_signal": false
+    }
+  ],
+  "investigation_signals": [
+    "empty-query_json"
+  ],
+  "setup_separate": {
+    "hardened8b": {
+      "source_import_ns": 68315003.0,
+      "physical_template_copy_ns": 1278335.5,
+      "store_open_ns": 116916440.5
+    },
+    "proposed": {
+      "source_import_ns": 71576687.5,
+      "physical_template_copy_ns": 1322286.0,
+      "store_open_ns": 119903492.0
+    }
+  },
+  "limits": "One closed history/host/immutable build pair, descriptive per-control intervals not family-wise or universal; prior1.27x study remains unchanged and separate"
+}

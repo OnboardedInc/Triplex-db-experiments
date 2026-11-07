@@ -1,0 +1,51 @@
+{
+  "schema": "td.item4_1.selected-contract-documents/1",
+  "scope": "new graph contract/proof/review and additive source-only coordinator decision; no execution plan",
+  "empirical_status": "UNRUN",
+  "preservation": "selected input documents retained exact UTF8 bytes; no normalization",
+  "files": [
+    {
+      "name": "README.md",
+      "bytes": 2966,
+      "sha256": "540535acf3dad66aea6ecda5b73ccd3f81dbcf4ecfae939e5fdfc5d56fb6554d",
+      "git_blob_sha": "282fbb11c8a6593de201f859411cd4925b7b8451"
+    },
+    {
+      "name": "CONTRACT.md",
+      "bytes": 29164,
+      "sha256": "e519009062c000b5aa87bbadd400de6c4147c3aadd56c7af0b39f4e0d8c9bf84",
+      "git_blob_sha": "5f97abf029f75539be0c4a5cd1ec5d7b99cc0b8e"
+    },
+    {
+      "name": "PROOF-AND-COST.md",
+      "bytes": 21769,
+      "sha256": "401760f07e78eae45618276c632ff08b1537c38d6f8dac50009c81580baa0f7b",
+      "git_blob_sha": "93a3f28417232039649617af2a0e7610f51661c1"
+    },
+    {
+      "name": "REVIEW-NOTES.md",
+      "bytes": 6733,
+      "sha256": "5cd702f59df0daf4a958e584bca972e8cc6c9bbb805a2a4a41888ddc8b6335c2",
+      "git_blob_sha": "5dda19904d3c837e16b3392e4d4c4f6403ee13ab"
+    },
+    {
+      "name": "INDEPENDENT-REVIEW.md",
+      "bytes": 13941,
+      "sha256": "0a4cae40c516bc76167549e759a1b0bf4f774e2102ff8bd0753c6df4b5bfd4fc",
+      "git_blob_sha": "13f608dca123224d96e3c526c65437c7f2cd2fd9"
+    },
+    {
+      "name": "DECISION.md",
+      "bytes": 1522,
+      "sha256": "024869573b60dc601fb8b52ca16ce76afbf4fa030b8a88beebef7185abcfb371",
+      "git_blob_sha": "74a275aa6d2d47fed7355aea5224e4ed720ce730"
+    },
+    {
+      "name": "SELECTION.json",
+      "bytes": 1658,
+      "sha256": "6fcfa9788830f7f05e0e7d2159e6407db6bc6ccdfaff68a0961669e64e94a5ff",
+      "git_blob_sha": "5bb52e3b6f5b0e3b943f221839d9fc422b055df9"
+    }
+  ],
+  "self_excluded": "FILES.json"
+}

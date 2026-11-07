@@ -1,0 +1,106 @@
+{
+  "scope": "NEW primary source continuation closing ordinary current-pin builtin-type default creation, implicit lookup paths and existing internal authority; no runtime or prior witness content",
+  "files": [
+    {
+      "path": "src/main/client_data.cpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/client_data.cpp",
+      "bytes": 10013,
+      "sha256": "c755c6959e51644037a2739c51597e4c9d8d7cb538c367cdacfd068db976098b",
+      "git_blob_sha1": "9dd8937a6af7aeee31cb1dfbe85c48091619f512",
+      "returned_git_sha1": "9dd8937a6af7aeee31cb1dfbe85c48091619f512",
+      "blob_match": true
+    },
+    {
+      "path": "src/main/extension_callback_manager.cpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/extension_callback_manager.cpp",
+      "bytes": 12594,
+      "sha256": "7b966d1d8f64abc051df73ad7cb0eb41be01032c7dac4937c02cfe2b20ac90f0",
+      "git_blob_sha1": "a59a69d6539a4fc899a7f7f823c520f61f665be4",
+      "returned_git_sha1": "a59a69d6539a4fc899a7f7f823c520f61f665be4",
+      "blob_match": true
+    },
+    {
+      "path": "src/include/duckdb/main/extension_callback_manager.hpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/main/extension_callback_manager.hpp",
+      "bytes": 3367,
+      "sha256": "94ba214fdaa8a5280a551cdbf60a89c9a1b8a945ea6a68c2f2539e8572620e00",
+      "git_blob_sha1": "fca546d2e231458f41e680e3143e444903e13ede",
+      "returned_git_sha1": "fca546d2e231458f41e680e3143e444903e13ede",
+      "blob_match": true
+    },
+    {
+      "path": "src/planner/binder/statement/bind_drop.cpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/planner/binder/statement/bind_drop.cpp",
+      "bytes": 5874,
+      "sha256": "f5f6f7c2ddf2824b22c016628ed275eae5d452baa95cdd6102b55cb1d236a756",
+      "git_blob_sha1": "5c47d886ade27eb16d186ecc0ff3ff143cefd30b",
+      "returned_git_sha1": "5c47d886ade27eb16d186ecc0ff3ff143cefd30b",
+      "blob_match": true
+    },
+    {
+      "path": "src/include/duckdb/parser/parsed_data/drop_info.hpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/parser/parsed_data/drop_info.hpp",
+      "bytes": 2325,
+      "sha256": "c01bae02b1a8f8ff9750d2bd40ae5f549229c72009c02c92f5d2fe20b4bf04fc",
+      "git_blob_sha1": "892b27b9fa8a943acce3a0b0c1a4068d5ecb227c",
+      "returned_git_sha1": "892b27b9fa8a943acce3a0b0c1a4068d5ecb227c",
+      "blob_match": true
+    },
+    {
+      "path": "src/parser/peg/transformer/transform_expression.cpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/parser/peg/transformer/transform_expression.cpp",
+      "bytes": 136222,
+      "sha256": "1169444306f40ae3571c7cbd42830bb2da9a07675ce65963cc8d5f86a7dedbf2",
+      "git_blob_sha1": "65aff7f04ebea6a8d2d68595dfdb25e105dddd45",
+      "returned_git_sha1": "65aff7f04ebea6a8d2d68595dfdb25e105dddd45",
+      "blob_match": true
+    },
+    {
+      "path": "src/planner/binder/query_node/bind_select_node.cpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/planner/binder/query_node/bind_select_node.cpp",
+      "bytes": 35107,
+      "sha256": "45474290d48da9626b69807b9f5e95b247cfa41bde2d928fcdc735590e284c1e",
+      "git_blob_sha1": "49843c81256c0c9169556469d7a33d5f968e5d5c",
+      "returned_git_sha1": "49843c81256c0c9169556469d7a33d5f968e5d5c",
+      "blob_match": true
+    },
+    {
+      "path": "src/include/duckdb/common/constants.hpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/constants.hpp",
+      "bytes": 5147,
+      "sha256": "bf3a4e5895a527f146bca7e20d3f73f57f64034819dd0b0e4e01e53d08245a7a",
+      "git_blob_sha1": "5bd87cbcd68847562756258c5c2e6259b6a3c8ee",
+      "returned_git_sha1": "5bd87cbcd68847562756258c5c2e6259b6a3c8ee",
+      "blob_match": true
+    },
+    {
+      "path": "src/common/identifier.cpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/common/identifier.cpp",
+      "bytes": 1458,
+      "sha256": "6220c8d78cb547141e15fe7e11084129f5cd0f07a0d8619b8e2caff5742bd837",
+      "git_blob_sha1": "69bda856bce8bd8e97ce5427e708eced594f50be",
+      "returned_git_sha1": "69bda856bce8bd8e97ce5427e708eced594f50be",
+      "blob_match": true
+    },
+    {
+      "path": "src/include/duckdb/catalog/catalog_entry/duck_schema_entry.hpp",
+      "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/catalog/catalog_entry/duck_schema_entry.hpp",
+      "bytes": 4942,
+      "sha256": "aaad0e0eac40e154a0eb279fdcdc0dce406082a74981e7ee2899702c1bb66afb",
+      "git_blob_sha1": "f19d061cb11730dd139073c2973decbc46d2f200",
+      "returned_git_sha1": "f19d061cb11730dd139073c2973decbc46d2f200",
+      "blob_match": true
+    }
+  ],
+  "conclusion_narrowing": "Catalog-resolved SQL type names were a proof obligation, not an established shadow vulnerability: recognized builtin defaults are generated as internal entries in each main schema before ordinary CREATE vacancy. No runtime type witness exists."
+}

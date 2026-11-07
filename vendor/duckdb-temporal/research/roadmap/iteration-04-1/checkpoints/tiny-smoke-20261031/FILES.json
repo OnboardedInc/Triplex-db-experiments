@@ -1,0 +1,36 @@
+{
+  "schema": "td.item4.1.tiny-result-files/1",
+  "scope": "Only new four-case graph result, synthetic fixtures, project content identities and independent readback; no source-code execution plan or computer details.",
+  "files": [
+    {
+      "name": "README.md",
+      "bytes": 3743,
+      "sha256": "f8e83023f2a42cdfb1dfb6086286972ce4df9e887eaacf019218bf3a239cde61",
+      "git_blob_sha": "24e9627f9bc4be06bc11c65ae845e29ad3bc6e43"
+    },
+    {
+      "name": "RESULT.json",
+      "bytes": 2775,
+      "sha256": "4dfcdfd2f9ebd6cb77194fbc6655982d70f2dc98377d785be61b82abc4dff3b7",
+      "git_blob_sha": "8130b85a812e2ade13a3bac4dbfcb578d6e1216a"
+    },
+    {
+      "name": "FIXTURES.json",
+      "bytes": 2022,
+      "sha256": "fc8253730d785f67eeafc5bdd3674953bd8c3c30bc6c82903d980f9700920468",
+      "git_blob_sha": "f5583183a6b231da89e1b5504e3b54375732cff9"
+    },
+    {
+      "name": "SOURCE-IDENTITIES.json",
+      "bytes": 2145,
+      "sha256": "b22a9df5e5a925b3cdb57c91145580d1d225a7f107a0bcbaac952f412aed105e",
+      "git_blob_sha": "cee84f304d2c6679d564ef163fd08a4fd302cc29"
+    },
+    {
+      "name": "INDEPENDENT-READBACK.md",
+      "bytes": 6489,
+      "sha256": "b4e611cecc6a070178bba6a1a606a2751102d9d76c5303940c5df8703d10c73d",
+      "git_blob_sha": "b069b1b049e5e7482e00515197b8923d713c1d70"
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+{
+  "schema": "td.native-writer-b0-broad-arm/1",
+  "status": "passed",
+  "role": "cpp_candidate",
+  "pid": 31819,
+  "protocolSource": {
+    "commit": "4349accbd5b97e42a01bb10e729cca861cdbcd94",
+    "pins": {
+      "adapter/native-writer-b0-broad.mjs": "ddee99642a4df1cd99af14b851dccd25a0072a9007c8b6fc99f664a66d2714a9",
+      "NATIVE-WRITER-B0-BROAD.md": "c0377b63743c4dc9dbe27063d448ac44d3603eaeeac9cdd40ab6e5ae18d07403"
+    }
+  },
+  "terminal": {
+    "status": "terminal",
+    "argv": [
+      "<pinned-node-installation>/bin/node",
+      "<qualified-build02-runtime>/adapter/benchmark-scale.mjs",
+      "--runtime",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+      "--sizes",
+      "10000000",
+      "--readers",
+      "1,4,16",
+      "--samples",
+      "5",
+      "--warmup",
+      "1",
+      "--writes",
+      "8",
+      "--group-size",
+      "256",
+      "--fixture-mode",
+      "mixed",
+      "--threads",
+      "4",
+      "--memory-limit",
+      "2GB",
+      "--max-temp-directory-size",
+      "4GB",
+      "--max-intermediate-bytes",
+      "4294967296",
+      "--duration-seconds",
+      "60",
+      "--read-duration-seconds",
+      "0",
+      "--max-writes",
+      "12000",
+      "--clone-database",
+      "<accepted-project-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "--clone-evidence",
+      "<accepted-project-runtime>/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "<writer-source-runtime>/build/native-writer-b0-broad-20261106/reverse-01/cpp_candidate/result.json"
+    ],
+    "parentPid": 31819,
+    "startedAtUtc": "2026-11-06T09:50:04.927Z",
+    "pid": 32576,
+    "code": 0,
+    "signal": null,
+    "exitedAtUtc": "2026-11-06T09:54:26.363Z",
+    "elapsedMs": 261421.840667
+  },
+  "proof": {
+    "status": "passed",
+    "role": "cpp_candidate",
+    "pid": 32576,
+    "runtime": "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+    "actualImages": [
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+    ],
+    "roleProof": {
+      "schema": "td.native-writer-lab-process/1",
+      "role": "cpp_candidate",
+      "pid": 32576,
+      "parentPid": 31819,
+      "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+      "preloadSha256": "1cfa9efa476ab4bfeaeb923fb1ed9fe4bf9306cb7d5af10bb0fe5145fb909fb9",
+      "runtime": "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+      "selectedPortUrl": "file://<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/adapter/native-duckdb-port.mjs",
+      "entry": "<qualified-build02-runtime>/adapter/benchmark-scale.mjs",
+      "entryKind": "measured_parent",
+      "childOutput": null,
+      "readerCount": null,
+      "UV_THREADPOOL_SIZE": "4",
+      "routes": {
+        "nativeEnrollment": 11,
+        "nativeGenerated": 1175,
+        "sdkGenerated": 0,
+        "errors": 0,
+        "unknown": 0
+      },
+      "writerPorts": [
+        {
+          "id": 1,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "4"
+          ]
+        },
+        {
+          "id": 2,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "4"
+          ]
+        },
+        {
+          "id": 3,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "4"
+          ]
+        },
+        {
+          "id": 4,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "7"
+          ]
+        },
+        {
+          "id": 5,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "7"
+          ]
+        },
+        {
+          "id": 6,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "7"
+          ]
+        },
+        {
+          "id": 7,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "19"
+          ]
+        },
+        {
+          "id": 8,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "19"
+          ]
+        },
+        {
+          "id": 9,
+          "enrollments": 1,
+          "nativeGenerated": 3,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "19"
+          ]
+        },
+        {
+          "id": 10,
+          "enrollments": 1,
+          "nativeGenerated": 1148,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "19"
+          ]
+        },
+        {
+          "id": 11,
+          "enrollments": 1,
+          "nativeGenerated": 0,
+          "sdkGenerated": 0,
+          "workerConnectionIds": [
+            "19"
+          ]
+        }
+      ],
+      "mechanism": "Generated writer dispatch only; native lifecycle remains active in both roles",
+      "preloadWallMs": 62.745375,
+      "receipts": {
+        "ready": "<writer-source-runtime>/build/native-writer-b0-broad-20261106/reverse-01/cpp_candidate/process/cpp_candidate-32576-ready.json",
+        "exit": "<writer-source-runtime>/build/native-writer-b0-broad-20261106/reverse-01/cpp_candidate/process/cpp_candidate-32576-exit.json"
+      },
+      "loadedImages": [
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "afterCleanup": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "status": "process_role_and_cleanup_verified"
+    },
+    "rawSha256": "67a7e71298f387e842dae56be070f43647959ac6bb6c81f39595be3efcd1ed95",
+    "fixedSamples": 315,
+    "mixedSamples": 348,
+    "acks": 1145,
+    "closedClone": "<qualified-build02-runtime>/build/scale-runs/20261106T095005024Z-9ae0b276/facts-10000000.duckdb"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "submitted_at_utc": "2026-10-30T21:49:01.517Z",
+  "returned_at_utc": "2026-10-30T21:49:06.579Z",
+  "reread_at_utc": "2026-10-30T21:49:16.944Z",
+  "returned_updated_at": "2026-10-30T21:49:05Z",
+  "reread_updated_at": "2026-10-30T21:49:05Z",
+  "submitted_sha256": "75cb2be7d971dcbe44ae981275f0c200e6e1a53f48cca0ffc8a6b7f06a77ecc3",
+  "submitted_bytes": 6327,
+  "head": "8b14300cf42ff9524957f7f5fb41ce7db89f4c1a",
+  "base": "main",
+  "draft": true,
+  "body_equal_all": true,
+  "returned_sha256": "75cb2be7d971dcbe44ae981275f0c200e6e1a53f48cca0ffc8a6b7f06a77ecc3",
+  "returned_bytes": 6327,
+  "reread_sha256": "75cb2be7d971dcbe44ae981275f0c200e6e1a53f48cca0ffc8a6b7f06a77ecc3",
+  "reread_bytes": 6327
+}

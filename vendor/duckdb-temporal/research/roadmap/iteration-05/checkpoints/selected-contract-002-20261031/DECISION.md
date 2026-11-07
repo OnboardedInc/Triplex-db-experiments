@@ -1,0 +1,7 @@
+# Item5 coordinator source-only selection — revision002
+
+The exact frozen002 contract, accounting and bounded independent re-review identified in SELECTION.json are selected for a genuinely new standalone owned-typed-relation reducer source component. Coordinator content/math review confirms the NUL-free correction, fixed reservation/counter prefix machine, portable four-limb exact-final i64 proof, deterministic source schedule and closed guard bound. Frozen001/002 and reviews remain unchanged; this additive decision opens source writing only.
+
+Declared implementation requirements are C++17 standard library, exact64-bit integer words and8-bit text bytes, not observations of a computer/toolchain. New source must not import, modify, compile or invoke the held native candidate, old harness/controller/command, stopped payload or environment/admission artifact. It must not become substitute execution. No host or Datalog adapter is selected, no old API/IR/counter is changed, and actual-v2 remains later explicit integration rather than a v1 replacement.
+
+No compiler, syntax-only check, import, runtime/test/oracle/SQL/benchmark/control probe is authorized by this source decision. Any genuinely new unit scope requires separate review and applicable tool permission. No old dependency or hold is changed. Item3/4 remain unaccepted, item4 incomplete/untested, independent4.1 untested, and full item5 acceptance is not established. No computer-environment details may be collected/saved/transmitted.

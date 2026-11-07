@@ -1,0 +1,22 @@
+{
+  "started_at": "2026-11-06T02:58:05.087354+00:00",
+  "pid": 61904,
+  "source_commit": "9261c96d8ac0ffcc52c0735d396fcbcbf18e4ef0",
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime",
+  "command": [
+    "node",
+    "workloads/run_three_engines.mjs",
+    "--runtime",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime",
+    "--output",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime/build/sdk-integration-functional-20-20261105/first.json",
+    "--samples",
+    "1",
+    "--warmup",
+    "0",
+    "--python",
+    "[LOCAL_PATH_0034]"
+  ],
+  "output": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime/build/sdk-integration-functional-20-20261105/first.json",
+  "log": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime/build/sdk-integration-functional-20-20261105/first.log"
+}

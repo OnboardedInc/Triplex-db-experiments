@@ -1,0 +1,24 @@
+{
+  "schema": "td.native-writer-active-start-corrected-preparation/1",
+  "status": "prepared_no_engine_test",
+  "startedAtUtc": "2026-11-06T08:01:54.578432+00:00",
+  "pid": 90501,
+  "sourceCommit": "011fcb44ef29d06557186a85d703a68575105169",
+  "stage": "terminal",
+  "driverSha256": "69198d35dbd9928633dd99c2ec23cdf6b742630c5df33376d5b9b9cd5b98f48c",
+  "priorTscTerminalSha256": "9d879a0f40dcdf371708971e36027c4ebf43b9432de6ade43eef0579f65b07f7",
+  "priorTscLogSha256": "75d05047efc6764f0c9607aa78f8c758a739f070492b3a81a2612bdd95fb0234",
+  "admissionSha256": "f4dbecf3d26f3cc9ada2492e30d2f4a1bafbabb7bbed0a6e4ef92d1c44001a47",
+  "endedAtUtc": "2026-11-06T08:01:57.236045+00:00",
+  "compiledArtifactFiles": 189,
+  "dependencyFiles": 395,
+  "physicalFiles": 584,
+  "additions": {
+    "build/adapter/test-native-writer-active-teardown.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "build/adapter/test-native-writer-active-teardown.js": "a9c3aead8dfe0b9639bdf5a75a533af8911ae8cdf90e914f213f27a465cf57c9",
+    "build/adapter/native-writer-active-teardown-worker.mjs": "5eca7508e8ea77114b125bff8f046735f4f3205a4e758071a279475828a749fe"
+  },
+  "original186And395Unchanged": true,
+  "allNative48AndSource128Unchanged": true,
+  "priorFailedTscUnchanged": true
+}

@@ -1,0 +1,46 @@
+SELECT DISTINCT (?q_entity_type AS ?v0_type) (?q_entity_value AS ?v0_value) (?q_entity_order AS ?v0_order) (?q_code_type AS ?v1_type) (?q_code_value AS ?v1_value) (?q_code_order AS ?v1_order) (?q_count_type AS ?v2_type) (?q_count_value AS ?v2_value) (?q_count_order AS ?v2_order) (?q_enabled_type AS ?v3_type) (?q_enabled_value AS ?v3_value) (?q_enabled_order AS ?v3_order) (?q_instant_type AS ?v4_type) (?q_instant_value AS ?v4_value) (?q_instant_order AS ?v4_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> { ?w0 <urn:triplex:field:valid_from_order> ?w0_vf ; <urn:triplex:field:recorded_position_order> ?w0_rp . 
+OPTIONAL { ?w0 <urn:triplex:field:valid_to_order> ?w0_vt }
+OPTIONAL { ?w0 <urn:triplex:field:retracted_position_order> ?w0_xp }
+
+?w0 <urn:triplex:field:entity_id> ?q_entity_value .
+?w0 <urn:triplex:field:attribute> ":conf/code" .
+?w0 <urn:triplex:field:scalar_family> ?q_code_type ; <urn:triplex:field:scalar_lexical> ?q_code_value ; <urn:triplex:field:scalar_order> ?q_code_order .
+?w1 <urn:triplex:field:valid_from_order> ?w1_vf ; <urn:triplex:field:recorded_position_order> ?w1_rp . 
+OPTIONAL { ?w1 <urn:triplex:field:valid_to_order> ?w1_vt }
+OPTIONAL { ?w1 <urn:triplex:field:retracted_position_order> ?w1_xp }
+
+?w1 <urn:triplex:field:entity_id> ?q_entity_value .
+?w1 <urn:triplex:field:attribute> ":conf/count" .
+?w1 <urn:triplex:field:scalar_family> ?q_count_type ; <urn:triplex:field:scalar_lexical> ?q_count_value ; <urn:triplex:field:scalar_order> ?q_count_order .
+?w2 <urn:triplex:field:valid_from_order> ?w2_vf ; <urn:triplex:field:recorded_position_order> ?w2_rp . 
+OPTIONAL { ?w2 <urn:triplex:field:valid_to_order> ?w2_vt }
+OPTIONAL { ?w2 <urn:triplex:field:retracted_position_order> ?w2_xp }
+
+?w2 <urn:triplex:field:entity_id> ?q_entity_value .
+?w2 <urn:triplex:field:attribute> ":conf/enabled" .
+?w2 <urn:triplex:field:scalar_family> ?q_enabled_type ; <urn:triplex:field:scalar_lexical> ?q_enabled_value ; <urn:triplex:field:scalar_order> ?q_enabled_order .
+?w3 <urn:triplex:field:valid_from_order> ?w3_vf ; <urn:triplex:field:recorded_position_order> ?w3_rp . 
+OPTIONAL { ?w3 <urn:triplex:field:valid_to_order> ?w3_vt }
+OPTIONAL { ?w3 <urn:triplex:field:retracted_position_order> ?w3_xp }
+
+?w3 <urn:triplex:field:entity_id> ?q_entity_value .
+?w3 <urn:triplex:field:attribute> ":conf/instant" .
+?w3 <urn:triplex:field:scalar_family> ?q_instant_type ; <urn:triplex:field:scalar_lexical> ?q_instant_value ; <urn:triplex:field:scalar_order> ?q_instant_order .
+BIND("string" AS ?q_entity_type) BIND(?q_entity_value AS ?q_entity_order) }
+FILTER(?w0_vf <= "c33fffffffffffff")
+FILTER((!BOUND(?w0_vt) || ?w0_vt > "c33fffffffffffff"))
+FILTER(?w0_rp <= "bff0000000000000")
+FILTER((!BOUND(?w0_xp) || ?w0_xp > "bff0000000000000"))
+FILTER(?w1_vf <= "c33fffffffffffff")
+FILTER((!BOUND(?w1_vt) || ?w1_vt > "c33fffffffffffff"))
+FILTER(?w1_rp <= "bff0000000000000")
+FILTER((!BOUND(?w1_xp) || ?w1_xp > "bff0000000000000"))
+FILTER(?w2_vf <= "c33fffffffffffff")
+FILTER((!BOUND(?w2_vt) || ?w2_vt > "c33fffffffffffff"))
+FILTER(?w2_rp <= "bff0000000000000")
+FILTER((!BOUND(?w2_xp) || ?w2_xp > "bff0000000000000"))
+FILTER(?w3_vf <= "c33fffffffffffff")
+FILTER((!BOUND(?w3_vt) || ?w3_vt > "c33fffffffffffff"))
+FILTER(?w3_rp <= "bff0000000000000")
+FILTER((!BOUND(?w3_xp) || ?w3_xp > "bff0000000000000"))
+ } LIMIT 1001

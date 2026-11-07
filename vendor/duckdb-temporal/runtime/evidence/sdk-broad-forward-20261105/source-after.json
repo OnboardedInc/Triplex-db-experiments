@@ -1,0 +1,28 @@
+{
+  "timestampUtc": "2026-11-06T03:55:07.386407+00:00",
+  "source": {
+    "database": {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "sha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "bytes": 3905433600,
+      "mtimeNs": 1793911060600328880
+    },
+    "recipe": {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "sha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+      "bytes": 350315,
+      "mtimeNs": 1793911060614201524
+    }
+  },
+  "sourceWalAbsent": true,
+  "sourceExactBeforeAfterEquality": true,
+  "harnessPins": {
+    "adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "harnessExactBeforeAfterEquality": true,
+  "helperSha256": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb"
+}

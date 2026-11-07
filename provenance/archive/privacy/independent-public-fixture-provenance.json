@@ -1,0 +1,286 @@
+{
+  "format": "independent-public-fixture-provenance/v1",
+  "status": "PASS",
+  "verifiedPublicFiles": 27,
+  "findingClasses": {
+    "curl-auth-user": 6,
+    "private-key": 12,
+    "jwt": 20,
+    "pkcs12-file": 2
+  },
+  "files": [
+    {
+      "file": "offline/public-source/KurrentDB/CHANGELOG.md",
+      "classes": [
+        "public-upstream-application-link"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/docs/server/http-api/security.md",
+      "classes": [
+        "curl-auth-user"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Auth.OAuth.Tests/Fixture.cs",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Auth.StreamPolicyPlugin.Tests/StreamPolicySelectorFactoryTests.cs",
+      "classes": [
+        "jwt"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.AutoScavenge.Tests/DummyStartup.cs",
+      "classes": [
+        "jwt"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.AutoScavenge.Tests/LicenseTests.cs",
+      "classes": [
+        "jwt"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Components.Tests/TestUtilities/StubLicenseService.cs",
+      "classes": [
+        "jwt"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Core.Testing/Services/Transport/Tcp/test_certificates/ca/ca.key",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Core.Testing/Services/Transport/Tcp/test_certificates/ca_untrusted/ca.key",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Core.Testing/Services/Transport/Tcp/test_certificates/node1/node1.key",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Core.Testing/Services/Transport/Tcp/test_certificates/node2/node2.key",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Core.Testing/Services/Transport/Tcp/test_certificates/node3/node3.key",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Core.Testing/Services/Transport/Tcp/test_certificates/untrusted/untrusted.key",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Core.XUnit.Tests/Services/Archive/FakeLicensingService.cs",
+      "classes": [
+        "jwt"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.Plugins.TestHelpers/Fixtures.cs",
+      "classes": [
+        "jwt"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/KurrentDB/src/KurrentDB.TcpPlugin.Tests/TcpApiPluginTests.cs",
+      "classes": [
+        "jwt"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/fdb-record-layer/yaml-tests/src/test/resources/serialization-keys.p12",
+      "classes": [
+        "pkcs12-file"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/foundationdb/contrib/mtlsbenchmark/keys/key_file.key",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/foundationdb/design/idempotency_ids.md",
+      "classes": [
+        "public-upstream-application-link"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/foundationdb/design/transaction-state-store.md",
+      "classes": [
+        "public-upstream-application-link"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/foundationdb/documentation/sphinx/source/ha-write-path.rst",
+      "classes": [
+        "public-upstream-application-link"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/foundationdb/fdbrpc/FlowGrpcTests.cpp",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/foundationdb/flow/include/flow/SimpleCounter.h",
+      "classes": [
+        "public-upstream-application-link"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/jena/jena-fuseki2/jena-fuseki-main/src/test/java/org/apache/jena/fuseki/main/examples/ExFuseki_08_Https_CmdAuth.java",
+      "classes": [
+        "curl-auth-user"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/jena/jena-fuseki2/jena-fuseki-main/src/test/java/org/apache/jena/fuseki/main/examples/ExFuseki_09_Https_Auth.java",
+      "classes": [
+        "curl-auth-user"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/xtdb/src/test/resources/xtdb/pgwire/xtdb.example.com.key",
+      "classes": [
+        "private-key"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    },
+    {
+      "file": "offline/public-source/xtdb/src/test/resources/xtdb/pgwire/xtdb.example.com.p12",
+      "classes": [
+        "pkcs12-file"
+      ],
+      "sha256MatchesPinnedManifest": true,
+      "gitBlobMatchesPinnedManifest": true,
+      "pinnedCommitRecorded": true,
+      "licenseNoticesRecorded": true
+    }
+  ],
+  "unexpectedNonPublicCredentialLocations": [],
+  "meaning": "Credential-shaped test material and application links listed here are byte-identical to pinned public upstream source. This confirms provenance; credentials were not used or validated.",
+  "sensitiveValuesIncluded": false
+}

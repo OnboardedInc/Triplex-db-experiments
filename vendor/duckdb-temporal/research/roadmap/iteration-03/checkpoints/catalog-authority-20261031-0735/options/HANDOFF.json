@@ -1,0 +1,38 @@
+{
+  "schema": "td.catalog_contract_options_handoff/1",
+  "scope": "NEW independent primary-source-only technical proposal; no previous witness/raw/archive/preparation content or alternate preservation of it",
+  "status": "FROZEN_FOR_ROOT_REVIEW; NO_OPTION_SELECTED; NO_IMPLEMENTATION_RELEASE",
+  "report": {
+    "path": "CONTRACT-OPTIONS.md",
+    "bytes": 25129,
+    "sha256": "afb2cbe97c91a3d98d88e48656359a7e6300ce5bcb88d19ada8412d8438e4b9a"
+  },
+  "primary_implementation_files": 58,
+  "primary_returned_bytes": 2231926,
+  "primary_identity": "SHA256 and returned Git-blob SHA1 all match exact d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "license": "Separate returned-license receipt; retained copy has exactly one documented appended LF. First incorrect byte-equality check is preserved.",
+  "options": {
+    "A": "Preserve absolute rejection of every extra attachment. Requires actual fresh hidden-aware same-context authority; internal C++ loop is source-plausible, not available through current CAPIv2 or build/load/runtime-proved here.",
+    "B1": "Explicitly revise property to successful owned-lookup authority. Hidden absence is not attested; inherited unqualified-table ambiguity may fail closed late.",
+    "B2": "Same explicit property revision plus stronger planned table qualification. All inherited schema/clock/native table dependencies need separately selected integration design.",
+    "optional_type_policy": "Reject visible noninternal types if explicitly desired. Ordinary current-pin creation of fixed builtin-name shadows is source-blocked, not an established vulnerability."
+  },
+  "critical_proofs": [
+    "Protected primitive first inspection avoids overridable aggregate/scalar dependencies before visible callable/temp rejection.",
+    "Allowed active context and reserved main/temp/system aliases close ordinary main schema/catalog ambiguity.",
+    "Non-table implicit fallback requires an unqualified normal-lookup miss and explicitly implicit path entries. Fixed positive trusted builtin/helper resolutions and allowed path prevent hidden aux fallback.",
+    "Unqualified TABLE default-catalog lookup can cause ambiguity outside the normal path. An actually found owned base table causes an error, not silent alternate relation selection.",
+    "CatalogSet snapshot visibility is distinct from the current attachment-map copy and mutable settings. Private/cooperating connection and no unmanaged concurrent mutation remain required.",
+    "SQL casts are catalog-bound, but recognized builtin defaults are internally generated in every main schema before ordinary CREATE vacancy. The initial type-shadow concern is narrowed accordingly."
+  ],
+  "checks": {
+    "source_receipt_check": "SOURCE-ONLY-CHECKS-002.json passed, actual exec exit 0 / chunk 850d5c; frozen app sources unchanged",
+    "preserved_check_failure": "SOURCE-ONLY-CHECK-001-FIRST-FAILURE.json: exit 1 / chunk a84370, license-copy appended-LF provenance only",
+    "preserved_notes_writer_failure": "CLOSURE-WRITER-001-FIRST-FAILURE.json: exit 1 / chunk d7c4a2, parse error before any statement",
+    "runtime": "UNRUN_NOT_AUTHORIZED_IN_THIS_ROUND",
+    "performance": "UNRUN_NO_CLAIM"
+  },
+  "next": "Root/parent independent review and permitted durable selected-decision checkpoint before any app edits or new tests",
+  "pending_calls_sessions": "none",
+  "authority_pending": "Root decision/durability only; no new execution requested"
+}

@@ -1,0 +1,500 @@
+{
+  "schema": "native-mixed-million-qualification/1",
+  "source": "388d355c",
+  "result": "tail_budget_failed",
+  "timestampUtc": "2026-11-05T19:00:09.775Z",
+  "configuration": {
+    "sizes": [
+      1000000
+    ],
+    "readers": [
+      1,
+      4,
+      16
+    ],
+    "samples": 5,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 536870912,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "fixture": {
+    "size": 1000000,
+    "groupSize": 256,
+    "groups": 3907,
+    "position": "3909",
+    "latestCut": true,
+    "retainedBytes": "82789889",
+    "closedRows": "1",
+    "setupRoute": "mixed_native_commands",
+    "schema": "schema mixed_scale version 1 { entity Anchor {s:text required;} entity Row {b:boolean;r:ref_value(Anchor);s:text many;i:int64 many;f:float64 many;dt:datetime many;j:json many;z:blob many;} }",
+    "setupMs": 179080.804792,
+    "databaseBytes": 417083392
+  },
+  "artifactSha256": {
+    "core": "a6235719ff10e7c371f9ea8212e1537f25de719223804d23cc3773db0be40110",
+    "companion": "5ab96770afbed986b33eaa6b75f0f64c843045a636edcb9ff5922a6498d58a68",
+    "control": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "sdkEngine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "rawEvidence": {
+    "file": "build/mixed-million-20261105/first.json",
+    "sha256": "fa0f111fe41ecaa2c7d791f42c30a16595d6114670831c212e39db8054fff0e5"
+  },
+  "fixedReadCells": [
+    {
+      "readers": 1,
+      "kind": "count",
+      "latencyMs": {
+        "count": 5,
+        "min": 59.54191699999501,
+        "p50": 60.29145900000003,
+        "p95": 68.35520800002269,
+        "p99": 68.35520800002269,
+        "max": 68.35520800002269
+      },
+      "exact": true
+    },
+    {
+      "readers": 1,
+      "kind": "grouped_count",
+      "latencyMs": {
+        "count": 5,
+        "min": 61.769209000020055,
+        "p50": 63.369166999997105,
+        "p95": 63.60666700001457,
+        "p99": 63.60666700001457,
+        "max": 63.60666700001457
+      },
+      "exact": true
+    },
+    {
+      "readers": 1,
+      "kind": "projection",
+      "latencyMs": {
+        "count": 5,
+        "min": 62.161625000007916,
+        "p50": 62.75974999999744,
+        "p95": 66.3033750000177,
+        "p99": 66.3033750000177,
+        "max": 66.3033750000177
+      },
+      "exact": true
+    },
+    {
+      "readers": 4,
+      "kind": "count",
+      "latencyMs": {
+        "count": 20,
+        "min": 86.09658300000592,
+        "p50": 107.35812499999884,
+        "p95": 129.86529200000223,
+        "p99": 135.38866599998437,
+        "max": 135.38866599998437
+      },
+      "exact": true
+    },
+    {
+      "readers": 4,
+      "kind": "grouped_count",
+      "latencyMs": {
+        "count": 20,
+        "min": 82.9074580000015,
+        "p50": 108.91966699998011,
+        "p95": 141.25779200001853,
+        "p99": 160.29912499999045,
+        "max": 160.29912499999045
+      },
+      "exact": true
+    },
+    {
+      "readers": 4,
+      "kind": "projection",
+      "latencyMs": {
+        "count": 20,
+        "min": 84.04737499999464,
+        "p50": 120.79595800000243,
+        "p95": 166.14879199999268,
+        "p99": 170.9236249999958,
+        "max": 170.9236249999958
+      },
+      "exact": true
+    },
+    {
+      "readers": 16,
+      "kind": "count",
+      "latencyMs": {
+        "count": 80,
+        "min": 311.5052089999954,
+        "p50": 375.83024999999907,
+        "p95": 595.9995409999974,
+        "p99": 689.1937920000055,
+        "max": 689.1937920000055
+      },
+      "exact": true
+    },
+    {
+      "readers": 16,
+      "kind": "grouped_count",
+      "latencyMs": {
+        "count": 80,
+        "min": 379.97675000000163,
+        "p50": 459.90474999998696,
+        "p95": 680.7064169999794,
+        "p99": 767.7447080000129,
+        "max": 767.7447080000129
+      },
+      "exact": true
+    },
+    {
+      "readers": 16,
+      "kind": "projection",
+      "latencyMs": {
+        "count": 80,
+        "min": 417.7526669999934,
+        "p50": 478.2392089999921,
+        "p95": 753.1753749999916,
+        "p99": 870.1932500000112,
+        "max": 870.1932500000112
+      },
+      "exact": true
+    }
+  ],
+  "mixed": {
+    "exactReads": 1098,
+    "acknowledgedWrites": 136,
+    "errors": 0,
+    "acknowledgementErrors": 0,
+    "latencyMs": {
+      "count": 1098,
+      "min": 145.36745900000096,
+      "p50": 604.2967499999795,
+      "p95": 2483.820624999993,
+      "p99": 6350.930625000008,
+      "max": 19648.26237500002
+    },
+    "maxReaders": 16,
+    "throughputQueriesPerSecond": 18.17927474414319,
+    "maxSampledRssBytes": 2925527040,
+    "windows": [
+      {
+        "startMs": 0,
+        "endMs": 10000,
+        "completedReads": 92,
+        "latencyMs": {
+          "count": 92,
+          "min": 355.0120830000087,
+          "p50": 583.752999999997,
+          "p95": 6399.505374999979,
+          "p99": 6776.021582999994,
+          "max": 6776.021582999994
+        },
+        "completedWrites": 11,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 2332524544,
+          "maxActiveReaders": 16,
+          "maxWaitingReaders": 0,
+          "samples": 387
+        }
+      },
+      {
+        "startMs": 10000,
+        "endMs": 20000,
+        "completedReads": 231,
+        "latencyMs": {
+          "count": 231,
+          "min": 145.36745900000096,
+          "p50": 575.5604170000006,
+          "p95": 1253.9365419999813,
+          "p99": 3806.118167000008,
+          "max": 4201.303083000006
+        },
+        "completedWrites": 30,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 2317926400,
+          "maxActiveReaders": 16,
+          "maxWaitingReaders": 0,
+          "samples": 388
+        }
+      },
+      {
+        "startMs": 20000,
+        "endMs": 30000,
+        "completedReads": 176,
+        "latencyMs": {
+          "count": 176,
+          "min": 228.06904099998064,
+          "p50": 598.0472080000036,
+          "p95": 2677.7690000000002,
+          "p99": 3008.4359580000164,
+          "max": 19648.26237500002
+        },
+        "completedWrites": 19,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 2572484608,
+          "maxActiveReaders": 16,
+          "maxWaitingReaders": 0,
+          "samples": 388
+        }
+      },
+      {
+        "startMs": 30000,
+        "endMs": 40000,
+        "completedReads": 210,
+        "latencyMs": {
+          "count": 210,
+          "min": 164.9225419999857,
+          "p50": 601.4084159999911,
+          "p95": 2334.7153749999998,
+          "p99": 2483.820624999993,
+          "max": 9689.764624999982
+        },
+        "completedWrites": 27,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 2736947200,
+          "maxActiveReaders": 16,
+          "maxWaitingReaders": 0,
+          "samples": 388
+        }
+      },
+      {
+        "startMs": 40000,
+        "endMs": 50000,
+        "completedReads": 131,
+        "latencyMs": {
+          "count": 131,
+          "min": 267.4987090000068,
+          "p50": 748.8626250000088,
+          "p95": 3759.2124579999945,
+          "p99": 4525.5844579999975,
+          "max": 11386.408042000025
+        },
+        "completedWrites": 18,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 2925527040,
+          "maxActiveReaders": 16,
+          "maxWaitingReaders": 0,
+          "samples": 389
+        }
+      },
+      {
+        "startMs": 50000,
+        "endMs": 60000,
+        "completedReads": 242,
+        "latencyMs": {
+          "count": 242,
+          "min": 269.4539999999979,
+          "p50": 622.5097499999974,
+          "p95": 1013.7235000000219,
+          "p99": 1517.1924169999838,
+          "max": 13939.108584000001
+        },
+        "completedWrites": 30,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 2503933952,
+          "maxActiveReaders": 16,
+          "maxWaitingReaders": 0,
+          "samples": 389
+        }
+      },
+      {
+        "startMs": 60000,
+        "endMs": 60398.449082999985,
+        "completedReads": 16,
+        "latencyMs": {
+          "count": 16,
+          "min": 518.0659999999916,
+          "p50": 604.2195419999771,
+          "p95": 1040.3739580000401,
+          "p99": 1040.3739580000401,
+          "max": 1040.3739580000401
+        },
+        "completedWrites": 1,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 2364833792,
+          "maxActiveReaders": 15,
+          "maxWaitingReaders": 0,
+          "samples": 15
+        }
+      }
+    ],
+    "reopenVerified": true,
+    "finalReadVerified": true,
+    "tailQueries": [
+      {
+        "reader": 0,
+        "round": 5,
+        "elapsedMs": 19648.26237500002,
+        "position": "3909",
+        "kind": "projection",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_single_atom",
+        "rows": 256,
+        "startOffsetMs": 2858.8608329999843
+      },
+      {
+        "reader": 3,
+        "round": 50,
+        "elapsedMs": 13939.108584000001,
+        "position": "3909",
+        "kind": "projection",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_single_atom",
+        "rows": 256,
+        "startOffsetMs": 41258.16391599999
+      },
+      {
+        "reader": 8,
+        "round": 45,
+        "elapsedMs": 11386.408042000025,
+        "position": "3909",
+        "kind": "projection",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_single_atom",
+        "rows": 256,
+        "startOffsetMs": 37228.56870799998
+      },
+      {
+        "reader": 7,
+        "round": 30,
+        "elapsedMs": 9689.764624999982,
+        "position": "3909",
+        "kind": "grouped_count",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_count",
+        "rows": 8,
+        "startOffsetMs": 24615.257125000004
+      },
+      {
+        "reader": 4,
+        "round": 5,
+        "elapsedMs": 6776.021582999994,
+        "position": "3909",
+        "kind": "count",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_count",
+        "rows": 1,
+        "startOffsetMs": 3102.880582999991
+      },
+      {
+        "reader": 11,
+        "round": 5,
+        "elapsedMs": 6613.703416999982,
+        "position": "3909",
+        "kind": "grouped_count",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_count",
+        "rows": 8,
+        "startOffsetMs": 2855.896458000003
+      },
+      {
+        "reader": 14,
+        "round": 5,
+        "elapsedMs": 6432.898958000005,
+        "position": "3909",
+        "kind": "grouped_count",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_count",
+        "rows": 8,
+        "startOffsetMs": 3037.8179999999993
+      },
+      {
+        "reader": 5,
+        "round": 5,
+        "elapsedMs": 6428.696708000003,
+        "position": "3909",
+        "kind": "grouped_count",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_count",
+        "rows": 8,
+        "startOffsetMs": 3038.171457999997
+      },
+      {
+        "reader": 13,
+        "round": 4,
+        "elapsedMs": 6399.505374999979,
+        "position": "3919",
+        "kind": "projection",
+        "cut": "latest",
+        "route": "sql",
+        "reason": "owned_unique_scalable_single_atom",
+        "rows": 256,
+        "startOffsetMs": 3036.7334580000024
+      },
+      {
+        "reader": 2,
+        "round": 5,
+        "elapsedMs": 6367.38616699999,
+        "position": "3909",
+        "kind": "grouped_count",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_count",
+        "rows": 8,
+        "startOffsetMs": 3101.7864579999878
+      },
+      {
+        "reader": 8,
+        "round": 5,
+        "elapsedMs": 6350.930625000008,
+        "position": "3909",
+        "kind": "grouped_count",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_count",
+        "rows": 8,
+        "startOffsetMs": 3118.1623749999853
+      },
+      {
+        "reader": 6,
+        "round": 50,
+        "elapsedMs": 4525.5844579999975,
+        "position": "3909",
+        "kind": "projection",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_scalable_single_atom",
+        "rows": 256,
+        "startOffsetMs": 41445.60445799999
+      }
+    ],
+    "reasonCounts": {
+      "owned_scalable_count": 151,
+      "owned_scalable_single_atom": 77,
+      "owned_unique_scalable_count": 582,
+      "owned_unique_scalable_single_atom": 288
+    }
+  },
+  "gates": {
+    "durationMs": 60000,
+    "throughputMin": 15,
+    "p50MaxMs": 1000,
+    "p99MaxMs": 3000,
+    "rssMaxBytes": 3500000000
+  },
+  "next": "Verify whether a sufficient all-cut proof for valid-disjoint same-transaction fragments removes historical deduplication and improves the tail."
+}

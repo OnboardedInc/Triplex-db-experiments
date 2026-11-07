@@ -1,0 +1,9 @@
+{
+  "configuredEntities": 8,
+  "domainSubjects": 8,
+  "logicalHistory": "PASS",
+  "operationReceipts": "PASS",
+  "publicRequiredAtomicRejection": "PASS",
+  "schemaReleaseReadback": "PASS",
+  "status": "PASS_TINY_PUBLIC_FOUNDATION_ONLY"
+}

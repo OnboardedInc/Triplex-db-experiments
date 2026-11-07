@@ -1,0 +1,69 @@
+{
+  "checked_at": "2026-11-03 08:32 UTC (minute resolution)",
+  "repository": "Contributor/research-reference",
+  "visibility": "private",
+  "main": "c44c356a35d16cf20d5d13b4731be1c89c8f49ec",
+  "prs": [
+    {
+      "number": 7,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head_sha": "a7ddd79021ce3f5a7030420ebc1003e855fccfde",
+      "base_sha": "d049f45950469b2110950fb39189d2db3851f9ed",
+      "head_ref": "dot/temporal-datalog-prototype-20261030",
+      "base_ref": "main",
+      "commits": 27,
+      "changed_files": 432,
+      "additions": 335355,
+      "deletions": 0,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "number": 8,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head_sha": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "base_sha": "0a6525287e9987e5b57ee74eaa0c24ad3d9de038",
+      "head_ref": "dot/native-cloud-v06-independent-20261102-0056",
+      "base_ref": "main",
+      "commits": 216,
+      "changed_files": 216,
+      "additions": 68388,
+      "deletions": 0,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "number": 9,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head_sha": "dbb7d27a20430e09413f92259007961ad8e66ac3",
+      "base_sha": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "head_ref": "dot/triple-store-direct-20261102-2330",
+      "base_ref": "dot/native-cloud-v06-independent-20261102-0056",
+      "commits": 29,
+      "changed_files": 189,
+      "additions": 46339,
+      "deletions": 0,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    }
+  ],
+  "page": {
+    "sequence": 92,
+    "updated_at": "2026-11-03T07:42:46.412129Z",
+    "url": "[PRIVATE_APPLICATION_REFERENCE_REMOVED]"
+  },
+  "owner_visibility": "Original owner's live state and pending calls remain unobservable in available published records.",
+  "ci": {
+    "head": "dbb7d27a20430e09413f92259007961ad8e66ac3",
+    "initial_read": "2026-11-03 08:19 UTC (minute resolution)",
+    "combined_statuses": [],
+    "pr_triggered_workflow_runs": [],
+    "claim": "No required-CI pass established; workflow wrapper covers PR-triggered first-page records only."
+  },
+  "runtime_acceptance_change": false,
+  "holds_and_stopped_actions_changed": false,
+  "kind": "READ_ONLY_REMOTE_METADATA_NOT_COMPUTER_SNAPSHOT"
+}

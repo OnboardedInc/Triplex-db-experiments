@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "97c3e0000e7b55242097ce66d7287b8f3a07804b",
+  "file": "adapter/diagnose-reference-coverage-growth.mjs",
+  "sha256": "b203283b6a583156b7eef0d919b67b675e02441ed8b0bc7aa0bcb6b01473d2b8",
+  "node": "[LOCAL_PATH_0043]",
+  "environment": {
+    "UV_THREADPOOL_SIZE": "4",
+    "NODE_OPTIONS": ""
+  },
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/diagnostic-reference-coverage-growth-20261106-01"
+}

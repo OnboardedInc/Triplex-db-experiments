@@ -1,0 +1,85 @@
+{
+  "schema": "native-interval-patch-verification/1",
+  "timestamp_utc": "2026-11-05T14:33:08.663683+00:00",
+  "status": "passed",
+  "base_commit": "67d961b4d3e4a86a91d3ca124aab47661c35722f",
+  "scope": "Candidate native interval-local complete-record correction, provenance audit, lazy format-six compatibility fence and owned rollback cleanup.",
+  "artifact": {
+    "engine": "2.0.0",
+    "candidate_extension_version": "0.20.0",
+    "extension_sha256": "6a253937745382f25624278495d375a0c95c12878396fb6c62c62700079dcfd4",
+    "catalog_sql_sha256": "9149189aefaee13c19b91b9a91c2f408018ef42f3b4241650b05c2ef79378ae6",
+    "control_bridge_sha256": "c46fe8298b05a508ab42324f3a47ee89bcae4461bd5938073d2168b54a96aca5",
+    "owner_extension_sha256": "91fc67d6675d2bb310b8ff85bacde9ac96c870104bb9de02cca32cc10c027df5",
+    "owner_core_extension_sha256": "6a253937745382f25624278495d375a0c95c12878396fb6c62c62700079dcfd4",
+    "owner_engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "source_sha256": {
+    "adapter/native-duckdb-port.mjs": "b427bfd0e391548a5b0aa95c7cdc2bbdee02a3df350dab11e46dc201e633c11b",
+    "adapter/native-entity.ts": "9f47282189bb4545539bdd77a10c041433dd742cec53ab16d16c8a2d081f18ab",
+    "adapter/test-interval-patch.ts": "4b75c8cab809b1f26d63a40dfaf8026aa4d758a262401c451e06666a9035c1dc",
+    "native/catalog.sql": "5e5e8feeb72a274e065d8c9c48b39da6240bed399e0a6d4c85fc683a5e161da6",
+    "native/src/temporal_command.cpp": "4dfdafd2d7b46e23ce003b42ad2daca56e7f7505ef11267695e27a896f1caaba",
+    "native/src/temporal_command.hpp": "92ef654a3466a02aac383739e0cff947247cdf145167f753df6812f261ac9d7c",
+    "native/src/temporal_datalog.cpp": "8a323782c1b4316252799bc99a3c8d3727fc94420c8114b51a783c06e923cf84",
+    "native/src/temporal_integrity.hpp": "7357a78e33421f1e57fe34281eeb168e2b3bf251f5da4d7de18dd6d4c43926bd"
+  },
+  "checks": [
+    {
+      "command": "node --test --test-concurrency=1 build/adapter/test-interval-patch.js",
+      "passed": 8,
+      "failed": 0,
+      "duration_ms": 5240.76125,
+      "output_sha256": "0e25d97a36395478fd35c5b10aab90ecdd85ad2f974662c4f3b9d58b065c1208"
+    },
+    {
+      "command": "node --test --test-concurrency=1 build/adapter/test-entity.js build/adapter/test-owned-store.js build/adapter/test-store-query.js build/adapter/test-control.js build/adapter/test-cleanup.js",
+      "passed": 41,
+      "failed": 0,
+      "duration_ms": 13388.132708,
+      "output_sha256": "94be391a26bce56f0a581bf7c082eb8dc9abbd4b1f574a53f62d39de60d5945a"
+    },
+    {
+      "command": "node_modules/.bin/tsc --pretty false",
+      "status": "passed"
+    }
+  ],
+  "covered": [
+    "Exact half-open valid and knowledge cuts, deterministic replacement/fragment IDs, canonical replay, command-kind collision and full replacement after fragments",
+    "Disjoint IDs, multiple old intervals, gap fill and schema-valid empty record",
+    "Repeated fragment flattening and original schema/reference meaning through new schema versions",
+    "Logical retained rows/bytes at boundary plus or minus one; resultant live rows 4095/4096/4097",
+    "Strict/owned pooled prepared latest and historical reads, full re-audit",
+    "Legacy format-five migration, one-time repeat rejection, explicit/autocommit migration DDL rollback, old initializer/Python rejection of committed format six",
+    "Late INSERT rollback of facts/header/metadata/usage/clock, writer conflict/reconcile, replay under oversized valid current state and reduced budgets",
+    "Orphan/invalid source/forward validator/bounds/format corruption, empty-result history/at metadata guards, aborted owned transaction rollback and healthy re-audit"
+  ],
+  "initial_failures": [
+    {
+      "failure": "Relative build output path resolved under native compiler cwd, so generated catalog header was missing.",
+      "resolution": "Used an absolute isolated output directory."
+    },
+    {
+      "failure": "A row-returning SELECT guard preceded later statements in td_initialize expansion.",
+      "resolution": "Used the existing non-row-returning error-guard pattern; exact version/cardinality checks preserved."
+    },
+    {
+      "failure": "Adversarial replay test removed catalog revision and expected replay despite corrupt format metadata.",
+      "resolution": "Kept strict global metadata audit and narrowed replay contract/test to otherwise valid oversized current state and reduced budgets."
+    },
+    {
+      "failure": "Owned rollback attempted invalidation SQL inside an aborted transaction before ROLLBACK.",
+      "resolution": "Dispatch ROLLBACK first, then conservatively invalidate ownership; preserve returned rollback rows."
+    },
+    {
+      "failure": "Healthy-reuse test expected a JavaScript number from a port that normalizes integer output to bigint.",
+      "resolution": "Corrected expected value to bigint."
+    }
+  ],
+  "limits": [
+    "Fresh replacement record remains at most 64KiB and 4096 values; affected and resulting live entity assertion counts are bounded at4096.",
+    "Format six is assigned only on a successful new patch; old Python/public compatibility openers deliberately reject it.",
+    "Candidate artifact retains build version0.20.0; release integration and full repository verification remain root-owned.",
+    "No new abrupt-process-kill test specifically for interval patches; transaction rollback and late native INSERT fault are exercised."
+  ]
+}

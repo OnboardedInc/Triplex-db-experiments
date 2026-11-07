@@ -1,0 +1,41 @@
+{
+  "format": "triplex-qlever-planner-candidate/1",
+  "predeclaredAtUnix": 1794012345.736537,
+  "problemTag": "qlever.planner-memory.correlated-negation",
+  "arm": "C-persisted-minus",
+  "state": "PREDECLARED_BEFORE_EXECUTION",
+  "control": {
+    "sourcePlan": "compact",
+    "negationPlan": "minus",
+    "receipt": ".devloop/jobs/qlever-negation-minus-family12-v2/attempts/0001",
+    "result": "FirstqueryengineOOM1372GiB; cascadesnotindependentfailures"
+  },
+  "candidate": {
+    "sourcePlan": "persisted",
+    "negationPlan": "minus",
+    "aggregateAnswerPlan": "bounded",
+    "engineMemoryBytes": 2147483648,
+    "queryPlanningBudget": 100,
+    "controllerOldSpaceMiB": 256,
+    "aggregateClientReservationBytes": 939524096
+  },
+  "singleMeasuredVariable": "Select existing persisted scalar leaf instead of compact variable-predicate reconstruction on the same flatfamily12 task. Defensive nested fallback guard has no effect on this flatAST.",
+  "existingMechanism": {
+    "source": "packages/qlever/src/PersistedScalarSource.ts",
+    "writer": "packages/qlever/src/rdf.ts:227",
+    "storedPredicates": [
+      "scalar_family",
+      "scalar_lexical",
+      "scalar_order"
+    ],
+    "maintenanceCost": "Already emitted by current shared writer and counted in all storedquads; no new databasecopy or helper.",
+    "admission": "Existing compiler missing-channel SELECT LIMIT1 over every assertion-id row in exactscope; Qexecutor rejects before mainquery. Every call incurs this guard; all-complete retained-history scan is charged, not free."
+  },
+  "firstGates": [
+    "Actualownedmissing-channelrefusal with simple shared-subject nativepatterncorrelation",
+    "Family12same8current/reopenanswers",
+    "Currentgrammar keyless/global/repeated/typed equality and preflight guards",
+    "Whole142plusunchanged44 onlyifsurvives"
+  ],
+  "scope": "Explicitcandidateprofile only; compact/EXISTS/nativeaggregate defaults unchanged. No performance claim or blanketSPARQLsemanticqualification."
+}

@@ -1,0 +1,164 @@
+{
+  "files": [
+    {
+      "bytes": 24483,
+      "git_blob_sha1": "68460e5db62d88be7738f1114196e35ca2b127a1",
+      "mode": "100644",
+      "path": "api/REPORT.md",
+      "sha256": "ed508f8f74bb8b5ad818127b4ce8cbab9b230c246bfb930b1220f0280290b51e"
+    },
+    {
+      "bytes": 12976,
+      "git_blob_sha1": "76587b333c6cdd9ba1a5c613935d43969e023020",
+      "mode": "100644",
+      "path": "api/SOURCES-AND-LIMITS.md",
+      "sha256": "9402d42f858f9756b00443fa2537fa3e156b113281fb9e93174391e099ea0f07"
+    },
+    {
+      "bytes": 3802,
+      "git_blob_sha1": "eefe2d0bec423325d32fd62b892c6a9659c77372",
+      "mode": "100644",
+      "path": "api/ERRATA.md",
+      "sha256": "7e7cb845f3cc5a3aa354b1f611e24ab3f0c8edbd1b0b58400c22d0ea47b11f9d"
+    },
+    {
+      "bytes": 2378,
+      "git_blob_sha1": "491649f8c9954192bfcca5dd62a464dc04b84a06",
+      "mode": "100644",
+      "path": "api/ERRATA-PROVENANCE.md",
+      "sha256": "4621a7980d208bfebd57097e8279f666962f89fc9c282265c8865178953f3eaf"
+    },
+    {
+      "bytes": 14287,
+      "git_blob_sha1": "2ad34cc7346830a4ee1fc9826aae4697ff9accc1",
+      "mode": "100644",
+      "path": "resource-theory/RESEARCH.md",
+      "sha256": "4fefef3b781f877b75037616f6b03ccf4984e87ed00526d11a8b8fb478164cca"
+    },
+    {
+      "bytes": 11788,
+      "git_blob_sha1": "a4a4956d715f8c10c540c10871fb7b4ff96c99ae",
+      "mode": "100644",
+      "path": "resource-theory/DERIVED-BOUNDS.md",
+      "sha256": "d23c0461ffd23b3625f7ab0e8b3084dba669c083e08022823f18b331a773961b"
+    },
+    {
+      "bytes": 5894,
+      "git_blob_sha1": "3311a9ea232d8f6b7f344e43dc55e14e96409ed7",
+      "mode": "100644",
+      "path": "resource-theory/PRIMARY-SOURCES.md",
+      "sha256": "9445280859c31bbcca0774e46b818cbeaff7cd72391238cdb617ca45e7212051"
+    },
+    {
+      "bytes": 5780,
+      "git_blob_sha1": "a31eff4f2f7dd9b10ee9347cd1878ca1e4f1cf22",
+      "mode": "100644",
+      "path": "resource-theory/OPEN-QUESTIONS.md",
+      "sha256": "97f8d32b72caad9fe2e978785ed6488e4982be200203c4c31de2655ca181376e"
+    },
+    {
+      "bytes": 1896,
+      "git_blob_sha1": "8e1e8f544fdeb64caf17e1402430acb20dca6198",
+      "mode": "100644",
+      "path": "resource-theory/PUBLIC-READ-GAPS.md",
+      "sha256": "1739e1ca15b9297811ffbbee53074b91203ae8152640acfeaa1b84ddf8154191"
+    },
+    {
+      "bytes": 11236,
+      "git_blob_sha1": "c90e1e9fbcc6f5185dfcc3ce75a8355e1e545d3e",
+      "mode": "100644",
+      "path": "correctness/10-RESEARCH.md",
+      "sha256": "6c5c455d6e9450426c04b0230c0c60a4eca1c65a3db2e34edb7d7467ec7cadd8"
+    },
+    {
+      "bytes": 10711,
+      "git_blob_sha1": "051329a61a86fbd44b52791cf2e103f90b3c9f7a",
+      "mode": "100644",
+      "path": "correctness/20-ACCEPTANCE-OBLIGATIONS.md",
+      "sha256": "28f534bb92ef3a15bd133aa97fe31480a13e0a1d4eb60a021f44609d897d70bd"
+    },
+    {
+      "bytes": 8655,
+      "git_blob_sha1": "988af3d5a849508f4bd32746fc388a7571c2257e",
+      "mode": "100644",
+      "path": "correctness/30-HAND-FIXTURE-SPECS.md",
+      "sha256": "ba44e1d2b12e6322f47a56335dca0b71d0b267aad060e9fcad7477dc8e782d8c"
+    },
+    {
+      "bytes": 9092,
+      "git_blob_sha1": "39d0f045f9c6e25b3eec37d82c01f2cb336aba98",
+      "mode": "100644",
+      "path": "correctness/40-SOURCE-LEDGER.md",
+      "sha256": "4619882b9b87de39d67744a8f07ef382034438d8a82040debd62f561d24e4a25"
+    },
+    {
+      "bytes": 12620,
+      "git_blob_sha1": "2c0f0ce9408048c6b9117c473ad8f4f1dcd244aa",
+      "mode": "100644",
+      "path": "review/CORRECTNESS-REVIEW.md",
+      "sha256": "d81e5df141cf5e24179c3985b5d273fce57b029c9e19575c6893487608c7419b"
+    },
+    {
+      "bytes": 13058,
+      "git_blob_sha1": "0b79aaae4673df059f9265d3f62e40704523479f",
+      "mode": "100644",
+      "path": "review/RESOURCE-REVIEW.md",
+      "sha256": "69acfd2f302ff3dff9a0446076ccd52de994e0d3c9e6e54eb4613a742119bf15"
+    },
+    {
+      "bytes": 9603,
+      "git_blob_sha1": "a3b98ce4fda3d5982e0d4604908a2beba92512cd",
+      "mode": "100644",
+      "path": "review/API-REVIEW.md",
+      "sha256": "741ec310f8f6e05f86dfb1df3d34f1d9fc22c4488e5a062ba23837c8f4a402d9"
+    },
+    {
+      "bytes": 7004,
+      "git_blob_sha1": "12c150a4107a9601feabb3bdb52900b418187c6c",
+      "mode": "100644",
+      "path": "review/API-EVIDENCE.md",
+      "sha256": "38051ec0a8fb558033246718070a0c01d16035428c4daea916004db8c266ab5c"
+    },
+    {
+      "bytes": 3743,
+      "git_blob_sha1": "d28b651c7ee18f6196e71ec4e6fcd4101bc6780b",
+      "mode": "100644",
+      "path": "review/API-ERRATUM-DELTA.md",
+      "sha256": "25b8bfa8afd1aafb9909481fe668042de422f37c9fa130f0dfc44fe97c242df1"
+    },
+    {
+      "bytes": 13263,
+      "git_blob_sha1": "9f40ec7bd8f3f7467e6785c72c3d3a4d40aca41e",
+      "mode": "100644",
+      "path": "RESEARCH-SYNTHESIS.md",
+      "sha256": "2f98c4ba55e58ad7d9b8020107b9b44460d4df72819de660c18841e2a4eae091"
+    },
+    {
+      "bytes": 10952,
+      "git_blob_sha1": "9327ce70de1966bc8224cc42fccda3cc44a12875",
+      "mode": "100644",
+      "path": "SOURCE-IDENTITIES.json",
+      "sha256": "413c0012ca038dab19ccbac34f6e73d83a0c48852f4c66a66257745ea860009d"
+    },
+    {
+      "bytes": 10543,
+      "git_blob_sha1": "0ee087e0feb1854b9db42238b9e218af9e281d24",
+      "mode": "100644",
+      "path": "review/SYNTHESIS-REVIEW.md",
+      "sha256": "2f8a067db7425eeedc2e04f3080542d566bcb1cd96e8cf464fe9cab0d100c98d"
+    },
+    {
+      "bytes": 5955,
+      "git_blob_sha1": "3717d421b318a06ec4d1d5b6032819ab3caecba5",
+      "mode": "100644",
+      "path": "README.md",
+      "sha256": "b508b2affc862436552ff5673cab524d22cb7bfc3e1d2f55fdab0043035dd694"
+    }
+  ],
+  "format": "selected-goal6-primary-research-checkpoint-v1",
+  "payload_files_excluding_this_manifest": 22,
+  "raw_acquisition_records_progress_logs_computer_details_or_stopped_material_included": false,
+  "self_hash_policy": "This manifest excludes itself; remote Git identity and independent full readback cover all23 files.",
+  "source_pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "status": "PRELIMINARY_RESEARCH_ONLY_EMPIRICAL_UNRUN_NO_IMPLEMENTATION_SELECTED"
+}

@@ -1,0 +1,42 @@
+{
+  "duckdb": "2.0.0",
+  "ALTER TABLE temporal_facts ADD COLUMN v_tag UTINYINT DEFAULT 1 NOT NULL": "supported",
+  "ALTER TABLE temporal_facts ADD COLUMN v_bool BOOLEAN": "supported",
+  "rebuild_rollback": {
+    "version": 1,
+    "legacy_row": [
+      [
+        "1:0",
+        "e",
+        "a",
+        "1",
+        0,
+        10,
+        1,
+        9223372036854775807
+      ]
+    ]
+  },
+  "rebuild_commit": {
+    "version": 2,
+    "typed_row": [
+      [
+        "1:0",
+        "e",
+        "a",
+        1,
+        "1",
+        0,
+        10,
+        1,
+        9223372036854775807
+      ]
+    ],
+    "receipt": [
+      [
+        1,
+        "probe"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+TAP version 13
+# Subtest: independent full512 native patch trace retains every returned cut and restores all256 entities
+ok 1 - independent full512 native patch trace retains every returned cut and restores all256 entities
+  ---
+  duration_ms: 49643.418916
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-20261105-01/runtime/build/sdk-admission-independent-dUFWpX/facts.duckdb
+# Exact reads per client: 394,391,392,391,391,391,392,391,391,393,390,391,390,391,394,389; actual native patch ACKs: 512
+# Subtest: three held real scopes isolate queued abort/deadline and recycle all16 physical ports
+ok 2 - three held real scopes isolate queued abort/deadline and recycle all16 physical ports
+  ---
+  duration_ms: 695.408916
+  type: 'test'
+  ...
+# Subtest: close and revalidate drain three actual scopes plus thirteen accepted calls
+ok 3 - close and revalidate drain three actual scopes plus thirteen accepted calls
+  ---
+  duration_ms: 854.4265
+  type: 'test'
+  ...
+# Subtest: pooled original writer barrier is not recaptured after heavy admission
+ok 4 - pooled original writer barrier is not recaptured after heavy admission
+  ---
+  duration_ms: 387.479875
+  type: 'test'
+  ...
+# Subtest: readers zero queued full-call deadline cannot advance the real writer tail
+ok 5 - readers zero queued full-call deadline cannot advance the real writer tail
+  ---
+  duration_ms: 414.904875
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 52158.052458

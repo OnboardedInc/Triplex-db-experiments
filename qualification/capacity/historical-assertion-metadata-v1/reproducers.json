@@ -1,0 +1,74 @@
+{
+  "format": "triplex-historical-assertion-metadata-source-wave/1",
+  "status": "SOURCE_ONLY_NOT_BUILT_NOT_EXECUTED_NOT_GRANTED",
+  "problem": "Five current-public tiny V4 reads fail the stronger shared snapshot metadata target while raw lifetime compatibility and all membership/history checks remain intact.",
+  "independentActualFailure": {
+    "path": "qualification/reviews/configured-entity-xtdb-tiny-v4-terminal-independent.json",
+    "sha256": "a79d1ad96d80dc3b013cc181233e75f1a4ba08560ae6e8b45510a2c6543a95c1"
+  },
+  "unchangedPredecessorRun": "configured-entity-xtdb-tiny-v4/0001",
+  "initialAdapterMetadataProfile": "Pinned XTDB codec schemaVersion1 only, separately qualified in tiny V4. It is copied and checked, never an application type-version or automatic evolution rule.",
+  "oracle": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
+  "publicReadInput": "Existing QueryRequest/Attribute handles plus public TemporalBasis recordedAt/validAt ONLY. Do not add or inject recordedPosition into TemporalBasis.",
+  "upperP": "Each new implementation resolves the committed scope position exactly once internally before its assertion read; it returns that real cut in ReadBasis. A controlled second writer may commit after capture. CapturedP is an oracle coordinate, not a public input field.",
+  "resultContract": {
+    "kind": "triplex/assertion-snapshot/1",
+    "basis": "Existing ReadBasis; scope and captured P always present, V resolved once, R only when actually bound.",
+    "mode": "live-at-valid or known-at-valid; both apply the same half-open V window.",
+    "assertions": "Distinct SnapshotAssertion uses existing branded id/entity/attribute and TripleValue leaf types. Explicit nullable metadata is part of this NEW result codec: validTo, createdBy, entityType, schemaVersion and txId each retain their raw nullable value; knownRetirement is null or {recordedAt:number,txId:TransactionId|null}. It exposes no raw retractedAt/retractTxId fields. Existing TypeExpr/TypeSchema describe this result; no new schema DSL or implicit conversion of ordinary Triple is added.",
+    "rawLifetimeCompatibility": "Ordinary Triples.match/entity/entities/history and existing Triple return shapes keep their present raw lifetime contract. No implicit global mask, row repair or harness mask."
+  },
+  "commonFiniteFixture": {
+    "primaryDomainSubjects": 1,
+    "sameTimestampDomainSubjects": 1,
+    "freshScopesPerCandidate": 2,
+    "distinctScopedDomainSubjectsPerCandidate": 2,
+    "primaryCommits": 4,
+    "assertionVersions": 5,
+    "retirements": 3,
+    "sameTimestampCommits": 2,
+    "totalMaximumCommits": 6,
+    "totalMaximumAssertionVersions": 7,
+    "maximumExplicitOperationsPerCommit": 2,
+    "primaryCases": 10,
+    "freshClientRepeat": "All ten new projection reads repeat after each earlier client is fully closed. This is client reopen, not engine restart.",
+    "sameTimeCapture": "Pause a legitimately internal source-P acquisition after it returns P1, commit P2 at the same recorded instant through a second normal writer, then resume the helper. Verify returned P1 plus old value/no future retirement. New fresh invocation captures P2 and returns new value.",
+    "rawCompatibilityControls": "Read ordinary raw history and old-R match before/after new reads. Preserve all complete original lifetime fields and verify no new source fact, claim or operation receipt was created by a read."
+  },
+  "A": {
+    "id": "xtdb-assertion-snapshot-native-helper-a-v1",
+    "hypothesis": "A narrowly named SDK helper over the existing closed native assertion relations can expose truthful known-at-cut assertion metadata without changing the default Triplex runtime or raw lifetime readers.",
+    "seam": "New isolated XTDB helper/application package using current makeXtdbNativeQueries. Native provider acquires P exactly once. Use ctx.facts() for live-at-valid, and ctx.history() plus the SAME explicit V predicate for known-at-valid. Add only declared selective QueryRequest predicates; no Datalog lowering or arbitrary load-query fallback.",
+    "projection": "Map bounded declared native assertion columns into the distinct result type. Existing Native/Sources SQL CASE/XTQL conditional hides future retirement fields inside the qualified read surface. The test harness must compare raw actual results, not apply this mapping for the product.",
+    "sourceInspiration": "packages/xtdb/src/native/NativeQueries.ts:76-103 and packages/xtdb/src/native/Sources.ts:58-97",
+    "cost": "One existing source-cut lookup plus one bounded answer query, decoding only final selected assertions. No new data copy/index/materialized relation or source writes. maxRows+1 refusal, timeout/cancellation and trace work remain charged.",
+    "initialScope": "Committed database assertions only; no transaction pending overlay is serialized or merged. Calling this separate provider from a transaction does not make pending facts committed. No promise of portable implementation before sibling qualification."
+  },
+  "B": {
+    "id": "xtdb-assertion-snapshot-adapter-projection-b-v1",
+    "hypothesis": "A separate basis-aware adapter assertion-read primitive can provide the same result/cut contract while retaining ordinary raw reads and transaction/write behavior.",
+    "seam": "An isolated opt-in snapshot read entry acquires P with currentCommitPosition once outside any active write callback and passes P only through ResolvedTemporalBasis to a NEW private adapter projection. Existing query/getById/retract/history remain untouched; no global runtime metadata default is changed.",
+    "projection": "Use the same known-retirement test as Native/Sources for three backend SELECT CASE columns; preserve raw row filters/value decoding. In known-at-valid mode apply V explicitly even though current history() is all-business-time. Decode into the same distinct SnapshotAssertion result.",
+    "sourceInspiration": "packages/xtdb/src/XtdbStorageAdapter.ts:110-184; packages/core/src/storage/StorageAdapter.ts:28-41; packages/core/src/store/TriplesLive.ts:621-632",
+    "cost": "One cut read plus one bounded selective assertion query; three scalar projections per returned row. A narrow new internal adapter/read SPI and a separate SDK entry are required, followed by Core/public-DTS/package tests. No persistent copy or write is required.",
+    "initialScope": "Committed-only read entry; explicitly refuse/keep outside active pending transactions in the first candidate. Pending/child/retry semantics are not inferred from raw getById. A later pending-aware version needs an explicit authority for sourceK plus pending state and its own tests."
+  },
+  "C": {
+    "id": "xtdb-assertion-native-system-time-mapping-c-research-v1",
+    "status": "GATED_RESEARCH_NOT_AN_IMPLEMENTATION_CANDIDATE",
+    "reason": "Engine system time/snapshot tokens are different coordinates from the deterministic numeric Triplex R/V and scope P. Current submit returns only await visibility token; it records no authoritative logical-P to engine-snapshot map. Multiple staged logical positions may share one physical commit, so even a mapping may not replace logical predicates/projection.",
+    "prerequisite": "Demonstrate exact same-scope operation/commit/snapshot mapping, atomicity, same-timestamp and multi-logical-position cases, reconnect/unknown ACK/retention. No R==engine-system-time conversion, latest SHOW after COMMIT shortcut, or using CLOCK_TIME as historical authority."
+  },
+  "qualificationOrder": [
+    "Independent source/API/oracle review; exact pure manifest and grant before executing the seven new source tests.",
+    "Build separately selectable A and B only after exact source/build/dependency identity and grants; never modify default exports/dist in place.",
+    "Small actual frozen fixture and raw lifetime compatibility first; strict distinct projection oracle/current/fresh-client/basis/lineage and no-read-write receipts.",
+    "Independent actual review before any configured-tiny successor. Preserve V4 failure and identify a NEW projection-qualified profile, not a retroactive PASS.",
+    "Repeat unchanged foundation44 and applicable142/public package checks before broader provider integration. Capacity/growth qualification is still separate."
+  ],
+  "proposedOnlyResources": {
+    "pure": "768MiB/1CPU/32MiB/120s/Node256, no owner/backend imports",
+    "actualEach": "1.25GiB/1CPU/128MiB/180s/Node768 plus existing3GiB/2CPU XTDB owner; exact resources need review/grant",
+    "largerStageAdmission": "BLOCKED"
+  }
+}

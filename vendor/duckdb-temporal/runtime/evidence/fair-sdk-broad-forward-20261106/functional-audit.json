@@ -1,0 +1,52 @@
+{
+  "b0": {
+    "driverStatus": "passed",
+    "fixedCells": 9,
+    "fixedExactSamples": 315,
+    "mixedExactSamples": 355,
+    "ackCount": 50,
+    "firstACK": "39088",
+    "lastACK": "39137",
+    "unreconciledUniqueConsecutiveACKs": true,
+    "oldAndReturnedCuts": true,
+    "all16LogicalReaders": true,
+    "threeQueryKinds": true,
+    "fullWindowACKs": [
+      8,
+      7,
+      9,
+      9,
+      8,
+      8
+    ],
+    "zeroErrors": true,
+    "drainAndReopen": true,
+    "poolMaxObservedActive": 16,
+    "typedTupleScope": "Exact typed values checked by the unchanged mixed-scale independent owning oracle on every call; additional raw audit verifies stored cardinalities/K/receipt progress/lifecycle."
+  },
+  "fair4": {
+    "driverStatus": "passed",
+    "fixedCells": 9,
+    "fixedExactSamples": 315,
+    "mixedExactSamples": 329,
+    "ackCount": 105,
+    "firstACK": "39088",
+    "lastACK": "39192",
+    "unreconciledUniqueConsecutiveACKs": true,
+    "oldAndReturnedCuts": true,
+    "all16LogicalReaders": true,
+    "threeQueryKinds": true,
+    "fullWindowACKs": [
+      17,
+      18,
+      17,
+      18,
+      17,
+      17
+    ],
+    "zeroErrors": true,
+    "drainAndReopen": true,
+    "poolMaxObservedActive": 4,
+    "typedTupleScope": "Exact typed values checked by the unchanged mixed-scale independent owning oracle on every call; additional raw audit verifies stored cardinalities/K/receipt progress/lifecycle."
+  }
+}

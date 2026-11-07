@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "variant": "accepted-item1",
+  "finished_utc": "2026-10-30T22:10:47.770954+00:00",
+  "all20_profiled_plus8_warm_results_exact": true,
+  "controls": [
+    {
+      "dataset": "float",
+      "api": "query",
+      "profiled_public_calls": 5,
+      "fp_reader_calls": 0,
+      "require_supported_calls": 0,
+      "require_masked_calls": 0
+    },
+    {
+      "dataset": "float",
+      "api": "query_json",
+      "profiled_public_calls": 5,
+      "fp_reader_calls": 0,
+      "require_supported_calls": 0,
+      "require_masked_calls": 0
+    },
+    {
+      "dataset": "mixed",
+      "api": "query",
+      "profiled_public_calls": 5,
+      "fp_reader_calls": 0,
+      "require_supported_calls": 0,
+      "require_masked_calls": 0
+    },
+    {
+      "dataset": "mixed",
+      "api": "query_json",
+      "profiled_public_calls": 5,
+      "fp_reader_calls": 0,
+      "require_supported_calls": 0,
+      "require_masked_calls": 0
+    }
+  ],
+  "source_caps_roots_guards_unchanged": true,
+  "classification": "Separate post-study per-function profile, not timing campaign or native-only causal attribution"
+}

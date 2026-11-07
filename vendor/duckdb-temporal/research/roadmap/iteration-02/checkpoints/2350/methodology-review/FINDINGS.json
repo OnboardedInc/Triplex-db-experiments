@@ -1,0 +1,46 @@
+{
+  "scope": "Static text tracing only; no injected benchmark or validator executed by reviewer",
+  "original_method_findings": [
+    {
+      "id": "M01",
+      "location": "analyze.py:14\u201315, compared with run_campaign.py:29\u201333",
+      "finding": "Analyzer never independently rejects failed/nonzero/timeout/validation-error controller pinfo when top campaign and child bundles say PASS.",
+      "static_counterexample": "Change a campaign pinfo returncode to7/statusFAIL_OR_INCOMPLETE/timeoutTrue while retaining topPASS and valid child files; the analyzer never reads these fields before emitting its final PASS. This was not executed.",
+      "bounded_consequence": "Malformed/inconsistent downstream bundle can be accepted; no actual failed process alleged.",
+      "status": "ORIGINAL_HARNESS_UNCHANGED; ROOT_SEPARATE_ACTUAL_RUN_CLOSURE_ADDED",
+      "closure_report_sha256": "b521bc9e08832530d226d79c20d0d33d59bdc487c70f6121ad70b08acdffcc82"
+    },
+    {
+      "id": "M02",
+      "location": "common.py:46\u201361; analyze.py:15\u201317",
+      "finding": "Downstream bundle validator omits full recorded process provenance/schedule/mode joins and exact sweep/warmup sequence.",
+      "bounded_consequence": "Minimal PASS/count/checksum metadata is weaker than the full declared provenance; current frozen worker/controller construction is stronger than downstream revalidation.",
+      "status": "ROOT_SEPARATE_168_PROCESS_11760_OUTCOME_CLOSURE_AND_EXACT_DERIVATION_RECORDED",
+      "closure_report_sha256": "b521bc9e08832530d226d79c20d0d33d59bdc487c70f6121ad70b08acdffcc82",
+      "derivation_report_sha256": "a93e6ea41369456f96bed032a56a3c27f84b7376c118678877c217ac4a689c3c"
+    }
+  ],
+  "supplemental_hygiene": {
+    "location": "verify_postrun.py:40,42\u201355",
+    "finding": "Equality-only nested affinity/caps/native-counter metadata and unbounded register/RSS fields needed exact type/range confirmation. No bad actual record alleged.",
+    "status": "ROOT_SEPARATE_TYPE_AUDIT_RECORDS_ALL168_META_11760_ROWS_PASS_19_DENIALS",
+    "audit_source_sha256": "a88d16e2ec8c26a147a26999fd216e01de4ed27333378c7707a30e3c91a448c9",
+    "audit_report_sha256": "35d4c96479ee9b33b588dac5e7a23c2a8b313964ea2d7e448d788dfc51adc346",
+    "provenance": "Not separately prefrozen; root explicitly preserves tool-write-before-execution and report-embedded source identity, not a new timing."
+  },
+  "nonblocking_endpoint_limit": {
+    "location": "worker.py:43\u201345",
+    "finding": "Assignment result=fn(request) may deallocate the previous result before the stop-clock read.",
+    "interpretation": "Statement-level public-call latency can contain previous-control return disposal. Paired common control order mitigates asymmetry; additive carryover can attenuate ratios. No magnitude measured here.",
+    "status": "PRESERVED_DESCRIPTIVE_BOUNDARY_NOT_A_FAILED_RUN"
+  },
+  "remaining_limits": [
+    "Original analyzer is not generally repaired for future malformed bundles; distinct closure applies to these recorded runs.",
+    "Metadata joins are not independent historic kernel affinity/module-mapping/continuous-FP attestation; history checksum is receipt-derived; threads/Python-version checks are in frozen worker code but not all independently retained meta fields.",
+    "Golden historical expected rows are not a fresh independent semantic oracle; timed full outputs are checked then summarized, not all retained for independent reconstruction.",
+    "Per-control descriptive bootstrap intervals are not family-wise, host/build-generalized or equivalence guarantees; warmup/temporal independence remains a limitation.",
+    "Root retains residual5\u201312percent investigation signals and holds item2 for fresh focused research before any patch."
+  ],
+  "reviewer_reruns_imports_candidate_db_native_fp_tests_or_bootstrap": false,
+  "remaining_concrete_recorded_run_gate_defect_found_after_supplemental_receipts": false
+}

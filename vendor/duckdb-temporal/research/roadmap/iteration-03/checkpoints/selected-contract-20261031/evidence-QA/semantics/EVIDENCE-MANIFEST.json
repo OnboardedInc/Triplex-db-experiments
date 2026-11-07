@@ -1,0 +1,103 @@
+{
+  "utc": "2026-10-31T04:11:37.473332+00:00",
+  "status": "CLOSED_SOURCE_ONLY_QA",
+  "input_manifest_sha256": "849c98fee64ca679ca70d6fbe1ddd133708dc8c1639d4d8d4e5fc28125f59123",
+  "scope": "IR/safety evidence reconciliation and stdlib-only specification/receipt checks; no implementation or application/native/database/FP/build/benchmark execution",
+  "originals_and_snapshot_untouched": true,
+  "pending_external_call": "none",
+  "approval": "none",
+  "execution_session": "none",
+  "fresh_primary_browsing": "none; no unresolved concrete source conflict",
+  "architecture_selected": false,
+  "application_acceptance": "UNRUN",
+  "inventory_identical_two_passes": true,
+  "file_count_excluding_manifest": 12,
+  "bytes_excluding_manifest": 56512,
+  "manifest_self_hash": "excluded by definition; delivered separately in handoff",
+  "files": [
+    {
+      "path": "QA.md",
+      "bytes": 10466,
+      "sha256": "b350563e2ad665bfe0b75b1bad03e54bfb1a3aa408ccdcbc679cd550091bf52e",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "audit_specs.py",
+      "bytes": 12940,
+      "sha256": "bab2d35f77b96f7c231a4589bd2cd8fda9a067cf0eee496e058cac9f8f93bd9d",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "command-exit.jsonl",
+      "bytes": 3451,
+      "sha256": "17b6595aa7d528be737653fb570ed645566ac0c5997b1f866e63670c63989eca",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "corpus-audit.json",
+      "bytes": 1440,
+      "sha256": "32c8cbe021839e434b2c0f2500ecc87ead95a1ce53a3bd3006631a433f3506f9",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "errata.md",
+      "bytes": 2092,
+      "sha256": "6928f27e31bd14572732214912129f23c46b539f6330b1fac9f225c59291d105",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "freeze_outputs.py",
+      "bytes": 6472,
+      "sha256": "c1765b81af5e8188b93a10c3e2268c88fe66c7290f22a606a8d781f78534f667",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "input-verification.json",
+      "bytes": 3656,
+      "sha256": "b502149433eaff753c10de4fb94eb3a79bb495308174b2efd65d48ad0d9d5e2c",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "progress.jsonl",
+      "bytes": 2442,
+      "sha256": "00dffc55835af4e50dbd2a34ec282c5d8c3d6bcc003e7014674319af1d1756b5",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "project-source-verification.json",
+      "bytes": 3536,
+      "sha256": "544c4c24e6eb63ee39cac0d9e4406ecd24eca1074473fd775eebca340ed28dde",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "source-receipt-QA.json",
+      "bytes": 6696,
+      "sha256": "4d246f60e54d50ad0af6ea24db514d00bb17e2b0e6f24173100429debcf95388",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "supporting-pin-input-verification.json",
+      "bytes": 863,
+      "sha256": "95b7fb87e96c684e6d2ec3e4ff199423c3e55b63e3d1eb1f8d66010bb79304d7",
+      "mode": "0444",
+      "utf8": true
+    },
+    {
+      "path": "v2-header-source-check.json",
+      "bytes": 2458,
+      "sha256": "d3126394922e8dfac6367e5f3dfbf7b233585492e106b8e7206cf18de41667b4",
+      "mode": "0444",
+      "utf8": true
+    }
+  ]
+}

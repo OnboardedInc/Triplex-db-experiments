@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: a native writer transport fatal fences writer, active readers and queued readers with its original cause
+ok 1 - a native writer transport fatal fences writer, active readers and queued readers with its original cause
+  ---
+  duration_ms: 416.495333
+  type: 'test'
+  ...
+# Subtest: ordinary writer transport OOM and an embedded fatal phrase preserve healthy instance reuse
+ok 2 - ordinary writer transport OOM and an embedded fatal phrase preserve healthy instance reuse
+  ---
+  duration_ms: 375.502542
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 904.046875

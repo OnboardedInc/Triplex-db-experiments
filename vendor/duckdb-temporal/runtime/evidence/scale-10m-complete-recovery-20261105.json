@@ -1,0 +1,75 @@
+{
+  "schema": "temporal-scale-recovery/1",
+  "timestampUtc": "2026-11-05 14:05:44 UTC",
+  "sourceFailure": "scale-10m-native-resumed-20261105-01.json",
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.19.0",
+    "extension_sha256": "47e9e7629b034bc1f9d5b953a73bc0c93dcae7f0f46775ab5eae2e717f8caccf",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a"
+  },
+  "profile": {
+    "access": "READ_ONLY",
+    "threads": 2,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB"
+  },
+  "observations": {
+    "position": "2442",
+    "commands": "2442",
+    "retainedAssertions": "10000000",
+    "storageUsageCount": "10000000",
+    "invalidCarriers": "0",
+    "validatedNativeHistoryRows": "10000000",
+    "storageUsageBytesMatch": true,
+    "minValue": "0",
+    "maxValue": "9999999",
+    "sumValue": "49999995000000",
+    "lastAcknowledgedCommand": "scale-c-00002441",
+    "lastAcknowledgedAssertionRows": "1664"
+  },
+  "rawRead": {
+    "engine": "v2.0.0",
+    "access": "read_only",
+    "state": [
+      [
+        "2442",
+        "2442",
+        "10000000",
+        "10000000"
+      ]
+    ],
+    "carriers": [
+      [
+        "0"
+      ]
+    ],
+    "history": [
+      [
+        "10000000"
+      ]
+    ],
+    "usage": [
+      [
+        true
+      ]
+    ],
+    "domain": [
+      [
+        "0",
+        "9999999",
+        "49999995000000"
+      ]
+    ],
+    "last": [
+      [
+        "scale-c-00002441",
+        "2442",
+        "1664"
+      ]
+    ]
+  },
+  "preservedOriginalFailure": "scale-10m-recovery-20261105.json",
+  "decision": "All 2442 native commands are acknowledged and all ten million assertions pass read-only retained-history and usage checks. Audit-only resume may continue validation and read measurements without issuing another native write.",
+  "scope": "The second setup failure occurred in the benchmark's combined audit query after every native write completed. Public-query and concurrent-read measurements remain pending."
+}

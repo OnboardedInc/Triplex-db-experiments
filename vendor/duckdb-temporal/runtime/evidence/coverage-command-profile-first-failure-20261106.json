@@ -1,0 +1,312 @@
+{
+  "schema": "td.coverage-command-profile-first-failure/1",
+  "status": "failed_native_json_capture_after_public_semantics_pass",
+  "sourceCommit": "59db67660428984322f6d98872a4e53317c95358",
+  "rawDirectory": "coverage-command-profile-first-failure-20261106-raw",
+  "rawFiles": {
+    "outer-after-first.json": {
+      "bytes": 1737,
+      "sha256": "af9ee2655ab1f9275ca555c0837efa91232c1d28b26b1d319dfb24a919fb00f7"
+    },
+    "outer-baseline-first.started.json": {
+      "bytes": 1133,
+      "sha256": "2176be1cfa49d9a013b7d01ed8d4a3194b476d12c9f39dfdda00e6a4f8be9235"
+    },
+    "outer-baseline-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "outer-baseline-first.stdout": {
+      "bytes": 192,
+      "sha256": "fa06982ab9454573552f66ea880d1fa56e9edaf572293413cebc7fc2dc3d2bef"
+    },
+    "outer-baseline-first.terminal.json": {
+      "bytes": 1236,
+      "sha256": "ce0fd8216db2c0f390bdf753999720069a776874f9dac4adb426f25e6a8a3047"
+    },
+    "outer-before-first.json": {
+      "bytes": 1642,
+      "sha256": "f8a59000e54f6e577dd9a9be1d5dfffd7000bbb28d1157ddd58db1586b5f0ac4"
+    },
+    "outer-run-first.py": {
+      "bytes": 3662,
+      "sha256": "6664a107851c846f15823a4504698ed692b881ce7df3f161ff33a3b67f538b00"
+    },
+    "outer-syntax-first.started.json": {
+      "bytes": 618,
+      "sha256": "fbf7fd1a2c360af45e3c45619c2a1d0d12be1e4082b7d7cd0f283f1378ad7e3d"
+    },
+    "outer-syntax-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "outer-syntax-first.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "outer-syntax-first.terminal.json": {
+      "bytes": 722,
+      "sha256": "bf18610750e6faa1813dc072b906007ff552a6e5e2c7a5f30917901962f333f0"
+    },
+    "driver-child-first.json": {
+      "bytes": 31927,
+      "sha256": "8c5d00280d06cd0950cf2cbc5f1dc9587f1ba14829efc597401a4e379b34ea0b"
+    },
+    "driver-config-first.json": {
+      "bytes": 846,
+      "sha256": "926bc9fb61d28f954cbbbb15dbab3b9b09624e9474761324528c851126719aab"
+    },
+    "driver-result-first.json": {
+      "bytes": 34768,
+      "sha256": "b07cae9b2f3cf107674cc3c914759fa67caeb03adf441455e52a90d6f6cb1dd9"
+    },
+    "driver-started-first.json": {
+      "bytes": 556,
+      "sha256": "37d60d49da1255f5b92665720be2370394ae136a0b06d9e984b943967dd81fea"
+    },
+    "driver-stderr-first.log": {
+      "bytes": 525140,
+      "sha256": "327e7f7a8900b268d63beb6979644c1acaed90fa86f66dd32474d5c7feb1b8e9"
+    },
+    "driver-stdout-first.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "driver-terminal-first.json": {
+      "bytes": 94,
+      "sha256": "7e1a360d36e3341cb10ed1128801220b0de7555e1a98a54f05c18e9f96ac0e60"
+    },
+    "executed-source-profile-reference-coverage-command.mjs": {
+      "bytes": 17095,
+      "sha256": "a20527876b422faa68c855e63c02acc48373f37720e3ba524cf398d364804e3a"
+    },
+    "executed-source-patch-profile-sql.mjs": {
+      "bytes": 2576,
+      "sha256": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24"
+    },
+    "executed-source-REFERENCE-COVERAGE-COMMAND-PROFILE.md": {
+      "bytes": 5885,
+      "sha256": "b952e8f29a5cf929671937d8476922c9645f57ec6d90f2a2fea613483529fb14"
+    }
+  },
+  "outerCapture": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/qualification-coverage-command-profile-20261106-01",
+  "caseCapture": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-01/baseline-zero",
+  "syntaxTerminal": {
+    "pid": 68394,
+    "parentPid": 68390,
+    "argv": [
+      "[LOCAL_PATH_0043]",
+      "--check",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+    "startedAtUtc": "2026-11-06T11:29:44.552268+00:00",
+    "environment": {
+      "UV_THREADPOOL_SIZE": "4",
+      "NODE_OPTIONS": "absent",
+      "TD_NATIVE_WRITER_LAB_*": "absent"
+    },
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T11:29:44.582904+00:00",
+    "elapsedMs": 30.482499860227108
+  },
+  "outerTerminal": {
+    "pid": 68396,
+    "parentPid": 68390,
+    "argv": [
+      "[LOCAL_PATH_0043]",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs",
+      "--role",
+      "baseline",
+      "--scenario",
+      "zero",
+      "--runtime",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "--cost-root",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime",
+      "--output",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-01/baseline-zero"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+    "startedAtUtc": "2026-11-06T11:29:44.583446+00:00",
+    "environment": {
+      "UV_THREADPOOL_SIZE": "4",
+      "NODE_OPTIONS": "absent",
+      "TD_NATIVE_WRITER_LAB_*": "absent"
+    },
+    "exitCode": 1,
+    "endedAtUtc": "2026-11-06T11:29:53.924551+00:00",
+    "elapsedMs": 9341.293500037864
+  },
+  "childTerminal": {
+    "pid": 68398,
+    "code": 0,
+    "signal": null,
+    "endedAtUtc": "2026-11-06T11:29:53.913Z"
+  },
+  "childStatus": "passed_public_semantics_profile_parse_pending",
+  "captureError": {
+    "name": "AssertionError",
+    "message": "Truncated native JSON\n\n1 !== -1\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Truncated native JSON\n\n1 !== -1\n\n    at jsonObjects (file://__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs:134:10)\n    at file://__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs:156:19"
+  },
+  "independentSavedByteJsonError": {
+    "message": "Expecting property name enclosed in double quotes",
+    "char": 65536,
+    "line": 513,
+    "column": 43
+  },
+  "actualPublicCall": {
+    "sql": "PRAGMA td_patch_entity_v2('coverage_cost',1,'Target','target-A','measure-4','{\"n\"=i64(5);}',20,80)",
+    "params": [],
+    "metrics": {
+      "name": "native_entity_writer",
+      "nativeQueueNs": "8208",
+      "sqlCallNs": "86518958",
+      "copyAndCleanupNs": "17375",
+      "completionWaitNs": "13458",
+      "sequence": "16",
+      "connectionId": "4",
+      "bridgeAwaitMs": 86.61204199999997,
+      "portDecodeMs": 0.019000000000005457,
+      "portFullMs": 86.63162499999999
+    }
+  },
+  "actualReceipt": {
+    "commandId": "measure-4",
+    "position": "8",
+    "asserted": [
+      "82099c296de62e5450805cf925de168e4efcc5bfb640c8708ce6d968affc5a23"
+    ],
+    "retracted": [
+      "f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62"
+    ],
+    "schema": "coverage_cost",
+    "version": 1,
+    "type": "Target",
+    "entityId": "target-A",
+    "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+    "requestHash": "46e774769a62f01662aefd991b0ed19e934cd5e8e87c831603b9654049821d60"
+  },
+  "fourWarmupReceipts": [
+    {
+      "commandId": "measure-0",
+      "position": "4",
+      "asserted": [
+        "a30ee02b13c9f0a7f6ee85867b0f74810f463a1c5ab197b7049ef524f0197331",
+        "3734298e1743e2292169898c54044b311bdb6eb6883fc413e0d10cab42d9ffef",
+        "1f479c56b9e69ef7d23d8d6e4d396db4a0d7d087cdbe18591c4c44850a460e28"
+      ],
+      "retracted": [
+        "4b25053f4828d1244287d6ce7c5218b30cbc743c151360a3aa7c5d0b18293ec5"
+      ],
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "entityId": "target-A",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "70f1e580c4d9d8527e6f6e59f2cce04155257475d3d9caa9815fb5acd58e99ec"
+    },
+    {
+      "commandId": "measure-1",
+      "position": "5",
+      "asserted": [
+        "2cbe75d2efa3182fbd47b2cf60dd0f4ade2ddfc2bacfc5d58f9b35f14e0302d4"
+      ],
+      "retracted": [
+        "a30ee02b13c9f0a7f6ee85867b0f74810f463a1c5ab197b7049ef524f0197331"
+      ],
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "entityId": "target-A",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "b234a960a6a51b186c0717917d9786c713959bf9ece56e6bfffe2dc81dac21d7"
+    },
+    {
+      "commandId": "measure-2",
+      "position": "6",
+      "asserted": [
+        "828c207ee5fece892ee49a5832c113063d0f210f2a668b7c7dd2b6c9c3286dee"
+      ],
+      "retracted": [
+        "2cbe75d2efa3182fbd47b2cf60dd0f4ade2ddfc2bacfc5d58f9b35f14e0302d4"
+      ],
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "entityId": "target-A",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "d03bd203d6458df9877f3bf5213fc26c86493b398afd3b526f37f5259d96b9e4"
+    },
+    {
+      "commandId": "measure-3",
+      "position": "7",
+      "asserted": [
+        "f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62"
+      ],
+      "retracted": [
+        "828c207ee5fece892ee49a5832c113063d0f210f2a668b7c7dd2b6c9c3286dee"
+      ],
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "entityId": "target-A",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "d034785d5202e9db66fd98d3201e2a23eebde7aa535d88e21a38dc07fb946e0b"
+    }
+  ],
+  "sourceCriticalSdkNodePinsBeforeAfterEqual": true,
+  "nativeManifestSdkSourcePinsBeforeAfterEqual": true,
+  "costSourcePinsBeforeAfterEqual": true,
+  "configuration": {
+    "allow_unsigned_extensions": "true",
+    "threads": "4",
+    "memory_limit": "128000000B",
+    "max_temp_directory_size": "64000000B",
+    "allowed_configs": "['enable_profiling','profiling_coverage','profiling_output']"
+  },
+  "observedWriterSettings": [
+    [
+      true,
+      "json",
+      "ALL",
+      ""
+    ]
+  ],
+  "loadedImages": [
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_control.node",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_datalog.duckdb_extension",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_writer.node"
+  ],
+  "afterCleanup": {
+    "liveHandles": 0,
+    "pendingCompletions": 0,
+    "asyncContexts": 0,
+    "asyncResources": 0,
+    "lifecycleOwners": 0
+  },
+  "exactReplayAndOldCuts": true,
+  "retainedDatabase": {
+    "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-01/baseline-zero/facts.duckdb",
+    "bytes": 9711616,
+    "closedWithoutWal": true,
+    "binaryCommitted": false
+  },
+  "nativeStderr": {
+    "bytes": 525140,
+    "markerBlockCharacters": 519600,
+    "completeAllStatementProfiles": false
+  },
+  "scope": "One actual baseline2f zero-policy public patch. Setup seed K2/K3, four warmups K4..K7, measure4 K8, exact typed points/presence/history/replay, images and cleanup passed. Root-approved preflight Git-bound driver/doc/operator helper to59 and critical SDK5 to approved cf7 baseline child; no source/engine/cap changes. Native stderr contains truncated JSON and no complete all-statement profile claim. No retry or alternative raw SQL was run.",
+  "hypothesis": "Native C fprintf into Node child stderr pipe may return partial/nonblocking writes; pinned Printer.RawPrint ignores fprintf result. Transport diagnosis is unproven. Proposed separate source repair is regular-file inherited FD2, preserving all public SQL/config/request behavior.",
+  "claims": {
+    "profileGatePassed": false,
+    "operatorAttribution": false,
+    "performanceWin": false,
+    "coveragePromotion": false
+  }
+}

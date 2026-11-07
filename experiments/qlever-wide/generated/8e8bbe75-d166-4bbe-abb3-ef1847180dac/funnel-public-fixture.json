@@ -1,0 +1,335 @@
+{
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:8e8bbe75-d166-4bbe-abb3-ef1847180dac\",0]",
+  "deterministic": {
+    "startTime": 1001,
+    "seed": "8e8bbe75-d166-4bbe-abb3-ef1847180dac"
+  },
+  "operation": "Triples.assertBatch",
+  "source": "reversed workload17 business events payloads, never expected/assertion rows",
+  "facts": [
+    {
+      "entityId": "equal-2",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "equal"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "equal-2",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "payment"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "equal-2",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "20"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "equal-1",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "equal"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "equal-1",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "checkout"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "equal-1",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "20"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "equal-0",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "equal"
+      },
+      "validFrom": 1000010
+    },
+    {
+      "entityId": "equal-0",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "view"
+      },
+      "validFrom": 1000010
+    },
+    {
+      "entityId": "equal-0",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "10"
+      },
+      "validFrom": 1000010
+    },
+    {
+      "entityId": "U-2",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "U"
+      },
+      "validFrom": 1000040
+    },
+    {
+      "entityId": "U-2",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "payment"
+      },
+      "validFrom": 1000040
+    },
+    {
+      "entityId": "U-2",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "40"
+      },
+      "validFrom": 1000040
+    },
+    {
+      "entityId": "U-1",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "U"
+      },
+      "validFrom": 1000005
+    },
+    {
+      "entityId": "U-1",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "checkout"
+      },
+      "validFrom": 1000005
+    },
+    {
+      "entityId": "U-1",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "5"
+      },
+      "validFrom": 1000005
+    },
+    {
+      "entityId": "U-0",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "U"
+      },
+      "validFrom": 1000000
+    },
+    {
+      "entityId": "U-0",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "view"
+      },
+      "validFrom": 1000000
+    },
+    {
+      "entityId": "U-0",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "0"
+      },
+      "validFrom": 1000000
+    },
+    {
+      "entityId": "T-2",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "T"
+      },
+      "validFrom": 1000030
+    },
+    {
+      "entityId": "T-2",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "checkout"
+      },
+      "validFrom": 1000030
+    },
+    {
+      "entityId": "T-2",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "30"
+      },
+      "validFrom": 1000030
+    },
+    {
+      "entityId": "T-1",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "T"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "T-1",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "payment"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "T-1",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "20"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "T-0",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "T"
+      },
+      "validFrom": 1000010
+    },
+    {
+      "entityId": "T-0",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "view"
+      },
+      "validFrom": 1000010
+    },
+    {
+      "entityId": "T-0",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "10"
+      },
+      "validFrom": 1000010
+    },
+    {
+      "entityId": "S-2",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "S"
+      },
+      "validFrom": 1000030
+    },
+    {
+      "entityId": "S-2",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "payment"
+      },
+      "validFrom": 1000030
+    },
+    {
+      "entityId": "S-2",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "30"
+      },
+      "validFrom": 1000030
+    },
+    {
+      "entityId": "S-1",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "S"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "S-1",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "checkout"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "S-1",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "20"
+      },
+      "validFrom": 1000020
+    },
+    {
+      "entityId": "S-0",
+      "attribute": ":w17/a73657373696f6e",
+      "value": {
+        "type": "string",
+        "value": "S"
+      },
+      "validFrom": 1000010
+    },
+    {
+      "entityId": "S-0",
+      "attribute": ":w17/a73746570",
+      "value": {
+        "type": "string",
+        "value": "view"
+      },
+      "validFrom": 1000010
+    },
+    {
+      "entityId": "S-0",
+      "attribute": ":w17/a6174",
+      "value": {
+        "type": "integer",
+        "value": "10"
+      },
+      "validFrom": 1000010
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "schema": "td.native-edb-union-and-workloads-029/1",
+  "result": "PASS",
+  "platform": "macOS ARM64",
+  "source": "7cec72b1f7b0678d589e4ae593d72d164683d155",
+  "coreSha256": "e2e64170a274e08b096e4418efdc7625e016e1a8f55ba7262090d3fd9826d359",
+  "ownerSha256": "852e7e838ba9764e0bf3a8d4d60e59f325d427603122c5aad11ef860360f1fe8",
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "controlBridgeSha256": "57557b073784a65295449d21ebb9e98be939e5862e3df23728d4574339a10c3c",
+  "typecheck": "PASS",
+  "focusedChecks": 13,
+  "scope": [
+    "three bounded union checks covering typed identity, both cuts, preconstruction admission and native fallback",
+    "interval, computed-head and Triplex reservation regressions on the same artifact",
+    "12 workload families and 43 case oracles through three engines and separate reopen checks"
+  ],
+  "logSha256": {
+    "core.log": "9107d1648a43c406530e68cc1ed620fbd60a5a73702c70d65ffa1bd6d88b240b",
+    "first.tap": "6823fd9cbbccca1c32b94eae313f831477ca3821ac00f361daba01349a59eecd",
+    "owner.log": "7ba179fa139ed1fd2d772fee4f2852625c0761a10d8d1f34a7a64ca059848951",
+    "tsc.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "workloads.log": "d6ee40bdfd8dc603c2cc0d1b5ce34c4fd2f97396dc08f8cfc5a112663b3e1060"
+  },
+  "workloads": {
+    "configuration": {
+      "workloads": [
+        "01",
+        "02",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12",
+        "13",
+        "16",
+        "18"
+      ],
+      "samples": 1,
+      "warmup": 0,
+      "threads": 1,
+      "memoryLimit": "128MB",
+      "maxTempDirectorySize": "64MB",
+      "python": "python"
+    },
+    "exactAnswers": 129,
+    "reopenedProfiles": 36,
+    "immutableEventOracles": 71,
+    "packetSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "sourceSha256": {
+      "workloads/run_three_engines.mjs": "fa7d592d831e7c486ebb3bd51b91756bd662ce83327ed6040c727429bceefec2",
+      "workloads/engine_cases.mjs": "089413b9d36e6b8667ee4cccfe22061368d0c551b6ca8cfa4a10f7b8d9e26ebc",
+      "workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+      "workloads/containment_cases.mjs": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+      "workloads/uptime_cases.mjs": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9",
+      "workloads/event_oracles.py": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02",
+      "workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+      "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+    },
+    "families": [
+      "01",
+      "02",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+      "13",
+      "16",
+      "18"
+    ],
+    "rawFile": "build/workload-runs/functional-12-029-20261105.json",
+    "rawSha256": "92baaae9d792136ece160e10c52b26ce82de51925dd4fc845d39ffadb0ca0cf1"
+  },
+  "timingScope": "Correctness only. The frozen ten-million-fact fixture was in setup."
+}

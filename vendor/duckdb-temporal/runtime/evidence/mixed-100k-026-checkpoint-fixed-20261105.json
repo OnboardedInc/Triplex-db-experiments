@@ -1,0 +1,289 @@
+{
+  "schema": "native-mixed-scale-qualification/1",
+  "status": "passed",
+  "timestampUtc": "2026-11-05T18:52:35.543Z",
+  "source": "68fede1d2a195971af3868405308019753cd534b",
+  "configuration": {
+    "sizes": [
+      100000
+    ],
+    "readers": [
+      1,
+      4,
+      16
+    ],
+    "samples": 3,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 15,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 1200,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "fixture": {
+    "size": 100000,
+    "groupSize": 256,
+    "groups": 391,
+    "position": "393",
+    "latestCut": true,
+    "retainedBytes": "8230308",
+    "closedRows": "1",
+    "setupRoute": "mixed_native_commands",
+    "schema": "schema mixed_scale version 1 { entity Anchor {s:text required;} entity Row {b:boolean;r:ref_value(Anchor);s:text many;i:int64 many;f:float64 many;dt:datetime many;j:json many;z:blob many;} }",
+    "setupMs": 14732.439084,
+    "databaseBytes": 50868224
+  },
+  "artifacts": {
+    "core": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b",
+    "owner": "5ab96770afbed986b33eaa6b75f0f64c843045a636edcb9ff5922a6498d58a68",
+    "ownerManifest": "278ae8ed5efb1ac2388e36713af3540660a2c9e25ed4771ce7ea9f6b5befbc66",
+    "control": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "sources": {
+    "harness": "21c4af9100b8c14e5ddb7ba7522f1da4af4b332a36ffd727133e51dac6ac5769",
+    "fixture": "e07df04c95cbd8586f8d8a4c69a3da4b3b88bf909feaf2ac114637b6eed2f700",
+    "adapter": {
+      "adapter/native-entity.ts": "cb929e55a24208d39e5330a5cee4fea1e36dc14fe3ecf1f8fa082eb080306c1d",
+      "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+    }
+  },
+  "rawEvidence": {
+    "file": "build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json",
+    "sha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4"
+  },
+  "fixedCells": [
+    {
+      "readers": 1,
+      "kind": "count",
+      "latencyMs": {
+        "count": 3,
+        "min": 23.896375000000262,
+        "p50": 24.098416999999245,
+        "p95": 24.3505839999998,
+        "p99": 24.3505839999998,
+        "max": 24.3505839999998
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_count"
+    },
+    {
+      "readers": 1,
+      "kind": "grouped_count",
+      "latencyMs": {
+        "count": 3,
+        "min": 25.20091599999978,
+        "p50": 25.92425000000003,
+        "p95": 26.33374999999978,
+        "p99": 26.33374999999978,
+        "max": 26.33374999999978
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_count"
+    },
+    {
+      "readers": 1,
+      "kind": "projection",
+      "latencyMs": {
+        "count": 3,
+        "min": 25.460250000000087,
+        "p50": 26.155749999999898,
+        "p95": 26.824875000000247,
+        "p99": 26.824875000000247,
+        "max": 26.824875000000247
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_single_atom"
+    },
+    {
+      "readers": 4,
+      "kind": "count",
+      "latencyMs": {
+        "count": 12,
+        "min": 28.514665999999124,
+        "p50": 30.021082999999635,
+        "p95": 30.73554199999853,
+        "p99": 30.73554199999853,
+        "max": 30.73554199999853
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_count"
+    },
+    {
+      "readers": 4,
+      "kind": "grouped_count",
+      "latencyMs": {
+        "count": 12,
+        "min": 28.87275000000227,
+        "p50": 29.196749999999156,
+        "p95": 30.600875000000087,
+        "p99": 30.600875000000087,
+        "max": 30.600875000000087
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_count"
+    },
+    {
+      "readers": 4,
+      "kind": "projection",
+      "latencyMs": {
+        "count": 12,
+        "min": 29.10570799999914,
+        "p50": 32.28108399999837,
+        "p95": 35.08808399999907,
+        "p99": 35.08808399999907,
+        "max": 35.08808399999907
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_single_atom"
+    },
+    {
+      "readers": 16,
+      "kind": "count",
+      "latencyMs": {
+        "count": 48,
+        "min": 53.52837499999805,
+        "p50": 73.75545799999963,
+        "p95": 100.59491699999853,
+        "p99": 101.06666699999914,
+        "max": 101.06666699999914
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_count"
+    },
+    {
+      "readers": 16,
+      "kind": "grouped_count",
+      "latencyMs": {
+        "count": 48,
+        "min": 63.98316700000214,
+        "p50": 76.96849999999904,
+        "p95": 105.42154200000004,
+        "p99": 114.46929200000159,
+        "max": 114.46929200000159
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_count"
+    },
+    {
+      "readers": 16,
+      "kind": "projection",
+      "latencyMs": {
+        "count": 48,
+        "min": 59.5804590000007,
+        "p50": 80.3602499999979,
+        "p95": 100.6517079999976,
+        "p99": 104.45054199999868,
+        "max": 104.45054199999868
+      },
+      "route": "sql",
+      "reason": "owned_unique_scalable_single_atom"
+    }
+  ],
+  "mixedCell": {
+    "readerCount": 16,
+    "wallMs": 15045.652041999998,
+    "latencyMs": {
+      "count": 2305,
+      "min": 46.48379100000602,
+      "p50": 93.63904200000252,
+      "p95": 159.40337499999805,
+      "p99": 186.64816699999938,
+      "max": 252.70116699999926
+    },
+    "throughputQueriesPerSecond": 153.2004059090017,
+    "pool": {
+      "before": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "after": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "maxObservedActive": 16,
+      "maxObservedWaiting": 0,
+      "sampleIntervalMs": 25
+    },
+    "overlappingQueryWrites": 5158,
+    "finalReadVerified": true,
+    "reopenVerified": true,
+    "windows": [
+      {
+        "startMs": 0,
+        "endMs": 10000,
+        "completedReads": 1501,
+        "latencyMs": {
+          "count": 1501,
+          "min": 53.243624999999156,
+          "p50": 96.99870799999917,
+          "p95": 161.1830000000009,
+          "p99": 189.72366700000202,
+          "max": 252.70116699999926
+        },
+        "completedWrites": 122,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 838074368,
+          "maxActiveReaders": 16,
+          "maxWaitingReaders": 0,
+          "samples": 394
+        }
+      },
+      {
+        "startMs": 10000,
+        "endMs": 15045.652041999998,
+        "completedReads": 804,
+        "latencyMs": {
+          "count": 804,
+          "min": 46.48379100000602,
+          "p50": 89.99345799999719,
+          "p95": 152.87329199999658,
+          "p99": 168.9330829999999,
+          "max": 221.63695800000278
+        },
+        "completedWrites": 62,
+        "errors": 0,
+        "resources": {
+          "maxRssBytes": 865599488,
+          "maxActiveReaders": 16,
+          "maxWaitingReaders": 0,
+          "samples": 199
+        }
+      }
+    ],
+    "requestedDurationMs": 15000,
+    "drainMs": 45.65204199999789,
+    "tailEvidence": "smoke_only",
+    "exactReads": 2305,
+    "acknowledgedWrites": 184,
+    "errors": 0,
+    "acknowledgedWriteErrors": 0,
+    "maxSampledRssBytes": 865599488,
+    "measuredKinds": {
+      "count": 768,
+      "projection": 766,
+      "grouped_count": 771
+    },
+    "measuredCuts": {
+      "fixed": 465,
+      "latest": 1840
+    }
+  },
+  "limitations": [
+    "Short synthetic scale screen. Tail estimates do not establish a sustained latency SLO.",
+    "Read/write overlap is measured at the public call boundary.",
+    "Sampled process RSS is an observed envelope. Physical memory accounting is separate."
+  ]
+}

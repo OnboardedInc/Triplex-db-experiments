@@ -1,0 +1,18 @@
+Actual runtime: v24.13.0
+
+function testMatchesPattern(test, patterns) {
+  const matchesByNameOrParent = ArrayPrototypeSome(patterns, (re) =>
+    RegExpPrototypeExec(re, test.name) !== null,
+  ) || (test.parent && testMatchesPattern(test.parent, patterns));
+  if (matchesByNameOrParent) return true;
+
+  const testNameWithAncestors = StringPrototypeTrim(test.getTestNameWithAncestors());
+
+  return ArrayPrototypeSome(patterns, (re) =>
+    RegExpPrototypeExec(re, testNameWithAncestors) !== null,
+  );
+}
+
+class TestPlan {
+
+The negative pattern matches a parent/root name; matching ancestors select the full512 child. Its mandatory missing-env assertion ran before digest/clone/open. No512 workload ran. Proposed future selection: --test-skip-pattern=^independent full512. Not run in this gate.

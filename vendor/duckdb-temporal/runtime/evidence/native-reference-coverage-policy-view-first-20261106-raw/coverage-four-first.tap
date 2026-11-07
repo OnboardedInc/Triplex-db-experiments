@@ -1,0 +1,38 @@
+TAP version 13
+# Subtest: coverage accepts adjacent empty-target presence and validates source removal plus target reset at one batch cut
+ok 1 - coverage accepts adjacent empty-target presence and validates source removal plus target reset at one batch cut
+  ---
+  duration_ms: 3211.396333
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/build/reference-coverage-A45kNY/facts.duckdb
+# Subtest: coverage rejects a real target gap atomically and admits the same failed source command after filling it
+ok 2 - coverage rejects a real target gap atomically and admits the same failed source command after filling it
+  ---
+  duration_ms: 1748.536166
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/build/reference-coverage-gap-IcamHL/facts.duckdb
+# Subtest: coverage validates same-batch forward cyclic and self edges against one final overlay
+ok 3 - coverage validates same-batch forward cyclic and self edges against one final overlay
+  ---
+  duration_ms: 1911.343375
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/build/reference-coverage-cycle-I3sYyq/facts.duckdb
+# Subtest: coverage remains bound to each immutable schema through patch carries and delayed legacy replay
+ok 4 - coverage remains bound to each immutable schema through patch carries and delayed legacy replay
+  ---
+  duration_ms: 2215.366333
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/build/reference-coverage-policy-ibBCyb/facts.duckdb
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10433.901375

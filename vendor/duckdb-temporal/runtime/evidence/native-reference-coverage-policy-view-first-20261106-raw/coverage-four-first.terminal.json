@@ -1,0 +1,21 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "build/adapter/test-native-reference-coverage.js"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+  "pid": 91724,
+  "startedAtUtc": "2026-11-06T12:08:45.753621+00:00",
+  "endedAtUtc": "2026-11-06T12:08:56.223729+00:00",
+  "exitCode": 0,
+  "elapsedMs": 10470.134791918099,
+  "environment": {
+    "UV_THREADPOOL_SIZE": "4",
+    "NODE_OPTIONS": "",
+    "TD_REFERENCE_COVERAGE_PREDECESSOR_RUNTIME": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+    "TD_NATIVE_WRITER_LAB_prefix": "removed"
+  }
+}

@@ -1,0 +1,222 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.000004458,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 0.000049459,
+                    "type": "CREATE_TABLE_AS",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Projections": [
+                                    "schema_name",
+                                    "schema_version",
+                                    "entity_type",
+                                    "entity_id",
+                                    "command_id",
+                                    "record_text",
+                                    "valid_from",
+                                    "valid_to",
+                                    "schema_hash",
+                                    "is_live_type",
+                                    "prepared",
+                                    "recorded_at"
+                                ],
+                                "Estimated Cardinality": "1"
+                            },
+                            "intermediate_rows": 1,
+                            "intermediate_size_bytes": 16781,
+                            "timing": 0.000017166,
+                            "type": "PROJECTION",
+                            "children": [
+                                {
+                                    "extra_info": {
+                                        "Join Type": "RIGHT",
+                                        "Conditions": [
+                                            "schema_name = schema_name",
+                                            "entity_type = entity_type"
+                                        ],
+                                        "Estimated Cardinality": "1"
+                                    },
+                                    "intermediate_rows": 1,
+                                    "intermediate_size_bytes": 20629,
+                                    "timing": 0.000039292,
+                                    "type": "HASH_JOIN",
+                                    "children": [
+                                        {
+                                            "extra_info": {
+                                                "Table": "facts.td_catalog_v1.schema_type_modes",
+                                                "Type": "Sequential Scan",
+                                                "Projections": [
+                                                    "schema_name",
+                                                    "entity_type",
+                                                    "is_live"
+                                                ],
+                                                "Dynamic Filters": [
+                                                    "(schema_name = 'coverage_cost')",
+                                                    "(entity_type = 'Target')"
+                                                ],
+                                                "Estimated Cardinality": "3"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 33,
+                                            "row_groups_scanned": 1,
+                                            "rows_scanned": 3,
+                                            "timing": 0.000006542,
+                                            "total_row_groups_to_scan": 1,
+                                            "type": "TABLE_SCAN"
+                                        },
+                                        {
+                                            "extra_info": {
+                                                "Join Type": "LEFT",
+                                                "Conditions": [
+                                                    "schema_name = name",
+                                                    "schema_version = version"
+                                                ],
+                                                "Estimated Cardinality": "1"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 20628,
+                                            "timing": 0.000069791,
+                                            "type": "HASH_JOIN",
+                                            "children": [
+                                                {
+                                                    "extra_info": {
+                                                        "Table": "\"temp\".main.__td_native_input",
+                                                        "Type": "Sequential Scan",
+                                                        "Projections": [
+                                                            "schema_name",
+                                                            "schema_version",
+                                                            "entity_type",
+                                                            "entity_id",
+                                                            "command_id",
+                                                            "record_text",
+                                                            "valid_from",
+                                                            "valid_to"
+                                                        ],
+                                                        "Estimated Cardinality": "1"
+                                                    },
+                                                    "intermediate_rows": 1,
+                                                    "intermediate_size_bytes": 100,
+                                                    "row_groups_scanned": 1,
+                                                    "rows_scanned": 1,
+                                                    "timing": 0.00000625,
+                                                    "total_row_groups_to_scan": 1,
+                                                    "type": "TABLE_SCAN"
+                                                },
+                                                {
+                                                    "extra_info": {
+                                                        "Table": "facts.td_catalog_v1.\"schemas\"",
+                                                        "Type": "Sequential Scan",
+                                                        "Projections": [
+                                                            "name",
+                                                            "version",
+                                                            "content_hash",
+                                                            "dsl",
+                                                            "ir"
+                                                        ],
+                                                        "Estimated Cardinality": "1"
+                                                    },
+                                                    "intermediate_rows": 1,
+                                                    "intermediate_size_bytes": 68,
+                                                    "row_groups_scanned": 1,
+                                                    "rows_scanned": 1,
+                                                    "timing": 0.000009209,
+                                                    "total_row_groups_to_scan": 1,
+                                                    "type": "TABLE_SCAN"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000002458,
+        "aggregate_reuse": 0.000003292,
+        "build_side_probe_side": 0.000014291,
+        "column_lifetime": 0.000013708,
+        "common_aggregate": 0.000001708,
+        "common_subexpressions": 0.000004875,
+        "common_subplan": 0.00004775,
+        "cte_filter_pusher": 2.91e-7,
+        "cte_inlining": 2.09e-7,
+        "deliminator": 2.92e-7,
+        "duplicate_groups": 0.000004167,
+        "empty_result_pullup": 3.34e-7,
+        "expression_rewriter": 0.000021583,
+        "filter_pullup": 7.5e-7,
+        "filter_pushdown": 0.000017875,
+        "grouping_sets": 8.34e-7,
+        "in_clause": 7.5e-7,
+        "join_elimination": 0.000003792,
+        "join_filter_pushdown": 0.000036333,
+        "join_order": 0.00011675,
+        "late_materialization": 4.17e-7,
+        "limit_pushdown": 3.75e-7,
+        "outer_join_simplification": 0.000005125,
+        "partial_aggregate_pushdown": 0.000001541,
+        "partitioned_execution": 4.16e-7,
+        "projection_placement": 0.000005459,
+        "projection_pullup": 0.000005167,
+        "redundant_order_keys": 0.000008708,
+        "regex_range": 3.34e-7,
+        "reorder_filter": 0.000001833,
+        "row_group_pruner": 3.33e-7,
+        "row_number_rewriter": 7.08e-7,
+        "sampling_pushdown": 3.33e-7,
+        "scalar_fn_pushdown": 2.91e-7,
+        "statistics_propagation": 0.000023667,
+        "top_n": 1.67e-7,
+        "top_n_window_elimination": 0.000002125,
+        "total_time": 0.000403125,
+        "type_pushdown": 5e-7,
+        "unnest_rewriter": 3.34e-7,
+        "unused_columns": 0.000014542,
+        "window_self_join": 3.33e-7
+    },
+    "physical_planner": {
+        "column_binding": 0.000007083,
+        "create_plan": 0.000020709,
+        "resolve_types": 4.58e-7,
+        "total_time": 0.000031666
+    },
+    "planner": {
+        "binding_time": 0.000210375,
+        "total_time": 0.000277166
+    },
+    "query": {
+        "cpu_time": 0.000202167,
+        "sql": "CREATE TEMP TABLE __td_native_plan AS\n SELECT i.*,s.content_hash schema_hash,coalesce(m.is_live,FALSE) is_live_type,\n system.main.td_prepare_entity_v2(s.dsl,s.ir,i.entity_type,i.record_text) prepared,\n epoch_ms(current_timestamp)::DOUBLE recorded_at\n FROM __td_native_input i LEFT JOIN td_catalog_v1.schemas s ON s.name=i.schema_name AND s.version=i.schema_version\n LEFT JOIN td_catalog_v1.schema_type_modes m USING(schema_name,entity_type);\n",
+        "total_intermediate_rows": 7,
+        "total_intermediate_size_bytes": 58247,
+        "total_row_groups_scanned": 3,
+        "total_row_groups_to_scan": 3,
+        "total_rows_scanned": 5,
+        "total_time": 0.001567166
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 18778608,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 1048576
+    }
+}

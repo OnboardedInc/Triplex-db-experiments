@@ -1,0 +1,76 @@
+{
+  "format": "independent-handoff-state-review/1",
+  "status": "PASS_WITH_EXPLICIT_LIMITS",
+  "reviewedAtUtc": "2026-11-06T16:55:18.055751+00:00",
+  "scope": "Read-only challenge of pause narrative, source/evidence chronology, incomplete goals, scale and disconnected-build claims. Separate from artifact-integrity audit.",
+  "blockingFindings": [],
+  "correctedBeforeApproval": [
+    {
+      "item": "Historical DuckDB resource units",
+      "resolution": "Pause state now preserves exact 128MB/64MB settings; retained OOM reports 122.0MiB, so binary-unit inflation was removed."
+    },
+    {
+      "item": "QLever candidate/profile distinction",
+      "resolution": "Seven MASK/DISTINCT cases explicitly belong to separate 2CPU/2GiB candidate nodes and are not full compact-v3 qualification."
+    }
+  ],
+  "checks": [
+    {
+      "item": "Latest backend chronology",
+      "status": "PASS",
+      "finding": "XTDB retained 15:30 runtime and 15:34 workload receipts PASS with unchanged captured inputs. Pause state correctly denies final-build acceptance. Latest QLever 16:14 wrapper FAIL is duplicate ?node projection, with 44 pending upstream cases, not a claimed 44 PASS."
+    },
+    {
+      "item": "Older QLever workload outcome",
+      "status": "PASS",
+      "finding": "Included report has 113 observed checks and 70 PASS, consistent with 43 FAIL and 29 unexecuted out of 142. No fresh compact-v3 workload 142 or complete passing paired comparison is claimed."
+    },
+    {
+      "item": "Known recursion defect remains in source",
+      "status": "PASS",
+      "finding": "recursion.ts still compiles find:[first,end], allowing coincident variables. Validation stack matches included failure. No packaging repair or rerun is claimed."
+    },
+    {
+      "item": "Workspace tests are distinct from native qualification",
+      "status": "PASS",
+      "finding": "Included log supports 719 core, 8 HTTP codec, 12 strict comparator tests, 28 test tasks and 30 typecheck tasks. Native integration skips in that workspace run do not become backend passes; separate runtime/workload outcomes remain explicit."
+    },
+    {
+      "item": "Native recovery and managed-writer limits",
+      "status": "PASS",
+      "finding": "Recovery receipt checks 7+2+36=45 typed synthetic facts at retained source cuts. Omitted mutable state prevents bootstrap-only reproduction. Managed-writer receipt is 30 offline checks with 0 native requests/actions; no native fault qualification is asserted."
+    },
+    {
+      "item": "Ten goals, entity scale and comparison",
+      "status": "PASS",
+      "finding": "Both new backends remain incomplete. 100k sparse subjects, ten-million retained facts and ten-million distinct entities are kept separate. Roughly 100 million active facts is the representative final target. DuckDB remains an earlier reference, not a third current competitor. No fair P99 or final paired performance pass is claimed."
+    },
+    {
+      "item": "Offline and sanitized-export limits",
+      "status": "PASS",
+      "finding": "Documentation distinguishes captured raw archives from a qualified disconnected build, notes system/lifecycle/browser prerequisites, macOS-only DuckDB companion linking, Linux ARM64 images, original-Git source-proof incompatibility, unique-owner controller adaptation and new-machine startup qualification."
+    }
+  ],
+  "limits": [
+    "No live service/container state was queried; source-machine stop and no-new-native-action statements remain the packaging owners stated pause boundary, consistent with the included receipt chronology.",
+    "No source, build, installation, service, native query, fault trial, benchmark or package consumer run was performed for this review.",
+    "This review does not certify implementation correctness, full export completeness, privacy of every public upstream fixture, or a successful disconnected build.",
+    "Final archive/tree sealing and independent privacy scans remain separate packaging steps."
+  ],
+  "inputSha256": {
+    "README.md": "28193a8f09c9a1d9c90677dc27ddf2e9f190fb5bcba445a0ecd82af32246b439",
+    "handoff/PAUSED-STATE.md": "12c814363b5a4ff2783f63fa11aad3175c63677bcebcd667f2b7dc1e107abf39",
+    "handoff/RESUME.md": "ab220e96c14ca006e78ce3bfca7f1ad8279dcbc1b0f62be996c232a7055d366f",
+    "triplex-backends/qualification/evidence/workspace-check-final-v2.log": "a8ea72299b1db64cd843adc9dbc9e5decade36aca4e654f965087f9c223cfc45",
+    "triplex-backends/qualification/evidence/xtdb/suite-2026-11-06T15-30-06-453Z-4117112d-receipt.json": "11ccedceac4eb491c5cc164ca9a60c48fa0f4f63c0bbc547d11ffacfcadcf545",
+    "triplex-backends/qualification/evidence/xtdb/workloads-2026-11-06T15-34-12-560Z-d6f37cb7-receipt.json": "556945e5f1ecd7f4a17dbdec16ed3a278f81e53cb6f40a5c521460d7116d9765",
+    "triplex-backends/qualification/evidence/qlever/suite-2026-11-06T16-14-19-211Z-92a571ac-receipt.json": "b91c76b32fde5d830493864be97ac1e832bde155c505890974b8ed2d16604905",
+    "triplex-backends/qualification/evidence/qlever/suite-2026-11-06T16-14-19-211Z-92a571ac-vitest.json": "d3555d872a67b9212ca81518f3f74c5cbf75f80942b3c7421423f6a56b87a3c9",
+    "triplex-backends/qualification/evidence/qlever/workloads-2026-11-06T14-37-48-090Z-ef903d8b-workloads.json": "2b7567f59c0f51599bc792be0155eb73174db71787e7f95d5df9bc3cca883388",
+    "triplex-backends/qualification/evidence/qlever-compact-v3-data-recovery-1793981306328510000.json": "18285093403231ef4ef900a95322715a44b902972268425c71c6fe86caa4cb3f",
+    "triplex-backends/qualification/evidence/qlever-managed-writer-model-1793981775834415000.json": "c699fbae779a2a1b22c127234628640c3e6ecabe21100c205e349544c7c687d2",
+    "triplex-backends/packages/qlever/src/recursion.ts": "7ac8d843d20837d85a3688cc1bb3d9878289aafde9c9c732d030a4a6002eb4cf",
+    "triplex-backends/packages/qlever/src/QleverQueryExecutor.ts": "3f959c7873ae7e091fb31991741260104b3ff3cbab48228a76aaeac0de164fc5",
+    "duckdb-temporal/current/runtime/evidence/native-reference-coverage-growth-trace-first-20261106.json": "2dd478294697540151a7dc90ab615f87d80bfe3001a866ac008e0508b2b1dca6"
+  }
+}

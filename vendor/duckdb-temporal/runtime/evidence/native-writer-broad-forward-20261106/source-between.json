@@ -1,0 +1,19 @@
+{
+  "point": "between",
+  "recordedAtUtc": "2026-11-06T07:10:51.956637+00:00",
+  "walAbsent": true,
+  "files": {
+    "database": {
+      "sha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "bytes": 3905433600,
+      "mtimeNs": 1793911060600328880,
+      "ctimeNs": 1793911060600328880
+    },
+    "recipe": {
+      "sha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+      "bytes": 350315,
+      "mtimeNs": 1793911060614201524,
+      "ctimeNs": 1793911060614201524
+    }
+  }
+}

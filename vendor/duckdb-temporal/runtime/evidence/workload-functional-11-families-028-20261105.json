@@ -1,0 +1,422 @@
+{
+  "schema": "td.workload-functional-campaign/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T19:40:01.605Z",
+  "engineSource": "bdd4b6bef63ead76432f1b23d5c043ff69557025",
+  "runnerSource": "486141bc53d8ae7526cc5f7523315266ea9beb01",
+  "rawEvidence": {
+    "file": "build/workload-runs/all-11-028-20261105.json",
+    "sha256": "10bce634aad5ebdef08ec2129868e2af03d820b3c6b92c383adaaa9d82330abc"
+  },
+  "packetSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "runnerSourcesSha256": {
+    "workloads/run_three_engines.mjs": "57d56f94017e204fca762561e64e1e260e497cc00e4a71bcb4b4f35c44b4adad",
+    "workloads/engine_cases.mjs": "6900a280380ce71aef503fc694a0e3f1cb189f74309b0960e4f062f6b1a2460a",
+    "workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+    "workloads/containment_cases.mjs": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+    "workloads/event_oracles.py": "a12fcbc373865e05b00c53b02136796c003106fa923c6762cf7a0a93f59d2b4d",
+    "workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+  },
+  "runtimeArtifactSha256": {
+    "build/artifact.json": "64d9c8063c165d926e31d4039841a630ea3d8688d25ca5762468b0cfb4212708",
+    "build/temporal_datalog.duckdb_extension": "0e5c2a02c15f146d9040c7f41ea21f8d6bb8080b98468cdb1d5667f24c404fa5",
+    "build/temporal_control.node": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "build/adapter/native-entity.js": "dcad01a37ae791e5925f48db12e65a4bf27b4ed046711594779dd7c405a8dfac",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/owner_probe/artifact.json": "91f5b7b8dce5c23ef501ff24f2a8d971a03e56b5a66e7f82dd6056f6ccdbdf2b",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "fe13a80efe5202d73e34f6a69e1452a8abee35f4e6c4b1b5459bc925e50b37e2"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "configuration": {
+    "workloads": [
+      "01",
+      "02",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+      "13",
+      "16"
+    ],
+    "samples": 1,
+    "warmup": 0,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "python": "python"
+  },
+  "oracleCasesValidated": 71,
+  "selectedOracleCases": 38,
+  "exactEngineAnswers": 114,
+  "reopenProfilesPassed": 33,
+  "scope": "Synthetic functional answers and reopen. Each case has one measured sample. Full workload performance and maintenance comparison follows ten-goal acceptance.",
+  "profiles": [
+    {
+      "workload": "01",
+      "profile": "naive_sql",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 11.532625000000053
+    },
+    {
+      "workload": "01",
+      "profile": "direct_duckdb",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 536576,
+      "ingestionMs": 22.539750000000026
+    },
+    {
+      "workload": "01",
+      "profile": "temporal_store",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 6565888,
+      "ingestionMs": 111.53820800000017
+    },
+    {
+      "workload": "02",
+      "profile": "direct_duckdb",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 536576,
+      "ingestionMs": 4.12495899999999
+    },
+    {
+      "workload": "02",
+      "profile": "temporal_store",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 6041600,
+      "ingestionMs": 106.54166699999996
+    },
+    {
+      "workload": "02",
+      "profile": "naive_sql",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 1.8151670000002014
+    },
+    {
+      "workload": "06",
+      "profile": "temporal_store",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 5255168,
+      "ingestionMs": 151.57220800000005
+    },
+    {
+      "workload": "06",
+      "profile": "naive_sql",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 3.329250000000229
+    },
+    {
+      "workload": "06",
+      "profile": "direct_duckdb",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 3.232458000000406
+    },
+    {
+      "workload": "07",
+      "profile": "naive_sql",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 3.842041999999765
+    },
+    {
+      "workload": "07",
+      "profile": "direct_duckdb",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 3.1459169999998267
+    },
+    {
+      "workload": "07",
+      "profile": "temporal_store",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 5255168,
+      "ingestionMs": 149.94754199999988
+    },
+    {
+      "workload": "08",
+      "profile": "direct_duckdb",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 1323008,
+      "ingestionMs": 2.928707999999915
+    },
+    {
+      "workload": "08",
+      "profile": "temporal_store",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 5255168,
+      "ingestionMs": 128.03012499999932
+    },
+    {
+      "workload": "08",
+      "profile": "naive_sql",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 3.3056249999999636
+    },
+    {
+      "workload": "09",
+      "profile": "temporal_store",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 5255168,
+      "ingestionMs": 82.22775000000001
+    },
+    {
+      "workload": "09",
+      "profile": "naive_sql",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 3.5905839999995806
+    },
+    {
+      "workload": "09",
+      "profile": "direct_duckdb",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 1323008,
+      "ingestionMs": 6.018415999999888
+    },
+    {
+      "workload": "10",
+      "profile": "naive_sql",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 6.676916999999776
+    },
+    {
+      "workload": "10",
+      "profile": "direct_duckdb",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 1847296,
+      "ingestionMs": 199.73466700000063
+    },
+    {
+      "workload": "10",
+      "profile": "temporal_store",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 5255168,
+      "ingestionMs": 197.0574999999999
+    },
+    {
+      "workload": "11",
+      "profile": "direct_duckdb",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 5.832875000000058
+    },
+    {
+      "workload": "11",
+      "profile": "temporal_store",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 5255168,
+      "ingestionMs": 202.12937499999953
+    },
+    {
+      "workload": "11",
+      "profile": "naive_sql",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 2.4645830000008573
+    },
+    {
+      "workload": "12",
+      "profile": "temporal_store",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 6041600,
+      "ingestionMs": 229.2095420000005
+    },
+    {
+      "workload": "12",
+      "profile": "naive_sql",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 3.614207999999053
+    },
+    {
+      "workload": "12",
+      "profile": "direct_duckdb",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 7.829250000000684
+    },
+    {
+      "workload": "13",
+      "profile": "naive_sql",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 2.9315829999995913
+    },
+    {
+      "workload": "13",
+      "profile": "direct_duckdb",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 536576,
+      "ingestionMs": 5.821792000000642
+    },
+    {
+      "workload": "13",
+      "profile": "temporal_store",
+      "exactAnswers": 4,
+      "reopenVerified": true,
+      "databaseBytes": 6303744,
+      "ingestionMs": 140.74004200000127
+    },
+    {
+      "workload": "16",
+      "profile": "direct_duckdb",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 1060864,
+      "ingestionMs": 2.7262920000011945
+    },
+    {
+      "workload": "16",
+      "profile": "temporal_store",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 5255168,
+      "ingestionMs": 72.82433300000048
+    },
+    {
+      "workload": "16",
+      "profile": "naive_sql",
+      "exactAnswers": 3,
+      "reopenVerified": true,
+      "databaseBytes": 798720,
+      "ingestionMs": 2.088665999999648
+    }
+  ],
+  "atomicContainment": {
+    "commands": [
+      {
+        "eventId": "load",
+        "logicalPosition": "1",
+        "nativePosition": "1",
+        "method": "batch",
+        "elapsedMs": 70.35654199999954,
+        "asserted": 10,
+        "retracted": 0,
+        "requestHash": "e792510a650d88987ba0178eb25c7761d6a2f4d4ae1a2eebbfd944d190be0b0f"
+      },
+      {
+        "eventId": "move-B",
+        "logicalPosition": "2",
+        "nativePosition": "2",
+        "method": "batch",
+        "elapsedMs": 70.36208299999998,
+        "asserted": 4,
+        "retracted": 2,
+        "requestHash": "b233be5db60a5cfaed974219dd5c07f7798c016ede32eed92ef06619c4eae0a6"
+      }
+    ],
+    "cases": [
+      {
+        "id": "nested-items",
+        "cut": {
+          "known_at": "2",
+          "valid_at": "5"
+        },
+        "rows": [
+          [
+            {
+              "tag": "str",
+              "value": "A"
+            }
+          ],
+          [
+            {
+              "tag": "str",
+              "value": "B"
+            }
+          ]
+        ]
+      },
+      {
+        "id": "move-boundary",
+        "cut": {
+          "known_at": "2",
+          "valid_at": "10"
+        },
+        "rows": [
+          [
+            {
+              "tag": "str",
+              "value": "A"
+            }
+          ]
+        ]
+      },
+      {
+        "id": "move-not-yet-known",
+        "cut": {
+          "known_at": "1",
+          "valid_at": "10"
+        },
+        "rows": [
+          [
+            {
+              "tag": "str",
+              "value": "A"
+            }
+          ],
+          [
+            {
+              "tag": "str",
+              "value": "B"
+            }
+          ]
+        ]
+      },
+      {
+        "id": "destination",
+        "cut": {
+          "known_at": "2",
+          "valid_at": "10"
+        },
+        "rows": [
+          [
+            {
+              "tag": "str",
+              "value": "B"
+            }
+          ]
+        ]
+      }
+    ]
+  }
+}

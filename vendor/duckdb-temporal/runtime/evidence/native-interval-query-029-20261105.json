@@ -1,0 +1,29 @@
+{
+  "schema": "td.native-interval-query-focused/1",
+  "result": "PASS",
+  "platform": "macOS ARM64",
+  "source": "9d5a8361e1f3ba4f36927cded588f4edde0d2ab6",
+  "coreSource": "00b7b8f814081bb49f693a6ee30eb88499f0cf4f",
+  "coreSha256": "01f451d1d59943cfbced162580cc800527614474e50150994ddb99775312eb8b",
+  "ownerSha256": "852e7e838ba9764e0bf3a8d4d60e59f325d427603122c5aad11ef860360f1fe8",
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "controlBridgeSha256": "57557b073784a65295449d21ebb9e98be939e5862e3df23728d4574339a10c3c",
+  "checks": 4,
+  "typecheck": "PASS",
+  "scope": [
+    "56 exact point comparisons across four historical cuts, interval clipping, replay and reopen",
+    "all eight query value tags, distinct blob IDs, exact finite float and extreme int64 endpoints",
+    "stratified negation, completed empty aggregates and coherent latest results with a concurrent writer",
+    "future and empty cut errors, segment and total-work admission, pre-aborted call and healthy reader reuse"
+  ],
+  "firstFailure": "Three passed. The aggregate fixture supplied a literal in the aggregate source atom, which existing grammar rejects. The rerun uses a completed relation and also exercises a simultaneous write.",
+  "logSha256": {
+    "core.log": "cc27880758e75539a1cc95eed97abd8736031a9ec15feef5c1b094b0f193939a",
+    "first.tap": "6ecfb5c958b8454786807472a585886acd22a81a802c75885f72d493d280fed5",
+    "owner.log": "69234d26562b84b72f65f12d6e6b87c1d698515a21b732bbfc77b2743e1bca02",
+    "second.tap": "feb3c8fe5571c9a4e39bf25ffb844d6434307700a40dd7a36c77d91e5ee6151f",
+    "tsc-second.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tsc.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timingScope": "Bounded correctness only during preparation of a separate frozen scale fixture."
+}

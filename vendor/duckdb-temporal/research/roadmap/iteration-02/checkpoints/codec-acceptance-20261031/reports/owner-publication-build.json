@@ -1,0 +1,17 @@
+{
+  "schema": "codec-final-source-only-publication-build-v1",
+  "completed_utc": "2026-10-31T03:25:28.282008+00:00",
+  "status": "PASS_FULL_RAW_SOURCE_ONLY_FROZEN_AFTER_ALL_EXECUTION",
+  "directory": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-codec/revision-02/curated-final-results",
+  "manifest_sha256": "28648809b4a216449169f8e1ef9d4525be20564df1a995eae14fbe138043cb07",
+  "checksum_file_sha256": "4034dcaddcf4536e71d6260182fccd45b158a989d3479c168160de66576ad896",
+  "content_tree_sha256": "03a97580d21cb80e3fe22eb724d2cb2a4a2bd20811457971d5d84e1baa339122",
+  "content_files": 1359,
+  "content_bytes": 16881023,
+  "physical_files": 1361,
+  "raw_run_files_all978_present_exact": true,
+  "fixed_binary_inputs_excluded": 5,
+  "generated_runtimeDBs_excluded": 175,
+  "all_selected_bytes_strictUTF8_noNUL": true,
+  "old_packages_source_method_gate_untouched": true
+}

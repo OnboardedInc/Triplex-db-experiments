@@ -1,0 +1,34 @@
+{
+  "sourceCommit": "c593a6fc8eafd3dd76eda36b2f245885cfb94425",
+  "independentQaCommit": "d3b368eb7d18a51a94a325b11641291d69413a3a",
+  "qaTestExactGitBytes": true,
+  "priorPresenceSdkCompiledPinsExact": {
+    "build/adapter/native-entity.d.ts": "2a079f5291fd3ac0f8c78fd935cb6d82f24f4735ba76fd2d1d31ae66116d8006",
+    "build/adapter/native-entity.js": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+    "build/adapter/test-native-presence-intervals-sdk.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "build/adapter/test-native-presence-intervals-sdk.js": "524b7153884081190f819e3b243f9322dc32c6e0633d2ad22b14a3e3466683a7"
+  },
+  "appSourceUnchangedFromBase": {
+    "adapter/native-entity.ts": {
+      "currentSha256": "04286acf2a23db4b3543d649c190275ddcd24c280a5730da9a672a8d36864460",
+      "sameAsBase4674135b": true
+    },
+    "adapter/native-duckdb-port.mjs": {
+      "currentSha256": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+      "sameAsBase4674135b": true
+    },
+    "adapter/native-schema.ts": {
+      "currentSha256": "8cbb2619b785ad8f7b9fdb1c2f8de67c4de2ac35e5d9ee99a4997a60bfdd38c5",
+      "sameAsBase4674135b": false
+    },
+    "NATIVE-SCHEMA.md": {
+      "currentSha256": "3189525d7aed1531ab4e0d48ab88cbb6e5c8a167a9ac6e053e7eb11e47737b46",
+      "sameAsBase4674135b": false
+    },
+    "REFERENCE-COVERAGE-INDEPENDENT-QA.md": {
+      "currentSha256": "8b616f5e32bb490c43aa6ae9530f1b283fa8cc37c3c8895ebaee7fbba862cd74",
+      "sameAsIndependentQa": true
+    }
+  },
+  "gitSource43Exact": true
+}

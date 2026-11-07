@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-31T03:18:04.281541+00:00",
+  "status": "QUIET_WINDOW_RELEASED_AFTER_ACTUAL_TIMING_AND_SEPARATE_PROFILE_TERMINAL0",
+  "actual_timing_session": 53774,
+  "actual_profile_session": 25263,
+  "profile_outer_actual_exits": {
+    "python_returncode": 0,
+    "tee_returncode": 0
+  },
+  "profile_controllers": 1,
+  "profile_child_exits0": 3,
+  "gate_unchanged": "06756817f3d2a4d592ea07b75f5081c2c7eac4b003560c47b67197f6929cba57",
+  "scope": "Sole owner reports no active OS/performance session; root reread exact PASS exits and complete outer/campaign. Analysis/review/curation may follow, no further performance invocation authorized."
+}

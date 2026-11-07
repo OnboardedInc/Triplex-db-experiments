@@ -1,0 +1,32 @@
+{
+  "role": "cpp_candidate",
+  "pid": 4882,
+  "wrapperPid": 4872,
+  "argv": [
+    "node",
+    "<writer-source-runtime>/adapter/native-writer-lab-antijoin.mjs",
+    "--binding",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/binding-first.json",
+    "--budget",
+    "<writer-source-runtime>/evidence/antijoin-cost-10m-budget-20261105.json",
+    "--baseline-root",
+    "<task-workspace>/temporal-thread-budget-20261105/projects/temporal-datalog/runtime",
+    "--fixture",
+    "<accepted-project-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+    "--evidence",
+    "<accepted-project-runtime>/build/combined-028-20261105/mixed-10m-pilot.json",
+    "--small-control-proof",
+    "<writer-source-runtime>/build/native-writer-lab-small-20261106-01/sdk_control/result.json",
+    "--small-candidate-proof",
+    "<writer-source-runtime>/build/native-writer-lab-small-20261106-01/cpp_candidate/result.json",
+    "--role",
+    "cpp_candidate",
+    "--output",
+    "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate.json"
+  ],
+  "startedAtUtc": "2026-11-06T08:43:30.975028+00:00",
+  "status": "terminal",
+  "exitCode": 0,
+  "exitedAtUtc": "2026-11-06T08:47:40.046815+00:00",
+  "elapsedMs": 249072.72758311592
+}

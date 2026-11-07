@@ -1,0 +1,19 @@
+{
+  "schema": "codec-final-study-postexit-readback-v1",
+  "completed_utc": "2026-10-31T02:57:01.577100+00:00",
+  "status": "PASS_FROZEN_FINAL_STUDY_WAITING_ROOT_QUIET_TIMING_AUTHORITY",
+  "study": {
+    "path": "STUDY-MANIFEST.json",
+    "bytes": 52125,
+    "sha256": "05314589bd181c3ff7500f8cf1c0e45a82e7cc9c7a84233b2c94a9385c6a447b"
+  },
+  "study_member_count": 278,
+  "all_members_rehashed_after_actual_exit": true,
+  "source_only_freezer_actual_exit": 0,
+  "candidate_admission_sha256": "1d46348f4e241977ab17799ca58fec59f7a583d67b51f3b2396b19de27b6c9c0",
+  "exact_untimed_public_preflight_outputs": 56,
+  "all_actual_preflight_outer_controller_child_exits0": true,
+  "timing_profile_execution": "NOT_RUN",
+  "execution_gate": "ABSENT",
+  "no_new_app_native_DB_calls": true
+}

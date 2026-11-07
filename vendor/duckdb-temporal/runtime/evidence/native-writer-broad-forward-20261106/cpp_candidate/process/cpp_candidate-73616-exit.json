@@ -1,0 +1,145 @@
+{
+  "schema": "td.native-writer-lab-process/1",
+  "role": "cpp_candidate",
+  "pid": 73616,
+  "parentPid": 73606,
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "preloadSha256": "1cfa9efa476ab4bfeaeb923fb1ed9fe4bf9306cb7d5af10bb0fe5145fb909fb9",
+  "runtime": "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+  "selectedPortUrl": "file://<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/adapter/native-duckdb-port.mjs",
+  "entry": "<qualified-build02-runtime>/adapter/benchmark-scale.mjs",
+  "entryKind": "measured_parent",
+  "childOutput": null,
+  "readerCount": null,
+  "UV_THREADPOOL_SIZE": "4",
+  "routes": {
+    "nativeEnrollment": 11,
+    "nativeGenerated": 1193,
+    "sdkGenerated": 0,
+    "errors": 0,
+    "unknown": 0
+  },
+  "writerPorts": [
+    {
+      "id": 1,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "4"
+      ]
+    },
+    {
+      "id": 2,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "4"
+      ]
+    },
+    {
+      "id": 3,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "4"
+      ]
+    },
+    {
+      "id": 4,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "7"
+      ]
+    },
+    {
+      "id": 5,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "7"
+      ]
+    },
+    {
+      "id": 6,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "7"
+      ]
+    },
+    {
+      "id": 7,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "19"
+      ]
+    },
+    {
+      "id": 8,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "19"
+      ]
+    },
+    {
+      "id": 9,
+      "enrollments": 1,
+      "nativeGenerated": 3,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "19"
+      ]
+    },
+    {
+      "id": 10,
+      "enrollments": 1,
+      "nativeGenerated": 1166,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "19"
+      ]
+    },
+    {
+      "id": 11,
+      "enrollments": 1,
+      "nativeGenerated": 0,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "19"
+      ]
+    }
+  ],
+  "mechanism": "Generated writer dispatch only; native lifecycle remains active in both roles",
+  "preloadWallMs": 87.726833,
+  "receipts": {
+    "ready": "<writer-source-runtime>/build/native-writer-lab-broad-20261106/forward-01/cpp_candidate/process/cpp_candidate-73616-ready.json",
+    "exit": "<writer-source-runtime>/build/native-writer-lab-broad-20261106/forward-01/cpp_candidate/process/cpp_candidate-73616-exit.json"
+  },
+  "loadedImages": [
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+  ],
+  "afterCleanup": {
+    "liveHandles": 0,
+    "pendingCompletions": 0,
+    "asyncContexts": 0,
+    "asyncResources": 0,
+    "lifecycleOwners": 0
+  },
+  "status": "process_role_and_cleanup_verified"
+}

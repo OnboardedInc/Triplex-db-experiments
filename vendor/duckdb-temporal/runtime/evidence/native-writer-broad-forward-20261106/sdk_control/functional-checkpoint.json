@@ -1,0 +1,122 @@
+{
+  "role": "sdk_control",
+  "terminal": {
+    "role": "sdk_control",
+    "pid": 71489,
+    "argv": [
+      "node",
+      "<qualified-build02-runtime>/adapter/benchmark-scale.mjs",
+      "--runtime",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+      "--sizes",
+      "10000000",
+      "--readers",
+      "1,4,16",
+      "--samples",
+      "5",
+      "--warmup",
+      "1",
+      "--writes",
+      "8",
+      "--group-size",
+      "256",
+      "--fixture-mode",
+      "mixed",
+      "--threads",
+      "4",
+      "--memory-limit",
+      "2GB",
+      "--max-temp-directory-size",
+      "4GB",
+      "--max-intermediate-bytes",
+      "4294967296",
+      "--duration-seconds",
+      "60",
+      "--read-duration-seconds",
+      "0",
+      "--max-writes",
+      "12000",
+      "--clone-database",
+      "<canonical-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "--clone-evidence",
+      "<canonical-runtime>/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "<writer-source-runtime>/build/native-writer-lab-broad-20261106/forward-01/sdk_control/result.json"
+    ],
+    "startedAtUtc": "2026-11-06T07:05:11.382849+00:00",
+    "status": "terminal",
+    "exitCode": 0,
+    "exitedAtUtc": "2026-11-06T07:09:35.629073+00:00",
+    "elapsedMs": 264245.94658380374
+  },
+  "functional": "PASS",
+  "exactLoadedImageSet": true,
+  "roleAssociation": "PASS",
+  "zeroCleanup": {
+    "liveHandles": 0,
+    "pendingCompletions": 0,
+    "asyncContexts": 0,
+    "asyncResources": 0,
+    "lifecycleOwners": 0
+  },
+  "routes": {
+    "nativeEnrollment": 11,
+    "nativeGenerated": 0,
+    "sdkGenerated": 80,
+    "errors": 0,
+    "unknown": 0
+  },
+  "mixed": {
+    "reads": 352,
+    "qps": 5.744189508689785,
+    "p50": 2540.754082999978,
+    "p99": 4640.975166999997,
+    "acks": 50,
+    "ackRate": 0.8276791798042794,
+    "wallMs": 61279.315292000014,
+    "rss": 2803597312
+  },
+  "closedOwnedClone": {
+    "path": "<qualified-build02-runtime>/build/scale-runs/20261106T070511523Z-77844a00/facts-10000000.duckdb",
+    "walAbsent": true,
+    "bytes": 3905433600
+  },
+  "fixed": {
+    "1-count": {
+      "p50": 467.3129579999986,
+      "p99": 471.0488749999986
+    },
+    "1-grouped_count": {
+      "p50": 495.5700829999987,
+      "p99": 519.0538750000014
+    },
+    "1-projection": {
+      "p50": 14.210542000000714,
+      "p99": 20.924332999995386
+    },
+    "4-count": {
+      "p50": 1044.2717499999999,
+      "p99": 1379.3581249999988
+    },
+    "4-grouped_count": {
+      "p50": 1168.0381249999919,
+      "p99": 1527.5511249999981
+    },
+    "4-projection": {
+      "p50": 18.765749999991385,
+      "p99": 24.30520799999067
+    },
+    "16-count": {
+      "p50": 3609.119083999991,
+      "p99": 6730.919458000004
+    },
+    "16-grouped_count": {
+      "p50": 3983.8716249999998,
+      "p99": 6760.260458000004
+    },
+    "16-projection": {
+      "p50": 58.42766700001084,
+      "p99": 86.24604100000579
+    }
+  }
+}

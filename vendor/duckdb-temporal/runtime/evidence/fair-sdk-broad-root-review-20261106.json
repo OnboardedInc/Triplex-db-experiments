@@ -1,0 +1,296 @@
+{
+  "schema": "td.fair-sdk-broad-root-review/1",
+  "status": "REJECTED_NUMERIC_UNPROMOTED",
+  "reviewedAtUtc": "2026-11-06T06:26:42.614979+00:00",
+  "original27IndependentlyRecomputed": [
+    {
+      "name": "fixed_count_1_p50_relative",
+      "actual": 435.7742500000004,
+      "limit": 523.1697874999993,
+      "direction": "max",
+      "control": 454.93024999999943,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_1_p50_relative",
+      "actual": 466.68416699999943,
+      "limit": 560.5791437500015,
+      "direction": "max",
+      "control": 487.4601250000014,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_1_p50_relative",
+      "actual": 14.051124999998137,
+      "limit": 15.525862499999128,
+      "direction": "max",
+      "control": 13.500749999999243,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_4_p50_relative",
+      "actual": 999.8210000000036,
+      "limit": 1180.6327892,
+      "direction": "max",
+      "control": 1026.637208,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_4_p50_relative",
+      "actual": 1066.8234999999986,
+      "limit": 1247.384923300011,
+      "direction": "max",
+      "control": 1084.6825420000096,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_4_p50_relative",
+      "actual": 20.551583000007668,
+      "limit": 20.452893750010844,
+      "direction": "max",
+      "control": 17.78512500000943,
+      "passed": false
+    },
+    {
+      "name": "fixed_count_16_p50_relative",
+      "actual": 3948.341207999998,
+      "limit": 3902.178802850001,
+      "direction": "max",
+      "control": 3393.198959000001,
+      "passed": false
+    },
+    {
+      "name": "fixed_grouped_count_16_p50_relative",
+      "actual": 4258.358958000026,
+      "limit": 4193.772514199976,
+      "direction": "max",
+      "control": 3646.7587079999794,
+      "passed": false
+    },
+    {
+      "name": "fixed_projection_16_p50_relative",
+      "actual": 89.88491600000998,
+      "limit": 64.73512839999165,
+      "direction": "max",
+      "control": 56.29141599999275,
+      "passed": false
+    },
+    {
+      "name": "fixed_count_4_p99_relative",
+      "actual": 1350.349792000001,
+      "limit": 1554.662499599994,
+      "direction": "max",
+      "control": 1295.552082999995,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_4_p99_relative",
+      "actual": 1348.1908330000006,
+      "limit": 1780.5711491999973,
+      "direction": "max",
+      "control": 1483.8092909999978,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_4_p99_relative",
+      "actual": 26.337291999996523,
+      "limit": 30.789699600002493,
+      "direction": "max",
+      "control": 25.65808300000208,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_16_p99_relative",
+      "actual": 4509.546000000002,
+      "limit": 7846.178600399993,
+      "direction": "max",
+      "control": 6538.482166999995,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_16_p99_relative",
+      "actual": 4810.0268750000105,
+      "limit": 7965.328999199985,
+      "direction": "max",
+      "control": 6637.774165999988,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_16_p99_relative",
+      "actual": 131.38708300000872,
+      "limit": 94.49804999999469,
+      "direction": "max",
+      "control": 78.74837499999558,
+      "passed": false
+    },
+    {
+      "name": "projection_1_p50_absolute",
+      "actual": 14.051124999998137,
+      "limit": 19,
+      "direction": "max",
+      "control": null,
+      "passed": true
+    },
+    {
+      "name": "projection_16_p50_absolute",
+      "actual": 89.88491600000998,
+      "limit": 115,
+      "direction": "max",
+      "control": null,
+      "passed": true
+    },
+    {
+      "name": "projection_16_p99_absolute",
+      "actual": 131.38708300000872,
+      "limit": 185,
+      "direction": "max",
+      "control": null,
+      "passed": true
+    },
+    {
+      "name": "mixed_qps_relative",
+      "actual": 5.261396566273869,
+      "limit": 5.159573017475954,
+      "direction": "min",
+      "control": 5.732858908306615,
+      "passed": true
+    },
+    {
+      "name": "mixed_qps_absolute",
+      "actual": 5.261396566273869,
+      "limit": 4.8,
+      "direction": "min",
+      "control": null,
+      "passed": true
+    },
+    {
+      "name": "mixed_p50_relative",
+      "actual": 3173.9002080000064,
+      "limit": 2982.0867062500165,
+      "direction": "max",
+      "control": 2593.1188750000147,
+      "passed": false
+    },
+    {
+      "name": "mixed_p50_absolute",
+      "actual": 3173.9002080000064,
+      "limit": 3200,
+      "direction": "max",
+      "control": null,
+      "passed": true
+    },
+    {
+      "name": "mixed_p99_relative",
+      "actual": 4053.515250000026,
+      "limit": 5760.4682579499795,
+      "direction": "max",
+      "control": 5009.102832999983,
+      "passed": true
+    },
+    {
+      "name": "mixed_p99_absolute",
+      "actual": 4053.515250000026,
+      "limit": 6500,
+      "direction": "max",
+      "control": null,
+      "passed": true
+    },
+    {
+      "name": "mixed_write_rate_relative",
+      "actual": 1.7497156954913688,
+      "limit": 0.7420172618497779,
+      "direction": "min",
+      "control": 0.824463624277531,
+      "passed": true
+    },
+    {
+      "name": "mixed_ack_count",
+      "actual": 105,
+      "limit": 40,
+      "direction": "min",
+      "control": null,
+      "passed": true
+    },
+    {
+      "name": "mixed_sampled_rss",
+      "actual": 2082242560,
+      "limit": 3500000000,
+      "direction": "max",
+      "control": null,
+      "passed": true
+    }
+  ],
+  "passed": 21,
+  "failed": 6,
+  "storedSampleWidthsCutsAndQuantilesRecomputed": 1314,
+  "uniqueConsecutiveUnreconciledACKsRecomputed": 155,
+  "complete10sProgressWindowsRecomputed": 12,
+  "rootRawReportHashes": {
+    "b0": "96948b307406931576e27b09ce086ff3076e34206665497f3097d503ad4d091f",
+    "fair4": "bc81b4ccc2b51721043ad4efa59b8667184df2624aaa0da75624cf78e9e7805e"
+  },
+  "rawSource": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/fair-sdk-broad-20261106/forward-01",
+  "evidencePackageVerification": "PASS: all46 raw hashes/sizes; three identical405/446actualmaps; four fixedbefore/after artifacts; alloriginalterminals0; closedsource371/recipe532/noWAL/stat evidence",
+  "limits": [
+    "Raw samples retain width/cut, not every typed tuple byte. The unchanged driver asserts the complete typed tuples.",
+    "Small empirical p99 and sampled RSS are not latency SLO or peak containment.",
+    "No retry, reverse, threshold change, product promotion or goal closure."
+  ],
+  "sourceEvidenceCommit": "ad4b59bfaa2988a6763ce6dcc9b0cfe5868e3527",
+  "receiptSha256": "3f9c2efff10238618faa6f5327439a24040236af9249d9137fdc9c0130a1dde5",
+  "rawHashesAndSizesVerified": {
+    "b0-artifact-after.json": "06f653d063be909e5593ee6dddf0a06e52e95b73190a339fb6dda6438056923b",
+    "b0-artifact-after.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "b0-artifact-after.stdout.log": "4d69c05a00e1f232eff5d71a917174f1c9ed3aca7067dc609a715eb04298774d",
+    "b0-artifact-before.json": "06f653d063be909e5593ee6dddf0a06e52e95b73190a339fb6dda6438056923b",
+    "b0-artifact-before.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "b0-artifact-before.stdout.log": "15c0b60c2e1572c6efd44f8c0e929835e4b7577d8714e372195d9af9b5f59773",
+    "b0-artifact-preflight.json": "06f653d063be909e5593ee6dddf0a06e52e95b73190a339fb6dda6438056923b",
+    "b0-artifact-preflight.log": "12eaf2ae1d109cf0ccdc3bd4d07922c075f3471f78b3c28ca9d1c3bf6b38e492",
+    "b0-first-processes.json": "5d2c2eb09729481d0e50b1d868a2d744e190b64296751eb4106fd8896266394f",
+    "b0-functional-audit.json": "3014d669ef8315ca0600fc9f4e29c60caec69789011a193472e1b8b311cd871f",
+    "b0.json": "96948b307406931576e27b09ce086ff3076e34206665497f3097d503ad4d091f",
+    "b0.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "b0.stdout.log": "a58b5001ede726c7ae9f6970b31254663dd52b73819a2160c4699d3466a60c0d",
+    "fair4-artifact-after.json": "ffc27bf562197573af620e8a6deb21b844a1fa7411663e84b5264087e2ab948d",
+    "fair4-artifact-after.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fair4-artifact-after.stdout.log": "c32db834acd7963372c37d883f88ee609276f5132612860983c21d5fcbfa0264",
+    "fair4-artifact-before.json": "ffc27bf562197573af620e8a6deb21b844a1fa7411663e84b5264087e2ab948d",
+    "fair4-artifact-before.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fair4-artifact-before.stdout.log": "f69b37a742ef78d2067c05ebab2f2f23b28dab045e92e29088e8e6099e581f31",
+    "fair4-artifact-preflight.json": "ffc27bf562197573af620e8a6deb21b844a1fa7411663e84b5264087e2ab948d",
+    "fair4-artifact-preflight.log": "8fb83467d821ba41944ac4a6be11d9ac2bbd2c30313cd4b620223d25667984b7",
+    "fair4-first-processes.json": "94b13af32a4a02d9c812a42df31b6e67b7f4f548a7fd802031de72a0d331d659",
+    "fair4.json": "bc81b4ccc2b51721043ad4efa59b8667184df2624aaa0da75624cf78e9e7805e",
+    "fair4.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fair4.stdout.log": "ce348636d69bdea8dcaa36bab66f307ec7ba5ab2e4c3bb6a6995499a31bca265",
+    "functional-audit.json": "2ed10d0869822f03ecdd51a6f9478b59d52b7adefdc6a53e8ae79bc6bbf8c57a",
+    "maps-after.json": "0152b8e0ca109ed6c617e9be88eaef72b3c540179029855c6e11857d8ad85845",
+    "maps-after.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "maps-after.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "maps-before.json": "0152b8e0ca109ed6c617e9be88eaef72b3c540179029855c6e11857d8ad85845",
+    "maps-before.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "maps-before.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "maps-between.json": "0152b8e0ca109ed6c617e9be88eaef72b3c540179029855c6e11857d8ad85845",
+    "maps-between.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "maps-between.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "packaging-first-failure.json": "64d292556ed52639e4c6bcfe70255e9a43d2852e960e46072eddc4924c964f3a",
+    "post-first-terminals.json": "33c62c17a809b682d07006a6d6689c73719613a9d5f2b2d5cde3025e0c1f505a",
+    "preflight-first-terminals.json": "31fb973319240c6db6b256a463b3ace4ec3f03f3d186785bde87642f071aaae8",
+    "preflight-maps.json": "0152b8e0ca109ed6c617e9be88eaef72b3c540179029855c6e11857d8ad85845",
+    "preflight-maps.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preflight-source-stat.json": "9f06b748b3eb34cc70d36914bc335b6bcc196842270dab709018e702d268a5a9",
+    "reviewed-launch-plan.json": "0fe6007d1c338e077d82099ab690b86372d8c66ca7b5c05994148564a9abd5b0",
+    "source-after.json": "c0926f7c4c34ac52ccbdf32111dc45063eb67c5c49d209eb3abef94d4d04684e",
+    "source-before.json": "b74a6aa86157c406eace10660e5733bdd82bf617f62b38ba97efaa29ae1b819c",
+    "source-between.json": "0b834285cd63cd4335913e233cef3f5b44e7f9864af5eee6769d893ad6016c8c",
+    "summary-first.json": "e641a9de15efc441d62518b31b54694e523e80538eb28e5110e66d31afc627e9"
+  },
+  "originalTerminalsVerified": 12,
+  "sourceBeforeBetweenAfterVerifiedFromOriginalEvidence": true,
+  "mapped405RuntimeActualExpectedEqual": true,
+  "beforeBetweenAfterMapsEqual": true,
+  "artifactSidecarsByteEqualFixedBindings": true,
+  "packagingSyntaxFailurePreserved": true,
+  "qualification": "Reject fair4 on six original numeric misses, no reverse/retry/threshold change/product promotion/goal closure."
+}

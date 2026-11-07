@@ -1,0 +1,39 @@
+{
+  "format": "excluded-local-state-inventory/1",
+  "localMachinePathsExcluded": true,
+  "sourceDirectoriesUnmodified": true,
+  "groups": [
+    {
+      "group": "triplex-local-xtdb-state",
+      "regularFiles": 524,
+      "logicalBytes": 1402736705,
+      "externalSymlinksNotFollowed": 0,
+      "exported": false,
+      "disposition": "Originals retained in place. Mutable database/experiment state and compiled artifacts are omitted; project UTF-8 build snapshots, source/generators, research, expected answers and evidence exported separately. Only explicitly allowlisted public synthetic immutable bootstrap index bytes are copied."
+    },
+    {
+      "group": "triplex-local-qlever-state",
+      "regularFiles": 2067,
+      "logicalBytes": 296182340,
+      "externalSymlinksNotFollowed": 0,
+      "exported": false,
+      "disposition": "Originals retained in place. Mutable database/experiment state and compiled artifacts are omitted; project UTF-8 build snapshots, source/generators, research, expected answers and evidence exported separately. Only explicitly allowlisted public synthetic immutable bootstrap index bytes are copied."
+    },
+    {
+      "group": "triplex-local-experiment-state",
+      "regularFiles": 9798,
+      "logicalBytes": 215703221,
+      "externalSymlinksNotFollowed": 6,
+      "exported": false,
+      "disposition": "Originals retained in place. Mutable database/experiment state and compiled artifacts are omitted; project UTF-8 build snapshots, source/generators, research, expected answers and evidence exported separately. Only explicitly allowlisted public synthetic immutable bootstrap index bytes are copied."
+    },
+    {
+      "group": "duckdb-generated-build",
+      "regularFiles": 4498,
+      "logicalBytes": 50669688947,
+      "externalSymlinksNotFollowed": 1,
+      "exported": false,
+      "disposition": "Originals retained in place. Mutable database/experiment state and compiled artifacts are omitted; project UTF-8 build snapshots, source/generators, research, expected answers and evidence exported separately. Only explicitly allowlisted public synthetic immutable bootstrap index bytes are copied."
+    }
+  ]
+}

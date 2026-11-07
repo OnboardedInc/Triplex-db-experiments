@@ -1,0 +1,35 @@
+{
+  "schema": "td.coverage-growth-trace-root-review/1",
+  "sourcePackageCommit": "9a80186d2f44ce294abab3788c55c474f1505a19",
+  "measuredSourceCommit": "d71d9958f0fecb39a4a088eafb204c9e28f9db0c",
+  "receiptSha256": "caf73d485914ed94bcc0f7de56886f26a37e94fcae7c4093915b74aeb9d8bbfb",
+  "rawFiles": 11,
+  "allHashesAndSizesMatch": true,
+  "independentTraceCheck": {
+    "events": 1060,
+    "consecutiveSequence": true,
+    "targetBatchAcks": 195,
+    "sourcePutAcks": 65,
+    "clock": "261",
+    "threeCountRoutesExact": true,
+    "revalidateBegin": {
+      "sequence": 1054,
+      "atUtc": "2026-11-06T11:18:01.626Z",
+      "stage": "revalidate:begin",
+      "details": {}
+    },
+    "revalidateError": {
+      "sequence": 1055,
+      "atUtc": "2026-11-06T11:18:01.825Z",
+      "stage": "revalidate:error",
+      "details": {
+        "name": "Error",
+        "message": "Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads",
+        "stack": "Error: Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"
+      }
+    },
+    "cleanupCompleted": true
+  },
+  "scope": "Fresh diagnostic proves this failure in revalidate after acknowledged writes and exact native/scalable/automatic counts. Subaudit remains unknown; original failedfixture status unchanged. No successful audit/reopen or physicalmemory guarantee.",
+  "reviewedAtUtc": "2026-11-06T11:25:22.532658+00:00"
+}

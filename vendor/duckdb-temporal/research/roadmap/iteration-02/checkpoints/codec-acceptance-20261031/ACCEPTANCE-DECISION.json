@@ -1,0 +1,45 @@
+{
+  "decision_utc": "2026-10-31T03:25:25.937421+00:00",
+  "decision_owner": "/root/orchestrate_triple_store",
+  "status": "ACCEPT_ITERATION_02_WITHIN_EXPLICIT_BOUNDED_CONTRACT",
+  "tested_source_commit": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+  "tested_export_manifest_sha256": "cb63b5055b4e58dc9a2cfbaaf4d316a107be8c807b4cac6d387d40446151273d",
+  "native_artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+  "fp_source_sha256": "92169be543692ff30a1824fa0add9cdb7e3139c864bdef8fdc5d1b0ec9710164",
+  "correctness_main": "85a27609f0352774b0b72015d96778161f437563",
+  "preexecution_main": "20ad11ab6704ea1706e1fe27892cefda69284f33",
+  "study_manifest_sha256": "05314589bd181c3ff7500f8cf1c0e45a82e7cc9c7a84233b2c94a9385c6a447b",
+  "immutable_execution_gate_sha256": "06756817f3d2a4d592ea07b75f5081c2c7eac4b003560c47b67197f6929cba57",
+  "functional_done_when": "Representative typed age/range/int64-time filters agree across native, independent host/SQL/browser reference and supported persisted paths; checked arithmetic/binding/type/overflow/division/domain faults fail before successful partial output under documented limits. Inputs bound; body-only bounded whitelist, no recursive value generation.",
+  "basis": [
+    "Full269 clean export normal/native/header/store/browser/directcoreSAN and accepted/frozen differential passed; separate explicit sanitizer limits retained.",
+    "Public carrier verbatim/private after-key tail AST identical/both selected-slot accesses/all6query7JSON guards retained; independent protocol/domain/realstoreGC/physical-control tests PASS.",
+    "First-only timed AthenB actualPython0tee0/controllers0/168children0,11760checksumcounter outcomes/7056measured4704warmup; separate profiles3children/294outcomes42groups exact.",
+    "Independent captured-provenance reviewer52controls49denials,965rawrefs and alljoins PASS; originalpreflight61controls54denials and56fulloutputs kept distinct.",
+    "Root independent estimator reconstructs1176pairrows/28stats/560000bootstrapmedians exactly; own23helpercontrols PASS."
+  ],
+  "comparison_A_same_native_median_range": [
+    0.8779278757600671,
+    0.9729466051232425
+  ],
+  "comparison_B_public_call_versus_accepted_median_range": [
+    1.005972249427816,
+    1.0482933353376114
+  ],
+  "both_predeclared_5pct_investigation_signal_lists_empty": true,
+  "screen_interpretation": "Triage only, not original functional release SLO. Some B intervals exclude1; retain measurable residual cost, not equivalence/full recovery/universal improvement.",
+  "timing_endpoint": "Statement-level public query/query_json return, can include disposal of prior result. File clone/connection setup and independent normalization are outside that interval; setup/process/RSS/profile diagnostics retained separately. Not native-only or full fresh-process/production-throughput proof.",
+  "scale": "Synthetic320storedfacts/10commits;14controls. Wide256rowsx8cells/1024floatcells is output width, not1024storedfacts.42pairs/2rounds per comparison, descriptive percontrol intervals/round andloadstrata all retained.",
+  "limits": [
+    "Exactly four scalar types, body-only whitelist; no date/null/reference/vector/document values or unrestrictedfunctions.",
+    "Supported PythonFP ABI and continuous nearest/masked/FTZDAZoff trustedcallee premise; no hostrepair/cache/fallback, no automatic safety after arbitrarily corruptedcontrols.",
+    "Actual unstable DuckDBCAPIv2 exacthost2.0.0 pinned; no ABI stabilization date, broadhost/platformsupport or release certification.",
+    "Original100001Pythonbindingcarrier SIGKILL preserved/incomplete, host-only reproduced/noOOMcause proved; directcoreSAN not fullhost/bindingLSan proof.",
+    "No SQLfirstplanner yet, stratifiednegation/aggregates/cancellation/crashrecovery/incrementalreuse/historyinterval/Triplexconformance; goals3-10remain.",
+    "No deployment/merge/readinessforreview/production-ready claim; existing draftPR and deployedv1Site unchanged."
+  ],
+  "raw_peer_manifest_sha256": "73bcfe2486cdd3a663fe6a63fa7f492586cc51da9d662963b4731384f15d2818",
+  "root_numeric_receipt_sha256": "19db56f19ac415e8a59d0e5486188f5397dec54dec2b3f5fe2b8d9ae2862642c",
+  "publication_state_at_decision": "LOCAL_FROZEN_DECISION; complete postrun raw package/main publication and source-docs/Page/PR synchronization follow, not claimed saved yet.",
+  "next": "Preserve complete closedraw/decision remotely, synchronize source-docs/Page/PR, then freshheavyprimaryparallel database/performance research BEFORE goal3implementation."
+}

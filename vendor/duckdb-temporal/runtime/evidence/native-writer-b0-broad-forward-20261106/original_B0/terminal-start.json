@@ -1,0 +1,18 @@
+{
+  "status": "running",
+  "argv": [
+    "<pinned-node-installation>/bin/node",
+    "<writer-source-runtime>/adapter/native-writer-b0-observer.mjs",
+    "--admission",
+    "<writer-source-runtime>/build/native-writer-b0-stage-20261106-01/admission-first.json",
+    "--admission-sha256",
+    "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+    "--output",
+    "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/role.json",
+    "--result",
+    "<writer-source-runtime>/build/native-writer-b0-broad-20261106/forward-01/original_B0/result.json"
+  ],
+  "parentPid": 22265,
+  "startedAtUtc": "2026-11-06T09:27:15.075Z",
+  "pid": 23036
+}

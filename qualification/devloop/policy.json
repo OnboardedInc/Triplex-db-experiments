@@ -1,0 +1,28 @@
+{
+  "format": "triplex-devloop-policy/1",
+  "proofPolicy": "portable-export-devloop-v1",
+  "maximumHeavyTrials": 3,
+  "memoryPoolBytes": 10737418240,
+  "cpuPoolUnits": 8,
+  "sampleMilliseconds": 200,
+  "terminationGraceMilliseconds": 500,
+  "maximumLogBytesPerAttempt": 33554432,
+  "memorySupervision": "sampled-owned-process-group-watchdog-not-hard-containment",
+  "nativeMacHardMemoryContainment": false,
+  "clients": { "acceptance": 256, "stress": [512, 1024] },
+  "lanes": {
+    "duckdb-datalog": "duckdb",
+    "xtdb-datalog": "xtdb",
+    "qlever-datalog": "qlever",
+    "xtdb-native": "xtdb",
+    "qlever-native": "qlever"
+  },
+  "promotion": {
+    "minimumReadGoodputRatio": 1.1,
+    "maximumRequiredP99Ratio": 1.1,
+    "minimumIndependentRuns": 3,
+    "minimumObservationsPerRequiredClass": 10000,
+    "confidenceClaim": "separation-beyond-observed-run-range-not-formal-95-percent-confidence",
+    "writerFloor": "calibrate-and-freeze-per-profile-before-candidates"
+  }
+}

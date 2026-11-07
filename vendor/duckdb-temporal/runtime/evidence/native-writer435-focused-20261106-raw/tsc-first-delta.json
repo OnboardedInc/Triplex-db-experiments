@@ -1,0 +1,16 @@
+{
+  "removed": [],
+  "added": [
+    "build/adapter/native-writer-test-fault.d.ts",
+    "build/adapter/native-writer-test-fault.js"
+  ],
+  "changed": [
+    "build/adapter/test-fatal.js",
+    "build/adapter/test-owned-store.js",
+    "build/adapter/test-readers.js",
+    "build/adapter/test-sdk-admission-independent.js",
+    "build/adapter/test-sdk-admission.js"
+  ],
+  "compiledCount": 188,
+  "unionCount": 583
+}

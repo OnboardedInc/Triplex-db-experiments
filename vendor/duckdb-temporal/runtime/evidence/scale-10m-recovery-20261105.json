@@ -1,0 +1,99 @@
+{
+  "schema": "temporal-scale-recovery/1",
+  "timestampUtc": "2026-11-05 13:58:22 UTC",
+  "sourceFailure": "scale-10m-native-20261105-01.json",
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.19.0",
+    "extension_sha256": "47e9e7629b034bc1f9d5b953a73bc0c93dcae7f0f46775ab5eae2e717f8caccf",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a"
+  },
+  "profile": {
+    "access": "READ_ONLY",
+    "threads": 2,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB"
+  },
+  "preservedBeforeResume": {
+    "method": "filesystem_clone",
+    "directory": "build/scale-runs/20261105T134603054Z-3f9db3c0",
+    "files": [
+      {
+        "file": "facts-10000000.pre-resume.duckdb",
+        "bytes": 3160944640,
+        "sha256": "54dc3ff3c1591b5c96a64c25fa2bc774e9073e9007144a0e242b457940d91f8e"
+      },
+      {
+        "file": "facts-10000000.pre-resume.duckdb.wal",
+        "bytes": 13459317,
+        "sha256": "cab52d3375969ba3cfe18b6450582cc39c7599789cef3629d9b1954f728a7f28"
+      }
+    ]
+  },
+  "failedCommand": {
+    "index": 1979,
+    "commandId": "scale-c-00001979",
+    "receiptPresent": false,
+    "assertionRows": 0,
+    "ownerRows": 0,
+    "headerRows": 0
+  },
+  "observations": {
+    "position": "1979",
+    "maxCommandPosition": "1979",
+    "commands": "1979",
+    "retainedAssertions": "8105984",
+    "storageUsageCount": "8105984",
+    "lastAcknowledgedCommand": "scale-c-00001978",
+    "lastAcknowledgedAssertionRows": "4096",
+    "invalidCarriers": "0",
+    "validatedNativeHistoryRows": "8105984",
+    "storageUsageBytesMatch": true,
+    "laterAssertionRows": "0"
+  },
+  "rawRead": {
+    "engine": "v2.0.0",
+    "access": "read_only",
+    "state": [
+      [
+        "1979",
+        "8105984",
+        "8105984",
+        "1979",
+        "1979"
+      ]
+    ],
+    "receipts": [
+      [
+        "scale-c-00001978",
+        "1979",
+        "4096"
+      ]
+    ],
+    "target": [
+      [
+        "scale-c-00001978",
+        "4096",
+        "1979",
+        "1979",
+        "4096"
+      ]
+    ]
+  },
+  "rawAudit": {
+    "engine": "v2.0.0",
+    "access": "read_only",
+    "audit": [
+      [
+        "0",
+        "8105984",
+        true,
+        "0",
+        "0",
+        "0"
+      ]
+    ]
+  },
+  "decision": "The failed command is absent after a read-only reopen and full retained-history audit. Resume may submit command index 1979 with its original deterministic ID and request. No write was retried during reconciliation.",
+  "scope": "Observed recovery from the configured one-gigabyte native checkpoint allocation failure. The ten-million read milestone remains pending."
+}

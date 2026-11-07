@@ -1,0 +1,12 @@
+{
+  "schema": "td.native-writer-antijoin-audit-script-failure/1",
+  "atUtc": "2026-11-06T08:52:33.178895+00:00",
+  "status": "OFFLINE_AUDIT_TYPE_ERROR",
+  "helper": "check-antijoin.py",
+  "line": 35,
+  "exitCode": 1,
+  "error": "TypeError: can only concatenate str (not \"int\") to str",
+  "reason": "Serialized BIGINT rightSideFacts was not converted to int for comparison; no original-driver or actual-answer failure",
+  "rawOutputsChanged": false,
+  "engineRerun": false
+}

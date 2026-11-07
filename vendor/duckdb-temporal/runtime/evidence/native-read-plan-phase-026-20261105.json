@@ -1,0 +1,698 @@
+{
+  "schema": "native-read-plan-profile-summary/1",
+  "status": "passed",
+  "timestampUtc": "2026-11-05T18:48:56.232Z",
+  "sourceCommit": "7451150c0007f50c85da2f39aaff80e308991499",
+  "harnessSha256": "eb7941312475ff1b42d020eeb53d4c8f114a8d984672f424fbda070d74dafd68",
+  "artifactAndInputSha256": {
+    "core_manifest": "3e8a24cbc378455d08c8b864ea011c033d197c4f471d68e877e238c2c1a4a24a",
+    "companion_manifest": "8dad69e642b374f3e3a755bd039ddcd1ea79cce60db87673728a9fc711e32c02",
+    "core_extension": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b",
+    "control_bridge": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "companion_extension": "68a4f021b8bc9ec38c2ddda4370460ed0d9aa6bdd81d847e30205b67486b1af6",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "86d36a999928ec656a7c58419de83fd3bc3c7cf3610b9c1972400bc65ea36c3b",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "benchmark_driver": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "benchmark_clone_helper": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+    "benchmark_clone_module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "benchmark/benchmark-scale.mjs": "21c4af9100b8c14e5ddb7ba7522f1da4af4b332a36ffd727133e51dac6ac5769",
+    "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "source_evidence": "591ada89b1f384e05d6424dd474025c296c15beaf4e64c90b90ceb7ceecf0f0c"
+  },
+  "runtimeVersion": "0.26.0",
+  "sdkEntrySha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3",
+  "configuration": {
+    "threads": "1",
+    "memory_limit": "1GiB",
+    "max_temp_directory_size": "1GiB",
+    "queryOptions": {
+      "maxInputFacts": 10000000,
+      "maxIntermediateRows": 10000000,
+      "maxIntermediateBytes": 536870912,
+      "maxOutputRows": 100000,
+      "maxOutputBytes": 16777216
+    },
+    "kinds": [
+      "tiny_constant",
+      "empty_scan",
+      "count",
+      "projection_40000"
+    ],
+    "validAt": "0",
+    "deadlineMs": 60000,
+    "templateSamples": 5,
+    "parallelCalls": 1
+  },
+  "fixture": {
+    "clone": {
+      "mode": "darwin_clonefile",
+      "status": "cloned"
+    },
+    "sourceBytes": 314060800,
+    "retainedFacts": 1000008,
+    "knownAt": "253",
+    "sourceMetadataUnchanged": true,
+    "sourceEvidence": "scale-1m-native-20261105-01.json",
+    "databaseContentHashMeasuredHere": false
+  },
+  "openAuditMs": 1380.3645000000001,
+  "timingScope": {
+    "templateGeneration": "Wall around the prepared C++ template scalar call and result extraction. Includes DuckDB dispatch, SDK and async scheduling. First and repeated calls are separate samples.",
+    "directExecution": "A separate ordinary prepared execution checks every typed answer at the fixed cut. Prepare and execute-and-extract wall are separate. Public store queue, routing, and JS value decoding are outside this call.",
+    "operatorProfile": "EXPLAIN ANALYZE executes the same generated SQL again with a fresh token and profiling overhead. It returns the profile rather than the answer. Operator timings can overlap across threads and include callbacks executed inside those operators.",
+    "boundary": "These clocks are different observations. They cannot be added into a public latency decomposition or used to infer C++ callback-only time."
+  },
+  "documentation": "https://duckdb.org/docs/2.0/dev/profiling",
+  "findings": [
+    "The slowest operator in both the count and 40,000-row projection is the generated admission projection. It checks carrier widths and computes logical input bytes over 1,000,008 rows.",
+    "Scan counters sum visits across operators. They include repeated visits to the same assertions and a small number of rows from other tables.",
+    "The tiny forced-native query invokes the evaluator inside a one-row projection. DuckDB reports the enclosing operator timing, which includes other work in that projection.",
+    "The profiled rerun discards data output and emits one profile row. The ordinary run materializes and extracts the full answer. Their wall-clock difference cannot identify SDK or decoding overhead."
+  ],
+  "retainedRawReceipts": [
+    {
+      "file": "read-plan-profile-026-20261105-01.json",
+      "sha256": "6e6dd12178eac70e991ce2706f2a8acfbee1bb38279e9b4c56a71e4db54bc865",
+      "sourceCommit": "cd4324fb092a05dce0cee8014f859e7a8ee3c523",
+      "harnessSha256": "39bdc9e58fb667bd52b23c8a0d941f316968745c72757c0a3954323a0d8587de",
+      "status": "failed",
+      "error": {
+        "phase": "template_generation",
+        "name": "Error",
+        "code": null,
+        "message": "Binder Error: No function matches the given name and argument types 'td_query_store_values_sql_v2(STRING_LITERAL, HUGEINT, HUGEINT, HUGEINT, HUGEINT, HUGEINT, HUGEINT, HUGEINT)'. You might need to add explicit type casts.\n\tCandidate functions:\n\ttd_query_store_values_sql_v2(\"program\" VARCHAR, valid_at BIGINT, known_at BIGINT, max_facts BIGINT, max_rounds BIGINT, max_work BIGINT, deadline_ms BIGINT, route BIGINT, /) -> VARCHAR\n\n\nLINE 1: SELECT system.main.td_query_store_values_sql_v2(?,?,?,?,?,?,?,?)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+      }
+    },
+    {
+      "file": "read-plan-profile-026-20261105-02.json",
+      "sha256": "29162c558f50539be1d7e7ee2288e3f999e6908d7fc2dcefec4dd66e5938e66a",
+      "status": "passed"
+    }
+  ],
+  "cells": [
+    {
+      "kind": "tiny_constant",
+      "program": "answer(7).",
+      "template": {
+        "entry": "td_query_store_values_sql_v2",
+        "prepareWallMs": 0.49479200000018864,
+        "generationCallWallMs": [
+          0.6220410000000811,
+          0.3309999999999036,
+          0.20716700000002675,
+          0.2107499999999618,
+          0.28929200000015953
+        ],
+        "sqlSha256": "236387d8482000b5d176a14ecf2e74ab004ffadd5adfabd8e5441c9dd287c0d4",
+        "sqlBytes": 3829,
+        "medianCallWallMs": 0.28929200000015953
+      },
+      "ordinaryExecution": {
+        "prepareWallMs": 3.5487500000001546,
+        "executeAndExtractWallMs": 5.228207999999995,
+        "route": "native",
+        "reason": "forced_native",
+        "position": "253",
+        "answerRows": 1,
+        "answerWireSha256": "acc23f7058c95f82a009d6783db4a408a51741ab76f880b263286dffaf6f3ca7"
+      },
+      "explainAnalyze": {
+        "prepareWallMs": 3.5327089999998407,
+        "executeAndExtractWallMs": 5.78129100000001,
+        "queryMetrics": {
+          "cpu_time": 0.00032379900000000005,
+          "total_intermediate_rows": 65,
+          "total_intermediate_size_bytes": 46189,
+          "total_row_groups_scanned": 2,
+          "total_row_groups_to_scan": 2,
+          "total_rows_scanned": 2,
+          "total_time": 0.004825625
+        },
+        "plannerMetrics": {
+          "binding_time": 0.0025735,
+          "total_time": 0.001779166
+        },
+        "optimizerTotalSeconds": 0.001860333,
+        "physicalPlannerTotalSeconds": 9.9458e-05,
+        "systemMetrics": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 86310864,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 6291456
+        },
+        "operatorCount": 79,
+        "topOperators": [
+          {
+            "path": "0.0.0.0.1.1.1.1.1.0.0.0.0",
+            "type": "CTE",
+            "timingMs": 0.049125,
+            "rowsProduced": 0,
+            "rowsScanned": null,
+            "outputBytes": 0,
+            "detail": {
+              "CTE Name": "__duckdb_delim_170",
+              "Table Index": "170",
+              "Execution Mode": "HYBRID_FANOUT",
+              "Fanout Mode": "DIRECT",
+              "Consumers": "1",
+              "Direct Consumers": "1",
+              "Buffered Consumers": "0",
+              "Chunk Storage": "NONE",
+              "Order Mode": "SEQUENTIAL",
+              "Materialized Consumers": "1",
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.0.0.0.0.1.0.1.0.0",
+            "type": "HASH_GROUP_BY",
+            "timingMs": 0.048834,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 866,
+            "detail": {
+              "Groups": [
+                "#0",
+                "#1"
+              ],
+              "Aggregates": "",
+              "Estimated Cardinality": "0"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.0.0.0.0.1.0",
+            "type": "HASH_JOIN",
+            "timingMs": 0.033416,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 1692,
+            "detail": {
+              "Join Type": "LEFT",
+              "Conditions": "delim_index IS NOT DISTINCT FROM delim_index",
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.0",
+            "type": "PROJECTION",
+            "timingMs": 0.032459,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 3170,
+            "detail": {
+              "Projections": [
+                "known",
+                "answer"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.0.0.0",
+            "type": "PROJECTION",
+            "timingMs": 0.0305,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 4184,
+            "detail": {
+              "Projections": [
+                "known",
+                "route",
+                "reason",
+                "answer",
+                "answer",
+                "answer",
+                "tuple_json",
+                "ordinal"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          }
+        ],
+        "assertionScanRowsPerOperator": []
+      }
+    },
+    {
+      "kind": "empty_scan",
+      "program": "answer(?v) :- triple(?e,'absent-phase-screen',?v).",
+      "template": {
+        "entry": "td_query_store_scalable_sql_v2",
+        "prepareWallMs": 0.384708000000046,
+        "generationCallWallMs": [
+          0.3584579999999278,
+          0.3324999999999818,
+          0.3135409999999865,
+          0.365666999999803,
+          0.24312499999996362
+        ],
+        "sqlSha256": "37d6bf8f7bd2a0c1cacb9eeec9314855206ecf5c6021c19854b1091f506513ec",
+        "sqlBytes": 5873,
+        "medianCallWallMs": 0.3324999999999818
+      },
+      "ordinaryExecution": {
+        "prepareWallMs": 8.559375000000045,
+        "executeAndExtractWallMs": 6.838958000000048,
+        "route": "sql",
+        "reason": "owned_allcut_unique_scalable_single_atom",
+        "position": "253",
+        "answerRows": 0,
+        "answerWireSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "explainAnalyze": {
+        "prepareWallMs": 8.485291000000188,
+        "executeAndExtractWallMs": 7.991708999999901,
+        "queryMetrics": {
+          "cpu_time": 0.000175788,
+          "total_intermediate_rows": 91,
+          "total_intermediate_size_bytes": 36720,
+          "total_row_groups_scanned": 2,
+          "total_row_groups_to_scan": 35,
+          "total_rows_scanned": 2,
+          "total_time": 0.006759416
+        },
+        "plannerMetrics": {
+          "binding_time": 0.003025958,
+          "total_time": 0.002283375
+        },
+        "optimizerTotalSeconds": 0.003016625,
+        "physicalPlannerTotalSeconds": 0.0001425,
+        "systemMetrics": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 88614864,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 9961472
+        },
+        "operatorCount": 137,
+        "topOperators": [
+          {
+            "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0",
+            "type": "ORDER_BY",
+            "timingMs": 0.025625,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 1071,
+            "detail": {
+              "Order By": [
+                "#7 ASC",
+                "#8 ASC",
+                "#9 ASC",
+                "#10 ASC",
+                "#11 ASC"
+              ],
+              "Estimated Cardinality": "9694"
+            }
+          },
+          {
+            "path": "0.0.0.0.0.0.0.0",
+            "type": "ORDER_BY",
+            "timingMs": 0.016374,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 8,
+            "detail": {
+              "Order By": "seq ASC",
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.0.0.0.0",
+            "type": "NESTED_LOOP_JOIN",
+            "timingMs": 0.008042,
+            "rowsProduced": 0,
+            "rowsScanned": null,
+            "outputBytes": 0,
+            "detail": {
+              "Join Type": "INNER",
+              "Conditions": [
+                "tx_from <= known",
+                "tx_to > known"
+              ],
+              "Estimated Cardinality": "2423"
+            }
+          },
+          {
+            "path": "0.0.0.0.0",
+            "type": "PROJECTION",
+            "timingMs": 0.007875,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 1,
+            "detail": {
+              "Projections": "ok",
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.0.0.0.0.0.0.0.0",
+            "type": "TABLE_SCAN",
+            "timingMs": 0.0075,
+            "rowsProduced": 3,
+            "rowsScanned": 0,
+            "outputBytes": 9361,
+            "detail": {
+              "Function": "DUCKDB_DATABASES",
+              "Estimated Cardinality": "1"
+            }
+          }
+        ],
+        "assertionScanRowsPerOperator": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "kind": "count",
+      "program": "source(?e,?v) :- triple(?e,'i',?v). answer(count()) :- source(?e,?v).",
+      "template": {
+        "entry": "td_query_store_scalable_sql_v2",
+        "prepareWallMs": 0.41516599999999926,
+        "generationCallWallMs": [
+          0.4409169999998994,
+          0.3977500000000873,
+          0.44762500000001637,
+          0.33216700000002675,
+          0.3727919999998903
+        ],
+        "sqlSha256": "c340942893eed86a6a7468e90f40750b66e284b757bce71f195a7c10e3272c5e",
+        "sqlBytes": 6171,
+        "medianCallWallMs": 0.3977500000000873
+      },
+      "ordinaryExecution": {
+        "prepareWallMs": 9.012457999999924,
+        "executeAndExtractWallMs": 63.82508400000006,
+        "route": "sql",
+        "reason": "owned_allcut_unique_scalable_count",
+        "position": "253",
+        "answerRows": 1,
+        "answerWireSha256": "431c16d6cf24d135f2639e6012325210cc246eba60c9d46dcb5046d71f420ac2"
+      },
+      "explainAnalyze": {
+        "prepareWallMs": 9.247624999999971,
+        "executeAndExtractWallMs": 66.26416599999993,
+        "queryMetrics": {
+          "cpu_time": 0.05367380300000004,
+          "total_intermediate_rows": 21002349,
+          "total_intermediate_size_bytes": 549616168,
+          "total_row_groups_scanned": 47,
+          "total_row_groups_to_scan": 57,
+          "total_rows_scanned": 4002082,
+          "total_time": 0.064328708
+        },
+        "plannerMetrics": {
+          "binding_time": 0.003390917,
+          "total_time": 0.002605959
+        },
+        "optimizerTotalSeconds": 0.0044115,
+        "physicalPlannerTotalSeconds": 0.000231667,
+        "systemMetrics": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 93171664,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 14155776
+        },
+        "operatorCount": 191,
+        "topOperators": [
+          {
+            "path": "0.0.0.0.1.1.1.0.0.0",
+            "type": "PROJECTION",
+            "timingMs": 19.98912900000001,
+            "rowsProduced": 1000008,
+            "rowsScanned": null,
+            "outputBytes": 17000136,
+            "detail": {
+              "Projections": [
+                "((v_tag > 8) OR (octet_length(encode(e)) > 512) OR (octet_length(encode(a)) > 512) OR ((v_tag IN (1, 5, 8)) AND (octet_length(v_s) > 512)) OR ((v_tag = 8) AND (octet_length(v_s) = 0)) OR CASE  WHEN ((v_tag = 7)) THEN (CASE  WHEN ((octet_length(v_s) > 4096)) THEN (true) ELSE (td_validate_json_source_v2(decode(v_s)) IS DISTINCT FROM true) END) ELSE false END)",
+                "(((120 + CAST(octet_length(encode(e)) AS HUGEINT)) + CAST(octet_length(encode(a)) AS HUGEINT)) + CAST(CASE  WHEN ((v_tag IN (1, 5, 7, 8))) THEN (octet_length(v_s)) ELSE 0 END AS HUGEINT))"
+              ],
+              "Estimated Cardinality": "12119"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.1.0.0.0.0.0.0.0",
+            "type": "TABLE_SCAN",
+            "timingMs": 5.627517,
+            "rowsProduced": 1000008,
+            "rowsScanned": 1000008,
+            "outputBytes": 49250760,
+            "detail": {
+              "Table": "fixture.main.assertions",
+              "Type": "Sequential Scan",
+              "Projections": [
+                "tx_from",
+                "tx_to",
+                "e",
+                "v_tag",
+                "v_s"
+              ],
+              "Filters": "(encode(a) IN ('i'::BLOB))",
+              "Dynamic Filters": [
+                "(tx_from <= 253)",
+                "(tx_to > 253)"
+              ],
+              "Estimated Cardinality": "1000008"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.0.0.0.0.0",
+            "type": "TABLE_SCAN",
+            "timingMs": 5.249540999999986,
+            "rowsProduced": 1000008,
+            "rowsScanned": 1000008,
+            "outputBytes": 65375816,
+            "detail": {
+              "Table": "fixture.main.assertions",
+              "Type": "Sequential Scan",
+              "Projections": [
+                "tx_from",
+                "tx_to",
+                "a",
+                "v_tag",
+                "e",
+                "v_s"
+              ],
+              "Filters": "(encode(a) IN ('i'::BLOB))",
+              "Dynamic Filters": [
+                "(tx_from <= 253)",
+                "(tx_to > 253)"
+              ],
+              "Estimated Cardinality": "1000008"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.0.0",
+            "type": "UNGROUPED_AGGREGATE",
+            "timingMs": 5.185961000000004,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 32,
+            "detail": {
+              "Aggregates": [
+                "count_star()",
+                "count_star() FILTER (WHERE #0) Filter: #0",
+                "sum(#1)"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.1.0.0.0.0.0.0",
+            "type": "NESTED_LOOP_JOIN",
+            "timingMs": 3.8135679999999987,
+            "rowsProduced": 1000008,
+            "rowsScanned": null,
+            "outputBytes": 66254992,
+            "detail": {
+              "Join Type": "INNER",
+              "Conditions": [
+                "tx_from <= known",
+                "tx_to > known"
+              ],
+              "Estimated Cardinality": "24238"
+            }
+          }
+        ],
+        "assertionScanRowsPerOperator": [
+          1000008,
+          2048,
+          1000008,
+          1000008,
+          1000008
+        ]
+      }
+    },
+    {
+      "kind": "projection_40000",
+      "program": "answer(?v) :- triple(?e,'i',?v),[?v < 40000].",
+      "template": {
+        "entry": "td_query_store_scalable_sql_v2",
+        "prepareWallMs": 3.137000000000171,
+        "generationCallWallMs": [
+          0.47804199999995944,
+          0.3117090000000644,
+          0.44583399999987705,
+          0.3772080000001097,
+          0.220833999999968
+        ],
+        "sqlSha256": "e36558829c1ba013e7cd121482785bc6c01fab3015109910d7f5de08f2d7ba27",
+        "sqlBytes": 6075,
+        "medianCallWallMs": 0.3772080000001097
+      },
+      "ordinaryExecution": {
+        "prepareWallMs": 8.015916999999945,
+        "executeAndExtractWallMs": 133.413,
+        "route": "sql",
+        "reason": "owned_allcut_unique_scalable_single_atom",
+        "position": "253",
+        "answerRows": 40000,
+        "answerWireSha256": "74be70bcbed95d65228ae19ebac982f1079666db6e5dfca8c23657ba45ba657f"
+      },
+      "explainAnalyze": {
+        "prepareWallMs": 8.100709000000052,
+        "executeAndExtractWallMs": 80.2401669999997,
+        "queryMetrics": {
+          "cpu_time": 0.07527952900000001,
+          "total_intermediate_rows": 9602201,
+          "total_intermediate_size_bytes": 496671361,
+          "total_row_groups_scanned": 25,
+          "total_row_groups_to_scan": 35,
+          "total_rows_scanned": 2002066,
+          "total_time": 0.078837459
+        },
+        "plannerMetrics": {
+          "binding_time": 0.003959667,
+          "total_time": 0.002792375
+        },
+        "optimizerTotalSeconds": 0.002947125,
+        "physicalPlannerTotalSeconds": 0.0001525,
+        "systemMetrics": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 149612496,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 69206016
+        },
+        "operatorCount": 129,
+        "topOperators": [
+          {
+            "path": "0.0.0.0.1.1.1.0.0.0",
+            "type": "PROJECTION",
+            "timingMs": 19.909999999999958,
+            "rowsProduced": 1000008,
+            "rowsScanned": null,
+            "outputBytes": 17000136,
+            "detail": {
+              "Projections": [
+                "((v_tag > 8) OR (octet_length(encode(e)) > 512) OR (octet_length(encode(a)) > 512) OR ((v_tag IN (1, 5, 8)) AND (octet_length(v_s) > 512)) OR ((v_tag = 8) AND (octet_length(v_s) = 0)) OR CASE  WHEN ((v_tag = 7)) THEN (CASE  WHEN ((octet_length(v_s) > 4096)) THEN (true) ELSE (td_validate_json_source_v2(decode(v_s)) IS DISTINCT FROM true) END) ELSE false END)",
+                "(((120 + CAST(octet_length(encode(e)) AS HUGEINT)) + CAST(octet_length(encode(a)) AS HUGEINT)) + CAST(CASE  WHEN ((v_tag IN (1, 5, 7, 8))) THEN (octet_length(v_s)) ELSE 0 END AS HUGEINT))"
+              ],
+              "Estimated Cardinality": "12119"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1",
+            "type": "CTE",
+            "timingMs": 17.238541000000005,
+            "rowsProduced": 0,
+            "rowsScanned": null,
+            "outputBytes": 0,
+            "detail": {
+              "CTE Name": "active",
+              "Table Index": "5",
+              "Execution Mode": "HYBRID_FANOUT",
+              "Fanout Mode": "DIRECT",
+              "Consumers": "1",
+              "Direct Consumers": "1",
+              "Buffered Consumers": "0",
+              "Chunk Storage": "NONE",
+              "Order Mode": "UNORDERED",
+              "Materialized Consumers": "1",
+              "Estimated Cardinality": "48476"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.0.0.0.0",
+            "type": "TABLE_SCAN",
+            "timingMs": 5.5411190000000055,
+            "rowsProduced": 1000008,
+            "rowsScanned": 1000008,
+            "outputBytes": 66501776,
+            "detail": {
+              "Table": "fixture.main.assertions",
+              "Type": "Sequential Scan",
+              "Projections": [
+                "tx_from",
+                "tx_to",
+                "a",
+                "v_tag",
+                "v_s",
+                "v_b",
+                "v_i",
+                "v_f"
+              ],
+              "Filters": "(encode(a) IN ('i'::BLOB))",
+              "Dynamic Filters": [
+                "(tx_from <= 253)",
+                "(tx_to > 253)"
+              ],
+              "Estimated Cardinality": "1000008"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.0.0.0.0.0",
+            "type": "TABLE_SCAN",
+            "timingMs": 5.290961000000005,
+            "rowsProduced": 1000008,
+            "rowsScanned": 1000008,
+            "outputBytes": 65375816,
+            "detail": {
+              "Table": "fixture.main.assertions",
+              "Type": "Sequential Scan",
+              "Projections": [
+                "tx_from",
+                "tx_to",
+                "a",
+                "v_tag",
+                "e",
+                "v_s"
+              ],
+              "Filters": "(encode(a) IN ('i'::BLOB))",
+              "Dynamic Filters": [
+                "(tx_from <= 253)",
+                "(tx_to > 253)"
+              ],
+              "Estimated Cardinality": "1000008"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.0.0",
+            "type": "UNGROUPED_AGGREGATE",
+            "timingMs": 5.178128000000007,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 32,
+            "detail": {
+              "Aggregates": [
+                "count_star()",
+                "count_star() FILTER (WHERE #0) Filter: #0",
+                "sum(#1)"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          }
+        ],
+        "assertionScanRowsPerOperator": [
+          1000008,
+          1000008,
+          2048
+        ]
+      }
+    }
+  ]
+}

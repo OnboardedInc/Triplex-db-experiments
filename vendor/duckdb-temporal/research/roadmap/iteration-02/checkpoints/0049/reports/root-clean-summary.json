@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-10-31T00:29:02.275575+00:00",
+  "exit_code": 0,
+  "source_files_verified_pre_post": 268,
+  "all_export_source_equals_working": true,
+  "export_manifest_sha256": "441d6564e20734b21dbc9ce043bd960520deed261d5a437662cbaa53b634f2c7",
+  "fp_source_sha256": "92169be543692ff30a1824fa0add9cdb7e3139c864bdef8fdc5d1b0ec9710164",
+  "native_artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+  "reports": {
+    "engine/build/core-verification/verification.json": {
+      "status": "PASS",
+      "sha256": "10a9b10409dce14c4612af5d86a19df7bcf93509a28e72465c57cf3fa6cc9263"
+    },
+    "engine/build/item2-core-verification/verification.json": {
+      "status": "PASS",
+      "sha256": "1de8d1b678aa770a5479e606802c3a70f347c2f6f0d4c12dd6c7f9ced6494860"
+    },
+    "engine/build/item2-core-verification-sanitized/verification.json": {
+      "status": "PASS",
+      "sha256": "93b26d43fce8aab4032ad65953753d3e2e99f5b4da63e61e5d579b8384397ac4"
+    },
+    "engine/build/item2-store-verification.json": {
+      "status": "PASS",
+      "sha256": "7ca975eca062c0f249cc01f1181fc9ef8b0ecc4a3b4dc8fe1cbc1d7ceefb4841"
+    },
+    "engine/tests/typed-verification.json": {
+      "status": "PASS",
+      "sha256": "91515e85c707d140d88286973b5f5d1a150a57bea59ba0d0acd030f7de1d7bfd"
+    }
+  },
+  "explicit_reader_suite": "16groups/79children plus explicitrealnative6/7counts,zero unavailable skips",
+  "explicit_batch_suite": "11groups/115children,zero unavailable skips",
+  "explicit_real_store": "13methods,zero unavailable skips",
+  "existing_typed_suite_absence_arm": "1inapplicablewithenginepresent; rootseparateabsencerunpending",
+  "scope": "Fullcleanexportnormalnative/browser/store/directcoreSAN; notnewfullbindingSANorallroadmapacceptance",
+  "reader_macro_performance": "NOT_RUN"
+}

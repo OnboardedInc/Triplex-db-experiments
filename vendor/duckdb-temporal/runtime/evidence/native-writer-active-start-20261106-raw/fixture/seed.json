@@ -1,0 +1,62 @@
+{
+  "definition": {
+    "name": "native",
+    "version": 1,
+    "hash": "7b298a27294c6c4ecb4f979818095d4e14082a8fe5a93b2423acbf406a2cb379"
+  },
+  "receipt": {
+    "commandId": "seed",
+    "position": "1",
+    "asserted": [
+      "80e3a20119df8c4d606ab980ee1b9a7b46107c20d0112ace92ecb07eae21a462",
+      "9f21984669ce23ed44b3ad121eed736d14e9c7113427a8f650ee08d03c93195c"
+    ],
+    "retracted": [],
+    "schema": "native",
+    "version": 1,
+    "type": "Row",
+    "entityId": "e",
+    "schemaHash": "7b298a27294c6c4ecb4f979818095d4e14082a8fe5a93b2423acbf406a2cb379",
+    "requestHash": "e3c3e02344421996400b7a4d742152bcfca67de4277ec5d190047c01dbf11dea"
+  },
+  "history": [
+    {
+      "assertionId": "80e3a20119df8c4d606ab980ee1b9a7b46107c20d0112ace92ecb07eae21a462",
+      "entityId": "e",
+      "attribute": "i",
+      "value": {
+        "tag": "i64",
+        "value": "-1"
+      },
+      "validFrom": "0",
+      "validTo": "100",
+      "txFrom": "1",
+      "txTo": "9223372036854775807",
+      "commandId": "seed",
+      "correctedBy": null,
+      "schema": "native",
+      "version": 1,
+      "type": "Row",
+      "schemaHash": "7b298a27294c6c4ecb4f979818095d4e14082a8fe5a93b2423acbf406a2cb379"
+    },
+    {
+      "assertionId": "9f21984669ce23ed44b3ad121eed736d14e9c7113427a8f650ee08d03c93195c",
+      "entityId": "e",
+      "attribute": "s",
+      "value": {
+        "tag": "str",
+        "value": "Old"
+      },
+      "validFrom": "0",
+      "validTo": "100",
+      "txFrom": "1",
+      "txTo": "9223372036854775807",
+      "commandId": "seed",
+      "correctedBy": null,
+      "schema": "native",
+      "version": 1,
+      "type": "Row",
+      "schemaHash": "7b298a27294c6c4ecb4f979818095d4e14082a8fe5a93b2423acbf406a2cb379"
+    }
+  ]
+}

@@ -1,0 +1,238 @@
+{
+  "scope": "Small text-only identities; no candidate/source-module/native binary/DB/template file was imported/executed/opened/hashed in this lane; template receipt JSON only",
+  "study_sha256": "357664ce0a6af25efc171f5687e917cf4cc4ffd2d37ea580bfc6e89ac4119a0a",
+  "root_reported_all_study_and_supplemental_inputs_verified": "61+49; not repeated here for binaries/DBs/whole export",
+  "files": [
+    {
+      "path": "POSTFIX-PROTOCOL.md",
+      "bytes": 9913,
+      "sha256": "adce055be9fbb7f790222e2a2e1fad5e29388bcbc69d8df4fe2f5469f7badc02",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "common.py",
+      "bytes": 6691,
+      "sha256": "4fc12434aa2f771f8ec5284194a1fbadf0b86183467d834d1f55d0efc62edf01",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "worker.py",
+      "bytes": 6809,
+      "sha256": "8b8ccee4e4b5aa27c4e9da180a9b8ca6e476e48eac01d1d61cdf35d335d9c365",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "run_campaign.py",
+      "bytes": 4773,
+      "sha256": "0a5d1c4b4d8c8c2736528d73746b52b86b42f159cf055356464f681da1f284e9",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "analyze.py",
+      "bytes": 4903,
+      "sha256": "c68b058950c24828e8906abc3700ecb3d8cd395759c47f029c75765939fef5d7",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "profile_public.py",
+      "bytes": 5257,
+      "sha256": "160752901eb4681a05eec0779db7460b53999c907fdfc9163f1da04d2bcf85d7",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "admit_candidate.py",
+      "bytes": 4730,
+      "sha256": "fd468a50ded768b5482be8e23d6f877fc1699b3fb0a8906025892c089192d440",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "freeze_study.py",
+      "bytes": 3616,
+      "sha256": "0b18e1979d0dfc27a094d417491887c06322ce7b87cdee4f5ea6cea05cd9975a",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "make_controls.py",
+      "bytes": 4147,
+      "sha256": "bf6f89dde8f72338582d136af60d0f88a319791ff958587c6cceb149bd91982d",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "settings.json",
+      "bytes": 465,
+      "sha256": "e7b73c03656e820b614621e32860bab6aafc3bd0ef3c63e67a834e4966bdc6da",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "controls.json",
+      "bytes": 570373,
+      "sha256": "6e0a998200d3ec2ab10dbf81c8cc22249246719161556709aeef19b10ae167b8",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "schedule.json",
+      "bytes": 37600,
+      "sha256": "a1af86916c117a72ca83ec42d1af86b4d22eb278fc47f3ab92e30dccb4951594",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "STUDY-MANIFEST.json",
+      "bytes": 11627,
+      "sha256": "357664ce0a6af25efc171f5687e917cf4cc4ffd2d37ea580bfc6e89ac4119a0a",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "CANDIDATE-ADMISSION.json",
+      "bytes": 1048,
+      "sha256": "ad9bfc675cb9e335c1f189dcca58149068ebfa646e53ab26adb4c5c33006c1cb",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "PREPARATION-MANIFEST.json",
+      "bytes": 7960,
+      "sha256": "89677d9140025972962530ac528883e80c1230d9a11bdc1a1f3e672eba830bea",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "EXECUTION-GATE.json",
+      "bytes": 958,
+      "sha256": "ec59a66bebaf3902ad64798d7fef17454594c7473c7cfab80482275790acc469",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "study-registry.json",
+      "bytes": 7614,
+      "sha256": "50152399d590ae4b5f51e20dcb7d7d7b9c5768c5df21b9b43dfc584cbc2eb04a",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "baseline-source-registry.json",
+      "bytes": 5123,
+      "sha256": "544d881c9292d891422ea7ad528d83afbb6e7ddadaa66f5ce079ee9d549e1dcf",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "ROOT-CANDIDATE-FREEZE-RECEIPT.json",
+      "bytes": 1342,
+      "sha256": "e6489e4d41c84fabd0e8da21808b8c1ce7f50fcdc52827538a8807936f0d9a05",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "ROOT-CORRECTNESS-AUTHORIZATION.json",
+      "bytes": 3458,
+      "sha256": "cded2ef9d304d6442235c0901018fe4afde390d50fe10c4d66c94fa0616a951a",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "ROOT-CORRECTNESS-RECEIPT.json",
+      "bytes": 3458,
+      "sha256": "cded2ef9d304d6442235c0901018fe4afde390d50fe10c4d66c94fa0616a951a",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "ROOT-CLEAN-EXPORT-SUMMARY.json",
+      "bytes": 1748,
+      "sha256": "4e87be74d97412927a5ad2597807b22561ba5a0d4873e42097bdaf7ada03378d",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "POST-PREFLIGHT-INTEGRITY.json",
+      "bytes": 567,
+      "sha256": "00c2e16aea2a75ecb54806fae7f0ed1b22f72b5e7c00b1ffc920014b6713e01e",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "EXACT-PREFLIGHT-SUMMARY.json",
+      "bytes": 4194,
+      "sha256": "33d7262a32886ccd6bfe22faeb06566112665c2b9d296efcaf9958286d5af18e",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "FINAL-PREFLIGHT-MANIFEST.json",
+      "bytes": 8971,
+      "sha256": "a7ad6bae4fa956be81b4106830ea5ec5b60f001b7baaffcd686f2c344abcbbe8",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "harness-no-engine-results.json",
+      "bytes": 21990,
+      "sha256": "551dbbc4e2f03e1696de83422e3f9400ad9eb4e915e7290f836fbe72012463e5",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "admitted-gates-before-freeze.json",
+      "bytes": 8924,
+      "sha256": "a537cdee538d0b332c7e109b03aa36304757fe93b6c4745ec2c82d799c4dfca6",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "admitted-gates-after-freeze.json",
+      "bytes": 9855,
+      "sha256": "0caf95b2c2c7d3432e7cb14f529dc7cc0d524ee920ef906d31ca177f2937a3be",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "test_harness_no_engine.py",
+      "bytes": 5910,
+      "sha256": "c9bbd096ef612ab249409b83e70f43b05a7c466062950e34743a19eba5736dd8",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "test_admitted_fail_closed.py",
+      "bytes": 3026,
+      "sha256": "d240811f396cc85a6a4796868a64f1c9b14e9306657a9d53be2fc1e3034486f0",
+      "pinned_by_study_manifest": false,
+      "study_manifest_entry_matches": null
+    },
+    {
+      "path": "inputs/runtime-pins.json",
+      "bytes": 1503,
+      "sha256": "87a3501c4f87b8c120f492a7dea3d7496a59e30ae9873e8130c66927f146918e",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "templates/template-receipt.json",
+      "bytes": 526,
+      "sha256": "8aba24f58d7b68fc07d6fc7d063f670b8f7530d409fd8fbf49929e266fe302ff",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    },
+    {
+      "path": "PRIMARY-SOURCES.json",
+      "bytes": 1198,
+      "sha256": "44d67234d0ef8e502873750c034621bc232a0fd13a371842107e4f1b25cdd088",
+      "pinned_by_study_manifest": true,
+      "study_manifest_entry_matches": true
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "format": "independent-archive-coverage-exceptions/v1",
+  "malformedPublicFixtures": [
+    {
+      "file": "offline/sources/duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa.tar.gz!data/csv/gzip_large_extra_field.csv.gz",
+      "class": "public-upstream-compression-regression-fixture",
+      "archiveSha256MatchesPinnedPublicManifest": true,
+      "decodeLimitation": "EOFError",
+      "bytes": 140
+    },
+    {
+      "file": "offline/sources/duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa.tar.gz!data/parquet-testing/oob_gzip/half_footer.gz",
+      "class": "public-upstream-compression-regression-fixture",
+      "archiveSha256MatchesPinnedPublicManifest": true,
+      "decodeLimitation": "EOFError",
+      "bytes": 58
+    },
+    {
+      "file": "offline/sources/duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa.tar.gz!data/parquet-testing/oob_gzip/no_footer.gz",
+      "class": "public-upstream-compression-regression-fixture",
+      "archiveSha256MatchesPinnedPublicManifest": true,
+      "decodeLimitation": "EOFError",
+      "bytes": 54
+    },
+    {
+      "file": "offline/sources/duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa.tar.gz!data/parquet-testing/oob_gzip/one_byte_footer.gz",
+      "class": "public-upstream-compression-regression-fixture",
+      "archiveSha256MatchesPinnedPublicManifest": true,
+      "decodeLimitation": "EOFError",
+      "bytes": 55
+    },
+    {
+      "file": "offline/public-source/jena/jena-arq/testing/ARQ/testing-2026-05.zip!testing/DAWG-Final_data-r2.zip",
+      "class": "public-upstream-nested-ZIP-test-fixture",
+      "parentSha256MatchesPinnedPublicManifest": true,
+      "parentGitBlobMatchesPinnedPublicManifest": true,
+      "decodeLimitation": "ZIP integrity/header errors; complete inner decode not claimed",
+      "regularMembersDecodedByBoundedFallback": 722,
+      "fallbackDecodedBytes": 1369750,
+      "fallbackCrcVerifiedMembers": 710,
+      "rawAndDecodedConfiguredIdentityMatches": 0
+    }
+  ],
+  "publicHomePrefixClassifications": [
+    {
+      "file": "offline/npm/tarballs/alchemy_2.0.0-beta.80.tgz",
+      "member": "package/src/Railway/TODO.md",
+      "class": "public-source-example-or-username-prefix-collision",
+      "archiveSha256MatchesPinnedPublicManifest": true,
+      "officialPublicOrigin": true,
+      "prefixOccurrences": 1,
+      "completeUsernameBoundaryOccurrences": 0
+    },
+    {
+      "file": "offline/npm/tarballs/cpu-features_0.0.10.tgz",
+      "member": "mscdex-cpu-features-c6f574c/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile",
+      "class": "public-source-example-or-username-prefix-collision",
+      "archiveSha256MatchesPinnedPublicManifest": true,
+      "officialPublicOrigin": true,
+      "prefixOccurrences": 1,
+      "completeUsernameBoundaryOccurrences": 0
+    },
+    {
+      "file": "offline/sources/duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa.tar.gz",
+      "member": "duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa/extension/README.md",
+      "class": "public-source-example-or-username-prefix-collision",
+      "archiveSha256MatchesPinnedPublicManifest": true,
+      "officialPublicOrigin": true,
+      "prefixOccurrences": 2,
+      "completeUsernameBoundaryOccurrences": 2
+    }
+  ],
+  "limits": "Only the five listed public test fixtures had incomplete normal decompression. Their enclosing bytes match pinned public manifests. No private source archive, runtime database, or unknown-origin binary was treated as a public fixture. No archive content was executed or extracted to a filesystem during this scan.",
+  "matchedPrivateValuesIncluded": false
+}

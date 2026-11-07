@@ -1,0 +1,98 @@
+{
+  "schema": "transport-comparison/1",
+  "timestamp_utc": "2026-11-05T02:16:42.859Z",
+  "warmup_pairs": 2,
+  "measured_pairs": 5,
+  "scope": "complete typed result conversion and round trips; identical SQL; every cell checked; open separately charged",
+  "source_sha256": {
+    "adapter/benchmark-transport.mjs": "5bc55c9424c4a78ec7f560bd5f9e322685320716095353d0bcefedadd7743010",
+    "adapter/native-duckdb-port.mjs": "c1b018cbfdb2fe44946fd5a351dac7fd43b117f3121fcc68736941ab75c48a21",
+    "adapter/owned-duckdb-port.mjs": "65caca13d12022265bb0b45f9d9e69459871e6ab5f986ff84fe29c3958483ae8",
+    "adapter/worker.py": "538f089893e8079740513c798a03cf2a0706718b5b3fa48a19287dddb67414e4",
+    "adapter/build-deps/package-lock.json": "5c6e54fd457433e7348efd0ad3301fa49f93763b0f459d6c7c43abc392b7308b"
+  },
+  "summary": {
+    "reference": {
+      "open_ms": 130.68887499999983,
+      "read_20000_ms": 44.953666999999996,
+      "repeated_100_ms": 17.821916999999985
+    },
+    "native": {
+      "open_ms": 20.36720800000012,
+      "read_20000_ms": 11.555999999999813,
+      "repeated_100_ms": 24.685875000000124
+    }
+  },
+  "samples": [
+    {
+      "variant": "reference",
+      "attempt": 0,
+      "open_ms": 129.7784590000001,
+      "read_20000_ms": 48.444041999999854,
+      "repeated_100_ms": 18.21291599999995
+    },
+    {
+      "variant": "native",
+      "attempt": 0,
+      "open_ms": 20.498125000000073,
+      "read_20000_ms": 11.555999999999813,
+      "repeated_100_ms": 23.927208000000064
+    },
+    {
+      "variant": "native",
+      "attempt": 1,
+      "open_ms": 18.541291999999885,
+      "read_20000_ms": 12.108208999999988,
+      "repeated_100_ms": 23.58741699999996
+    },
+    {
+      "variant": "reference",
+      "attempt": 1,
+      "open_ms": 130.70249999999987,
+      "read_20000_ms": 46.95450000000005,
+      "repeated_100_ms": 16.734916999999996
+    },
+    {
+      "variant": "reference",
+      "attempt": 2,
+      "open_ms": 123.56874999999991,
+      "read_20000_ms": 44.953666999999996,
+      "repeated_100_ms": 17.821916999999985
+    },
+    {
+      "variant": "native",
+      "attempt": 2,
+      "open_ms": 20.36720800000012,
+      "read_20000_ms": 10.459792000000107,
+      "repeated_100_ms": 28.303666999999905
+    },
+    {
+      "variant": "native",
+      "attempt": 3,
+      "open_ms": 20.67079100000001,
+      "read_20000_ms": 11.630457999999862,
+      "repeated_100_ms": 25.394624999999905
+    },
+    {
+      "variant": "reference",
+      "attempt": 3,
+      "open_ms": 130.68887499999983,
+      "read_20000_ms": 44.78391599999986,
+      "repeated_100_ms": 18.2990420000001
+    },
+    {
+      "variant": "reference",
+      "attempt": 4,
+      "open_ms": 133.89525000000003,
+      "read_20000_ms": 44.78187500000013,
+      "repeated_100_ms": 16.437999999999647
+    },
+    {
+      "variant": "native",
+      "attempt": 4,
+      "open_ms": 20.193958000000293,
+      "read_20000_ms": 10.157624999999825,
+      "repeated_100_ms": 24.685875000000124
+    }
+  ]
+}

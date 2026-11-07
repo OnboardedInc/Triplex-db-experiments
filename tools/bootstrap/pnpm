@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+TRIPLEX_TASK_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+exec "$TRIPLEX_TASK_ROOT/tools/bootstrap/with-env.sh" "$TRIPLEX_TASK_ROOT/.local/tools/node-v24.13.0-darwin-arm64/bin/node" "$TRIPLEX_TASK_ROOT/.local/tools/pnpm-10.11.0/package/bin/pnpm.cjs" "$@"

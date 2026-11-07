@@ -1,0 +1,198 @@
+{
+  "schema": "td.native-reference-coverage-growth-read-only-reconciliation/1",
+  "status": "counts_reconciled_only",
+  "packagedAtUtc": "2026-11-06T11:09:41.011581+00:00",
+  "source": {
+    "sourceCommit": "97c3e0000e7b55242097ce66d7287b8f3a07804b",
+    "file": "adapter/diagnose-reference-coverage-growth.mjs",
+    "sha256": "b203283b6a583156b7eef0d919b67b675e02441ed8b0bc7aa0bcb6b01473d2b8",
+    "node": "[LOCAL_PATH_0043]",
+    "environment": {
+      "UV_THREADPOOL_SIZE": "4",
+      "NODE_OPTIONS": ""
+    },
+    "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/diagnostic-reference-coverage-growth-20261106-01"
+  },
+  "firstFailureReceipt": "evidence/native-reference-coverage-boundaries-first-20261106.json",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/diagnostic-reference-coverage-growth-20261106-01",
+  "rawDirectory": "evidence/native-reference-coverage-growth-diagnostic-20261106-raw",
+  "rawFiles": {
+    "closed-first.json": {
+      "sha256": "97f11ba0365659504d73940b5fd7eb159731268311f86311e784e862adef4c81",
+      "sizeBytes": 77
+    },
+    "counts-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "counts-first.stdout": {
+      "sha256": "c1218e9aa6c492cdc592f06ba97db6066d52cb7b5292c816d58c639256a11ba2",
+      "sizeBytes": 840
+    },
+    "counts-first.terminal.json": {
+      "sha256": "43ce3ca4fcfb6080d42401350ab1dadb19dec3341f4f62c6958809a8321fd157",
+      "sizeBytes": 839
+    },
+    "result.json": {
+      "sha256": "5af0a76e0ed5ccab77272ff2876849d14410957393e19e42feb4796b72f9b2b4",
+      "sizeBytes": 92320
+    },
+    "source-after-first.json": {
+      "sha256": "92d2a041508a46ebbb44823ee03af10358e772596ef5e5b3a84c86acb20cc388",
+      "sizeBytes": 551
+    },
+    "source-before-first.json": {
+      "sha256": "92d2a041508a46ebbb44823ee03af10358e772596ef5e5b3a84c86acb20cc388",
+      "sizeBytes": 551
+    },
+    "syntax-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "syntax-first.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "syntax-first.terminal.json": {
+      "sha256": "8e636a06f785e55d36e66eea8eba28afc6b0a94793ad0a0dc35ea75a67f2a6cb",
+      "sizeBytes": 458
+    }
+  },
+  "terminals": {
+    "syntax": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--check",
+        "adapter/diagnose-reference-coverage-growth.mjs"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 61724,
+      "startedAtUtc": "2026-11-06T11:07:07.203640+00:00",
+      "endedAtUtc": "2026-11-06T11:07:07.229683+00:00",
+      "exitCode": 0,
+      "elapsedMs": 25.66683292388916
+    },
+    "counts": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "adapter/diagnose-reference-coverage-growth.mjs",
+        "--database",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-growth-FPDV3o/facts.duckdb",
+        "--output",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/diagnostic-reference-coverage-growth-20261106-01/result.json"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 61725,
+      "startedAtUtc": "2026-11-06T11:07:07.230089+00:00",
+      "endedAtUtc": "2026-11-06T11:07:07.456772+00:00",
+      "exitCode": 0,
+      "elapsedMs": 226.71537497080863
+    }
+  },
+  "actualAccess": {
+    "sdk": {
+      "api": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js",
+      "bindings": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+      "platform": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+      "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    },
+    "config": {
+      "access_mode": "READ_ONLY",
+      "threads": "1",
+      "memory_limit": "128MB",
+      "max_temp_directory_size": "64MB"
+    },
+    "effectiveSettings": [
+      [
+        "read_only",
+        "1",
+        "122.0 MiB",
+        "61.0 MiB"
+      ]
+    ],
+    "restrictions": "READ_ONLY; no LOAD, initializer, owner activation, audit, native command, EXPLAIN or product retry.",
+    "noProjectNativeImagesLoaded": true
+  },
+  "reconciliation": {
+    "persistedAuthoredCommandPrefix": 260,
+    "expectedAuthoredCommands": 260,
+    "firstAbsent": null,
+    "clock": 261,
+    "targetBatches": 195,
+    "targetBatchMembers": 4225,
+    "singleSourceCommandsAndEdits": 65,
+    "presenceEntities": 130,
+    "presenceEvents": 4290,
+    "assertions": 65,
+    "retainedCount": 65,
+    "retainedBytes": 630,
+    "lastPersistedCommand": "growth-source-64",
+    "lastPersistedPosition": 261,
+    "queryEvidence": {
+      "format_clock_usage": [
+        [
+          12,
+          "261",
+          "65",
+          "630"
+        ]
+      ],
+      "base_counts": [
+        [
+          "commands",
+          "261"
+        ],
+        [
+          "assertions",
+          "65"
+        ],
+        [
+          "entity_batches",
+          "195"
+        ],
+        [
+          "entity_batch_members",
+          "4225"
+        ],
+        [
+          "entity_commands",
+          "65"
+        ],
+        [
+          "entity_presence_edits",
+          "65"
+        ]
+      ],
+      "presence_totals": [
+        [
+          "130",
+          "4290"
+        ]
+      ]
+    },
+    "completePrefixDetails": "result.json"
+  },
+  "derivedPrecisionNote": "All260 authored commands and their receipts/headers persisted, so the failure is not before final command commit. This does NOT prove the fixture observed the last JavaScript ACK: final postcommit delivery/cleanup remains possible, alongside subsequent query binding/execution, revalidation, presence/replay, raw reopen or final SDK reopen/checks. The first raw diagnostic interpretation remains unchanged. No product gate was retried or accepted.",
+  "immutability": {
+    "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-growth-FPDV3o/facts.duckdb",
+    "sha256Before": "1c2cd16700e993db513d0c2dad81bca77ef45e5b5ce9579a0ffdb83e614f45b0",
+    "sha256After": "1c2cd16700e993db513d0c2dad81bca77ef45e5b5ce9579a0ffdb83e614f45b0",
+    "mtimeMsBefore": 1793962267628.6028,
+    "mtimeMsAfter": 1793962267628.6028,
+    "sameHashAndMtime": true,
+    "noWal": true,
+    "closedScopedLsof": "closed-first.json",
+    "sourceBeforeAfterExact": true,
+    "cleanupErrors": []
+  },
+  "claims": {
+    "growthSetupCommitted": true,
+    "growthProductQueryOrAuditPassed": false,
+    "healthyReuseQualified": false,
+    "referenceAuditGrowthGateClosed": false,
+    "physicalMemoryContainment": false,
+    "performanceComparison": false
+  },
+  "nextSourceOnly": "Fresh named instrumented growth gate, durable begin/end and each realACK marker with original260commands/caps/oracles; separate fixedschema4 identity-only paired growth proposal to distinguish a preexisting metadata128MB issue."
+}

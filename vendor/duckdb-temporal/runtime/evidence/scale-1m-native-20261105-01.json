@@ -1,0 +1,2772 @@
+{
+  "schema": "temporal-scale-benchmark/1",
+  "timestampUtc": "2026-11-05T13:40:01.612Z",
+  "configuration": {
+    "sizes": [
+      1000000
+    ],
+    "readers": [
+      1,
+      4,
+      16
+    ],
+    "samples": 2,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 4096,
+    "fixtureMode": "native",
+    "threads": 4,
+    "memoryLimit": "1GB",
+    "maxTempDirectorySize": "2GB",
+    "maxIntermediateBytes": 4294967296
+  },
+  "fixtureDirectory": "build/scale-runs/20261105T134001610Z-08978c32",
+  "limitations": [
+    "SQL-expanded setup is not native ingestion throughput evidence",
+    "Process memory before/after is not a peak or hard memory bound",
+    "Empirical quantiles from small sample counts are smoke measurements"
+  ],
+  "stages": [
+    {
+      "size": 1000000,
+      "database": "facts-1000000.duckdb",
+      "status": "passed",
+      "cells": [
+        {
+          "kind": "count",
+          "mixedIngestion": false,
+          "readerCount": 1,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 279.93308400000024,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.004665999997087056
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 279.19225000000006,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 279.96299999999974
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 559.1936659999992,
+          "throughputQueriesPerSecond": 3.576578422832141,
+          "latencyMs": {
+            "count": 2,
+            "min": 279.19225000000006,
+            "p50": 279.19225000000006,
+            "p95": 279.93308400000024,
+            "p99": 279.93308400000024,
+            "max": 279.93308400000024
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 964476928,
+                "heapTotal": 43630592,
+                "heapUsed": 9737904,
+                "external": 4102379,
+                "arrayBuffers": 1908175
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1031569408,
+                "heapTotal": 43630592,
+                "heapUsed": 9904880,
+                "external": 4116581,
+                "arrayBuffers": 1922337
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 1072316416,
+                "heapTotal": 43630592,
+                "heapUsed": 10077560,
+                "external": 4130743,
+                "arrayBuffers": 1936499
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 293.0430830000005,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "sum",
+          "mixedIngestion": false,
+          "readerCount": 1,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 279.32645799999955,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.0039590000014868565
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 273.78137499999866,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 279.3585000000021
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 553.177125000002,
+          "throughputQueriesPerSecond": 3.615478496150746,
+          "latencyMs": {
+            "count": 2,
+            "min": 273.78137499999866,
+            "p50": 273.78137499999866,
+            "p95": 279.32645799999955,
+            "p99": 279.32645799999955,
+            "max": 279.32645799999955
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 1072365568,
+                "heapTotal": 43630592,
+                "heapUsed": 10204408,
+                "external": 4924320,
+                "arrayBuffers": 2730076
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1073856512,
+                "heapTotal": 43630592,
+                "heapUsed": 10308064,
+                "external": 4939226,
+                "arrayBuffers": 2744982
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 916144128,
+                "heapTotal": 43630592,
+                "heapUsed": 10433648,
+                "external": 4954132,
+                "arrayBuffers": 2759888
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 288.32174999999916,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "grouped_sum",
+          "mixedIngestion": false,
+          "readerCount": 1,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 279.83558300000004,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.008042000001296401
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 281.9417500000018,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 280.07679199999984
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 562.2570420000011,
+          "throughputQueriesPerSecond": 3.557091953683341,
+          "latencyMs": {
+            "count": 2,
+            "min": 279.83558300000004,
+            "p50": 279.83558300000004,
+            "p95": 281.9417500000018,
+            "p99": 281.9417500000018,
+            "max": 281.9417500000018
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 916127744,
+                "heapTotal": 43630592,
+                "heapUsed": 10574480,
+                "external": 5751564,
+                "arrayBuffers": 3557320
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 921763840,
+                "heapTotal": 43892736,
+                "heapUsed": 12495104,
+                "external": 5871150,
+                "arrayBuffers": 3676906
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 903708672,
+                "heapTotal": 43892736,
+                "heapUsed": 14287064,
+                "external": 5990736,
+                "arrayBuffers": 3796492
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 294.2608330000003,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 245
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "count",
+          "mixedIngestion": false,
+          "readerCount": 4,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 511.56237500000134,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.008291999998618849
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 623.6356669999986,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.008666999998240499
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 662.4351670000033,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.007749999997031409
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 681.5777080000007,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.004916999998386018
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 425.9128750000018,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 511.59570899999744
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 513.4523340000014,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 681.5986249999987
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 663.8702919999996,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 623.6608749999978
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 656.7046660000015,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 662.4612089999973
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 1319.189291999999,
+          "throughputQueriesPerSecond": 6.064330607074095,
+          "latencyMs": {
+            "count": 8,
+            "min": 425.9128750000018,
+            "p50": 623.6356669999986,
+            "p95": 681.5777080000007,
+            "p99": 681.5777080000007,
+            "max": 681.5777080000007
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 903626752,
+                "heapTotal": 43892736,
+                "heapUsed": 14446288,
+                "external": 6792031,
+                "arrayBuffers": 4597787
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1071628288,
+                "heapTotal": 43892736,
+                "heapUsed": 14679240,
+                "external": 6827412,
+                "arrayBuffers": 4633168
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 1033764864,
+                "heapTotal": 43892736,
+                "heapUsed": 15032584,
+                "external": 6884012,
+                "arrayBuffers": 4689768
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 281.0940840000003,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "sum",
+          "mixedIngestion": false,
+          "readerCount": 4,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 498.77400000000125,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.005624999997962732
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 642.924750000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.00966599999810569
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 747.195458000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.009249999999155989
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 2730.7292089999974,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 498.7991660000007
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 3838.927834000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 642.9497909999955
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 3741.636292000003,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 747.2187079999967
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 7393.030125000001,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.008791000000201166
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 302.4940839999981,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 7393.083415999998
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 7695.984541000002,
+          "throughputQueriesPerSecond": 1.0395031275570228,
+          "latencyMs": {
+            "count": 8,
+            "min": 302.4940839999981,
+            "p50": 747.195458000002,
+            "p95": 7393.030125000001,
+            "p99": 7393.030125000001,
+            "max": 7393.030125000001
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 1032781824,
+                "heapTotal": 43892736,
+                "heapUsed": 15195656,
+                "external": 7690997,
+                "arrayBuffers": 5496753
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1014267904,
+                "heapTotal": 43892736,
+                "heapUsed": 15422800,
+                "external": 7728238,
+                "arrayBuffers": 5533994
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 859291648,
+                "heapTotal": 43892736,
+                "heapUsed": 15894024,
+                "external": 7787814,
+                "arrayBuffers": 5593570
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43515904",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 303.622542000001,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "grouped_sum",
+          "mixedIngestion": false,
+          "readerCount": 4,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 617.5873750000028,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.011957999995502178
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 649.411417000003,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.01245799999742303
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 659.7955000000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.008999999998195563
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 773.9022499999992,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.01283300000068266
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 699.2434169999979,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 617.8513329999987
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 704.0202500000014,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 659.9992079999938
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 727.8260840000003,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 649.7550409999967
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 632.3242079999982,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 774.1052080000009
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 1406.6628329999949,
+          "throughputQueriesPerSecond": 5.6872192911633075,
+          "latencyMs": {
+            "count": 8,
+            "min": 617.5873750000028,
+            "p50": 659.7955000000002,
+            "p95": 773.9022499999992,
+            "p99": 773.9022499999992,
+            "max": 773.9022499999992
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 868892672,
+                "heapTotal": 43892736,
+                "heapUsed": 16480976,
+                "external": 8600519,
+                "arrayBuffers": 6406275
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1076035584,
+                "heapTotal": 44154880,
+                "heapUsed": 20525456,
+                "external": 8899460,
+                "arrayBuffers": 6705216
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 1326530560,
+                "heapTotal": 43876352,
+                "heapUsed": 14118776,
+                "external": 2556563,
+                "arrayBuffers": 362319
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43778048",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 316.1560000000027,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 245
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "count",
+          "mixedIngestion": false,
+          "readerCount": 16,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 2314.793666999998,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.006832999999460299
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 2795.382083000004,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.010999999998603016
+            },
+            {
+              "reader": 5,
+              "round": 0,
+              "elapsedMs": 3108.446167000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02733299999817973
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 3118.199250000005,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.010499999996682163
+            },
+            {
+              "reader": 8,
+              "round": 0,
+              "elapsedMs": 3124.8200829999987,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02862499999901047
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 3135.070083999999,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.011458000000857282
+            },
+            {
+              "reader": 7,
+              "round": 0,
+              "elapsedMs": 3141.097791999993,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.0282500000030268
+            },
+            {
+              "reader": 6,
+              "round": 0,
+              "elapsedMs": 3152.1151249999966,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.02787499999976717
+            },
+            {
+              "reader": 9,
+              "round": 0,
+              "elapsedMs": 3159.5730419999963,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.029083000001264736
+            },
+            {
+              "reader": 4,
+              "round": 0,
+              "elapsedMs": 3165.741292000006,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.011832999996840954
+            },
+            {
+              "reader": 10,
+              "round": 0,
+              "elapsedMs": 3193.525249999999,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.029416999997920357
+            },
+            {
+              "reader": 12,
+              "round": 0,
+              "elapsedMs": 3195.6901670000007,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.030082999997830484
+            },
+            {
+              "reader": 11,
+              "round": 0,
+              "elapsedMs": 3199.7636669999993,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.0297500000015134
+            },
+            {
+              "reader": 13,
+              "round": 0,
+              "elapsedMs": 3430.105540999997,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.030417000001762062
+            },
+            {
+              "reader": 14,
+              "round": 0,
+              "elapsedMs": 5390.515958000004,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.030791999997745734
+            },
+            {
+              "reader": 15,
+              "round": 0,
+              "elapsedMs": 5398.0353749999995,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.031125000001338776
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 3084.2290409999987,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2314.817167000001
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 2604.330624999995,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2795.4129170000015
+            },
+            {
+              "reader": 5,
+              "round": 1,
+              "elapsedMs": 2292.067541999997,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3108.4922080000033
+            },
+            {
+              "reader": 8,
+              "round": 1,
+              "elapsedMs": 2276.5102079999997,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3124.860542000002
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 2286.1847909999997,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3118.2236669999984
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 2269.35325,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3135.092417
+            },
+            {
+              "reader": 7,
+              "round": 1,
+              "elapsedMs": 2263.334999999999,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3141.1394169999985
+            },
+            {
+              "reader": 6,
+              "round": 1,
+              "elapsedMs": 2252.3423330000005,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3152.1564169999983
+            },
+            {
+              "reader": 9,
+              "round": 1,
+              "elapsedMs": 2245.961083000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3159.6248750000013
+            },
+            {
+              "reader": 4,
+              "round": 1,
+              "elapsedMs": 2257.6984169999996,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3165.7792499999996
+            },
+            {
+              "reader": 10,
+              "round": 1,
+              "elapsedMs": 2841.3822910000017,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3193.5764169999966
+            },
+            {
+              "reader": 12,
+              "round": 1,
+              "elapsedMs": 2839.8994170000005,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3195.7597499999974
+            },
+            {
+              "reader": 13,
+              "round": 1,
+              "elapsedMs": 2606.0975000000035,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3430.1529579999988
+            },
+            {
+              "reader": 14,
+              "round": 1,
+              "elapsedMs": 739.7936669999981,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 5390.561249999999
+            },
+            {
+              "reader": 11,
+              "round": 1,
+              "elapsedMs": 2971.733500000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3199.826667000001
+            },
+            {
+              "reader": 15,
+              "round": 1,
+              "elapsedMs": 825.6362910000025,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 5398.081791999997
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 6223.759542,
+          "throughputQueriesPerSecond": 5.141586814858986,
+          "latencyMs": {
+            "count": 32,
+            "min": 739.7936669999981,
+            "p50": 2841.3822910000017,
+            "p95": 5390.515958000004,
+            "p99": 5398.0353749999995,
+            "max": 5398.0353749999995
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 1327267840,
+                "heapTotal": 43876352,
+                "heapUsed": 14663248,
+                "external": 3375014,
+                "arrayBuffers": 1180770
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1536786432,
+                "heapTotal": 43876352,
+                "heapUsed": 15108520,
+                "external": 3495271,
+                "arrayBuffers": 1301027
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43515904",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 1497251840,
+                "heapTotal": 43876352,
+                "heapUsed": 16496312,
+                "external": 3721623,
+                "arrayBuffers": 1527379
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43515904",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 307.0546250000043,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "sum",
+          "mixedIngestion": false,
+          "readerCount": 16,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 2023.7730410000004,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.006792000000132248
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 2024.3390409999993,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.014666999995824881
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 2024.941082999998,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01374999999825377
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 2025.5354169999991,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01433299999916926
+            },
+            {
+              "reader": 5,
+              "round": 0,
+              "elapsedMs": 2388.891416999999,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.015583000000333413
+            },
+            {
+              "reader": 4,
+              "round": 0,
+              "elapsedMs": 2388.9918340000004,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.014957999999751337
+            },
+            {
+              "reader": 7,
+              "round": 0,
+              "elapsedMs": 2554.6222500000003,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01616699999431148
+            },
+            {
+              "reader": 6,
+              "round": 0,
+              "elapsedMs": 2555.4119169999976,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01583299999765586
+            },
+            {
+              "reader": 9,
+              "round": 0,
+              "elapsedMs": 2555.9865840000057,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01683299999422161
+            },
+            {
+              "reader": 8,
+              "round": 0,
+              "elapsedMs": 2572.7025829999984,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.016416999998909887
+            },
+            {
+              "reader": 11,
+              "round": 0,
+              "elapsedMs": 2573.8577920000025,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01737499999580905
+            },
+            {
+              "reader": 14,
+              "round": 0,
+              "elapsedMs": 2574.4452500000043,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.02283299999544397
+            },
+            {
+              "reader": 10,
+              "round": 0,
+              "elapsedMs": 2575.2194999999992,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.017082999998820014
+            },
+            {
+              "reader": 15,
+              "round": 0,
+              "elapsedMs": 4790.455083999994,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.023083000000042375
+            },
+            {
+              "reader": 13,
+              "round": 0,
+              "elapsedMs": 4794.289250000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.022582999998121522
+            },
+            {
+              "reader": 12,
+              "round": 0,
+              "elapsedMs": 4796.202958000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.02224999999452848
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 2773.946125000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2023.801999999996
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 3018.793792000004,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2024.3687079999945
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 3020.2330409999995,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2024.9650419999962
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 3064.734292000001,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2025.5817499999976
+            },
+            {
+              "reader": 5,
+              "round": 1,
+              "elapsedMs": 2706.2757920000004,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2388.923332999999
+            },
+            {
+              "reader": 4,
+              "round": 1,
+              "elapsedMs": 2706.2168749999983,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2389.0176250000004
+            },
+            {
+              "reader": 7,
+              "round": 1,
+              "elapsedMs": 2541.7526660000003,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2554.6566669999957
+            },
+            {
+              "reader": 6,
+              "round": 1,
+              "elapsedMs": 2544.5609170000025,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2555.4420829999945
+            },
+            {
+              "reader": 9,
+              "round": 1,
+              "elapsedMs": 2548.1116669999974,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2556.011707999998
+            },
+            {
+              "reader": 8,
+              "round": 1,
+              "elapsedMs": 2540.031750000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2572.733874999998
+            },
+            {
+              "reader": 11,
+              "round": 1,
+              "elapsedMs": 3166.8802090000027,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2573.8834579999966
+            },
+            {
+              "reader": 14,
+              "round": 1,
+              "elapsedMs": 3168.5610000000015,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2574.471666999998
+            },
+            {
+              "reader": 10,
+              "round": 1,
+              "elapsedMs": 3168.6275830000013,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 2575.2414999999964
+            },
+            {
+              "reader": 15,
+              "round": 1,
+              "elapsedMs": 1094.3606670000008,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 4790.495082999994
+            },
+            {
+              "reader": 13,
+              "round": 1,
+              "elapsedMs": 1214.3568749999977,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 4794.321958
+            },
+            {
+              "reader": 12,
+              "round": 1,
+              "elapsedMs": 1271.5474170000016,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 4796.237999999998
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 6067.840624999997,
+          "throughputQueriesPerSecond": 5.273704762145103,
+          "latencyMs": {
+            "count": 32,
+            "min": 1094.3606670000008,
+            "p50": 2555.9865840000057,
+            "p95": 4794.289250000002,
+            "p99": 4796.202958000002,
+            "max": 4796.202958000002
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 1504460800,
+                "heapTotal": 43876352,
+                "heapUsed": 16771656,
+                "external": 4553187,
+                "arrayBuffers": 2358943
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1510440960,
+                "heapTotal": 43876352,
+                "heapUsed": 17530696,
+                "external": 4679768,
+                "arrayBuffers": 2485524
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "41680896",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 1319157760,
+                "heapTotal": 43876352,
+                "heapUsed": 18909536,
+                "external": 4918024,
+                "arrayBuffers": 2723780
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43515904",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 329.08533299999544,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "grouped_sum",
+          "mixedIngestion": false,
+          "readerCount": 16,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 2706.1177919999973,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.01754199999413686
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 2706.7812500000073,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.017958999997063074
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 2707.3332910000026,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.006708999993861653
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 2711.7212080000027,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.01691700000083074
+            },
+            {
+              "reader": 5,
+              "round": 0,
+              "elapsedMs": 3069.256499999996,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.019208999998227227
+            },
+            {
+              "reader": 4,
+              "round": 0,
+              "elapsedMs": 3070.335874999997,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.018334000000322703
+            },
+            {
+              "reader": 7,
+              "round": 0,
+              "elapsedMs": 3070.9168750000026,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.019833999998809304
+            },
+            {
+              "reader": 9,
+              "round": 0,
+              "elapsedMs": 3071.5831250000047,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.02074999999604188
+            },
+            {
+              "reader": 10,
+              "round": 0,
+              "elapsedMs": 3072.822166999991,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.021124999999301508
+            },
+            {
+              "reader": 8,
+              "round": 0,
+              "elapsedMs": 3074.2016250000015,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.020208999994792975
+            },
+            {
+              "reader": 11,
+              "round": 0,
+              "elapsedMs": 3083.0973749999976,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.02145899999595713
+            },
+            {
+              "reader": 13,
+              "round": 0,
+              "elapsedMs": 3086.088334,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.023000000001047738
+            },
+            {
+              "reader": 12,
+              "round": 0,
+              "elapsedMs": 3096.407957999996,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.022666999997454695
+            },
+            {
+              "reader": 14,
+              "round": 0,
+              "elapsedMs": 3836.2214160000003,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.02333399999770336
+            },
+            {
+              "reader": 6,
+              "round": 0,
+              "elapsedMs": 5265.641541999998,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.019541999994544312
+            },
+            {
+              "reader": 15,
+              "round": 0,
+              "elapsedMs": 5266.599709000009,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 0.023624999994353857
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 2561.1698329999927,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 2706.318041999999
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 2892.431958000001,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 2706.954209000003
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 2897.0473330000095,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 2707.4750839999906
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 2895.485958999998,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 2711.9767500000016
+            },
+            {
+              "reader": 5,
+              "round": 1,
+              "elapsedMs": 2542.3267500000075,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3069.455124999993
+            },
+            {
+              "reader": 4,
+              "round": 1,
+              "elapsedMs": 2543.986791000003,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3070.5469589999993
+            },
+            {
+              "reader": 7,
+              "round": 1,
+              "elapsedMs": 2543.968458000003,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3071.100708999991
+            },
+            {
+              "reader": 9,
+              "round": 1,
+              "elapsedMs": 2543.7578749999957,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3071.7889589999977
+            },
+            {
+              "reader": 10,
+              "round": 1,
+              "elapsedMs": 2552.5840000000026,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3073.023874999999
+            },
+            {
+              "reader": 8,
+              "round": 1,
+              "elapsedMs": 2551.745708000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3074.5800420000014
+            },
+            {
+              "reader": 11,
+              "round": 1,
+              "elapsedMs": 3127.745916999993,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3083.2916669999977
+            },
+            {
+              "reader": 13,
+              "round": 1,
+              "elapsedMs": 3125.225458000001,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3086.263666999992
+            },
+            {
+              "reader": 12,
+              "round": 1,
+              "elapsedMs": 3119.3167079999985,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3096.5757920000033
+            },
+            {
+              "reader": 14,
+              "round": 1,
+              "elapsedMs": 2529.3760420000035,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 3836.4042499999923
+            },
+            {
+              "reader": 6,
+              "round": 1,
+              "elapsedMs": 1129.7881249999919,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 5265.941584
+            },
+            {
+              "reader": 15,
+              "round": 1,
+              "elapsedMs": 1266.5804170000047,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 245,
+              "startOffsetMs": 5266.866416999997
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 6533.682916999998,
+          "throughputQueriesPerSecond": 4.897697119145338,
+          "latencyMs": {
+            "count": 32,
+            "min": 1129.7881249999919,
+            "p50": 2895.485958999998,
+            "p95": 5265.641541999998,
+            "p99": 5266.599709000009,
+            "max": 5266.599709000009
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 1326972928,
+                "heapTotal": 43876352,
+                "heapUsed": 19207320,
+                "external": 5762850,
+                "arrayBuffers": 3568606
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1295646720,
+                "heapTotal": 18710528,
+                "heapUsed": 12357312,
+                "external": 2450046,
+                "arrayBuffers": 255802
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "42991616",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 1326825472,
+                "heapTotal": 38109184,
+                "heapUsed": 17369152,
+                "external": 2556563,
+                "arrayBuffers": 362319
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43515904",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 321.7541249999995,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 245
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "count",
+          "mixedIngestion": true,
+          "readerCount": 16,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 2953.7937079999974,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.007874999995692633
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 2954.577958000009,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.011791999990236945
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 2956.189624999999,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.012208000000100583
+            },
+            {
+              "reader": 4,
+              "round": 0,
+              "elapsedMs": 2958.1585829999967,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.012791999994078651
+            },
+            {
+              "reader": 7,
+              "round": 0,
+              "elapsedMs": 2963.3895829999965,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.1179169999959413
+            },
+            {
+              "reader": 5,
+              "round": 0,
+              "elapsedMs": 2964.896041999993,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.01374999999825377
+            },
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 2966.209917,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.012499999997089617
+            },
+            {
+              "reader": 6,
+              "round": 0,
+              "elapsedMs": 2968.1901249999937,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.11762499999895226
+            },
+            {
+              "reader": 8,
+              "round": 0,
+              "elapsedMs": 2968.691875000004,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.11816699999326374
+            },
+            {
+              "reader": 9,
+              "round": 0,
+              "elapsedMs": 2969.419207999992,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.11854199999652337
+            },
+            {
+              "reader": 12,
+              "round": 0,
+              "elapsedMs": 2970.4364579999965,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.1194169999944279
+            },
+            {
+              "reader": 11,
+              "round": 0,
+              "elapsedMs": 2971.061499999996,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.11916699999710545
+            },
+            {
+              "reader": 15,
+              "round": 0,
+              "elapsedMs": 3006.685958000002,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.12016699998639524
+            },
+            {
+              "reader": 13,
+              "round": 0,
+              "elapsedMs": 3006.7358749999985,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.11966699999175034
+            },
+            {
+              "reader": 10,
+              "round": 0,
+              "elapsedMs": 5233.5277919999935,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.11883300000044983
+            },
+            {
+              "reader": 14,
+              "round": 0,
+              "elapsedMs": 5234.588291000007,
+              "position": "245",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.11991699998907279
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 2281.1810419999965,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2954.454457999993
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 2281.7961249999935,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2954.5969999999943
+            },
+            {
+              "reader": 4,
+              "round": 1,
+              "elapsedMs": 2279.1714580000116,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2958.185416999986
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 2281.975416000001,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2956.212791999991
+            },
+            {
+              "reader": 5,
+              "round": 1,
+              "elapsedMs": 2275.210625000007,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2964.921166999993
+            },
+            {
+              "reader": 7,
+              "round": 1,
+              "elapsedMs": 2277.312625000006,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2963.5243749999936
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 2275.347041999994,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2966.2398329999996
+            },
+            {
+              "reader": 6,
+              "round": 1,
+              "elapsedMs": 2274.1533330000093,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2968.3524169999873
+            },
+            {
+              "reader": 8,
+              "round": 1,
+              "elapsedMs": 2291.6933329999883,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2968.827541999999
+            },
+            {
+              "reader": 9,
+              "round": 1,
+              "elapsedMs": 2308.7992080000113,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2969.546666999988
+            },
+            {
+              "reader": 12,
+              "round": 1,
+              "elapsedMs": 2850.455707999994,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2970.6007919999975
+            },
+            {
+              "reader": 11,
+              "round": 1,
+              "elapsedMs": 2850.6125829999946,
+              "position": "246",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 2971.188666999995
+            },
+            {
+              "reader": 13,
+              "round": 1,
+              "elapsedMs": 2815.7347080000036,
+              "position": "247",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3006.8586249999935
+            },
+            {
+              "reader": 15,
+              "round": 1,
+              "elapsedMs": 2982.907374999995,
+              "position": "247",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 3006.8226670000004
+            },
+            {
+              "reader": 10,
+              "round": 1,
+              "elapsedMs": 833.7512500000012,
+              "position": "248",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 5233.670416999987
+            },
+            {
+              "reader": 14,
+              "round": 1,
+              "elapsedMs": 948.0422499999986,
+              "position": "248",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 5234.7182919999905
+            }
+          ],
+          "errors": [],
+          "writes": [
+            {
+              "index": 0,
+              "position": "246",
+              "startOffsetMs": 0.12924999999813735,
+              "elapsedMs": 3004.3843329999945
+            },
+            {
+              "index": 1,
+              "position": "247",
+              "startOffsetMs": 3004.519499999995,
+              "elapsedMs": 2256.0729580000043
+            },
+            {
+              "index": 2,
+              "position": "248",
+              "startOffsetMs": 5260.594166999988,
+              "elapsedMs": 559.6874580000003
+            },
+            {
+              "index": 3,
+              "position": "249",
+              "startOffsetMs": 5820.283791999987,
+              "elapsedMs": 35.81950000001234
+            },
+            {
+              "index": 4,
+              "position": "250",
+              "startOffsetMs": 5856.105707999988,
+              "elapsedMs": 32.50854200001049
+            },
+            {
+              "index": 5,
+              "position": "251",
+              "startOffsetMs": 5888.615916999988,
+              "elapsedMs": 28.37225000000035
+            },
+            {
+              "index": 6,
+              "position": "252",
+              "startOffsetMs": 5916.990124999997,
+              "elapsedMs": 25.396291999990353
+            },
+            {
+              "index": 7,
+              "position": "253",
+              "startOffsetMs": 5942.387832999986,
+              "elapsedMs": 25.39929200000188
+            }
+          ],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 6183.446207999994,
+          "throughputQueriesPerSecond": 5.175107686487054,
+          "latencyMs": {
+            "count": 32,
+            "min": 833.7512500000012,
+            "p50": 2953.7937079999974,
+            "p95": 5233.5277919999935,
+            "p99": 5234.588291000007,
+            "max": 5234.588291000007
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 1324695552,
+                "heapTotal": 38109184,
+                "heapUsed": 17773976,
+                "external": 3414713,
+                "arrayBuffers": 1220469
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 1253621760,
+                "heapTotal": 38109184,
+                "heapUsed": 18516264,
+                "external": 3533321,
+                "arrayBuffers": 1339077
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "43515904",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 1204142080,
+                "heapTotal": 38109184,
+                "heapUsed": 20117064,
+                "external": 3766489,
+                "arrayBuffers": 1572245
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "58654000",
+                "temporaryStorageBytes": "0"
+              }
+            }
+          },
+          "pool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 316.62520799999766,
+            "position": "245",
+            "route": "sql",
+            "reason": "scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": true,
+          "overlappingQueryWrites": 73,
+          "writeMode": "bounded_burst",
+          "writeBurstDurationMs": 5967.65787499999,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        }
+      ],
+      "openConfiguration": {
+        "threads": 4,
+        "memoryLimit": "1GB",
+        "maxTempDirectorySize": "2GB",
+        "retainedLimits": {
+          "maxFacts": 1100000,
+          "maxBytes": 4294967296
+        }
+      },
+      "fixture": {
+        "size": 1000000,
+        "groupSize": 4096,
+        "groups": 245,
+        "position": "245",
+        "schemaHash": "1df92efaaf577c73d62cac22c68011dc23aec9345e33477e354afcf5c288dbf1",
+        "setupRoute": "native_put_record",
+        "audit": {
+          "retainedCarrier": true,
+          "allNativeHistoryBindings": true,
+          "usage": true,
+          "receipts": true,
+          "nativeReplay": true
+        },
+        "setupMs": 24941.172458,
+        "databaseBytes": 352071680
+      }
+    }
+  ],
+  "status": "passed",
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.19.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "schema_borrowed_input": true,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "74cf165a2f9d24323474a0be10cbe10b30c930a73de666503e449a202cbafb7c",
+      "native/src/temporal_command.hpp": "0e72ef0ec9dce8a8cef085b6e81fba624dec33602e1fb3cf649a6629e21c51ce",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_count_plan.hpp": "0885641b3279d71c5064c069bcaf0a7c520dd46bd25fa3d2e31650bb6ac02e45",
+      "native/src/temporal_datalog.cpp": "d165717e450a3c8d40c9810d29b761f92dd620a88e391d9e842b267459142d19",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_join_plan.hpp": "b2cfc07956e011c42bfc860fe157b2a0bbc311fdc7423e152eeb659f16674857",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_scan_plan.hpp": "c7d94b7b43d1e02fd26594d8ea3a643a20ceca6b6c9ce413d9fcaa42e2bccb3a",
+      "native/src/temporal_schema.cpp": "5c4777b3d867d4a57aa5de3cebf457d425055296e6c2fad2c311455f98b41ea6",
+      "native/src/temporal_schema.hpp": "05ca882152b3f4de4599ee48305c942495759e2187c3bab40f5587961c6fbc14",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "6b9c2b47be2d34f48efe32079d1b915ce1e4ca94ca5d8dd27868c2c680b18469",
+      "native/src/temporal_store_query.hpp": "ab96f3eff8affaf01c23da724d7c5eead9691a3efdb46d601ad011a2af5ca8f0",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "b53556d123c9e3c8a9c4d5140ffe8ace112753a50afa33a7987af6a8fc95e6dd",
+    "extension_sha256": "47e9e7629b034bc1f9d5b953a73bc0c93dcae7f0f46775ab5eae2e717f8caccf"
+  },
+  "runtimeArtifactSha256": {
+    "build/adapter/native-entity.js": "99650aaa2c86443f80824b46b7f40e9995adaf2191f9955b8f303e9d671dd003",
+    "build/adapter/native-duckdb-port.mjs": "622561f962ad72631440b778f667caf7a5bf2e81f6ecc9f9d38706d16065ee16"
+  },
+  "runtimeSourceSha256": {
+    "adapter/native-entity.ts": "963b9249e8ecfc59a363e3bd8aa628481ce7eaa24177a163b613c26f8fb3f6d1",
+    "adapter/native-duckdb-port.mjs": "622561f962ad72631440b778f667caf7a5bf2e81f6ecc9f9d38706d16065ee16"
+  },
+  "harnessSha256": "220e5711fdaad8922736454ee3c0632e230089a48bc6aa798a43d8d354974e76",
+  "fixtureSha256": "f716668e31fb2b5beb2889a306979952ab20a4d5d0625a63a5d96ca599677013",
+  "capabilities": {
+    "scalableQuery": true
+  }
+}

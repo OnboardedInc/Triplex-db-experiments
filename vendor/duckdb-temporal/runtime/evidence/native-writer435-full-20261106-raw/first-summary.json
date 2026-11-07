@@ -1,0 +1,62 @@
+{
+  "schema": "td.native-writer435-full/1",
+  "sourceCommit": "506698215b8bebdf604de2f41d281d3cdc611929",
+  "productionCodeCommit": "659ace02feaaa4fe1d779644b84c0f6e42fb2097",
+  "status": "failed_first_full_outcome",
+  "expected": {
+    "python": 31,
+    "fixedNode": 76,
+    "additionalNode": 263,
+    "workloadOracle": 8,
+    "workloadPlans": 13,
+    "scopedMethods": 391,
+    "triplexCases": 44,
+    "total": 435
+  },
+  "environment": {
+    "PATH": "[LOCAL_PATH_0056] Support/JetBrains/Toolbox/scripts:[LOCAL_PATH_0057]",
+    "UV_THREADPOOL_SIZE": "4",
+    "TD_TEST_PRE_BATCH_BUILD": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/retained-diagnostics-20261105/accepted-026",
+    "TD_SDK_ADMISSION_SOURCE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "TD_SDK_ADMISSION_RECIPE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json"
+  },
+  "candidateReport": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/evidence/verification.json",
+  "previousCandidateReport": {
+    "exists": true,
+    "sha256": "d08c0dbfceb007104c656c12b98e3bfe8626ad6f7ae13af6b6099d1e3b9cab0f",
+    "bytes": 44971
+  },
+  "nativeRebuild": false,
+  "packageInstall": false,
+  "restage": false,
+  "terminal": {
+    "command": [
+      "[LOCAL_PATH_0034]",
+      "verify.py",
+      "--with-direct"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime",
+    "pid": 81621,
+    "startedAtUtc": "2026-11-06T07:35:27.973386+00:00",
+    "status": "terminal",
+    "environment": {
+      "PATH": "[LOCAL_PATH_0056] Support/JetBrains/Toolbox/scripts:[LOCAL_PATH_0057]",
+      "UV_THREADPOOL_SIZE": "4",
+      "TD_TEST_PRE_BATCH_BUILD": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/retained-diagnostics-20261105/accepted-026",
+      "TD_SDK_ADMISSION_SOURCE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+      "TD_SDK_ADMISSION_RECIPE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json"
+    },
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T07:42:44.761970+00:00",
+    "elapsedMs": 436789.6775000263
+  },
+  "failure": {
+    "type": "AssertionError",
+    "message": "runtime/source/native/header/Node/route/fixture drift",
+    "trace": "Traceback (most recent call last):\n  File \"/tmp/temporal-writer435-50669821-full.py\", line 87, in <module>\n    assert post==pre,'runtime/source/native/header/Node/route/fixture drift'\n           ^^^^^^^^^\nAssertionError: runtime/source/native/header/Node/route/fixture drift\n"
+  },
+  "candidateReportAfter": {
+    "sha256": "30aecf908244837b51617eb3aeec752225cf711872c0cc0044092141518afe93",
+    "sameAsPrevious": false
+  }
+}

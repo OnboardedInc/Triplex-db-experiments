@@ -1,0 +1,24 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "build/adapter/test-native-reference-coverage.js"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+  "pid": 45736,
+  "startedAtUtc": "2026-11-06T10:26:03.333362+00:00",
+  "endedAtUtc": "2026-11-06T10:26:13.196691+00:00",
+  "exitCode": 0,
+  "elapsedMs": 9863.16950013861,
+  "environment": {
+    "UV_THREADPOOL_SIZE": "4"
+  },
+  "settings": {
+    "readers": 2,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB"
+  }
+}

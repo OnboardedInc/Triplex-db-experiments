@@ -1,0 +1,109 @@
+{
+  "schema": "td.native-writer-lab-file-only/1",
+  "recordedAtUtc": "2026-11-06T06:41:31.265843+00:00",
+  "status": "PASS_FILE_ONLY",
+  "reviewedLabSource": "213bf0b6e9f30703ee35f937d5fb414a49a4d8ce",
+  "nativeSource": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "syntax": {
+    "files": 4,
+    "results": [
+      {
+        "file": "native-writer-lab-provenance.mjs",
+        "exitCode": 0,
+        "log": "build/native-writer-lab-20261106-01/checks/native-writer-lab-provenance.mjs.log"
+      },
+      {
+        "file": "native-writer-lab-preload.mjs",
+        "exitCode": 0,
+        "log": "build/native-writer-lab-20261106-01/checks/native-writer-lab-preload.mjs.log"
+      },
+      {
+        "file": "native-writer-lab-small.mjs",
+        "exitCode": 0,
+        "log": "build/native-writer-lab-20261106-01/checks/native-writer-lab-small.mjs.log"
+      },
+      {
+        "file": "native-writer-lab-antijoin.mjs",
+        "exitCode": 0,
+        "log": "build/native-writer-lab-20261106-01/checks/native-writer-lab-antijoin.mjs.log"
+      }
+    ]
+  },
+  "stage": {
+    "files": 408,
+    "sdkDependencyFiles": 395,
+    "requiredAssets": 13,
+    "runtimeFilesAfterMatched": 408,
+    "inventorySha256": "8f1bfbcb69409f308a74a32a62f787693739798cc0c72df3710d92dba3798d71",
+    "readOnlyFilesAndDirectories": true,
+    "source": "selected assets only from existing qualified Bbuild02; no DBs/logs copied"
+  },
+  "attestation": {
+    "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "verifySha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "bindEqualsVerify": true,
+    "nativeSdkBuildSourceInputs": 46,
+    "unchangedMeasuredGitInputs": 10,
+    "newLabGitInputs": 5,
+    "fullHeaderTreeFileCounts": {
+      "duckdb/src/include": 1665,
+      "duckdb/third_party/fmt/include": 5,
+      "duckdb/third_party/utf8proc/include": 2,
+      "node": 2726
+    },
+    "packageResolution": {
+      "api": "node_modules/@duckdb/node-api/lib/index.js",
+      "bindings": "node_modules/@duckdb/node-bindings/duckdb.js",
+      "platform": "node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+      "engine": "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+    }
+  },
+  "pins": {
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9",
+    "build/owner_probe/temporal_writer.node": "02270b0840dd4bab9c3beb00986e06bc0e8125c2971f9ac6f9a407f6fe03418c",
+    "build/adapter/native-entity.js": "48c6a5d6443fc706e59e31779437e4b24d7ce6ea6de1b07d22501f54e8b9d8f8",
+    "build/adapter/native-schema.js": "723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226",
+    "build/adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+    "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+    "build/artifact.json": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+    "build/owner_probe/artifact.json": "1dcf48f7dfa69262f6b18bdb48ac2020205c9f702a63737cb13299297f749331",
+    "build/owner_probe/temporal_owner_probe.so": "884e708dcb9161d9d1c94790bec52b1cf1a388bf42115c7ed98e25b4f502fccd"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "nodeVersion": "v24.13.0",
+  "nodeExecutableSha256": "6f2e835e57feb7a29ffcd53a4d4eb60224ec264a1e002c3ba6d99999ea29807d",
+  "originalAntiBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+  "staticLoaderObservation": {
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "<staged408-runtime>/build/owner_probe/temporal_owner_probe.duckdb_extension:\n\t__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/owner_probe/temporal_owner_probe.so (compatibility version 0.0.0, current version 0.0.0)\n\t@rpath/libduckdb.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2100.43.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)\n",
+    "build/owner_probe/temporal_writer.node": "<staged408-runtime>/build/owner_probe/temporal_writer.node:\n\t__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/owner_probe/temporal_writer.node (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2100.43.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)\n"
+  },
+  "notExecuted": [
+    "native imports",
+    "store.open",
+    "database queries",
+    "tests",
+    "TSC",
+    "native compilation",
+    "small role/census",
+    "anti/broad performance"
+  ],
+  "remainingGates": [
+    "independent eight-type and full512 actualCPP qualification",
+    "root/A/C source clearance",
+    "actual relocated image identity and both actual16role/18USER census gates",
+    "original baseline raw availability/identity and freshanti1/16control/candidate arms",
+    "broad unchanged gates and reversed promising pairs"
+  ],
+  "rawPins": {
+    "checks/first.json": "6f62e7848b4238ab56b762588bc63158461ec113dd1ee13c292424d8eec2ee51",
+    "stage-first.json": "57170da18cccf48d28913930b0c11b86b62e8f4f903afeaacfdcd8e68e2f2daf",
+    "bind-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binding-first.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "verify-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "verify-first.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "utc": "2026-10-31T04:35:30.457054+00:00",
+  "status": "PASS_ALL30_CLOSED_EVIDENCE_QA_MEMBERS",
+  "checks": [
+    {
+      "lane": "semantics",
+      "manifest_sha256": "95fd7e9a2b6c91dc767d9b95edf84a5e14c56da32f624f3355963f55ccaa0d1e",
+      "members": 12,
+      "all_bytes_modes_UTF8_verified": true
+    },
+    {
+      "lane": "v2-performance",
+      "manifest_sha256": "d07fc8c1cc2a367f55e2ed71dcbc05799a8bc29bfbbf5bebcaa496cce60fdb06",
+      "members": 18,
+      "all_bytes_modes_UTF8_verified": true
+    }
+  ],
+  "specification_cases": 73,
+  "application_queries_passed": 0,
+  "application_queries": "UNRUN",
+  "architecture_selected_at_this_check": false
+}

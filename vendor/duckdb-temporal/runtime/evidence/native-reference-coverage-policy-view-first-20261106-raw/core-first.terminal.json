@@ -1,0 +1,12 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "build_native.py"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+  "pid": 91181,
+  "startedAtUtc": "2026-11-06T12:07:28.718041+00:00",
+  "endedAtUtc": "2026-11-06T12:07:40.965367+00:00",
+  "exitCode": 0,
+  "elapsedMs": 12247.47887486592
+}

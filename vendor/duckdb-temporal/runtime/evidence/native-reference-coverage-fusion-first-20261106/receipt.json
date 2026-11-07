@@ -1,0 +1,405 @@
+{
+  "schema": "td.reference-coverage-fusion-first/1",
+  "status": "FIRST_FOCUSED_PASS",
+  "createdAtUtc": "2026-11-06T12:04:58.002723+00:00",
+  "implementationSourceCommit": "1a1e261ff3a52ab4b1500247b2cfcc1478ad8765",
+  "baseQualifiedCoverageSourceCommit": "1fd53bf5bf450a391b91289a95c37908d4daae44",
+  "scope": "Isolated route1 fusion: materialize existing admission inside coverage CTE and reuse existing command/batch guard. Canonical/API/SDK bytes unchanged. This is first bounded correctness qualification, not a speed or promotion claim.",
+  "native": {
+    "extensionVersion": "0.32.0",
+    "coreSha256": "f52c51ab7b0eee5e252c07643b4316a7d0870c2848e5a76ba91a651b69b73e72",
+    "ownerSha256": "af00a86d77a3163fb927d0ab0f914d5d5c139e1a50d2d0fc03b544a9f3404134",
+    "controlSha256": "fb20fbc99b2c0ef3badaf3dd311b4dd712389daa7c3bca2cefcd0bd120088699",
+    "writerAddonSha256": "fd309e95a8e88c6b191b2ffed6b4b1b2eea27b1a9500df61425321d75772bf85",
+    "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "compatMutations": true,
+    "flags": {
+      "schema_template_reuse": true,
+      "schema_borrowed_input": true,
+      "diagnostic_evaluator_profile": false,
+      "experimental_current_unique_fast_path": true,
+      "experimental_injective_projection_fast_path": true,
+      "experimental_identity_count_fast_path": false,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_streaming_source_fast_path": true
+    }
+  },
+  "sdk": {
+    "entityJsSha256": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+    "sameAsQualified43c": true,
+    "dependencyFiles": 395,
+    "readOnlyRoutes": 5,
+    "selectedExternalReferences": 7,
+    "headers": 36,
+    "node": "24.13.0"
+  },
+  "phases": [
+    {
+      "phase": "stage-first",
+      "pid": 87471,
+      "command": [
+        "<task>/.venv/bin/python",
+        "<task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/build/qualification-reference-coverage-fusion-20261106-01/stage-selected.py"
+      ],
+      "startedAtUtc": "2026-11-06T12:00:20.755508+00:00",
+      "endedAtUtc": "2026-11-06T12:00:22.022841+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "core-build-first",
+      "pid": 87634,
+      "command": [
+        "<task>/.venv/bin/python",
+        "build_native.py"
+      ],
+      "startedAtUtc": "2026-11-06T12:00:36.797048+00:00",
+      "endedAtUtc": "2026-11-06T12:00:49.124691+00:00",
+      "exitCode": 0,
+      "selectedNode": "<node24.13>/bin/node"
+    },
+    {
+      "phase": "owner-build-first",
+      "pid": 87920,
+      "command": [
+        "<task>/.venv/bin/python",
+        "build_owner_probe.py",
+        "--source-dir",
+        "<task>/dependencies/duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa",
+        "--engine-library",
+        "<task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "--compat-mutations"
+      ],
+      "startedAtUtc": "2026-11-06T12:01:07.980999+00:00",
+      "endedAtUtc": "2026-11-06T12:01:16.375017+00:00",
+      "exitCode": 0,
+      "selectedNode": "<node24.13>/bin/node"
+    },
+    {
+      "phase": "tsc-first",
+      "pid": 88201,
+      "command": [
+        "<node24.13>/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json"
+      ],
+      "startedAtUtc": "2026-11-06T12:01:44.764181+00:00",
+      "endedAtUtc": "2026-11-06T12:01:47.034975+00:00",
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "<node24.13>/bin/node",
+        "-e",
+        "const{createRequire}=require('node:module');const{resolve,dirname,join}=require('node:path');const req=createRequire(resolve('build/adapter/native-duckdb-port.mjs'));const api=req.resolve('@duckdb/node-api'),bind=createRequire(api).resolve('@duckdb/node-bindings'),platform=createRequire(bind).resolve('@duckdb/node-bindings-darwin-arm64/duckdb.node');console.log(JSON.stringify({node:process.execPath,version:process.version,api,bindings:bind,platform,engine:join(dirname(platform),'libduckdb.dylib')}))"
+      ],
+      "startedAtUtc": "2026-11-06T12:02:38.741125+00:00",
+      "endedAtUtc": "2026-11-06T12:02:38.774686+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "coverage-qa4-first",
+      "pid": 88940,
+      "command": [
+        "<node24.13>/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "build/adapter/test-native-reference-coverage.js"
+      ],
+      "startedAtUtc": "2026-11-06T12:03:00.059098+00:00",
+      "endedAtUtc": "2026-11-06T12:03:11.199972+00:00",
+      "exitCode": 0,
+      "UV_THREADPOOL_SIZE": "4",
+      "NODE_OPTIONS": null,
+      "profile": "unchanged test-owned readers2/threads1/128MB memory/64MB spill"
+    }
+  ],
+  "qualification": {
+    "schema": "td.reference-coverage-fusion-focused-first/1",
+    "status": "FIRST_PASS",
+    "sourceCommit": "1a1e261ff3a52ab4b1500247b2cfcc1478ad8765",
+    "createdAtUtc": "2026-11-06T12:03:43.503055+00:00",
+    "tests": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "retries": 0,
+      "testRunnerDurationMs": 11077.039417,
+      "publicProfile": "unchanged readers2/threads1/128MB/64MB; UV4"
+    },
+    "beforeSha256": "3ebc88968d76401bbea836b5e2a2acba08ab1fbc878202ec586fe9400450fc80",
+    "afterSha256": "43d631760c8066aaa6efcb701d3e9c013f67163550340a35e01c4a5c66b869de",
+    "unchanged": {
+      "sources": 43,
+      "dependencies": 395,
+      "routes": 5,
+      "externalEntries": 7,
+      "headers": 36,
+      "node": true,
+      "artifacts": 9,
+      "compiledFiles": 192
+    },
+    "fixtures": [
+      {
+        "database": "build/reference-coverage-ptrDUj/facts.duckdb",
+        "bytes": 9187328,
+        "walAbsent": true,
+        "testProcessExited": true,
+        "closureEvidence": "test finally close plus terminal exit0; no independent database reopen in postcheck"
+      },
+      {
+        "database": "build/reference-coverage-gap-zXVSXh/facts.duckdb",
+        "bytes": 7876608,
+        "walAbsent": true,
+        "testProcessExited": true,
+        "closureEvidence": "test finally close plus terminal exit0; no independent database reopen in postcheck"
+      },
+      {
+        "database": "build/reference-coverage-cycle-oSAzBR/facts.duckdb",
+        "bytes": 7090176,
+        "walAbsent": true,
+        "testProcessExited": true,
+        "closureEvidence": "test finally close plus terminal exit0; no independent database reopen in postcheck"
+      },
+      {
+        "database": "build/reference-coverage-policy-GHIv6e/facts.duckdb",
+        "bytes": 8400896,
+        "walAbsent": true,
+        "testProcessExited": true,
+        "closureEvidence": "test finally close plus terminal exit0; no independent database reopen in postcheck"
+      }
+    ],
+    "scope": "Fresh qualified fusion pair and unchanged4 independent coverage cases only. No speed or full-suite/promotion claim. Explicit precedence/empty-admission limits, larger growth OOM and broader regression/cost gates remain pending."
+  },
+  "firstFailures": [],
+  "unchangedBeforeAfter": {
+    "sources": 43,
+    "dependencies": 395,
+    "routes": 5,
+    "externalEntries": 7,
+    "headers": 36,
+    "node": true,
+    "artifacts": 9,
+    "compiledFiles": 192
+  },
+  "limits": "Unchanged independent test profile readers2, threads1, memory128MB, temp64MB; no source/cap retries.",
+  "remaining": [
+    "No extra cap/empty-admission/error-priority method yet.",
+    "No full regression suite or measured cf7 cost matrix yet.",
+    "Separate larger coverage growth OOM remains unresolved by this gate.",
+    "No loaded-image census was added; actual public factory artifact/owner checks and real queries ran.",
+    "No production promotion from these four tests."
+  ],
+  "projectOnlyDerivation": {
+    "method": "UTF8 exact string replacement only; every other byte retained, including typed values, BIGINT strings and error text.",
+    "replacementMap": [
+      {
+        "fromLabel": "absolute current task directory with trailing slash",
+        "to": "<task>/"
+      },
+      {
+        "fromLabel": "absolute pinned fnm Node24.13 installation with trailing slash",
+        "to": "<node24.13>/"
+      }
+    ]
+  },
+  "rawIndex": {
+    "raw/copied-source-assets-first.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/copied-source-assets-first.json",
+      "rawSha256": "b5a1538785f25550904fbc8f71d9e1fdc2cfd235726499b88ebe6dcff8c17b3d",
+      "projectOnlySha256": "b5a1538785f25550904fbc8f71d9e1fdc2cfd235726499b88ebe6dcff8c17b3d",
+      "rawBytes": 6254,
+      "projectOnlyBytes": 6254
+    },
+    "raw/core-build-first.stderr": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/core-build-first.stderr",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawBytes": 0,
+      "projectOnlyBytes": 0
+    },
+    "raw/core-build-first.stdout": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/core-build-first.stdout",
+      "rawSha256": "dbcab26b9c549f49636329f4e185d028165fba4425122b72b549baecc572aea1",
+      "projectOnlySha256": "dbcab26b9c549f49636329f4e185d028165fba4425122b72b549baecc572aea1",
+      "rawBytes": 4377,
+      "projectOnlyBytes": 4377
+    },
+    "raw/core-build-first.terminal.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/core-build-first.terminal.json",
+      "rawSha256": "71e869985f2f7fa9f8f161a52964a338a72e9c584c7484b86a3fc84e088e5a0c",
+      "projectOnlySha256": "04aa9e7833d3b1e2a3b8beef604d5e287fa670e07b5b55230e1af490f931a54c",
+      "rawBytes": 364,
+      "projectOnlyBytes": 288
+    },
+    "raw/coverage-qa4-first.stderr": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/coverage-qa4-first.stderr",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawBytes": 0,
+      "projectOnlyBytes": 0
+    },
+    "raw/coverage-qa4-first.stdout": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/coverage-qa4-first.stdout",
+      "rawSha256": "084f1e8cf5e29690154a8a48532eed211193ea718fe830c61df0163bfc53d4c1",
+      "projectOnlySha256": "e89272ce163b8385a25b725814cd5dc1a92d539dcf5cfccb8bd9c2e4d180a5b3",
+      "rawBytes": 1351,
+      "projectOnlyBytes": 1207
+    },
+    "raw/coverage-qa4-first.terminal.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/coverage-qa4-first.terminal.json",
+      "rawSha256": "125a46f5aa5a46d00439ce16288cd53a591e61a2b0a90b5371ad6fa74091b140",
+      "projectOnlySha256": "695bc8ff14874638fafe9ad3bebfbf992b89cd69095230284305e9bce216c0a7",
+      "rawBytes": 491,
+      "projectOnlyBytes": 451
+    },
+    "raw/owner-build-first.stderr": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/owner-build-first.stderr",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawBytes": 0,
+      "projectOnlyBytes": 0
+    },
+    "raw/owner-build-first.stdout": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/owner-build-first.stdout",
+      "rawSha256": "eacd4fcc7291c3f4100a5019c648328f7c7ec13cbac4de3ae2e89f052c304393",
+      "projectOnlySha256": "533e8125bc948cf07114da00af41d5b799ff634cb670ecad882d769f25825246",
+      "rawBytes": 6933,
+      "projectOnlyBytes": 6821
+    },
+    "raw/owner-build-first.terminal.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/owner-build-first.terminal.json",
+      "rawSha256": "29f643feaed46d0adc894a49803cd76c1724e31291b52fd9c5815d76b7902d94",
+      "projectOnlySha256": "9c669733bd6ef3adaafb8f315bf7e1059dbdd5cbfd46527fac8e4c8ab9d72a96",
+      "rawBytes": 733,
+      "projectOnlyBytes": 585
+    },
+    "raw/postcheck-first.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/postcheck-first.json",
+      "rawSha256": "0449761d695702adf374c28a94a418f6686c7e57c7fb634bf912a88d8df387c2",
+      "projectOnlySha256": "0449761d695702adf374c28a94a418f6686c7e57c7fb634bf912a88d8df387c2",
+      "rawBytes": 2147,
+      "projectOnlyBytes": 2147
+    },
+    "raw/posttest-pins-first.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/posttest-pins-first.json",
+      "rawSha256": "43d631760c8066aaa6efcb701d3e9c013f67163550340a35e01c4a5c66b869de",
+      "projectOnlySha256": "7e61aaf9e44cb8b8a1082ec888897ce4bd2cc3d44755871e945213dd413a084b",
+      "rawBytes": 95226,
+      "projectOnlyBytes": 93022
+    },
+    "raw/pretest-pins-first.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/pretest-pins-first.json",
+      "rawSha256": "3ebc88968d76401bbea836b5e2a2acba08ab1fbc878202ec586fe9400450fc80",
+      "projectOnlySha256": "8bcb0913c04cc46041b85ec70dbde90d82874f3d45b4fb3d7f9b67966e0de7c8",
+      "rawBytes": 95226,
+      "projectOnlyBytes": 93022
+    },
+    "raw/resolution-first.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/resolution-first.json",
+      "rawSha256": "cd84cca3714e17b37b69b219e731e3a87185388174f9f59ecf09ff1bb0075b54",
+      "projectOnlySha256": "c563d0799254d89278f30b8170f5a28ddb6add2f1e3e463c3d00b5425a4411fe",
+      "rawBytes": 819,
+      "projectOnlyBytes": 635
+    },
+    "raw/resolution-first.stderr": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/resolution-first.stderr",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawBytes": 0,
+      "projectOnlyBytes": 0
+    },
+    "raw/resolution-first.stdout": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/resolution-first.stdout",
+      "rawSha256": "a0d19bef1227054c9ab61b34f84bfc5a665dc9d12538f1c9cbf699ec76d1360e",
+      "projectOnlySha256": "f3d613394535097fdef63fbc30c435e15036b687d5b9a67d9dcaa241a9768f36",
+      "rawBytes": 794,
+      "projectOnlyBytes": 610
+    },
+    "raw/resolution-first.terminal.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/resolution-first.terminal.json",
+      "rawSha256": "a0d0c074f9046e2def06dc1996b9e6bfbdd75be67c3c8029094a85079c87e2dc",
+      "projectOnlySha256": "07daef49992b287387c9504369694f72992da3cf902a98ddfa0fe92b3c47dd60",
+      "rawBytes": 735,
+      "projectOnlyBytes": 695
+    },
+    "raw/stage-before-first.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/stage-before-first.json",
+      "rawSha256": "5bc8d926e5bce59daaf2a4e31e862d835023ef52b3a1371a4ae9a691f9dc097e",
+      "projectOnlySha256": "1d7d88b33ec0c769a38f09948fd1c7c26b7c9a9e950251e2a9606a27395d678a",
+      "rawBytes": 72426,
+      "projectOnlyBytes": 70334
+    },
+    "raw/stage-first.stderr": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/stage-first.stderr",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawBytes": 0,
+      "projectOnlyBytes": 0
+    },
+    "raw/stage-first.stdout": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/stage-first.stdout",
+      "rawSha256": "5d684619775189a4df6f6b9691d05415e5ed4c81767f60f1fb67bab9d9e5c7d6",
+      "projectOnlySha256": "5d684619775189a4df6f6b9691d05415e5ed4c81767f60f1fb67bab9d9e5c7d6",
+      "rawBytes": 235,
+      "projectOnlyBytes": 235
+    },
+    "raw/stage-first.terminal.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/stage-first.terminal.json",
+      "rawSha256": "add817b5e870952c94a266054cc700a43c3ceee39550a8ee4f35b532e5610bb7",
+      "projectOnlySha256": "25ca5aa8cb5fc508c79768b5cc88d0f84f41b7395f91f244db490f54e742c6bb",
+      "rawBytes": 448,
+      "projectOnlyBytes": 376
+    },
+    "raw/stage-selected-first.py": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/stage-selected-first.py",
+      "rawSha256": "902a32b26aab9fb97c91e4f9aa66090410c3fc58c2697216572bc1e34d05416e",
+      "projectOnlySha256": "74ade7e50be80a2cca0ddf8de56f0274f75b35c67459bce574d9772d55e03e1a",
+      "rawBytes": 3895,
+      "projectOnlyBytes": 3859
+    },
+    "raw/stage-selected.py": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/stage-selected.py",
+      "rawSha256": "902a32b26aab9fb97c91e4f9aa66090410c3fc58c2697216572bc1e34d05416e",
+      "projectOnlySha256": "74ade7e50be80a2cca0ddf8de56f0274f75b35c67459bce574d9772d55e03e1a",
+      "rawBytes": 3895,
+      "projectOnlyBytes": 3859
+    },
+    "raw/tsc-first.stderr": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/tsc-first.stderr",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawBytes": 0,
+      "projectOnlyBytes": 0
+    },
+    "raw/tsc-first.stdout": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/tsc-first.stdout",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawBytes": 0,
+      "projectOnlyBytes": 0
+    },
+    "raw/tsc-first.terminal.json": {
+      "sourceRelative": "build/qualification-reference-coverage-fusion-20261106-01/tsc-first.terminal.json",
+      "rawSha256": "7f2a04b699ccda6c852e796542b6472ab325eae3e169de755a20bc5cb8ba89a7",
+      "projectOnlySha256": "9972805be74dcd11020804ddabe6164293fb482bba9d070fcd24bee2dabd7e6e",
+      "rawBytes": 323,
+      "projectOnlyBytes": 283
+    },
+    "raw/core-artifact.json": {
+      "sourceRelative": "build/artifact.json",
+      "rawSha256": "af9bca6d838a55d423e2198db5f9726b52d3a3b3628dd97a049ef33129306513",
+      "projectOnlySha256": "af9bca6d838a55d423e2198db5f9726b52d3a3b3628dd97a049ef33129306513",
+      "rawBytes": 4553,
+      "projectOnlyBytes": 4553
+    },
+    "raw/owner-artifact.json": {
+      "sourceRelative": "build/owner_probe/artifact.json",
+      "rawSha256": "f1e9fdfeeaa84c383ebf9e64f1f1d2876dd5fff0a30c86618d2d16165d653d5d",
+      "projectOnlySha256": "a7f156dc2f66f4fcf19c27b7b013cd77311d81f81d855c0b426077afd1ff31f5",
+      "rawBytes": 7413,
+      "projectOnlyBytes": 7301
+    }
+  }
+}

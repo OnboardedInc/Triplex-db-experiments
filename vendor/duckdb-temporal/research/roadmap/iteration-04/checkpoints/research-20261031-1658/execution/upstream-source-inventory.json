@@ -1,0 +1,97 @@
+{
+  "schema": "goal4.research.sources/1",
+  "engine_version": "2.0.0",
+  "commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "version_verification": "GitHub GET /repos/duckdb/duckdb/git/ref/tags/v2.0.0 returned commit d54cbbe3df17e8e5ce68312f483b4155836112aa on 2026-10-31 UTC",
+  "hash_method": "SHA256 over exact UTF-8 content returned by GitHub connector; full source retained in connector memory only, not copied to project",
+  "sources": [
+    {
+      "repository": "duckdb/duckdb",
+      "ref": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "path": "src/execution/join_hashtable.cpp",
+      "bytes": 120273,
+      "sha256": "feaf5efd6e5bd853dad0af5ce51d9488a657d1131eed83e7e6fd8e420a55b41c",
+      "lines": 2897,
+      "raw_url": "https://raw.githubusercontent.com/duckdb/duckdb/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/execution/join_hashtable.cpp",
+      "retrieval": "GitHub connector exact-ref UTF-8 raw; digest of returned content bytes",
+      "status": "fetched source; selected ranges/name inventory inspected, not executed"
+    },
+    {
+      "repository": "duckdb/duckdb",
+      "ref": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "path": "src/execution/operator/join/physical_hash_join.cpp",
+      "bytes": 121762,
+      "sha256": "300a691ced70216d8b92abd6487b5e7b8bf566654c093f5d83d83d798554c9a8",
+      "lines": 2894,
+      "raw_url": "https://raw.githubusercontent.com/duckdb/duckdb/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/execution/operator/join/physical_hash_join.cpp",
+      "retrieval": "GitHub connector exact-ref UTF-8 raw; digest of returned content bytes",
+      "status": "fetched source; selected ranges/name inventory inspected, not executed"
+    },
+    {
+      "repository": "duckdb/duckdb",
+      "ref": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "path": "src/planner/binder/query_node/plan_subquery.cpp",
+      "bytes": 38149,
+      "sha256": "71acfeed501d8eabc347585aecb67ac8b77efb08baa09474b92c6e3535d72e98",
+      "lines": 826,
+      "raw_url": "https://raw.githubusercontent.com/duckdb/duckdb/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/planner/binder/query_node/plan_subquery.cpp",
+      "retrieval": "GitHub connector exact-ref UTF-8 raw; digest of returned content bytes",
+      "status": "fetched source; selected ranges/name inventory inspected, not executed"
+    },
+    {
+      "repository": "duckdb/duckdb",
+      "ref": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "path": "src/include/duckdb_extension_v2.h",
+      "bytes": 205461,
+      "sha256": "fa0871d3f5b8e5da9a686c019fcaf8210349440831d5e9228720cbba31ccaa51",
+      "lines": 3511,
+      "raw_url": "https://raw.githubusercontent.com/duckdb/duckdb/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb_extension_v2.h",
+      "retrieval": "GitHub connector exact-ref UTF-8 raw; digest of returned content bytes",
+      "status": "fetched source; selected ranges/name inventory inspected, not executed"
+    },
+    {
+      "repository": "duckdb/duckdb",
+      "ref": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "path": "src/optimizer/pushdown/pushdown_semi_anti_join.cpp",
+      "bytes": 2001,
+      "sha256": "fa08e5a08534f619b3ffa829b307e67eb3a88e4a8256d8b71083d466fdaa9ac9",
+      "lines": 54,
+      "raw_url": "https://raw.githubusercontent.com/duckdb/duckdb/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/optimizer/pushdown/pushdown_semi_anti_join.cpp",
+      "retrieval": "GitHub connector exact-ref UTF-8 raw; digest of returned content bytes",
+      "status": "fetched source; selected ranges/name inventory inspected, not executed"
+    },
+    {
+      "repository": "duckdb/duckdb",
+      "ref": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "path": "src/optimizer/pushdown/pushdown_mark_join.cpp",
+      "bytes": 4685,
+      "sha256": "b0c1cdf96b0e24e35b65e89f25af91e1b90491fa3404f2658758ebb6429b651d",
+      "lines": 112,
+      "raw_url": "https://raw.githubusercontent.com/duckdb/duckdb/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/optimizer/pushdown/pushdown_mark_join.cpp",
+      "retrieval": "GitHub connector exact-ref UTF-8 raw; digest of returned content bytes",
+      "status": "fetched source; selected ranges/name inventory inspected, not executed"
+    },
+    {
+      "repository": "duckdb/duckdb",
+      "ref": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "path": "src/optimizer/join_filter_pushdown_optimizer.cpp",
+      "bytes": 16614,
+      "sha256": "e8f94f7b557bf5141c05e624bdbfafd569b2f7f6a3bfb79851785282f43c7c9e",
+      "lines": 425,
+      "raw_url": "https://raw.githubusercontent.com/duckdb/duckdb/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/optimizer/join_filter_pushdown_optimizer.cpp",
+      "retrieval": "GitHub connector exact-ref UTF-8 raw; digest of returned content bytes",
+      "status": "fetched source; selected ranges/name inventory inspected, not executed"
+    },
+    {
+      "repository": "duckdb/duckdb",
+      "ref": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "path": "src/optimizer/filter_pushdown.cpp",
+      "bytes": 12574,
+      "sha256": "d2100e4d6551ea790818cd6e63b143b9672fa2c5c683028ba963082b3a78dae7",
+      "lines": 338,
+      "raw_url": "https://raw.githubusercontent.com/duckdb/duckdb/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/optimizer/filter_pushdown.cpp",
+      "retrieval": "GitHub connector exact-ref UTF-8 raw; digest of returned content bytes",
+      "status": "fetched source; MARK-conversion restriction and join dispatcher inspected; not executed"
+    }
+  ]
+}

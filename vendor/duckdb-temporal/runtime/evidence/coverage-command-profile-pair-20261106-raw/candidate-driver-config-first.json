@@ -1,0 +1,10 @@
+{
+  "role": "candidate",
+  "scenario": "zero",
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+  "costRoot": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime",
+  "output": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/candidate-zero",
+  "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/candidate-zero/facts.duckdb",
+  "begin": "TD_COVERAGE_PROFILE_BEGIN 327db6f8-1664-4fd1-9d5c-b18bc47526ce",
+  "end": "TD_COVERAGE_PROFILE_END 327db6f8-1664-4fd1-9d5c-b18bc47526ce"
+}

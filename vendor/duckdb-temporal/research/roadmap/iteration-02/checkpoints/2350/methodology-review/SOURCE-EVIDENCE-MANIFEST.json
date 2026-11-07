@@ -1,0 +1,60 @@
+{
+  "status": "FROZEN_STATIC_METHODOLOGY_REVIEW_NOT_ITEM2_ACCEPTANCE",
+  "frozen_utc": "2026-10-30T23:49:44Z",
+  "scope": "Own text reports/JSON receipts/source identities only; no copied candidate source/runtime/native binary/database/full third-party content, no replay or implementation",
+  "study_manifest_sha256": "357664ce0a6af25efc171f5687e917cf4cc4ffd2d37ea580bfc6e89ac4119a0a",
+  "files": [
+    {
+      "path": "FINDINGS.json",
+      "bytes": 3940,
+      "sha256": "b831fd08d275986a6bc1fcdf11f01c89fc96ef21b7febed4721c73ecd79e93a4"
+    },
+    {
+      "path": "FROZEN-TEXT-STRUCTURE-CHECK.json",
+      "bytes": 3027,
+      "sha256": "cdb7e6a9c2b495bc8fe92edfbf8a68cfa463f057e19b2d7b82d7af11d90bc527"
+    },
+    {
+      "path": "ONE-PROCESS-READBACK.json",
+      "bytes": 3355,
+      "sha256": "9a3de07e97441bc22798bce2e32e31747a6253c1115b06339c001894afa1f269"
+    },
+    {
+      "path": "POSTRUN-CLOSURE-SPEC.md",
+      "bytes": 8946,
+      "sha256": "292b3625fda4bff22263452c588eb52516964cc94e8a43279174511c398fb0bb"
+    },
+    {
+      "path": "PRIMARY-URLS.json",
+      "bytes": 1747,
+      "sha256": "887f6eefde16f6ff9297940398f90c726c8df52dd246ffdc6ed02e9fc5edcb49"
+    },
+    {
+      "path": "REVIEW-SUMMARY.json",
+      "bytes": 1516,
+      "sha256": "dbf339b19f2bc401137633a4929bf89a9591daefb119f6b2ef84bfc3c22b40a6"
+    },
+    {
+      "path": "REVIEW.md",
+      "bytes": 10507,
+      "sha256": "1de13e22548de809e802769384e5161b99392f3153c90fb6d7e491aeb536b887"
+    },
+    {
+      "path": "ROOT-SUPPLEMENTAL-READBACK.json",
+      "bytes": 4705,
+      "sha256": "e55056c6fc766c46b89bd017c140f66636a745cecb699b565a799a0d7f25c02f"
+    },
+    {
+      "path": "TEXT-INPUT-IDENTITY.json",
+      "bytes": 8381,
+      "sha256": "ce65d15ac000abbc6d8b24d6425c04f44dbcc76622c3435727d25cd1c27619c8"
+    },
+    {
+      "path": "WORKER-PROGRESS.md",
+      "bytes": 3286,
+      "sha256": "6ec9218ea516c8f4e27bfbfe7bc0ffa52ac9a3dbf7f3951f3155b017aa7144b5"
+    }
+  ],
+  "manifest_hash": "Recorded separately in SHA256SUMS and final handoff; excluded from own file list.",
+  "ownership": "STATIC_REVIEW_RELEASED_NO_PENDING_PROCESS"
+}

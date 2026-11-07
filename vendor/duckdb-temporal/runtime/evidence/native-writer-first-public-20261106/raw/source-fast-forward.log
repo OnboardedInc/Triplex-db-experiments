@@ -1,0 +1,26 @@
+Updating b5ea1f3c..c76f0f41
+Fast-forward
+ .../runtime/NATIVE-WRITER-EXECUTOR.md              | 368 ++++++++++++++++++++
+ .../runtime/SDK-QUERY-ADMISSION.md                 |   6 +
+ .../runtime/adapter/native-duckdb-port.d.mts       |  15 +
+ .../runtime/adapter/native-duckdb-port.mjs         | 106 +++++-
+ .../runtime/adapter/native-entity.ts               |  58 ++--
+ .../runtime/adapter/native-schema.ts               |  25 +-
+ .../runtime/adapter/test-native-writer.ts          | 187 ++++++++++
+ .../temporal-datalog/runtime/build_owner_probe.py  |  25 +-
+ .../native-writer-first-build-20261106.json        | 147 ++++++++
+ .../native-writer-first-build-20261106.log         |  18 +
+ .../runtime/native/owner_probe/native_writer.cpp   | 306 +++++++++++++++++
+ .../runtime/native/owner_probe/native_writer.hpp   |   6 +
+ .../runtime/native/owner_probe/native_writer_abi.h |  36 ++
+ .../runtime/native/owner_probe/node_writer.cpp     | 382 +++++++++++++++++++++
+ .../runtime/native/owner_probe/owner_probe.cpp     |  10 +
+ 15 files changed, 1654 insertions(+), 41 deletions(-)
+ create mode 100644 projects/temporal-datalog/runtime/NATIVE-WRITER-EXECUTOR.md
+ create mode 100644 projects/temporal-datalog/runtime/adapter/test-native-writer.ts
+ create mode 100644 projects/temporal-datalog/runtime/evidence/native-writer-first-build-20261106.json
+ create mode 100644 projects/temporal-datalog/runtime/evidence/native-writer-first-build-20261106.log
+ create mode 100644 projects/temporal-datalog/runtime/native/owner_probe/native_writer.cpp
+ create mode 100644 projects/temporal-datalog/runtime/native/owner_probe/native_writer.hpp
+ create mode 100644 projects/temporal-datalog/runtime/native/owner_probe/native_writer_abi.h
+ create mode 100644 projects/temporal-datalog/runtime/native/owner_probe/node_writer.cpp

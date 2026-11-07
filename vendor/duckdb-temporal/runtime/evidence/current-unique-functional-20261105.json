@@ -1,0 +1,90 @@
+{
+  "schema": "current-unique-functional/1",
+  "status": "passed",
+  "base_version": "0.20.0",
+  "variants": [
+    {
+      "name": "baseline",
+      "core_extension_sha256": "5d7d5ed0baa65359ae6c3b6d56e2f9ca9c7c7e4e247d439bafb068ba8adc0a97",
+      "companion_extension_sha256": "f89d70fa46b559bc5dfc742262eeae911ccedaac24983aa3af6cb430b2b7fc95",
+      "flags": {
+        "identity_count": false,
+        "current_unique": false,
+        "injective_projection": false
+      },
+      "suites": [
+        {
+          "name": "capability",
+          "passed": 5,
+          "failed": 0,
+          "duration_ms": 1008.397167,
+          "log_sha256": "1cc475dd4e3f2cff1d55106b1253b2cedc0bee42caf3b282c2ecdf7be1565116"
+        },
+        {
+          "name": "owner",
+          "passed": 19,
+          "failed": 0,
+          "duration_ms": 8081.830291,
+          "log_sha256": "34a168f4bcc5e2e171c88c69db2cc80c3534ee8d8cb26cc25a956d62a0f4c118"
+        },
+        {
+          "name": "native_scale",
+          "passed": 6,
+          "failed": 0,
+          "native_ingested_assertions": 1003529,
+          "duration_seconds": 16.487,
+          "log_sha256": "433606c4b66f2672cb443b7d77bb5c89f36e6e56375aa4ab67a13ebc5cbcfe83"
+        }
+      ]
+    },
+    {
+      "name": "candidate",
+      "core_extension_sha256": "255be701ba9f22cc4030e1d80fe50ccdeb9ddee58e6bdb2d8a459a782ecaf03b",
+      "companion_extension_sha256": "e5a5dc3db13d1d039380217bb723f16f66ffc170b3240df0f2997685dbefaab9",
+      "flags": {
+        "identity_count": false,
+        "current_unique": true,
+        "injective_projection": false
+      },
+      "suites": [
+        {
+          "name": "capability",
+          "passed": 5,
+          "failed": 0,
+          "duration_ms": 1038.342709,
+          "log_sha256": "bdd4e138e5fa91157d76e0bc8516a7243c10b2a5f0cb9ddd5868acdc693ad5ea"
+        },
+        {
+          "name": "owner",
+          "passed": 19,
+          "failed": 0,
+          "duration_ms": 8322.070875,
+          "log_sha256": "0441c4bbfe0aac8ee5cc970fc85aed5020584fcc661fe82bd122455722b8a165"
+        },
+        {
+          "name": "native_scale",
+          "passed": 6,
+          "failed": 0,
+          "native_ingested_assertions": 1003529,
+          "duration_seconds": 16.769,
+          "log_sha256": "26ce41c958fc04e1116ce3afb41342f5ed421230ca36654bdf404553d41f0378"
+        }
+      ]
+    }
+  ],
+  "scope": "Isolated current-uniqueness native capability. All other experimental macros disabled. No performance claim or promotion.",
+  "sources": {
+    "native/src/temporal_current_unique.hpp": "90e8af10cd90edf66434a36ebbbf3fa389fc47e0057b71ea35c7c06e03bd4ddb",
+    "native/owner_probe/owner_probe.cpp": "80b6296f99672547b1655d910d6948bd900ce8fd8adad0051502fd5d96261a24",
+    "native/src/temporal_store_query.cpp": "6ae2dda9331c8da80e22ad28f5878f35f74379e163a20b1f87846ffb0fb6c267",
+    "native/src/temporal_count_plan.hpp": "c057fa522e0ac3ad39bdb42589a036362df8bcc991965fb6a9f72ade01aa5bde",
+    "native/src/temporal_scan_plan.hpp": "1c16be3ca60d3bea07d32bf7e20aef5aca9003fccfb5cf8e51c24dff491701aa",
+    "adapter/test-current-unique.mjs": "ad8733ee3df3a97a4a92dca94c883e8f1e6613deb89e2d5f6f5a251f645f2bd2",
+    "build_identity_count_spike.py": "5a05b920e785a65dadb0754ad2fc8eb78e324b2d7a6e4556972de2ef35f3ef1a"
+  },
+  "pairing": {
+    "passed": 3,
+    "failed": 0,
+    "log_sha256": "0c5a355b52b923b37aa627a1009b176b30986b4891ccb4e5c5136a39f8b30493"
+  }
+}

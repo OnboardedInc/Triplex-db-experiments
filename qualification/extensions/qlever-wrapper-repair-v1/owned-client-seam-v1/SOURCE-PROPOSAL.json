@@ -1,0 +1,634 @@
+{
+  "format": "triplex-q-private-borrowed-client-source-proposal/1",
+  "at": "2026-11-07T14:07:50.511950+00:00",
+  "status": "SOURCE_FROZEN_UNBUILT_UNEXECUTED_FOR_INDEPENDENT_REVIEW",
+  "sourceFiles": [
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/BUILD-TYPE-PLANS.json",
+      "bytes": 6541,
+      "sha256": "d94667b8924cb7065994f0f307bc35a427db271b0738c2537286d6c8ca8dd6af"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/PLAN.md",
+      "bytes": 6492,
+      "sha256": "0c255b7808a23c0c643a6c3b7b93434831c3d7a76cdede3e28566cebe548b18c"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.mjs",
+      "bytes": 5073,
+      "sha256": "fd7992cb0e6324ac233d5410d1db1ee19de537495a93ae9430a1d0f6c7485790"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.test.mjs",
+      "bytes": 5990,
+      "sha256": "3152206b2215d0e876e190f6907496cb53917d3121e1ecbbaa4d8001e33eaba1"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/index.ts.patch",
+      "bytes": 1496,
+      "sha256": "3c8b1c3dd94602cf34ef4b8c41d3fd4be5be559df7d08fb3bee0cdfa445f1dc6"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/public.types.negative.ts",
+      "bytes": 355,
+      "sha256": "5d58314e74979cc4c8ff062c56fa7024bffc20391e81f8a743fe8e23acc9678e"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/public.types.positive.ts",
+      "bytes": 1138,
+      "sha256": "40d34057d3de734dc5eb47ce0af20db1c261bd4f9d175ac40b1c208a77af4923"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/sdk-observation.test.mjs",
+      "bytes": 3819,
+      "sha256": "25a8053bf34163391564bb30e3fe2344d94935dde3c642c843c08e6a5a63cd27"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/source-copies.json",
+      "bytes": 23923,
+      "sha256": "16a2f7856ed9f6c11c747ae00431ef3e43f4cb796c3a91aafa4704ae3fd28b77"
+    }
+  ],
+  "copiedSdkSourceMembers": [
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/AggregateAnswers.ts",
+      "bytes": 5264,
+      "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/AggregateAnswers.ts",
+        "bytes": 5264,
+        "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/FamilyDomainDistinct.ts",
+      "bytes": 1455,
+      "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/FamilyDomainDistinct.ts",
+        "bytes": 1455,
+        "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/FamilyDomainMask.ts",
+      "bytes": 2147,
+      "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/FamilyDomainMask.ts",
+        "bytes": 2147,
+        "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/FamilyDomains.ts",
+      "bytes": 560,
+      "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/FamilyDomains.ts",
+        "bytes": 560,
+        "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/Operations.ts",
+      "bytes": 1656,
+      "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/Operations.ts",
+        "bytes": 1656,
+        "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/PersistedScalarSource.ts",
+      "bytes": 2392,
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/PersistedScalarSource.ts",
+        "bytes": 2392,
+        "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/QleverClient.ts",
+      "bytes": 4916,
+      "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/QleverClient.ts",
+        "bytes": 4916,
+        "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/QleverQueryExecutor.ts",
+      "bytes": 19608,
+      "sha256": "c16ceb21ff23ce7251259fa61238defddcc72870abd7d9147a27309e6ad42319",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/QleverQueryExecutor.ts",
+        "bytes": 19608,
+        "sha256": "c16ceb21ff23ce7251259fa61238defddcc72870abd7d9147a27309e6ad42319"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/QleverStorageAdapter.ts",
+      "bytes": 22212,
+      "sha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/QleverStorageAdapter.ts",
+        "bytes": 22212,
+        "sha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/ScalarSource.ts",
+      "bytes": 630,
+      "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/ScalarSource.ts",
+        "bytes": 630,
+        "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/TemporalQueries.ts",
+      "bytes": 8772,
+      "sha256": "a97c81e76f354a00f23ad1f5488269544456299c09671b70e97870420e6e326c",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/TemporalQueries.ts",
+        "bytes": 8772,
+        "sha256": "a97c81e76f354a00f23ad1f5488269544456299c09671b70e97870420e6e326c"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/compiler.ts",
+      "bytes": 44928,
+      "sha256": "9c60e5a7f491a92ffdb5f7d42cdf57d28dd01d6959066d2b4ed32850e14b012f",
+      "source": {
+        "path": "packages/qlever/src/compiler.ts",
+        "bytes": 44928,
+        "sha256": "9c60e5a7f491a92ffdb5f7d42cdf57d28dd01d6959066d2b4ed32850e14b012f"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/index.ts",
+      "bytes": 3905,
+      "sha256": "a13aad49ecf2c4380ddeeda9b3d08ccabedac32f36b7118c69133d65f1cf36d8",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/index.ts",
+        "bytes": 3606,
+        "sha256": "bab363752c09c82bfd64f80e9e8a4963d0b290a6f0e05ecfc557ab97f231cb4c"
+      },
+      "adaptation": "BORROWED_CLIENT_API_ONLY"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/native/BasisRelations.ts",
+      "bytes": 12091,
+      "sha256": "4d4d0c9dba971210f07edba989e2df608e4540f2d2942f666fd8b15c1adfe484",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/native/BasisRelations.ts",
+        "bytes": 12091,
+        "sha256": "4d4d0c9dba971210f07edba989e2df608e4540f2d2942f666fd8b15c1adfe484"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/native/NativeContext.ts",
+      "bytes": 7184,
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/native/NativeContext.ts",
+        "bytes": 7184,
+        "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/native/NativeQueries.ts",
+      "bytes": 8755,
+      "sha256": "05df60e33c066f1fcd1a7cac100135a6dc9c9fa3e4af34d344b3a42728f8d21a",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/native/NativeQueries.ts",
+        "bytes": 8755,
+        "sha256": "05df60e33c066f1fcd1a7cac100135a6dc9c9fa3e4af34d344b3a42728f8d21a"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/rdf.ts",
+      "bytes": 9714,
+      "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/rdf.ts",
+        "bytes": 9714,
+        "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/recursion.ts",
+      "bytes": 6256,
+      "sha256": "b879595677ed2f0cfd4ff4c1f32f573ac724613e04f2a831e61fd96922bb15af",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/recursion.ts",
+        "bytes": 6256,
+        "sha256": "b879595677ed2f0cfd4ff4c1f32f573ac724613e04f2a831e61fd96922bb15af"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/package.json",
+      "bytes": 1030,
+      "sha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/package.json",
+        "bytes": 1030,
+        "sha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/tsdown.config.ts",
+      "bytes": 246,
+      "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/tsdown.config.ts",
+        "bytes": 246,
+        "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "control",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/tsconfig.json",
+      "bytes": 238,
+      "sha256": "70fefc1483c57dc107320e5252b343e18d249b81d93fc6c8225eaa822026e545",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/tsconfig.json",
+        "bytes": 238,
+        "sha256": "70fefc1483c57dc107320e5252b343e18d249b81d93fc6c8225eaa822026e545"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/AggregateAnswers.ts",
+      "bytes": 5264,
+      "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/AggregateAnswers.ts",
+        "bytes": 5264,
+        "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/FamilyDomainDistinct.ts",
+      "bytes": 1455,
+      "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/FamilyDomainDistinct.ts",
+        "bytes": 1455,
+        "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/FamilyDomainMask.ts",
+      "bytes": 2147,
+      "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/FamilyDomainMask.ts",
+        "bytes": 2147,
+        "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/FamilyDomains.ts",
+      "bytes": 560,
+      "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/FamilyDomains.ts",
+        "bytes": 560,
+        "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/Operations.ts",
+      "bytes": 1656,
+      "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/Operations.ts",
+        "bytes": 1656,
+        "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/PersistedScalarSource.ts",
+      "bytes": 2392,
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/PersistedScalarSource.ts",
+        "bytes": 2392,
+        "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/QleverClient.ts",
+      "bytes": 4916,
+      "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/QleverClient.ts",
+        "bytes": 4916,
+        "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/QleverQueryExecutor.ts",
+      "bytes": 19608,
+      "sha256": "c16ceb21ff23ce7251259fa61238defddcc72870abd7d9147a27309e6ad42319",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/QleverQueryExecutor.ts",
+        "bytes": 19608,
+        "sha256": "c16ceb21ff23ce7251259fa61238defddcc72870abd7d9147a27309e6ad42319"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/QleverStorageAdapter.ts",
+      "bytes": 22212,
+      "sha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/QleverStorageAdapter.ts",
+        "bytes": 22212,
+        "sha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/ScalarSource.ts",
+      "bytes": 630,
+      "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/ScalarSource.ts",
+        "bytes": 630,
+        "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/TemporalQueries.ts",
+      "bytes": 8772,
+      "sha256": "a97c81e76f354a00f23ad1f5488269544456299c09671b70e97870420e6e326c",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/TemporalQueries.ts",
+        "bytes": 8772,
+        "sha256": "a97c81e76f354a00f23ad1f5488269544456299c09671b70e97870420e6e326c"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/compiler.ts",
+      "bytes": 45487,
+      "sha256": "304e2d527cbc0083a4ed75ea7c2f730e1b69d2337734f6d86c2ded5fbb96a01e",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/compiler.ts",
+        "bytes": 45487,
+        "sha256": "304e2d527cbc0083a4ed75ea7c2f730e1b69d2337734f6d86c2ded5fbb96a01e"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/index.ts",
+      "bytes": 3905,
+      "sha256": "a13aad49ecf2c4380ddeeda9b3d08ccabedac32f36b7118c69133d65f1cf36d8",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/index.ts",
+        "bytes": 3606,
+        "sha256": "bab363752c09c82bfd64f80e9e8a4963d0b290a6f0e05ecfc557ab97f231cb4c"
+      },
+      "adaptation": "BORROWED_CLIENT_API_ONLY"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/native/BasisRelations.ts",
+      "bytes": 12091,
+      "sha256": "4d4d0c9dba971210f07edba989e2df608e4540f2d2942f666fd8b15c1adfe484",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/native/BasisRelations.ts",
+        "bytes": 12091,
+        "sha256": "4d4d0c9dba971210f07edba989e2df608e4540f2d2942f666fd8b15c1adfe484"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/native/NativeContext.ts",
+      "bytes": 7184,
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/native/NativeContext.ts",
+        "bytes": 7184,
+        "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/native/NativeQueries.ts",
+      "bytes": 8755,
+      "sha256": "05df60e33c066f1fcd1a7cac100135a6dc9c9fa3e4af34d344b3a42728f8d21a",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/native/NativeQueries.ts",
+        "bytes": 8755,
+        "sha256": "05df60e33c066f1fcd1a7cac100135a6dc9c9fa3e4af34d344b3a42728f8d21a"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/rdf.ts",
+      "bytes": 9714,
+      "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/rdf.ts",
+        "bytes": 9714,
+        "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/recursion.ts",
+      "bytes": 6256,
+      "sha256": "b879595677ed2f0cfd4ff4c1f32f573ac724613e04f2a831e61fd96922bb15af",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/recursion.ts",
+        "bytes": 6256,
+        "sha256": "b879595677ed2f0cfd4ff4c1f32f573ac724613e04f2a831e61fd96922bb15af"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/package.json",
+      "bytes": 1030,
+      "sha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/package.json",
+        "bytes": 1030,
+        "sha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/tsdown.config.ts",
+      "bytes": 246,
+      "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/tsdown.config.ts",
+        "bytes": 246,
+        "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    },
+    {
+      "arm": "candidate",
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/tsconfig.json",
+      "bytes": 238,
+      "sha256": "70fefc1483c57dc107320e5252b343e18d249b81d93fc6c8225eaa822026e545",
+      "source": {
+        "path": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/tsconfig.json",
+        "bytes": 238,
+        "sha256": "70fefc1483c57dc107320e5252b343e18d249b81d93fc6c8225eaa822026e545"
+      },
+      "adaptation": "EXACT_FROZEN_SOURCE"
+    }
+  ],
+  "copiedSdkSourceAndConfigCount": 42,
+  "copiedSdkSourceBytes": 328477,
+  "noCompiledOutputsProduced": true,
+  "exactCommonApiDelta": "Optional borrowed QleverRuntimeOptions.client captured once. Without client the original construction/defaults and owned close remain. With client it is reused without runtime close; caller owns final retirement.",
+  "competingSourceDifference": [
+    "src/compiler.ts"
+  ],
+  "observationContract": "Only admitted query/update/command calls forward exact original receiver/arguments/Promise/result/cause. Rejection or signal uncertainty is sticky before consumer catch; every next request checks coordinator/unknown/active absolute deadline synchronously before original dispatch. Cancel/close remain explicit original cleanup, never auto-called or equated with native drain.",
+  "observationalPrivacy": "Safe bounded method/id/phase/class only; no query/parameter/token/raw error string in events.",
+  "pureDefinitionsAuthored": [
+    "admitted query update command preserve receiver arguments original Promise and result identity",
+    "caught inner rejection is observed before the consumer and blocks every next request",
+    "absolute deadline refuses transport without a timer and after a deferred callback advances time",
+    "signal abort is sticky even if the admitted original later resolves",
+    "synchronous original throws keep their exact cause and make uncertainty sticky",
+    "local typed constraint after a fulfilled original response does not fabricate uncertainty",
+    "observer callback failure stays contained and refuses later dispatch",
+    "explicit cancel and close retain original Promises and never clear prior uncertainty"
+  ],
+  "sdkFakeDefinitionsAuthored": [
+    "real public runtime may catch an inner ReadError but observed borrowed client keeps it unknown",
+    "real public local Pagination failure after successful metadata stays a local typed constraint"
+  ],
+  "testsExecuted": 0,
+  "oldSdkBuild": {
+    "jobId": "qlever-wrapper-sdk-build-v3",
+    "attemptId": "0001",
+    "terminal": {
+      "path": ".devloop/jobs/qlever-wrapper-sdk-build-v3/attempts/0001/terminal.json",
+      "bytes": 5304,
+      "sha256": "e29e43c4bc6c855767a12d1895aa89253cd0eb9b3d57e9fa6cf9a9da7359226e"
+    },
+    "artifact": {
+      "path": ".devloop/jobs/qlever-wrapper-sdk-build-v3/attempts/0001/artifacts/build.json",
+      "bytes": 47601,
+      "sha256": "fb7da4121b7c23c9788e3134c73fe8b25b495bfe72feb9b5ba76af94c9512a84"
+    },
+    "packageRoot": "packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001",
+    "generatedMembershipDigest": "6b3b2869b43cc40844140d00b708e9933c1e33875b1d2d28ad1eb2a46924fe51",
+    "generatedMembers": 70,
+    "scope": "ONE_ANCHORED_ADAPTER_ONLY_BUILD;REFERENCED_INSTALLED_DEPENDENCIES;NO_ENGINE_BUILD_OR_LIVE_INTEGRATION"
+  },
+  "oldSdk70AndApplications26V1_27V2_27V3ByteIdentical": true,
+  "runtimeV3StillBlocked": {
+    "path": "qualification/reviews/qlever-wrapper-runtime-v3-source-metadata-independent.json",
+    "bytes": 16019,
+    "sha256": "abeed8664c8e221e6e082b4eb7430df1dfa128041c7c77eee695576e6e706fee"
+  },
+  "witnessOnlyActual": {
+    "path": "qualification/reviews/qlever-wrapper-requalification-public-dts-v2-actual-independent.json",
+    "bytes": 3411,
+    "sha256": "0f451fed283d6995c3397459c968ddec0dd02c2023bc6b311ae72fbc315a2c6d"
+  },
+  "plans": {
+    "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/BUILD-TYPE-PLANS.json",
+    "bytes": 6541,
+    "sha256": "d94667b8924cb7065994f0f307bc35a427db271b0738c2537286d6c8ca8dd6af"
+  },
+  "latestScope": "Codex QLever\u2013Triplex Datalog plus common SDK compatibility. Native/SPARQL workflows belong to Claude with separate checkout/foundations; no Native142 preparation/orchestration or cross-vendor client/database sharing.",
+  "scopeLimits": [
+    "Observer is not wired into a runnable Q worker; v3 remains blocked.",
+    "A separately frozen worker must use the same observed client for its runtime/interval calls and consult independent observer state for every settings/next-window/release decision.",
+    "No full engine settlement/cancellation proof from Promise success or client.close. Unknown marker never auto-clears, root must hold all Q entrypoints; no new global scheduler mechanism.",
+    "No live source/dist/default, original70 artifact, v1\u2013v3 source/envelope/oracle, XTDB or shared snapshot-oracle changes.",
+    "No actual pure/SDK fake/type/build/native/hold/settings/queue/policy action; all source definitions/plans need review and exact future grants.",
+    "No default/collation/durability/capacity/cancellation/performance promotion."
+  ],
+  "quotaStatus": "No write/quota blocker encountered; only bounded source/copy/plan files produced. No new global storage-capacity measurement claimed.",
+  "operationsRun": {
+    "sourceModulesImported": 0,
+    "testsOrCompilersOrBuilds": 0,
+    "sdkOrBackendCalls": 0,
+    "engineOrSettingsActions": 0,
+    "operationalHoldFileActions": 0,
+    "queueOrPolicyMutation": 0
+  }
+}

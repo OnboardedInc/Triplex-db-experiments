@@ -1,0 +1,71 @@
+{
+  "schema": "td.item4.selected-contract/1",
+  "utc": "2026-10-31T17:55:31.073906+00:00",
+  "decision": "ADOPT_REVIEWED_PRECODE_CONTRACT_V1",
+  "scope": "Genuinely new item4 argument-only native signed evaluator and inspect-only owned IR2; no store/SQL activation",
+  "root_contract_sha256": "1230df6e474341cabcf277fae4b170796b5a6927b0010edf760e88fb9c92d3c6",
+  "normative_companion_files": [
+    "execution/NATIVE-CONTRACT.md",
+    "execution/IR2-CONTRACT.md",
+    "execution/BUDGET-MODEL.json",
+    "execution/DIAGNOSTICS.md"
+  ],
+  "author_packets": [
+    {
+      "folder": "execution",
+      "manifest": "execution/SHA256-MANIFEST.json",
+      "sha256": "4615f510898a14ffd3cc1145e826113b42cf41d0b4891e0e10922a73b405deb5",
+      "members": 8
+    },
+    {
+      "folder": "semantics",
+      "manifest": "semantics/SHA256-MANIFEST.json",
+      "sha256": "0bf35021d0cd7d57bfcb465213cb945d02a93b60492e4d611a736c8d35375a26",
+      "members": 4
+    },
+    {
+      "folder": "reviews/semantics",
+      "manifest": "reviews/semantics/SHA256-MANIFEST.json",
+      "sha256": "c9917471d0e53d7118ddfb6b504ba334a38c6bfbc843141a4903f04c5bdce229",
+      "members": 3
+    },
+    {
+      "folder": "reviews/qa-initial",
+      "manifest": "reviews/qa-initial/OUTPUT-MANIFEST.tsv",
+      "sha256": "e55acf5535d6e38e223fdf142a9ad6f9d172be52b96d140ed4ea67994871c4c5",
+      "members": 4
+    },
+    {
+      "folder": "reviews/qa-final",
+      "manifest": "reviews/qa-final/OUTPUT-MANIFEST.tsv",
+      "sha256": "72456d0df27035a2975131aeb5c69cd88ebd016f2a38f81a65c6404f61155fb6",
+      "members": 8
+    }
+  ],
+  "review_closure": "No unresolved contract contradiction on exact frozen execution packet and root candidate; earlier draft findings are historical, not current blockers",
+  "baseline_source_commit": "52b1e81f1d71590bdefb376e62924c9f717d4344",
+  "baseline_source_files": 280,
+  "baseline_source_bytes": 14821011,
+  "baseline_source_revalidated_utc": "2026-10-31T17:43:18.160494+00:00",
+  "host_pin": "DuckDB2.0.0/d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "actual_api": "unstable C API v2",
+  "proposed_artifact": "0.5.0 NOT BUILT",
+  "source_implementation": "NOT STARTED",
+  "runtime_tests": "ALL UNRUN",
+  "code_gate": "May allocate disjoint isolated new source ownership only AFTER exact durable checkpoint readback",
+  "compiler_runtime_gate": "CLOSED; separate current capacity/candidate/campaign review required",
+  "integration_gate": "HELD; no item3 acceptance or guard bypass",
+  "conditional_compact_ir_bound": {
+    "bytes": 2510848,
+    "row_cap": 4194304,
+    "margin": 1683456,
+    "method": "Independent specification shape counting under exact compact schema/global caps/no duplicate facts or source copies",
+    "not_claimed": [
+      "implementation conformity",
+      "measured maximum",
+      "RSS/allocator capacity",
+      "arbitrary caller-constructed IR validity"
+    ]
+  },
+  "exclusions": "No item3 stopped save/probe/controller material, old85-file tree retry, app source, build artifact, database, secret or external paper corpus included"
+}

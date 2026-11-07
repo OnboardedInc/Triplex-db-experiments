@@ -1,0 +1,44 @@
+{
+  "utc": "2026-10-31T03:16:33.122490+00:00",
+  "status": "PASS_ROOT_INDEPENDENT_CLOSED_ORDERED_TIMING_RAW_COUNTS_EXITS_SEQUENCE_CHECKSUM_COUNTERS",
+  "verifier_sha256": "33f5873b6579ac9a51df65751c53a197404a056f87bbbcab890c85317107e5c8",
+  "outer_sha256": "ea33c39f5adf3fcd498846bedaa643ba8f8e72b08bbaf37ae587537886c2520f",
+  "gate_sha256": "06756817f3d2a4d592ea07b75f5081c2c7eac4b003560c47b67197f6929cba57",
+  "study_sha256": "05314589bd181c3ff7500f8cf1c0e45a82e7cc9c7a84233b2c94a9385c6a447b",
+  "counts": {
+    "processes": 168,
+    "outcomes": 11760,
+    "measured": 7056,
+    "warmups": 4704,
+    "raw_files_rehashed": 846
+  },
+  "comparisons": [
+    {
+      "comparison": "codec_implementation",
+      "campaign_sha256": "d6bac26cfd1c6958e618c5ecc99957ee7bfecd051c046d8c0e889f993926e4f2",
+      "processes": 84,
+      "pairs": 42,
+      "outcomes": 5880,
+      "measured": 3528,
+      "warmups": 2352,
+      "controller_returncode": 0
+    },
+    {
+      "comparison": "accepted_to_codec",
+      "campaign_sha256": "fde128306459eee25fa9c94d5a316f7190d483ab1b47cf9a2dc8181103b89b70",
+      "processes": 84,
+      "pairs": 42,
+      "outcomes": 5880,
+      "measured": 3528,
+      "warmups": 2352,
+      "controller_returncode": 0
+    }
+  ],
+  "actual_outer_python_tee_exits": {
+    "python_returncode": 0,
+    "tee_returncode": 0
+  },
+  "profiles": "NOT_RUN",
+  "numeric_analysis": "NOT_RUN",
+  "limits": "Raw checksum/counter and capture checks; full56preflightpayloads independently verified earlier. Not per-call full payload preservation, continuous runtime attestation, speed conclusion or roadmap acceptance."
+}

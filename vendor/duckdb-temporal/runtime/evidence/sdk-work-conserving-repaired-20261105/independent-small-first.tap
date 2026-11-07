@@ -1,0 +1,31 @@
+✖ independent full512 native patch trace retains every returned cut and restores all256 entities (1.008459ms)
+✔ four held real scopes isolate queued abort/deadline and recycle all16 physical ports (740.027667ms)
+✔ close and revalidate drain four actual scopes plus twelve accepted calls (847.209083ms)
+✔ pooled original writer barrier is not recaptured after heavy admission (421.622041ms)
+✔ readers zero queued full-call deadline cannot advance the real writer tail (431.881542ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2598.622458
+
+✖ failing tests:
+
+test at build/adapter/test-sdk-admission-independent.js:117:1
+✖ independent full512 native patch trace retains every returned cut and restores all256 entities (1.008459ms)
+  AssertionError [ERR_ASSERTION]: Set TD_SDK_ADMISSION_SOURCE and TD_SDK_ADMISSION_RECIPE to the approved closed100k inputs; this test never skips missing conditions
+      at TestContext.<anonymous> (file://__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/adapter/test-sdk-admission-independent.js:119:12)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.start (node:internal/test_runner/test:1003:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:358:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

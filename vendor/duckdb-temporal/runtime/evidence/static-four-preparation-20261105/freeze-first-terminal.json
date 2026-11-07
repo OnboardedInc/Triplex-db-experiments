@@ -1,0 +1,13 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "-B",
+    "freeze_static_four_runtime.py",
+    "prepare",
+    "--receipt",
+    "build/static-four-preparation-20261105/freeze-first.json"
+  ],
+  "startedAtUtc": "2026-11-06T04:54:05.236112+00:00",
+  "endedAtUtc": "2026-11-06T04:54:08.455340+00:00",
+  "exitCode": 0
+}

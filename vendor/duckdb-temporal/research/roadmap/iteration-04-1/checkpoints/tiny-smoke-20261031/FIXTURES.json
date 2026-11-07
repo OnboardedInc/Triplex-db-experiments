@@ -1,0 +1,83 @@
+{
+  "schema": "td.item4.1.tiny-fixtures/1",
+  "cases": [
+    {
+      "scenario_id": "SMOKE_EMPTY",
+      "graph": {
+        "schema": "item4.1-graph-v1",
+        "direction": "producer_to_consumer",
+        "n": 0,
+        "edges": []
+      },
+      "expected_canonical_verdict": "STRATIFIABLE",
+      "expected_checker_result": "VALID_STRATIFIABLE",
+      "call_sequence": [
+        "analyze(graph)",
+        "check_certificate(graph, returned_certificate)"
+      ]
+    },
+    {
+      "scenario_id": "SMOKE_POSITIVE_SELF",
+      "graph": {
+        "schema": "item4.1-graph-v1",
+        "direction": "producer_to_consumer",
+        "n": 1,
+        "edges": [
+          [
+            0,
+            0,
+            "positive"
+          ]
+        ]
+      },
+      "expected_canonical_verdict": "STRATIFIABLE",
+      "expected_checker_result": "VALID_STRATIFIABLE",
+      "call_sequence": [
+        "analyze(graph)",
+        "check_certificate(graph, returned_certificate)"
+      ]
+    },
+    {
+      "scenario_id": "SMOKE_NEGATIVE_SELF",
+      "graph": {
+        "schema": "item4.1-graph-v1",
+        "direction": "producer_to_consumer",
+        "n": 1,
+        "edges": [
+          [
+            0,
+            0,
+            "negative"
+          ]
+        ]
+      },
+      "expected_canonical_verdict": "UNSTRATIFIABLE",
+      "expected_checker_result": "VALID_UNSTRATIFIABLE",
+      "call_sequence": [
+        "analyze(graph)",
+        "check_certificate(graph, returned_certificate)"
+      ]
+    },
+    {
+      "scenario_id": "SMOKE_AGGREGATE_SELF",
+      "graph": {
+        "schema": "item4.1-graph-v1",
+        "direction": "producer_to_consumer",
+        "n": 1,
+        "edges": [
+          [
+            0,
+            0,
+            "aggregate"
+          ]
+        ]
+      },
+      "expected_canonical_verdict": "UNSTRATIFIABLE",
+      "expected_checker_result": "VALID_UNSTRATIFIABLE",
+      "call_sequence": [
+        "analyze(graph)",
+        "check_certificate(graph, returned_certificate)"
+      ]
+    }
+  ]
+}

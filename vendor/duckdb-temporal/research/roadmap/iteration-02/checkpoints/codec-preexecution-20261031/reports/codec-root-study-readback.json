@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-31T02:57:44.736093+00:00",
+  "status": "PASS_ROOT_FINAL_STUDY_POSTEXIT_ALL_MEMBER_READBACK",
+  "study_manifest_sha256": "05314589bd181c3ff7500f8cf1c0e45a82e7cc9c7a84233b2c94a9385c6a447b",
+  "members": 278,
+  "all278_closed_member_hashes_lengths_verified": true,
+  "preparation_manifest_sha256": "8f43a7c409a13328aab5ed2997a39a41bba2b91f56d9290a2ae9a4bdba06cc54",
+  "candidate_admission_sha256": "1d46348f4e241977ab17799ca58fec59f7a583d67b51f3b2396b19de27b6c9c0",
+  "source_registry_sha256": "56af592c3e3c8e69878b8b5c0443793b98945aff9d5f65bb5f665c066fc39af4",
+  "root_freeze_authorization_sha256": "ff3e71c95b2d571d0dd85cfbb6b2c7465941e73c6404c07c2b854a05644a6efc",
+  "genuine_preflight_roles": 4,
+  "exact_public_preflight_results": 56,
+  "freezer_actual_exit_observation": "Delegated sole owner observed existing freezer terminal0 at02:56:40; root independently rehashed all278 after owner completion.",
+  "timing_profile_execution": "NOT_RUN",
+  "execution_gate_and_study_profile_runs_absent": true
+}

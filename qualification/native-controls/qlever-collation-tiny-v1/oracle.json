@@ -1,0 +1,69 @@
+{
+  "format": "triplex-native-qlever-tiny-sort-oracle/1",
+  "status": "SOURCE_ONLY_UNEXECUTED",
+  "rows": [
+    {
+      "entity": "urn:triplex-sort:ascii-A",
+      "label": "A"
+    },
+    {
+      "entity": "urn:triplex-sort:ascii-E",
+      "label": "E"
+    },
+    {
+      "entity": "urn:triplex-sort:ascii-c",
+      "label": "c"
+    },
+    {
+      "entity": "urn:triplex-sort:ascii-z",
+      "label": "z"
+    },
+    {
+      "entity": "urn:triplex-sort:nfd-e-acute",
+      "label": "é"
+    },
+    {
+      "entity": "urn:triplex-sort:nfc-e-acute",
+      "label": "é"
+    },
+    {
+      "entity": "urn:triplex-sort:private-use",
+      "label": ""
+    },
+    {
+      "entity": "urn:triplex-sort:astral-10000",
+      "label": "𐀀"
+    },
+    {
+      "entity": "urn:triplex-sort:emoji",
+      "label": "😀"
+    }
+  ],
+  "rdfInputTriples": 9,
+  "configuredEntityClaimed": false,
+  "expectedAscendingIds": [
+    "ascii-A",
+    "ascii-E",
+    "ascii-c",
+    "nfd-e-acute",
+    "ascii-z",
+    "nfc-e-acute",
+    "private-use",
+    "astral-10000",
+    "emoji"
+  ],
+  "expectedGreaterThanE": [
+    "ascii-c",
+    "nfd-e-acute",
+    "ascii-z",
+    "nfc-e-acute",
+    "private-use",
+    "astral-10000",
+    "emoji"
+  ],
+  "unicodeLcaseInput": "É",
+  "unicodeLcaseExpected": "é",
+  "nfdNfcIdentityDistinct": true,
+  "standardsSource": "https://www.w3.org/TR/sparql11-query/",
+  "notPublicTriplexQualification": true
+}

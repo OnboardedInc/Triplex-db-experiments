@@ -1,0 +1,52 @@
+{
+  "scope": "Distinct project-only pinned public API boundary research and independent Q1 review;no computer details,stopped material or executionplan",
+  "base_main_commit": "972ed9f89f55efb2e0e96901a9b650a7bfc10b12",
+  "inventory_excludes_self": true,
+  "files": [
+    {
+      "name": "README.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/v2-host-boundary-20261101/README.md",
+      "bytes": 3765,
+      "sha256": "14e082605141a41b44c5ed6e06e192e5d24625c1349da4ff138c19b3903a769b",
+      "git_blob_sha": "b9e2801f726d740073d056616bd9b3904927631d",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "RESEARCH.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/v2-host-boundary-20261101/RESEARCH.md",
+      "bytes": 18535,
+      "sha256": "42aa891abbac9479668c0657abadeca99214b7ca3c63dd2cff109f74dbbe8c92",
+      "git_blob_sha": "c4586c92a37b2b1430f19d257509ff97c4370ca8",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "PINNED-EVIDENCE.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/v2-host-boundary-20261101/PINNED-EVIDENCE.md",
+      "bytes": 6218,
+      "sha256": "03ad5ab4b42960cc9c1a66e3eac8ffec71f3790b5db9acb8e0b5f1fec1375e29",
+      "git_blob_sha": "b4fb1075996c503bf2d2f4270fe2158f3d521eb8",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "RISKS-AND-OPEN-CLAIMS.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/v2-host-boundary-20261101/RISKS-AND-OPEN-CLAIMS.md",
+      "bytes": 8593,
+      "sha256": "6ce4ad12d233168302a080b3a599265c0e12de6a6758b14dd2dcba7cdbad6a2d",
+      "git_blob_sha": "f350101396466ab0eb9afa449d5ee108f1c19e4f",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "INDEPENDENT-REVIEW.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-05/checkpoints/v2-host-boundary-20261101/INDEPENDENT-REVIEW.md",
+      "bytes": 13147,
+      "sha256": "7679f05f0c1bb6899014de1b2968c637f9611cc1281e8f0edd5cccedeffe5d1e",
+      "git_blob_sha": "6b175034e2e39397857b0ae6f422d30018dcdd6f",
+      "mode": "100644",
+      "type": "blob"
+    }
+  ]
+}

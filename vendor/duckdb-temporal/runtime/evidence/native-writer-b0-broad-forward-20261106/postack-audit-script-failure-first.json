@@ -1,0 +1,8 @@
+{
+  "status": "OFFLINE_AUDIT_SCRIPT_NAME_ERROR",
+  "atUtc": "2026-11-06T09:41:34.317660+00:00",
+  "exitCode": 1,
+  "error": "NameError: name 'not39087' is not defined",
+  "cause": "Missing whitespace in a Python offline condition; no data assertion failure.",
+  "repair": "Fresh helper only uses not(parenthesized comparison); all raw/gates unchanged; no engine rerun"
+}

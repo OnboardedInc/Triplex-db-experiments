@@ -1,0 +1,39 @@
+SELECT DISTINCT (?q_session_type AS ?v0_type) (?q_session_value AS ?v0_value) (?q_session_order AS ?v0_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJ3aWRlLWZ1bm5lbDo4ZThiYmU3NS1kMTY2LTRiYmUtYWJiMy1lZjE4NDcxODBkYWMiLDBd> { ?w0 <urn:triplex:field:valid_from_order> ?w0_vf ; <urn:triplex:field:recorded_position_order> ?w0_rp . ?w0 <urn:triplex:field:recorded_at_order> ?w0_ra .
+OPTIONAL { ?w0 <urn:triplex:field:valid_to_order> ?w0_vt }
+OPTIONAL { ?w0 <urn:triplex:field:retracted_position_order> ?w0_xp }
+OPTIONAL { ?w0 <urn:triplex:field:retracted_at_order> ?w0_xa }
+?w0 <urn:triplex:field:entity_id> ?q_view_value .
+?w0 <urn:triplex:field:attribute> ":w17/a73657373696f6e" .
+?w0 <urn:triplex:field:scalar_family> ?q_session_type ; <urn:triplex:field:scalar_lexical> ?q_session_value ; <urn:triplex:field:scalar_order> ?q_session_order .
+?w1 <urn:triplex:field:valid_from_order> ?w1_vf ; <urn:triplex:field:recorded_position_order> ?w1_rp . ?w1 <urn:triplex:field:recorded_at_order> ?w1_ra .
+OPTIONAL { ?w1 <urn:triplex:field:valid_to_order> ?w1_vt }
+OPTIONAL { ?w1 <urn:triplex:field:retracted_position_order> ?w1_xp }
+OPTIONAL { ?w1 <urn:triplex:field:retracted_at_order> ?w1_xa }
+?w1 <urn:triplex:field:entity_id> ?q_view_value .
+?w1 <urn:triplex:field:attribute> ":w17/a73746570" .
+?w1 <urn:triplex:field:scalar_family> "string" ; <urn:triplex:field:scalar_lexical> "view" ; <urn:triplex:field:scalar_order> "view" .
+?w2 <urn:triplex:field:valid_from_order> ?w2_vf ; <urn:triplex:field:recorded_position_order> ?w2_rp . ?w2 <urn:triplex:field:recorded_at_order> ?w2_ra .
+OPTIONAL { ?w2 <urn:triplex:field:valid_to_order> ?w2_vt }
+OPTIONAL { ?w2 <urn:triplex:field:retracted_position_order> ?w2_xp }
+OPTIONAL { ?w2 <urn:triplex:field:retracted_at_order> ?w2_xa }
+?w2 <urn:triplex:field:entity_id> ?q_view_value .
+?w2 <urn:triplex:field:attribute> ":w17/a6174" .
+?w2 <urn:triplex:field:scalar_family> ?q_v_type ; <urn:triplex:field:scalar_lexical> ?q_v_value ; <urn:triplex:field:scalar_order> ?q_v_order .
+BIND("string" AS ?q_view_type) BIND(?q_view_value AS ?q_view_order) }
+FILTER(?w0_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w0_vt) || ?w0_vt > "c12e84e400000000"))
+FILTER(?w0_rp <= "bff0000000000000")
+FILTER((!BOUND(?w0_xp) || ?w0_xp > "bff0000000000000" || ?w0_xa > "c08f480000000000"))
+FILTER(?w0_ra <= "c08f480000000000")
+FILTER(?w1_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w1_vt) || ?w1_vt > "c12e84e400000000"))
+FILTER(?w1_rp <= "bff0000000000000")
+FILTER((!BOUND(?w1_xp) || ?w1_xp > "bff0000000000000" || ?w1_xa > "c08f480000000000"))
+FILTER(?w1_ra <= "c08f480000000000")
+FILTER(?w2_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w2_vt) || ?w2_vt > "c12e84e400000000"))
+FILTER(?w2_rp <= "bff0000000000000")
+FILTER((!BOUND(?w2_xp) || ?w2_xp > "bff0000000000000" || ?w2_xa > "c08f480000000000"))
+FILTER(?w2_ra <= "c08f480000000000")
+FILTER((?q_v_type IN ("number","integer") && ?q_v_type = "integer" && ?q_v_order >= "8000000000000000"))
+FILTER((?q_v_type IN ("number","integer") && ?q_v_type = "integer" && ?q_v_order < "8000000000000028")) } LIMIT 1001

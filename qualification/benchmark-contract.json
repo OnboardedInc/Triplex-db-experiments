@@ -1,0 +1,106 @@
+{
+  "format": "triplex-backends-benchmark-contract/2",
+  "status": "calibration-pending-no-qualified-performance-claims",
+  "resourceProfile": "local-shared-development-v2",
+  "scaleStagesDistinctEntities": [100000, 1000000, 10000000],
+  "activeFactProfilesPerEntity": [1, 10],
+  "historicalDepths": [1, 3, 10],
+  "readerClients": [1, 4, 16],
+  "modes": ["read-only", "sustained-ingestion"],
+  "queryFamilies": [
+    "point",
+    "selective-filter",
+    "join",
+    "anti-join",
+    "recursion",
+    "aggregate",
+    "historical",
+    "interval",
+    "pagination"
+  ],
+  "topologies": ["chain", "tree", "diamond", "cycle", "high-fanout", "skewed-hotset"],
+  "comparisonPaths": ["public-triplex-xtdb", "public-triplex-qlever"],
+  "measurements": {
+    "qualifiedPercentileMinimumObservationsPerPopulation": 10000,
+    "independentRuns": 3,
+    "percentiles": [50, 90, 95, 99],
+    "endToEndIncludes": [
+      "submission-queue",
+      "pool-wait",
+      "network",
+      "transaction-processing",
+      "visibility-wait",
+      "result-decoding"
+    ],
+    "separatePhases": [
+      "load",
+      "startup",
+      "revalidation",
+      "cold-query",
+      "warm-query",
+      "maintenance",
+      "restart",
+      "backup",
+      "restore"
+    ],
+    "resourceOwners": [
+      "xtdb-jvm-heap",
+      "xtdb-offheap-native",
+      "xtdb-container-rss",
+      "qlever-cpp-rss",
+      "qlever-index-and-update-state",
+      "qlever-query-cache",
+      "adapter-process-tree-rss",
+      "owned-disk",
+      "spill",
+      "gc",
+      "cpu"
+    ]
+  },
+  "calibration": {
+    "freezeRuleBeforeCandidates": true,
+    "fixedInputs": [
+      "fixture",
+      "workload-mix",
+      "reader-count",
+      "ingestion-schedule",
+      "cold-warm-definition",
+      "resource-caps",
+      "observation-count",
+      "promotion-formula"
+    ],
+    "controls": "Two public Triplex runtimes, identical frozen fixtures/contracts, three alternating-order runs under the fair serialized profile. Native probes are diagnostics and replay is an oracle.",
+    "numericSLOs": null,
+    "rule": "Freeze numeric SLOs and source/control identities in a create-only calibration receipt before optimization candidate runs. A new scale gets fresh controls before candidates. Candidate failures cannot redefine baselines. Changed budgets/topology/semantics/formula create a new named profile and retain original failures."
+  },
+  "samplingRules": [
+    "No successful-only service percentiles; preserve timeout/error counts and raw observations.",
+    "Do not combine different query families, cold/warm states or concurrency levels into a latency population.",
+    "Small pilot samples remain diagnostic and never close a scale gate.",
+    "Two or three experiments may share the server for correctness; paired performance and process-failure trials run exclusively.",
+    "Observe active backend queries and waiting clients separately from sixteen submitted clients.",
+    "Never present XTDB8GiB versus QLever4GiB development runs as a fair performance comparison."
+  ],
+  "separateMilestones": [
+    "ten-million-retained-facts",
+    "million-fact-query-input",
+    "sixteen-readers-during-ingestion",
+    "ten-million-distinct-entities"
+  ],
+  "capacityRule": "Before each stage, admit measured projected storage plus worst overlapping WAL, compaction, backup/restore and scratch under the fixed resource profile. Over-budget stages remain BLOCKED_CAPACITY and completion remains unachieved; no deletion or budget increase converts failure into a pass.",
+  "correctnessOracle": "Independent immutable-event replay and frozen expected answers; not an engine competitor",
+  "diagnosticControls": ["native-XTDB-SQL/XTQL", "native-QLever-SPARQL"],
+  "duckdbPolicy": "Read-only source/research/workload reference only; no cloning, dependency installation, execution or process changes",
+  "comparisonScheduling": {
+    "qualificationProfile": "local-serial-fair-v1",
+    "cpuPerBackend": 4,
+    "serverMemoryBytesPerBackend": 8589934592,
+    "serialized": true,
+    "developmentOnly": {
+      "xtdbServerMemoryBytes": 8589934592,
+      "qleverServerMemoryBytes": 4294967296
+    },
+    "ownedDiskMaximumBytesBothBackendsTogether": 12884901888,
+    "hostFreeReserveBytes": 12884901888
+  }
+}

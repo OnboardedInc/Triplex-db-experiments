@@ -1,0 +1,53 @@
+{
+  "sequence": 14,
+  "page_id": "[PRIVATE_APPLICATION_REFERENCE_REMOVED]",
+  "blocks": 78,
+  "identities_order_preserved": true,
+  "changed": [
+    {
+      "id": "0839035e-d573-5d6e-8107-bcc9e9468023",
+      "hash": "39e221e0f1a3c67c399a99b7a467f0129601d45fcda6793dce6ba7f7a2b67564"
+    },
+    {
+      "id": "1d94769e-2c87-5fcd-a1d8-480075701adc",
+      "hash": "ec953c2dffe6142d76744965fdb0ac0602e3a49cf169a4965b039a217744e051"
+    }
+  ],
+  "receipt": {
+    "new_sequence": 14,
+    "through_sequence": 14,
+    "operation_results": [
+      {
+        "operation_index": 0,
+        "preceding_block_id": "c00e0ef3-6ab6-5ef3-b181-85dcb7c03ab3",
+        "created_block_ids": [],
+        "continuation_position": {
+          "block_id": "0839035e-d573-5d6e-8107-bcc9e9468023",
+          "relative_position_base64": "AMGM/csCnRdB"
+        },
+        "affected_blocks": [
+          {
+            "block_id": "0839035e-d573-5d6e-8107-bcc9e9468023",
+            "hash": "39e221e0f1a3c67c399a99b7a467f0129601d45fcda6793dce6ba7f7a2b67564"
+          }
+        ]
+      },
+      {
+        "operation_index": 1,
+        "preceding_block_id": "e94c9980-be37-56b5-ada4-39adbdb885de",
+        "created_block_ids": [],
+        "continuation_position": {
+          "block_id": "1d94769e-2c87-5fcd-a1d8-480075701adc",
+          "relative_position_base64": "AMGM/csCtCVB"
+        },
+        "affected_blocks": [
+          {
+            "block_id": "1d94769e-2c87-5fcd-a1d8-480075701adc",
+            "hash": "ec953c2dffe6142d76744965fdb0ac0602e3a49cf169a4965b039a217744e051"
+          }
+        ]
+      }
+    ]
+  },
+  "at_utc": "2026-10-30T21:50:09.150Z"
+}

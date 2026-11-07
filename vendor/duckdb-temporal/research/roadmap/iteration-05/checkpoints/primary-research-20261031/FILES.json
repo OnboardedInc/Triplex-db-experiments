@@ -1,0 +1,96 @@
+{
+  "schema": "td.item5.primary-research-documents/1",
+  "research_date": "2026-10-31",
+  "scope": "new source-only project research and additive peer errata; no selected contract or execution plan",
+  "normalization": "UTF-8; CRLF normalized to LF; one terminal newline",
+  "empirical_status": "UNRUN",
+  "files": [
+    {
+      "name": "README.md",
+      "bytes": 4633,
+      "sha256": "79aac0a60eb8ca1359b1f03c9780c52d9958645d4af215ba559cf4ac6923bab2",
+      "git_blob_sha": "3afadc54908b77ebede21b332f5f356f98634b9c",
+      "authored_research_role": "coordinator research introduction/additive errata"
+    },
+    {
+      "name": "ERRATA.md",
+      "bytes": 2939,
+      "sha256": "d3e52b1045d69128e12a92e7a93e9d24df746f4844342d165a0fb1a35adfd5a6",
+      "git_blob_sha": "24aa813fc8d1f98445b93d4f966887516054e4db",
+      "authored_research_role": "coordinator research introduction/additive errata"
+    },
+    {
+      "name": "theory-report.md",
+      "bytes": 36786,
+      "sha256": "d61977e926d3bf05217e544bf5aa7712e0fbe5fef899cd8c9bc4520bcd368341",
+      "git_blob_sha": "94908c68db6a619ae4737066015717937deea69c",
+      "authored_research_role": "aggregate theory revision 001",
+      "source_content_sha256": "5c7b8eef7b6287663e16f45a58600a97a9aa560f44e73202bf1057566dea70f9"
+    },
+    {
+      "name": "oracle-obligations.md",
+      "bytes": 21279,
+      "sha256": "c9ae879e784ba47d8770f2f80aa8896415f4b67afe62bcb8b334e2f1b3a78bce",
+      "git_blob_sha": "103da97e8eb1a85d26ea269c6ddd4c26c73dd0f6",
+      "authored_research_role": "aggregate theory revision 001",
+      "source_content_sha256": "d3036377e76c717f719195353ef975d9699f83bc61983cb642da96f3ad67814e"
+    },
+    {
+      "name": "theory-sources.md",
+      "bytes": 11564,
+      "sha256": "4d1fcc4c54af5e4a754624f7c11b5960301a594bcb4e7829d03c46f23fe70bc6",
+      "git_blob_sha": "03b85d41d147337bce7f981059f8d08a695137ff",
+      "authored_research_role": "aggregate theory revision 001",
+      "source_content_sha256": "70cec5718e0c810ea6409e7ddaa0dd0406669ac6271cf0436ea99256ac2d9f14"
+    },
+    {
+      "name": "numeric-report.md",
+      "bytes": 28063,
+      "sha256": "0c8a9381c4863c621a36f7c592b22d08682c7b72c953a76947ef5d26294c7da9",
+      "git_blob_sha": "f6de088b8e15e0487b05fdcc68c68ab140ccd009",
+      "authored_research_role": "aggregate numeric research revision 001",
+      "source_content_sha256": "0c8a9381c4863c621a36f7c592b22d08682c7b72c953a76947ef5d26294c7da9"
+    },
+    {
+      "name": "numeric-sources.md",
+      "bytes": 8743,
+      "sha256": "64c13797b9dc878d622b2ea74a98903c651b6d8f1728e539add5329ab4c3cf6d",
+      "git_blob_sha": "4f56672e26d4f54cc09e9dac2414576acfb72076",
+      "authored_research_role": "aggregate numeric research revision 001",
+      "source_content_sha256": "64c13797b9dc878d622b2ea74a98903c651b6d8f1728e539add5329ab4c3cf6d"
+    },
+    {
+      "name": "v2-performance.md",
+      "bytes": 31507,
+      "sha256": "f916fa918617e2db1bd80220acc7dca0cc3329db9c94bd2e446451dc565b91a2",
+      "git_blob_sha": "0c1497ccbf94b700daf1f835d4fec8d9f238bbdc",
+      "authored_research_role": "aggregate v2 performance research revision 001",
+      "source_content_sha256": "f916fa918617e2db1bd80220acc7dca0cc3329db9c94bd2e446451dc565b91a2"
+    },
+    {
+      "name": "v2-sources.md",
+      "bytes": 10262,
+      "sha256": "9d876f114c8fd2e1fb71919609b6f731385684b9aa196e25475c972f96f2e9fc",
+      "git_blob_sha": "5d5a13cffb9abfd09a62ee204142c0105ed2fca3",
+      "authored_research_role": "aggregate v2 performance research revision 001",
+      "source_content_sha256": "9d876f114c8fd2e1fb71919609b6f731385684b9aa196e25475c972f96f2e9fc"
+    },
+    {
+      "name": "peer-review.md",
+      "bytes": 20348,
+      "sha256": "4cd8e9119b4af28819414b33f9975f7e60218add24dcb2f392a8db0f8800e4b7",
+      "git_blob_sha": "2e2f49300cc6559a1fdb0395c4d7f05129f9be47",
+      "authored_research_role": "independent research peer revision 001",
+      "source_content_sha256": "4cd8e9119b4af28819414b33f9975f7e60218add24dcb2f392a8db0f8800e4b7"
+    },
+    {
+      "name": "peer-sources.md",
+      "bytes": 10139,
+      "sha256": "cd759bf20a41283b28e8ac3a4678d5f0d097817570c1d435f31ef51aacf6cf88",
+      "git_blob_sha": "fef80000b617f0f89d70e823424c4988a127442f",
+      "authored_research_role": "independent research peer revision 001",
+      "source_content_sha256": "cd759bf20a41283b28e8ac3a4678d5f0d097817570c1d435f31ef51aacf6cf88"
+    }
+  ],
+  "self_excluded": "FILES.json is excluded from its own file inventory"
+}

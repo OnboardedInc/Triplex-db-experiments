@@ -1,0 +1,295 @@
+{
+  "verified_original_files": 264,
+  "original_manifest_sha256": "5dd72ff6c34907ec4208a4bfd56cbd8c52ac3b1eddf65dd440285e26d5ff1d25",
+  "excluded": [
+    {
+      "path": "raw/duckdb_duckdb-python__.gitmodules",
+      "bytes": 141,
+      "sha256": "243aa611f95a5bbc9c790dc93feebd5ba92d7137fc892cfe355d30340096fee8",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb-python__pyproject.toml",
+      "bytes": 23272,
+      "sha256": "8ce2db9f6232afbf8be997f9a511309425d546f9c7a7266cf6b39837418f2693",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb-python__src__engine__result.cpp",
+      "bytes": 12536,
+      "sha256": "c63d11bfa3b120a15570c1c1ee751f53dbdf623a4c17d9bf1752a9b0b3a2cf6e",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb-python__src__native__python_conversion.cpp",
+      "bytes": 46262,
+      "sha256": "b5450a7a2ddcfaeb962e50fb6a47f8e6bf03a93652dcdeccc21d2834934b3946",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb-python__src__native__python_objects.cpp",
+      "bytes": 28566,
+      "sha256": "4f59f1c04ce34891c9d85b217c1ba2ac32bac95fd6010cbcad989d79c3d400d6",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb-python__src__pyconnection.cpp",
+      "bytes": 70198,
+      "sha256": "5c33473dbd459851144f19d2eba6069b0d1cd171bd20ccf47124fc823b649857",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb-python__src__pyresult.cpp",
+      "bytes": 23544,
+      "sha256": "e49b68f854c856361c4a6ae35e378e21631d16cba59735e575df31c046c8b2f5",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__include__duckdb__common__constants.hpp",
+      "bytes": 5147,
+      "sha256": "bf3a4e5895a527f146bca7e20d3f73f57f64034819dd0b0e4e01e53d08245a7a",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__include__duckdb__common__types.hpp",
+      "bytes": 28633,
+      "sha256": "8bd7ad9dc2fe2c04657cf749e3ea8e4d1c83d003540307e9e5d19b3dbcd4c2ce",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__include__duckdb__common__types__data_chunk.hpp",
+      "bytes": 8824,
+      "sha256": "2a4201a20b74f0dfe17d92e0d1d9b52684a11e0c7010cdc21ce11510f43cb649",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__include__duckdb__common__types__vector.hpp",
+      "bytes": 11236,
+      "sha256": "26457cee1485d5517dafe26a0a8c8859b6a5c990fb340736dce771274591fee4",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__include__duckdb_extension_v2.h",
+      "bytes": 205461,
+      "sha256": "fa0871d3f5b8e5da9a686c019fcaf8210349440831d5e9228720cbba31ccaa51",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__main__capi__v2__capi_v2_data_chunk.cpp",
+      "bytes": 4626,
+      "sha256": "97a1b20f47aeae567d6b48ef4b5671035d9fb0a3c311ec1b209b4310b3ba0d15",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__main__capi__v2__capi_v2_func_scalar.cpp",
+      "bytes": 22476,
+      "sha256": "96d8cb5b9deaf7aeb9d118ad40147e98e8f3edead54d8bfafd5c9945fa91dd3f",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__main__capi__v2__capi_v2_func_table.cpp",
+      "bytes": 80237,
+      "sha256": "592fce58aaeb5c098ae243d2badb33f7c56cdc5ddc542237cc6f5750df8940f3",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__main__capi__v2__capi_v2_result.cpp",
+      "bytes": 23817,
+      "sha256": "3b164b4e215aef0b5c7912212557585f6b80b0c9273b16f983090a1e461a097d",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__main__capi__v2__capi_v2_vector.cpp",
+      "bytes": 23006,
+      "sha256": "b53cb2978200b6e80934f8c6ce4ea24dab43d3f9b03b7a10fa398a1a7a65a49f",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/duckdb_duckdb__src__main__query_result.cpp",
+      "bytes": 20998,
+      "sha256": "cdd52d402dc4d3635b1a286bbb1a6b439db704ed049a220c7445bb06c26dcc16",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Doc__c-api__buffer.rst",
+      "bytes": 23544,
+      "sha256": "ff93fb5ccdb99f3467ea74af159a70e0efc940ef30844b4336597938784fd63b",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Doc__c-api__memory.rst",
+      "bytes": 31069,
+      "sha256": "c53eb003684feb59110f6a28d8ae003c05d5661fd85da02bd6fd21704ea73f87",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Doc__c-api__refcounting.rst",
+      "bytes": 6947,
+      "sha256": "bc3eda858bd17d699aeab6f9b53231a8d0c4543374f3cb95c7231e029a39c8a8",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Doc__library__gc.rst",
+      "bytes": 11829,
+      "sha256": "98e57f90f3f30bfeb10b65adbe801f5de40c091b7f27bba4d2844576f2706031",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Doc__library__stdtypes.rst",
+      "bytes": 215324,
+      "sha256": "3c61e89ca96738cba12cd45632b2728e4fcb3637c340996f59f97fa4eb8614b0",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Doc__library__struct.rst",
+      "bytes": 25148,
+      "sha256": "b23918e0290a5d5f2dbc3670ca73ee2ee25499e8e21b537d9135a0ca75a44be2",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Include__cpython__setobject.h",
+      "bytes": 2146,
+      "sha256": "c965bf093325e20c319af5183a8e5723d4d0b373cb6d1b8781df8c1e588963c0",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Include__object.h",
+      "bytes": 37155,
+      "sha256": "68b97095c521fcb3fab7193e166870b0c040c8f19ac50efb42088364862503a7",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Include__setobject.h",
+      "bytes": 1557,
+      "sha256": "7ff1b984647598b19ff593b0fa40d44cf5d7bc37d386dd9fac059e560f4a31ca",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Modules___struct.c",
+      "bytes": 73803,
+      "sha256": "f78e301ba2fc79eee58e355e5b4a8dd721000f4b4a796e66367a53d3e68fd3f0",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Modules__gcmodule.c",
+      "bytes": 81690,
+      "sha256": "85249e2913874de01bc9856b273c78bc9b967d882cd19f68a49d51b9ce98017d",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__bytearrayobject.c",
+      "bytes": 73528,
+      "sha256": "371795e3559821c7b0870febca595adf370c5156f76acde0cf3530fed7a0bd1d",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__bytesobject.c",
+      "bytes": 104600,
+      "sha256": "ba826eab3af4004103dd8ad99dff4ed6d23c35c516ec9fd773f77eddc4942c2d",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__dictobject.c",
+      "bytes": 179120,
+      "sha256": "2139caefe57c6659db766fdda5e53c57f0e42e9335227875756307acfcdb51dd",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__floatobject.c",
+      "bytes": 72465,
+      "sha256": "d558f168de7ec864b64ffad7ee2b056bda4efca1ee68ca690189354b893ccc76",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__genobject.c",
+      "bytes": 78785,
+      "sha256": "7c13a1de31fc8af6e082fc9aa055bcfe980786b4104fec0f7564e40735e44cad",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__listobject.c",
+      "bytes": 105241,
+      "sha256": "5f33dd1d97bfcc33e60495011fad7d9d02587a966999f28c159971f31aa91531",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__longobject.c",
+      "bytes": 204954,
+      "sha256": "315c71c11dacfcffcbc33bc2d778533297f162438d02780ec02de569871a2879",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__memoryobject.c",
+      "bytes": 99726,
+      "sha256": "43728748a34eab47c0f7c7d3e3d7b0f155ee236ce6eb768ba64d202c902f9bb5",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__object.c",
+      "bytes": 74419,
+      "sha256": "59a16a78aa9a3da68a68b7efd99528c7b014e0ac0d4db8b55e0502e67bb604f9",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__setobject.c",
+      "bytes": 74585,
+      "sha256": "e633e7ae4e427ecead8879965910e27427d34ae0fc5b956142bc337f741a367c",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__tupleobject.c",
+      "bytes": 35261,
+      "sha256": "924295e1827f08034877cf0f61c475a4f9abdb8f333581726e6610366735c833",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Objects__unicodeobject.c",
+      "bytes": 468976,
+      "sha256": "dd21107aaed90e06b85cae80de86f43f09e6c0bcb35b00037344cf96960bd431",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Python__bltinmodule.c",
+      "bytes": 93974,
+      "sha256": "368b677db85bd846fc85271d6e7170ee8e529230bd1ea352d16ccef0a75787e0",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/python_cpython__Python__bytecodes.c",
+      "bytes": 143622,
+      "sha256": "f8c050621f1498d953d4898aaf29457e154620fec7f8bb987b4d3fde6f5a1d84",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/web-pinned-cpython-evidence.json",
+      "bytes": 26595,
+      "sha256": "7a03ab40e8ded168c1d2942d48d84f21ead8da46792085ddb1918f835389689e",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/web-primary-browse-01.json",
+      "bytes": 38484,
+      "sha256": "43beef76aa1efdae9b47423057bd7c31db70a20c0002fa1e6309b1342a4c06ac",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/web-primary-browse-02.json",
+      "bytes": 29848,
+      "sha256": "320090ed17a88f5e6bf351c6b8d9a07405bd0328f878c5b9ffd78deb1d02f0fb",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/web-primary-browse-03.json",
+      "bytes": 29093,
+      "sha256": "c68934e129b949fb3b1e20dc7950b27b5e9f40793b9617534216694fa2c0c072",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    },
+    {
+      "path": "raw/web-primary-browse-04.json",
+      "bytes": 31174,
+      "sha256": "4a69191d633d1d937f9793361eb268dca67ed3e1b0435dce6abf0730991fb53b",
+      "reason": "Fullthirdpartysourceorweb-toolpagecacheexcludedfrompublication; exactsourceURLs/Gitblobs remainSOURCE-INDEX/receipts."
+    }
+  ],
+  "scope": "Only publication derivative; original264-file research bundle remains unchanged locally. Independentprototype scripts/fixtures/reports/profiledata/metadata receipts are retained. Original full-bundle verifier requires omitted caches; no claim this derivative can replay that full264-filecheck."
+}

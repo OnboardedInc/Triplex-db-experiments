@@ -1,0 +1,520 @@
+{
+  "schema": "native-evaluator-wide-diagnostic/1",
+  "status": "passed",
+  "timestampUtc": "2026-11-05T19:29:08.906Z",
+  "runtimeVersion": "0.27.0",
+  "integratedBase": "23a34b22906ae8321853ad61986b49f990b8a7fb",
+  "instrumentationSource": "8b70edfbed045aab838caa2f6cd9a5fca4188e08",
+  "diagnosticSource": "8b15d1f42fc07a41c53d44e5f717054f369ba740",
+  "artifactAndInputSha256": {
+    "core_manifest": "01e778c152c31806cb58716ffa84b2cdb29ef1190fcf7556ff6a15339db3d069",
+    "companion_manifest": "20085e61f2bb24701c05f130718515eebc7b338466f460ea21fcea7d81f1d41b",
+    "core_extension": "28ebe4de1d01867a761cac6378870f2061f77309aef96a96273a8df8f9a6270c",
+    "control_bridge": "1983539726805568c4919126eae224e6b72a81adb2a5d841016a1536f02f5e35",
+    "companion_extension": "5266cd829bcd3cf1a2c1c985d022cbc280b907ff343efe79460b2c373cd93e18",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "dcad01a37ae791e5925f48db12e65a4bf27b4ed046711594779dd7c405a8dfac",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "benchmark_driver": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "benchmark_clone_helper": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+    "benchmark_clone_module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "benchmark/benchmark-scale.mjs": "071b237f4a8e31ada86f438e08bc4b05d436011c53039459561238ef3efe8144",
+    "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "source_evidence": "729417a998dbc64f26f0d5f4988fe70fb958a526f07d1310469a9d7ce441e283"
+  },
+  "sdkEntrySha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3",
+  "harnessSha256": "f03a33a2842b2af062f886dc3b961cc5b3ed44fd0e250ad5a6bf71155ebafa8d",
+  "fixtureSourceSha256": "811653b6e8ee2e8c87cef69f0599cef0b1ecf637fbc212158bdc4773233952a8",
+  "configuration": {
+    "threads": "1",
+    "memory_limit": "128MB",
+    "max_temp_directory_size": "64MB",
+    "queryOptions": {
+      "maxInputFacts": 10000000,
+      "maxIntermediateRows": 10000000,
+      "maxIntermediateBytes": 536870912,
+      "maxOutputRows": 100000,
+      "maxOutputBytes": 16777216
+    },
+    "kinds": [
+      "native_projection_40000",
+      "sql_projection_40000"
+    ],
+    "validAt": "0",
+    "deadlineMs": 60000,
+    "templateSamples": 5,
+    "parallelCalls": 1,
+    "fixtureMode": "evaluator",
+    "repeats": 7,
+    "boundedOptions": {
+      "maxFacts": 100000,
+      "maxRounds": 1000,
+      "maxWork": 5000000,
+      "deadlineMs": 1000,
+      "forceNative": true
+    }
+  },
+  "fixture": {
+    "recipe": {
+      "chain": 64,
+      "disconnected": 2048,
+      "validAt": 0,
+      "wideProjection": {
+        "activeFacts": 45000,
+        "answerRows": 40000,
+        "groupSize": 4096
+      }
+    },
+    "retainedFacts": 47112,
+    "knownAt": "76",
+    "seedWallMs": 2007.937709
+  },
+  "rawOpenAuditWallMs": 172.76954199999997,
+  "publicOpenAuditWallMs": 258.85345900000084,
+  "exactAnswerCalls": 32,
+  "answerOracle": "Each ordinary, repeated and public call verifies the complete ordered int64 range 0 through 39999.",
+  "timingScope": {
+    "templateGeneration": "Wall around the prepared C++ template scalar call and result extraction. Includes DuckDB dispatch, SDK and async scheduling. First and repeated calls are separate samples.",
+    "directExecution": "A separate ordinary prepared execution checks every typed answer at the fixed cut. Prepare and execute-and-extract wall are separate. Public store queue, routing, and JS value decoding are outside this call.",
+    "operatorProfile": "EXPLAIN ANALYZE executes the same generated SQL again with a fresh token and profiling overhead. It returns the profile rather than the answer. Operator timings can overlap across threads and include callbacks executed inside those operators.",
+    "boundary": "The measurements cover overlapping scopes or separate runs. Each wall interval includes any scheduling within that scope.",
+    "cppEvaluator": "Four steady-clock nanosecond scopes cover engine construction and C++ import from a borrowed DuckDB list, fixed-point strata, native answer construction and sort, and result-vector encoding. DuckDB list construction, outer SQL JSON, and SDK decoding are separate work.",
+    "publicPath": "Independent public query calls on the same fixture and cut, including SDK row extraction and typed decoding. First and warm calls are separate. No evaluator profile token is used."
+  },
+  "comparisonBounds": [
+    "The query reads 45000 relevant facts in a closed fixture with 47112 retained facts. The bounded native fact budget includes 40000 derived answers.",
+    "The two cases run in fixed native-then-SQL order on one connection and one thread. These are scoped diagnostic observations.",
+    "The reported C++ scope sum adds four disjoint intervals within each callback before computing its median. The DuckDB projection includes those scopes.",
+    "EXPLAIN consumes the result and returns the profile. Separate direct and public repeats include full result extraction and different layers. Subtracting them cannot isolate the SDK or decode time."
+  ],
+  "retainedRawReceipt": {
+    "file": "evaluator-wide-027-20261105-01.json",
+    "sha256": "acb442026796721f08ee777d3a969ed224b4e27ec601afb49c32a84dad47fc7c"
+  },
+  "cells": [
+    {
+      "kind": "native_projection_40000",
+      "program": "answer(?v) :- triple(?e,'i',?v),[?v < 40000].",
+      "templateGenerationCall": {
+        "entry": "td_query_store_values_sql_v2",
+        "prepareWallMs": 0.5740409999998519,
+        "generationCallWallMs": [
+          0.6418330000001333,
+          0.2895410000000993,
+          0.25370799999973315,
+          0.2571250000000873,
+          0.20916699999997945
+        ],
+        "sqlSha256": "fa0666d26ea4e25a4db1f6fc3a4f4bd045d2df798cf6e512a17a211a41d9cd02",
+        "sqlBytes": 4094
+      },
+      "ordinaryExecution": {
+        "prepareWallMs": 3.552332999999635,
+        "executeAndExtractWallMs": 116.23566600000004,
+        "route": "native",
+        "reason": "forced_native",
+        "position": "76",
+        "answerRows": 40000,
+        "answerWireSha256": "74be70bcbed95d65228ae19ebac982f1079666db6e5dfca8c23657ba45ba657f",
+        "counters": {
+          "rounds": "1",
+          "derivedFacts": "40000",
+          "work": "180000"
+        }
+      },
+      "repeatedExecution": {
+        "samples": [
+          {
+            "executeAndExtractWallMs": 94.06933299999992,
+            "cppEvaluator": {
+              "buildAndLoadNs": "8167791",
+              "fixedPointNs": "5622667",
+              "materializeAnswerNs": "4263333",
+              "encodeResultVectorNs": "1472459",
+              "inputRows": "45000",
+              "answerRows": "40000"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 93.18529199999966,
+            "cppEvaluator": {
+              "buildAndLoadNs": "7014000",
+              "fixedPointNs": "4877250",
+              "materializeAnswerNs": "4044833",
+              "encodeResultVectorNs": "1350208",
+              "inputRows": "45000",
+              "answerRows": "40000"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 84.74583399999983,
+            "cppEvaluator": {
+              "buildAndLoadNs": "7062667",
+              "fixedPointNs": "4977209",
+              "materializeAnswerNs": "4120833",
+              "encodeResultVectorNs": "1337542",
+              "inputRows": "45000",
+              "answerRows": "40000"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 80.81012499999997,
+            "cppEvaluator": {
+              "buildAndLoadNs": "7067625",
+              "fixedPointNs": "4538000",
+              "materializeAnswerNs": "3855917",
+              "encodeResultVectorNs": "1350625",
+              "inputRows": "45000",
+              "answerRows": "40000"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 87.97125000000005,
+            "cppEvaluator": {
+              "buildAndLoadNs": "7131167",
+              "fixedPointNs": "4648583",
+              "materializeAnswerNs": "3851125",
+              "encodeResultVectorNs": "1360750",
+              "inputRows": "45000",
+              "answerRows": "40000"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 84.71504200000027,
+            "cppEvaluator": {
+              "buildAndLoadNs": "7354791",
+              "fixedPointNs": "4720667",
+              "materializeAnswerNs": "3980333",
+              "encodeResultVectorNs": "1273750",
+              "inputRows": "45000",
+              "answerRows": "40000"
+            }
+          },
+          {
+            "executeAndExtractWallMs": 86.70533300000034,
+            "cppEvaluator": {
+              "buildAndLoadNs": "7229250",
+              "fixedPointNs": "4688959",
+              "materializeAnswerNs": "4089167",
+              "encodeResultVectorNs": "1449958",
+              "inputRows": "45000",
+              "answerRows": "40000"
+            }
+          }
+        ],
+        "prepareWallMs": 4.277667000000292,
+        "medianExecuteAndExtractWallMs": 86.70533300000034
+      },
+      "publicPath": {
+        "firstCallWallMs": 155.52241700000013,
+        "warmCallWallMs": [
+          141.6364169999997,
+          135.5579170000001,
+          136.5476660000004,
+          134.7700420000001,
+          148.1185830000004,
+          134.04679100000067,
+          133.8629579999997
+        ],
+        "warmMedianWallMs": 135.5579170000001
+      },
+      "explainAnalyze": {
+        "prepareWallMs": 4.307458000000224,
+        "executeAndExtractWallMs": 43.23374999999987,
+        "queryMetrics": {
+          "cpu_time": 0.036521002000000004,
+          "total_intermediate_rows": 865074,
+          "total_intermediate_size_bytes": 210762527,
+          "total_row_groups_scanned": 7,
+          "total_row_groups_to_scan": 7,
+          "total_rows_scanned": 94227,
+          "total_time": 0.041691125
+        },
+        "systemMetrics": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 66424112,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 28237824
+        },
+        "topOperators": [
+          {
+            "path": "0.0.0.0.1.1.1.1.1.0",
+            "type": "PROJECTION",
+            "timingMs": 19.451625,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 2058672,
+            "detail": {
+              "Projections": [
+                "known",
+                "answer"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.1.0.0.0",
+            "type": "PROJECTION",
+            "timingMs": 4.72279,
+            "rowsProduced": 40000,
+            "rowsScanned": null,
+            "outputBytes": 3601920,
+            "detail": {
+              "Projections": [
+                "known",
+                "route",
+                "reason",
+                "answer",
+                "answer",
+                "answer",
+                "tuple_json",
+                "ordinal"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.1.0.0.0.0.1.0",
+            "type": "HASH_JOIN",
+            "timingMs": 2.6625010000000002,
+            "rowsProduced": 40000,
+            "rowsScanned": null,
+            "outputBytes": 44746880,
+            "detail": {
+              "Join Type": "LEFT",
+              "Conditions": "delim_index IS NOT DISTINCT FROM delim_index",
+              "Estimated Cardinality": "1"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.0.0",
+            "type": "HASH_GROUP_BY",
+            "timingMs": 1.6582089999999998,
+            "rowsProduced": 45000,
+            "rowsScanned": null,
+            "outputBytes": 2356896,
+            "detail": {
+              "Groups": [
+                "#0",
+                "#1",
+                "#2",
+                "#3",
+                "#4",
+                "#5",
+                "#6"
+              ],
+              "Aggregates": "",
+              "Estimated Cardinality": "525"
+            }
+          }
+        ],
+        "cppEvaluator": {
+          "buildAndLoadNs": "7103083",
+          "fixedPointNs": "4834958",
+          "materializeAnswerNs": "3810667",
+          "encodeResultVectorNs": "1275042",
+          "inputRows": "45000",
+          "answerRows": "40000"
+        },
+        "callbackOperatorCandidates": [
+          {
+            "path": "0.0.0.0.1.1.1.1.1.0",
+            "type": "PROJECTION",
+            "timingMs": 19.451625,
+            "rowsProduced": 1,
+            "rowsScanned": null,
+            "outputBytes": 2058672,
+            "detail": {
+              "Projections": [
+                "known",
+                "answer"
+              ],
+              "Estimated Cardinality": "1"
+            }
+          }
+        ]
+      },
+      "cppScopeMediansNs": {
+        "buildAndLoadNs": 7131167,
+        "fixedPointNs": 4720667,
+        "materializeAnswerNs": 4044833,
+        "encodeResultVectorNs": 1350625
+      },
+      "medianSumOfFourCppScopesNs": 17329541
+    },
+    {
+      "kind": "sql_projection_40000",
+      "program": "answer(?v) :- triple(?e,'i',?v),[?v < 40000].",
+      "templateGenerationCall": {
+        "entry": "td_query_store_scalable_sql_v2",
+        "prepareWallMs": 0.5486670000000231,
+        "generationCallWallMs": [
+          0.39820800000006784,
+          0.303957999999966,
+          0.2391669999997248,
+          0.3104580000003807,
+          0.23670899999979156
+        ],
+        "sqlSha256": "e4bf6a3f0cca804d7896de915340445b943f6683344fc7634c80d52b877cf1ef",
+        "sqlBytes": 6261
+      },
+      "ordinaryExecution": {
+        "prepareWallMs": 7.466374999999971,
+        "executeAndExtractWallMs": 69.1234999999997,
+        "route": "sql",
+        "reason": "owned_allcut_unique_scalable_single_atom",
+        "position": "76",
+        "answerRows": 40000,
+        "answerWireSha256": "74be70bcbed95d65228ae19ebac982f1079666db6e5dfca8c23657ba45ba657f"
+      },
+      "repeatedExecution": {
+        "samples": [
+          {
+            "executeAndExtractWallMs": 63.14662499999986
+          },
+          {
+            "executeAndExtractWallMs": 63.44699999999966
+          },
+          {
+            "executeAndExtractWallMs": 68.85437499999989
+          },
+          {
+            "executeAndExtractWallMs": 61.36925000000019
+          },
+          {
+            "executeAndExtractWallMs": 65.1889999999994
+          },
+          {
+            "executeAndExtractWallMs": 66.22183300000052
+          },
+          {
+            "executeAndExtractWallMs": 68.18912499999988
+          }
+        ],
+        "prepareWallMs": 7.87820899999997,
+        "medianExecuteAndExtractWallMs": 65.1889999999994
+      },
+      "publicPath": {
+        "firstCallWallMs": 121.3647089999995,
+        "warmCallWallMs": [
+          112.83487499999956,
+          111.12424999999985,
+          113.62429100000008,
+          115.1665409999996,
+          116.28345899999931,
+          114.74695799999972,
+          114.1289999999999
+        ],
+        "warmMedianWallMs": 114.1289999999999
+      },
+      "explainAnalyze": {
+        "prepareWallMs": 7.901499999999942,
+        "executeAndExtractWallMs": 19.817250000000058,
+        "queryMetrics": {
+          "cpu_time": 0.011882437000000003,
+          "total_intermediate_rows": 1007070,
+          "total_intermediate_size_bytes": 50555091,
+          "total_row_groups_scanned": 8,
+          "total_row_groups_to_scan": 9,
+          "total_rows_scanned": 98323,
+          "total_time": 0.018429166
+        },
+        "systemMetrics": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 50492720,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 20971520
+        },
+        "topOperators": [
+          {
+            "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0",
+            "type": "PROJECTION",
+            "timingMs": 4.598291000000001,
+            "rowsProduced": 40000,
+            "rowsScanned": null,
+            "outputBytes": 4672640,
+            "detail": {
+              "Projections": [
+                "known",
+                "route",
+                "reason",
+                "rounds",
+                "derived_facts",
+                "work",
+                "tuple_json",
+                "h0t",
+                "h0s",
+                "h0b",
+                "h0i",
+                "h0f"
+              ],
+              "Estimated Cardinality": "1049"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0",
+            "type": "ORDER_BY",
+            "timingMs": 2.0807960000000003,
+            "rowsProduced": 40000,
+            "rowsScanned": null,
+            "outputBytes": 1895360,
+            "detail": {
+              "Order By": [
+                "#7 ASC",
+                "#8 ASC",
+                "#9 ASC",
+                "#10 ASC",
+                "#11 ASC"
+              ],
+              "Estimated Cardinality": "1049"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0",
+            "type": "HASH_GROUP_BY",
+            "timingMs": 1.2821740000000001,
+            "rowsProduced": 40000,
+            "rowsScanned": null,
+            "outputBytes": 1175360,
+            "detail": {
+              "Groups": [
+                "#0",
+                "#1",
+                "#2",
+                "#3",
+                "#4",
+                "#5"
+              ],
+              "Aggregates": "",
+              "Estimated Cardinality": "1050"
+            }
+          },
+          {
+            "path": "0.0.0.0.1.1.1.1.1",
+            "type": "CTE",
+            "timingMs": 0.895664,
+            "rowsProduced": 0,
+            "rowsScanned": null,
+            "outputBytes": 0,
+            "detail": {
+              "CTE Name": "active",
+              "Table Index": "5",
+              "Execution Mode": "HYBRID_FANOUT",
+              "Fanout Mode": "DIRECT",
+              "Consumers": "1",
+              "Direct Consumers": "1",
+              "Buffered Consumers": "0",
+              "Chunk Storage": "NONE",
+              "Order Mode": "UNORDERED",
+              "Materialized Consumers": "1",
+              "Estimated Cardinality": "1049"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

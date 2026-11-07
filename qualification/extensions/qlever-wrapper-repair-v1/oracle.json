@@ -1,0 +1,159 @@
+{
+  "format": "triplex-wrapper-text-repair-logical-oracle/1",
+  "status": "SOURCE_ONLY_UNEXECUTED",
+  "fixture": {
+    "attribute": ":wrapper-text/label",
+    "entityType": "WrapperTextProbe",
+    "rows": [
+      {
+        "entity": "lowercase-a",
+        "label": "a"
+      },
+      {
+        "entity": "lowercase-c",
+        "label": "c"
+      },
+      {
+        "entity": "lowercase-e",
+        "label": "e"
+      },
+      {
+        "entity": "lowercase-z",
+        "label": "z"
+      }
+    ],
+    "validFrom": 10.25,
+    "validTo": 10.75,
+    "validAt": 10.5,
+    "recordedClock": 1000.25,
+    "logicalSubjectIds": 4,
+    "configuredEntityCapacityClaimed": false,
+    "seedCommands": 1,
+    "seedAssertions": 4,
+    "retractions": 0
+  },
+  "orderBy": [
+    {
+      "column": "?label",
+      "direction": "asc"
+    },
+    {
+      "column": "?entity",
+      "direction": "asc"
+    }
+  ],
+  "cases": [
+    {
+      "id": "wrapper.lowercase.gt-b",
+      "operator": ">",
+      "boundary": "b",
+      "expectedRows": [
+        {
+          "entity": "lowercase-c",
+          "label": "c"
+        },
+        {
+          "entity": "lowercase-e",
+          "label": "e"
+        },
+        {
+          "entity": "lowercase-z",
+          "label": "z"
+        }
+      ],
+      "surfaces": [
+        "qlever-datalog-current",
+        "qlever-datalog-fresh-client-reopen",
+        "qlever-native-STR-diagnostic"
+      ],
+      "expectedTerminalPage": true
+    },
+    {
+      "id": "wrapper.lowercase.ge-c",
+      "operator": ">=",
+      "boundary": "c",
+      "expectedRows": [
+        {
+          "entity": "lowercase-c",
+          "label": "c"
+        },
+        {
+          "entity": "lowercase-e",
+          "label": "e"
+        },
+        {
+          "entity": "lowercase-z",
+          "label": "z"
+        }
+      ],
+      "surfaces": [
+        "qlever-datalog-current",
+        "qlever-datalog-fresh-client-reopen",
+        "qlever-native-STR-diagnostic"
+      ],
+      "expectedTerminalPage": true
+    },
+    {
+      "id": "wrapper.lowercase.lt-e",
+      "operator": "<",
+      "boundary": "e",
+      "expectedRows": [
+        {
+          "entity": "lowercase-a",
+          "label": "a"
+        },
+        {
+          "entity": "lowercase-c",
+          "label": "c"
+        }
+      ],
+      "surfaces": [
+        "qlever-datalog-current",
+        "qlever-datalog-fresh-client-reopen",
+        "qlever-native-STR-diagnostic"
+      ],
+      "expectedTerminalPage": true
+    },
+    {
+      "id": "wrapper.lowercase.le-e",
+      "operator": "<=",
+      "boundary": "e",
+      "expectedRows": [
+        {
+          "entity": "lowercase-a",
+          "label": "a"
+        },
+        {
+          "entity": "lowercase-c",
+          "label": "c"
+        },
+        {
+          "entity": "lowercase-e",
+          "label": "e"
+        }
+      ],
+      "surfaces": [
+        "qlever-datalog-current",
+        "qlever-datalog-fresh-client-reopen",
+        "qlever-native-STR-diagnostic"
+      ],
+      "expectedTerminalPage": true
+    }
+  ],
+  "otherSurfaces": {
+    "duckdb-datalog": "UNEXECUTED",
+    "xtdb-datalog": "UNEXECUTED",
+    "xtdb-native": "UNEXECUTED"
+  },
+  "unchangedMixedCaseOracle": {
+    "path": "qualification/extensions/string-order-v1/oracle.json",
+    "sha256": "8f4da85e806e2503c62b373bfeaa44c8d91be55a029dc01c08eb2a3d53a6b19d"
+  },
+  "claimsExcluded": [
+    "General Unicode Datalog order policy",
+    "Native string-order conformance",
+    "Equal-label tie policy",
+    "Existing20families/71/142 modification",
+    "Capacity/load/fault/durability qualification"
+  ]
+}

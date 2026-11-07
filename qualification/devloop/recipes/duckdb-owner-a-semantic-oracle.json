@@ -1,0 +1,79 @@
+{
+  "format": "triplex-prospective-duckdb-read-scope-oracle/1",
+  "status": "FROZEN_EXPECTATIONS_NOT_EXECUTED",
+  "candidate": "duckdb-owner-audit-a-read-scope",
+  "implementationBaseCommit": "ca2dd6d321aaf4e479bfe31eb3e0b0163309cbad",
+  "surface": "duckdb-datalog",
+  "selection": "queryAll with includeBasis:true and explicit combined candidate option only",
+  "meaning": "Test-only fixture and golden answers using existing Triplex values and Datalog AST. This is not a new public schema/query DSL, a runtime evaluator or an executed test result.",
+  "profile": {
+    "readScopePlan": "combined",
+    "includeBasis": true,
+    "threads": 1,
+    "memoryBytes": 128000000,
+    "maximumSpillBytes": 64000000,
+    "existingExecutorTimeoutMs": 30000,
+    "aggregateReservationBytes": 2147483648,
+    "aggregateCpuUnits": 2
+  },
+  "fixture": {
+    "scopeName": "duckdb-owner-a-semantic-v1",
+    "receipts": [
+      { "alias": "seed", "position": 1, "recordedAt": 1000.25 },
+      { "alias": "correction", "position": 2, "recordedAt": 2000.5 },
+      { "alias": "future-window", "position": 3, "recordedAt": 3000.75 }
+    ],
+    "facts": [
+      { "alias": "old", "entityId": "a", "attribute": ":owner/name", "value": { "type": "string", "value": "before" }, "validFrom": 1.25, "validTo": 2.75, "assertedBy": "seed", "retractedBy": "correction" },
+      { "alias": "new", "entityId": "a", "attribute": ":owner/name", "value": { "type": "string", "value": "after" }, "validFrom": 1.25, "validTo": 2.75, "assertedBy": "correction" },
+      { "alias": "stable", "entityId": "b", "attribute": ":owner/name", "value": { "type": "string", "value": "stable" }, "validFrom": 0, "assertedBy": "seed" },
+      { "alias": "future", "entityId": "a", "attribute": ":owner/name", "value": { "type": "string", "value": "future-window" }, "validFrom": 2.75, "validTo": 4.25, "assertedBy": "future-window" },
+      { "alias": "exact", "entityId": "a", "attribute": ":owner/exact", "value": { "type": "integer", "value": "9223372036854775807" }, "validFrom": 0, "assertedBy": "seed" }
+    ],
+    "precondition": "Use existing public transact/assert/retract commands. Resolve retraction IDs from actual seed receipts. Assert actual P and recordedAt equal these controlled fixture receipts before any read comparison; retain complete receipts or stop. No fixture rewrite inside a measured window."
+  },
+  "queries": {
+    "names": {
+      "find": ["?e", "?name"],
+      "where": [["?e", ":owner/name", "?name"]],
+      "orderBy": [{ "variable": "?e", "direction": "asc" }]
+    },
+    "exact": { "find": ["?i"], "where": [["a", ":owner/exact", "?i"]] }
+  },
+  "publicGoldenCasesAtPhysicalPosition3": [
+    { "id": "latest-fractional", "query": "names", "basis": { "validAt": 1.5 }, "expectedRows": [{ "?e": "a", "?name": "after" }, { "?e": "b", "?name": "stable" }] },
+    { "id": "recorded-boundary-before", "query": "names", "basis": { "validAt": 1.5, "recordedAt": 1000.25 }, "expectedRows": [{ "?e": "a", "?name": "before" }, { "?e": "b", "?name": "stable" }] },
+    { "id": "recorded-boundary-after", "query": "names", "basis": { "validAt": 1.5, "recordedAt": 2000.5 }, "expectedRows": [{ "?e": "a", "?name": "after" }, { "?e": "b", "?name": "stable" }] },
+    { "id": "recorded-before-first", "query": "names", "basis": { "validAt": 1.5, "recordedAt": 1000 }, "expectedRows": [] },
+    { "id": "valid-inclusive-start", "query": "names", "basis": { "validAt": 1.25 }, "expectedRows": [{ "?e": "a", "?name": "after" }, { "?e": "b", "?name": "stable" }] },
+    { "id": "valid-before-start", "query": "names", "basis": { "validAt": 1.249 }, "expectedRows": [{ "?e": "b", "?name": "stable" }] },
+    { "id": "valid-half-open-boundary", "query": "names", "basis": { "validAt": 2.75 }, "expectedRows": [{ "?e": "a", "?name": "future-window" }, { "?e": "b", "?name": "stable" }] },
+    { "id": "valid-exclusive-end", "query": "names", "basis": { "validAt": 4.25 }, "expectedRows": [{ "?e": "b", "?name": "stable" }] },
+    { "id": "exact-i64", "query": "exact", "basis": { "validAt": 1.5 }, "expectedRows": [{ "?i": { "type": "integer", "value": "9223372036854775807" } }] }
+  ],
+  "publicBasisRules": [
+    "Every above public response has the actual opaque scope and recordedPosition3, even when recordedAt requests earlier knowledge.",
+    "Echo the resolved validAt and only the explicitly supplied recordedAt; do not replace R with P or manufacture a latest recorded instant.",
+    "Unordered tests compare canonical row sets; these named queries already have deterministic ordering or one row."
+  ],
+  "internalCutGoldenCases": [
+    { "id": "internal-earlier-cut", "query": "names", "basis": { "validAt": 1.5, "recordedPosition": 1 }, "expectedRows": [{ "?e": "a", "?name": "before" }, { "?e": "b", "?name": "stable" }] },
+    { "id": "internal-cut-and-recorded-time", "query": "names", "basis": { "validAt": 1.5, "recordedPosition": 3, "recordedAt": 1000.25 }, "expectedRows": [{ "?e": "a", "?name": "before" }, { "?e": "b", "?name": "stable" }] }
+  ],
+  "internalCutScope": "Direct existing executor/internal cut regression only. Do not add recordedPosition to the public TemporalBasis input.",
+  "requiredNormalReadWitnesses": [
+    "clock-capture-before-scope-request",
+    "one-physical-BEGIN",
+    "one-current-position-capture-inside-same-scope",
+    "existing-domain-and-final-SQL-at-captured-P-V-R",
+    "owned-result-copy-before-COMMIT",
+    "acknowledged-COMMIT-or-acknowledged-rollback",
+    "unchanged-complete-owner-activation-before-public-success",
+    "zero-pending-owned-work-after-drain"
+  ],
+  "limits": [
+    "This expected data has not been run against an A implementation; no passing counter or candidate performance result exists.",
+    "Default, page/cursor, direct standalone executor and non-Duck fallback paths require unchanged-behavior checks; no speedup is claimed for them.",
+    "Queued-work withdrawal, validated audit epochs and cheaper complete audits remain separate jobs."
+  ]
+}

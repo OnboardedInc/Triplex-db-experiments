@@ -1,0 +1,37 @@
+{
+  "schema": "td.presence-sdk-pretest-delta-first/1",
+  "observedAtUtc": "2026-11-06T09:43:13.728655+00:00",
+  "status": "failed_setup_before_engine",
+  "originalToolChunk": "e19628",
+  "actualDelta": {
+    "changed": [
+      "build/adapter/native-entity.d.ts",
+      "build/adapter/native-entity.js"
+    ],
+    "added": [
+      "build/adapter/test-native-presence-intervals-sdk.d.ts",
+      "build/adapter/test-native-presence-intervals-sdk.js"
+    ],
+    "removed": []
+  },
+  "originalExpected": {
+    "changed": [
+      "build/adapter/native-entity.js",
+      "build/adapter/native-entity.d.ts"
+    ],
+    "added": [
+      "build/adapter/test-native-presence-intervals-sdk.js",
+      "build/adapter/test-native-presence-intervals-sdk.d.ts"
+    ],
+    "removed": []
+  },
+  "samePathSets": {
+    "changed": true,
+    "added": true,
+    "removed": true
+  },
+  "cause": "Wrapper sorted actual path lists but compared them to unsorted expected lists. No file or byte mismatch.",
+  "testsStarted": false,
+  "sourceOrRuntimeRepair": false,
+  "repair": "Compare both lists in sorted order, preserving original before-first and this failure."
+}

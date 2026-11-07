@@ -1,0 +1,594 @@
+{
+  "schema": "td.native-patch-diagnostic-receipt/1",
+  "status": "passed",
+  "testedSource": "58491541",
+  "commonBase": "773f7746466caf0ba4eff70a741e9594d07f39cc",
+  "productionChanges": false,
+  "raw": {
+    "file": "build/patch-diagnostic-logs/10m-01.json",
+    "sha256": "5c8c70344877ccf546c5260bb2c9243921ba10131edf465dee7dbb9a93d8ec22"
+  },
+  "startedUtc": "2026-11-06T00:04:39.209Z",
+  "completedUtc": "2026-11-06T00:07:13.974Z",
+  "configuration": {
+    "samples": 1,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB"
+  },
+  "fixture": {
+    "size": 10000000,
+    "initialAdded": 22,
+    "position": "39087",
+    "sourceEvidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "sha256Before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "sha256After": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3"
+  },
+  "actualPins": {
+    "core_manifest": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+    "companion_manifest": "0fd59063a4ad3cf3f25cac4f28961f94b5ee9b9e25631b2dddf3e84e4469a571",
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "benchmark_driver": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "benchmark_clone_helper": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+    "benchmark_clone_module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "benchmark/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "source_evidence": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7"
+  },
+  "driverSha256": "fc09faa86aec8f5000fd8f2feef2c831710e50aa60a9316493266bae4b061cec",
+  "helperSha256": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24",
+  "emitter": {
+    "binarySha256": "026b8127d570445e747d44a9ccade81342aa777e108b7798c087b399bc7c679d",
+    "helperSha256": "e37638cb62615a3410284ea449db0d743dacf8069607a3878cb8a3abf7f12dc0",
+    "builderSha256": "022ae67bace8bdbaf7258158ed6b718063c90ff6f4b038deab64e836dacd3e73",
+    "coreManifestSha256": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+    "catalogHeaderSha256": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+  },
+  "checks": {
+    "exactReceiptsAcrossClones": true,
+    "exactHistoriesAcrossClones": true,
+    "oldCurrentCuts": true,
+    "reopenFullAudit": true,
+    "sourceUnchanged": true,
+    "artifactsBeforeAfterUnchanged": true
+  },
+  "cells": [
+    {
+      "kind": "public",
+      "status": "passed",
+      "canonicalState": [
+        "39096",
+        "10000536",
+        "832858774",
+        "39096"
+      ],
+      "historySha256": "6c1a5382793d7564249212a5ec90f2ba87302cc01af8c19b046c07ba3d606856",
+      "reopenAndOldCutExact": true,
+      "samples": [
+        {
+          "publicWallMs": 3121.608874999998
+        }
+      ]
+    },
+    {
+      "kind": "generated",
+      "status": "passed",
+      "canonicalState": [
+        "39096",
+        "10000536",
+        "832858774",
+        "39096"
+      ],
+      "historySha256": "6c1a5382793d7564249212a5ec90f2ba87302cc01af8c19b046c07ba3d606856",
+      "reopenAndOldCutExact": true,
+      "samples": [
+        {
+          "generatedProgramMs": 3190.6748339999976,
+          "statementSequenceWallMs": 3190.6782079999975,
+          "beginMs": 0.280957999995735,
+          "commitMs": 9.524292000001878,
+          "stages": []
+        }
+      ]
+    },
+    {
+      "kind": "phased",
+      "status": "passed",
+      "canonicalState": [
+        "39096",
+        "10000536",
+        "832858774",
+        "39096"
+      ],
+      "historySha256": "6c1a5382793d7564249212a5ec90f2ba87302cc01af8c19b046c07ba3d606856",
+      "reopenAndOldCutExact": true,
+      "samples": [
+        {
+          "statementSequenceWallMs": 3291.315082999994,
+          "beginMs": 0.18666700000176206,
+          "commitMs": 6.868583000003127,
+          "stages": [
+            {
+              "phase": "owner_guard",
+              "prepareWallMs": 2.844167000002926,
+              "executeAndExtractWallMs": 2.7079999999987194
+            },
+            {
+              "phase": "input",
+              "prepareWallMs": 0.4474589999881573,
+              "executeAndExtractWallMs": 0.4425000000046566
+            },
+            {
+              "phase": "plan",
+              "prepareWallMs": 0.603041000009398,
+              "executeAndExtractWallMs": 3.21729200000118
+            },
+            {
+              "phase": "ctx",
+              "prepareWallMs": 1.1790420000033919,
+              "executeAndExtractWallMs": 1.3421660000021802
+            },
+            {
+              "phase": "pending",
+              "prepareWallMs": 1.5127920000086306,
+              "executeAndExtractWallMs": 1.4757919999974547
+            },
+            {
+              "phase": "old",
+              "prepareWallMs": 0.6503339999908349,
+              "executeAndExtractWallMs": 1.0236660000082338
+            },
+            {
+              "phase": "patch_admission",
+              "prepareWallMs": 27.319541000004392,
+              "executeAndExtractWallMs": 3169.1460839999927
+            },
+            {
+              "phase": "insert_into:__td_native_pending",
+              "prepareWallMs": 2.247625000003609,
+              "executeAndExtractWallMs": 1.6138330000103451
+            },
+            {
+              "phase": "guard",
+              "prepareWallMs": 18.03104099999473,
+              "executeAndExtractWallMs": 19.192582999996375
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_owners",
+              "prepareWallMs": 0.757833000010578,
+              "executeAndExtractWallMs": 0.7842090000049211
+            },
+            {
+              "phase": "insert_into:main.commands",
+              "prepareWallMs": 1.6578339999978198,
+              "executeAndExtractWallMs": 3.0466250000026776
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_commands",
+              "prepareWallMs": 0.5740000000077998,
+              "executeAndExtractWallMs": 1.2285420000116574
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_presence_edits",
+              "prepareWallMs": 0.3472080000065034,
+              "executeAndExtractWallMs": 0.40991699999722186
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_patch_commands",
+              "prepareWallMs": 0.285290999992867,
+              "executeAndExtractWallMs": 0.7354590000031749
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_assertion_sources",
+              "prepareWallMs": 0.27454099999158643,
+              "executeAndExtractWallMs": 0.25524999998742715
+            },
+            {
+              "phase": "update:main.store_meta",
+              "prepareWallMs": 0.5674999999901047,
+              "executeAndExtractWallMs": 0.5306249999994179
+            },
+            {
+              "phase": "update:main.assertions",
+              "prepareWallMs": 0.7247079999942798,
+              "executeAndExtractWallMs": 4.686458000011044
+            },
+            {
+              "phase": "insert_into:main.assertions",
+              "prepareWallMs": 1.6102499999979045,
+              "executeAndExtractWallMs": 3.588999999992666
+            },
+            {
+              "phase": "update:main.storage_usage",
+              "prepareWallMs": 1.2429170000104932,
+              "executeAndExtractWallMs": 1.1331669999926817
+            },
+            {
+              "phase": "update:main.clock",
+              "prepareWallMs": 0.5733329999929992,
+              "executeAndExtractWallMs": 0.6370419999875594
+            },
+            {
+              "phase": "drop_table:__td_native_guard",
+              "prepareWallMs": 0.14341699999931734,
+              "executeAndExtractWallMs": 0.11687500000698492
+            },
+            {
+              "phase": "drop_table:__td_native_patch_admission",
+              "prepareWallMs": 0.14191599999321625,
+              "executeAndExtractWallMs": 0.14458300000114832
+            },
+            {
+              "phase": "drop_table:__td_native_old",
+              "prepareWallMs": 0.13870799999858718,
+              "executeAndExtractWallMs": 0.08800000000337604
+            },
+            {
+              "phase": "drop_table:__td_native_pending",
+              "prepareWallMs": 0.09733399999095127,
+              "executeAndExtractWallMs": 0.08454199999687262
+            },
+            {
+              "phase": "drop_table:__td_native_ctx",
+              "prepareWallMs": 0.10374999999476131,
+              "executeAndExtractWallMs": 0.1022919999959413
+            },
+            {
+              "phase": "drop_table:__td_native_plan",
+              "prepareWallMs": 0.12841699999989942,
+              "executeAndExtractWallMs": 0.19420799998624716
+            },
+            {
+              "phase": "drop_table:__td_native_input",
+              "prepareWallMs": 0.1739579999994021,
+              "executeAndExtractWallMs": 0.10612499999115244
+            },
+            {
+              "phase": "drop_table:__td_native_owner_guard",
+              "prepareWallMs": 0.09266700000443961,
+              "executeAndExtractWallMs": 0.08604199999535922
+            },
+            {
+              "phase": "receipt",
+              "prepareWallMs": 3.4876660000008997,
+              "executeAndExtractWallMs": 3.334499999997206
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "explain",
+      "status": "passed",
+      "canonicalState": [
+        "39096",
+        "10000536",
+        "832858774",
+        "39096"
+      ],
+      "historySha256": "6c1a5382793d7564249212a5ec90f2ba87302cc01af8c19b046c07ba3d606856",
+      "reopenAndOldCutExact": true,
+      "samples": [
+        {
+          "statementSequenceWallMs": 3317.1825830000016,
+          "beginMs": 0.17779099999461323,
+          "commitMs": 9.355083000002196,
+          "stages": [
+            {
+              "phase": "owner_guard",
+              "prepareWallMs": 2.933707999996841,
+              "executeAndExtractWallMs": 2.8062079999945126
+            },
+            {
+              "phase": "input",
+              "prepareWallMs": 0.4178749999991851,
+              "executeAndExtractWallMs": 0.5853330000099959
+            },
+            {
+              "phase": "plan",
+              "prepareWallMs": 0.47704199999861885,
+              "executeAndExtractWallMs": 2.538457999995444
+            },
+            {
+              "phase": "ctx",
+              "prepareWallMs": 1.2238339999894379,
+              "executeAndExtractWallMs": 1.3281669999996666
+            },
+            {
+              "phase": "pending",
+              "prepareWallMs": 1.4205000000074506,
+              "executeAndExtractWallMs": 1.4125409999978729
+            },
+            {
+              "phase": "old",
+              "prepareWallMs": 0.5259590000059688,
+              "executeAndExtractWallMs": 0.7732080000132555
+            },
+            {
+              "phase": "patch_admission",
+              "prepareWallMs": 26.066250000003492,
+              "executeAndExtractWallMs": 3149.837999999989
+            },
+            {
+              "phase": "insert_into:__td_native_pending",
+              "prepareWallMs": 2.1150000000052387,
+              "executeAndExtractWallMs": 2.4144999999989523
+            },
+            {
+              "phase": "guard",
+              "prepareWallMs": 22.34795799999847,
+              "executeAndExtractWallMs": 25.711209000000963
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_owners",
+              "prepareWallMs": 1.4741250000079162,
+              "executeAndExtractWallMs": 1.8009579999779817
+            },
+            {
+              "phase": "insert_into:main.commands",
+              "prepareWallMs": 2.0324580000014976,
+              "executeAndExtractWallMs": 3.6382079999893904
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_commands",
+              "prepareWallMs": 0.7114169999840669,
+              "executeAndExtractWallMs": 3.4661659999983385
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_presence_edits",
+              "prepareWallMs": 0.8708749999932479,
+              "executeAndExtractWallMs": 1.0307499999762513
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_patch_commands",
+              "prepareWallMs": 0.6004580000007991,
+              "executeAndExtractWallMs": 1.0464170000050217
+            },
+            {
+              "phase": "insert_into:td_catalog_v1.entity_assertion_sources",
+              "prepareWallMs": 0.5220409999892581,
+              "executeAndExtractWallMs": 0.5928750000020955
+            },
+            {
+              "phase": "update:main.store_meta",
+              "prepareWallMs": 0.7443330000096466,
+              "executeAndExtractWallMs": 0.83674999998766
+            },
+            {
+              "phase": "update:main.assertions",
+              "prepareWallMs": 2.24708400000236,
+              "executeAndExtractWallMs": 6.498417000024347
+            },
+            {
+              "phase": "insert_into:main.assertions",
+              "prepareWallMs": 2.5153749999881256,
+              "executeAndExtractWallMs": 6.03595900000073
+            },
+            {
+              "phase": "update:main.storage_usage",
+              "prepareWallMs": 1.586250000022119,
+              "executeAndExtractWallMs": 1.8048330000019632
+            },
+            {
+              "phase": "update:main.clock",
+              "prepareWallMs": 1.0473329999949783,
+              "executeAndExtractWallMs": 1.1294580000103451
+            },
+            {
+              "phase": "drop_table:__td_native_guard",
+              "prepareWallMs": 0.2681659999943804,
+              "executeAndExtractWallMs": 0.15345799998613074
+            },
+            {
+              "phase": "drop_table:__td_native_patch_admission",
+              "prepareWallMs": 0.11570799999753945,
+              "executeAndExtractWallMs": 0.10099999999511056
+            },
+            {
+              "phase": "drop_table:__td_native_old",
+              "prepareWallMs": 0.08741699997335672,
+              "executeAndExtractWallMs": 0.07324999998672865
+            },
+            {
+              "phase": "drop_table:__td_native_pending",
+              "prepareWallMs": 0.12795799999730662,
+              "executeAndExtractWallMs": 0.14691599999787286
+            },
+            {
+              "phase": "drop_table:__td_native_ctx",
+              "prepareWallMs": 0.16954099998110905,
+              "executeAndExtractWallMs": 0.1381659999897238
+            },
+            {
+              "phase": "drop_table:__td_native_plan",
+              "prepareWallMs": 0.13624999998137355,
+              "executeAndExtractWallMs": 0.09558300001663156
+            },
+            {
+              "phase": "drop_table:__td_native_input",
+              "prepareWallMs": 0.11754199999268167,
+              "executeAndExtractWallMs": 0.0851249999832362
+            },
+            {
+              "phase": "drop_table:__td_native_owner_guard",
+              "prepareWallMs": 0.1316250000090804,
+              "executeAndExtractWallMs": 0.20079100001021288
+            },
+            {
+              "phase": "receipt",
+              "prepareWallMs": 3.7480829999840353,
+              "executeAndExtractWallMs": 4.849167000007583
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "selectedExplain": [
+    {
+      "phase": "old",
+      "prepareWallMs": 0.5259590000059688,
+      "executeAndExtractWallMs": 0.7732080000132555,
+      "rawProfileSha256": "1cc4e3195e47cceb93501e932c4dc7a67f8e31fae51739d62beb3101fd22284c",
+      "assertionScans": [
+        {
+          "timingMs": 0.021249,
+          "rowsProduced": 2,
+          "rowsScanned": 534,
+          "filters": "(tx_to = 9223372036854775807)",
+          "dynamicFilters": "(e = 'probe-000')"
+        }
+      ],
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0",
+          "type": "HASH_JOIN",
+          "timingMs": 0.031123,
+          "rowsProduced": 2,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"INNER\",\"Conditions\":\"e = entity_id\",\"Estimated Cardinality\":\"75\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 0.021249,
+          "rowsProduced": 2,
+          "rowsScanned": 534,
+          "detail": "{\"Table\":\"\\\"explain\\\".main.assertions\",\"Type\":\"Sequential Scan\",\"Projections\":[\"e\",\"assertion_id\"],\"Filters\":\"(tx_to = 9223372036854775807)\",\"Dynamic Filters\":\"(e = 'probe-000')\",\"Estimated Cardinality\":\"5000268\"}"
+        },
+        {
+          "path": "0.0.0.0",
+          "type": "CREATE_TABLE_AS",
+          "timingMs": 0.008791,
+          "rowsProduced": 1,
+          "rowsScanned": null,
+          "detail": "{}"
+        }
+      ]
+    },
+    {
+      "phase": "patch_admission",
+      "prepareWallMs": 26.066250000003492,
+      "executeAndExtractWallMs": 3149.837999999989,
+      "rawProfileSha256": "0616c1c04f991bbcc8fdd53d2e751e959cb30067cf1da52f4a43d730d9484fc4",
+      "assertionScans": [
+        {
+          "timingMs": 0.6749149999999999,
+          "rowsProduced": 1,
+          "rowsScanned": 1,
+          "filters": null,
+          "dynamicFilters": "(assertion_id = '8196c71bfcbd6b381f97d27ebf11e1179845235952d4a90b642e8e945867f149')"
+        },
+        {
+          "timingMs": 2121.7829299999985,
+          "rowsProduced": 10000534,
+          "rowsScanned": 10000534,
+          "filters": null,
+          "dynamicFilters": null
+        },
+        {
+          "timingMs": 0.011250999999999999,
+          "rowsProduced": 2,
+          "rowsScanned": 534,
+          "filters": "(tx_to = 9223372036854775807)",
+          "dynamicFilters": "(e = 'probe-000')"
+        }
+      ],
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.0.0.0.1.0.0.1.1.0",
+          "type": "FILTER",
+          "timingMs": 7674.165526000003,
+          "rowsProduced": 10000534,
+          "rowsScanned": null,
+          "detail": "{\"Expression\":\"CASE  WHEN (((command_id IS NULL) AND (entity_id IS NULL) AND (NOT COALESCE(((request_hash IS NOT NULL) AND (origin = 'triplex')), false)))) THEN (false) WHEN ((command_id IS NULL)) THEN (CAST(\\\"error\\\"('TD_E_COMMAND_HISTORY: native creator binding is missing') AS BOOLEAN)) WHEN ((command_id IS NULL)) THEN (CAST(\\\"error\\\"('TD_E_COMMAND_HISTORY: native validation binding is missing') AS BOOLEAN)) WHEN ((((content_hash = schema_hash) AND (position = position) AND (tx_from = position) AND (e = entity_id) AND (entity_type = entity_type) AND (payload_hash = sha256(payload)) AND (schema_name = schema_name) AND (entity_type = entity_type) AND (schema_name = schema_name) AND (entity_type = entity_type) AND (entity_id = e) AND td_validate_schema_fact_v2(dsl, ir, entity_type, a, v_tag) AND ((first_position <= position) OR (reference_type IS NULL)) AND CASE  WHEN ((assertion_id IS NU"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.0.0.0.1.0.0.1.1.0.0.1.0.0.0.0.0.0.0.0.0.0.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 2121.7829299999985,
+          "rowsProduced": 10000534,
+          "rowsScanned": 10000534,
+          "detail": "{\"Table\":\"\\\"explain\\\".main.assertions\",\"Type\":\"Sequential Scan\",\"Projections\":[\"command_id\",\"e\",\"assertion_id\",\"a\",\"v_s\",\"tx_from\",\"entity_type\",\"payload_hash\",\"payload\",\"v_tag\",\"valid_from\",\"valid_to\",\"tag\",\"extra_json\",\"v_b\",\"v_i\",\"v_f\"],\"Estimated Cardinality\":\"10000535\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.0.0.0.1.0.0.1.1.0.0.1.0.0.0.0.0.0.0.0.0",
+          "type": "HASH_JOIN",
+          "timingMs": 368.50660699999906,
+          "rowsProduced": 10000534,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"LEFT\",\"Conditions\":\"source_assertion_id = assertion_id\",\"Estimated Cardinality\":\"10000535\"}"
+        }
+      ]
+    },
+    {
+      "phase": "guard",
+      "prepareWallMs": 22.34795799999847,
+      "executeAndExtractWallMs": 25.711209000000963,
+      "rawProfileSha256": "3c88da942d76f2fb3155520f638a1867262b8bb25bc62bbbe8b8701e4802c100",
+      "assertionScans": [
+        {
+          "timingMs": 0.023167999999999998,
+          "rowsProduced": 2,
+          "rowsScanned": 534,
+          "filters": "(tx_to = 9223372036854775807)",
+          "dynamicFilters": "(e = 'probe-000')"
+        },
+        {
+          "timingMs": 1.735,
+          "rowsProduced": 8191,
+          "rowsScanned": 8191,
+          "filters": "",
+          "dynamicFilters": null
+        }
+      ],
+      "topOperators": [
+        {
+          "path": "0.0.0.0.0.0.1.0.0.1.1.0.0.0.1.1.0.0.0.0.1.1.0.0",
+          "type": "TABLE_SCAN",
+          "timingMs": 1.735,
+          "rowsProduced": 8191,
+          "rowsScanned": 8191,
+          "detail": "{\"Table\":\"\\\"explain\\\".main.assertions\",\"Type\":\"Sequential Scan\",\"Projections\":[\"e\",\"a\",\"v_tag\",\"v_s\",\"v_b\",\"v_i\",\"v_f\",\"valid_to\",\"valid_from\",\"tx_from\",\"tx_to\",\"assertion_id\"],\"Filters\":\"\",\"Estimated Cardinality\":\"10000535\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.1.1.1.0.0.1.0.0.1.0.1",
+          "type": "HASH_JOIN",
+          "timingMs": 0.146542,
+          "rowsProduced": 256,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"INNER\",\"Conditions\":\"command_id = command_id\",\"Estimated Cardinality\":\"0\"}"
+        },
+        {
+          "path": "0.0.0.0.0.0.0.0.0.0.1.1.1.0.0.1.0.0.1.0",
+          "type": "HASH_JOIN",
+          "timingMs": 0.058499999999999996,
+          "rowsProduced": 256,
+          "rowsScanned": null,
+          "detail": "{\"Join Type\":\"INNER\",\"Conditions\":\"command_id = command_id\",\"Estimated Cardinality\":\"0\"}"
+        }
+      ]
+    }
+  ],
+  "finding": "Patch admission validates all 10000534 retained history rows before selecting two affected assertion IDs. The main history scan has no entity filter; old-target selection already has a dynamic entity filter. Test a redundant literal h.entity_id predicate first.",
+  "proofBoundary": "Operator timings aggregate parallel work and may exceed statement wall. One patch per clone is diagnostic, not throughput or tail acceptance. May overlap cohort A bounded correctness. The production sources and all admission/receipt contracts are unchanged.",
+  "timingScopes": {
+    "public": "Full public patchRecord ACK including queue, generated PRAGMA bind/execute, transport and receipt decoding.",
+    "generated": "Exact C++-generated program via one raw SDK run in an explicit transaction. Separate scope from public request.",
+    "phased": "The same emitted statements prepared/executed individually inside an explicit transaction. SDK and inter-statement scheduling overhead differ from the production PRAGMA.",
+    "explain": "Separate fresh-clone EXPLAIN ANALYZE executions of each emitted statement. They mutate that diagnostic clone and include profiling overhead; final receipt is read again separately for exact equality.",
+    "overlap": "Operator timing may overlap across threads and contains extension callback work. Do not sum/subtract these timers as exclusive phases.",
+    "compilation": "Emitter process wall is not pure C++ compiler time or production PRAGMA bind time."
+  },
+  "limitations": [
+    "No mixed/concurrent throughput qualification. This diagnostic is sequential and changes request boundaries for phased observations.",
+    "RSS is sampled process RSS, not allocator containment. Fixture hashing is outside all request/profile scopes; it is performed only when an expected SHA is provided.",
+    "A diagnostic failure is retained and terminates this attempt; no changed settings or automatic fallback."
+  ]
+}

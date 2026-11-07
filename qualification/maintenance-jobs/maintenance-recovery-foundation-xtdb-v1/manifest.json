@@ -1,0 +1,308 @@
+{
+  "format": "triplex-devloop-job/1",
+  "id": "maintenance-recovery-foundation-xtdb-v1",
+  "kind": "verification",
+  "queryPath": "xtdb-datalog",
+  "backend": "xtdb",
+  "author": "qlever-environment-owner",
+  "problemId": "owned-sparseimage-allocation-retention",
+  "logicalTaskId": "same-owned-engine-maintenance-readiness",
+  "hypothesis": "Same exact private CID/image/caps retains the quiescent native position/claim/history cardinalities after fixed-cap same-image compaction; full offline authoritative byte equality is separately anchored.",
+  "goals": [
+    6,
+    7,
+    9
+  ],
+  "dependsOn": [],
+  "requiredOwners": [],
+  "residentRecovery": {
+    "ownerId": "foundation-xtdb",
+    "containerId": "6bb5cffd170dc87871e4514a7179ed72b9c453d513a3190b9e5b119f0e408810",
+    "imageSha256": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "readinessArtifact": "artifacts/readiness.json",
+    "requiredCheckKeys": [
+      "maintenance-readiness"
+    ]
+  },
+  "inspiration": [
+    {
+      "reference": "tools/bootstrap/restore-qlever.py",
+      "mechanism": "Exact private Docker ownership and native fixed-state recovery audit",
+      "adaptation": "Retain UNKNOWN reservation until new source-bound readiness and fresh startup identity; no write-crash or scale claim"
+    }
+  ],
+  "command": {
+    "argv": [
+      "/Users/sam/projects/triplex-db/.local/tools/node-v24.13.0-darwin-arm64/bin/node",
+      "tools/bootstrap/maintenance-readiness.mjs",
+      "--mode",
+      "after",
+      "--owner",
+      "foundation-xtdb",
+      "--baseline",
+      ".runtime/bootstrap/maintenance-native-basis-20261106.json",
+      "--output",
+      "{RUN_ARTIFACTS}/readiness.json"
+    ],
+    "cwd": ".",
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=128"
+    }
+  },
+  "resources": {
+    "heavy": true,
+    "memoryBytes": 536870912,
+    "cpuUnits": 1,
+    "diskBytes": 16777216,
+    "timeoutMilliseconds": 120000,
+    "maximumLogBytes": 1048576
+  },
+  "inputs": [
+    {
+      "path": "tools/bootstrap/maintenance-readiness.mjs",
+      "role": "runner",
+      "sha256": "d037c32ca8e0ebda71d5c787cb4a6ce871fef51481dfe813fbd06b385891e1cd"
+    },
+    {
+      "path": "tools/bootstrap/with-env.sh",
+      "role": "runner",
+      "sha256": "cfd29a2d18e4e355bc30d6efdab7a8c19c006c5f1de191ca857409765201c838"
+    },
+    {
+      "path": "tools/bootstrap/check-storage.py",
+      "role": "source",
+      "sha256": "b056890b430ee5d56e4577dfb5d6e190f70691029564086eeffb9d4ac01caa41"
+    },
+    {
+      "path": ".runtime/bootstrap/maintenance-native-basis-20261106.json",
+      "role": "oracle",
+      "sha256": "26bc5827d2e183b839c654ae53574e81c99c92c69f40578ac7b512dd1f4aefbc"
+    },
+    {
+      "path": ".runtime/bootstrap/maintenance-authoritative-proof-20261106.json",
+      "role": "infrastructure",
+      "sha256": "74ddcbf03f9e9e93490bc63d4353bc312ef7bf60d904719a34cf79c2e32d2179"
+    },
+    {
+      "path": ".runtime/bootstrap/maintenance-engine-start-20261106.json",
+      "role": "infrastructure",
+      "sha256": "f5c0e11ee6af6c740f913e7113bc26f3712b5894503b9f1410d69cbf05183208"
+    },
+    {
+      "path": ".runtime/engines/owners.json",
+      "role": "mapping",
+      "sha256": "88be3c1e926f37a8b2f3a0c053230e5a7fefcdefc80603ae1c8186132c19a874"
+    },
+    {
+      "path": "qualification/maintenance-jobs/maintenance-recovery-foundation-xtdb-v1/expected-status.json",
+      "role": "oracle",
+      "sha256": "8464da5cdfe6e194b80c831ec0a51f7cbd451d98670fc3281ca7b76221657ecb"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/README.md",
+      "role": "dependency",
+      "sha256": "036885436fc97f00ec33baabe6d4692dd05fc0c47b977f219b5ba3b89eecb6b1"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/package.json",
+      "role": "dependency",
+      "sha256": "944d492614959389a5739ef2893bc1830fb773ff042159d9b331d43b2f6792e9"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/types/package.json",
+      "role": "dependency",
+      "sha256": "c96411ecdd1bdeeac8096b325a2da3777775cdfb1357046e8e12f60de96274e6"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/types/tsconfig.json",
+      "role": "dependency",
+      "sha256": "6b56b1f0c7a63493b52bbcf977396dcfc5e894b668ebc827d54809b26ffd3301"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/types/index.d.ts",
+      "role": "dependency",
+      "sha256": "3e9763c4afdadcdca1a4f469ffed3dcbbf5eddfc2aa04b5e588b514e4f57f9f1"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/polyfills.js",
+      "role": "dependency",
+      "sha256": "c9bfd7d57f1402676a42c8b6a49386ca18f95ccc687fdaad625f3a3fc7ba3f81"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/types.js",
+      "role": "dependency",
+      "sha256": "1883bd4536eab1c94b9e708d325b13708b0f18ec80020e3a825f34a72f603b81"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/subscribe.js",
+      "role": "dependency",
+      "sha256": "5d0b1ec9705281ed4a60236fe5f65654038bae117845a71d19e35374d34c0cfa"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/queue.js",
+      "role": "dependency",
+      "sha256": "15e6345adb6708bf3b99ad39fc2231c2fb61de5f6cba4b7a7a6be881482a4ec3"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/query.js",
+      "role": "dependency",
+      "sha256": "67c45a5151032aa46b587abc15381fe4efd97c696e5c1b53082b8161309c4ee2"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js",
+      "role": "dependency",
+      "sha256": "4e21f5733e70d79cffc10d10d4ef01031de4a9ac862210e43f8870029fd103ed"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/bytes.js",
+      "role": "dependency",
+      "sha256": "53b73b5ee2919ab5561229c62a4e2db578f63ca613b795b380c23cb684f2d514"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/errors.js",
+      "role": "dependency",
+      "sha256": "85cfbed9a5ab0db41ab8e97b806c881af29807dfe99bc656fdf1a18c1c13b6c6"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/result.js",
+      "role": "dependency",
+      "sha256": "001ff5e0c8d634674f483d07fbcd620a797e3101f842d6c20ca3ace936260465"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js",
+      "role": "dependency",
+      "sha256": "ee3a218d9aa6a6f2887c1a19da50009335fe84c11a5431d5cab72d6bc528632f"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/large.js",
+      "role": "dependency",
+      "sha256": "05ea787f79cefaf16310f14119fbfd36d2fed0795581b0df1b0e63b591a3ed94"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/package.json",
+      "role": "dependency",
+      "sha256": "fa6944a20ca5e6fbaf98fd202eb8c7004d5b4ab786e36b9ed02ee31dbe196c9f"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/types.js",
+      "role": "dependency",
+      "sha256": "8ba968fc19489cdb670e8fc0d184b942eafa5f3d7a06dca4b165318fcd57e9fb"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/subscribe.js",
+      "role": "dependency",
+      "sha256": "5c6dfb4fa656f814a47749d342daa86a1dbaa9e695f43ac1c7050302c7e91fea"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/queue.js",
+      "role": "dependency",
+      "sha256": "7d20fa53a3930be070609d7912ecd14c347df3526805bca2f6cb7eb35d2e62cf"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/query.js",
+      "role": "dependency",
+      "sha256": "75ae9c69a1aaf3be4d8d65e4742c36018b89594907b85769e560c2590716c109"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/index.js",
+      "role": "dependency",
+      "sha256": "d8fea1a5311c47e65004646bc81f57305ac64d48f99004a5b3ca27bcfc6babf8"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/bytes.js",
+      "role": "dependency",
+      "sha256": "4e13b04c965e8dcc45104091a92318715af96e7f6d820faea9097a014930bc70"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/errors.js",
+      "role": "dependency",
+      "sha256": "fad515c5d5e76e0f44e7e4408342301ec4df51517ffdbb836be9942cd48e5a99"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/result.js",
+      "role": "dependency",
+      "sha256": "84b46a3940d3bd1fbea85e5beb5b7c652f3f1058fec2c6cc5ce351730533ee10"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/connection.js",
+      "role": "dependency",
+      "sha256": "ce6d375809baad79963ef9b3773e6ac757bcf6da2362d4d85482bb14c2c751be"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/large.js",
+      "role": "dependency",
+      "sha256": "40b498ca792f3d28b1ce8a99b931cbd9c04c2931366b9fdc93a19083e545b9ff"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/types.js",
+      "role": "dependency",
+      "sha256": "e6c9e8f43272ae853944613560e5eabb15955fd8b2981749e7fa1c9015f370db"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/subscribe.js",
+      "role": "dependency",
+      "sha256": "9ce6fd98780e0adff813d13cc03951e5b1c66d602637beb6f9494c40e7b9212e"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/queue.js",
+      "role": "dependency",
+      "sha256": "15e6345adb6708bf3b99ad39fc2231c2fb61de5f6cba4b7a7a6be881482a4ec3"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/query.js",
+      "role": "dependency",
+      "sha256": "67c45a5151032aa46b587abc15381fe4efd97c696e5c1b53082b8161309c4ee2"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/index.js",
+      "role": "dependency",
+      "sha256": "aca9c247b7ddb2aedf90d20ce8e6f52ac6ebd95865056599ca05ed4dab4baad7"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/bytes.js",
+      "role": "dependency",
+      "sha256": "368a278367814e80f7ae816e01e202279f3ce38347f2ac465b562ebeb61d84ca"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/errors.js",
+      "role": "dependency",
+      "sha256": "85cfbed9a5ab0db41ab8e97b806c881af29807dfe99bc656fdf1a18c1c13b6c6"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/result.js",
+      "role": "dependency",
+      "sha256": "001ff5e0c8d634674f483d07fbcd620a797e3101f842d6c20ca3ace936260465"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/connection.js",
+      "role": "dependency",
+      "sha256": "3efad812b825f76708f2e62e8dd00088900206e04afed2dc4b75b9aecd435fa9"
+    },
+    {
+      "path": "node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cf/src/large.js",
+      "role": "dependency",
+      "sha256": "b02b13cf2b5d435368c7d61989af1692a9965b6edf9b60e1d0bc320ac42f48df"
+    },
+    {
+      "path": ".runtime/bootstrap/image-imports.json",
+      "role": "build",
+      "sha256": "ab00caaa954c1f363c942e00f9bd88667e932ef871eb841211c7a673eb50e5ea"
+    }
+  ],
+  "evidence": {
+    "checks": [
+      {
+        "key": "maintenance-readiness",
+        "expectedInput": "qualification/maintenance-jobs/maintenance-recovery-foundation-xtdb-v1/expected-status.json",
+        "actual": "artifacts/status.json"
+      }
+    ],
+    "requiredCheckKeys": [
+      "maintenance-readiness"
+    ]
+  },
+  "retention": {
+    "scratch": "retain-forensic",
+    "meaning": "All existing data and pre/post offline hashes retained; no cleanup or recreate"
+  }
+}

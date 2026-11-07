@@ -1,0 +1,40 @@
+UTC: 2026-10-31T07:26:09Z
+
+COMMAND: sha256sum app/candidate build and public header inputs (read-only)
+3af928980e50b1174f624feab9024988d024e03977fa4e7daab31b17b7b0d7ab  temporal-roadmap-20261030/implementation/engine/build.sh
+3af928980e50b1174f624feab9024988d024e03977fa4e7daab31b17b7b0d7ab  .agent-logs/goal3-coordinator/integration/candidate-002/engine/build.sh
+73026a28e5b55952afb6e2e9ce80fd4f76614afedce329da895ccaf85a4a8be6  temporal-roadmap-20261030/implementation/engine/vendor/duckdb_v2.h
+fa0871d3f5b8e5da9a686c019fcaf8210349440831d5e9228720cbba31ccaa51  temporal-roadmap-20261030/implementation/engine/vendor/duckdb_extension_v2.h
+bf840147dc70bb8238631023e95fa99c987a7744605a008bbb5b53a0446ae6ea  temporal-roadmap-20261030/implementation/engine/vendor/duckdb.h
+
+COMMAND: nl -ba implementation/engine/build.sh (bounded build command)
+     7	fi
+     8	OUT="${TD_BUILD_DIR:-$PWD/build}"
+     9	mkdir -p "$OUT" logs
+    10	export TMPDIR="$OUT"
+    11	CXX="${CXX:-g++}"
+    12	python3 vendor/materialize_duckdb_v2.py
+    13	CORE="${TD_CONTROL_CORE:-src/temporal_core.cpp}"
+    14	extra=()
+    15	if [[ -n "${TD_CONTROL_CORE:-}" ]]; then
+    16	  # Separate API-only experiment: the unchanged v1 core, never the typed core.
+    17	  expected=470bb3c29392637e57ae61b3faaea6557874a79834b3b748510e2fd8594dad24
+    18	  actual="$(sha256sum "$CORE" | cut -d' ' -f1)"
+    19	  [[ "$actual" == "$expected" ]] || { echo 'Wrong frozen control core' >&2; exit 2; }
+    20	  extra=(-DTD_LEGACY_ONLY)
+    21	fi
+    22	"$CXX" -std=c++17 -O3 -DNDEBUG -fPIC -fvisibility=hidden -shared \
+    23	  -fno-fast-math -frounding-math -ffp-contract=off -mfpmath=sse -msse2 \
+    24	  -Wall -Wextra -Wpedantic -Werror -Wno-missing-field-initializers \
+    25	  "${extra[@]}" -Ivendor -Isrc "$CORE" src/temporal_datalog.cpp -Wl,-z,defs \
+    26	  -o "$OUT/temporal_datalog.so"
+    27	python3 vendor/append_extension_metadata.py \
+    28	  -l "$OUT/temporal_datalog.so" -n temporal_datalog \
+    29	  -o "$OUT/temporal_datalog.duckdb_extension" \
+    30	  -p linux_amd64 -dv v2.0.0 -ev 0.4.0 --abi-type C_STRUCT_UNSTABLE
+    31	sha256sum "$OUT/temporal_datalog.duckdb_extension"
+
+COMMAND: candidate native entrypoint name
+401:DUCKDB_EXTENSION_ENTRYPOINT(duckdb_v2_extension_handle extension, duckdb_v2_context_handle context,
+
+COMMAND: find internal headers in current vendor directory by explicit names (no matches means absent)

@@ -1,0 +1,16 @@
+✔ coverage accepts adjacent empty-target presence and validates source removal plus target reset at one batch cut (3246.523708ms)
+ℹ Preserved owned fixture: <task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/build/reference-coverage-ptrDUj/facts.duckdb
+✔ coverage rejects a real target gap atomically and admits the same failed source command after filling it (1870.323209ms)
+ℹ Preserved owned fixture: <task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/build/reference-coverage-gap-zXVSXh/facts.duckdb
+✔ coverage validates same-batch forward cyclic and self edges against one final overlay (1960.7155ms)
+ℹ Preserved owned fixture: <task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/build/reference-coverage-cycle-oSAzBR/facts.duckdb
+✔ coverage remains bound to each immutable schema through patch carries and delayed legacy replay (2226.343917ms)
+ℹ Preserved owned fixture: <task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/build/reference-coverage-policy-GHIv6e/facts.duckdb
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11077.039417

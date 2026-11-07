@@ -1,0 +1,24 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "--test-name-pattern=^(native validation failure and injected writer transport interruption preserve owned reads|required ownership verifies the engine resolved by the SDK with a shadow platform package)$",
+    "build/adapter/test-owned-store.js"
+  ],
+  "pid": 77688,
+  "startedAtUtc": "2026-11-06T07:24:01.277634+00:00",
+  "status": "terminal",
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T07:24:02.299600+00:00",
+  "elapsedMs": 1021.9835829921067,
+  "tapPass": 2,
+  "expectedSelectedPass": 2,
+  "tapFail": [
+    "0"
+  ],
+  "tapCancelled": [
+    "0"
+  ]
+}

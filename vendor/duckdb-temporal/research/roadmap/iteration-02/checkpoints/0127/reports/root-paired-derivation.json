@@ -1,0 +1,1399 @@
+{
+  "status": "PASS_INDEPENDENT_IMPLEMENTATION_EXACT_PAIRED_DERIVATION",
+  "at_utc": "2026-10-31T01:24:29.568794+00:00",
+  "verifier_sha256": "e509cec194f0997df4c7a057a7e38e888c849fc1dedc1b8f20382525d1070137",
+  "comparisons": [
+    {
+      "comparison": "reader_implementation",
+      "controls": [
+        {
+          "control": "float256-query",
+          "shape": "float256",
+          "api": "query",
+          "rows": 256,
+          "float_cells": 256,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 3718574.5,
+          "proposed_median_ns": 3666330.0,
+          "median_paired_ratio": 0.9828693872059142,
+          "bootstrap95_interval": [
+            0.9361367709310633,
+            1.0168718633290081
+          ],
+          "round_medians": {
+            "1": 0.9799769345479218,
+            "2": 0.9857618398639065
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 1.0119755935794472,
+            "reader-only": 0.9565645195435476
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "float256-query_json",
+          "shape": "float256",
+          "api": "query_json",
+          "rows": 256,
+          "float_cells": 256,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 3917534.0,
+          "proposed_median_ns": 3810216.5,
+          "median_paired_ratio": 0.9703277246731319,
+          "bootstrap95_interval": [
+            0.927241664206066,
+            1.0098064874455384
+          ],
+          "round_medians": {
+            "1": 0.9511431429316329,
+            "2": 1.003479992383012
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 0.9963160202514942,
+            "reader-only": 0.9554630229398882
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "mixed64-query",
+          "shape": "mixed64",
+          "api": "query",
+          "rows": 64,
+          "float_cells": 16,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2556007.0,
+          "proposed_median_ns": 2483473.5,
+          "median_paired_ratio": 0.9721643806693899,
+          "bootstrap95_interval": [
+            0.9474064639811319,
+            1.014923055873615
+          ],
+          "round_medians": {
+            "1": 0.9627598915497957,
+            "2": 0.9840188525729927
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 0.9678493631037165,
+            "reader-only": 0.9840188525729927
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "mixed64-query_json",
+          "shape": "mixed64",
+          "api": "query_json",
+          "rows": 64,
+          "float_cells": 16,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2705652.5,
+          "proposed_median_ns": 2462807.0,
+          "median_paired_ratio": 0.9566720972253387,
+          "bootstrap95_interval": [
+            0.9200219018203588,
+            0.989160079764223
+          ],
+          "round_medians": {
+            "1": 0.9820820697820031,
+            "2": 0.9408889230389853
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 0.9767610234388862,
+            "reader-only": 0.9543303944083095
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "empty-query",
+          "shape": "empty",
+          "api": "query",
+          "rows": 0,
+          "float_cells": 0,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2078055.0,
+          "proposed_median_ns": 2066644.5,
+          "median_paired_ratio": 0.9849346199532094,
+          "bootstrap95_interval": [
+            0.931597901873997,
+            1.0404644258248692
+          ],
+          "round_medians": {
+            "1": 0.9850775575084163,
+            "2": 0.9609276850825714
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 1.032330565284721,
+            "reader-only": 0.9609276850825714
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "empty-query_json",
+          "shape": "empty",
+          "api": "query_json",
+          "rows": 0,
+          "float_cells": 0,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2030886.0,
+          "proposed_median_ns": 2078459.0,
+          "median_paired_ratio": 0.9763284109080748,
+          "bootstrap95_interval": [
+            0.9282311055648039,
+            1.0170753718910284
+          ],
+          "round_medians": {
+            "1": 0.9698779298499783,
+            "2": 0.9827788919661711
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 0.9930336050279321,
+            "reader-only": 0.9558527173222359
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "no_float64-query",
+          "shape": "no_float64",
+          "api": "query",
+          "rows": 64,
+          "float_cells": 0,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2525972.5,
+          "proposed_median_ns": 2383026.5,
+          "median_paired_ratio": 0.9682639472702451,
+          "bootstrap95_interval": [
+            0.9431531220575657,
+            1.0028897104447565
+          ],
+          "round_medians": {
+            "1": 0.9649050466797874,
+            "2": 0.9985798672009918
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 0.9441803140080909,
+            "reader-only": 0.9992889179582014
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "no_float64-query_json",
+          "shape": "no_float64",
+          "api": "query_json",
+          "rows": 64,
+          "float_cells": 0,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2371846.0,
+          "proposed_median_ns": 2298235.5,
+          "median_paired_ratio": 0.9649691798511918,
+          "bootstrap95_interval": [
+            0.9234349679288967,
+            1.0199174796762915
+          ],
+          "round_medians": {
+            "1": 0.9487112039536849,
+            "2": 0.9685479683847654
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 1.0079175744005446,
+            "reader-only": 0.9487112039536849
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "tiny_float1-query",
+          "shape": "tiny_float1",
+          "api": "query",
+          "rows": 1,
+          "float_cells": 1,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2184122.5,
+          "proposed_median_ns": 2057244.0,
+          "median_paired_ratio": 0.9518223497796181,
+          "bootstrap95_interval": [
+            0.9167720223873705,
+            0.9853400444329937
+          ],
+          "round_medians": {
+            "1": 0.9519816062210655,
+            "2": 0.9334762606103034
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 0.9808362841451077,
+            "reader-only": 0.9335127170572683
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "tiny_float1-query_json",
+          "shape": "tiny_float1",
+          "api": "query_json",
+          "rows": 1,
+          "float_cells": 1,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2073512.5,
+          "proposed_median_ns": 2158753.5,
+          "median_paired_ratio": 1.0193288433327685,
+          "bootstrap95_interval": [
+            0.9805097765188746,
+            1.0722680460875813
+          ],
+          "round_medians": {
+            "1": 0.9962230616589135,
+            "2": 1.049664998872931
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 1.049664998872931,
+            "reader-only": 0.9859108207476756
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "tiny_no_float1-query",
+          "shape": "tiny_no_float1",
+          "api": "query",
+          "rows": 1,
+          "float_cells": 0,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2167762.0,
+          "proposed_median_ns": 2153941.5,
+          "median_paired_ratio": 0.9856668821021066,
+          "bootstrap95_interval": [
+            0.9552188731510345,
+            1.0537970860432337
+          ],
+          "round_medians": {
+            "1": 1.0101141056353078,
+            "2": 0.9808819991273392
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 1.0378113307741967,
+            "reader-only": 0.969993557323514
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "tiny_no_float1-query_json",
+          "shape": "tiny_no_float1",
+          "api": "query_json",
+          "rows": 1,
+          "float_cells": 0,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2313975.0,
+          "proposed_median_ns": 2228848.0,
+          "median_paired_ratio": 0.9462760931667007,
+          "bootstrap95_interval": [
+            0.9064968501931017,
+            0.978951220370731
+          ],
+          "round_medians": {
+            "1": 0.957585072251053,
+            "2": 0.933708434253705
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 1.0052580841686518,
+            "reader-only": 0.933708434253705
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "wide_float256-query",
+          "shape": "wide_float256",
+          "api": "query",
+          "rows": 256,
+          "float_cells": 1024,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 7816300.0,
+          "proposed_median_ns": 7697032.0,
+          "median_paired_ratio": 0.9630697935073556,
+          "bootstrap95_interval": [
+            0.9401532356693165,
+            0.9755464791399266
+          ],
+          "round_medians": {
+            "1": 0.9646259072873564,
+            "2": 0.9621402497372761
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 0.9646259072873564,
+            "reader-only": 0.9621402497372761
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "wide_float256-query_json",
+          "shape": "wide_float256",
+          "api": "query_json",
+          "rows": 256,
+          "float_cells": 1024,
+          "baseline": "ffc-current-reader",
+          "proposed": "reader-only",
+          "baseline_median_ns": 7892681.5,
+          "proposed_median_ns": 7658872.0,
+          "median_paired_ratio": 0.9708874149607694,
+          "bootstrap95_interval": [
+            0.9519433819321548,
+            1.0043232623646534
+          ],
+          "round_medians": {
+            "1": 0.9659249860554998,
+            "2": 0.9861947798884982
+          },
+          "load_order_medians": {
+            "ffc-current-reader": 1.0124564432896908,
+            "reader-only": 0.9620628491483225
+          },
+          "regression_investigation_signal": false
+        }
+      ],
+      "raw_outcome_hashes": [
+        {
+          "path": "runs/comparison-A/round1-pair01-reader-only/observations.jsonl",
+          "sha256": "63eb29cc87846a4745e660902ea08ed743debd01cc7da3ca1920b13f974e8fb7"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair01-ffc-current-reader/observations.jsonl",
+          "sha256": "f3316e7ec46c8737e7c861359a7f8fba84ef64c810b4d1010e0479ec8dd83884"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair02-ffc-current-reader/observations.jsonl",
+          "sha256": "056b798aeba3e8a6a7e92f8489dcf8012d88fe28ea0c67756b8104cf5ee6f61f"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair02-reader-only/observations.jsonl",
+          "sha256": "d8dc4fe1c5a161c3c40dd0d14727748e863b3cd1a0b16e9e6bb5f964056513a4"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair03-ffc-current-reader/observations.jsonl",
+          "sha256": "02bf06fe73f7a513f3a8ec499f9c757683c652e6d57ffb2a5836864b6c63d3c2"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair03-reader-only/observations.jsonl",
+          "sha256": "05acde4c2b5a524af309ec0b34dae52423ec239e04dd697395eaefbc98619d83"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair04-reader-only/observations.jsonl",
+          "sha256": "43aacb99812810790beda240e6f090ce7da566426859d213125ee9034737bd07"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair04-ffc-current-reader/observations.jsonl",
+          "sha256": "1a55b850aebb606d555f0528e8bc04f9e65d39ab9ec83c69ff73304cfc0438a7"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair05-reader-only/observations.jsonl",
+          "sha256": "63fe1b31eca92e2ff79e65e75aa92f177893f6676f16c6756ac7bb3f6c8eedaa"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair05-ffc-current-reader/observations.jsonl",
+          "sha256": "46f5c0781f153610e639b54cc9749291decd9e42e4f2a24f5feb117322e8b2ca"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair06-ffc-current-reader/observations.jsonl",
+          "sha256": "b5bbccb4cc7d4ba0c5253e3b359a7a4480c056910169b7c1a8b31fd6e4c2538f"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair06-reader-only/observations.jsonl",
+          "sha256": "dd90c68856081650f2b22915fe253e5ab3698849c8719eabcd0515de0e19a7bc"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair07-ffc-current-reader/observations.jsonl",
+          "sha256": "da4493585bdb5e99f61875dc978c2818b6040b4f0a5a3b081dd05898c48e6b19"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair07-reader-only/observations.jsonl",
+          "sha256": "67d1d0ff2b99f6b7456db78d14aede0f62eccc1c8e39b6ab0f489777a8e4f771"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair08-ffc-current-reader/observations.jsonl",
+          "sha256": "1416bb01ae57652964e2b939a74a165ff44231fb33b456af2bb5bcc4c03f1be3"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair08-reader-only/observations.jsonl",
+          "sha256": "bb5ad197c8c795bd51cbdf44983906d57b9161ca99bb9767a9bcbbe5818aa432"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair09-reader-only/observations.jsonl",
+          "sha256": "32a7ac22252e8b6fcd820e89a92807608f45a1926e10596ac69f525640fe07bd"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair09-ffc-current-reader/observations.jsonl",
+          "sha256": "59ad07d14ef33d8d7f1acce6f8032c2be248896b0e63cdb3354ba9145fe4b1ea"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair10-reader-only/observations.jsonl",
+          "sha256": "2d57ca034c17762d90fdb702b52bd1e685d70777342f44477ad1e5c68c658521"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair10-ffc-current-reader/observations.jsonl",
+          "sha256": "05b360387b996e5c309e233a7a80d0c42a1f772079c3db25186b2150e632f3c4"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair11-ffc-current-reader/observations.jsonl",
+          "sha256": "dc0164f2bd30a415d97853fe72ba04be8efba893a3b78bb5135197b55916dcc4"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair11-reader-only/observations.jsonl",
+          "sha256": "565eb85472459a1f90bbd703c46b41dfb8c2bfa093420f19575f02ef87e31c5a"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair12-ffc-current-reader/observations.jsonl",
+          "sha256": "1f7151b4eca93bd11fcc5f18b784217d34b8f136b8a179ac56fbf6bf410a8a74"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair12-reader-only/observations.jsonl",
+          "sha256": "d480298754fb30e2941e3a55c23b0337285bd40aba03fbd223fb5ee8153d7457"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair13-ffc-current-reader/observations.jsonl",
+          "sha256": "d394e6261df7d87dae290b6424e9a0e509283c78eb6152862fd73e600ee34b82"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair13-reader-only/observations.jsonl",
+          "sha256": "233a08c457ae0849aec89972f599315aa9ff196bb7a5135f2e5844ccaf0a2c4d"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair14-reader-only/observations.jsonl",
+          "sha256": "2b54fc25745d8cd871c77bdcd6314fad8d4424822b170371e17b19eaad4c7510"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair14-ffc-current-reader/observations.jsonl",
+          "sha256": "b5c3d2eee4ab08230ef1b5b43289f7b7f741a465d4feadac2dbcd4a8ff252522"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair15-reader-only/observations.jsonl",
+          "sha256": "ec3bdce231624b3b1ec197caf695e54a24b6b18384ccf601ac0b2e45c5f2719a"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair15-ffc-current-reader/observations.jsonl",
+          "sha256": "0e8ddf5973dfb7d694625f9c520aade167b4aac71e4a1f97a4f7d8f15d9d1e64"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair16-ffc-current-reader/observations.jsonl",
+          "sha256": "9b3a68777c274fcc09996cebb4a46a32cca8464236a08bc9bb2fa1580b00de99"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair16-reader-only/observations.jsonl",
+          "sha256": "8261ef9a694494846d9e11492fd8ebebbf2ea7e66938953abe5eb8b9a452a0c9"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair17-reader-only/observations.jsonl",
+          "sha256": "4d5b30e0bd7830f1888b5e3fd8c51280af193cc2b823bb112da835cacf85b6f1"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair17-ffc-current-reader/observations.jsonl",
+          "sha256": "e1daec7fc4b14dce71b047b8a0b9ba3e233270bc0f84b941f09ae29acd19f4b3"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair18-ffc-current-reader/observations.jsonl",
+          "sha256": "424cae5c2d86b78d1b5c0272eb9eec88616a81e09a3668d359e5e0aa2fa452d1"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair18-reader-only/observations.jsonl",
+          "sha256": "210dff398287b96ef4d0fcf841c1a28139522976c3a7ea4c5ecb31c589d63802"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair19-reader-only/observations.jsonl",
+          "sha256": "ed1a5daef8d46dd8e3d540f9af2acecc33aab697825683383c66e24725c4de60"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair19-ffc-current-reader/observations.jsonl",
+          "sha256": "74bb13481fce5322f20ae0b42d87e9559329181e7b3b3572fbb8ff7b97830ab9"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair20-ffc-current-reader/observations.jsonl",
+          "sha256": "19d5ea42cf60546232c5fd2d3e9b2f27c9054d17358bd503d08bcb09aa9ac117"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair20-reader-only/observations.jsonl",
+          "sha256": "3788fa80ab924417ca3432228e1e424b250bf00cac18111916378b5fcb180300"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair21-reader-only/observations.jsonl",
+          "sha256": "624ee15a85db6b1b3c0c475652335215ab19b1fbe928de49fc82a9c3aea73641"
+        },
+        {
+          "path": "runs/comparison-A/round1-pair21-ffc-current-reader/observations.jsonl",
+          "sha256": "39c4c8d2e0d70d951aaa8b59f725fece741ea76c5dd4b032426f1f5dc099fd53"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair01-ffc-current-reader/observations.jsonl",
+          "sha256": "629dafce102741e9a60d94077a0182693df69eed9c7c8b2bf288a164a42fecc9"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair01-reader-only/observations.jsonl",
+          "sha256": "0d2ebce30cd5da5d5a758f0ed141ff13af537051185bc2f28078fb195fc5d6e9"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair02-reader-only/observations.jsonl",
+          "sha256": "d6ef57030e649dc6762cd6ac0a461e57366b2b0151a8ed6181f6e5919098fa8c"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair02-ffc-current-reader/observations.jsonl",
+          "sha256": "7af6732e0d32421471f1a37681588c2c00ec1ee87e63c1bb240231f374548ac3"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair03-ffc-current-reader/observations.jsonl",
+          "sha256": "34a78096e781b1f3d1c906c00aebc60763d98e7799e241166a3580dd949d35b4"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair03-reader-only/observations.jsonl",
+          "sha256": "36b12270a25bbfa844a33c75fc479065dab216a2190a5b64c8c5f7597c6722fa"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair04-ffc-current-reader/observations.jsonl",
+          "sha256": "71e5ee05218109c228b5eac677d1a5dc261f3c868be3863be6b41180caae35c8"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair04-reader-only/observations.jsonl",
+          "sha256": "dcce8080b57e34a696c5eb6a25b55b22f5f5b59aa6a5647640b2069dff2220ea"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair05-reader-only/observations.jsonl",
+          "sha256": "f614ee3043f67b1f4d229062241e1dd31d56aa3128e03749681c640279d0432f"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair05-ffc-current-reader/observations.jsonl",
+          "sha256": "5ba396d8057f6d2df4ba4ff843c460865600100197593d641c5e429d8a791d86"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair06-ffc-current-reader/observations.jsonl",
+          "sha256": "d1ecbd7184b4a65c69b6077ce4e1d9a7d4147601dc8840df4695c3655b8216c5"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair06-reader-only/observations.jsonl",
+          "sha256": "409fd510ae87101a29a29e19321c0f4225799ed7bff35d97977e474f3966545b"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair07-reader-only/observations.jsonl",
+          "sha256": "28d11be626bc3fad7086651fa8ee18e125cdec36be07221631671a97d8d4c590"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair07-ffc-current-reader/observations.jsonl",
+          "sha256": "5e22a4869d535e0c5aa69b486e16de1c5a7e4871fc891b657483cab315e53d97"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair08-ffc-current-reader/observations.jsonl",
+          "sha256": "63288a78411c4e51b94f5e099d4cc98f61fd65f45bb298d52afe86d226d8821e"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair08-reader-only/observations.jsonl",
+          "sha256": "c2f2fa8965a46d619ff5f48fa8f168efd44b37545a93e0520c5676a15fbe9098"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair09-reader-only/observations.jsonl",
+          "sha256": "f11fdc613f50b9f36757eed140419d8bc6718909a0a3272ac6fda63f7101bbcc"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair09-ffc-current-reader/observations.jsonl",
+          "sha256": "d4bd70e81e7440144c458e85b7b132f06b4b1a14b8dc5ff43009c525c80c27d7"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair10-reader-only/observations.jsonl",
+          "sha256": "dc2715c6225edd7669cf758669bc9ccd2172296931467c690caede8b7f500432"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair10-ffc-current-reader/observations.jsonl",
+          "sha256": "766d3790b7e5c52254b4a335f0403057bad01a9dd20f4ec9cbc7a7a05a39f968"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair11-reader-only/observations.jsonl",
+          "sha256": "7d1eb9d4458ad5ea324bbd1667b537ed4e44711715f3da00efd207e31a17302d"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair11-ffc-current-reader/observations.jsonl",
+          "sha256": "fcd990b3cb04ab641f3f6ca9cd949be5b2d1efd8a657417329067c6cac341ab9"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair12-reader-only/observations.jsonl",
+          "sha256": "7d8302cf948fed23f657cf047090d1e0fe69613f0a48fd68cf27a3bccd248b22"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair12-ffc-current-reader/observations.jsonl",
+          "sha256": "f69de58749f6d46361e5590c6528aff1c8cf6a8b8ec463d6cc77e8dea35e0d78"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair13-reader-only/observations.jsonl",
+          "sha256": "75099552a4c921311559c36cea347ca9a946174d1b5c3fc3e71b71a779c1fce6"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair13-ffc-current-reader/observations.jsonl",
+          "sha256": "731b76676adb75ad8acbebdb79c0a452970cfd7c57ef38d126fa24be944a015c"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair14-reader-only/observations.jsonl",
+          "sha256": "084d338991f1ffd85f7f20d1f95c2e3d88158c75189823ed0258f7b391fc0d8b"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair14-ffc-current-reader/observations.jsonl",
+          "sha256": "a20c5d7fab461c31bc5e02bfddae7c635a2771b6450e80fb2866c2be29f30043"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair15-ffc-current-reader/observations.jsonl",
+          "sha256": "b391a77072a6c6910be842d6b01f5e2ff5ef360e686977a8ba1acd5ed4979a68"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair15-reader-only/observations.jsonl",
+          "sha256": "85de1161ee23a498072f96b5661f1b169a2dbc796078e1357b1866e3df1cefdf"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair16-ffc-current-reader/observations.jsonl",
+          "sha256": "6e6b72073e43d5c5582430c33973a0060c4ac3205d9efafcca7a41f56aaa5e78"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair16-reader-only/observations.jsonl",
+          "sha256": "763b76ac0478351f2708cf9c873136cb55b6eb43673bb9f9028e987163f29cf2"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair17-reader-only/observations.jsonl",
+          "sha256": "a6a245d19d5450dae57ff0a952c7a6e559e73782ae253491b6e0c426ee9f667c"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair17-ffc-current-reader/observations.jsonl",
+          "sha256": "2418aedb3f06d97a427becd4a63420b46dc66b036caeae50368d7f9236588be6"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair18-ffc-current-reader/observations.jsonl",
+          "sha256": "b9c99714c7d8a587aa7ff0f4fdbdcd6316784fa78a48931fa02007de4ae76b23"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair18-reader-only/observations.jsonl",
+          "sha256": "2f18b72306e6b9508d375b997dfd07f9afa1360a86b3fd5215e43d78274da187"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair19-reader-only/observations.jsonl",
+          "sha256": "ceafc74a390311435eea78602941d1c9025317cd95478e429684a0f988fefa0a"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair19-ffc-current-reader/observations.jsonl",
+          "sha256": "85726af9ca4b42da41b6bf6c7ff9beb8e342f1c945208348e2907c00ebeb945f"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair20-ffc-current-reader/observations.jsonl",
+          "sha256": "90a8c455d5f78232208ce15a410688c65dd0471405a1f74b58fb004afa71f39e"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair20-reader-only/observations.jsonl",
+          "sha256": "fb5d6c5a9b77db05ad43a8304d1b1b5c25af58a6bd206e401f8b52c91c373f94"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair21-ffc-current-reader/observations.jsonl",
+          "sha256": "4ec4012bbe5f0a9dd8ffa6c8fd5584b474cc781abfccedcd1ca5ad48b2dd07f0"
+        },
+        {
+          "path": "runs/comparison-A/round2-pair21-reader-only/observations.jsonl",
+          "sha256": "a8cb3c2371dbd472c2325a1710a9517aeb64f48c55b9dcb60cd6409548ffbc9c"
+        }
+      ],
+      "campaign_sha256": "aa3184013bc629cece68f9360033ee0a94a4166875a0dd2e49f4a4cfaa64ee71"
+    },
+    {
+      "comparison": "accepted_to_reader",
+      "controls": [
+        {
+          "control": "float256-query",
+          "shape": "float256",
+          "api": "query",
+          "rows": 256,
+          "float_cells": 256,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 3652471.0,
+          "proposed_median_ns": 3817875.0,
+          "median_paired_ratio": 1.087837092452773,
+          "bootstrap95_interval": [
+            1.046397954604532,
+            1.1102894166766175
+          ],
+          "round_medians": {
+            "1": 1.0880754157024355,
+            "2": 1.0722412974716506
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0863470015060377,
+            "reader-only": 1.0880754157024355
+          },
+          "regression_investigation_signal": true
+        },
+        {
+          "control": "float256-query_json",
+          "shape": "float256",
+          "api": "query_json",
+          "rows": 256,
+          "float_cells": 256,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 3485995.5,
+          "proposed_median_ns": 3707178.0,
+          "median_paired_ratio": 1.0832982784136223,
+          "bootstrap95_interval": [
+            1.0621850806834479,
+            1.1376743459575227
+          ],
+          "round_medians": {
+            "1": 1.0760328683658595,
+            "2": 1.0899469086599973
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0936123610005934,
+            "reader-only": 1.0766496481672472
+          },
+          "regression_investigation_signal": true
+        },
+        {
+          "control": "mixed64-query",
+          "shape": "mixed64",
+          "api": "query",
+          "rows": 64,
+          "float_cells": 16,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2440706.5,
+          "proposed_median_ns": 2543389.5,
+          "median_paired_ratio": 1.0306584673408468,
+          "bootstrap95_interval": [
+            0.9932818992763723,
+            1.0751620584946853
+          ],
+          "round_medians": {
+            "1": 1.0306738908176574,
+            "2": 1.0306430438640364
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0306430438640364,
+            "reader-only": 1.0483712401931422
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "mixed64-query_json",
+          "shape": "mixed64",
+          "api": "query_json",
+          "rows": 64,
+          "float_cells": 16,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2536320.0,
+          "proposed_median_ns": 2651984.5,
+          "median_paired_ratio": 1.0534912376146728,
+          "bootstrap95_interval": [
+            1.0225436891486681,
+            1.0983195514458406
+          ],
+          "round_medians": {
+            "1": 1.0424810441921435,
+            "2": 1.0784345237778477
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0633802039972877,
+            "reader-only": 1.0519192198499625
+          },
+          "regression_investigation_signal": true
+        },
+        {
+          "control": "empty-query",
+          "shape": "empty",
+          "api": "query",
+          "rows": 0,
+          "float_cells": 0,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2006781.5,
+          "proposed_median_ns": 2169197.5,
+          "median_paired_ratio": 1.03662549919191,
+          "bootstrap95_interval": [
+            0.9774920780956626,
+            1.0733525217103037
+          ],
+          "round_medians": {
+            "1": 1.0604697392763165,
+            "2": 1.017792529012516
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.017792529012516,
+            "reader-only": 1.055849332570382
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "empty-query_json",
+          "shape": "empty",
+          "api": "query_json",
+          "rows": 0,
+          "float_cells": 0,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2176874.0,
+          "proposed_median_ns": 2191285.0,
+          "median_paired_ratio": 1.0161537255097381,
+          "bootstrap95_interval": [
+            0.9576311776689574,
+            1.0471908896645454
+          ],
+          "round_medians": {
+            "1": 0.9665966964953733,
+            "2": 1.0236922624546103
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0288606601734478,
+            "reader-only": 1.0087266269290438
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "no_float64-query",
+          "shape": "no_float64",
+          "api": "query",
+          "rows": 64,
+          "float_cells": 0,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2216288.0,
+          "proposed_median_ns": 2296694.0,
+          "median_paired_ratio": 1.0388354956928119,
+          "bootstrap95_interval": [
+            1.0066391416196798,
+            1.0545790889516247
+          ],
+          "round_medians": {
+            "1": 1.0356001194311157,
+            "2": 1.0393057183168088
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0356001194311157,
+            "reader-only": 1.0421210132563328
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "no_float64-query_json",
+          "shape": "no_float64",
+          "api": "query_json",
+          "rows": 64,
+          "float_cells": 0,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2278116.5,
+          "proposed_median_ns": 2337171.0,
+          "median_paired_ratio": 1.0396026571100077,
+          "bootstrap95_interval": [
+            0.9794150040774573,
+            1.0801444516877066
+          ],
+          "round_medians": {
+            "1": 0.9895748660698063,
+            "2": 1.0557712311018437
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.042629633021302,
+            "reader-only": 1.0365756811987132
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "tiny_float1-query",
+          "shape": "tiny_float1",
+          "api": "query",
+          "rows": 1,
+          "float_cells": 1,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2077088.5,
+          "proposed_median_ns": 2093508.0,
+          "median_paired_ratio": 1.0400062340130796,
+          "bootstrap95_interval": [
+            0.9996007110513058,
+            1.0559411608982594
+          ],
+          "round_medians": {
+            "1": 1.0328234491000121,
+            "2": 1.0417277103523486
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0432581635223828,
+            "reader-only": 1.0328234491000121
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "tiny_float1-query_json",
+          "shape": "tiny_float1",
+          "api": "query_json",
+          "rows": 1,
+          "float_cells": 1,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2155035.5,
+          "proposed_median_ns": 2138581.5,
+          "median_paired_ratio": 1.0084801944282324,
+          "bootstrap95_interval": [
+            0.9621123583600839,
+            1.0491773303898517
+          ],
+          "round_medians": {
+            "1": 1.0202288977192435,
+            "2": 1.001357212235167
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0202288977192435,
+            "reader-only": 1.0039285503547772
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "tiny_no_float1-query",
+          "shape": "tiny_no_float1",
+          "api": "query",
+          "rows": 1,
+          "float_cells": 0,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2211744.5,
+          "proposed_median_ns": 2210427.5,
+          "median_paired_ratio": 1.0062335281404928,
+          "bootstrap95_interval": [
+            0.9803677283679333,
+            1.036522542113648
+          ],
+          "round_medians": {
+            "1": 0.9879578590646613,
+            "2": 1.0210321904507484
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0210321904507484,
+            "reader-only": 0.9896618204555465
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "tiny_no_float1-query_json",
+          "shape": "tiny_no_float1",
+          "api": "query_json",
+          "rows": 1,
+          "float_cells": 0,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 2137524.0,
+          "proposed_median_ns": 2081609.5,
+          "median_paired_ratio": 0.9984030909833636,
+          "bootstrap95_interval": [
+            0.9518446039448947,
+            1.040194224488363
+          ],
+          "round_medians": {
+            "1": 0.9978754126592335,
+            "2": 0.9989307693074936
+          },
+          "load_order_medians": {
+            "accepted-item1": 0.9724584883137832,
+            "reader-only": 1.014343014907958
+          },
+          "regression_investigation_signal": false
+        },
+        {
+          "control": "wide_float256-query",
+          "shape": "wide_float256",
+          "api": "query",
+          "rows": 256,
+          "float_cells": 1024,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 7028281.0,
+          "proposed_median_ns": 7869597.5,
+          "median_paired_ratio": 1.1162488755122597,
+          "bootstrap95_interval": [
+            1.077305850581495,
+            1.1537841578595602
+          ],
+          "round_medians": {
+            "1": 1.117718801386639,
+            "2": 1.1147789496378804
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.0955960591118454,
+            "reader-only": 1.1316696518147855
+          },
+          "regression_investigation_signal": true
+        },
+        {
+          "control": "wide_float256-query_json",
+          "shape": "wide_float256",
+          "api": "query_json",
+          "rows": 256,
+          "float_cells": 1024,
+          "baseline": "accepted-item1",
+          "proposed": "reader-only",
+          "baseline_median_ns": 7160972.5,
+          "proposed_median_ns": 7869047.0,
+          "median_paired_ratio": 1.1191545594400742,
+          "bootstrap95_interval": [
+            1.076770928251095,
+            1.1526173943979348
+          ],
+          "round_medians": {
+            "1": 1.0892132564906116,
+            "2": 1.1505178784459134
+          },
+          "load_order_medians": {
+            "accepted-item1": 1.1137024999063372,
+            "reader-only": 1.1242350002591739
+          },
+          "regression_investigation_signal": true
+        }
+      ],
+      "raw_outcome_hashes": [
+        {
+          "path": "runs/comparison-B/round1-pair01-accepted-item1/observations.jsonl",
+          "sha256": "44479b9fe8a8a69d47dfcbe995bee53138691434263d2ff80eb2901baf9c6f18"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair01-reader-only/observations.jsonl",
+          "sha256": "b39cdb6925cfe1e71db4774636a4d948c71d5cece7e48a45fe3bf41e52389481"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair02-reader-only/observations.jsonl",
+          "sha256": "7bd4878de27b3d0788b37cd7a44411284f370a2c3e5ce134cc87bed62b0909f7"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair02-accepted-item1/observations.jsonl",
+          "sha256": "5adfb22c7ded3b10b49a22a61ac94e5109e881b88937fdcaea3b75f5b3112093"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair03-accepted-item1/observations.jsonl",
+          "sha256": "7e020ba66d6eacf97c8b9032218df2905c8245d2136a8c0f66daebc1d8d4de3d"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair03-reader-only/observations.jsonl",
+          "sha256": "d0440050c768750560b4932545898f58bc3298112aaa457b2cf0da33b8e5b492"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair04-accepted-item1/observations.jsonl",
+          "sha256": "0a4ebcf4b5f75e10c60047d377118e73d0387985a2cc46f4d23d0c505ca608bc"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair04-reader-only/observations.jsonl",
+          "sha256": "efe9f9bac746a3a6bb1d603a6340289db0cceea602333af21fc6d233506d9bd9"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair05-accepted-item1/observations.jsonl",
+          "sha256": "eae4c8924d0ebde0f9665a90f49d92505a4905b447660d59e2ff4b79d949be17"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair05-reader-only/observations.jsonl",
+          "sha256": "26b0228236b1e82c10072615a6169e4db5d88420005cad2eb960a8f2defca4e5"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair06-reader-only/observations.jsonl",
+          "sha256": "2c3d8b1232ea9e92a72166bf34af89e4299bda2a5c6db24c7bdda250f5ca421e"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair06-accepted-item1/observations.jsonl",
+          "sha256": "0f9c749f84d6baac8c950c41c748d9826e942b187ce6ff12cc4c4ccb63281542"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair07-accepted-item1/observations.jsonl",
+          "sha256": "ee66584ddcebf06182d8f19f09e5247f267334017e9a83cccb1b79719bed75ea"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair07-reader-only/observations.jsonl",
+          "sha256": "d1855d77605626598f10bf16a1a2960f73a0acd904b3b828d428ccaadd69928c"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair08-accepted-item1/observations.jsonl",
+          "sha256": "96005dae676adca50c685a7910eb5e388b228a292693ce48c347810fb331a690"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair08-reader-only/observations.jsonl",
+          "sha256": "d9f41fbbb34b3abce684c33e7de5658e4c1c0c54a322663c1a3c5f36bb71fe9b"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair09-reader-only/observations.jsonl",
+          "sha256": "09edb66e4ee8f8396dc13c2a61c830d6fde9daa0ef48fa1f2873162aeeb54178"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair09-accepted-item1/observations.jsonl",
+          "sha256": "1273fb298b45f2a53bcf0d4694e67700b11d3831ae1a93bd7358d66e999e59ff"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair10-accepted-item1/observations.jsonl",
+          "sha256": "3b56158498347903a1cde6679b4ba5bb656b4095a7e67bd56f5d1df60265b608"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair10-reader-only/observations.jsonl",
+          "sha256": "fd56b29ca68b3d616afa16404f2b05551178fdeeeb78bbad0e58f2fd8247b11b"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair11-reader-only/observations.jsonl",
+          "sha256": "91ef378c2c7a5b14d5303afd7a3013f3200550684e1d7eee0bac2424482b1115"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair11-accepted-item1/observations.jsonl",
+          "sha256": "227d88a2758708148258e69dd6473ad8629f68430d2d0cbcb7e43e006cbcca04"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair12-reader-only/observations.jsonl",
+          "sha256": "d1bd877a23719a0f30c76a7d89b30ef266c61eff3a8308823608c5422c8c2604"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair12-accepted-item1/observations.jsonl",
+          "sha256": "2651515eaa9cbb5d8961d09ce57209fc8a4da82028d8c75de46b58e897f64da3"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair13-reader-only/observations.jsonl",
+          "sha256": "d16341410e4945e04e1410003e587b65d3d15085f477d6f1f9d39199fa74d521"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair13-accepted-item1/observations.jsonl",
+          "sha256": "de39c69d8933d64c9786d81397c217e2d6f2d4a64dba3fb074d75948327de087"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair14-reader-only/observations.jsonl",
+          "sha256": "89e8d6975a03a6b22e5c101493619315de6ef4b2472ee3c92232ff922e85b409"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair14-accepted-item1/observations.jsonl",
+          "sha256": "dd0632ac7e67fa54a1843b1eac51bd2d7af6d7aa5df0dc6ff880ab3dd3c02597"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair15-reader-only/observations.jsonl",
+          "sha256": "9d54b1349f750dce78f124f6df793040c593f38b931e389d9a7e3f3addcce15d"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair15-accepted-item1/observations.jsonl",
+          "sha256": "f14dc71789c572cef2f99353fa3c7a27d1b12c57970e8a8050f53c7b1e687ea0"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair16-accepted-item1/observations.jsonl",
+          "sha256": "16380817706e507d6b1301bf888b1ffff596ada2d1af7500bc47b4f5323540a7"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair16-reader-only/observations.jsonl",
+          "sha256": "2e060c00c46bd96291dbe000ca1b565181a12abd9cdd2715a26608cf89f6f95e"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair17-reader-only/observations.jsonl",
+          "sha256": "990a7a3348dbaa446de3c81f419e2683cc838f4a09d07d2c2b18e3abbd1f13bf"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair17-accepted-item1/observations.jsonl",
+          "sha256": "bd5dec7982489a4c2671976bf4cf3b0c5b85761a88f99b41b0bac886e0f1f8ee"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair18-accepted-item1/observations.jsonl",
+          "sha256": "2015006bf917210b5c2110740d9d057a0cf0ca44f5008bd0588b4c1d200e3135"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair18-reader-only/observations.jsonl",
+          "sha256": "1c5abde2fe0056ea5c0ae81883055bcff4a43b6fc69b393db3e457ea24d5bd2e"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair19-accepted-item1/observations.jsonl",
+          "sha256": "a4f829140415e44d7b2030428f30bae7943364ef7405e8052a72d946864a4ca0"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair19-reader-only/observations.jsonl",
+          "sha256": "04f17633618d01b2bbd38fa205848065280e3e29a72b02180e6460d14d63854f"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair20-reader-only/observations.jsonl",
+          "sha256": "e2feae9556eacbc37a0b1970449956b19c4dc7d377eb72d46d97f1285083ebd2"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair20-accepted-item1/observations.jsonl",
+          "sha256": "e6f78013cfa723ba4ceeec13ee1b1193ee66a8a378e3fd579be6872903201c3c"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair21-accepted-item1/observations.jsonl",
+          "sha256": "edb8d2150e3376ef65a45eb24cab41fc1e31fdcd886eb8a000d613dd4004fc06"
+        },
+        {
+          "path": "runs/comparison-B/round1-pair21-reader-only/observations.jsonl",
+          "sha256": "5239acae1f13c3c5bc0628b59297c7e2f8a72d94effd45b21c0e36958d26c219"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair01-accepted-item1/observations.jsonl",
+          "sha256": "d425964f7bb46ac446bc04c5902734ebacdb6abb86aeb8b4e002c0c5d2962de0"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair01-reader-only/observations.jsonl",
+          "sha256": "1d50f8d5882dcaa81defdf0f1e0e0a595e0a8605ccf66424e397eb4786c86a8f"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair02-accepted-item1/observations.jsonl",
+          "sha256": "0b5f20a1a2a0e7e6e9926ce1424277ccc665a46c94677541a517184d34ed4fa5"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair02-reader-only/observations.jsonl",
+          "sha256": "572e46d7b12df8fe401d25336bf383ea31ddcefdd287db2f36f5230aeb04dccb"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair03-reader-only/observations.jsonl",
+          "sha256": "4138d3e9f1ae05bbb157f5d95c9de9227a5d0131180ffef193e91811878e18bb"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair03-accepted-item1/observations.jsonl",
+          "sha256": "ef7a0ef35e5236c1bf4ce967a0adb87d63b3da54e6b6a0e78bb5ed5a282bcc8f"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair04-reader-only/observations.jsonl",
+          "sha256": "57c166cebedd3fde5d8e9ad41d39eb07d13d92bf852369fc29350cf38d2e0310"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair04-accepted-item1/observations.jsonl",
+          "sha256": "74e2d0450d2cc03179862f507c0ea20ffff6a6c9488b14b09785e7ee15cbf4df"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair05-accepted-item1/observations.jsonl",
+          "sha256": "7964b4a19b7f7c0524620ba1384ed3e487e03940be6c82130d8624a7fba8371c"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair05-reader-only/observations.jsonl",
+          "sha256": "e5a3b97b3581610f41d31960fb2a2d4af711c49c03b48bd5aa410b83e298bda3"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair06-reader-only/observations.jsonl",
+          "sha256": "0abd5c0f7cf491fff92f1480554952339c477746f7314c677d7022eee121df7a"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair06-accepted-item1/observations.jsonl",
+          "sha256": "4c33d971dcd26b0b83c8e6a7ca274b1f6b52be7297b7ddfbb2629f4a0fb1286a"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair07-reader-only/observations.jsonl",
+          "sha256": "325dd6d4ae01c9f0fe6d1eb6788d3e4075df51cbb5ce32af5ad7e8866b9796f3"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair07-accepted-item1/observations.jsonl",
+          "sha256": "753887a44217bc4049af8b913c8cff8a03f34685bd7ca4836b7ec659c7f5ef1a"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair08-accepted-item1/observations.jsonl",
+          "sha256": "908631bb738d2f51e48bb484447db2364b5d0bfa188d4c09dff8816697a65dcb"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair08-reader-only/observations.jsonl",
+          "sha256": "cbaef6651a61df3827490276f01922945bde8b0db0d30544764b998ef1f4b805"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair09-accepted-item1/observations.jsonl",
+          "sha256": "26a0c0c8b936586d4f8b999ebe62f573bd0ba810f45bcdf6689ef8fbd45e0695"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair09-reader-only/observations.jsonl",
+          "sha256": "b39fa171bc2e1d17983e8291dbc2d2eaa3a8939f2333b6dd6d28fb877d5a3e57"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair10-reader-only/observations.jsonl",
+          "sha256": "c9c80bafe910d20d8ef7ad97fa92d5f2c0044bdc042ce86df4e650d9022dfc1a"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair10-accepted-item1/observations.jsonl",
+          "sha256": "61bcdc67119c2225e4b5c118445b216670ee0084b2b8088d41c200a7e68bf69b"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair11-accepted-item1/observations.jsonl",
+          "sha256": "dc70bfc5911f8b8a83633649e4727c696c9f2a970f849d439bf563c8e862c558"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair11-reader-only/observations.jsonl",
+          "sha256": "ab2627f0302bcfd94e1597b73bb2e23b898b7aeeb5d5a250799cdb086ac2b9e9"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair12-accepted-item1/observations.jsonl",
+          "sha256": "609f24842882e1426a649bc58ed91b7158550768030f7fd2a5171feaf0dd512a"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair12-reader-only/observations.jsonl",
+          "sha256": "c7ffced4bd89f0a72e7273191962f50d9a6787c402941613b1a5aad61ace2f2f"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair13-reader-only/observations.jsonl",
+          "sha256": "5c171fcd70bc64c4e595ff3add94dc454199a6aa0527b5dbace4df9751fb73f5"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair13-accepted-item1/observations.jsonl",
+          "sha256": "8c12aa0c302baf25a6c3ca7f386490a2d53d1f34c952b1e4a867e9ed0b561956"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair14-reader-only/observations.jsonl",
+          "sha256": "17f2e3c2f6d7b25f088222ed0d1591ec0a9bd140f550b3bc9060cb2334503d1f"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair14-accepted-item1/observations.jsonl",
+          "sha256": "6a0636b259a69906b01dba2f3ac04ba78c170bb5257d759a9619eaa24771a057"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair15-accepted-item1/observations.jsonl",
+          "sha256": "1034eb2634690642ddf67d7358a77880b31ca66046b27c6481d0f82308bdbe59"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair15-reader-only/observations.jsonl",
+          "sha256": "4a6be17b30ad55e04d8d3c2afc40846b57dcf8028cc08508c60ba9aefde795be"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair16-reader-only/observations.jsonl",
+          "sha256": "639861baa7b5f48d9dc70a02df15df5392e07a7709292892213c69e67d542f0b"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair16-accepted-item1/observations.jsonl",
+          "sha256": "3e63b736715e12eb0bb020525c450f01bfd07a8ec44f7fb89ff5bdb97795cd3f"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair17-accepted-item1/observations.jsonl",
+          "sha256": "36cabadaa9c704ff05c7d98ecbc0e5aa7090fde8ca342320bdc6c82b5a472b14"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair17-reader-only/observations.jsonl",
+          "sha256": "7f42caa328a01a688c4aad1d509ba1eb3ea9c42c91f22757e919fbca00f6bc35"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair18-accepted-item1/observations.jsonl",
+          "sha256": "dd7ad2f04cacb2f6b2c796d38ce975fd9dc1b1061252bd3c8b4d70603a184692"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair18-reader-only/observations.jsonl",
+          "sha256": "4a4fc91f5b8591168ab2f8d4095cf96f615b95353a1ea1f39e447897bbe980b4"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair19-reader-only/observations.jsonl",
+          "sha256": "bea2c84840a7a09e2c9379435857cf7e1fa3118e08c5b65c08603d7914d1e6dc"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair19-accepted-item1/observations.jsonl",
+          "sha256": "52a2a2d783ab4ba7e677d693463080151b66dc8a33211f6f4090f0bcf69c339e"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair20-reader-only/observations.jsonl",
+          "sha256": "367c4d4dffd25a381a9cfd5de58d46ab021e0abe822d1fb847ee57664b4b66ed"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair20-accepted-item1/observations.jsonl",
+          "sha256": "1ef1c3d804cf388c9d871a2d3568fbec29d24a562049da7193ed23f6671a41e4"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair21-reader-only/observations.jsonl",
+          "sha256": "434aa3a7e8c780dfc2684d75d0c3756181ce02a4e6ffd6a373a5b36498b53a5e"
+        },
+        {
+          "path": "runs/comparison-B/round2-pair21-accepted-item1/observations.jsonl",
+          "sha256": "3aefd5af0d88b7fd127a29de35db1c003092c7e5a63e1be69ca48a08bc6abf05"
+        }
+      ],
+      "campaign_sha256": "25112ed5732913974f0179e98221a9c704fcdf6786eee13a6f205502d8459b70"
+    }
+  ],
+  "paired_rows_checked": 1176,
+  "controls_checked": 28,
+  "bootstrap_medians_reconstructed": 560000,
+  "scope": "Independent code for the same predeclared estimator; not independent samples/inference model, family-wise testing, equivalence, universal recovery or item2 acceptance. Companion lane checks all provenance; no application/DB/native imports."
+}

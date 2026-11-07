@@ -1,0 +1,230 @@
+{
+  "schema": "source-only-independent-review-evidence-v1",
+  "frozen_utc": "2026-10-31T02:57:25.086779+00:00",
+  "scope": "Closed independent source/admission/untimed review; all listed files immutable after this freeze.",
+  "files": [
+    {
+      "path": "ADMISSION-RESULT-attempt01.json",
+      "bytes": 196,
+      "sha256": "1704c99b5d1e402a9edf34a92654804a23313d3729671b5cd49d71ac5bce74c2",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "ADMISSION-RESULT-attempt02.json",
+      "bytes": 2837,
+      "sha256": "d057dbbfa93ede8288a84972856c966ae630052f870bfc9856543f3bb9158cbb",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "CLOSED-EVIDENCE-REFERENCES.json",
+      "bytes": 8526,
+      "sha256": "af7e76cc2ff9cd34e4265f1693d55de59f568e262d6a4173fba951aed32635fc",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "PREFLIGHT-RESULT-attempt01.json",
+      "bytes": 4813,
+      "sha256": "2ae26ec40b41991f38f28c9aa04b12b30af1dd804c6e836637cd0f33180cb3e3",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "REVIEW.md",
+      "bytes": 3996,
+      "sha256": "c0db3b44f6b4eb6193d4167face7cd9da18b57285a0d5fbb901d7de0c2e76880",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "REVIEWER-SETUP-CORRECTION.json",
+      "bytes": 1313,
+      "sha256": "da308af02198d483285d185a3fb20ec48d873aadf9f61200a24066312cedcb43",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "SUMMARY.json",
+      "bytes": 1744,
+      "sha256": "5b1b56852091b89551e1a1ee761f1bbdca2716d83dedd734e629ed19a93a9875",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "VALIDATOR-CONTROLS-attempt01.json",
+      "bytes": 12695,
+      "sha256": "43a9f6ace1eff7389b4f46a70b62d161c8f414713b7ec461c9d8f5c33f99b8e8",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "VALIDATOR-SOURCE-CHECKPOINT.json",
+      "bytes": 492,
+      "sha256": "b297a8238407bdb959514dcae09a62cfe48567f4f2096cd96f97f6557ef65ebf",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "WORKER-PROGRESS.jsonl",
+      "bytes": 2654,
+      "sha256": "24839d7018100370aa25ac8900599a0468ef5f87a595ccf7d64962a8e77cd3c3",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "admission-validator-attempt01.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "admission-validator-attempt01.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "admission-validator-attempt01.stdout",
+      "bytes": 153,
+      "sha256": "78f49e22b34f4a6359aa92f59c2247a59854e69f1061cebaae557ca361d189d8",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "admission-validator-attempt02.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "admission-validator-attempt02.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "admission-validator-attempt02.stdout",
+      "bytes": 139,
+      "sha256": "60e5f1fc8b103b9d567951a330b99bbbc3465ff1ed6df5d8cec668a85cd52214",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "control-fixtures/actual_outer_integer0_positive.json",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "control-fixtures/outer_bool_false_denied.json",
+      "bytes": 6,
+      "sha256": "2ed27c1421e6928dbe13dbfdb5c59e1045b30341fe7ebe05700006bc5ac572c0",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "control-fixtures/outer_float0_denied.json",
+      "bytes": 4,
+      "sha256": "51ff0d2f0d3a5d61edec31785532ea0d570f8c348d58b15b94ff9c2ca6e926a4",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "control-fixtures/outer_nonzero_denied.json",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "control-fixtures/outer_null_denied.json",
+      "bytes": 5,
+      "sha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "independent_validator-v1.py.source-text",
+      "bytes": 31987,
+      "sha256": "e517768c018574e61c6a52f290924605372bc15ef9b417e517931969d362ad4b",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "independent_validator.py",
+      "bytes": 34844,
+      "sha256": "1b2f5f7d6c904e6af0182560be87aa1af3307869de9b64cfb92ec9fbc005ce96",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "preflight-validator-attempt01.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "preflight-validator-attempt01.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "preflight-validator-attempt01.stdout",
+      "bytes": 139,
+      "sha256": "89cbbd044eb4abbaf133f3f381279be81be0d3260303244d2a7c9e02ec9a905d",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "test_independent_validator.py",
+      "bytes": 8228,
+      "sha256": "11d1282f5ac1a0703f48dc0b0cff3295d6e7e1b2226df4b0a450e93da27d2b58",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "validator-controls-attempt01.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "validator-controls-attempt01.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "validator-controls-attempt01.stdout",
+      "bytes": 73,
+      "sha256": "990aae2ab434071ec5836e46a02d501f126a30ece13ce99495f3a4d85cea267a",
+      "mode": "0644",
+      "utf8": true
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "__pycache__/independent_validator.cpython-312.pyc",
+      "bytes": 52140,
+      "sha256": "f4f77f79d0765b1c3fedddb53fbf6692510b75f2d93aa6b9c609af0b4dd3072b",
+      "mode": "0644",
+      "reason": "Own initial py_compile bytecode cache: non-source binary excluded; preserved in place, not deleted."
+    }
+  ],
+  "manifest_self_excluded": true,
+  "active_operations": false,
+  "secrets_or_private_reasoning": false,
+  "binary_or_runtime_artifacts_published": false
+}

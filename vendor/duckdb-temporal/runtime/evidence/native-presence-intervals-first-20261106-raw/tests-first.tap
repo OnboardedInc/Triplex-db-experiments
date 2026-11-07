@@ -1,0 +1,45 @@
+TAP version 13
+# Subtest: presence intervals match nine manual ledgers and independent endpoint cells at old cuts and reopen
+ok 1 - presence intervals match nine manual ledgers and independent endpoint cells at old cuts and reopen
+  ---
+  duration_ms: 8746.808041
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-ABiPtq/facts.duckdb
+# Subtest: presence intervals keep Unicode byte identities separate at shared batch cuts
+ok 2 - presence intervals keep Unicode byte identities separate at shared batch cuts
+  ---
+  duration_ms: 906.8805
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-uTBLJj/facts.duckdb
+# Subtest: presence interval limits charge all visible events, actual islands and exact UTF8 result bytes
+ok 3 - presence interval limits charge all visible events, actual islands and exact UTF8 result bytes
+  ---
+  duration_ms: 1058.8695
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-Ls2DCB/facts.duckdb
+# Subtest: prepared presence reads rerun owner and clock guards even for no-edit status rows
+ok 4 - prepared presence reads rerun owner and clock guards even for no-edit status rows
+  ---
+  duration_ms: 775.185416
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-iXRpDp/facts.duckdb
+# Subtest: presence intervals see native caller-transaction writes and restore old cuts after rollback
+ok 5 - presence intervals see native caller-transaction writes and restore old cuts after rollback
+  ---
+  duration_ms: 1023.863
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-4fVqif/facts.duckdb
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14098.253708

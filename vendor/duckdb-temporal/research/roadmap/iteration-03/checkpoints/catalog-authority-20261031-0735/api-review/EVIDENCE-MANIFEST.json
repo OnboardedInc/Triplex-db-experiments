@@ -1,0 +1,65 @@
+{
+  "approval": null,
+  "build_load_runtime_viability": "UNRUN",
+  "file_count": 7,
+  "files": [
+    {
+      "bytes": 11700,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "API-REVIEW.md",
+      "sha256": "d474f14f7e3c76450d640b274f893298e627ef983b043423646869ee213a5a2a"
+    },
+    {
+      "bytes": 15190,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "PINNED-SOURCE-RECEIPTS.json",
+      "sha256": "04d091b8705fce6b9bc4f5d82eecea70c3e479f0f354f61e505dab09352f2b3c"
+    },
+    {
+      "bytes": 77726,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "PUBLIC-SURFACE-INVENTORY.json",
+      "sha256": "e4332b86b9f7e5af9dd24aabd6a3b5b83a617b41b25e21707056095d55a689d4"
+    },
+    {
+      "bytes": 1765,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "STATIC-RECEIPT.json",
+      "sha256": "7e342b4600403c08f02571891b2fc0c0227f39b11db6df8dff90d2dc8354ffb1"
+    },
+    {
+      "bytes": 1309,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "command-exit.jsonl",
+      "sha256": "39fc9a1b148033028a699120effaa1acbcd68382c390a4a04110f3b6146f34e6"
+    },
+    {
+      "bytes": 2903,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "progress.jsonl",
+      "sha256": "c95911f9f37a8020903059a11e2bd3a1d718adeb3fea6ea6881a13133e2d49e0"
+    },
+    {
+      "bytes": 2854,
+      "encoding": "utf-8",
+      "mode": "0444",
+      "path": "source-hash-checker.js",
+      "sha256": "a5e9d39a8c2e7651e05d580dd9fe1332de211ea382b782096b0e5c6665801f45"
+    }
+  ],
+  "manifest_self_excluded": true,
+  "pending_call": null,
+  "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "root_authority": "Root alone selects architecture and gates implementation/execution/publication.",
+  "schema": "closed_source_only_evidence_manifest/1",
+  "scope": "Independent public C APIv2/private context attachment authority research only; no stopped backup material or action; no app/native/DB execution/source changes.",
+  "session": null,
+  "total_bytes": 113447,
+  "utc": "2026-10-31T07:25:53.484215+00:00"
+}

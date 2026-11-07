@@ -1,0 +1,73 @@
+{
+  "schema": "td.antijoin-config-independent-source-review/1",
+  "status": "CLEAR_FOR_PARENT_AUTHORIZED_CORRECTNESS_SMOKES",
+  "reviewedSourceCommit": "8651acc1d243b4803a55e2d08913fc08abd3ae4b",
+  "reviewedBranch": "codex/temporal-antijoin-config-20261105",
+  "nativeReferenceCommit": "fe9ca9aa00b454f7555fe6f1392ef8ad2a3f5840",
+  "blockingFindings": [],
+  "sourceAndMetadataChecks": {
+    "originalBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+    "nativeBindingSha256": "0eaf2187d65289cbbb2902ae58867ab64127d4c973d6fe59341065e50356f963",
+    "nativeHelperSha256": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610",
+    "unchangedBReferenceHarnessSha256": "b57ec6acf0efd993c6b86d801e0af3295ee4ef2e15deb5e8e1dd76786d3518bc",
+    "unchangedReadCellSourceSha256": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "archiveInventoryFileSha256": "b17f748f92f8fa94bd5b9218602993e8b0e5f4b9ab863b38d7941fb11769580b",
+    "actualHarnessFingerprintsPerArm": 9,
+    "allActualCommonHarnessFingerprintsMatched": true,
+    "nativeHelperAndBReferenceHarnessByteIdentical": true,
+    "originalBudgetContentAndSixteenReaderLimitsUnchanged": true,
+    "selectedRuntimePinMapsEqualQualifiedB2Binding": true,
+    "fixtureAndRecipeIdentitiesRemainExplicit": true
+  },
+  "arms": [
+    {
+      "arm": "B0",
+      "configSha256": "c0f2716614737f60947e5a053ae315fe886ea59b1ab0aa439d678433bf9f4319",
+      "threads": 4,
+      "UV_THREADPOOL_SIZE": "4",
+      "logicalClients": 16,
+      "readerConnections": 16,
+      "extraAdmissionCap": null
+    },
+    {
+      "arm": "C2",
+      "configSha256": "ed7a651c7adeb5b658938c3f6794fe757d8179455aa9292cf2850b0078dd3fe4",
+      "threads": 4,
+      "UV_THREADPOOL_SIZE": "4",
+      "logicalClients": 16,
+      "readerConnections": 16,
+      "extraAdmissionCap": 3
+    },
+    {
+      "arm": "B2",
+      "configSha256": "2b30d92b3907c6c2075d6d34c676728e3cd9333077b7727fa966aa6367db959f",
+      "threads": 1,
+      "UV_THREADPOOL_SIZE": "4",
+      "logicalClients": 16,
+      "readerConnections": 16,
+      "extraAdmissionCap": null
+    }
+  ],
+  "reviewConclusions": [
+    "The immutable original 0.32 numerical baseline and fixed B native artifact are labeled separately; only the three exact configuration arms and sixteen-reader subset are admitted.",
+    "The native v2 binding helper is unchanged. It verifies actual core/owner/engine/adapter/source identities against the original B sourceRoot and c3 tracked-source attestation, while the common harness has separate actual fingerprints.",
+    "The readCell implementation, query, independent correction oracle, seed batches and writer loop are unchanged. Full-call timing starts before the C2 FIFO wrapper and includes its queue wait and complete public decoding.",
+    "FIFO admission subtracts queue wait from the remaining public timeout, propagates aborts and releases a slot on either fulfillment or rejection; completed cells require no active/queued/rejected calls.",
+    "Native reader acquisition uses FIFO shift/push. Even with only three admitted calls, the pool can rotate across all sixteen independent connections; the new observer checks distinct actual port identities and separately caps active control scopes.",
+    "The physical observer counts public native-port control scopes including first/warmup/final calls, not simultaneous native execution tasks. Its scope label is accurate and shared by all three arms.",
+    "Small100k timings are explicitly unqualified; large sixteen-reader screens use the original eight absolute limits and retain drift, source, receipt, exact-answer, lifecycle and cleanup checks. A winner still needs one-reader and fresh/reversed control qualification."
+  ],
+  "remainingGates": [
+    "First real startup of the copied read-only SDK/core/owner archive and three actual100k correctness smokes",
+    "Parent-scheduled isolated sixteen-reader large screens with original numerical gates",
+    "One-reader qualification, fresh matched B0 and reversed promising comparisons, broader regressions before promotion"
+  ],
+  "reviewBoundary": {
+    "engineOrCompilerExecuted": false,
+    "testsExecutedByReviewer": false,
+    "largeFixtureHashed": false,
+    "runtimeBinariesOrSdkHashedByReviewer": false,
+    "sourceEdits": false,
+    "method": "Read-only source/diff review plus small actual source/config/native-binding/budget/inventory-file hashes. This review checks the SHA256SUMS file, not every archived file anew; actual runtime admission and startup remain smoke obligations."
+  }
+}

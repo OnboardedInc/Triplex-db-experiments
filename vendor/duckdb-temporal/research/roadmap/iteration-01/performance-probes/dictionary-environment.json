@@ -1,0 +1,30 @@
+{
+  "captured_utc": "2026-10-30T14:35:51Z",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "python": "3.12.14",
+  "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "shared_host": true,
+  "flags": "-std=c++17 -O3 -DNDEBUG -Wall -Wextra -Werror",
+  "allocation_measurement": "cumulative requested bytes/new calls only, not peak/live bytes; same header-free counters in all candidates",
+  "timing": "one dictionary construction + intern per input + one emitted canonical string per distinct value + dictionary teardown; input generation, validation and emitted-output teardown excluded",
+  "warmups": 2,
+  "measured_repeats_per_process": 21,
+  "independent_processes": 2,
+  "order": "cyclic Latin-square rotation across 3 candidates each repeat",
+  "address_undefined_sanitizer": "-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined; 1000 inputs/scenario, 2 warmups + 1 measured repeat; ASAN_OPTIONS=detect_leaks=0; exit 0, empty stderr",
+  "leak_sanitizer": "blocked: LeakSanitizer encountered fatal error because it does not work under ptrace in this execution runtime; no leak-verification claim",
+  "balanced_v2": "single-buffer to_chars integer/stack hexadecimal float formatting, short-string/small-integer cases added; two 21-repetition processes, 2 warmups each; five scenarios, 630 measured records; all exact checks passed",
+  "balanced_v2_address_undefined_sanitizer": "same sanitizer flags; 1000 inputs/scenario, 2 warmups +1 measured repeat; ASAN_OPTIONS=detect_leaks=0; exit 0, 15 exact checks, empty stderr"
+}

@@ -1,0 +1,141 @@
+{
+  "schema": "td.sdk-work-conserving-first/1",
+  "status": "FIRSTPASS_FOCUSED_ONLY",
+  "firstAttempt": true,
+  "recordedAtUtc": "2026-11-06T04:39:50.574148+00:00",
+  "sourceCommit": "a37ee6e45aab2a0da334114669c51d1556e911a1",
+  "baseCommit": "b5ea1f3c49645dad295a264119acf4ea5e3c7b40",
+  "branch": "codex/temporal-sdk-work-conserving-20261105",
+  "worktree": "[LOCAL_PATH_0066]",
+  "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+  "tsc": {
+    "command": [
+      "node_modules/.bin/tsc",
+      "--pretty",
+      "false"
+    ],
+    "session": 23657,
+    "exitCode": 0,
+    "nativeBuild": false,
+    "install": false
+  },
+  "test": {
+    "command": [
+      "node",
+      "--test",
+      "build/adapter/test-sdk-work-conserving.js"
+    ],
+    "session": 85586,
+    "exitCode": 0,
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "canceled": 0,
+    "durationMs": 5759.768167,
+    "reporter": "Node default spec; .tap filename does not imply TAP serialization"
+  },
+  "conditions": [
+    "Four actual held SDK streams, FIFO across five heavy families, all16 physical reader connections reused.",
+    "Actual writer call is reached after third completed read scope; first two slots refill reads; writer lane serial, then read-only capacity returns4; real SQL receipts/latest+historical answers.",
+    "16reads behind an earlier held actual writer have zero leases/grants; canceled barrier job retains pending admission; later held writer cannot extend original read barrier.",
+    "Queued cancellation/timeout creates no native token; active canceled scope retains resources until held result/cleanup is released; native output-budget error plus healthy reuse.",
+    "Close and revalidation drain4active+12queued reads and a real accepted writer, then reject/recover as expected without a maintenance execution permit.",
+    "16held light SDK results preserve older light lease FIFO while a writer progresses; readers0 maintains serialized tail/deadline ordering."
+  ],
+  "explicitMemoryProfile": {
+    "normalApplicationDefault": "128MB unchanged",
+    "firstFiveMethods": "default128MB",
+    "lastMethodHeldLightCondition": "512MB only to create the previously established16held-light lease condition",
+    "serializedSubcase": "default128MB"
+  },
+  "pins": {
+    "build/adapter/native-entity.js": "57516761338c48be5c8ade1b70bf85d52527a507c62e5a378cec336f05366583",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "build/artifact.json": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "build/owner_probe/artifact.json": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+    "adapter/native-entity.ts": "61ae774311d35a963ef91097129093d074fc7e79d6d65919cb3e905d3f460a1e",
+    "adapter/test-sdk-work-conserving.ts": "f80ba4c10703a5da3164abee59407c96d92840652407964b5443aa5510bb4deb",
+    "SDK-QUERY-ADMISSION.md": "a80b2f77158b410782c9c240323290561cfb5603cdf01a381d598a1a7c57db5a",
+    "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+    "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b"
+  },
+  "compiledTests": {
+    "build/adapter/native-entity.d.ts": "915d3898172f8f8e45b1afc92d4d74abae3a9f40cf86068247b2d6ca079b4540",
+    "build/adapter/test-sdk-work-conserving.js": "970a5a782b7ec131ed001f668320c73a3edc5e4ed8163842d29e1c9ae3a3bbc6",
+    "build/adapter/test-sdk-work-conserving.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+  },
+  "unchangedAfterEngine": {
+    "allPostTscRuntimeAndSourcePins": true,
+    "localSdkFiles": 395,
+    "localSdkMapping": true,
+    "nativeSourceReferences": 40,
+    "nativeInputsMatchFrozen": true,
+    "externalFileAndSymlinkMaps": true
+  },
+  "staging": "Existing stage_sdk_verification.py with frozen8f1b inventory445; fresh local copies, existing plain1ef library and existing shared type/effect/Triplex dependencies; required MJS copied.",
+  "rawFiles": {
+    "after-engine.json": {
+      "file": "sdk-work-conserving-first-20261105/after-engine.json",
+      "sha256": "5fac31554f9d2b847d4248eadc749b08131430e8d02dc6add7261fdadda7bcc0",
+      "bytes": 357690
+    },
+    "before-engine.json": {
+      "file": "sdk-work-conserving-first-20261105/before-engine.json",
+      "sha256": "3db0ea84a2c475711bb312ac8506c275b13e12784ea3dceecdd554f04c69d3cb",
+      "bytes": 2441
+    },
+    "before-tsc.json": {
+      "file": "sdk-work-conserving-first-20261105/before-tsc.json",
+      "sha256": "dd2bbe1e74bff5c47cb99aeb33a2df6b0c9ba5ec63debeccf7f7061a0377626b",
+      "bytes": 357155
+    },
+    "staging.json": {
+      "file": "sdk-work-conserving-first-20261105/staging.json",
+      "sha256": "b9a101c9a96bcc484eb53765b884cae6a1e0a2d6365ab09e99fd40fa84ed4928",
+      "bytes": 6698
+    },
+    "test-first.exit": {
+      "file": "sdk-work-conserving-first-20261105/test-first.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "test-first.tap": {
+      "file": "sdk-work-conserving-first-20261105/test-first.tap",
+      "sha256": "247cabbeae93b1d8952677b6c94f710586e291d676499ca25e837fd3094f627a",
+      "bytes": 682
+    },
+    "tsc-first.exit": {
+      "file": "sdk-work-conserving-first-20261105/tsc-first.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "tsc-first.log": {
+      "file": "sdk-work-conserving-first-20261105/tsc-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "qualified": "First TypeScript and six focused real-engine lifecycle methods only.",
+  "unrun": [
+    "Old static-three suites/assertion adaptation",
+    "Full independent512patch trace",
+    "Full verification/44Triplex conformance",
+    "All anti-join numerical gates",
+    "All27broad numerical gates",
+    "Paired/reverse performance qualification"
+  ],
+  "limitations": [
+    "Read scope holds occur after actual SDK stream execution and before fetch/cleanup, not a claim of four simultaneous C++ cores. Writer pauses precede actual native command dispatch; all claimed ACKs come from subsequent real C++ execution.",
+    "A queued/ungranted cancellation earns zero credit. A job canceled after atomic slot+reader grant still owns and cleans its resources, then earns one cleanup credit even if native execution never begins.",
+    "Completion quantum is not a wall-time guarantee or shared native/engine/host memory budget. Light work remains outside four-slot accounting.",
+    "395local SDK files and selected external regular-file/symlink maps were hashed before/after. Triplex scoped package links are recorded; their target trees were not recursively fingerprinted by this six-method gate. No Triplex acceptance is claimed.",
+    "No source, fixture, cap, policy or test change/retry after the initial TSC/engine outcome."
+  ]
+}

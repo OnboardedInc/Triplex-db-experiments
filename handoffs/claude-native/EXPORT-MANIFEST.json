@@ -1,0 +1,717 @@
+{
+  "format": "triplex-independent-native-source-handoff/1",
+  "createdAt": "2026-11-07T14:15:05.020312+00:00",
+  "sourceCheckpoint": "eb1490533d19346a430417a740dfbb56e8789f75",
+  "baseArchive": {
+    "path": ".artifacts/claude-native-handoff/source-eb14905.tar.gz",
+    "bytes": 36114638,
+    "sha256": "2ff6bb8fd59935f168bfdfd1d8b7141b5b5fb046f1cc4f7a915df9b6d6648c8d"
+  },
+  "scope": {
+    "independentNativeEffort": [
+      "xtdb-native",
+      "qlever-native"
+    ],
+    "codexRetained": [
+      "duckdb-datalog",
+      "xtdb-datalog",
+      "qlever-datalog"
+    ]
+  },
+  "qualification": "SOURCE_EXPORT_ONLY_NOT_A_BUILD_OR_CURRENT_ENGINE_ACCEPTANCE",
+  "limits": [
+    "Configure an independent checkout, engines, ports, volumes, credentials, tools, resources and receipts.",
+    "No homebase VM, database, installed dependency, canonical queue, credentials or resource grant is transferred.",
+    "Frozen source prototypes are unbuilt/unexecuted unless their individual evidence explicitly records otherwise.",
+    "Selected independent reviews are reference evidence; their large raw capture trees and installed dependencies are not copied.",
+    "Historical absolute paths and bootstrap commands are machine-specific data, not instructions or authority.",
+    "The base source is already expanded in this archive; the README's optional original-source archive link is historical metadata."
+  ],
+  "overlayFiles": [
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/CONTRACT.md",
+      "bytes": 3726,
+      "sha256": "c1ae51640df77aaa8a271b9b3f4cd25ed3375f48e496514c2f8d98eeb6e9eaa2"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/PROPOSAL.json",
+      "bytes": 17438,
+      "sha256": "ac4843ee341208bdb57475b35507feab85dad811fb62365eb056f27b99a9f3d5"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/contracts/assertion-snapshot-ab-private-build-v1/contract.json",
+      "bytes": 40016,
+      "sha256": "2f7c6aed66b75753f7d92a570e78c84226dfbff72f11f4f5bf137060ff71fbb4"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/contracts/assertion-snapshot-ab-private-build-v1/expected.json",
+      "bytes": 183,
+      "sha256": "bc2f8a76c6d075d1f696e0812fd9f6323b2e721401124fbcd764cc27c5ecfe3e"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/contracts/assertion-snapshot-ab-private-build-v1/manifest.json",
+      "bytes": 904325,
+      "sha256": "3a59be55792971e5288c0f268d8b848614cd7bc35e3b90c3becbb2b73787d548"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/contracts/assertion-snapshot-ab-private-build-v1/prepared-source-preimages.json",
+      "bytes": 40193,
+      "sha256": "3c73b0a868efe08abfe3dd848be037f549e9bdfd169310fb2594d409ea3db28c"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/contracts/assertion-snapshot-ab-source-types-v1/contract.json",
+      "bytes": 40009,
+      "sha256": "c3cdc41493f5240a4e1e1f818382d30a72e022896ce3ffaf4eeac353553b887e"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/contracts/assertion-snapshot-ab-source-types-v1/expected.json",
+      "bytes": 135,
+      "sha256": "11f0140c7442003fb95bfc9da405cbee9fcd4fdac6b4a142002b3f9cacf8f3e1"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/contracts/assertion-snapshot-ab-source-types-v1/manifest.json",
+      "bytes": 904239,
+      "sha256": "9199995aed9b9d6fcef25378a75fb27e9d4cd6213e1f2c9fe098998e365d0767"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/contracts/assertion-snapshot-ab-source-types-v1/prepared-source-preimages.json",
+      "bytes": 40191,
+      "sha256": "8db4d7b25dbec100002699a1451564aabd90a1749d3e4c9a2a0828bf06bd8497"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/dependencies.json",
+      "bytes": 1341332,
+      "sha256": "2f758bd6529c3c0e5c30487530a405ffccf4e3253d80e118836026a39b626c96"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/fake-worker.mjs",
+      "bytes": 8560,
+      "sha256": "c833b708b7aa732d7691e4040b64f3b4d09e55bdf9e29dc146654c52bb7bc816"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/identity-preflight.mjs",
+      "bytes": 5444,
+      "sha256": "f6d129ab92878fffcc2574c8ef6d08f7b55be244b3f809a0be3c0e8066c6be69"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/identity-preload.mjs",
+      "bytes": 948,
+      "sha256": "aa1d2b73316998c9b5f426e8cdf420e0cd8c8fdc304efe9fe460a2906698b027"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/preparation-first-failure.json",
+      "bytes": 1011,
+      "sha256": "454a20d8219d3838fdd4144e17ba2f61bc8fdc949f35f5c209acb20bd3c418d6"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/prepare-v2.mjs",
+      "bytes": 16070,
+      "sha256": "c3e47707bb56781b17495b85ec501e1c7741f62cbe2030a2e442a969603ff7c9"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/prepare.mjs",
+      "bytes": 15917,
+      "sha256": "7779cb8bedb5ce34888987599a042b5c23cfcaa3d20cc964dbf0a9ea5d707775"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/source-copies.json",
+      "bytes": 17213,
+      "sha256": "4a0220c141ce259af7bd9a8ee9b5529b47cbb5cd58e95ea2f1362f28521b321d"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-offline-preparation-v1/worker.mjs",
+      "bytes": 11057,
+      "sha256": "45e51c27e71458336ba0b90a036df37e3030f3e1bb5e45772fab62a251c8d46c"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/CONTRACT.md",
+      "bytes": 4505,
+      "sha256": "bb959c4cc94a28fc38ed6b58a190dc1125551c9b306a4f4ffca9b56972c35540"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/PLANS.json",
+      "bytes": 6877,
+      "sha256": "85affc9ec111f1237545cf351f922b8bd33ba0f25b1d3439a9530d5b52d5db8f"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/SOURCE-PROPOSAL.json",
+      "bytes": 7648,
+      "sha256": "f9b9ce1500302035e997c52b41f18d231f3c241f77d85c82bd7443eb78aebc25"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/adapter-delta.patch",
+      "bytes": 1745,
+      "sha256": "a018f4164e6d50beb3c20b5689a4408563ed65693b97b49cf8b80a89ea7422f7"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/ConstraintValidation.ts",
+      "bytes": 15048,
+      "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/MaintainedQueries.ts",
+      "bytes": 11052,
+      "sha256": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/Operations.ts",
+      "bytes": 1829,
+      "sha256": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/TemporalQueries.ts",
+      "bytes": 10103,
+      "sha256": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/TransactionContext.ts",
+      "bytes": 666,
+      "sha256": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/XtdbClient.ts",
+      "bytes": 10615,
+      "sha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/XtdbQueryExecutor.ts",
+      "bytes": 10564,
+      "sha256": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/XtdbStorageAdapter.ts",
+      "bytes": 25584,
+      "sha256": "9f453f672032322425aa9e452e7f2b42428144b1c9e39cf85bd51e37f02a2a63"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/codecs.ts",
+      "bytes": 8780,
+      "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/index.ts",
+      "bytes": 3831,
+      "sha256": "5bdb382d4bd424e92ab6098ba0bed9954cae9a256ffe1fde2378c67bf8233de3"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/native/NativeQueries.ts",
+      "bytes": 7584,
+      "sha256": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/native/Reachability.ts",
+      "bytes": 10624,
+      "sha256": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/native/ReadOnlySql.ts",
+      "bytes": 3662,
+      "sha256": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/native/Sources.ts",
+      "bytes": 6366,
+      "sha256": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/query/compiler.ts",
+      "bytes": 7431,
+      "sha256": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/query/domains.ts",
+      "bytes": 8567,
+      "sha256": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/query/grouping.ts",
+      "bytes": 4974,
+      "sha256": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/query/overlay.ts",
+      "bytes": 2655,
+      "sha256": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/backend/query/recursion.ts",
+      "bytes": 7187,
+      "sha256": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/component.test.ts",
+      "bytes": 7705,
+      "sha256": "1a1191cd55a1c866fed9761aef33736d8b9cf83b92439c8862f357baf568fc47"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/oracle/oracle.mjs",
+      "bytes": 4547,
+      "sha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/public.types.ts",
+      "bytes": 1055,
+      "sha256": "d4e7bfa3507e48c80b82534028256edee268376f90a471af291e9d6b17759bde"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/source-copies.json",
+      "bytes": 7716,
+      "sha256": "cd78941ab398eba879dd41f3c23304ac4f0c050bdb63598d31c5b84226de530d"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/src/adapterProjection.ts",
+      "bytes": 5772,
+      "sha256": "d5c01279a5b7e61df074ead60d4e036f1212d459c5da06785170af457bd6d2eb"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/src/contract.ts",
+      "bytes": 5096,
+      "sha256": "0c336873e649473860e6fdb1d211ed5772849e85aae2d82874cfff9dd125628e"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/src/entry.ts",
+      "bytes": 1089,
+      "sha256": "8ce1227f7b8b85462233011d2241aaea07b33d3a521f743f47f8a59e65e7ac2d"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/src/nativeHelper.ts",
+      "bytes": 3166,
+      "sha256": "f522e3d8d9cd15c26b5ad04aa96a993efaa43b4735ae4a0cb5ea02c5418228e4"
+    },
+    {
+      "path": ".artifacts/assertion-snapshot-ab-v1/src/rows.ts",
+      "bytes": 2730,
+      "sha256": "6a9a18a993af51e09f5c62bff123b9ec9e94d78e86d1e771ec57de5a1fa46e6b"
+    },
+    {
+      "path": "handoffs/claude-native/README.md",
+      "bytes": 9909,
+      "sha256": "0aafbc46ff64b5d0fc2e61616ebb604a85b91b3ad6218078b4a91485eb2ef475"
+    },
+    {
+      "path": "handoffs/claude-native/START-HERE.md",
+      "bytes": 4825,
+      "sha256": "0b39df9f10b8706c6c220e3753f10fbc8b9d103f289177bdd4888efeb2c6ac90"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/package.json",
+      "bytes": 1030,
+      "sha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/AggregateAnswers.ts",
+      "bytes": 5264,
+      "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/FamilyDomainDistinct.ts",
+      "bytes": 1455,
+      "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/FamilyDomainMask.ts",
+      "bytes": 2147,
+      "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/FamilyDomains.ts",
+      "bytes": 560,
+      "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/Operations.ts",
+      "bytes": 1656,
+      "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/PersistedScalarSource.ts",
+      "bytes": 2392,
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/QleverClient.ts",
+      "bytes": 4916,
+      "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/QleverQueryExecutor.ts",
+      "bytes": 19608,
+      "sha256": "c16ceb21ff23ce7251259fa61238defddcc72870abd7d9147a27309e6ad42319"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/QleverStorageAdapter.ts",
+      "bytes": 22212,
+      "sha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/ScalarSource.ts",
+      "bytes": 630,
+      "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/TemporalQueries.ts",
+      "bytes": 8772,
+      "sha256": "a97c81e76f354a00f23ad1f5488269544456299c09671b70e97870420e6e326c"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/compiler.ts",
+      "bytes": 45487,
+      "sha256": "304e2d527cbc0083a4ed75ea7c2f730e1b69d2337734f6d86c2ded5fbb96a01e"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/index.ts",
+      "bytes": 3905,
+      "sha256": "a13aad49ecf2c4380ddeeda9b3d08ccabedac32f36b7118c69133d65f1cf36d8"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/native/BasisRelations.ts",
+      "bytes": 12091,
+      "sha256": "4d4d0c9dba971210f07edba989e2df608e4540f2d2942f666fd8b15c1adfe484"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/native/NativeContext.ts",
+      "bytes": 7184,
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/native/NativeQueries.ts",
+      "bytes": 8755,
+      "sha256": "05df60e33c066f1fcd1a7cac100135a6dc9c9fa3e4af34d344b3a42728f8d21a"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/rdf.ts",
+      "bytes": 9714,
+      "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/src/recursion.ts",
+      "bytes": 6256,
+      "sha256": "b879595677ed2f0cfd4ff4c1f32f573ac724613e04f2a831e61fd96922bb15af"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/tsconfig.json",
+      "bytes": 238,
+      "sha256": "70fefc1483c57dc107320e5252b343e18d249b81d93fc6c8225eaa822026e545"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/candidate/tsdown.config.ts",
+      "bytes": 246,
+      "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/package.json",
+      "bytes": 1030,
+      "sha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/AggregateAnswers.ts",
+      "bytes": 5264,
+      "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/FamilyDomainDistinct.ts",
+      "bytes": 1455,
+      "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/FamilyDomainMask.ts",
+      "bytes": 2147,
+      "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/FamilyDomains.ts",
+      "bytes": 560,
+      "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/Operations.ts",
+      "bytes": 1656,
+      "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/PersistedScalarSource.ts",
+      "bytes": 2392,
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/QleverClient.ts",
+      "bytes": 4916,
+      "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/QleverQueryExecutor.ts",
+      "bytes": 19608,
+      "sha256": "c16ceb21ff23ce7251259fa61238defddcc72870abd7d9147a27309e6ad42319"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/QleverStorageAdapter.ts",
+      "bytes": 22212,
+      "sha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/ScalarSource.ts",
+      "bytes": 630,
+      "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/TemporalQueries.ts",
+      "bytes": 8772,
+      "sha256": "a97c81e76f354a00f23ad1f5488269544456299c09671b70e97870420e6e326c"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/compiler.ts",
+      "bytes": 44928,
+      "sha256": "9c60e5a7f491a92ffdb5f7d42cdf57d28dd01d6959066d2b4ed32850e14b012f"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/index.ts",
+      "bytes": 3905,
+      "sha256": "a13aad49ecf2c4380ddeeda9b3d08ccabedac32f36b7118c69133d65f1cf36d8"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/native/BasisRelations.ts",
+      "bytes": 12091,
+      "sha256": "4d4d0c9dba971210f07edba989e2df608e4540f2d2942f666fd8b15c1adfe484"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/native/NativeContext.ts",
+      "bytes": 7184,
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/native/NativeQueries.ts",
+      "bytes": 8755,
+      "sha256": "05df60e33c066f1fcd1a7cac100135a6dc9c9fa3e4af34d344b3a42728f8d21a"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/rdf.ts",
+      "bytes": 9714,
+      "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/recursion.ts",
+      "bytes": 6256,
+      "sha256": "b879595677ed2f0cfd4ff4c1f32f573ac724613e04f2a831e61fd96922bb15af"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/tsconfig.json",
+      "bytes": 238,
+      "sha256": "70fefc1483c57dc107320e5252b343e18d249b81d93fc6c8225eaa822026e545"
+    },
+    {
+      "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/tsdown.config.ts",
+      "bytes": 246,
+      "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e"
+    },
+    {
+      "path": "qualification/capacity/historical-assertion-metadata-v2/README.md",
+      "bytes": 3218,
+      "sha256": "9df51948d8f7a66d6b2afbd08ed8797b98ee42a41290962eddf3e45a47f09434"
+    },
+    {
+      "path": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+      "bytes": 4547,
+      "sha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b"
+    },
+    {
+      "path": "qualification/capacity/historical-assertion-metadata-v2/oracle.test.mjs",
+      "bytes": 4760,
+      "sha256": "ff81358090f1cb697f67d0360b092673dbef9bd0adb471067f7b5cb02b33ed94"
+    },
+    {
+      "path": "qualification/capacity/historical-assertion-metadata-v2/prepare.mjs",
+      "bytes": 8594,
+      "sha256": "25ff5ed2ac8ddd9fe71ac5702de1996a1364260d97028596a3b5b18113283411"
+    },
+    {
+      "path": "qualification/capacity/historical-assertion-metadata-v2/run.mjs",
+      "bytes": 3380,
+      "sha256": "791611bd96737407ab68a78c44204e9dbcb98681edf4e27dfdd944a495c73c07"
+    },
+    {
+      "path": "qualification/evidence/presence-reference-deletion-requirements-v1.json",
+      "bytes": 15313,
+      "sha256": "9a80e97039800fed67ec2fa4e6718efb478cd8e9b3bf97213aa4b1c44604969e"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/BUILD-TYPE-PLANS.json",
+      "bytes": 6541,
+      "sha256": "d94667b8924cb7065994f0f307bc35a427db271b0738c2537286d6c8ca8dd6af"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/PLAN.md",
+      "bytes": 6492,
+      "sha256": "0c255b7808a23c0c643a6c3b7b93434831c3d7a76cdede3e28566cebe548b18c"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/SOURCE-PROPOSAL.json",
+      "bytes": 30151,
+      "sha256": "03b905acbf763444f52b311381ac2062a01734c921dc2d628137fd5e011c2e22"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.mjs",
+      "bytes": 5073,
+      "sha256": "fd7992cb0e6324ac233d5410d1db1ee19de537495a93ae9430a1d0f6c7485790"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.test.mjs",
+      "bytes": 5990,
+      "sha256": "3152206b2215d0e876e190f6907496cb53917d3121e1ecbbaa4d8001e33eaba1"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/index.ts.patch",
+      "bytes": 1496,
+      "sha256": "3c8b1c3dd94602cf34ef4b8c41d3fd4be5be559df7d08fb3bee0cdfa445f1dc6"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/public.types.negative.ts",
+      "bytes": 355,
+      "sha256": "5d58314e74979cc4c8ff062c56fa7024bffc20391e81f8a743fe8e23acc9678e"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/public.types.positive.ts",
+      "bytes": 1138,
+      "sha256": "40d34057d3de734dc5eb47ce0af20db1c261bd4f9d175ac40b1c208a77af4923"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/sdk-observation.test.mjs",
+      "bytes": 3819,
+      "sha256": "25a8053bf34163391564bb30e3fe2344d94935dde3c642c843c08e6a5a63cd27"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/source-copies.json",
+      "bytes": 23923,
+      "sha256": "16a2f7856ed9f6c11c747ae00431ef3e43f4cb796c3a91aafa4704ae3fd28b77"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/BUILD-TYPE-PLANS.json",
+      "bytes": 7266,
+      "sha256": "f03a8b9e947cd137443786deb1ffea9ebd1aac3f37d6989a4b52cfcb7d4dc8c3"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/DELTA.patch",
+      "bytes": 3341,
+      "sha256": "7096ef022e21da335b65734d0fbe48dc5c46124c58617f4c4aaa3eb5a6081c1b"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/PLAN.md",
+      "bytes": 6994,
+      "sha256": "37615a7a3479a5406dba50818aaa855996b71dd2e7eeb8290de040eaf5164326"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/SOURCE-PROPOSAL.json",
+      "bytes": 28856,
+      "sha256": "9e604312e701337ca879e87c1de81cb406b675ce48f3235f10a78b2ddcc2795c"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/client-outcomes.mjs",
+      "bytes": 5277,
+      "sha256": "c225ded139ee248c285e2492c62fc07d0a410d4ccab58a908d524618ce84ba79"
+    },
+    {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/client-outcomes.test.mjs",
+      "bytes": 6288,
+      "sha256": "8a55dd773b855f111bedc41f26a9f2958080893bb50348b7ccdee44033ca03f2"
+    },
+    {
+      "path": "qualification/reviews/assertion-snapshot-ab-v1-source-independent.json",
+      "bytes": 15169,
+      "sha256": "8f747c8e6ac024cb8debb02db84bbae4358cf2638359b15a11d9a18834549d31"
+    },
+    {
+      "path": "qualification/reviews/configured-entity-xtdb-tiny-v4-terminal-independent.json",
+      "bytes": 8076,
+      "sha256": "a79d1ad96d80dc3b013cc181233e75f1a4ba08560ae6e8b45510a2c6543a95c1"
+    },
+    {
+      "path": "qualification/reviews/historical-assertion-metadata-oracle-v2-actual-independent-qlever.json",
+      "bytes": 4838,
+      "sha256": "95a5ef4b14b06a0e07d6c8c26459582b07a5f9161f899eb978efcb0bf52a6a5f"
+    },
+    {
+      "path": "qualification/reviews/qlever-combined-final-functional-independent.json",
+      "bytes": 2692,
+      "sha256": "6ecc15a4c5baa771b2125ac64dc760f45b4121b64a4e79ddd86b30536f7418e5"
+    },
+    {
+      "path": "qualification/reviews/qlever-native-entry-final-independent.json",
+      "bytes": 1259,
+      "sha256": "089fb8aca612ee264e9171e21d51fe3e934f360f1b664d1bf3d200d40785663e"
+    },
+    {
+      "path": "qualification/reviews/qlever-public-string-v6-terminal-independent.json",
+      "bytes": 3453,
+      "sha256": "c7639142c3d0bb5cf4930770db5ff6a5383a6a68506ff0fffaccb1fa5f2088d7"
+    },
+    {
+      "path": "qualification/reviews/qlever-wrapper-lowercase-v1-actual-independent.json",
+      "bytes": 9533,
+      "sha256": "6580ccd8ee5735aff51f2d25e420654c0daf3f647a5d1d5c02ef153f333fe82b"
+    },
+    {
+      "path": "qualification/reviews/qlever-wrapper-mixed-v1-actual-independent.json",
+      "bytes": 24965,
+      "sha256": "eadcbd398707d6483b24cc9583b8e0943fcb7777f4b3c10b30ffd45bb9089a6b"
+    },
+    {
+      "path": "qualification/reviews/qlever-wrapper-runtime-v3-source-metadata-independent.json",
+      "bytes": 16019,
+      "sha256": "abeed8664c8e221e6e082b4eb7430df1dfa128041c7c77eee695576e6e706fee"
+    },
+    {
+      "path": "qualification/reviews/xtdb-driver-stages-observed-v1-independent.json",
+      "bytes": 5728,
+      "sha256": "31c9a308d2917e601ef5564d1c72cec9a34bf0ce66faa874a986133e68be5304"
+    },
+    {
+      "path": "qualification/reviews/xtdb-driver-stages-observed-v1-trace-independent.json",
+      "bytes": 8267,
+      "sha256": "42f9bc798d7b0d4ccb4f07391aa189d6f58f0bb24cd0252fa612b425699bb081"
+    },
+    {
+      "path": "qualification/reviews/xtdb-final-combined-independent.json",
+      "bytes": 3810,
+      "sha256": "2965c13516cedbfb585fc3036c2469f872392277594771fee96cb791b2cdf164"
+    },
+    {
+      "path": "qualification/reviews/xtdb-handoff-observed-focused-v2-independent.json",
+      "bytes": 10680,
+      "sha256": "b7f70eaf6a95313f31c4d90e0e7ed8f28ad30a2d03b11dea5ba97544fccd018c"
+    },
+    {
+      "path": "qualification/reviews/xtdb-writer-rate16-control-v1-independent.json",
+      "bytes": 5689,
+      "sha256": "c548b77937fe2ab0c73eb6d0b9a1e724a79d881fc6ec4ec32e869433b3ad4fb6"
+    },
+    {
+      "path": "wiki/goals.md",
+      "bytes": 7331,
+      "sha256": "c950839afd0d87627e71a6c2ec7ae9fcc127042849b53dc911c90233d1606103"
+    },
+    {
+      "path": "wiki/problems/cancellation-observation-levels.md",
+      "bytes": 4877,
+      "sha256": "95504ddf87c45578d2eba6ab7175bf0373be77bde87b5de9ef807b5e2a67852b"
+    },
+    {
+      "path": "wiki/problems/native-correlation.md",
+      "bytes": 2573,
+      "sha256": "dd3203c744bb00823b368cfb9849da5c1411ae1b26a76fbb94de0e07d87808ff"
+    },
+    {
+      "path": "wiki/problems/qlever-native-string-order.md",
+      "bytes": 4826,
+      "sha256": "c06e70e04abf90d168aec2e55e7a6be5366c3bf0002ed15e1ac77aa05832245f"
+    },
+    {
+      "path": "wiki/problems/transaction-identity-read-duplication.md",
+      "bytes": 3255,
+      "sha256": "40d555d90bd9d2e53980edf219d9f495094bd6f82ad90740dc5ccd600bc96fa9"
+    },
+    {
+      "path": "wiki/research/presence-reference-deletion-requirements-v1.md",
+      "bytes": 6304,
+      "sha256": "39bfd708aad0f7b42893836fdcf607d2a298566910afd04e4a99c6356502ac3f"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "format": "triplex-configured-capacity-plan/1",
+  "status": "SOURCE_ONLY_UNEXECUTED_NO_BACKEND_OR_COMPONENT_GRANT",
+  "recipe": "packages/qualification/experiments/configured-entities-v1/recipe.mjs",
+  "oracle": "qualification/capacity/configured-entities-v1/oracle.mjs",
+  "tiny": { "entityCount": 8, "profiles": ["sparse1", "representative10"], "commandWidth": 500 },
+  "stages": [8, 1000, 5000, 20000, 100000, 1000000, 10000000],
+  "foundations": ["duckdb", "xtdb", "qlever"],
+  "queryPaths": ["duckdb-datalog", "xtdb-datalog", "xtdb-native", "qlever-datalog", "qlever-native"],
+  "largeStageAdmission": "BLOCKED_UNTIL_TINY_REPLAY_SCHEMA_RECEIPTS_REOPEN_AND_MEASURED_PHYSICAL_PEAK_RESERVATION_PASS",
+  "measuredBytesPerConfiguredEntity": null,
+  "measuredPeakWalSpillRebuildBackupBytes": null,
+  "uncertaintyAllowanceBytes": null,
+  "latencySla": null,
+  "oldRawDiagnosticsChanged": false,
+  "old142OracleChanged": false
+}

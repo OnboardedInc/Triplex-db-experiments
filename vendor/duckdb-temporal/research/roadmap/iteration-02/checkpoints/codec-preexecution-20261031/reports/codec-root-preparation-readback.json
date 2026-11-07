@@ -1,0 +1,27 @@
+{
+  "at_utc": "2026-10-31T02:47:13.064123+00:00",
+  "status": "PASS_ROOT_SELECTED_CODEC_PREPARATION_POST_EXIT_READBACK",
+  "checks": [
+    {
+      "manifest": "PREPARATION-MANIFEST.json",
+      "sha256": "8f43a7c409a13328aab5ed2997a39a41bba2b91f56d9290a2ae9a4bdba06cc54",
+      "members": 240
+    },
+    {
+      "manifest": "curated-source-preparation/MANIFEST.json",
+      "sha256": "e13c21ed37a8e0c5ee0311990a167c7a23ebda749e6c7056716a4bbb4ace3155",
+      "members": 241
+    },
+    {
+      "manifest": "terminal-handoff/SOURCE-ONLY-MANIFEST.json",
+      "sha256": "5f5c8e407c5c4bc458f2fc4657e22c2ef2ae054d7ea04ee40966acdbabd134ec",
+      "members": 14
+    }
+  ],
+  "handoff_sha256": "803b105f6038a3108a075a5450c6ae5a4222baf122c186a4583be4838875150c",
+  "all240_source_inputs241_public14_terminal_members_exact": true,
+  "candidate_admission_study_execution_gates_attempts_absent": true,
+  "no_application_import_or_execution": true,
+  "correctness_durable_main": "85a27609f0352774b0b72015d96778161f437563",
+  "source_commit": "7c42861776af49610c62ca4aa1a4ccc6a143de97"
+}

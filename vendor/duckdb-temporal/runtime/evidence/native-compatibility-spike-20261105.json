@@ -1,0 +1,93 @@
+{
+  "schema": "temporal-native-compatibility-spike/1",
+  "source_base": "5d179f5a",
+  "scope": "Experimental format-five append/retract transport. Default PublicDuckDBBackend and makeDuckDBRuntime remain selected by existing callers.",
+  "api": {
+    "append": "PRAGMA td_compat_append_v1(rows_json)",
+    "retract": "PRAGMA td_compat_retract_v1(assertion_id,timestamp,transaction_id,position)",
+    "opt_in_backend": "NativeCompatibilityBackend",
+    "opt_in_factory": "makeNativeCompatibilityRuntime"
+  },
+  "limits": {
+    "rows_per_native_append": 128,
+    "utf8_bytes_per_json_envelope": 32768,
+    "wrapper_statement_characters": 65000,
+    "public_batch_rows": 4096,
+    "retained_facts": 1000000,
+    "retained_logical_bytes": 268435456,
+    "format": 5
+  },
+  "contract": [
+    "Existing buildRow owns public shape and values. C++ emits physical carrier validation, conversion and retained charging.",
+    "Seven Triplex carriers retain caller IDs, commit positions and timestamps. Binary64 values use existing exact bit helpers, and public zero normalization is preserved.",
+    "Chunks use the existing caller transaction and poisoned-owner queue. Missing retraction returns false. Failed later chunks roll back previous chunks, receipt and clock changes.",
+    "All compatibility dispatch uses the raw port path and invalidates owned integrity before execution.",
+    "This transport does not add schema-aware fact transaction semantics. Raw valid JSON payload text can be noncanonical, matching the retained-carrier contract."
+  ],
+  "verification": {
+    "core_build": "PASS",
+    "paired_owner_build": "PASS",
+    "typescript": "PASS",
+    "node_command": "node --test --test-concurrency=1 build/adapter/test-native-compat.js build/adapter/test-adapter.js",
+    "node_methods": 17,
+    "node_passed": 17,
+    "node_duration_ms": 40137.631667,
+    "new_methods": 6,
+    "existing_adapter_methods": 11,
+    "triplex_cases_in_new_factory_method": 44,
+    "final_triplex_method_duration_ms": 36202.70275
+  },
+  "covered": [
+    "All seven public value carriers compared against existing typed Appender by all physical assertion columns, payload hashes, carrier bits, public results, history and logical usage.",
+    "Positive and negative binary64 subnormal, signed-zero normalization, maximum finite doubles and date values, fractional metadata and intervals with equal integral ceilings, saturated integral ticks.",
+    "Caller-selected IDs/positions/times, command claim identity, same-position retraction, soft missing retraction and read-your-writes.",
+    "Late duplicate and oversized-row failure roll back all chunks even when caller catches, followed by healthy reuse.",
+    "Malformed public rows, 129-row count, storage capacity, missing usage singleton, exact32KiB JSON envelope and one-byte-over rejection.",
+    "Owned activation followed by raw mutation invalidation and successful real re-audit.",
+    "Existing11 adapter methods include persistent restart, original Effect fiber rollback, interruption, driver lifecycle, Appender parity and abrupt-exit recovery."
+  ],
+  "first_failures": [
+    {
+      "kind": "typescript_fixture",
+      "observed": "Value tag literals widened after mapping an untyped fixture array.",
+      "fix": "Give the source fixture array its TripleInput contextual type."
+    },
+    {
+      "kind": "test_diagnostic",
+      "observed": "Initial physical diagnostic passed NULL v_f to the exact bit scalar.",
+      "fix": "Apply the scalar only to present floating carriers."
+    },
+    {
+      "kind": "native_envelope_admission",
+      "observed": "Reusing the typed Datalog term validator imposed a16KiB cap on the32KiB compatibility JSON envelope.",
+      "fix": "Use explicit envelope byte/nonempty/NUL admission; SQL JSON validation and existing public normalization own remaining shape/text checks."
+    },
+    {
+      "kind": "test_error_contract",
+      "observed": "Tests matched the outer generic rollback message instead of its preserved cause.",
+      "fix": "Assert ROLLED_BACK and the expected cause message."
+    }
+  ],
+  "performance": "Unmeasured. No throughput, latency improvement or default-cutover claim. Final acknowledgement currently joins inserted IDs through the public view and needs retained-history profiling.",
+  "artifacts": {
+    "engine": "2.0.0",
+    "node_api_version": 8,
+    "core_extension_sha256": "7cff5d5bb30d3ea5d807b479bbe4583f07838a47dc0ef4f21ada934dbba95b7c",
+    "core_library_sha256": "a77bec35bee85669844d19c83f8f78377e2c0515cd7426bd4f972e47ff4a98d4",
+    "control_bridge_sha256": "a996668f64b2f5206c105084a952389f236cd379cf437988114f440ea4c3ad4b",
+    "owner_extension_sha256": "dfba1fc043ce2edc0475cbb9ef89404f9d25608132419537778bdbfa98f10e77",
+    "owner_engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "catalog_sql_sha256": "52bf5736155afda31b6c37bf896ed7789fc41f2d4e063c1ce086cc8c9aea39fd"
+  },
+  "source_sha256": {
+    "native/src/temporal_compat.hpp": "7a58d0d65069782f36b3321020f255569cc25056b9af6ebb9e5792483f285c77",
+    "native/src/temporal_compat.cpp": "e77c01ca724dee539a9cd8da6237db8e56ed0884a56e05d825007c3ca5f70b8c",
+    "native/src/temporal_datalog.cpp": "f3fc9f687febfb9f1c8b426b5c734c3de61b5072badacc2f40908becf6085a43",
+    "build_native.py": "440ece09c44125a3447be8944bb42e3944158aa1c44c5691e9443221bc52385b",
+    "adapter/public-backend.mjs": "9d993207539943c47a85cdd69d25400fc9870d05b2165ee0a4ccf711ddedfce0",
+    "adapter/public-backend.d.mts": "e17dca48c72ecb38631bd14e77df275bbf2cc47579893fe9418c146bbeb602dc",
+    "adapter/native-compat-backend.ts": "692c23f6fa26ebc4a8ce5767e5838b85800204d8e063b420189fac8f6540073b",
+    "adapter/native-compat-runtime.ts": "1cd419469d454aaf1d2f947f12ac5757ee24c76c9c75a2ae4cd0b9abc9c541da",
+    "adapter/test-native-compat.ts": "d99a8f7a819865622e32b8cccc0962aa3116aa1124ca34cb8b95cf4483e79ec2"
+  }
+}

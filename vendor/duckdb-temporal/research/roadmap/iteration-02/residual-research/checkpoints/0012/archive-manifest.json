@@ -1,0 +1,15 @@
+{
+  "archive": "deferred-codec-theory-and-proofs.tar.gz",
+  "bytes": 223040,
+  "sha256": "4ebed2ce6f4c53fda6c18df027ff2132f439bdb42d5d47a1d40382d37e10c26f",
+  "entries": 219,
+  "source_bytes": 2243959,
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 297389,
+      "sha256": "c0a79ea41f03fc33880e35bb0a0ab59a092d10ca41252278c5bc1efe8aff1bb5",
+      "git_sha": "38400b9d74b86dbc56ed20ad55c0136a4ac77ac3"
+    }
+  ]
+}

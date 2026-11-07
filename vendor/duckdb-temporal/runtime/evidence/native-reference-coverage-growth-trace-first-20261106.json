@@ -1,0 +1,262 @@
+{
+  "schema": "td.native-reference-coverage-growth-trace-first-gate/1",
+  "status": "failed_revalidation_memory_boundary",
+  "packagedAtUtc": "2026-11-06T11:20:47.564165+00:00",
+  "sourceCommit": "d71d9958f0fecb39a4a088eafb204c9e28f9db0c",
+  "pairedNativeSourceCommit": "c593a6fc8eafd3dd76eda36b2f245885cfb94425",
+  "originalFailureReceipt": "evidence/native-reference-coverage-boundaries-first-20261106.json",
+  "originalReadOnlyReconciliation": "evidence/native-reference-coverage-growth-diagnostic-20261106.json",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-coverage-growth-trace-20261106-01",
+  "rawDirectory": "evidence/native-reference-coverage-growth-trace-first-20261106-raw",
+  "rawFiles": {
+    "after-tests-first.json": {
+      "sha256": "375cbdcfb77b0b2dab0d0b8c163d123c8625e5afc8c82bb24e717081cb2b4596",
+      "sizeBytes": 98914
+    },
+    "before-first.json": {
+      "sha256": "887529be214564dc8c157d39e2cc2b1f76434b66cc90260a4dbd04b4b88e3a40",
+      "sizeBytes": 94535
+    },
+    "compiled-before-tests-first.json": {
+      "sha256": "233d751ee1d2b9a42657c031ceadf43b32fa000002a8ef22ecccb977ee90ec3b",
+      "sizeBytes": 21212
+    },
+    "tests-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tests-first.tap": {
+      "sha256": "19d218d8b04a783aa685e2cd097093c9015b8f070150abf9a115d662d041ebf8",
+      "sizeBytes": 1266
+    },
+    "tests-first.terminal.json": {
+      "sha256": "a6d69fd4bddaf576a3bc7e47f3ac433b421ddf42bba756f94c5e009cb5fb4b1a",
+      "sizeBytes": 651
+    },
+    "tsc-delta-first.json": {
+      "sha256": "c6122573c35b64c0777b205502d21d5f09e8c8509d01850404d5e5b456c304c1",
+      "sizeBytes": 216
+    },
+    "tsc-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tsc-first.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tsc-first.terminal.json": {
+      "sha256": "7a2eb1f64e9875027bc0fb11ca68f7950fed4988b1afb31258406d946563a917",
+      "sizeBytes": 460
+    },
+    "events.jsonl": {
+      "sha256": "6f4ddc90b20234b193f2d9246b637c94d6629129198f0075f6a4ddf935f3de7d",
+      "sizeBytes": 162245
+    }
+  },
+  "terminals": {
+    "tsc-first": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 64887,
+      "startedAtUtc": "2026-11-06T11:17:12.006098+00:00",
+      "endedAtUtc": "2026-11-06T11:17:13.952277+00:00",
+      "exitCode": 0,
+      "elapsedMs": 1946.1993749719113
+    },
+    "tests-first": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "build/adapter/test-native-reference-coverage-growth-trace.js"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 65031,
+      "startedAtUtc": "2026-11-06T11:17:33.066605+00:00",
+      "endedAtUtc": "2026-11-06T11:18:01.885735+00:00",
+      "exitCode": 1,
+      "elapsedMs": 28819.219666998833,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4",
+        "NODE_OPTIONS": "",
+        "TD_NATIVE_WRITER_LAB_prefix": "removed"
+      }
+    }
+  },
+  "compilerDelta": {
+    "prior188Exact": true,
+    "additionsOnly": [
+      "build/adapter/test-native-reference-coverage-growth-trace.d.ts",
+      "build/adapter/test-native-reference-coverage-growth-trace.js"
+    ],
+    "count": 190
+  },
+  "actualOutcome": {
+    "freshNamedFixture": true,
+    "originalFailureDbOpenedOrReused": false,
+    "methodCount": 1,
+    "passed": 0,
+    "failed": 1,
+    "retry": false,
+    "capRaise": false,
+    "productionOrOracleChange": false
+  },
+  "observedTrace": {
+    "events": 1060,
+    "durableBatchAcks": 195,
+    "durableSourcePutAcks": 65,
+    "positionsConsecutive": [
+      2,
+      261
+    ],
+    "finalPublicAck": {
+      "sequence": 1046,
+      "atUtc": "2026-11-06T11:18:01.547Z",
+      "stage": "source_put:ack",
+      "details": {
+        "commandId": "growth-source-64",
+        "position": "261"
+      }
+    },
+    "allWritesAcknowledged": {
+      "sequence": 1047,
+      "atUtc": "2026-11-06T11:18:01.548Z",
+      "stage": "all_writes_acknowledged",
+      "details": {
+        "position": "261",
+        "batchAcks": 195,
+        "putAcks": 65
+      }
+    },
+    "typedCountChecks": [
+      {
+        "sequence": 1049,
+        "atUtc": "2026-11-06T11:18:01.583Z",
+        "stage": "first_count:native:end",
+        "details": {
+          "position": "261",
+          "route": "native",
+          "rows": [
+            [
+              {
+                "tag": "i64",
+                "value": "65"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "sequence": 1051,
+        "atUtc": "2026-11-06T11:18:01.609Z",
+        "stage": "first_count:scalable:end",
+        "details": {
+          "position": "261",
+          "route": "sql",
+          "rows": [
+            [
+              {
+                "tag": "i64",
+                "value": "65"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "sequence": 1053,
+        "atUtc": "2026-11-06T11:18:01.625Z",
+        "stage": "first_count:automatic:end",
+        "details": {
+          "position": "261",
+          "route": "native",
+          "rows": [
+            [
+              {
+                "tag": "i64",
+                "value": "65"
+              }
+            ]
+          ]
+        }
+      }
+    ],
+    "firstError": {
+      "sequence": 1055,
+      "atUtc": "2026-11-06T11:18:01.825Z",
+      "stage": "revalidate:error",
+      "details": {
+        "name": "Error",
+        "message": "Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads",
+        "stack": "Error: Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"
+      }
+    },
+    "revalidateBegin": {
+      "sequence": 1054,
+      "atUtc": "2026-11-06T11:18:01.626Z",
+      "stage": "revalidate:begin",
+      "details": {}
+    },
+    "cleanupStoreEnd": {
+      "sequence": 1060,
+      "atUtc": "2026-11-06T11:18:01.858Z",
+      "stage": "cleanup_store:end",
+      "details": {}
+    },
+    "subsequentPresenceReplayRawAndReopenEntered": false
+  },
+  "diagnosis": {
+    "proved": "This fresh diagnostic received all260 public ACKs and exact65n query results atK261 from native, scalable SQL and automatic routes, then failed inside explicit revalidate(). It excludes finalACKdelivery and the three initial queryroutes for this attempt.",
+    "notProved": "The initial uninstrumented attempt remains ambiguous. Revalidation substage is not identified; base integrity, uniqueness, presence, covered-edge audit and current/allcut proofs run in sequence. Elapsedtime alone cannot attribute the OOM to a substage.",
+    "error": "Out of Memory Error: failed to pin block of size256.0KiB (122.0MiB/122.0MiB used)",
+    "growthAuditabilityAccepted": false,
+    "healthyReuseAfterAuditFailureQualified": false,
+    "next": "Source-reviewed identicalschema4 identity-only growth on actual2f versusa562 would distinguish a preexisting metadata/presence128MB boundary. No such comparison executed."
+  },
+  "settings": {
+    "readers": 2,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "UV_THREADPOOL_SIZE": "4"
+  },
+  "nativePins": {
+    "build/artifact.json": "7a6c2f45f386faf13bf11448116644fcb5a54af75b02b4e190e969a2b5b093cb",
+    "build/catalog_sql.hpp": "454570e13f70effc105f50251ef8f073e571ae843211ff4a48f69d49fb4ceb11",
+    "build/temporal_datalog.duckdb_extension": "a562ddf6d7f3ebb8189efd785ad312143d940c9ca6d95049ced357a78149c66b",
+    "build/temporal_datalog.so": "0ab27c08f0289a648d305cf1ff3ef44a625f81c68d10c4e9c8af5f6dcf2425b6",
+    "build/temporal_control.node": "6358b3f085e3f41cf66729b890d53121f2f23ddcbd4e679b307e302e8da9199e",
+    "build/owner_probe/artifact.json": "aa42d89c915ed343cebe8ffdfe3fba1ec23a27540edd17cfc076c8d936bf40b6",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "286694a1225384bedff88aa462d9ad03a48b4eac5e2b135a69c84014f24f258b",
+    "build/owner_probe/temporal_owner_probe.so": "89c52bc41fea69998e929b1ba5b4ca0c9abb78312f8381db659cf4d3092fe63d",
+    "build/owner_probe/temporal_writer.node": "7c6da97f4421db1fa3737e7b2a072f928c1f84ef9a56722533d90b163304c94f"
+  },
+  "postchecks": {
+    "native9Unchanged": true,
+    "dependencies395Unchanged": true,
+    "source48Unchanged": true,
+    "compiled190Unchanged": true,
+    "headers36Routes5References7NodeUnchanged": true,
+    "sourceClean": true,
+    "fixture": {
+      "file": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-growth-trace-8VI5GK/facts.duckdb",
+      "sizeBytes": 8663040,
+      "mtimeNs": 1793963881854233341,
+      "sha256": "c3cb4744d1d530b329d1a05b9cd41a431b82ee9b3b9231bbaef180f1c0260ca5",
+      "walAbsent": true,
+      "lsofExitCode": 1,
+      "lsofStdout": "",
+      "lsofStderr": ""
+    },
+    "allBeforePinsUnchanged": true,
+    "extraSqlOrReopen": false
+  },
+  "scope": "Fresh diagnostic failure retained alongside original failure. Trace I/O is diagnostic overhead, not a performance result. No full verifier, new localcap gate, production promotion or Goals1/9 closure."
+}

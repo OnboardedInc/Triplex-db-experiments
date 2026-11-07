@@ -1,0 +1,11 @@
+{
+  "schema": "td.source_only_check_first_failure/1",
+  "utc": "2026-10-31T07:30:19.383805+00:00",
+  "observed_exec_chunk_id": "a84370",
+  "observed_exec_exit": 1,
+  "stderr": "Traceback (most recent call last): File \"<stdin>\", line 15, in <module>; AssertionError",
+  "failed_assertion": "byte-identical retained LICENSE copy versus returned source digest",
+  "actual_cause": "apply_patch AddFile retained exact source text plus one appended LF; complete returned-source SHA/Git-blob receipt remains unchanged",
+  "effect": "No application or runtime was exercised; report/source receipts unaffected",
+  "correction_scope": "new additive license-copy provenance note and new strict stdlib file checks only; no original file overwrite"
+}

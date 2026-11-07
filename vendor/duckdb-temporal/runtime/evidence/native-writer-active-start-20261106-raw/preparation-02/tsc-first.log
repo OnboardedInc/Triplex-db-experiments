@@ -1,0 +1,2 @@
+adapter/test-native-writer-active-teardown.ts(113,95): error TS18046: 'error' is of type 'unknown'.
+adapter/test-native-writer-active-teardown.ts(113,114): error TS18046: 'error' is of type 'unknown'.

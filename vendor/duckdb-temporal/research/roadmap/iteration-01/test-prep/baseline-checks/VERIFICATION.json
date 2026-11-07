@@ -1,0 +1,89 @@
+{
+  "format": "temporal-roadmap-isolated-baseline-verification-v1",
+  "verification_scope": "Existing v1 clean candidate only; NOT typed-v2 implementation acceptance",
+  "source_manifest_sha256": "590c7b3d7ed751ae7dc4c5f3b32b5e225051bbb9262bc1b13277a3dbc37040fb",
+  "frozen_source_entries_verified_unchanged": 218,
+  "extension_sha256": "62c9f24e3f8951771ff0f7ceae7dd255843885b203c818bb53e3c232baa45662",
+  "rebuild_reproducibility": "Two local builds with pinned vendored headers and same GCC14.2 reproduce original candidate SHA; not a cross-environment reproducibility guarantee",
+  "native_tests": {
+    "DuckDB2.0.0": 22,
+    "DuckDB1.4.3": 22,
+    "passed": true,
+    "independence_note": "Same 22 integration cases on 2 runtimes; not 44 distinct cases"
+  },
+  "storage": {
+    "runtime": "2.0.0",
+    "tests": 23,
+    "passed": true,
+    "largest_observed_fixture_bytes_after_close": 4468736
+  },
+  "browser_reference": {
+    "groups": 25,
+    "passed": true,
+    "rendered_UI_or_native_browser_execution": false
+  },
+  "correctness": {
+    "cases": 60,
+    "passed": true
+  },
+  "qa": {
+    "checks": 545,
+    "passed": true
+  },
+  "path_relocation": "Unchanged source imported; only fixture root and explicit trusted extension path redirected to isolated output. Store caps/path-policy code unchanged. Bench spill/output roots redirected too.",
+  "not_run": [
+    "Typed v2 native acceptance",
+    "Typed v2 store migration",
+    "Typed v2 browser acceptance",
+    "New full-path performance benchmark",
+    "Rendered UI and deployed Site acceptance",
+    "Crash, backup and restore certification"
+  ],
+  "retained_logs": [
+    {
+      "path": "runs/20261030-1503/browser-v1.log",
+      "bytes": 1979,
+      "sha256": "7b5fb58fbaf30ec77018dc3403cc1c341171092c7fb2504675a03e3f1b15f3ac"
+    },
+    {
+      "path": "runs/20261030-1503/build.log",
+      "bytes": 421,
+      "sha256": "e5c4a6a2332a7d50c052c2da97eccec9d7048e3b3e41c02c2bbe2a89bac299bd"
+    },
+    {
+      "path": "runs/20261030-1503/correctness-duckdb2.log",
+      "bytes": 54,
+      "sha256": "0cdb88eaab7f66173e1244425fd1661120e05743b3a163c97c36b74c67b8c76d"
+    },
+    {
+      "path": "runs/20261030-1503/duckdb2/correctness-v1.json",
+      "bytes": 38260,
+      "sha256": "68c6333ddefaa9ac95e2767fa7093381393cb055f06f7770e7cd132c765948d9"
+    },
+    {
+      "path": "runs/20261030-1503/duckdb2/qa-v1.json",
+      "bytes": 287174,
+      "sha256": "359909919b74d75f50f51c4d521f342a33e4b477ed8de14236b9b6caf29a5801"
+    },
+    {
+      "path": "runs/20261030-1503/native-duckdb143.log",
+      "bytes": 2795,
+      "sha256": "44641ec45a07f0261e0e1da3177dae175fe4bd538b00f7b2b93ef955a0a0c683"
+    },
+    {
+      "path": "runs/20261030-1503/native-duckdb2.log",
+      "bytes": 2795,
+      "sha256": "ccce0acf3643c39f522656fd1b1444fc35e3470ac75fa1af1f1f97089dedcc57"
+    },
+    {
+      "path": "runs/20261030-1503/qa-duckdb2.log",
+      "bytes": 56,
+      "sha256": "1e679b9b9a64c50d5a1213599701a85f86387ed12e462027ce72aca442765d72"
+    },
+    {
+      "path": "runs/20261030-1503/storage-duckdb2.log",
+      "bytes": 3428,
+      "sha256": "d87720399169b923bf037a49edd94b88c0940abf156efa85176ed56a5708b656"
+    }
+  ]
+}

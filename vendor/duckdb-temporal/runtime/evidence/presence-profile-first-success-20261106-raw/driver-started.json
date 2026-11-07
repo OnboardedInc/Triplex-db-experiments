@@ -1,0 +1,24 @@
+{
+  "schema": "td.presence-profile/1",
+  "status": "running",
+  "pid": 44191,
+  "argv": [
+    "[LOCAL_PATH_0043]",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-native-presence-intervals.mjs",
+    "--runtime",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+    "--output",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03"
+  ],
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "output": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03",
+  "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03/facts.duckdb",
+  "startedAtUtc": "2026-11-06T10:21:07.761Z",
+  "cells": [],
+  "scope": "Fresh synthetic raw-owned presence endpoint diagnostic; profiling overhead is not service latency.",
+  "unmeasured": [
+    "C++ PRAGMA emission phase",
+    "exclusive DuckDB-versus-host time",
+    "whole-process allocation containment"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "td.static-four-preparation-root-review/1",
+  "source": "b0429633088af085a92a6b97882280fc17a6ade6",
+  "rawHashesVerified": 17,
+  "bindingsVerified": 4,
+  "sourceGitPinsVerified": 13,
+  "pureSourceGitPinsVerified": 5,
+  "actualPureTests": 28,
+  "exactPrePostOriginalAndMappedReportsEqual": true,
+  "inventoryEntriesPerSubject": 446,
+  "runtimeFilesPerSubject": 405,
+  "engineInvoked": false,
+  "limits": "File-only preparation; no DuckDB correctness or performance claim from these checks.",
+  "actualExpected405MapsEqual": true,
+  "onlyCandidateRuntimeDifference": [
+    "build/adapter/native-entity.js"
+  ],
+  "mappedEngine72Verified": true
+}

@@ -1,0 +1,113 @@
+{
+  "schema": "td.item4_1.primary-research-documents/1",
+  "date": "2026-10-31",
+  "scope": "new explicit-graph primary research and independent review only; no contract or execution plan",
+  "empirical_status": "UNRUN",
+  "files": [
+    {
+      "name": "README.md",
+      "bytes": 4960,
+      "sha256": "ffc900d064e1f8c85c12ecc687d4461eedbb731423afd8fcc13765fdd36ce7d1",
+      "git_blob_sha": "653ac54acd6928af406fe9b9636abf3ac424e50e",
+      "authored_research_role": "coordinator research introduction/additive errata"
+    },
+    {
+      "name": "ERRATA.md",
+      "bytes": 2176,
+      "sha256": "11d4f5fb8c42eb9a61169ae15c2e320479a0eb3b0295a1eb70dcf90f86ab68e7",
+      "git_blob_sha": "003abe453e4feda2789c34c165b16580b3020678",
+      "authored_research_role": "coordinator research introduction/additive errata"
+    },
+    {
+      "name": "theory-report.md",
+      "bytes": 25561,
+      "sha256": "7e5d136dcb770a1277db8194cdb47e61d6707d132d1ef2e9242d288ceb9fe94a",
+      "git_blob_sha": "bf45acb25d3f07932aed5a1b5bf04fd797adacf1",
+      "authored_research_role": "fresh certificate theory revision001",
+      "source_content_sha256": "7e5d136dcb770a1277db8194cdb47e61d6707d132d1ef2e9242d288ceb9fe94a",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    },
+    {
+      "name": "assertions-and-proofs.md",
+      "bytes": 12562,
+      "sha256": "c2b5318c8d70b3c4aa3c29c5a2bdd07ea9c69c360ee92e8357bf8eb41e6cac16",
+      "git_blob_sha": "6136e891fa3e157f72e88848c2bd3ff638eb3245",
+      "authored_research_role": "fresh certificate theory revision001",
+      "source_content_sha256": "c2b5318c8d70b3c4aa3c29c5a2bdd07ea9c69c360ee92e8357bf8eb41e6cac16",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    },
+    {
+      "name": "theory-counterexamples.md",
+      "bytes": 10943,
+      "sha256": "e2409b0caddc8b14baef5a3e13704805080e4bb5d05460f86e4d7b3447e07c20",
+      "git_blob_sha": "691a7f0b734ee9d2a664ff32f2e49931ce907f53",
+      "authored_research_role": "fresh certificate theory revision001",
+      "source_content_sha256": "e2409b0caddc8b14baef5a3e13704805080e4bb5d05460f86e4d7b3447e07c20",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    },
+    {
+      "name": "theory-sources.md",
+      "bytes": 10179,
+      "sha256": "5d69cb06fd93d4707de5bddc90823df0f0f3003fc6f182527c08fe5572fd0366",
+      "git_blob_sha": "cd83b900f1ec0a60c3bea5a5a212a0f3d482d87f",
+      "authored_research_role": "fresh certificate theory revision001",
+      "source_content_sha256": "5d69cb06fd93d4707de5bddc90823df0f0f3003fc6f182527c08fe5572fd0366",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    },
+    {
+      "name": "verification-alternatives.md",
+      "bytes": 17890,
+      "sha256": "394da61319df6ed0b512833bb5a614dad642ea2cdbd2cc698baed247b8194ebb",
+      "git_blob_sha": "f52737086683c07716137ebfe3d30784d38d1183",
+      "authored_research_role": "fresh certificate verification revision001",
+      "source_content_sha256": "394da61319df6ed0b512833bb5a614dad642ea2cdbd2cc698baed247b8194ebb",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    },
+    {
+      "name": "oracle-test-specifications.md",
+      "bytes": 18886,
+      "sha256": "30afa39767b25c5d99c511446ef9d269802ce120ddd49fb3bd5d7968fd448b02",
+      "git_blob_sha": "eb3808a87ea39a4fa1143fbe232bac3b8e1c7b5a",
+      "authored_research_role": "fresh certificate verification revision001",
+      "source_content_sha256": "30afa39767b25c5d99c511446ef9d269802ce120ddd49fb3bd5d7968fd448b02",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    },
+    {
+      "name": "cost-and-portability.md",
+      "bytes": 15998,
+      "sha256": "420d5302a26d4d890f4db9ccabf3291cfb8747cda8784fd34a9af0a5b1afb6b8",
+      "git_blob_sha": "ea4f5075485202de9582d1da29c3931e5cddefb5",
+      "authored_research_role": "fresh certificate verification revision001",
+      "source_content_sha256": "420d5302a26d4d890f4db9ccabf3291cfb8747cda8784fd34a9af0a5b1afb6b8",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    },
+    {
+      "name": "verification-sources.md",
+      "bytes": 10367,
+      "sha256": "731160caa85a2d354f513da5034bbb5fa46c9b7706a031071e190fe259773ff5",
+      "git_blob_sha": "a2e51109b6f6eba78ee3e6890a1944f32f84c6d6",
+      "authored_research_role": "fresh certificate verification bibliography section only",
+      "source_content_sha256": "462a8c70940d78298ed4acf15eb88e484588e9bf5873103a9871e4152d86af44",
+      "publication_transform": "explicit bibliography-section extraction from new authored research; no acquisition log or operational index"
+    },
+    {
+      "name": "peer-review.md",
+      "bytes": 8216,
+      "sha256": "4decc822e36db4a29b509f789c369e7287d60ba18207e9541aa1999b7b3ab872",
+      "git_blob_sha": "e0a2068ace204f2f18035bc55e8a74974ef006cc",
+      "authored_research_role": "independent graph research peer revision001",
+      "source_content_sha256": "4decc822e36db4a29b509f789c369e7287d60ba18207e9541aa1999b7b3ab872",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    },
+    {
+      "name": "peer-proof-checklist.md",
+      "bytes": 8619,
+      "sha256": "e38e56864e44bfb51154e8bc9abfa35c3c3661bda366b942836c04e3c78114fd",
+      "git_blob_sha": "95c146d3aaa40482031d097d78fd0d32badc24a9",
+      "authored_research_role": "independent graph research peer revision001",
+      "source_content_sha256": "e38e56864e44bfb51154e8bc9abfa35c3c3661bda366b942836c04e3c78114fd",
+      "publication_transform": "line-ending and terminal-newline normalization only"
+    }
+  ],
+  "self_excluded": "FILES.json excluded from its own inventory"
+}

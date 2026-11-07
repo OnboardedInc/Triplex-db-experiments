@@ -1,0 +1,73 @@
+{
+  "format": "triplex-devloop-job/1",
+  "id": "logical-fixture-smoke-v1",
+  "kind": "fixture",
+  "queryPath": "duckdb-datalog",
+  "backend": "duckdb",
+  "author": "duckdb-research-controller-owner",
+  "problemId": "reproducible-logical-fixture",
+  "logicalTaskId": "logical-event-fixture-only",
+  "hypothesis": "An actual bounded recipe produces retained exact-int64 historical inputs; this is not an engine or scale claim",
+  "goals": [
+    1,
+    7,
+    9
+  ],
+  "dependsOn": [],
+  "inspiration": [
+    {
+      "reference": "wiki/research.md",
+      "mechanism": "Independent immutable-event recipes with distinct validity and knowledge coordinates",
+      "adaptation": "Small controller proof before actual Triplex backend fixture generators"
+    }
+  ],
+  "command": {
+    "argv": [
+      "/Users/sam/projects/triplex-db/.local/tools/node-v24.13.0-darwin-arm64/bin/node",
+      "qualification/devloop/fixtures/logical-fixture.mjs"
+    ],
+    "cwd": ".",
+    "env": {}
+  },
+  "resources": {
+    "heavy": false,
+    "memoryBytes": 268435456,
+    "cpuUnits": 1,
+    "diskBytes": 1048576,
+    "timeoutMilliseconds": 30000,
+    "maximumLogBytes": 1048576
+  },
+  "inputs": [
+    {
+      "path": "qualification/devloop/fixtures/logical-fixture.mjs",
+      "role": "source",
+      "sha256": "4561711c8d80f704ed494fb600c6938d5163f000934f2711ce373b4d7bf071dd"
+    },
+    {
+      "path": "scripts/triplex-devloop.mjs",
+      "role": "runner",
+      "sha256": "bb5aa837af993dc85caee6d1d75e876bce3274f5846a6bdb93f01f118341a0fb"
+    },
+    {
+      "path": "qualification/devloop/fixtures/logical-fixture.expected.json",
+      "role": "oracle",
+      "sha256": "04805068469c06e1cfd3c49baf84c64dd5ddaa32ac9f3753fb9ccf20d658afb7"
+    }
+  ],
+  "evidence": {
+    "checks": [
+      {
+        "key": "logical-fixture-result",
+        "expectedInput": "qualification/devloop/fixtures/logical-fixture.expected.json",
+        "actual": "artifacts/result.json"
+      }
+    ],
+    "requiredCheckKeys": [
+      "logical-fixture-result"
+    ]
+  },
+  "retention": {
+    "scratch": "rebuildable-ephemeral-only",
+    "meaning": "Logical JSON fixture and proof outputs retained under artifacts; no backend database"
+  }
+}

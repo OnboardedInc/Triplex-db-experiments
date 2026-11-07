@@ -1,0 +1,127 @@
+{
+  "schema": "td.sdk-broad-staging-preflight/1",
+  "status": "PASSED_NO_ENGINE",
+  "firstAttempt": true,
+  "sourceCommit": "51f9d67d39fc26d1cc1bbde7dcf6aec55c9215ee",
+  "timestampUtc": "2026-11-06T03:42:18.684970+00:00",
+  "stageReceipt": {
+    "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime/build/sdk-broad-regression-20261105/forward-02/stage-before.json",
+    "sha256": "bb07a1fb9c6aad6dcb55a24e69502b2e3c095abe7c44cf2ef172db3c279c8712"
+  },
+  "subjects": {
+    "b0": {
+      "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime/build/sdk-broad-staged-20261105/forward-02/b0/runtime",
+      "counts": {
+        "inventory": 445,
+        "runtime": 404,
+        "source": 40,
+        "sidecars": 1,
+        "actualStagedRuntime": 405
+      },
+      "exactMapping": true,
+      "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+      "nativeGitReferences": 39,
+      "sdkSourceCommit": "fe9ca9aa00b454f7555fe6f1392ef8ad2a3f5840",
+      "sdkSourceReferences": 5,
+      "pins": {
+        "core": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "companion": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "control": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+        "entity": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+        "schema": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "port": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+        "header": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+      },
+      "resolvedSdkFiles": {
+        "api": {
+          "relativePath": "node_modules/@duckdb/node-api/lib/index.js",
+          "sha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+        },
+        "bindings": {
+          "relativePath": "node_modules/@duckdb/node-bindings/duckdb.js",
+          "sha256": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce"
+        },
+        "platform": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+          "sha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+        },
+        "engine": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+          "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+        }
+      }
+    },
+    "sdk": {
+      "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime/build/sdk-broad-staged-20261105/forward-02/sdk/runtime",
+      "counts": {
+        "inventory": 445,
+        "runtime": 404,
+        "source": 40,
+        "sidecars": 1,
+        "actualStagedRuntime": 405
+      },
+      "exactMapping": true,
+      "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+      "nativeGitReferences": 39,
+      "sdkSourceCommit": "d024e9b8e0c2eee16d4e992c7514048115e6f80b",
+      "sdkSourceReferences": 5,
+      "pins": {
+        "core": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "companion": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "control": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+        "entity": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+        "schema": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "port": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+        "header": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+      },
+      "resolvedSdkFiles": {
+        "api": {
+          "relativePath": "node_modules/@duckdb/node-api/lib/index.js",
+          "sha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+        },
+        "bindings": {
+          "relativePath": "node_modules/@duckdb/node-bindings/duckdb.js",
+          "sha256": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce"
+        },
+        "platform": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+          "sha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+        },
+        "engine": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+          "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+        }
+      }
+    }
+  },
+  "source": {
+    "database": {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "sha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "bytes": 3905433600,
+      "mtimeNs": 1793911060600328880
+    },
+    "recipe": {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "sha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+      "bytes": 350315,
+      "mtimeNs": 1793911060614201524
+    }
+  },
+  "harnessPins": {
+    "adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "helperSha256": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb",
+  "protocolSha256": "9b017efdf445370e26af8750767f1125a5a973a694c1b7de8dc1afb0d57ad19f",
+  "addendumSha256": "5e96748471e1ccaeeabc5d59bcc89be14c62f71d8d85dee0ea9e20e3d061acdd",
+  "sourceWalAbsent": true,
+  "nativeBuild": "none",
+  "installation": "none",
+  "engine": "not_run",
+  "benchmark": "not_started",
+  "completedAtUtc": "2026-11-06T03:42:21.380204+00:00"
+}

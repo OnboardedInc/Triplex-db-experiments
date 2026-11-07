@@ -1,0 +1,40 @@
+{
+  "selected_at": "2026-10-31T22:28:39.872163+00:00",
+  "selected_contract": "item5 N1 owned-relation reducer frozen draft revision002",
+  "decision": "coordinator selects exact peer-closed contract for genuinely new SOURCE-ONLY implementation",
+  "independent_review": "B1/B2/C1 closed; no residual blocking contradiction in bounded scope",
+  "files": [
+    {
+      "document": "CONTRACT-DRAFT.md",
+      "bytes": 23381,
+      "sha256": "94ebe3e5878da8393ad8fba72f1570bc0c04e561efea1e248f224345f1e4ee6d"
+    },
+    {
+      "document": "ARITHMETIC-AND-ACCOUNTING.md",
+      "bytes": 27053,
+      "sha256": "689d33b26a31ddeab7255ad3ed3e21ec8b99fbf26e8e2bc5d4e2f81f2c641c98"
+    },
+    {
+      "document": "REFERENCES-AND-GATES.md",
+      "bytes": 14610,
+      "sha256": "6e5d148a08bb137bf01057c39333bc344602feacadc61d6ff53b743b546a7c6d"
+    },
+    {
+      "document": "REVISION-NOTES.md",
+      "bytes": 6160,
+      "sha256": "4778bc68681abfac4bde24d58aebbe55d2802dec082365a68174c75b99fb290e"
+    },
+    {
+      "document": "independent-contract-rereview.md",
+      "bytes": 8065,
+      "sha256": "3f22048e3aec99879fbd6297f64a455dddd9cc6213babaa526bb0a79e65b3ef7"
+    }
+  ],
+  "source_language_requirement": "C++17 standard library, exact64-bit signed/unsigned words and8-bit text bytes; declared source requirements, not installed observations",
+  "source_scope": "standalone owned relation reducer; no old/native/host imports or integration",
+  "execution_gate": "CLOSED: no source import/parse/compile/runtime/tests/benchmark/control or SQL activation",
+  "external_write": "none by this selection",
+  "acceptance": "not established; no Datalog/temporal/SQL/v2 or item5 acceptance",
+  "privacy": "no computer-environment snapshots/details; project data only",
+  "prior_holds": "all old stopped saves and explicitly dependent native syntax unchanged"
+}

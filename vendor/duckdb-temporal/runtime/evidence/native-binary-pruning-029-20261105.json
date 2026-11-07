@@ -1,0 +1,40 @@
+{
+  "schema": "td.binary-text-scan-pruning-focused/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T21:04:51.829941+00:00",
+  "platform": "macOS ARM64",
+  "source": "31db38c0616a25afe06cf78f20738b9b63244a6c",
+  "coreSha256": "c7f7ae4a7b1cc7b0421f5f00faacfe4ec88ac698490202eda3177ec950f7b1c6",
+  "companionSha256": "e610447b87bfa0b5dd9ab82c4d75fe0dab5c7498ac542bfdff1b63194f84d894",
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "checks": 20,
+  "typecheck": "PASS",
+  "profileHarnessSha256": "69ca29c558507220ad951003b47eeeb919914f5b817e435bccf8128bf7238ae1",
+  "retainedFacts": 10000022,
+  "validAt": 0,
+  "knownAt": 39087,
+  "projection": {
+    "answerRows": 256,
+    "answerWireSha256": "a7e63f17f5a8a9623afc4719731fdb06a89512e111991bad0a8f897690e872c7",
+    "baselineMaxRowsScanned": 10000022,
+    "candidateMaxRowsScanned": 2659968,
+    "candidateFilters": [
+      "(e = 'typed-e-00000000')"
+    ],
+    "ordinaryBaselineMs": 59.72637500000019,
+    "ordinaryCandidateMs": 16.03045899999961
+  },
+  "scope": [
+    "Exact binary case and Unicode identity on admitted scopes, including multi-literal union.",
+    "Seven scalable comparison, three union, six multi-cut and four interval checks.",
+    "Same closed-fixture recipe, one connection, separate EXPLAIN, and exact count and grouped-count controls.",
+    "Concurrent public latency and sustained ingestion remain separate promotion gates."
+  ],
+  "logs": {
+    "core.log": "6be2377d7b31eb381cedb3ccd15c636c39a4109e70abe1ece152cdb6cc308273",
+    "focused-first.tap": "f271b4f668731eb980916bb01ad5533c0277f34c07df8291f1f2ef4aa0133711",
+    "operator-first.json": "84335072e87497a2992384575a2074aec6e43069bba21338a446e174021fc169",
+    "operator-first.log": "8d485e4b42651bbde205a4300cafbe77b2ff1919b11e0ccf688704fa137bc2b1",
+    "owner.log": "1794a091cb745967c2ce0e7e0642e887db203bdea3df57ba14c829fa69567c19"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "-B",
+    "build/integration-native-writer-20261106-01/install_default.py"
+  ],
+  "pid": 49425,
+  "exitCode": 0,
+  "startedAtUtc": "2026-11-06T10:39:43.926538+00:00",
+  "exitedAtUtc": "2026-11-06T10:39:44.350543+00:00",
+  "elapsedMs": 423.8922081422061
+}

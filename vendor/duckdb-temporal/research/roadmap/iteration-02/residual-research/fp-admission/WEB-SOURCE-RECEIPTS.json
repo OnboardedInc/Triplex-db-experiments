@@ -1,0 +1,66 @@
+[
+  {
+    "id": "gnu_2_41_control_functions",
+    "url": "https://sourceware.org/glibc/manual/2.41/html_node/Control-Functions.html",
+    "retrieved_utc": "2026-10-30T23:51:55Z",
+    "version": "glibc manual 2.41",
+    "support": "Public fegetmode semantics, return code, control-vs-status distinction",
+    "content_hash": "not claimed: web rendered source"
+  },
+  {
+    "id": "intel_fnstcw",
+    "url": "https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-2a-manual.pdf#page=491",
+    "retrieved_utc": "2026-10-30T23:51:55Z",
+    "version": "253666-060US September 2016, section3-389",
+    "support": "FNSTCW stores CW, no waiting check; FP exception/condition-code caveat",
+    "content_hash": "not claimed: web PDF"
+  },
+  {
+    "id": "intel_stmxcsr",
+    "url": "https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-2b-manual.pdf#page=649",
+    "retrieved_utc": "2026-10-30T23:51:55Z",
+    "version": "253667-060US September 2016, section4-647",
+    "support": "32-bit MXCSR store, no SIMD FP exceptions, reserved register bits zero",
+    "content_hash": "not claimed: web PDF"
+  },
+  {
+    "id": "cwi_x100",
+    "url": "https://ir.cwi.nl/pub/16497/16497B.pdf",
+    "retrieved_utc": "2026-10-30T23:49:00Z",
+    "version": "Boncz/Zukowski/Nes CIDR2005",
+    "support": "Batch/vector amortization and vector size/per-call overhead theory; not proof of permission caching",
+    "content_hash": "not claimed: web PDF"
+  },
+  {
+    "id": "postgres18_volatility",
+    "url": "https://www.postgresql.org/docs/18/xfunc-volatility.html",
+    "retrieved_utc": "2026-10-30T23:46:43Z",
+    "version": "PostgreSQL18 docs",
+    "support": "No-side-effects does not imply same return within a query; optimization needs stability promise",
+    "content_hash": "not claimed: web rendered source"
+  },
+  {
+    "id": "postgres18_expression_rules",
+    "url": "https://www.postgresql.org/docs/18/sql-expressions.html#SYNTAX-EXPRESS-EVAL",
+    "retrieved_utc": "2026-10-30T23:49:00Z",
+    "version": "PostgreSQL18 docs",
+    "support": "Evaluation-error/side-effect order is a contract, not a universal SQL expectation",
+    "content_hash": "not claimed: web rendered source"
+  },
+  {
+    "id": "llvm_speculatable",
+    "url": "https://llvm.org/docs/LangRef.html#speculatable",
+    "retrieved_utc": "2026-10-30T23:49:00Z",
+    "version": "Live LLVM LangRef, fresh read",
+    "support": "Speculation constraints; calls-count observability not implied merely by purity",
+    "content_hash": "not claimed: web rendered source"
+  },
+  {
+    "id": "python3_12_docs_live",
+    "url": "https://docs.python.org/3.12/library/ctypes.html",
+    "retrieved_utc": "2026-10-30T23:45:34Z",
+    "version": "Live docs currently3.12.16, not pinned3.12.14",
+    "support": "Discovery/cross-reference only; pinned source receipts preferred",
+    "content_hash": "not claimed: web rendered source"
+  }
+]

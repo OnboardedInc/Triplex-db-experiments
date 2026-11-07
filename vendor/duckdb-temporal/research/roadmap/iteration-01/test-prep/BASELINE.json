@@ -1,0 +1,9 @@
+{
+  "format": "temporal-roadmap-preparation-baseline-v1",
+  "source": "local audited clean export final-1139",
+  "source_manifest_sha256": "590c7b3d7ed751ae7dc4c5f3b32b5e225051bbb9262bc1b13277a3dbc37040fb",
+  "source_files": 218,
+  "source_bytes": 11734460,
+  "remote_state": "The final clean export has not been verified on PR7; remote initial prototype remains c24108a183a236c45eb570458a168fe1ef1cbaac as of the last read.",
+  "purpose": "Isolated specifications and tests only until original owner handoff; no modification of original source or PR."
+}

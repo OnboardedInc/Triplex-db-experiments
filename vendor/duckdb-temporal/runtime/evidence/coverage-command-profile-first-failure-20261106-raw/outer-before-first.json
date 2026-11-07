@@ -1,0 +1,26 @@
+{
+  "sourceCommit": "59db67660428984322f6d98872a4e53317c95358",
+  "code": {
+    "adapter/profile-reference-coverage-command.mjs": "a20527876b422faa68c855e63c02acc48373f37720e3ba524cf398d364804e3a",
+    "REFERENCE-COVERAGE-COMMAND-PROFILE.md": "b952e8f29a5cf929671937d8476922c9645f57ec6d90f2a2fea613483529fb14",
+    "adapter/patch-profile-sql.mjs": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24"
+  },
+  "criticalSdk": {
+    "build/adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+    "build/adapter/native-schema.js": "723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226",
+    "build/adapter/owned-duckdb-port.mjs": "65caca13d12022265bb0b45f9d9e69459871e6ab5f986ff84fe29c3958483ae8",
+    "build/adapter/native-entity.js": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+    "build/adapter/native-entity.d.ts": "2a079f5291fd3ac0f8c78fd935cb6d82f24f4735ba76fd2d1d31ae66116d8006"
+  },
+  "node": {
+    "path": "[LOCAL_PATH_0043]",
+    "resolved": "[LOCAL_PATH_0043]",
+    "sha256": "6f2e835e57feb7a29ffcd53a4d4eb60224ec264a1e002c3ba6d99999ea29807d"
+  },
+  "approvedCostChild": {
+    "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/reference-coverage-cost-20261106-01/zero-0-1-pair0-baseline/result.json",
+    "sha256": "2c55ee960b7615778d5afd41546001632fe0b42a35e03f9ce928369d74e2b121",
+    "role": "baseline",
+    "sourceCommit": "4674135bafce0cb5d50e3773c1391848974e9079"
+  }
+}

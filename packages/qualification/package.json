@@ -1,0 +1,30 @@
+{
+  "name": "@triplex-build/triplex-qualification",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run && node --test ../../qualification/compare.test.mjs",
+    "test:comparison": "node --test ../../qualification/compare.test.mjs"
+  },
+  "dependencies": {
+    "@triplex-build/triplex": "workspace:^",
+    "@triplex-build/triplex-testkit": "workspace:^",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

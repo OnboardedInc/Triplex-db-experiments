@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-31T05:54:48.068011+00:00",
+  "status": "ROOT_INDEPENDENT_PACKAGE_PARTS_ARCHIVE_MEMBER_AND_LOGICAL_HASH_MODE_PATHSET_PASS",
+  "method": "Separate root verifier, no packager/app imports; safe manual logical restore and byte/hash/mode/pathset reread",
+  "archive_sha256": "13d766c5a99d65c82dfcb5687abb8bbc21fbdcbe34508c686b9b918e713071b1",
+  "archive_bytes": 1687814,
+  "publication_files_exact": 22,
+  "parts": 10,
+  "tar_members": 1206,
+  "logical_paths": 1922,
+  "logical_bytes": 27783298,
+  "unique_payloads": 1202,
+  "all_raw_bytes_unmodified": true,
+  "publication_proposal_sha256": "31d4ba1dd828c19f4d35c714f04fa42bc8e003bb8fc07f06d755e3eed083da5e",
+  "embedded_inventory_sha256": "dced2532c60c759c632baef7c0f3d10c05f91133e91459a5fcb1ac59345b05b0",
+  "root_goal3_accepted": false,
+  "performance": "UNRUN",
+  "all1922_logical_files_materialized_and_modes_rechecked": true
+}

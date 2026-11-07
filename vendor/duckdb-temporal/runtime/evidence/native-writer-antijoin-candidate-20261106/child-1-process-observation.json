@@ -1,0 +1,9 @@
+{
+  "pid": 5388,
+  "readerCount": 1,
+  "parentPid": 4882,
+  "observedAtUtc": "2026-11-06T08:44:15.752929+00:00",
+  "psExit": 0,
+  "psStdout": " 5388  4882 <pinned-node-installation>/bin/node <qualified-build02-runtime>/adapter/benchmark-antijoin-cost.mjs --child {\"readers\":[1,16],\"samples\":20,\"warmup\":1,\"durationSeconds\":60,\"maxWrites\":12000,\"threads\":4,\"memoryLimit\":\"2GB\",\"maxTempDirectorySize\":\"4GB\",\"maxIntermediateBytes\":4294967296,\"runtime\":\"<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime\",\"runtimePins\":{\"core_extension\":\"f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82\",\"companion_extension\":\"0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9\",\"control_bridge\":\"af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88\",\"engine_library\":\"72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c\",\"adapter/native-entity.js\":\"48c6a5d6443fc706e59e31779437e4b24d7ce6ea6de1b07d22501f54e8b9d8f8\",\"adapter/native-schema.js\":\"723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226\",\"adapter/native-duckdb-port.mjs\":\"2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268\"},\"readerCount\":1,\"fixture\":\"<accepted-project-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb\",\"evidence\":\"<accepted-project-runtime>/build/combined-028-20261105/mixed-10m-pilot.json\",\"database\":\"<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate-children/readers-1.duckdb\",\"output\":\"<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate-children/readers-1.json\"}\n",
+  "psStderr": ""
+}

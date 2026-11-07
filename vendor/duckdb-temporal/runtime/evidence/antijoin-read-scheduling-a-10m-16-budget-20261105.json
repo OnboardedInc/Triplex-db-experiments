@@ -1,0 +1,109 @@
+{
+  "schema": "td.antijoin-cost-budget/1",
+  "status": "PREDECLARED_UNRUN",
+  "fixtureSize": 10000000,
+  "coreSha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+  "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+  "UV_THREADPOOL_SIZE": "4",
+  "configuration": {
+    "readers": [
+      16
+    ],
+    "samples": 20,
+    "warmup": 1,
+    "durationSeconds": 60,
+    "maxWrites": 12000,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296
+  },
+  "baseline": {
+    "file": "../build/antijoin-qualification-20261105-02/100k.json",
+    "sha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474"
+  },
+  "profiles": [
+    {
+      "readers": 16,
+      "maxFixedP50Ms": 3500,
+      "maxFixedP99Ms": 6500,
+      "minMixedQueriesPerSecond": 4.8,
+      "maxMixedP50Ms": 3200,
+      "maxMixedP99Ms": 6500,
+      "minAcknowledgedWrites": 40,
+      "minAcknowledgedWritesPerSecond": 0.5,
+      "maxSampledRssBytes": 3500000000
+    }
+  ],
+  "runtime": "isolated-cohort-a-read-contract2; frozen032 native/port/schema, scheduling-only compiled store",
+  "runtimePins": {
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "adapter/native-entity.js": "6f466cee4993875914e75e7d00858d665424cec75f9ae050cd615998a273cc32",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "baselineReceipt": {
+    "file": "native-antijoin-cost-100k-20261105.json",
+    "sha256": "b20cc58126b0d77cd27fbeb80f2b37c814b8e32c0482efc26921b80d260affba"
+  },
+  "scope": "Candidate A16-only60s screen, explicit read contract2, not equivalent-v1 optimization or a full-promotion result. Same original query, fixture, oracle, cyclic writes, admission and numeric16-client gates.",
+  "requiredCorrectness": "Exact typed answer and returned-K oracle after every call; scoped input exact/minus-one proof; zero query or acknowledgment errors; all 16 leases used/returned; reuse; a write in every full 10 s window; consecutive receipts; final/reopen and unchanged source.",
+  "controlBudget": {
+    "file": "antijoin-cost-10m-budget-20261105.json",
+    "sha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43"
+  },
+  "controlRuntimePins": {
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "experiment": {
+    "cohort": "A",
+    "readContractVersion": 2,
+    "equivalentToV1": false,
+    "fullPromotionEligible": false,
+    "sourceBase": "773f7746466caf0ba4eff70a741e9594d07f39cc",
+    "applicationSourceCheckpoint": "8367e0a1",
+    "mechanism": "Pooled reads do not await captured writer tail; committed MVCC at statement execution with unchanged postACK visibility, explicit historical cuts and writeFIFO",
+    "logicalClients": 16,
+    "nativePoolConnections": 16,
+    "DuckDBThreads": 4,
+    "UV_THREADPOOL_SIZE": "4",
+    "readAdmissionLimit": 16,
+    "freshness": "Actual submitted/ACKed positions at invocation/return; returnedK; pending overlap; latest read postACK lower bound; per-cell measured latest staleness distributions",
+    "unchangedAbsoluteGates": true,
+    "oneReader": "Not rerun; no one-reader outcome implied"
+  },
+  "sourceFixture": {
+    "sha256BeforeAndAfter": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "knowledgePosition": "39087",
+    "logicalInputFacts": 1680202,
+    "positiveFacts": 256,
+    "rightSideFacts": 1679946,
+    "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7"
+  },
+  "harnessPins": {
+    "adapter/benchmark-read-scheduling.mjs": "d447daf410aafd6c006bc3b080a0df9ce3e709abfe85ce3d8751dedf1684afc8",
+    "adapter/benchmark-antijoin-cost.mjs": "144c16218379581b518da57d910296d6067e921d10fa5fc8447bf3f595772a33",
+    "adapter/benchmark-scale.mjs": "40a8fce06a9d37820c6e054e3ebd937116b8e5ee69430bc7a4e16137dab507c1",
+    "adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "smallScreenSource": {
+    "fixtureSize": 100000,
+    "knowledgePosition": "577",
+    "sha256BeforeAndAfter": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "evidenceSha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4",
+    "qualification": "Correctness only;16clients,2fixedsamples,warmup0,2smixed; no numeric promotion"
+  }
+}

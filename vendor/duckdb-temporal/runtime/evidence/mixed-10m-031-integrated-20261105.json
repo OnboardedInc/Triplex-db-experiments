@@ -1,0 +1,209 @@
+{
+  "schema": "td.mixed-10m-031-integrated/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T22:10:06.641644+00:00",
+  "predeclaredBudgetCommit": "03eaa41cbfb83f42cd2a60e9838cae646ac6b165",
+  "rawEvidence": "build/combined-031-20261105/mixed-10m-integrated.json",
+  "rawEvidenceSha256": "1db2586e3d0ec3618bd7cbc78ec7f1baffa2afc8243853229111868f8a4f5b98",
+  "comparisonEvidence": "build/binary-predicate-10m-20261105/reverse-control.json",
+  "comparisonEvidenceSha256": "be586680e138cb34dd9101c62a7fe8a9f9213c90f8c4c8602b3a188d94d336a3",
+  "sourceSha256BeforeAndAfter": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+  "configuration": {
+    "sizes": [
+      10000000
+    ],
+    "readers": [
+      1,
+      4,
+      16
+    ],
+    "samples": 5,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "coreSha256": "5191449b92d71209f9739771c8e5d03c6a5525b5e800ffdde91e28db83b4b946",
+  "companionSha256": "4b872cb97f4c95536f1139e215351c717c03e557476e18fb580ffb21a1f183f4",
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "runtimeArtifactSha256": {
+    "build/adapter/native-entity.js": "454e17fcc1462b48d9e997351dbfcb44a2600167c7a862fcdbb6e2592704740f",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "budgets": {
+    "1/projection p50": true,
+    "16/projection p50": true,
+    "16/projection p99": true,
+    "1/count p50": true,
+    "1/grouped_count p50": true,
+    "16/count p50": true,
+    "16/count p99": true,
+    "16/grouped_count p50": true,
+    "16/grouped_count p99": true,
+    "mixed reads/s": true,
+    "mixed p50": true,
+    "mixed p99": true,
+    "mixed writes/s": true,
+    "mixed acknowledged writes": true,
+    "mixed RSS": true
+  },
+  "cells": {
+    "1/count": {
+      "samples": 5,
+      "latencyMs": {
+        "count": 5,
+        "min": 431.8720409999987,
+        "p50": 436.44308399999863,
+        "p95": 447.3502499999995,
+        "p99": 447.3502499999995,
+        "max": 447.3502499999995
+      },
+      "readsPerSecond": 2.2876189347553373,
+      "sampledRssBytes": 2583117824
+    },
+    "1/grouped_count": {
+      "samples": 5,
+      "latencyMs": {
+        "count": 5,
+        "min": 461.82329200000095,
+        "p50": 468.7202920000018,
+        "p95": 475.9286659999998,
+        "p99": 475.9286659999998,
+        "max": 475.9286659999998
+      },
+      "readsPerSecond": 2.1342366943738726,
+      "sampledRssBytes": 2651242496
+    },
+    "1/projection": {
+      "samples": 5,
+      "latencyMs": {
+        "count": 5,
+        "min": 13.311374999997497,
+        "p50": 13.883915999998862,
+        "p95": 17.830832999999984,
+        "p99": 17.830832999999984,
+        "max": 17.830832999999984
+      },
+      "readsPerSecond": 66.17389175274859,
+      "sampledRssBytes": 2634186752
+    },
+    "4/count": {
+      "samples": 20,
+      "latencyMs": {
+        "count": 20,
+        "min": 482.8903750000027,
+        "p50": 928.1170839999977,
+        "p95": 1228.6900840000017,
+        "p99": 1276.0794580000002,
+        "max": 1276.0794580000002
+      },
+      "readsPerSecond": 3.9798108842262283,
+      "sampledRssBytes": 2620751872
+    },
+    "4/grouped_count": {
+      "samples": 20,
+      "latencyMs": {
+        "count": 20,
+        "min": 763.5460840000014,
+        "p50": 1007.6544580000045,
+        "p95": 1302.9170840000006,
+        "p99": 1340.1919999999955,
+        "max": 1340.1919999999955
+      },
+      "readsPerSecond": 3.7246617664121224,
+      "sampledRssBytes": 2544091136
+    },
+    "4/projection": {
+      "samples": 20,
+      "latencyMs": {
+        "count": 20,
+        "min": 13.764749999987544,
+        "p50": 17.27141699999629,
+        "p95": 26.2288750000007,
+        "p99": 27.088750000009895,
+        "max": 27.088750000009895
+      },
+      "readsPerSecond": 204.85742563356433,
+      "sampledRssBytes": 2767994880
+    },
+    "16/count": {
+      "samples": 80,
+      "latencyMs": {
+        "count": 80,
+        "min": 2867.9061250000086,
+        "p50": 3253.351999999999,
+        "p95": 5828.317666000003,
+        "p99": 6129.341583000001,
+        "max": 6129.341583000001
+      },
+      "readsPerSecond": 4.17061310040693,
+      "sampledRssBytes": 2658615296
+    },
+    "16/grouped_count": {
+      "samples": 80,
+      "latencyMs": {
+        "count": 80,
+        "min": 2979.1322079999954,
+        "p50": 3593.521375000011,
+        "p95": 6067.9439589999965,
+        "p99": 6223.6473750000005,
+        "max": 6223.6473750000005
+      },
+      "readsPerSecond": 3.8542953812072045,
+      "sampledRssBytes": 2522759168
+    },
+    "16/projection": {
+      "samples": 80,
+      "latencyMs": {
+        "count": 80,
+        "min": 37.47883300000103,
+        "p50": 53.45612499999697,
+        "p95": 62.820292000018526,
+        "p99": 73.23412500001723,
+        "max": 73.23412500001723
+      },
+      "readsPerSecond": 277.40669815811384,
+      "sampledRssBytes": 2610167808
+    },
+    "mixed": {
+      "samples": 362,
+      "latencyMs": {
+        "count": 362,
+        "min": 1040.3615829999908,
+        "p50": 2539.4190409999865,
+        "p95": 4309.609959000023,
+        "p99": 4962.981292000011,
+        "max": 5037.485374999989
+      },
+      "readsPerSecond": 5.870175173495922,
+      "sampledRssBytes": 2729459712,
+      "writes": 52,
+      "writesPerSecond": 0.8432295829331159,
+      "writesPerCompleteWindow": [
+        8,
+        7,
+        10,
+        9,
+        9,
+        8
+      ],
+      "finalReadVerified": true,
+      "reopenVerified": true,
+      "allReadersUsedAndReturned": true
+    }
+  },
+  "limitations": [
+    "One integrated confirmation includes an additional four-reader tier. The isolated binary predicate comparison is separately order-balanced.",
+    "Fixed sixteen-reader p99 is the maximum of 80 observations. Sampled process RSS is not a memory ceiling.",
+    "Mixed history begins at K39087 and advances with 52 acknowledged writes."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "pid": 44191,
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-native-presence-intervals.mjs",
+    "--runtime",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+    "--output",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+  "startedAtUtc": "2026-11-06T10:21:07.729910+00:00",
+  "environment": {
+    "UV_THREADPOOL_SIZE": "4",
+    "NODE_OPTIONS": "absent",
+    "TD_NATIVE_WRITER_LAB_*": "absent"
+  },
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T10:21:09.357419+00:00",
+  "elapsedMs": 1627.6115830987692,
+  "outerWatchdogTerminated": false
+}

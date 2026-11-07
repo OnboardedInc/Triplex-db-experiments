@@ -1,0 +1,13 @@
+{
+  "scope": "Fresh primary-source review only; no downloaded binaries, full third-party documents or candidate execution. Paraphrased claims and links are in REVIEW.md.",
+  "inspected_utc_window": ["2026-10-31T00:41:30Z", "2026-10-31T00:47:25Z"],
+  "sources": [
+    {"title": "Pinned CPython3.12.14 simple statements", "url": "https://raw.githubusercontent.com/python/cpython/v3.12.14/Doc/reference/simple_stmts.rst", "scope": "Assignment rebinding may release/destruct the previous object before the following stop clock; no measured disposal magnitude inferred."},
+    {"title": "Pinned CPython3.12.14 time", "url": "https://raw.githubusercontent.com/python/cpython/v3.12.14/Doc/library/time.rst", "scope": "perf_counter_ns is elapsed high-resolution time, including descheduling/sleep, not exclusive CPU time."},
+    {"title": "Pinned CPython3.12.14 sys", "url": "https://raw.githubusercontent.com/python/cpython/v3.12.14/Doc/library/sys.rst", "scope": "sys.executable, version and optimization flags are interpreter metadata; source uses explicit optimization/debug rejection rather than relying on asserts."},
+    {"title": "Pinned CPython3.12.14 profiler", "url": "https://raw.githubusercontent.com/python/cpython/v3.12.14/Doc/library/profile.rst", "scope": "Deterministic profiling is not benchmark timing; overhead is unequal for Python versus C."},
+    {"title": "Official CPython importlib3.12 rolling documentation", "url": "https://docs.python.org/3.12/library/importlib.html", "page_version": "3.12.16 rolling docs; runtime remains pinned3.12.14", "scope": "__file__ and ModuleSpec.origin can differ and are not automatically synchronized; source paths are observed joins, not immutable loaded-code attestation."},
+    {"title": "Official Linux kernel proc filesystem documentation", "url": "https://www.kernel.org/doc/html/latest/filesystems/proc.html", "scope": "Own-process maps describe mapped regions and file paths; snapshot/race limits do not support historic or continuously observed attestation."},
+    {"title": "Kalibera and Jones2013, Rigorous Benchmarking in Reasonable Time", "url": "https://kar.kent.ac.uk/33611/45/p63-kaliber.pdf", "version": "University of Kent author-accepted manuscript; DOI10.1145/2464157.2464160", "scope": "Variation and initialization/independence occur at different repetition levels. Process-pair clustering does not establish i.i.d. state or implement full multi-build variance design."}
+  ]
+}

@@ -1,0 +1,341 @@
+{
+  "schema": "td.new_primary_authority_checkpoint/1",
+  "utc": "2026-10-31T07:36:51.064341+00:00",
+  "scope": "Only independently reviewed NEW primary-source/API/ABI/dependency analysis and selected direction; no stopped backup payload or preparation",
+  "selected_option": "A absolute additional-attachment rejection; next isolated feasibility gates only",
+  "source_commit": "52b1e81f1d71590bdefb376e62924c9f717d4344",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4007,
+      "sha256": "00f7bbce5eb5e25bdc15816b651fe320cd1c5659fd768293d8c63c3e7d3772e3",
+      "git_blob_sha1": "24e99d8570389648529c00ef01c527db33d96a22",
+      "git_mode": "100644",
+      "source": "root-authored new checkpoint overview"
+    },
+    {
+      "path": "api-review/API-REVIEW.md",
+      "bytes": 11700,
+      "sha256": "d474f14f7e3c76450d640b274f893298e627ef983b043423646869ee213a5a2a",
+      "git_blob_sha1": "4557f0de2bde699ae41657145a870b4d52b91462",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/api-review/API-REVIEW.md"
+    },
+    {
+      "path": "api-review/EVIDENCE-MANIFEST.json",
+      "bytes": 2066,
+      "sha256": "407cdfc26359bca23341ca27df980c2da9dcd3a91a35001940bf41fa307af5fa",
+      "git_blob_sha1": "c95a95c49c917a63c793cf382ee0a584092f0eea",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/api-review/EVIDENCE-MANIFEST.json"
+    },
+    {
+      "path": "api-review/PINNED-SOURCE-RECEIPTS.json",
+      "bytes": 15190,
+      "sha256": "04d091b8705fce6b9bc4f5d82eecea70c3e479f0f354f61e505dab09352f2b3c",
+      "git_blob_sha1": "d9d97a8e49a1fe264b819e0cd71e351cab924772",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/api-review/PINNED-SOURCE-RECEIPTS.json"
+    },
+    {
+      "path": "api-review/PUBLIC-SURFACE-INVENTORY.json",
+      "bytes": 77726,
+      "sha256": "e4332b86b9f7e5af9dd24aabd6a3b5b83a617b41b25e21707056095d55a689d4",
+      "git_blob_sha1": "b9dd7a6b7b3a0315b226a80802e76d648037f293",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/api-review/PUBLIC-SURFACE-INVENTORY.json"
+    },
+    {
+      "path": "api-review/STATIC-RECEIPT.json",
+      "bytes": 1765,
+      "sha256": "7e342b4600403c08f02571891b2fc0c0227f39b11db6df8dff90d2dc8354ffb1",
+      "git_blob_sha1": "a3a9ecdd199a13de40af149144da18ac52533991",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/api-review/STATIC-RECEIPT.json"
+    },
+    {
+      "path": "api-review/command-exit.jsonl",
+      "bytes": 1309,
+      "sha256": "39fc9a1b148033028a699120effaa1acbcd68382c390a4a04110f3b6146f34e6",
+      "git_blob_sha1": "1ef133be83b0556214aa04259f2b97e996d55011",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/api-review/command-exit.jsonl"
+    },
+    {
+      "path": "api-review/progress.jsonl",
+      "bytes": 2903,
+      "sha256": "c95911f9f37a8020903059a11e2bd3a1d718adeb3fea6ea6881a13133e2d49e0",
+      "git_blob_sha1": "f1664d50807a809d229dda6aa42268737648a551",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/api-review/progress.jsonl"
+    },
+    {
+      "path": "api-review/source-hash-checker.js",
+      "bytes": 2854,
+      "sha256": "a5e9d39a8c2e7651e05d580dd9fe1332de211ea382b782096b0e5c6665801f45",
+      "git_blob_sha1": "ce3ad9f20182442e10b62cab444d747e3b93abdc",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/api-review/source-hash-checker.js"
+    },
+    {
+      "path": "bridge-feasibility/EVIDENCE-MANIFEST.json",
+      "bytes": 2415,
+      "sha256": "b9d78af49296976d94c7ee5b28e50e7a3aba1918b7284d5a270df315912f3024",
+      "git_blob_sha1": "6d585a0658ccfc9207bbe8f4814f20ea63afc677",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/EVIDENCE-MANIFEST.json"
+    },
+    {
+      "path": "bridge-feasibility/FEASIBILITY.md",
+      "bytes": 11963,
+      "sha256": "83138061902588c4d68eab1efe72afdad7efcb3bffa3ddaf35b5d3e627ac7439",
+      "git_blob_sha1": "51034fc3ba8c407e003ed8ce6dc36307b49f7c6b",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/FEASIBILITY.md"
+    },
+    {
+      "path": "bridge-feasibility/SOURCE-EXCERPTS.json",
+      "bytes": 37916,
+      "sha256": "82b443ebf2322b45e4eff3cb0a811fa14a48eedc99348f7aa03e1460191649fb",
+      "git_blob_sha1": "5f25f4aea96bb574ea9caf62e67b15ed3018369c",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/SOURCE-EXCERPTS.json"
+    },
+    {
+      "path": "bridge-feasibility/SOURCE-RECEIPTS.json",
+      "bytes": 12009,
+      "sha256": "6fdeb0da1b699d7145420ccfd821033804e257ae8c3004f773eb3dbfc9b15c32",
+      "git_blob_sha1": "9e1f6cf26ab7499eead6fca960aca5aeea16954c",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/SOURCE-RECEIPTS.json"
+    },
+    {
+      "path": "bridge-feasibility/build-static.txt",
+      "bytes": 2408,
+      "sha256": "432738e1f8766bec0674c6181d945deff6bcdec81f25e8c2728060e851b5fab6",
+      "git_blob_sha1": "23d21e4a518a739c5ee507ffb99d763fa333541f",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/build-static.txt"
+    },
+    {
+      "path": "bridge-feasibility/cpp-dependencies-static.txt",
+      "bytes": 5290,
+      "sha256": "82f058111754e59607eafa4c14f55f49e5b4c41205cfd35ff24eaff6a429e131",
+      "git_blob_sha1": "45a18646488db440736a189e3a47f3f3765b3a40",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/cpp-dependencies-static.txt"
+    },
+    {
+      "path": "bridge-feasibility/final-readback-static.txt",
+      "bytes": 769,
+      "sha256": "ea23d773cc7fdd5125e193631fb5f28463752805c8d375f3d11bbb33199e3b09",
+      "git_blob_sha1": "0103b0d96ad9563e7f7ea105ad8f472634c45d8d",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/final-readback-static.txt"
+    },
+    {
+      "path": "bridge-feasibility/host-elf-static.txt",
+      "bytes": 7665,
+      "sha256": "66e41e932b063a4cd4bd6a9ed52c61633442304017ed49e0f17f3d10115b40ca",
+      "git_blob_sha1": "180ce608fc1319047e0881145dcbea85e74a4b0a",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/host-elf-static.txt"
+    },
+    {
+      "path": "bridge-feasibility/host-pin-static.txt",
+      "bytes": 727,
+      "sha256": "231e5d2af46ec86d1e87de732f2ec58693a4e946e76641797eb2eaf588c82b82",
+      "git_blob_sha1": "449d8413cc8019fba1dd59ce00b0c3dec70198a3",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/bridge-feasibility/host-pin-static.txt"
+    },
+    {
+      "path": "direction-review/EVIDENCE-MANIFEST.json",
+      "bytes": 1053,
+      "sha256": "07d771371cd4718e2ddd08f738733abfc4ca16b2f4d811f2f8a556d655d726de",
+      "git_blob_sha1": "591dbea0497f68a63f0e947d10085a52d8c1cc11",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/direction-review/EVIDENCE-MANIFEST.json"
+    },
+    {
+      "path": "direction-review/INPUT-RECEIPT.json",
+      "bytes": 7132,
+      "sha256": "66c4dd559318562db83a067c9bb428850084826562e4881b0be37abb43b319f6",
+      "git_blob_sha1": "7e3b6a508986ac0773e37941117b0f6c9fd8f71c",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/direction-review/INPUT-RECEIPT.json"
+    },
+    {
+      "path": "direction-review/REVIEW.md",
+      "bytes": 2457,
+      "sha256": "6517c5a69dd4f6bdd5b5a917fd105d7c0c14e13383f195ea544d88b9d262ba3a",
+      "git_blob_sha1": "f135e8d5c70facc11fe1d2f37c48709ce2748870",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/direction-review/REVIEW.md"
+    },
+    {
+      "path": "direction-review/command-exit.jsonl",
+      "bytes": 375,
+      "sha256": "9ba03a6a7c7eb5652c729d0d6170185e42933076d7e5cf2eebefe28fdce80326",
+      "git_blob_sha1": "a626a67ff0614163d0cc26faef509120b06d4c2a",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/direction-review/command-exit.jsonl"
+    },
+    {
+      "path": "direction-review/progress.jsonl",
+      "bytes": 782,
+      "sha256": "8ba14f50bc45de30456d972335b3cf29109fcee2a062c6d7cbfda861940086c7",
+      "git_blob_sha1": "3c67a3443cfe487d4b8ff8caf9a675554a4045a1",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/direction-review/progress.jsonl"
+    },
+    {
+      "path": "options/CLOSURE-WRITER-001-FIRST-FAILURE.json",
+      "bytes": 514,
+      "sha256": "a0fad23f61ee97916b8057192b777a4b9145abb04dd401066bca27231b3d481c",
+      "git_blob_sha1": "3120d50d048885aa2ab6d9e46b719ee96d7bedbe",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/CLOSURE-WRITER-001-FIRST-FAILURE.json"
+    },
+    {
+      "path": "options/CONTRACT-OPTIONS.md",
+      "bytes": 25129,
+      "sha256": "afb2cbe97c91a3d98d88e48656359a7e6300ce5bcb88d19ada8412d8438e4b9a",
+      "git_blob_sha1": "769445ef0899e30b5bcd70c7b7ea7a95694f08e1",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/CONTRACT-OPTIONS.md"
+    },
+    {
+      "path": "options/HANDOFF.json",
+      "bytes": 3441,
+      "sha256": "9e600b6f564586f6872d8662b553fa9d2e0c1ea6281e4b1878dce84fdfdc44be",
+      "git_blob_sha1": "b9bb0ac92019e8a6649d8d962234e9dbbb4a9222",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/HANDOFF.json"
+    },
+    {
+      "path": "options/LICENSE-COPY-NOTE.json",
+      "bytes": 444,
+      "sha256": "2929d7d4965fc4c885557e163013ea2b50dbb3947bc4b0b0c189ed6fc94b93a3",
+      "git_blob_sha1": "eea603b6aa9d0d7f3af595c7b0759c21386142fc",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/LICENSE-COPY-NOTE.json"
+    },
+    {
+      "path": "options/LICENSE-SOURCE-RECEIPT.json",
+      "bytes": 524,
+      "sha256": "19d790e6c61a22e033ff6393bf8f2af131034acf8bc45350c02c06417dd77d5a",
+      "git_blob_sha1": "d7f3449d4a6da7cb199e0c260437393f4865455c",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/LICENSE-SOURCE-RECEIPT.json"
+    },
+    {
+      "path": "options/LICENSE.duckdb",
+      "bytes": 1073,
+      "sha256": "332e19171f85a7ea54842f234cd68e15cc33f4fc974ce11fffd9ede1625be80f",
+      "git_blob_sha1": "384489dbca1ac0df40ac50fc380582795babed1c",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/LICENSE.duckdb"
+    },
+    {
+      "path": "options/MANIFEST.json",
+      "bytes": 2379,
+      "sha256": "b65ca6a7c2677e8b385f5587f9904898163309e622ea3f10390921dde1d7d0b9",
+      "git_blob_sha1": "0e3c48247b9a0a7910702ffad12193dc88a5019a",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/MANIFEST.json"
+    },
+    {
+      "path": "options/PINNED-SOURCE-ADDENDUM.json",
+      "bytes": 5889,
+      "sha256": "962af82288c36449e841d338ff5e32202149e5b6d8e1c273a0392de6be28ba58",
+      "git_blob_sha1": "202d3a7cc2e60f923e7cc0f6c3acf78bdda763a1",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/PINNED-SOURCE-ADDENDUM.json"
+    },
+    {
+      "path": "options/PINNED-SOURCE-RECEIPTS.json",
+      "bytes": 29017,
+      "sha256": "e4c847091c3b7c76212a49306646a42daf4b9981e75c5b02755de58c60a14e28",
+      "git_blob_sha1": "73e0415ef097c2df87e0cbe063b15b3be22c896e",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/PINNED-SOURCE-RECEIPTS.json"
+    },
+    {
+      "path": "options/PRIMARY-EXCERPTS.md",
+      "bytes": 56516,
+      "sha256": "6b859a49538eec431853efb05b8dfd259c80c5a976ddc32b2fe110a725e28529",
+      "git_blob_sha1": "c7d91ba16d100b4ae3bb5cc3a11d475c8eca614d",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/PRIMARY-EXCERPTS.md"
+    },
+    {
+      "path": "options/SOURCE-ONLY-CHECK-001-FIRST-FAILURE.json",
+      "bytes": 740,
+      "sha256": "eacbf1af5e427c76dabfd3fcc3de6be61583c97da1c891f187d950c9d3cf4494",
+      "git_blob_sha1": "0f6bdcb094bd292dc92533ab66b71f512c0fcca4",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/SOURCE-ONLY-CHECK-001-FIRST-FAILURE.json"
+    },
+    {
+      "path": "options/SOURCE-ONLY-CHECKS-002.json",
+      "bytes": 1947,
+      "sha256": "40e9c9356c470c5fcfbafd26872fdc1f623c61512d66f10e5839f5dbe08e7862",
+      "git_blob_sha1": "0e7b9c61674d4aa28f5199c7651baac7f1ad98b2",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/python-owner/contract-options/SOURCE-ONLY-CHECKS-002.json"
+    },
+    {
+      "path": "root-review/DEPENDENCY-MAP.md",
+      "bytes": 8238,
+      "sha256": "61dc96a48e3dbd235ac2898aa4346740491d635f5d88ccea34517c78c2f0a39a",
+      "git_blob_sha1": "1e0953b5f81ceccb93dedd05167a2399ed3c9a5a",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/root-dependencies/DEPENDENCY-MAP.md"
+    },
+    {
+      "path": "root-review/PRIMARY-CHECKPOINT-INPUT-READBACK.json",
+      "bytes": 8446,
+      "sha256": "7f5ff1ed6fa8ffe1f8708c2be6f3457909849d37fe32de916fc5f1276a9f30d6",
+      "git_blob_sha1": "76d447e8110766fa75853275022ab673301fdfe8",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/root-dependencies/PRIMARY-CHECKPOINT-INPUT-READBACK.json"
+    },
+    {
+      "path": "root-review/ROOT-PRECODE-IDENTITY-READBACK.json",
+      "bytes": 935,
+      "sha256": "1d17a635b99d1077ee7f3b6e5afbed97b852ebf39dcbb142c454e714a56a3ff5",
+      "git_blob_sha1": "9775bcdefb2fe782c343c6c76636fcdc9dfa80fe",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/root-dependencies/ROOT-PRECODE-IDENTITY-READBACK.json"
+    },
+    {
+      "path": "root-review/SELECTED-DIRECTION.md",
+      "bytes": 7489,
+      "sha256": "4892fcbb5a1374ea2bd17a919de23589d36983aa6a3d161a9e8adc551b771364",
+      "git_blob_sha1": "7f3917e55b9ac6755945b973cdd003ca2cbccd44",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/root-dependencies/SELECTED-DIRECTION.md"
+    },
+    {
+      "path": "root-review/SOURCE-READBACK.json",
+      "bytes": 1443,
+      "sha256": "aa2c8201d4813d73426053da04356b572081912dc646929614601303be95a8a4",
+      "git_blob_sha1": "0c224c359fc4bbac91e7d8432b55219bc7de0cc8",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/root-dependencies/SOURCE-READBACK.json"
+    },
+    {
+      "path": "root-review/STATIC-DEPENDENCIES.json",
+      "bytes": 13284,
+      "sha256": "807eaf7e0dc181c9281b01212a86d7fee99ae94f1a359673f1bb11be91195639",
+      "git_blob_sha1": "7d6eac1c76db605b9b0fc55bc848f7d5b4644970",
+      "git_mode": "100644",
+      "source": ".agent-logs/goal3-catalog-research/root-dependencies/STATIC-DEPENDENCIES.json"
+    }
+  ],
+  "manifest_self_excluded": true,
+  "git_mode_mapping": "Nonexecutable UTF8 research records use Git100644; original local manifest modes remain documentary metadata",
+  "no_app_compile_link_load_runtime": true,
+  "no_stopped_material_repackaging": true
+}

@@ -1,0 +1,9 @@
+{
+  "changed": {},
+  "added": [
+    "build/adapter/test-native-reference-coverage-boundaries.d.ts",
+    "build/adapter/test-native-reference-coverage-boundaries.js"
+  ],
+  "count": 188,
+  "all186PriorExact": true
+}

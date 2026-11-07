@@ -1,0 +1,75 @@
+SELECT DISTINCT (?q_v_type AS ?domain0) (?q_c_type AS ?domain1) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJ3aWRlLWZ1bm5lbDo4ZThiYmU3NS1kMTY2LTRiYmUtYWJiMy1lZjE4NDcxODBkYWMiLDBd> { ?w0 <urn:triplex:field:valid_from_order> ?w0_vf ; <urn:triplex:field:recorded_position_order> ?w0_rp . ?w0 <urn:triplex:field:recorded_at_order> ?w0_ra .
+OPTIONAL { ?w0 <urn:triplex:field:valid_to_order> ?w0_vt }
+OPTIONAL { ?w0 <urn:triplex:field:retracted_position_order> ?w0_xp }
+OPTIONAL { ?w0 <urn:triplex:field:retracted_at_order> ?w0_xa }
+?w0 <urn:triplex:field:entity_id> ?q_view_value .
+?w0 <urn:triplex:field:attribute> ":w17/a73657373696f6e" .
+?w0 <urn:triplex:field:scalar_family> ?q_session_type ; <urn:triplex:field:scalar_lexical> ?q_session_value ; <urn:triplex:field:scalar_order> ?q_session_order .
+?w1 <urn:triplex:field:valid_from_order> ?w1_vf ; <urn:triplex:field:recorded_position_order> ?w1_rp . ?w1 <urn:triplex:field:recorded_at_order> ?w1_ra .
+OPTIONAL { ?w1 <urn:triplex:field:valid_to_order> ?w1_vt }
+OPTIONAL { ?w1 <urn:triplex:field:retracted_position_order> ?w1_xp }
+OPTIONAL { ?w1 <urn:triplex:field:retracted_at_order> ?w1_xa }
+?w1 <urn:triplex:field:entity_id> ?q_view_value .
+?w1 <urn:triplex:field:attribute> ":w17/a73746570" .
+?w1 <urn:triplex:field:scalar_family> "string" ; <urn:triplex:field:scalar_lexical> "view" ; <urn:triplex:field:scalar_order> "view" .
+?w2 <urn:triplex:field:valid_from_order> ?w2_vf ; <urn:triplex:field:recorded_position_order> ?w2_rp . ?w2 <urn:triplex:field:recorded_at_order> ?w2_ra .
+OPTIONAL { ?w2 <urn:triplex:field:valid_to_order> ?w2_vt }
+OPTIONAL { ?w2 <urn:triplex:field:retracted_position_order> ?w2_xp }
+OPTIONAL { ?w2 <urn:triplex:field:retracted_at_order> ?w2_xa }
+?w2 <urn:triplex:field:entity_id> ?q_view_value .
+?w2 <urn:triplex:field:attribute> ":w17/a6174" .
+?w2 <urn:triplex:field:scalar_family> ?q_v_type ; <urn:triplex:field:scalar_lexical> ?q_v_value ; <urn:triplex:field:scalar_order> ?q_v_order .
+?w3 <urn:triplex:field:valid_from_order> ?w3_vf ; <urn:triplex:field:recorded_position_order> ?w3_rp . ?w3 <urn:triplex:field:recorded_at_order> ?w3_ra .
+OPTIONAL { ?w3 <urn:triplex:field:valid_to_order> ?w3_vt }
+OPTIONAL { ?w3 <urn:triplex:field:retracted_position_order> ?w3_xp }
+OPTIONAL { ?w3 <urn:triplex:field:retracted_at_order> ?w3_xa }
+?w3 <urn:triplex:field:entity_id> ?q_checkout_value .
+?w3 <urn:triplex:field:attribute> ":w17/a73657373696f6e" .
+?w3 <urn:triplex:field:scalar_family> ?q_session_type ; <urn:triplex:field:scalar_lexical> ?q_session_value ; <urn:triplex:field:scalar_order> ?q_session_order .
+?w4 <urn:triplex:field:valid_from_order> ?w4_vf ; <urn:triplex:field:recorded_position_order> ?w4_rp . ?w4 <urn:triplex:field:recorded_at_order> ?w4_ra .
+OPTIONAL { ?w4 <urn:triplex:field:valid_to_order> ?w4_vt }
+OPTIONAL { ?w4 <urn:triplex:field:retracted_position_order> ?w4_xp }
+OPTIONAL { ?w4 <urn:triplex:field:retracted_at_order> ?w4_xa }
+?w4 <urn:triplex:field:entity_id> ?q_checkout_value .
+?w4 <urn:triplex:field:attribute> ":w17/a73746570" .
+?w4 <urn:triplex:field:scalar_family> "string" ; <urn:triplex:field:scalar_lexical> "checkout" ; <urn:triplex:field:scalar_order> "checkout" .
+?w5 <urn:triplex:field:valid_from_order> ?w5_vf ; <urn:triplex:field:recorded_position_order> ?w5_rp . ?w5 <urn:triplex:field:recorded_at_order> ?w5_ra .
+OPTIONAL { ?w5 <urn:triplex:field:valid_to_order> ?w5_vt }
+OPTIONAL { ?w5 <urn:triplex:field:retracted_position_order> ?w5_xp }
+OPTIONAL { ?w5 <urn:triplex:field:retracted_at_order> ?w5_xa }
+?w5 <urn:triplex:field:entity_id> ?q_checkout_value .
+?w5 <urn:triplex:field:attribute> ":w17/a6174" .
+?w5 <urn:triplex:field:scalar_family> ?q_c_type ; <urn:triplex:field:scalar_lexical> ?q_c_value ; <urn:triplex:field:scalar_order> ?q_c_order .
+BIND("string" AS ?q_view_type) BIND(?q_view_value AS ?q_view_order)
+BIND("string" AS ?q_checkout_type) BIND(?q_checkout_value AS ?q_checkout_order) }
+FILTER(?w0_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w0_vt) || ?w0_vt > "c12e84e400000000"))
+FILTER(?w0_rp <= "bff0000000000000")
+FILTER((!BOUND(?w0_xp) || ?w0_xp > "bff0000000000000" || ?w0_xa > "c08f480000000000"))
+FILTER(?w0_ra <= "c08f480000000000")
+FILTER(?w1_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w1_vt) || ?w1_vt > "c12e84e400000000"))
+FILTER(?w1_rp <= "bff0000000000000")
+FILTER((!BOUND(?w1_xp) || ?w1_xp > "bff0000000000000" || ?w1_xa > "c08f480000000000"))
+FILTER(?w1_ra <= "c08f480000000000")
+FILTER(?w2_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w2_vt) || ?w2_vt > "c12e84e400000000"))
+FILTER(?w2_rp <= "bff0000000000000")
+FILTER((!BOUND(?w2_xp) || ?w2_xp > "bff0000000000000" || ?w2_xa > "c08f480000000000"))
+FILTER(?w2_ra <= "c08f480000000000")
+FILTER(?w3_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w3_vt) || ?w3_vt > "c12e84e400000000"))
+FILTER(?w3_rp <= "bff0000000000000")
+FILTER((!BOUND(?w3_xp) || ?w3_xp > "bff0000000000000" || ?w3_xa > "c08f480000000000"))
+FILTER(?w3_ra <= "c08f480000000000")
+FILTER(?w4_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w4_vt) || ?w4_vt > "c12e84e400000000"))
+FILTER(?w4_rp <= "bff0000000000000")
+FILTER((!BOUND(?w4_xp) || ?w4_xp > "bff0000000000000" || ?w4_xa > "c08f480000000000"))
+FILTER(?w4_ra <= "c08f480000000000")
+FILTER(?w5_vf <= "c12e84e400000000")
+FILTER((!BOUND(?w5_vt) || ?w5_vt > "c12e84e400000000"))
+FILTER(?w5_rp <= "bff0000000000000")
+FILTER((!BOUND(?w5_xp) || ?w5_xp > "bff0000000000000" || ?w5_xa > "c08f480000000000"))
+FILTER(?w5_ra <= "c08f480000000000")
+ } LIMIT 1001

@@ -1,0 +1,46 @@
+{
+  "format": "triplex-qlever-negation-wave/1",
+  "problemTag": "qlever.planner-memory.correlated-negation",
+  "predeclaredUnix": 1794006997.402019,
+  "state": "AUTHORED_UNEXECUTED",
+  "fixedProfile": {
+    "engineMemoryBytes": 2147483648,
+    "queryPlanningBudget": 100,
+    "allocation512M": true,
+    "samePinnedImage": true
+  },
+  "control": {
+    "plan": "exists",
+    "evidence": ".devloop/jobs/qlever-datalog-packet-bounded-v2/attempts/0001",
+    "result": "OOM137atfamily12deny-two-allows; notrerununchangedunbounded"
+  },
+  "arms": [
+    {
+      "plan": "projected",
+      "hypothesis": "Compileclosednegativeconjunctionwithfreshbindings; projectDISTINCTonlysharedflattenedfamily+lexicalkeys; correlateafterprojectiontoavoidcarryingouterphysicalchannelsintoplanner",
+      "limits": "Outer-onlypredicatebindingsfallbacktocontrol; keylessglobalNOTEXISTS retained; boundedquerywidthunchanged"
+    },
+    {
+      "plan": "minus",
+      "hypothesis": "UseprojectednativeMINUSonlywithnonemptysharedphysicalaliasesandclosednegativebindings; preservefamily+lexicalcompatibility",
+      "limits": "Keyless/disjointnegativeandORexpressionusenativeNOTEXISTS; noassertionidentitysubstitution"
+    }
+  ],
+  "requiredFirstGates": [
+    "pureeligibilityanddisjointguard",
+    "publicsemanticref/stringandnumber/int64andtypedrefcases",
+    "repeatedvariables/constants/conjunction/OR/outer-onlypredicate",
+    "independentfamily12oraclecurrent+reopened8cases"
+  ],
+  "then": [
+    "freshunchanged44",
+    "fullcurrent+reopened142",
+    "independentreviewandsameprofilecontrol/candidatecalibrationbeforeperformancepromotion"
+  ],
+  "prohibitedClaims": [
+    "No largerheapaswin",
+    "NoOOMphaseallocationstackclaim",
+    "NosemanticPASSfromqueryshapealone",
+    "Noordinaryhostfactevaluation"
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "schema": "td.static-four-budget-asset-repair/1",
+  "status": "PASSED_FILE_ONLY_NO_RETRY",
+  "recordedAtUtc": "2026-11-06T05:17:22.939232+00:00",
+  "preservedFailureCommit": "072c96c036a95a1295cc5eb6f72d38834fba2526",
+  "preservedFailureSha256": "be643346b97784bbbb0dd235fcf9577d7ace09c447ede5b88717c3a693767acf",
+  "originalBudget": {
+    "file": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/evidence/antijoin-cost-10m-budget-20261105.json",
+    "sha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+    "unchanged": true
+  },
+  "assets": [
+    {
+      "purpose": "original100k baseline raw required by both small/large runner preflight",
+      "source": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-read-scheduling-20261105/runtime/build/antijoin-qualification-20261105-02/100k.json",
+      "destination": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/antijoin-qualification-20261105-02/100k.json",
+      "bytes": 2788372,
+      "sha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474",
+      "copy": "exclusive new destination, exact bytes",
+      "sourceIdentityBefore": {
+        "bytes": 2788372,
+        "mtimeNs": 1793920826617740008,
+        "ctimeNs": 1793924307484679115
+      },
+      "sourceIdentityAfter": {
+        "bytes": 2788372,
+        "mtimeNs": 1793920826617740008,
+        "ctimeNs": 1793924307484679115
+      },
+      "sourceUnchanged": true
+    },
+    {
+      "purpose": "original baseline compact receipt required by both small/large runner preflight",
+      "destination": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/evidence/native-antijoin-cost-100k-20261105.json",
+      "bytes": 17486,
+      "sha256": "b20cc58126b0d77cd27fbeb80f2b37c814b8e32c0482efc26921b80d260affba",
+      "copy": "none; already committed exact bytes"
+    }
+  ],
+  "requiredBudgetRelativeFiles": [
+    "baseline.file",
+    "baselineReceipt.file"
+  ],
+  "otherBaselineRawMirrorsNeeded": false,
+  "reason": "The unchanged driver reads only these two budget-relative files; source fixture/recipe paths are explicit inputs and were already present and verified in the failed first preflight. Nested historical child pointers are not read.",
+  "sourceInputsUnchanged": {
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/antijoin-profile-binding.mjs": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4",
+    "adapter/antijoin-sdk-binding.mjs": "74839060c5382ca78cd89629ebf3882db26adbc1febbebdb19aa2961f18b855a",
+    "adapter/benchmark-antijoin-cost.mjs": "1f76395dfe3e4bf91464aee84e80927600e36a11ab5a29c2ebbcc5a62baeded5",
+    "adapter/antijoin-static-four-binding.mjs": "eb5f6e078560c86f3501020d39afdbcd9925663a1a00c0f76b254b89757c524b",
+    "freeze_static_four_runtime.py": "4a524076d42e47bf9c6671650f1446c0e524120cea060c0e283d10c61b298a58",
+    "STATIC-FOUR-PERFORMANCE-PROTOCOL.md": "3afa0ecf118cfb7f603982766a69dbde5957bcc5ddb087776a4a8ec3c693458b",
+    "stage_broad_sdk_runtime.py": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb",
+    "adapter/native-entity.ts": "6101c9eb6059e051520b29fab50cf400bf12d18d24f0fc4714cfd8804b443969",
+    "adapter/native-schema.ts": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+    "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b"
+  },
+  "sourceOrRuntimeEdits": "none",
+  "frozenArchiveEdits": "none",
+  "databaseOrBenchmarkExecution": "none",
+  "retry": "none",
+  "nextGate": "Separately scheduled fresh candidate1/16 SMALL profiles after root review and B release."
+}

@@ -1,0 +1,24 @@
+{
+  "name": "triplex-integration-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest --run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/sql-sqlite-node": "catalog:",
+    "@triplex-build/triplex": "workspace:^",
+    "@triplex-build/triplex-cloudflare": "workspace:^",
+    "@triplex-build/triplex-http": "workspace:^",
+    "@triplex-build/triplex-sql": "workspace:^",
+    "@triplex-build/triplex-sqlite": "workspace:^",
+    "@triplex-build/triplex-testkit": "workspace:^",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  }
+}

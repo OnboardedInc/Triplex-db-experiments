@@ -1,0 +1,85 @@
+{
+  "format": "independent-handoff-completeness-review/1",
+  "reviewedAtUtc": "2026-11-06T17:26:03.322633+00:00",
+  "status": "PASS_STATIC_REVIEW_WITH_DECLARED_RUNTIME_LIMITS",
+  "reviewerRole": "independent completeness and packaging-tool reviewer",
+  "scope": "Sanitized staging tree, paused-state context, portable prerequisites and packaging tools. No services, backend builds, runtime tests, dependency installs or native queries were performed by this review.",
+  "reviewedFileSha256": {
+    "README.md": "28193a8f09c9a1d9c90677dc27ddf2e9f190fb5bcba445a0ecd82af32246b439",
+    "handoff/PAUSED-STATE.md": "12c814363b5a4ff2783f63fa11aad3175c63677bcebcd667f2b7dc1e107abf39",
+    "handoff/RESUME.md": "ab220e96c14ca006e78ce3bfca7f1ad8279dcbc1b0f62be996c232a7055d366f",
+    "tools/verify_bundle.py": "92b42cc8c51a2a175ddc681c165307e957effd3240fddf6f5532f3e3855ea580",
+    "tools/materialize_variant.py": "d9b61765df56f6df413bfc6cc16f6e5cb2b3861c075f1f6fc3e58c7b81990bda",
+    "tools/offline_registry.py": "b58bae4429e5d97c3092b82a7e0e1e4daf2e71a80cca37a6ef3dcc9e7e191898",
+    "tools/prepare_local_run.py": "3f784b4769bc563d021f31c6f94218cc0377a00155ed74a30c3836991649a5eb",
+    "offline/qlever-bootstrap/MANIFEST.json": "244de38d4be71e8f46bfaa9d7de0a96d95cb316ab2402c512040a1056a869c84",
+    "offline/container-images/manifest.json": "6bb3aa65d042608d8f6b07ca81c8e8e3e153c1e0a1aa8de85ad5c74ec90c8ecd",
+    "triplex-backends/qualification/source-manifest.json": "cbee69a046be4922400825da07ad2ef0becac41b3452336dee225e8a22c84f7f"
+  },
+  "resolvedFindings": [
+    {
+      "finding": "Archive directory members bypassed the required top-level folder prefix.",
+      "resolution": "Directory and file names now enforce the expected archive root; duplicate members and global/member comments are rejected."
+    },
+    {
+      "finding": "Directory-form symlink metadata bypassed file-only mode validation.",
+      "resolution": "Unix symlink and other special member modes are rejected before branching on directory entries."
+    },
+    {
+      "finding": "Startup accepted an edited run image identity without checking the bundled backend pin.",
+      "resolution": "Start revalidates format/backend/unique owner, pinned image/reference, memory/internal port and bootstrap map against bundled manifests."
+    },
+    {
+      "finding": "A substituted configuration symlink could be mounted into a fresh runtime.",
+      "resolution": "Start rejects configuration symlinks and requires the bundled configuration digest."
+    },
+    {
+      "finding": "Fresh-data map ignored special entries and unexpected directories.",
+      "resolution": "Start now rejects every nonregular or nonflat entry via lstat before hashing or contacting Docker, then requires the exact pristine filename/hash map."
+    },
+    {
+      "finding": "The first archive candidate correctly emitted required ZIP64 header-offset metadata above the writer threshold, while the initial bundled verifier rejected every extra field.",
+      "resolution": "The verifier now accepts only an exact ZIP64 tag1/length8 field whose value equals the actual header offset at or above the ZIP64 threshold. Timestamp, ownership, comment and other arbitrary metadata remain rejected. Final archive SHA and parity are a separate post-freeze gate."
+    }
+  ],
+  "confirmedInputs": {
+    "qleverBootstrap": {
+      "files": 23,
+      "logicalBytes": 8659,
+      "result": "All allowlisted staged bytes matched the retained immutable bootstrap; no update snapshot or telemetry included."
+    },
+    "copiedOracleInputs": {
+      "files": 17,
+      "result": "All original expected SHA256 values match the staged oracle inputs."
+    },
+    "workspace": "Workspace manifests/lock, required packages, public dist snapshots and hidden documentation configuration are present.",
+    "noStagedSymlinksObserved": true
+  },
+  "portableToolAssessment": {
+    "verifyBundle": "Checks exact exported membership/digests and safe archive structure. Explicitly does not assert original Git-origin verification, runtime correctness or a digital signature.",
+    "materializeVariant": "Requires a new destination, validates object digests and safe relative member paths, and does not execute materialized source.",
+    "offlineRegistry": "Verifies captured package identity/bytes before loopback-only serving; no remote proxy or lifecycle execution is performed by the registry.",
+    "prepareLocalRun": "Default action prepares a new folder without starting a service. Explicit start refuses existing unique owner names, nonlocal Docker endpoints, platform/pin drift, occupied published ports, changed initial data and symlink paths; it runs as the current UID/GID and performs no ownership changes or resource replacement. Initial contents must now be flat regular files only; FIFOs, devices, sockets and unexpected directories are refused before Docker calls."
+  },
+  "declaredLimitsThatRemain": [
+    "Recipient native startup and dependency/lifecycle installation have not been executed or qualified.",
+    "Unique-owner readiness, resource admission and original-origin controller assumptions still require explicit portable adaptation; direct contract checks are not equivalent to qualified controller receipts.",
+    "Startup checks a starter disk reserve but does not reserve aggregate Docker/host/client memory or future ingestion/backup capacity; target capacity admission remains required.",
+    "Historical recovery fixtures refer to omitted retained database state and cannot run unchanged on the one-triple bootstrap.",
+    "The latest unchanged query-suite self-rule failure, untested adapter sub-budget edits, earlier failures and incomplete ten-goal/scale/comparison target remain explicit.",
+    "The export uses a separate packaging profile and does not claim the earlier development storage gate covered staging or ZIP overlap."
+  ],
+  "citationCoverageReview": {
+    "originalUnavailableUrlsRemainUnavailable": true,
+    "metadataOnlyAlternativesAdded": 2,
+    "bodyBytesModified": false,
+    "scope": "Alternate full-paper identity was checked from bundled first-page text; related material is not relabeled as an identical missing landing/listing page."
+  },
+  "blockersBeforeByteFreeze": [],
+  "finalZipParity": "PENDING_FINAL_ARCHIVE",
+  "packagingOwnerReportedChecks": {
+    "passed": 24,
+    "scope": "Private packaging-tool fixtures, including FIFO and unexpected-directory rejection; reported by the packaging owner, not independently executed by this reviewer.",
+    "backendRuntimeTests": false
+  }
+}

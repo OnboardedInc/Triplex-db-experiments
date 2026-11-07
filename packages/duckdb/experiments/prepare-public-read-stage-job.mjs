@@ -1,0 +1,23 @@
+/** Freeze the root-approved120s diagnostic; starts no engine or process. */
+import assert from 'node:assert/strict';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { join, resolve } from 'node:path';
+const root = resolve(import.meta.dirname, '../../..'), id = process.argv[2];
+assert(/^[a-z0-9][a-z0-9._-]{0,100}$/.test(id ?? ''));
+const template = JSON.parse(await readFile(join(root, '.devloop/jobs/five-surface-rate16-duckdb-datalog-v1/manifest.json'), 'utf8')).manifest;
+const directory = join(root, 'qualification/native-jobs', id); await mkdir(directory, { recursive: true });
+const fixture = '.devloop/jobs/five-surface-rate16-duckdb-seed-v1/attempts/0001/artifacts/fixture.json';
+const spec = 'qualification/load-jobs/five-surface-rate16-duckdb-seed-v1/spec.json';
+const expected = { format: 'triplex-duckdb-public-stage-checks/1', positionBefore: 2, positionAfter: 2, verifiedAnswers: 17, expectedCancellations: 1, queuedCancellationObserved: true, applicationWrites: 0, stageLogWithin16MiB: true };
+const expectedPath = 'qualification/native-jobs/' + id + '/expected.json';
+await writeFile(join(root, expectedPath), JSON.stringify(expected, null, 2) + '\n', { flag: 'wx' });
+const inputs = new Map(template.inputs.map(input => [input.path, input]));
+for (const [path, role] of [[fixture, 'fixture'], [spec, 'recipe'], [expectedPath, 'oracle'], ['packages/duckdb/experiments/public-read-stages.mjs', 'runner'], ['packages/duckdb/experiments/public-read-stage-preload.mjs', 'runner'], ['packages/duckdb/experiments/prepare-public-read-stage-job.mjs', 'runner'], ['vendor/duckdb-temporal/runtime/native/owner_probe/owner_probe.cpp', 'source']]) inputs.set(path, { path, role });
+for (const [path, input] of inputs) input.sha256 = createHash('sha256').update(await readFile(join(root, path))).digest('hex');
+const db = template.command.env.DUCKDB_DATABASE_DIRECTORY;
+assert(db && !db.includes('{RUN_DIRECTORY}'), 'Reuse the already-admitted persistent fixture directory');
+const manifest = { ...template, id, kind: 'verification', author: 'duckdb-stage-diagnostic-owner', problemId: 'duckdb-public-read-queue-and-ownership-stages', logicalTaskId: 'public-current-history-and-queued-cancel', hypothesis: 'Measure public queue/ownership/final-SQL dispatch-to-settlement before selecting any optimization', goals: [5, 6, 7, 9], dependsOn: ['five-surface-rate16-duckdb-seed-v1'], inspiration: [{ reference: '.devloop/jobs/five-surface-rate16-duckdb-datalog-v1/attempts/0001', mechanism: 'Actual timeout/backlog and shared physical owner require phase attribution', adaptation: 'Copied observers around original public backend/port methods; no owner checks, C++calls, limits or writes are removed' }, { reference: 'vendor/duckdb-temporal/runtime/native/owner_probe/owner_probe.cpp:412', mechanism: 'Ownership activation performs native integrity audits', adaptation: 'Record its complete wrapper wall separately from final query work; native time is labelled only where existing C++ metrics provide it' }], command: { argv: [process.execPath, 'packages/duckdb/experiments/public-read-stages.mjs', '--fixture', fixture, '--spec', spec, '--database-directory', db], cwd: '.', env: {} }, resources: { ...template.resources, memoryBytes: 2 * 1024 ** 3, cpuUnits: 2, timeoutMilliseconds: 120000 }, inputs: [...inputs.values()].sort((a, b) => a.path.localeCompare(b.path)), evidence: { checks: [{ key: 'public-stage-oracles-and-queued-cancellation', expectedInput: expectedPath, actual: 'artifacts/checks.json' }], requiredCheckKeys: ['public-stage-oracles-and-queued-cancellation'] }, retention: { scratch: 'rebuildable-ephemeral-only', meaning: 'No fixture application writes; untouched seeded scope and all original data/history remain outside scratch' } };
+delete manifest.profile;
+await writeFile(join(directory, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({ id, manifest: 'qualification/native-jobs/' + id + '/manifest.json', inputs: manifest.inputs.length, scope: 1, memoryBytes: manifest.resources.memoryBytes, timeoutMilliseconds: manifest.resources.timeoutMilliseconds }));

@@ -1,0 +1,317 @@
+{
+  "schema": "td.workload-three-engine-functional/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T19:26:24.375Z",
+  "runtimeSource": "23a34b22906ae8321853ad61986b49f990b8a7fb",
+  "workloadSource": "b76f0f61a8196ae1108e6e08bdfec539106c5969",
+  "rawEvidence": {
+    "path": "build/workload-runs/lineage-16-027-20261105.json",
+    "sha256": "f6b52364b4954553660f695aea29a415bc7128a1ec22721a3f648b861423f949"
+  },
+  "packetSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "runnerSourcesSha256": {
+    "workloads/run_three_engines.mjs": "3007acacc866253700bec33c5f8286a2c76cead2e43588b0c94b2cec96548c70",
+    "workloads/engine_cases.mjs": "d7b39343da9b244537d6b8b8965d129a420e8c530ed397ae8966d640aa3534d4",
+    "workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+    "workloads/event_oracles.py": "a12fcbc373865e05b00c53b02136796c003106fa923c6762cf7a0a93f59d2b4d",
+    "workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+  },
+  "runtimeArtifactSha256": {
+    "build/artifact.json": "044f79da4f11eea522b46dfac60eef20ab31e8e1a0a3c192b53af501873cfc80",
+    "build/temporal_datalog.duckdb_extension": "47f2775c53267dc4ad4645ed03324e22d5121304f8cbd4a091dc7307814c9340",
+    "build/temporal_control.node": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "build/adapter/native-entity.js": "dcad01a37ae791e5925f48db12e65a4bf27b4ed046711594779dd7c405a8dfac",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/owner_probe/artifact.json": "f8aa33348e6176bdccc26b28ac1511b44f79bf5e182fedda887a8f4b98321d50",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "fbb59eec7a76290a99b3fc1d48e91f9f02a86519c36361c30a7dd74372b9d10f"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "selectedWorkloads": [
+    "16"
+  ],
+  "exactEngineAnswers": 9,
+  "allReopenChecksPassed": true,
+  "scope": "One measured sample per case on the synthetic functional fixture. Performance campaign remains separate.",
+  "profiles": [
+    {
+      "profile": "naive_sql",
+      "schemaMs": 2.9784589999999866,
+      "ingestionMs": 4.193542000000008,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720,
+      "cases": [
+        {
+          "id": "original-lineage",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "20"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "str",
+                "value": "A"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "B"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ]
+          ],
+          "route": "sql"
+        },
+        {
+          "id": "metadata-added",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "str",
+                "value": "A"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "B"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "C"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ]
+          ],
+          "route": "sql"
+        },
+        {
+          "id": "unknown-output",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "typedAnswer": [],
+          "route": "sql"
+        }
+      ]
+    },
+    {
+      "profile": "direct_duckdb",
+      "schemaMs": 1.0196249999999623,
+      "ingestionMs": 2.0387080000000424,
+      "reopenChecksPassed": true,
+      "databaseBytes": 1060864,
+      "cases": [
+        {
+          "id": "original-lineage",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "20"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "str",
+                "value": "A"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "B"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ]
+          ],
+          "route": "sql"
+        },
+        {
+          "id": "metadata-added",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "str",
+                "value": "A"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "B"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "C"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ]
+          ],
+          "route": "sql"
+        },
+        {
+          "id": "unknown-output",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "typedAnswer": [],
+          "route": "sql"
+        }
+      ]
+    },
+    {
+      "profile": "temporal_store",
+      "schemaMs": 7.0755830000000515,
+      "ingestionMs": 51.82045800000003,
+      "reopenChecksPassed": true,
+      "databaseBytes": 5255168,
+      "cases": [
+        {
+          "id": "original-lineage",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "20"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "str",
+                "value": "A"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "B"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ]
+          ],
+          "route": "native"
+        },
+        {
+          "id": "metadata-added",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "str",
+                "value": "A"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "B"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ],
+            [
+              {
+                "tag": "str",
+                "value": "C"
+              },
+              {
+                "tag": "i64",
+                "value": "7"
+              }
+            ]
+          ],
+          "route": "native"
+        },
+        {
+          "id": "unknown-output",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "20"
+          },
+          "typedAnswer": [],
+          "route": "native"
+        }
+      ]
+    }
+  ],
+  "retainedRefundFailure": {
+    "source": "b13987eda3461a1bf44d3548401904896afa15a1",
+    "workload": "08",
+    "rawEvidence": {
+      "path": "build/workload-runs/revenue-lineage-08-16-027-20261105.json",
+      "sha256": "68d5d02e1e1a36d911493ffe2f31b48281768f257267a597c80058c2dc0f2e2c"
+    },
+    "errorsByCase": {
+      "net700": "Invalid Input Error: TD_E_EXEC phase=exec: TD_E_STRAT_UNSAFE: head variable is not positively bound",
+      "one-refund": "Invalid Input Error: TD_E_EXEC phase=exec: TD_E_STRAT_UNSAFE: head variable is not positively bound",
+      "no-refunds": "Invalid Input Error: TD_E_EXEC phase=exec: TD_E_STRAT_UNSAFE: head variable is not positively bound"
+    },
+    "explanation": "Native filters require positively bound inputs. The attempted equality filter introduced the head variable for the signed refund, which is outside the grammar. Both DuckDB comparison paths passed their refund answers."
+  }
+}

@@ -1,0 +1,10 @@
+SELECT DISTINCT ("string" AS ?v0_type) (?b0_value AS ?v0_value) (?b0_value AS ?v0_order) (?b1_type AS ?v1_type) (?b1_value AS ?v1_value) (?b1_order AS ?v1_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> {
+?assertion0 <urn:triplex:field:entity_id> ?b0_value .
+?assertion0 <urn:triplex:field:attribute> ":conf/code" .
+?assertion0 <urn:triplex:field:scalar_family> ?b1_type ; <urn:triplex:field:scalar_lexical> ?b1_value ; <urn:triplex:field:scalar_order> ?b1_order .
+?assertion0 <urn:triplex:field:valid_from_order> ?validFrom0 ; <urn:triplex:field:recorded_position_order> ?recorded0 .
+FILTER(?validFrom0 <= "c33fffffffffffff" && ?recorded0 <= "bff0000000000000")
+FILTER NOT EXISTS { ?assertion0 <urn:triplex:field:valid_to_order> ?validTo0 . FILTER(?validTo0 <= "c33fffffffffffff") }
+FILTER NOT EXISTS { ?assertion0 <urn:triplex:field:retracted_position_order> ?retracted0 .  FILTER(?retracted0 <= "bff0000000000000") }
+
+} } LIMIT 1001

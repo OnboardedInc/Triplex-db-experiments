@@ -1,0 +1,42 @@
+{
+  "format": "triplex-native-query-wave/1",
+  "predeclaredAtUnix": 1794010159.536198,
+  "problemTag": "qlever.native.empty-global-sum",
+  "state": "PREDECLARED_BEFORE_CANDIDATE_EXECUTION",
+  "control": {
+    "receipt": ".devloop/jobs/qlever-native-packet-v1/attempts/0001",
+    "result": "06/empty-currency and08/no-refunds current/reopen HTTP500 GroupByImpl509 on empty global SUM; positive/grouped sums passed",
+    "repeatUnchangedFailure": false
+  },
+  "fixedProfile": {
+    "engineBytes": 2147483648,
+    "planningBudget": 100,
+    "clientBytes": 939524096,
+    "queryPath": "qlever-native"
+  },
+  "arms": [
+    {
+      "id": "count-first",
+      "mechanism": "Native COUNT of distinct contribution relation; at returned source position use exact zero only for empty global input, otherwise run bounded native SUM at same P. Every statement and normalization is traced.",
+      "cost": "Extra charged source-cut/COUNT query and repeated native relation work; no ordinary source rows leave QLever.",
+      "status": "PROPOSED_NOT_EXECUTED"
+    },
+    {
+      "id": "sentinel",
+      "mechanism": "For global SUM only, UNION one native zero contribution with unbound event; SUM is nonempty and COUNT(bound event) counts real contributions. Grouped SUM stays unchanged and empty groups produce no phantom group.",
+      "cost": "One extra native relation row and bound-event count, no extra coordinator round trip; must prove empty/signed/duplicate behavior independently.",
+      "status": "PROPOSED_NOT_EXECUTED"
+    }
+  ],
+  "gates": [
+    "Four prior failing logical cases current/reopen, plus full families04/05/06/07/08 to retain grouped/duplicate/reversal/negative semantics",
+    "Same frozen task answers and same source/dependency/engine limits across both SUM arms",
+    "Full142 on selected candidate and independent review before acceptance"
+  ],
+  "prohibitedClaims": [
+    "No timing win from these diagnostic small correctness gates",
+    "No unknown rows or failed task keys dropped",
+    "No grouped-empty zero row injected",
+    "No larger engine heap"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "archive": "item2-research-evidence.tar.gz",
+  "bytes": 898092,
+  "sha256": "ccf3b1fab0df997019cab4803977ff49fd791e0c1f606c6d360f534959eb94ab",
+  "entries": 158,
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 300001,
+      "sha256": "c701fd2e4643dbbf3f2af9d6262f867628582bd8f640a459b9eaae64d19fedb8"
+    },
+    {
+      "path": "archive.part02.b64",
+      "bytes": 300001,
+      "sha256": "a3bce5390403d91d5f9de4834b8d55a566e2cc1b2feae9825cd666f297b07456"
+    },
+    {
+      "path": "archive.part03.b64",
+      "bytes": 300001,
+      "sha256": "d97f7305d455027fdb9dbf13ebe8c8990a6d2221dae1d0152d437dc388984836"
+    },
+    {
+      "path": "archive.part04.b64",
+      "bytes": 297457,
+      "sha256": "81fac652e843b9bb7251c452bf4b39e10151d67d782041673aced9c2650249f2"
+    }
+  ],
+  "extract_or_execute": false
+}

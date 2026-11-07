@@ -1,0 +1,63 @@
+{
+  "archive": "codec-complete-results-and-bounded-acceptance.tar.gz",
+  "bytes": 1945153,
+  "sha256": "68222f6c7c7e0016b0f3db27d5ccfdefe8e936214a688e42cf7a580b7bb868bb",
+  "entries": 1409,
+  "source_bytes": 17868093,
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 300001,
+      "sha256": "ee2f6e3014c12b364eb439cf8be92d3e56ee2462433e13aac4ad1625af8b96dd",
+      "git_sha": "ca58284a2beda91b8ba5f83b9e51ab8df6ce2e72"
+    },
+    {
+      "path": "archive.part02.b64",
+      "bytes": 300001,
+      "sha256": "d5e181a7071c970db4396e131dd57df2b64ca8f54201f55e71bb853a8ff390dc",
+      "git_sha": "ade3ac658938c5924bfba64f08c6517d71af1106"
+    },
+    {
+      "path": "archive.part03.b64",
+      "bytes": 300001,
+      "sha256": "3ae0671e8a4dad3d996675fdf23555ef0b78ef1142090737613e6f3c157fb5bb",
+      "git_sha": "a7396d14b144fd00b9b2c14cda79d5689f26a942"
+    },
+    {
+      "path": "archive.part04.b64",
+      "bytes": 300001,
+      "sha256": "4e83c7e126c6d9ed80f423b0c1288ffeb445108a2f6917db3554935551349121",
+      "git_sha": "cefcabd03fec2275de6ed4c115538b856e8d9570"
+    },
+    {
+      "path": "archive.part05.b64",
+      "bytes": 300001,
+      "sha256": "03f5ebb0dd3a22cbfdd196cba738bd78ae5d78cbf28027a6c038f5c35abb36b4",
+      "git_sha": "e4701d96a2aaed8751a37679e7be981ab6cc3383"
+    },
+    {
+      "path": "archive.part06.b64",
+      "bytes": 300001,
+      "sha256": "6d4082089d9e50540acb3ab5d93188d3646f22a42102bd5546b47a1b6bfdb7cf",
+      "git_sha": "ea93f20a4025ef35a333e986b3f24ff05bc27cf9"
+    },
+    {
+      "path": "archive.part07.b64",
+      "bytes": 300001,
+      "sha256": "c8abcbd34d578dd7b8c4b1b0fab373e598ac3045607558d549aff098f3edd9a1",
+      "git_sha": "5d4faf1f1bba0127876ad7271a6142884c0b79f9"
+    },
+    {
+      "path": "archive.part08.b64",
+      "bytes": 300001,
+      "sha256": "1dffdfa64d308ddff04e8b1cc563a8a6854ba12a39066d173bb030663c6dd804",
+      "git_sha": "36248ad4eb33a2a4a1dfb887c70e034a705a6757"
+    },
+    {
+      "path": "archive.part09.b64",
+      "bytes": 193532,
+      "sha256": "b2b08f36ada7110432e87df3d584e0b48789d369fdb0b1e41d990461a8118bb6",
+      "git_sha": "0f2345fec0eba3774ca661433181a81bed3cfd02"
+    }
+  ]
+}

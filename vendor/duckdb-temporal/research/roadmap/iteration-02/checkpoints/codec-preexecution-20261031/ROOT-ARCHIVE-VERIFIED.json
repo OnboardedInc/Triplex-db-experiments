@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-31T02:59:57.397040+00:00",
+  "status": "PASS_ROOT_RESTORED_ARCHIVE_ALL_MEMBERS_AND_CLOSED_OWNER_CURATION",
+  "archive_sha256": "f1f1e36c888ec6af7a8bc9ae9d5292bc7c3cd4542ce752296c91718b1d17b422",
+  "restored_members": 597,
+  "logical_bytes": 12491531,
+  "all_members_exact_sha_length_UTF8_noNUL_regular0644_safe_names_uid_gid_mtime0": true,
+  "owner_curated_final_study_manifest_sha256": "b7be88c5b88a5fd258e7bc3fe4051d4ea29b9565ffcf599892fb6528dbd5cc50",
+  "owner_curated_final_study_members_verified": 305,
+  "five_pinned_binary_inputs_hash_references_only": true,
+  "timing_profile_execution": "NOT_RUN"
+}

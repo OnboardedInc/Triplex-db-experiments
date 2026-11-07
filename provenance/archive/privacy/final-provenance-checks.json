@@ -1,0 +1,16 @@
+{
+  "format": "final-sanitized-copy-provenance-check/1",
+  "result": "PASS",
+  "checks": [
+    {
+      "scope": "source-to-export",
+      "files": 16658,
+      "failures": 0
+    },
+    {
+      "scope": "content-addressed-manifests",
+      "fileReferences": 72221,
+      "failures": 0
+    }
+  ]
+}

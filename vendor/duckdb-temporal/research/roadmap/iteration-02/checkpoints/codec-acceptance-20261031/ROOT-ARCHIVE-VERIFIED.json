@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-31T03:31:11.911933+00:00",
+  "status": "PASS_ROOT_RESTORED_ALL_CODEC_RESULTS_AND_BOUNDED_DECISION_MEMBERS",
+  "archive_sha256": "68222f6c7c7e0016b0f3db27d5ccfdefe8e936214a688e42cf7a580b7bb868bb",
+  "members": 1409,
+  "logical_bytes": 17868093,
+  "all_safe_regular0644_UTF8_noNUL_exactlengthsha_uidgidmtime0": true,
+  "all978raw_run_files_in_worker1359_publication": true,
+  "decision_sha256": "b00d645b422eab82bb6169b57c83ee58519876dbfbf76cb1a49734d62d5dbc78",
+  "timing_profile_rerun": false
+}

@@ -1,0 +1,22 @@
+{
+  "utc": "2026-10-31T16:44:18.923841+00:00",
+  "prior_manifest": "fa3cc4cbe3e6b4ad367bd52e59339224a2f73755fa0c5e3a80da44e465b8505d",
+  "prior_local_notes_retained": true,
+  "clarifications": [
+    {
+      "path": "../CLARIFICATION-001.json",
+      "sha256": "daedc51774642824e55710eb19b657bc4df04b650b8dee96e12dd19a34157c6f"
+    },
+    {
+      "path": "../CLARIFICATION-002-NUL.json",
+      "sha256": "a10492fe361693fdf862394f92a411fada15f87f4d84ce8308ab2953b6cef616"
+    }
+  ],
+  "changes": [
+    "Clarify row-wise loading/selection allowed, full admission before evaluation/result",
+    "Correct N19 from an unrun invalid admitted-NUL proposal to typed-NUL rejection control",
+    "Keep same-name arity mismatch rejection explicit",
+    "Add already-published typed-value validation source to hash inventory"
+  ],
+  "evidence_status": "Original source-only design clarifications, no implementation/test/runtime or stopped-item3 material"
+}

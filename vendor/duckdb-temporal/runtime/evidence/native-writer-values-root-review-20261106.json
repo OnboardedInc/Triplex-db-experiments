@@ -1,0 +1,89 @@
+{
+  "schema": "td.native-writer-values-root-review/1",
+  "status": "SCOPED_PASS_UNPROMOTED",
+  "reviewedAtUtc": "2026-11-06T06:54:32.796542+00:00",
+  "sourceEvidenceCommit": "51d4d0f738d6ca6a17413aaf218d2389d39f90f0",
+  "receipts": [
+    {
+      "file": "native-writer-values-20261106.json",
+      "sha256": "f1dda30c8547641fa642314be81a244ceba67b85d42667f72af34764dc23e949",
+      "source": "0eb57f6aa62632eae25acc709987d34f594905ea",
+      "testSource": "88a2c4e18635a010d67deb49930675ed81f877a3",
+      "tap": {
+        "methods": 3,
+        "pass": 3,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "durationMs": 8954.660083
+      }
+    },
+    {
+      "file": "native-writer-full512-20261106.json",
+      "sha256": "08b031b5ba28516aabaa414571239183e66d5ec7ca454695731e6a46665795da",
+      "source": "0eb57f6aa62632eae25acc709987d34f594905ea",
+      "testSource": "88a2c4e18635a010d67deb49930675ed81f877a3",
+      "tap": {
+        "methods": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "durationMs": 49465.6575
+      }
+    }
+  ],
+  "rawHashesAndOriginalsVerified": {
+    "evidence/native-writer-values-20261106-raw/stage-repair-first.json": "1c76eeba1ae6180d8519ea4715aa3042d0a6d57d3557101cf5f6465b271d3475",
+    "evidence/native-writer-values-20261106-raw/tsc-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/native-writer-values-20261106-raw/tsc-first-terminal.json": "9671029f3daf0356c7a7e4d53a8b67e9e6a7be900759b888f346bc65c985682c",
+    "evidence/native-writer-values-20261106-raw/build-after-tsc-first.json": "3033239732c52bdd009adffb33de4ca6bf5a0f4c6483426142b939383299dee3",
+    "evidence/native-writer-values-20261106-raw/before-tests-first.json": "8b7f72a21795c60f7cac90fcbd615990c8a28d580b80b701a8d09f67e82f537c",
+    "evidence/native-writer-values-20261106-raw/values-first.tap": "a93f9d084f9bfbbeacf2a78d91adffcf8856d38947052a6e873e51c893fbd0ef",
+    "evidence/native-writer-values-20261106-raw/values-first-terminal.json": "c5b2da2379b7711b31854f6c0b3875279b7c7282a3132fa49d151cfd23e62876",
+    "evidence/native-writer-values-20261106-raw/after-tests-first.json": "b6512a35c3231cc203b6d43bd51c310445cb317cb9f0b060982dd54b84eabb91",
+    "evidence/native-writer-full512-20261106-raw/before-first.json": "93589de738a7d73dd397a46efcedbd2b73f3dd4fa81f9e084e4ecd2340bedd77",
+    "evidence/native-writer-full512-20261106-raw/full512-first.tap": "7207b4e6b32e7c631427d87ff344eb3ccd0ad5af7047cd20623585e6a846eaef",
+    "evidence/native-writer-full512-20261106-raw/full512-first-terminal.json": "e0acb13ceb2095f72f810e464c38a31ed75b6d41bf154400272564c16a92b08e",
+    "evidence/native-writer-full512-20261106-raw/after-first.json": "93589de738a7d73dd397a46efcedbd2b73f3dd4fa81f9e084e4ecd2340bedd77"
+  },
+  "firstStageFailureAndAdditive3AssetRepairPreserved": true,
+  "TscOnly2NewOutputsOriginal184Unchanged": true,
+  "sourcePinsComparedToTestedGit": 128,
+  "postEvidenceOnlyDocChange": [
+    "NATIVE-WRITER-VALUES-QUALIFICATION.md"
+  ],
+  "nativeSourcePins": 48,
+  "currentCompiledPins": 186,
+  "sdkDependencyPins": 395,
+  "full512BeforeAfterExact": true,
+  "full512MapSha256": "93589de738a7d73dd397a46efcedbd2b73f3dd4fa81f9e084e4ecd2340bedd77",
+  "actualPatchACKs": 512,
+  "exactReadsPerClientRecomputed": [
+    513,
+    512,
+    513,
+    513,
+    512,
+    513,
+    512,
+    512,
+    513,
+    513,
+    512,
+    512,
+    512,
+    513,
+    513,
+    514
+  ],
+  "totalExactReads": 8202,
+  "currentWriterCorrectnessUnion": 14,
+  "unionScope": "prior10 + newvalues3 + unchangedfull5121; not a fresh14/full435/422 or performance run",
+  "limits": [
+    "Public tests assert exact typed values/cuts/replays/history; TAP does not retain every tuple or receipt body.",
+    "Qualification protocol updated with outcomes after tests; all128 source hashes match tested0eb Git and before/after source snapshots; current executable sources unchanged.",
+    "External compiler entrypoints/routes pinned; this gate does not inventory every external transitive compiler/type file.",
+    "All10 goals remain governed by ledger; no new goal closure, source promotion or timing qualification."
+  ]
+}

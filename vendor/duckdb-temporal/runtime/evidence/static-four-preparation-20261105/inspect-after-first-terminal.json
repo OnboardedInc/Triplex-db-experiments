@@ -1,0 +1,11 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "-B",
+    "freeze_static_four_runtime.py",
+    "inspect",
+    "--receipt",
+    "build/static-four-preparation-20261105/inspect-after-first.json"
+  ],
+  "exitCode": 0
+}

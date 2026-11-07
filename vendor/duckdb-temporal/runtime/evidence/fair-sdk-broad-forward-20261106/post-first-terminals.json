@@ -1,0 +1,38 @@
+[
+  {
+    "phase": "fair4-artifact-after",
+    "command": [
+      "node",
+      "adapter/antijoin-fair-sdk-binding.mjs",
+      "--artifact-role",
+      "FAIR4_SDK_CANDIDATE",
+      "--readers",
+      "16",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/fair-sdk-broad-20261106/forward-01/fair4-artifact-after.json"
+    ],
+    "startedAtUtc": "2026-11-06T06:23:57.619881+00:00",
+    "terminalAtUtc": "2026-11-06T06:24:01.792123+00:00",
+    "exitCode": 0
+  },
+  {
+    "phase": "maps-after",
+    "command": [
+      "[LOCAL_PATH_0034]",
+      "-B",
+      "freeze_fair_sdk_runtime.py",
+      "inspect",
+      "--receipt",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/fair-sdk-broad-20261106/forward-01/maps-after.json"
+    ],
+    "startedAtUtc": "2026-11-06T06:24:01.792667+00:00",
+    "terminalAtUtc": "2026-11-06T06:24:04.245100+00:00",
+    "exitCode": 0
+  }
+]

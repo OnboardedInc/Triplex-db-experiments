@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-10-30T23:20:40Z",
+  "source_files_verified_pre_post": 267,
+  "every_export_source_equals_working_source": true,
+  "exit_code": 0,
+  "normal_extension_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+  "export_manifest_sha256": "eb52a0acd82a49d82e03c633793b8337e9c9c94cbab73a580227d3ec78e81b04",
+  "explicit_store_tests": {
+    "methods": 13,
+    "skipped": 0
+  },
+  "explicit_batch_suite": {
+    "groups": 11,
+    "physical_request_children": 115,
+    "skipped": 0
+  },
+  "normal_typed_suite_existing_absence_arm_skip": 1,
+  "reports": {
+    "engine/build/core-verification/verification.json": {
+      "status": "PASS",
+      "sha256": "fbcc3a813b2d71592e6f016b66567c0baa764134802a26a6c12ab9df3885c139"
+    },
+    "engine/build/item2-core-verification/verification.json": {
+      "status": "PASS",
+      "sha256": "ab5da61909cecebfc6334484a91f22833e0b7ffafeb8b7fd6281c0ee6673f621"
+    },
+    "engine/build/item2-core-verification-sanitized/verification.json": {
+      "status": "PASS",
+      "sha256": "c307029e77e3cff43df27abab3d81afdd2f2cdca92ce2a6fb70d1d7597e28d59"
+    },
+    "engine/build/item2-store-verification.json": {
+      "status": "PASS",
+      "sha256": "d4e895f59b028047b7358513dfcfd8a41c47fc1cd40fdad7bd790df8600ff612"
+    },
+    "engine/tests/typed-verification.json": {
+      "status": "PASS",
+      "sha256": "908f7f45c47434c73cd11eeb5fde4e0da6b4e7bc0eba6115edbe25e7f6c8eee4"
+    }
+  },
+  "postfix_performance": "NOT RUN; preparation only",
+  "scope": "Root full clean-export verifier normal native/browser/store and direct-core sanitizers; full instrumented binding has separately documented verified and incomplete arms, not implied by this result."
+}

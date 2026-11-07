@@ -1,0 +1,76 @@
+{
+  "schema": "td.goal8.current_planner_cache_split/1",
+  "observed_utc": "2026-11-03T19:17:00Z",
+  "status": "RESEARCH_ONLY_UNSELECTED_UNIMPLEMENTED_UNRUN",
+  "repository": {
+    "full_name": "Contributor/research-reference",
+    "visibility_verified": "private",
+    "default_branch": "main"
+  },
+  "roadmap": {
+    "url": "[PRIVATE_APPLICATION_REFERENCE_REMOVED]",
+    "sequence": 107
+  },
+  "old_research": {
+    "ref": "dbd5d713b59151b786dd800a646a74af93d1d1ea",
+    "path": "projects/temporal-datalog/prototype/native-cloud-v06/addenda/goal8-source-research-20261102/README.md",
+    "scope": "Preserved historical source research, not execution/retry authority"
+  },
+  "sources": [
+    {
+      "ref": "a6f72041d2620355fd4fcd7f1c33f8deb1bb6bfa",
+      "path": "projects/temporal-datalog/prototype/goal31-independent-20261103/planner.hpp",
+      "blob_sha": "a01248a979f21c90d32d38851bdf3fb962e1c1fc",
+      "lines": 7
+    },
+    {
+      "ref": "a6f72041d2620355fd4fcd7f1c33f8deb1bb6bfa",
+      "path": "projects/temporal-datalog/prototype/goal31-independent-20261103/planner.cpp",
+      "blob_sha": "6ddf49e2e67979297e0d188891440be2f1d95a0a",
+      "lines": 233
+    },
+    {
+      "ref": "a6f72041d2620355fd4fcd7f1c33f8deb1bb6bfa",
+      "path": "projects/temporal-datalog/prototype/goal31-independent-20261103/adapter.py",
+      "blob_sha": "7ba10e4c68d9204a2db750479533fe88a63f5f5f",
+      "lines": 135
+    },
+    {
+      "ref": "a6f72041d2620355fd4fcd7f1c33f8deb1bb6bfa",
+      "path": "projects/temporal-datalog/prototype/goal31-independent-20261103/extension.cpp",
+      "blob_sha": "e118ebf66ee463f0b8b3d79aad83d849603bc283",
+      "lines": 98
+    },
+    {
+      "ref": "3de749d706de5a421248195483ec22cd053972fb",
+      "path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/ir2.py",
+      "blob_sha": "5864086c680a358b77128ec0873bf656aec9ae78",
+      "lines": 341
+    },
+    {
+      "ref": "3de749d706de5a421248195483ec22cd053972fb",
+      "path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/proof.py",
+      "blob_sha": "6a3f591f7495bb48999665654c81a26539bec991",
+      "lines": 231
+    },
+    {
+      "ref": "3de749d706de5a421248195483ec22cd053972fb",
+      "path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/query.py",
+      "blob_sha": "6182f32f999959f9352893fccc3137e6ee031720",
+      "lines": 182
+    },
+    {
+      "ref": "3de749d706de5a421248195483ec22cd053972fb",
+      "path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/sql.py",
+      "blob_sha": "f2d7ccc9edc68c75d72f3c4838602c8b35067597",
+      "lines": 148
+    },
+    {
+      "ref": "3de749d706de5a421248195483ec22cd053972fb",
+      "path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/typed_values.py",
+      "blob_sha": "9091a404b978c03bf20446a55317299696cb514f",
+      "lines": 267
+    }
+  ],
+  "verification_scope": "Read-only GitHub fetch_file named exact refs; source-body interpretation and connector-returned Git blob IDs. No loaded-image, runtime, full-tree or performance attestation."
+}

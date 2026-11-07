@@ -1,0 +1,71 @@
+{
+  "format": "triplex-qlever-planner-wave/1",
+  "predeclaredAtUnix": 1794014807.1414971,
+  "problemTag": "qlever.planner-memory.planner-algorithm-threshold",
+  "state": "PREDECLARED_UNEXECUTED_AFTER_SOURCE_AND_LOG_AUDIT",
+  "arm": "F-planner-budget-1",
+  "control": {
+    "planningBudget": 100,
+    "receipt": ".devloop/jobs/qlever-retirement-paired-family12-v1/attempts/0001",
+    "redactedLog": ".runtime/engines/qlever-main/retirement-paired-oom-window-20261106.redacted.log",
+    "greedyPlannerMessagesBeforeOOM": 241,
+    "outcome": "First main query OOM137 at2GiB; no unchanged repeat."
+  },
+  "singleVariable": "Change only the instance query-planning-budget threshold from100 to1, leaving the D source/negation/retirement/aggregate profile unchanged. This selects the planner algorithm earlier; it is not a memory ceiling.",
+  "fixedProfile": {
+    "engineMemoryBytes": 2147483648,
+    "sourcePlan": "persisted",
+    "negationPlan": "minus",
+    "retirementPlan": "paired",
+    "aggregateAnswerPlan": "bounded",
+    "scalarOrderPlan": "default-off",
+    "clientBytes": 939524096,
+    "controllerOldSpaceMiB": 256
+  },
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/ad-freiburg/qlever/6c5861a/src/engine/QueryPlanner.cpp",
+      "function": "QueryPlanner::fillDpTab",
+      "lines": "1664-1731",
+      "mechanism": "For each connected component, compare the connected-subgraph count against the threshold; use greedy planning above it, dynamic programming otherwise."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ad-freiburg/qlever/6c5861a/src/engine/CountConnectedSubgraphs.cpp",
+      "function": "countConnectedSubgraphs::countSubgraphs",
+      "lines": "11-29,83-105",
+      "mechanism": "Stop counting once the threshold is exceeded. For threshold1, any component with more than one counted subgraph selects greedy. Threshold0 selects greedy for every nonempty component."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ad-freiburg/qlever/6c5861a/src/global/RuntimeParameters.h",
+      "lines": "98-101",
+      "mechanism": "The parameter is size_t and its source default is1500; this project explicitly pins100."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ad-freiburg/qlever/6c5861a/src/global/RuntimeParameters.cpp",
+      "lines": "15-91,104-117",
+      "mechanism": "The constructor registers the setting without a setting-specific constraint; the positive constraints shown apply to timeout and scan threads."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ad-freiburg/qlever/6c5861a/src/util/Parameters.h",
+      "lines": "142-146",
+      "mechanism": "Its parser uses std::stoull and converts to size_t. On the observed64bit Linux target, the representable unsigned range is0 through18446744073709551615; the experiment uses plain decimal1, avoiding zero/overflow/parser edge cases."
+    }
+  ],
+  "evidenceAndInference": {
+    "observed": "The failed D query already emitted241 greedy-planner messages at threshold100 before its cgroup OOM. Lowering the threshold cannot change those already-greedy components.",
+    "hypothesis": "Smaller still-dynamic subplans and their candidate combinations may account for remaining memory. A threshold1 can change those selections. Existing logs do not identify every subplan or an allocation stack, so improvement remains uncertain.",
+    "notClaimed": "Neither threshold100 nor1 imposes a native memory bound or proves that greedy planning itself cannot OOM."
+  },
+  "executionPolicy": {
+    "startCondition": "Only after controller thin-state READY and exact owned Q readiness; no concurrent captured query or writer on this same Q foundation while its global setting is changed. Other engines may co-run under the normal three-heavy vector pool.",
+    "setting": "Read100, set1, read back1 in the charged worker; retain settings receipts and actual native log.",
+    "cleanup": "Restore100 and read it back in finally. If the engine OOMs, retain UNKNOWN reservation and forensic ACK/data state; same-CID recovery restores/readbacks100 before resident refresh.",
+    "gates": [
+      "Eight frozen family12 current/reopen oracle checks",
+      "Healthy same-CID engine and complete cleanup/settings receipt",
+      "Relevant semantic gates and full142/44 only if a survivor",
+      "Independent verifier before default or configuration promotion"
+    ]
+  },
+  "provenanceLimit": "The supplied public source corpus is commit e8e6ed5af4388cc7406eab7f95c7565c90987d86, not this runtime revision. The immutable official6c5861a URLs above were checked directly; no source was installed or native trial run for this audit."
+}

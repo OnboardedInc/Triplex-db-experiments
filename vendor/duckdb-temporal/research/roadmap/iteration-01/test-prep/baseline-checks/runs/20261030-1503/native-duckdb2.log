@@ -1,0 +1,29 @@
+Runtime: 2.0.0 platform: linux_amd64
+Memory status: ['VmSize:\t 2784584 kB', 'VmRSS:\t   62116 kB']
+test_01_loaded_is_native (frozen_v1_extension_test.ExtensionTests.test_01_loaded_is_native) ... ok
+test_02_half_open_valid (frozen_v1_extension_test.ExtensionTests.test_02_half_open_valid) ... ok
+test_03_half_open_knowledge (frozen_v1_extension_test.ExtensionTests.test_03_half_open_knowledge) ... ok
+test_04_late_correction_and_retraction (frozen_v1_extension_test.ExtensionTests.test_04_late_correction_and_retraction) ... ok
+test_05_no_last_write_wins (frozen_v1_extension_test.ExtensionTests.test_05_no_last_write_wins) ... ok
+test_06_cycle_duplicate_set_semantics (frozen_v1_extension_test.ExtensionTests.test_06_cycle_duplicate_set_semantics) ... ok
+test_07_repeated_variable_and_constants (frozen_v1_extension_test.ExtensionTests.test_07_repeated_variable_and_constants) ... ok
+test_08_mutual_recursion (frozen_v1_extension_test.ExtensionTests.test_08_mutual_recursion) ... ok
+test_09_nonlinear_recursive_join (frozen_v1_extension_test.ExtensionTests.test_09_nonlinear_recursive_join) ... ok
+test_10_ground_comments_escaping_unicode (frozen_v1_extension_test.ExtensionTests.test_10_ground_comments_escaping_unicode) ... ok
+test_11_empty_and_null_list (frozen_v1_extension_test.ExtensionTests.test_11_empty_and_null_list) ... ok
+test_12_reject_invalid_programs (frozen_v1_extension_test.ExtensionTests.test_12_reject_invalid_programs) ... ok
+test_13_invalid_intervals_and_null_fields (frozen_v1_extension_test.ExtensionTests.test_13_invalid_intervals_and_null_fields) ... ok
+test_14_limits_never_return_partial (frozen_v1_extension_test.ExtensionTests.test_14_limits_never_return_partial) ... ok
+test_15_null_parameters (frozen_v1_extension_test.ExtensionTests.test_15_null_parameters) ... ok
+test_16_long_and_large_input (frozen_v1_extension_test.ExtensionTests.test_16_long_and_large_input) ... ok
+test_17_actual_duckdb_storage_and_transaction (frozen_v1_extension_test.ExtensionTests.test_17_actual_duckdb_storage_and_transaction) ... ok
+test_18_vectorized_multiple_invocations (frozen_v1_extension_test.ExtensionTests.test_18_vectorized_multiple_invocations) ... ok
+test_19_random_temporal_closure_oracle (frozen_v1_extension_test.ExtensionTests.test_19_random_temporal_closure_oracle) ... ok
+test_20_integer_extremes_no_overflow (frozen_v1_extension_test.ExtensionTests.test_20_integer_extremes_no_overflow) ... ok
+test_21_irrelevant_edb_count_and_variable_attribute (frozen_v1_extension_test.ExtensionTests.test_21_irrelevant_edb_count_and_variable_attribute) ... ok
+test_22_apostrophe_extension_path (frozen_v1_extension_test.ExtensionTests.test_22_apostrophe_extension_path) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 1.566s
+
+OK

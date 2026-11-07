@@ -1,0 +1,80 @@
+{
+  "schema": "td.native-writer-public-gate1-root-review/1",
+  "status": "SCOPED_PASS_NOT_PROMOTED",
+  "reviewedAtUtc": "2026-11-06T06:08:44.696422+00:00",
+  "evidence": [
+    {
+      "evidence": "native-writer-first-public-20261106",
+      "testedSource": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+      "pass": 3,
+      "fail": 1,
+      "receiptSha256": "b3958323b1fd4c6e2e54f82e8f2179648a5c50b3c39cdabd77cb187efec7aa64",
+      "rawHashesVerified": {
+        "stage.log": "2d2643b52975df3b2ed7570ce463a0ca7ac438b85ef358d0f0205830d630b05d",
+        "source-fast-forward.log": "89a03e3e1b05efda82005523c1d56cdc29cd20c4d8a9805dfa05f42fb345280c",
+        "before-build.json": "f402db9d0e54b746c12e784ececab2f9da27377617b683c6edd3091d5c7bf2ec",
+        "owner-build-first.log": "49bafaa1cc4357fc615f880e88cf7b2ae6e0e239cf544371e303e78e1335b588",
+        "tsc-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before-tests.json": "50bc076d2e6b4fabfce49bf76c6ac1045937dd709c086ef2b7c2c288c5adbf99",
+        "public-four-first.tap": "57b8004d1659cee9c65155dc6f8b79838bf2f8999441a35d88a9a83d6456c314"
+      },
+      "gitSourcePinsVerified": 56,
+      "compiledAndArtifactPinsVerified": 9
+    },
+    {
+      "evidence": "native-writer-factory-targeted-20261106",
+      "testedSource": "05cfbda1aa9dadef512f877f20735b45feecc0e8",
+      "pass": 1,
+      "fail": 0,
+      "receiptSha256": "433f597e35258ddf5d99f72dbeeb06b2e863eaeca152a928c9ed70f7b38d1106",
+      "rawHashesVerified": {
+        "preserved-test-bytes.json": "6bac02472de3103fa026bdc8b7b875028d27fcd668894ebdf9979dca491aa3d4",
+        "source-fast-forward.log": "e4c22d0d95ed4785fb3e80b6ad45d655160cdf23fbdef3385bc475697de0b9a9",
+        "tsc-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before-tests.json": "d5be5c594632516003af13deb5d03e9877a2fc35ef4e5178f510e4a05910dddc",
+        "targeted-first.tap": "554f202e962c0fed54c2efe06c904e583ce0013b50a28aceb7579271796ebb56"
+      },
+      "gitSourcePinsVerified": 56,
+      "compiledAndArtifactPinsVerified": 9
+    },
+    {
+      "evidence": "native-writer-gate1-20261106",
+      "testedSource": "74467cb078d7c1d255850dc2c695caa98e8501e7",
+      "pass": 6,
+      "fail": 0,
+      "receiptSha256": "c1f6805207699527ff3495fb28a0d621055e9cedafb9fa97f50be3073735a309",
+      "rawHashesVerified": {
+        "before-compile.json": "b4b366c02acac00d0dade0bd7ae145e0c59ebbb0cf59c0003c7516294738f8d4",
+        "source-fast-forward.log": "3549a5331278b3a72164edc2a4bc5ed26e8685fea5b1b4e02cbdf403edaf833f",
+        "tsc-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before-tests.json": "14851c83ed7d74489782d903a02a3d20f4138de796d63794ddb463ef5bb460ef",
+        "exact-six-first.tap": "014e0fa8dc215b3b2dbea9ebbdd5bc19abbb939c7fda4e8f682ec45c14bb37d4"
+      },
+      "gitSourcePinsVerified": 56,
+      "compiledAndArtifactPinsVerified": 12
+    }
+  ],
+  "currentIndependentUnionMethods": 10,
+  "union": "initial3PASS + fixture-corrected factory targeted1PASS + Gate1first6PASS; not fresh10/full suite",
+  "currentArtifacts": {
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9",
+    "build/owner_probe/temporal_writer.node": "02270b0840dd4bab9c3beb00986e06bc0e8125c2971f9ac6f9a407f6fe03418c",
+    "build/adapter/native-entity.js": "48c6a5d6443fc706e59e31779437e4b24d7ce6ea6de1b07d22501f54e8b9d8f8",
+    "build/adapter/native-schema.js": "723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226",
+    "build/adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268"
+  },
+  "currentDependenciesRehashed": 395,
+  "nativeSourcesComparedToImplementationGit": 48,
+  "immutableCurrentPinsVerified": 4,
+  "existingCompiled177PreservedAcrossGate1": true,
+  "fourNewTestOutputsOnly": true,
+  "firstFixtureFailurePreserved": true,
+  "sourceReview": "Root reviewed actual writer and repaired factory/control/delivery sources; independent C review also accepted control/delivery sources.",
+  "limits": [
+    "Initial first-public command failed one fixture before intended fault reached; only3 methods passed there.",
+    "Gate1 revalidate verifies post18 contexts and one worker identity; not full pre/post ID-set equality.",
+    "Held actual result delivery proves named scopes/cancellation lifecycle, not sustained engine overlap performance.",
+    "Typed-decoder Proxy fault uses unmodified actual committed rows but does not cover every NAPI allocation/delivery branch.",
+    "Active-job environment teardown, eight-type expansion, independent512stress, full regression and matched performance remain open."
+  ]
+}

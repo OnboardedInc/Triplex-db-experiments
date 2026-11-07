@@ -1,0 +1,9 @@
+{
+  "schema": "td.static-four-small-packaging-first-error/1",
+  "code": "KeyError",
+  "message": "'knownAt'",
+  "stage": "Packaging script read nonexistent sourceFixture.knownAt instead of actual sourceFixture.position",
+  "engineResult": "Bothsmallprofileshadalreadypassedandenginewasreleased",
+  "sourceRuntimeOrExpectedAnswerChange": "none",
+  "partialEvidence": "raw copies retained in this directory; no overwrites; corrected metadata packaging will use a fresh directory"
+}

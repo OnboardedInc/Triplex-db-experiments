@@ -1,0 +1,11 @@
+# Fresh signed-graph checker robustness research
+
+This checkpoint selects a genuinely new source-only fourteen-call robustness slice for the independent item4.1 signed-graph certificate tool. **All fourteen cases remain UNRUN.** It adds no observed test, performance result or database/Datalog/SQL/host acceptance; earlier smoke and twelve-case semantic evidence remain separate.
+
+The [fresh primary research and saved-source review](RESEARCH-AND-REVIEW.md) cover certifying computation, shortest-path evidence, SCC witness freedom and honest whole-boundary costs. The [hand specification](NEXT-SLICE-SPEC.md) has two valid deliberately non-BFS SCC-tree controls, eight invalid certificates and two malformed graphs checked by both public APIs:12 checker and2 analyze calls, plus26 separate argument-value checks. No producer-derived expected answer, broad suite factory or hidden API call is selected.
+
+The [independent specification review](INDEPENDENT-SPEC-REVIEW.md) reconciles every graph, canonical edge ID, auxiliary tree, level/distance/path and ordinary expected status, with no blocking mathematical/status discrepancy. The [precision and selection](PRECISION-AND-SELECTION.md) makes exact-type plus complete bounded post-call value checks mandatory, limits the observational nonmutation claim, and corrects slot/admission-only labels without changing any case or count. The original specification's pre-selection wording is historical; this additive selection is the current source-authoring decision only.
+
+[Saved project identities](SOURCE-IDENTITIES.md) bind the inspected graph/oracle sources to source035e2ab5 and selected contract2790d1b8. These are project source references, not runtime attestation or installed capability observations. The later native-only source checkpoint99cf5ebc changes none of those graph files. No old native engine, stopped backup, prior launcher or held syntax action is reused or opened.
+
+New fixture/ledger/output implementation and independent actual-source review are still required before any separately reviewed exact action. No source import/parser/generator/test/API execution, command packet, deletion or computer-environment snapshot is included. [FILES.json](FILES.json) inventories the project documents; theoretical logical bounds are not measured physical resource or time guarantees.

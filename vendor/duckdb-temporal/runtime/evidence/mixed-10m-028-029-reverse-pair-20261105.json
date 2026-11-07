@@ -1,0 +1,366 @@
+{
+  "schema": "td.mixed-10m-028-029-reverse-pair/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T21:24:46.148484+00:00",
+  "fixture": {
+    "retainedBaseFacts": 10000000,
+    "priorAdditions": 22,
+    "initialKnowledgePosition": 39087,
+    "sourceFileSha256BeforeAndAfter": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3"
+  },
+  "configuration": {
+    "sizes": [
+      10000000
+    ],
+    "readers": [
+      1,
+      16
+    ],
+    "samples": 5,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "predeclaredBudgetCommit": "0135d3021ab2506c775717ba456a2e78246ca628",
+  "budgets": {
+    "1/count p50 at most 115% of control": true,
+    "1/grouped_count p50 at most 115% of control": true,
+    "16/count p50 at most 115% of control": true,
+    "16/grouped_count p50 at most 115% of control": true,
+    "16/projection p50 at most 4500 ms": true,
+    "16/projection p99 at most 12000 ms": true,
+    "mixed throughput at least 3.5/s": true,
+    "mixed p50 at most 4500 ms": true,
+    "mixed p99 at most 9000 ms": true,
+    "mixed sampled RSS at most 3.5 GB": true,
+    "exact mixed lifecycle": true
+  },
+  "runs": [
+    {
+      "version": "0.29.0",
+      "sourceEvidence": "build/combined-029-20261105/clone-reverse-candidate-029.json",
+      "evidenceSha256": "c9f6e0490e83e3452d2d7a231cab5d17140242cf4599ada97699bf74a803ffe6",
+      "coreSha256": "9591d0f226ad13ed26e430e82c744ca09713fd36baed82ca881f42ea1cf937e3",
+      "companionSha256": "fe13a80efe5202d73e34f6a69e1452a8abee35f4e6c4b1b5459bc925e50b37e2",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "harnessSha256": "071b237f4a8e31ada86f438e08bc4b05d436011c53039459561238ef3efe8144",
+      "cloneMethod": "closed_file_required_darwin_clonefile",
+      "fixtureRecipeSourceSha256": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+      "cells": {
+        "1/count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 439.0396670000009,
+            "p50": 446.1099580000009,
+            "p95": 457.3458329999994,
+            "p99": 457.3458329999994,
+            "max": 457.3458329999994
+          },
+          "readsPerSecond": 2.237208828769866,
+          "sampledRssBytes": 2363998208,
+          "beforeWarmupRssBytes": 2360377344,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 5
+          },
+          "firstReadAfterOpenMs": 519.8730409999989
+        },
+        "1/grouped_count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 463.5237080000006,
+            "p50": 466.7612909999989,
+            "p95": 483.5573750000003,
+            "p99": 483.5573750000003,
+            "max": 483.5573750000003
+          },
+          "readsPerSecond": 2.1227315997651184,
+          "sampledRssBytes": 2651160576,
+          "beforeWarmupRssBytes": 2769731584,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 5
+          },
+          "firstReadAfterOpenMs": 486.1074580000022
+        },
+        "1/projection": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 22.210957999996026,
+            "p50": 22.858875000005355,
+            "p95": 23.004750000000058,
+            "p99": 23.004750000000058,
+            "max": 23.004750000000058
+          },
+          "readsPerSecond": 43.16849575612169,
+          "sampledRssBytes": 3023568896,
+          "beforeWarmupRssBytes": 3021209600,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_single_atom": 5
+          },
+          "firstReadAfterOpenMs": 33.43600000000151
+        },
+        "16/count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 2868.887791000001,
+            "p50": 3634.8776670000007,
+            "p95": 5587.79779099999,
+            "p99": 6002.395082999996,
+            "max": 6002.395082999996
+          },
+          "readsPerSecond": 4.082528474577587,
+          "sampledRssBytes": 2813640704,
+          "beforeWarmupRssBytes": 2851422208,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 80
+          },
+          "firstReadAfterOpenMs": 463.04804200000217
+        },
+        "16/grouped_count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3456.9278329999943,
+            "p50": 4176.7611250000045,
+            "p95": 7682.201042000001,
+            "p99": 7751.307084,
+            "max": 7751.307084
+          },
+          "readsPerSecond": 3.3482891118948275,
+          "sampledRssBytes": 2369880064,
+          "beforeWarmupRssBytes": 2579283968,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 80
+          },
+          "firstReadAfterOpenMs": 497.4301669999986
+        },
+        "16/projection": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 107.34745800000383,
+            "p50": 142.6024999999936,
+            "p95": 195.56604100001277,
+            "p99": 217.1543329999986,
+            "max": 217.1543329999986
+          },
+          "readsPerSecond": 100.57914199157646,
+          "sampledRssBytes": 1823195136,
+          "beforeWarmupRssBytes": 1705263104,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_single_atom": 80
+          },
+          "firstReadAfterOpenMs": 38.62200000000303
+        },
+        "mixed": {
+          "samples": 317,
+          "latencyMs": {
+            "count": 317,
+            "min": 1360.2481670000125,
+            "p50": 2801.7712089999986,
+            "p95": 5093.685874999996,
+            "p99": 5775.949500000017,
+            "max": 5869.412125000003
+          },
+          "readsPerSecond": 5.069909784408044,
+          "sampledRssBytes": 2468233216,
+          "beforeWarmupRssBytes": 2496528384,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 214,
+            "owned_allcut_unique_scalable_single_atom": 103
+          },
+          "writes": 43,
+          "errors": 0,
+          "acknowledgementErrors": 0,
+          "finalReadVerified": true,
+          "reopenVerified": true,
+          "observedReaders": 16,
+          "returnedReaders": 16,
+          "wallMs": 62525.76741599999,
+          "writesPerCompleteWindow": [
+            7,
+            6,
+            7,
+            7,
+            8,
+            7
+          ]
+        }
+      }
+    },
+    {
+      "version": "0.28.0",
+      "sourceEvidence": "build/combined-029-20261105/clone-reverse-control-028.json",
+      "evidenceSha256": "267eb76afb8fd988e216ffefaae908d2b73bb1a876d28dafa820cbe1f5277f20",
+      "coreSha256": "0e5c2a02c15f146d9040c7f41ea21f8d6bb8080b98468cdb1d5667f24c404fa5",
+      "companionSha256": "fe13a80efe5202d73e34f6a69e1452a8abee35f4e6c4b1b5459bc925e50b37e2",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "harnessSha256": "071b237f4a8e31ada86f438e08bc4b05d436011c53039459561238ef3efe8144",
+      "cloneMethod": "closed_file_required_darwin_clonefile",
+      "fixtureRecipeSourceSha256": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+      "cells": {
+        "1/count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 446.5807080000013,
+            "p50": 457.85012500000084,
+            "p95": 523.3951250000009,
+            "p99": 523.3951250000009,
+            "max": 523.3951250000009
+          },
+          "readsPerSecond": 2.1225539290542703,
+          "sampledRssBytes": 2247950336,
+          "beforeWarmupRssBytes": 2309931008,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 5
+          },
+          "firstReadAfterOpenMs": 484.15045800000007
+        },
+        "1/grouped_count": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 488.7282919999998,
+            "p50": 497.38866699999926,
+            "p95": 688.2156250000007,
+            "p99": 688.2156250000007,
+            "max": 688.2156250000007
+          },
+          "readsPerSecond": 1.8365596866057794,
+          "sampledRssBytes": 2235334656,
+          "beforeWarmupRssBytes": 2234875904,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 5
+          },
+          "firstReadAfterOpenMs": 515.6881659999999
+        },
+        "1/projection": {
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 505.7583750000049,
+            "p50": 517.5792920000022,
+            "p95": 545.3571250000023,
+            "p99": 545.3571250000023,
+            "max": 545.3571250000023
+          },
+          "readsPerSecond": 1.9242169290969815,
+          "sampledRssBytes": 2414608384,
+          "beforeWarmupRssBytes": 2423455744,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_single_atom": 5
+          },
+          "firstReadAfterOpenMs": 762.8256670000046
+        },
+        "16/count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3051.2534580000065,
+            "p50": 3741.0728750000126,
+            "p95": 6212.209416999991,
+            "p99": 6455.443625,
+            "max": 6455.443625
+          },
+          "readsPerSecond": 3.7558114947059806,
+          "sampledRssBytes": 2193408000,
+          "beforeWarmupRssBytes": 2400010240,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 80
+          },
+          "firstReadAfterOpenMs": 540.2819170000002
+        },
+        "16/grouped_count": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3392.620458000005,
+            "p50": 3885.962375000003,
+            "p95": 7049.4959579999995,
+            "p99": 7227.236875000002,
+            "max": 7227.236875000002
+          },
+          "readsPerSecond": 3.510911532746227,
+          "sampledRssBytes": 2168455168,
+          "beforeWarmupRssBytes": 2461614080,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_count": 80
+          },
+          "firstReadAfterOpenMs": 530.88220800001
+        },
+        "16/projection": {
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 9933.847750000015,
+            "p50": 16857.816125000012,
+            "p95": 34177.74633299999,
+            "p99": 38051.562000000005,
+            "max": 38051.562000000005
+          },
+          "readsPerSecond": 0.840000488302784,
+          "sampledRssBytes": 2801057792,
+          "beforeWarmupRssBytes": 2555887616,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_single_atom": 80
+          },
+          "firstReadAfterOpenMs": 515.2805829999852
+        },
+        "mixed": {
+          "samples": 179,
+          "latencyMs": {
+            "count": 179,
+            "min": 2369.3966669999645,
+            "p50": 5082.51337499998,
+            "p95": 9432.491792000015,
+            "p99": 12262.490541999985,
+            "max": 12302.506416999968
+          },
+          "readsPerSecond": 2.7592297134711625,
+          "sampledRssBytes": 2908405760,
+          "beforeWarmupRssBytes": 2799796224,
+          "routeCounts": {
+            "owned_allcut_unique_scalable_single_atom": 59,
+            "owned_allcut_unique_scalable_count": 120
+          },
+          "writes": 24,
+          "errors": 0,
+          "acknowledgementErrors": 0,
+          "finalReadVerified": true,
+          "reopenVerified": true,
+          "observedReaders": 16,
+          "returnedReaders": 16,
+          "wallMs": 64873.177874999994,
+          "writesPerCompleteWindow": [
+            4,
+            4,
+            4,
+            4,
+            3,
+            4
+          ]
+        }
+      }
+    }
+  ],
+  "firstPairEvidence": "evidence/mixed-10m-028-029-first-pair-20261105.json",
+  "limitations": [
+    "Two ordered pairs from the same closed fixture are engineering screens. Fixed 16-reader p99 is the maximum of 80 samples.",
+    "The candidates process different numbers of acknowledged additions once each mixed run starts.",
+    "Sampled RSS measures the full process at sampling instants. This is neither a hard memory ceiling nor a deployment service objective."
+  ]
+}

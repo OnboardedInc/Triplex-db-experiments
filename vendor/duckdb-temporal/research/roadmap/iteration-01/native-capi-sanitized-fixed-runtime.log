@@ -1,0 +1,80 @@
+test_answer_derived_first_position_remains_typed (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_derived_first_position_remains_typed) ... ok
+test_answer_different_float_spellings_normalize_within_float_tag (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_different_float_spellings_normalize_within_float_tag) ... ok
+test_answer_duplicate_values_are_sets_not_bags (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_duplicate_values_are_sets_not_bags) ... ok
+test_answer_float_order_is_numeric_not_spelling_or_intern_id (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_float_order_is_numeric_not_spelling_or_intern_id) ... ok
+test_answer_four_tagged_ground_values (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_four_tagged_ground_values) ... ok
+test_answer_four_tags_survive_base_values (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_four_tags_survive_base_values) ... ok
+test_answer_full_int64_and_adjacent_unsafe_js_integers (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_full_int64_and_adjacent_unsafe_js_integers) ... ok
+test_answer_full_int64_time_cut_is_lossless (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_full_int64_time_cut_is_lossless) ... ok
+test_answer_half_open_upper_time_cut_is_excluded (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_half_open_upper_time_cut_is_excluded) ... ok
+test_answer_legacy_looking_text_is_never_inferred (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_legacy_looking_text_is_never_inferred) ... ok
+test_answer_max_int64_predecessor_valid_cut_is_included (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_max_int64_predecessor_valid_cut_is_included) ... ok
+test_answer_max_int64_recorded_cut_is_excluded_by_open_end (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_max_int64_recorded_cut_is_excluded_by_open_end) ... ok
+test_answer_max_int64_valid_cut_is_excluded_by_open_end (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_max_int64_valid_cut_is_excluded_by_open_end) ... ok
+test_answer_native_extreme_interval_comparison_never_subtracts (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_native_extreme_interval_comparison_never_subtracts) ... ok
+test_answer_numeric_entity_literal_cannot_match_text_entity (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_numeric_entity_literal_cannot_match_text_entity) ... ok
+test_answer_rounded_recorded_boundary_must_not_admit_earlier_cut (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_rounded_recorded_boundary_must_not_admit_earlier_cut) ... ok
+test_answer_rounded_valid_boundary_must_not_admit_earlier_cut (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_rounded_valid_boundary_must_not_admit_earlier_cut) ... ok
+test_answer_signed_zero_is_normalized_only_within_its_tag (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_signed_zero_is_normalized_only_within_its_tag) ... ok
+test_answer_strings_use_utf8_byte_order_not_js_utf16_order (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_strings_use_utf8_byte_order_not_js_utf16_order) ... ok
+test_answer_typed_value_does_not_unify_with_text_entity (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_typed_value_does_not_unify_with_text_entity) ... ok
+test_reject_float_overflow (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_float_overflow) ... ok
+test_reject_integer_overflow (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_integer_overflow) ... ok
+test_reject_integer_underflow (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_integer_underflow) ... ok
+test_reject_leading_zero (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_leading_zero) ... ok
+test_reject_malformed_boolean_suffix (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_malformed_boolean_suffix) ... ok
+test_reject_malformed_number_suffix (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_malformed_number_suffix) ... ok
+test_reject_nonzero_float_underflow_to_zero (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_nonzero_float_underflow_to_zero) ... ok
+test_reject_unsupported_null_literal (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_unsupported_null_literal) ... ok
+test_boolean_false_and_true_order (__main__.TypedCarrierTests.test_boolean_false_and_true_order) ... ok
+test_carrier_zero_is_normalized_and_subnormal_bits_retained (__main__.TypedCarrierTests.test_carrier_zero_is_normalized_and_subnormal_bits_retained) ... ok
+test_empty_typed_list_is_valid (__main__.TypedCarrierTests.test_empty_typed_list_is_valid) ... ok
+test_every_inactive_payload_must_be_null (__main__.TypedCarrierTests.test_every_inactive_payload_must_be_null) ... ok
+test_float_literals_preserve_representable_subnormals_and_extremes (__main__.TypedCarrierTests.test_float_literals_preserve_representable_subnormals_and_extremes) ... ok
+test_invalid_intervals_rejected_even_when_invisible (__main__.TypedCarrierTests.test_invalid_intervals_rejected_even_when_invisible) ... ok
+test_nonfinite_floats_rejected_after_successful_binding (__main__.TypedCarrierTests.test_nonfinite_floats_rejected_after_successful_binding) ... ok
+test_nul_strings_rejected_in_v2 (__main__.TypedCarrierTests.test_nul_strings_rejected_in_v2) ... ok
+test_null_list_and_fact_are_rejected (__main__.TypedCarrierTests.test_null_list_and_fact_are_rejected) ... ok
+test_required_fact_fields_are_not_null (__main__.TypedCarrierTests.test_required_fact_fields_are_not_null) ... ok
+test_required_scalar_arguments_are_not_null (__main__.TypedCarrierTests.test_required_scalar_arguments_are_not_null) ... ok
+test_selected_payload_must_be_present (__main__.TypedCarrierTests.test_selected_payload_must_be_present) ... ok
+test_tag_is_required_and_unknown_tags_rejected (__main__.TypedCarrierTests.test_tag_is_required_and_unknown_tags_rejected) ... ok
+test_typed_value_propagates_each_of_eight_derived_positions (__main__.TypedCarrierTests.test_typed_value_propagates_each_of_eight_derived_positions) ... ok
+test_v2_registered_as_scalar (__main__.TypedCarrierTests.test_v2_registered_as_scalar) ... ok
+test_fact_work_and_round_limits_fail_without_rows (__main__.BoundsTests.test_fact_work_and_round_limits_fail_without_rows) ... ok
+test_invalid_admission_limits (__main__.BoundsTests.test_invalid_admission_limits) ... ok
+test_numeric_token_128_byte_boundary_is_independent_of_overflow (__main__.BoundsTests.test_numeric_token_128_byte_boundary_is_independent_of_overflow) ... ok
+test_term_and_program_byte_bounds (__main__.BoundsTests.test_term_and_program_byte_bounds) ... ok
+test_long_string_ownership_during_output_growth (__main__.BatchTests.test_long_string_ownership_during_output_growth) ... ok
+test_mixed_valid_invalid_scalar_batch_leaves_connection_usable (__main__.BatchTests.test_mixed_valid_invalid_scalar_batch_leaves_connection_usable) ... ok
+test_nonzero_input_list_offsets_and_chunk_boundaries (__main__.BatchTests.test_nonzero_input_list_offsets_and_chunk_boundaries) ... ok
+test_varying_output_tuple_lengths_and_payload_kinds (__main__.BatchTests.test_varying_output_tuple_lengths_and_payload_kinds) ... ok
+test_v1_null_fact_list_retains_legacy_empty_semantics (__main__.LegacyCompatibilityTests.test_v1_null_fact_list_retains_legacy_empty_semantics) ... ok
+test_v1_numeric_and_boolean_literals_remain_unsupported (__main__.LegacyCompatibilityTests.test_v1_numeric_and_boolean_literals_remain_unsupported) ... ok
+test_v1_still_registered_as_scalar (__main__.LegacyCompatibilityTests.test_v1_still_registered_as_scalar) ... ok
+test_v1_string_embedding_agrees_at_temporal_cuts (__main__.LegacyCompatibilityTests.test_v1_string_embedding_agrees_at_temporal_cuts) ... ok
+test_v1_string_rows_and_quoted_literals_unchanged (__main__.LegacyCompatibilityTests.test_v1_string_rows_and_quoted_literals_unchanged) ... ok
+test_input_row_cap_includes_duplicate_rows (__main__.LargeInputTests.test_input_row_cap_includes_duplicate_rows) ... ok
+
+----------------------------------------------------------------------
+Ran 57 tests in 24.816s
+
+OK
+{
+  "status": "PASS",
+  "native_tests_run": 57,
+  "fixture_sha256": "247e80d77a51f3a6287f40b078c5b090690992a64b15101779e64a006a796edf",
+  "answer_fixtures": 20,
+  "native_program_rejection_fixtures": 8,
+  "harness_prebinding_source_rejections_checked": 7,
+  "selected_integration_tests": 57,
+  "large_cases_included": true,
+  "python": "3.12.14",
+  "duckdb": "2.0.0",
+  "extension": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/capi-sanitized/temporal_datalog.duckdb_extension",
+  "extension_sha256": "999beebe98971d85eb4dea68c3167d9df8c7a6a4ac1476563f23beded18bb288",
+  "platform": "linux_amd64",
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0
+}

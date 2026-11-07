@@ -1,0 +1,29 @@
+test_atomic_correction_preserves_both_knowledge_cuts (frozen_v1_storage_test.StorageTests.test_atomic_correction_preserves_both_knowledge_cuts) ... ok
+test_bounded_admission_and_observed_disk_budget (frozen_v1_storage_test.StorageTests.test_bounded_admission_and_observed_disk_budget) ... ok
+test_commit_cap_and_physical_footprint_at_limit (frozen_v1_storage_test.StorageTests.test_commit_cap_and_physical_footprint_at_limit) ... ok
+test_database_location_and_closed_store_guards (frozen_v1_storage_test.StorageTests.test_database_location_and_closed_store_guards) ... ok
+test_duplicate_command_is_not_applied_twice (frozen_v1_storage_test.StorageTests.test_duplicate_command_is_not_applied_twice) ... ok
+test_empty_table_calls_native_and_pins_zero_snapshot (frozen_v1_storage_test.StorageTests.test_empty_table_calls_native_and_pins_zero_snapshot) ... ok
+test_future_and_invalid_query_basis_rejected (frozen_v1_storage_test.StorageTests.test_future_and_invalid_query_basis_rejected) ... ok
+test_history_admission_cap_is_enforced_before_writes (frozen_v1_storage_test.StorageTests.test_history_admission_cap_is_enforced_before_writes) ... ok
+test_insert_and_real_timestamptz (frozen_v1_storage_test.StorageTests.test_insert_and_real_timestamptz) ... ok
+test_interruption_rolls_back_all_changes (frozen_v1_storage_test.StorageTests.test_interruption_rolls_back_all_changes) ... ok
+test_invalid_inputs_do_not_allocate_position (frozen_v1_storage_test.StorageTests.test_invalid_inputs_do_not_allocate_position) ... ok
+test_multivalued_eav_has_no_last_writer_wins (frozen_v1_storage_test.StorageTests.test_multivalued_eav_has_no_last_writer_wins) ... ok
+test_native_failure_rolls_back_correction_and_commit_ledger (frozen_v1_storage_test.StorageTests.test_native_failure_rolls_back_correction_and_commit_ledger) ... ok
+test_native_sees_uncommitted_command_in_same_transaction (frozen_v1_storage_test.StorageTests.test_native_sees_uncommitted_command_in_same_transaction) ... ok
+test_post_commit_budget_error_reports_acknowledgement_ambiguity (frozen_v1_storage_test.StorageTests.test_post_commit_budget_error_reports_acknowledgement_ambiguity) ... ok
+test_quote_like_data_is_never_sql (frozen_v1_storage_test.StorageTests.test_quote_like_data_is_never_sql) ... ok
+test_read_snapshot_remains_pinned_across_other_connection_commit (frozen_v1_storage_test.StorageTests.test_read_snapshot_remains_pinned_across_other_connection_commit) ... ok
+test_reopen_persists_facts_clock_receipt_and_native_load (frozen_v1_storage_test.StorageTests.test_reopen_persists_facts_clock_receipt_and_native_load) ... ok
+test_retraction_retains_assertion_history (frozen_v1_storage_test.StorageTests.test_retraction_retains_assertion_history) ... ok
+test_same_object_threads_are_serialized (frozen_v1_storage_test.StorageTests.test_same_object_threads_are_serialized) ... ok
+test_stale_retraction_rolls_back_prior_retraction_and_clock (frozen_v1_storage_test.StorageTests.test_stale_retraction_rolls_back_prior_retraction_and_clock) ... ok
+test_tick_extremes_and_epoch_microsecond_convention (frozen_v1_storage_test.StorageTests.test_tick_extremes_and_epoch_microsecond_convention) ... ok
+test_valid_intervals_are_half_open (frozen_v1_storage_test.StorageTests.test_valid_intervals_are_half_open) ... ok
+Largest observed fixture after close: 4468736 bytes
+
+----------------------------------------------------------------------
+Ran 23 tests in 4.615s
+
+OK

@@ -1,0 +1,56 @@
+{
+  "schema": "td.triplex-dependency-native-qualification/1",
+  "observed_utc": "2026-11-05T19:42:37Z",
+  "tested_source": "133af320f81707fd50f3824cd30bb77f1820dc77",
+  "result": "PASS",
+  "artifact": {
+    "extension_version": "0.28.0",
+    "platform": "macOS arm64",
+    "core_sha256": "1f37bc04bb124df5e3cb51241fa9d163ad07a0f77b3b5d8e6b57d4ff1e94ff26",
+    "owner_sha256": "a02b79939c3f1a44588c073c2a70a8520239166b9d7ea6fc26a24f60c737761a",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_sha256": "efc3e8225da5a76f0835a27c381cadc3d95961edde4869af966532a00df34fbe",
+    "public_factory_sha256": "96bf97ec32c299c3b812b34f7daec1c624b5505206fa60a9e820250f8b014346",
+    "public_backend_sha256": "de4ba6f4f30bb811aaec780cb441eea353e6d0c7844811c0baf3925edf3149b6"
+  },
+  "public_gate": {
+    "typecheck": "PASS",
+    "pass": 2,
+    "fail": 0,
+    "skip": 0,
+    "elapsed_ms": 863.842333,
+    "test": "node --test --test-concurrency=1 --test-reporter=tap build/adapter/test-triplex-dependency.js",
+    "tap_sha256": "097b00c28a1aa957f1990498d7b11c1610167d193f26b32d3e27cfa2e8646888",
+    "compiled_test_sha256": "23233e58cf871cd0fae8b2981b1519a658bb308eb75bad2f1e1a043d8100c936"
+  },
+  "conformance": {
+    "suite": "pinned-runtimeConformance-public-factory",
+    "upstream": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+    "cases": 44,
+    "result": "PASS",
+    "elapsed_ms": 4714.359333,
+    "log_sha256": "a3cc66f6eff59cb7c27b5432a05a9531bb59abadb9cf21df2974b680d46a5b4b"
+  },
+  "observed_route": {
+    "factory": "makeDuckDBRuntime",
+    "operation": "dependencyState",
+    "callback": "system.main.td_triplex_dependency_entry_v1",
+    "reduction": "DuckDB MAX/MIN",
+    "normal_shape": "One prepared query reused across three calls; each returns one scalar pair.",
+    "max_attribute_shape": "1024 distinct attributes used two statements in the same transaction, each returning one row.",
+    "prior_shape": "Six temporal cells per matching retained assertion transferred into JavaScript.",
+    "transfer_scope": "Structural row/cardinality proof."
+  },
+  "qualified_edges": [
+    "Fractional valid and recorded cuts",
+    "Conjunctive recorded time and position",
+    "Retraction and empty semantics",
+    "Duplicate and quoted Unicode attributes",
+    "1024-attribute cap",
+    "Read-your-writes and rollback"
+  ],
+  "remaining_goal_scope": [
+    "Native Triplex schema delegation",
+    "Native Triplex mutation and query compilation parity"
+  ]
+}

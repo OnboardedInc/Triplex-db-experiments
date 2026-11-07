@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "fixedCells": 9,
+  "fixedSamples": 315,
+  "mixedSamples": 355,
+  "mixedACKs": 50,
+  "all16LogicalReaders": true,
+  "consecutiveUniqueUnreconciledACKs": true,
+  "writeWindows": [
+    8,
+    7,
+    9,
+    9,
+    8,
+    8
+  ],
+  "drainAndReopen": true,
+  "tupleScope": "Unchanged owning mixed-scale independent typed oracles execute on every query; this additional raw audit checks stored cardinalities/K/IDs/progress and lifecycle."
+}

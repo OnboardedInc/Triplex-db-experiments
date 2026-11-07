@@ -1,0 +1,178 @@
+{
+  "schema": "independent-all-cut-read-review/1",
+  "timestampUtc": "2026-11-05T15:45:57.980494+00:00",
+  "reviewScope": "Read-only source and recorded-result arithmetic. No engine or test execution by this reviewer.",
+  "sourceCommit": "75f16ceb",
+  "functionalEvidence": {
+    "file": "all-cut-functional-20261105.json",
+    "sha256": "ae37aacccc8c22e8f2e589c0e3962f0a2110ee78b3ef453224acb56a5ed044b6",
+    "baselinePassed": 8,
+    "candidatePassed": 66,
+    "failed": 0,
+    "sourceHashesVerified": 15
+  },
+  "sourceSha256": {
+    "native/src/temporal_current_unique.hpp": "2b4b3782bfdad09cae18fad5250a5644a5b9b57f20e53664d478db0f27a90171",
+    "native/src/temporal_store_query.cpp": "efa9f8910e1cc090e916eae3e0c8e6437566669a4aa57c0e6f98389b70441aad",
+    "native/owner_probe/owner_probe.cpp": "b131f2f23af1daede1400abfdb3b0c166528ea76dda058ef7d0e163b13920167",
+    "build_native.py": "bb515e66e255d828c24efa5e5747ff53a84b6c6c2d2adadfff24e630146f4aa7",
+    "build_owner_probe.py": "f54be0e0bd564bdf3a9f5f9d1488214bc1f3820f21d3b16ce067822edd7d1284",
+    "build_identity_count_spike.py": "8c79d14c6f16558f2bf6fdce3ddd0b0457c5bcd225c4f7e3c9e77cf2133891fe",
+    "adapter/native-entity.ts": "a6885a5ae224fc5248c40ef49d125e65ed575bf68b6a50da08b74f9460b16879",
+    "adapter/test-all-cut-unique.mjs": "3dc1d4290a3b7ecc69ad8b5621b888197f62dd9c0d08987cebf3875d98749142",
+    "adapter/test-all-cut-store.mjs": "f4cd38f6658ff612fbfb63e50f5534efaa9e9633719e26d2538295d0fbc48f45",
+    "adapter/benchmark-identity-count.mjs": "074fce37d1872a1d068da50376eb68b841b8e791f476f225db95cccf30874224",
+    "adapter/test-read-provenance.mjs": "4b3bfa1c404f4fd5119a24aaf8a607aa610120a6e00b2d9c1d5205a199ec6794",
+    "adapter/test-current-unique.mjs": "51f3a71c0fa18411ce8bc550ca46a9f852291009bea308e7bfb8810672fc97bd",
+    "adapter/test-owned-query.mjs": "452a97a4fd02aed670266ae96bc601631c391cf0d54274ca150ce804b8d56abe",
+    "adapter/test-owned-store.ts": "e09e5225864b50f3c1e41546fa50113c046d0fa1df6678a3bdd77c88559bc137",
+    "adapter/test-interval-patch.ts": "a37b6eaaea95ad2e31c12f2335b296f43201e49c2629091a264a2a4fb61e0ab2"
+  },
+  "performanceEvidence": {
+    "file": "all-cut-fixed-sum-10m-20261105.json",
+    "sha256": "674c44a16e8a40f0ae651aa50cdf5b1ebbde8da11cf89d8500262a6acaba6385",
+    "reportedRawRetrySha256": "cb2d0c9cbff2e876fd44d9af7ce6f7e8a93e0f21f75bdfea083fa19f00c31faf",
+    "driverCommit": "a466d90e",
+    "sourceDatabaseSha256": "2797eb25983f8d2159a3562fe10f8c4476a2810557baeaa9909229c9a69e1af6"
+  },
+  "configuration": {
+    "facts": 10000000,
+    "knownAt": 2442,
+    "validAt": 0,
+    "readers": 16,
+    "requestedDurationMs": 60000,
+    "threads": 4,
+    "engineMemoryLimit": "2GB",
+    "maxTemporaryStorage": "4GB",
+    "maxLogicalIntermediateBytes": 4294967296,
+    "repeats": 1
+  },
+  "profiles": [
+    {
+      "variant": "baseline",
+      "completedReads": 68,
+      "latencyMs": {
+        "p50": 16246.404916,
+        "p95": 26350.192625000003,
+        "p99": 29920.652834
+      },
+      "queriesPerSecond": 0.8661971453922835,
+      "wallMsIncludingDrain": 78504.068458,
+      "drainMs": 18504.068457999994,
+      "totalElapsedMsIncludingOpenFirstWarmupAndClose": 118213.284667,
+      "queriesPerSecondIncludingOpenFirstWarmupAndClose": 0.5752314572051024,
+      "openMs": 4527.623417,
+      "openMaxSampledRssBytes": 1899888640,
+      "queryMaxSampledRssBytes": 2911354880,
+      "windowCompletedReads": [
+        0,
+        10,
+        8,
+        8,
+        13,
+        13,
+        7,
+        9
+      ],
+      "reason": [
+        "owned_scalable_aggregate"
+      ],
+      "errors": 0,
+      "sixteenReadersObserved": true,
+      "readersDrained": true,
+      "artifactHashes": {
+        "core_manifest": "786c3936126a65f0462641354ff1cf0435da195750ba053bcb4044d0cc8292ee",
+        "companion_manifest": "0215dd83f5e5bcf55d0da879377703c6217da7cfe9e124274485ac1e96c331f1",
+        "core_extension": "5e02b04ed343c2bcc59ca3998511cde6e25117a6f8b9fc00cb15d6959e3d3155",
+        "control_bridge": "4a366ca5c25b8c7bc701b19f945481bb3fdc337a1ce2abd4299f3c6805c62390",
+        "companion_extension": "e7bb61ce58b7fd448830889a3bcfd1f865e859bb39b81460c1d6c7c20f4001fa",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "adapter/native-entity.js": "c4923d61b6dcefd776bccb98aaba4ec774679e7cdd0010d8a697f5b54317b32d",
+        "adapter/native-schema.js": "3f84713dce80b4b9424607f939d5dfed2d9892895a32c1c3547ee85084334675",
+        "adapter/native-duckdb-port.mjs": "b427bfd0e391548a5b0aa95c7cdc2bbdee02a3df350dab11e46dc201e633c11b",
+        "benchmark_driver": "57387441d96cbd375dbdda5f2bbd7b7544d1b410a90b0840d569cd58daaa4fbf",
+        "benchmark/benchmark-scale.mjs": "d41bc766dd644ef6dc6cb99ff4af68e0f26a8585760d7d63105ce39710f3bf87",
+        "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+        "source_evidence": "241b18cd22788f8f84400e1feb91f4ca4d4bfb6f35a1984ca8251e18e2bcc740"
+      }
+    },
+    {
+      "variant": "candidate",
+      "completedReads": 242,
+      "latencyMs": {
+        "p50": 3081.9460839999992,
+        "p95": 10130.468874999999,
+        "p99": 13010.093624999998
+      },
+      "queriesPerSecond": 3.9450164634543725,
+      "wallMsIncludingDrain": 61343.21674999999,
+      "drainMs": 1343.2167499999923,
+      "totalElapsedMsIncludingOpenFirstWarmupAndClose": 72633.81820899999,
+      "queriesPerSecondIncludingOpenFirstWarmupAndClose": 3.3317813377737866,
+      "openMs": 5102.933292,
+      "openMaxSampledRssBytes": 2227552256,
+      "queryMaxSampledRssBytes": 2894495744,
+      "windowCompletedReads": [
+        2,
+        38,
+        53,
+        27,
+        53,
+        53,
+        16
+      ],
+      "reason": [
+        "owned_allcut_unique_scalable_aggregate"
+      ],
+      "errors": 0,
+      "sixteenReadersObserved": true,
+      "readersDrained": true,
+      "artifactHashes": {
+        "core_manifest": "22fd1e951c339f2a31ef4ff8a63c85f2e684eb686924712bd4a1751e977e6a85",
+        "companion_manifest": "add6efb98f3b798379ba7b7bbf9e27bc0deae03fbcbb28dd3b660cb413393848",
+        "core_extension": "c89b331b83449acffb121a31760a6618a081a0a13dbefbe83ce5de386460773f",
+        "control_bridge": "08f90997236e85e59becaa9a5726fc4722bbd4036c6f545ecb1d75bc3a65da0f",
+        "companion_extension": "49936a787cbb9843d4eaec8802f5e9e06b473247af2fc110d6eba9e7e2ac3c48",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "adapter/native-entity.js": "c4923d61b6dcefd776bccb98aaba4ec774679e7cdd0010d8a697f5b54317b32d",
+        "adapter/native-schema.js": "3f84713dce80b4b9424607f939d5dfed2d9892895a32c1c3547ee85084334675",
+        "adapter/native-duckdb-port.mjs": "b427bfd0e391548a5b0aa95c7cdc2bbdee02a3df350dab11e46dc201e633c11b",
+        "benchmark_driver": "57387441d96cbd375dbdda5f2bbd7b7544d1b410a90b0840d569cd58daaa4fbf",
+        "benchmark/benchmark-scale.mjs": "d41bc766dd644ef6dc6cb99ff4af68e0f26a8585760d7d63105ce39710f3bf87",
+        "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+        "source_evidence": "241b18cd22788f8f84400e1feb91f4ca4d4bfb6f35a1984ca8251e18e2bcc740"
+      }
+    }
+  ],
+  "recomputedThroughputRatio": 4.554409448749398,
+  "recomputedMedianLatencyReduction": 0.8102998109468024,
+  "verified": [
+    "All measured samples are fixed-K2442 sum queries using the expected baseline or all-cut reason.",
+    "Per-reader rounds have no gaps; submissions stop before60000ms and in-flight calls drain.",
+    "All ten-second completion buckets, sample counts, nearest-rank quantiles and throughput match the raw receipt.",
+    "Both variants pin the same engine, adapters, benchmark helpers, source evidence and native source hashes; compiled all-cut flag differs.",
+    "Open/full-audit elapsed and RSS remain separate; full-cost throughput is recomputed without granting free validation."
+  ],
+  "proofBoundaries": [
+    "Initial audit requires nonoverlapping positive transaction intervals per complete typed EAV; this sufficient condition can reject valid disjoint rectangles.",
+    "Nonempty future starts and finite future ends are excluded before native-write induction. Empty rectangles contribute no visible rows.",
+    "Private native puts close old current rectangles at a fresh knowledge position. Patches create canonical replacement sets and valid-time-subset remnants, preserving two-dimensional uniqueness.",
+    "Only audited owned generations can expose bits. Fixed cuts require all-cut bit2; latest can also use independent current bit1.",
+    "One volatile bitmask is read on each invocation. Revalidated capability loss chooses DISTINCT and an ordinary owned reason, including cached statements.",
+    "Arbitrary writes, unknown connections and unaudited generations remain outside the certified fast path."
+  ],
+  "firstPerformanceAttempt": {
+    "status": "failed",
+    "reportedRawSha256": "20b3e593e801f231ba159039c9f72aed606d59796935dd888c0e21761e8cb990",
+    "available": "Outer failed readCell status assertion and original fixture copy.",
+    "unavailable": "Detailed inner failure and query samples were discarded before the failure-retention fix.",
+    "causalConclusion": "Unknown. The retry and its improvements do not explain or erase the first failure."
+  },
+  "assessment": "The fixed-read incremental comparison passes. Keep normal flags disabled pending the clean mixed-ingestion gate.",
+  "limitations": [
+    "One baseline-first/candidate-second pair only, with a failed prior attempt; no repeated-order stability result.",
+    "Candidate3.945queries/s and242samples do not establish the separate5queries/s and1000completed-read mixed gate.",
+    "Memory values are sampled process RSS, not complete allocator containment.",
+    "Complete answer equality was checked inside the recorded harness; samples retain answer metadata, not full answer payloads."
+  ]
+}

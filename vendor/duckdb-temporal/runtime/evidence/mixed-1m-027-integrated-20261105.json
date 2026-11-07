@@ -1,0 +1,131 @@
+{
+  "schema": "native-mixed-million-integrated-qualification/1",
+  "result": "PASS",
+  "platform": "macOS ARM64",
+  "coreSource": "23a34b22906ae8321853ad61986b49f990b8a7fb",
+  "timestampUtc": "2026-11-05T19:26:26.405Z",
+  "configuration": {
+    "sizes": [
+      1000000
+    ],
+    "readers": [
+      16
+    ],
+    "samples": 3,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 536870912,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "budget": {
+    "queriesPerSecondMin": 15,
+    "p50MsMax": 1000,
+    "p99MsMax": 3000,
+    "rssBytesMax": 3500000000
+  },
+  "fixture": {
+    "baseRetainedFacts": 1000000,
+    "priorAcknowledgedWrites": 136,
+    "initialKnowledgePosition": "4045",
+    "sourceFileSha256BeforeAndAfter": "1f3dc5123ae349c7831d8082f310854fc2d2749fe91f5e2671bf3ac14e07a4f2",
+    "sourceWalAbsent": true,
+    "cloneMethod": "Darwin APFS clonefile",
+    "originalQualificationSha256": "fa0f111fe41ecaa2c7d791f42c30a16595d6114670831c212e39db8054fff0e5"
+  },
+  "rawEvidence": {
+    "file": "build/combined-027-20261105/mixed-million.json",
+    "sha256": "e94e851194ec7e898d050c2dc8f766df121d47954e4d451cd9bcc26bcdab164c"
+  },
+  "artifactSha256": {
+    "build/adapter/native-entity.js": "dcad01a37ae791e5925f48db12e65a4bf27b4ed046711594779dd7c405a8dfac",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "harnessSha256": "071b237f4a8e31ada86f438e08bc4b05d436011c53039459561238ef3efe8144",
+  "mixedFixtureSha256": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+  "mixed": {
+    "readSamples": 2031,
+    "writes": 244,
+    "errors": 0,
+    "throughputQueriesPerSecond": 33.598154996256504,
+    "latencyMs": {
+      "count": 2031,
+      "min": 137.7905830000018,
+      "p50": 460.9315830000014,
+      "p95": 620.9744580000006,
+      "p99": 751.0022919999974,
+      "max": 965.9733750000014
+    },
+    "rssBytes": 1794801664,
+    "observedReaders": 16,
+    "allLeasesReturned": true,
+    "finalAndReopenVerified": true,
+    "writesByCompleteWindow": [
+      42,
+      43,
+      41,
+      39,
+      40,
+      38
+    ],
+    "routeCounts": {
+      "fixed/count/owned_allcut_unique_scalable_count": 139,
+      "fixed/grouped_count/owned_allcut_unique_scalable_count": 138,
+      "fixed/projection/owned_allcut_unique_scalable_single_atom": 139,
+      "latest/count/owned_allcut_unique_scalable_count": 537,
+      "latest/grouped_count/owned_allcut_unique_scalable_count": 539,
+      "latest/projection/owned_allcut_unique_scalable_single_atom": 539
+    }
+  },
+  "fixedCells": [
+    {
+      "kind": "count",
+      "latencyMs": {
+        "count": 48,
+        "min": 205.87745899999982,
+        "p50": 424.52345799999966,
+        "p95": 717.7297079999998,
+        "p99": 837.8918330000001,
+        "max": 837.8918330000001
+      },
+      "exact": true
+    },
+    {
+      "kind": "grouped_count",
+      "latencyMs": {
+        "count": 48,
+        "min": 201.30733299999974,
+        "p50": 498.4841669999996,
+        "p95": 761.410417,
+        "p99": 840.6846660000001,
+        "max": 840.6846660000001
+      },
+      "exact": true
+    },
+    {
+      "kind": "projection",
+      "latencyMs": {
+        "count": 48,
+        "min": 226.50658300000032,
+        "p50": 470.9485000000004,
+        "p95": 730.2374999999993,
+        "p99": 948.1282500000016,
+        "max": 948.1282500000016
+      },
+      "exact": true
+    }
+  ],
+  "limitations": [
+    "One sustained release repeat on a verified clone. Setup and warmup are outside timed mixed results.",
+    "The ongoing writes are native single-record commands. Batch throughput and the eight-type ten-million-fact gate are separate."
+  ]
+}

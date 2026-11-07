@@ -1,0 +1,143 @@
+{
+  "schema": "native-mixed-million-allcut-comparison/1",
+  "platform": "macOS ARM64",
+  "configuration": {
+    "sizes": [
+      1000000
+    ],
+    "readers": [
+      16
+    ],
+    "samples": 3,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 536870912,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "budget": {
+    "queriesPerSecondMin": 15,
+    "p50MsMax": 1000,
+    "p99MsMax": 3000,
+    "rssBytesMax": 3500000000
+  },
+  "fixture": {
+    "baseRetainedFacts": 1000000,
+    "priorAcknowledgedWrites": 136,
+    "initialKnowledgePosition": "4045",
+    "sourceFileSha256BeforeAndAfter": "1f3dc5123ae349c7831d8082f310854fc2d2749fe91f5e2671bf3ac14e07a4f2",
+    "sourceWalAbsent": true,
+    "cloneMethod": "Darwin APFS clonefile",
+    "originalQualificationSha256": "fa0f111fe41ecaa2c7d791f42c30a16595d6114670831c212e39db8054fff0e5"
+  },
+  "harnessSha256": "071b237f4a8e31ada86f438e08bc4b05d436011c53039459561238ef3efe8144",
+  "changedCoreSource": "native/src/temporal_current_unique.hpp",
+  "runs": {
+    "control": {
+      "timestampUtc": "2026-11-05T19:13:27.542Z",
+      "coreSourceCommit": "922390c40655cc78e764fd224122d6bc4a47950a",
+      "coreSha256": "a6235719ff10e7c371f9ea8212e1537f25de719223804d23cc3773db0be40110",
+      "companionSha256": "5ab96770afbed986b33eaa6b75f0f64c843045a636edcb9ff5922a6498d58a68",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "controlBridgeSha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+      "rawEvidence": {
+        "file": "build/mixed-million-20261105/rectangle-control.json",
+        "sha256": "0da7d0edcd0890417d85f1a5ac4d83792498ca3a4a6746be62efde3104b3830e"
+      },
+      "exactFixedCells": 3,
+      "readSamples": 1354,
+      "writes": 162,
+      "errors": 0,
+      "throughputQueriesPerSecond": 22.03558197881705,
+      "latencyMs": {
+        "count": 1354,
+        "min": 151.1730000000025,
+        "p50": 535.8904170000023,
+        "p95": 1554.2657920000056,
+        "p99": 4080.1365000000005,
+        "max": 16125.453875
+      },
+      "rssBytes": 2954231808,
+      "observedReaders": 16,
+      "leasesReturned": true,
+      "finalAndReopenVerified": true,
+      "writesByCompleteWindow": [
+        26,
+        36,
+        18,
+        31,
+        25,
+        25
+      ],
+      "routeCounts": {
+        "fixed/count/owned_scalable_count": 93,
+        "fixed/grouped_count/owned_scalable_count": 95,
+        "fixed/projection/owned_scalable_single_atom": 93,
+        "latest/count/owned_unique_scalable_count": 359,
+        "latest/grouped_count/owned_unique_scalable_count": 357,
+        "latest/projection/owned_unique_scalable_single_atom": 357
+      },
+      "budgetMisses": [
+        "p99"
+      ]
+    },
+    "candidate": {
+      "timestampUtc": "2026-11-05T19:12:14.322Z",
+      "coreSourceCommit": "db1830bd8d7d1eea242f9e285d7139c47113736d",
+      "coreSha256": "bc1fb19594b59cb98d799e1d70b2625ca0cfe5b85bfca6badcd14db2482d23c7",
+      "companionSha256": "e25180b880228922168f2467eced7a0c336ae0d4601129501aa69a9f1d00aeeb",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "controlBridgeSha256": "4f5fb1fe00e78fd9c6b6a5cae2fc991cac10a10f2110c0f2fed0da8b5187d39b",
+      "rawEvidence": {
+        "file": "build/mixed-million-20261105/rectangle.json",
+        "sha256": "7b48bb0869e52e15eb87d94ddc97251599d8ec2569aa6c35ca47b8047dffe4df"
+      },
+      "exactFixedCells": 3,
+      "readSamples": 2181,
+      "writes": 269,
+      "errors": 0,
+      "throughputQueriesPerSecond": 36.15570786294057,
+      "latencyMs": {
+        "count": 2181,
+        "min": 141.20133299999725,
+        "p50": 430.3820420000011,
+        "p95": 596.8022920000003,
+        "p99": 711.9458749999976,
+        "max": 945.9196670000001
+      },
+      "rssBytes": 2010939392,
+      "observedReaders": 16,
+      "leasesReturned": true,
+      "finalAndReopenVerified": true,
+      "writesByCompleteWindow": [
+        43,
+        44,
+        47,
+        44,
+        44,
+        46
+      ],
+      "routeCounts": {
+        "fixed/count/owned_allcut_unique_scalable_count": 148,
+        "fixed/grouped_count/owned_allcut_unique_scalable_count": 149,
+        "fixed/projection/owned_allcut_unique_scalable_single_atom": 149,
+        "latest/count/owned_allcut_unique_scalable_count": 577,
+        "latest/grouped_count/owned_allcut_unique_scalable_count": 579,
+        "latest/projection/owned_allcut_unique_scalable_single_atom": 579
+      },
+      "budgetMisses": []
+    }
+  },
+  "limitations": [
+    "Sequential paired runs, one minute per build. Startup audit and first-read warmup are outside mixed metrics.",
+    "This certifies the pinned 0.26 proof builds on the mixed fixture. Larger scale and the combined 0.27 build are separate gates."
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "node": "v24.22.1",
+  "parsed_untagged_i64_max": 9223372036854776000,
+  "parsed_untagged_i64_max_as_exact_integer": "9223372036854775808",
+  "expected_i64_max": "9223372036854775807",
+  "bigint_stringify_error": "TypeError",
+  "strict_equality_distinguishes_true_and_one": true,
+  "strict_equality_distinguishes_one_bigint_and_one_number": true,
+  "json_nonfinite_becomes_null": "[null,null,null]",
+  "json_negative_zero": "0",
+  "tagged_i64_roundtrip": true,
+  "python_float_json_to_js_bit_mismatches": 0,
+  "js_json_float_roundtrip_bit_mismatches": 1,
+  "js_json_float_roundtrip_mismatch_examples": [
+    {
+      "bits": "8000000000000000",
+      "value": 0
+    }
+  ],
+  "notes": "The lone JSON round-trip bit mismatch is negative zero, intentionally canonicalized to positive zero by the recommended semantics. This probes language transport, not the proposed implementation."
+}

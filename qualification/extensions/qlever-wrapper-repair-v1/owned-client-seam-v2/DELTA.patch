@@ -1,0 +1,53 @@
+--- qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.mjs
++++ qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/client-outcomes.mjs
+@@ -40,7 +40,13 @@
+     notify('uncertainty', onUncertainty, { ...event, reason });
+   };
+   const admit = () => {
+-    try { assertAdmission(); }
++    try {
++      const result = assertAdmission();
++      if (result && typeof result.then === 'function') {
++        Promise.resolve(result).catch(() => {});
++        throw new Error('SYNCHRONOUS_ADMISSION_CHECK_REQUIRED');
++      }
++    }
+     catch (error) { uncertain('COORDINATOR_ADMISSION_REFUSED'); admissionRefusals++; throw error; }
+     let at;
+     try { at = now(); assert(Number.isSafeInteger(at), 'FINITE_ABSOLUTE_CLOCK_REQUIRED'); }
+--- qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.test.mjs
++++ qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/client-outcomes.test.mjs
+@@ -64,6 +64,9 @@
+   const g = fixture({ onUncertainty: () => Promise.reject(new Error('invalid async observer')) });
+   const rejected = g.client.query('fixed'); g.pending[0].reject(new Error('synthetic')); await assert.rejects(rejected);
+   await Promise.resolve(); assert(g.snapshot().unknownClientWork); assert(g.snapshot().observerFailures > 0);
++  const h = fixture({ assertAdmission: async () => { throw new Error('invalid async admission'); } });
++  assert.throws(() => h.client.query('not-admitted'), /SYNCHRONOUS_ADMISSION_CHECK_REQUIRED/);
++  await Promise.resolve(); assert.equal(h.calls.length, 0); assert(h.snapshot().unknownClientWork);
+ });
+ test('explicit cancel and close retain original Promises and never clear prior uncertainty', async () => {
+   const f = fixture(); const cancel = f.client.cancel('owned-id'); assert.equal(cancel, f.calls[0].promise);
+--- qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/PLAN.md
++++ qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/PLAN.md
+@@ -1,4 +1,10 @@
+ # Private borrowed client and outcome observation
++
++This separately named source-v2 preserves the frozen03b905ac… v1 proposal.
++Its only helper delta consumes and refuses a returned async admission check
++before original dispatch. One subcontrol is added inside the same seventh pure
++definition; the count remains8. SDK source copies/API/branch, public type
++witnesses and the two generated-SDK fake definitions are unchanged v1 inputs.
+ 
+ SOURCE ONLY. No source/test module, compiler/build, SDK connection, engine,
+ settings, queue or operational marker action is authorized by these files.
+@@ -47,7 +53,9 @@
+ client transport failure; no client invocation means no fabricated client event.
+ 
+ Observer callback failures/invalid async callbacks are contained, marked unknown
+-and their Promise rejections consumed. Future wrapper checks must consult both
++and their Promise rejections consumed. Admission checks also must be synchronous:
++an invalid async return is consumed and refused before original dispatch.
++Future wrapper checks must consult both
+ the independent observer snapshot and outer fence; notification alone is not a
+ settlement proof. This source does NOT yet wire the observer into a runnable
+ worker or authorize marker/settings actions. The unresolved marker must still

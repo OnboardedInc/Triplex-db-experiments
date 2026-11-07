@@ -1,0 +1,50 @@
+{
+  "utc": "2026-10-31T16:44:18.923701+00:00",
+  "published_commit": "52b1e81f1d71590bdefb376e62924c9f717d4344",
+  "frozen_manifest_sha256": "5e30c8b2dfaaac103c647a42440fb7d6c39d83846cc107913452b4e62db2c384",
+  "scope": "Seven narrow already-published source files read/hash-verified; no source copied/imported/executed",
+  "files": [
+    {
+      "path": "engine/src/temporal_core.cpp",
+      "bytes": 41463,
+      "sha256": "c583da8f2d885b28396e74771697601b6ba1a33828690ebdd62a95b33653be84",
+      "git_sha": "72e9db5085b6e4ff36bafd26008a8cf04dd1e418"
+    },
+    {
+      "path": "engine/ITERATION-02.md",
+      "bytes": 17213,
+      "sha256": "77ed4f1f2ae24a98d1ef9b0810e11db97dc6b67ad134e7e50f51f14ae4a68a58",
+      "git_sha": "9aa756c684f4d46bf4be4200a5fe0c9408bbe54d"
+    },
+    {
+      "path": "engine/tests/plan_ir/INTERFACE.md",
+      "bytes": 2874,
+      "sha256": "9bb277a8dcb5692fecd5cc5090b8de728abdadd5571e0fa34e04c391c331cb63",
+      "git_sha": "8c2d32e04129fa393b12fe5dbe7d45f4e1af045e"
+    },
+    {
+      "path": "storage/typed_store.py",
+      "bytes": 37740,
+      "sha256": "7edd1b26428b60268c2d677e1cea8efe2635b1f850b3b02fd641e2e3f7b59a87",
+      "git_sha": "100a4cbb7867f1454a304635ed6ba618d0ef04ce"
+    },
+    {
+      "path": "storage/schema_v2.sql",
+      "bytes": 2020,
+      "sha256": "6c23294e685d7f17a69ccaf6de813f96235e6301cd57ac6ed8f21c8137d91135",
+      "git_sha": "5f8cff5ee6980e45df0e5094ac378514b750de0c"
+    },
+    {
+      "path": "storage/store.py",
+      "bytes": 15286,
+      "sha256": "10fe4928a74ac0230b07d4ea8871399651fcb82a54c43ffa94c47dfb350c6552",
+      "git_sha": "479d6a9133acddfd32a6c93a723f8c77155db4e4"
+    },
+    {
+      "path": "engine/src/temporal_value_domain.hpp",
+      "bytes": 8863,
+      "sha256": "e41516e1c8b761b25935049fbb19e75ebca0789c2b95b6d4cfbd65cea6409a63",
+      "git_sha": "99ff9118354d3bba5e48ad461442ef2493e94086"
+    }
+  ]
+}

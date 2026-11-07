@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "variant": "candidate-item2",
+  "finished_utc": "2026-10-30T22:10:48.241715+00:00",
+  "all20_profiled_plus8_warm_results_exact": true,
+  "controls": [
+    {
+      "dataset": "float",
+      "api": "query",
+      "profiled_public_calls": 5,
+      "fp_reader_calls": 2570,
+      "require_supported_calls": 1290,
+      "require_masked_calls": 1280
+    },
+    {
+      "dataset": "float",
+      "api": "query_json",
+      "profiled_public_calls": 5,
+      "fp_reader_calls": 2575,
+      "require_supported_calls": 1295,
+      "require_masked_calls": 1280
+    },
+    {
+      "dataset": "mixed",
+      "api": "query",
+      "profiled_public_calls": 5,
+      "fp_reader_calls": 170,
+      "require_supported_calls": 90,
+      "require_masked_calls": 80
+    },
+    {
+      "dataset": "mixed",
+      "api": "query_json",
+      "profiled_public_calls": 5,
+      "fp_reader_calls": 175,
+      "require_supported_calls": 95,
+      "require_masked_calls": 80
+    }
+  ],
+  "source_caps_roots_guards_unchanged": true,
+  "classification": "Separate post-study per-function profile, not timing campaign or native-only causal attribution"
+}

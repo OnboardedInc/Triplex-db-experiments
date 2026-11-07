@@ -1,0 +1,18 @@
+{
+  "attempt": 2,
+  "started_at": "2026-11-06T02:47:09.590002+00:00",
+  "pid": 87356,
+  "source_commit": "59d18593699194fe29b2af7ad073848e0f392317",
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime",
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "verify.py",
+    "--with-direct"
+  ],
+  "environment": {
+    "TD_TEST_PRE_BATCH_BUILD": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/retained-diagnostics-20261105/accepted-026",
+    "TD_SDK_ADMISSION_SOURCE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "TD_SDK_ADMISSION_RECIPE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json"
+  },
+  "log": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime/build/sdk-integration-full-second.log"
+}

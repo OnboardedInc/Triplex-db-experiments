@@ -1,0 +1,52 @@
+{
+  "schema": "temporal-scale-benchmark/1",
+  "timestampUtc": "2026-11-06T03:33:32.846Z",
+  "configuration": {
+    "sizes": [
+      10000000
+    ],
+    "readers": [
+      1,
+      4,
+      16
+    ],
+    "samples": 5,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "threadBudget": {
+    "duckdbThreads": 4,
+    "uvThreadpoolSizeEnvironmentAtHarnessImport": "4",
+    "nodeUvThreadpoolDefaultWhenUnset": 4,
+    "scope": "one_shared_DuckDB_instance; Node_UV_pool_is_process_global_and_configured_before_startup"
+  },
+  "fixtureDirectory": "build/scale-runs/20261106T033332842Z-a0b8165c",
+  "limitations": [
+    "SQL-expanded setup is not native ingestion throughput evidence",
+    "Process memory before/after is not a peak or hard memory bound",
+    "Empirical quantiles from small sample counts are smoke measurements"
+  ],
+  "stages": [],
+  "status": "failed",
+  "clonedFrom": {
+    "database": "facts-10000000.duckdb",
+    "evidence": "mixed-10m-pilot.json",
+    "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7"
+  },
+  "error": {
+    "name": "Error",
+    "code": "ENOENT",
+    "message": "ENOENT: no such file or directory, open '<path>'"
+  }
+}

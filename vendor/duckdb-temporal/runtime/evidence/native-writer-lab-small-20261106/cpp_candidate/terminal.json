@@ -1,0 +1,17 @@
+{
+  "role": "cpp_candidate",
+  "pid": 64508,
+  "command": [
+    "node",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/adapter/native-writer-lab-small.mjs",
+    "--runtime",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/native-writer-lab-20261106-01/runtime",
+    "--output",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/native-writer-lab-small-20261106-01/cpp_candidate/result.json"
+  ],
+  "startedAtUtc": "2026-11-06T06:46:31.854882+00:00",
+  "status": "terminal",
+  "exitCode": 0,
+  "exitedAtUtc": "2026-11-06T06:46:33.381290+00:00",
+  "elapsedMs": 1526.2090000323951
+}

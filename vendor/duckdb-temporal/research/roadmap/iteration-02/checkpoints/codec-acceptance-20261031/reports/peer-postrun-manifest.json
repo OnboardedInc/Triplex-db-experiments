@@ -1,0 +1,110 @@
+{
+  "schema": "independent-codec-postrun-source-only-evidence-v1",
+  "frozen_utc": "2026-10-31T03:23:21.937690+00:00",
+  "scope": "Closed postrun raw-provenance review only; immutable listed evidence, own new subdirectory.",
+  "files": [
+    {
+      "path": "CLOSURE-REFERENCES.json",
+      "bytes": 1062,
+      "sha256": "cae71d373e0687bab536f16587725e820feb2d1dfa8eeaf92952305e40311dfa",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "ORIGINAL-PREFLIGHT-PRESERVATION.json",
+      "bytes": 271,
+      "sha256": "a5eb9db52f09ac3bf134e70386ec9b09bbaa0b7eb2d84bcfaf68f9056ca9cace",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "POSTRUN-RESULT-attempt01.json",
+      "bytes": 14590,
+      "sha256": "22709d0dc0913aee93731f78517cad17c1cfc3137a824384b02b0113b7cd666c",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "RAW-EVIDENCE-MANIFEST.json",
+      "bytes": 257573,
+      "sha256": "52be87c98a1b805ff0e0d28d8761637bec3fb903ebbf4ccf1a86a509406675b8",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "REVIEW.md",
+      "bytes": 4719,
+      "sha256": "3d431e41f5d7e91308aabf81093e62c0fe9c0f3669f8277ebfe33bb99f1226da",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "SUMMARY.json",
+      "bytes": 2735,
+      "sha256": "0fe5384bd26480db1b54f795ae738e1536bbf67048e8db38ae5c8e84d0047f3e",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "VALIDATOR-CONTROLS-attempt01.json",
+      "bytes": 10270,
+      "sha256": "268b7ceb2e8b68da2f21f2cc8bee1964ea43f9f816d66ed37307c36b81095929",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "VALIDATOR-SOURCE-CHECKPOINT.json",
+      "bytes": 521,
+      "sha256": "1f04bf4ebd93b1dcff5067aac6133d52cea9bc64652c6df7a8b9f903015ed070",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "WORKER-PROGRESS.jsonl",
+      "bytes": 2027,
+      "sha256": "e4f384a8ccdc3fec8a3cc941947b1357268a869f138f09ba09e900ca690a94ad",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "own_preflight_reference.py",
+      "bytes": 34844,
+      "sha256": "1b2f5f7d6c904e6af0182560be87aa1af3307869de9b64cfb92ec9fbc005ce96",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "postrun-validator-attempt01.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "postrun-validator-attempt01.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "postrun-validator-attempt01.stdout",
+      "bytes": 268,
+      "sha256": "da3790da2e1afd685ec3433479d7cdb2b7a8421ec349dd98950a75e92821b0d9",
+      "mode": "0644",
+      "utf8": true
+    },
+    {
+      "path": "postrun_validator.py",
+      "bytes": 31720,
+      "sha256": "7266dca5ace07ed95b9af7e0c002718ad29751aac0491892728ab40be0247582",
+      "mode": "0644",
+      "utf8": true
+    }
+  ],
+  "exclusions": [],
+  "manifest_self_excluded": true,
+  "active_operations": false,
+  "original_preflight_manifest_sha256": "fd3cfe656fae08c65eef8e6851656f4ec94fd69b71697dfb04ccafa23157705e",
+  "binary_runtime_artifacts_included": false
+}

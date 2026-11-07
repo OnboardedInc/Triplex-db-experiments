@@ -1,0 +1,75 @@
+{
+  "archive": "complete-reader-trial-and-renewed-codec-research.tar.gz",
+  "bytes": 2434478,
+  "sha256": "88fd8a217a2a96f7bbe0b277799331615b93ca12be812be779481d19682879cd",
+  "entries": 1630,
+  "source_bytes": 25760215,
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 300001,
+      "sha256": "acd757e58b314d8607773c22ad3ba34a12ef07a34ab26e656ce7d96322f7d1db",
+      "git_sha": "a947a79b701424cefbfc5c2d63e93b77c63d3a98"
+    },
+    {
+      "path": "archive.part02.b64",
+      "bytes": 300001,
+      "sha256": "6b8852d7294246d9ee89326f33b2dc03ce17ebc31a47867732336e321903788b",
+      "git_sha": "4879d467445c9e34c4310611b71587ca6dd62059"
+    },
+    {
+      "path": "archive.part03.b64",
+      "bytes": 300001,
+      "sha256": "b2be1e54511006d2e7fe3b840ea13369f936645396ec176a8e872f28e809c502",
+      "git_sha": "aa42fda103c87c0d12681de46ec2e02421a0867a"
+    },
+    {
+      "path": "archive.part04.b64",
+      "bytes": 300001,
+      "sha256": "7fd59f856102288caeae41e24bd5cea31bfcccc476332f347aaad0eaf925bd4f",
+      "git_sha": "403f2ce51c70c8167cc22554716e5e2fde00067e"
+    },
+    {
+      "path": "archive.part05.b64",
+      "bytes": 300001,
+      "sha256": "bb40dc74cc7017d444c84d2a252f2931e53c70014d97b6d2debe1e73306698e8",
+      "git_sha": "141547aaf3f84a6cfdb8ac2d941f77fb9044f950"
+    },
+    {
+      "path": "archive.part06.b64",
+      "bytes": 300001,
+      "sha256": "e00ff33f3a78b6e302ce341f85345c6d42dac87ab2777e58867b906144841ee7",
+      "git_sha": "77a1314f76d0318e020b5e4d8f7b2d02956e373d"
+    },
+    {
+      "path": "archive.part07.b64",
+      "bytes": 300001,
+      "sha256": "7acb6bffc01f56aea25ab34ca3970976d7bd6deabb9ef93f6819aa7506f0ec89",
+      "git_sha": "a175ae5ea6d5762dcb6d52f4dc98e02afb69e971"
+    },
+    {
+      "path": "archive.part08.b64",
+      "bytes": 300001,
+      "sha256": "5a67c8cff831739b8012f00983b0d7061ec43cca4d50b138ce525480fc023a4d",
+      "git_sha": "a6f7e8924a14d8525e26bbd91a2a69878fbd4776"
+    },
+    {
+      "path": "archive.part09.b64",
+      "bytes": 300001,
+      "sha256": "24fe4e5a454959e18dd05f4298d36aee8d350a716258c30704ba66cef7c09679",
+      "git_sha": "71668ef3480e22ae268eb6c620d8e3d52e4317dd"
+    },
+    {
+      "path": "archive.part10.b64",
+      "bytes": 300001,
+      "sha256": "109270be510d4ca031a9b6b4734179ea8d07c26ddf56f02263cfa4def48728e1",
+      "git_sha": "596b97c220bab4ee632b9267fba4867e3d49fea2"
+    },
+    {
+      "path": "archive.part11.b64",
+      "bytes": 245962,
+      "sha256": "f0e72b3f1649ea34d09d59b461b2021c5522bba10496cecbcc59ac8301d8458e",
+      "git_sha": "84e9fe6f7bcce01b588589776d76e383795b5112"
+    }
+  ]
+}

@@ -1,0 +1,1057 @@
+{
+  "schema": "td.coverage-command-profile-pair/1",
+  "status": "passed_two_actual_public_zero_policy_diagnostics",
+  "sourceCommit": "200eb2268f67a556d66378904d590a6014d70f21",
+  "rawDirectory": "coverage-command-profile-pair-20261106-raw",
+  "rawFiles": {
+    "baseline-outer-after-first.json": {
+      "bytes": 1737,
+      "sha256": "1ab670767f5159e3f06c868400e15ee3dc2a2b101abf85d71ae20fbafd58f254"
+    },
+    "baseline-outer-baseline-first.started.json": {
+      "bytes": 1133,
+      "sha256": "deafad366230e5097becea602bb29fbb9b20f9df747c763cb1b4b7421d727415"
+    },
+    "baseline-outer-baseline-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-outer-baseline-first.stdout": {
+      "bytes": 192,
+      "sha256": "cc8d5ea1c059f01736ae2fc65968281b6d6c9023affc7fda8cb149f3b3e0e478"
+    },
+    "baseline-outer-baseline-first.terminal.json": {
+      "bytes": 1235,
+      "sha256": "1e743721e543cb4bf265fb022c5a80e59ce632532037b5d23c63419d170abfaa"
+    },
+    "baseline-outer-before-first.json": {
+      "bytes": 1642,
+      "sha256": "13e564b85ffae26dc6eed36175595fbbbb13e0e0e3e17a017607cc9e95fe50d8"
+    },
+    "baseline-outer-run-first.py": {
+      "bytes": 3662,
+      "sha256": "a2e61c9beb003b4fa14b2990ecd3508a55f4eb8a4af1bbd8fff58044e824b272"
+    },
+    "baseline-outer-syntax-first.started.json": {
+      "bytes": 618,
+      "sha256": "abf114d81498c3362334ea567f431e4e585fde5d44fd4b0f7f43412f233a819e"
+    },
+    "baseline-outer-syntax-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-outer-syntax-first.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-outer-syntax-first.terminal.json": {
+      "bytes": 721,
+      "sha256": "8b5ff4938f77d55c6267023ead476863edb7e2e8b7924f52c6176cb74bb33ccb"
+    },
+    "baseline-driver-child-first.json": {
+      "bytes": 31991,
+      "sha256": "5f36051cf477c6de8350edd816171f61707cda65efb5693ed8c78ab8c7300a57"
+    },
+    "baseline-driver-config-first.json": {
+      "bytes": 846,
+      "sha256": "93bf2e906be03852fc7122abc0d45421701fc3e6d7c6d4fd8a95553e3ebabede"
+    },
+    "baseline-driver-result-first.json": {
+      "bytes": 568562,
+      "sha256": "d948c3f7f41819cbf1cea1cbf57bd720a9a71c23db25e101c001d51a3b9caede"
+    },
+    "baseline-driver-started-first.json": {
+      "bytes": 556,
+      "sha256": "ed6a4f19afc3e261c62b1d6315b7750eff295683c0b8ed53180209be088db556"
+    },
+    "baseline-driver-statement-000.json": {
+      "bytes": 72424,
+      "sha256": "76310674fb9139f6f78ff8e4de34a715f8ebf4b7dbd93458e1aeba8a793473a6"
+    },
+    "baseline-driver-statement-001.json": {
+      "bytes": 5248,
+      "sha256": "fdd8dcfe2136b68b73677fba54a214ad8f029129df5b5a42f4aae0dbf14fd670"
+    },
+    "baseline-driver-statement-002.json": {
+      "bytes": 11411,
+      "sha256": "1ce6c03061cfe98b94f1985d7b1150a66232caf782dc6c7162f9e22978713eda"
+    },
+    "baseline-driver-statement-003.json": {
+      "bytes": 13199,
+      "sha256": "cbf1aa30cbe02e5725914063eda906d8d5f26440cdfd5b7f47d0c6b1fdac02ec"
+    },
+    "baseline-driver-statement-004.json": {
+      "bytes": 14803,
+      "sha256": "e828d31b248c1add2cc464b5d791462b4434a7b7b67eda0dc63cb28a22dc53fb"
+    },
+    "baseline-driver-statement-005.json": {
+      "bytes": 7738,
+      "sha256": "84c8473f3839cc4365efe25de5ab8bc05f22b70a45f41dc1da2a88ad8b495633"
+    },
+    "baseline-driver-statement-006.json": {
+      "bytes": 406378,
+      "sha256": "40e77bade57276dfdff29b559c163fb9c813e428f6bf439fb63b5290ae7c37b0"
+    },
+    "baseline-driver-statement-007.json": {
+      "bytes": 36768,
+      "sha256": "d8f3ee75403ea51adf8c15f689740ef3e27febbf16af2bb8ba2afbde6b957397"
+    },
+    "baseline-driver-statement-008.json": {
+      "bytes": 306434,
+      "sha256": "d9613809a587771ac5ee1b125aa9adc203e323f5b997a41281a54f5fd19b4f12"
+    },
+    "baseline-driver-statement-009.json": {
+      "bytes": 15851,
+      "sha256": "f4d2899fac83e8f82efd9cd50cad3dea9042053d15d19f109573a73eed70ff2a"
+    },
+    "baseline-driver-statement-010.json": {
+      "bytes": 33031,
+      "sha256": "b3cfe27908a16121f3c894e3567c07f043780fd8ff38089e5f01864487122593"
+    },
+    "baseline-driver-statement-011.json": {
+      "bytes": 4400,
+      "sha256": "2f119c9f3f8eca51dbad2e9c6dcb114d40a111cb12501fc9926261c8fc598e1d"
+    },
+    "baseline-driver-statement-012.json": {
+      "bytes": 5196,
+      "sha256": "b52ca78c8f466e21be4a9d89bce9fb58735d1a4f806b1bc2b759aee99fd2cc8d"
+    },
+    "baseline-driver-statement-013.json": {
+      "bytes": 4186,
+      "sha256": "2df401fcc51095f273994f9aadd472e4574c493c02f931eb155a5e853ee40e26"
+    },
+    "baseline-driver-statement-014.json": {
+      "bytes": 3589,
+      "sha256": "1516af130f5ea8d0b539e1ca8fb9739dc84b4b98822924d5c29e62948b7f901f"
+    },
+    "baseline-driver-statement-015.json": {
+      "bytes": 11566,
+      "sha256": "d09a2cdbc77be477ab049a61b019106227092aa44e5a291f0007d4a62d122eb3"
+    },
+    "baseline-driver-statement-016.json": {
+      "bytes": 11685,
+      "sha256": "0c0ca0b432f0a8caa5872ce87052b0156c8f0f8c923213d9e3a4fa29a4279830"
+    },
+    "baseline-driver-statement-017.json": {
+      "bytes": 14527,
+      "sha256": "ac47bf924a41506bd147d57013efa71cf7678bfc586bf701c03e3ee94a47e066"
+    },
+    "baseline-driver-statement-018.json": {
+      "bytes": 22104,
+      "sha256": "6fb3fef3e9c64d2c5bea9708d3e8b48c5f8b849dec08834e778c868be1dd38e9"
+    },
+    "baseline-driver-statement-019.json": {
+      "bytes": 18291,
+      "sha256": "80b54d6f5d46a337ae7d6fdd957194208677be3415af3a9fae9eb51a9087be90"
+    },
+    "baseline-driver-statement-020.json": {
+      "bytes": 3010,
+      "sha256": "f73a46996587d74e0aa92522e03f795139f5148ecc14fb69018a6b2f8f41f547"
+    },
+    "baseline-driver-statement-021.json": {
+      "bytes": 2992,
+      "sha256": "02a893a8ef0ee086124cb13b0dbb179bf5224c7bfb23c8bcd6966eb216e5fb8a"
+    },
+    "baseline-driver-statement-022.json": {
+      "bytes": 2967,
+      "sha256": "879ed76d045981ae0b724e3853a0a87ddced263d7ebd9ab578cd9a215a3b92c9"
+    },
+    "baseline-driver-statement-023.json": {
+      "bytes": 2973,
+      "sha256": "ea4716b7fd2bcd5ea6c416b72ca38f97421c340c0be06ea9e4b3b30d8afb0b9b"
+    },
+    "baseline-driver-statement-024.json": {
+      "bytes": 2968,
+      "sha256": "75891ec68d214b088ee223eedd01fbb5bf43a681d5a2de7877b29b6116c40157"
+    },
+    "baseline-driver-statement-025.json": {
+      "bytes": 2991,
+      "sha256": "5bb6df2637663aff622e26a99a0f222cf68c9c715fcbf76ba1a0e321d13bfeb0"
+    },
+    "baseline-driver-statement-026.json": {
+      "bytes": 2980,
+      "sha256": "3ee2fe3db6d9b6a4e69f5b7c848b8459a66dece2b734e044d186cb5f4abe767d"
+    },
+    "baseline-driver-statement-027.json": {
+      "bytes": 3025,
+      "sha256": "0d4fffab47d22b40fe8886021756d3d209e163b20d00409ff8d1ec07c4677bf8"
+    },
+    "baseline-driver-statement-028.json": {
+      "bytes": 89230,
+      "sha256": "cac343165a9ea54261f263365a3a6c1153245466dc555107901630db47f29354"
+    },
+    "baseline-driver-stderr-first.log": {
+      "bytes": 1137556,
+      "sha256": "ffd2f56e054b6a7f16f3ff47b47773309e871ddb94b717503ce0171de5e4e56a"
+    },
+    "baseline-driver-stdout-first.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-driver-terminal-first.json": {
+      "bytes": 94,
+      "sha256": "e62bee502de62ba7936cf0ab6ae3ac540a9d85c2b5e6cafe02bc8999255b7111"
+    },
+    "candidate-outer-after-first.json": {
+      "bytes": 1739,
+      "sha256": "b8e98decf513d03b87ecb84e5f9b7c27c1ac722f809661224d7efe25c0837040"
+    },
+    "candidate-outer-before-first.json": {
+      "bytes": 1644,
+      "sha256": "abd47d52de90eba7d6b15da060a9a9ecb7907882ec1e0b655d24aa88a018c369"
+    },
+    "candidate-outer-candidate-first.started.json": {
+      "bytes": 1135,
+      "sha256": "7070de793709c49bb9e28b611a138e28488ce1fc5e2c54cfc8bbc7f441ef424d"
+    },
+    "candidate-outer-candidate-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-outer-candidate-first.stdout": {
+      "bytes": 193,
+      "sha256": "519eb3eff16a3fceb58f15f9f674ab75cf20ac729776de63d914138f524cfe98"
+    },
+    "candidate-outer-candidate-first.terminal.json": {
+      "bytes": 1238,
+      "sha256": "9f24ba33a459f2170b01dfe0eab77606a09bc3ac9e877db71fa9b791c27cbcdf"
+    },
+    "candidate-outer-run-first.py": {
+      "bytes": 3667,
+      "sha256": "357c4068e0d1deb92563eae1033ef0cd5cc3b699bdc5f5fb64ab495bd04d2674"
+    },
+    "candidate-outer-syntax-first.started.json": {
+      "bytes": 618,
+      "sha256": "59e22bebffc1d0674d644e4724c11d34ac542a70e8846a7121de76bacc47b1fd"
+    },
+    "candidate-outer-syntax-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-outer-syntax-first.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-outer-syntax-first.terminal.json": {
+      "bytes": 721,
+      "sha256": "3b2a5ca810710167ea1dc921abba45cc67ba581dd794b96bee8ffb8e79484932"
+    },
+    "candidate-driver-child-first.json": {
+      "bytes": 32241,
+      "sha256": "c7cefb6f7cde0e7a20c331819a1a0232c13ab2311d6aaf8ee9d0a603c1c05716"
+    },
+    "candidate-driver-config-first.json": {
+      "bytes": 849,
+      "sha256": "cdb8b01578b52fbf2ed36f1235af5c9d1772ab26762e59bb4ac75f756ac00cbb"
+    },
+    "candidate-driver-result-first.json": {
+      "bytes": 777780,
+      "sha256": "7be7be15b8ce3be257af4c84d1dbbfaf8de6b74bdd4d0f06dbab40af57039d9d"
+    },
+    "candidate-driver-started-first.json": {
+      "bytes": 557,
+      "sha256": "2885bccf91f300b0a98e6dfc36e083c1e48941abc8927aa27095510f6fb432d0"
+    },
+    "candidate-driver-statement-000.json": {
+      "bytes": 76173,
+      "sha256": "ef889d1bf80dac3b2c54be3f82a10f45127f90e76631a29d66c9f450bd12d1d4"
+    },
+    "candidate-driver-statement-001.json": {
+      "bytes": 5274,
+      "sha256": "305fe619df454c0c2a8611cf78614a053a9b8e3a98fdd321b037028b4e82082a"
+    },
+    "candidate-driver-statement-002.json": {
+      "bytes": 11400,
+      "sha256": "ed07ba6082ad458e48edd0e44bcf594dee1abd8079d7ead111b2de5f8af8d72b"
+    },
+    "candidate-driver-statement-003.json": {
+      "bytes": 13173,
+      "sha256": "425a5ddbd701665fad8b8e10d94a23b893962df8cc94120bd8e60194718a7c9b"
+    },
+    "candidate-driver-statement-004.json": {
+      "bytes": 14856,
+      "sha256": "634050c94ab5239b03f9e4bb9190f1d5adeaabbd80e600bd0e492c1c5e93cc12"
+    },
+    "candidate-driver-statement-005.json": {
+      "bytes": 7774,
+      "sha256": "aa0b8f39e39de81786015f587bcac93b44779a3a1870f1f3a87a1d289e5a9282"
+    },
+    "candidate-driver-statement-006.json": {
+      "bytes": 406260,
+      "sha256": "faa909283674766a8fef4ef8c5dd085e405486f60023a762f9e45b6003165614"
+    },
+    "candidate-driver-statement-007.json": {
+      "bytes": 36782,
+      "sha256": "ee22fac0c1121b7f761f5f85bb756d074ca67e4b0fb8fb3cb4f72221eadb10a3"
+    },
+    "candidate-driver-statement-008.json": {
+      "bytes": 306460,
+      "sha256": "3e9ab3b27da42645b83eeafee99c1f4d320288aaab83019ca74a18cb5d12bc6b"
+    },
+    "candidate-driver-statement-009.json": {
+      "bytes": 499746,
+      "sha256": "8ff80e1bc1fcd5d42f36b3ee88716ef40ce782f7ac533d55eb0524ed17e435fd"
+    },
+    "candidate-driver-statement-010.json": {
+      "bytes": 3041,
+      "sha256": "0959ab327436782c2e609ecad061e7536cdf495fb85bc3437b6839e0b9b56fae"
+    },
+    "candidate-driver-statement-011.json": {
+      "bytes": 15839,
+      "sha256": "7dcc408768caaca19c1f4b2120d9ca331d97184c380b60afd1b3d6a27ba55d8d"
+    },
+    "candidate-driver-statement-012.json": {
+      "bytes": 33022,
+      "sha256": "2c695f402f214499c21801eb9f86e8e80f5396f1ec05c08914a3898632542b4e"
+    },
+    "candidate-driver-statement-013.json": {
+      "bytes": 4404,
+      "sha256": "cb2dda85dee5e6b1dfdcdd4728f0c002b4144a5d3ee2aaf3bc5ed22bfc5722d2"
+    },
+    "candidate-driver-statement-014.json": {
+      "bytes": 5232,
+      "sha256": "df7444d3b2d6d50683587982b9b8631f66fccbc84d72efe462539b021b591b30"
+    },
+    "candidate-driver-statement-015.json": {
+      "bytes": 4167,
+      "sha256": "5b78b3e7ae5565e506d822479719cebd004844800fd8a6a67c7a15e7c06cf01d"
+    },
+    "candidate-driver-statement-016.json": {
+      "bytes": 3550,
+      "sha256": "73a0a4325a90dc34eb0896f41b14ab88191f54d8361d96d53124b8f18dcaee09"
+    },
+    "candidate-driver-statement-017.json": {
+      "bytes": 11548,
+      "sha256": "16e1e37dcdca65ec9208eb61039a8b03cb09733e5a206f5a79bff009a75e0dac"
+    },
+    "candidate-driver-statement-018.json": {
+      "bytes": 11708,
+      "sha256": "8726ccf178a7f009e3793d9a2f34d4029260ba396f151bd36e41652d44e8afaa"
+    },
+    "candidate-driver-statement-019.json": {
+      "bytes": 14462,
+      "sha256": "39ab6c6f6a094041855cdc9389a36589cd81067650249fb269c0507ed57df1ba"
+    },
+    "candidate-driver-statement-020.json": {
+      "bytes": 22080,
+      "sha256": "dab7d3041ac0195be6435e35c58af69340eb15e8ed3fcac03c4e768242e609db"
+    },
+    "candidate-driver-statement-021.json": {
+      "bytes": 18264,
+      "sha256": "fe81bd6c2cfdd984bef300cb5358f127187f818019193343ae1142cc9e51a3ab"
+    },
+    "candidate-driver-statement-022.json": {
+      "bytes": 2999,
+      "sha256": "c22f4684971b3f80a6796c84e53bea2ca2533ed4f3df963c12b4c2e45b217578"
+    },
+    "candidate-driver-statement-023.json": {
+      "bytes": 2991,
+      "sha256": "2419e2159fcc46f1b2fdc47f83910bd9b98121ae08b26754cf59626b9e74ab05"
+    },
+    "candidate-driver-statement-024.json": {
+      "bytes": 2978,
+      "sha256": "19b4b3864e23bae9a89955ee4c226add0bbd3e34abf58013cad62add062e2dce"
+    },
+    "candidate-driver-statement-025.json": {
+      "bytes": 2976,
+      "sha256": "c6c3dd249d67cb58bc4c18fd1706ef51432aa29c5f68266abb29a4af42ccf45a"
+    },
+    "candidate-driver-statement-026.json": {
+      "bytes": 2966,
+      "sha256": "8928ac97a73280243e40054034e5dcec54703c2ac9491fcc3e5a39cf5d19f664"
+    },
+    "candidate-driver-statement-027.json": {
+      "bytes": 2981,
+      "sha256": "0b14fe241354814bdaacc61d9b1de61243ad8b28ba89b46e5189b4fd785f9927"
+    },
+    "candidate-driver-statement-028.json": {
+      "bytes": 2971,
+      "sha256": "e49af4683854cb77425209b6fcc83a05e8d9057258e99b8aa2a91b26e02a4ff5"
+    },
+    "candidate-driver-statement-029.json": {
+      "bytes": 2974,
+      "sha256": "52f2de0d0806e001332db53133cad347c11ccebc2123010b9a762ab239628518"
+    },
+    "candidate-driver-statement-030.json": {
+      "bytes": 92921,
+      "sha256": "40d241724b4a3f68449cdff58f1c5f850a058e8dcec6f66c7f9832ec9ce585c6"
+    },
+    "candidate-driver-stderr-first.log": {
+      "bytes": 1647591,
+      "sha256": "4071dee9800cb476efaf69ce33907e696dffef3d8adbc139fa69843098d190ae"
+    },
+    "candidate-driver-stdout-first.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-driver-terminal-first.json": {
+      "bytes": 94,
+      "sha256": "784721cd5f3a26d914c050f4cfc7b93ca7fc3ce2fafbd700d45604f920af5fbf"
+    },
+    "executed-source-profile-reference-coverage-command.mjs": {
+      "bytes": 17562,
+      "sha256": "10788933c609e755673e633ebf3ed0790a092a0d2c4b79c7349ff1e811d0b813"
+    },
+    "executed-source-patch-profile-sql.mjs": {
+      "bytes": 2576,
+      "sha256": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24"
+    },
+    "executed-source-REFERENCE-COVERAGE-COMMAND-PROFILE.md": {
+      "bytes": 7295,
+      "sha256": "137751dba034658e6f17148dbcea8a2495f4e8877825f9010301fdf7fbac497a"
+    },
+    "ctas-summary-first.json": {
+      "bytes": 10277,
+      "sha256": "0727baa679aa7ca8f45faffa0f702d51ca4b75a4f36018bf4adc8b32021521fd"
+    }
+  },
+  "roles": {
+    "baseline": {
+      "nativeRuntime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/qualification-coverage-command-profile-20261106-02",
+      "caseDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/baseline-zero",
+      "syntaxTerminal": {
+        "pid": 74884,
+        "parentPid": 74880,
+        "argv": [
+          "[LOCAL_PATH_0043]",
+          "--check",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs"
+        ],
+        "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+        "startedAtUtc": "2026-11-06T11:38:06.052904+00:00",
+        "environment": {
+          "UV_THREADPOOL_SIZE": "4",
+          "NODE_OPTIONS": "absent",
+          "TD_NATIVE_WRITER_LAB_*": "absent"
+        },
+        "exitCode": 0,
+        "endedAtUtc": "2026-11-06T11:38:06.081642+00:00",
+        "elapsedMs": 28.58733292669058
+      },
+      "outerTerminal": {
+        "pid": 74885,
+        "parentPid": 74880,
+        "argv": [
+          "[LOCAL_PATH_0043]",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs",
+          "--role",
+          "baseline",
+          "--scenario",
+          "zero",
+          "--runtime",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+          "--cost-root",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime",
+          "--output",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/baseline-zero"
+        ],
+        "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+        "startedAtUtc": "2026-11-06T11:38:06.082332+00:00",
+        "environment": {
+          "UV_THREADPOOL_SIZE": "4",
+          "NODE_OPTIONS": "absent",
+          "TD_NATIVE_WRITER_LAB_*": "absent"
+        },
+        "exitCode": 0,
+        "endedAtUtc": "2026-11-06T11:38:15.648453+00:00",
+        "elapsedMs": 9566.22041692026
+      },
+      "childTerminal": {
+        "pid": 74887,
+        "code": 0,
+        "signal": null,
+        "endedAtUtc": "2026-11-06T11:38:15.586Z"
+      },
+      "childPid": 74887,
+      "parentPid": 74885,
+      "captureFd2": {
+        "regularFile": true,
+        "mode": 33188
+      },
+      "profiles": 29,
+      "ctas": 8,
+      "rawStderrBytes": 1137556,
+      "actualPublicCallSqlSha256": "f5c3145808a4ab54c4e11170485ca3cc3358e30d7ee2180e977ee9f37ef344a3",
+      "actualPublicCall": {
+        "sql": "PRAGMA td_patch_entity_v2('coverage_cost',1,'Target','target-A','measure-4','{\"n\"=i64(5);}',20,80)",
+        "params": [],
+        "metrics": {
+          "name": "native_entity_writer",
+          "nativeQueueNs": "10000",
+          "sqlCallNs": "92400084",
+          "copyAndCleanupNs": "18500",
+          "completionWaitNs": "23708",
+          "sequence": "16",
+          "connectionId": "4",
+          "bridgeAwaitMs": 92.5172090000001,
+          "portDecodeMs": 0.01558300000010604,
+          "portFullMs": 92.5333750000002
+        }
+      },
+      "publicReceipt": {
+        "commandId": "measure-4",
+        "position": "8",
+        "asserted": [
+          "82099c296de62e5450805cf925de168e4efcc5bfb640c8708ce6d968affc5a23"
+        ],
+        "retracted": [
+          "f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62"
+        ],
+        "schema": "coverage_cost",
+        "version": 1,
+        "type": "Target",
+        "entityId": "target-A",
+        "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+        "requestHash": "46e774769a62f01662aefd991b0ed19e934cd5e8e87c831603b9654049821d60"
+      },
+      "semanticHistorySha256": "24ec0e009af0a22fcc916c942cea8caff9e7c53adeba19ff7466516f2df02940",
+      "publicWithProfilingMs": 92.68704099999991,
+      "settings": [
+        [
+          true,
+          "json",
+          "ALL",
+          ""
+        ]
+      ],
+      "createConfiguration": {
+        "allow_unsigned_extensions": "true",
+        "threads": "4",
+        "memory_limit": "128000000B",
+        "max_temp_directory_size": "64000000B",
+        "allowed_configs": "['enable_profiling','profiling_coverage','profiling_output']"
+      },
+      "loadedImages": [
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_control.node",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_datalog.duckdb_extension",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "cleanup": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "nativeManifestSdkSourcePrePostEqual": true,
+      "criticalSdk5NodeAndSourceGitPrePostEqual": true,
+      "costSourcePrePostEqual": true,
+      "exactOldCutsTypedHistoryReplay": true,
+      "retainedDatabase": {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/baseline-zero/facts.duckdb",
+        "bytes": 9711616,
+        "closedWithoutWal": true,
+        "binaryCommitted": false
+      }
+    },
+    "candidate": {
+      "nativeRuntime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/qualification-coverage-command-profile-20261106-03",
+      "caseDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/candidate-zero",
+      "syntaxTerminal": {
+        "pid": 76390,
+        "parentPid": 76386,
+        "argv": [
+          "[LOCAL_PATH_0043]",
+          "--check",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs"
+        ],
+        "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+        "startedAtUtc": "2026-11-06T11:40:03.122653+00:00",
+        "environment": {
+          "UV_THREADPOOL_SIZE": "4",
+          "NODE_OPTIONS": "absent",
+          "TD_NATIVE_WRITER_LAB_*": "absent"
+        },
+        "exitCode": 0,
+        "endedAtUtc": "2026-11-06T11:40:03.166764+00:00",
+        "elapsedMs": 43.90387493185699
+      },
+      "outerTerminal": {
+        "pid": 76391,
+        "parentPid": 76386,
+        "argv": [
+          "[LOCAL_PATH_0043]",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs",
+          "--role",
+          "candidate",
+          "--scenario",
+          "zero",
+          "--runtime",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+          "--cost-root",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime",
+          "--output",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/candidate-zero"
+        ],
+        "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+        "startedAtUtc": "2026-11-06T11:40:03.167291+00:00",
+        "environment": {
+          "UV_THREADPOOL_SIZE": "4",
+          "NODE_OPTIONS": "absent",
+          "TD_NATIVE_WRITER_LAB_*": "absent"
+        },
+        "exitCode": 0,
+        "endedAtUtc": "2026-11-06T11:40:13.312185+00:00",
+        "elapsedMs": 10145.00412507914
+      },
+      "childTerminal": {
+        "pid": 76392,
+        "code": 0,
+        "signal": null,
+        "endedAtUtc": "2026-11-06T11:40:13.271Z"
+      },
+      "childPid": 76392,
+      "parentPid": 76391,
+      "captureFd2": {
+        "regularFile": true,
+        "mode": 33188
+      },
+      "profiles": 31,
+      "ctas": 9,
+      "rawStderrBytes": 1647591,
+      "actualPublicCallSqlSha256": "f5c3145808a4ab54c4e11170485ca3cc3358e30d7ee2180e977ee9f37ef344a3",
+      "actualPublicCall": {
+        "sql": "PRAGMA td_patch_entity_v2('coverage_cost',1,'Target','target-A','measure-4','{\"n\"=i64(5);}',20,80)",
+        "params": [],
+        "metrics": {
+          "name": "native_entity_writer",
+          "nativeQueueNs": "3125",
+          "sqlCallNs": "125663625",
+          "copyAndCleanupNs": "26333",
+          "completionWaitNs": "16458",
+          "sequence": "16",
+          "connectionId": "4",
+          "bridgeAwaitMs": 125.75887499999999,
+          "portDecodeMs": 0.015957999999955064,
+          "portFullMs": 125.77554099999998
+        }
+      },
+      "publicReceipt": {
+        "commandId": "measure-4",
+        "position": "8",
+        "asserted": [
+          "82099c296de62e5450805cf925de168e4efcc5bfb640c8708ce6d968affc5a23"
+        ],
+        "retracted": [
+          "f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62"
+        ],
+        "schema": "coverage_cost",
+        "version": 1,
+        "type": "Target",
+        "entityId": "target-A",
+        "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+        "requestHash": "46e774769a62f01662aefd991b0ed19e934cd5e8e87c831603b9654049821d60"
+      },
+      "semanticHistorySha256": "24ec0e009af0a22fcc916c942cea8caff9e7c53adeba19ff7466516f2df02940",
+      "publicWithProfilingMs": 125.92887500000006,
+      "settings": [
+        [
+          true,
+          "json",
+          "ALL",
+          ""
+        ]
+      ],
+      "createConfiguration": {
+        "allow_unsigned_extensions": "true",
+        "threads": "4",
+        "memory_limit": "128000000B",
+        "max_temp_directory_size": "64000000B",
+        "allowed_configs": "['enable_profiling','profiling_coverage','profiling_output']"
+      },
+      "loadedImages": [
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/temporal_control.node",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/temporal_datalog.duckdb_extension",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "cleanup": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "nativeManifestSdkSourcePrePostEqual": true,
+      "criticalSdk5NodeAndSourceGitPrePostEqual": true,
+      "costSourcePrePostEqual": true,
+      "exactOldCutsTypedHistoryReplay": true,
+      "retainedDatabase": {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/candidate-zero/facts.duckdb",
+        "bytes": 9711616,
+        "closedWithoutWal": true,
+        "binaryCommitted": false
+      }
+    }
+  },
+  "actualRequestReceiptAndFullHistoryIdentical": true,
+  "ctasTable": [
+    {
+      "role": "baseline",
+      "index": 0,
+      "ctas": "__td_native_owner_guard",
+      "querySqlSha256": "51da1c84a3c706893b91429944c9f22b7a8459ff99b123b6e7e0fa6c01be8b96",
+      "querySqlBytes": 1618,
+      "rawProfileSha256": "76310674fb9139f6f78ff8e4de34a715f8ebf4b7dbd93458e1aeba8a793473a6",
+      "queryMs": 9.755416,
+      "parserMs": 0.050583,
+      "plannerMs": 0.5635,
+      "bindingMs": 0.403875,
+      "optimizerMs": 0.994667,
+      "physicalPlanMs": 0.06325,
+      "cpuMs": 0.202878,
+      "operators": 48,
+      "rows": 44,
+      "rowsScanned": 3
+    },
+    {
+      "role": "baseline",
+      "index": 1,
+      "ctas": "__td_native_input",
+      "querySqlSha256": "d6f0ac1cdfc6e459a92590401d57ea4184bd8425534a2943e6df8b67c073870d",
+      "querySqlBytes": 323,
+      "rawProfileSha256": "fdd8dcfe2136b68b73677fba54a214ad8f029129df5b5a42f4aae0dbf14fd670",
+      "queryMs": 0.368875,
+      "parserMs": null,
+      "plannerMs": 0.093959,
+      "bindingMs": 0.06,
+      "optimizerMs": 0.085958,
+      "physicalPlanMs": 0.007583,
+      "cpuMs": 0.042624,
+      "operators": 4,
+      "rows": 3,
+      "rowsScanned": 1
+    },
+    {
+      "role": "baseline",
+      "index": 2,
+      "ctas": "__td_native_plan",
+      "querySqlSha256": "d150f17b62ef18a8355752ee764b19cd478a1370be71800602c585a4d1b8c811",
+      "querySqlBytes": 442,
+      "rawProfileSha256": "1ce6c03061cfe98b94f1985d7b1150a66232caf782dc6c7162f9e22978713eda",
+      "queryMs": 1.223917,
+      "parserMs": null,
+      "plannerMs": 0.222917,
+      "bindingMs": 0.166125,
+      "optimizerMs": 0.254958,
+      "physicalPlanMs": 0.018708,
+      "cpuMs": 0.138253,
+      "operators": 8,
+      "rows": 7,
+      "rowsScanned": 5
+    },
+    {
+      "role": "baseline",
+      "index": 3,
+      "ctas": "__td_native_ctx",
+      "querySqlSha256": "53826ecdc4755d5fae8a73ce14e96a9e4fb7f43dba8d92d112ed3bc1053bd044",
+      "querySqlBytes": 698,
+      "rawProfileSha256": "cbf1aa30cbe02e5725914063eda906d8d5f26440cdfd5b7f47d0c6b1fdac02ec",
+      "queryMs": 1.410541,
+      "parserMs": null,
+      "plannerMs": 0.332166,
+      "bindingMs": 0.246292,
+      "optimizerMs": 0.407834,
+      "physicalPlanMs": 0.043416,
+      "cpuMs": 0.154958,
+      "operators": 9,
+      "rows": 7,
+      "rowsScanned": 2
+    },
+    {
+      "role": "baseline",
+      "index": 4,
+      "ctas": "__td_native_pending",
+      "querySqlSha256": "cc19744ca4030be804b79255af9bcb25222eef3f7cb6c3d5fd485aea87469d76",
+      "querySqlBytes": 984,
+      "rawProfileSha256": "e828d31b248c1add2cc464b5d791462b4434a7b7b67eda0dc63cb28a22dc53fb",
+      "queryMs": 1.376959,
+      "parserMs": null,
+      "plannerMs": 0.400333,
+      "bindingMs": 0.31825,
+      "optimizerMs": 0.374041,
+      "physicalPlanMs": 0.025625,
+      "cpuMs": 0.123622,
+      "operators": 11,
+      "rows": 10,
+      "rowsScanned": 2
+    },
+    {
+      "role": "baseline",
+      "index": 5,
+      "ctas": "__td_native_old",
+      "querySqlSha256": "7dd25e5f25d566b439051cae3d35174dc6b734131aa762f66683121c30d72af2",
+      "querySqlBytes": 231,
+      "rawProfileSha256": "84c8473f3839cc4365efe25de5ab8bc05f22b70a45f41dc1da2a88ad8b495633",
+      "queryMs": 0.922416,
+      "parserMs": null,
+      "plannerMs": 0.145042,
+      "bindingMs": 0.092291,
+      "optimizerMs": 0.257916,
+      "physicalPlanMs": 0.018542,
+      "cpuMs": 0.107126,
+      "operators": 6,
+      "rows": 5,
+      "rowsScanned": 17
+    },
+    {
+      "role": "baseline",
+      "index": 6,
+      "ctas": "__td_native_patch_admission",
+      "querySqlSha256": "4d51f155633fcd9b48db8f11d059a202ba609e70ba1fd6a56718c3b3b57ee3b0",
+      "querySqlBytes": 1136,
+      "rawProfileSha256": "40e77bade57276dfdff29b559c163fb9c813e428f6bf439fb63b5290ae7c37b0",
+      "queryMs": 33.668875,
+      "parserMs": null,
+      "plannerMs": 3.578208,
+      "bindingMs": 1.959416,
+      "optimizerMs": 20.928417,
+      "physicalPlanMs": 0.249166,
+      "cpuMs": 2.262458,
+      "operators": 133,
+      "rows": 374,
+      "rowsScanned": 179
+    },
+    {
+      "role": "baseline",
+      "index": 8,
+      "ctas": "__td_native_guard",
+      "querySqlSha256": "c2cd87f5ff2bfbaa08a8a08af06dce1b6efcfc22909b7f01bb1f99fcda576485",
+      "querySqlBytes": 3647,
+      "rawProfileSha256": "d9613809a587771ac5ee1b125aa9adc203e323f5b997a41281a54f5fd19b4f12",
+      "queryMs": 18.026584,
+      "parserMs": null,
+      "plannerMs": 9.925458,
+      "bindingMs": 1.723,
+      "optimizerMs": 4.539,
+      "physicalPlanMs": 0.285542,
+      "cpuMs": 0.954414,
+      "operators": 137,
+      "rows": 160,
+      "rowsScanned": 80
+    },
+    {
+      "role": "candidate",
+      "index": 0,
+      "ctas": "__td_native_owner_guard",
+      "querySqlSha256": "4a07d7b776316c6c391ee27628b5a5bf179cd662c368aab5f471d072ced0dd21",
+      "querySqlBytes": 1694,
+      "rawProfileSha256": "ef889d1bf80dac3b2c54be3f82a10f45127f90e76631a29d66c9f450bd12d1d4",
+      "queryMs": 11.051708,
+      "parserMs": 0.061417,
+      "plannerMs": 0.603667,
+      "bindingMs": 0.408542,
+      "optimizerMs": 1.476083,
+      "physicalPlanMs": 0.112208,
+      "cpuMs": 0.181915,
+      "operators": 50,
+      "rows": 46,
+      "rowsScanned": 3
+    },
+    {
+      "role": "candidate",
+      "index": 1,
+      "ctas": "__td_native_input",
+      "querySqlSha256": "d6f0ac1cdfc6e459a92590401d57ea4184bd8425534a2943e6df8b67c073870d",
+      "querySqlBytes": 323,
+      "rawProfileSha256": "305fe619df454c0c2a8611cf78614a053a9b8e3a98fdd321b037028b4e82082a",
+      "queryMs": 0.524833,
+      "parserMs": null,
+      "plannerMs": 0.161042,
+      "bindingMs": 0.113375,
+      "optimizerMs": 0.146042,
+      "physicalPlanMs": 0.013292,
+      "cpuMs": 0.043124,
+      "operators": 4,
+      "rows": 3,
+      "rowsScanned": 1
+    },
+    {
+      "role": "candidate",
+      "index": 2,
+      "ctas": "__td_native_plan",
+      "querySqlSha256": "d150f17b62ef18a8355752ee764b19cd478a1370be71800602c585a4d1b8c811",
+      "querySqlBytes": 442,
+      "rawProfileSha256": "ed07ba6082ad458e48edd0e44bcf594dee1abd8079d7ead111b2de5f8af8d72b",
+      "queryMs": 1.567166,
+      "parserMs": null,
+      "plannerMs": 0.277166,
+      "bindingMs": 0.210375,
+      "optimizerMs": 0.403125,
+      "physicalPlanMs": 0.031666,
+      "cpuMs": 0.202167,
+      "operators": 8,
+      "rows": 7,
+      "rowsScanned": 5
+    },
+    {
+      "role": "candidate",
+      "index": 3,
+      "ctas": "__td_native_ctx",
+      "querySqlSha256": "53826ecdc4755d5fae8a73ce14e96a9e4fb7f43dba8d92d112ed3bc1053bd044",
+      "querySqlBytes": 698,
+      "rawProfileSha256": "425a5ddbd701665fad8b8e10d94a23b893962df8cc94120bd8e60194718a7c9b",
+      "queryMs": 1.668333,
+      "parserMs": null,
+      "plannerMs": 0.299125,
+      "bindingMs": 0.214834,
+      "optimizerMs": 0.3505,
+      "physicalPlanMs": 0.02675,
+      "cpuMs": 0.31546,
+      "operators": 9,
+      "rows": 7,
+      "rowsScanned": 2
+    },
+    {
+      "role": "candidate",
+      "index": 4,
+      "ctas": "__td_native_pending",
+      "querySqlSha256": "cc19744ca4030be804b79255af9bcb25222eef3f7cb6c3d5fd485aea87469d76",
+      "querySqlBytes": 984,
+      "rawProfileSha256": "634050c94ab5239b03f9e4bb9190f1d5adeaabbd80e600bd0e492c1c5e93cc12",
+      "queryMs": 1.453083,
+      "parserMs": null,
+      "plannerMs": 0.517459,
+      "bindingMs": 0.416833,
+      "optimizerMs": 0.409,
+      "physicalPlanMs": 0.028875,
+      "cpuMs": 0.150127,
+      "operators": 11,
+      "rows": 10,
+      "rowsScanned": 2
+    },
+    {
+      "role": "candidate",
+      "index": 5,
+      "ctas": "__td_native_old",
+      "querySqlSha256": "7dd25e5f25d566b439051cae3d35174dc6b734131aa762f66683121c30d72af2",
+      "querySqlBytes": 231,
+      "rawProfileSha256": "aa0b8f39e39de81786015f587bcac93b44779a3a1870f1f3a87a1d289e5a9282",
+      "queryMs": 0.841833,
+      "parserMs": null,
+      "plannerMs": 0.128833,
+      "bindingMs": 0.081459,
+      "optimizerMs": 0.308375,
+      "physicalPlanMs": 0.015125,
+      "cpuMs": 0.054583,
+      "operators": 6,
+      "rows": 5,
+      "rowsScanned": 17
+    },
+    {
+      "role": "candidate",
+      "index": 6,
+      "ctas": "__td_native_patch_admission",
+      "querySqlSha256": "4d51f155633fcd9b48db8f11d059a202ba609e70ba1fd6a56718c3b3b57ee3b0",
+      "querySqlBytes": 1136,
+      "rawProfileSha256": "faa909283674766a8fef4ef8c5dd085e405486f60023a762f9e45b6003165614",
+      "queryMs": 33.475916,
+      "parserMs": null,
+      "plannerMs": 3.323666,
+      "bindingMs": 1.8595,
+      "optimizerMs": 21.865625,
+      "physicalPlanMs": 0.335166,
+      "cpuMs": 2.190756,
+      "operators": 133,
+      "rows": 374,
+      "rowsScanned": 179
+    },
+    {
+      "role": "candidate",
+      "index": 8,
+      "ctas": "__td_native_guard",
+      "querySqlSha256": "6b1779f9d6ee67b4e26df54029d79547ffd500b3852b92cd69d785c9e7bdedc4",
+      "querySqlBytes": 3649,
+      "rawProfileSha256": "3e9ab3b27da42645b83eeafee99c1f4d320288aaab83019ca74a18cb5d12bc6b",
+      "queryMs": 18.292458,
+      "parserMs": null,
+      "plannerMs": 9.968584,
+      "bindingMs": 1.779792,
+      "optimizerMs": 5.226458,
+      "physicalPlanMs": 0.237125,
+      "cpuMs": 0.861666,
+      "operators": 137,
+      "rows": 160,
+      "rowsScanned": 80
+    },
+    {
+      "role": "candidate",
+      "index": 9,
+      "ctas": "__td_reference_guard",
+      "querySqlSha256": "8294241f7b962b4b3d3fbaa3afd68accd3c32c1dd5a0d45af179f53a20ec7077",
+      "querySqlBytes": 6084,
+      "rawProfileSha256": "8ff80e1bc1fcd5d42f36b3ee88716ef40ce782f7ac533d55eb0524ed17e435fd",
+      "queryMs": 30.362417,
+      "parserMs": null,
+      "plannerMs": 3.505125,
+      "bindingMs": 1.781167,
+      "optimizerMs": 21.768584,
+      "physicalPlanMs": 0.238541,
+      "cpuMs": 0.908498,
+      "operators": 231,
+      "rows": 216,
+      "rowsScanned": 71
+    }
+  ],
+  "addedCandidateGuard": {
+    "role": "candidate",
+    "index": 9,
+    "ctas": "__td_reference_guard",
+    "querySqlSha256": "8294241f7b962b4b3d3fbaa3afd68accd3c32c1dd5a0d45af179f53a20ec7077",
+    "querySqlBytes": 6084,
+    "rawProfileSha256": "8ff80e1bc1fcd5d42f36b3ee88716ef40ce782f7ac533d55eb0524ed17e435fd",
+    "queryMs": 30.362417,
+    "parserMs": null,
+    "plannerMs": 3.505125,
+    "bindingMs": 1.781167,
+    "optimizerMs": 21.768584,
+    "physicalPlanMs": 0.238541,
+    "cpuMs": 0.908498,
+    "operators": 231,
+    "rows": 216,
+    "rowsScanned": 71
+  },
+  "fixture": {
+    "costSource": "cf7f0d86645383944cac77c2f49e331428c75a33",
+    "scenario": "zero",
+    "noiseEntities": 0,
+    "noiseRevisions": 1,
+    "warmups": 4,
+    "representativeWrite": "measure-4",
+    "position": "8",
+    "validInterval": [
+      "20",
+      "80"
+    ],
+    "value": {
+      "tag": "i64",
+      "value": "5"
+    },
+    "sourceRecords": 8,
+    "retainedDefaults": {
+      "maxFacts": 1000000,
+      "maxBytes": 268435456
+    }
+  },
+  "priorFailure": {
+    "source": "59db67660428984322f6d98872a4e53317c95358",
+    "package": "3e8b02e4",
+    "receipt": "coverage-command-profile-first-failure-20261106.json",
+    "scope": "Public semantics passed but native stderr pipe bytes were truncated. Regular-file capture now works; specific short-write/nonblocking mechanism remains unproven."
+  },
+  "scope": "One baseline2f and one candidatea562 fresh public patch on the exact same cf7 recipe prefix, actual engine/core/owner/SDK/Node checked. No new native emitter/build, SQL splitting, added native mode or request/budget change. Diagnostic-only constructor allowlist adds exactly3 profiling settings; actual worker JSON+ALL+emptyoutput and regularFD2 confirmed. Native JSON was emitted directly to the regular file inside patch markers before any verification SQL. Individual profile files were extracted offline after child exit. No unrelated/incoming profile or service benchmark run.",
+  "interpretation": "The candidate has an observed extra reference-guard CTAS with substantial optimizer time even in schema4/no-policy execution. This identifies a concrete next experiment target, not an exclusive causal decomposition or a performance win. Overlapping parser/planner/optimizer/operator/native/public metrics are not summed or subtracted. Missing metrics remain null, not zero. The final receipt profile may include commit; no separate commit or callback time is invented.",
+  "claims": {
+    "servicePerformanceComparison": false,
+    "exclusivePhaseAttribution": false,
+    "coveragePromotion": false,
+    "goals1or9Closed": false
+  }
+}

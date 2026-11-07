@@ -1,0 +1,377 @@
+{
+  "schema": "td.native-writer-lab-small-pair/1",
+  "recordedAtUtc": "2026-11-06T06:47:41.000594+00:00",
+  "status": "PASS",
+  "labSource": "213bf0b6e9f30703ee35f937d5fb414a49a4d8ce",
+  "nativeSource": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "runtimeFiles": 408,
+  "beforeAfterFullBindingEquals": true,
+  "bothRolesExactReceiptsEqual": true,
+  "roles": {
+    "sdk_control": {
+      "terminal": {
+        "role": "sdk_control",
+        "pid": 63059,
+        "command": [
+          "node",
+          "<writer-source-runtime>/adapter/native-writer-lab-small.mjs",
+          "--runtime",
+          "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+          "--output",
+          "<writer-source-runtime>/build/native-writer-lab-small-20261106-01/sdk_control/result.json"
+        ],
+        "startedAtUtc": "2026-11-06T06:45:09.396043+00:00",
+        "status": "terminal",
+        "exitCode": 0,
+        "exitedAtUtc": "2026-11-06T06:45:12.925846+00:00",
+        "elapsedMs": 3529.6525838784873
+      },
+      "census": {
+        "phase": "post-open, before any workload",
+        "elapsedMs": 1.3104159999998046,
+        "audited": true,
+        "live": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "enrolled": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "workerConnectionId": "19",
+        "sdkWriterConnection": 2
+      },
+      "routes": {
+        "nativeEnrollment": 3,
+        "nativeGenerated": 0,
+        "sdkGenerated": 8,
+        "errors": 0,
+        "unknown": 0
+      },
+      "cleanup": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "loadedImages": [
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "receipts": {
+        "first": {
+          "commandId": "first",
+          "position": "1",
+          "asserted": [
+            "b2853bd5d1f1f45352ed1ebefa6dca06926e515a6aea3ab400aa7ac55133d2c9",
+            "bf7954c7dd1063fb743ee9ac57f8374fde5d9271b57baa8d38138df759a16547"
+          ],
+          "retracted": [],
+          "schema": "lab_probe",
+          "version": 1,
+          "type": "Probe",
+          "entityId": "e",
+          "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+          "requestHash": "992cb9c93707283abdb5e787a2482edd2d584adbe6fe4923ec75b606fb994a49"
+        },
+        "patched": {
+          "commandId": "patch",
+          "position": "2",
+          "asserted": [
+            "9f72f378fb29b29e43407424260ff0e1b4a944dff71ddeb27553ed02c50759f4",
+            "44d2f67948d5818370162e097053c9f92670df0347a90be2ffc0d77c13a3f292"
+          ],
+          "retracted": [
+            "b2853bd5d1f1f45352ed1ebefa6dca06926e515a6aea3ab400aa7ac55133d2c9",
+            "bf7954c7dd1063fb743ee9ac57f8374fde5d9271b57baa8d38138df759a16547"
+          ],
+          "schema": "lab_probe",
+          "version": 1,
+          "type": "Probe",
+          "entityId": "e",
+          "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+          "requestHash": "ee939c2cda74b91fccb6a999718b4f0f6e2a406bce1f2cbe3f8b6cdb5ab46308"
+        },
+        "batch": {
+          "commandId": "two-member",
+          "position": "3",
+          "schema": "lab_probe",
+          "version": 1,
+          "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+          "requestHash": "b3533b662ada8e5cb665ea277e7e230271c9e6b98f3e3877df2e4b2bb45409d2",
+          "members": [
+            {
+              "operation": "patch",
+              "type": "Probe",
+              "entityId": "e",
+              "asserted": [
+                "606e1d8a5bbc4c853c8139a5ab525e035265274125f7c45b847297f313d4023d",
+                "c21970198f4baa80c4526b579085b6738a6a60e4e100f8370bcfbee7c6db2692"
+              ],
+              "retracted": [
+                "44d2f67948d5818370162e097053c9f92670df0347a90be2ffc0d77c13a3f292",
+                "9f72f378fb29b29e43407424260ff0e1b4a944dff71ddeb27553ed02c50759f4"
+              ]
+            },
+            {
+              "operation": "put",
+              "type": "Probe",
+              "entityId": "f",
+              "asserted": [
+                "d2764f4821a2bcc191339a1d9626c14a037f26c50d2d7a64598247c2a519febe",
+                "92257da4409f2ff362a46faf94b7c113ca81c4a20b44fd5daacf2e3b5b8daafa"
+              ],
+              "retracted": []
+            }
+          ]
+        }
+      },
+      "exactQueryAnswers": 21,
+      "openAuditMs": 1118.547167,
+      "rssBeforeOpen": 93044736,
+      "rssAfterOpen": 217513984,
+      "reopenVerified": true,
+      "closedOwnedDatabase": {
+        "bytes": 7614464,
+        "walAbsent": true
+      },
+      "rawPins": {
+        "sdk_control/result.json": "e68a6a07dd1034d2eda070dd067829020adc467b4a18b7f231495cda2ed68243",
+        "sdk_control/terminal.json": "64444a436a9b6c90562f3c8c6a4c33889ab7730e2eb44d2093262f3f35752ed4",
+        "sdk_control/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sdk_control/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sdk_control/preflight.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+        "sdk_control/postflight.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+        "sdk_control/preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sdk_control/postflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sdk_control/process/sdk_control-63059-ready.json": "72a23b127b8d425a2519d58e2ece009f983ddae9f9d743cc33a4632f793c6a6c",
+        "sdk_control/process/sdk_control-63059-exit.json": "579bf4e89ae5447288c3cb5585dbf3ed0d9dadc81fe28f8d473ac849e9f64d37"
+      }
+    },
+    "cpp_candidate": {
+      "terminal": {
+        "role": "cpp_candidate",
+        "pid": 64508,
+        "command": [
+          "node",
+          "<writer-source-runtime>/adapter/native-writer-lab-small.mjs",
+          "--runtime",
+          "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+          "--output",
+          "<writer-source-runtime>/build/native-writer-lab-small-20261106-01/cpp_candidate/result.json"
+        ],
+        "startedAtUtc": "2026-11-06T06:46:31.854882+00:00",
+        "status": "terminal",
+        "exitCode": 0,
+        "exitedAtUtc": "2026-11-06T06:46:33.381290+00:00",
+        "elapsedMs": 1526.2090000323951
+      },
+      "census": {
+        "phase": "post-open, before any workload",
+        "elapsedMs": 0.9300839999999653,
+        "audited": true,
+        "live": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "enrolled": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "workerConnectionId": "19",
+        "sdkWriterConnection": 2
+      },
+      "routes": {
+        "nativeEnrollment": 3,
+        "nativeGenerated": 8,
+        "sdkGenerated": 0,
+        "errors": 0,
+        "unknown": 0
+      },
+      "cleanup": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "loadedImages": [
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "receipts": {
+        "first": {
+          "commandId": "first",
+          "position": "1",
+          "asserted": [
+            "b2853bd5d1f1f45352ed1ebefa6dca06926e515a6aea3ab400aa7ac55133d2c9",
+            "bf7954c7dd1063fb743ee9ac57f8374fde5d9271b57baa8d38138df759a16547"
+          ],
+          "retracted": [],
+          "schema": "lab_probe",
+          "version": 1,
+          "type": "Probe",
+          "entityId": "e",
+          "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+          "requestHash": "992cb9c93707283abdb5e787a2482edd2d584adbe6fe4923ec75b606fb994a49"
+        },
+        "patched": {
+          "commandId": "patch",
+          "position": "2",
+          "asserted": [
+            "9f72f378fb29b29e43407424260ff0e1b4a944dff71ddeb27553ed02c50759f4",
+            "44d2f67948d5818370162e097053c9f92670df0347a90be2ffc0d77c13a3f292"
+          ],
+          "retracted": [
+            "b2853bd5d1f1f45352ed1ebefa6dca06926e515a6aea3ab400aa7ac55133d2c9",
+            "bf7954c7dd1063fb743ee9ac57f8374fde5d9271b57baa8d38138df759a16547"
+          ],
+          "schema": "lab_probe",
+          "version": 1,
+          "type": "Probe",
+          "entityId": "e",
+          "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+          "requestHash": "ee939c2cda74b91fccb6a999718b4f0f6e2a406bce1f2cbe3f8b6cdb5ab46308"
+        },
+        "batch": {
+          "commandId": "two-member",
+          "position": "3",
+          "schema": "lab_probe",
+          "version": 1,
+          "schemaHash": "f067c8a2123e754015a8c8f9696d5eb3e090ff150e04f83671b34bdbd494ae69",
+          "requestHash": "b3533b662ada8e5cb665ea277e7e230271c9e6b98f3e3877df2e4b2bb45409d2",
+          "members": [
+            {
+              "operation": "patch",
+              "type": "Probe",
+              "entityId": "e",
+              "asserted": [
+                "606e1d8a5bbc4c853c8139a5ab525e035265274125f7c45b847297f313d4023d",
+                "c21970198f4baa80c4526b579085b6738a6a60e4e100f8370bcfbee7c6db2692"
+              ],
+              "retracted": [
+                "44d2f67948d5818370162e097053c9f92670df0347a90be2ffc0d77c13a3f292",
+                "9f72f378fb29b29e43407424260ff0e1b4a944dff71ddeb27553ed02c50759f4"
+              ]
+            },
+            {
+              "operation": "put",
+              "type": "Probe",
+              "entityId": "f",
+              "asserted": [
+                "d2764f4821a2bcc191339a1d9626c14a037f26c50d2d7a64598247c2a519febe",
+                "92257da4409f2ff362a46faf94b7c113ca81c4a20b44fd5daacf2e3b5b8daafa"
+              ],
+              "retracted": []
+            }
+          ]
+        }
+      },
+      "exactQueryAnswers": 21,
+      "openAuditMs": 307.82887500000004,
+      "rssBeforeOpen": 95731712,
+      "rssAfterOpen": 222019584,
+      "reopenVerified": true,
+      "closedOwnedDatabase": {
+        "bytes": 7614464,
+        "walAbsent": true
+      },
+      "rawPins": {
+        "cpp_candidate/result.json": "e67c43790e27f0e204f38bf145c940d92e180f30a757f55850978d529138d71d",
+        "cpp_candidate/terminal.json": "9a5166fefd8f013e47360fc00cdf85b5bc5c1da25b44feb2d81ee715c9373302",
+        "cpp_candidate/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cpp_candidate/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cpp_candidate/preflight.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+        "cpp_candidate/postflight.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+        "cpp_candidate/preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cpp_candidate/postflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cpp_candidate/process/cpp_candidate-64508-ready.json": "ff2d3c4e80221d127198185e8c7820335780aadf81a869cc10a14f0ba1b97062",
+        "cpp_candidate/process/cpp_candidate-64508-exit.json": "ce28661495c6f989817fc8a0aef42919004755cbdad31af493f15615e80b3508"
+      }
+    }
+  },
+  "scope": "two fresh tiny role/census correctness runs; firstsdk_control then firstcpp_candidate",
+  "notQualified": [
+    "anti1/16 workload performance",
+    "broad performance",
+    "reverse order",
+    "physical/transient memory ceilings",
+    "active-job environment cleanup",
+    "all possible delivery/allocation failures"
+  ],
+  "unchanged": "no native rebuild, source repair, cap/timeout changes, installs or automatic retry"
+}

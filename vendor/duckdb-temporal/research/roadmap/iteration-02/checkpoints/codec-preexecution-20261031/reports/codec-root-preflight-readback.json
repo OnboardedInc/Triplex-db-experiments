@@ -1,0 +1,54 @@
+{
+  "utc": "2026-10-31T02:54:16.231227+00:00",
+  "status": "PASS_ROOT_CLOSED_UNTIMED_PREFLIGHT_READBACK",
+  "candidate_authorization_sha256": "bfebc664c50171a690747ff489491ce392d500b9ca5bbb349f32c6513185cc8b",
+  "candidate_admission_sha256": "1d46348f4e241977ab17799ca58fec59f7a583d67b51f3b2396b19de27b6c9c0",
+  "study_registry_sha256": "56af592c3e3c8e69878b8b5c0443793b98945aff9d5f65bb5f665c066fc39af4",
+  "campaign_sha256": "e4e77d27903bd108487695a4f40c1751b63b16a0da7d7f507c4f34cf83fd8056",
+  "handoff_sha256": "72e016767889799d95fdddd7e779bd592207ae858d9f8ff1cb35e66405a23b31",
+  "all_handoff_raw_files_verified": 40,
+  "all_registered_source_artifact_files_verified": 17,
+  "roles": [
+    {
+      "comparison": "codec_implementation",
+      "variant": "ae-current-codec",
+      "actual_child_returncode": 0,
+      "exact_public_results": 14,
+      "measured_or_profiled": 0,
+      "setup_ns": {},
+      "public_durations_all_null": true
+    },
+    {
+      "comparison": "codec_implementation",
+      "variant": "codec-only",
+      "actual_child_returncode": 0,
+      "exact_public_results": 14,
+      "measured_or_profiled": 0,
+      "setup_ns": {},
+      "public_durations_all_null": true
+    },
+    {
+      "comparison": "accepted_to_codec",
+      "variant": "accepted-item1",
+      "actual_child_returncode": 0,
+      "exact_public_results": 14,
+      "measured_or_profiled": 0,
+      "setup_ns": {},
+      "public_durations_all_null": true
+    },
+    {
+      "comparison": "accepted_to_codec",
+      "variant": "codec-only",
+      "actual_child_returncode": 0,
+      "exact_public_results": 14,
+      "measured_or_profiled": 0,
+      "setup_ns": {},
+      "public_durations_all_null": true
+    }
+  ],
+  "exact_public_results": 56,
+  "strict_type_recursive_expected_equality": true,
+  "actual_outer_terminal0_source": "Sole owner observed actual exec session58357 terminal0; root read external controller returncode and outer.exit without consuming owner session.",
+  "timing_profiles": "NOT_RUN",
+  "independent_review": "PENDING before finalfreeze gate"
+}

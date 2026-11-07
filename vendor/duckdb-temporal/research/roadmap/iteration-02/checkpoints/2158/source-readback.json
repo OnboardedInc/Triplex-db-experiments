@@ -1,0 +1,15 @@
+{
+  "at_utc": "2026-10-30T21:46:10.506Z",
+  "candidate": "8b14300cf42ff9524957f7f5fb41ce7db89f4c1a",
+  "ref": {
+    "sha": "8b14300cf42ff9524957f7f5fb41ce7db89f4c1a"
+  },
+  "pr": {
+    "head": "8b14300cf42ff9524957f7f5fb41ce7db89f4c1a",
+    "base": "main",
+    "draft": true,
+    "state": "open",
+    "merged": false,
+    "updated_at": "2026-10-30T21:46:06Z"
+  }
+}

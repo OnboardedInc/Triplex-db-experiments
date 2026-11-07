@@ -1,0 +1,38 @@
+[
+  {
+    "directory": "build/native-writer-active-start-tT8w65",
+    "files": {
+      "build/native-writer-active-start-tT8w65/facts.duckdb": {
+        "bytes": 10498048
+      },
+      "build/native-writer-active-start-tT8w65/worker.stdout.log": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "build/native-writer-active-start-tT8w65/termination.json": {
+        "bytes": 43101,
+        "sha256": "0a1aca4d92c41d48e73ee29c7c1dae41bf6f50fba3ca3fb8b1edc63bcb04c051"
+      },
+      "build/native-writer-active-start-tT8w65/parent-observations.jsonl": {
+        "bytes": 205,
+        "sha256": "f02fdc2ac3b60859cf58219e66c719b1192ebf6fe84b87e0516b1aed8b8e94e3"
+      },
+      "build/native-writer-active-start-tT8w65/worker-observations.jsonl": {
+        "bytes": 34766,
+        "sha256": "514803a660e094ea26b7fe929cab094ebe0349452d116c7c224ae739b40cf85b"
+      },
+      "build/native-writer-active-start-tT8w65/worker.stderr.log": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "build/native-writer-active-start-tT8w65/recovery.json": {
+        "bytes": 2800010,
+        "sha256": "4a29c91357e0fa1434cb34305d41b4eaa9e74e8cc22396084910d0bc8f4b4fd1"
+      },
+      "build/native-writer-active-start-tT8w65/seed.json": {
+        "bytes": 1744,
+        "sha256": "0b683842d2961da32b2ad9e32114624c04639b4763bdcf1634d84640981a0a33"
+      }
+    }
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "[LOCAL_PATH_0044]",
+    "-p",
+    "tsconfig.json"
+  ],
+  "pid": 77576,
+  "startedAtUtc": "2026-11-06T07:23:48.863796+00:00",
+  "status": "terminal",
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T07:23:50.873924+00:00",
+  "elapsedMs": 2009.8749999888241
+}

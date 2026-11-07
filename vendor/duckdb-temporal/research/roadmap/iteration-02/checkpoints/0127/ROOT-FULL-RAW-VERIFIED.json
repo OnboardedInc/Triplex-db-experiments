@@ -1,0 +1,16 @@
+{
+  "at_utc": "2026-10-31T01:37:01.828647+00:00",
+  "status": "PASS_ROOT_INDEPENDENT_COMPLETE_RAW_CURATION_READBACK",
+  "source_manifest_sha256": "948e75ef6d463a31197e2ffe7da91df95038c11264b68f134b26c97eda55ec49",
+  "canonical_content_tree_sha256": "9ee7d4e1d1deb1e573021b468fe837561b07197986977c52b0ba621d947a54a0",
+  "content_members": 1568,
+  "content_bytes": 24914999,
+  "all_physical_members": 1570,
+  "all1569_manifest_checksums_verified": true,
+  "complete_declared_membership_and_UTF8_no_NUL": true,
+  "all978_raw_run_preflight_profile_files_retained_per_owner_index": true,
+  "independent_timing_and_profile_review_frozen": true,
+  "root_independent_stats_receipt": "34acab967b4e73a509db40b0f39ff8873a08fcb0780c3795d126e5e0994273cd",
+  "no_application_or_study_execution": true,
+  "archive_next": "Complete measured raw plus root snapshots and fresh selected research; no code patch before durable decision"
+}

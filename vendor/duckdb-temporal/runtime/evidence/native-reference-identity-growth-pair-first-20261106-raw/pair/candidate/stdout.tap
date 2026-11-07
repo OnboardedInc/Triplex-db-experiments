@@ -1,0 +1,29 @@
+TAP version 13
+# Subtest: coverage growth diagnostic records each actual ACK and isolates postcommit query audit and reopen phases
+not ok 1 - coverage growth diagnostic records each actual ACK and isolates postcommit query audit and reopen phases
+  ---
+  duration_ms: 29974.464
+  type: 'test'
+  location: '__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/candidate/growth.mjs:47:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)
+    
+    Possible solutions:
+    * Reducing the number of threads (SET threads=X)
+    * Disabling insertion-order preservation (SET preserve_insertion_order=false)
+    * Increasing the memory limit (SET memory_limit='...GB')
+    
+    See also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/candidate/build/reference-coverage-growth-trace-PJ6fcR
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30099.8135

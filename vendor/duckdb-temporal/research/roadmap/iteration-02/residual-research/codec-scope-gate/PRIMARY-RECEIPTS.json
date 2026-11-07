@@ -1,0 +1,30 @@
+{
+  "at_utc": "2026-10-31T02:03:21.352Z",
+  "source_pin": "2abcf904b8dac8c999d2b3aac76681abb333798a",
+  "primary_reads": [
+    {
+      "repository": "python/cpython",
+      "path": "Doc/reference/executionmodel.rst",
+      "git_blob_sha": "44b852d42c84f94e056f592e33d5050f45719097",
+      "characters": 15655,
+      "via": "GitHub official source after web cache miss",
+      "facts": "All references in a function follow local binding declarations even before assignment; nearest scope wins, then globals/builtins."
+    },
+    {
+      "repository": "python/cpython",
+      "path": "Doc/library/ast.rst",
+      "git_blob_sha": "6a98d9b3c1167ef6d4543f37ca229a4f40e0afe4",
+      "characters": 86169,
+      "via": "Pinned web and GitHub official source",
+      "facts": "FunctionDef type_params is a separate AST field added in Python3.12; arguments/returns/body equality alone is incomplete."
+    },
+    {
+      "url": "https://peps.python.org/pep-0695/#type-parameter-scopes",
+      "via": "Fresh official PEP web read",
+      "facts": "Function type parameters are visible inside its body and influence lexical lookup; reject new generic scopes for this nongeneric tail."
+    }
+  ],
+  "moving_docs_navigation_only": "https://docs.python.org/3.12/reference/executionmodel.html reports3.12.16, not exact runtime3.12.14 pin",
+  "application_import_or_execution": false,
+  "source_cache_exported": false
+}

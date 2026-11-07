@@ -1,0 +1,9595 @@
+{
+  "status": "passed",
+  "readers": 1,
+  "cells": [
+    {
+      "kind": "anti_join",
+      "mixedIngestion": false,
+      "readerCount": 1,
+      "status": "passed",
+      "samples": [
+        {
+          "reader": 0,
+          "round": 0,
+          "elapsedMs": 17.834457999999813,
+          "position": "585",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 256,
+          "startOffsetMs": 0.004249999999956344
+        },
+        {
+          "reader": 0,
+          "round": 1,
+          "elapsedMs": 18.41254200000003,
+          "position": "585",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 256,
+          "startOffsetMs": 17.987333000000035
+        }
+      ],
+      "errors": [],
+      "writes": [],
+      "writeAcknowledgementErrors": [],
+      "queryOptions": {
+        "validAt": "0",
+        "timeoutMs": 60000,
+        "maxInputFacts": 10000000,
+        "maxIntermediateRows": 10000000,
+        "maxIntermediateBytes": 4294967296
+      },
+      "wallMs": 36.5642499999999,
+      "throughputQueriesPerSecond": 54.69823666559564,
+      "latencyMs": {
+        "count": 2,
+        "min": 17.834457999999813,
+        "p50": 17.834457999999813,
+        "p95": 18.41254200000003,
+        "p99": 18.41254200000003,
+        "max": 18.41254200000003
+      },
+      "resources": {
+        "before": {
+          "processBytes": {
+            "rss": 383549440,
+            "heapTotal": 19759104,
+            "heapUsed": 12811408,
+            "external": 69710549,
+            "arrayBuffers": 67294676
+          },
+          "duckdb": {
+            "available": true,
+            "memoryBytes": "44301360",
+            "temporaryStorageBytes": "0"
+          }
+        },
+        "beforeMeasured": {
+          "processBytes": {
+            "rss": 383827968,
+            "heapTotal": 19759104,
+            "heapUsed": 13558216,
+            "external": 69762662,
+            "arrayBuffers": 67346749
+          },
+          "duckdb": {
+            "available": true,
+            "memoryBytes": "44301360",
+            "temporaryStorageBytes": "0"
+          }
+        },
+        "after": {
+          "processBytes": {
+            "rss": 387186688,
+            "heapTotal": 19759104,
+            "heapUsed": 11846984,
+            "external": 69591722,
+            "arrayBuffers": 67175809
+          },
+          "duckdb": {
+            "available": true,
+            "memoryBytes": "44301360",
+            "temporaryStorageBytes": "0"
+          }
+        },
+        "maxSampledRssBytes": 385040384
+      },
+      "cpuUsage": {
+        "userMicroseconds": 44681,
+        "systemMicroseconds": 2598,
+        "totalMicroseconds": 47279,
+        "averageCores": 1.2930389656563483,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      "pool": {
+        "before": {
+          "capacity": 1,
+          "available": 1,
+          "active": 0,
+          "waiting": 0
+        },
+        "after": {
+          "capacity": 1,
+          "available": 1,
+          "active": 0,
+          "waiting": 0
+        },
+        "maxObservedActive": 1,
+        "maxObservedWaiting": 0,
+        "sampleIntervalMs": 25
+      },
+      "firstReadAfterOpen": {
+        "reader": 0,
+        "round": 0,
+        "elapsedMs": 29.933791999999812,
+        "position": "585",
+        "kind": "anti_join",
+        "cut": "latest",
+        "route": "sql",
+        "reason": "owned_allcut_unique_scalable_anti_join",
+        "rows": 256
+      },
+      "finalReadVerified": null,
+      "overlappingQueryWrites": 0,
+      "overlapScope": "public_call_intervals_including_queue_wait; not_native_execution_phase_proof",
+      "writeMode": null,
+      "writeLimit": 0,
+      "writeLimitReached": false,
+      "measurementMode": "sample_count",
+      "requestedDurationMs": null,
+      "drainMs": null,
+      "windows": [
+        {
+          "startMs": 0,
+          "endMs": 36.5642499999999,
+          "completedReads": 2,
+          "latencyMs": {
+            "count": 2,
+            "min": 17.834457999999813,
+            "p50": 17.834457999999813,
+            "p95": 18.41254200000003,
+            "p99": 18.41254200000003,
+            "max": 18.41254200000003
+          },
+          "completedWrites": 0,
+          "errors": 0,
+          "resources": {
+            "maxRssBytes": 385040384,
+            "maxActiveReaders": 1,
+            "maxWaitingReaders": 0,
+            "samples": 1
+          }
+        }
+      ],
+      "writeBurstDurationMs": null,
+      "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+      "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+      "tailEvidence": "smoke_only",
+      "physicalReaderControls": {
+        "calls": 3,
+        "maxActive": 1,
+        "distinctPorts": 1,
+        "portIds": [
+          1
+        ],
+        "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+      },
+      "logicalClients": 1,
+      "executionAdmission": {
+        "owner": "NativeEntityStore",
+        "limit": 1,
+        "outerGateway": false,
+        "scope": "SDK policy limit; concurrency measured separately by actual physical control scopes"
+      }
+    },
+    {
+      "kind": "anti_join",
+      "mixedIngestion": true,
+      "readerCount": 1,
+      "status": "passed",
+      "samples": [
+        {
+          "reader": 0,
+          "round": 0,
+          "elapsedMs": 19.48258399999986,
+          "position": "585",
+          "kind": "anti_join",
+          "cut": "fixed",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 256,
+          "startOffsetMs": 0.00633300000026793
+        },
+        {
+          "reader": 0,
+          "round": 1,
+          "elapsedMs": 78.47775000000001,
+          "position": "586",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 255,
+          "startOffsetMs": 19.66341700000021
+        },
+        {
+          "reader": 0,
+          "round": 2,
+          "elapsedMs": 78.05787499999997,
+          "position": "587",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 254,
+          "startOffsetMs": 98.2972920000002
+        },
+        {
+          "reader": 0,
+          "round": 3,
+          "elapsedMs": 77.45408300000008,
+          "position": "588",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 253,
+          "startOffsetMs": 176.51412500000015
+        },
+        {
+          "reader": 0,
+          "round": 4,
+          "elapsedMs": 75.01299999999992,
+          "position": "589",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 252,
+          "startOffsetMs": 254.1308750000003
+        },
+        {
+          "reader": 0,
+          "round": 5,
+          "elapsedMs": 75.86458399999992,
+          "position": "585",
+          "kind": "anti_join",
+          "cut": "fixed",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 256,
+          "startOffsetMs": 329.28970800000025
+        },
+        {
+          "reader": 0,
+          "round": 6,
+          "elapsedMs": 75.88450000000012,
+          "position": "591",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 250,
+          "startOffsetMs": 405.3220000000001
+        },
+        {
+          "reader": 0,
+          "round": 7,
+          "elapsedMs": 76.67029200000025,
+          "position": "592",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 249,
+          "startOffsetMs": 481.359958
+        },
+        {
+          "reader": 0,
+          "round": 8,
+          "elapsedMs": 75.51716699999997,
+          "position": "593",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 248,
+          "startOffsetMs": 558.1825000000003
+        },
+        {
+          "reader": 0,
+          "round": 9,
+          "elapsedMs": 142.1189159999999,
+          "position": "594",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 247,
+          "startOffsetMs": 633.8596670000002
+        },
+        {
+          "reader": 0,
+          "round": 10,
+          "elapsedMs": 117.48433299999988,
+          "position": "585",
+          "kind": "anti_join",
+          "cut": "fixed",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 256,
+          "startOffsetMs": 776.1406670000001
+        },
+        {
+          "reader": 0,
+          "round": 11,
+          "elapsedMs": 100.77158300000019,
+          "position": "596",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 245,
+          "startOffsetMs": 893.7325000000001
+        },
+        {
+          "reader": 0,
+          "round": 12,
+          "elapsedMs": 78.74787500000002,
+          "position": "597",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 244,
+          "startOffsetMs": 994.6035830000001
+        },
+        {
+          "reader": 0,
+          "round": 13,
+          "elapsedMs": 79.09687499999973,
+          "position": "598",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 243,
+          "startOffsetMs": 1073.4460000000004
+        },
+        {
+          "reader": 0,
+          "round": 14,
+          "elapsedMs": 73.49266699999953,
+          "position": "599",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 242,
+          "startOffsetMs": 1152.6508750000003
+        },
+        {
+          "reader": 0,
+          "round": 15,
+          "elapsedMs": 75.02987500000017,
+          "position": "585",
+          "kind": "anti_join",
+          "cut": "fixed",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 256,
+          "startOffsetMs": 1226.274542
+        },
+        {
+          "reader": 0,
+          "round": 16,
+          "elapsedMs": 74.80662500000017,
+          "position": "601",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 240,
+          "startOffsetMs": 1301.3931670000002
+        },
+        {
+          "reader": 0,
+          "round": 17,
+          "elapsedMs": 77.77787499999977,
+          "position": "602",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 239,
+          "startOffsetMs": 1376.2905
+        },
+        {
+          "reader": 0,
+          "round": 18,
+          "elapsedMs": 75.70808299999953,
+          "position": "603",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 238,
+          "startOffsetMs": 1454.1592500000006
+        },
+        {
+          "reader": 0,
+          "round": 19,
+          "elapsedMs": 76.17654200000015,
+          "position": "604",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 237,
+          "startOffsetMs": 1529.9659579999998
+        },
+        {
+          "reader": 0,
+          "round": 20,
+          "elapsedMs": 82.03320799999983,
+          "position": "585",
+          "kind": "anti_join",
+          "cut": "fixed",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 256,
+          "startOffsetMs": 1606.2259170000007
+        },
+        {
+          "reader": 0,
+          "round": 21,
+          "elapsedMs": 77.19191599999976,
+          "position": "606",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 235,
+          "startOffsetMs": 1688.3505420000001
+        },
+        {
+          "reader": 0,
+          "round": 22,
+          "elapsedMs": 78.33324999999968,
+          "position": "607",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 234,
+          "startOffsetMs": 1765.6455420000002
+        },
+        {
+          "reader": 0,
+          "round": 23,
+          "elapsedMs": 76.79554199999984,
+          "position": "608",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 233,
+          "startOffsetMs": 1844.100958
+        },
+        {
+          "reader": 0,
+          "round": 24,
+          "elapsedMs": 78.7001250000003,
+          "position": "609",
+          "kind": "anti_join",
+          "cut": "latest",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 232,
+          "startOffsetMs": 1920.982583
+        },
+        {
+          "reader": 0,
+          "round": 25,
+          "elapsedMs": 75.92704200000026,
+          "position": "585",
+          "kind": "anti_join",
+          "cut": "fixed",
+          "route": "sql",
+          "reason": "owned_allcut_unique_scalable_anti_join",
+          "rows": 256,
+          "startOffsetMs": 1999.765625
+        }
+      ],
+      "errors": [],
+      "writes": [
+        {
+          "index": 0,
+          "entityId": "probe-000",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000000",
+          "value": 0,
+          "position": "586",
+          "reconciled": false,
+          "startOffsetMs": 0.03170800000043528,
+          "elapsedMs": 79.45112499999959
+        },
+        {
+          "index": 1,
+          "entityId": "probe-001",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000001",
+          "value": 0,
+          "position": "587",
+          "reconciled": false,
+          "startOffsetMs": 79.65570800000023,
+          "elapsedMs": 77.0269589999998
+        },
+        {
+          "index": 2,
+          "entityId": "probe-002",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000002",
+          "value": 0,
+          "position": "588",
+          "reconciled": false,
+          "startOffsetMs": 156.7750420000002,
+          "elapsedMs": 77.62424999999985
+        },
+        {
+          "index": 3,
+          "entityId": "probe-003",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000003",
+          "value": 0,
+          "position": "589",
+          "reconciled": false,
+          "startOffsetMs": 234.49545800000033,
+          "elapsedMs": 75.65904199999977
+        },
+        {
+          "index": 4,
+          "entityId": "probe-004",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000004",
+          "value": 0,
+          "position": "590",
+          "reconciled": false,
+          "startOffsetMs": 310.2682080000004,
+          "elapsedMs": 76.55174999999963
+        },
+        {
+          "index": 5,
+          "entityId": "probe-005",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000005",
+          "value": 0,
+          "position": "591",
+          "reconciled": false,
+          "startOffsetMs": 386.93700000000035,
+          "elapsedMs": 76.05625000000009
+        },
+        {
+          "index": 6,
+          "entityId": "probe-006",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000006",
+          "value": 0,
+          "position": "592",
+          "reconciled": false,
+          "startOffsetMs": 463.1031670000002,
+          "elapsedMs": 74.70595800000001
+        },
+        {
+          "index": 7,
+          "entityId": "probe-007",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000007",
+          "value": 0,
+          "position": "593",
+          "reconciled": false,
+          "startOffsetMs": 537.9087080000004,
+          "elapsedMs": 76.66012499999988
+        },
+        {
+          "index": 8,
+          "entityId": "probe-008",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000008",
+          "value": 0,
+          "position": "594",
+          "reconciled": false,
+          "startOffsetMs": 614.6639170000003,
+          "elapsedMs": 78.37441600000011
+        },
+        {
+          "index": 9,
+          "entityId": "probe-009",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000009",
+          "value": 0,
+          "position": "595",
+          "reconciled": false,
+          "startOffsetMs": 693.1472080000003,
+          "elapsedMs": 170.16645900000003
+        },
+        {
+          "index": 10,
+          "entityId": "probe-010",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000010",
+          "value": 0,
+          "position": "596",
+          "reconciled": false,
+          "startOffsetMs": 863.4940000000001,
+          "elapsedMs": 110.99070800000027
+        },
+        {
+          "index": 11,
+          "entityId": "probe-011",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000011",
+          "value": 0,
+          "position": "597",
+          "reconciled": false,
+          "startOffsetMs": 974.592208,
+          "elapsedMs": 79.21383400000013
+        },
+        {
+          "index": 12,
+          "entityId": "probe-012",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000012",
+          "value": 0,
+          "position": "598",
+          "reconciled": false,
+          "startOffsetMs": 1053.9037500000004,
+          "elapsedMs": 79.39691700000003
+        },
+        {
+          "index": 13,
+          "entityId": "probe-013",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000013",
+          "value": 0,
+          "position": "599",
+          "reconciled": false,
+          "startOffsetMs": 1133.390375,
+          "elapsedMs": 74.75641700000051
+        },
+        {
+          "index": 14,
+          "entityId": "probe-014",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000014",
+          "value": 0,
+          "position": "600",
+          "reconciled": false,
+          "startOffsetMs": 1208.2380000000003,
+          "elapsedMs": 74.94879200000014
+        },
+        {
+          "index": 15,
+          "entityId": "probe-015",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000015",
+          "value": 0,
+          "position": "601",
+          "reconciled": false,
+          "startOffsetMs": 1283.2725420000006,
+          "elapsedMs": 74.86216599999989
+        },
+        {
+          "index": 16,
+          "entityId": "probe-016",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000016",
+          "value": 0,
+          "position": "602",
+          "reconciled": false,
+          "startOffsetMs": 1358.2366670000001,
+          "elapsedMs": 76.7334579999997
+        },
+        {
+          "index": 17,
+          "entityId": "probe-017",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000017",
+          "value": 0,
+          "position": "603",
+          "reconciled": false,
+          "startOffsetMs": 1435.0565000000006,
+          "elapsedMs": 77.08683299999939
+        },
+        {
+          "index": 18,
+          "entityId": "probe-018",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000018",
+          "value": 0,
+          "position": "604",
+          "reconciled": false,
+          "startOffsetMs": 1512.2933750000002,
+          "elapsedMs": 75.74483299999974
+        },
+        {
+          "index": 19,
+          "entityId": "probe-019",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000019",
+          "value": 0,
+          "position": "605",
+          "reconciled": false,
+          "startOffsetMs": 1588.1630420000001,
+          "elapsedMs": 80.22262500000033
+        },
+        {
+          "index": 20,
+          "entityId": "probe-020",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000020",
+          "value": 0,
+          "position": "606",
+          "reconciled": false,
+          "startOffsetMs": 1668.501875,
+          "elapsedMs": 77.63595799999985
+        },
+        {
+          "index": 21,
+          "entityId": "probe-021",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000021",
+          "value": 0,
+          "position": "607",
+          "reconciled": false,
+          "startOffsetMs": 1746.2811250000004,
+          "elapsedMs": 78.31674999999996
+        },
+        {
+          "index": 22,
+          "entityId": "probe-022",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000022",
+          "value": 0,
+          "position": "608",
+          "reconciled": false,
+          "startOffsetMs": 1824.6921250000005,
+          "elapsedMs": 77.7153330000001
+        },
+        {
+          "index": 23,
+          "entityId": "probe-023",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000023",
+          "value": 0,
+          "position": "609",
+          "reconciled": false,
+          "startOffsetMs": 1902.5407500000001,
+          "elapsedMs": 77.5555000000004
+        },
+        {
+          "index": 24,
+          "entityId": "probe-024",
+          "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000024",
+          "value": 0,
+          "position": "610",
+          "reconciled": false,
+          "startOffsetMs": 1980.1914580000002,
+          "elapsedMs": 78.00595900000008
+        }
+      ],
+      "writeAcknowledgementErrors": [],
+      "queryOptions": {
+        "validAt": "0",
+        "timeoutMs": 60000,
+        "maxInputFacts": 10000000,
+        "maxIntermediateRows": 10000000,
+        "maxIntermediateBytes": 4294967296
+      },
+      "wallMs": 2075.801375,
+      "throughputQueriesPerSecond": 12.525283157209586,
+      "latencyMs": {
+        "count": 26,
+        "min": 19.48258399999986,
+        "p50": 76.79554199999984,
+        "p95": 117.48433299999988,
+        "p99": 142.1189159999999,
+        "max": 142.1189159999999
+      },
+      "resources": {
+        "before": {
+          "processBytes": {
+            "rss": 387284992,
+            "heapTotal": 19759104,
+            "heapUsed": 12008056,
+            "external": 69637457,
+            "arrayBuffers": 67221544
+          },
+          "duckdb": {
+            "available": true,
+            "memoryBytes": "44301360",
+            "temporaryStorageBytes": "0"
+          }
+        },
+        "beforeMeasured": {
+          "processBytes": {
+            "rss": 391905280,
+            "heapTotal": 19759104,
+            "heapUsed": 12720872,
+            "external": 69689537,
+            "arrayBuffers": 67273624
+          },
+          "duckdb": {
+            "available": true,
+            "memoryBytes": "44301360",
+            "temporaryStorageBytes": "0"
+          }
+        },
+        "after": {
+          "processBytes": {
+            "rss": 429506560,
+            "heapTotal": 20283392,
+            "heapUsed": 11817048,
+            "external": 69535349,
+            "arrayBuffers": 67119436
+          },
+          "duckdb": {
+            "available": true,
+            "memoryBytes": "47750032",
+            "temporaryStorageBytes": "0"
+          }
+        },
+        "maxSampledRssBytes": 432488448
+      },
+      "cpuUsage": {
+        "userMicroseconds": 2838958,
+        "systemMicroseconds": 112258,
+        "totalMicroseconds": 2951216,
+        "averageCores": 1.4217236945418248,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      "pool": {
+        "before": {
+          "capacity": 1,
+          "available": 1,
+          "active": 0,
+          "waiting": 0
+        },
+        "after": {
+          "capacity": 1,
+          "available": 1,
+          "active": 0,
+          "waiting": 0
+        },
+        "maxObservedActive": 1,
+        "maxObservedWaiting": 0,
+        "sampleIntervalMs": 25
+      },
+      "firstReadAfterOpen": {
+        "reader": 0,
+        "round": 0,
+        "elapsedMs": 30.48416700000007,
+        "position": "585",
+        "kind": "anti_join",
+        "cut": "fixed",
+        "route": "sql",
+        "reason": "owned_allcut_unique_scalable_anti_join",
+        "rows": 256
+      },
+      "finalReadVerified": true,
+      "overlappingQueryWrites": 50,
+      "overlapScope": "public_call_intervals_including_queue_wait; not_native_execution_phase_proof",
+      "writeMode": "sustained",
+      "writeLimit": 12000,
+      "writeLimitReached": false,
+      "measurementMode": "mixed_duration",
+      "requestedDurationMs": 2000,
+      "drainMs": 75.80137500000001,
+      "windows": [
+        {
+          "startMs": 0,
+          "endMs": 2075.801375,
+          "completedReads": 26,
+          "latencyMs": {
+            "count": 26,
+            "min": 19.48258399999986,
+            "p50": 76.79554199999984,
+            "p95": 117.48433299999988,
+            "p99": 142.1189159999999,
+            "max": 142.1189159999999
+          },
+          "completedWrites": 25,
+          "errors": 0,
+          "resources": {
+            "maxRssBytes": 432488448,
+            "maxActiveReaders": 1,
+            "maxWaitingReaders": 0,
+            "samples": 78
+          }
+        }
+      ],
+      "writeBurstDurationMs": 2058.165709,
+      "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+      "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+      "tailEvidence": "smoke_only",
+      "physicalReaderControls": {
+        "calls": 28,
+        "maxActive": 1,
+        "distinctPorts": 1,
+        "portIds": [
+          1
+        ],
+        "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+      },
+      "logicalClients": 1,
+      "executionAdmission": {
+        "owner": "NativeEntityStore",
+        "limit": 1,
+        "outerGateway": false,
+        "scope": "SDK policy limit; concurrency measured separately by actual physical control scopes"
+      }
+    }
+  ],
+  "firstReads": {
+    "beforeProbe": {
+      "position": "577",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [],
+      "counters": null,
+      "elapsedMs": 28.850459
+    },
+    "afterProbe": {
+      "position": "585",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [
+        [
+          {
+            "tag": "str",
+            "value": "probe-000"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-001"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-002"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-003"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-004"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-005"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-006"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-007"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-008"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-009"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-010"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-011"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-012"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-013"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-014"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-015"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-016"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-017"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-018"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-019"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-020"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-021"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-022"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-023"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-024"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-025"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-026"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-027"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-028"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-029"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-030"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-031"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-032"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-033"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-034"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-035"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-036"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-037"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-038"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-039"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-040"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-041"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-042"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-043"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-044"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-045"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-046"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-047"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-048"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-049"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-050"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-051"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-052"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-053"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-054"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-055"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-056"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-057"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-058"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-059"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-060"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-061"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-062"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-063"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-064"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-065"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-066"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-067"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-068"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-069"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-070"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-071"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-072"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-073"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-074"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-075"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-076"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-077"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-078"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-079"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-080"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-081"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-082"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-083"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-084"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-085"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-086"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-087"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-088"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-089"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-090"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-091"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-092"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-093"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-094"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-095"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-096"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-097"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-098"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-099"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-100"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-101"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-102"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-103"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-104"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-105"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-106"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-107"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-108"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-109"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-110"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-111"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-112"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-113"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-114"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-115"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-116"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-117"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-118"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-119"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-120"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-121"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-122"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-123"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-124"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-125"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-126"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-127"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-128"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-129"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-130"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-131"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-132"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-133"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-134"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-135"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-136"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-137"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-138"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-139"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-140"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-141"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-142"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-143"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-144"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-145"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-146"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-147"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-148"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-149"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-150"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-151"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-152"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-153"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-154"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-155"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-156"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-157"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-158"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-159"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-160"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-161"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-162"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-163"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-164"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-165"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-166"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-167"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-168"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-169"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-170"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-171"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-172"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-173"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-174"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-175"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-176"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-177"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-178"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-179"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-180"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-181"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-182"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-183"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-184"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-185"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-186"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-187"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-188"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-189"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-190"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-191"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-192"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-193"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-194"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-195"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-196"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-197"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-198"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-199"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-200"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-201"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-202"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-203"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-204"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-205"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-206"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-207"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-208"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-209"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-210"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-211"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-212"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-213"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-214"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-215"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-216"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-217"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-218"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-219"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-220"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-221"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-222"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-223"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-224"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-225"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-226"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-227"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-228"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-229"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-230"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-231"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-232"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-233"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-234"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-235"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-236"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-237"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-238"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-239"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-240"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-241"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-242"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-243"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-244"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-245"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-246"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-247"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-248"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-249"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-250"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-251"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-252"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-253"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-254"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-255"
+          }
+        ]
+      ],
+      "counters": null,
+      "elapsedMs": 30.47550000000001
+    }
+  },
+  "receiptDetails": [
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000000",
+      "position": "586",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000001",
+      "position": "587",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000002",
+      "position": "588",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000003",
+      "position": "589",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000004",
+      "position": "590",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000005",
+      "position": "591",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000006",
+      "position": "592",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000007",
+      "position": "593",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000008",
+      "position": "594",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000009",
+      "position": "595",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000010",
+      "position": "596",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000011",
+      "position": "597",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000012",
+      "position": "598",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000013",
+      "position": "599",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000014",
+      "position": "600",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000015",
+      "position": "601",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000016",
+      "position": "602",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000017",
+      "position": "603",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000018",
+      "position": "604",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000019",
+      "position": "605",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000020",
+      "position": "606",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000021",
+      "position": "607",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000022",
+      "position": "608",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000023",
+      "position": "609",
+      "asserted": 2,
+      "retracted": 2
+    },
+    {
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-00000024",
+      "position": "610",
+      "asserted": 2,
+      "retracted": 2
+    }
+  ],
+  "writeMethod": "NativeEntityStore.patchRecord",
+  "UV_THREADPOOL_SIZE_at_import": "4",
+  "provenance": {
+    "hashes": {
+      "core_manifest": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+      "companion_manifest": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+      "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+      "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+      "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+      "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "adapter/native-entity.js": "3769fb975d3d621418f91a0bebfffcfce656cdcc98c3e002f61b03c203089afe",
+      "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+      "benchmark_driver": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+      "benchmark_clone_helper": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+      "benchmark_clone_module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+      "benchmark/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+      "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+      "source_evidence": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4"
+    },
+    "coreManifest": {
+      "engine": "2.0.0",
+      "extension_version": "0.32.0",
+      "abi": "C_STRUCT_UNSTABLE",
+      "catalog_sql_sha256": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+      "control_bridge_sha256": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+      "node_api_version": 8,
+      "schema_template_reuse": true,
+      "schema_borrowed_input": true,
+      "diagnostic_evaluator_profile": false,
+      "experimental_current_unique_fast_path": true,
+      "experimental_injective_projection_fast_path": true,
+      "experimental_identity_count_fast_path": false,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_streaming_source_fast_path": true,
+      "source_sha256": {
+        "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+        "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+        "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+        "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+        "native/src/temporal_command.cpp": "6b2c3a064050b64694c436b4769bc61be52494a1624c8cd361ed1cc53371c426",
+        "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+        "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+        "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+        "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+        "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+        "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+        "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+        "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+        "native/src/temporal_datalog.cpp": "c80961113dd0b2fd2d1c182cd03f434aee724a6ea6a867fb603322356179281c",
+        "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+        "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+        "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+        "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+        "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+        "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+        "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+        "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+        "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+        "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+        "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+        "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+        "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+        "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+        "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+        "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+        "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+        "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da"
+      },
+      "library_sha256": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+      "extension_sha256": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82"
+    },
+    "companionManifest": {
+      "schema": "native-owner-probe-build/1",
+      "engine": "2.0.0",
+      "abi": "CPP",
+      "test_command": [
+        "node",
+        "adapter/test-owner-probe.mjs"
+      ],
+      "source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "source_archive_sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+      "headers_sha256": {
+        "duckdb/common/exception.hpp": "225053a2f1bb4171d3fa066e78783800210041b31f5c06ecb839239ea59c4e51",
+        "duckdb/common/types/data_chunk.hpp": "2a4201a20b74f0dfe17d92e0d1d9b52684a11e0c7010cdc21ce11510f43cb649",
+        "duckdb/common/types/value.hpp": "2bf173b58b09f1292abaa89da509860cce7c9d2ae01f4c7909dc0f0f8b0a32fe",
+        "duckdb/function/scalar_function.hpp": "e4c44b31c3c853a13160da48d69c8209deec936fe0e4d14e94e31adf9e4fb7dd",
+        "duckdb/main/attached_database.hpp": "45176b4ca1c8328ee6e0a8ec0a65d5adeba289060da939677be013ad52689c20",
+        "duckdb/main/client_context.hpp": "c753b9242ec947e56db73881caa12476648dc44b38711a9aa829493cf4438691",
+        "duckdb/main/client_context_state.hpp": "a4ec23711715d9163f86cd7533c58fbbb8a3d5f2934b7a2e563ee31b94056447",
+        "duckdb/main/connection_manager.hpp": "66a506a2a6fcdc927a4caadf5709bda6affdf180b23544ab6d7180457408f20d",
+        "duckdb/main/database.hpp": "45834eb51cdb83e6ead27c580399331186289fbca2fb3500a15dccadc55fbb68",
+        "duckdb/main/connection.hpp": "bf2c26ff4b8c26e1e6bf58a1944a40db9bf237f4db979d4c0fc106b175ca1556",
+        "duckdb/main/query_result.hpp": "d614035b27d91e08e98f1caffca22e3f1518feb67a975a37097b495c50ab50b3",
+        "duckdb/main/query_parameters.hpp": "dadc90d8f8b820966affe3cae9af05e8ae2a7cb177c3f95b652b7b209be8a326",
+        "duckdb/common/enums/query_result_state.hpp": "9a8551fb1c73f1c43f4d1232c95283c4f50bccffc26775f9672d5445c940fa5f",
+        "duckdb/main/extension/extension_loader.hpp": "8518760b6c391ace37c9ede72f0e4fbcc63cdb1cf750a06427849af297f490dd",
+        "duckdb/planner/extension_callback.hpp": "39a1227729d44d73da36f03f246d4602a0c5216fb46a8c2fb272b86fadca4599",
+        "duckdb/transaction/duck_transaction_manager.hpp": "962f0cc5a6423da5fa4672bc0be54df51c3d2bc0a8b6d7af67f833c70843dfaa",
+        "duckdb/transaction/meta_transaction.hpp": "1a5d1f9fbde38dfb541dea6b2774ca6360450e0b6ff983bcc97163bd9a60e2fa"
+      },
+      "dependency_license_sha256": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3",
+      "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "core_extension_sha256": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+      "experimental_current_unique_fast_path": true,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_compat_mutations": true,
+      "compat_mutation_sources_sha256": {
+        "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+        "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42"
+      },
+      "probe_source_sha256": "62bda50850f24ef79c5b025301600d8db50ed4e7a17dfbfc52bf3586c6767c77",
+      "integrity_sources_sha256": {
+        "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+        "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+        "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+        "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+        "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+        "native/catalog.sql": "5da97390c926dade88eee4803adec095be9661a63ee5154d17b1337bd92a82bd",
+        "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+      },
+      "library_sha256": "0201c8473b960c5c7aa8f57cae422f60c43b3f026cd6b9f594dbecbc13cd1d33",
+      "extension_sha256": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390"
+    },
+    "node": {
+      "version": "v24.13.0",
+      "platform": "darwin",
+      "architecture": "arm64"
+    }
+  },
+  "harnessSha256": "1f76395dfe3e4bf91464aee84e80927600e36a11ab5a29c2ebbcc5a62baeded5",
+  "sourceFixture": {
+    "size": 100000,
+    "groupSize": 256,
+    "groups": 391,
+    "initialAdded": 184,
+    "position": "577",
+    "latestCut": true
+  },
+  "clone": {
+    "mode": "darwin_clonefile",
+    "status": "cloned"
+  },
+  "openConfiguration": {
+    "readers": 1,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "retainedLimits": {
+      "maxFacts": 124696,
+      "maxBytes": 4294967296
+    }
+  },
+  "openAuditMs": 985.6568750000001,
+  "rightSideFactsBeforeProbes": "16819",
+  "seedBatches": [
+    {
+      "position": "578",
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-seed-0",
+      "members": 32,
+      "asserted": 64
+    },
+    {
+      "position": "579",
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-seed-1",
+      "members": 32,
+      "asserted": 64
+    },
+    {
+      "position": "580",
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-seed-2",
+      "members": 32,
+      "asserted": 64
+    },
+    {
+      "position": "581",
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-seed-3",
+      "members": 32,
+      "asserted": 64
+    },
+    {
+      "position": "582",
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-seed-4",
+      "members": 32,
+      "asserted": 64
+    },
+    {
+      "position": "583",
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-seed-5",
+      "members": 32,
+      "asserted": 64
+    },
+    {
+      "position": "584",
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-seed-6",
+      "members": 32,
+      "asserted": 64
+    },
+    {
+      "position": "585",
+      "commandId": "anti-483ceb58-7de7-46c8-964e-78a17af47a80-seed-7",
+      "members": 32,
+      "asserted": 64
+    }
+  ],
+  "probeSetupMs": 724.8426250000002,
+  "probe": {
+    "position": "585",
+    "entities": 256,
+    "asserted": 512
+  },
+  "rightSideFactsAtInitialCut": "17075",
+  "inputAdmissionProof": {
+    "scopedInputFacts": 17331,
+    "rightSideFacts": "17075",
+    "positiveSideFacts": 256,
+    "exactSucceeded": true,
+    "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+    "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+  },
+  "reuseChecks": [
+    {
+      "knownAt": "585",
+      "elapsedMs": 18.047833000000537,
+      "position": "585",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [
+        [
+          {
+            "tag": "str",
+            "value": "probe-000"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-001"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-002"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-003"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-004"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-005"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-006"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-007"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-008"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-009"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-010"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-011"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-012"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-013"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-014"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-015"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-016"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-017"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-018"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-019"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-020"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-021"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-022"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-023"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-024"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-025"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-026"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-027"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-028"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-029"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-030"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-031"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-032"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-033"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-034"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-035"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-036"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-037"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-038"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-039"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-040"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-041"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-042"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-043"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-044"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-045"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-046"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-047"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-048"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-049"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-050"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-051"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-052"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-053"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-054"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-055"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-056"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-057"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-058"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-059"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-060"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-061"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-062"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-063"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-064"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-065"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-066"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-067"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-068"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-069"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-070"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-071"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-072"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-073"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-074"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-075"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-076"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-077"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-078"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-079"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-080"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-081"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-082"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-083"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-084"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-085"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-086"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-087"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-088"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-089"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-090"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-091"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-092"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-093"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-094"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-095"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-096"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-097"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-098"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-099"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-100"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-101"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-102"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-103"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-104"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-105"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-106"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-107"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-108"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-109"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-110"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-111"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-112"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-113"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-114"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-115"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-116"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-117"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-118"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-119"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-120"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-121"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-122"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-123"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-124"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-125"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-126"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-127"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-128"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-129"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-130"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-131"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-132"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-133"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-134"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-135"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-136"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-137"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-138"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-139"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-140"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-141"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-142"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-143"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-144"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-145"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-146"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-147"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-148"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-149"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-150"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-151"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-152"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-153"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-154"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-155"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-156"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-157"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-158"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-159"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-160"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-161"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-162"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-163"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-164"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-165"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-166"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-167"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-168"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-169"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-170"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-171"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-172"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-173"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-174"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-175"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-176"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-177"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-178"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-179"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-180"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-181"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-182"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-183"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-184"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-185"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-186"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-187"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-188"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-189"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-190"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-191"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-192"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-193"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-194"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-195"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-196"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-197"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-198"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-199"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-200"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-201"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-202"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-203"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-204"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-205"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-206"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-207"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-208"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-209"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-210"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-211"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-212"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-213"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-214"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-215"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-216"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-217"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-218"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-219"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-220"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-221"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-222"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-223"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-224"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-225"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-226"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-227"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-228"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-229"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-230"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-231"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-232"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-233"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-234"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-235"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-236"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-237"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-238"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-239"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-240"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-241"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-242"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-243"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-244"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-245"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-246"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-247"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-248"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-249"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-250"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-251"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-252"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-253"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-254"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-255"
+          }
+        ]
+      ],
+      "counters": null
+    }
+  ],
+  "reopenAuditMs": 420.83916599999975,
+  "reopenChecks": [
+    {
+      "knownAt": "577",
+      "elapsedMs": 27.748625000000175,
+      "position": "577",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [],
+      "counters": null
+    },
+    {
+      "knownAt": "581",
+      "elapsedMs": 27.88866699999926,
+      "position": "581",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [
+        [
+          {
+            "tag": "str",
+            "value": "probe-000"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-001"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-002"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-003"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-004"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-005"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-006"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-007"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-008"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-009"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-010"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-011"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-012"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-013"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-014"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-015"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-016"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-017"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-018"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-019"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-020"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-021"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-022"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-023"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-024"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-025"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-026"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-027"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-028"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-029"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-030"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-031"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-032"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-033"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-034"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-035"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-036"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-037"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-038"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-039"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-040"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-041"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-042"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-043"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-044"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-045"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-046"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-047"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-048"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-049"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-050"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-051"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-052"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-053"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-054"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-055"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-056"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-057"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-058"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-059"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-060"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-061"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-062"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-063"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-064"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-065"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-066"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-067"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-068"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-069"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-070"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-071"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-072"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-073"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-074"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-075"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-076"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-077"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-078"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-079"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-080"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-081"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-082"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-083"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-084"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-085"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-086"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-087"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-088"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-089"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-090"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-091"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-092"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-093"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-094"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-095"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-096"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-097"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-098"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-099"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-100"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-101"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-102"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-103"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-104"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-105"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-106"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-107"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-108"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-109"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-110"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-111"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-112"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-113"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-114"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-115"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-116"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-117"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-118"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-119"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-120"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-121"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-122"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-123"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-124"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-125"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-126"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-127"
+          }
+        ]
+      ],
+      "counters": null
+    },
+    {
+      "knownAt": "585",
+      "elapsedMs": 27.779457999999977,
+      "position": "585",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [
+        [
+          {
+            "tag": "str",
+            "value": "probe-000"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-001"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-002"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-003"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-004"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-005"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-006"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-007"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-008"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-009"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-010"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-011"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-012"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-013"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-014"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-015"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-016"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-017"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-018"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-019"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-020"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-021"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-022"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-023"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-024"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-025"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-026"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-027"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-028"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-029"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-030"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-031"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-032"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-033"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-034"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-035"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-036"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-037"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-038"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-039"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-040"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-041"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-042"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-043"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-044"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-045"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-046"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-047"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-048"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-049"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-050"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-051"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-052"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-053"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-054"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-055"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-056"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-057"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-058"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-059"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-060"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-061"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-062"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-063"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-064"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-065"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-066"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-067"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-068"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-069"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-070"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-071"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-072"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-073"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-074"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-075"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-076"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-077"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-078"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-079"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-080"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-081"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-082"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-083"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-084"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-085"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-086"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-087"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-088"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-089"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-090"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-091"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-092"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-093"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-094"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-095"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-096"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-097"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-098"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-099"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-100"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-101"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-102"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-103"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-104"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-105"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-106"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-107"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-108"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-109"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-110"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-111"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-112"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-113"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-114"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-115"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-116"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-117"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-118"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-119"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-120"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-121"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-122"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-123"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-124"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-125"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-126"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-127"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-128"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-129"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-130"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-131"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-132"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-133"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-134"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-135"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-136"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-137"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-138"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-139"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-140"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-141"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-142"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-143"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-144"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-145"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-146"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-147"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-148"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-149"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-150"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-151"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-152"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-153"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-154"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-155"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-156"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-157"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-158"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-159"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-160"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-161"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-162"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-163"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-164"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-165"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-166"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-167"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-168"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-169"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-170"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-171"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-172"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-173"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-174"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-175"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-176"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-177"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-178"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-179"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-180"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-181"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-182"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-183"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-184"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-185"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-186"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-187"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-188"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-189"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-190"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-191"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-192"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-193"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-194"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-195"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-196"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-197"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-198"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-199"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-200"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-201"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-202"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-203"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-204"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-205"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-206"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-207"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-208"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-209"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-210"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-211"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-212"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-213"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-214"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-215"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-216"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-217"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-218"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-219"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-220"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-221"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-222"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-223"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-224"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-225"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-226"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-227"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-228"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-229"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-230"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-231"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-232"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-233"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-234"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-235"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-236"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-237"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-238"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-239"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-240"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-241"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-242"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-243"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-244"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-245"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-246"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-247"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-248"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-249"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-250"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-251"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-252"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-253"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-254"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-255"
+          }
+        ]
+      ],
+      "counters": null
+    },
+    {
+      "knownAt": "597",
+      "elapsedMs": 28.005417000000307,
+      "position": "597",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [
+        [
+          {
+            "tag": "str",
+            "value": "probe-012"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-013"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-014"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-015"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-016"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-017"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-018"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-019"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-020"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-021"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-022"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-023"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-024"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-025"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-026"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-027"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-028"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-029"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-030"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-031"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-032"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-033"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-034"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-035"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-036"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-037"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-038"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-039"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-040"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-041"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-042"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-043"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-044"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-045"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-046"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-047"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-048"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-049"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-050"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-051"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-052"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-053"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-054"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-055"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-056"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-057"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-058"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-059"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-060"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-061"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-062"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-063"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-064"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-065"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-066"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-067"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-068"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-069"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-070"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-071"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-072"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-073"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-074"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-075"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-076"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-077"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-078"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-079"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-080"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-081"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-082"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-083"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-084"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-085"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-086"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-087"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-088"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-089"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-090"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-091"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-092"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-093"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-094"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-095"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-096"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-097"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-098"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-099"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-100"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-101"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-102"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-103"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-104"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-105"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-106"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-107"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-108"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-109"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-110"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-111"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-112"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-113"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-114"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-115"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-116"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-117"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-118"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-119"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-120"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-121"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-122"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-123"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-124"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-125"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-126"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-127"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-128"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-129"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-130"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-131"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-132"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-133"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-134"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-135"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-136"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-137"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-138"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-139"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-140"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-141"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-142"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-143"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-144"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-145"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-146"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-147"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-148"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-149"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-150"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-151"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-152"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-153"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-154"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-155"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-156"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-157"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-158"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-159"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-160"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-161"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-162"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-163"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-164"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-165"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-166"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-167"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-168"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-169"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-170"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-171"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-172"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-173"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-174"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-175"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-176"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-177"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-178"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-179"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-180"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-181"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-182"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-183"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-184"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-185"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-186"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-187"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-188"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-189"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-190"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-191"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-192"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-193"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-194"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-195"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-196"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-197"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-198"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-199"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-200"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-201"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-202"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-203"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-204"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-205"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-206"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-207"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-208"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-209"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-210"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-211"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-212"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-213"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-214"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-215"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-216"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-217"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-218"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-219"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-220"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-221"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-222"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-223"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-224"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-225"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-226"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-227"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-228"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-229"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-230"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-231"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-232"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-233"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-234"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-235"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-236"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-237"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-238"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-239"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-240"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-241"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-242"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-243"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-244"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-245"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-246"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-247"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-248"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-249"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-250"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-251"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-252"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-253"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-254"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-255"
+          }
+        ]
+      ],
+      "counters": null
+    },
+    {
+      "knownAt": "610",
+      "elapsedMs": 28.460374999999658,
+      "position": "610",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [
+        [
+          {
+            "tag": "str",
+            "value": "probe-025"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-026"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-027"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-028"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-029"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-030"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-031"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-032"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-033"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-034"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-035"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-036"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-037"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-038"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-039"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-040"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-041"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-042"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-043"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-044"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-045"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-046"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-047"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-048"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-049"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-050"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-051"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-052"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-053"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-054"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-055"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-056"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-057"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-058"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-059"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-060"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-061"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-062"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-063"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-064"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-065"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-066"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-067"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-068"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-069"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-070"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-071"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-072"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-073"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-074"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-075"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-076"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-077"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-078"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-079"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-080"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-081"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-082"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-083"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-084"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-085"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-086"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-087"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-088"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-089"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-090"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-091"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-092"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-093"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-094"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-095"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-096"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-097"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-098"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-099"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-100"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-101"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-102"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-103"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-104"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-105"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-106"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-107"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-108"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-109"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-110"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-111"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-112"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-113"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-114"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-115"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-116"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-117"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-118"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-119"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-120"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-121"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-122"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-123"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-124"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-125"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-126"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-127"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-128"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-129"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-130"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-131"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-132"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-133"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-134"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-135"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-136"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-137"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-138"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-139"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-140"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-141"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-142"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-143"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-144"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-145"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-146"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-147"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-148"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-149"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-150"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-151"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-152"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-153"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-154"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-155"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-156"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-157"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-158"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-159"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-160"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-161"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-162"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-163"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-164"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-165"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-166"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-167"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-168"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-169"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-170"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-171"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-172"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-173"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-174"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-175"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-176"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-177"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-178"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-179"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-180"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-181"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-182"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-183"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-184"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-185"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-186"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-187"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-188"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-189"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-190"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-191"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-192"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-193"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-194"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-195"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-196"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-197"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-198"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-199"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-200"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-201"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-202"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-203"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-204"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-205"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-206"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-207"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-208"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-209"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-210"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-211"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-212"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-213"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-214"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-215"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-216"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-217"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-218"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-219"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-220"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-221"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-222"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-223"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-224"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-225"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-226"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-227"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-228"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-229"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-230"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-231"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-232"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-233"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-234"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-235"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-236"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-237"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-238"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-239"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-240"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-241"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-242"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-243"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-244"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-245"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-246"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-247"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-248"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-249"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-250"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-251"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-252"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-253"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-254"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-255"
+          }
+        ]
+      ],
+      "counters": null
+    }
+  ],
+  "reopenVerified": true
+}

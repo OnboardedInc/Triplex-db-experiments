@@ -1,0 +1,12 @@
+✔ zero-policy recipes preserve identical native inputs for both runtime roles (6.259125ms)
+✔ unrelated and incoming cases change reference endpoints, not setup command count (0.262083ms)
+✔ event oracle independently splits corrections and retains earlier knowledge/endpoints (7.391916ms)
+✔ local recipe and sample count bounds reject before setup (3.532042ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 65.266833

@@ -1,0 +1,13 @@
+# Renewed primary-source investigation after native compile nonpass
+
+**Actual failure cause remains unknown.** Two distinct source-only investigations found no justified source repair or new compiler action. This is a bounded negative research result, not a successful build or an environment diagnosis.
+
+The [separate preserved project result and exact new adapter source]([PRIVATE_REFERENCE_REMOVED]) records one nonpassing compile-only attempt: known reaped driver exit 1, outer exit 4, no artifact adopted, no pilot/native calls or performance observations. Diagnostics were discarded from creation. That consumed action remains stopped without retry, fallback, probe, alternate compiler or pilot; preservation does not create another action token.
+
+DRIVER-SEARCH-RESEARCH checks public Python/GCC API documentation against the declared request. An explicit child mapping is not inherited configuration, but absence of PATH is not proof of absent executable search. Header, library and compiler-part lookup are separate concerns. None of that identifies an installed program, missing component or actual failure cause. Two unavailable public sources remain explicitly unchecked and were not retried through other versions or copies.
+
+CXX-SOURCE-RESEARCH independently reads the three exact selected project texts and official compiler/library language references. Public names/signatures, friend scope, aggregate/optional/move use, constexpr/type aliases and includes yielded no definite source-proven contradiction within the declared C++17 support model. The source does have compile-time support guards; their existence does not show which guard or compilation stage, if any, failed. Negative manual review is not parsing, translation, link or portability acceptance.
+
+The two reports preserve exact sources, primary citations, uncertainty and missing-source limits. They contain no computer-environment snapshot/detail, installed-state observation, compiler/system diagnostic, binary, old controller or stopped backup payload. Project source paths/hashes and literal design requirements are identities/premises, not collected machine metadata. No repair, execution recipe, diagnostic recovery, new action authority or inference about unseen installed capabilities is supplied.
+
+Independent graph-certificate source work and the separately scoped Python semantic-reference unit may continue within their own reviews/admissions. They do not substitute for the failed native scaling attempt or establish item 5 host/SQL/Datalog/temporal integration. All older stops and current native STOP remain unchanged. FILES inventories this new research-only package; source publication is not execution permission.

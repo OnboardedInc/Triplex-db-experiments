@@ -1,0 +1,33 @@
+{
+  "status": "TERMINAL_NO_KNOWN_STATIC_MUST_FIX_UNDER_SELECTED_IMMUTABLE_CONDITIONAL_GATE",
+  "preparation_sha256": "79a386fd0a9f84722024189081eaa00fea5968284580dbe5f08c463acbdd5b52",
+  "curated_sha256": "4276ef94b176f2f23954b413ef62197389e88e99c91f4e0600eb9eef19a2a9e6",
+  "terminal_sha256": "9776514ff1c790273c8620e10f10711b912ee1a47a52a4487a121f9df85fcedf",
+  "actual_review_operations": {
+    "active_python_text_hash_AST_only": 14,
+    "method_input_text_hash_joins": 7,
+    "terminal_members_hash_verified": 8,
+    "harness_or_candidate_or_tests_executed": 0,
+    "DB_native_hardware_FP_calls": 0,
+    "timed_or_bootstrap_runs": 0,
+    "children_spawned": 0
+  },
+  "recorded_not_rerun_checks": {
+    "checks": 397,
+    "outcomes": {
+      "PASS_ACCEPTED_SYNTHETIC_ONLY": 11,
+      "PASS_REJECTED": 386
+    },
+    "not_rerun": true,
+    "literal_fake_nanoseconds": 1,
+    "no_engine_or_FP_execution_claim": true
+  },
+  "new_concrete_method_defects": 0,
+  "reported_operational_constraint": "Full execution gate SHA must stay immutable; root accepted conditional initial profile permission; code strictly requires completed A/B before profiles.",
+  "reviewer_collector_negative": "First own collector stopped on a .md/.json receipt filename typo; corrected only own collector, then terminal PASS. Not a preparation defect or rerun of any harness/test.",
+  "acceptance_or_execution_authority": false,
+  "report": "REVIEW.md",
+  "findings": "FINDINGS.json",
+  "identity": "STATIC-INPUT-IDENTITY.json",
+  "primary_references": "PRIMARY-URLS.json"
+}

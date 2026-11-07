@@ -1,0 +1,50 @@
+{
+  "schema": "goal4.contract.sha256-manifest/1",
+  "utc": "2026-10-31T17:44:20.271717+00:00",
+  "revision": "001",
+  "scope": "New pre-code additive native/IR contract research only; no implementation/runtime evidence",
+  "hash": "SHA256",
+  "self_excluded": "SHA256-MANIFEST.json",
+  "files": [
+    {
+      "path": "BUDGET-MODEL.json",
+      "bytes": 1741,
+      "sha256": "45a0cf56a1656cd8cc6cd45985226e6c5e90f49792f736630ff385c6e8c18d73"
+    },
+    {
+      "path": "DIAGNOSTICS.md",
+      "bytes": 8690,
+      "sha256": "1465cc039786db2bb5699f7f275b4afafa15daad6bbd2b04c11baed1f2a29aae"
+    },
+    {
+      "path": "FROZEN-READY.json",
+      "bytes": 1260,
+      "sha256": "5daaf8a36a03b9d6e05560384483428433df4816b3f0d4fdd5dc6aa2a4dd92d4"
+    },
+    {
+      "path": "IR2-CONTRACT.md",
+      "bytes": 9890,
+      "sha256": "c680654909a0b480889feb193e4d30395ea525ef1466fca070f1744b09314bd6"
+    },
+    {
+      "path": "NATIVE-CONTRACT.md",
+      "bytes": 31269,
+      "sha256": "1160eb56cabf5468c1115931d95395be3350f45e8448f45f417cf49e4d55822e"
+    },
+    {
+      "path": "SOURCE-INVENTORY.json",
+      "bytes": 4376,
+      "sha256": "9d09c5f25536334ec1a7ac7bb0331472c100ecdd37d8864c30d58f2e46b21021"
+    },
+    {
+      "path": "SOURCE-MAP.md",
+      "bytes": 6708,
+      "sha256": "1fd056708ed475545abc81cd66a82934b45c04407d02d64e722fa27d29bcef64"
+    },
+    {
+      "path": "progress.jsonl",
+      "bytes": 5267,
+      "sha256": "5ee302ff66bba6482023978da94fce093c81e94d693ae14bc430aaf520574afb"
+    }
+  ]
+}

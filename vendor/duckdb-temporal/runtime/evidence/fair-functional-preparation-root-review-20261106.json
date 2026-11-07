@@ -1,0 +1,26 @@
+{
+  "schema": "td.fair-functional-preparation-root-review/1",
+  "source": "2b0ce884212d1e12a76529ce50c4f6fdb7e0d385",
+  "functionalRawHashesVerified": 15,
+  "preparationRawHashesVerified": 17,
+  "sourceGitPinsVerified": 19,
+  "actualNewEngineSuites": {
+    "readers": 10,
+    "control": 7,
+    "cleanup": 6,
+    "fatal": 4,
+    "single-strategy": 2,
+    "full512": 1
+  },
+  "scopedCurrentCorrectnessMethods": 45,
+  "full512Acks": 512,
+  "full512ExactReads": 7271,
+  "clients": 16,
+  "sourceAndRuntimeSdkExternalMapsEqual": true,
+  "actualExpected405MapsEqual": true,
+  "inventoryEntriesPerSubject": 446,
+  "onlyCandidateRuntimeDelta": "build/adapter/native-entity.js",
+  "fixedBindingsVerified": 4,
+  "actualPurePassed": 28,
+  "scope": "Correctness and file preparation only. No performance or full qualification; no promotion."
+}

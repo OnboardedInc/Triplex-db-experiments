@@ -1,0 +1,94 @@
+{
+  "schema": "td.native-batch-qualification/1",
+  "observed_utc": "2026-11-05T19:16:49Z",
+  "tested_source": "3383ccf27824f1974893d07bdae42e3e845ac2e9",
+  "main_base": "9fc114d7",
+  "active_carrier_budget_proof": "f7342982",
+  "result": "PASS",
+  "artifact": {
+    "extension_version": "0.27.0",
+    "core_sha256": "8c30aae8062716edebcddcdf62266b496000672b537ab4fbfcfad55181718231",
+    "owner_sha256": "3e9327da24f48a653703c50879a1f2e23a51cbad5c3aae4dd8db8fbce7eec347",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_sha256": "efc3e8225da5a76f0835a27c381cadc3d95961edde4869af966532a00df34fbe",
+    "catalog_header_sha256": "550235a655b78a216aaf67685a2ef682058fea59044608c32d14599f8db6d95d"
+  },
+  "gate": {
+    "platform": "macOS arm64",
+    "typecheck": "PASS",
+    "command": "TD_TEST_PRE_BATCH_BUILD=<accepted-026> node --test --test-concurrency=1 --test-reporter=tap build/adapter/test-batch-{owned,crash,limits}.js",
+    "tests": 12,
+    "pass": 12,
+    "fail": 0,
+    "skipped": 0,
+    "elapsed_ms": 15996.816625,
+    "default_memory": "128MB",
+    "instrumented_inside_insert_memory": "512MB for crash writer and retry using the deliberately expensive CHECK",
+    "phases": [
+      "observed pending INSERT",
+      "before commit",
+      "after commit"
+    ],
+    "cases": [
+      "SIGKILL inside_insert reconciles a first native batch and its migration",
+      "SIGKILL before_commit reconciles a first native batch and its migration",
+      "SIGKILL after_commit reconciles a first native batch and its migration",
+      "batch accepts 32 members and the exact UTF-8 envelope and per-record limits",
+      "one command accepts 4096 submitted assertions across two members at default memory",
+      "4096 affected assertions and 8192 generated carries fit one batch receipt at default memory",
+      "first one-K patch and put preserve format 5 history and replay at default memory",
+      "first one-K patch and put preserve format 6 history and replay at default memory",
+      "first batch metadata, members and receipt share the caller transaction",
+      "late batch usage constraint rolls back migration and both members",
+      "batch from format eight preserves typed forward references and a cyclic declaration",
+      "format nine revision two upgrades atomically and preserves blob descriptors through batch patch"
+    ]
+  },
+  "prior_binary_fence": {
+    "extension_version": "0.26.0",
+    "core_sha256": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b",
+    "owner_sha256": "5ab96770afbed986b33eaa6b75f0f64c843045a636edcb9ff5922a6498d58a68",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "fixture_sha256_before_and_after": "9fc096aa6fa3f75dd823e3ed0e943a8b79dbb3165fcde7b92a1287ee0c94fa98",
+    "result": "Archived revision-2 binary rejected revision 3 during initialization. Activation, read and write failed, and the copied catalog snapshot was unchanged."
+  },
+  "original_failure": {
+    "source": "a316bdd4d082f53362808c2f24aa53bc1f9d0226",
+    "core_sha256": "a9b11e95396bd1b788b31b3d202a2578ead67356662882844d36299a1541d8c3",
+    "owner_sha256": "3e9327da24f48a653703c50879a1f2e23a51cbad5c3aae4dd8db8fbce7eec347",
+    "tests": 12,
+    "pass": 11,
+    "fail": 1,
+    "skipped": 0,
+    "failed_stage": "CREATE TEMP TABLE __td_batch_pending with lateral json_each over prepared member JSON",
+    "error": "DuckDB failed to allocate 256 KiB with 122 MiB of 122 MiB used. The failed exact-4096 request left no receipt."
+  },
+  "revised_stage_probe": {
+    "method": "Execute the native C++ expanded SQL statement by statement in one 128 MB engine transaction, then roll back",
+    "input_json_bytes": 26639,
+    "expanded_sql_bytes_before_comment": 44668,
+    "tracked_bytes_before_pending_stage": 2809136,
+    "tracked_bytes_after_pending_stage": 4201456,
+    "measurement": "DuckDB counters sampled between statements",
+    "assertions": 4096,
+    "exact_zero_based_assertion_ids": 4096,
+    "result": "Projected list UNNEST completed. The public-path rerun independently validated all IDs, the receipt and the one knowledge cut."
+  },
+  "local_log_sha256": {
+    "first-engine.tap": "e361f8d94d2935edbcec7409a2ff41285b8c04404a8871dabab9afe7c4c5b5d1",
+    "submitted-stages.log": "315cac2e0cdb1e4904703acf2cc8f7295d9982d289c9795f4cdcf71269439567",
+    "statement-memory.log": "ab9abdef69763f52f8b8697452da23f08280f43adf8e61e44e512b8fba001aec",
+    "statement-memory-unnest.log": "ba3a2ff5492e38f256a4a1f7772cf1369ef3371f530087be84db059c3758f325",
+    "final/engine.tap": "e9ccdcffc5e6ad0909dc58dfce361d67db35db0c583dbcdc7f51c7c9f2b34a31"
+  },
+  "compiled_test_sha256": {
+    "test-batch-owned.js": "82547f1caac57a1dfd62b94a985e73e81d6297a9c04ddf235333b32f8ca71c5e",
+    "test-batch-crash.js": "4fcc331292684aa64f0205afafb99fe70226afafe1eb8b965691499b8b0a809c",
+    "test-batch-limits.js": "8f3ef1df2f1482b9a17701964ebeddeecf8efcb9d69865e6e328dd6133d57808",
+    "crash-native-command.mjs": "44e33d6d587a82752e9ad9d52917bf64e1c852204898ff3dce5d5548a10867a3"
+  },
+  "remaining_qualification": [
+    "Main integrated full verification",
+    "Mixed-scale batch performance"
+  ]
+}

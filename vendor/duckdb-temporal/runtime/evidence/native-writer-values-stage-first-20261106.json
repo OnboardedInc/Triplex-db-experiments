@@ -1,0 +1,53 @@
+{
+  "schema": "td.native-writer-values-stage-first/1",
+  "status": "FAILED_SETUP_BEFORE_TSC_OR_ENGINE",
+  "sourceCommit": "88a2c4e18635a010d67deb49930675ed81f877a3",
+  "firstAttempt": true,
+  "firstTerminalExitCode": 1,
+  "error": {
+    "name": "FileNotFoundError",
+    "message": "[Errno 2] No such file or directory: '__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/build/temporal_datalog.duckdb_extension'",
+    "traceback": "Traceback (most recent call last):\n  File \"<stdin>\", line 47, in <module>\n  File \"<stdin>\", line 10, in digest\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py\", line 771, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/build/temporal_datalog.duckdb_extension'\n"
+  },
+  "copied": {
+    "compiledArtifacts": 181,
+    "sdkDependencies": 395,
+    "nativeSourcesChecked": 48,
+    "externalRoutes": {
+      "@triplex-build": {
+        "literalTarget": "[LOCAL_PATH_0061]",
+        "resolvedTarget": "[LOCAL_PATH_0061]",
+        "use": "read-only selected existing dependency"
+      },
+      "@types": {
+        "literalTarget": "[LOCAL_PATH_0062]",
+        "resolvedTarget": "[LOCAL_PATH_0062]",
+        "use": "read-only selected existing dependency"
+      },
+      "effect": {
+        "literalTarget": "[LOCAL_PATH_0063]",
+        "resolvedTarget": "[LOCAL_PATH_0063]",
+        "use": "read-only selected existing dependency"
+      },
+      "typescript": {
+        "literalTarget": "[LOCAL_PATH_0064]",
+        "resolvedTarget": "[LOCAL_PATH_0064]",
+        "use": "read-only selected existing dependency"
+      },
+      ".bin/tsc": {
+        "literalTarget": "[LOCAL_PATH_0044]",
+        "resolvedTarget": "[LOCAL_PATH_0044]",
+        "use": "read-only selected existing dependency"
+      }
+    }
+  },
+  "diagnosis": "The181 compiled pins and395 SDK dependency maps omit coreextensionf44/plain1ef/controlaf from separate immutable4 map; engine72 overlaps SDK395. Correct union579/184 compiled; only3 absent assets required.",
+  "TSC": "notstarted",
+  "DuckDBEngine": "notimported",
+  "databaseOrTests": "notstarted",
+  "raw": {
+    "file": "native-writer-values-stage-first-20261106/stage-first.json",
+    "sha256": "8206aa7335a3a6293e8a61c2207cd348a666f2a87a01509c59e2ad853c5d0f26"
+  },
+  "repairAuthorization": "Root explicitly authorized only3 absent assets and new attempt02 receipt; first trace/maps remain unchanged, test source/expected answers unchanged."
+}

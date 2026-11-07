@@ -1,0 +1,98 @@
+{
+  "format": "triplex-native-query-feature-qualification/1",
+  "recordedAtUnix": 1794017875.290974,
+  "engine": {
+    "version": "0.6.0",
+    "git": "6c5861a",
+    "image": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "memoryBytes": 2147483648
+  },
+  "publicBoundary": "Authored SPARQL SELECT returning schema-validated rows through compiled public TypeScript APIs; no Datalog lowering, new public schema DSL or full AST rewriter. Engine language expressiveness remains available; only declared executed features below are qualified.",
+  "features": [
+    {
+      "id": "schema-keyed-typed-fact-read",
+      "status": "EXECUTED_SCOPED_PASS",
+      "evidence": [
+        ".devloop/jobs/qlever-native-entry-final-v1/attempts/0001/terminal.json",
+        "qualification/reviews/qlever-native-entry-final-independent.json",
+        ".devloop/jobs/public-native-consumer-v2/attempts/0001/terminal.json"
+      ],
+      "scope": "Fresh final-source compiled public entry11 gate passes exact signed int64, binary64 lexical values/negative zero, numeric-looking text, schema-bound joins, scope/half-open fractional cuts, correction/history/current/reopen, raw language tags/safe parameters and preaborted requests. Independent review verifies actual baseline100 before/after and all3237 pins. The earlier installed consumer is historical for its captured closure."
+    },
+    {
+      "id": "native-only-query-forms",
+      "status": "AVAILABLE_NOT_BLANKET_QUALIFIED",
+      "scope": "A trusted callback supplies native SPARQL and the engine parses its syntax; select consumes binding rows. Native expressions, property paths, UNION and raw graph patterns remain available. Arbitrary raw graph patterns do not acquire helper cuts or authorization automatically."
+    },
+    {
+      "id": "authored-business-task-packet",
+      "status": "CURRENT_SOURCE_BOUND_FULL_PACKET_PASS",
+      "evidence": [
+        ".devloop/jobs/qlever-native-packet-v5/attempts/0001/terminal.json",
+        "qualification/evidence/qlever-native-v4-controller-publication-failure.json",
+        "qualification/reviews/qlever-native-v5-independent.json",
+        "qualification/reviews/qlever-combined-final-functional-independent.json"
+      ],
+      "scope": "Fresh v5 canonically published all142 static current/reopen answers with final task-wide source cuts, current signed-zero trace evidence, complete71 authored handlers, baseline100 readbacks and source/controller preimages at the same2GiB engine limit. V4 remains controller_publication_failed and unqualified; its raw terminal is not adopted. This is functional fixture coverage, not arbitrary SPARQL or concurrent/scale acceptance."
+    },
+    {
+      "id": "task-wide-source-cut",
+      "status": "EXECUTED_FOCUSED_AND_FULL_PACKET_PASS",
+      "evidence": [
+        ".devloop/jobs/qlever-native-task-cut-control-v1/attempts/0001/terminal.json",
+        ".devloop/jobs/qlever-native-task-cut-fixed-v1/attempts/0001/terminal.json",
+        ".devloop/jobs/qlever-native-packet-v5/attempts/0001/terminal.json"
+      ],
+      "scope": "A real refund writer between calls of a revenue task exposed the mixed-position control. The fixed first task stays at100 at its initial position and the next task sees90 at the advanced position. Intentional earlier cuts are preserved. Fresh v5 then passed the full142 static fixture. This is not a256-client load result."
+    },
+    {
+      "id": "property-path-working-relations",
+      "status": "EXECUTED_SCOPED_PASS",
+      "evidence": [
+        ".devloop/jobs/qlever-native-helper-interval-v1/attempts/0001/terminal.json",
+        ".devloop/jobs/qlever-native-packet-v5/attempts/0001/terminal.json"
+      ],
+      "scope": "Native capped edge graph materialization plus property paths implements14 logical closure tasks. Complete working state, unknown ACK reconciliation and cleanup are charged. The initial helper probe passed six closure checks and separately failed ten interval checks; fresh v5 passes all142 including every closure and uptime current/reopen case."
+    },
+    {
+      "id": "interval-union-uptime",
+      "status": "EXECUTED_SCOPED_PASS_AFTER_RETAINED_FAILURES",
+      "evidence": [
+        ".devloop/jobs/qlever-native-uptime-v5/attempts/0001/terminal.json",
+        ".devloop/jobs/qlever-native-packet-v5/attempts/0001/terminal.json"
+      ],
+      "scope": "Positive GROUP MIN adjacent endpoints, coverage joins, DISTINCT and SUM, plus an explicit native COUNT empty proof, pass ten current/reopen checks. Earlier Cartesian planner assertion and empty SUM error remain engine findings."
+    },
+    {
+      "id": "exact-latest-revision-and-empty-groups",
+      "status": "INDEPENDENT_EXECUTION_SCOPED_PASS",
+      "evidence": [
+        "qualification/reviews/qlever-native-shape-edges-independent-v1.json"
+      ],
+      "scope": "Grouped MAX over a full signed64 order key, joined back to every winner, preserves tied maxima. Empty MAX and grouped SUM produce no rows. This qualifies the candidate query rather than fixing engine correlation."
+    },
+    {
+      "id": "raw-outer-filter-correlated-not-exists",
+      "status": "OBSERVED_NORMATIVE_FAIL",
+      "evidence": [
+        "qualification/reviews/qlever-native-shape-edges-independent-v1.json"
+      ],
+      "scope": "Both flat and subquery-wrapped standard controls expect only two and return one,two. Do not infer general correlation correctness from task recipes using positive grouping."
+    },
+    {
+      "id": "arbitrary-native-arithmetic",
+      "status": "NOT_BLANKET_QUALIFIED",
+      "scope": "Typed lexical source reads preserve exact carriers; ctx.nativeNumber rejects operands outside its pinned reduced-precision safe domain. Authored expressions use the pinned engine arithmetic. Exact integer SUM recipes consume only bounded final aggregate scalars with explicit count and domain bounds; arbitrary full-precision SPARQL arithmetic remains unqualified."
+    },
+    {
+      "id": "cancel-and-failure-isolation",
+      "status": "PARTIAL_NO_FULL_ACCEPTANCE",
+      "scope": "The preaborted request gate passed and the API exposes native cancellation and deadlines. Running physical reclamation, independent writer failures, restore and write-fault acceptance remain separate required gates."
+    }
+  ],
+  "limits": [
+    "No claim that all ten goals, ten million entities, 100 million active facts or 256 clients have passed.",
+    "Native paths initially share Triplex writes, history and receipts; query recipes do not qualify a different write architecture.",
+    "Resources, helpers, admissions and working graph maintenance belong to the complete application path."
+  ]
+}

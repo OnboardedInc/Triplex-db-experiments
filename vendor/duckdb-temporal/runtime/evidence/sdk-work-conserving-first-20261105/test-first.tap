@@ -1,0 +1,14 @@
+✔ read-only peers use four slots and all five heavy families share their FIFO (1439.553458ms)
+✔ a writer gets the third cleanup slot and read-only service returns to four (502.128375ms)
+✔ prior-write barriers own no permits and cannot be extended by a later writer (518.74ms)
+✔ queued cancellation owns no token while active cleanup retains its slot (428.165041ms)
+✔ close and revalidate drain accepted peers without acquiring a maintenance permit (880.579875ms)
+✔ light lease FIFO and a blocked heavy reader cannot prevent a writer peer (1000.244541ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5759.768167

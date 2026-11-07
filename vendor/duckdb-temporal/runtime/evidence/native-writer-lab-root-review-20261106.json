@@ -1,0 +1,57 @@
+{
+  "schema": "td.native-writer-lab-root-review/1",
+  "status": "SMALL_CORRECTNESS_PASS_UNPROMOTED",
+  "reviewedAtUtc": "2026-11-06T06:55:22.124359+00:00",
+  "fileOnlyEvidenceCommit": "cf46293dfed10455ceb01cf61b13ffd6b9330996",
+  "smallEvidenceCommit": "3242904e57d15907931c924cfdb09b5bf1d1c29a",
+  "labSource": "213bf0b6e9f30703ee35f937d5fb414a49a4d8ce",
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "fileOnlyRawHashes": {
+    "checks/first.json": "6f62e7848b4238ab56b762588bc63158461ec113dd1ee13c292424d8eec2ee51",
+    "stage-first.json": "57170da18cccf48d28913930b0c11b86b62e8f4f903afeaacfdcd8e68e2f2daf",
+    "bind-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binding-first.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "verify-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "verify-first.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe"
+  },
+  "smallRawHashes": {
+    "sdk_control/result.json": "e68a6a07dd1034d2eda070dd067829020adc467b4a18b7f231495cda2ed68243",
+    "sdk_control/terminal.json": "64444a436a9b6c90562f3c8c6a4c33889ab7730e2eb44d2093262f3f35752ed4",
+    "sdk_control/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sdk_control/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sdk_control/preflight.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "sdk_control/postflight.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "sdk_control/preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sdk_control/postflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sdk_control/process/sdk_control-63059-ready.json": "72a23b127b8d425a2519d58e2ece009f983ddae9f9d743cc33a4632f793c6a6c",
+    "sdk_control/process/sdk_control-63059-exit.json": "579bf4e89ae5447288c3cb5585dbf3ed0d9dadc81fe28f8d473ac849e9f64d37",
+    "cpp_candidate/result.json": "e67c43790e27f0e204f38bf145c940d92e180f30a757f55850978d529138d71d",
+    "cpp_candidate/terminal.json": "9a5166fefd8f013e47360fc00cdf85b5bc5c1da25b44feb2d81ee715c9373302",
+    "cpp_candidate/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cpp_candidate/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cpp_candidate/preflight.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "cpp_candidate/postflight.json": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+    "cpp_candidate/preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cpp_candidate/postflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cpp_candidate/process/cpp_candidate-64508-ready.json": "ff2d3c4e80221d127198185e8c7820335780aadf81a869cc10a14f0ba1b97062",
+    "cpp_candidate/process/cpp_candidate-64508-exit.json": "ce28661495c6f989817fc8a0aef42919004755cbdad31af493f15615e80b3508"
+  },
+  "actualRuntimePinsRehashed": 408,
+  "sourceGitInputsVerified": {
+    "source": 46,
+    "measuredSource": 10,
+    "labSourceAttestation": 5
+  },
+  "bothObserved18ContextCensusesVerified": true,
+  "bothActualSelectedEngineAndNativeImagesVerified": true,
+  "actualRolePidOutputReaderBindingAssociationsVerified": true,
+  "bothExclusiveRoutesAndZeroCleanupVerified": true,
+  "bothCanonicalReceiptsExactlyEqual": true,
+  "independentAgentReview": "A independently verified all20 raw hashes, census/routes/images/cleanup/receipts/closed DBs; read-only source review also clear.",
+  "limits": [
+    "Two tiny16-reader runs at512MB/64MBtemp; no anti/broad/reverse/performance qualification.",
+    "21 actual typed query assertions perrole are enforced by fixed213 small source; not every tuple is stored in summary.",
+    "Active-job environment teardown and broader faults/full435 remain open.",
+    "Static loader IDs alone are insufficient; actual loaded-image reports are checked here."
+  ]
+}

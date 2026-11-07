@@ -1,0 +1,84 @@
+{
+  "schema": "td.coverage-growth-read-only-review/1",
+  "sourcePackageCommit": "8e1e3e614d4202eff1e7104aaf5dce9dc05b18db",
+  "receipt": "native-reference-coverage-growth-diagnostic-20261106.json",
+  "receiptSha256": "4f976a0f4189a752e1931f6fc0ecae00e98dfefc73300566f83e4a0a1e79cec6",
+  "rawFiles": 10,
+  "allManifestHashesAndSizesMatch": true,
+  "sourceReviewedBeforeExecution": true,
+  "reconciliation": {
+    "persistedAuthoredCommandPrefix": 260,
+    "expectedAuthoredCommands": 260,
+    "firstAbsent": null,
+    "clock": 261,
+    "targetBatches": 195,
+    "targetBatchMembers": 4225,
+    "singleSourceCommandsAndEdits": 65,
+    "presenceEntities": 130,
+    "presenceEvents": 4290,
+    "assertions": 65,
+    "retainedCount": 65,
+    "retainedBytes": 630,
+    "lastPersistedCommand": "growth-source-64",
+    "lastPersistedPosition": 261,
+    "queryEvidence": {
+      "format_clock_usage": [
+        [
+          12,
+          "261",
+          "65",
+          "630"
+        ]
+      ],
+      "base_counts": [
+        [
+          "commands",
+          "261"
+        ],
+        [
+          "assertions",
+          "65"
+        ],
+        [
+          "entity_batches",
+          "195"
+        ],
+        [
+          "entity_batch_members",
+          "4225"
+        ],
+        [
+          "entity_commands",
+          "65"
+        ],
+        [
+          "entity_presence_edits",
+          "65"
+        ]
+      ],
+      "presence_totals": [
+        [
+          "130",
+          "4290"
+        ]
+      ]
+    },
+    "completePrefixDetails": "result.json"
+  },
+  "derivedPrecisionNote": "All260 authored commands and their receipts/headers persisted, so the failure is not before final command commit. This does NOT prove the fixture observed the last JavaScript ACK: final postcommit delivery/cleanup remains possible, alongside subsequent query binding/execution, revalidation, presence/replay, raw reopen or final SDK reopen/checks. The first raw diagnostic interpretation remains unchanged. No product gate was retried or accepted.",
+  "immutability": {
+    "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-growth-FPDV3o/facts.duckdb",
+    "sha256Before": "1c2cd16700e993db513d0c2dad81bca77ef45e5b5ce9579a0ffdb83e614f45b0",
+    "sha256After": "1c2cd16700e993db513d0c2dad81bca77ef45e5b5ce9579a0ffdb83e614f45b0",
+    "mtimeMsBefore": 1793962267628.6028,
+    "mtimeMsAfter": 1793962267628.6028,
+    "sameHashAndMtime": true,
+    "noWal": true,
+    "closedScopedLsof": "closed-first.json",
+    "sourceBeforeAfterExact": true,
+    "cleanupErrors": []
+  },
+  "scope": "Read-only committed-state reconciliation only; all260 committed does not prove finalJSACK or query/audit/reopen success. No growth acceptance, retry or cap change.",
+  "reviewedAtUtc": "2026-11-06T11:12:54.642702+00:00",
+  "independentRawCheck": "Actual READ_ONLY settings, all260 distinct expected IDs/nonnull receipts,195batches65singles,130/4290events,K261/65facts/630bytes, no project-native image, sameinput/outputDBhash and no cleanup errors independently recomputed from raw result."
+}

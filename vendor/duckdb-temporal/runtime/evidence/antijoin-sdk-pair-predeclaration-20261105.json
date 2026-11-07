@@ -1,0 +1,30 @@
+{
+  "schema": "td.antijoin-selected-sdk-pair-predeclaration/1",
+  "status": "PREDECLARED_UNRUN",
+  "inspectionOnly": true,
+  "firstAttempt": true,
+  "selectedImplementationSource": "6fbb3775",
+  "controlBindingSha256": "5db1d86dcbbb791926631cbf4f018683fd3a3cc2b29b5237dcfe9afa35a9e6aa",
+  "candidateBindingSha256": "bc6394cee5a6f7e6caa57635fe1377cd94105c58ce5565257d8ef9f2add63596",
+  "sameHarness": true,
+  "sameOriginalBudget": true,
+  "sameOriginalLimits": true,
+  "sameNativeReference": true,
+  "sameResolvedSdkPackages": true,
+  "terminal": {
+    "file": "antijoin-sdk-control-16-binding-20261105-terminal.log",
+    "sha256": "870f1841bace1b346255c4728ea9ac4bd105cdeffb18d5d7aa3c10985c88cc62",
+    "exitCode": 0
+  },
+  "protocol": "ANTIJOIN-SDK-PAIRED-16-PROTOCOL.md",
+  "engineRunsOccurred": false,
+  "requires": "Integrated full verification and root explicit paired timing lease.",
+  "comparisonDisposition": {
+    "absoluteGates": "Evaluate and report original eight numerical limits for both B0 and C in both orders.",
+    "candidateRequired": "C must pass 8/8 original limits in each order.",
+    "baselineNumericalMiss": "Preserve failed_budget; numerical miss alone does not stop the remaining authorized arm.",
+    "fatalComparisonFailure": "Stop and preserve identity, typed-oracle or lifecycle disagreement in either arm.",
+    "relativeReview": "Report pairwise QPS, fixed/mixed p50/p99, ACK count/rate and sampled RSS deltas with absolute values, order and pins. No new relative hard gate.",
+    "thresholds": "No post-hoc threshold changes or first-outcome retry."
+  }
+}

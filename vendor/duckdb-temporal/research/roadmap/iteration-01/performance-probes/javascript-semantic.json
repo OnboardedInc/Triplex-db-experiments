@@ -1,0 +1,13 @@
+{
+  "runtime": "v24.22.1",
+  "unsafe_integer_literal": 9223372036854776000,
+  "safe_integer_check": false,
+  "tagged_int64_roundtrip": "9223372036854775807",
+  "tagged_float_integer_payload": "{\"type\":\"float64\",\"value\":1}",
+  "negative_zero_json": "0",
+  "number_strict_equal_bool": false,
+  "number_one_equal_float_one": true,
+  "negative_positive_zero_equal": true,
+  "map_zero_keys": 1,
+  "json_bigint_error": "TypeError"
+}

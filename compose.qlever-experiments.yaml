@@ -1,0 +1,70 @@
+name: triplex-qlever-experiments
+services:
+  a:
+    image: adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec
+    container_name: triplex-qlever-candidate-a
+    platform: linux/arm64
+    cpus: 2
+    mem_limit: 2g
+    memswap_limit: 2g
+    working_dir: /data
+    entrypoint: ["qlever-server"]
+    command:
+      [
+        "-i",
+        "triplex",
+        "-p",
+        "7019",
+        "-j",
+        "4",
+        "-m",
+        "512M",
+        "-c",
+        "64M",
+        "-e",
+        "32M",
+        "--persist-updates",
+        "--no-patterns",
+        "--no-access-check",
+      ]
+    ports: ["127.0.0.1:7021:7019"]
+    volumes: ["./.qlever/experiments/oom-wave-20261106T145730/a:/data"]
+    labels:
+      triplex.owner: triplex-db
+      triplex.experiment: oom-wave-20261106T145730
+      triplex.candidate: a
+    restart: "no"
+  b:
+    image: adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec
+    container_name: triplex-qlever-candidate-b
+    platform: linux/arm64
+    cpus: 2
+    mem_limit: 2g
+    memswap_limit: 2g
+    working_dir: /data
+    entrypoint: ["qlever-server"]
+    command:
+      [
+        "-i",
+        "triplex",
+        "-p",
+        "7019",
+        "-j",
+        "4",
+        "-m",
+        "512M",
+        "-c",
+        "64M",
+        "-e",
+        "32M",
+        "--persist-updates",
+        "--no-patterns",
+        "--no-access-check",
+      ]
+    ports: ["127.0.0.1:7022:7019"]
+    volumes: ["./.qlever/experiments/oom-wave-20261106T145730/b:/data"]
+    labels:
+      triplex.owner: triplex-db
+      triplex.experiment: oom-wave-20261106T145730
+      triplex.candidate: b
+    restart: "no"

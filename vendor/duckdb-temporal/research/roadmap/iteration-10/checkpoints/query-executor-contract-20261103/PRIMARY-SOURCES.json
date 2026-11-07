@@ -1,0 +1,227 @@
+{
+  "repository": "bjacobso/triplex",
+  "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+  "retrieved_date_utc": "2026-11-03",
+  "method": "Connected GitHub read-only source tools",
+  "evidence_kind": "Named pinned source and connector-returned blob IDs; no loaded-build authentication or source-body rehash",
+  "all_controls": "UNEXECUTED",
+  "runtime_actions": "None",
+  "sources": [
+    {
+      "path": "packages/core/src/storage/QueryExecutor.ts",
+      "blob_sha": "8c1d3e3b9cf9cc8c14586e0fc48780075086157f",
+      "line_ranges": [
+        "112-174"
+      ]
+    },
+    {
+      "path": "packages/core/src/datalog/schema.ts",
+      "blob_sha": "3a3a1356473336aac8ec571a0cfa8c32aecac5ad",
+      "line_ranges": [
+        "13-95",
+        "101-138",
+        "140-194",
+        "200-290",
+        "300-430",
+        "436-521",
+        "608-678"
+      ]
+    },
+    {
+      "path": "packages/core/src/datalog/validation.ts",
+      "blob_sha": "f271306ef9d7bf772a7dc0b36cfd5028df358742",
+      "line_ranges": [
+        "23-56",
+        "52-111",
+        "113-136",
+        "138-205",
+        "207-255",
+        "257-329",
+        "355-403"
+      ]
+    },
+    {
+      "path": "packages/core/src/datalog/compiler.ts",
+      "blob_sha": "e1df2e3f61fd72e574f77418160448b885045c5f",
+      "line_ranges": [
+        "237-266",
+        "529-615",
+        "649-780",
+        "787-812",
+        "878-923",
+        "1048-1101",
+        "1116-1267",
+        "1292-1365",
+        "1611-1733",
+        "1755-1799",
+        "1804-1924"
+      ]
+    },
+    {
+      "path": "packages/core/src/datalog/wrapper.ts",
+      "blob_sha": "46cca1f25f7f3bc6e6fb296de5fe9e7aa41b456d",
+      "line_ranges": [
+        "60-158",
+        "318-446"
+      ]
+    },
+    {
+      "path": "packages/core/src/kv/datalog/executor.ts",
+      "blob_sha": "1f524d44426f0b33338a74f2f8050bda6d5c2f19",
+      "line_ranges": [
+        "60-187",
+        "189-306",
+        "346-394",
+        "398-443",
+        "461-512",
+        "514-610",
+        "679-751",
+        "764-819",
+        "823-925"
+      ]
+    },
+    {
+      "path": "packages/core/src/kv/datalog/predicate.ts",
+      "blob_sha": "86f8151df41dc483013f841e79f03d8cb81879a5",
+      "line_ranges": [
+        "1-89"
+      ]
+    },
+    {
+      "path": "packages/core/src/kv/datalog/pattern.ts",
+      "blob_sha": "e1bb99316774cabde1ec9e57f3f74c9d44a4517e",
+      "line_ranges": [
+        "171-255"
+      ],
+      "role": "Supplementary inspected binding implementation"
+    },
+    {
+      "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "blob_sha": "d617ebf4e101e7aed3de262f3278c8d7cd699d0f",
+      "line_ranges": [
+        "822-908"
+      ]
+    },
+    {
+      "path": "packages/sql/src/SqlQueryExecutor.ts",
+      "blob_sha": "d53f1d9baa3a88d0900222ea16724f77a5ec63ea",
+      "line_ranges": [
+        "35-42",
+        "185-307"
+      ]
+    },
+    {
+      "path": "packages/core/src/errors/index.ts",
+      "blob_sha": "5098faef3dd76bbb6e12471b12e12441ff970bff",
+      "line_ranges": [
+        "119-140",
+        "185-191"
+      ]
+    },
+    {
+      "path": "docs/datalog.md",
+      "blob_sha": "89ca70125e150c2b8fb89750bcb7db4632cdf271",
+      "line_ranges": [
+        "119-144",
+        "146-175",
+        "248-276"
+      ]
+    },
+    {
+      "path": "docs/custom-runtimes.md",
+      "blob_sha": "df7813e8fbf95d6f595c2aaee8af95318b2de0b1",
+      "line_ranges": [
+        "213-258"
+      ]
+    },
+    {
+      "path": "packages/core/test/datalog/validation.test.ts",
+      "blob_sha": "32f27798c47d4323db927841b195f35765bf26f0",
+      "line_ranges": [
+        "10-288"
+      ],
+      "role": "Authored assertions only; not run"
+    },
+    {
+      "path": "packages/core/test/kv/datalog/executor.test.ts",
+      "blob_sha": "eebba0139e05141999f97774ae0b137a3de08e44",
+      "line_ranges": [
+        "429-475"
+      ],
+      "role": "Authored assertions only; not run"
+    },
+    {
+      "path": "test/integration/test/datalog-differential.test.ts",
+      "blob_sha": "7a2fbf307f4048090761413854827a96240394b9",
+      "line_ranges": [
+        "22-91",
+        "104-165"
+      ],
+      "role": "Supplementary authored corpus only; not run"
+    },
+    {
+      "path": "packages/core/src/runtime/Runtime.ts",
+      "blob_sha": "05d0dc5103425c88534f3d32f427ffc59239a109",
+      "role": "Named source/assertion provenance; read-only, not run"
+    },
+    {
+      "path": "packages/testkit/src/index.ts",
+      "blob_sha": "d410781a7dc61a3833991a6fc9463c7dbf9c1a77",
+      "role": "Named source/assertion provenance; read-only, not run"
+    },
+    {
+      "path": "packages/core/test/datalog/compiler.test.ts",
+      "blob_sha": "914667cec5297020d7c7069de428ca66b5fda559",
+      "role": "Named source/assertion provenance; read-only, not run"
+    },
+    {
+      "path": "packages/core/test/datalog/wrapper.test.ts",
+      "blob_sha": "f0271f7dfc418003bc5d3deab4ce7eb1da1252ef",
+      "role": "Named source/assertion provenance; read-only, not run"
+    },
+    {
+      "path": "test/integration/test/datalog.test.ts",
+      "blob_sha": "ad8bb4272caa8cc01c56859190a1d7697d38b872",
+      "role": "Named source/assertion provenance; read-only, not run"
+    }
+  ],
+  "product_mapping": {
+    "repository": "Contributor/research-reference",
+    "revision": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "evidence_kind": "Unchanged published product source, not a runtime or loaded-build observation",
+    "sources": [
+      {
+        "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_core.cpp",
+        "blob_sha": "217b1b42aafe1aea490baa3b95b84b5ef12c4ad2"
+      },
+      {
+        "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_expression.hpp",
+        "blob_sha": "81372c05af37c3bef6e65223e4905e01f2a16869"
+      },
+      {
+        "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_value_domain.hpp",
+        "blob_sha": "99ff9118354d3bba5e48ad461442ef2493e94086"
+      },
+      {
+        "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/store.py",
+        "blob_sha": "479d6a9133acddfd32a6c93a723f8c77155db4e4"
+      },
+      {
+        "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/typed_store.py",
+        "blob_sha": "100a4cbb7867f1454a304635ed6ba618d0ef04ce"
+      },
+      {
+        "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/stratified_store_v1.py",
+        "blob_sha": "3ff0d627fd2227e168123d5b74033ad26b769fac"
+      },
+      {
+        "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/planner_v1.py",
+        "blob_sha": "4bfaa1c6cc8c7829acfb37750aa2376951c3e8ed"
+      },
+      {
+        "path": "projects/temporal-datalog/prototype/native-cloud-v06/DESIGN.md",
+        "blob_sha": "10821705bcf34881eb74040d9b4a07f40c78d311"
+      }
+    ]
+  }
+}

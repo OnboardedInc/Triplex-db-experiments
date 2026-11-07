@@ -1,0 +1,33 @@
+{
+  "schema": "td.native-write-frozen-runtime-receipt/1",
+  "status": "READ_ONLY_BYTE_SNAPSHOT_COMPLETE_NOT_ENGINE_REOPENED",
+  "runtime": "build/native-write-frozen-032-20261105/runtime",
+  "archive": "build/native-write-frozen-032-20261105",
+  "checksums": "build/native-write-frozen-032-20261105/SHA256SUMS",
+  "sha256SumsSha256": "b17f748f92f8fa94bd5b9218602993e8b0e5f4b9ab863b38d7941fb11769580b",
+  "files": 445,
+  "fileMode": "0444",
+  "directoryMode": "0555",
+  "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+  "qualifiedHarnessCommit": "fe9ca9aa00b454f7555fe6f1392ef8ad2a3f5840",
+  "firstMixedReceiptCommit": "af5bf466",
+  "actualByteHashes": {
+    "coreExtension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "ownerCompanion": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "controlBridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "engineLibrary": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "copiedSdkPackages": [
+    "@duckdb/node-api",
+    "@duckdb/node-bindings",
+    "@duckdb/node-bindings-darwin-arm64",
+    "detect-libc"
+  ],
+  "preserved": [
+    "Exact core, paired owner, control, manifests and generated catalog header",
+    "All three production adapter modules",
+    "Actual selected SDK and engine package bytes with dependency notices",
+    "Native and owner manifest source inputs and original build scripts"
+  ],
+  "boundary": "Copies, not links. No source/artifact edit, rebuild, test, engine open or timed run was performed to make the archive. Future common harness uses the unchanged original B sourceRoot for git-commit attestation; source copies are also retained for recovery. Native/runtime binaries remain unpromoted."
+}

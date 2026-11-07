@@ -1,0 +1,2 @@
+{"kind":"termination_requested","pid":91745,"atNs":"1803552741479833","threadId":1,"observedAtNs":"1803552740695500"}
+{"kind":"worker_exit","pid":91745,"atNs":"1803553007253833","threadId":1,"exitCode":1}

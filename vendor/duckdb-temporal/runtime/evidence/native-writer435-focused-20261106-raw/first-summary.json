@@ -1,0 +1,172 @@
+{
+  "schema": "td.native-writer435-focused/1",
+  "sourceCommit": "659ace02feaaa4fe1d779644b84c0f6e42fb2097",
+  "baseSourceCommit": "51d4d0f738d6ca6a17413aaf218d2389d39f90f0",
+  "status": "passed_focused14_not_full435",
+  "baselineCounts": {
+    "compiled": 186,
+    "dependencies": 395,
+    "union": 581
+  },
+  "tests": [
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "build/adapter/test-sdk-admission.js"
+      ],
+      "pid": 77616,
+      "startedAtUtc": "2026-11-06T07:23:51.385284+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:23:56.586145+00:00",
+      "elapsedMs": 5200.8885841351,
+      "tapPass": 5,
+      "expectedSelectedPass": 5,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ]
+    },
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-skip-pattern=^independent full512 native patch trace retains every returned cut and restores all256 entities$",
+        "build/adapter/test-sdk-admission-independent.js"
+      ],
+      "pid": 77648,
+      "startedAtUtc": "2026-11-06T07:23:57.125260+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:23:59.739785+00:00",
+      "elapsedMs": 2614.5500410348177,
+      "tapPass": 4,
+      "expectedSelectedPass": 4,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ]
+    },
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^pooled admission includes reads awaiting the writer barrier$",
+        "build/adapter/test-readers.js"
+      ],
+      "pid": 77675,
+      "startedAtUtc": "2026-11-06T07:24:00.234355+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:24:00.750844+00:00",
+      "elapsedMs": 516.498832963407,
+      "tapPass": 1,
+      "expectedSelectedPass": 1,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ]
+    },
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^(native validation failure and injected writer transport interruption preserve owned reads|required ownership verifies the engine resolved by the SDK with a shadow platform package)$",
+        "build/adapter/test-owned-store.js"
+      ],
+      "pid": 77688,
+      "startedAtUtc": "2026-11-06T07:24:01.277634+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:24:02.299600+00:00",
+      "elapsedMs": 1021.9835829921067,
+      "tapPass": 2,
+      "expectedSelectedPass": 2,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ]
+    },
+    {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^(a native writer transport fatal fences writer, active readers and queued readers with its original cause|ordinary writer transport OOM and an embedded fatal phrase preserve healthy instance reuse)$",
+        "build/adapter/test-fatal.js"
+      ],
+      "pid": 77706,
+      "startedAtUtc": "2026-11-06T07:24:02.799316+00:00",
+      "status": "terminal",
+      "exitCode": 0,
+      "endedAtUtc": "2026-11-06T07:24:03.735561+00:00",
+      "elapsedMs": 936.24775018543,
+      "tapPass": 2,
+      "expectedSelectedPass": 2,
+      "tapFail": [
+        "0"
+      ],
+      "tapCancelled": [
+        "0"
+      ]
+    }
+  ],
+  "tsc": {
+    "command": [
+      "[LOCAL_PATH_0043]",
+      "[LOCAL_PATH_0044]",
+      "-p",
+      "tsconfig.json"
+    ],
+    "pid": 77576,
+    "startedAtUtc": "2026-11-06T07:23:48.863796+00:00",
+    "status": "terminal",
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T07:23:50.873924+00:00",
+    "elapsedMs": 2009.8749999888241
+  },
+  "selected512": {
+    "sourceEqualA51d": true,
+    "compiledEqualA": true,
+    "sourceBlockSha256": "c3c52a5c8a7d8f95cd5baa4d1025d52fd863c319d95bff8d60ead0f952c78012",
+    "compiledBlockSha256": "806b78538a00f0a74758f8789a61322dd976e816e9e1b74c8c0e13482901d511"
+  },
+  "delta": {
+    "removed": [],
+    "added": [
+      "build/adapter/native-writer-test-fault.d.ts",
+      "build/adapter/native-writer-test-fault.js"
+    ],
+    "changed": [
+      "build/adapter/test-fatal.js",
+      "build/adapter/test-owned-store.js",
+      "build/adapter/test-readers.js",
+      "build/adapter/test-sdk-admission-independent.js",
+      "build/adapter/test-sdk-admission.js"
+    ],
+    "compiledCount": 188,
+    "unionCount": 583
+  },
+  "selectedMethodsPassed": 14,
+  "full435Run": false,
+  "nativeRebuild": false,
+  "packageInstall": false
+}

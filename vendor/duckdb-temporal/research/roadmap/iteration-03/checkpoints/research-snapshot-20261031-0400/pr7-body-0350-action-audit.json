@@ -1,0 +1,19 @@
+{
+  "submitted_at": "2026-10-31T03:51:44.148Z",
+  "returned_at": "2026-10-31T03:51:51.834Z",
+  "reread_at": "2026-10-31T03:52:26.992Z",
+  "github_updated_at": "2026-10-31T03:51:51Z",
+  "head": "8e682874c52c3f7cfc88e1cc6c006da684b04a9a",
+  "state": "open",
+  "draft": true,
+  "merged": false,
+  "base": "main",
+  "status": "VERIFIED_BODY_ONLY_UPDATE_SUBMIT_RETURN_REREAD_EXACT",
+  "submitted_sha256": "074dcab15cbd0104c4c298b87d53c7a9856dbdab35fcf55f363387e816f70615",
+  "returned_sha256": "074dcab15cbd0104c4c298b87d53c7a9856dbdab35fcf55f363387e816f70615",
+  "reread_sha256": "074dcab15cbd0104c4c298b87d53c7a9856dbdab35fcf55f363387e816f70615",
+  "bytes": 9246,
+  "historical_suffix_unchanged": true,
+  "only_body_requested": true,
+  "no_deletion_or_state_change": true
+}

@@ -1,0 +1,33 @@
+{
+  "closed_utc": "2026-10-31T16:44:18.923896+00:00",
+  "scope": "Current new item4 root QA research with explicit source-reviewed clarifications, before implementation",
+  "cases": 32,
+  "all_tests": "UNRUN",
+  "files": [
+    {
+      "path": "CHANGE-RECORD.json",
+      "bytes": 944,
+      "sha256": "63266003efd63572812ef41a61760066dbbd1e03240bc0a0224b021bbdcc0b66"
+    },
+    {
+      "path": "FIXTURE-MATRIX.json",
+      "bytes": 6230,
+      "sha256": "0d2148ca4fe034dbbc52e6de2dbe0f54b7ff776b62a63e85bcbd59ffe1a7b661"
+    },
+    {
+      "path": "PRIMARY-SOURCES.json",
+      "bytes": 1436,
+      "sha256": "f5f6dbddb672a8c3cd02613939fba1a0faca856fce8be83c05aee3a1dc5b01f0"
+    },
+    {
+      "path": "PUBLISHED-SOURCE-READBACK.json",
+      "bytes": 1894,
+      "sha256": "54f7bf798daa9e29d599243de67527e017e30dba5e22c9a0c471932822000f71"
+    },
+    {
+      "path": "RESEARCH.md",
+      "bytes": 9669,
+      "sha256": "fd85e948aef8ab05ee00af0bc087c1b3be30ab5687de62ae3cd16507d140a92e"
+    }
+  ]
+}

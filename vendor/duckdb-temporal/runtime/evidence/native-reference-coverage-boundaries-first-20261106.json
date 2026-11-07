@@ -1,0 +1,299 @@
+{
+  "schema": "td.native-reference-coverage-boundary-first-gate/1",
+  "status": "failed_growth_memory_boundary",
+  "packagedAtUtc": "2026-11-06T10:53:39.484631+00:00",
+  "measuredSourceCommit": "e8b395d835832d0bd1915374cbe8b018092dd478",
+  "pairedNativeSourceCommit": "c593a6fc8eafd3dd76eda36b2f245885cfb94425",
+  "firstGateReceipt": "evidence/native-reference-coverage-first-20261106.json",
+  "independentBoundaryQa": {
+    "initial": "66245ca8",
+    "preEngineBooleanKeywordCorrection": "56999646",
+    "preEnginePublicBigIntRepresentationCorrection": "2b4649af148d23bd04c28331093bf10800839a29",
+    "actualFileExactFinalQa": true,
+    "changesAfterTestStart": false
+  },
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-coverage-boundaries-20261106-01",
+  "rawDirectory": "evidence/native-reference-coverage-boundaries-first-20261106-raw",
+  "rawFiles": {
+    "after-tests-first.json": {
+      "sha256": "1f0918233bdb550bea73ab73473883075e04756499a884f35e9fdbad86fef45b",
+      "sizeBytes": 98452
+    },
+    "before-first.json": {
+      "sha256": "b7338a237269f92de2b0ab9985a00f75aff58c53652783bd025c8a2be4cc2896",
+      "sizeBytes": 94029
+    },
+    "compiled-before-tests-first.json": {
+      "sha256": "861c84577c477adcf1db6792fd58d4ae203ea14ad2fa6f2e3fe90ad74e309310",
+      "sizeBytes": 20942
+    },
+    "tests-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tests-first.tap": {
+      "sha256": "1665e8f2f43806485b5a353f8ebb544af2f40c1de948a8963d428f3555d24135",
+      "sizeBytes": 2633
+    },
+    "tests-first.terminal.json": {
+      "sha256": "54859e9af73d774957327203c9f1e00dc526162c0a6d42a7ac649480bcaa5453",
+      "sizeBytes": 933
+    },
+    "tsc-delta-first.json": {
+      "sha256": "ee8f8added2d6263890bc66a89973949e89537243fcad3da52426e45cb61c167",
+      "sizeBytes": 215
+    },
+    "tsc-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tsc-first.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tsc-first.terminal.json": {
+      "sha256": "5842c68191dd8e9e0b2a3197112a5764a0e5ccafd374bd802a8103623e21486c",
+      "sizeBytes": 460
+    },
+    "predecessor-fence.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "predecessor-fence.stdout": {
+      "sha256": "28f8fac3e227d6137de280bceff1de3f818b5a74f4db616a0493c939648fe759",
+      "sizeBytes": 79396
+    },
+    "predecessor-fence.terminal.json": {
+      "sha256": "ff4d7e2858931a22d938081dc4048fd82878a26ab279689b00eaa5c57a1e2045",
+      "sizeBytes": 69
+    },
+    "predecessor-ir.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "predecessor-ir.stdout": {
+      "sha256": "9d57741adf5cc228d5cc46844b2ceaaf50532cdc36d98a49fbc974cd21907651",
+      "sizeBytes": 28211
+    },
+    "predecessor-ir.terminal.json": {
+      "sha256": "d0e778e221b49130e7e861bfbd1abfadecefd444975b5a76eff82e65432fd508",
+      "sizeBytes": 69
+    }
+  },
+  "actualOutcomes": {
+    "tsc": "first_pass",
+    "priorCompiled186Unchanged": true,
+    "compiledAdditionsOnly": [
+      "build/adapter/test-native-reference-coverage-boundaries.d.ts",
+      "build/adapter/test-native-reference-coverage-boundaries.js"
+    ],
+    "selectedMethods": 4,
+    "passed": 3,
+    "failed": 1,
+    "skipped": 0,
+    "reserved4096MethodExecuted": false,
+    "reruns": 0,
+    "capRaises": 0,
+    "productionRepairs": 0
+  },
+  "terminals": {
+    "tsc": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 53085,
+      "startedAtUtc": "2026-11-06T10:50:11.774363+00:00",
+      "endedAtUtc": "2026-11-06T10:50:13.783813+00:00",
+      "exitCode": 0,
+      "elapsedMs": 2009.4687500968575
+    },
+    "node": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^(coverage definitions preserve predecessor|coverage checks exact signed|coverage audits130|coverage proof entity cap)",
+        "build/adapter/test-native-reference-coverage-boundaries.js"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 53226,
+      "startedAtUtc": "2026-11-06T10:50:36.866466+00:00",
+      "endedAtUtc": "2026-11-06T10:51:08.670324+00:00",
+      "exitCode": 1,
+      "elapsedMs": 31803.584292065352,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4",
+        "TD_REFERENCE_COVERAGE_PREDECESSOR_RUNTIME": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime"
+      },
+      "excludedReservedEdge4096Method": true
+    }
+  },
+  "passedMethods": [
+    "coverage definitions preserve predecessor IR1 through4 and caller rollback restores format schema activation and receipts",
+    "coverage checks exact signed int64 endpoints adjacency and exclusive end without tick arithmetic overflow",
+    "coverage proof entity cap accepts source plus31 targets and atomically rejects source plus32"
+  ],
+  "failure": {
+    "method": "coverage audits130 entities and4290 cumulative presence events using small per-edge prefixes",
+    "observedError": "Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)",
+    "durationMs": 27702.641458,
+    "exactFailingOperation": "Not identified; test did not emit per-stage progress and DuckDB error omitted a stack. Intended loop totals are not proof all were committed.",
+    "status": "preserved_unrepaired",
+    "healthyReuseAfterFailure": "Unqualified; test finally closed store, no product retry or reopen was run.",
+    "memoryPolicyUnchanged": "128MB memory_limit,64MB max_temp_directory_size; no relaxation",
+    "diagnosticNext": "After a separately granted lease, read-only raw inspection of preserved closed growth database or fresh CoW fork to reconcile last acknowledged command/receipt/clock/events before any product retry. Distinguish setup write, query bind/execute, per-unit proof, audit pages or reopen.",
+    "growthFixture": {
+      "file": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-growth-FPDV3o/facts.duckdb",
+      "sizeBytes": 8663040,
+      "mtimeNs": 1793962267628602865,
+      "sha256": "1c2cd16700e993db513d0c2dad81bca77ef45e5b5ce9579a0ffdb83e614f45b0",
+      "walAbsent": true,
+      "lsofExitCode": 1,
+      "lsofStdout": "",
+      "lsofStderr": ""
+    }
+  },
+  "predecessorProof": {
+    "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+    "modes": [
+      {
+        "mode": "fence",
+        "status": "passed",
+        "pid": 53229,
+        "pins": {
+          "core": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+          "owner": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+          "addon": "92ab7cb9de0efa47bec982d21b374e9f527fbcb9b244357912f1ca2104b1e840",
+          "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+        },
+        "paths": {
+          "core": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_datalog.duckdb_extension",
+          "owner": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+          "addon": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_writer.node",
+          "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+        },
+        "irs": [
+          {
+            "definition": "schema coverage_old1 version 1 {entity R {a:text;b:boolean;c:int64;d:float64;}}",
+            "ir": "{\"format\":\"td.schema/1\",\"name\":\"coverage_old1\",\"version\":1,\"entities\":[{\"name\":\"R\",\"attributes\":[{\"key\":\"a\",\"tag\":1,\"required\":false,\"many\":false},{\"key\":\"b\",\"tag\":2,\"required\":false,\"many\":false},{\"key\":\"c\",\"tag\":3,\"required\":false,\"many\":false},{\"key\":\"d\",\"tag\":4,\"required\":false,\"many\":false}]}]}",
+            "hash": "d4a051ec2ec8c1c8e26467c3f0419a66907a05e2ccaadf0848743e4dcd96f0f2"
+          },
+          {
+            "definition": "schema coverage_old2 version 1 {entity R {a:datetime;b:ref_value(R);}}",
+            "ir": "{\"format\":\"td.schema/2\",\"name\":\"coverage_old2\",\"version\":1,\"entities\":[{\"name\":\"R\",\"attributes\":[{\"key\":\"a\",\"tag\":6,\"required\":false,\"many\":false},{\"key\":\"b\",\"tag\":5,\"required\":false,\"many\":false,\"reference\":\"R\"}]}]}",
+            "hash": "44d78efcd032a53cdbeab7f98256f657b8a9c032fcb97f50a6b8adbc75e93b23"
+          },
+          {
+            "definition": "schema coverage_old3 version 1 {entity R {a:text unique;}}",
+            "ir": "{\"format\":\"td.schema/3\",\"name\":\"coverage_old3\",\"version\":1,\"entities\":[{\"name\":\"R\",\"attributes\":[{\"key\":\"a\",\"tag\":1,\"required\":false,\"many\":false,\"unique\":true}]}]}",
+            "hash": "b2203a6f7566d3f55a49f7d6c0df95fb1e4f0ff495dd20bbf63fff29240988b5"
+          },
+          {
+            "definition": "schema coverage_old4 version 1 {entity R live {}}",
+            "ir": "{\"format\":\"td.schema/4\",\"name\":\"coverage_old4\",\"version\":1,\"entities\":[{\"name\":\"R\",\"live\":true,\"attributes\":[]}]}",
+            "hash": "6a8bddafe488f1682d1935e28a8b6eafa61fafab357d14efdef25979c4e4928b"
+          }
+        ],
+        "initializerError": {
+          "name": "Error",
+          "message": "Invalid Input Error: TD_E_COMMAND_FORMAT: unsupported temporal catalog version"
+        },
+        "cleanupErrors": []
+      },
+      {
+        "mode": "ir",
+        "status": "passed",
+        "pid": 53228,
+        "pins": {
+          "core": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+          "owner": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+          "addon": "92ab7cb9de0efa47bec982d21b374e9f527fbcb9b244357912f1ca2104b1e840",
+          "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+        },
+        "paths": {
+          "core": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_datalog.duckdb_extension",
+          "owner": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+          "addon": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_writer.node",
+          "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+        },
+        "irs": [
+          {
+            "definition": "schema coverage_old1 version 1 {entity R {a:text;b:boolean;c:int64;d:float64;}}",
+            "ir": "{\"format\":\"td.schema/1\",\"name\":\"coverage_old1\",\"version\":1,\"entities\":[{\"name\":\"R\",\"attributes\":[{\"key\":\"a\",\"tag\":1,\"required\":false,\"many\":false},{\"key\":\"b\",\"tag\":2,\"required\":false,\"many\":false},{\"key\":\"c\",\"tag\":3,\"required\":false,\"many\":false},{\"key\":\"d\",\"tag\":4,\"required\":false,\"many\":false}]}]}",
+            "hash": "d4a051ec2ec8c1c8e26467c3f0419a66907a05e2ccaadf0848743e4dcd96f0f2"
+          },
+          {
+            "definition": "schema coverage_old2 version 1 {entity R {a:datetime;b:ref_value(R);}}",
+            "ir": "{\"format\":\"td.schema/2\",\"name\":\"coverage_old2\",\"version\":1,\"entities\":[{\"name\":\"R\",\"attributes\":[{\"key\":\"a\",\"tag\":6,\"required\":false,\"many\":false},{\"key\":\"b\",\"tag\":5,\"required\":false,\"many\":false,\"reference\":\"R\"}]}]}",
+            "hash": "44d78efcd032a53cdbeab7f98256f657b8a9c032fcb97f50a6b8adbc75e93b23"
+          },
+          {
+            "definition": "schema coverage_old3 version 1 {entity R {a:text unique;}}",
+            "ir": "{\"format\":\"td.schema/3\",\"name\":\"coverage_old3\",\"version\":1,\"entities\":[{\"name\":\"R\",\"attributes\":[{\"key\":\"a\",\"tag\":1,\"required\":false,\"many\":false,\"unique\":true}]}]}",
+            "hash": "b2203a6f7566d3f55a49f7d6c0df95fb1e4f0ff495dd20bbf63fff29240988b5"
+          },
+          {
+            "definition": "schema coverage_old4 version 1 {entity R live {}}",
+            "ir": "{\"format\":\"td.schema/4\",\"name\":\"coverage_old4\",\"version\":1,\"entities\":[{\"name\":\"R\",\"live\":true,\"attributes\":[]}]}",
+            "hash": "6a8bddafe488f1682d1935e28a8b6eafa61fafab357d14efdef25979c4e4928b"
+          }
+        ],
+        "initializerError": null,
+        "cleanupErrors": []
+      }
+    ],
+    "formatFence": "Actual2f child PRAGMA td_initialize rejects format12 with TD_E_COMMAND_FORMAT: unsupported temporal catalog version. Raw logical base-table/view snapshots equal before/after on a separate copy; original DB hash unchanged. Fork byte hash may change through ordinary open/checkpoint and is not claimed identical.",
+    "legacyIrParity": "Four canonical schema/1..4 IR strings and hashes byte-equal between actual old/new binaries, actual current registrations agree.",
+    "callerRollback": "Actual BEGIN, firstIR5 registration/format12+activation+K and native target/source writes visible in transaction, then ROLLBACK restores tables/views/metadata/receipts/clock exactly."
+  },
+  "settings": {
+    "readers": 2,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "UV_THREADPOOL_SIZE": "4"
+  },
+  "nativePins": {
+    "build/artifact.json": "7a6c2f45f386faf13bf11448116644fcb5a54af75b02b4e190e969a2b5b093cb",
+    "build/catalog_sql.hpp": "454570e13f70effc105f50251ef8f073e571ae843211ff4a48f69d49fb4ceb11",
+    "build/temporal_datalog.duckdb_extension": "a562ddf6d7f3ebb8189efd785ad312143d940c9ca6d95049ced357a78149c66b",
+    "build/temporal_datalog.so": "0ab27c08f0289a648d305cf1ff3ef44a625f81c68d10c4e9c8af5f6dcf2425b6",
+    "build/temporal_control.node": "6358b3f085e3f41cf66729b890d53121f2f23ddcbd4e679b307e302e8da9199e",
+    "build/owner_probe/artifact.json": "aa42d89c915ed343cebe8ffdfe3fba1ec23a27540edd17cfc076c8d936bf40b6",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "286694a1225384bedff88aa462d9ad03a48b4eac5e2b135a69c84014f24f258b",
+    "build/owner_probe/temporal_owner_probe.so": "89c52bc41fea69998e929b1ba5b4ca0c9abb78312f8381db659cf4d3092fe63d",
+    "build/owner_probe/temporal_writer.node": "7c6da97f4421db1fa3737e7b2a072f928c1f84ef9a56722533d90b163304c94f"
+  },
+  "postchecks": {
+    "native9Unchanged": true,
+    "dependencies395Unchanged": true,
+    "source45Unchanged": true,
+    "compiled188Unchanged": true,
+    "headers36Routes5References7NodeUnchanged": true,
+    "sourceClean": true,
+    "databaseCount": 5,
+    "allClosedScopedLsof": true,
+    "allWalAbsent": true,
+    "details": "after-tests-first.json",
+    "extraSqlOrReopen": false
+  },
+  "separateLocalLimits": {
+    "scopedVisibleEvents": 4096,
+    "coalescedIslands": 4096,
+    "combinedEventPlusIslandCap": false,
+    "logicalStagingByteBudgetIncludesBoth": true
+  },
+  "acceptanceScope": "Only three small boundary methods pass. Together with prior independent four, seven distinct methods have passed; the eighth growth method failed. No full verifier, scale, memory-contained auditability or production promotion claim.",
+  "remaining": [
+    "Locate/reconcile growthOOM without changing128MB; close actual cumulative-history auditability only after a successful real gate",
+    "Exact4096/4097 edge/events/islands/work/byte/error-priority tests remain reserved",
+    "No-policy completeACK cost screen versus2f, coverageheavy plan/audit cost",
+    "Future full449 baseline+presence5+SDK5+coverage4 excludes these boundary methods until separately registered/reviewed"
+  ]
+}

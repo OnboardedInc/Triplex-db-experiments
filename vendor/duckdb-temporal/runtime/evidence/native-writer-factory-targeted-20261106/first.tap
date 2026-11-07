@@ -1,0 +1,17 @@
+TAP version 13
+# Subtest: native writer factory retires unclaimed and claimed anchors after actual bootstrap delivery and enrollment failures
+ok 1 - native writer factory retires unclaimed and claimed anchors after actual bootstrap delivery and enrollment failures
+  ---
+  duration_ms: 631.997375
+  type: 'test'
+  ...
+# Preserved owned fixture: <owned-build02-runtime>/build/native-writer-factory-ZDv6WL/facts.duckdb
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 767.636208

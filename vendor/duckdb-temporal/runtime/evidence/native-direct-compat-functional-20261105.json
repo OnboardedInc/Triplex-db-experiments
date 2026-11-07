@@ -1,0 +1,75 @@
+{
+  "schema": "temporal-direct-compatibility-functional/1",
+  "status": "functional_passed_performance_pending",
+  "prototype_base": "a19a4e6f33c17c8b0fc66f74c7bf33a55d1b7973",
+  "scope": "Bounded opt-in same-caller-transaction C++ append. Existing prepared SQL handles retraction. Default runtime selection and default companion feature flag are unchanged.",
+  "verification": {
+    "flagged_companion_build": "PASS",
+    "typescript": "PASS",
+    "public_and_host_command": "node --test --test-concurrency=1 build/adapter/test-native-direct.js build/adapter/test-adapter.js build/adapter/test-owned-store.js",
+    "public_and_host_methods": 28,
+    "public_and_host_duration_ms": 8739.0515,
+    "companion_command": "node --test --test-concurrency=1 adapter/test-owner-probe.mjs adapter/test-owner-activation.mjs adapter/test-owned-query.mjs",
+    "companion_methods": 19,
+    "companion_duration_ms": 10512.094541,
+    "total_methods": 47,
+    "total_passed": 47,
+    "new_direct_methods": 9,
+    "triplex_cases_inside_one_direct_method": 44
+  },
+  "direct_cases": [
+    "All seven public carriers compared through every physical assertion column, payload hashes, exact floating bits and fractional metadata.",
+    "Caller transaction, provided IDs and positions, read-your-writes, preserved command claim and SQL retraction, prepared parameter refresh, and drop/recreate under the cached statement.",
+    "Actual usage CHECK failure after native append flush aborts rows, usage, clock and receipt despite caller catching the error.",
+    "Malformed fields, NULL, zero-result invocation, vector multiplicity, depth64 admission, 4097-row rejection, native2MiB exact/plus1 and explicit read-only transaction.",
+    "Persistent reopen and explicit feature-absent error.",
+    "Dependent materialized first append followed by another expression in the same statement invalidates the whole caller transaction. COMMIT rolls it back.",
+    "Real shared-instance two-connection overlapping snapshots with disjoint appends conflict on usage. The loser leaves no row/claim/count. Retry commits exact two-row/two-receipt state. Positions are reserved before the overlapping transactions to isolate the usage conflict.",
+    "Storage usage foreign keys are explicitly rejected before append. The synthetic counter-FK fixture preserves empty assertions, claims, clock and usage.",
+    "All44 unchanged pinned Triplex conformance cases through the explicit direct factory."
+  ],
+  "review_changes": [
+    "Per-query registered ClientContext state enforces one invocation across all scalar expressions and threads. Repetition invalidates the caller transaction before throwing.",
+    "Reject usage foreign keys because DataTable.VerifyUpdateConstraints skips them. Reject counter indexes and cross-singleton CHECK constraints. The ordinary counter CHECK constraints are bound and evaluated by DuckDB.",
+    "Resolve and verify canonical table names, types and primary keys at execution. Reject generated columns and triggers.",
+    "Flush after full parsing and carrier construction. Caller transaction invalidation covers every exception after the first possible append."
+  ],
+  "initial_full_test_failure": {
+    "methods_passed": 8,
+    "methods_failed": 1,
+    "error": "NativePortError PLAN: Invalid SQL statement",
+    "cause": "The 2MiB native boundary test submitted a literal through the intentionally smaller public SQL-text admission.",
+    "fix": "Use a fresh raw SDK connection with the same core/companion pair and prepared VARCHAR binding for the native limit. Preserve public port limits."
+  },
+  "limits": {
+    "native_rows": 4096,
+    "native_json_bytes": 2097152,
+    "host_parameter_bytes": 1048576,
+    "json_depth": 64,
+    "json_nodes": 1000000,
+    "retained_rows": 1000000,
+    "retained_logical_bytes": 268435456,
+    "format": 5
+  },
+  "pending": [
+    "Three-way matched-owned complete-path performance matrix.",
+    "Actual strict-default versus direct owned-loader full-path comparison.",
+    "Promotion decision remains deferred."
+  ],
+  "artifacts": {
+    "core_extension_sha256": "7cff5d5bb30d3ea5d807b479bbe4583f07838a47dc0ef4f21ada934dbba95b7c",
+    "owner_extension_sha256": "1b9d3bad6652002672624171f463ab6dead65fd99f0cd6a803baa8e30f744eff",
+    "owner_library_sha256": "825805e24d03906fb1d527897e045647ce2b00cea1bc18e0f360b7220f40e437",
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "experimental_compat_mutations": true
+  },
+  "source_sha256": {
+    "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42",
+    "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+    "native/owner_probe/owner_probe.cpp": "ffda8922b881e20c0e797ba31bf5fb06a12dd61585e24a21262e20690ddc7eca",
+    "build_owner_probe.py": "ee7262e1087a4779fc4d1ea63f9f26a7ea6822b1bc938f028d8fa2584da14717",
+    "adapter/native-direct-backend.ts": "abc5b48af2b4cdbdc9c58cf5788778f4250fb00e4f57b085183372baf4341e5b",
+    "adapter/native-direct-runtime.ts": "0401112ca54879ef83bf4651fd2c85e1c634d230ed8e57f6d396414f6af29d21",
+    "adapter/test-native-direct.ts": "04be5cc987f40db3246faf62057a3923737392b6195fd5d1c99d09ae2aa0e0da"
+  }
+}

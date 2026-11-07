@@ -1,0 +1,14 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "node_modules/typescript/bin/tsc",
+    "-p",
+    "tsconfig.json"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+  "pid": 45518,
+  "startedAtUtc": "2026-11-06T10:25:17.762262+00:00",
+  "endedAtUtc": "2026-11-06T10:25:19.715797+00:00",
+  "exitCode": 0,
+  "elapsedMs": 1953.3972919452935
+}

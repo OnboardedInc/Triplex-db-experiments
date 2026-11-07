@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "regular_utf8_members": 212,
+  "all_member_hashes_bytes_modes": "PASS",
+  "all_four_input_manifests_verified": true,
+  "no_extraction_or_execution": true,
+  "archive": {
+    "archive": "guarded-batch-correctness-and-preparation.tar.gz",
+    "bytes": 346218,
+    "sha256": "93b64008b9cb8b9fb0ae03ccb58a0a40fbaf8f87a1367646a8c8bde8fd39e73d",
+    "entries": 212,
+    "source_bytes": 2649513,
+    "parts": [
+      {
+        "path": "archive.part01.b64",
+        "bytes": 300001,
+        "sha256": "dbec34d667f0415d006798f30fe6d11b613618cd6e070c10589a725812ea294a"
+      },
+      {
+        "path": "archive.part02.b64",
+        "bytes": 161625,
+        "sha256": "d093bd455dd18aa984451e7b2ebc29e5e84ca19b4daf53f28da3ae5bbd3bf37e"
+      }
+    ]
+  }
+}

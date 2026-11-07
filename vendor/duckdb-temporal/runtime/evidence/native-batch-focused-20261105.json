@@ -1,0 +1,61 @@
+{
+  "schema": "td.native-batch-functional-qualification/1",
+  "observed_utc": "2026-11-05T18:46:45Z",
+  "tested_source": "f1d53094566bc45639962d0d823e711c505ff20b",
+  "source_baseline": "e96727c6",
+  "result": "PASS",
+  "build": {
+    "extension_version": "0.26.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "core_sha256": "44d0410bec7196aa7cc671d5a8ebef17db645869ea57f903ad0c3a920e2a912c",
+    "owner_sha256": "58af388f0789dd5fd4eddef05364cb7566e98f6ba1da3bfbaedc70b3126db281",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_sha256": "efc3e8225da5a76f0835a27c381cadc3d95961edde4869af966532a00df34fbe",
+    "catalog_header_sha256": "550235a655b78a216aaf67685a2ef682058fea59044608c32d14599f8db6d95d",
+    "compiled_test_sha256": "82547f1caac57a1dfd62b94a985e73e81d6297a9c04ddf235333b32f8ca71c5e",
+    "compiled_store_sha256": "dcad01a37ae791e5925f48db12e65a4bf27b4ed046711594779dd7c405a8dfac"
+  },
+  "gate": {
+    "platform": "macOS arm64",
+    "public_default_memory": "128MB",
+    "public_history_readers": 2,
+    "test": "node --test --test-concurrency=1 --test-reporter=tap build/adapter/test-batch-owned.js",
+    "prior_build_env": "TD_TEST_PRE_BATCH_BUILD set to the frozen pre-batch 0.26 build",
+    "typecheck": "PASS",
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 6179.11975,
+    "scenarios": [
+      "first one-K patch and put preserve format 5 history and replay at default memory",
+      "first one-K patch and put preserve format 6 history and replay at default memory",
+      "first batch metadata, members and receipt share the caller transaction",
+      "late batch usage constraint rolls back migration and both members",
+      "batch from format eight preserves typed forward references and a cyclic declaration",
+      "format nine revision two upgrades atomically and preserves blob descriptors through batch patch"
+    ]
+  },
+  "prior_binary_fence": {
+    "extension_version": "0.26.0",
+    "core_sha256": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b",
+    "owner_sha256": "68a4f021b8bc9ec38c2ddda4370460ed0d9aa6bdd81d847e30205b67486b1af6",
+    "synthetic_source_sha256_before_and_after": "19e7bf176c3a3b56a4856feed339882f2af2e7981f8c032f07e2fd88b8878837",
+    "result": "Initializes format 9 only at catalog revision 2. Rejects revision 3 explicitly; activation, read, and write also fail. The copied store snapshot and original fixture hash match before and after."
+  },
+  "initial_failures": [
+    "Core compile stopped because the merged JSON source validator preceded its typed-text declaration. Declaration order was corrected.",
+    "Strict TypeScript compile stopped on a valid-cut fixture inferred as a variable-length array. The fixture now preserves tuple types.",
+    "First engine run passed five cases. The typed cycle fixture declared legacy ref(Row) while supplying typed references. Switching the fixture to ref_value(Row) passed all six without changing the binary."
+  ],
+  "local_log_sha256": {
+    "core-first-failure.log": "f64595a76443acfa7d99fb4519b358d79e784f25705269c4442035eebe8a7923",
+    "tsc-first-failure.log": "d6e30baa09ce714b488f22c78ac9ddd5eb577527a7d3d36073657568c2a5c706",
+    "first-engine.tap": "7d3638c2584a5e57591871190273211b37eb1298886a32b82d0e3f02d2e7018a",
+    "final-engine.tap": "3386362b0ba336a32e5ac994524512677c10576a2e757a36d89ad2d806d9ae5d"
+  },
+  "remaining_qualification": [
+    "Independent long trace and admission maxima at default memory",
+    "Observed batch SIGKILL recovery",
+    "Combined full verification and mixed scale on the promoted artifact"
+  ]
+}

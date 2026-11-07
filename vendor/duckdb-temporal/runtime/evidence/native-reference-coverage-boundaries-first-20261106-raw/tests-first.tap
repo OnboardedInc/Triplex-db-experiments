@@ -1,0 +1,50 @@
+TAP version 13
+# Subtest: coverage definitions preserve predecessor IR1 through4 and caller rollback restores format schema activation and receipts
+ok 1 - coverage definitions preserve predecessor IR1 through4 and caller rollback restores format schema activation and receipts
+  ---
+  duration_ms: 1349.27925
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-definition-jjJyyh
+# Subtest: coverage checks exact signed int64 endpoints adjacency and exclusive end without tick arithmetic overflow
+ok 2 - coverage checks exact signed int64 endpoints adjacency and exclusive end without tick arithmetic overflow
+  ---
+  duration_ms: 1556.024916
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-int64-WFTDJG
+# Subtest: coverage audits130 entities and4290 cumulative presence events using small per-edge prefixes
+not ok 3 - coverage audits130 entities and4290 cumulative presence events using small per-edge prefixes
+  ---
+  duration_ms: 27702.641458
+  type: 'test'
+  location: '__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/adapter/test-native-reference-coverage-boundaries.js:244:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Out of Memory Error: failed to pin block of size 256.0 KiB (122.0 MiB/122.0 MiB used)
+    
+    Possible solutions:
+    * Reducing the number of threads (SET threads=X)
+    * Disabling insertion-order preservation (SET preserve_insertion_order=false)
+    * Increasing the memory limit (SET memory_limit='...GB')
+    
+    See also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-growth-FPDV3o
+# Subtest: coverage proof entity cap accepts source plus31 targets and atomically rejects source plus32
+ok 4 - coverage proof entity cap accepts source plus31 targets and atomically rejects source plus32
+  ---
+  duration_ms: 996.388375
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-entities-amFVZg
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 31765.224

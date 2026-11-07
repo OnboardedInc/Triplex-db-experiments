@@ -1,0 +1,294 @@
+{
+  "sourceCommit": "d1e5e30d64d2c5fdaf8efbd06694cd04ad5cefe2",
+  "pins": {
+    "build/artifact.json": "6f235c453429d482e9dd0b752ce67715026b6717300eafd4fdbcaba1e2f057d6",
+    "build/catalog_sql.hpp": "688ecafd5bdda85f9c6e479595add09abd69840682c17ca543fdc4d857b887c8",
+    "build/temporal_datalog.duckdb_extension": "840a252db7fecbeeeab4b845e876262aa34bbdb9dfea3b9df36ffdf9e7dbbbb8",
+    "build/temporal_datalog.so": "a48be6399b7af7efb864ced234edf7ca46ba37356d2fabab213b2f5d052a5f09",
+    "build/temporal_control.node": "5a6cdd62105592c3e4761485f4068a007131515edd3b6ea973a1e435d5ad0f8b",
+    "build/owner_probe/artifact.json": "e9d3b35c6a9248146a89263cfcdfcdb8df64a2dfdd23f532ffc607578833654e",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "4b62322d12e95772f67885b3ef30826491f11bc5770f33574e9b0fbcbdacc87c",
+    "build/owner_probe/temporal_owner_probe.so": "3d303cd6c5557ec5e231256d1b7c97d2b714e2a8bf902203d9914b1b27aeb14f",
+    "build/owner_probe/temporal_writer.node": "253d176a9af1a55666a25b6c4357503bbcb0cb06f3d5191ec4ce53585e7b5323"
+  },
+  "coreSources": {
+    "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+    "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+    "native/src/temporal_batch.cpp": "4b76774c7f8a8b4dc7b1a896e2f61edb86b7eb46d13eccc17adea0f0851e1617",
+    "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+    "native/src/temporal_command.cpp": "0deec770d753594e4f549e07b2b5d5d9a92bda824a090730bf7d79d42b46fd38",
+    "native/src/temporal_command.hpp": "f755c6f25a31c828c54e074300abbe2028d07212e8876a241d33d7d235d58633",
+    "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+    "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+    "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+    "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+    "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+    "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+    "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+    "native/src/temporal_datalog.cpp": "72951f542146679105c1f4e08491c1479c80128db2956744b691d9c81b9f1f4f",
+    "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+    "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+    "native/src/temporal_integrity.hpp": "0c2508a5076e129cd8d1286773e2a46cdb0b2383c2de5d7e1b6d1e6e3d03ac77",
+    "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+    "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+    "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+    "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+    "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+    "native/src/temporal_presence_intervals.hpp": "7fc4be5ab6c2a11a7c1d6331fbaf4fd650fa314073351e00c05e8bf9942f3561",
+    "native/src/temporal_reference_coverage.hpp": "4f3c8b15f84fad0c3c3f76989bd8c0f44fa27925749c5415d5bf54ed3fbf4b05",
+    "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+    "native/src/temporal_schema.cpp": "ea2803e9b074c4b0df83cc82fba9120c5473495beb2c7e55b17a730efa7ad197",
+    "native/src/temporal_schema.hpp": "17c794b5b7c28ecd08388ab4d020c24cb666b2a780405e4ebbe8070c8a692eb2",
+    "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+    "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+    "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+    "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+    "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+    "native/src/temporal_uniqueness.hpp": "46b01a8d74cb424241254483612254137ea1926af0468e21efbbc104cd35007b",
+    "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da"
+  },
+  "ownerSharedSources": {
+    "native/src/temporal_integrity.hpp": "0c2508a5076e129cd8d1286773e2a46cdb0b2383c2de5d7e1b6d1e6e3d03ac77",
+    "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+    "native/src/temporal_uniqueness.hpp": "46b01a8d74cb424241254483612254137ea1926af0468e21efbbc104cd35007b",
+    "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+    "native/src/temporal_presence_intervals.hpp": "7fc4be5ab6c2a11a7c1d6331fbaf4fd650fa314073351e00c05e8bf9942f3561",
+    "native/src/temporal_reference_coverage.hpp": "4f3c8b15f84fad0c3c3f76989bd8c0f44fa27925749c5415d5bf54ed3fbf4b05",
+    "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+    "native/catalog.sql": "561277698c5bcf70a956f8f96d3150481907dcab2dec395c5c9e8e2cfccbdf2c",
+    "build/catalog_sql.hpp": "688ecafd5bdda85f9c6e479595add09abd69840682c17ca543fdc4d857b887c8"
+  },
+  "coreFlags": {
+    "experimental_current_unique_fast_path": true,
+    "experimental_injective_projection_fast_path": true,
+    "experimental_identity_count_fast_path": false,
+    "experimental_all_cut_unique_fast_path": true,
+    "experimental_streaming_source_fast_path": true
+  },
+  "standardHelpers": {
+    "build/adapter/benchmark-aggregate.mjs": {
+      "source": "adapter/benchmark-aggregate.mjs",
+      "sha256": "586f5898f4df0e49ccb3f839abddd476ac4400d2baecab8f62102be280d6c80f"
+    },
+    "build/adapter/benchmark-antijoin-cost.mjs": {
+      "source": "adapter/benchmark-antijoin-cost.mjs",
+      "sha256": "b57ec6acf0efd993c6b86d801e0af3295ee4ef2e15deb5e8e1dd76786d3518bc"
+    },
+    "build/adapter/benchmark-compat-write.mjs": {
+      "source": "adapter/benchmark-compat-write.mjs",
+      "sha256": "6453d6578e95d10dcca3c837a42845aa52d68eafbdb4f80cad9b9847e21f8d16"
+    },
+    "build/adapter/benchmark-control.mjs": {
+      "source": "adapter/benchmark-control.mjs",
+      "sha256": "09f907239de7edcb5b81773ac87d40cf54bef9a832c018b074628f9793176f02"
+    },
+    "build/adapter/benchmark-count.mjs": {
+      "source": "adapter/benchmark-count.mjs",
+      "sha256": "0114b0bedd5baa160fb7d77402db546331637fc073f1a3b105746a8c8ef01bbd"
+    },
+    "build/adapter/benchmark-entity.mjs": {
+      "source": "adapter/benchmark-entity.mjs",
+      "sha256": "488f4178d1ac54acd0045d8e0e087789e0c2d7f142190ee5143a2453dc04ef48"
+    },
+    "build/adapter/benchmark-identity-count.mjs": {
+      "source": "adapter/benchmark-identity-count.mjs",
+      "sha256": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca"
+    },
+    "build/adapter/benchmark-join.mjs": {
+      "source": "adapter/benchmark-join.mjs",
+      "sha256": "5d821301ea497b87f75d0939efdbeaf6007e911c29d1004e2b15c4aac4bc7679"
+    },
+    "build/adapter/benchmark-reference.mjs": {
+      "source": "adapter/benchmark-reference.mjs",
+      "sha256": "34e7a5b021d87f0cd6d296cad356219b9ab46601130ee823ac5d7d8faa15ff97"
+    },
+    "build/adapter/benchmark-scale.mjs": {
+      "source": "adapter/benchmark-scale.mjs",
+      "sha256": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c"
+    },
+    "build/adapter/benchmark-scan.mjs": {
+      "source": "adapter/benchmark-scan.mjs",
+      "sha256": "aa8c1301ec3ec68bddd92dd794a322afa50c73bc4970a919920438964832dcf5"
+    },
+    "build/adapter/benchmark-schema-views.mjs": {
+      "source": "adapter/benchmark-schema-views.mjs",
+      "sha256": "4084ee111d4b2dd31ea0c8e40fe9ff655d9518224784bf8aaccb91faa73c813a"
+    },
+    "build/adapter/benchmark-schema.mjs": {
+      "source": "adapter/benchmark-schema.mjs",
+      "sha256": "5c0455c1f483f45b360342080f51f29df531929a2272a8fd558ee7a80aaadef2"
+    },
+    "build/adapter/benchmark-store-query.mjs": {
+      "source": "adapter/benchmark-store-query.mjs",
+      "sha256": "05d71361848bef7928344816a9998c097649c6553e04428be48c0e753bdf6d50"
+    },
+    "build/adapter/benchmark-transport.mjs": {
+      "source": "adapter/benchmark-transport.mjs",
+      "sha256": "5bc55c9424c4a78ec7f560bd5f9e322685320716095353d0bcefedadd7743010"
+    },
+    "build/adapter/benchmark-write.mjs": {
+      "source": "adapter/benchmark-write.mjs",
+      "sha256": "436331732ac82e7378e61b789b840224781ad0d463ce0d120d2e72db6ef2d694"
+    },
+    "build/adapter/clone-benchmark-fixture.mjs": {
+      "source": "adapter/clone-benchmark-fixture.mjs",
+      "sha256": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6"
+    },
+    "build/adapter/crash-fixture.mjs": {
+      "source": "adapter/crash-fixture.mjs",
+      "sha256": "43e2856343c3680ec7838924109866cfa9172b1bce0d1a184f38820604c16f29"
+    },
+    "build/adapter/crash-native-command.mjs": {
+      "source": "adapter/crash-native-command.mjs",
+      "sha256": "44e33d6d587a82752e9ad9d52917bf64e1c852204898ff3dce5d5548a10867a3"
+    },
+    "build/adapter/diagnose-reference-coverage-growth.mjs": {
+      "source": "adapter/diagnose-reference-coverage-growth.mjs",
+      "sha256": "b203283b6a583156b7eef0d919b67b675e02441ed8b0bc7aa0bcb6b01473d2b8"
+    },
+    "build/adapter/diagnose-reference-identity-growth.mjs": {
+      "source": "adapter/diagnose-reference-identity-growth.mjs",
+      "sha256": "6ed2ec50f447b4600200ba20d892229a64afc7cb554cb29b82fffb2a287b68cc"
+    },
+    "build/adapter/evaluator-profile-fixture.mjs": {
+      "source": "adapter/evaluator-profile-fixture.mjs",
+      "sha256": "811653b6e8ee2e8c87cef69f0599cef0b1ecf637fbc212158bdc4773233952a8"
+    },
+    "build/adapter/mixed-scale-fixture.mjs": {
+      "source": "adapter/mixed-scale-fixture.mjs",
+      "sha256": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09"
+    },
+    "build/adapter/native-duckdb-port.mjs": {
+      "source": "adapter/native-duckdb-port.mjs",
+      "sha256": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268"
+    },
+    "build/adapter/native-write-candidate-binding.mjs": {
+      "source": "adapter/native-write-candidate-binding.mjs",
+      "sha256": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610"
+    },
+    "build/adapter/owned-duckdb-port.mjs": {
+      "source": "adapter/owned-duckdb-port.mjs",
+      "sha256": "65caca13d12022265bb0b45f9d9e69459871e6ab5f986ff84fe29c3958483ae8"
+    },
+    "build/adapter/patch-profile-sql.mjs": {
+      "source": "adapter/patch-profile-sql.mjs",
+      "sha256": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24"
+    },
+    "build/adapter/profile-native-patch.mjs": {
+      "source": "adapter/profile-native-patch.mjs",
+      "sha256": "993bd2491c91ddbbc91e2550a376b52270a0f196939f3d6c6c5e8a126f468855"
+    },
+    "build/adapter/profile-public-read-phases.mjs": {
+      "source": "adapter/profile-public-read-phases.mjs",
+      "sha256": "ecbb19d43deaaab75c6aa38526abed0d4763cc4072ffa40b2a57ce3a51ea58a0"
+    },
+    "build/adapter/profile-read-plan.mjs": {
+      "source": "adapter/profile-read-plan.mjs",
+      "sha256": "f03a33a2842b2af062f886dc3b961cc5b3ed44fd0e250ad5a6bf71155ebafa8d"
+    },
+    "build/adapter/public-backend.mjs": {
+      "source": "adapter/public-backend.mjs",
+      "sha256": "c763e86f4faf7c35de9c166813d590603321b2b7617022b6263e5f8df5c395bf"
+    },
+    "build/adapter/query-result-boundary.mjs": {
+      "source": "adapter/query-result-boundary.mjs",
+      "sha256": "c9673b3a01a84bfe526459f05d456a740665dae0a719167f03deaf5167bd1947"
+    },
+    "build/adapter/scale-fixture.mjs": {
+      "source": "adapter/scale-fixture.mjs",
+      "sha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+    },
+    "build/adapter/shared-fixture.mjs": {
+      "source": "adapter/shared-fixture.mjs",
+      "sha256": "da4205aaa1c153a2ac2e8fe9df63f8dcc7909eebd1c3b7cd1b71a90e0edd23f5"
+    },
+    "build/adapter/test-all-cut-store.mjs": {
+      "source": "adapter/test-all-cut-store.mjs",
+      "sha256": "358d473e1820d8a0cbc23f0972e6cc545e6b7580925619bebf42d59dd9dbc036"
+    },
+    "build/adapter/test-all-cut-unique.mjs": {
+      "source": "adapter/test-all-cut-unique.mjs",
+      "sha256": "6b2fe871a3f39f8728dd777c8304a87b636d37d8750a885cf3c0a832a266af59"
+    },
+    "build/adapter/test-antijoin-cost.mjs": {
+      "source": "adapter/test-antijoin-cost.mjs",
+      "sha256": "d60c2bcf3f4ec062bceba111e4d96444c287717ce540994e4b92890941674a3e"
+    },
+    "build/adapter/test-current-unique.mjs": {
+      "source": "adapter/test-current-unique.mjs",
+      "sha256": "92a44f94568990a1406e58e5e9a47292f5127d54ece341adc0d59998679cede2"
+    },
+    "build/adapter/test-evaluator-profile.mjs": {
+      "source": "adapter/test-evaluator-profile.mjs",
+      "sha256": "640d3c8fde753c7d5497c0df5ac2b3faf4b5a8589b41195f24126d3d12ca33b9"
+    },
+    "build/adapter/test-identity-count.mjs": {
+      "source": "adapter/test-identity-count.mjs",
+      "sha256": "2f13f15b4c1b227dd617779b3346aa0ba26fba80e2246adf2604dc5936f2378a"
+    },
+    "build/adapter/test-json-blob-upgrade.mjs": {
+      "source": "adapter/test-json-blob-upgrade.mjs",
+      "sha256": "db96074314aa1eb12578a1a85a8bf23362a3de1da51cb90a34760acaeb0b57a4"
+    },
+    "build/adapter/test-native-write-binding.mjs": {
+      "source": "adapter/test-native-write-binding.mjs",
+      "sha256": "bd116dbe7a6c63c93e23ab5b83fe6c4df53e551cf5d88bc4cc3e1c8ed192bee2"
+    },
+    "build/adapter/test-owned-query.mjs": {
+      "source": "adapter/test-owned-query.mjs",
+      "sha256": "cc18672c70af5cfb5b01b48a10b4aef8c150e004c63a959038ff77963823e144"
+    },
+    "build/adapter/test-owner-activation.mjs": {
+      "source": "adapter/test-owner-activation.mjs",
+      "sha256": "fd7f5273bc80a61aec4932c94efe1a0f8357c68323deea5249ac3ccf6f20ddcd"
+    },
+    "build/adapter/test-owner-probe.mjs": {
+      "source": "adapter/test-owner-probe.mjs",
+      "sha256": "d7dee4920d6eede98b1cc4ca36a764e885f9e81f855a3be5373384f98cf48107"
+    },
+    "build/adapter/test-owner-usage.mjs": {
+      "source": "adapter/test-owner-usage.mjs",
+      "sha256": "0236394b2bb84623e121caec04212161c53640f7dd330f157e0b806752ae75ad"
+    },
+    "build/adapter/test-patch-profile-sql.mjs": {
+      "source": "adapter/test-patch-profile-sql.mjs",
+      "sha256": "fc1255c8c601c34f7d2ee2436afb3f2e743e06c90b4d5b962cb577bf7079593e"
+    },
+    "build/adapter/test-presence-upgrade.mjs": {
+      "source": "adapter/test-presence-upgrade.mjs",
+      "sha256": "5d9cb043244950b28afb34f04ea21f72b172f382a43fc4c1f4604744aeb3332a"
+    },
+    "build/adapter/test-read-provenance.mjs": {
+      "source": "adapter/test-read-provenance.mjs",
+      "sha256": "7e692fd8ec02d83f1e8d95bd3caa4ae55ec6e8fc3d12b0b8975842b8b5377a15"
+    },
+    "build/adapter/test-scale-fixture.mjs": {
+      "source": "adapter/test-scale-fixture.mjs",
+      "sha256": "a5e64edf7ccb15b4ceb36cf123cd1ea6494bcd46533892fb8f57dad84fb83d31"
+    },
+    "build/adapter/test-single-owner-native.mjs": {
+      "source": "adapter/test-single-owner-native.mjs",
+      "sha256": "d4f1077fb3cd38604c27d7c0cf8d82a0301951bdd2c667c6b2226f190f05fa30"
+    },
+    "build/adapter/test-streaming-source.mjs": {
+      "source": "adapter/test-streaming-source.mjs",
+      "sha256": "dee1efe50c9fd92b3540246279aaa2982bb8c9a66eaa5b1834d1a5bc4829651c"
+    },
+    "build/adapter/test-uniqueness-upgrade.mjs": {
+      "source": "adapter/test-uniqueness-upgrade.mjs",
+      "sha256": "77988cd991b995632b65c98102a2f446b364cf13208add5fac3f0eb1939edaa6"
+    },
+    "build/adapter/transaction-owner.mjs": {
+      "source": "adapter/transaction-owner.mjs",
+      "sha256": "4d1de7e32e298a39c4dd19a9d26f93045b1f575c1da2f3135c77507d5fa03c8b"
+    },
+    "build/adapter/verify-expanded-upgrade.mjs": {
+      "source": "adapter/verify-expanded-upgrade.mjs",
+      "sha256": "2dc06366fc46ec895ce44d8da97f5fa5e4a2fec87fe9acbbcc49d462053d26b1"
+    },
+    "build/adapter/public-schema.sql": {
+      "source": "adapter/public-schema.sql",
+      "sha256": "50d23fc33b22f49c732a0e77d7b517c7fdffad1a9eac40b0be674d5cdd84be88"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+✔ result/binding/destruction faults all run, preserve errors, fence and defer failed releases (444.293166ms)
+✔ primary fetch errors remain the cause when completed result cleanup also throws (84.971042ms)
+✔ cancellation cannot hide uncertain cleanup; token/listener retirement still runs (88.663458ms)
+✔ close attempts every statement, connection and instance despite failures, then permits close-only retry (381.815375ms)
+✔ eviction destruction failure fences the port and still releases the new statement (95.955792ms)
+✔ scope listener and control-release faults are independent, fence reuse and retain explicit cleanup (38.779958ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1508.498333

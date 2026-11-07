@@ -1,0 +1,70 @@
+{
+  "schema": "td.catalog_contract_options_manifest/1",
+  "utc": "2026-10-31T07:31:42.238249+00:00",
+  "scope": "Only NEW contract-options files: primary source analysis and finite proposal, without prior witness/raw/archive/backup-preparation content.",
+  "root": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-catalog-research/python-owner/contract-options",
+  "files": [
+    {
+      "path": "CLOSURE-WRITER-001-FIRST-FAILURE.json",
+      "bytes": 514,
+      "sha256": "a0fad23f61ee97916b8057192b777a4b9145abb04dd401066bca27231b3d481c"
+    },
+    {
+      "path": "CONTRACT-OPTIONS.md",
+      "bytes": 25129,
+      "sha256": "afb2cbe97c91a3d98d88e48656359a7e6300ce5bcb88d19ada8412d8438e4b9a"
+    },
+    {
+      "path": "HANDOFF.json",
+      "bytes": 3441,
+      "sha256": "9e600b6f564586f6872d8662b553fa9d2e0c1ea6281e4b1878dce84fdfdc44be"
+    },
+    {
+      "path": "LICENSE-COPY-NOTE.json",
+      "bytes": 444,
+      "sha256": "2929d7d4965fc4c885557e163013ea2b50dbb3947bc4b0b0c189ed6fc94b93a3"
+    },
+    {
+      "path": "LICENSE-SOURCE-RECEIPT.json",
+      "bytes": 524,
+      "sha256": "19d790e6c61a22e033ff6393bf8f2af131034acf8bc45350c02c06417dd77d5a"
+    },
+    {
+      "path": "LICENSE.duckdb",
+      "bytes": 1073,
+      "sha256": "332e19171f85a7ea54842f234cd68e15cc33f4fc974ce11fffd9ede1625be80f"
+    },
+    {
+      "path": "PINNED-SOURCE-ADDENDUM.json",
+      "bytes": 5889,
+      "sha256": "962af82288c36449e841d338ff5e32202149e5b6d8e1c273a0392de6be28ba58"
+    },
+    {
+      "path": "PINNED-SOURCE-RECEIPTS.json",
+      "bytes": 29017,
+      "sha256": "e4c847091c3b7c76212a49306646a42daf4b9981e75c5b02755de58c60a14e28"
+    },
+    {
+      "path": "PRIMARY-EXCERPTS.md",
+      "bytes": 56516,
+      "sha256": "6b859a49538eec431853efb05b8dfd259c80c5a976ddc32b2fe110a725e28529"
+    },
+    {
+      "path": "SOURCE-ONLY-CHECK-001-FIRST-FAILURE.json",
+      "bytes": 740,
+      "sha256": "eacbf1af5e427c76dabfd3fcc3de6be61583c97da1c891f187d950c9d3cf4494"
+    },
+    {
+      "path": "SOURCE-ONLY-CHECKS-002.json",
+      "bytes": 1947,
+      "sha256": "40e9c9356c470c5fcfbafd26872fdc1f623c61512d66f10e5839f5dbe08e7862"
+    }
+  ],
+  "mutable_progress_at_close": {
+    "path": "progress.jsonl",
+    "bytes": 4093,
+    "sha256": "d2c06b366283e27af3ea13d7a2c0f7ad4d71b675356047a385c3083ac794c152"
+  },
+  "state": "FROZEN_FOR_REVIEW; NO_CODE_GATE",
+  "pending_calls": "none"
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "td.native-writer435-first-drift/1",
+  "status": "observed_additions_pending_root_review",
+  "verifierExitCode": 0,
+  "wrapperExitCode": 1,
+  "firstWrapperFailurePreserved": "first-summary.json",
+  "sourceCommit": "506698215b8bebdf604de2f41d281d3cdc611929",
+  "runtimeDelta": {
+    "added": {
+      "build/owner_probe/activation-db4dfd91-6139-4dd6-a3e6-082afdbe38e2.duckdb": "b88c0613857e4974f6146a66294c8238bcdf484e863e4dc71f33d497b515f9f8",
+      "build/owner_probe/activation-evidence.json": "c767c00d2ab972d82d30f3c889c48d5eee166ebb89542490873059b3a599d1f2",
+      "build/owner_probe/evidence.json": "1c1b35cc48e5d4a2a4e5a1252eeb7677456ced0881a6901ceb6ecc5dbc4b1e75"
+    },
+    "changed": {},
+    "removed": {}
+  },
+  "allOtherPostSectionsEqual": {
+    "source": true,
+    "external": true,
+    "fixtures": true
+  },
+  "actualCounts": {
+    "python": 31,
+    "fixedNode": 76,
+    "additionalNode": 263,
+    "workloadOracle": 8,
+    "workloadPlans": 13,
+    "triplexCases": 44,
+    "scopedMethods": 391,
+    "total": 435
+  },
+  "typescript": "PASS",
+  "sourceHashes": {
+    "count": 226,
+    "equalPreflight": true
+  },
+  "freshReportTimestampInTerminal": true,
+  "freshReportSha256": "30aecf908244837b51617eb3aeec752225cf711872c0cc0044092141518afe93",
+  "mainVerification": {
+    "before": "aced40cd39edf63c2af8bc0a2ff53d76746b9a741ffb089cbbb9e8a9fb1244d6",
+    "after": "aced40cd39edf63c2af8bc0a2ff53d76746b9a741ffb089cbbb9e8a9fb1244d6",
+    "unchanged": true
+  },
+  "artifactManifestEquality": {
+    "core": true,
+    "owner": true
+  },
+  "producerSourceReferences": {
+    "build/owner_probe/activation-UUID.duckdb": "adapter/test-owner-activation.mjs:169",
+    "build/owner_probe/activation-evidence.json": "adapter/test-owner-activation.mjs:184",
+    "build/owner_probe/evidence.json": "adapter/test-owner-probe.mjs:127"
+  },
+  "rootClassificationOrAcceptance": false,
+  "rerun": false
+}

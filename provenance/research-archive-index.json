@@ -1,0 +1,20 @@
+{
+  "format": "triplex-on-demand-archive-index/1",
+  "archive": "/Users/sam/Downloads/download.zip",
+  "archiveSha256": "f9031e347b551bd39d54bd03e18e2d4cdc697e863872a4310fbbb650bce5c23b",
+  "memberRoot": "temporal-store-handoff/",
+  "fullMemberManifest": "provenance/archive/MANIFEST.json",
+  "policy": "Original archive stays immutable; unimported research, variants, native sources and tool archives are loaded on demand with manifest verification.",
+  "archiveEntryCount": 78669,
+  "topLevelPrefixes": [
+    "MANIFEST.json",
+    "README.md",
+    "duckdb-temporal",
+    "handoff",
+    "offline",
+    "privacy",
+    "references",
+    "tools",
+    "triplex-backends"
+  ]
+}

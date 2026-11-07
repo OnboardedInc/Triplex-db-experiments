@@ -1,0 +1,10 @@
+{
+  "attempt": 2,
+  "started_at": "2026-11-06T02:47:09.590002+00:00",
+  "finished_at": "2026-11-06T02:54:06.752080+00:00",
+  "exit_code": 0,
+  "elapsed_seconds": 417.15809079189785,
+  "pid": 87356,
+  "first_terminal": true,
+  "unchanged_before_after": true
+}

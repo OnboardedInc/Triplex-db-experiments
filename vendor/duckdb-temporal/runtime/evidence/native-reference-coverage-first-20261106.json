@@ -1,0 +1,278 @@
+{
+  "schema": "td.native-reference-coverage-first-gate/1",
+  "status": "focused_pass",
+  "packagedAtUtc": "2026-11-06T10:30:30.905625+00:00",
+  "measuredSourceCommit": "c593a6fc8eafd3dd76eda36b2f245885cfb94425",
+  "implementationCommit": "229121424e63729867b2c71c9b1eacb0ba35a4e8",
+  "qualifiedBaseCommit": "4674135bafce0cb5d50e3773c1391848974e9079",
+  "independentQaCommit": "d3b368eb7d18a51a94a325b11641291d69413a3a",
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-coverage-20261106-01",
+  "rawDirectory": "evidence/native-reference-coverage-first-20261106-raw",
+  "rawFiles": {
+    "after-tests-first.json": {
+      "sha256": "69e24abeb79b508715f883a2b76b171cd15b6b9ded3ecb76979ea67e302f9094",
+      "sizeBytes": 95525
+    },
+    "compiled-before-tests-first.json": {
+      "sha256": "1908b144b627f7d700035bb08284731fbd48b45f40e3a7495db009af8ef30b20",
+      "sizeBytes": 20676
+    },
+    "core-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "core-first.stdout": {
+      "sha256": "f021160614dc223318cf5df7173fcc58f71f6b9cdaa89b8729eb3a19e1655c45",
+      "sizeBytes": 4377
+    },
+    "core-first.terminal.json": {
+      "sha256": "6cabf6e5949fcbc8903b031f09ae1433bcab57d32a71735e2f3f61b0c67da243",
+      "sizeBytes": 412
+    },
+    "owner-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "owner-first.stdout": {
+      "sha256": "998a82e9dfe18d833569d8c3b88497d112de16ac7c4fa909022ba99ff2368667",
+      "sizeBytes": 6939
+    },
+    "owner-first.terminal.json": {
+      "sha256": "29cdb6a6cca2262424f89b266c319bf126831a3842626821b8cbb45893cefd27",
+      "sizeBytes": 782
+    },
+    "paired-before-first.json": {
+      "sha256": "f3cb0d3251be7fb95e32782ae6346f2346a0789c529057210f9005470169cdec",
+      "sizeBytes": 16250
+    },
+    "sdk-resolution-first.json": {
+      "sha256": "4398758a1aefaccabb1ff9e68388d31f8222807e09ec4fcbbf19e283e9ef4b74",
+      "sizeBytes": 937
+    },
+    "source-and-sdk-review.json": {
+      "sha256": "43ff615ab3d3a2f25e176ce413413582025a9194bade87c04ba78df5de7d76d7",
+      "sizeBytes": 1584
+    },
+    "stage-before-first.json": {
+      "sha256": "3867126c269f1fd407eb3246893a1d2d7de03c3012319bdb92be4570ad0b0452",
+      "sizeBytes": 71746
+    },
+    "stage-first.terminal.json": {
+      "sha256": "87da6e323b54bc68cb47e1d399ca375f448077871e03cd210bd1a269c97b7097",
+      "sizeBytes": 251
+    },
+    "tests-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tests-first.tap": {
+      "sha256": "b4086b4f071a969d312d7ba27df9a6e0f92d32b90dcb66b18a716ea77245af26",
+      "sizeBytes": 1966
+    },
+    "tests-first.terminal.json": {
+      "sha256": "c29224c9e9b125bd3f789c89f1b645bf3d9b1c9dbb31e9c17e94017d5730a2de",
+      "sizeBytes": 686
+    },
+    "tsc-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tsc-first.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tsc-first.terminal.json": {
+      "sha256": "57a9bf9dd5a86891949ccab336f1b015f17a1faec68139752ddebdfaf0690550",
+      "sizeBytes": 460
+    },
+    "core-artifact.json": {
+      "sha256": "7a6c2f45f386faf13bf11448116644fcb5a54af75b02b4e190e969a2b5b093cb",
+      "sizeBytes": 4553
+    },
+    "owner-artifact.json": {
+      "sha256": "aa42d89c915ed343cebe8ffdfe3fba1ec23a27540edd17cfc076c8d936bf40b6",
+      "sizeBytes": 7419
+    }
+  },
+  "actualOutcomes": {
+    "freshStage": "first_pass",
+    "coreBuild": "first_pass",
+    "matchedOwnerControlAddonBuild": "first_pass",
+    "tsc": "first_pass",
+    "independentMethods": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "repairsOrRetries": []
+  },
+  "terminals": {
+    "stage-first": {
+      "status": "passed",
+      "exitCode": 0,
+      "execSession": 25745,
+      "processPid": "not captured",
+      "observedAtUtc": "2026-11-06T10:23:29.476279+00:00",
+      "receipt": "stage-before-first.json",
+      "originalToolChunks": [
+        "2af5de",
+        "d1867b"
+      ]
+    },
+    "core-first": {
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "build_native.py"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 45021,
+      "startedAtUtc": "2026-11-06T10:23:29.476506+00:00",
+      "endedAtUtc": "2026-11-06T10:23:40.888889+00:00",
+      "exitCode": 0,
+      "elapsedMs": 11412.359208101407
+    },
+    "owner-first": {
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "build_owner_probe.py",
+        "--source-dir",
+        "[LOCAL_PATH_0041]",
+        "--engine-library",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "--compat-mutations"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 45183,
+      "startedAtUtc": "2026-11-06T10:24:06.965097+00:00",
+      "endedAtUtc": "2026-11-06T10:24:14.847469+00:00",
+      "exitCode": 0,
+      "elapsedMs": 7882.217250065878
+    },
+    "tsc-first": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 45518,
+      "startedAtUtc": "2026-11-06T10:25:17.762262+00:00",
+      "endedAtUtc": "2026-11-06T10:25:19.715797+00:00",
+      "exitCode": 0,
+      "elapsedMs": 1953.3972919452935
+    },
+    "tests-first": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "build/adapter/test-native-reference-coverage.js"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+      "pid": 45736,
+      "startedAtUtc": "2026-11-06T10:26:03.333362+00:00",
+      "endedAtUtc": "2026-11-06T10:26:13.196691+00:00",
+      "exitCode": 0,
+      "elapsedMs": 9863.16950013861,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4"
+      },
+      "settings": {
+        "readers": 2,
+        "threads": 1,
+        "memoryLimit": "128MB",
+        "maxTempDirectorySize": "64MB"
+      }
+    }
+  },
+  "testMethods": [
+    "coverage accepts adjacent empty-target presence and validates source removal plus target reset at one batch cut",
+    "coverage rejects a real target gap atomically and admits the same failed source command after filling it",
+    "coverage validates same-batch forward cyclic and self edges against one final overlay",
+    "coverage remains bound to each immutable schema through patch carries and delayed legacy replay"
+  ],
+  "staging": {
+    "dependencies": 395,
+    "externalRoutes": 5,
+    "selectedCompilerReferences": 7,
+    "headers": 36,
+    "standardHelpers": 54,
+    "oldBinaryOrDatabaseCopies": false,
+    "dependencyInstall": false,
+    "sourceGitExact": true
+  },
+  "nativePins": {
+    "build/artifact.json": "7a6c2f45f386faf13bf11448116644fcb5a54af75b02b4e190e969a2b5b093cb",
+    "build/catalog_sql.hpp": "454570e13f70effc105f50251ef8f073e571ae843211ff4a48f69d49fb4ceb11",
+    "build/temporal_datalog.duckdb_extension": "a562ddf6d7f3ebb8189efd785ad312143d940c9ca6d95049ced357a78149c66b",
+    "build/temporal_datalog.so": "0ab27c08f0289a648d305cf1ff3ef44a625f81c68d10c4e9c8af5f6dcf2425b6",
+    "build/temporal_control.node": "6358b3f085e3f41cf66729b890d53121f2f23ddcbd4e679b307e302e8da9199e",
+    "build/owner_probe/artifact.json": "aa42d89c915ed343cebe8ffdfe3fba1ec23a27540edd17cfc076c8d936bf40b6",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "286694a1225384bedff88aa462d9ad03a48b4eac5e2b135a69c84014f24f258b",
+    "build/owner_probe/temporal_owner_probe.so": "89c52bc41fea69998e929b1ba5b4ca0c9abb78312f8381db659cf4d3092fe63d",
+    "build/owner_probe/temporal_writer.node": "7c6da97f4421db1fa3737e7b2a072f928c1f84ef9a56722533d90b163304c94f"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "coreFlags": {
+    "experimental_current_unique_fast_path": true,
+    "experimental_injective_projection_fast_path": true,
+    "experimental_identity_count_fast_path": false,
+    "experimental_all_cut_unique_fast_path": true,
+    "experimental_streaming_source_fast_path": true
+  },
+  "settings": {
+    "readers": 2,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "UV_THREADPOOL_SIZE": "4"
+  },
+  "postchecks": {
+    "native9Unchanged": true,
+    "dependencies395Unchanged": true,
+    "source43UnchangedAndGitExact": true,
+    "compiled186Unchanged": true,
+    "headers36AndRoutes5AndReferences7Unchanged": true,
+    "nodeUnchanged": true,
+    "gitCleanAtPostcheck": true,
+    "fixtureCount": 4,
+    "allClosedScopedLsof": true,
+    "allWalAbsent": true,
+    "noExtraSqlOrReopen": true,
+    "details": "after-tests-first.json"
+  },
+  "compatibility": {
+    "preservedPresenceNativeBuild": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+    "preservedPresenceSdkCompiled4Exact": true,
+    "oldPresenceBuildUnmodified": true,
+    "nativeArtifactVersion": "0.32.0 source-qualified experimental pair; no version or production promotion in this gate",
+    "coverageSchemaIr": "td.schema/5",
+    "coverageStoreFormat": 12
+  },
+  "coverage": [
+    "Adjacent target presence, empty managed target and both reference carriers; atomic rejection of unchanged incoming target shrink",
+    "One-K source-edge removal plus target reset; retained old cuts, canonical receipts/reordered batch replay, audit/reopen",
+    "Actual target gap rejection/no receipt, gap repair and successful same-command-ID retry",
+    "Same-batch forward/cyclic/self references and atomic narrowing/repair",
+    "Immutable definition policy through patch carries; original identity-only carries remain identity and new middle coverage is enforced"
+  ],
+  "limits": {
+    "logicalOnly": true,
+    "localEntities": 32,
+    "candidateEdges": 4096,
+    "scopedEventsAndIslands": 4096,
+    "comparisons": 65536,
+    "stagingBytes": 1048576,
+    "boundaryQualification": "Not exercised by these four methods."
+  },
+  "remaining": [
+    "Exact local-cap/error-order and empty/coalesced-output over-limit gates",
+    "Per-unit audit beyond 32 global entities / 4096 retained history rows; paged audit/cancellation cost",
+    "Integer extremes, caller-transaction rollback and actual old-binary format12 fence",
+    "Legacy schema/IR byte and broad command/query/full verifier regressions including owner-pairing unittest",
+    "Complete no-policy ACK overhead versus accepted presence pair and coverage-heavy plan/cost measurements",
+    "No production acceptance or Goals1/9 closure claim"
+  ]
+}

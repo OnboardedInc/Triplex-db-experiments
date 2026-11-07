@@ -1,0 +1,7 @@
+# Immutable copied reference inputs and raw qualification observations.
+qualification/workloads/**
+qualification/evidence/**
+**/qualification/evidence/**
+packages/xtdb/experiments/**/*.json
+packages/qlever/experiments/**/*.json
+experiments/**/generated/**

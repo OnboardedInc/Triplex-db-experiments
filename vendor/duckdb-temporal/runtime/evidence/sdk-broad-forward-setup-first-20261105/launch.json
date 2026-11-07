@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "0d2cbb1d1279856c41cb05456bf6f0831842ab4d",
+  "preflightCompletedAtUtc": "2026-11-06T03:33:16.044037+00:00",
+  "protocol": "SDK-BROAD-REGRESSION-PROTOCOL.md",
+  "order": [
+    "B0",
+    "SDK"
+  ],
+  "phase": "before_B0",
+  "engine": "not_yet_started"
+}

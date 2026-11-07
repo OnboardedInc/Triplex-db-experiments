@@ -1,0 +1,18 @@
+✔ reader configuration validates bounds and keeps legacy defaults (520.811834ms)
+✔ independent reader connections overlap, retain their cuts and observe later writer commits (432.202958ms)
+✔ a canceled queued reader owns no control and cannot interrupt the active reader (310.372542ms)
+✔ active reader cancellation interrupts only its connection and releases the lease (346.689417ms)
+✔ close drains active and queued readers before closing all connections and the shared instance (301.911416ms)
+✔ pooled read admission bounds active and queued work and recycles settled capacity (1044.993292ms)
+✔ pooled admission includes reads awaiting the writer barrier (339.921917ms)
+✔ reader initialization failure closes every opened connection and its instance (142.488959ms)
+✔ uncertain reader cleanup retires the lease and fails queued work without disabling the writer (321.972708ms)
+✔ close attempts all reader connections and permits teardown retry after a failure (275.133042ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4152.378833

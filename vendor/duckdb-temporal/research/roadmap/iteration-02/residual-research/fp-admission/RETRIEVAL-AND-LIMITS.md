@@ -1,0 +1,15 @@
+# Retrieval and evidentiary limits
+
+Fresh primary-source retrieval: 2026-10-30 UTC. GitHub connector GET returned exact UTF-8 source text for 22 glibc 2.41 / CPython 3.12.14 / duckdb-python 2.0.0 files. `SOURCE-RECEIPTS.json` records SHA-256, Git-blob SHA-1 computed locally, byte count, exact version URL, and retrieval UTC. The Git blob hashes are independently computed identifiers, not claims that a provider returned a matching blob SHA field. Private cached source files are excluded from any published handoff; hashes/URLs/short derived notes are sufficient.
+
+`apply_patch` added a known final newline to cache materialization; it was removed immediately once for each fresh cached file before source digests were finalized. Cache bytes then equal the UTF-8 connector-returned content. This is a source-text receipt, not an HTTP transport-body checksum claim.
+
+The ordinary web tool could read fegetenv but returned cache misses for the exact fegetmode raw/GitHub page URLs. The official-source GitHub connector successfully retrieved the same exact glibc-2.41 fegetmode path (also through its contents endpoint), removing that retrieval blocker. `include/bits/libc-header-start.h` returned a GitHub 404; the correct glibc root path `bits/libc-header-start.h` succeeded. No guessed source content was used. A guessed GNU manual Control-Modes node failed; the documented Control-Functions node succeeded. One DuckDB live docs URL failed; pinned v2.0.0 result source succeeded.
+
+Live Python `/3.12/` docs identify themselves as 3.12.16 now; they are not evidence of the precise target's implementation. Pinned 3.12.14 source/docs receipts were obtained for claims about allocation, ctypes fields/pointers/GIL, struct buffering, GC, signals and decref behavior.
+
+Intel's accessible primary SDM PDFs are September 2016 edition 253666/253667-060US. They establish stable instruction semantics, including the FNSTCW condition-code caveat; they are not a claim about a new CPU's timing. Web-only PDFs/manuals/pages have no local-byte checksum claim; their receipt file records exact URL, edition and scope.
+
+Original `verification-01/mechanism-summary.json` captured its redirected stdout log while still empty; the original is preserved. The completed stdout has the same bytes as the summary after the process exits. `verification-01/POSTRUN-OUTPUT-VERIFICATION.json` independently closes the actual hashes and documents this provenance correction. No test outcomes changed and no run was repeated.
+
+No production patch, app-source write, Git/Page/PR mutation, DB/candidate/store import, native-engine execution, or performance timing occurred. Nondefault FP control writes occurred only in the coordinator-authorized 79 isolated research children, through an unchanged copy of the existing inspectable test helper. The controlling process's full before/after environment observations were identical. This evidence cannot accept item 2 or attribute the persisted wall-time residual to any single mechanism.

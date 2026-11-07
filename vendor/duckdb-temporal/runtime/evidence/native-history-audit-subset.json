@@ -1,0 +1,247 @@
+{
+  "schema": "native-history-audit-subset/1",
+  "timestamp_utc": "2026-11-05T14:56:38.006097+00:00",
+  "status": "passed",
+  "base_commit": "86e8bb01787e1a6340a80f7331083c0df2c36fdc",
+  "source_sha256": {
+    "native/catalog.sql": "e2e9487121f0443c19ea0892f52e2962365e7610d135f27db82cb35f4a4f9eaa",
+    "adapter/test-interval-patch.ts": "233be0646929d760aa7ae42ba682640ed58956781728db15c100d7e6fb63fd1f"
+  },
+  "method": {
+    "configuration": {
+      "threads": 4,
+      "memory_limit": "2GB",
+      "max_temp_directory_size": "4GB"
+    },
+    "fixture_handling": "Each variant received a fresh exclusive reflink/copy of the same closed one-million fixture and optional WAL; source size and nanosecond mtime were checked unchanged after each copy. Original fixture was never opened.",
+    "sequence": [
+      "New independent Node process per variant using the same packaged SDK",
+      "Load hash-verified core, run td_initialize, load paired owner companion, enroll connection",
+      "Run SELECT td_owner_probe_activate(0) three times and retain all elapsed wall samples",
+      "Assert retained count1000008 and clock253",
+      "Run EXPLAIN (ANALYZE, FORMAT JSON) SELECT count(*) FROM td_catalog_v1.entity_history",
+      "Close connection and instance"
+    ],
+    "comparison_scope": "Bounded diagnostic of complete audit and actual operator work on an empty-provenance fixture; three activation samples do not establish a latency distribution.",
+    "raw_profile_location": "Unmodified complete profiles retained in the child worktree build/patch-audit-probe directory."
+  },
+  "profiles": [
+    {
+      "variant": "before-optimization",
+      "core_extension_sha256": "f0a57dbff82393e04fed136896a4ced70ea8500692e935b8f0164c3e3f5beead",
+      "owner_extension_sha256": "db3effa748018804f2c23203e1774829e6672954263878c6e49f58a7c427a71f",
+      "fixture": {
+        "assertions": 1000008,
+        "position": 253,
+        "provenance_rows": 0,
+        "source_files": [
+          {
+            "suffix": "",
+            "bytes": "314060800",
+            "mtimeNs": "1793888878183515808"
+          }
+        ]
+      },
+      "activation_ms": [
+        288.78491699999995,
+        244.11820899999998,
+        238.2366669999999
+      ],
+      "query": {
+        "cpu_time": 0.4800181859999998,
+        "sql": "EXPLAIN (ANALYZE, FORMAT JSON) SELECT count(*) FROM td_catalog_v1.entity_history",
+        "total_intermediate_rows": 15012667,
+        "total_intermediate_size_bytes": 6055190082,
+        "total_row_groups_scanned": 41,
+        "total_row_groups_to_scan": 48,
+        "total_rows_scanned": 2010743,
+        "total_time": 0.14928875
+      },
+      "system": {
+        "blocked_thread_time": 0,
+        "peak_buffer_memory": 314859520,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 198967296
+      },
+      "assertion_scans": [
+        {
+          "type": "TABLE_SCAN",
+          "intermediate_rows": 1000008,
+          "intermediate_size_bytes": 411895272,
+          "timing": 0.061738236,
+          "extra_info": {
+            "Table": "\"before-optimization-1793890543561\".main.assertions",
+            "Type": "Sequential Scan",
+            "Projections": [
+              "command_id",
+              "assertion_id",
+              "e",
+              "a",
+              "v_s",
+              "tx_from",
+              "entity_type",
+              "payload_hash",
+              "payload",
+              "v_tag",
+              "tag",
+              "v_i"
+            ],
+            "Estimated Cardinality": "1000008"
+          }
+        },
+        {
+          "type": "TABLE_SCAN",
+          "intermediate_rows": 1000008,
+          "intermediate_size_bytes": 141071488,
+          "timing": 0.022730914999999997,
+          "extra_info": {
+            "Table": "\"before-optimization-1793890543561\".main.assertions",
+            "Type": "Sequential Scan",
+            "Projections": "assertion_id",
+            "Estimated Cardinality": "1000008"
+          }
+        },
+        {
+          "type": "TABLE_SCAN",
+          "intermediate_rows": 8192,
+          "intermediate_size_bytes": 1163264,
+          "timing": 0.000235958,
+          "extra_info": {
+            "Table": "\"before-optimization-1793890543561\".main.assertions",
+            "Type": "Sequential Scan",
+            "Projections": "assertion_id",
+            "Estimated Cardinality": "1000008"
+          }
+        }
+      ],
+      "raw_profile_file": "before-optimization-actual.json",
+      "raw_profile_sha256": "821ce0d825517aef7e0348375fbf868f1a9013645915b43f462b5518cf93b588"
+    },
+    {
+      "variant": "after-optimization",
+      "core_extension_sha256": "0aba7597e8284dd5889ba66f8381af5413090f3a758732d5090740203e0925cd",
+      "owner_extension_sha256": "db3effa748018804f2c23203e1774829e6672954263878c6e49f58a7c427a71f",
+      "fixture": {
+        "assertions": 1000008,
+        "position": 253,
+        "provenance_rows": 0,
+        "source_files": [
+          {
+            "suffix": "",
+            "bytes": "314060800",
+            "mtimeNs": "1793888878183515808"
+          }
+        ]
+      },
+      "activation_ms": [
+        291.074708,
+        222.84512499999994,
+        283.85958300000004
+      ],
+      "query": {
+        "cpu_time": 0.44787974199999964,
+        "sql": "EXPLAIN (ANALYZE, FORMAT JSON) SELECT count(*) FROM td_catalog_v1.entity_history",
+        "total_intermediate_rows": 14020852,
+        "total_intermediate_size_bytes": 8382980543,
+        "total_row_groups_scanned": 34,
+        "total_row_groups_to_scan": 48,
+        "total_rows_scanned": 1018927,
+        "total_time": 0.1301355
+      },
+      "system": {
+        "blocked_thread_time": 0,
+        "peak_buffer_memory": 198729728,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 94371840
+      },
+      "assertion_scans": [
+        {
+          "type": "TABLE_SCAN",
+          "intermediate_rows": 8192,
+          "intermediate_size_bytes": 1163264,
+          "timing": 0.00019733400000000002,
+          "extra_info": {
+            "Table": "\"after-optimization-1793890545441\".main.assertions",
+            "Type": "Sequential Scan",
+            "Projections": "assertion_id",
+            "Estimated Cardinality": "1000008"
+          }
+        },
+        {
+          "type": "TABLE_SCAN",
+          "intermediate_rows": 1000008,
+          "intermediate_size_bytes": 452021032,
+          "timing": 0.067278745,
+          "extra_info": {
+            "Table": "\"after-optimization-1793890545441\".main.assertions",
+            "Type": "Sequential Scan",
+            "Projections": [
+              "command_id",
+              "assertion_id",
+              "e",
+              "a",
+              "v_s",
+              "tx_from",
+              "entity_type",
+              "payload_hash",
+              "payload",
+              "v_tag",
+              "valid_from",
+              "valid_to",
+              "tag",
+              "v_i",
+              "tx_to",
+              "corrected_by"
+            ],
+            "Estimated Cardinality": "1000008"
+          }
+        },
+        {
+          "type": "TABLE_SCAN",
+          "intermediate_rows": 8192,
+          "intermediate_size_bytes": 1163264,
+          "timing": 0.00021674999999999998,
+          "extra_info": {
+            "Table": "\"after-optimization-1793890545441\".main.assertions",
+            "Type": "Sequential Scan",
+            "Projections": "assertion_id",
+            "Estimated Cardinality": "1000008"
+          }
+        }
+      ],
+      "raw_profile_file": "after-optimization-actual.json",
+      "raw_profile_sha256": "d178927016afe0da30c47f7c90ac5641c2c320d503fd67de8ebf67c9e1e9d6c9"
+    }
+  ],
+  "observations": [
+    "The extra parent assertion-ID scan emitted1000008 rows before and8192 rows after; the latter is bounded scan startup, not a full-history build.",
+    "Total profiled rows scanned fell2010743 to1018927.",
+    "Profiled history-query wall time fell0.14928875s to0.1301355s in this pair.",
+    "Peak DuckDB buffer memory fell314859520 to198729728 bytes.",
+    "Cumulative intermediate bytes increased6055190082 to8382980543; the optimized primary scan retains more columns. This counter is cumulative operator output, not peak allocation.",
+    "Three activation samples are noisy and do not establish an activation latency improvement."
+  ],
+  "checks": [
+    {
+      "command": "node --test --test-concurrency=1 build/adapter/test-format-fence.js build/adapter/test-interval-patch.js build/adapter/test-interval-crash.js",
+      "passed": 12,
+      "failed": 0,
+      "duration_ms": 11159.727875,
+      "output_sha256": "e44e1b3314b28455ac8f24a66c089b8502843ee23812940e5f55855fcb3db978"
+    },
+    {
+      "command": "node --test --test-concurrency=1 build/adapter/test-entity.js build/adapter/test-owned-store.js build/adapter/test-store-query.js build/adapter/test-control.js build/adapter/test-cleanup.js build/adapter/test-schema.js",
+      "passed": 48,
+      "failed": 0,
+      "duration_ms": 16679.683667,
+      "output_sha256": "e2d9c3b75c8a40b7563be3258f7155eed0dade1af81f023061005f0f6341a84a"
+    },
+    {
+      "command": "node_modules/.bin/tsc --pretty false",
+      "status": "passed"
+    }
+  ],
+  "correctness": "Source parent lookup remains a left join after filtering the physical source to requested parent IDs. Global child-orphan validation compares provenance count with a semijoin count. Regression corrupts a parent ID while making child bounds equal to an ordinary replacement window, proving provenance is not silently discarded."
+}

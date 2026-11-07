@@ -1,0 +1,13 @@
+✔ freshness records pending submission separately from ACK and permits a precommit snapshot (0.80275ms)
+✔ freshness rejects latest results omitting an ACK already delivered at invocation (0.878583ms)
+✔ explicit historical cuts are exact and exempt from the latest post-ACK lower bound (0.160666ms)
+✔ a commit visible before ACK delivery is recorded without inventing an ACK or commit timestamp (0.087167ms)
+✔ return-time staleness reports an ACK delivered during an existing coherent read (0.468042ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 70.270042

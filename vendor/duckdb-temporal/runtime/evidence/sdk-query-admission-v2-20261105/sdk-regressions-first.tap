@@ -1,0 +1,172 @@
+TAP version 13
+# Subtest: result/binding/destruction faults all run, preserve errors, fence and defer failed releases
+ok 1 - result/binding/destruction faults all run, preserve errors, fence and defer failed releases
+  ---
+  duration_ms: 279.838
+  type: 'test'
+  ...
+# Subtest: primary fetch errors remain the cause when completed result cleanup also throws
+ok 2 - primary fetch errors remain the cause when completed result cleanup also throws
+  ---
+  duration_ms: 83.578584
+  type: 'test'
+  ...
+# Subtest: cancellation cannot hide uncertain cleanup; token/listener retirement still runs
+ok 3 - cancellation cannot hide uncertain cleanup; token/listener retirement still runs
+  ---
+  duration_ms: 85.787875
+  type: 'test'
+  ...
+# Subtest: close attempts every statement, connection and instance despite failures, then permits close-only retry
+ok 4 - close attempts every statement, connection and instance despite failures, then permits close-only retry
+  ---
+  duration_ms: 329.739042
+  type: 'test'
+  ...
+# Subtest: eviction destruction failure fences the port and still releases the new statement
+ok 5 - eviction destruction failure fences the port and still releases the new statement
+  ---
+  duration_ms: 92.83375
+  type: 'test'
+  ...
+# Subtest: scope listener and control-release faults are independent, fence reuse and retain explicit cleanup
+ok 6 - scope listener and control-release faults are independent, fence reuse and retain explicit cleanup
+  ---
+  duration_ms: 36.983041
+  type: 'test'
+  ...
+# Subtest: Node bridge shares the extension invocation registry, pins identity and bounds/retires controls
+ok 7 - Node bridge shares the extension invocation registry, pins identity and bounds/retires controls
+  ---
+  duration_ms: 106.112875
+  type: 'test'
+  ...
+# Subtest: controlled queries preserve native/SQL routes, fresh data and transport validation without listener leaks
+ok 8 - controlled queries preserve native/SQL routes, fresh data and transport validation without listener leaks
+  ---
+  duration_ms: 593.762875
+  type: 'test'
+  ...
+# Subtest: whole-query SQL timeout/cancel awaits cleanup, retires tokens and releases connection ownership
+ok 9 - whole-query SQL timeout/cancel awaits cleanup, retires tokens and releases connection ownership
+  ---
+  duration_ms: 129.945875
+  type: 'test'
+  ...
+# Subtest: native polling observes Node cancellation and independent evaluator/whole-query deadlines publish no partial output
+ok 10 - native polling observes Node cancellation and independent evaluator/whole-query deadlines publish no partial output
+  ---
+  duration_ms: 468.490625
+  type: 'test'
+  ...
+# Subtest: aborting a queued request cannot interrupt the previous invocation
+ok 11 - aborting a queued request cannot interrupt the previous invocation
+  ---
+  duration_ms: 474.575208
+  type: 'test'
+  ...
+# Subtest: C++ parameterized templates reuse structural SQL with fresh tokens, data, rollback and schema meaning
+ok 12 - C++ parameterized templates reuse structural SQL with fresh tokens, data, rollback and schema meaning
+  ---
+  duration_ms: 492.327958
+  type: 'test'
+  ...
+# Subtest: expanded SQL above the wire limit falls back to the pragma without rejecting the valid program
+ok 13 - expanded SQL above the wire limit falls back to the pragma without rejecting the valid program
+  ---
+  duration_ms: 485.618584
+  type: 'test'
+  ...
+# Subtest: an SDK fatal fences writer, active readers and queued readers with its original cause
+ok 14 - an SDK fatal fences writer, active readers and queued readers with its original cause
+  ---
+  duration_ms: 421.991542
+  type: 'test'
+  ...
+# Subtest: ordinary SDK OOM and an embedded fatal phrase preserve healthy instance reuse
+ok 15 - ordinary SDK OOM and an embedded fatal phrase preserve healthy instance reuse
+  ---
+  duration_ms: 355.943042
+  type: 'test'
+  ...
+# Subtest: fatal primary survives cleanup errors and close still attempts connection and instance
+ok 16 - fatal primary survives cleanup errors and close still attempts connection and instance
+  ---
+  duration_ms: 82.916042
+  type: 'test'
+  ...
+# Subtest: fatal native appender failures fence every connection sharing the instance
+ok 17 - fatal native appender failures fence every connection sharing the instance
+  ---
+  duration_ms: 84.766708
+  type: 'test'
+  ...
+# Subtest: reader configuration validates bounds and keeps legacy defaults
+ok 18 - reader configuration validates bounds and keeps legacy defaults
+  ---
+  duration_ms: 485.65125
+  type: 'test'
+  ...
+# Subtest: independent reader connections overlap, retain their cuts and observe later writer commits
+ok 19 - independent reader connections overlap, retain their cuts and observe later writer commits
+  ---
+  duration_ms: 436.3985
+  type: 'test'
+  ...
+# Subtest: a canceled queued reader owns no control and cannot interrupt the active reader
+ok 20 - a canceled queued reader owns no control and cannot interrupt the active reader
+  ---
+  duration_ms: 302.20075
+  type: 'test'
+  ...
+# Subtest: active reader cancellation interrupts only its connection and releases the lease
+ok 21 - active reader cancellation interrupts only its connection and releases the lease
+  ---
+  duration_ms: 311.826584
+  type: 'test'
+  ...
+# Subtest: close drains active and queued readers before closing all connections and the shared instance
+ok 22 - close drains active and queued readers before closing all connections and the shared instance
+  ---
+  duration_ms: 285.797167
+  type: 'test'
+  ...
+# Subtest: pooled read admission bounds active and queued work and recycles settled capacity
+ok 23 - pooled read admission bounds active and queued work and recycles settled capacity
+  ---
+  duration_ms: 907.075375
+  type: 'test'
+  ...
+# Subtest: pooled admission includes reads awaiting the writer barrier
+ok 24 - pooled admission includes reads awaiting the writer barrier
+  ---
+  duration_ms: 338.997917
+  type: 'test'
+  ...
+# Subtest: reader initialization failure closes every opened connection and its instance
+ok 25 - reader initialization failure closes every opened connection and its instance
+  ---
+  duration_ms: 133.050833
+  type: 'test'
+  ...
+# Subtest: uncertain reader cleanup retires the lease and fails queued work without disabling the writer
+ok 26 - uncertain reader cleanup retires the lease and fails queued work without disabling the writer
+  ---
+  duration_ms: 346.345458
+  type: 'test'
+  ...
+# Subtest: close attempts all reader connections and permits teardown retry after a failure
+ok 27 - close attempts all reader connections and permits teardown retry after a failure
+  ---
+  duration_ms: 329.905875
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8952.887083

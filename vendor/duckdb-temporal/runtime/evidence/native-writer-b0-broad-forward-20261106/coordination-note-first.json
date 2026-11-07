@@ -1,0 +1,15 @@
+{
+  "schema": "td.native-writer-b0-broad-coordination-note/1",
+  "recordedAtUtc": "2026-11-06T09:33:11.154033+00:00",
+  "status": "TIMESTAMP_PENDING",
+  "reportedBy": "root",
+  "reportedActivity": "A151-line source profiler commit/push and remote readback before deferpushmessage arrived",
+  "reportedDurationsSeconds": {
+    "commitPush": 1.461,
+    "readback": 0.365
+  },
+  "potentialOverlap": "OriginalB0 child09:27:15.075Z to09:31:29.683Z; exactactivityUTCtimes requested",
+  "reportedOtherEngineBuildOrLargeHash": false,
+  "measurementEffect": "Unknown; no causal attribution",
+  "action": "Preserve first forward unchanged; no stop/retry or favorable rerun; all gates/caps unchanged"
+}

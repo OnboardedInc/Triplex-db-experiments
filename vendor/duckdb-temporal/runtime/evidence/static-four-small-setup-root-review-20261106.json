@@ -1,0 +1,16 @@
+{
+  "schema": "td.static-four-small-setup-root-review/1",
+  "failureSource": "072c96c036a95a1295cc5eb6f72d38834fba2526",
+  "failureRawHashesVerified": 5,
+  "actualChildAttempts": 0,
+  "actualProfiles": 0,
+  "runtimeAndSourceMapsUnchanged": true,
+  "repairSource": "508ed0c323ef946682d603b5bf3e56aad2c7fdc2",
+  "assetSourceAndDestinationActualHashesVerified": true,
+  "copiedBytes": 2788372,
+  "copiedSha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474",
+  "budgetBaselineCompactAlsoVerified": true,
+  "budgetOrRuntimeChanged": false,
+  "engineInvokedByReview": false,
+  "qualification": "Setup repair only. Candidate16 and fresh small attempt are unrun."
+}

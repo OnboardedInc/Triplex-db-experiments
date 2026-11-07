@@ -1,0 +1,154 @@
+{
+  "format": "triplex-native-only-feasibility-hypothesis/1",
+  "id": "qlever-native-only-point-rate16-v1",
+  "recordedAt": "2026-11-07T02:28:46.067843+00:00",
+  "status": "PREPARED_FOR_ROOT_REVIEW_NO_EXECUTION_YET",
+  "hypothesis": "The independently authored native point path uses a source-cut SELECT plus one typed answer SELECT, while the explicit F1 Datalog path additionally performs two integrity-admission SELECTs. Fewer read calls may reduce shared-engine read/write contention. Shared Triplex writes/history/receipts remain unchanged. This is a new native-only diagnostic, not completion or promotion of the failed Qfoundation wave.",
+  "failedPredecessor": {
+    "run": "qlever-qualified-rate16-datalog-v2/0001",
+    "receipt": "qualification/evidence/qlever-qualified-rate16-datalog-v2-failure.json",
+    "outcome": "215correct265deadlineerrors;0of6writersvisiblewithin30s;all6reconciledafterdrain;actual100restored. Native sibling in that wave staysunexecuted."
+  },
+  "numericContract": {
+    "logicalClients": 256,
+    "dispatchSlots": 16,
+    "pendingLimit": 4096,
+    "mode": "open-loop",
+    "readOffersPerSecond": 16,
+    "measurementMilliseconds": 30000,
+    "scheduledReadDeadlineMilliseconds": 30000,
+    "maximumReads": 10000,
+    "expectedOfferedReads": 480,
+    "expectedOffersPerClass": 240,
+    "classes": [
+      "point-current",
+      "point-history"
+    ],
+    "writerMode": "rate",
+    "writerCommandsPerSecond": 0.2,
+    "writerOfferMilliseconds": [
+      0,
+      5000,
+      10000,
+      15000,
+      20000,
+      25000
+    ],
+    "writerCommand": "One atomic retract-and-replace correction on each of ten entities;20 operations total",
+    "warmupExcluded": false,
+    "applicationRetries": false,
+    "clockPolicy": "monotonic-scheduled-offer-deadline/1"
+  },
+  "queryPath": "qlever-native",
+  "settings": {
+    "plannerBudget": 100,
+    "candidateFlags": "ALL_ABSENT",
+    "settingsGuard": "read100 before and after; no native parameter mutation"
+  },
+  "engine": {
+    "image": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "containerId": "e225d359e2a8211de8c5b3551e1aff8952b92b41922c4f90505ca4c6afc30b3f",
+    "memoryBytes": 2147483648,
+    "cpuUnits": 1.5,
+    "sharedWritesHistoryReceipts": true
+  },
+  "fixtureReuse": {
+    "spec": "qualification/load-jobs/qlever-qualified-rate16-seed-v2/spec.json",
+    "immutableSeedReceipt": "qualification/load-jobs/qlever-qualified-rate16-seed-v2/fixture.json",
+    "seedReceiptSha256": "7fa7b2c65001f6a3d27e90429effbab8226130fa5384680fbf7e19db681d86c4",
+    "instance": 1,
+    "scope": "[\"triplex-scope-v1\",\"benchmark\",\"triplex-load\",\"qlever-qualified-rate16-v2-instance-1\",0]",
+    "expectedCurrentPosition": 2,
+    "expectedSeedRecordedAt": 1000.25,
+    "freshWritesAfterSuccessfulPreflight": 6,
+    "configuredEntities": 0,
+    "preflight": [
+      "Canonical read-only baseline100 wrapper, same exactownedCID/image/caps/StartedAt; no otherQ job",
+      "Verify immutable spec,seed receipt/model/schema and original catalog hashes before any native call",
+      "Public currentPosition must equal2 before and after metadata checks",
+      "Public transactionByCommand for qlever-qualified-rate16-v2:1:seed:2 must be position2,instant1000.25",
+      "Public transactionByCommand for qlever-qualified-rate16-v2:1:correction:1 must be null",
+      "No workload SELECT warmup or writes during preflight; failure stops before load admission"
+    ],
+    "oracle": "Regenerate the independent model catalog from immutable seed receipt, compare original entries, publish under this new wave/oracle ID before load admission; only instance1 executes."
+  },
+  "stages": [
+    {
+      "id": "qlever-native-only-rate16-preflight-v1",
+      "kind": "canonical-read-only-verification",
+      "profile": "native100-untouched-instance1-P2-R1000.25",
+      "requiredChecks": "actualP2/R+no correction receipt+immutable seed/oracle bytes+100beforeafter"
+    },
+    {
+      "id": "qlever-native-only-rate16-load-v1",
+      "kind": "canonical-fixed-diagnostic",
+      "profile": "authored-native100-point-rate16-independent-wave-v1",
+      "dependsOn": "successful preflight",
+      "command": "Existing unmodified load runner with separate strict native100 wrapper and complete preserved source/controller preimages",
+      "gates": {
+        "seed": [
+          "fresh scopes",
+          "1000 domain assertions per scope",
+          "two500-assertion commands per scope",
+          "actual seed position/time/assertion-ID receipts",
+          "source/preimage and owned-storage integrity"
+        ],
+        "read": [
+          "all480 offers accounted",
+          "all returned result bytes match independent oracle at actual returned cut",
+          "zero errors or overload rejections at256",
+          "all256 logical clients make progress",
+          "complete scheduled latency includes queue and bounded drain"
+        ],
+        "writer": [
+          "exactly six unique atomic correction commands",
+          "all six reconciled without replay",
+          "all six ACKed and publicly visible within the fixed30s window",
+          "raw ACK/probe/visibility/backlog timing retained"
+        ],
+        "lifecycle": [
+          "actual dispatch and pending maxima retained",
+          "no partial answers or hidden retries",
+          "group gone and canonical terminal publication verified",
+          "unknown backend work retained for explicit reconciliation"
+        ],
+        "failure": "Retain all source, raw observations, first failures and cleanup evidence; stop further load jobs for that foundation. A failed liveness or availability gate is not acceptance"
+      }
+    }
+  ],
+  "resources": {
+    "maximumHeavyTrials": 3,
+    "poolMemoryBytes": 10737418240,
+    "poolCpuUnits": 8,
+    "residentOwner": "foundation-qlever",
+    "residentMemoryBytes": 2147483648,
+    "residentCpuUnits": 1.5,
+    "clientMemoryBytes": 939524096,
+    "clientCpuUnits": 1,
+    "perJobDiskReservationBytes": 268435456,
+    "perJobTimeoutMilliseconds": 600000,
+    "maximumReadObservationBytes": 134217728,
+    "hardTotalOwnedDiskBytes": 50000000000,
+    "operationalStopBytes": 46000000000,
+    "quotaImageMaximumBytes": 45000000000,
+    "externalZipAndAllowanceCounted": true,
+    "containment": "Qengine Linux cgroup cap; Mac controller/adapter RSS watchdog is not hard containment. VMOS overhead is separate. No extra foundation/copy/fault server."
+  },
+  "schedule": {
+    "admission": "Canonical fair queue, max3heavy/10GiB/8CPU; exact differentfoundation co-runners retained, no fair performance claim",
+    "settings": "No otherQ job during each readonly100 baseline stage",
+    "failure": "Any preflight/semantic/availability/writer-in-window/settings/cleanup failure stops this new diagnostic and preserves firstfailure; no rate reduction or retries",
+    "mainFoundation": "No restart, copy, pause, cap increase or write-fault action is included"
+  },
+  "attribution": {
+    "existingRaw": "Driver enqueue/dispatch/complete, returned cuts, writer offer/start/ACK/visible and full failures are retained. Existing failed Datalog query trace lacks native phase timings.",
+    "staticCallCount": "For this point query, includeBasis acquires one source position; explicit F checks scalar completeness and retirement pairing, then main answer. Native select acquires sourceposition and typed answer. This is source-derived call structure, not measured phase cost or causal proof.",
+    "notMeasured": "Fetch-driver dispatch/native planner start, integrity-admission versus answer cost, server-side physical cancellation completion and write staging versus commit/index time. Native client abort requests cancellation best-effort; clean Macgroup alone is not engine stop proof."
+  },
+  "interpretation": [
+    "Same immutable numeric contract and shared writes, new query surface/settings/profile/IDs; not a controlled one-variable throughput comparison",
+    "Native queries remain authored SPARQL; no Datalog lowering or full AST parser",
+    "All480 reads,256logical client progress,zeroerror/reject and6ACK+visibleinside30s required; all6afterdrain is insufficient",
+    "No productSLA,sustainable-rate,all-ten-goal or scale claim"
+  ]
+}

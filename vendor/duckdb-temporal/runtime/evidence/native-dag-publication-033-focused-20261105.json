@@ -1,0 +1,233 @@
+{
+  "schema": "td.native-dag-publication-focused/1",
+  "timestampUtc": "2026-11-05T22:57:28.588056+00:00",
+  "result": "PASS_FOCUSED_ONLY",
+  "sourceCommit": "b2b913cf436ca305b1ad3db95566b4bc9bbe43a4",
+  "baseCommit": "ce7c53b9",
+  "initialSourceCommit": "3cf08b10",
+  "kernelOriginalCommit": "4c57d9c4",
+  "extensionVersion": "0.33.0",
+  "coreSourceHashesMatch": true,
+  "coreSourceSha256": {
+    "native/experimental/dag_support.hpp": "5664294e262b5cf83a11259f2f90345277b0347f9058bd9ae99df746ea40baa5",
+    "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+    "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+    "native/src/temporal_batch.cpp": "eeab47429aee8564506da64bea0634ffd0f004045e4e3ed7ce61811f053d8d5e",
+    "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+    "native/src/temporal_command.cpp": "ba92857294571da2b3302f94c25d917822c9bbd7476bf9c139270f85f9df3440",
+    "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+    "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+    "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+    "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+    "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+    "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+    "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+    "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+    "native/src/temporal_dag_bindings.hpp": "89167fb74c468a8a633566517090143667d8473fcdfbfd71ce8a56696afc7f04",
+    "native/src/temporal_dag_projection.cpp": "78eaf14586928fcfc287d1a0f4ec04457599c0fb8b1b7084de9ccbb04d1ac6f2",
+    "native/src/temporal_dag_projection.hpp": "a50bf3dc76478ccc93659ddc33fb1142e8f8fef873f1f856209aace0b5fe94fe",
+    "native/src/temporal_datalog.cpp": "fee120280deb3153ae448a2acfe387b98211b70ef1cec80be70999eec3ad5ab6",
+    "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+    "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+    "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+    "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+    "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+    "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+    "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+    "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+    "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+    "native/src/temporal_schema.cpp": "bd83be2bb6d3cf76cd0d0716ad9628bac324e627e98b023834f3faf8e034c0b8",
+    "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+    "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+    "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+    "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+    "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+    "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+    "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+    "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da"
+  },
+  "artifacts": {
+    "build/artifact.json": "9841fb3244a63cafc9902ab243686c4764659b845ac63d4bb91711fbe5aebba5",
+    "build/temporal_datalog.duckdb_extension": "1c54d1108ecd36597cded7bfe7aafb9f73351af62dc098fdd360c1301626cf3e",
+    "build/temporal_control.node": "00e6981d0ba4985f1cc49986a50ef750f2343e7fc26dd1bd52f6087d816355b4",
+    "build/owner_probe/artifact.json": "6d47b94d824c18f96c36a0d0aa571e50a55a9ee979d31eead46e2c9477521c99",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "dd15a969d9535199a8eb76a8ad3047483f7d142102ebc31f669de63da1d6a220",
+    "build/adapter/native-entity.js": "c6d6a6468c4be3b8b1ea8ca9734c99f8b7a81957ec1ed0fba500f39194cf4533",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/adapter/test-native-dag-publication.js": "c944fb7ad1e0d8920797faba70152b86c0fd731d8603f5412a6b2e3b7cee81ef",
+    "build/adapter/test-native-dag-legacy.js": "150dc0b0d13c112686fda36f8f2b312d77487741e5fdcde4030d84232b5cdb74"
+  },
+  "companionPairMatches": true,
+  "engine": {
+    "version": "2.0.0",
+    "sdkPackage": "@duckdb/node-api 2.0.0-r.1",
+    "librarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "libraryDigestComputedBy": "build_owner_probe.py over selected actual SDK libduckdb.dylib"
+  },
+  "legacyActualArtifact": {
+    "extensionVersion": "0.32.0",
+    "coreSha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companionSha256": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "coreActualBytesMatch": true,
+    "companionActualBytesMatch": true,
+    "moduleSha256": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "transportSha256": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "commands": [
+    {
+      "phase": "core build",
+      "attempt": 1,
+      "result": "PASS",
+      "log": "core-01.log"
+    },
+    {
+      "phase": "paired compatibility owner build",
+      "attempt": 1,
+      "result": "PASS",
+      "log": "owner-01.log"
+    },
+    {
+      "phase": "TypeScript compilation",
+      "attempt": 1,
+      "result": "PASS",
+      "log": "tsc-01.log"
+    },
+    {
+      "phase": "focused real-engine suite",
+      "attempt": 1,
+      "result": "FAIL",
+      "passed": 0,
+      "failed": 4,
+      "durationMs": 1747.103917,
+      "log": "focused-01.tap",
+      "causes": [
+        "Rebuild PRAGMA intermediate row-returning SELECT cannot precede further expanded statements",
+        "Direct INTEGER version fixture expected bigint without cast"
+      ],
+      "preservedArtifacts": "build/dag-publication-gate-20261105/attempt-01"
+    },
+    {
+      "phase": "core build",
+      "attempt": 2,
+      "result": "PASS",
+      "log": "core-02.log"
+    },
+    {
+      "phase": "paired compatibility owner build",
+      "attempt": 2,
+      "result": "PASS",
+      "log": "owner-02.log"
+    },
+    {
+      "phase": "TypeScript compilation",
+      "attempt": 2,
+      "result": "PASS",
+      "log": "tsc-02.log"
+    },
+    {
+      "phase": "focused real-engine suite",
+      "attempt": 2,
+      "result": "PASS",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 4741.113125,
+      "log": "focused-02.tap"
+    },
+    {
+      "phase": "actual archived writer/reopen",
+      "attempt": 1,
+      "result": "PASS",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 1354.21075,
+      "log": "legacy-01.tap"
+    }
+  ],
+  "rawLogDirectory": "build/dag-publication-gate-20261105",
+  "rawLogs": {
+    "legacy-01.tap": {
+      "sha256": "5739223b42965717812b9b0966a23185169453a855922ed546f2a14839d034af",
+      "bytes": 251
+    },
+    "core-01.log": {
+      "sha256": "fbf51cf1b5f69be9c085cdeae2afb4e71b5ef62a08576e1342b063b52692721e",
+      "bytes": 4584
+    },
+    "focused-01.tap": {
+      "sha256": "1a582b6cc817202196eac163dcaa855405f5d2d1c9b4bdbb2de3706e057b5617",
+      "bytes": 2349
+    },
+    "owner-02.log": {
+      "sha256": "12d08390ee1a684c7162ba874a9bf461cd98f370ebd3f65f1f85b200fdc098c1",
+      "bytes": 3782
+    },
+    "core-02.log": {
+      "sha256": "d8d003532870b688813eab38406cacf48638207d25a171869e2578e2a6433b25",
+      "bytes": 4584
+    },
+    "focused-02.tap": {
+      "sha256": "af5df751ead1a3fd518f9eca4a78267d66f463d0889925adc4c28ac62455092a",
+      "bytes": 550
+    },
+    "owner-01.log": {
+      "sha256": "7e89e49a3769c1ce55ae4ce45de738e152ecbdb76d27ccfb2ca9971402bf54ac",
+      "bytes": 3782
+    },
+    "tsc-02.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "tsc-01.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "correctnessScope": [
+    "Independent exhaustive logical-path enumeration and canonical forced-native closure equality",
+    "Duplicate physical support and alternate logical path deletion; final support removal",
+    "Native patch/full replacement and historical valid-interval correction",
+    "16 concurrent SDK reads using configured 4-reader pool",
+    "Pinned reader retains K5 through writer two-command K6/K7 commit; new reader observes K7",
+    "First registration rollback preserves format5/K0 and empty derived definition/nodes",
+    "Explicit two-command rollback discards canonical and derived state; same-ID retry/receipt replay",
+    "Shared-K batch maintenance and schema-only clock advancement",
+    "Checked path capacity/rank failure rolls back native writes; healthy reuse",
+    "Audited revalidation and fresh SDK reopen rebuild from canonical history",
+    "Actual archived 0.32 writer leaves checkpoint K1 while canonical reaches K2; current reader rejects stale; rebuild/reopen returns exact empty K2 without format migration",
+    "Pre-aborted public DAG read rejects and subsequent read remains healthy"
+  ],
+  "bounds": {
+    "definitions": 1,
+    "nodes": 128,
+    "nodeUtf8Bytes": 512,
+    "retainedRelevantRows": 8192,
+    "activePhysicalSupports": 2048,
+    "signedEdits": 4096,
+    "numericEnvelopeBytesEach": 2097152,
+    "checkpointTuples": 16384,
+    "maximumPathsPerPair": 1000000000,
+    "maximumPairUpdates": 1000000
+  },
+  "implementationScope": {
+    "edgeDiscovery": "bounded canonical rescan at each advanced K",
+    "closureMaintenance": "C++ signed physical support transitions; boolean logical edges and checked path counts",
+    "publication": "canonical facts, supports, pair rows, checkpoint in same DuckDB transaction",
+    "readerAuthority": "SQL snapshot canonical clock plus derived checkpoint/rows",
+    "reopen": "canonical audit then full rebuild before SDK admission",
+    "cppPointerCache": false,
+    "canonicalFormatChange": false
+  },
+  "limitations": [
+    "No performance measurements or promotion claim",
+    "No complete canonical regression/full verification run on this branch",
+    "Existing standalone kernel proof is reused; its standalone test executable was not rebuilt in this focused gate",
+    "Engine interruption during maintenance remains unqualified; pre-aborted read only was exercised",
+    "Retained/support/edit caps and dense maximum-node memory remain unqualified at engine boundary",
+    "Scheduled future-knowledge rows and independent-writer contention remain unqualified",
+    "Derived materialization/storage and unregistered write/open overhead are unmeasured",
+    "No arbitrary historical-K projection API, cyclic maintenance, generic joins or automatic query substitution"
+  ]
+}

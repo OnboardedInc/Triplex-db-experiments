@@ -1,0 +1,158 @@
+{
+  "status": "PASS_FOUR_GENUINE_UNTIMED_ROLES_56_EXACT_PUBLIC_RESULTS_FULL_PROVENANCE",
+  "completed_utc": "2026-10-31T00:50:31.639312+00:00",
+  "preparation_manifest_sha256": "79a386fd0a9f84722024189081eaa00fea5968284580dbe5f08c463acbdd5b52",
+  "candidate_admission_sha256": "1c1c9332e2af4c08fc1db8c3a4461cd77fdbca54f118efe8f248a77f8c50ca55",
+  "source_registry_sha256": "cb694ddaa9dd2f0c890338b567f8e93d4a6d9bb09bd48bc609e0513f68391afa",
+  "candidate_snapshot_manifest_sha256": "441d6564e20734b21dbc9ce043bd960520deed261d5a437662cbaa53b634f2c7",
+  "candidate_source": "ae50094cd242c4d46950f8a9a99d1ecdca03b7f8",
+  "preflight_campaign_sha256": "aa7bf9b1be81227a16f72ab053d40c32c4569c13795999b1509e817d3943f093",
+  "roles": 4,
+  "outputs": 56,
+  "actual_controller_exit": 0,
+  "attempts": 1,
+  "public_setup_controller_durations_collected": false,
+  "timing_profile_execution_gate_created": false,
+  "records": [
+    {
+      "comparison": "reader_implementation",
+      "variant": "ffc-current-reader",
+      "observations": 14,
+      "status": "PASS",
+      "returncode": 0,
+      "timeout": false,
+      "python_version": [
+        3,
+        12,
+        14
+      ],
+      "libc_version": "glibc 2.41",
+      "actual_threads": [
+        1,
+        1
+      ],
+      "affinity": [
+        8
+      ],
+      "gc_enabled": true,
+      "fp_before": {
+        "round": 0,
+        "mxcsr": 8099,
+        "x87": 895
+      },
+      "fp_after": {
+        "round": 0,
+        "mxcsr": 8099,
+        "x87": 895
+      },
+      "artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+      "process_sha256": "70e9ee53c0053a7e5b778b5ed71f87395072fd462836be8d1ecfe2ca69723a37",
+      "preflight_sha256": "fbe8e3092df17a74db999ec94362a41ddb14b954da5f1dbbbea784c3313a74aa"
+    },
+    {
+      "comparison": "reader_implementation",
+      "variant": "reader-only",
+      "observations": 14,
+      "status": "PASS",
+      "returncode": 0,
+      "timeout": false,
+      "python_version": [
+        3,
+        12,
+        14
+      ],
+      "libc_version": "glibc 2.41",
+      "actual_threads": [
+        1,
+        1
+      ],
+      "affinity": [
+        8
+      ],
+      "gc_enabled": true,
+      "fp_before": {
+        "round": 0,
+        "mxcsr": 8099,
+        "x87": 895
+      },
+      "fp_after": {
+        "round": 0,
+        "mxcsr": 8099,
+        "x87": 895
+      },
+      "artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+      "process_sha256": "5c38077f2ca1fcf0dee850348162719349b033141f182edaf272d273dd3748b6",
+      "preflight_sha256": "6d9007eab193309d74b00761b959262c7a9d71693c117a329905a15348c6b62b"
+    },
+    {
+      "comparison": "accepted_to_reader",
+      "variant": "accepted-item1",
+      "observations": 14,
+      "status": "PASS",
+      "returncode": 0,
+      "timeout": false,
+      "python_version": [
+        3,
+        12,
+        14
+      ],
+      "libc_version": "glibc 2.41",
+      "actual_threads": [
+        1,
+        1
+      ],
+      "affinity": [
+        8
+      ],
+      "gc_enabled": true,
+      "fp_before": {
+        "round": 0,
+        "mxcsr": 8099,
+        "x87": 895
+      },
+      "fp_after": {
+        "round": 0,
+        "mxcsr": 8099,
+        "x87": 895
+      },
+      "artifact_sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+      "process_sha256": "329af1424cddfe1135169f5ecf0f519d87c3bcbf633d71cb1604428f99255f62",
+      "preflight_sha256": "c34cd49b09d3d3697731663ffa73a943387c5b3803eb3ff238de4230c337bed6"
+    },
+    {
+      "comparison": "accepted_to_reader",
+      "variant": "reader-only",
+      "observations": 14,
+      "status": "PASS",
+      "returncode": 0,
+      "timeout": false,
+      "python_version": [
+        3,
+        12,
+        14
+      ],
+      "libc_version": "glibc 2.41",
+      "actual_threads": [
+        1,
+        1
+      ],
+      "affinity": [
+        8
+      ],
+      "gc_enabled": true,
+      "fp_before": {
+        "round": 0,
+        "mxcsr": 8099,
+        "x87": 895
+      },
+      "fp_after": {
+        "round": 0,
+        "mxcsr": 8099,
+        "x87": 895
+      },
+      "artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+      "process_sha256": "f38cffae680fc85df819f6bed6f60b79fe643d33572232cec06292f4c8cb8712",
+      "preflight_sha256": "d943f3b0c7ff7a6cc54cc2ddfb196cf16fc53ac7bbd4b1532f83b30f3998a7fc"
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+{
+  "schema": "native-entity-command-timing/1",
+  "timestamp_utc": "2026-11-05T04:32:34.864Z",
+  "warmups": 2,
+  "measured": 5,
+  "scope": "Full thin TypeScript put: serialization, native validation/expansion, DuckDB command transaction and owned receipt; open/schema registration excluded; complete at/history/receipt verification outside timing. No before/after speedup claim.",
+  "native_build": {
+    "engine": "2.0.0",
+    "extension_version": "0.9.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "schema_template_reuse": true,
+    "source_sha256": {
+      "native/src/temporal_command.cpp": "a4c9414cb080b8dc7f73b5816b2372b8677acb4bcd08d54c4d15db4efd8b325e",
+      "native/src/temporal_command.hpp": "9dbb3130aed244f9dedbceb212853370969fc462cbcf4c3b8d68a8b89c134e16",
+      "native/src/temporal_control.hpp": "7fc6a2962413303383c98eeb65b5222423c5a351571a7adc0fbe8fff32d49ba8",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_datalog.cpp": "fd41895b8571308e391f42570877b2c5e4ac537fa9b80baf314035469f375693",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_schema.cpp": "01144cf5057d3d46029662584be164c1d97745d1da2e156f5710afdfb0d6ffb7",
+      "native/src/temporal_schema.hpp": "498b7492d164692a5174562dc14443f2a6f108b2e8930d556586d43f5ef3c112",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "a34fe6d36bbac04816b4b5603644f7ce08c800d12e267b96b97608d926d83e54",
+    "extension_sha256": "ac0e5f17a37620be7b8879b3d799b141b0ddd25b65b2502873e511f28b1a1513"
+  },
+  "source_sha256": {
+    "adapter/benchmark-entity.mjs": "c9e544c66fe44239de9ecd2b936bbf145132a1cbe5a5b72a2442cccff9ab7136",
+    "adapter/native-entity.ts": "bb62fcbd587744d09a2a1d1ac2326837e77f5a37e34eaa8d67146cb9a5b0a146",
+    "adapter/native-schema.ts": "45486e9ee0780fe785ade64b5da1fa7b9b3b19c621134a38182ea94749054675",
+    "adapter/native-duckdb-port.mjs": "15a712cfb104ffbf2dcaaf5d76d133c55d32b8c039a0991fedd30e25986a1003",
+    "native/catalog.sql": "7e7981d6d7499562bb9a30b4b1677b5172e20df6916af471ac48bf4ca9bf5ecc",
+    "native/src/temporal_command.cpp": "a4c9414cb080b8dc7f73b5816b2372b8677acb4bcd08d54c4d15db4efd8b325e",
+    "native/src/temporal_command.hpp": "9dbb3130aed244f9dedbceb212853370969fc462cbcf4c3b8d68a8b89c134e16",
+    "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+    "native/src/temporal_schema.cpp": "01144cf5057d3d46029662584be164c1d97745d1da2e156f5710afdfb0d6ffb7",
+    "native/src/temporal_datalog.cpp": "fd41895b8571308e391f42570877b2c5e4ac537fa9b80baf314035469f375693"
+  },
+  "summary": [
+    {
+      "count": 1,
+      "phase": "insert",
+      "median_ms": 13.627666000000033
+    },
+    {
+      "count": 1,
+      "phase": "replace",
+      "median_ms": 13.729083000000003
+    },
+    {
+      "count": 64,
+      "phase": "insert",
+      "median_ms": 15.002291000000014
+    },
+    {
+      "count": 64,
+      "phase": "replace",
+      "median_ms": 15.383458000000019
+    },
+    {
+      "count": 4096,
+      "phase": "insert",
+      "median_ms": 31.108833000000004
+    },
+    {
+      "count": 4096,
+      "phase": "replace",
+      "median_ms": 55.98279200000002
+    }
+  ],
+  "samples": [
+    {
+      "count": 1,
+      "phase": "insert",
+      "attempt": 0,
+      "elapsed_ms": 13.682958000000013
+    },
+    {
+      "count": 1,
+      "phase": "replace",
+      "attempt": 0,
+      "elapsed_ms": 13.729083000000003
+    },
+    {
+      "count": 1,
+      "phase": "insert",
+      "attempt": 1,
+      "elapsed_ms": 13.627666000000033
+    },
+    {
+      "count": 1,
+      "phase": "replace",
+      "attempt": 1,
+      "elapsed_ms": 13.570625000000007
+    },
+    {
+      "count": 1,
+      "phase": "insert",
+      "attempt": 2,
+      "elapsed_ms": 13.383500000000026
+    },
+    {
+      "count": 1,
+      "phase": "replace",
+      "attempt": 2,
+      "elapsed_ms": 13.596541000000002
+    },
+    {
+      "count": 1,
+      "phase": "insert",
+      "attempt": 3,
+      "elapsed_ms": 13.447333000000015
+    },
+    {
+      "count": 1,
+      "phase": "replace",
+      "attempt": 3,
+      "elapsed_ms": 44.39691699999997
+    },
+    {
+      "count": 1,
+      "phase": "insert",
+      "attempt": 4,
+      "elapsed_ms": 15.803124999999909
+    },
+    {
+      "count": 1,
+      "phase": "replace",
+      "attempt": 4,
+      "elapsed_ms": 17.47754199999997
+    },
+    {
+      "count": 64,
+      "phase": "insert",
+      "attempt": 0,
+      "elapsed_ms": 14.893166999999949
+    },
+    {
+      "count": 64,
+      "phase": "replace",
+      "attempt": 0,
+      "elapsed_ms": 14.495290999999952
+    },
+    {
+      "count": 64,
+      "phase": "insert",
+      "attempt": 1,
+      "elapsed_ms": 15.002291000000014
+    },
+    {
+      "count": 64,
+      "phase": "replace",
+      "attempt": 1,
+      "elapsed_ms": 15.383458000000019
+    },
+    {
+      "count": 64,
+      "phase": "insert",
+      "attempt": 2,
+      "elapsed_ms": 15.065666999999962
+    },
+    {
+      "count": 64,
+      "phase": "replace",
+      "attempt": 2,
+      "elapsed_ms": 15.238790999999992
+    },
+    {
+      "count": 64,
+      "phase": "insert",
+      "attempt": 3,
+      "elapsed_ms": 14.754042000000027
+    },
+    {
+      "count": 64,
+      "phase": "replace",
+      "attempt": 3,
+      "elapsed_ms": 15.447542000000112
+    },
+    {
+      "count": 64,
+      "phase": "insert",
+      "attempt": 4,
+      "elapsed_ms": 15.93929100000014
+    },
+    {
+      "count": 64,
+      "phase": "replace",
+      "attempt": 4,
+      "elapsed_ms": 16.357290999999805
+    },
+    {
+      "count": 4096,
+      "phase": "insert",
+      "attempt": 0,
+      "elapsed_ms": 31.275041999999985
+    },
+    {
+      "count": 4096,
+      "phase": "replace",
+      "attempt": 0,
+      "elapsed_ms": 57.117209
+    },
+    {
+      "count": 4096,
+      "phase": "insert",
+      "attempt": 1,
+      "elapsed_ms": 31.108833000000004
+    },
+    {
+      "count": 4096,
+      "phase": "replace",
+      "attempt": 1,
+      "elapsed_ms": 55.98279200000002
+    },
+    {
+      "count": 4096,
+      "phase": "insert",
+      "attempt": 2,
+      "elapsed_ms": 31.197167000000036
+    },
+    {
+      "count": 4096,
+      "phase": "replace",
+      "attempt": 2,
+      "elapsed_ms": 54.4692500000001
+    },
+    {
+      "count": 4096,
+      "phase": "insert",
+      "attempt": 3,
+      "elapsed_ms": 30.875332999999955
+    },
+    {
+      "count": 4096,
+      "phase": "replace",
+      "attempt": 3,
+      "elapsed_ms": 57.99862499999972
+    },
+    {
+      "count": 4096,
+      "phase": "insert",
+      "attempt": 4,
+      "elapsed_ms": 30.956083000000035
+    },
+    {
+      "count": 4096,
+      "phase": "replace",
+      "attempt": 4,
+      "elapsed_ms": 54.30287499999986
+    }
+  ]
+}

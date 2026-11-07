@@ -1,0 +1,278 @@
+{
+  "schema": "td.mixed-10m-operator-profile/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T21:00:43.163379+00:00",
+  "profilerSource": "1a69a6bfc94d61614478fa8036d9dfe881ad8984",
+  "fixture": {
+    "baseRetainedFacts": 10000000,
+    "priorAdditions": 22,
+    "validAt": 0,
+    "knownAt": 39087
+  },
+  "scope": [
+    "Separate ordered single-connection EXPLAIN ANALYZE runs on immutable clones.",
+    "Ordinary and profiled statements use the same generated SQL and fresh invocation tokens.",
+    "Projection, count and grouped count use the independent eight-type fixture recipe. All projected typed wire rows were checked.",
+    "Operator output bytes are the profiler metric, not the process RSS or a physical allocation measurement."
+  ],
+  "runs": [
+    {
+      "version": "028",
+      "rawFile": "build/research-guided-profiles-20261105/mixed-028.json",
+      "rawSha256": "572c99c06c0677dc7cb4fa7cb53dcce41d1759b72336bcb16aa9e79f82940838",
+      "profileHarnessSha256": "69ca29c558507220ad951003b47eeeb919914f5b817e435bccf8128bf7238ae1",
+      "cases": [
+        {
+          "kind": "projection",
+          "answerRows": 256,
+          "answerWireSha256": "a7e63f17f5a8a9623afc4719731fdb06a89512e111991bad0a8f897690e872c7",
+          "templateSha256": "823c64f54e6a9086a66310fdda2280f17c5010d13b3a00beb2881a3a727b88be",
+          "ordinaryExecuteAndExtractMs": 584.3608750000003,
+          "explainWallMs": 562.3261670000011,
+          "assertionsScans": [
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 112.83338599999999,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6830716990,
+              "timingMs": 147.43691500000003,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 8191,
+              "rowsProduced": 8191,
+              "outputBytes": 7024118,
+              "timingMs": 1.019376,
+              "filter": "(valid_from <= 0)"
+            }
+          ]
+        },
+        {
+          "kind": "count",
+          "answerRows": 1,
+          "answerWireSha256": "e1af432a642fc64b7a96b19f0709993a5dfd93c5b4abdff87a319f8bab7b1b3c",
+          "templateSha256": "3784f0229fe04dbf9d0a373a7b34047db4c5072fa280230d64917b495304fea8",
+          "ordinaryExecuteAndExtractMs": 536.604041999999,
+          "explainWallMs": 490.07387500000004,
+          "assertionsScans": [
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 104.78774800000004,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 8191,
+              "rowsProduced": 8191,
+              "outputBytes": 7024118,
+              "timingMs": 1.210833,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 99.90968100000003,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 401250296,
+              "timingMs": 10.682133999999982,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 401250296,
+              "timingMs": 11.088380000000011,
+              "filter": "(valid_from <= 0)"
+            }
+          ]
+        },
+        {
+          "kind": "grouped_count",
+          "answerRows": 8,
+          "answerWireSha256": "2eff306a74f039d818175c5159e82cf878e34bb1f77834105ee722ce12967864",
+          "templateSha256": "be7c23b1d9aefb17db55b9cf4ab938b483ebe466f43b38929fa74de3320f5a04",
+          "ordinaryExecuteAndExtractMs": 531.4617920000001,
+          "explainWallMs": 540.2971660000003,
+          "assertionsScans": [
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 105.11464699999993,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 8191,
+              "rowsProduced": 8191,
+              "outputBytes": 7024118,
+              "timingMs": 1.065292,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 176.71539299999978,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 401250296,
+              "timingMs": 8.109298999999984,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 401250296,
+              "timingMs": 8.802063000000018,
+              "filter": "(valid_from <= 0)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "029",
+      "rawFile": "build/research-guided-profiles-20261105/mixed-029.json",
+      "rawSha256": "857944a9f3b53360056bddd4c87b4d27696bdc488653f0f74eb00609c39026d6",
+      "profileHarnessSha256": "69ca29c558507220ad951003b47eeeb919914f5b817e435bccf8128bf7238ae1",
+      "cases": [
+        {
+          "kind": "projection",
+          "answerRows": 256,
+          "answerWireSha256": "a7e63f17f5a8a9623afc4719731fdb06a89512e111991bad0a8f897690e872c7",
+          "templateSha256": "fc27f14f5c734018c5b650850a2d0d7d56f83ac9e1496a7c42c6b6ce4a5e7092",
+          "ordinaryExecuteAndExtractMs": 59.72637500000019,
+          "explainWallMs": 29.179833000000144,
+          "assertionsScans": [
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 256,
+              "outputBytes": 2113976,
+              "timingMs": 19.144456000000005,
+              "filter": "(encode(e) IN ('typed-e-00000000'::BLOB))"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 256,
+              "outputBytes": 2119096,
+              "timingMs": 18.958755,
+              "filter": "(encode(e) IN ('typed-e-00000000'::BLOB))"
+            },
+            {
+              "rowsScanned": 9887637,
+              "rowsProduced": 256,
+              "outputBytes": 2119096,
+              "timingMs": 17.744253,
+              "filter": "(encode(e) IN ('typed-e-00000000'::BLOB))"
+            }
+          ]
+        },
+        {
+          "kind": "count",
+          "answerRows": 1,
+          "answerWireSha256": "e1af432a642fc64b7a96b19f0709993a5dfd93c5b4abdff87a319f8bab7b1b3c",
+          "templateSha256": "3784f0229fe04dbf9d0a373a7b34047db4c5072fa280230d64917b495304fea8",
+          "ordinaryExecuteAndExtractMs": 638.5797079999993,
+          "explainWallMs": 569.2500830000008,
+          "assertionsScans": [
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 128.85694999999996,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 8191,
+              "rowsProduced": 8191,
+              "outputBytes": 7024118,
+              "timingMs": 1.6067500000000001,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 126.10421199999999,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 401250296,
+              "timingMs": 10.850321000000013,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 401250296,
+              "timingMs": 11.000488000000018,
+              "filter": "(valid_from <= 0)"
+            }
+          ]
+        },
+        {
+          "kind": "grouped_count",
+          "answerRows": 8,
+          "answerWireSha256": "2eff306a74f039d818175c5159e82cf878e34bb1f77834105ee722ce12967864",
+          "templateSha256": "be7c23b1d9aefb17db55b9cf4ab938b483ebe466f43b38929fa74de3320f5a04",
+          "ordinaryExecuteAndExtractMs": 605.6721670000006,
+          "explainWallMs": 597.4282080000012,
+          "assertionsScans": [
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 115.97123100000003,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 8191,
+              "rowsProduced": 8191,
+              "outputBytes": 7024118,
+              "timingMs": 1.7799170000000002,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 6656965755,
+              "timingMs": 101.22574600000003,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 401250296,
+              "timingMs": 12.063354999999985,
+              "filter": "(valid_from <= 0)"
+            },
+            {
+              "rowsScanned": 10000022,
+              "rowsProduced": 10000019,
+              "outputBytes": 401250296,
+              "timingMs": 19.074387000000005,
+              "filter": "(valid_from <= 0)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

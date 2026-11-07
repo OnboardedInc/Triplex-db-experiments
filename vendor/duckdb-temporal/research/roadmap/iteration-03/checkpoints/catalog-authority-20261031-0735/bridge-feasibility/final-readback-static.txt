@@ -1,0 +1,9 @@
+UTC: 2026-10-31T07:28:55Z
+
+COMMAND: sha256sum protected app artifact and isolated frozen candidate native artifact (read only)
+5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d  temporal-roadmap-20261030/implementation/engine/build/temporal_datalog.duckdb_extension
+260b430a462a66b53e71728e860e9920b524a31c63dd117158e8524d73353a1a  .agent-logs/goal3-coordinator/integration/candidate-002/engine/build/temporal_datalog.duckdb_extension
+
+COMMAND: sha256sum unchanged app/candidate build scripts
+3af928980e50b1174f624feab9024988d024e03977fa4e7daab31b17b7b0d7ab  temporal-roadmap-20261030/implementation/engine/build.sh
+3af928980e50b1174f624feab9024988d024e03977fa4e7daab31b17b7b0d7ab  .agent-logs/goal3-coordinator/integration/candidate-002/engine/build.sh

@@ -1,0 +1,16 @@
+{
+  "submitted_at": "2026-10-31T02:29:06.799Z",
+  "returned_at": "2026-10-31T02:29:13.843Z",
+  "reread_at": "2026-10-31T02:29:14.857Z",
+  "github_updated_at": "2026-10-31T02:29:13Z",
+  "head": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+  "draft": true,
+  "state": "open",
+  "merged": false,
+  "submitted_sha256": "fbe99c680cf8529f6bb1307800b798d4fa122cd11b2f6d55304ae0bd54b20249",
+  "returned_sha256": "fbe99c680cf8529f6bb1307800b798d4fa122cd11b2f6d55304ae0bd54b20249",
+  "reread_sha256": "fbe99c680cf8529f6bb1307800b798d4fa122cd11b2f6d55304ae0bd54b20249",
+  "bytes": 9504,
+  "exact": true,
+  "isError": false
+}

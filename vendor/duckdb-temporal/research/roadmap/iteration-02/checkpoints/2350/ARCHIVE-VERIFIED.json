@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "all_members_bytes_hashes_modes_verified": true,
+  "performance999_exact_content_files_verified": true,
+  "no_extraction_or_execution": true,
+  "archive": {
+    "archive": "postfix-raw-paired-studies-and-closure.tar.gz",
+    "bytes": 871412,
+    "sha256": "707006210ff78622e78bd2962bb96f681efca6974fdd8f19bfc905fa8fad075d",
+    "entries": 1015,
+    "source_bytes": 12427241,
+    "parts": [
+      {
+        "path": "archive.part01.b64",
+        "bytes": 300001,
+        "sha256": "5da2fe3356d156c9bdb993081ed3e460294d028ca9a996a1070a5278b7e2fabd",
+        "git_sha": "dc04b1b2f6d9cd3451e27aaa72a7ccc41d19ad64"
+      },
+      {
+        "path": "archive.part02.b64",
+        "bytes": 300001,
+        "sha256": "9041f83e277b8c0d2b7afd2d0dd872f18c17732908d560c5d702989a4147f4f6",
+        "git_sha": "27614b6ad30b0fee185dbe9273e83154a01d9453"
+      },
+      {
+        "path": "archive.part03.b64",
+        "bytes": 300001,
+        "sha256": "75d01389bb10f04fed75421a588a404346b22e5b82f845ba21925ebd833c462b",
+        "git_sha": "99d98487236721aba1c0a0a5968f2fbd1a777ebe"
+      },
+      {
+        "path": "archive.part04.b64",
+        "bytes": 261885,
+        "sha256": "1851d1bccfdbadcffa5c0237074ba50c3e75e8cd741fcca5fa77acfffd8fda2a",
+        "git_sha": "4341482902ec95f7b1a547075097b64d31757cc6"
+      }
+    ]
+  }
+}

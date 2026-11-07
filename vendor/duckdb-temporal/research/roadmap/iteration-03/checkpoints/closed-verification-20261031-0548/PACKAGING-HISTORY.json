@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-31T05:50:51.679962+00:00",
+  "event": "preserved_completed_local_capture_then_narrowed_scope",
+  "reason": "Root excluded newly added opaque main-ledger seed; no source/evidence loss or app runtime",
+  "prior_archive_sha256": "cf047376d5514d7c4f72bbfd76fb110c7c17194033d290413b7d042ab4f54e2a",
+  "prior_archive_restore": "PASS",
+  "retained_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-durable-prep/attempt-001-capture",
+  "new_capture": "exclude main-ledger-*; retain all selected goal3 raw evidence; no deletion"
+}

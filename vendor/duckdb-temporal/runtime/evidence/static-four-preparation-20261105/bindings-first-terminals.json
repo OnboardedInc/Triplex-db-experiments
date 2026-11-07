@@ -1,0 +1,90 @@
+[
+  {
+    "phase": "binding-control-1",
+    "command": [
+      "node",
+      "adapter/antijoin-static-four-binding.mjs",
+      "--artifact-role",
+      "STATIC4_B0_MAPPED_CONTROL",
+      "--readers",
+      "1",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "evidence/antijoin-static-four-control-10m-1-20261105.json"
+    ],
+    "startedAtUtc": "2026-11-06T04:54:29.631270+00:00",
+    "endedAtUtc": "2026-11-06T04:54:33.452535+00:00",
+    "exitCode": 0
+  },
+  {
+    "phase": "binding-control-16",
+    "command": [
+      "node",
+      "adapter/antijoin-static-four-binding.mjs",
+      "--artifact-role",
+      "STATIC4_B0_MAPPED_CONTROL",
+      "--readers",
+      "16",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "evidence/antijoin-static-four-control-10m-16-20261105.json"
+    ],
+    "startedAtUtc": "2026-11-06T04:54:33.453108+00:00",
+    "endedAtUtc": "2026-11-06T04:54:37.034038+00:00",
+    "exitCode": 0
+  },
+  {
+    "phase": "binding-candidate-1",
+    "command": [
+      "node",
+      "adapter/antijoin-static-four-binding.mjs",
+      "--artifact-role",
+      "STATIC4_SDK_CANDIDATE",
+      "--readers",
+      "1",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "evidence/antijoin-static-four-candidate-10m-1-20261105.json"
+    ],
+    "startedAtUtc": "2026-11-06T04:54:37.034496+00:00",
+    "endedAtUtc": "2026-11-06T04:54:40.557257+00:00",
+    "exitCode": 0
+  },
+  {
+    "phase": "binding-candidate-16",
+    "command": [
+      "node",
+      "adapter/antijoin-static-four-binding.mjs",
+      "--artifact-role",
+      "STATIC4_SDK_CANDIDATE",
+      "--readers",
+      "16",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "evidence/antijoin-static-four-candidate-10m-16-20261105.json"
+    ],
+    "startedAtUtc": "2026-11-06T04:54:40.557709+00:00",
+    "endedAtUtc": "2026-11-06T04:54:44.407861+00:00",
+    "exitCode": 0
+  }
+]

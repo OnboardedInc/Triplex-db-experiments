@@ -1,0 +1,11 @@
+{
+  "scenario": "unrelated",
+  "noiseEntities": 0,
+  "noiseRevisions": 1,
+  "samples": 16,
+  "warmup": 4,
+  "opens": 3,
+  "role": "candidate",
+  "runtime": "<coverage-candidate-runtime>",
+  "sourceCommit": "229121424e63729867b2c71c9b1eacb0ba35a4e8"
+}

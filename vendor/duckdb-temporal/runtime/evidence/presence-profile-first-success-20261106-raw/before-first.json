@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "1706d28457aa301cd4a41078b31b7173d9f6381c",
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "output": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03",
+  "pins": {
+    "driver": "7ae1a740181033e58add024d441c964d86e5956857b44ef09f7cf178cc45b57e",
+    "coreManifest": "1baa2cc1e17c0ec9ffe4f269625be0144bb30df9296c0ca6ba02009c2d9f0264",
+    "ownerManifest": "a3075e1c059d72d3f2145fff341f57ebb00da3fc43073a1299f8dc9d55c2c9e3",
+    "core": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+    "owner": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+    "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  }
+}

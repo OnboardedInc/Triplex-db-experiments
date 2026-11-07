@@ -1,0 +1,13 @@
+{
+  "schema": "td.native-writer-b0-broad-arm/1",
+  "status": "running",
+  "role": "cpp_candidate",
+  "pid": 31819,
+  "protocolSource": {
+    "commit": "4349accbd5b97e42a01bb10e729cca861cdbcd94",
+    "pins": {
+      "adapter/native-writer-b0-broad.mjs": "ddee99642a4df1cd99af14b851dccd25a0072a9007c8b6fc99f664a66d2714a9",
+      "NATIVE-WRITER-B0-BROAD.md": "c0377b63743c4dc9dbe27063d448ac44d3603eaeeac9cdd40ab6e5ae18d07403"
+    }
+  }
+}

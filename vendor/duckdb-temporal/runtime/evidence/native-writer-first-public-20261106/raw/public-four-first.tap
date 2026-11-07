@@ -1,0 +1,50 @@
+TAP version 13
+# Subtest: native writer public put patch replay batch resources and reopen keep exact receipts cuts and one USER context
+ok 1 - native writer public put patch replay batch resources and reopen keep exact receipts cuts and one USER context
+  ---
+  duration_ms: 1998.252667
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-public-bzQ6w9/facts.duckdb
+# {"phase":"public-source-spans","metrics":[{"name":"native_writer_enroll","nativeQueueNs":"8458","sqlCallNs":"87791","copyAndCleanupNs":"4958","completionWaitNs":"10042","sequence":"1","connectionId":"19","bridgeAwaitMs":0.13491700000008677,"portDecodeMs":0.021707999999989624,"portFullMs":0.1574590000000171},{"name":"native_entity_writer","nativeQueueNs":"14041","sqlCallNs":"339625","copyAndCleanupNs":"6833","completionWaitNs":"6125","sequence":"2","connectionId":"19","bridgeAwaitMs":0.40116699999998673,"portDecodeMs":0.016000000000076398,"portFullMs":0.4175829999999223},{"name":"native_entity_writer","nativeQueueNs":"9792","sqlCallNs":"7984958","copyAndCleanupNs":"13625","completionWaitNs":"15750","sequence":"3","connectionId":"19","bridgeAwaitMs":8.087750000000142,"portDecodeMs":0.03037499999982174,"portFullMs":8.118750000000091},{"name":"native_entity_writer","nativeQueueNs":"9334","sqlCallNs":"33537667","copyAndCleanupNs":"19416","completionWaitNs":"13083","sequence":"4","connectionId":"19","bridgeAwaitMs":33.64150000000018,"portDecodeMs":0.03512499999987995,"portFullMs":33.677417000000105},{"name":"native_entity_writer","nativeQueueNs":"7709","sqlCallNs":"63126042","copyAndCleanupNs":"16125","completionWaitNs":"17250","sequence":"5","connectionId":"19","bridgeAwaitMs":63.22375000000011,"portDecodeMs":0.02295800000001691,"portFullMs":63.24745800000005},{"name":"native_entity_writer","nativeQueueNs":"4208","sqlCallNs":"342959","copyAndCleanupNs":"4250","completionWaitNs":"5875","sequence":"6","connectionId":"19","bridgeAwaitMs":0.38141700000005585,"portDecodeMs":0.008207999999740423,"portFullMs":0.39020799999980227},{"name":"native_entity_writer","nativeQueueNs":"7500","sqlCallNs":"65722458","copyAndCleanupNs":"15917","completionWaitNs":"16417","sequence":"7","connectionId":"19","bridgeAwaitMs":65.81399999999985,"portDecodeMs":0.023458000000118773,"portFullMs":65.83804199999986},{"name":"native_entity_writer","nativeQueueNs":"8875","sqlCallNs":"33453417","copyAndCleanupNs":"11958","completionWaitNs":"20458","sequence":"8","connectionId":"19","bridgeAwaitMs":33.54991699999982,"portDecodeMs":0.01999999999998181,"portFullMs":33.570624999999836},{"name":"native_entity_writer","nativeQueueNs":"9458","sqlCallNs":"64844292","copyAndCleanupNs":"11792","completionWaitNs":"18250","sequence":"9","connectionId":"19","bridgeAwaitMs":64.93795799999998,"portDecodeMs":0.02116699999987759,"portFullMs":64.9597920000001},{"name":"native_entity_writer","nativeQueueNs":"9750","sqlCallNs":"370708","copyAndCleanupNs":"4291","completionWaitNs":"6083","sequence":"10","connectionId":"19","bridgeAwaitMs":0.4138750000001892,"portDecodeMs":0.01312499999994543,"portFullMs":0.42754199999990306},{"name":"native_writer_enroll","nativeQueueNs":"8000","sqlCallNs":"149792","copyAndCleanupNs":"3750","completionWaitNs":"4458","sequence":"11","connectionId":"19","bridgeAwaitMs":0.17912500000011278,"portDecodeMs":0.00437499999998181,"portFullMs":0.18387500000017099}]}
+# Subtest: native writer late unique-constraint error rolls back header retraction clock and permits same-session reuse
+ok 2 - native writer late unique-constraint error rolls back header retraction clock and permits same-session reuse
+  ---
+  duration_ms: 734.655125
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-rollback-I1vAas/facts.duckdb
+# Subtest: native writer factory retires unclaimed and claimed anchors after actual bootstrap delivery and enrollment failures
+not ok 3 - native writer factory retires unclaimed and claimed anchors after actual bootstrap delivery and enrollment failures
+  ---
+  duration_ms: 215.703375
+  type: 'test'
+  location: '__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/adapter/test-native-writer.js:178:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file://__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/adapter/test-native-writer.js:196:5)
+    async Test.run (node:internal/test_runner/test:1113:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-factory-GtyQjO/facts.duckdb
+# Subtest: native writer child environment teardown joins idle executor before releasing its database anchor
+ok 4 - native writer child environment teardown joins idle executor before releasing its database anchor
+  ---
+  duration_ms: 616.07675
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-environment-CLcgX5/facts.duckdb
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4581.950833

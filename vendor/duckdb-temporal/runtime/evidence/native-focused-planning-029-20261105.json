@@ -1,0 +1,33 @@
+{
+  "schema": "td.native-029-focused/1",
+  "result": "PASS",
+  "source": "6bef420871cf2bd34967da5ec2e30a7076dd32e6",
+  "platform": "macOS ARM64",
+  "coreSha256": "23148fd51969ac0b691e657dc3b989a60ee03d76a51fdcd5306ba1d2dfbaca3d",
+  "ownerSha256": "fe13a80efe5202d73e34f6a69e1452a8abee35f4e6c4b1b5459bc925e50b37e2",
+  "controlBridgeSha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "typecheck": "PASS",
+  "focusedChecks": 27,
+  "triplex": {
+    "suite": "pinned-runtimeConformance-public-factory",
+    "upstream": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+    "cases": 44,
+    "result": "PASS",
+    "elapsed_ms": 4556.555334000001
+  },
+  "scopes": [
+    "completed aggregates over proved two-to-four-atom EAV joins with exact set, history and eager error order",
+    "literal entity source admission retains negated and unbound semantics and excludes unrelated wide carriers",
+    "computed heads remain on the bounded native evaluator",
+    "default Triplex dependency summary returns bounded native aggregates in its original transaction"
+  ],
+  "logSha256": {
+    "core.log": "6feb2b89d22ea47300a05f84ecaf3cf67e024051154360affd10c346add50018",
+    "focused-first.tap": "ce51a0e7df7fbf9ca5ec65bc6fc025bfee93a81d93d0198f9928fce552068793",
+    "owner.log": "029af2ad897bca978b64505a005b83bd4556a4b11b3b33fb38d5b4273101769e",
+    "triplex.log": "28787aa598d5ea1d7738eff223b9e4ed0d25a5d86b341d32b9d7ef5c0791ad6b",
+    "tsc.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timingScope": "Correctness only. The frozen 0.28 ten-million-fact fixture was being prepared during this isolated build and focused test run."
+}

@@ -1,0 +1,3076 @@
+{
+  "schema": "three-engine-workload-screen/1",
+  "status": "passed",
+  "timestampUtc": "2026-11-05T15:30:18.829Z",
+  "runDirectory": "20261105T153018827Z-3ebd9c76",
+  "configuration": {
+    "workloads": [
+      "01",
+      "02",
+      "06",
+      "07"
+    ],
+    "samples": 1,
+    "warmup": 0,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "integrity": "strict",
+    "python": "python"
+  },
+  "packetSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "oracleValidation": {
+    "workloads": 20,
+    "cases": 71,
+    "small_oracle_checks": 31,
+    "event_oracle_checks": 66,
+    "checked_cases": 71,
+    "assertion_only_case_ids": [
+      "18/bridge-known",
+      "18/clipped",
+      "18/duplicate-stays10",
+      "18/gap",
+      "18/union10"
+    ],
+    "unchecked_case_ids": [],
+    "new_event_checked_case_ids": [
+      "03/two-purchases",
+      "04/claim29-corrected",
+      "04/claim29-original",
+      "04/claim30-exclusive-end",
+      "08/net700",
+      "08/no-refunds",
+      "08/one-refund",
+      "09/before-entitlement-known",
+      "09/entitlement-boundary",
+      "09/unprovisioned",
+      "10/complete-source-overdue",
+      "10/completed-late",
+      "10/deadline-boundary",
+      "10/incomplete-source",
+      "11/expired-membership",
+      "11/inherited-allow",
+      "11/unknown-user",
+      "12/corrected-block",
+      "12/deny-two-allows",
+      "12/exclusive-block-end",
+      "12/one-allow-remains",
+      "13/destination",
+      "13/move-boundary",
+      "13/move-not-yet-known",
+      "13/nested-items",
+      "14/affected-customer",
+      "14/before-shipment",
+      "14/corrected-genealogy",
+      "15/dependency-set",
+      "15/diamond-cycle",
+      "15/vulnerability-end",
+      "16/metadata-added",
+      "16/original-lineage",
+      "16/unknown-output",
+      "17/equal-steps-fail",
+      "17/include-exclusive-boundary",
+      "17/ordered-not-reordered",
+      "19/historical-training-example",
+      "19/label-not-known",
+      "20/remaining-closure"
+    ],
+    "result": "PASS",
+    "scope": "synthetic contract validation; no database execution or benchmark"
+  },
+  "scope": "Four implemented synthetic workloads through three complete read paths; no twenty-workload or sustained-performance claim.",
+  "timingScope": "Query through complete typed decoding and common inventory projection; exact answer comparison excluded. Warmup excluded from samples.",
+  "inputScope": "One accepted immutable event per source ID. Network deliveries and deduplication intake cost are outside this tranche.",
+  "limitations": [
+    "Four workloads only; small functional timing screen with no latency SLO.",
+    "SQL preparation is cached per connection. Cold first calls include their query preparation.",
+    "The temporal store uses its public integrity/query path. Direct SQL baselines do not add that service-layer audit.",
+    "Memory/spill samples occur before and after cells, not at the physical allocation peak."
+  ],
+  "setupScope": "Schema initialization, per-event ingestion and knowledge-group commit cost reported separately; projections receive no uncharged refresh.",
+  "cutScope": "Native cut maps each logical event knowledge group to its last acknowledged native command. No reads occur inside groups.",
+  "unimplementedWorkloads": [
+    "03",
+    "04",
+    "05",
+    "08",
+    "09",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20"
+  ],
+  "runs": [
+    {
+      "workload": "01",
+      "profile": "naive_sql",
+      "database": "01-naive_sql.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "paid-after-shipment-known",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.7055420000000083,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "paid"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 1.603874999999988,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "paid"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.7216669999999965,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.7055420000000083,
+            "p50": 0.7055420000000083,
+            "p95": 0.7055420000000083,
+            "p99": 0.7055420000000083,
+            "max": 0.7055420000000083
+          }
+        },
+        {
+          "id": "shipment-boundary",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "30"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.6438330000000008,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "shipped"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.7173329999999964,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "shipped"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.6532909999999958,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.6438330000000008,
+            "p50": 0.6438330000000008,
+            "p95": 0.6438330000000008,
+            "p99": 0.6438330000000008,
+            "max": 0.6438330000000008
+          }
+        },
+        {
+          "id": "earlier-knowledge",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "35"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.6567090000000064,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "paid"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.6555840000000046,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "paid"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.6697499999999934,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.6567090000000064,
+            "p50": 0.6567090000000064,
+            "p95": 0.6567090000000064,
+            "p99": 0.6567090000000064,
+            "max": 0.6567090000000064
+          }
+        },
+        {
+          "id": "before-first-status",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "19"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.43616599999998584,
+              "rows": [],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.4617089999999848,
+            "rows": [],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.44624999999999204,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.43616599999998584,
+            "p50": 0.43616599999998584,
+            "p95": 0.43616599999998584,
+            "p99": 0.43616599999998584,
+            "max": 0.43616599999998584
+          }
+        }
+      ],
+      "openMs": 12.832792000000012,
+      "schemaMs": 1.350166999999999,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 2.438666999999981
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.6639590000000055
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "paid",
+            "logicalPosition": "1",
+            "elapsedMs": 1.6655000000000086
+          },
+          {
+            "eventId": "shipped",
+            "logicalPosition": "2",
+            "elapsedMs": 0.3736669999999833
+          }
+        ]
+      },
+      "ingestionMs": 3.240708000000012,
+      "resourcesBefore": {
+        "rssBytes": 181960704,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 185221120,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 8.074124999999981,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720
+    },
+    {
+      "workload": "01",
+      "profile": "direct_duckdb",
+      "database": "01-direct_duckdb.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "paid-after-shipment-known",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.29666699999998514,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "paid"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.6836669999999856,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "paid"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.3073749999999791,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.29666699999998514,
+            "p50": 0.29666699999998514,
+            "p95": 0.29666699999998514,
+            "p99": 0.29666699999998514,
+            "max": 0.29666699999998514
+          }
+        },
+        {
+          "id": "shipment-boundary",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "30"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.37179199999999923,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "shipped"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.44095799999999485,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "shipped"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.38641699999999446,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.37179199999999923,
+            "p50": 0.37179199999999923,
+            "p95": 0.37179199999999923,
+            "p99": 0.37179199999999923,
+            "max": 0.37179199999999923
+          }
+        },
+        {
+          "id": "earlier-knowledge",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "35"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.344584000000026,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "paid"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.3182909999999879,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "paid"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.35300000000000864,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.344584000000026,
+            "p50": 0.344584000000026,
+            "p95": 0.344584000000026,
+            "p99": 0.344584000000026,
+            "max": 0.344584000000026
+          }
+        },
+        {
+          "id": "before-first-status",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "19"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.22562500000000796,
+              "rows": [],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.2886670000000038,
+            "rows": [],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.24029200000001083,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.22562500000000796,
+            "p50": 0.22562500000000796,
+            "p95": 0.22562500000000796,
+            "p99": 0.22562500000000796,
+            "max": 0.22562500000000796
+          }
+        }
+      ],
+      "openMs": 8.179082999999991,
+      "schemaMs": 0.742083000000008,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.8451250000000243
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.35179100000002
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "paid",
+            "logicalPosition": "1",
+            "elapsedMs": 1.373958999999985
+          },
+          {
+            "eventId": "shipped",
+            "logicalPosition": "2",
+            "elapsedMs": 1.0391249999999843
+          }
+        ]
+      },
+      "ingestionMs": 3.2249999999999943,
+      "resourcesBefore": {
+        "rssBytes": 187645952,
+        "duckdb": {
+          "memoryBytes": "294800",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 187973632,
+        "duckdb": {
+          "memoryBytes": "294800",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 8.312791000000004,
+      "reopenChecksPassed": true,
+      "databaseBytes": 536576
+    },
+    {
+      "workload": "01",
+      "profile": "temporal_store",
+      "database": "01-temporal_store.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "paid-after-shipment-known",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "25"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 24.860000000000014,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "paid"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "proved_single_atom",
+              "position": "2"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 38.51362499999999,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "paid"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "proved_single_atom",
+            "position": "2"
+          },
+          "wallMs": 24.883541000000037,
+          "latencyMs": {
+            "count": 1,
+            "min": 24.860000000000014,
+            "p50": 24.860000000000014,
+            "p95": 24.860000000000014,
+            "p99": 24.860000000000014,
+            "max": 24.860000000000014
+          }
+        },
+        {
+          "id": "shipment-boundary",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "30"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 24.995457999999985,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "shipped"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "proved_single_atom",
+              "position": "2"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 36.3965,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "shipped"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "proved_single_atom",
+            "position": "2"
+          },
+          "wallMs": 25.018167000000005,
+          "latencyMs": {
+            "count": 1,
+            "min": 24.995457999999985,
+            "p50": 24.995457999999985,
+            "p95": 24.995457999999985,
+            "p99": 24.995457999999985,
+            "max": 24.995457999999985
+          }
+        },
+        {
+          "id": "earlier-knowledge",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "35"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 25.52779099999998,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "paid"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "proved_single_atom",
+              "position": "1"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 37.244834000000026,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "paid"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "proved_single_atom",
+            "position": "1"
+          },
+          "wallMs": 25.551207999999974,
+          "latencyMs": {
+            "count": 1,
+            "min": 25.52779099999998,
+            "p50": 25.52779099999998,
+            "p95": 25.52779099999998,
+            "p99": 25.52779099999998,
+            "max": 25.52779099999998
+          }
+        },
+        {
+          "id": "before-first-status",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "19"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 24.471542,
+              "rows": [],
+              "route": "sql",
+              "reason": "proved_single_atom",
+              "position": "2"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 36.563041999999996,
+            "rows": [],
+            "route": "sql",
+            "reason": "proved_single_atom",
+            "position": "2"
+          },
+          "wallMs": 24.49958300000003,
+          "latencyMs": {
+            "count": 1,
+            "min": 24.471542,
+            "p50": 24.471542,
+            "p95": 24.471542,
+            "p99": 24.471542,
+            "max": 24.471542
+          }
+        }
+      ],
+      "openMs": 46.50395900000001,
+      "schemaReceipt": {
+        "name": "workload_01",
+        "version": 1,
+        "hash": "69c7e2e6cdec5aa0040bf45e0abded5b2bdd78ba5b6dcc10069e9b4d90a084aa"
+      },
+      "schemaMs": 6.848500000000001,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "events": 1,
+            "elapsedMs": 24.974458999999968
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "events": 1,
+            "elapsedMs": 56.619208000000015
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "paid",
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "elapsedMs": 24.965958,
+            "asserted": 1,
+            "retracted": 0,
+            "requestHash": "bf2c7af066bed2defaeeddd7f571373e61dd58da30bee72cf3cd7f0936594354"
+          },
+          {
+            "eventId": "shipped",
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "elapsedMs": 56.613541,
+            "asserted": 2,
+            "retracted": 1,
+            "requestHash": "31a3a7ab438db27f785fe5e07033a452de5cf45cad6dd8c9bc8864e1b28133fc"
+          }
+        ]
+      },
+      "ingestionMs": 81.63408400000003,
+      "resourcesBefore": {
+        "rssBytes": 215547904,
+        "duckdb": {
+          "memoryBytes": "8403952",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 257556480,
+        "duckdb": {
+          "memoryBytes": "8403952",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 34.161208999999985,
+      "reopenChecksPassed": true,
+      "databaseBytes": 6565888
+    },
+    {
+      "workload": "02",
+      "profile": "direct_duckdb",
+      "database": "02-direct_duckdb.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "original-known-address",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.30387500000006185,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "A"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.71875,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "A"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.3149999999999409,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.30387500000006185,
+            "p50": 0.30387500000006185,
+            "p95": 0.30387500000006185,
+            "p99": 0.30387500000006185,
+            "max": 0.30387500000006185
+          }
+        },
+        {
+          "id": "corrected-same-valid-time",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.23725000000001728,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "B"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.284041000000002,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "B"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.2443749999999909,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.23725000000001728,
+            "p50": 0.23725000000001728,
+            "p95": 0.23725000000001728,
+            "p99": 0.23725000000001728,
+            "max": 0.23725000000001728
+          }
+        },
+        {
+          "id": "before-any-knowledge",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "0",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.207416999999964,
+              "rows": [],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.24250000000006366,
+            "rows": [],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.215041000000042,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.207416999999964,
+            "p50": 0.207416999999964,
+            "p95": 0.207416999999964,
+            "p99": 0.207416999999964,
+            "max": 0.207416999999964
+          }
+        }
+      ],
+      "openMs": 8.539750000000026,
+      "schemaMs": 0.7690420000000131,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.9273750000000973
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.1612910000000056
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "address-a",
+            "logicalPosition": "1",
+            "elapsedMs": 1.3127080000000433
+          },
+          {
+            "eventId": "address-b",
+            "logicalPosition": "2",
+            "elapsedMs": 0.8377500000000282
+          }
+        ]
+      },
+      "ingestionMs": 3.127834000000007,
+      "resourcesBefore": {
+        "rssBytes": 265158656,
+        "duckdb": {
+          "memoryBytes": "294800",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 265256960,
+        "duckdb": {
+          "memoryBytes": "294800",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 8.161499999999933,
+      "reopenChecksPassed": true,
+      "databaseBytes": 536576
+    },
+    {
+      "workload": "02",
+      "profile": "temporal_store",
+      "database": "02-temporal_store.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "original-known-address",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 24.925957999999923,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "A"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "proved_single_atom",
+              "position": "1"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 36.886957999999936,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "A"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "proved_single_atom",
+            "position": "1"
+          },
+          "wallMs": 24.953915999999936,
+          "latencyMs": {
+            "count": 1,
+            "min": 24.925957999999923,
+            "p50": 24.925957999999923,
+            "p95": 24.925957999999923,
+            "p99": 24.925957999999923,
+            "max": 24.925957999999923
+          }
+        },
+        {
+          "id": "corrected-same-valid-time",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 23.835125000000062,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "B"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "proved_single_atom",
+              "position": "2"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 36.142708000000084,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "B"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "proved_single_atom",
+            "position": "2"
+          },
+          "wallMs": 23.864667000000054,
+          "latencyMs": {
+            "count": 1,
+            "min": 23.835125000000062,
+            "p50": 23.835125000000062,
+            "p95": 23.835125000000062,
+            "p99": 23.835125000000062,
+            "max": 23.835125000000062
+          }
+        },
+        {
+          "id": "before-any-knowledge",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "0",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 25.147416999999905,
+              "rows": [],
+              "route": "sql",
+              "reason": "proved_single_atom",
+              "position": "0"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 37.41837499999997,
+            "rows": [],
+            "route": "sql",
+            "reason": "proved_single_atom",
+            "position": "0"
+          },
+          "wallMs": 25.176542000000154,
+          "latencyMs": {
+            "count": 1,
+            "min": 25.147416999999905,
+            "p50": 25.147416999999905,
+            "p95": 25.147416999999905,
+            "p99": 25.147416999999905,
+            "max": 25.147416999999905
+          }
+        }
+      ],
+      "openMs": 45.29008399999998,
+      "schemaReceipt": {
+        "name": "workload_02",
+        "version": 1,
+        "hash": "4a135cb13fab3c819808f08c279c881e0a3c87e9bf24326203daa890e7a70223"
+      },
+      "schemaMs": 4.9929579999999305,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "events": 1,
+            "elapsedMs": 24.77433300000007
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "events": 1,
+            "elapsedMs": 55.57991700000002
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "address-a",
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "elapsedMs": 24.771041999999966,
+            "asserted": 1,
+            "retracted": 0,
+            "requestHash": "674ab2ff5bb7ca106be107dd703428d86f5a6da6b3cdc9595400526b29a03d9e"
+          },
+          {
+            "eventId": "address-b",
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "elapsedMs": 55.57833300000004,
+            "asserted": 1,
+            "retracted": 1,
+            "requestHash": "569475dd60e27f2c6cbb34426ac0e9cde04d30dabdaf3f7102bc02877b0fc2b7"
+          }
+        ]
+      },
+      "ingestionMs": 80.37524999999994,
+      "resourcesBefore": {
+        "rssBytes": 266240000,
+        "duckdb": {
+          "memoryBytes": "8125488",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 267796480,
+        "duckdb": {
+          "memoryBytes": "8125488",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 32.82941699999992,
+      "reopenChecksPassed": true,
+      "databaseBytes": 6041600
+    },
+    {
+      "workload": "02",
+      "profile": "naive_sql",
+      "database": "02-naive_sql.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "original-known-address",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "1",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.7142079999998714,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "A"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 1.4796660000001793,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "A"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.7355000000000018,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.7142079999998714,
+            "p50": 0.7142079999998714,
+            "p95": 0.7142079999998714,
+            "p99": 0.7142079999998714,
+            "max": 0.7142079999998714
+          }
+        },
+        {
+          "id": "corrected-same-valid-time",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.6075410000000829,
+              "rows": [
+                [
+                  {
+                    "tag": "str",
+                    "value": "B"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.7996249999998781,
+            "rows": [
+              [
+                {
+                  "tag": "str",
+                  "value": "B"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.6162500000000364,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.6075410000000829,
+            "p50": 0.6075410000000829,
+            "p95": 0.6075410000000829,
+            "p99": 0.6075410000000829,
+            "max": 0.6075410000000829
+          }
+        },
+        {
+          "id": "before-any-knowledge",
+          "operation": "state_at",
+          "cut": {
+            "known_at": "0",
+            "valid_at": "10"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.44650000000001455,
+              "rows": [],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.4946669999999358,
+            "rows": [],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.45537500000000364,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.44650000000001455,
+            "p50": 0.44650000000001455,
+            "p95": 0.44650000000001455,
+            "p99": 0.44650000000001455,
+            "max": 0.44650000000001455
+          }
+        }
+      ],
+      "openMs": 8.520457999999962,
+      "schemaMs": 0.7508339999999407,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.2752499999999145
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.7288330000001224
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "address-a",
+            "logicalPosition": "1",
+            "elapsedMs": 0.7529580000000351
+          },
+          {
+            "eventId": "address-b",
+            "logicalPosition": "2",
+            "elapsedMs": 0.39812499999993634
+          }
+        ]
+      },
+      "ingestionMs": 2.0248750000000655,
+      "resourcesBefore": {
+        "rssBytes": 268124160,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 268156928,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 8.283709000000044,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720
+    },
+    {
+      "workload": "06",
+      "profile": "temporal_store",
+      "database": "06-temporal_store.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "balance800",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "12"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 21.445375000000013,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "800"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "3"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 31.90970900000002,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "800"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "3"
+          },
+          "wallMs": 21.46745800000008,
+          "latencyMs": {
+            "count": 1,
+            "min": 21.445375000000013,
+            "p50": 21.445375000000013,
+            "p95": 21.445375000000013,
+            "p99": 21.445375000000013,
+            "max": 21.445375000000013
+          }
+        },
+        {
+          "id": "distinct-equal-postings",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "11"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 21.053375000000187,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "1000"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "3"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 30.822415999999976,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "1000"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "3"
+          },
+          "wallMs": 21.076000000000022,
+          "latencyMs": {
+            "count": 1,
+            "min": 21.053375000000187,
+            "p50": 21.053375000000187,
+            "p95": 21.053375000000187,
+            "p99": 21.053375000000187,
+            "max": 21.053375000000187
+          }
+        },
+        {
+          "id": "business-reversal",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "13"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 22.454666999999972,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "300"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "4"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 30.835458000000017,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "300"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "4"
+          },
+          "wallMs": 22.47858300000007,
+          "latencyMs": {
+            "count": 1,
+            "min": 22.454666999999972,
+            "p50": 22.454666999999972,
+            "p95": 22.454666999999972,
+            "p99": 22.454666999999972,
+            "max": 22.454666999999972
+          }
+        },
+        {
+          "id": "empty-currency",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 21.835583000000042,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "0"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "4"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 31.01237500000002,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "0"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "4"
+          },
+          "wallMs": 21.85741699999994,
+          "latencyMs": {
+            "count": 1,
+            "min": 21.835583000000042,
+            "p50": 21.835583000000042,
+            "p95": 21.835583000000042,
+            "p99": 21.835583000000042,
+            "max": 21.835583000000042
+          }
+        }
+      ],
+      "openMs": 44.136999999999944,
+      "schemaReceipt": {
+        "name": "workload_06",
+        "version": 1,
+        "hash": "396baa85ecc246c19b75e647e23017d0d86e83406879b7e88a6ef09783c5f109"
+      },
+      "schemaMs": 5.685791999999992,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "events": 1,
+            "elapsedMs": 24.355833000000075
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "events": 1,
+            "elapsedMs": 23.20379099999991
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": "3",
+            "events": 1,
+            "elapsedMs": 24.354458000000022
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": "4",
+            "events": 1,
+            "elapsedMs": 23.953666999999996
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "p1",
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "elapsedMs": 24.35354099999995,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "3acdd6702ba869ac128164dec29d17fcd57687b69ad367bd2f475a59202762c2"
+          },
+          {
+            "eventId": "p2",
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "elapsedMs": 23.20225000000005,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "1ed83e260e2d15bee52f587f80f3dfa7658e038bf93b0cd7bfa5c717220d94d7"
+          },
+          {
+            "eventId": "p3",
+            "logicalPosition": "3",
+            "nativePosition": "3",
+            "elapsedMs": 24.3531660000001,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "02466876c246a8f4618cf81382d83950147844f5cfab7decc203f2048fd87f88"
+          },
+          {
+            "eventId": "reverse-p1",
+            "logicalPosition": "4",
+            "nativePosition": "4",
+            "elapsedMs": 23.951999999999998,
+            "asserted": 4,
+            "retracted": 0,
+            "requestHash": "7d4ba74236e616977b75cbec177835477ab78c1836e421109e702e6e79894723"
+          }
+        ]
+      },
+      "ingestionMs": 95.90099999999984,
+      "resourcesBefore": {
+        "rssBytes": 268484608,
+        "duckdb": {
+          "memoryBytes": "8113248",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 269205504,
+        "duckdb": {
+          "memoryBytes": "8113248",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 37.19566699999996,
+      "reopenChecksPassed": true,
+      "databaseBytes": 5255168
+    },
+    {
+      "workload": "06",
+      "profile": "naive_sql",
+      "database": "06-naive_sql.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "balance800",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "12"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.3506250000000364,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "800"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 1.08462499999996,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "800"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.3608329999999569,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.3506250000000364,
+            "p50": 0.3506250000000364,
+            "p95": 0.3506250000000364,
+            "p99": 0.3506250000000364,
+            "max": 0.3506250000000364
+          }
+        },
+        {
+          "id": "distinct-equal-postings",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "11"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.3797079999999369,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "1000"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.4802500000000691,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "1000"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.38554199999998673,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.3797079999999369,
+            "p50": 0.3797079999999369,
+            "p95": 0.3797079999999369,
+            "p99": 0.3797079999999369,
+            "max": 0.3797079999999369
+          }
+        },
+        {
+          "id": "business-reversal",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "13"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.4657910000000811,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "300"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.45125000000007276,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "300"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.47191700000007586,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.4657910000000811,
+            "p50": 0.4657910000000811,
+            "p95": 0.4657910000000811,
+            "p99": 0.4657910000000811,
+            "max": 0.4657910000000811
+          }
+        },
+        {
+          "id": "empty-currency",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.5169579999999314,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "0"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.5505419999999503,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "0"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.5239999999998872,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.5169579999999314,
+            "p50": 0.5169579999999314,
+            "p95": 0.5169579999999314,
+            "p99": 0.5169579999999314,
+            "max": 0.5169579999999314
+          }
+        }
+      ],
+      "openMs": 11.44162499999993,
+      "schemaMs": 0.7398749999999836,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.2440000000001419
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.6179999999999382
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.6243750000001
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.5217920000000049
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "p1",
+            "logicalPosition": "1",
+            "elapsedMs": 0.7137079999999969
+          },
+          {
+            "eventId": "p2",
+            "logicalPosition": "2",
+            "elapsedMs": 0.3624170000000504
+          },
+          {
+            "eventId": "p3",
+            "logicalPosition": "3",
+            "elapsedMs": 0.35087499999985994
+          },
+          {
+            "eventId": "reverse-p1",
+            "logicalPosition": "4",
+            "elapsedMs": 0.29358400000000984
+          }
+        ]
+      },
+      "ingestionMs": 3.031750000000102,
+      "resourcesBefore": {
+        "rssBytes": 269467648,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 269746176,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 7.675584000000072,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720
+    },
+    {
+      "workload": "06",
+      "profile": "direct_duckdb",
+      "database": "06-direct_duckdb.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "balance800",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "12"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.33349999999995816,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "800"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.7953339999999116,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "800"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.3422499999999218,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.33349999999995816,
+            "p50": 0.33349999999995816,
+            "p95": 0.33349999999995816,
+            "p99": 0.33349999999995816,
+            "max": 0.33349999999995816
+          }
+        },
+        {
+          "id": "distinct-equal-postings",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "11"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.2885000000001128,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "1000"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.3900830000000042,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "1000"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.2953749999999218,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.2885000000001128,
+            "p50": 0.2885000000001128,
+            "p95": 0.2885000000001128,
+            "p99": 0.2885000000001128,
+            "max": 0.2885000000001128
+          }
+        },
+        {
+          "id": "business-reversal",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "13"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.2697499999999309,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "300"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.4429160000001957,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "300"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.27454099999999926,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.2697499999999309,
+            "p50": 0.2697499999999309,
+            "p95": 0.2697499999999309,
+            "p99": 0.2697499999999309,
+            "max": 0.2697499999999309
+          }
+        },
+        {
+          "id": "empty-currency",
+          "operation": "account_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "20"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.3256669999998394,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "0"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.46854199999984303,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "0"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.3327919999999267,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.3256669999998394,
+            "p50": 0.3256669999998394,
+            "p95": 0.3256669999998394,
+            "p99": 0.3256669999998394,
+            "max": 0.3256669999998394
+          }
+        }
+      ],
+      "openMs": 8.260708000000022,
+      "schemaMs": 0.6741250000000036,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.0796249999998508
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.5481250000000273
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.46379099999990103
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.7538750000001073
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "p1",
+            "logicalPosition": "1",
+            "elapsedMs": 0.6144580000000133
+          },
+          {
+            "eventId": "p2",
+            "logicalPosition": "2",
+            "elapsedMs": 0.3141249999998763
+          },
+          {
+            "eventId": "p3",
+            "logicalPosition": "3",
+            "elapsedMs": 0.2555419999998776
+          },
+          {
+            "eventId": "reverse-p1",
+            "logicalPosition": "4",
+            "elapsedMs": 0.36754100000007384
+          }
+        ]
+      },
+      "ingestionMs": 2.8610419999999976,
+      "resourcesBefore": {
+        "rssBytes": 269811712,
+        "duckdb": {
+          "memoryBytes": "814992",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 269877248,
+        "duckdb": {
+          "memoryBytes": "814992",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 7.860832999999957,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720
+    },
+    {
+      "workload": "07",
+      "profile": "naive_sql",
+      "database": "07-naive_sql.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "available7",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "3"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.49070800000004056,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "3"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "7"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 1.1082919999998921,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "3"
+                },
+                {
+                  "tag": "i64",
+                  "value": "7"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.5031660000001921,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.49070800000004056,
+            "p50": 0.49070800000004056,
+            "p95": 0.49070800000004056,
+            "p99": 0.49070800000004056,
+            "max": 0.49070800000004056
+          }
+        },
+        {
+          "id": "before-release",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "3"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.5237500000000637,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "6"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.7618749999999181,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "4"
+                },
+                {
+                  "tag": "i64",
+                  "value": "6"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.5315410000000611,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.5237500000000637,
+            "p50": 0.5237500000000637,
+            "p95": 0.5237500000000637,
+            "p99": 0.5237500000000637,
+            "max": 0.5237500000000637
+          }
+        },
+        {
+          "id": "canceled-reservation",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "4"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.5246660000000247,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "naive_sql"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.6128750000000309,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "0"
+                },
+                {
+                  "tag": "i64",
+                  "value": "10"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "naive_sql"
+          },
+          "wallMs": 0.5290829999999005,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.5246660000000247,
+            "p50": 0.5246660000000247,
+            "p95": 0.5246660000000247,
+            "p99": 0.5246660000000247,
+            "max": 0.5246660000000247
+          }
+        }
+      ],
+      "openMs": 8.48174999999992,
+      "schemaMs": 0.8437079999998787,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.590832999999975
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.6331250000000637
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.5404580000001715
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.792459000000008
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "receive",
+            "logicalPosition": "1",
+            "elapsedMs": 0.949292000000014
+          },
+          {
+            "eventId": "reserve",
+            "logicalPosition": "2",
+            "elapsedMs": 0.34008300000004965
+          },
+          {
+            "eventId": "release",
+            "logicalPosition": "3",
+            "elapsedMs": 0.28674999999998363
+          },
+          {
+            "eventId": "cancel-rest",
+            "logicalPosition": "4",
+            "elapsedMs": 0.3539579999999205
+          }
+        ]
+      },
+      "ingestionMs": 3.5842079999999896,
+      "resourcesBefore": {
+        "rssBytes": 270155776,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 270663680,
+        "duckdb": {
+          "memoryBytes": "819072",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 7.809083000000101,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720
+    },
+    {
+      "workload": "07",
+      "profile": "direct_duckdb",
+      "database": "07-direct_duckdb.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "available7",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "3"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.33620799999994233,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "3"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "7"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.8701250000001437,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "3"
+                },
+                {
+                  "tag": "i64",
+                  "value": "7"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.34541600000011385,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.33620799999994233,
+            "p50": 0.33620799999994233,
+            "p95": 0.33620799999994233,
+            "p99": 0.33620799999994233,
+            "max": 0.33620799999994233
+          }
+        },
+        {
+          "id": "before-release",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "3"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.4430409999999938,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "6"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.5729999999998654,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "4"
+                },
+                {
+                  "tag": "i64",
+                  "value": "6"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.4512919999999667,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.4430409999999938,
+            "p50": 0.4430409999999938,
+            "p95": 0.4430409999999938,
+            "p99": 0.4430409999999938,
+            "max": 0.4430409999999938
+          }
+        },
+        {
+          "id": "canceled-reservation",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "4"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 0.40170899999998255,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  }
+                ]
+              ],
+              "route": "sql",
+              "reason": "direct_duckdb"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 0.37333300000000236,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "0"
+                },
+                {
+                  "tag": "i64",
+                  "value": "10"
+                }
+              ]
+            ],
+            "route": "sql",
+            "reason": "direct_duckdb"
+          },
+          "wallMs": 0.40645900000004076,
+          "latencyMs": {
+            "count": 1,
+            "min": 0.40170899999998255,
+            "p50": 0.40170899999998255,
+            "p95": 0.40170899999998255,
+            "p99": 0.40170899999998255,
+            "max": 0.40170899999998255
+          }
+        }
+      ],
+      "openMs": 8.295540999999957,
+      "schemaMs": 0.7768749999997908,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 1.2499159999999847
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.5680839999999989
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.6884169999998448
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": null,
+            "events": 1,
+            "elapsedMs": 0.6901249999998527
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "receive",
+            "logicalPosition": "1",
+            "elapsedMs": 0.740333999999848
+          },
+          {
+            "eventId": "reserve",
+            "logicalPosition": "2",
+            "elapsedMs": 0.3074579999999969
+          },
+          {
+            "eventId": "release",
+            "logicalPosition": "3",
+            "elapsedMs": 0.35400000000004184
+          },
+          {
+            "eventId": "cancel-rest",
+            "logicalPosition": "4",
+            "elapsedMs": 0.3820419999999558
+          }
+        ]
+      },
+      "ingestionMs": 3.221166999999923,
+      "resourcesBefore": {
+        "rssBytes": 271155200,
+        "duckdb": {
+          "memoryBytes": "810912",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 271663104,
+        "duckdb": {
+          "memoryBytes": "810912",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 8.316250000000082,
+      "reopenChecksPassed": true,
+      "databaseBytes": 798720
+    },
+    {
+      "workload": "07",
+      "profile": "temporal_store",
+      "database": "07-temporal_store.duckdb",
+      "status": "passed",
+      "cases": [
+        {
+          "id": "available7",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "3",
+            "valid_at": "3"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 21.768625000000156,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "3"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "7"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "3"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 31.215000000000146,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "3"
+                },
+                {
+                  "tag": "i64",
+                  "value": "7"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "3"
+          },
+          "wallMs": 21.786082999999962,
+          "latencyMs": {
+            "count": 1,
+            "min": 21.768625000000156,
+            "p50": 21.768625000000156,
+            "p95": 21.768625000000156,
+            "p99": 21.768625000000156,
+            "max": 21.768625000000156
+          }
+        },
+        {
+          "id": "before-release",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "2",
+            "valid_at": "3"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 21.002916999999798,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "6"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "2"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 31.340166999999838,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "4"
+                },
+                {
+                  "tag": "i64",
+                  "value": "6"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "2"
+          },
+          "wallMs": 21.024374999999964,
+          "latencyMs": {
+            "count": 1,
+            "min": 21.002916999999798,
+            "p50": 21.002916999999798,
+            "p95": 21.002916999999798,
+            "p99": 21.002916999999798,
+            "max": 21.002916999999798
+          }
+        },
+        {
+          "id": "canceled-reservation",
+          "operation": "inventory_balance",
+          "cut": {
+            "known_at": "4",
+            "valid_at": "4"
+          },
+          "status": "passed",
+          "samples": [
+            {
+              "elapsedMs": 21.801625000000058,
+              "rows": [
+                [
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "i64",
+                    "value": "10"
+                  }
+                ]
+              ],
+              "route": "native",
+              "reason": "bounded_native_store",
+              "position": "4"
+            }
+          ],
+          "firstRead": {
+            "elapsedMs": 31.47458299999971,
+            "rows": [
+              [
+                {
+                  "tag": "i64",
+                  "value": "10"
+                },
+                {
+                  "tag": "i64",
+                  "value": "0"
+                },
+                {
+                  "tag": "i64",
+                  "value": "10"
+                }
+              ]
+            ],
+            "route": "native",
+            "reason": "bounded_native_store",
+            "position": "4"
+          },
+          "wallMs": 21.820250000000215,
+          "latencyMs": {
+            "count": 1,
+            "min": 21.801625000000058,
+            "p50": 21.801625000000058,
+            "p95": 21.801625000000058,
+            "p99": 21.801625000000058,
+            "max": 21.801625000000058
+          }
+        }
+      ],
+      "openMs": 45.492750000000115,
+      "schemaReceipt": {
+        "name": "workload_07",
+        "version": 1,
+        "hash": "afd9209a8e4fff674fc35a5ba52edd0b5d3e48210a20846f45f8976d14642f52"
+      },
+      "schemaMs": 5.0925000000002,
+      "ingestion": {
+        "groups": [
+          {
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "events": 1,
+            "elapsedMs": 23.739832999999635
+          },
+          {
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "events": 1,
+            "elapsedMs": 22.7326250000001
+          },
+          {
+            "logicalPosition": "3",
+            "nativePosition": "3",
+            "events": 1,
+            "elapsedMs": 26.682792000000063
+          },
+          {
+            "logicalPosition": "4",
+            "nativePosition": "4",
+            "events": 1,
+            "elapsedMs": 24.05991700000004
+          }
+        ],
+        "commands": [
+          {
+            "eventId": "receive",
+            "logicalPosition": "1",
+            "nativePosition": "1",
+            "elapsedMs": 23.738166999999976,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "2d7209927d7263885b36ac974bf2e639609457e76071fe93a546b939a4149db3"
+          },
+          {
+            "eventId": "reserve",
+            "logicalPosition": "2",
+            "nativePosition": "2",
+            "elapsedMs": 22.730957999999646,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "bb00ff040afe5443ba97d1aa02da2c4037005df402eef8887a74f30a3641d7bb"
+          },
+          {
+            "eventId": "release",
+            "logicalPosition": "3",
+            "nativePosition": "3",
+            "elapsedMs": 26.680875000000015,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "084dadd47ce7ab4049778dbc1c941ad28507dd33d8c2f9a8c83fb5dcb269195d"
+          },
+          {
+            "eventId": "cancel-rest",
+            "logicalPosition": "4",
+            "nativePosition": "4",
+            "elapsedMs": 24.058374999999614,
+            "asserted": 3,
+            "retracted": 0,
+            "requestHash": "d951d5e18c8b10b251e6070241df3ca6db4bd9d8f0de97e55feb84bb9f46c8c3"
+          }
+        ]
+      },
+      "ingestionMs": 97.23433299999988,
+      "resourcesBefore": {
+        "rssBytes": 271826944,
+        "duckdb": {
+          "memoryBytes": "8113248",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "resourcesAfter": {
+        "rssBytes": 274055168,
+        "duckdb": {
+          "memoryBytes": "8113248",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "reopenMs": 33.49379200000021,
+      "reopenChecksPassed": true,
+      "databaseBytes": 5255168
+    }
+  ],
+  "sourceSha256": {
+    "workloads/run_three_engines.mjs": "4a3749aa964185ecd87e3831da8c133135af26992e28b6df7b2e9ef4f36273c5",
+    "workloads/engine_cases.mjs": "3d3154da394c308038edcd1bd4fac07ad102c5e8b288edd0a4074f35aa159973",
+    "workloads/event_oracles.py": "a12fcbc373865e05b00c53b02136796c003106fa923c6762cf7a0a93f59d2b4d",
+    "workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "adapter/scale-fixture.mjs": "2a5ca9168dad9f5c8424bbf42d68f41450e88e57d8607dead66771dcaf8b51ac"
+  },
+  "runtimeArtifactSha256": {
+    "build/artifact.json": "439ad24908a7d03e887348bc797f27ab4b6c9049aafa6e03ef873cf562095414",
+    "build/temporal_datalog.duckdb_extension": "ce27628ef67c14a758250d3eb2f1117fcb5f928a93ff9b04604e806941919649",
+    "build/temporal_control.node": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "build/adapter/native-entity.js": "0cc4f8be131ea557d8cb4128b067a52dd331a6a7106e6c283e5ea7011038aae0",
+    "build/adapter/native-schema.js": "3f84713dce80b4b9424607f939d5dfed2d9892895a32c1c3547ee85084334675",
+    "build/adapter/native-duckdb-port.mjs": "b427bfd0e391548a5b0aa95c7cdc2bbdee02a3df350dab11e46dc201e633c11b"
+  },
+  "duckdbApiSha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3",
+  "duckdbBindingSha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902",
+  "duckdbLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "duckdbVersion": "v2.0.0",
+  "selectedCaseCount": 14,
+  "executedEngineCaseCount": 42,
+  "passedEngineCaseCount": 42,
+  "evidenceRedactions": [
+    "configuration.python reduced to executable basename; original retained with owned fixture"
+  ],
+  "originalEvidenceSha256": "c103f53cc5ad24f6e14aa4f3eff146f2ff0a2f6e3d995dfc6ef7f23bc9b3a84d",
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.22.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "catalog_sql_sha256": "52bf5736155afda31b6c37bf896ed7789fc41f2d4e063c1ce086cc8c9aea39fd",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "schema_borrowed_input": true,
+    "experimental_current_unique_fast_path": false,
+    "experimental_injective_projection_fast_path": false,
+    "experimental_identity_count_fast_path": false,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "286bd783958228eace0a9d5cffdd11f0dd9bd2b8be471a7fb96663d59442e228",
+      "native/src/temporal_command.hpp": "92ef654a3466a02aac383739e0cff947247cdf145167f753df6812f261ac9d7c",
+      "native/src/temporal_compat.cpp": "e77c01ca724dee539a9cd8da6237db8e56ed0884a56e05d825007c3ca5f70b8c",
+      "native/src/temporal_compat.hpp": "7a58d0d65069782f36b3321020f255569cc25056b9af6ebb9e5792483f285c77",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_count_plan.hpp": "c057fa522e0ac3ad39bdb42589a036362df8bcc991965fb6a9f72ade01aa5bde",
+      "native/src/temporal_current_unique.hpp": "90e8af10cd90edf66434a36ebbbf3fa389fc47e0057b71ea35c7c06e03bd4ddb",
+      "native/src/temporal_datalog.cpp": "f3fc9f687febfb9f1c8b426b5c734c3de61b5072badacc2f40908becf6085a43",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_integrity.hpp": "a7313ffca05545763885717d7221b48e9e3bcd02d5ef0fb0bef0c865b4248de3",
+      "native/src/temporal_join_plan.hpp": "b2cfc07956e011c42bfc860fe157b2a0bbc311fdc7423e152eeb659f16674857",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_scan_plan.hpp": "1c16be3ca60d3bea07d32bf7e20aef5aca9003fccfb5cf8e51c24dff491701aa",
+      "native/src/temporal_schema.cpp": "4ee5c1548e803bcb0e53f64f62ba22e236227672b3d51e75d4afff239cb6be29",
+      "native/src/temporal_schema.hpp": "05ca882152b3f4de4599ee48305c942495759e2187c3bab40f5587961c6fbc14",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "6ae2dda9331c8da80e22ad28f5878f35f74379e163a20b1f87846ffb0fb6c267",
+      "native/src/temporal_store_query.hpp": "3f135c45509c27346986034feb4a26d840e1e3b9bf9584511e5f57dae92cde70",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "00dc784f83bfa37079167f068eb83058bed8519ecdabde52cf97630df37f98c2",
+    "extension_sha256": "ce27628ef67c14a758250d3eb2f1117fcb5f928a93ff9b04604e806941919649"
+  },
+  "postRunMetadata": {
+    "nativeBuild": "Read after close and matched to the recorded artifact manifest hash."
+  }
+}

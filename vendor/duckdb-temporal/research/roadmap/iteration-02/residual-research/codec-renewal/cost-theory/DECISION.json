@@ -1,0 +1,79 @@
+{
+  "status": "RENEWED_RESEARCH_COMPLETE_NOT_APPLICATION_OR_PERFORMANCE_ACCEPTANCE",
+  "created_utc": "2026-10-31T01:36:00+00:00",
+  "owner": "/root/orchestrate_triple_store/iteration02_codec_renewed_cost",
+  "candidate_recommendation": {
+    "preferred": "C1p+C2: private identical after-key tail, public function entirely verbatim; root selects/saves before writer",
+    "C1p": "Keep entire public _carrier_payload source unchanged. Add private same tag/selection/null tail called only after _native_keys. Enforce AST-equivalence regression invariant on tail statements/order/messages/return. Domain/FP/finite/+0 _canonical_payload stays shared.",
+    "C1s_alternative": "Shared after-key tail with public key gate verbatim: same private work removal and no shape-tail duplication, but adds public helper frame and public latency/stack-observability risk.",
+    "C2": "Only private native-result root/carrier expected key metadata becomes immutable module-level frozensets; no public gate substitution.",
+    "fallback": "C2 alone only if coordinator explicitly selects it before implementation; preserve distinct hypothesis/trial identity.",
+    "not_selected": [
+      "generator/null/key-screen rewrites",
+      "ASCII validation fast path",
+      "native/Arrow egress",
+      "byte-level float classification or buffers",
+      "FP reader/gate changes"
+    ],
+    "tradeoff_evidence": "Static call graph and exact CPython call-frame implementation; no new app import or performance run. Both C1 variants remove identical private operations. C1p trades small shape-tail maintenance duplication for unchanged public call graph; AST test is a maintenance invariant, not full semantic proof."
+  },
+  "pins": {
+    "current_typed_store_sha256": "25e9a4f178144070f85cbf1215dd1e12270ae0efbdd27be1dbf49ba9e76dcfdc",
+    "current_fp_sha256": "92169be543692ff30a1824fa0add9cdb7e3139c864bdef8fdc5d1b0ec9710164",
+    "historical_old_fp_sha256": "facfc51b6f42a21019d70fef05b2c813e3f6f81e53587c3b80bb09a1b26dfd5c",
+    "cpython_commit": "2abcf904b8dac8c999d2b3aac76681abb333798a",
+    "duckdb_commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "duckdb_python_commit": "83c719961098611e769dc4bab0bda2bf149a2d1e",
+    "closed_study_manifest_sha256": "5a8277b3fdb12a4fd4f79ebad4e49504db1671aabc4a083d5af0b0bf46ca87b2",
+    "same_native_artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4"
+  },
+  "actual_scope": {
+    "app_or_other_shared_source_edited": false,
+    "git_or_page_mutations": false,
+    "application_imports": false,
+    "db_native_fp_execution": false,
+    "new_timing_or_profiling": false,
+    "existing_profile_reports_read": 42,
+    "existing_profile_processes_read": 3,
+    "existing_profile_result_records_read": 294,
+    "existing_profile_seconds_used_for_cost_estimation": false,
+    "fresh_pinned_primary_source_reads": 17,
+    "fresh_primary_web_paper_curations": 4
+  },
+  "source_mechanism": {
+    "C": "All output cells, not just floats",
+    "F": "Float64 cells",
+    "removed_set_constructions": "2C+1 per successful private result, after import/setup",
+    "removed_repeated_carrier_key_comparisons": "C, plus their keys views and associated equality iterators",
+    "does_not_mean": [
+      "2C+1 measured malloc/free events",
+      "five fresh hash computations per five-key literal",
+      "measured allocator bytes/cycles",
+      "latency ratio or recovery forecast"
+    ],
+    "retained": "Private exact-key screen; remaining key equality; both generators; both carrier/domain tuples; all tag/payload/domain/type/null/finite/canonical-zero checks; float pack and bit copies; string validation; native boxing/fetch; wire containers; all6/7 public-call FP reads. C1p additionally preserves the entire public _carrier_payload source/call graph."
+  },
+  "new_A": "Current AE500-context source (typed25e9a4f/FP92169be) versus selected newcandidate, exact480456 both endpoints; not historicalffc/facfc baseline.",
+  "new_B": "Accepted-item1+5b661 versus identical selected newcandidate+480456; broader version/contract pair, not codec/native causal isolation.",
+  "protocol": "Original physical320facts/10commits,14 controls,42 pairs/comparison,2x21 rounds,2warm+3measured sweeps,CPU8/threads1/defaultFP/GCenabled,statement-level result=fn assignment,20000 seeded pair bootstrap; full provenance/exits/outcomes/strata with no result selection, pooling, retry, trimming or lifetime changes.",
+  "acceptance_limits": [
+    "Coordinator alone selects and records exact candidate before writer and owns all app writes/correctness/admission/timing authorizations.",
+    "Current original full correctness plus real FP/adversarial/store suites and actual preflight must pass before timed study.",
+    "All14 controls and below-screen positive estimates must remain reported; existing5percent/CI/both-round screen is investigation triage, not equivalence/SLO/familywise/universal proof.",
+    "A favorable same-artifact A cannot erase an adverse broader B; preserved original outcome collection and statement lifetime boundary are mandatory.",
+    "C1s adds a public from_carrier helper frame; C1p avoids it by preserving public function verbatim and binding the duplicated private shape tail with an AST-equivalence regression test. Source line numbers can shift and allocation/GC timing still differs privately. Neither variant implies a public-codec speedup.",
+    "Current FP predicate/Controls AST equality and existing profile closure are not new real FP/native correctness execution.",
+    "Empty/tiny fixed work and native output contracts are not resolved by a source-level removal count.",
+    "No CAPIv2 stabilization date, stable-surface, portability or production-readiness claim."
+  ],
+  "handoff_files": [
+    "RESEARCH.md",
+    "PRIMARY-SOURCE-RECEIPTS.json",
+    "WEB-PRIMARY-CURATION.json",
+    "PROFILE-COUNT-RECEIPT.json",
+    "LOCAL-SOURCE-RECEIPT.json",
+    "STATIC-SHAPE-COST-COUNTS.json",
+    "collect_cost_evidence.py",
+    "EXPORT-MANIFEST.json"
+  ]
+}

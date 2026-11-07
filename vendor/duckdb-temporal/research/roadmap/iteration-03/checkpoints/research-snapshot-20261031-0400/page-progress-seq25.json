@@ -1,0 +1,44 @@
+{
+  "utc": "2026-10-31T03:48:58.525Z",
+  "page_id": "[PRIVATE_APPLICATION_REFERENCE_REMOVED]",
+  "sequence": 25,
+  "all78_ids_order_unchanged": true,
+  "goal1": "ACCEPTED_BOUNDED",
+  "goal2": "ACCEPTED_BOUNDED",
+  "goal3": "HEAVY_PRIMARY_RESEARCH_IN_PROGRESS_NO_IMPLEMENTATION",
+  "main_results": "51c9e491588946d93c9e42ae18e9494e35510841",
+  "source_docs": "8e682874c52c3f7cfc88e1cc6c006da684b04a9a",
+  "tested_runtime": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+  "changed": [
+    {
+      "block_id": "0839035e-d573-5d6e-8107-bcc9e9468023",
+      "hash": "705b37dbc3d78d94607aaba432f6460a63a8fd50173e557ace4c41995f6f9221",
+      "exact_text": true
+    },
+    {
+      "block_id": "1d94769e-2c87-5fcd-a1d8-480075701adc",
+      "hash": "cfbbea9e6e9d2fc4b45f97f7661610cdf215ef0cf6e0e38d680f5da3950861da",
+      "exact_text": true
+    },
+    {
+      "block_id": "90e1cf17-2cf7-51bf-8c28-e22e71a4c2bc",
+      "hash": "fafb441b64b479c7c85de801e0ba8a65806aa54b1dab9e934718e4edb492c15f",
+      "exact_text": true
+    },
+    {
+      "block_id": "5814792b-bb8b-5c20-bc84-0619c174f3c9",
+      "hash": "4c21d2bdb7d7ad1635a9ce81286b54f15b078feccf3c74dc607795da205deb46",
+      "exact_text": true
+    },
+    {
+      "block_id": "e8e17831-3922-526b-9539-54d0ac4cf628",
+      "hash": "6ef128ba146e4e8287371ca2f74639d6473e459ba6eb27b8adcc8e925a80d9e4",
+      "exact_text": true
+    },
+    {
+      "block_id": "4e602687-28c6-5b2f-a1ef-f78d8b8e5bec",
+      "hash": "f3f7162fe06cedb036b0139b91134603b87aeece1904f0fd37c2b38e54d71d3e",
+      "exact_text": true
+    }
+  ]
+}

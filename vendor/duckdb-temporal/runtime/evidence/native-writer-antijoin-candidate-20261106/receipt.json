@@ -1,0 +1,489 @@
+{
+  "schema": "td.native-writer-antijoin-candidate-receipt/1",
+  "status": "CANDIDATE_ORIGINAL_16_OF_16_PASS",
+  "recordedAtUtc": "2026-11-06T08:59:46.868752+00:00",
+  "comparison": "Candidate-only original anti1/16 absolute screen; no SDK/reverse anti arm and no originalB0 comparison",
+  "labSourceCommit": "213bf0b6e9f30703ee35f937d5fb414a49a4d8ce",
+  "nativeSourceCommit": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "orchestrationSourceCommit": "3b9c6f367edd68cf5f21d047d74232c1ca28bf73",
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "originalBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+  "baselineRawSha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474",
+  "baselineReceiptSha256": "b20cc58126b0d77cd27fbeb80f2b37c814b8e32c0482efc26921b80d260affba",
+  "sourceSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+  "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+  "sourceMetadataAndNoWalMatched": true,
+  "closureBeforeAfterMatched": true,
+  "outerTerminal": {
+    "role": "cpp_candidate",
+    "pid": 4882,
+    "wrapperPid": 4872,
+    "argv": [
+      "node",
+      "<writer-source-runtime>/adapter/native-writer-lab-antijoin.mjs",
+      "--binding",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/binding-first.json",
+      "--budget",
+      "<writer-source-runtime>/evidence/antijoin-cost-10m-budget-20261105.json",
+      "--baseline-root",
+      "<task-workspace>/temporal-thread-budget-20261105/projects/temporal-datalog/runtime",
+      "--fixture",
+      "<accepted-project-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "--evidence",
+      "<accepted-project-runtime>/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--small-control-proof",
+      "<writer-source-runtime>/build/native-writer-lab-small-20261106-01/sdk_control/result.json",
+      "--small-candidate-proof",
+      "<writer-source-runtime>/build/native-writer-lab-small-20261106-01/cpp_candidate/result.json",
+      "--role",
+      "cpp_candidate",
+      "--output",
+      "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate.json"
+    ],
+    "startedAtUtc": "2026-11-06T08:43:30.975028+00:00",
+    "status": "terminal",
+    "exitCode": 0,
+    "exitedAtUtc": "2026-11-06T08:47:40.046815+00:00",
+    "elapsedMs": 249072.72758311592
+  },
+  "profiles": [
+    {
+      "readers": 1,
+      "pid": 5388,
+      "probeK": 39095,
+      "fixedSamples": 20,
+      "fixedP50": 198.21475000000282,
+      "fixedP99": 207.08620800000062,
+      "mixedReads": 264,
+      "qps": 4.392711204827173,
+      "p50": 225.8812079999916,
+      "p99": 266.9560410000049,
+      "acks": 527,
+      "ackRate": 8.780253866649934,
+      "rss": 2607661056,
+      "windows": [
+        87,
+        87,
+        89,
+        87,
+        88,
+        88
+      ],
+      "finalK": 39622,
+      "maxActive": 1,
+      "closedWithoutWal": true,
+      "exactSixImages": true,
+      "zeroCleanup": true,
+      "latestFrontiersPassed": true,
+      "inputAdmission": {
+        "scopedInputFacts": 1680202,
+        "rightSideFacts": "1679946",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      }
+    },
+    {
+      "readers": 16,
+      "pid": 5799,
+      "probeK": 39095,
+      "fixedSamples": 320,
+      "fixedP50": 1997.7163329999967,
+      "fixedP99": 3895.4773330000025,
+      "mixedReads": 467,
+      "qps": 7.567275509885292,
+      "p50": 2059.9590420000022,
+      "p99": 3089.1542090000003,
+      "acks": 365,
+      "ackRate": 6.080798172565213,
+      "rss": 2868035584,
+      "windows": [
+        60,
+        58,
+        62,
+        62,
+        62,
+        60
+      ],
+      "finalK": 39460,
+      "maxActive": 16,
+      "closedWithoutWal": true,
+      "exactSixImages": true,
+      "zeroCleanup": true,
+      "latestFrontiersPassed": true,
+      "inputAdmission": {
+        "scopedInputFacts": 1680202,
+        "rightSideFacts": "1679946",
+        "positiveSideFacts": 256,
+        "exactSucceeded": true,
+        "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+        "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+      }
+    }
+  ],
+  "gates": [
+    {
+      "readers": 1,
+      "name": "fixedP50",
+      "passed": true
+    },
+    {
+      "readers": 1,
+      "name": "fixedP99",
+      "passed": true
+    },
+    {
+      "readers": 1,
+      "name": "mixedQPS",
+      "passed": true
+    },
+    {
+      "readers": 1,
+      "name": "mixedP50",
+      "passed": true
+    },
+    {
+      "readers": 1,
+      "name": "mixedP99",
+      "passed": true
+    },
+    {
+      "readers": 1,
+      "name": "writes",
+      "passed": true
+    },
+    {
+      "readers": 1,
+      "name": "writesPerSecond",
+      "passed": true
+    },
+    {
+      "readers": 1,
+      "name": "sampledRss",
+      "passed": true
+    },
+    {
+      "readers": 16,
+      "name": "fixedP50",
+      "passed": true
+    },
+    {
+      "readers": 16,
+      "name": "fixedP99",
+      "passed": true
+    },
+    {
+      "readers": 16,
+      "name": "mixedQPS",
+      "passed": true
+    },
+    {
+      "readers": 16,
+      "name": "mixedP50",
+      "passed": true
+    },
+    {
+      "readers": 16,
+      "name": "mixedP99",
+      "passed": true
+    },
+    {
+      "readers": 16,
+      "name": "writes",
+      "passed": true
+    },
+    {
+      "readers": 16,
+      "name": "writesPerSecond",
+      "passed": true
+    },
+    {
+      "readers": 16,
+      "name": "sampledRss",
+      "passed": true
+    }
+  ],
+  "passed": 16,
+  "totalSavedSamples": 1071,
+  "totalNativeACKs": 892,
+  "originalThresholds": [
+    {
+      "readers": 1,
+      "maxFixedP50Ms": 1500,
+      "maxFixedP99Ms": 2500,
+      "minMixedQueriesPerSecond": 0.75,
+      "maxMixedP50Ms": 1500,
+      "maxMixedP99Ms": 3000,
+      "minAcknowledgedWrites": 40,
+      "minAcknowledgedWritesPerSecond": 0.5,
+      "maxSampledRssBytes": 3500000000
+    },
+    {
+      "readers": 16,
+      "maxFixedP50Ms": 3500,
+      "maxFixedP99Ms": 6500,
+      "minMixedQueriesPerSecond": 4.8,
+      "maxMixedP50Ms": 3200,
+      "maxMixedP99Ms": 6500,
+      "minAcknowledgedWrites": 40,
+      "minAcknowledgedWritesPerSecond": 0.5,
+      "maxSampledRssBytes": 3500000000
+    }
+  ],
+  "rawOuterSha256": "e3f03d4adba89594ddd99bc1558818910e681a98779e90ce27586773884717da",
+  "rawIndex": {
+    "cpp_candidate.json": {
+      "originalSha256": "e3f03d4adba89594ddd99bc1558818910e681a98779e90ce27586773884717da",
+      "projectOnlySha256": "20b7a25731ebbf41941d2a211e417051515eee517262859d42d3fe1faee2a4ab",
+      "bytes": 6451958,
+      "originalMtimeNs": 1793954860028973096
+    },
+    "outer-terminal.json": {
+      "originalSha256": "d01153ff716f4f4bc5a32b74c3ff6577a7c35c9e6e6f139cc935333ab6781c32",
+      "projectOnlySha256": "029f30d22bdec15a9fa64a82805f55d64a1dbd6f2eec1106d8c941240a50b8ee",
+      "bytes": 1947,
+      "originalMtimeNs": 1793954860047875271
+    },
+    "outer.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793954610975240476
+    },
+    "outer.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793954610975345768
+    },
+    "anti-launcher.py": {
+      "originalSha256": "15933c9507d02c1cd2d8a942ac9567dd638339634dbeceaded2dbbd9d6e7210f",
+      "projectOnlySha256": "7ddb7d30f376cfa1a68991361645bb2ed8a78395d77ef946f69a7d553d759fd2",
+      "bytes": 2928,
+      "originalMtimeNs": 1793954610883266676
+    },
+    "source-before.json": {
+      "originalSha256": "e0e60a2a7fe5c9600a6de9ae9a88060b680665900f6c54a4a290ad77946573a0",
+      "projectOnlySha256": "d9e92e59409391fc7db483fadcf3e74f107ace239f9fea82c45d67998fb232f8",
+      "bytes": 1020,
+      "originalMtimeNs": 1793954492642528732
+    },
+    "source-after.json": {
+      "originalSha256": "458620ba41a85eaf6a1fd340991a40ee1b8a4cc4a0a4649562e582280b2cdece",
+      "projectOnlySha256": "4246dfe7a07ba334c3ef5ffeb59a5f06d2bd0e5211d29ce479ae6818bfd3f876",
+      "bytes": 1020,
+      "originalMtimeNs": 1793954954446748189
+    },
+    "source-after.stdout.log": {
+      "originalSha256": "0261ae16fec6883147e50c2e7d639477ef51bc3e6d624c34669c76886c47a0ec",
+      "projectOnlySha256": "8e4969844f965cb71c2045141c740d646d981aa6b9d9854fd7220a5d2377b203",
+      "bytes": 952,
+      "originalMtimeNs": 1793954954446880022
+    },
+    "source-after.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793954951644576764
+    },
+    "source-after-fingerprint.py": {
+      "originalSha256": "f676bd45f541f9662ee212e2ee6677950f59f7d92f33fa2e3672a9bb2f6ec932",
+      "projectOnlySha256": "3f7b0f0208ea7851f35685c8636648f1b0f6cb9b0911f686ea1b81f55ca11491",
+      "bytes": 2430,
+      "originalMtimeNs": 1793954951578661650
+    },
+    "setup-failure-first.json": {
+      "originalSha256": "d73653a8318f37c345495a36926e120e570c91946fb496e64cfce195576e0df4",
+      "projectOnlySha256": "2e2bad5e68aedc0e7addc5781c063c9bb390a128b29069b6d7b0f0fd0734c086",
+      "bytes": 1388,
+      "originalMtimeNs": 1793954338582131788
+    },
+    "setup-repair-initial-fingerprint.py": {
+      "originalSha256": "2c48e00f28903f0430eee268ce9d21b2320b46c66af4d821295fbf90dd46ee49",
+      "projectOnlySha256": "8cbff945b12422347162d38af18c991fbf36c15183efb671e4dfd3c480740003",
+      "bytes": 2432,
+      "originalMtimeNs": 1793954469210842198
+    },
+    "setup-repair.stdout.log": {
+      "originalSha256": "aca672a1ff87da923ab9595523db8e913841ceee4c839225fa7477f576539bfb",
+      "projectOnlySha256": "cd848b0376ba10c2251b36b4421d418f1abd744790d5f728903da755b155cc34",
+      "bytes": 952,
+      "originalMtimeNs": 1793954492642746773
+    },
+    "setup-repair.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793954489720236993
+    },
+    "setup-repair-terminal.json": {
+      "originalSha256": "fc2b64e1043f790a52d094d781649a8c6f4676445028d8159ec24d62d1180971",
+      "projectOnlySha256": "19d79896a9ed0aa70b0c2bfdde89a9f7f13637fe45c61890c2cd269382e66721",
+      "bytes": 490,
+      "originalMtimeNs": 1793954492649450455
+    },
+    "offline-audit-failure-first.json": {
+      "originalSha256": "5b304c65f58e9f354c8fa653efde59fe8f2f4fe27228b6001f4a36907e1837e3",
+      "projectOnlySha256": "5b304c65f58e9f354c8fa653efde59fe8f2f4fe27228b6001f4a36907e1837e3",
+      "bytes": 476,
+      "originalMtimeNs": 1793955153179333264
+    },
+    "check-antijoin.py": {
+      "originalSha256": "84117a3dd9193fa3266874bdfe5718d659fc093c53dc9044c4980c68e4d73acd",
+      "projectOnlySha256": "def18f84502fec61d41d98967186bcc6adfb30bff1e2a03d8537d15fa83d0565",
+      "bytes": 9240,
+      "originalMtimeNs": 1793955104706111018
+    },
+    "check-antijoin-02.py": {
+      "originalSha256": "52bb6970d6bfdb1fb57ebf1efac8d55c4e53862cc598f4055ca75b20085ef509",
+      "projectOnlySha256": "399f7c0505c5be3d7214cf100b63b93fc4ce78a41d91854753b8183646a24ab3",
+      "bytes": 9250,
+      "originalMtimeNs": 1793955251626297378
+    },
+    "offline-audit-02.stdout.log": {
+      "originalSha256": "cf5f2f12fdde69307cb3f2dd8b2baa44380efca87f45781a7583cfd2169b40c3",
+      "projectOnlySha256": "cf5f2f12fdde69307cb3f2dd8b2baa44380efca87f45781a7583cfd2169b40c3",
+      "bytes": 2834,
+      "originalMtimeNs": 1793955487075433232
+    },
+    "offline-audit-02.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793955486936440362
+    },
+    "offline-audit-02-terminal.json": {
+      "originalSha256": "bd0e6350271a626871e2df58703f3e5bf8204d32db3bf979bdcd15d994fd83d5",
+      "projectOnlySha256": "873f25a36139097f4f440a50ae27a50c808e2e42fdf19693a739c05b585688d4",
+      "bytes": 476,
+      "originalMtimeNs": 1793955487089912355
+    },
+    "independent-check-first.json": {
+      "originalSha256": "3ea9c5da296e374f559e76c8540ffb7af5ff307e862c9643b12daf0809e0d94e",
+      "projectOnlySha256": "3ea9c5da296e374f559e76c8540ffb7af5ff307e862c9643b12daf0809e0d94e",
+      "bytes": 3808,
+      "originalMtimeNs": 1793955487075268647
+    },
+    "child-1-process-observation.json": {
+      "originalSha256": "22f5c9b7678ff706c904e89bb475f5d7a1ebbcc0b4f366ca6b153edd68851b30",
+      "projectOnlySha256": "789688985c5ecf16f09776ededb5d3caeb231858309affb80cb1f5b9e996a794",
+      "bytes": 2224,
+      "originalMtimeNs": 1793954655753344139
+    },
+    "child-16-process-observation.json": {
+      "originalSha256": "8f6faf23990191c0dd6e4fe4fe313735a35b7de0674eded86e098c348a9471ac",
+      "projectOnlySha256": "2b29f6a272c463d9899967e2f66b809a6b2adac97bc468bffcedfb5b5e36a978",
+      "bytes": 2228,
+      "originalMtimeNs": 1793954786866669578
+    },
+    "child-1-image-checkpoint.json": {
+      "originalSha256": "4c8cd12aa261149c84938ac795109437bcd21114384fb433c585fcf1e7409a9b",
+      "projectOnlySha256": "bcfde8c534247c33a1c732319904c836d8e17dab6f0dffd8672de7c1584175b8",
+      "bytes": 1653,
+      "originalMtimeNs": 1793954822024276255
+    },
+    "cpp_candidate-children/readers-1.json": {
+      "originalSha256": "ad37e498f567412a2bfa89de26781c5b9f95950ff6548a3870b66358a43b4518",
+      "projectOnlySha256": "21a70f165d17c588457b90482b7017b935f66c1c00ebb9f716f2e62f9e96f08e",
+      "bytes": 503320,
+      "originalMtimeNs": 1793954711669596411
+    },
+    "cpp_candidate-children/readers-1.json.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793954616912731793
+    },
+    "cpp_candidate-children/readers-1.json.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793954616912919251
+    },
+    "cpp_candidate-children/roles/cpp_candidate-5388-ready.json": {
+      "originalSha256": "d0eef9d6780561b1c7e72b409c776035aea06f55d49052b81c9b507e39e05a15",
+      "projectOnlySha256": "a9824214fa3ffa34ed3968520fa4aecc981280f4bc2f754456b32f9399bb2b67",
+      "bytes": 1920,
+      "originalMtimeNs": 1793954617004316178
+    },
+    "cpp_candidate-children/roles/cpp_candidate-5388-exit.json": {
+      "originalSha256": "00dc4529945ed6592b311a5334bb202385713b410745bd5afa0e270760245795",
+      "projectOnlySha256": "154ee81c9ef6553ba893268cc2f98544e8f53d4c8ca27da7e7f1823b628e9107",
+      "bytes": 3708,
+      "originalMtimeNs": 1793954711683588397
+    },
+    "cpp_candidate-children/readers-16.json": {
+      "originalSha256": "e59334464f98c1a2317e277f9c054a2de2ace7283f01131b744b1b7502184cc0",
+      "projectOnlySha256": "6bb84c35badbba84c326b2cf704abb67137083ab43db01f0b75b964d7d31375f",
+      "bytes": 878817,
+      "originalMtimeNs": 1793954854546015469
+    },
+    "cpp_candidate-children/readers-16.json.stdout.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793954711833402509
+    },
+    "cpp_candidate-children/readers-16.json.stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793954711833654133
+    },
+    "cpp_candidate-children/roles/cpp_candidate-5799-ready.json": {
+      "originalSha256": "10045d6374446fda379440e6bb8b652547b85dff1ea48c3a9b3ff663b5af63b0",
+      "projectOnlySha256": "16055fbba77dda0a96db74dc74c6c967ac7f2f7fe76e1c7d7b58410c718d2915",
+      "bytes": 1921,
+      "originalMtimeNs": 1793954711948706591
+    },
+    "cpp_candidate-children/roles/cpp_candidate-5799-exit.json": {
+      "originalSha256": "dd157ef3a046c00bbf6ddcfce221c7ac0a01940e0e1b25119380dfaced0f9bbe",
+      "projectOnlySha256": "9135156e9cde1b6bf971abbfe8296fa67814009d135b5b094999ac3d5f025397",
+      "bytes": 3711,
+      "originalMtimeNs": 1793954854556993967
+    }
+  },
+  "prePostBindingFiles": {
+    "before": {
+      "sha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "after": {
+      "sha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "retainedFirstOutcomes": [
+    {
+      "kind": "setup",
+      "file": "setup-failure-first.json",
+      "cause": "Initial fingerprint mistakenly invoked a comparator requiring existing baseline; no engine was started.",
+      "repair": "Parent-authorized saved/read original initial fingerprint routine, exclusive baseline creation, accepted reverse metadata comparison; no frozen source or cap edit."
+    },
+    {
+      "kind": "offline audit script",
+      "file": "offline-audit-failure-first.json",
+      "cause": "Serialized BIGINT RHS count was added to Number without int conversion.",
+      "repair": "Parent-authorized fresh check-antijoin-02.py only int-normalizes two stored count operands. Original helper and failure retained; no engine rerun or gate change."
+    }
+  ],
+  "engineAttempts": 1,
+  "profileChildren": 2,
+  "engineReruns": 0,
+  "rawDirectory": "build/native-writer-lab-antijoin-20261106/candidate-01",
+  "sanitization": "Only explicit task/source/Node prefixes replaced; original local raw hashes/bytes retained; all numeric/boolean/null JSON leaves proved unchanged.",
+  "limitations": [
+    "No matched SDK/reverse anti run was requested; absolute original16 gates only.",
+    "Typed full answers checked in-flight; independent offline audit additionally verifies saved full typed preflight/reuse/reopen answers and sample cardinality/frontiers.",
+    "Reader16 completed365 patches; full512 restoration is separately qualified, not claimed from this arm.",
+    "Requested60s mixed; throughput includes drain/oracle, stopped latency includes public typed decode.",
+    "Sampled p99/RSS are engineering screens, not SLOs or physical allocation containment. Open/transient RSS peak is not separately measured.",
+    "Logical1680202 scoped input admission is not a physical scan-cardinality claim.",
+    "No originalSDK754/owner55 fresh regression proof; B0 syntax/staging/admission and engine gates remain separate."
+  ],
+  "remainingBeforePromotion": [
+    "Fresh originalB0 broad in both orders after separately reviewed admission/tiny qualification.",
+    "Root independent acceptance of this anti raw package."
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "schema": "td.antijoin-fixed-b-config-large/1",
+  "arm": "B0",
+  "result": "FAILED_UNCHANGED_NUMERIC_GATES",
+  "auditRecordedUtc": "2026-11-06T01:07:49.852075+00:00",
+  "sourceCheckpoint": "8651acc1d243b4803a55e2d08913fc08abd3ae4b",
+  "nativeSourceCheckpoint": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+  "nativeBindingSha256": "0eaf2187d65289cbbb2902ae58867ab64127d4c973d6fe59341065e50356f963",
+  "original032NumericalBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+  "startedUtc": "2026-11-06T01:01:59.956Z",
+  "rawEvidence": {
+    "file": "evidence/antijoin-config-b0-10m16-raw-20261105.json",
+    "originalFile": "build/config-wave-20261105/b0-large-01.json",
+    "sha256": "8d5b3d369c709f4e3a4eb225081b772573c9df22b7a0e1e1b8ee98bbb6e5148d",
+    "bytes": 1031018
+  },
+  "configBinding": {
+    "file": "evidence/antijoin-config-b0-10m-16-20261105.json",
+    "sha256": "c0f2716614737f60947e5a053ae315fe886ea59b1ab0aa439d678433bf9f4319",
+    "actualConfiguration": {
+      "readers": [
+        16
+      ],
+      "samples": 20,
+      "warmup": 1,
+      "durationSeconds": 60,
+      "maxWrites": 12000,
+      "threads": 4,
+      "memoryLimit": "2GB",
+      "maxTempDirectorySize": "4GB",
+      "maxIntermediateBytes": 4294967296
+    }
+  },
+  "runtimePinsBefore": {
+    "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "runtimePinsAfter": {
+    "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "runtimeAndSourceReferenceUnchanged": true,
+  "harnessPinsBefore": {
+    "adapter/benchmark-antijoin-cost.mjs": "5376a279ceda839ac0b6c8567e2a1b7b05be4151d7402d17412ae41724a103da",
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/native-write-candidate-binding.mjs": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610",
+    "adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "harnessPinsAfter": {
+    "adapter/benchmark-antijoin-cost.mjs": "5376a279ceda839ac0b6c8567e2a1b7b05be4151d7402d17412ae41724a103da",
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/native-write-candidate-binding.mjs": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610",
+    "adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "source": {
+    "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+    "bytes": 3905433600,
+    "mtimeMs": 1793911060600.3289,
+    "ctimeMs": 1793911060600.3289,
+    "sha256Before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "sha256After": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3"
+  },
+  "sourceFixture": {
+    "size": 10000000,
+    "groupSize": 256,
+    "groups": 39063,
+    "initialAdded": 22,
+    "position": "39087",
+    "latestCut": true
+  },
+  "sourceUnchanged": true,
+  "archive": {
+    "entriesPassedBefore": 445,
+    "entriesPassedAfter": 445,
+    "beforeLog": {
+      "file": "build/config-wave-20261105/b0-large-01-checks/archive-before.log",
+      "sha256": "9511b7a49b36bfbb48686cfcbfbbe0ff7a79c13554f67d6466809c4fcff82aaa"
+    },
+    "afterLog": {
+      "file": "build/config-wave-20261105/b0-large-01-checks/archive-after.log",
+      "sha256": "9511b7a49b36bfbb48686cfcbfbbe0ff7a79c13554f67d6466809c4fcff82aaa"
+    }
+  },
+  "inputAdmissionProof": {
+    "scopedInputFacts": 1680202,
+    "rightSideFacts": "1679946",
+    "positiveSideFacts": 256,
+    "exactSucceeded": true,
+    "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+    "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+  },
+  "metrics": [
+    {
+      "phase": "fixed",
+      "samples": 320,
+      "latencyMs": {
+        "count": 320,
+        "min": 1159.0139159999962,
+        "p50": 2077.571625000004,
+        "p95": 4115.185792,
+        "p99": 6940.012083000001,
+        "max": 7480.838041000003
+      },
+      "queriesPerSecond": 6.427875096273983,
+      "wallMs": 49783.170209,
+      "writeAcks": 0,
+      "writeAckLatencyMs": null,
+      "writesPerComplete10sWindow": null,
+      "drainMs": null,
+      "sampledMaxRssBytes": 3190947840,
+      "duckdbSnapshotBefore": {
+        "available": true,
+        "memoryBytes": "481557552",
+        "temporaryStorageBytes": "0"
+      },
+      "duckdbSnapshotAfter": {
+        "available": true,
+        "memoryBytes": "481557552",
+        "temporaryStorageBytes": "0"
+      },
+      "cpuUsage": {
+        "userMicroseconds": 267935517,
+        "systemMicroseconds": 26956214,
+        "totalMicroseconds": 294891731,
+        "averageCores": 5.923522543100082,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      "pool": {
+        "before": {
+          "capacity": 16,
+          "available": 16,
+          "active": 0,
+          "waiting": 0
+        },
+        "after": {
+          "capacity": 16,
+          "available": 16,
+          "active": 0,
+          "waiting": 0
+        },
+        "maxObservedActive": 16,
+        "maxObservedWaiting": 0,
+        "sampleIntervalMs": 25
+      },
+      "logicalClients": 16,
+      "nativePoolCapacity": 16,
+      "physicalControlScopes": {
+        "calls": 337,
+        "maxActive": 16,
+        "distinctPorts": 16,
+        "portIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+      },
+      "admission": {
+        "limit": 16,
+        "scope": "no extra harness admission"
+      }
+    },
+    {
+      "phase": "mixed",
+      "samples": 416,
+      "latencyMs": {
+        "count": 416,
+        "min": 599.4382909999986,
+        "p50": 2179.151417000001,
+        "p95": 3802.389666999996,
+        "p99": 4580.843208000006,
+        "max": 5070.838457999998
+      },
+      "queriesPerSecond": 6.7819693982827465,
+      "wallMs": 61339.114875,
+      "writeAcks": 41,
+      "writeAckLatencyMs": {
+        "p50": 1587.3447079999896,
+        "p99": 2544.6375420000113
+      },
+      "writesPerComplete10sWindow": [
+        6,
+        6,
+        7,
+        7,
+        7,
+        7
+      ],
+      "drainMs": 1339.1148749999993,
+      "sampledMaxRssBytes": 2872983552,
+      "duckdbSnapshotBefore": {
+        "available": true,
+        "memoryBytes": "481557552",
+        "temporaryStorageBytes": "0"
+      },
+      "duckdbSnapshotAfter": {
+        "available": true,
+        "memoryBytes": "527997840",
+        "temporaryStorageBytes": "950272"
+      },
+      "cpuUsage": {
+        "userMicroseconds": 355105367,
+        "systemMicroseconds": 40325525,
+        "totalMicroseconds": 395430892,
+        "averageCores": 6.446635117018388,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      "pool": {
+        "before": {
+          "capacity": 16,
+          "available": 16,
+          "active": 0,
+          "waiting": 0
+        },
+        "after": {
+          "capacity": 16,
+          "available": 16,
+          "active": 0,
+          "waiting": 0
+        },
+        "maxObservedActive": 16,
+        "maxObservedWaiting": 0,
+        "sampleIntervalMs": 25
+      },
+      "logicalClients": 16,
+      "nativePoolCapacity": 16,
+      "physicalControlScopes": {
+        "calls": 434,
+        "maxActive": 16,
+        "distinctPorts": 16,
+        "portIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+      },
+      "admission": {
+        "limit": 16,
+        "scope": "no extra harness admission"
+      }
+    }
+  ],
+  "numericGates": {
+    "fixedP50": true,
+    "fixedP99": false,
+    "mixedQPS": true,
+    "mixedP50": true,
+    "mixedP99": true,
+    "writes": true,
+    "writesPerSecond": true,
+    "sampledRss": true
+  },
+  "gatePassCount": 7,
+  "gateFailCount": 1,
+  "limits": {
+    "readers": 16,
+    "maxFixedP50Ms": 3500,
+    "maxFixedP99Ms": 6500,
+    "minMixedQueriesPerSecond": 4.8,
+    "maxMixedP50Ms": 3200,
+    "maxMixedP99Ms": 6500,
+    "minAcknowledgedWrites": 40,
+    "minAcknowledgedWritesPerSecond": 0.5,
+    "maxSampledRssBytes": 3500000000
+  },
+  "writesPerSecond": 0.6729097201708668,
+  "correctness": {
+    "inlineFullTypedOracle": true,
+    "independentStoredTypedAnswerAndSampleWidthChecks": true,
+    "consecutivePositionsAndReceipts": true,
+    "zeroQueryAndAckErrors": true,
+    "all16PhysicalReaderPortsUsed": true,
+    "allQueuesAndLeasesReturned": true,
+    "healthyReuseCalls": 16,
+    "reopenedExactCuts": 5,
+    "sixWindowsWithWrites": true,
+    "finalReadVerified": true
+  },
+  "qualificationScope": {
+    "oneReaderRun": false,
+    "fullPromotionEligible": false,
+    "candidateOrReference": "Fresh fixed-B configuration reference",
+    "freshPairReverseStillRequired": true,
+    "engineLeaseReleased": true,
+    "nextArmStartedAutomatically": false
+  },
+  "limitations": [
+    "One sixteen-client run, not a one-reader/full-workload promotion.",
+    "Separate source/runtime/budget identities are retained; original032 remains the numerical budget baseline.",
+    "Actual port control scopes are not evidence of simultaneous native tasks.",
+    "CPU includes all process threads, oracle, sampling and drain; RSS is sampled and spill counters are snapshots.",
+    "Prior first B measurements are not interchangeable with this fresh control. Preserve run/order variance without rewriting fixed limits."
+  ]
+}

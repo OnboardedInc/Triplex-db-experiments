@@ -1,0 +1,821 @@
+{
+  "schema": "native-edb-join-comparison/1",
+  "timestamp_utc": "2026-11-05T07:10:35.241Z",
+  "warmup_rounds": 2,
+  "measured_rounds": 5,
+  "scope": "Same program/data/binary; rotating proved SQL, forced native and automatic C++ cost preference via complete NativeEntityStore query, including retained validation, fresh proof statistics and exact owned output. Canonical fixture ingested through public native appender, closed/reopened before queries; ingestion/open excluded. Every row checked. Cost uses total retained rows (three per fixture entity), not result size; preference never substitutes for query admission.",
+  "native_build": {
+    "engine": "2.0.0",
+    "extension_version": "0.12.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "schema_template_reuse": true,
+    "source_sha256": {
+      "native/src/temporal_command.cpp": "99d2467b68426ecb85347682deabec64dd40381b57ac383035e088e0563630d7",
+      "native/src/temporal_command.hpp": "9dbb3130aed244f9dedbceb212853370969fc462cbcf4c3b8d68a8b89c134e16",
+      "native/src/temporal_control.hpp": "7fc6a2962413303383c98eeb65b5222423c5a351571a7adc0fbe8fff32d49ba8",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_datalog.cpp": "02de59c996440897727a157e6a3ceab8cadf27dda85b9f01923c9f780e60bade",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_join_plan.hpp": "f55a8b0d4c0ac440e3182b928fc2cb817985aa2f21b2b0c54d45ca57a0718b81",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_scan_plan.hpp": "07ccb4fe75a97d0fd5086842fc5faacfc7889d2090656811425302e55a9181dc",
+      "native/src/temporal_schema.cpp": "7230878fff8bec74df022c958ec830ad13f282315f1efa8eada9f8390e32b410",
+      "native/src/temporal_schema.hpp": "0cf339bbbcffef136ad7c64dd0253d117e30ecb3a3f317d15556b8760257ccd5",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "92b340b4b1cdd1323bdee5a05355f830e4c228f224c15114f26d819a6389b69d",
+      "native/src/temporal_store_query.hpp": "e80a00868646321dfafcb81a43118611585eb7d3f150ac0390fe054c8c4053b6",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "76623bfe851d6cf6a8d787faeba880d2f2166610e9c4c5470f4f4416931dd430",
+    "extension_sha256": "2a9b77793c5e8cd9bb285e8042f9b534c8719e802df6af7712c23367afc8173f"
+  },
+  "source_sha256": {
+    "adapter/benchmark-join.mjs": "5c97647fc07af41898d635b2d5b9e5cdb2ac3a95792202c324793860eaa2e149",
+    "adapter/native-entity.ts": "99a4a596ad477b41d027fdad8d1bfbbaf08c4ee2746477ff96e8aa87e12d1891",
+    "adapter/native-duckdb-port.mjs": "6312fc96f98eb12eb783c73c3c0c03a50ad0bfefb2497c67f5ae772328c179ba",
+    "adapter/public-backend.mjs": "ad35edcc9df75f4f89fbbaa517474bfbb953204031bc17589263a658e38f24c2",
+    "native/src/temporal_join_plan.hpp": "f55a8b0d4c0ac440e3182b928fc2cb817985aa2f21b2b0c54d45ca57a0718b81",
+    "native/src/temporal_scan_plan.hpp": "07ccb4fe75a97d0fd5086842fc5faacfc7889d2090656811425302e55a9181dc",
+    "native/src/temporal_store_query.cpp": "92b340b4b1cdd1323bdee5a05355f830e4c228f224c15114f26d819a6389b69d",
+    "native/src/temporal_store_query.hpp": "e80a00868646321dfafcb81a43118611585eb7d3f150ac0390fe054c8c4053b6",
+    "native/src/temporal_datalog.cpp": "02de59c996440897727a157e6a3ceab8cadf27dda85b9f01923c9f780e60bade",
+    "native/catalog.sql": "7d2eeafe5a7cec59c3d9c9febd1340de6afd8307a96c8e7a5428b51591a17e69"
+  },
+  "summary": [
+    {
+      "size": 500,
+      "atoms": 2,
+      "native_ms": 9.885582999999997,
+      "sql_ms": 12.32766700000002,
+      "auto_ms": 9.191208000000074,
+      "speedup": 0.8019021766243346
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "native_ms": 7.872084000000086,
+      "sql_ms": 14.078333000000043,
+      "auto_ms": 7.937709000000041,
+      "speedup": 0.5591630770489704
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "native_ms": 16.559000000000196,
+      "sql_ms": 18.830458000000135,
+      "auto_ms": 16.258332999999993,
+      "speedup": 0.8793731942154608
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "native_ms": 18.62895800000001,
+      "sql_ms": 24.089083999999957,
+      "auto_ms": 18.511916000000156,
+      "speedup": 0.7733360886615716
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "native_ms": 56.79175000000032,
+      "sql_ms": 55.27766699999984,
+      "auto_ms": 54.48087499999974,
+      "speedup": 1.0273905011222795
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "native_ms": 59.346708999999464,
+      "sql_ms": 53.30829199999971,
+      "auto_ms": 54.766750000000684,
+      "speedup": 1.113273503491723
+    }
+  ],
+  "samples": [
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 0,
+      "elapsed_ms": 9.944124999999985,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 0,
+      "elapsed_ms": 9.885582999999997,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 0,
+      "elapsed_ms": 14.23637500000001,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 1,
+      "elapsed_ms": 9.922833000000026,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 1,
+      "elapsed_ms": 13.959625000000017,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 1,
+      "elapsed_ms": 9.051290999999992,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 2,
+      "elapsed_ms": 12.32766700000002,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 2,
+      "elapsed_ms": 9.191208000000074,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 2,
+      "elapsed_ms": 10.241833000000042,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 3,
+      "elapsed_ms": 9.984624999999937,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 3,
+      "elapsed_ms": 8.24091599999997,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 3,
+      "elapsed_ms": 12.158375000000092,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 4,
+      "elapsed_ms": 7.754959000000099,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 4,
+      "elapsed_ms": 12.170749999999998,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 4,
+      "elapsed_ms": 7.891374999999925,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 0,
+      "elapsed_ms": 8.389084000000025,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 0,
+      "elapsed_ms": 7.872084000000086,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 0,
+      "elapsed_ms": 14.078333000000043,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 1,
+      "elapsed_ms": 7.679624999999987,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 1,
+      "elapsed_ms": 13.794624999999996,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 1,
+      "elapsed_ms": 7.937709000000041,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 2,
+      "elapsed_ms": 13.728083000000083,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 2,
+      "elapsed_ms": 7.677625000000035,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 2,
+      "elapsed_ms": 7.535417000000052,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 3,
+      "elapsed_ms": 7.796791999999982,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 3,
+      "elapsed_ms": 8.581624999999917,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 3,
+      "elapsed_ms": 14.575583999999935,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 4,
+      "elapsed_ms": 8.542332999999985,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 4,
+      "elapsed_ms": 14.16612500000008,
+      "rows": 500
+    },
+    {
+      "size": 500,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 4,
+      "elapsed_ms": 8.02962500000001,
+      "rows": 500
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 0,
+      "elapsed_ms": 17.811999999999898,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 0,
+      "elapsed_ms": 16.692084000000023,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 0,
+      "elapsed_ms": 18.607208000000128,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 1,
+      "elapsed_ms": 15.22420800000009,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 1,
+      "elapsed_ms": 18.905833999999913,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 1,
+      "elapsed_ms": 16.019167000000152,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 2,
+      "elapsed_ms": 18.818166999999903,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 2,
+      "elapsed_ms": 16.029166000000032,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 2,
+      "elapsed_ms": 15.428083000000015,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 3,
+      "elapsed_ms": 16.258332999999993,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 3,
+      "elapsed_ms": 17.075792000000092,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 3,
+      "elapsed_ms": 18.830458000000135,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 4,
+      "elapsed_ms": 16.559000000000196,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 4,
+      "elapsed_ms": 19.661959000000024,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 4,
+      "elapsed_ms": 16.701624999999922,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 0,
+      "elapsed_ms": 18.511916000000156,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 0,
+      "elapsed_ms": 18.402166999999963,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 0,
+      "elapsed_ms": 25.16729200000009,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 1,
+      "elapsed_ms": 19.04104200000006,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 1,
+      "elapsed_ms": 24.46008299999994,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 1,
+      "elapsed_ms": 16.407666000000063,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 2,
+      "elapsed_ms": 24.089083999999957,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 2,
+      "elapsed_ms": 18.594499999999925,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 2,
+      "elapsed_ms": 20.660707999999886,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 3,
+      "elapsed_ms": 19.184499999999844,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 3,
+      "elapsed_ms": 18.62895800000001,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 3,
+      "elapsed_ms": 23.73354100000006,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 4,
+      "elapsed_ms": 18.06170800000018,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 4,
+      "elapsed_ms": 23.56224999999995,
+      "rows": 2000
+    },
+    {
+      "size": 2000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 4,
+      "elapsed_ms": 18.138999999999896,
+      "rows": 2000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 0,
+      "elapsed_ms": 57.51866599999994,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 0,
+      "elapsed_ms": 60.46504199999981,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 0,
+      "elapsed_ms": 58.17366700000002,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 1,
+      "elapsed_ms": 60.68829199999982,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 1,
+      "elapsed_ms": 56.308958000000075,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 1,
+      "elapsed_ms": 55.683500000000095,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 2,
+      "elapsed_ms": 55.27766699999984,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 2,
+      "elapsed_ms": 54.48087499999974,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 2,
+      "elapsed_ms": 56.79175000000032,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 3,
+      "elapsed_ms": 54.13850000000002,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 3,
+      "elapsed_ms": 55.05316700000003,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 3,
+      "elapsed_ms": 53.32529099999965,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "native",
+      "attempt": 4,
+      "elapsed_ms": 55.92533300000014,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "sql",
+      "attempt": 4,
+      "elapsed_ms": 49.168916999999965,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 2,
+      "mode": "auto",
+      "attempt": 4,
+      "elapsed_ms": 51.730458,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 0,
+      "elapsed_ms": 52.65366700000004,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 0,
+      "elapsed_ms": 60.691125000000284,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 0,
+      "elapsed_ms": 53.18712499999947,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 1,
+      "elapsed_ms": 54.83141599999999,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 1,
+      "elapsed_ms": 53.30829199999971,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 1,
+      "elapsed_ms": 51.610999999999876,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 2,
+      "elapsed_ms": 50.61833299999944,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 2,
+      "elapsed_ms": 54.766750000000684,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 2,
+      "elapsed_ms": 60.30725000000075,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 3,
+      "elapsed_ms": 57.84720800000014,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 3,
+      "elapsed_ms": 59.08808399999998,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 3,
+      "elapsed_ms": 58.08675000000039,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "native",
+      "attempt": 4,
+      "elapsed_ms": 59.346708999999464,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "sql",
+      "attempt": 4,
+      "elapsed_ms": 55.492582999999286,
+      "rows": 10000
+    },
+    {
+      "size": 10000,
+      "atoms": 3,
+      "mode": "auto",
+      "attempt": 4,
+      "elapsed_ms": 59.22954200000004,
+      "rows": 10000
+    }
+  ]
+}

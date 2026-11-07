@@ -1,0 +1,2413 @@
+{
+  "io": {
+    "total_bytes_read": 0,
+    "total_bytes_written": 0
+  },
+  "operator": [
+    {
+      "extra_info": {},
+      "intermediate_rows": 0,
+      "intermediate_size_bytes": 0,
+      "timing": 0,
+      "type": "RESULT_COLLECTOR",
+      "children": [
+        {
+          "extra_info": {},
+          "intermediate_rows": 0,
+          "intermediate_size_bytes": 0,
+          "timing": 0,
+          "type": "EXECUTE",
+          "children": [
+            {
+              "extra_info": {},
+              "intermediate_rows": 0,
+              "intermediate_size_bytes": 0,
+              "timing": 1.66e-7,
+              "type": "EXPLAIN_ANALYZE",
+              "children": [
+                {
+                  "extra_info": {
+                    "CTE Name": "integrity",
+                    "Table Index": "0",
+                    "Execution Mode": "MATERIALIZED",
+                    "Order Mode": "SEQUENTIAL",
+                    "Materialized Consumers": "3",
+                    "Estimated Cardinality": "87"
+                  },
+                  "intermediate_rows": 0,
+                  "intermediate_size_bytes": 0,
+                  "timing": 4.17e-7,
+                  "type": "CTE",
+                  "children": [
+                    {
+                      "extra_info": {
+                        "Projections": "ok",
+                        "Estimated Cardinality": "1"
+                      },
+                      "intermediate_rows": 1,
+                      "intermediate_size_bytes": 1,
+                      "timing": 0.000016458,
+                      "type": "PROJECTION",
+                      "children": [
+                        {
+                          "extra_info": {},
+                          "intermediate_rows": 1,
+                          "intermediate_size_bytes": 9,
+                          "timing": 0.0000037499999999999997,
+                          "type": "CROSS_PRODUCT",
+                          "children": [
+                            {
+                              "extra_info": {
+                                "Aggregates": "count_star()",
+                                "Estimated Cardinality": "1"
+                              },
+                              "intermediate_rows": 1,
+                              "intermediate_size_bytes": 8,
+                              "timing": 6.66e-7,
+                              "type": "UNGROUPED_AGGREGATE",
+                              "children": [
+                                {
+                                  "extra_info": {
+                                    "Order By": "seq ASC",
+                                    "Estimated Cardinality": "1"
+                                  },
+                                  "intermediate_rows": 1,
+                                  "intermediate_size_bytes": 8,
+                                  "timing": 0.00018395800000000002,
+                                  "type": "ORDER_BY",
+                                  "children": [
+                                    {
+                                      "extra_info": {
+                                        "Projections": "#1",
+                                        "Estimated Cardinality": "1"
+                                      },
+                                      "intermediate_rows": 1,
+                                      "intermediate_size_bytes": 8,
+                                      "timing": 1.67e-7,
+                                      "type": "PROJECTION",
+                                      "children": [
+                                        {
+                                          "extra_info": {
+                                            "Expression": "(NOT internal)",
+                                            "Estimated Cardinality": "1"
+                                          },
+                                          "intermediate_rows": 1,
+                                          "intermediate_size_bytes": 4137,
+                                          "timing": 0.000015459000000000002,
+                                          "type": "FILTER",
+                                          "children": [
+                                            {
+                                              "extra_info": {
+                                                "Projections": [
+                                                  "#5",
+                                                  "#1",
+                                                  "#0",
+                                                  "#2"
+                                                ],
+                                                "Estimated Cardinality": "1"
+                                              },
+                                              "intermediate_rows": 3,
+                                              "intermediate_size_bytes": 4475,
+                                              "timing": 4.16e-7,
+                                              "type": "PROJECTION",
+                                              "children": [
+                                                {
+                                                  "extra_info": {
+                                                    "Function": "DUCKDB_DATABASES",
+                                                    "Estimated Cardinality": "1"
+                                                  },
+                                                  "intermediate_rows": 3,
+                                                  "intermediate_size_bytes": 9361,
+                                                  "row_groups_scanned": 0,
+                                                  "rows_scanned": 0,
+                                                  "timing": 0.000026249,
+                                                  "total_row_groups_to_scan": 0,
+                                                  "type": "TABLE_SCAN"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "extra_info": {
+                                "Projections": [
+                                  "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+                                  "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+                                ],
+                                "Estimated Cardinality": "1"
+                              },
+                              "intermediate_rows": 1,
+                              "intermediate_size_bytes": 1,
+                              "timing": 0.000002042,
+                              "type": "PROJECTION",
+                              "children": [
+                                {
+                                  "extra_info": {
+                                    "Aggregates": [
+                                      "\"first\"(#0)",
+                                      "count_star()"
+                                    ],
+                                    "Estimated Cardinality": "1"
+                                  },
+                                  "intermediate_rows": 1,
+                                  "intermediate_size_bytes": 9,
+                                  "timing": 0.000001917,
+                                  "type": "UNGROUPED_AGGREGATE",
+                                  "children": [
+                                    {
+                                      "extra_info": {
+                                        "Projections": "#0",
+                                        "Estimated Cardinality": "1"
+                                      },
+                                      "intermediate_rows": 1,
+                                      "intermediate_size_bytes": 1,
+                                      "timing": 8.4e-8,
+                                      "type": "PROJECTION",
+                                      "children": [
+                                        {
+                                          "extra_info": {
+                                            "Projections": "ok",
+                                            "Estimated Cardinality": "1"
+                                          },
+                                          "intermediate_rows": 1,
+                                          "intermediate_size_bytes": 1,
+                                          "timing": 0.000006083,
+                                          "type": "PROJECTION",
+                                          "children": [
+                                            {
+                                              "extra_info": {},
+                                              "intermediate_rows": 1,
+                                              "intermediate_size_bytes": 19,
+                                              "timing": 0.000005625,
+                                              "type": "CROSS_PRODUCT",
+                                              "children": [
+                                                {
+                                                  "extra_info": {},
+                                                  "intermediate_rows": 1,
+                                                  "intermediate_size_bytes": 11,
+                                                  "timing": 0.000004625000000000001,
+                                                  "type": "CROSS_PRODUCT",
+                                                  "children": [
+                                                    {
+                                                      "extra_info": {},
+                                                      "intermediate_rows": 1,
+                                                      "intermediate_size_bytes": 10,
+                                                      "timing": 0.000009998,
+                                                      "type": "CROSS_PRODUCT",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {
+                                                            "Estimated Cardinality": "1"
+                                                          },
+                                                          "intermediate_rows": 1,
+                                                          "intermediate_size_bytes": 8,
+                                                          "timing": 0.0000022909999999999997,
+                                                          "type": "COLUMN_DATA_SCAN"
+                                                        },
+                                                        {
+                                                          "extra_info": {},
+                                                          "intermediate_rows": 1,
+                                                          "intermediate_size_bytes": 2,
+                                                          "timing": 0.0000115,
+                                                          "type": "CROSS_PRODUCT",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {
+                                                                "Projections": "(#0 = 1)",
+                                                                "Estimated Cardinality": "1"
+                                                              },
+                                                              "intermediate_rows": 1,
+                                                              "intermediate_size_bytes": 1,
+                                                              "timing": 0.000002875,
+                                                              "type": "PROJECTION",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "Aggregates": "count_star()",
+                                                                    "Estimated Cardinality": "1"
+                                                                  },
+                                                                  "intermediate_rows": 1,
+                                                                  "intermediate_size_bytes": 8,
+                                                                  "timing": 0.000002667,
+                                                                  "type": "UNGROUPED_AGGREGATE",
+                                                                  "children": [
+                                                                    {
+                                                                      "extra_info": {
+                                                                        "Projections": "42",
+                                                                        "Estimated Cardinality": "1"
+                                                                      },
+                                                                      "intermediate_rows": 0,
+                                                                      "intermediate_size_bytes": 0,
+                                                                      "timing": 0,
+                                                                      "type": "PROJECTION",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {
+                                                                            "Limit": "1",
+                                                                            "Estimated Cardinality": "1"
+                                                                          },
+                                                                          "intermediate_rows": 0,
+                                                                          "intermediate_size_bytes": 0,
+                                                                          "timing": 4.17e-7,
+                                                                          "type": "LIMIT",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Expression": "((singleton IS DISTINCT FROM true) OR (NOT (revision = 3)))",
+                                                                                "Estimated Cardinality": "1"
+                                                                              },
+                                                                              "intermediate_rows": 0,
+                                                                              "intermediate_size_bytes": 0,
+                                                                              "timing": 0.00002075,
+                                                                              "type": "FILTER",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "Table": "facts.td_catalog_v1.catalog_revision",
+                                                                                    "Type": "Sequential Scan",
+                                                                                    "Projections": [
+                                                                                      "singleton",
+                                                                                      "revision"
+                                                                                    ],
+                                                                                    "Estimated Cardinality": "1"
+                                                                                  },
+                                                                                  "intermediate_rows": 1,
+                                                                                  "intermediate_size_bytes": 5,
+                                                                                  "row_groups_scanned": 1,
+                                                                                  "rows_scanned": 1,
+                                                                                  "timing": 0.000006249,
+                                                                                  "total_row_groups_to_scan": 1,
+                                                                                  "type": "TABLE_SCAN"
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "extra_info": {
+                                                                "Projections": "(#0 = 1)",
+                                                                "Estimated Cardinality": "1"
+                                                              },
+                                                              "intermediate_rows": 1,
+                                                              "intermediate_size_bytes": 1,
+                                                              "timing": 6.67e-7,
+                                                              "type": "PROJECTION",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "Aggregates": "count_star()",
+                                                                    "Estimated Cardinality": "1"
+                                                                  },
+                                                                  "intermediate_rows": 1,
+                                                                  "intermediate_size_bytes": 8,
+                                                                  "timing": 6.25e-7,
+                                                                  "type": "UNGROUPED_AGGREGATE",
+                                                                  "children": [
+                                                                    {
+                                                                      "extra_info": {
+                                                                        "Projections": "42",
+                                                                        "Estimated Cardinality": "1"
+                                                                      },
+                                                                      "intermediate_rows": 0,
+                                                                      "intermediate_size_bytes": 0,
+                                                                      "timing": 0,
+                                                                      "type": "PROJECTION",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {
+                                                                            "Join Type": "INNER",
+                                                                            "Condition": "CASE  WHEN (false) THEN (SUBQUERY) WHEN ((version = 9)) THEN ((SUBQUERY != 1)) WHEN (false) THEN ((SUBQUERY != 1)) WHEN (false) THEN ((SUBQUERY != 1)) ELSE (SUBQUERY != 1) END",
+                                                                            "Estimated Cardinality": "1"
+                                                                          },
+                                                                          "intermediate_rows": 0,
+                                                                          "intermediate_size_bytes": 0,
+                                                                          "timing": 0.0000115,
+                                                                          "type": "BLOCKWISE_NL_JOIN",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {},
+                                                                              "intermediate_rows": 1,
+                                                                              "intermediate_size_bytes": 29,
+                                                                              "timing": 0.000006084,
+                                                                              "type": "CROSS_PRODUCT",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {},
+                                                                                  "intermediate_rows": 1,
+                                                                                  "intermediate_size_bytes": 25,
+                                                                                  "timing": 0.000004125,
+                                                                                  "type": "CROSS_PRODUCT",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "extra_info": {},
+                                                                                      "intermediate_rows": 1,
+                                                                                      "intermediate_size_bytes": 24,
+                                                                                      "timing": 0.000005498999999999999,
+                                                                                      "type": "CROSS_PRODUCT",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "extra_info": {},
+                                                                                          "intermediate_rows": 1,
+                                                                                          "intermediate_size_bytes": 16,
+                                                                                          "timing": 0.000009041,
+                                                                                          "type": "CROSS_PRODUCT",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "extra_info": {
+                                                                                                "Estimated Cardinality": "1"
+                                                                                              },
+                                                                                              "intermediate_rows": 1,
+                                                                                              "intermediate_size_bytes": 8,
+                                                                                              "timing": 0.000001291,
+                                                                                              "type": "COLUMN_DATA_SCAN"
+                                                                                            },
+                                                                                            {
+                                                                                              "extra_info": {
+                                                                                                "Estimated Cardinality": "1"
+                                                                                              },
+                                                                                              "intermediate_rows": 1,
+                                                                                              "intermediate_size_bytes": 8,
+                                                                                              "timing": 0.000002459,
+                                                                                              "type": "COLUMN_DATA_SCAN"
+                                                                                            }
+                                                                                          ]
+                                                                                        },
+                                                                                        {
+                                                                                          "extra_info": {
+                                                                                            "Estimated Cardinality": "1"
+                                                                                          },
+                                                                                          "intermediate_rows": 1,
+                                                                                          "intermediate_size_bytes": 8,
+                                                                                          "timing": 0.000002791,
+                                                                                          "type": "COLUMN_DATA_SCAN"
+                                                                                        }
+                                                                                      ]
+                                                                                    },
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "Projections": "(#0 = 1)",
+                                                                                        "Estimated Cardinality": "1"
+                                                                                      },
+                                                                                      "intermediate_rows": 1,
+                                                                                      "intermediate_size_bytes": 1,
+                                                                                      "timing": 4.16e-7,
+                                                                                      "type": "PROJECTION",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "extra_info": {
+                                                                                            "Aggregates": "count_star()",
+                                                                                            "Estimated Cardinality": "1"
+                                                                                          },
+                                                                                          "intermediate_rows": 1,
+                                                                                          "intermediate_size_bytes": 8,
+                                                                                          "timing": 9.170000000000001e-7,
+                                                                                          "type": "UNGROUPED_AGGREGATE",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "extra_info": {
+                                                                                                "Projections": "42",
+                                                                                                "Estimated Cardinality": "1"
+                                                                                              },
+                                                                                              "intermediate_rows": 1,
+                                                                                              "intermediate_size_bytes": 4,
+                                                                                              "timing": 3.34e-7,
+                                                                                              "type": "PROJECTION",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "extra_info": {
+                                                                                                    "Limit": "1",
+                                                                                                    "Estimated Cardinality": "1"
+                                                                                                  },
+                                                                                                  "intermediate_rows": 1,
+                                                                                                  "intermediate_size_bytes": 8,
+                                                                                                  "timing": 7.92e-7,
+                                                                                                  "type": "STREAMING_LIMIT",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "extra_info": {
+                                                                                                        "Table": "facts.td_catalog_v1.catalog_revision",
+                                                                                                        "Type": "Sequential Scan",
+                                                                                                        "Projections": "",
+                                                                                                        "Estimated Cardinality": "1"
+                                                                                                      },
+                                                                                                      "intermediate_rows": 1,
+                                                                                                      "intermediate_size_bytes": 8,
+                                                                                                      "row_groups_scanned": 1,
+                                                                                                      "rows_scanned": 1,
+                                                                                                      "timing": 0.000004459,
+                                                                                                      "total_row_groups_to_scan": 1,
+                                                                                                      "type": "TABLE_SCAN"
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                },
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "Table": "facts.main.store_meta",
+                                                                                    "Type": "Sequential Scan",
+                                                                                    "Projections": "version",
+                                                                                    "Estimated Cardinality": "1"
+                                                                                  },
+                                                                                  "intermediate_rows": 1,
+                                                                                  "intermediate_size_bytes": 4,
+                                                                                  "row_groups_scanned": 1,
+                                                                                  "rows_scanned": 1,
+                                                                                  "timing": 0.000009501,
+                                                                                  "total_row_groups_to_scan": 1,
+                                                                                  "type": "TABLE_SCAN"
+                                                                                }
+                                                                              ]
+                                                                            },
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Aggregates": "count_star()",
+                                                                                "Estimated Cardinality": "1"
+                                                                              },
+                                                                              "intermediate_rows": 1,
+                                                                              "intermediate_size_bytes": 8,
+                                                                              "timing": 2.5e-7,
+                                                                              "type": "UNGROUPED_AGGREGATE",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {},
+                                                                                  "intermediate_rows": 0,
+                                                                                  "intermediate_size_bytes": 0,
+                                                                                  "timing": 3.75e-7,
+                                                                                  "type": "EMPTY_RESULT"
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "extra_info": {
+                                                        "Projections": "(#0 = 1)",
+                                                        "Estimated Cardinality": "1"
+                                                      },
+                                                      "intermediate_rows": 1,
+                                                      "intermediate_size_bytes": 1,
+                                                      "timing": 0.000001667,
+                                                      "type": "PROJECTION",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {
+                                                            "Aggregates": "count_star()",
+                                                            "Estimated Cardinality": "1"
+                                                          },
+                                                          "intermediate_rows": 1,
+                                                          "intermediate_size_bytes": 8,
+                                                          "timing": 0.000001583,
+                                                          "type": "UNGROUPED_AGGREGATE",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {},
+                                                              "intermediate_rows": 0,
+                                                              "intermediate_size_bytes": 0,
+                                                              "timing": 3.33e-7,
+                                                              "type": "EMPTY_RESULT"
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "extra_info": {
+                                                    "Estimated Cardinality": "1"
+                                                  },
+                                                  "intermediate_rows": 1,
+                                                  "intermediate_size_bytes": 8,
+                                                  "timing": 0.0000059579999999999995,
+                                                  "type": "COLUMN_DATA_SCAN"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "extra_info": {
+                        "CTE Name": "cuts",
+                        "Table Index": "1",
+                        "Execution Mode": "MATERIALIZED",
+                        "Order Mode": "SEQUENTIAL",
+                        "Materialized Consumers": "4",
+                        "Estimated Cardinality": "87"
+                      },
+                      "intermediate_rows": 0,
+                      "intermediate_size_bytes": 0,
+                      "timing": 4.58e-7,
+                      "type": "CTE",
+                      "children": [
+                        {
+                          "extra_info": {
+                            "Projections": [
+                              "valid",
+                              "known"
+                            ],
+                            "Estimated Cardinality": "1"
+                          },
+                          "intermediate_rows": 1,
+                          "intermediate_size_bytes": 16,
+                          "timing": 9.16e-7,
+                          "type": "PROJECTION",
+                          "children": [
+                            {
+                              "extra_info": {},
+                              "intermediate_rows": 1,
+                              "intermediate_size_bytes": 5,
+                              "timing": 0.0000035830000000000003,
+                              "type": "CROSS_PRODUCT",
+                              "children": [
+                                {
+                                  "extra_info": {
+                                    "Projections": [
+                                      "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+                                      "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+                                    ],
+                                    "Estimated Cardinality": "1"
+                                  },
+                                  "intermediate_rows": 1,
+                                  "intermediate_size_bytes": 4,
+                                  "timing": 9.58e-7,
+                                  "type": "PROJECTION",
+                                  "children": [
+                                    {
+                                      "extra_info": {
+                                        "Aggregates": [
+                                          "\"first\"(#0)",
+                                          "count_star()"
+                                        ],
+                                        "Estimated Cardinality": "1"
+                                      },
+                                      "intermediate_rows": 1,
+                                      "intermediate_size_bytes": 12,
+                                      "timing": 0.0000016250000000000001,
+                                      "type": "UNGROUPED_AGGREGATE",
+                                      "children": [
+                                        {
+                                          "extra_info": {
+                                            "Projections": "#0",
+                                            "Estimated Cardinality": "1"
+                                          },
+                                          "intermediate_rows": 1,
+                                          "intermediate_size_bytes": 4,
+                                          "timing": 2.5e-7,
+                                          "type": "PROJECTION",
+                                          "children": [
+                                            {
+                                              "extra_info": {
+                                                "Projections": "CASE  WHEN ((position < 586)) THEN (CAST(\"error\"('TD_E_QUERY_INPUT: knowledge cut exceeds committed clock') AS INTEGER)) ELSE 586 END",
+                                                "Estimated Cardinality": "1"
+                                              },
+                                              "intermediate_rows": 1,
+                                              "intermediate_size_bytes": 4,
+                                              "timing": 0.000002459,
+                                              "type": "PROJECTION",
+                                              "children": [
+                                                {
+                                                  "extra_info": {
+                                                    "Table": "facts.main.clock",
+                                                    "Type": "Sequential Scan",
+                                                    "Projections": "position",
+                                                    "Estimated Cardinality": "1"
+                                                  },
+                                                  "intermediate_rows": 1,
+                                                  "intermediate_size_bytes": 8,
+                                                  "row_groups_scanned": 1,
+                                                  "rows_scanned": 1,
+                                                  "timing": 0.000004417,
+                                                  "total_row_groups_to_scan": 1,
+                                                  "type": "TABLE_SCAN"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "extra_info": {
+                                    "Expression": "ok",
+                                    "Estimated Cardinality": "1"
+                                  },
+                                  "intermediate_rows": 1,
+                                  "intermediate_size_bytes": 1,
+                                  "timing": 0.000001417,
+                                  "type": "FILTER",
+                                  "children": [
+                                    {
+                                      "extra_info": {
+                                        "CTE Index": "0",
+                                        "Estimated Cardinality": "1"
+                                      },
+                                      "intermediate_rows": 1,
+                                      "intermediate_size_bytes": 1,
+                                      "timing": 5e-7,
+                                      "type": "CTE_SCAN"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "extra_info": {
+                            "CTE Name": "owner_cap",
+                            "Table Index": "2",
+                            "Execution Mode": "MATERIALIZED",
+                            "Order Mode": "SEQUENTIAL",
+                            "Materialized Consumers": "3",
+                            "Estimated Cardinality": "87"
+                          },
+                          "intermediate_rows": 0,
+                          "intermediate_size_bytes": 0,
+                          "timing": 0.000001,
+                          "type": "CTE",
+                          "children": [
+                            {
+                              "extra_info": {
+                                "Projections": "capabilities",
+                                "Estimated Cardinality": "1"
+                              },
+                              "intermediate_rows": 1,
+                              "intermediate_size_bytes": 8,
+                              "timing": 0.000006083,
+                              "type": "PROJECTION",
+                              "children": [
+                                {
+                                  "extra_info": {},
+                                  "intermediate_rows": 1,
+                                  "intermediate_size_bytes": 4,
+                                  "timing": 2.5e-7,
+                                  "type": "DUMMY_SCAN"
+                                }
+                              ]
+                            },
+                            {
+                              "extra_info": {
+                                "CTE Name": "input_statistics",
+                                "Table Index": "3",
+                                "Execution Mode": "STREAMING_FANOUT",
+                                "Fanout Mode": "BUFFERED",
+                                "Consumers": "1",
+                                "Direct Consumers": "0",
+                                "Buffered Consumers": "1",
+                                "Chunk Storage": "POOLED/COLUMN_DATA",
+                                "Order Mode": "SEQUENTIAL",
+                                "Estimated Cardinality": "87"
+                              },
+                              "intermediate_rows": 0,
+                              "intermediate_size_bytes": 0,
+                              "timing": 0.000022125,
+                              "type": "CTE",
+                              "children": [
+                                {
+                                  "extra_info": {
+                                    "Projections": [
+                                      "n",
+                                      "invalid",
+                                      "carrier_bytes"
+                                    ],
+                                    "Estimated Cardinality": "1"
+                                  },
+                                  "intermediate_rows": 1,
+                                  "intermediate_size_bytes": 32,
+                                  "timing": 0.000006416,
+                                  "type": "PROJECTION",
+                                  "children": [
+                                    {
+                                      "extra_info": {
+                                        "Aggregates": [
+                                          "count_star()",
+                                          "count_star() FILTER (WHERE #0) Filter: #0",
+                                          "sum(#1)"
+                                        ],
+                                        "Estimated Cardinality": "1"
+                                      },
+                                      "intermediate_rows": 1,
+                                      "intermediate_size_bytes": 32,
+                                      "timing": 0.000131876,
+                                      "type": "UNGROUPED_AGGREGATE",
+                                      "children": [
+                                        {
+                                          "extra_info": {
+                                            "Projections": [
+                                              "((v_tag > 8) OR (octet_length(encode(e)) > 512) OR (octet_length(encode(a)) > 512) OR ((v_tag IN (1, 5, 8)) AND (octet_length(v_s) > 512)) OR ((v_tag = 8) AND (octet_length(v_s) = 0)) OR CASE  WHEN ((v_tag = 7)) THEN (CASE  WHEN ((octet_length(v_s) > 4096)) THEN (true) ELSE (td_validate_json_source_v2(decode(v_s)) IS DISTINCT FROM true) END) ELSE false END)",
+                                              "(((120 + CAST(octet_length(encode(e)) AS HUGEINT)) + CAST(octet_length(encode(a)) AS HUGEINT)) + CAST(CASE  WHEN ((v_tag IN (1, 5, 7, 8))) THEN (octet_length(v_s)) ELSE 0 END AS HUGEINT))"
+                                            ],
+                                            "Estimated Cardinality": "126"
+                                          },
+                                          "intermediate_rows": 17331,
+                                          "intermediate_size_bytes": 294627,
+                                          "timing": 0.0009579539999999999,
+                                          "type": "PROJECTION",
+                                          "children": [
+                                            {
+                                              "extra_info": {
+                                                "Join Type": "INNER",
+                                                "Conditions": [
+                                                  "valid_from <= valid",
+                                                  "tx_from <= known",
+                                                  "tx_to > known"
+                                                ],
+                                                "Estimated Cardinality": "126"
+                                              },
+                                              "intermediate_rows": 17331,
+                                              "intermediate_size_bytes": 89487587,
+                                              "timing": 0.000239836,
+                                              "type": "NESTED_LOOP_JOIN",
+                                              "children": [
+                                                {
+                                                  "extra_info": {
+                                                    "Expression": "((valid_from <= 0) AND ((a = 'i') OR (a = 'probe_member')))",
+                                                    "Estimated Cardinality": "100701"
+                                                  },
+                                                  "intermediate_rows": 17331,
+                                                  "intermediate_size_bytes": 89210291,
+                                                  "timing": 0.00040812899999999997,
+                                                  "type": "FILTER",
+                                                  "children": [
+                                                    {
+                                                      "extra_info": {
+                                                        "Table": "facts.main.assertions",
+                                                        "Type": "Sequential Scan",
+                                                        "Projections": [
+                                                          "valid_from",
+                                                          "tx_from",
+                                                          "tx_to",
+                                                          "a",
+                                                          "v_tag",
+                                                          "e",
+                                                          "v_s"
+                                                        ],
+                                                        "Filters": "optional: (a IN ('i', 'probe_member'))",
+                                                        "Dynamic Filters": [
+                                                          "(valid_from <= 0)",
+                                                          "(tx_from <= 586)",
+                                                          "(tx_to > 586)"
+                                                        ],
+                                                        "Estimated Cardinality": "100701"
+                                                      },
+                                                      "intermediate_rows": 100693,
+                                                      "intermediate_size_bytes": 95291621,
+                                                      "row_groups_scanned": 5,
+                                                      "rows_scanned": 100698,
+                                                      "timing": 0.001416711,
+                                                      "total_row_groups_to_scan": 5,
+                                                      "type": "TABLE_SCAN"
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "extra_info": {
+                                                    "CTE Index": "1",
+                                                    "Estimated Cardinality": "1"
+                                                  },
+                                                  "intermediate_rows": 1,
+                                                  "intermediate_size_bytes": 16,
+                                                  "timing": 5e-7,
+                                                  "type": "CTE_SCAN"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "extra_info": {
+                                    "CTE Name": "admission",
+                                    "Table Index": "4",
+                                    "Execution Mode": "MATERIALIZED",
+                                    "Order Mode": "SEQUENTIAL",
+                                    "Materialized Consumers": "3",
+                                    "Estimated Cardinality": "87"
+                                  },
+                                  "intermediate_rows": 0,
+                                  "intermediate_size_bytes": 0,
+                                  "timing": 0.000002084,
+                                  "type": "CTE",
+                                  "children": [
+                                    {
+                                      "extra_info": {
+                                        "Projections": "ok",
+                                        "Estimated Cardinality": "1"
+                                      },
+                                      "intermediate_rows": 1,
+                                      "intermediate_size_bytes": 1,
+                                      "timing": 0.000031125,
+                                      "type": "PROJECTION",
+                                      "children": [
+                                        {
+                                          "extra_info": {},
+                                          "intermediate_rows": 1,
+                                          "intermediate_size_bytes": 33,
+                                          "timing": 0.00008675100000000001,
+                                          "type": "CROSS_PRODUCT",
+                                          "children": [
+                                            {
+                                              "extra_info": {
+                                                "CTE Index": "3",
+                                                "CTE Mode": "BUFFERED",
+                                                "Consumer": "0",
+                                                "Scan Mode": "CHUNK",
+                                                "Estimated Cardinality": "1"
+                                              },
+                                              "intermediate_rows": 1,
+                                              "intermediate_size_bytes": 32,
+                                              "timing": 0.000004540999999999999,
+                                              "type": "CTE_SCAN"
+                                            },
+                                            {
+                                              "extra_info": {
+                                                "CTE Index": "0",
+                                                "Estimated Cardinality": "1"
+                                              },
+                                              "intermediate_rows": 1,
+                                              "intermediate_size_bytes": 1,
+                                              "timing": 1.67e-7,
+                                              "type": "CTE_SCAN"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "extra_info": {
+                                        "CTE Name": "active",
+                                        "Table Index": "5",
+                                        "Execution Mode": "HYBRID_FANOUT",
+                                        "Fanout Mode": "DIRECT",
+                                        "Consumers": "5",
+                                        "Direct Consumers": "5",
+                                        "Buffered Consumers": "0",
+                                        "Chunk Storage": "NONE",
+                                        "Order Mode": "UNORDERED",
+                                        "Materialized Consumers": "1",
+                                        "Estimated Cardinality": "87"
+                                      },
+                                      "intermediate_rows": 0,
+                                      "intermediate_size_bytes": 0,
+                                      "timing": 0.0012206269999999997,
+                                      "type": "CTE",
+                                      "children": [
+                                        {
+                                          "extra_info": {},
+                                          "intermediate_rows": 0,
+                                          "intermediate_size_bytes": 0,
+                                          "timing": 0,
+                                          "type": "UNION",
+                                          "children": [
+                                            {
+                                              "extra_info": {
+                                                "Projections": [
+                                                  "e",
+                                                  "a",
+                                                  "v_tag",
+                                                  "v_s",
+                                                  "v_b",
+                                                  "v_i",
+                                                  "v_f"
+                                                ],
+                                                "Estimated Cardinality": "253"
+                                              },
+                                              "intermediate_rows": 17331,
+                                              "intermediate_size_bytes": 89127630,
+                                              "timing": 0.000006579999999999997,
+                                              "type": "PROJECTION",
+                                              "children": [
+                                                {
+                                                  "extra_info": {
+                                                    "Join Type": "INNER",
+                                                    "Conditions": [
+                                                      "valid_from <= valid",
+                                                      "tx_from <= known",
+                                                      "tx_to > known"
+                                                    ],
+                                                    "Estimated Cardinality": "253"
+                                                  },
+                                                  "intermediate_rows": 17331,
+                                                  "intermediate_size_bytes": 89976849,
+                                                  "timing": 0.00028408299999999997,
+                                                  "type": "NESTED_LOOP_JOIN",
+                                                  "children": [
+                                                    {
+                                                      "extra_info": {
+                                                        "Expression": "((valid_from <= 0) AND ((a = 'i') OR (a = 'probe_member')))",
+                                                        "Estimated Cardinality": "100701"
+                                                      },
+                                                      "intermediate_rows": 17331,
+                                                      "intermediate_size_bytes": 89543574,
+                                                      "timing": 0.00043978899999999995,
+                                                      "type": "FILTER",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {
+                                                            "Table": "facts.main.assertions",
+                                                            "Type": "Sequential Scan",
+                                                            "Projections": [
+                                                              "valid_from",
+                                                              "tx_from",
+                                                              "tx_to",
+                                                              "a",
+                                                              "e",
+                                                              "v_tag",
+                                                              "v_s",
+                                                              "v_b",
+                                                              "v_i",
+                                                              "v_f"
+                                                            ],
+                                                            "Filters": "optional: (a IN ('i', 'probe_member'))",
+                                                            "Dynamic Filters": [
+                                                              "(valid_from <= 0)",
+                                                              "(tx_from <= 586)",
+                                                              "(tx_to > 586)"
+                                                            ],
+                                                            "Estimated Cardinality": "100701"
+                                                          },
+                                                          "intermediate_rows": 100693,
+                                                          "intermediate_size_bytes": 97042314,
+                                                          "row_groups_scanned": 5,
+                                                          "rows_scanned": 100698,
+                                                          "timing": 0.0016885799999999999,
+                                                          "total_row_groups_to_scan": 5,
+                                                          "type": "TABLE_SCAN"
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "extra_info": {},
+                                                      "intermediate_rows": 1,
+                                                      "intermediate_size_bytes": 25,
+                                                      "timing": 0.000005957,
+                                                      "type": "CROSS_PRODUCT",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {
+                                                            "CTE Index": "1",
+                                                            "Estimated Cardinality": "1"
+                                                          },
+                                                          "intermediate_rows": 1,
+                                                          "intermediate_size_bytes": 16,
+                                                          "timing": 4.59e-7,
+                                                          "type": "CTE_SCAN"
+                                                        },
+                                                        {
+                                                          "extra_info": {},
+                                                          "intermediate_rows": 1,
+                                                          "intermediate_size_bytes": 9,
+                                                          "timing": 0.000005997999999999999,
+                                                          "type": "CROSS_PRODUCT",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {
+                                                                "Expression": "((capabilities & 2) != 0)",
+                                                                "Estimated Cardinality": "1"
+                                                              },
+                                                              "intermediate_rows": 1,
+                                                              "intermediate_size_bytes": 8,
+                                                              "timing": 0.000005832,
+                                                              "type": "FILTER",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "CTE Index": "2",
+                                                                    "Estimated Cardinality": "1"
+                                                                  },
+                                                                  "intermediate_rows": 1,
+                                                                  "intermediate_size_bytes": 8,
+                                                                  "timing": 7.91e-7,
+                                                                  "type": "CTE_SCAN"
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "extra_info": {
+                                                                "Expression": "ok",
+                                                                "Estimated Cardinality": "1"
+                                                              },
+                                                              "intermediate_rows": 1,
+                                                              "intermediate_size_bytes": 1,
+                                                              "timing": 0.0000072929999999999995,
+                                                              "type": "FILTER",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "CTE Index": "4",
+                                                                    "Estimated Cardinality": "1"
+                                                                  },
+                                                                  "intermediate_rows": 1,
+                                                                  "intermediate_size_bytes": 1,
+                                                                  "timing": 0.0000037920000000000003,
+                                                                  "type": "CTE_SCAN"
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "extra_info": {
+                                                "Projections": [
+                                                  "#0",
+                                                  "__internal_decompress_string(#1)",
+                                                  "#2",
+                                                  "#3",
+                                                  "#4",
+                                                  "CAST(#5 AS BIGINT)",
+                                                  "#6"
+                                                ],
+                                                "Estimated Cardinality": "217"
+                                              },
+                                              "intermediate_rows": 0,
+                                              "intermediate_size_bytes": 0,
+                                              "timing": 0,
+                                              "type": "PROJECTION",
+                                              "children": [
+                                                {
+                                                  "extra_info": {
+                                                    "Groups": [
+                                                      "#0",
+                                                      "#1",
+                                                      "#2",
+                                                      "#3",
+                                                      "#4",
+                                                      "#5",
+                                                      "#6"
+                                                    ],
+                                                    "Aggregates": "",
+                                                    "Estimated Cardinality": "253"
+                                                  },
+                                                  "intermediate_rows": 0,
+                                                  "intermediate_size_bytes": 0,
+                                                  "timing": 9.17e-7,
+                                                  "type": "HASH_GROUP_BY",
+                                                  "children": [
+                                                    {
+                                                      "extra_info": {
+                                                        "Projections": [
+                                                          "e",
+                                                          "a",
+                                                          "v_tag",
+                                                          "v_s",
+                                                          "v_b",
+                                                          "v_i",
+                                                          "v_f"
+                                                        ],
+                                                        "Estimated Cardinality": "253"
+                                                      },
+                                                      "intermediate_rows": 0,
+                                                      "intermediate_size_bytes": 0,
+                                                      "timing": 0,
+                                                      "type": "PROJECTION",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {
+                                                            "Projections": [
+                                                              "#0",
+                                                              "__internal_compress_string_uhugeint(#1)",
+                                                              "#2",
+                                                              "#3",
+                                                              "#4",
+                                                              "CAST(#5 AS INTEGER)",
+                                                              "#6"
+                                                            ],
+                                                            "Estimated Cardinality": "253"
+                                                          },
+                                                          "intermediate_rows": 0,
+                                                          "intermediate_size_bytes": 0,
+                                                          "timing": 0,
+                                                          "type": "PROJECTION",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {
+                                                                "Projections": [
+                                                                  "e",
+                                                                  "a",
+                                                                  "v_tag",
+                                                                  "v_s",
+                                                                  "v_b",
+                                                                  "v_i",
+                                                                  "v_f"
+                                                                ],
+                                                                "Estimated Cardinality": "253"
+                                                              },
+                                                              "intermediate_rows": 0,
+                                                              "intermediate_size_bytes": 0,
+                                                              "timing": 0,
+                                                              "type": "PROJECTION",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "Join Type": "INNER",
+                                                                    "Conditions": [
+                                                                      "valid_from <= valid",
+                                                                      "tx_from <= known",
+                                                                      "tx_to > known"
+                                                                    ],
+                                                                    "Estimated Cardinality": "253"
+                                                                  },
+                                                                  "intermediate_rows": 0,
+                                                                  "intermediate_size_bytes": 0,
+                                                                  "timing": 7.92e-7,
+                                                                  "type": "NESTED_LOOP_JOIN",
+                                                                  "children": [
+                                                                    {
+                                                                      "extra_info": {
+                                                                        "Expression": "((valid_from <= 0) AND ((a = 'i') OR (a = 'probe_member')))",
+                                                                        "Estimated Cardinality": "100701"
+                                                                      },
+                                                                      "intermediate_rows": 344,
+                                                                      "intermediate_size_bytes": 2127016,
+                                                                      "timing": 0.000045583,
+                                                                      "type": "FILTER",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {
+                                                                            "Table": "facts.main.assertions",
+                                                                            "Type": "Sequential Scan",
+                                                                            "Projections": [
+                                                                              "valid_from",
+                                                                              "tx_from",
+                                                                              "tx_to",
+                                                                              "a",
+                                                                              "e",
+                                                                              "v_tag",
+                                                                              "v_s",
+                                                                              "v_b",
+                                                                              "v_i",
+                                                                              "v_f"
+                                                                            ],
+                                                                            "Filters": "optional: (a IN ('i', 'probe_member'))",
+                                                                            "Estimated Cardinality": "100701"
+                                                                          },
+                                                                          "intermediate_rows": 2047,
+                                                                          "intermediate_size_bytes": 2280286,
+                                                                          "row_groups_scanned": 1,
+                                                                          "rows_scanned": 2047,
+                                                                          "timing": 0.000747625,
+                                                                          "total_row_groups_to_scan": 5,
+                                                                          "type": "TABLE_SCAN"
+                                                                        }
+                                                                      ]
+                                                                    },
+                                                                    {
+                                                                      "extra_info": {},
+                                                                      "intermediate_rows": 0,
+                                                                      "intermediate_size_bytes": 0,
+                                                                      "timing": 2.08e-7,
+                                                                      "type": "CROSS_PRODUCT",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {
+                                                                            "CTE Index": "1",
+                                                                            "Estimated Cardinality": "1"
+                                                                          },
+                                                                          "intermediate_rows": 1,
+                                                                          "intermediate_size_bytes": 16,
+                                                                          "timing": 0.000001625,
+                                                                          "type": "CTE_SCAN"
+                                                                        },
+                                                                        {
+                                                                          "extra_info": {},
+                                                                          "intermediate_rows": 0,
+                                                                          "intermediate_size_bytes": 0,
+                                                                          "timing": 0.000001459,
+                                                                          "type": "CROSS_PRODUCT",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Expression": "((capabilities & 2) = 0)",
+                                                                                "Estimated Cardinality": "1"
+                                                                              },
+                                                                              "intermediate_rows": 0,
+                                                                              "intermediate_size_bytes": 0,
+                                                                              "timing": 0.000002917,
+                                                                              "type": "FILTER",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "CTE Index": "2",
+                                                                                    "Estimated Cardinality": "1"
+                                                                                  },
+                                                                                  "intermediate_rows": 1,
+                                                                                  "intermediate_size_bytes": 8,
+                                                                                  "timing": 0.000001292,
+                                                                                  "type": "CTE_SCAN"
+                                                                                }
+                                                                              ]
+                                                                            },
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Expression": "ok",
+                                                                                "Estimated Cardinality": "1"
+                                                                              },
+                                                                              "intermediate_rows": 1,
+                                                                              "intermediate_size_bytes": 1,
+                                                                              "timing": 0.000002417,
+                                                                              "type": "FILTER",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "CTE Index": "4",
+                                                                                    "Estimated Cardinality": "1"
+                                                                                  },
+                                                                                  "intermediate_rows": 1,
+                                                                                  "intermediate_size_bytes": 1,
+                                                                                  "timing": 0.000001083,
+                                                                                  "type": "CTE_SCAN"
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "extra_info": {
+                                            "CTE Name": "statistics",
+                                            "Table Index": "6",
+                                            "Execution Mode": "STREAMING_FANOUT",
+                                            "Fanout Mode": "BUFFERED",
+                                            "Consumers": "1",
+                                            "Direct Consumers": "0",
+                                            "Buffered Consumers": "1",
+                                            "Chunk Storage": "POOLED/COLUMN_DATA",
+                                            "Order Mode": "SEQUENTIAL",
+                                            "Estimated Cardinality": "87"
+                                          },
+                                          "intermediate_rows": 0,
+                                          "intermediate_size_bytes": 0,
+                                          "timing": 0.000007875,
+                                          "type": "CTE",
+                                          "children": [
+                                            {
+                                              "extra_info": {
+                                                "Projections": [
+                                                  "n",
+                                                  "string_bytes",
+                                                  "e_bytes"
+                                                ],
+                                                "Estimated Cardinality": "1"
+                                              },
+                                              "intermediate_rows": 1,
+                                              "intermediate_size_bytes": 32,
+                                              "timing": 0.000003,
+                                              "type": "PROJECTION",
+                                              "children": [
+                                                {
+                                                  "extra_info": {
+                                                    "Aggregates": [
+                                                      "count_star()",
+                                                      "sum(#0)",
+                                                      "max(#1)"
+                                                    ],
+                                                    "Estimated Cardinality": "1"
+                                                  },
+                                                  "intermediate_rows": 1,
+                                                  "intermediate_size_bytes": 32,
+                                                  "timing": 0.00004703900000000001,
+                                                  "type": "UNGROUPED_AGGREGATE",
+                                                  "children": [
+                                                    {
+                                                      "extra_info": {
+                                                        "Projections": [
+                                                          "((#0 + octet_length(encode(a))) + CASE  WHEN ((v_tag IN (1, 5, 7, 8))) THEN (octet_length(v_s)) ELSE 0 END)",
+                                                          "#0"
+                                                        ],
+                                                        "Estimated Cardinality": "470"
+                                                      },
+                                                      "intermediate_rows": 17331,
+                                                      "intermediate_size_bytes": 289328,
+                                                      "timing": 0.000240461,
+                                                      "type": "PROJECTION",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {
+                                                            "Projections": [
+                                                              "octet_length(encode(e))",
+                                                              "a",
+                                                              "v_tag",
+                                                              "v_s"
+                                                            ],
+                                                            "Estimated Cardinality": "470"
+                                                          },
+                                                          "intermediate_rows": 17331,
+                                                          "intermediate_size_bytes": 88651603,
+                                                          "timing": 0.00003475099999999999,
+                                                          "type": "PROJECTION",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {
+                                                                "CTE Index": "5",
+                                                                "CTE Mode": "DIRECT",
+                                                                "Consumer": "0",
+                                                                "Estimated Cardinality": "470"
+                                                              },
+                                                              "intermediate_rows": 17331,
+                                                              "intermediate_size_bytes": 89127630,
+                                                              "timing": 0.0000011669999999999998,
+                                                              "type": "CTE_SCAN"
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "extra_info": {
+                                                "CTE Name": "mode",
+                                                "Table Index": "7",
+                                                "Execution Mode": "MATERIALIZED",
+                                                "Order Mode": "SEQUENTIAL",
+                                                "Materialized Consumers": "3",
+                                                "Estimated Cardinality": "87"
+                                              },
+                                              "intermediate_rows": 0,
+                                              "intermediate_size_bytes": 0,
+                                              "timing": 0.000001416,
+                                              "type": "CTE",
+                                              "children": [
+                                                {
+                                                  "extra_info": {
+                                                    "Projections": "use_sql",
+                                                    "Estimated Cardinality": "1"
+                                                  },
+                                                  "intermediate_rows": 1,
+                                                  "intermediate_size_bytes": 1,
+                                                  "timing": 0.000030834,
+                                                  "type": "PROJECTION",
+                                                  "children": [
+                                                    {
+                                                      "extra_info": {},
+                                                      "intermediate_rows": 1,
+                                                      "intermediate_size_bytes": 66,
+                                                      "timing": 0.000012791,
+                                                      "type": "CROSS_PRODUCT",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {},
+                                                          "intermediate_rows": 1,
+                                                          "intermediate_size_bytes": 34,
+                                                          "timing": 0.000008251000000000001,
+                                                          "type": "CROSS_PRODUCT",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {},
+                                                              "intermediate_rows": 1,
+                                                              "intermediate_size_bytes": 33,
+                                                              "timing": 0.000008042999999999999,
+                                                              "type": "CROSS_PRODUCT",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {},
+                                                                  "intermediate_rows": 1,
+                                                                  "intermediate_size_bytes": 32,
+                                                                  "timing": 0.0000062080000000000005,
+                                                                  "type": "CROSS_PRODUCT",
+                                                                  "children": [
+                                                                    {
+                                                                      "extra_info": {},
+                                                                      "intermediate_rows": 1,
+                                                                      "intermediate_size_bytes": 24,
+                                                                      "timing": 0.000007041000000000001,
+                                                                      "type": "CROSS_PRODUCT",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {},
+                                                                          "intermediate_rows": 1,
+                                                                          "intermediate_size_bytes": 16,
+                                                                          "timing": 0.000012251,
+                                                                          "type": "CROSS_PRODUCT",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Aggregates": "count_star()",
+                                                                                "Estimated Cardinality": "1"
+                                                                              },
+                                                                              "intermediate_rows": 1,
+                                                                              "intermediate_size_bytes": 8,
+                                                                              "timing": 0.000003667,
+                                                                              "type": "UNGROUPED_AGGREGATE",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+                                                                                    "Estimated Cardinality": "470"
+                                                                                  },
+                                                                                  "intermediate_rows": 256,
+                                                                                  "intermediate_size_bytes": 17664,
+                                                                                  "timing": 0.000053163999999999994,
+                                                                                  "type": "FILTER",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "CTE Index": "5",
+                                                                                        "CTE Mode": "DIRECT",
+                                                                                        "Consumer": "1",
+                                                                                        "Estimated Cardinality": "470"
+                                                                                      },
+                                                                                      "intermediate_rows": 17331,
+                                                                                      "intermediate_size_bytes": 89127630,
+                                                                                      "timing": 0.0000013319999999999993,
+                                                                                      "type": "CTE_SCAN"
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            },
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Aggregates": "count_star()",
+                                                                                "Estimated Cardinality": "1"
+                                                                              },
+                                                                              "intermediate_rows": 1,
+                                                                              "intermediate_size_bytes": 8,
+                                                                              "timing": 0.000002,
+                                                                              "type": "UNGROUPED_AGGREGATE",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+                                                                                    "Estimated Cardinality": "470"
+                                                                                  },
+                                                                                  "intermediate_rows": 256,
+                                                                                  "intermediate_size_bytes": 17664,
+                                                                                  "timing": 0.000053167,
+                                                                                  "type": "FILTER",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "CTE Index": "5",
+                                                                                        "CTE Mode": "DIRECT",
+                                                                                        "Consumer": "2",
+                                                                                        "Estimated Cardinality": "470"
+                                                                                      },
+                                                                                      "intermediate_rows": 17331,
+                                                                                      "intermediate_size_bytes": 89127630,
+                                                                                      "timing": 0.0000011249999999999998,
+                                                                                      "type": "CTE_SCAN"
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        },
+                                                                        {
+                                                                          "extra_info": {
+                                                                            "Aggregates": "count_star()",
+                                                                            "Estimated Cardinality": "1"
+                                                                          },
+                                                                          "intermediate_rows": 1,
+                                                                          "intermediate_size_bytes": 8,
+                                                                          "timing": 0.000002875,
+                                                                          "type": "UNGROUPED_AGGREGATE",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+                                                                                "Estimated Cardinality": "470"
+                                                                              },
+                                                                              "intermediate_rows": 256,
+                                                                              "intermediate_size_bytes": 17664,
+                                                                              "timing": 0.00005283399999999999,
+                                                                              "type": "FILTER",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "CTE Index": "5",
+                                                                                    "CTE Mode": "DIRECT",
+                                                                                    "Consumer": "3",
+                                                                                    "Estimated Cardinality": "470"
+                                                                                  },
+                                                                                  "intermediate_rows": 17331,
+                                                                                  "intermediate_size_bytes": 89127630,
+                                                                                  "timing": 0.0000013379999999999995,
+                                                                                  "type": "CTE_SCAN"
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    },
+                                                                    {
+                                                                      "extra_info": {
+                                                                        "Aggregates": "count_star()",
+                                                                        "Estimated Cardinality": "1"
+                                                                      },
+                                                                      "intermediate_rows": 1,
+                                                                      "intermediate_size_bytes": 8,
+                                                                      "timing": 0.0000015410000000000002,
+                                                                      "type": "UNGROUPED_AGGREGATE",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {
+                                                                            "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+                                                                            "Estimated Cardinality": "470"
+                                                                          },
+                                                                          "intermediate_rows": 256,
+                                                                          "intermediate_size_bytes": 17664,
+                                                                          "timing": 0.000067916,
+                                                                          "type": "FILTER",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "CTE Index": "5",
+                                                                                "CTE Mode": "DIRECT",
+                                                                                "Consumer": "4",
+                                                                                "Estimated Cardinality": "470"
+                                                                              },
+                                                                              "intermediate_rows": 17331,
+                                                                              "intermediate_size_bytes": 89127630,
+                                                                              "timing": 9.179999999999998e-7,
+                                                                              "type": "CTE_SCAN"
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                },
+                                                                {
+                                                                  "extra_info": {
+                                                                    "CTE Index": "0",
+                                                                    "Estimated Cardinality": "1"
+                                                                  },
+                                                                  "intermediate_rows": 1,
+                                                                  "intermediate_size_bytes": 1,
+                                                                  "timing": 1.67e-7,
+                                                                  "type": "CTE_SCAN"
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "extra_info": {
+                                                                "CTE Index": "4",
+                                                                "Estimated Cardinality": "1"
+                                                              },
+                                                              "intermediate_rows": 1,
+                                                              "intermediate_size_bytes": 1,
+                                                              "timing": 4.1599999999999997e-7,
+                                                              "type": "CTE_SCAN"
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "extra_info": {
+                                                            "CTE Index": "6",
+                                                            "CTE Mode": "BUFFERED",
+                                                            "Consumer": "0",
+                                                            "Scan Mode": "CHUNK",
+                                                            "Estimated Cardinality": "1"
+                                                          },
+                                                          "intermediate_rows": 1,
+                                                          "intermediate_size_bytes": 32,
+                                                          "timing": 0.000003042,
+                                                          "type": "CTE_SCAN"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "extra_info": {
+                                                    "CTE Name": "anti_input",
+                                                    "Table Index": "8",
+                                                    "Execution Mode": "MATERIALIZED",
+                                                    "Order Mode": "UNORDERED",
+                                                    "Materialized Consumers": "2",
+                                                    "Estimated Cardinality": "87"
+                                                  },
+                                                  "intermediate_rows": 0,
+                                                  "intermediate_size_bytes": 0,
+                                                  "timing": 0.0013406680000000002,
+                                                  "type": "CTE",
+                                                  "children": [
+                                                    {
+                                                      "extra_info": {
+                                                        "Projections": [
+                                                          "e",
+                                                          "a",
+                                                          "v_tag",
+                                                          "v_s",
+                                                          "v_b",
+                                                          "v_i",
+                                                          "v_f"
+                                                        ],
+                                                        "Estimated Cardinality": "470"
+                                                      },
+                                                      "intermediate_rows": 17331,
+                                                      "intermediate_size_bytes": 1150758,
+                                                      "timing": 0.00000725,
+                                                      "type": "PROJECTION",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {},
+                                                          "intermediate_rows": 17331,
+                                                          "intermediate_size_bytes": 1168089,
+                                                          "timing": 0.000030545,
+                                                          "type": "CROSS_PRODUCT",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {
+                                                                "Expression": "((encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB) OR (encode(a) IS NOT DISTINCT FROM 'i'::BLOB))",
+                                                                "Estimated Cardinality": "470"
+                                                              },
+                                                              "intermediate_rows": 17331,
+                                                              "intermediate_size_bytes": 1150758,
+                                                              "timing": 0.00043753899999999997,
+                                                              "type": "FILTER",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "CTE Index": "5",
+                                                                    "Estimated Cardinality": "470"
+                                                                  },
+                                                                  "intermediate_rows": 17331,
+                                                                  "intermediate_size_bytes": 1150758,
+                                                                  "timing": 0.00008900200000000003,
+                                                                  "type": "CTE_SCAN"
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "extra_info": {
+                                                                "Expression": "SUBQUERY",
+                                                                "Estimated Cardinality": "1"
+                                                              },
+                                                              "intermediate_rows": 1,
+                                                              "intermediate_size_bytes": 1,
+                                                              "timing": 0.000002209,
+                                                              "type": "FILTER",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "Projections": [
+                                                                      "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+                                                                      "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+                                                                    ],
+                                                                    "Estimated Cardinality": "1"
+                                                                  },
+                                                                  "intermediate_rows": 1,
+                                                                  "intermediate_size_bytes": 1,
+                                                                  "timing": 0.000003917,
+                                                                  "type": "PROJECTION",
+                                                                  "children": [
+                                                                    {
+                                                                      "extra_info": {
+                                                                        "Aggregates": [
+                                                                          "\"first\"(#0)",
+                                                                          "count_star()"
+                                                                        ],
+                                                                        "Estimated Cardinality": "1"
+                                                                      },
+                                                                      "intermediate_rows": 1,
+                                                                      "intermediate_size_bytes": 9,
+                                                                      "timing": 0.000002667,
+                                                                      "type": "UNGROUPED_AGGREGATE",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {
+                                                                            "Projections": "#0",
+                                                                            "Estimated Cardinality": "1"
+                                                                          },
+                                                                          "intermediate_rows": 1,
+                                                                          "intermediate_size_bytes": 1,
+                                                                          "timing": 4.17e-7,
+                                                                          "type": "PROJECTION",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "CTE Index": "7",
+                                                                                "Estimated Cardinality": "1"
+                                                                              },
+                                                                              "intermediate_rows": 1,
+                                                                              "intermediate_size_bytes": 1,
+                                                                              "timing": 0.000001958,
+                                                                              "type": "CTE_SCAN"
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "extra_info": {
+                                                        "CTE Name": "sql_answer",
+                                                        "Table Index": "10",
+                                                        "Execution Mode": "STREAMING_FANOUT",
+                                                        "Fanout Mode": "BUFFERED",
+                                                        "Consumers": "1",
+                                                        "Direct Consumers": "0",
+                                                        "Buffered Consumers": "1",
+                                                        "Chunk Storage": "POOLED/COLUMN_DATA",
+                                                        "Order Mode": "UNORDERED",
+                                                        "Estimated Cardinality": "87"
+                                                      },
+                                                      "intermediate_rows": 0,
+                                                      "intermediate_size_bytes": 0,
+                                                      "timing": 0.000020249000000000002,
+                                                      "type": "CTE",
+                                                      "children": [
+                                                        {
+                                                          "extra_info": {
+                                                            "Projections": [
+                                                              "#0",
+                                                              "#1",
+                                                              "#2",
+                                                              "#3",
+                                                              "CAST(#4 AS BIGINT)",
+                                                              "#5"
+                                                            ],
+                                                            "Estimated Cardinality": "87"
+                                                          },
+                                                          "intermediate_rows": 255,
+                                                          "intermediate_size_bytes": 11013,
+                                                          "timing": 0.000003625,
+                                                          "type": "PROJECTION",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {
+                                                                "Groups": [
+                                                                  "#0",
+                                                                  "#1",
+                                                                  "#2",
+                                                                  "#3",
+                                                                  "#4",
+                                                                  "#5"
+                                                                ],
+                                                                "Aggregates": "",
+                                                                "Estimated Cardinality": "94"
+                                                              },
+                                                              "intermediate_rows": 255,
+                                                              "intermediate_size_bytes": 10212,
+                                                              "timing": 0.00008820699999999999,
+                                                              "type": "HASH_GROUP_BY",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "Projections": [
+                                                                      "present",
+                                                                      "h0t",
+                                                                      "h0s",
+                                                                      "h0b",
+                                                                      "h0i",
+                                                                      "h0f"
+                                                                    ],
+                                                                    "Estimated Cardinality": "94"
+                                                                  },
+                                                                  "intermediate_rows": 255,
+                                                                  "intermediate_size_bytes": 7908,
+                                                                  "timing": 2.5e-7,
+                                                                  "type": "PROJECTION",
+                                                                  "children": [
+                                                                    {
+                                                                      "extra_info": {
+                                                                        "Projections": [
+                                                                          "#0",
+                                                                          "#1",
+                                                                          "#2",
+                                                                          "#3",
+                                                                          "CAST(#4 AS TINYINT)",
+                                                                          "#5"
+                                                                        ],
+                                                                        "Estimated Cardinality": "94"
+                                                                      },
+                                                                      "intermediate_rows": 255,
+                                                                      "intermediate_size_bytes": 7908,
+                                                                      "timing": 0.000001459,
+                                                                      "type": "PROJECTION",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {
+                                                                            "Projections": [
+                                                                              "present",
+                                                                              "h0t",
+                                                                              "h0s",
+                                                                              "h0b",
+                                                                              "h0i",
+                                                                              "h0f"
+                                                                            ],
+                                                                            "Estimated Cardinality": "94"
+                                                                          },
+                                                                          "intermediate_rows": 255,
+                                                                          "intermediate_size_bytes": 9693,
+                                                                          "timing": 0.000003916,
+                                                                          "type": "PROJECTION",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {},
+                                                                              "intermediate_rows": 255,
+                                                                              "intermediate_size_bytes": 4335,
+                                                                              "timing": 0.000008583,
+                                                                              "type": "CROSS_PRODUCT",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "Join Type": "ANTI",
+                                                                                    "Conditions": [
+                                                                                      "encode(e) IS NOT DISTINCT FROM encode(e)",
+                                                                                      "v_tag IS NOT DISTINCT FROM v_tag",
+                                                                                      "v_s IS NOT DISTINCT FROM v_s",
+                                                                                      "v_b IS NOT DISTINCT FROM v_b",
+                                                                                      "v_i IS NOT DISTINCT FROM v_i",
+                                                                                      "v_f IS NOT DISTINCT FROM v_f"
+                                                                                    ],
+                                                                                    "Estimated Cardinality": "94"
+                                                                                  },
+                                                                                  "intermediate_rows": 255,
+                                                                                  "intermediate_size_bytes": 4080,
+                                                                                  "timing": 0.001173541,
+                                                                                  "type": "HASH_JOIN",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "Projections": [
+                                                                                          "#0",
+                                                                                          "#2",
+                                                                                          "#3",
+                                                                                          "#4",
+                                                                                          "#5",
+                                                                                          "#6"
+                                                                                        ],
+                                                                                        "Estimated Cardinality": "470"
+                                                                                      },
+                                                                                      "intermediate_rows": 256,
+                                                                                      "intermediate_size_bytes": 13568,
+                                                                                      "timing": 4.58e-7,
+                                                                                      "type": "PROJECTION",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "extra_info": {
+                                                                                            "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+                                                                                            "Estimated Cardinality": "470"
+                                                                                          },
+                                                                                          "intermediate_rows": 256,
+                                                                                          "intermediate_size_bytes": 17664,
+                                                                                          "timing": 0.00009529199999999998,
+                                                                                          "type": "FILTER",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "extra_info": {
+                                                                                                "CTE Index": "8",
+                                                                                                "Estimated Cardinality": "470"
+                                                                                              },
+                                                                                              "intermediate_rows": 17331,
+                                                                                              "intermediate_size_bytes": 1150758,
+                                                                                              "timing": 0.000029001000000000002,
+                                                                                              "type": "CTE_SCAN"
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    },
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "Projections": [
+                                                                                          "#0",
+                                                                                          "#2",
+                                                                                          "#3",
+                                                                                          "#4",
+                                                                                          "#5",
+                                                                                          "#6"
+                                                                                        ],
+                                                                                        "Estimated Cardinality": "470"
+                                                                                      },
+                                                                                      "intermediate_rows": 17075,
+                                                                                      "intermediate_size_bytes": 860662,
+                                                                                      "timing": 0.0000016669999999999999,
+                                                                                      "type": "PROJECTION",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "extra_info": {
+                                                                                            "Expression": "(encode(a) IS NOT DISTINCT FROM 'i'::BLOB)",
+                                                                                            "Estimated Cardinality": "470"
+                                                                                          },
+                                                                                          "intermediate_rows": 17075,
+                                                                                          "intermediate_size_bytes": 1133862,
+                                                                                          "timing": 0.000184209,
+                                                                                          "type": "FILTER",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "extra_info": {
+                                                                                                "CTE Index": "8",
+                                                                                                "Estimated Cardinality": "470"
+                                                                                              },
+                                                                                              "intermediate_rows": 17331,
+                                                                                              "intermediate_size_bytes": 1150758,
+                                                                                              "timing": 0.000030959,
+                                                                                              "type": "CTE_SCAN"
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                },
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "Expression": "SUBQUERY",
+                                                                                    "Estimated Cardinality": "1"
+                                                                                  },
+                                                                                  "intermediate_rows": 1,
+                                                                                  "intermediate_size_bytes": 1,
+                                                                                  "timing": 0.0000028749999999999996,
+                                                                                  "type": "FILTER",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "Projections": [
+                                                                                          "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+                                                                                          "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+                                                                                        ],
+                                                                                        "Estimated Cardinality": "1"
+                                                                                      },
+                                                                                      "intermediate_rows": 1,
+                                                                                      "intermediate_size_bytes": 1,
+                                                                                      "timing": 0.000002459,
+                                                                                      "type": "PROJECTION",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "extra_info": {
+                                                                                            "Aggregates": [
+                                                                                              "\"first\"(#0)",
+                                                                                              "count_star()"
+                                                                                            ],
+                                                                                            "Estimated Cardinality": "1"
+                                                                                          },
+                                                                                          "intermediate_rows": 1,
+                                                                                          "intermediate_size_bytes": 9,
+                                                                                          "timing": 0.000002458,
+                                                                                          "type": "UNGROUPED_AGGREGATE",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "extra_info": {
+                                                                                                "Projections": "#0",
+                                                                                                "Estimated Cardinality": "1"
+                                                                                              },
+                                                                                              "intermediate_rows": 1,
+                                                                                              "intermediate_size_bytes": 1,
+                                                                                              "timing": 1.66e-7,
+                                                                                              "type": "PROJECTION",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "extra_info": {
+                                                                                                    "CTE Index": "7",
+                                                                                                    "Estimated Cardinality": "1"
+                                                                                                  },
+                                                                                                  "intermediate_rows": 1,
+                                                                                                  "intermediate_size_bytes": 1,
+                                                                                                  "timing": 8.33e-7,
+                                                                                                  "type": "CTE_SCAN"
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "extra_info": {
+                                                            "Projections": [
+                                                              "#0",
+                                                              "__internal_decompress_string(#1)",
+                                                              "#2",
+                                                              "CAST(#3 AS BIGINT)",
+                                                              "CAST(#4 AS BIGINT)",
+                                                              "CAST(#5 AS BIGINT)",
+                                                              "#6"
+                                                            ],
+                                                            "Estimated Cardinality": "87"
+                                                          },
+                                                          "intermediate_rows": 255,
+                                                          "intermediate_size_bytes": 20496,
+                                                          "timing": 0.000003583,
+                                                          "type": "PROJECTION",
+                                                          "children": [
+                                                            {
+                                                              "extra_info": {
+                                                                "Order By": [
+                                                                  "#7 ASC",
+                                                                  "#8 ASC",
+                                                                  "#9 ASC",
+                                                                  "#10 ASC",
+                                                                  "#11 ASC"
+                                                                ],
+                                                                "Estimated Cardinality": "87"
+                                                              },
+                                                              "intermediate_rows": 255,
+                                                              "intermediate_size_bytes": 12753,
+                                                              "timing": 0.00012383400000000002,
+                                                              "type": "ORDER_BY",
+                                                              "children": [
+                                                                {
+                                                                  "extra_info": {
+                                                                    "Projections": [
+                                                                      "#0",
+                                                                      "__internal_compress_string_uinteger(#1)",
+                                                                      "#2",
+                                                                      "CAST(#3 AS TINYINT)",
+                                                                      "CAST(#4 AS TINYINT)",
+                                                                      "CAST(#5 AS TINYINT)",
+                                                                      "#6",
+                                                                      "#7",
+                                                                      "#8",
+                                                                      "#9",
+                                                                      "CAST(#10 AS TINYINT)",
+                                                                      "#11"
+                                                                    ],
+                                                                    "Estimated Cardinality": "87"
+                                                                  },
+                                                                  "intermediate_rows": 255,
+                                                                  "intermediate_size_bytes": 29662,
+                                                                  "timing": 0.000007,
+                                                                  "type": "PROJECTION",
+                                                                  "children": [
+                                                                    {
+                                                                      "extra_info": {
+                                                                        "Projections": [
+                                                                          "known",
+                                                                          "route",
+                                                                          "reason",
+                                                                          "rounds",
+                                                                          "derived_facts",
+                                                                          "work",
+                                                                          "tuple_json",
+                                                                          "h0t",
+                                                                          "h0s",
+                                                                          "h0b",
+                                                                          "h0i",
+                                                                          "h0f"
+                                                                        ],
+                                                                        "Estimated Cardinality": "87"
+                                                                      },
+                                                                      "intermediate_rows": 255,
+                                                                      "intermediate_size_bytes": 40334,
+                                                                      "timing": 0.000097792,
+                                                                      "type": "PROJECTION",
+                                                                      "children": [
+                                                                        {
+                                                                          "extra_info": {},
+                                                                          "intermediate_rows": 255,
+                                                                          "intermediate_size_bytes": 16836,
+                                                                          "timing": 0.000006251000000000001,
+                                                                          "type": "CROSS_PRODUCT",
+                                                                          "children": [
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Join Type": "RIGHT",
+                                                                                "Condition": "true",
+                                                                                "Estimated Cardinality": "87"
+                                                                              },
+                                                                              "intermediate_rows": 255,
+                                                                              "intermediate_size_bytes": 14796,
+                                                                              "timing": 0.000043873000000000005,
+                                                                              "type": "BLOCKWISE_NL_JOIN",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "CTE Index": "10",
+                                                                                    "CTE Mode": "BUFFERED",
+                                                                                    "Consumer": "0",
+                                                                                    "Scan Mode": "CHUNK",
+                                                                                    "Estimated Cardinality": "87"
+                                                                                  },
+                                                                                  "intermediate_rows": 255,
+                                                                                  "intermediate_size_bytes": 11997,
+                                                                                  "timing": 0.000007709,
+                                                                                  "type": "CTE_SCAN"
+                                                                                },
+                                                                                {
+                                                                                  "extra_info": {},
+                                                                                  "intermediate_rows": 1,
+                                                                                  "intermediate_size_bytes": 17,
+                                                                                  "timing": 0.000009334,
+                                                                                  "type": "CROSS_PRODUCT",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "CTE Index": "1",
+                                                                                        "Estimated Cardinality": "1"
+                                                                                      },
+                                                                                      "intermediate_rows": 1,
+                                                                                      "intermediate_size_bytes": 16,
+                                                                                      "timing": 0.000003,
+                                                                                      "type": "CTE_SCAN"
+                                                                                    },
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "Expression": "use_sql",
+                                                                                        "Estimated Cardinality": "1"
+                                                                                      },
+                                                                                      "intermediate_rows": 1,
+                                                                                      "intermediate_size_bytes": 1,
+                                                                                      "timing": 0.000003958,
+                                                                                      "type": "FILTER",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "extra_info": {
+                                                                                            "CTE Index": "7",
+                                                                                            "Estimated Cardinality": "1"
+                                                                                          },
+                                                                                          "intermediate_rows": 1,
+                                                                                          "intermediate_size_bytes": 1,
+                                                                                          "timing": 5.41e-7,
+                                                                                          "type": "CTE_SCAN"
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            },
+                                                                            {
+                                                                              "extra_info": {
+                                                                                "Projections": [
+                                                                                  "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+                                                                                  "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+                                                                                ],
+                                                                                "Estimated Cardinality": "1"
+                                                                              },
+                                                                              "intermediate_rows": 1,
+                                                                              "intermediate_size_bytes": 8,
+                                                                              "timing": 0.000001583,
+                                                                              "type": "PROJECTION",
+                                                                              "children": [
+                                                                                {
+                                                                                  "extra_info": {
+                                                                                    "Aggregates": [
+                                                                                      "\"first\"(#0)",
+                                                                                      "count_star()"
+                                                                                    ],
+                                                                                    "Estimated Cardinality": "1"
+                                                                                  },
+                                                                                  "intermediate_rows": 1,
+                                                                                  "intermediate_size_bytes": 16,
+                                                                                  "timing": 8.74e-7,
+                                                                                  "type": "UNGROUPED_AGGREGATE",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "extra_info": {
+                                                                                        "Projections": "#0",
+                                                                                        "Estimated Cardinality": "1"
+                                                                                      },
+                                                                                      "intermediate_rows": 1,
+                                                                                      "intermediate_size_bytes": 8,
+                                                                                      "timing": 1.25e-7,
+                                                                                      "type": "PROJECTION",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "extra_info": {
+                                                                                            "CTE Index": "2",
+                                                                                            "Estimated Cardinality": "1"
+                                                                                          },
+                                                                                          "intermediate_rows": 1,
+                                                                                          "intermediate_size_bytes": 8,
+                                                                                          "timing": 0.000001125,
+                                                                                          "type": "CTE_SCAN"
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "optimizer": {
+    "aggregate_function_rewriter": 0.000016041,
+    "aggregate_reuse": 0.000116125,
+    "build_side_probe_side": 0.000064166,
+    "column_lifetime": 0.000091584,
+    "common_aggregate": 0.00002325,
+    "common_subexpressions": 0.000116708,
+    "common_subplan": 0.00017125,
+    "cte_filter_pusher": 0.00009675,
+    "cte_inlining": 0.000018499,
+    "deliminator": 0.000003,
+    "duplicate_groups": 0.000065167,
+    "empty_result_pullup": 0.0000025,
+    "expression_rewriter": 0.000894042,
+    "filter_pullup": 0.000005125,
+    "filter_pushdown": 0.000151041,
+    "grouping_sets": 0.000012125,
+    "in_clause": 0.000014,
+    "join_elimination": 0.000110791,
+    "join_filter_pushdown": 0.000072875,
+    "join_order": 0.002705125,
+    "late_materialization": 0.000002875,
+    "limit_pushdown": 0.000002875,
+    "outer_join_simplification": 0.000048958,
+    "partial_aggregate_pushdown": 0.000021958,
+    "partitioned_execution": 0.000003584,
+    "projection_placement": 0.000058542,
+    "projection_pullup": 0.000162292,
+    "redundant_order_keys": 0.000021875,
+    "regex_range": 0.000002666,
+    "reorder_filter": 0.000026666,
+    "row_group_pruner": 0.000002542,
+    "row_number_rewriter": 0.000002709,
+    "sampling_pushdown": 0.000002166,
+    "scalar_fn_pushdown": 0.000001458,
+    "statistics_propagation": 0.000399,
+    "top_n": 0.00000275,
+    "top_n_window_elimination": 0.000006,
+    "total_time": 0.005960583,
+    "type_pushdown": 0.000002584,
+    "unnest_rewriter": 0.000003583,
+    "unused_columns": 0.000286583,
+    "window_self_join": 0.000001709
+  },
+  "physical_planner": {
+    "column_binding": 0.00006775,
+    "create_plan": 0.00016,
+    "resolve_types": 0.000005958,
+    "total_time": 0.000260833
+  },
+  "planner": {
+    "binding_time": 0.004991708,
+    "total_time": 0.003742417
+  },
+  "query": {
+    "cpu_time": 0.012746916999999998,
+    "sql": "EXPLAIN (ANALYZE, FORMAT JSON) WITH integrity AS MATERIALIZED (SELECT CASE WHEN NOT system.main.td_control_check_v1(CAST($1 AS BIGINT)) THEN error('TD_E_CONTROL: invalid invocation') WHEN system.main.td_owner_probe_validated_check() IS NOT TRUE THEN error('TD_E_OWNER_PROBE_INVALID: owner scope is not audited') WHEN NOT (SELECT ok FROM (SELECT CASE\n WHEN (SELECT count(*) FROM main.store_meta)<>1 OR EXISTS(\n   SELECT 1 FROM main.store_meta WHERE version IS NULL OR version NOT IN(5,6,8,9,10,11))\n THEN error('TD_E_COMMAND_FORMAT: unsupported native store format')\n WHEN (SELECT count(*) FROM td_catalog_v1.catalog_revision)>1 OR EXISTS(\n   SELECT 1 FROM td_catalog_v1.catalog_revision WHERE singleton IS DISTINCT FROM TRUE OR revision IS NULL OR revision NOT IN(2,3))\n THEN error('TD_E_COMMAND_FORMAT: unsupported native catalog revision')\n WHEN EXISTS(SELECT 1 FROM main.store_meta m WHERE CASE m.version\n   WHEN 5 THEN EXISTS(SELECT 1 FROM td_catalog_v1.catalog_revision WHERE revision<>2)\n   WHEN 9 THEN (SELECT count(*) FROM td_catalog_v1.catalog_revision)<>1\n   WHEN 10 THEN (SELECT count(*) FROM td_catalog_v1.catalog_revision)<>1\n   WHEN 11 THEN (SELECT count(*) FROM td_catalog_v1.catalog_revision)<>1\n   ELSE (SELECT count(*) FROM td_catalog_v1.catalog_revision WHERE revision=2)<>1 END)\n THEN error('TD_E_COMMAND_FORMAT: native format/catalog revision mismatch')\n ELSE TRUE END ok) native_format) THEN error('TD_E_COMMAND_FORMAT: unsupported native catalog') WHEN (SELECT count(*) FROM system.main.pragma_database_list)<>1 THEN error('TD_E_QUERY_CATALOG: visible extra attachments are unsupported') WHEN system.main.td_float_from_bits_v1('0000000000000000')<>0 THEN error('TD_E_QUERY_PROFILE: invalid float codec') ELSE TRUE END ok),cuts AS MATERIALIZED (SELECT '0'::BIGINT valid,(SELECT CASE WHEN position<586 THEN error('TD_E_QUERY_INPUT: knowledge cut exceeds committed clock') ELSE 586 END FROM main.clock WHERE singleton)::BIGINT known FROM integrity WHERE ok),owner_cap AS MATERIALIZED (SELECT system.main.td_owner_probe_uniqueness_check() capabilities),input_statistics AS MATERIALIZED (SELECT count(*) n,count(*) FILTER(WHERE v_tag>8 OR octet_length(encode(e))>512 OR octet_length(encode(a))>512 OR (v_tag IN(1,5,8) AND octet_length(v_s)>512) OR (v_tag=8 AND octet_length(v_s)=0) OR CASE WHEN v_tag=7 THEN CASE WHEN octet_length(v_s)>4096 THEN TRUE ELSE system.main.td_validate_json_source_v2(decode(v_s)) IS NOT TRUE END ELSE FALSE END) invalid,coalesce(sum(120::HUGEINT+octet_length(encode(e))+octet_length(encode(a))+CASE WHEN v_tag IN(1,5,7,8) THEN octet_length(v_s) ELSE 0 END),0) carrier_bytes FROM main.assertions CROSS JOIN cuts WHERE valid_from<=valid AND valid<valid_to AND tx_from<=known AND known<tx_to AND (a COLLATE \"binary\" IN ('i','probe_member'))),admission AS MATERIALIZED (SELECT CASE WHEN invalid>0 THEN error('TD_E_QUERY_PROFILE: relevant data exceeds the eight-tag Datalog profile (512-byte text/ID and 4096-byte strict JSON)') WHEN n>124696 OR n>124696 OR carrier_bytes>4294967296 THEN error('TD_E_QUERY_SCALE_LIMIT: scalable SQL input exceeds logical budget') ELSE TRUE END ok FROM input_statistics CROSS JOIN integrity),active AS MATERIALIZED (SELECT e,a,v_tag,v_s,v_b,v_i,v_f FROM main.assertions CROSS JOIN cuts CROSS JOIN admission CROSS JOIN owner_cap WHERE admission.ok AND (owner_cap.capabilities & 2)<>0 AND valid_from<=valid AND valid<valid_to AND tx_from<=known AND known<tx_to AND (a COLLATE \"binary\" IN ('i','probe_member')) UNION ALL SELECT DISTINCT e,a,v_tag,v_s,v_b,v_i,v_f FROM main.assertions CROSS JOIN cuts CROSS JOIN admission CROSS JOIN owner_cap WHERE admission.ok AND (owner_cap.capabilities & 2)=0 AND valid_from<=valid AND valid<valid_to AND tx_from<=known AND known<tx_to AND (a COLLATE \"binary\" IN ('i','probe_member'))),statistics AS MATERIALIZED (SELECT count(*) n,coalesce(sum(octet_length(encode(e))+octet_length(encode(a))+CASE WHEN v_tag IN(1,5,7,8) THEN octet_length(v_s) ELSE 0 END),0) string_bytes,coalesce(max(octet_length(encode(e))),0) e_bytes,coalesce(max(octet_length(encode(a))),0) a_bytes,coalesce(max(CASE WHEN v_tag IN(1,5,7,8) THEN octet_length(v_s) ELSE 0 END),0) v_bytes FROM active),mode AS MATERIALIZED (SELECT CASE WHEN NOT (statistics.n*120::HUGEINT+statistics.string_bytes<=4294967296 AND (SELECT count(*) FROM active WHERE TRUE AND 1::UTINYINT IS NOT DISTINCT FROM 1::UTINYINT AND encode(a) IS NOT DISTINCT FROM encode('probe_member') AND NULL::BOOLEAN IS NOT DISTINCT FROM NULL::BOOLEAN AND NULL::BIGINT IS NOT DISTINCT FROM NULL::BIGINT AND NULL::DOUBLE IS NOT DISTINCT FROM NULL::DOUBLE)<=124696 AND (SELECT count(*) FROM active WHERE TRUE AND 1::UTINYINT IS NOT DISTINCT FROM 1::UTINYINT AND encode(a) IS NOT DISTINCT FROM encode('probe_member') AND NULL::BOOLEAN IS NOT DISTINCT FROM NULL::BOOLEAN AND NULL::BIGINT IS NOT DISTINCT FROM NULL::BIGINT AND NULL::DOUBLE IS NOT DISTINCT FROM NULL::DOUBLE)*(120::HUGEINT+40+0+statistics.e_bytes)<=4294967296) THEN error('TD_E_QUERY_SCALE_LIMIT: scalable SQL intermediate exceeds logical budget') WHEN NOT (TRUE) THEN error('TD_E_QUERY_SCALE_UNSUPPORTED: scalable SQL aggregate domain is unproved') WHEN ((SELECT count(*) FROM active WHERE TRUE AND 1::UTINYINT IS NOT DISTINCT FROM 1::UTINYINT AND encode(a) IS NOT DISTINCT FROM encode('probe_member') AND NULL::BOOLEAN IS NOT DISTINCT FROM NULL::BOOLEAN AND NULL::BIGINT IS NOT DISTINCT FROM NULL::BIGINT AND NULL::DOUBLE IS NOT DISTINCT FROM NULL::DOUBLE))>100000 OR ((SELECT count(*) FROM active WHERE TRUE AND 1::UTINYINT IS NOT DISTINCT FROM 1::UTINYINT AND encode(a) IS NOT DISTINCT FROM encode('probe_member') AND NULL::BOOLEAN IS NOT DISTINCT FROM NULL::BOOLEAN AND NULL::BIGINT IS NOT DISTINCT FROM NULL::BIGINT AND NULL::DOUBLE IS NOT DISTINCT FROM NULL::DOUBLE))*(384+6*(0+statistics.e_bytes))>16777216 THEN error('TD_E_QUERY_SCALE_LIMIT: scalable SQL output exceeds logical budget') ELSE TRUE END use_sql FROM statistics CROSS JOIN admission CROSS JOIN integrity),anti_input AS MATERIALIZED (SELECT * FROM active WHERE (SELECT use_sql FROM mode)),anti_active AS (SELECT kept.* FROM anti_input kept ANTI JOIN anti_input denied ON TRUE AND (TRUE AND 1::UTINYINT IS NOT DISTINCT FROM 1::UTINYINT AND encode(denied.e) IS NOT DISTINCT FROM encode(kept.e) AND NULL::BOOLEAN IS NOT DISTINCT FROM NULL::BOOLEAN AND NULL::BIGINT IS NOT DISTINCT FROM NULL::BIGINT AND NULL::DOUBLE IS NOT DISTINCT FROM NULL::DOUBLE) AND (TRUE AND 1::UTINYINT IS NOT DISTINCT FROM 1::UTINYINT AND encode(denied.a) IS NOT DISTINCT FROM encode('i') AND NULL::BOOLEAN IS NOT DISTINCT FROM NULL::BOOLEAN AND NULL::BIGINT IS NOT DISTINCT FROM NULL::BIGINT AND NULL::DOUBLE IS NOT DISTINCT FROM NULL::DOUBLE) AND (TRUE AND denied.v_tag IS NOT DISTINCT FROM kept.v_tag AND denied.v_s IS NOT DISTINCT FROM kept.v_s AND denied.v_b IS NOT DISTINCT FROM kept.v_b AND denied.v_i IS NOT DISTINCT FROM kept.v_i AND denied.v_f IS NOT DISTINCT FROM kept.v_f)),sql_answer AS MATERIALIZED (SELECT DISTINCT TRUE present,1::UTINYINT h0t,encode(e) h0s,NULL::BOOLEAN h0b,NULL::BIGINT h0i,NULL::DOUBLE h0f FROM anti_active WHERE (SELECT use_sql FROM mode) AND TRUE AND 1::UTINYINT IS NOT DISTINCT FROM 1::UTINYINT AND encode(a) IS NOT DISTINCT FROM encode('probe_member') AND NULL::BOOLEAN IS NOT DISTINCT FROM NULL::BOOLEAN AND NULL::BIGINT IS NOT DISTINCT FROM NULL::BIGINT AND NULL::DOUBLE IS NOT DISTINCT FROM NULL::DOUBLE) SELECT known,'sql' route,CASE WHEN ((SELECT capabilities FROM owner_cap) & 2)<>0 THEN 'owned_allcut_unique_scalable_anti_join' ELSE 'owned_scalable_anti_join' END reason,NULL::BIGINT rounds,NULL::BIGINT derived_facts,NULL::BIGINT work,CASE WHEN r.present THEN CAST(to_json([struct_pack(tag:=r.h0t,s:=decode(r.h0s),b:=r.h0b,i:=r.h0i::VARCHAR,f:=CASE WHEN r.h0t IN(4,6) THEN system.main.td_float_bits_v1(r.h0f) END)]) AS VARCHAR) END tuple_json FROM cuts CROSS JOIN mode LEFT JOIN sql_answer r ON TRUE WHERE use_sql ORDER BY r.h0t,r.h0s,r.h0b,r.h0i,r.h0f",
+    "total_intermediate_rows": 572428,
+    "total_intermediate_size_bytes": 1188200203,
+    "total_row_groups_scanned": 15,
+    "total_row_groups_to_scan": 19,
+    "total_rows_scanned": 203447,
+    "total_time": 0.028067792
+  },
+  "system": {
+    "blocked_thread_time": 0.00352,
+    "peak_buffer_memory": 91507600,
+    "peak_streaming_buffer_size": 0,
+    "peak_temp_dir_size": 0,
+    "total_memory_allocated": 43515904
+  }
+}

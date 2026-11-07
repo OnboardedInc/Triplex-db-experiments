@@ -1,0 +1,42 @@
+# Independent guarded-batch code review
+
+**Reviewed corrected source: no remaining concrete blocker found. This is not item 2 acceptance, a benchmark result or a safety certification.** Two defects in immutable checkpoint 01 were independently reproduced, reported promptly and corrected by the sole writer in checkpoint 02; both original repros remain preserved.
+
+## Exact reviewed inputs
+
+- Root-verified selected-decision checkpoint: main `347aae5eae3daa1b5a454f820b88f1a79b094a47`, before implementation; exact DECISION hash is in `PREPARATION-INPUTS.json`.
+- Immutable checkpoint 02 manifest: `40b7118ba1090194240d97acf6f2f62ebfdee76d7584d329758dcff7002c2c8c` (all 12 source/fixture byte counts and hashes verified).
+- `typed_store.py`: `25e9a4f178144070f85cbf1215dd1e12270ae0efbdd27be1dbf49ba9e76dcfdc`.
+- New batch test: `187e3588c010742e83f12892dde9437f7d16e575d899c4493f26497481b84732`; fixture: `1b44e577b7d1f17559a3f99511c99e714c88d00e808ddd391efdfc4b65a75824`.
+- Hardened baseline typed source: `abe7424366b9d528fa1378c8e9d5f12e7f4e80d93a1c433712a76d916760c555`. FP reader remains `facfc51b6f42a21019d70fef05b2c813e3f6f81e53587c3b80bb09a1b26dfd5c`.
+- Twelve protected source/schema/legacy/reader/native files remained byte-identical across this review. The original project normal artifact remains `5b661f...`; genuine new suite copies explicitly selected immutable actual-v2 artifact `480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4`. These are distinct identities, not a loader/policy substitution.
+
+## Findings and independent correction checks
+
+**FPB-01 — stale readiness after ordinary Query close reentry.** A valid request getter could close the same store, then return its value; same-thread RLock permits this. Checkpoint 01 took only a fresh FP check after preparation, then attempted BEGIN on the closed connection in query/query_json/evaluated transact. Expected: closed StoreError before further DB use. Corrected source reruns `_ready()` after preparation, retaining closed-state and fresh FP checks. All six fields × three endpoints independently reject without subsequent execute. The writer also added real no-engine close/reopen state-preservation tests.
+
+**FPB-02 — newly repeated public nonzero Value payload setter.** An admitted InitOnceValue subclass with a normal one-initialization payload property succeeds for `.float64(1.25)` on the baseline. Checkpoint 01's unconditional payload rewrite caused a second setter call and failure. Corrected source restores the original zero-only rewrite; baseline and corrected source independently succeed with one assignment and exact cached bits. This is separate from intentionally selected Query snapshot getter-count semantics.
+
+See `FINDINGS.json`, original checkpoint-01 probe/results, and corrected `checkpoint-02-properties.json`. No production fix was made by this reviewer.
+
+## Complete changed call-graph review
+
+**Public scalar and persistence paths.** Value construction supplies masks-guarded `_float_bits` to shared `_canonical_payload`; only its representation copier is unguarded. from_carrier still performs the original shape/tag/selected/unused checks, then constructs `cls`, preserving public subclass admission. from_json/to_json retain their independent full-float guards and existing explicit JSON numeric rules. Public string subclasses still take the existing `_text`/encode path; private exact-builtin restrictions do not leak into it. Cached integer identity/hash/sort remain state-independent after admission. TypedFact validation, `_state`, history, migration and initial persisted validation still use these public validators; no batch bypass reaches them. Initialization, physical-size/close guards, inherited receipt/position/correct/context-manager methods, caps, schemas, legacy source and trusted artifact policy are unchanged.
+
+**Private result region.** `_query` completes execute/fetch without indexing its return; `_native_result_wire` first takes a full fresh guard. It exact-checks the fetch tuple before length/indexing; exact dict/key types before set equality/lookup; counters before integer comparison; rows/row/cell containers before their protocols; and exact payload types before shared validation. It retains chosen-nonnull/every inactive NULL, tag/range, UTF-8/NUL/512-byte string cap, finite exponent-bit and true signed-zero rules. All cells are processed, including repeated payloads; there is no distinct-value shortcut. Output envelope/lists/cells are locally rebuilt without raw-input mutation, preserving order/counters and canonical i64 strings/f64 bits. A final full guard precedes helper publication. Subsequent SnapshotResult construction/COMMIT remain under the unchanged trusted-callee/continuous-control premise; this is not a new arbitrary-callee cleanup guarantee.
+
+`_copy_float_bits` is reached only by the public masks-checked reader or the full-checked private canonicalization path. There is no ambient flag/token, cross-call FP permission cache, public skip_checks API, host-control repair, partially initialized Value, machine-code helper or private Python object-memory access. Per-cell checks remain O(cells); only repeated environment reads are amortized.
+
+**Query/evaluated-command ownership.** Each request's six fields is captured once before budget/BEGIN/position/staging DB work. Explicit base str.__str__ preserves program characters without an encode hook or the unrelated 512-byte EAV cap; root's six actual-host binding cases and explicit optimized-Python negatives support that mechanism. `_prepare_query` returns an owned exact frozen Query, not an FP permission. Initial and post-preparation `_ready` gates remain inside the same RLock; a fresh full check also precedes native execution. known_at=None is resolved only at the actual transaction position, including after evaluated writes. No original getter/reference reaches the executor. My supported reentrant-commit model confirms the outer query uses the later actual snapshot. Malformed requests now precede DB entry by selected design; multiple-invalid/duplicate error precedence and arbitrary getter invocation counts are not claimed unchanged.
+
+**Error boundaries.** Late codec faults return no prefix and normally propagate to whole-command rollback before COMMIT. No tainted-state repair/deferred cleanup was introduced. Ordinary TypedFact/Value staging callbacks remain, as does the explicit requirement for supported controls throughout connection/caller-codec lifetime. A nonconforming callee, hostile finalizer or arbitrary mid-call control corruption is not made rollback/close-safe by a post-fetch guard.
+
+## Verification actually performed here
+
+Separate independent untimed probe: **2,453 assertions PASS**, comprising 528 finite-bit patterns against an integer-bit oracle and baseline public codec, 13 nonfloat examples, 44 invalid payloads, 84 inactive-payload cases, 18 hostile envelopes, real fresh-read counts of exactly two at F=0/1/16/256, unchanged public masks/full guards and pure identity, 18 close-field/API models, three normal snapshot models and one supported reentrant-commit model. Exact patterns/outputs and source hashes are retained. Both -O and PYTHONOPTIMIZE=1 reject before candidate import. These are codec checks and **no-DB call-order models**, not persisted/native/physical-control acceptance.
+
+I read and hash-recorded, but did not rerun, owner terminal evidence: new 11-method/115-child batch suite; unchanged 7-method/56-child FP suite; genuine 13 expression-store methods with no skips; 26 independent migration cases; legacy 23; typed native 18 pass + one inapplicable absence skip; no-engine 17 pass + two native-only UNRUN skips. The original migration report-path confinement failure and both initial code defects remain visible. Log durations are not comparative benchmark evidence.
+
+## Remaining gates and limits
+
+Root still owns clean-export/verifier integration (include both new test and fixture, explicitly pin the real artifact), final matched persisted measurements and acceptance. No timed comparison, real SQL connection/query, helper build or physical FP-control write was performed in this review lane; real public fegetenv reads were retained. Allocation-failure injection/exhaustive concurrency were not independently run. This scoped review does not reopen earlier frozen reviews or certify arbitrary dynamic subclasses/hostile mid-call controls. See `REVIEW-LIMITS.json` for exact limits and harness negatives.

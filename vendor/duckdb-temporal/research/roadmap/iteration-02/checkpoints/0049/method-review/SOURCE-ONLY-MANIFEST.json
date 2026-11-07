@@ -1,0 +1,56 @@
+{
+  "schema": "read-only-reader-method-review-source-only-v1",
+  "frozen_utc": "2026-10-31T00:49:55Z",
+  "status": "TERMINAL_STATIC_REVIEW_NO_KNOWN_MUST_FIX_UNDER_SELECTED_CONDITIONAL_IMMUTABLE_GATE",
+  "candidate_or_execution_or_acceptance_authority": false,
+  "scope": "Own UTF8/no-NUL review reports, primary URLs, bounded input identity and stdlib-only inspection source; no candidate/runtime/binary/database/full third-party documents. Earlier frozen lanes unchanged. No active stdout capture is a member.",
+  "selected_preparation_sha256": "79a386fd0a9f84722024189081eaa00fea5968284580dbe5f08c463acbdd5b52",
+  "selected_curated_sha256": "4276ef94b176f2f23954b413ef62197389e88e99c91f4e0600eb9eef19a2a9e6",
+  "selected_terminal_sha256": "9776514ff1c790273c8620e10f10711b912ee1a47a52a4487a121f9df85fcedf",
+  "digest_recipe": "sorted path NUL decimal bytes NUL sha256 LF UTF8; manifest/checksums excluded from tree to avoid self-reference",
+  "content_tree_sha256": "01a5fa2879dcd1f1d8d2cf638d3fca181b0355356c4b8116afd8648d88d7310c",
+  "content_files": 8,
+  "content_bytes": 43581,
+  "files": [
+    {
+      "path": "FINDINGS.json",
+      "bytes": 2381,
+      "sha256": "4e77a4143e85a2a53099b152ff7a3be71d2b90f4161db1fcde3bc19d79b4b5ef"
+    },
+    {
+      "path": "INSPECT_SOURCE.py",
+      "bytes": 7058,
+      "sha256": "5f4110d5ba1744e098c93cd5accff7df8df5b99697ce926596cf68793f2d863c"
+    },
+    {
+      "path": "PRIMARY-URLS.json",
+      "bytes": 2451,
+      "sha256": "3be01bcc679c3286a0f834ba258f00ff0da109ffe9e8f327207e530776162455"
+    },
+    {
+      "path": "REVIEW-SUMMARY.json",
+      "bytes": 1551,
+      "sha256": "1d3ee8bdb6c10c2e2c7923c6ed4f888241f3a413fc7796b80733c0b93c6c61c6"
+    },
+    {
+      "path": "REVIEW.md",
+      "bytes": 13088,
+      "sha256": "5cb7212a4572b53678ef92b501dd310bae491a152c3b38b7c2fce2717d177498"
+    },
+    {
+      "path": "STAGE-STATUS.json",
+      "bytes": 1320,
+      "sha256": "a8f9ff7306e23487818816f807b2b5200c840abd661ba8c36c2fa8a8a3ac9d90"
+    },
+    {
+      "path": "STATIC-INPUT-IDENTITY.json",
+      "bytes": 12134,
+      "sha256": "49c916a762d2897a0f6655f58779a8c3e696c293efe078120fc0464991041f4b"
+    },
+    {
+      "path": "WORKER-PROGRESS.md",
+      "bytes": 3598,
+      "sha256": "440f9a20e04f6cdaa68f266ed23a2e09b682af40995dbc16bd5523bb2d560b07"
+    }
+  ]
+}

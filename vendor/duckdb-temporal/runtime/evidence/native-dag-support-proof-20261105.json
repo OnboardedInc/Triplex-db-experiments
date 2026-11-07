@@ -1,0 +1,42 @@
+{
+  "schema": "td.native-dag-support-proof/1",
+  "observed_utc": "2026-11-05T21:05:12.846018+00:00",
+  "tested_source": "4c57d9c4a4cc2b900da3d321abc3a3305932dfbf",
+  "source_branch": "codex/temporal-dag-maintenance-20261105",
+  "platform": "macOS arm64",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+  "source_sha256": {
+    "native/experimental/dag_support.hpp": "a320278f84e681ecfa346116213764c24594eaf335a476beb8ce6b4195047eb2",
+    "native/experimental/test_dag_support.cpp": "88fc1163d23308323331729445e1e7d286f4594816fb5beeab78694c729becec"
+  },
+  "build": {
+    "command": "c++ -std=c++17 -O2 -Wall -Wextra native/experimental/test_dag_support.cpp -o build/test_dag_support",
+    "binary_sha256": "84d9d8843fb94d1237bae03a5f25ec50926d79996b56729ff7d2ed5322e20b1f"
+  },
+  "gate": {
+    "command": "./build/test_dag_support",
+    "result": "PASS",
+    "pass": 5,
+    "log_sha256": "2a9cf15b0b2c8593c43cb2f57ca074d6c7a28e5e1bafec2610ec680d55f185d9",
+    "cases": [
+      "workload 20 diamond",
+      "mixed multi-edit",
+      "caps and rollback",
+      "checked arithmetic",
+      "deterministic recomputation trace"
+    ],
+    "deterministic_oracle_batches": 96
+  },
+  "scope": {
+    "maximum_nodes": 128,
+    "maximum_physical_support_edits_per_batch": 4096,
+    "graph": "All edges increase the immutable rank. Apply physical changes in a private candidate and change reachability only when a logical edge crosses zero support.",
+    "remaining_gates": [
+      "Canonical temporal edit translation",
+      "DuckDB transactional publication",
+      "Concurrent public reads and reopen",
+      "Equivalent three-engine workload 20",
+      "Complete maintenance and storage costs"
+    ]
+  }
+}

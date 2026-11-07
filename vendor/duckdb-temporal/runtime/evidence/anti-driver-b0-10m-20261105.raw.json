@@ -1,0 +1,4649 @@
+{
+  "schema": "td.anti-driver-plan/1",
+  "status": "passed",
+  "timestampUtc": "2026-11-06T00:58:49.863Z",
+  "query": "answer(?target) :- triple(?target,'probe_member',?measure), !triple(?target,'i',?measure).",
+  "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+  "harnessSha256": "e4ac8588796a3b301c8560faf1ca5de7c09992543ea0eed766896adba8dfb9c1",
+  "appReadContract": 1,
+  "scope": "Separate fixed-cut compiler-template EXPLAIN execution; not mixed/public-throughput qualification",
+  "configuration": {
+    "threads": 4,
+    "UV_THREADPOOL_SIZE": "4",
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "maxWritesReserve": 12000,
+    "readerConnections": 1,
+    "probes": 256,
+    "seedBatches": 8,
+    "patches": 1
+  },
+  "provenance": {
+    "hashes": {
+      "core_manifest": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+      "companion_manifest": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+      "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+      "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+      "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+      "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+      "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+      "benchmark_driver": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+      "benchmark_clone_helper": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+      "benchmark_clone_module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+      "benchmark/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+      "benchmark/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+      "source_evidence": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7"
+    },
+    "coreManifest": {
+      "engine": "2.0.0",
+      "extension_version": "0.32.0",
+      "abi": "C_STRUCT_UNSTABLE",
+      "catalog_sql_sha256": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+      "control_bridge_sha256": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+      "node_api_version": 8,
+      "schema_template_reuse": true,
+      "schema_borrowed_input": true,
+      "diagnostic_evaluator_profile": false,
+      "experimental_current_unique_fast_path": true,
+      "experimental_injective_projection_fast_path": true,
+      "experimental_identity_count_fast_path": false,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_streaming_source_fast_path": true,
+      "source_sha256": {
+        "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+        "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+        "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+        "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+        "native/src/temporal_command.cpp": "6b2c3a064050b64694c436b4769bc61be52494a1624c8cd361ed1cc53371c426",
+        "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+        "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+        "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+        "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+        "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+        "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+        "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+        "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+        "native/src/temporal_datalog.cpp": "c80961113dd0b2fd2d1c182cd03f434aee724a6ea6a867fb603322356179281c",
+        "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+        "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+        "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+        "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+        "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+        "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+        "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+        "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+        "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+        "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+        "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+        "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+        "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+        "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+        "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+        "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+        "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+        "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da"
+      },
+      "library_sha256": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+      "extension_sha256": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82"
+    },
+    "companionManifest": {
+      "schema": "native-owner-probe-build/1",
+      "engine": "2.0.0",
+      "abi": "CPP",
+      "test_command": [
+        "node",
+        "adapter/test-owner-probe.mjs"
+      ],
+      "source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+      "source_archive_sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+      "headers_sha256": {
+        "duckdb/common/exception.hpp": "225053a2f1bb4171d3fa066e78783800210041b31f5c06ecb839239ea59c4e51",
+        "duckdb/common/types/data_chunk.hpp": "2a4201a20b74f0dfe17d92e0d1d9b52684a11e0c7010cdc21ce11510f43cb649",
+        "duckdb/common/types/value.hpp": "2bf173b58b09f1292abaa89da509860cce7c9d2ae01f4c7909dc0f0f8b0a32fe",
+        "duckdb/function/scalar_function.hpp": "e4c44b31c3c853a13160da48d69c8209deec936fe0e4d14e94e31adf9e4fb7dd",
+        "duckdb/main/attached_database.hpp": "45176b4ca1c8328ee6e0a8ec0a65d5adeba289060da939677be013ad52689c20",
+        "duckdb/main/client_context.hpp": "c753b9242ec947e56db73881caa12476648dc44b38711a9aa829493cf4438691",
+        "duckdb/main/client_context_state.hpp": "a4ec23711715d9163f86cd7533c58fbbb8a3d5f2934b7a2e563ee31b94056447",
+        "duckdb/main/connection_manager.hpp": "66a506a2a6fcdc927a4caadf5709bda6affdf180b23544ab6d7180457408f20d",
+        "duckdb/main/database.hpp": "45834eb51cdb83e6ead27c580399331186289fbca2fb3500a15dccadc55fbb68",
+        "duckdb/main/connection.hpp": "bf2c26ff4b8c26e1e6bf58a1944a40db9bf237f4db979d4c0fc106b175ca1556",
+        "duckdb/main/query_result.hpp": "d614035b27d91e08e98f1caffca22e3f1518feb67a975a37097b495c50ab50b3",
+        "duckdb/main/query_parameters.hpp": "dadc90d8f8b820966affe3cae9af05e8ae2a7cb177c3f95b652b7b209be8a326",
+        "duckdb/common/enums/query_result_state.hpp": "9a8551fb1c73f1c43f4d1232c95283c4f50bccffc26775f9672d5445c940fa5f",
+        "duckdb/main/extension/extension_loader.hpp": "8518760b6c391ace37c9ede72f0e4fbcc63cdb1cf750a06427849af297f490dd",
+        "duckdb/planner/extension_callback.hpp": "39a1227729d44d73da36f03f246d4602a0c5216fb46a8c2fb272b86fadca4599",
+        "duckdb/transaction/duck_transaction_manager.hpp": "962f0cc5a6423da5fa4672bc0be54df51c3d2bc0a8b6d7af67f833c70843dfaa",
+        "duckdb/transaction/meta_transaction.hpp": "1a5d1f9fbde38dfb541dea6b2774ca6360450e0b6ff983bcc97163bd9a60e2fa"
+      },
+      "dependency_license_sha256": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3",
+      "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "core_extension_sha256": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+      "experimental_current_unique_fast_path": true,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_compat_mutations": true,
+      "compat_mutation_sources_sha256": {
+        "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+        "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42"
+      },
+      "probe_source_sha256": "62bda50850f24ef79c5b025301600d8db50ed4e7a17dfbfc52bf3586c6767c77",
+      "integrity_sources_sha256": {
+        "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+        "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+        "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+        "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+        "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+        "native/catalog.sql": "5da97390c926dade88eee4803adec095be9661a63ee5154d17b1337bd92a82bd",
+        "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+      },
+      "library_sha256": "0201c8473b960c5c7aa8f57cae422f60c43b3f026cd6b9f594dbecbc13cd1d33",
+      "extension_sha256": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390"
+    },
+    "node": {
+      "version": "v24.13.0",
+      "platform": "darwin",
+      "architecture": "arm64"
+    }
+  },
+  "sourceFixture": {
+    "size": 10000000,
+    "groupSize": 256,
+    "groups": 39063,
+    "initialAdded": 22,
+    "position": "39087",
+    "latestCut": true
+  },
+  "sourceSha256Before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+  "runDirectory": "build/anti-driver-plans/run-hv12Cm",
+  "clone": {
+    "mode": "darwin_clonefile",
+    "status": "cloned"
+  },
+  "patchReceipt": {
+    "commandId": "anti-plan-59fa9c3c-11d5-4e14-b2e9-6df4975fcb68-00000000",
+    "position": "39096",
+    "asserted": [
+      "9793ee17d834246f8b0ff0c239b9ee29deed178498dd1bf3ba94cdd03f71217b",
+      "78efe6ba3c64459954f1bbdfc9cea77902821411eefcd11852963660a2295e4e"
+    ],
+    "retracted": [
+      "3908510832029f8bac99d426da223a9d39af796ca71abce8ef12dc9942cacefa",
+      "dc1475823589ad4eb515bfa98d2707ab469b96fc4ea37fa98c005375df23637c"
+    ],
+    "schema": "anti_probe",
+    "version": 1,
+    "type": "Probe",
+    "entityId": "probe-000",
+    "schemaHash": "b4f0ffbafa563744336fab5e427596c1effc5910b2fbb0ca9c7609f24b6606a0",
+    "requestHash": "276c34e9f0f8adff601f2a674c775cc332f2c4b1d6551aaf6b064f97ba28d46b"
+  },
+  "admission": {
+    "logicalInput": 1680202,
+    "fullRightFacts": "1679946",
+    "positiveFacts": 256,
+    "exactCapPassed": true,
+    "minusOneRejected": true
+  },
+  "plan": {
+    "answer": {
+      "position": "39096",
+      "route": "sql",
+      "reason": "owned_allcut_unique_scalable_anti_join",
+      "rows": [
+        [
+          {
+            "tag": "str",
+            "value": "probe-001"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-002"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-003"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-004"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-005"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-006"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-007"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-008"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-009"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-010"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-011"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-012"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-013"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-014"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-015"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-016"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-017"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-018"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-019"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-020"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-021"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-022"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-023"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-024"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-025"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-026"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-027"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-028"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-029"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-030"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-031"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-032"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-033"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-034"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-035"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-036"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-037"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-038"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-039"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-040"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-041"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-042"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-043"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-044"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-045"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-046"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-047"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-048"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-049"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-050"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-051"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-052"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-053"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-054"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-055"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-056"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-057"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-058"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-059"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-060"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-061"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-062"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-063"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-064"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-065"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-066"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-067"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-068"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-069"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-070"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-071"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-072"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-073"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-074"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-075"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-076"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-077"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-078"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-079"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-080"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-081"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-082"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-083"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-084"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-085"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-086"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-087"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-088"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-089"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-090"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-091"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-092"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-093"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-094"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-095"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-096"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-097"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-098"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-099"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-100"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-101"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-102"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-103"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-104"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-105"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-106"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-107"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-108"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-109"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-110"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-111"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-112"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-113"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-114"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-115"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-116"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-117"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-118"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-119"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-120"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-121"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-122"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-123"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-124"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-125"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-126"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-127"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-128"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-129"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-130"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-131"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-132"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-133"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-134"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-135"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-136"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-137"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-138"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-139"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-140"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-141"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-142"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-143"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-144"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-145"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-146"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-147"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-148"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-149"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-150"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-151"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-152"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-153"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-154"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-155"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-156"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-157"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-158"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-159"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-160"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-161"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-162"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-163"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-164"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-165"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-166"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-167"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-168"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-169"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-170"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-171"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-172"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-173"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-174"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-175"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-176"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-177"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-178"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-179"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-180"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-181"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-182"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-183"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-184"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-185"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-186"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-187"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-188"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-189"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-190"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-191"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-192"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-193"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-194"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-195"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-196"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-197"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-198"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-199"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-200"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-201"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-202"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-203"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-204"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-205"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-206"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-207"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-208"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-209"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-210"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-211"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-212"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-213"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-214"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-215"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-216"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-217"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-218"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-219"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-220"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-221"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-222"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-223"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-224"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-225"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-226"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-227"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-228"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-229"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-230"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-231"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-232"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-233"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-234"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-235"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-236"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-237"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-238"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-239"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-240"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-241"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-242"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-243"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-244"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-245"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-246"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-247"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-248"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-249"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-250"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-251"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-252"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-253"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-254"
+          }
+        ],
+        [
+          {
+            "tag": "str",
+            "value": "probe-255"
+          }
+        ]
+      ],
+      "counters": null
+    },
+    "generatedSqlSha256": "98e05c3030cf97a629772bcd53f1f876117c841c325f7ed88db2a4fff3748e91",
+    "diagnosticWallMs": 216.3469589999986,
+    "pruningCtesPresent": false,
+    "operators": [
+      {
+        "path": "0",
+        "type": "RESULT_COLLECTOR",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {},
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0",
+        "type": "EXECUTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {},
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0",
+        "type": "EXPLAIN_ANALYZE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.000041,
+        "outputBytes": 0,
+        "detail": {},
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.000458,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "integrity",
+          "Table Index": "0",
+          "Execution Mode": "MATERIALIZED",
+          "Order Mode": "SEQUENTIAL",
+          "Materialized Consumers": "3",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          1,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.020458,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "ok",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.004084,
+        "outputBytes": 9,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0005000000000000001,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.0.0",
+        "type": "ORDER_BY",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.028541999999999998,
+        "outputBytes": 8,
+        "detail": {
+          "Order By": "seq ASC",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000084,
+        "outputBytes": 8,
+        "detail": {
+          "Projections": "#1",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.0.0.0.0",
+        "type": "FILTER",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.011707999999999998,
+        "outputBytes": 4137,
+        "detail": {
+          "Expression": "(NOT internal)",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          3
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.0.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 3,
+        "rowsScanned": null,
+        "timingMs": 0.000292,
+        "outputBytes": 4475,
+        "detail": {
+          "Projections": [
+            "#5",
+            "#1",
+            "#0",
+            "#2"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          3
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.0.0.0.0.0.0",
+        "type": "TABLE_SCAN",
+        "rowsProduced": 3,
+        "rowsScanned": 0,
+        "timingMs": 0.03125,
+        "outputBytes": 9361,
+        "detail": {
+          "Function": "DUCKDB_DATABASES",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0014160000000000002,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": [
+            "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+            "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001291,
+        "outputBytes": 9,
+        "detail": {
+          "Aggregates": [
+            "\"first\"(#0)",
+            "count_star()"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000084,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "#0",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.003875,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "ok",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0035,
+        "outputBytes": 19,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.004084,
+        "outputBytes": 11,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.005834000000000001,
+        "outputBytes": 10,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.0",
+        "type": "COLUMN_DATA_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0011660000000000002,
+        "outputBytes": 8,
+        "detail": {
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.00475,
+        "outputBytes": 2,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001083,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "(#0 = 1)",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.0.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001042,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {
+          "Projections": "42",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.0.0.0.0",
+        "type": "LIMIT",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.000292,
+        "outputBytes": 0,
+        "detail": {
+          "Limit": "1",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.0.0.0.0.0",
+        "type": "FILTER",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.011333,
+        "outputBytes": 0,
+        "detail": {
+          "Expression": "((singleton IS DISTINCT FROM true) OR (NOT (revision = 3)))",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.0.0.0.0.0.0",
+        "type": "TABLE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": 1,
+        "timingMs": 0.006000999999999999,
+        "outputBytes": 5,
+        "detail": {
+          "Table": "facts.td_catalog_v1.catalog_revision",
+          "Type": "Sequential Scan",
+          "Projections": [
+            "singleton",
+            "revision"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000709,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "(#0 = 1)",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000292,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {
+          "Projections": "42",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0",
+        "type": "BLOCKWISE_NL_JOIN",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.007540999999999999,
+        "outputBytes": 0,
+        "detail": {
+          "Join Type": "INNER",
+          "Condition": "CASE  WHEN (false) THEN (SUBQUERY) WHEN ((version = 9)) THEN ((SUBQUERY != 1)) WHEN (false) THEN ((SUBQUERY != 1)) WHEN (false) THEN ((SUBQUERY != 1)) ELSE (SUBQUERY != 1) END",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.005416000000000001,
+        "outputBytes": 29,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.003,
+        "outputBytes": 25,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0032489999999999997,
+        "outputBytes": 24,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.004749000000000001,
+        "outputBytes": 16,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.0.0.0",
+        "type": "COLUMN_DATA_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000583,
+        "outputBytes": 8,
+        "detail": {
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.0.0.1",
+        "type": "COLUMN_DATA_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.00075,
+        "outputBytes": 8,
+        "detail": {
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.0.1",
+        "type": "COLUMN_DATA_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000541,
+        "outputBytes": 8,
+        "detail": {
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.1",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000541,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "(#0 = 1)",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.1.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0012499999999999998,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.1.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000334,
+        "outputBytes": 4,
+        "detail": {
+          "Projections": "42",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.1.0.0.0",
+        "type": "STREAMING_LIMIT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0013750000000000001,
+        "outputBytes": 8,
+        "detail": {
+          "Limit": "1",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.0.1.0.0.0.0",
+        "type": "TABLE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": 1,
+        "timingMs": 0.003709,
+        "outputBytes": 8,
+        "detail": {
+          "Table": "facts.td_catalog_v1.catalog_revision",
+          "Type": "Sequential Scan",
+          "Projections": "",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.0.1",
+        "type": "TABLE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": 1,
+        "timingMs": 0.011,
+        "outputBytes": 4,
+        "detail": {
+          "Table": "facts.main.store_meta",
+          "Type": "Sequential Scan",
+          "Projections": "version",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.1",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0022500000000000003,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.0.1.1.0.0.0.1.0",
+        "type": "EMPTY_RESULT",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.000417,
+        "outputBytes": 0,
+        "detail": {},
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.1",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001709,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "(#0 = 1)",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.1.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.002125,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.0.1.0.0",
+        "type": "EMPTY_RESULT",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.000166,
+        "outputBytes": 0,
+        "detail": {},
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.0.0.1.0.0.0.0.1",
+        "type": "COLUMN_DATA_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0007080000000000001,
+        "outputBytes": 8,
+        "detail": {
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.000916,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "cuts",
+          "Table Index": "1",
+          "Execution Mode": "MATERIALIZED",
+          "Order Mode": "SEQUENTIAL",
+          "Materialized Consumers": "4",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          1,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0015,
+        "outputBytes": 16,
+        "detail": {
+          "Projections": [
+            "valid",
+            "known"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0036239999999999996,
+        "outputBytes": 5,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000833,
+        "outputBytes": 4,
+        "detail": {
+          "Projections": [
+            "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+            "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.0.0.0.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001542,
+        "outputBytes": 12,
+        "detail": {
+          "Aggregates": [
+            "\"first\"(#0)",
+            "count_star()"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.0.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 4,
+        "detail": {
+          "Projections": "#0",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.0.0.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.007167,
+        "outputBytes": 4,
+        "detail": {
+          "Projections": "CASE  WHEN ((position < 39096)) THEN (CAST(\"error\"('TD_E_QUERY_INPUT: knowledge cut exceeds committed clock') AS INTEGER)) ELSE 39096 END",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.0.0.0.0.0.0.0",
+        "type": "TABLE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": 1,
+        "timingMs": 0.007625,
+        "outputBytes": 8,
+        "detail": {
+          "Table": "facts.main.clock",
+          "Type": "Sequential Scan",
+          "Projections": "position",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.0.0.1",
+        "type": "FILTER",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001959,
+        "outputBytes": 1,
+        "detail": {
+          "Expression": "ok",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.0.0.1.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001416,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "0",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.000583,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "owner_cap",
+          "Table Index": "2",
+          "Execution Mode": "MATERIALIZED",
+          "Order Mode": "SEQUENTIAL",
+          "Materialized Consumers": "3",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          1,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0024159999999999997,
+        "outputBytes": 8,
+        "detail": {
+          "Projections": "capabilities",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.0.0",
+        "type": "DUMMY_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000084,
+        "outputBytes": 4,
+        "detail": {},
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.007,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "input_statistics",
+          "Table Index": "3",
+          "Execution Mode": "STREAMING_FANOUT",
+          "Fanout Mode": "BUFFERED",
+          "Consumers": "1",
+          "Direct Consumers": "0",
+          "Buffered Consumers": "1",
+          "Chunk Storage": "POOLED/COLUMN_DATA",
+          "Order Mode": "SEQUENTIAL",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          1,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001791,
+        "outputBytes": 32,
+        "detail": {
+          "Projections": [
+            "n",
+            "invalid",
+            "carrier_bytes"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.0.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 12.324200000000046,
+        "outputBytes": 32,
+        "detail": {
+          "Aggregates": [
+            "count_star()",
+            "count_star() FILTER (WHERE #0) Filter: #0",
+            "sum(#1)"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 102.20702300000009,
+        "outputBytes": 28563434,
+        "detail": {
+          "Projections": [
+            "((v_tag > 8) OR (octet_length(encode(e)) > 512) OR (octet_length(encode(a)) > 512) OR ((v_tag IN (1, 5, 8)) AND (octet_length(v_s) > 512)) OR ((v_tag = 8) AND (octet_length(v_s) = 0)) OR CASE  WHEN ((v_tag = 7)) THEN (CASE  WHEN ((octet_length(v_s) > 4096)) THEN (true) ELSE (td_validate_json_source_v2(decode(v_s)) IS DISTINCT FROM true) END) ELSE false END)",
+            "(((120 + CAST(octet_length(encode(e)) AS HUGEINT)) + CAST(octet_length(encode(a)) AS HUGEINT)) + CAST(CASE  WHEN ((v_tag IN (1, 5, 7, 8))) THEN (octet_length(v_s)) ELSE 0 END AS HUGEINT))"
+          ],
+          "Estimated Cardinality": "893"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.0.0.0.0",
+        "type": "NESTED_LOOP_JOIN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 24.795055999999967,
+        "outputBytes": 6076506698,
+        "detail": {
+          "Join Type": "INNER",
+          "Conditions": [
+            "valid_from <= valid",
+            "tx_from <= known",
+            "tx_to > known"
+          ],
+          "Estimated Cardinality": "893"
+        },
+        "childRows": [
+          1680202,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.0.0.0.0.0",
+        "type": "FILTER",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 37.219459999999955,
+        "outputBytes": 6049623466,
+        "detail": {
+          "Expression": "((valid_from <= 0) AND ((a = 'i') OR (a = 'probe_member')))",
+          "Estimated Cardinality": "10000539"
+        },
+        "childRows": [
+          10000531
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.0.0.0.0.0.0",
+        "type": "TABLE_SCAN",
+        "rowsProduced": 10000531,
+        "rowsScanned": 10000536,
+        "timingMs": 95.99380300000003,
+        "outputBytes": 6657003387,
+        "detail": {
+          "Table": "facts.main.assertions",
+          "Type": "Sequential Scan",
+          "Projections": [
+            "valid_from",
+            "tx_from",
+            "tx_to",
+            "a",
+            "v_tag",
+            "e",
+            "v_s"
+          ],
+          "Filters": "optional: (a IN ('i', 'probe_member'))",
+          "Dynamic Filters": [
+            "(valid_from <= 0)",
+            "(tx_from <= 39096)",
+            "(tx_to > 39096)"
+          ],
+          "Estimated Cardinality": "10000539"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.0.0.0.0.1",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.00125,
+        "outputBytes": 16,
+        "detail": {
+          "CTE Index": "1",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.003792,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "admission",
+          "Table Index": "4",
+          "Execution Mode": "MATERIALIZED",
+          "Order Mode": "SEQUENTIAL",
+          "Materialized Consumers": "3",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          1,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.01575,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "ok",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.015625,
+        "outputBytes": 33,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.00375,
+        "outputBytes": 32,
+        "detail": {
+          "CTE Index": "3",
+          "CTE Mode": "BUFFERED",
+          "Consumer": "0",
+          "Scan Mode": "CHUNK",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.0.0.1",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000917,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "0",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 110.86416000000003,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "active",
+          "Table Index": "5",
+          "Execution Mode": "HYBRID_FANOUT",
+          "Fanout Mode": "DIRECT",
+          "Consumers": "5",
+          "Direct Consumers": "5",
+          "Buffered Consumers": "0",
+          "Chunk Storage": "NONE",
+          "Order Mode": "UNORDERED",
+          "Materialized Consumers": "1",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          0,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0",
+        "type": "UNION",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {},
+        "childRows": [
+          1680202,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 0.7042939999999994,
+        "outputBytes": 6041613220,
+        "detail": {
+          "Projections": [
+            "e",
+            "a",
+            "v_tag",
+            "v_s",
+            "v_b",
+            "v_i",
+            "v_f"
+          ],
+          "Estimated Cardinality": "1787"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0",
+        "type": "NESTED_LOOP_JOIN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 27.874813999999965,
+        "outputBytes": 6123943118,
+        "detail": {
+          "Join Type": "INNER",
+          "Conditions": [
+            "valid_from <= valid",
+            "tx_from <= known",
+            "tx_to > known"
+          ],
+          "Estimated Cardinality": "1787"
+        },
+        "childRows": [
+          1680202,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.0",
+        "type": "FILTER",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 39.42430300000001,
+        "outputBytes": 6081938068,
+        "detail": {
+          "Expression": "((valid_from <= 0) AND ((a = 'i') OR (a = 'probe_member')))",
+          "Estimated Cardinality": "10000539"
+        },
+        "childRows": [
+          10000531
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.0.0",
+        "type": "TABLE_SCAN",
+        "rowsProduced": 10000531,
+        "rowsScanned": 10000536,
+        "timingMs": 123.44969,
+        "outputBytes": 6830763838,
+        "detail": {
+          "Table": "facts.main.assertions",
+          "Type": "Sequential Scan",
+          "Projections": [
+            "valid_from",
+            "tx_from",
+            "tx_to",
+            "a",
+            "e",
+            "v_tag",
+            "v_s",
+            "v_b",
+            "v_i",
+            "v_f"
+          ],
+          "Filters": "optional: (a IN ('i', 'probe_member'))",
+          "Dynamic Filters": [
+            "(valid_from <= 0)",
+            "(tx_from <= 39096)",
+            "(tx_to > 39096)"
+          ],
+          "Estimated Cardinality": "10000539"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.1",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0052910000000000006,
+        "outputBytes": 25,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.1.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000917,
+        "outputBytes": 16,
+        "detail": {
+          "CTE Index": "1",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.1.1",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.00475,
+        "outputBytes": 9,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.1.1.0",
+        "type": "FILTER",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.003126,
+        "outputBytes": 8,
+        "detail": {
+          "Expression": "((capabilities & 2) != 0)",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.1.1.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000833,
+        "outputBytes": 8,
+        "detail": {
+          "CTE Index": "2",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.1.1.1",
+        "type": "FILTER",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.002332,
+        "outputBytes": 1,
+        "detail": {
+          "Expression": "ok",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.0.0.1.1.1.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.005417,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "4",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1",
+        "type": "PROJECTION",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {
+          "Projections": [
+            "#0",
+            "__internal_decompress_string(#1)",
+            "#2",
+            "#3",
+            "#4",
+            "CAST(#5 AS BIGINT)",
+            "#6"
+          ],
+          "Estimated Cardinality": "1787"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0",
+        "type": "HASH_GROUP_BY",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.000292,
+        "outputBytes": 0,
+        "detail": {
+          "Groups": [
+            "#0",
+            "#1",
+            "#2",
+            "#3",
+            "#4",
+            "#5",
+            "#6"
+          ],
+          "Aggregates": "",
+          "Estimated Cardinality": "1787"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {
+          "Projections": [
+            "e",
+            "a",
+            "v_tag",
+            "v_s",
+            "v_b",
+            "v_i",
+            "v_f"
+          ],
+          "Estimated Cardinality": "1787"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {
+          "Projections": [
+            "#0",
+            "__internal_compress_string_uhugeint(#1)",
+            "#2",
+            "#3",
+            "#4",
+            "CAST(#5 AS INTEGER)",
+            "#6"
+          ],
+          "Estimated Cardinality": "1787"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0,
+        "outputBytes": 0,
+        "detail": {
+          "Projections": [
+            "e",
+            "a",
+            "v_tag",
+            "v_s",
+            "v_b",
+            "v_i",
+            "v_f"
+          ],
+          "Estimated Cardinality": "1787"
+        },
+        "childRows": [
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0",
+        "type": "NESTED_LOOP_JOIN",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.0007499999999999999,
+        "outputBytes": 0,
+        "detail": {
+          "Join Type": "INNER",
+          "Conditions": [
+            "valid_from <= valid",
+            "tx_from <= known",
+            "tx_to > known"
+          ],
+          "Estimated Cardinality": "1787"
+        },
+        "childRows": [
+          1376,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.0",
+        "type": "FILTER",
+        "rowsProduced": 1376,
+        "rowsScanned": null,
+        "timingMs": 0.060125,
+        "outputBytes": 6410768,
+        "detail": {
+          "Expression": "((valid_from <= 0) AND ((a = 'i') OR (a = 'probe_member')))",
+          "Estimated Cardinality": "10000539"
+        },
+        "childRows": [
+          8191
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.0.0",
+        "type": "TABLE_SCAN",
+        "rowsProduced": 8191,
+        "rowsScanned": 8191,
+        "timingMs": 0.931333,
+        "outputBytes": 7024118,
+        "detail": {
+          "Table": "facts.main.assertions",
+          "Type": "Sequential Scan",
+          "Projections": [
+            "valid_from",
+            "tx_from",
+            "tx_to",
+            "a",
+            "e",
+            "v_tag",
+            "v_s",
+            "v_b",
+            "v_i",
+            "v_f"
+          ],
+          "Filters": "optional: (a IN ('i', 'probe_member'))",
+          "Estimated Cardinality": "10000539"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.1",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.00025,
+        "outputBytes": 0,
+        "detail": {},
+        "childRows": [
+          1,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.1.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0015,
+        "outputBytes": 16,
+        "detail": {
+          "CTE Index": "1",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.1.1",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.003751,
+        "outputBytes": 0,
+        "detail": {},
+        "childRows": [
+          0,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.1.1.0",
+        "type": "FILTER",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.002125,
+        "outputBytes": 0,
+        "detail": {
+          "Expression": "((capabilities & 2) = 0)",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.1.1.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000875,
+        "outputBytes": 8,
+        "detail": {
+          "CTE Index": "2",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.1.1.1",
+        "type": "FILTER",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.002708,
+        "outputBytes": 1,
+        "detail": {
+          "Expression": "ok",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.0.1.0.0.0.0.0.1.1.1.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.005457999999999999,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "4",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.008584,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "statistics",
+          "Table Index": "6",
+          "Execution Mode": "STREAMING_FANOUT",
+          "Fanout Mode": "BUFFERED",
+          "Consumers": "1",
+          "Direct Consumers": "0",
+          "Buffered Consumers": "1",
+          "Chunk Storage": "POOLED/COLUMN_DATA",
+          "Order Mode": "SEQUENTIAL",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          1,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0038330000000000005,
+        "outputBytes": 32,
+        "detail": {
+          "Projections": [
+            "n",
+            "string_bytes",
+            "e_bytes"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.0.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 3.8454649999999746,
+        "outputBytes": 32,
+        "detail": {
+          "Aggregates": [
+            "count_star()",
+            "sum(#0)",
+            "max(#1)"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 24.812293000000004,
+        "outputBytes": 28132768,
+        "detail": {
+          "Projections": [
+            "((#0 + octet_length(encode(a))) + CASE  WHEN ((v_tag IN (1, 5, 7, 8))) THEN (octet_length(v_s)) ELSE 0 END)",
+            "#0"
+          ],
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 2.3834359999999997,
+        "outputBytes": 5995852906,
+        "detail": {
+          "Projections": [
+            "octet_length(encode(e))",
+            "a",
+            "v_tag",
+            "v_s"
+          ],
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.0.0.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 0.08415700000000023,
+        "outputBytes": 6041613220,
+        "detail": {
+          "CTE Index": "5",
+          "CTE Mode": "DIRECT",
+          "Consumer": "0",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.0006670000000000001,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "mode",
+          "Table Index": "7",
+          "Execution Mode": "MATERIALIZED",
+          "Order Mode": "SEQUENTIAL",
+          "Materialized Consumers": "3",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          1,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.011875,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "use_sql",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.006750000000000002,
+        "outputBytes": 66,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.006792,
+        "outputBytes": 34,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.004834,
+        "outputBytes": 33,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.004,
+        "outputBytes": 32,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.004,
+        "outputBytes": 24,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.007876000000000001,
+        "outputBytes": 16,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.0.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000874,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          256
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.0.0.0",
+        "type": "FILTER",
+        "rowsProduced": 256,
+        "rowsScanned": null,
+        "timingMs": 5.569597999999995,
+        "outputBytes": 17664,
+        "detail": {
+          "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.0.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 0.08277500000000024,
+        "outputBytes": 6041613220,
+        "detail": {
+          "CTE Index": "5",
+          "CTE Mode": "DIRECT",
+          "Consumer": "1",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.0.1",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0012499999999999998,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          256
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.0.1.0",
+        "type": "FILTER",
+        "rowsProduced": 256,
+        "rowsScanned": null,
+        "timingMs": 5.210248000000002,
+        "outputBytes": 17664,
+        "detail": {
+          "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.0.1.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 0.08362500000000024,
+        "outputBytes": 6041613220,
+        "detail": {
+          "CTE Index": "5",
+          "CTE Mode": "DIRECT",
+          "Consumer": "2",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.1",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000375,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          256
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.1.0",
+        "type": "FILTER",
+        "rowsProduced": 256,
+        "rowsScanned": null,
+        "timingMs": 5.419373999999994,
+        "outputBytes": 17664,
+        "detail": {
+          "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.0.1.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 0.08628900000000024,
+        "outputBytes": 6041613220,
+        "detail": {
+          "CTE Index": "5",
+          "CTE Mode": "DIRECT",
+          "Consumer": "3",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.1",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.002375,
+        "outputBytes": 8,
+        "detail": {
+          "Aggregates": "count_star()",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          256
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.1.0",
+        "type": "FILTER",
+        "rowsProduced": 256,
+        "rowsScanned": null,
+        "timingMs": 6.329452000000008,
+        "outputBytes": 17664,
+        "detail": {
+          "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.0.1.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 0.08210400000000023,
+        "outputBytes": 6041613220,
+        "detail": {
+          "CTE Index": "5",
+          "CTE Mode": "DIRECT",
+          "Consumer": "4",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.0.1",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.003542,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "0",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.0.1",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001375,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "4",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.0.0.1",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.004792,
+        "outputBytes": 32,
+        "detail": {
+          "CTE Index": "6",
+          "CTE Mode": "BUFFERED",
+          "Consumer": "0",
+          "Scan Mode": "CHUNK",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 27.062979000000006,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "anti_input",
+          "Table Index": "8",
+          "Execution Mode": "MATERIALIZED",
+          "Order Mode": "UNORDERED",
+          "Materialized Consumers": "2",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          1680202,
+          0
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 0.24768300000000013,
+        "outputBytes": 111523860,
+        "detail": {
+          "Projections": [
+            "e",
+            "a",
+            "v_tag",
+            "v_s",
+            "v_b",
+            "v_i",
+            "v_f"
+          ],
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 0.6565140000000007,
+        "outputBytes": 113204062,
+        "detail": {},
+        "childRows": [
+          1680202,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0.0",
+        "type": "FILTER",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 15.818966000000007,
+        "outputBytes": 111523860,
+        "detail": {
+          "Expression": "((encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB) OR (encode(a) IS NOT DISTINCT FROM 'i'::BLOB))",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 1.7442019999999998,
+        "outputBytes": 111523860,
+        "detail": {
+          "CTE Index": "5",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0.1",
+        "type": "FILTER",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001959,
+        "outputBytes": 1,
+        "detail": {
+          "Expression": "SUBQUERY",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001625,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": [
+            "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+            "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0.1.0.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0015,
+        "outputBytes": 9,
+        "detail": {
+          "Aggregates": [
+            "\"first\"(#0)",
+            "count_star()"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000084,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "#0",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.0.0.1.0.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001584,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "7",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1",
+        "type": "CTE",
+        "rowsProduced": 0,
+        "rowsScanned": null,
+        "timingMs": 0.033668,
+        "outputBytes": 0,
+        "detail": {
+          "CTE Name": "sql_answer",
+          "Table Index": "10",
+          "Execution Mode": "STREAMING_FANOUT",
+          "Fanout Mode": "BUFFERED",
+          "Consumers": "1",
+          "Direct Consumers": "0",
+          "Buffered Consumers": "1",
+          "Chunk Storage": "POOLED/COLUMN_DATA",
+          "Order Mode": "UNORDERED",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          255,
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.004166,
+        "outputBytes": 11013,
+        "detail": {
+          "Projections": [
+            "#0",
+            "#1",
+            "#2",
+            "#3",
+            "CAST(#4 AS BIGINT)",
+            "#5"
+          ],
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0",
+        "type": "HASH_GROUP_BY",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.104831,
+        "outputBytes": 10212,
+        "detail": {
+          "Groups": [
+            "#0",
+            "#1",
+            "#2",
+            "#3",
+            "#4",
+            "#5"
+          ],
+          "Aggregates": "",
+          "Estimated Cardinality": "714"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.0006670000000000001,
+        "outputBytes": 7908,
+        "detail": {
+          "Projections": [
+            "present",
+            "h0t",
+            "h0s",
+            "h0b",
+            "h0i",
+            "h0f"
+          ],
+          "Estimated Cardinality": "714"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.001333,
+        "outputBytes": 7908,
+        "detail": {
+          "Projections": [
+            "#0",
+            "#1",
+            "#2",
+            "#3",
+            "CAST(#4 AS TINYINT)",
+            "#5"
+          ],
+          "Estimated Cardinality": "714"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.003292,
+        "outputBytes": 9693,
+        "detail": {
+          "Projections": [
+            "present",
+            "h0t",
+            "h0s",
+            "h0b",
+            "h0i",
+            "h0f"
+          ],
+          "Estimated Cardinality": "714"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.010083000000000002,
+        "outputBytes": 4335,
+        "detail": {},
+        "childRows": [
+          255,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.0",
+        "type": "HASH_JOIN",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 82.42122200000001,
+        "outputBytes": 4080,
+        "detail": {
+          "Join Type": "ANTI",
+          "Conditions": [
+            "encode(e) IS NOT DISTINCT FROM encode(e)",
+            "v_tag IS NOT DISTINCT FROM v_tag",
+            "v_s IS NOT DISTINCT FROM v_s",
+            "v_b IS NOT DISTINCT FROM v_b",
+            "v_i IS NOT DISTINCT FROM v_i",
+            "v_f IS NOT DISTINCT FROM v_f"
+          ],
+          "Estimated Cardinality": "714"
+        },
+        "childRows": [
+          256,
+          1679946
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 256,
+        "rowsScanned": null,
+        "timingMs": 0.0005,
+        "outputBytes": 13568,
+        "detail": {
+          "Projections": [
+            "#0",
+            "#2",
+            "#3",
+            "#4",
+            "#5",
+            "#6"
+          ],
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          256
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.0.0.0",
+        "type": "FILTER",
+        "rowsProduced": 256,
+        "rowsScanned": null,
+        "timingMs": 5.887405000000002,
+        "outputBytes": 17664,
+        "detail": {
+          "Expression": "(encode(a) IS NOT DISTINCT FROM 'probe_member'::BLOB)",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.0.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 2.363295000000001,
+        "outputBytes": 111523860,
+        "detail": {
+          "CTE Index": "8",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.0.1",
+        "type": "PROJECTION",
+        "rowsProduced": 1679946,
+        "rowsScanned": null,
+        "timingMs": 0.09508499999999996,
+        "outputBytes": 84627828,
+        "detail": {
+          "Projections": [
+            "#0",
+            "#2",
+            "#3",
+            "#4",
+            "#5",
+            "#6"
+          ],
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1679946
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.0.1.0",
+        "type": "FILTER",
+        "rowsProduced": 1679946,
+        "rowsScanned": null,
+        "timingMs": 13.027884000000013,
+        "outputBytes": 111506964,
+        "detail": {
+          "Expression": "(encode(a) IS NOT DISTINCT FROM 'i'::BLOB)",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": [
+          1680202
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.0.1.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1680202,
+        "rowsScanned": null,
+        "timingMs": 2.0514289999999997,
+        "outputBytes": 111523860,
+        "detail": {
+          "CTE Index": "8",
+          "Estimated Cardinality": "3574"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.1",
+        "type": "FILTER",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.002042,
+        "outputBytes": 1,
+        "detail": {
+          "Expression": "SUBQUERY",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.1.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001709,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": [
+            "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+            "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.1.0.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0016250000000000001,
+        "outputBytes": 9,
+        "detail": {
+          "Aggregates": [
+            "\"first\"(#0)",
+            "count_star()"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000167,
+        "outputBytes": 1,
+        "detail": {
+          "Projections": "#0",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.1.0.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000459,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "7",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1",
+        "type": "PROJECTION",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.005791,
+        "outputBytes": 20496,
+        "detail": {
+          "Projections": [
+            "#0",
+            "__internal_decompress_string(#1)",
+            "#2",
+            "CAST(#3 AS BIGINT)",
+            "CAST(#4 AS BIGINT)",
+            "CAST(#5 AS BIGINT)",
+            "#6"
+          ],
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0",
+        "type": "ORDER_BY",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.32845700000000005,
+        "outputBytes": 12753,
+        "detail": {
+          "Order By": [
+            "#7 ASC",
+            "#8 ASC",
+            "#9 ASC",
+            "#10 ASC",
+            "#11 ASC"
+          ],
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.024625,
+        "outputBytes": 40414,
+        "detail": {
+          "Projections": [
+            "#0",
+            "__internal_compress_string_uinteger(#1)",
+            "#2",
+            "CAST(#3 AS TINYINT)",
+            "CAST(#4 AS TINYINT)",
+            "CAST(#5 AS TINYINT)",
+            "#6",
+            "#7",
+            "#8",
+            "#9",
+            "CAST(#10 AS TINYINT)",
+            "#11"
+          ],
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.23983400000000002,
+        "outputBytes": 51598,
+        "detail": {
+          "Projections": [
+            "known",
+            "route",
+            "reason",
+            "rounds",
+            "derived_facts",
+            "work",
+            "tuple_json",
+            "h0t",
+            "h0s",
+            "h0b",
+            "h0i",
+            "h0f"
+          ],
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          255
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.053834999999999994,
+        "outputBytes": 18372,
+        "detail": {},
+        "childRows": [
+          255,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.0",
+        "type": "BLOCKWISE_NL_JOIN",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.076332,
+        "outputBytes": 16332,
+        "detail": {
+          "Join Type": "RIGHT",
+          "Condition": "true",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": [
+          255,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 0.023208,
+        "outputBytes": 11997,
+        "detail": {
+          "CTE Index": "10",
+          "CTE Mode": "BUFFERED",
+          "Consumer": "0",
+          "Scan Mode": "CHUNK",
+          "Estimated Cardinality": "704"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.0.1",
+        "type": "CROSS_PRODUCT",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0048330000000000005,
+        "outputBytes": 17,
+        "detail": {},
+        "childRows": [
+          1,
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.0.1.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001,
+        "outputBytes": 16,
+        "detail": {
+          "CTE Index": "1",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.0.1.1",
+        "type": "FILTER",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.0027919999999999998,
+        "outputBytes": 1,
+        "detail": {
+          "Expression": "use_sql",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.0.1.1.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000834,
+        "outputBytes": 1,
+        "detail": {
+          "CTE Index": "7",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.1",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001792,
+        "outputBytes": 8,
+        "detail": {
+          "Projections": [
+            "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+            "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.1.0",
+        "type": "UNGROUPED_AGGREGATE",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.001167,
+        "outputBytes": 16,
+        "detail": {
+          "Aggregates": [
+            "\"first\"(#0)",
+            "count_star()"
+          ],
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.1.0.0",
+        "type": "PROJECTION",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.000167,
+        "outputBytes": 8,
+        "detail": {
+          "Projections": "#0",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": [
+          1
+        ]
+      },
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.1.0.0.0.0.1.0.0.0",
+        "type": "CTE_SCAN",
+        "rowsProduced": 1,
+        "rowsScanned": null,
+        "timingMs": 0.002458,
+        "outputBytes": 8,
+        "detail": {
+          "CTE Index": "2",
+          "Estimated Cardinality": "1"
+        },
+        "childRows": []
+      }
+    ],
+    "hashJoins": [
+      {
+        "path": "0.0.0.0.1.1.1.1.1.1.1.1.1.0.0.0.0.0.0.0",
+        "type": "HASH_JOIN",
+        "rowsProduced": 255,
+        "rowsScanned": null,
+        "timingMs": 82.42122200000001,
+        "outputBytes": 4080,
+        "detail": {
+          "Join Type": "ANTI",
+          "Conditions": [
+            "encode(e) IS NOT DISTINCT FROM encode(e)",
+            "v_tag IS NOT DISTINCT FROM v_tag",
+            "v_s IS NOT DISTINCT FROM v_s",
+            "v_b IS NOT DISTINCT FROM v_b",
+            "v_i IS NOT DISTINCT FROM v_i",
+            "v_f IS NOT DISTINCT FROM v_f"
+          ],
+          "Estimated Cardinality": "714"
+        },
+        "childRows": [
+          256,
+          1679946
+        ]
+      }
+    ],
+    "sqlFile": "build/anti-driver-plans/run-hv12Cm/actual-query.sql",
+    "profileFile": "build/anti-driver-plans/run-hv12Cm/profile.json",
+    "rawProfileSha256": "c271f4953b1c9a86ffe9639ef2f3d9b2443ff6432a39e865775dddb379b2fb66"
+  },
+  "reopenVerified": true,
+  "sourceSha256After": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+  "sourceUnchanged": true
+}

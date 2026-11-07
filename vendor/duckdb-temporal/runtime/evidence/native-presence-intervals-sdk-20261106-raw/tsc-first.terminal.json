@@ -1,0 +1,14 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "node_modules/typescript/bin/tsc",
+    "-p",
+    "tsconfig.json"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "pid": 29377,
+  "startedAtUtc": "2026-11-06T09:41:42.782766+00:00",
+  "endedAtUtc": "2026-11-06T09:41:44.792666+00:00",
+  "exitCode": 0,
+  "elapsedMs": 2009.8095410503447
+}

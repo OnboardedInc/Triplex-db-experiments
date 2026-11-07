@@ -1,0 +1,420 @@
+{
+  "schema": "temporal.sdk-query-admission-v2.focused.v1",
+  "status": "focused_correctness_passed_not_promoted",
+  "writtenAt": "2026-11-06T02:14:13.855241+00:00",
+  "source": {
+    "baseCommit": "fe9ca9aa00b454f7555fe6f1392ef8ad2a3f5840",
+    "testedSourceCommit": "2bb4ca2adb63c784e53b3d5c3b24664d3c5ed043",
+    "productionSdkSourceCommit": "d024e9b8e0c2eee16d4e992c7514048115e6f80b",
+    "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+    "branch": "codex/temporal-sdk-query-admission-20261105",
+    "sourceHashes": {
+      "adapter/native-entity.ts": "73615c1b50f1f48e83a563a0db724990eb9827dd5a4ff6fb39ba1ea9265bc6f0",
+      "adapter/test-sdk-admission.ts": "de6fd6cb4b3c37e5d694aa9ca15268cfa4d43f017bb8749b0f031b9461c81b9f",
+      "adapter/test-sdk-admission-independent.ts": "a2feb71443ed74c90cda745451685890257c80a6cfca3f8d0fe1b8f9f317fc31",
+      "adapter/test-readers.ts": "1b57be0dcf21cfcc5c1d38e3eca6d78259cf9c04066c9fcb2bf561c757b72c09",
+      "adapter/test-fatal.ts": "0462c3dc85c4cf94a046b7074ab6586d14fea37f0353bfc5346abe4651ffc5dc"
+    }
+  },
+  "contract": {
+    "sdkQueryContractVersion": 2,
+    "documentation": "SDK-QUERY-ADMISSION.md",
+    "heavyMethods": [
+      "query",
+      "queryScalable",
+      "queryIntervals",
+      "queryCuts",
+      "queryLookupAt"
+    ],
+    "defaultHeavyCapacity": "min(3, configured readers); readers0 remains serialized",
+    "priorWriteBarrier": "captured synchronously at original public invocation, before FIFO",
+    "timeoutOrigin": "original public admission; includes FIFO/writer/lease/execution/decoding",
+    "timeoutCompatibility": "intentional v2 change from after-queue timeout; no public selector",
+    "lightReads": "at/presenceAt/history/receipt/batchReceipt unchanged pooled path",
+    "admissionCount": "all pooled internal drains bounded by readerCount+maxQueuedReads",
+    "readerStats": "unchanged physical lease shape; waiting excludes private heavy FIFO",
+    "memoryScope": "scheduling policy only; no shared native/engine/host-memory containment claim"
+  },
+  "runtime": {
+    "stagedRuntime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-20261105-01/runtime",
+    "frozenRuntime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime",
+    "frozenManifest": {
+      "path": "evidence/sdk-query-admission-v2-20261105/frozen-SHA256SUMS",
+      "sha256": "8f1bfbcb69409f308a74a32a62f787693739798cc0c72df3710d92dba3798d71"
+    },
+    "frozenFileCount": 445,
+    "frozenModes": "files0444 directories0555",
+    "nativeAndProductionPins": {
+      "build/adapter/native-entity.js": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+      "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+      "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+      "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+      "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    },
+    "actualSdkChain": {
+      "api": {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime/node_modules/@duckdb/node-api/lib/index.js",
+        "sha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+      },
+      "bindings": {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+        "sha256": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce"
+      },
+      "platform": {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "sha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+      },
+      "engine": {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-frozen-032-20261105/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+      }
+    },
+    "productionDelta": "native-entity.js only; native-schema.js/native-duckdb-port.mjs/native/engine unchanged",
+    "baselineArchiveManifestSha256": "b17f748f92f8fa94bd5b9218602993e8b0e5f4b9ab863b38d7941fb11769580b",
+    "baselineArchiveBeforeAndAfter": {
+      "filesCheckedEach": 445,
+      "unchanged": true,
+      "rawBefore": {
+        "path": "evidence/sdk-query-admission-v2-20261105/archive-before.json",
+        "sha256": "b5b210923b46e680ecfe7bae20cb9d462ed2630083aa3fffa5f7d23e069d4951"
+      },
+      "rawAfter": {
+        "path": "evidence/sdk-query-admission-v2-20261105/archive-after.json",
+        "sha256": "0eae5c61a636a2af12c6000220f86dcd81686c3ba14b3f4b738bdd7a0d42d1b1"
+      }
+    },
+    "nativeFlags": {
+      "experimental_current_unique_fast_path": true,
+      "experimental_injective_projection_fast_path": true,
+      "experimental_identity_count_fast_path": false,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_streaming_source_fast_path": true
+    }
+  },
+  "build": {
+    "nodeVersion": "24.13.0",
+    "typescriptVersion": "6.0.2",
+    "compilerSha256": "2cf94b017788761cff62c0f58d6fa3c299afd0c51f6576ca5786f5762b172962",
+    "typecheck": {
+      "command": "node_modules/.bin/tsc --noEmit",
+      "source": "d024e9b8e0c2eee16d4e992c7514048115e6f80b",
+      "exitCode": 0
+    },
+    "finalEmission": {
+      "command": "node_modules/.bin/tsc --outDir __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-20261105-01/runtime/build/adapter",
+      "source": "2bb4ca2adb63c784e53b3d5c3b24664d3c5ed043",
+      "exitCode": 0,
+      "raw": {
+        "path": "evidence/sdk-query-admission-v2-20261105/compile-final.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "nativeBuild": "none; exact original B core/companion/control reused"
+  },
+  "finalChecks": {
+    "totalMethods": 92,
+    "failed": 0,
+    "skipped": 0,
+    "typecheck": "passed",
+    "suites": {
+      "sdkOwn": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "raw": {
+          "path": "evidence/sdk-query-admission-v2-20261105/sdk-own-third.tap",
+          "sha256": "c7eaba0f0ba321084fe0767fe201f3549094c78f93b293ab10818e83b8b5aff0"
+        },
+        "finishedAt": "2026-11-06T02:01:34.335577+00:00"
+      },
+      "sdkIndependent": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "raw": {
+          "path": "evidence/sdk-query-admission-v2-20261105/sdk-independent-second.tap",
+          "sha256": "5120645f67682688b106b79101ee3156623fcacd0f428083143385f391fcbfd3"
+        },
+        "finishedAt": "2026-11-06T02:05:18.277003+00:00"
+      },
+      "readerControlCleanupFatal": {
+        "passed": 27,
+        "failed": 0,
+        "skipped": 0,
+        "raw": {
+          "path": "evidence/sdk-query-admission-v2-20261105/sdk-regressions-first.tap",
+          "sha256": "61705c8a382c9adbc83bc06f374d4fceaf9f0b91b647a88199a8e95d2117c800"
+        },
+        "finishedAt": "2026-11-06T02:03:28.319273+00:00"
+      },
+      "broaderPublic": {
+        "passed": 55,
+        "failed": 0,
+        "skipped": 0,
+        "raw": {
+          "path": "evidence/sdk-query-admission-v2-20261105/sdk-broader-first.tap",
+          "sha256": "9cea3061d5513eb61198d5099fb3af6d2e9399e84408bab95d00194dc2a80e72"
+        },
+        "finishedAt": "2026-11-06T02:11:34.316113+00:00"
+      }
+    },
+    "existingReaderControlCleanupFatalCounts": {
+      "readers": 10,
+      "control": 7,
+      "cleanup": 6,
+      "fatal": 4
+    },
+    "broaderCounts": {
+      "native-datetime-reference": 5,
+      "native-json-blob": 11,
+      "scalable-comparison": 7,
+      "native-interval-query": 4,
+      "native-multi-cut": 6,
+      "native-temporal-lookup": 5,
+      "native-anti-join": 3,
+      "computed-head": 4,
+      "aggregate": 10
+    },
+    "broaderPinsBefore": {
+      "path": "evidence/sdk-query-admission-v2-20261105/broader-before.json",
+      "sha256": "5840eea52d51ecfa121a060a6a6a2da62e2d4530bc3bfe77a414629712c3e8f6"
+    },
+    "broaderPinsAfter": {
+      "path": "evidence/sdk-query-admission-v2-20261105/broader-after.json",
+      "sha256": "89b3a0812e04e67b62c415bd4100593beaaae978f57f5368aa997bd9fa7b3ebc"
+    }
+  },
+  "independentTrace": {
+    "fixture": "approved closed100k fresh Darwin CoW clone, source never opened",
+    "sourceK": 577,
+    "probeK": 585,
+    "allRemovedK": 841,
+    "fullRestoredK": 1097,
+    "nativePatchAcks": 512,
+    "exactReads": 6262,
+    "exactReadsPerLogicalClient": [
+      394,
+      391,
+      392,
+      391,
+      391,
+      391,
+      392,
+      391,
+      391,
+      393,
+      390,
+      391,
+      390,
+      391,
+      394,
+      389
+    ],
+    "logicalClients": 16,
+    "physicalPoolSize": 16,
+    "heavyNativeConcurrencyBound": 3,
+    "physicalPortCoverage": "all16 observed by separate held-scope/reuse test; not16 simultaneous native executions",
+    "assertions": [
+      "all returned K-indexed typed rows",
+      "pinned old cuts",
+      "explicit all-removed and full-restored cuts",
+      "first/middle/last delayed replay and receipt identity",
+      "history and entity point cuts",
+      "unmanaged presence returns null",
+      "full revalidation",
+      "close/reopen exact answers and healthy reuse"
+    ],
+    "sourceSha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "recipeSha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4",
+    "sourceAndRecipeAfterUnchanged": true
+  },
+  "firstOutcomes": [
+    {
+      "phase": "own_first",
+      "passed": 3,
+      "failed": 2,
+      "raw": {
+        "path": "evidence/sdk-query-admission-v2-20261105/sdk-own-first.tap",
+        "sha256": "792b95af1ef6dd5600d8febfbb348045b0914b77e2271150d6122adb38480602"
+      },
+      "cause": "test interceptor observed cached prepare/stream but missed uncached Connection.stream -> runUntilLast",
+      "repairCommit": "f16d6807",
+      "productionChanged": false
+    },
+    {
+      "phase": "own_second",
+      "passed": 4,
+      "failed": 1,
+      "raw": {
+        "path": "evidence/sdk-query-admission-v2-20261105/sdk-own-second.tap",
+        "sha256": "aa41820b63a9302fb047829295735adaaaa0bb3ce3de05d09b417d946d4ac03d"
+      },
+      "cause": "16 deliberately held LIGHT point results exhaust default128MB at122MiB; outside approved heavy cap",
+      "repairCommit": "31490e49",
+      "repair": "explicit512MB solely for16-held-light lease-waiter fixture; heavy/default application settings unchanged",
+      "productionChanged": false
+    },
+    {
+      "phase": "independent_first",
+      "passed": 4,
+      "failed": 1,
+      "raw": {
+        "path": "evidence/sdk-query-admission-v2-20261105/sdk-independent-first.tap",
+        "sha256": "ac73e2729ba7a9bfd502f5a9e1ae00d99258454671adcc093fc6e0f6f6112706"
+      },
+      "nativePatchAcks": 512,
+      "exactReads": 6317,
+      "exactReadsPerClient": [
+        395,
+        394,
+        394,
+        394,
+        398,
+        394,
+        397,
+        395,
+        395,
+        391,
+        397,
+        395,
+        392,
+        395,
+        394,
+        397
+      ],
+      "cause": "incorrect true expectation for unmanaged Probe presence; native result null is existing contract",
+      "repairCommit": "2bb4ca2a",
+      "repair": "expected null; Probe schema/query/native bytes unchanged",
+      "productionChanged": false
+    },
+    {
+      "phase": "freeze_metadata",
+      "cause": "first packaging count405 expected445;40source-reference files live outside archive/runtime",
+      "repair": "copied unchanged archive/source reference subtree, then445 checks passed",
+      "raw": {
+        "path": "evidence/sdk-query-admission-v2-20261105/final.json",
+        "sha256": "91722c804fd422eaf423def793125d3f55854ba23401b667b17a874c7cef83a1"
+      },
+      "productionChanged": false
+    }
+  ],
+  "light128MbBoundary": {
+    "candidate": {
+      "raw": {
+        "path": "evidence/sdk-query-admission-v2-20261105/sdk-own-second.tap",
+        "sha256": "aa41820b63a9302fb047829295735adaaaa0bb3ce3de05d09b417d946d4ac03d"
+      },
+      "primary": "Out of Memory Error: failed to allocate32KiB at122MiB/122MiB",
+      "cleanup": "test finally awaited all pending light reads and close; original OOM remained primary, no reported cleanup failure",
+      "healthyReuse": "unqualified; not exercised at128MB"
+    },
+    "baseline": {
+      "raw": {
+        "path": "evidence/sdk-query-admission-v2-20261105/baseline-light-128.json",
+        "sha256": "4f012e4e7d7a120a366f16f873bfa7c385c98fa14617c08b98bdda4e871a404d"
+      },
+      "reproduction": {
+        "path": "evidence/sdk-query-admission-v2-20261105/baseline-light-128.mjs",
+        "sha256": "a926bf8e2bbace2730a987e0314b44c901a1fed51ef5fdef3d4354a79ba86fdc"
+      },
+      "heldResults": 16,
+      "fulfilled": 12,
+      "failedOom": 4,
+      "cleanup": "finally close completed, process exit0",
+      "healthyReuse": "unqualified; not exercised at128MB"
+    },
+    "explicit512MbFixture": "all16light-held cancellation/retry case passes; ordinary heavy16client/default128MB case passes"
+  },
+  "commands": {
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-thread-budget-20261105/runtime/build/sdk-admission-20261105-01/runtime",
+    "own": "node --test --test-reporter=tap build/adapter/test-sdk-admission.js",
+    "independent": "TD_SDK_ADMISSION_SOURCE=<pinned100kDB> TD_SDK_ADMISSION_RECIPE=<pinnedrecipe> node --test --test-reporter=tap build/adapter/test-sdk-admission-independent.js",
+    "regressions": "node --test --test-reporter=tap --test-concurrency=1 build/adapter/test-readers.js build/adapter/test-control.js build/adapter/test-cleanup.js build/adapter/test-fatal.js",
+    "broader": "node --test --test-reporter=tap --test-concurrency=1 build/adapter/test-native-datetime-reference.js build/adapter/test-native-json-blob.js build/adapter/test-scalable-comparison.js build/adapter/test-native-interval-query.js build/adapter/test-native-multi-cut.js build/adapter/test-native-temporal-lookup.js build/adapter/test-native-anti-join.js build/adapter/test-computed-head.js build/adapter/test-aggregate.js"
+  },
+  "remainingQualification": [
+    "actual SDK-only1reader and reverse16reader paired performance; remove outer experimental FIFO",
+    "full integrated verification including44 unmodified Triplex cases",
+    "no production promotion or completed shared native memory-budget claim from this receipt"
+  ],
+  "raw": {
+    "sdk-own-first.tap": {
+      "path": "evidence/sdk-query-admission-v2-20261105/sdk-own-first.tap",
+      "sha256": "792b95af1ef6dd5600d8febfbb348045b0914b77e2271150d6122adb38480602"
+    },
+    "sdk-own-second.tap": {
+      "path": "evidence/sdk-query-admission-v2-20261105/sdk-own-second.tap",
+      "sha256": "aa41820b63a9302fb047829295735adaaaa0bb3ce3de05d09b417d946d4ac03d"
+    },
+    "sdk-own-third.tap": {
+      "path": "evidence/sdk-query-admission-v2-20261105/sdk-own-third.tap",
+      "sha256": "c7eaba0f0ba321084fe0767fe201f3549094c78f93b293ab10818e83b8b5aff0"
+    },
+    "sdk-independent-first.tap": {
+      "path": "evidence/sdk-query-admission-v2-20261105/sdk-independent-first.tap",
+      "sha256": "ac73e2729ba7a9bfd502f5a9e1ae00d99258454671adcc093fc6e0f6f6112706"
+    },
+    "sdk-independent-second.tap": {
+      "path": "evidence/sdk-query-admission-v2-20261105/sdk-independent-second.tap",
+      "sha256": "5120645f67682688b106b79101ee3156623fcacd0f428083143385f391fcbfd3"
+    },
+    "sdk-regressions-first.tap": {
+      "path": "evidence/sdk-query-admission-v2-20261105/sdk-regressions-first.tap",
+      "sha256": "61705c8a382c9adbc83bc06f374d4fceaf9f0b91b647a88199a8e95d2117c800"
+    },
+    "sdk-broader-first.tap": {
+      "path": "evidence/sdk-query-admission-v2-20261105/sdk-broader-first.tap",
+      "sha256": "9cea3061d5513eb61198d5099fb3af6d2e9399e84408bab95d00194dc2a80e72"
+    },
+    "baseline-light-128.mjs": {
+      "path": "evidence/sdk-query-admission-v2-20261105/baseline-light-128.mjs",
+      "sha256": "a926bf8e2bbace2730a987e0314b44c901a1fed51ef5fdef3d4354a79ba86fdc"
+    },
+    "baseline-light-128.json": {
+      "path": "evidence/sdk-query-admission-v2-20261105/baseline-light-128.json",
+      "sha256": "4f012e4e7d7a120a366f16f873bfa7c385c98fa14617c08b98bdda4e871a404d"
+    },
+    "stage.json": {
+      "path": "evidence/sdk-query-admission-v2-20261105/stage.json",
+      "sha256": "053e8f68e90bb33f2a4d5710e46a2810c726c6c921665a0b16bc532b35dc0b9b"
+    },
+    "final.json": {
+      "path": "evidence/sdk-query-admission-v2-20261105/final.json",
+      "sha256": "91722c804fd422eaf423def793125d3f55854ba23401b667b17a874c7cef83a1"
+    },
+    "broader-before.json": {
+      "path": "evidence/sdk-query-admission-v2-20261105/broader-before.json",
+      "sha256": "5840eea52d51ecfa121a060a6a6a2da62e2d4530bc3bfe77a414629712c3e8f6"
+    },
+    "broader-after.json": {
+      "path": "evidence/sdk-query-admission-v2-20261105/broader-after.json",
+      "sha256": "89b3a0812e04e67b62c415bd4100593beaaae978f57f5368aa997bd9fa7b3ebc"
+    },
+    "compile.log": {
+      "path": "evidence/sdk-query-admission-v2-20261105/compile.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compile-final.log": {
+      "path": "evidence/sdk-query-admission-v2-20261105/compile-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "archive-before.json": {
+      "path": "evidence/sdk-query-admission-v2-20261105/archive-before.json",
+      "sha256": "b5b210923b46e680ecfe7bae20cb9d462ed2630083aa3fffa5f7d23e069d4951"
+    },
+    "archive-after.json": {
+      "path": "evidence/sdk-query-admission-v2-20261105/archive-after.json",
+      "sha256": "0eae5c61a636a2af12c6000220f86dcd81686c3ba14b3f4b738bdd7a0d42d1b1"
+    },
+    "frozen-SHA256SUMS": {
+      "path": "evidence/sdk-query-admission-v2-20261105/frozen-SHA256SUMS",
+      "sha256": "8f1bfbcb69409f308a74a32a62f787693739798cc0c72df3710d92dba3798d71"
+    },
+    "frozen-archive.json": {
+      "path": "evidence/sdk-query-admission-v2-20261105/frozen-archive.json",
+      "sha256": "121dd128b9dd134bfe0184e219dce17292721a6643fe22bfb384d74a0cc4e154"
+    }
+  }
+}

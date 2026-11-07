@@ -1,0 +1,55 @@
+{
+  "schema": "td.item4.pure-research-files/1",
+  "excludes_self": true,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3343,
+      "sha256": "c7faaa1f4dd7b9fea6e094ebd75a3a8e869ea2579e132f007dc2b80dc5ffd5fe",
+      "git_sha": "19f7df3c0762a011fb9f67632ea4a354409ebed0",
+      "mode": "100644"
+    },
+    {
+      "path": "independent-review.md",
+      "bytes": 5247,
+      "sha256": "c95e8f2bc3cba3595f5cb0bc6ff56710b7399b46fe845c8eda18b24adecf84fc",
+      "git_sha": "811da97a8295eb25f31b6af352c24e5a44f97a12",
+      "mode": "100644"
+    },
+    {
+      "path": "measurement-axes.md",
+      "bytes": 1762,
+      "sha256": "2fdc09ac995623a59336a6fa72b6a90615d24267920618025b5124e0dbbaadfe",
+      "git_sha": "f2c91d62723388c9b7237c23064703c23e48239c",
+      "mode": "100644"
+    },
+    {
+      "path": "negation-primary-sources.md",
+      "bytes": 7825,
+      "sha256": "60e2c7dbc068cdf801ad96407851b5028c38162f0fb221c121e8be27c30f3315",
+      "git_sha": "e1d05e9597e274d5b694892726cb35a94513bf46",
+      "mode": "100644"
+    },
+    {
+      "path": "trace-safe-negation.md",
+      "bytes": 35472,
+      "sha256": "b3bb03d3ff8d78a1252be7de99a443b5666b51884cf7e11841b0b171dcd401ac",
+      "git_sha": "24980a10654335960d3fcecac3fefff72e8b4d0a",
+      "mode": "100644"
+    },
+    {
+      "path": "v2-boundary-costs.md",
+      "bytes": 16476,
+      "sha256": "4a038fbe3252bf66af76ace26fb2812f8934022cee4c6afd3159d76e44c27d19",
+      "git_sha": "30744d0a2e3d302cc76c5265100f9fcdce08be25",
+      "mode": "100644"
+    },
+    {
+      "path": "v2-primary-sources.md",
+      "bytes": 5602,
+      "sha256": "feec07f7f03b6a4bfc145aed182536f0f10521048be2a86ae79757facc88badf",
+      "git_sha": "2e743f1310cf85dcac9616cbce996c10c6dc2022",
+      "mode": "100644"
+    }
+  ]
+}

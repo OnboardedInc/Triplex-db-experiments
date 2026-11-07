@@ -1,0 +1,125 @@
+{
+  "schema": "td.native-writer435-focused-root-review/1",
+  "recordedAtUtc": "2026-11-06T07:30:13.596101+00:00",
+  "sourceCommit": "506698215b8bebdf604de2f41d281d3cdc611929",
+  "status": "accepted_focused14_ready_for_separate_full435_grant",
+  "rawHashesVerified": 29,
+  "actualCurrentRuntimePinsVerified": 583,
+  "actualCurrentSourcePinCounts": {
+    "owned": 132,
+    "native": 48
+  },
+  "stageDelta": {
+    "removed": [],
+    "added": [
+      "build/adapter/native-writer-test-fault.d.ts",
+      "build/adapter/native-writer-test-fault.js"
+    ],
+    "changed": [
+      "build/adapter/test-fatal.js",
+      "build/adapter/test-owned-store.js",
+      "build/adapter/test-readers.js",
+      "build/adapter/test-sdk-admission-independent.js",
+      "build/adapter/test-sdk-admission.js"
+    ],
+    "compiledCount": 188,
+    "unionCount": 583
+  },
+  "typescriptTerminal": {
+    "command": [
+      "[LOCAL_PATH_0043]",
+      "[LOCAL_PATH_0044]",
+      "-p",
+      "tsconfig.json"
+    ],
+    "pid": 77576,
+    "startedAtUtc": "2026-11-06T07:23:48.863796+00:00",
+    "status": "terminal",
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T07:23:50.873924+00:00",
+    "elapsedMs": 2009.8749999888241
+  },
+  "independentTapTerminals": [
+    {
+      "pid": 77616,
+      "counts": {
+        "tests": 5,
+        "pass": 5,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsedMs": 5200.8885841351
+    },
+    {
+      "pid": 77648,
+      "counts": {
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsedMs": 2614.5500410348177
+    },
+    {
+      "pid": 77675,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsedMs": 516.498832963407
+    },
+    {
+      "pid": 77688,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsedMs": 1021.9835829921067
+    },
+    {
+      "pid": 77706,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsedMs": 936.24775018543
+    }
+  ],
+  "selected512": {
+    "sourceEqualA51d": true,
+    "compiledEqualA": true,
+    "sourceBlockSha256": "c3c52a5c8a7d8f95cd5baa4d1025d52fd863c319d95bff8d60ead0f952c78012",
+    "compiledBlockSha256": "806b78538a00f0a74758f8789a61322dd976e816e9e1b74c8c0e13482901d511"
+  },
+  "postEveryProcessMapsEqual": true,
+  "scope": {
+    "focusedMethods": 14,
+    "actualPerProcess": [
+      5,
+      4,
+      1,
+      2,
+      2
+    ],
+    "typescript": "PASS",
+    "full512Executed": false,
+    "full435Executed": false,
+    "triplex44Executed": false,
+    "performanceExecuted": false
+  },
+  "limitations": [
+    "Focused14 plus TSC only; full435/44Triplex and unchanged512 remain unrun on this adapted source.",
+    "No performance, promotion, active-job environment-teardown or allocation-containment claim."
+  ]
+}

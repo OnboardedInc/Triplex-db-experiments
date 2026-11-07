@@ -1,0 +1,340 @@
+TAP version 13
+# Subtest: SQL extrema and integer sums preserve complete source sets, exact endpoints and grouped answers
+ok 1 - SQL extrema and integer sums preserve complete source sets, exact endpoints and grouped answers
+  ---
+  duration_ms: 583.658458
+  type: 'test'
+  ...
+# Subtest: SQL extrema keep binary Unicode ordering, finite float endpoints and subnormal bits
+ok 2 - SQL extrema keep binary Unicode ordering, finite float endpoints and subnormal bits
+  ---
+  duration_ms: 501.8845
+  type: 'test'
+  ...
+# Subtest: empty global/grouped aggregates and original schema meaning remain fresh through corrections
+ok 3 - empty global/grouped aggregates and original schema meaning remain fresh through corrections
+  ---
+  duration_ms: 645.46025
+  type: 'test'
+  ...
+# Subtest: SQL admission preserves native measure errors, final overflow and canonical tag-before-range priority
+ok 4 - SQL admission preserves native measure errors, final overflow and canonical tag-before-range priority
+  ---
+  duration_ms: 792.891958
+  type: 'test'
+  ...
+# Subtest: non-count aggregate proofs retain native work/fact/round failures including empty-global work
+ok 5 - non-count aggregate proofs retain native work/fact/round failures including empty-global work
+  ---
+  duration_ms: 1027.502208
+  type: 'test'
+  ...
+# Subtest: direct and projected measures, conservative mixed-group fallback and wide-source gating remain exact
+ok 6 - direct and projected measures, conservative mixed-group fallback and wide-source gating remain exact
+  ---
+  duration_ms: 579.624041
+  type: 'test'
+  ...
+# Subtest: scalable joins feed complete ledger and inventory aggregates at historical and corrected cuts
+ok 7 - scalable joins feed complete ledger and inventory aggregates at historical and corrected cuts
+  ---
+  duration_ms: 1053.876959
+  type: 'test'
+  ...
+# Subtest: join producer DISTINCT collapses fanout while preserving exact typed extrema and count keys
+ok 8 - join producer DISTINCT collapses fanout while preserving exact typed extrema and count keys
+  ---
+  duration_ms: 797.583
+  type: 'test'
+  ...
+# Subtest: joined aggregate faults preserve joined membership and tag-before-overflow precedence
+ok 9 - joined aggregate faults preserve joined membership and tag-before-overflow precedence
+  ---
+  duration_ms: 669.806334
+  type: 'test'
+  ...
+# Subtest: join-source proof rejects Cartesian and wide projections before construction and still gates output
+ok 10 - join-source proof rejects Cartesian and wide projections before construction and still gates output
+  ---
+  duration_ms: 577.762708
+  type: 'test'
+  ...
+# Subtest: computed signed refund heads feed an exact sum at historical and corrected cuts
+ok 11 - computed signed refund heads feed an exact sum at historical and corrected cuts
+  ---
+  duration_ms: 561.084959
+  type: 'test'
+  ...
+# Subtest: computed scan, join and aggregate source stay on the bounded native route
+ok 12 - computed scan, join and aggregate source stay on the bounded native route
+  ---
+  duration_ms: 332.905042
+  type: 'test'
+  ...
+# Subtest: computed heads require relational safety and reject value-generating recursion
+ok 13 - computed heads require relational safety and reject value-generating recursion
+  ---
+  duration_ms: 249.542416
+  type: 'test'
+  ...
+# Subtest: computed heads reuse checked arithmetic, work limits and eager body filters
+ok 14 - computed heads reuse checked arithmetic, work limits and eager body filters
+  ---
+  duration_ms: 335.201084
+  type: 'test'
+  ...
+# Subtest: anti membership is exact across typed values and both correction cuts
+ok 15 - anti membership is exact across typed values and both correction cuts
+  ---
+  duration_ms: 1019.764334
+  type: 'test'
+  ...
+# Subtest: blocking one positive support preserves the set answer until the final support is blocked
+ok 16 - blocking one positive support preserves the set answer until the final support is blocked
+  ---
+  duration_ms: 792.954333
+  type: 'test'
+  ...
+# Subtest: repeated variables and ground negatives retain typed keys and preconstruction bounds
+ok 17 - repeated variables and ground negatives retain typed keys and preconstruction bounds
+  ---
+  duration_ms: 936.388791
+  type: 'test'
+  ...
+# Subtest: datetime preserves finite epoch-millisecond bits, canonical zero, ordering and tag identity
+ok 18 - datetime preserves finite epoch-millisecond bits, canonical zero, ordering and tag identity
+  ---
+  duration_ms: 1191.375417
+  type: 'test'
+  ...
+# Subtest: datetime correction upgrades format 5 and preserves four-tag history and replay
+ok 19 - datetime correction upgrades format 5 and preserves four-tag history and replay
+  ---
+  duration_ms: 2696.602584
+  type: 'test'
+  ...
+# Subtest: datetime correction upgrades format 6 and preserves four-tag history and replay
+ok 20 - datetime correction upgrades format 6 and preserves four-tag history and replay
+  ---
+  duration_ms: 2842.345542
+  type: 'test'
+  ...
+# Subtest: native distinct references validate stable identity and join explicitly across temporal cuts
+ok 21 - native distinct references validate stable identity and join explicitly across temporal cuts
+  ---
+  duration_ms: 1500.672958
+  type: 'test'
+  ...
+# Subtest: latest native methods read actual format-five Triplex datetime and reference carriers
+ok 22 - latest native methods read actual format-five Triplex datetime and reference carriers
+  ---
+  duration_ms: 896.05325
+  type: 'test'
+  ...
+# Subtest: interval answers coalesce distinct supports and preserve correction gaps and old knowledge across reopen
+ok 23 - interval answers coalesce distinct supports and preserve correction gaps and old knowledge across reopen
+  ---
+  duration_ms: 1580.827625
+  type: 'test'
+  ...
+# Subtest: interval queries retain exact scalar carriers, blob identities and int64 endpoints
+ok 24 - interval queries retain exact scalar carriers, blob identities and int64 endpoints
+  ---
+  duration_ms: 362.4875
+  type: 'test'
+  ...
+# Subtest: absence and empty completed aggregates change at the exact endpoints
+ok 25 - absence and empty completed aggregates change at the exact endpoints
+  ---
+  duration_ms: 348.474917
+  type: 'test'
+  ...
+# Subtest: invalid cuts, segment and whole-work budgets, and cancellation leave the same reader healthy
+ok 26 - invalid cuts, segment and whole-work budgets, and cancellation leave the same reader healthy
+  ---
+  duration_ms: 369.991583
+  type: 'test'
+  ...
+# Subtest: JSON compares exact UTF-8 source bytes and blob grouping uses typed IDs
+ok 27 - JSON compares exact UTF-8 source bytes and blob grouping uses typed IDs
+  ---
+  duration_ms: 1423.656625
+  type: 'test'
+  ...
+# Subtest: blob descriptor corrections preserve identity, full history and original schema binding
+ok 28 - blob descriptor corrections preserve identity, full history and original schema binding
+  ---
+  duration_ms: 1520.558292
+  type: 'test'
+  ...
+# Subtest: a JSON value beyond the query byte limit remains readable at its exact temporal cut
+ok 29 - a JSON value beyond the query byte limit remains readable at its exact temporal cut
+  ---
+  duration_ms: 688.5895
+  type: 'test'
+  ...
+# Subtest: literal entity scope bounds both query routes without pruning negated or unbound atoms
+ok 30 - literal entity scope bounds both query routes without pruning negated or unbound atoms
+  ---
+  duration_ms: 465.870167
+  type: 'test'
+  ...
+# Subtest: injective scalable aggregates charge actual active bytes with one 4KiB JSON carrier
+ok 31 - injective scalable aggregates charge actual active bytes with one 4KiB JSON carrier
+  ---
+  duration_ms: 481.664708
+  type: 'test'
+  ...
+# Subtest: bad JSON and blob records are rejected atomically before advancing knowledge
+ok 32 - bad JSON and blob records are rejected atomically before advancing knowledge
+  ---
+  duration_ms: 1117.395375
+  type: 'test'
+  ...
+# Subtest: owner audit rejects same-width descriptor tampering on an inactive native blob
+ok 33 - owner audit rejects same-width descriptor tampering on an inactive native blob
+  ---
+  duration_ms: 783.780708
+  type: 'test'
+  ...
+# Subtest: legacy Triplex JSON and blob carriers are queryable without changing format five
+ok 34 - legacy Triplex JSON and blob carriers are queryable without changing format five
+  ---
+  duration_ms: 750.634625
+  type: 'test'
+  ...
+# Subtest: native JSON/blob registration atomically upgrades format 5 and preserves legacy replay
+ok 35 - native JSON/blob registration atomically upgrades format 5 and preserves legacy replay
+  ---
+  duration_ms: 1137.44525
+  type: 'test'
+  ...
+# Subtest: native JSON/blob registration atomically upgrades format 6 and preserves legacy replay
+ok 36 - native JSON/blob registration atomically upgrades format 6 and preserves legacy replay
+  ---
+  duration_ms: 1298.479375
+  type: 'test'
+  ...
+# Subtest: native JSON/blob registration atomically upgrades format 8 and preserves legacy replay
+ok 37 - native JSON/blob registration atomically upgrades format 8 and preserves legacy replay
+  ---
+  duration_ms: 1148.113625
+  type: 'test'
+  ...
+# Subtest: multi-cut preserves order, duplicate coordinates, empty groups and bitemporal corrections
+ok 38 - multi-cut preserves order, duplicate coordinates, empty groups and bitemporal corrections
+  ---
+  duration_ms: 551.780208
+  type: 'test'
+  ...
+# Subtest: one multi-cut statement resolves every latest position under a concurrent correction
+ok 39 - one multi-cut statement resolves every latest position under a concurrent correction
+  ---
+  duration_ms: 350.224792
+  type: 'test'
+  ...
+# Subtest: multi-cut validates every knowledge cut and leaves its lease healthy after limits or abort
+ok 40 - multi-cut validates every knowledge cut and leaves its lease healthy after limits or abort
+  ---
+  duration_ms: 316.513792
+  type: 'test'
+  ...
+# Subtest: multi-cut retains all eight exact typed carriers and validates future cuts on empty history
+ok 41 - multi-cut retains all eight exact typed carriers and validates future cuts on empty history
+  ---
+  duration_ms: 363.602166
+  type: 'test'
+  ...
+# Subtest: wide escaped output is refused by the shared pre-encoding budget
+ok 42 - wide escaped output is refused by the shared pre-encoding budget
+  ---
+  duration_ms: 4459.784375
+  type: 'test'
+  ...
+# Subtest: an in-flight multi-cut abort retires its control and releases the reader
+ok 43 - an in-flight multi-cut abort retires its control and releases the reader
+  ---
+  duration_ms: 351.527792
+  type: 'test'
+  ...
+# Subtest: correlated lookup joins two feature cuts and independently visible labels
+ok 44 - correlated lookup joins two feature cuts and independently visible labels
+  ---
+  duration_ms: 1004.472833
+  type: 'test'
+  ...
+# Subtest: lookup admits relevant per-entity envelopes and keeps exact endpoint and fanout gates
+ok 45 - lookup admits relevant per-entity envelopes and keeps exact endpoint and fanout gates
+  ---
+  duration_ms: 1386.433583
+  type: 'test'
+  ...
+# Subtest: lookup validates every driver row even when feature history is absent
+ok 46 - lookup validates every driver row even when feature history is absent
+  ---
+  duration_ms: 461.43875
+  type: 'test'
+  ...
+# Subtest: opposing cuts count an envelope-only feature without returning it
+ok 47 - opposing cuts count an envelope-only feature without returning it
+  ---
+  duration_ms: 906.444417
+  type: 'test'
+  ...
+# Subtest: empty temporal lookup still validates the outer cut and audited owner
+ok 48 - empty temporal lookup still validates the outer cut and audited owner
+  ---
+  duration_ms: 409.56475
+  type: 'test'
+  ...
+# Subtest: scalable comparisons preserve exact tagged equality and bound variable origins
+ok 49 - scalable comparisons preserve exact tagged equality and bound variable origins
+  ---
+  duration_ms: 594.957875
+  type: 'test'
+  ...
+# Subtest: ordered scalar scans compare exact signed int64 and UTF-8 bytes
+ok 50 - ordered scalar scans compare exact signed int64 and UTF-8 bytes
+  ---
+  duration_ms: 493.2125
+  type: 'test'
+  ...
+# Subtest: ordered comparison type faults are eager on complete relational matches
+ok 51 - ordered comparison type faults are eager on complete relational matches
+  ---
+  duration_ms: 517.942916
+  type: 'test'
+  ...
+# Subtest: scalable comparison scans admit full inputs and bound typed output after filtering
+ok 52 - scalable comparison scans admit full inputs and bound typed output after filtering
+  ---
+  duration_ms: 767.169833
+  type: 'test'
+  ...
+# Subtest: opaque or out-of-slice filters retain their bounded native semantics
+ok 53 - opaque or out-of-slice filters retain their bounded native semantics
+  ---
+  duration_ms: 407.2275
+  type: 'test'
+  ...
+# Subtest: cached audited comparison scans refresh cuts and retire an active abort
+ok 54 - cached audited comparison scans refresh cuts and retire an active abort
+  ---
+  duration_ms: 719.911041
+  type: 'test'
+  ...
+# Subtest: pushable entity scopes preserve binary case and Unicode identity before admission
+ok 55 - pushable entity scopes preserve binary case and Unicode identity before admission
+  ---
+  duration_ms: 536.441542
+  type: 'test'
+  ...
+1..55
+# tests 55
+# suites 0
+# pass 55
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50038.153

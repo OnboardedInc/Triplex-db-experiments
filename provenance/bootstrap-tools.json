@@ -1,0 +1,35 @@
+{
+  "format": "triplex-bootstrap-tools/1",
+  "node": {
+    "version": "v24.13.0",
+    "path": ".local/tools/node-v24.13.0-darwin-arm64/bin/node",
+    "source": {
+      "name": "node-v24.13.0-darwin-arm64.tar.gz",
+      "status": "VERIFIED",
+      "bytes": 51210463,
+      "sha256": "d595961e563fcae057d4a0fb992f175a54d97fcc4a14dc2d474d92ddeea3b9f8",
+      "path": "node/node-v24.13.0-darwin-arm64.tar.gz",
+      "sriVerified": [],
+      "url": "https://nodejs.org/dist/v24.13.0/node-v24.13.0-darwin-arm64.tar.gz",
+      "downloadedAtUtc": "2026-11-06T16:37:51Z",
+      "licenseRetainedInsideArchive": true
+    }
+  },
+  "pnpm": {
+    "version": "10.11.0",
+    "path": ".local/tools/pnpm-10.11.0/package/bin/pnpm.cjs",
+    "source": {
+      "bytes": 4570382,
+      "sha256": "a69e9cb077da419d47d18f1dd52e207245b29cac6e076acedbeb8be3b1a67bd7",
+      "path": "npm/tarballs/pnpm_10.11.0.tgz",
+      "sriVerified": [
+        "sha512-ZUBYP0HMX2KOs9l3Ps7oAvT575kjzEW2mJD7R5kdSwkpZGlOw6T3OKQgyRijMwYsi5JdMS9C5PDCY+tgNVH5dw=="
+      ],
+      "url": "https://registry.npmjs.org/pnpm/-/pnpm-10.11.0.tgz",
+      "downloadedAtUtc": "2026-11-06T16:37:32Z"
+    }
+  },
+  "sha256Verified": true,
+  "lifecycleScriptsExecuted": false,
+  "source": "Original ZIP verified public tool archives; licenses retained."
+}

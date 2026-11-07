@@ -1,0 +1,152 @@
+[
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_core.cpp",
+    "destination": "native/src/temporal_core.cpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_core.hpp",
+    "destination": "native/src/temporal_core.hpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_datalog.cpp",
+    "destination": "native/src/temporal_datalog.cpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_expression.hpp",
+    "destination": "native/src/temporal_expression.hpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_float.hpp",
+    "destination": "native/src/temporal_float.hpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_plan_ir.hpp",
+    "destination": "native/src/temporal_plan_ir.hpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_plan_ir_v2.hpp",
+    "destination": "native/src/temporal_plan_ir_v2.hpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_stratified_core.hpp",
+    "destination": "native/src/temporal_stratified_core.hpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_typed_core.hpp",
+    "destination": "native/src/temporal_typed_core.hpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_value_domain.hpp",
+    "destination": "native/src/temporal_value_domain.hpp"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/vendor/LICENSE.duckdb-v2",
+    "destination": "native/vendor/LICENSE.duckdb-v2"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/vendor/append_extension_metadata.py",
+    "destination": "native/vendor/append_extension_metadata.py"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/vendor/duckdb_extension_v2.h",
+    "destination": "native/vendor/duckdb_extension_v2.h"
+  },
+  {
+    "source_commit": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "source_path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/vendor/duckdb_v2.h",
+    "destination": "native/vendor/duckdb_v2.h"
+  },
+  {
+    "source_commit": "3de749d706de5a421248195483ec22cd053972fb",
+    "source_path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/__init__.py",
+    "destination": "temporal_store/compiler/__init__.py"
+  },
+  {
+    "source_commit": "3de749d706de5a421248195483ec22cd053972fb",
+    "source_path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/ir2.py",
+    "destination": "temporal_store/compiler/ir2.py"
+  },
+  {
+    "source_commit": "3de749d706de5a421248195483ec22cd053972fb",
+    "source_path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/proof.py",
+    "destination": "temporal_store/compiler/proof.py"
+  },
+  {
+    "source_commit": "3de749d706de5a421248195483ec22cd053972fb",
+    "source_path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/query.py",
+    "destination": "temporal_store/compiler/query.py"
+  },
+  {
+    "source_commit": "3de749d706de5a421248195483ec22cd053972fb",
+    "source_path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/sql.py",
+    "destination": "temporal_store/compiler/sql.py"
+  },
+  {
+    "source_commit": "3de749d706de5a421248195483ec22cd053972fb",
+    "source_path": "projects/temporal-datalog/prototype/goal5-completed-aggregate-sql-20261103/typed_values.py",
+    "destination": "temporal_store/compiler/typed_values.py"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/effect-storage.ts",
+    "destination": "adapter/effect-storage.ts"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/query-executor-adapter.ts",
+    "destination": "adapter/query-executor-adapter.ts"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/query-result-boundary.mjs",
+    "destination": "adapter/query-result-boundary.mjs"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/query-result-boundary.d.mts",
+    "destination": "adapter/query-result-boundary.d.mts"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/public-backend.mjs",
+    "destination": "adapter/public-backend.mjs"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/public-backend.d.mts",
+    "destination": "adapter/public-backend.d.mts"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/public-schema.sql",
+    "destination": "adapter/public-schema.sql"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/owned-duckdb-port.mjs",
+    "destination": "adapter/owned-duckdb-port.mjs"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-host-bridge-20261104/owned-duckdb-port.d.mts",
+    "destination": "adapter/owned-duckdb-port.d.mts"
+  },
+  {
+    "source_commit": "d3143ce170916d10c21bed36d542bd54ab2d10ff",
+    "source_path": "projects/temporal-datalog/prototype/goal10-value-boundary-20261103/sql-bridge/transaction-owner.mjs",
+    "destination": "adapter/transaction-owner.mjs"
+  }
+]

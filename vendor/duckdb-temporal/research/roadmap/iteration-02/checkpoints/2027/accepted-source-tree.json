@@ -1,0 +1,2171 @@
+{
+  "commit": "e42a8adc0f6f6f3c0b4eca903016a61bab4c3f67",
+  "subtree_sha": "58931fcd2e09776f55bdf87f965540de1cbcc7df",
+  "tree": [
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bbfe36f053231f09e672ab52c9ee982ebd961c23",
+      "size": 375,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "EXPORT-MANIFEST.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "20e46bef850353152656c593a554bdf8d314db98",
+      "size": 37411,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d1c523a3fa8fa5f259c634097c68ab8f0a294984",
+      "size": 1086,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "20c6bf7a1f96289dcd0b30443a80f33610727ffe",
+      "size": 5874,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "REPORT.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4bbc57930c21e5e4fd95ce125c0fc1d3afcea9a5",
+      "size": 13285,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "851ddda7d9631d9d1a2f14a2050b82412bdd773f",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/DELIVERABLE_SHA256SUMS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d6ee9ac6763268f000b8b298aef0c5aae7d1d8e0",
+      "size": 865,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/EVIDENCE.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ac2ef1ffd452f6ab28a0dfcb0f8bd38137782075",
+      "size": 7553,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/PLAN.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ee84f16e3c98a7d368d80c3f853af86e24e43a75",
+      "size": 8962,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "246848aad1593f9fea8a8370a46e941cf2cf573e",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/initial",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "440388668bb42bceceac581bc1463c845702c2a1",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/initial/source-sha256.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8744e46f99fb4e9a1d5ee754ae542bbc5ab88d52",
+      "size": 612,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/measurement-harness-v1.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "15d4a4734d5849b6bc102b6d50f70bdd77dd6929",
+      "size": 27792,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/measurement-harness-v2.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a62d12783f2b80cff15a23df45bbabf35a9d48b5",
+      "size": 29456,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/measurement-harness-v3.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "903f6d88481abd45a2ab359dbdbd659c01c3e8be",
+      "size": 30025,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/round01",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "46d068d1e9e828e0d0b966778eac065f6329a8c7",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/round01/source-sha256.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c06ac6586fc6ca039db623da62e078a3d2b1b156",
+      "size": 690,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/round02",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "c33c6e201010b37dc432684321b85b66ad956c42",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/round02/source-sha256.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b01591ce1ba534bf8a483b688548ddf3959089ad",
+      "size": 720,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/round03",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "9d8b1296589a12b79212a685d2674a940a49119b",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/artifacts/round03/source-sha256.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "79f63fc818556b30fc6150766e9bf0284cf56e04",
+      "size": 699,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/bench.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "30b97c3ac3396ac7cf23757f9b9abb2b923e5562",
+      "size": 30043,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/browser_fixture.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "467c61f3b71424153f2a7d83fd033d07f9ae9b6e",
+      "size": 17115,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/build-recipe.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "886b1d2782c1b9f5fbf5f4f7aefe3d85225e0651",
+      "size": 180,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/captured-build-recipe.txt",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "4267990eb1f8ea2d539a386175ea8e3d5eaf1999",
+      "size": 689,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/compare_round.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "22336abc86b7233a91b4e57bb4604b2c3204925a",
+      "size": 4878,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/environment_initial.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "245fad992bb1810f19d2250894a1c3d44cafe2d3",
+      "size": 462,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/evidence_audit.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c1fd506cd6f2cc87d7d977c8eb49a941e57ab425",
+      "size": 2183,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/fact_guard_probes.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c9198994eab5be02c46f51385c2923bcb6c1a800",
+      "size": 532,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/final_correctness.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6ee81bec26fd9f194f14d67093f93f9ba29fb011",
+      "size": 38334,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/final_qa.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dc4e15f03eccde3797372dceda96cdcf249934bb",
+      "size": 287241,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/final_results.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0e3ab2ab289a599d5e192d350657d29bf0727356",
+      "size": 509549,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/final_results.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "81e5422223ceb353708859450a73773155fdfd1f",
+      "size": 289029,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/final_summary.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "94ce8a623b6942c656243cb13d9ee26e3611f606",
+      "size": 515126,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/final_summary.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d5efa036e452abd570590fb8c9301103039704fa",
+      "size": 7125,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "969a5fbab4863751324e9e8b4c893b2745796938",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/final",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "8e2b75dfe6d152f784252764d20c625ef96cb735",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/final/SHA256SUMS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1cfc3d1741c93e3db161d15486d4faf4074ebfb3",
+      "size": 470,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/final/bench.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "30b97c3ac3396ac7cf23757f9b9abb2b923e5562",
+      "size": 30043,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/final/compare_round.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "22336abc86b7233a91b4e57bb4604b2c3204925a",
+      "size": 4878,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/final/ledger.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f6250f07e51ddea664ff1cced0e1486fa5969938",
+      "size": 6529,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/final/qa.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ff464a734ab981e464704c8922d7acc451cee9e4",
+      "size": 13890,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/final/summarize.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d5d4093e6569500221af39cef35d31420e37320e",
+      "size": 10268,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/final/verify_evidence.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "630583ca9e450b447d4069d8f8034513b7801b66",
+      "size": 6970,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/initial",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "73577433d8ee6440ec6f00546ed9e9e434a72c29",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/initial/bench.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "15d4a4734d5849b6bc102b6d50f70bdd77dd6929",
+      "size": 27792,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/initial/qa.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dba397c4eca32f417e61c331a260cb12277108de",
+      "size": 9719,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round01-expanded",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "fe7b95e2849aa8cb9835675e375793b933de9fe2",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round01-expanded/bench.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "15d4a4734d5849b6bc102b6d50f70bdd77dd6929",
+      "size": 27792,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round01-expanded/compare_round.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "22336abc86b7233a91b4e57bb4604b2c3204925a",
+      "size": 4878,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round01-expanded/qa.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9260491a8d46c0c4725926ca6d26f28a09f5caf2",
+      "size": 11187,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round02-paired",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "7688456cc419e1cdf022923a281fa2374d088632",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round02-paired/bench.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a62d12783f2b80cff15a23df45bbabf35a9d48b5",
+      "size": 29456,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round02-paired/compare_round.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "22336abc86b7233a91b4e57bb4604b2c3204925a",
+      "size": 4878,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round02-paired/qa.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "abeb5d8e3439aeb3321f7337ac683007d08da67a",
+      "size": 13008,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round02-paired/summarize.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f6602096f153b3ccf291e10f01d616596a04512d",
+      "size": 9373,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round02-replication",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "6fdc9317d597765bcf52b0b565ed069e230a1f2d",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round02-replication/bench.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "903f6d88481abd45a2ab359dbdbd659c01c3e8be",
+      "size": 30025,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round02-replication/compare_round.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "22336abc86b7233a91b4e57bb4604b2c3204925a",
+      "size": 4878,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round03",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "90798084f42dea193d619820e9f459c307049667",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round03/SHA256SUMS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9c65705c44cbcd5298ead9de78c15b5e652c40e6",
+      "size": 309,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round03/bench.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "30b97c3ac3396ac7cf23757f9b9abb2b923e5562",
+      "size": 30043,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round03/compare_round.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "22336abc86b7233a91b4e57bb4604b2c3204925a",
+      "size": 4878,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round03/qa.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a851cf23f1a0cc862e1f054e4b9a42b45c174012",
+      "size": 13096,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/history/round03/summarize.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f6602096f153b3ccf291e10f01d616596a04512d",
+      "size": 9373,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/initial_results.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e80fbe60b64fd8b4f147a7012fe63cd5a8a05be2",
+      "size": 474991,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/initial_results.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a43de022cd11efebfe1d11263a2c3c311095174e",
+      "size": 269175,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/initial_smoke.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e14da4683941ab27ca619f61088e8fe7df7b3785",
+      "size": 9096,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/initial_smoke.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cacaf5c36d714fe65a19b1ed1a331ef0f1fba41b",
+      "size": 2976,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/initial_summary.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "37588ab36d59fd64e5b5cf611ef0de3b08e3f6ab",
+      "size": 480649,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/initial_summary.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e4dca2691a1a5daef45c81705ac13b96b41fde1e",
+      "size": 6981,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/join_baseline_quality.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f9a96d3452af2dcf01b980d457c11fa7a98a6180",
+      "size": 92846,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/join_baseline_quality.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "749a384152a34ebaf04cbd56dcd23b6c33293a23",
+      "size": 52477,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/ledger.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f6250f07e51ddea664ff1cced0e1486fa5969938",
+      "size": 6529,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/native_correctness_2_initial.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "15b28a43b10aef767c4dcd5ef12374d111889666",
+      "size": 38075,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/native_correctness_2_round01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e63ebfa5a11305651aa04eed9e236d4a2cc148d2",
+      "size": 38084,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/native_correctness_2_round02.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b819ed267a7e1f5a147b823e118c38ef23da1030",
+      "size": 38087,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/native_correctness_2_round03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f3c79b9519923a4bd56d6b28e904cd2da4a217e6",
+      "size": 38334,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/native_correctness_initial.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2bfa351aec522d10dd6feb55aa4150cd91f818c6",
+      "size": 38099,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/oracle.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f464e4041e60fbfb2564acd48b8fe536bfe4e3fe",
+      "size": 3923,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/portable_sources.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e15750979dac246535e86d1dc9f485952a45d688",
+      "size": 4853,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "e1106fe497a2b4ed819148af328078771368c354",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/binary_tree_2047_native.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b78516e3f56c203eb2f03f65faf5b95a35389573",
+      "size": 7630,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/binary_tree_2047_native.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "77f89e4ca4d0d91461d6f73aa8dd2476021b1866",
+      "size": 6626,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/binary_tree_2047_native_prefilter.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "992441a702f395e2b33658ad38b37d27c57deb91",
+      "size": 7728,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/binary_tree_2047_native_prefilter.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62fb1a5ff167a893d0ec9bc2dc082ae271a6719c",
+      "size": 6701,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/binary_tree_2047_sql_union.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "381812ed8a25ce237d3081d4016b4d128ef4c4f3",
+      "size": 20255,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/binary_tree_2047_sql_union.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bb32b7bd0c546081b8e1b049497ac2be0f34bd7e",
+      "size": 17744,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/chain_1024_native.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a64be174dd6a0a923698db44b0f86b6eef98106b",
+      "size": 7621,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/chain_1024_native.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e60ee8dd11cf01750ea32644ca00a7c1d476346e",
+      "size": 6627,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/chain_1024_native_prefilter.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "27107904f89d81a20fc4596d920f730fa3bb74b7",
+      "size": 7712,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/chain_1024_native_prefilter.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "56639f16affb4197edd3fc3f800adf814186aef2",
+      "size": 6734,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/chain_1024_sql_union.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "625b2af90da5330d3df3bf6c322cef29992333b8",
+      "size": 20304,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/chain_1024_sql_union.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "debbc49305718c550c1de938f07f3c8773e7d04f",
+      "size": 17770,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/snapshot_25000_native.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a162626192a5e253e154b5455c91287374ac7452",
+      "size": 7415,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/snapshot_25000_native.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7c1789c59b044d4d7980104135088d4c3e2edff3",
+      "size": 6460,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/snapshot_25000_native_prefilter.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fd3abfe8c0b6ee653ef0f7f8ecd2a45106016777",
+      "size": 7961,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/snapshot_25000_native_prefilter.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1549c274f2f1240fbccfc3292a0fbccd19a53a77",
+      "size": 6940,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/snapshot_25000_sql_union.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0ac27bde105a779e6926fae599a7a17b6f8aadec",
+      "size": 2839,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/snapshot_25000_sql_union.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "baf82e028e719eb2857cf0ee26c791a5475aeb7a",
+      "size": 9417,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/temporal_clustered_2000_native.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "73d7d864ffbb111ef215b1a46b2c9cf87558f343",
+      "size": 7681,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/temporal_clustered_2000_native.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bd0483234b581d12f89538bac69890d64f0cbfe5",
+      "size": 6712,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/temporal_clustered_2000_native_prefilter.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "09bf41d6179f9b35bd8b300d3cc31286534f89ac",
+      "size": 8214,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/temporal_clustered_2000_native_prefilter.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8fe22cd1caa5a9729c3182da1f0057116e2a5a66",
+      "size": 7144,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/temporal_clustered_2000_sql_union.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d98e2089568f3e2a0c8a28ed290c5dd1630f3308",
+      "size": 31407,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_final/temporal_clustered_2000_sql_union.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6046b2a82b219731009ea993ca16aa9059eb3e2e",
+      "size": 28030,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "91c30b4e6c775ce2d7f0fb66d19a98c1beb4a9b7",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/chain_1024_native.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1c1834dc050e4cf8b66d92c66db6ed8ea970d08b",
+      "size": 7615,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/chain_1024_native.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2c76e045578ca731e4ef681e0d25a7fd7602a5cd",
+      "size": 6609,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/chain_1024_native_prefilter.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "792b9b0877aeae9a5c09a763efae4aa615ac2145",
+      "size": 7726,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/chain_1024_native_prefilter.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "79415d40dac298549835c4bd06ae1f4e8bfbc435",
+      "size": 6712,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/chain_1024_sql_union.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62fbdf6938778f2cdbc4a425cd7047f2b895f19d",
+      "size": 20287,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/chain_1024_sql_union.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "be30fafe7d1f31da80f2ecbd932a184923be2770",
+      "size": 17776,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/snapshot_25000_native.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2498ffa4ccf4993d7a1443ed56ffd4aef435c25f",
+      "size": 7431,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/snapshot_25000_native.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1a573b35ee37f13e51847ceabeabb29fa84a6564",
+      "size": 6450,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/snapshot_25000_native_prefilter.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "869b55257edef94f89c02593a368168aa6ef3aa8",
+      "size": 7951,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/snapshot_25000_native_prefilter.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1752918a6a8915239194a862ab149729518cce5e",
+      "size": 6970,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/snapshot_25000_sql_union.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4c4cd360a0aa8e04b4c0e9a6b14f4bd308916753",
+      "size": 2839,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/snapshot_25000_sql_union.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2f1e0255108b5eafee8c6119aa8c76ecaf65d7b6",
+      "size": 9453,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/temporal_clustered_2000_native.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9d2c6b2d9cd6299c95a8d59a80442894500e25aa",
+      "size": 7694,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/temporal_clustered_2000_native.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3bbb9f432882d79a8d1a220d61c4ec5795e28cf0",
+      "size": 6694,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/temporal_clustered_2000_native_prefilter.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c499799251656f150c459dc978117e027d449ac8",
+      "size": 8204,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/temporal_clustered_2000_native_prefilter.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "380fd849caa15f6af5c5004cbb7aa85853bfb90e",
+      "size": 7150,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/temporal_clustered_2000_sql_union.explain.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fa7a63dbd1d1b937b6d56bfed68b621e916e0a85",
+      "size": 31417,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/profiles_initial/temporal_clustered_2000_sql_union.profile.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "88de277c8d26974bd0dae7ceb94ac0f0c65c6214",
+      "size": 28056,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/qa.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ff464a734ab981e464704c8922d7acc451cee9e4",
+      "size": 13890,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/qa_initial.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "907eb51c44b6cd69b4d228bdac5a091617f8c23b",
+      "size": 282180,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/qa_round01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cbbb021bd8bcee1bfd033c272aa5cdf6a5dd8dab",
+      "size": 282185,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/qa_round02.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0b77c52c37c0bd4bcfdd0ae7183176eff9cbe6ec",
+      "size": 283406,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/qa_round03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5ceb8f2f6f19f0c1752a4636c923d6e892bc692a",
+      "size": 283741,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round01_paired.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "08125f0c1763bfce325b28a0bcdb7e2f55998824",
+      "size": 572676,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round01_paired.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "91a39b741eed95a70862540d7e26b5d4624e91c4",
+      "size": 330459,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round01_replication.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e69bab70e08262f9934e9be7d0681c0742ed2357",
+      "size": 166353,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round01_replication.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "47f72d0415331acda0e4384483b8c033a721b203",
+      "size": 95074,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round01_results.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "36d259cdc0360bbae237484d6351d4c854c6669e",
+      "size": 475046,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round01_results.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b8f2313ac423249cf9a7954663f8f1ec402f68a5",
+      "size": 269216,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round01_summary.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "648bb5fba2bbcd306c2897462fab7dac16021da1",
+      "size": 480736,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round01_summary.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "47181bf8ef0afd25dc2cf3fc0e4cbf7b4876167a",
+      "size": 7039,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round02_paired.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "55939416386b8da6f477f5569a50553e37e675bd",
+      "size": 572672,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round02_paired.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d191fa1c70c05c403f75fd570c6afaf31227e2e9",
+      "size": 330456,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round02_replication.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "97520b99a34eadc27034dcdb6080f777a2955339",
+      "size": 312723,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round02_replication.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "27be1cd425a6b1fe331cadb548a0890a7d23bdb9",
+      "size": 183687,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round03_paired.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4876a2dfb6fc4252abf09c871f872a00798dc89b",
+      "size": 573127,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round03_paired.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14ec0ff56a8d5da6720735ac235a5c4d13c58019",
+      "size": 330415,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round03_replication.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "830d5ca5dc71e9a58d89f1a8b8b83bf00afee12a",
+      "size": 393274,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round03_replication.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7cea7c4a660882abcc772b407f073a86e9f7b498",
+      "size": 232782,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round_ledger.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "03db9a863a7fd295b5a0cab2194ac9931a3bea80",
+      "size": 17075,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/round_ledger.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f86de12c58961fc72cd4e125ae1b4ec251ddc828",
+      "size": 8163,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/source_only_audit_smoke.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "49d0f8198dd9a5d8aed2dc55c291d2a752b09776",
+      "size": 2703,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/sql_correctness.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "905013f3eab76678c99a94e491d28d3261253b9e",
+      "size": 12729,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/sql_smoke.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "888962d824d98fdf0c3c52860ffc48961e0eb746",
+      "size": 8983,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/sql_smoke.jsonl",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fc98d51333bd5eebe77c9c55e23604002b6fe947",
+      "size": 2680,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/summarize.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d5d4093e6569500221af39cef35d31420e37320e",
+      "size": 10268,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/verification_correctness.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "223b2f502846ecd98a1d7109a1b2a121cdb5e26a",
+      "size": 38262,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/verification_qa.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "31f373b29291dac2ec1a46e3b001fba57105e91b",
+      "size": 287176,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "bench/verify_evidence.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "630583ca9e450b447d4069d8f8034513b7801b66",
+      "size": 6970,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "2d345a0660f9b3a997cf421085abe1558d154d19",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/BUILD_ENVIRONMENT.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "807b2ac59a46321dc8d84d88cf3c92f46e8ebf65",
+      "size": 672,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/ITERATION-01.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9666860503f0bbb9260228f18e358b1b6878469b",
+      "size": 3752,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d1c523a3fa8fa5f259c634097c68ab8f0a294984",
+      "size": 1086,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/PERFORMANCE.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "73e4d1c8cb3f42c563169bbcbc47baa802f8dc6d",
+      "size": 3517,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "27b7653f04ae55e662773ee0a89861f1231d1e1e",
+      "size": 8776,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/SOURCES.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d65e4629da636fdf3392f3499cebb371c360e516",
+      "size": 3635,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/VERIFICATION.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "730d4e82d4e7c4206f609682e88c68e6edc490e7",
+      "size": 2757,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/bootstrap.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "efc10f913bf0cbda01eaef18ba709d9e25a90d33",
+      "size": 1266,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/build.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "9d9c95b52f8455a0b4990826ac1e993ab8bd040c",
+      "size": 1421,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rebuild_round.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "dcd8f31ce52fc3653fee87558344c5b71ca5512e",
+      "size": 1118,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "bb4f46f32392ee9c3c5115028365aaabba9de183",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/initial",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "332a3b54bfcab66719a4cf574efaf22eedea0dd6",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/initial/SHA256SUMS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4812faf311fe55d6182cbcced9e0e5e658ac1a0a",
+      "size": 402,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/initial/build.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "4267990eb1f8ea2d539a386175ea8e3d5eaf1999",
+      "size": 689,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/initial/src",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "28eb6d162e0d7f1695a98a08e10bca0056923baa",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/initial/src/temporal_core.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6bfe685a1dae0530e41a95b63ab25b3ed713267b",
+      "size": 16767,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/initial/src/temporal_core.hpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "17f455b9c8290b63f43754f79e6c3cee6f841807",
+      "size": 1053,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/initial/src/temporal_datalog.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "79bf4496f75447cbfa3fcf0b8a034de9ba7d7495",
+      "size": 8643,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/manifest.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "61cbf3ddb9afcea204bc4bc8d7bbbc82286a9887",
+      "size": 4591,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round01-lazy-index",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "6e6d73f8c0d84638efbb695f31594878e1176516",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round01-lazy-index/SHA256SUMS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cc3179bafda9e3d003b81446b54618bcb16f807b",
+      "size": 448,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round01-lazy-index/build.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "4267990eb1f8ea2d539a386175ea8e3d5eaf1999",
+      "size": 689,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round01-lazy-index/src",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "52e3fadaf8c91782a0cdf567933ec9afb7faafa1",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round01-lazy-index/src/temporal_core.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9f05a45a8c835358bf0ec4f0d5d040209b40548e",
+      "size": 17170,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round01-lazy-index/src/temporal_core.hpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "17f455b9c8290b63f43754f79e6c3cee6f841807",
+      "size": 1053,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round01-lazy-index/src/temporal_datalog.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fd2164ab34583f6325406b565dab7341addd33f5",
+      "size": 8758,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round02-canonical-dictionary",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "fe82b3cd296a1c44e8d1b393905800789b04a72b",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round02-canonical-dictionary/SHA256SUMS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "efd597ceaf06152843dd4ce1bd515bad2eaf6e76",
+      "size": 448,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round02-canonical-dictionary/build.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "9870423b4dd3e3760c160d6751a8faa73036f299",
+      "size": 907,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round02-canonical-dictionary/src",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0a8a6980cca1392c0d161bb9c1701604691d8f4c",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round02-canonical-dictionary/src/temporal_core.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3895de5f8bbddaead03251cb26deecbe1d26bc29",
+      "size": 17264,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round02-canonical-dictionary/src/temporal_core.hpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "17f455b9c8290b63f43754f79e6c3cee6f841807",
+      "size": 1053,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round02-canonical-dictionary/src/temporal_datalog.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fd2164ab34583f6325406b565dab7341addd33f5",
+      "size": 8758,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round03-inline-tuples",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "a68fa62dfc59304eb4e3541ec45b3254691502d7",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round03-inline-tuples/SHA256SUMS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b5b1cdd3f74dc5a5d2bc7d1ee128db07d8ca6048",
+      "size": 489,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round03-inline-tuples/build.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "9870423b4dd3e3760c160d6751a8faa73036f299",
+      "size": 907,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round03-inline-tuples/src",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "26426813c818392b4087d30b531933d4e75b12b5",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round03-inline-tuples/src/temporal_core.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "33223ced0bdd4a760bf36f710e37af703e4e0000",
+      "size": 18452,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round03-inline-tuples/src/temporal_core.hpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "17f455b9c8290b63f43754f79e6c3cee6f841807",
+      "size": 1053,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/rounds/round03-inline-tuples/src/temporal_datalog.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fd2164ab34583f6325406b565dab7341addd33f5",
+      "size": 8758,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/src",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "31451d3b1244b5bb12b6d277538e753c3d620fc3",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/src/temporal_core.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "35eb747d338fc69380eb0db6a0b59033dff524de",
+      "size": 25112,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/src/temporal_core.hpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "17f455b9c8290b63f43754f79e6c3cee6f841807",
+      "size": 1053,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/src/temporal_datalog.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "66f33dc617d39d34e1bf9196cf033635e9023de9",
+      "size": 19642,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/src/temporal_typed_core.hpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f94113a07230f8a450c06b46cae6eb9c7a25eb8c",
+      "size": 1698,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/src/temporal_value_domain.hpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2a453c41db79f9fb0e06a60951a2672ab15b0b66",
+      "size": 9608,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/tests",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "ff0c203ee19fd57e978a3a5dfc8c99c1ad39f76c",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/tests/profile_ingestion.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d86f7b17d2229c4195306461f0ae650c002eece5",
+      "size": 1517,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/tests/run_typed_core.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "084b9149dd9e68349ace61ce91cad1234a8aa3d9",
+      "size": 11570,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/tests/test_core.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fbd3e455f4df6e468c1f7a9057e802a6cabf82b8",
+      "size": 1811,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/tests/test_extension.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8ac9d9e6a333bed1bb31708c827d60292593f520",
+      "size": 11564,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/tests/test_header_materialization.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "28d4a6f3c50e22002b28e3a08ca19c17ac1ae3be",
+      "size": 2121,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/tests/test_typed_core.cpp",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f723056d03e3359756d2bc4de6e43fa36cc5793d",
+      "size": 16557,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/tests/test_typed_extension.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b4e5c38c4e5598563a3177b3f739c25cad2e47de",
+      "size": 33896,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "294308cee532fdd2118d2a6dff6dd1d30d5ea2bc",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/LICENSE.duckdb",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4e1fbb7695a7e4fb679d654ce5391c1a20fa8c5f",
+      "size": 1072,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/LICENSE.duckdb-v2",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2719c9a23d2a37c1dfb7402e79f03bd615701e53",
+      "size": 1072,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/append_extension_metadata.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9603022ef0c718a93b38271dbd399c46ede67d9c",
+      "size": 1914,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/duckdb.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a6cd9e265279b4cb2c9d01794fd9d6323c42fd6c",
+      "size": 190571,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/duckdb_extension.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2d89b4b96715c2725c8052eb3eca668a82475bbb",
+      "size": 95235,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/duckdb_extension_v2.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b77dc115c1013e8f4db54f372cfd53d3148455ce",
+      "size": 205461,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/duckdb_v2.h.part1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "093ec9d6f74894912166a23b4b304e3fbf9c0f36",
+      "size": 375667,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/duckdb_v2.h.part2",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "23363ec941ce0d22a25f82a0b6aa35290cc7867b",
+      "size": 375796,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/duckdb_v2.parts.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "048a65fbcca5cc79dd798e0a00d47961a79bf159",
+      "size": 771,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "engine/vendor/materialize_duckdb_v2.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c7b665b3b2b6af320cc5c9d511ef52ddf50d80ac",
+      "size": 1792,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "export_source.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5e568e75b991834c393ea1b237f04b35ca65221b",
+      "size": 3570,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "research",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "dda8a624d4295054b0eb651b2effd019e177dec9",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "research/readiness-roadmap.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "26613ae453907ca7eb1ec67ca670057070e5acb4",
+      "size": 17769,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "research/triplex-interoperability.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "de30df3fdd47036a82006fba499b84d5cdb11840",
+      "size": 23219,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "4bdfffff08f8e1e02427871c19e2445d5305ecc5",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/REVIEW.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d91a4c84fbb4b07027f10a40459359264587cb04",
+      "size": 14206,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/browser_checks.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "01c3ea1533afe3813cc299a49479d35980f76928",
+      "size": 3277,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/browser_checks_0328.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7db6020ed9e409c1476a35fe28a73a79c9e89f5d",
+      "size": 1572,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/browser_checks_0331.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "61a1b268131094a8ffe4477290154c6a09ef32c3",
+      "size": 1934,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/browser_checks_final.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "34c67fab57bf2a0eae0147fbc9624d1cd80e6e0b",
+      "size": 1926,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/findings.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4f0a225faaff6715e21a936429dd1cad69f89b53",
+      "size": 5096,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/native_checks.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "92f5150bed4ea7da5ad55ffd65e06b6001d581ab",
+      "size": 6134,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/native_checks_baseline.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "85ccf7954e3bc63771bb341a5165e965500bde00",
+      "size": 1622,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/native_checks_final.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a271070a37b3fff37be856c1000d22e1b3990d61",
+      "size": 1785,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/native_checks_round03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e66001b474c84c33854ec31346e2fe13b71fb49c",
+      "size": 1784,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/native_checks_round03_duckdb143.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e8e2ec2e8f5299983b0530872d54c7c6d74ce447",
+      "size": 1783,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/oracle_checks.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14f3ac36cf49a4fe97866ff5182d25071b998c3a",
+      "size": 4532,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/oracle_checks_baseline.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4ac520ee5002f0841633d7d80666aac065daeb64",
+      "size": 560,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/oracle_checks_final.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1052d5247083b3c67fcc3a8c87ee3f319cf2fb2d",
+      "size": 560,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/oracle_checks_round03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "124c8ed55fe7f11752c8a8235f21ed8c783dafe4",
+      "size": 560,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/oracle_checks_round03_duckdb143.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6f28895911a9315cad835c92188d709e3e109850",
+      "size": 560,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "review/rebuild_initial_load_final.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3effaaff86b0d9188ef550a775b27ab6027218c4",
+      "size": 233,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "bc10ee8a0564744f1d6e57a3e33f06ba83c2d4ab",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/.gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d10d118c5c769547e955dd80ce69ddc7189dd7f5",
+      "size": 36,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/dist",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "30d724c52a0307344a3d56a38028e359e92ebad5",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/dist/app.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c83f8b167f820e624b46f77956d76ea48f59bbac",
+      "size": 10184,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/dist/engine-v2.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c9d227665aed8fc8115c04c8b7b4fa2cb847c73e",
+      "size": 19533,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/dist/engine.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "da51511a3d45e2d6e98ef32ab3b42b8c398213cb",
+      "size": 8633,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/dist/index.html",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0f74cb261acae6d62448a59ec08ffbc00ad36c7a",
+      "size": 12275,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/dist/query-worker.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e9c50a4d825284404fa43836260e100e33c19a3b",
+      "size": 336,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/dist/style.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f265b2a7779c6619a71e57dcfe64f6f3a93d5390",
+      "size": 13621,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cdfbf380739501245368b83195905bfac35b88ca",
+      "size": 216,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/tests",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "db21e8ec218113b7364ba7bdccf7593a49b89e24",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/tests/conformance.test.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3110787fcae352579f6c680a832f740d0d1397c0",
+      "size": 452,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/tests/engine.test.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0cdbbef0090e217f72d88b522ebf370c57859189",
+      "size": 4797,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/tests/native-fixtures.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "467c61f3b71424153f2a7d83fd033d07f9ae9b6e",
+      "size": 17115,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/tests/typed-engine.test.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c42bde3cc1f4b16f3f22dbadc470dc3609d2ea1c",
+      "size": 19780,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "site/tests/typed-fixtures.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2352fd98b00c726f80641be7730dd58deca65243",
+      "size": 25538,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "9113f0ca31393994929c72288bdd282c5cbce11f",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/.gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8f2e7e4dc3c48bab53f6464f88f9abd7c5842210",
+      "size": 69,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e04ee45d4c68cfeb7e33753449e937aaf3b4208c",
+      "size": 5247,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/schema.sql",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "28d87765fd3f4426d503676cddea2986117e1e28",
+      "size": 1504,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/schema_v2.sql",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5f8cff5ee6980e45df0e5094ac378514b750de0c",
+      "size": 2020,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/store.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "479d6a9133acddfd32a6c93a723f8c77155db4e4",
+      "size": 15286,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/tests",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "00b2f4c3f82b9dfda4e79e9ff96ee88b49902a61",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/tests/migration_adapter.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e578e2d676c878fef6ea6f9ea164ca85e82bd205",
+      "size": 2892,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/tests/test_store.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6bd3fcde53ed6bb950926a78b026b4a874f3cd3f",
+      "size": 14839,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/tests/test_typed_store.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "25bf9c9e4586bc4f9164f9735a8bce599d4ea2ff",
+      "size": 22919,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/typed_store.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5fbbc05363c3c31a6b44ace8c673cf4730f34b71",
+      "size": 26530,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "storage/verification.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ab7d44c06fdad3a711c29d839708dc403366c572",
+      "size": 1419,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "verification-final.log",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8335d33c6746589de1cc56fbd9d9b5123c5f2064",
+      "size": 7869,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "verify.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "b48b1d21d337791a32d6312528b6c0ea71bb62d1",
+      "size": 884,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "path": "verify_typed.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "2ceadbf025c8f9d55c665236963e48d5525206eb",
+      "size": 1165,
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    }
+  ]
+}

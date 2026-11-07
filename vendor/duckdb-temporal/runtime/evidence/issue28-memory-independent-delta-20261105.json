@@ -1,0 +1,54 @@
+{
+  "schema": "td.issue28-memory-independent-delta/1",
+  "status": "SOURCE_REVIEW_ONLY_GOAL6_OPEN",
+  "research": {
+    "indexCommit": "c5c557e3f1e13ec2c59b3281ec98e6838ae3c2a1",
+    "reportCommit": "f867076d006f90bd1cc7ba5730b2da1a0f7f1f77",
+    "reportPath": "projects/temporal-datalog/research/issues/28-native-memory-20261105/REPORT.md",
+    "reportGitBlobSha": "c23341495080922fa313e64885f8b0f2bde82637",
+    "capturedReportSha256": "d76d1313c34fefa873be6de72f49dc09b44e9462f2b0ae2e13bd2cde95c76e90",
+    "capturedManifestSha256": "b1a367ff5b53798e59032c45bbeca1778ec22a09e3ee915b98ac037377a02b25",
+    "boundary": "The report could not resolve historical allocator c6e3787e. Its326602 pure accounting model assertions are not real DuckDB/SDK/allocator/spill/cancellation acceptance."
+  },
+  "newLocalClosure": {
+    "receiptCommit": "eea9d495ca5578ca1bd2a03a6ff9608776cbd734",
+    "testedImplementationCommit": "dd86a40494f353a8b05081156de28f10938a329a",
+    "publishedBase": "ce7c53b9",
+    "paths": ["NATIVE-EVALUATOR-BUDGET.md", "evidence/native-evaluator-allocation-032-stage2-20261105.json", "native/src/temporal_allocation.hpp", "native/src/temporal_control.hpp", "native/src/temporal_datalog.cpp", "native/src/temporal_core.cpp"],
+    "recordedEngineGate": "Standalone test plus9ordinary public/raw Node methods PASS on first stage-two attempt; actual core/paired owner/engine/import hashes recorded in the receipt. This review read source and receipts and did not rerun or rehash those artifacts.",
+    "recordedCoreSha256": "979a6ee1e85db731ac3e7c593cd85beaadfd881335ae148de211fe7592d1b975",
+    "recordedOwnerSha256": "7d6a0283500884ff7b86c3eb74f281eb66ad8d95a1d3d69184f545d2c0994f12",
+    "notCurrentAcceptedRuntime": "Isolated stage-two runtime; not the frozen B f44/55/af candidate or published integrated acceptance."
+  },
+  "deltaFromReport": [
+    "Requested-capacity accounting already covers retained relation rows/sets, dictionary map/bucket/text storage, lazy index maps/posting capacities, pending sets and aggregate groups/order vectors, including old-plus-new growth overlap. It does not count malloc rounding or allocator bookkeeping.",
+    "Ordinary scalar callbacks already use synchronous borrowed run_to. Core lives through canonical sorting and DuckDB vector encoding, so an untracked owning TypedResult copy is no longer present on that path. The independent direct C++ owning run() result remains excluded.",
+    "Finite64MiB per-evaluator default and optional tightening through maxEvaluatorBytes are present in the isolated stage-two API. Same-token callbacks serialize retained evaluation/encoding through an invocation mutex; independent tokens remain parallel. No instance-wide shared-byte ledger exists.",
+    "Static native memory-limit what() plus noexcept accounting avoids allocating inside the allocator bookkeeping itself. Full fixed-size denial-stage/cause telemetry and end-to-end generic error translation under exhaustion are not qualified.",
+    "The normal-build40000-row default-cap gate is prepared but explicitly unrun at eea9d495. Broad existing control/interval/cut suites and full integrated verification remain promotion prerequisites."
+  ],
+  "remainingConcreteGaps": [
+    "Compiler/parser/IR/names, import temporaries and bounded scheduler/binding/callback scratch remain outside the retained allocator; an invocation cap does not currently cover compile-through-active-result construction.",
+    "Upstream DuckDB active DISTINCT/LIST construction and result vectors/StringHeap arenas are engine-owned and outside the native cap. Callback list validation happens after those allocations. SDK materialized rows, wire/JSON parsing and final TypeScript values are separate host owners.",
+    "Peak diagnostics are the maximum successful retained evaluator peak per invocation, not simultaneous native/process peaks, failed-stage peaks or a sum-safe total across readers.",
+    "C2's three active heavy public calls are fair concurrency admission, not shared native physical memory admission: callers may have different byte caps, SQL work has other owners, and compilation/transport are outside the retained cap.",
+    "A raw pre-LIST row/byte cap can reject duplicate-heavy history that previously fit a small DISTINCT result. Either declare that conservative compatibility change or use bounded engine-managed staging/deduplication; do not label the two contracts equivalent.",
+    "Existing pinned C APIv2 column_data_collection is a buffer-managed, spillable sequential staging mechanism. It does not supply an evictable hash index or spillable recursive evaluator. Append copies and scan/reference/reset lifetimes need real qualification before use."
+  ],
+  "nextBoundedGoal6Acceptance": [
+    "After the priority SDK fairness gate, run the existing ordinary40000-row exact gate with unchanged64MiB default and original query limits, preserve any failure, then required integrated semantic/control suites. No automatic cap increase.",
+    "Declare a versioned native coverage boundary and add one atomic request/shared requested-capacity reservation ledger covering newly owned compiler/import/retained/sort work through active construction. Charge old and new capacities together and roll back failed upstream reservations exactly once; no lock held through allocation, polling, copying or destruction.",
+    "Exercise actual normal-path1/4/16 independent callers with simultaneous live budgets and compiler/import/rehash/sort/encoding denials, exact eight-tag answers, no partial output, stable semantic/control/resource error precedence, balanced reservation release and healthy pool reuse. Keep zero-import pruning and unrestricted two-atom absent-index cases separate.",
+    "Qualify public carrier boundaries separately:512-byte text/ref/blob IDs and4096-byte JSON query carriers versus16384-byte direct-kernel terms. Validate borrowed lengths before copying and reserve capacity first.",
+    "Measure native deadline delivery/observation/cleanup separately from JavaScript AbortSignal delivery. Add byte-bounded polls around opaque helpers without claiming an unmeasured wall-time cancellation bound.",
+    "If staging is needed, prototype the existing exact-pin C APIv2 collection first, with append-copy, borrowed scan lifetime, referencing statements/reset, temp quota failure and cleanup tests. Report engine/V8/RSS separately; no claim that allocation counters or fair admission close process containment.",
+    "Derived persistent maintenance requires its own owner budget for old READY generation plus building generation/deltas/rollback; per-query release is not an adequate lifetime."
+  ],
+  "sourceAnchors": [
+    {"commit":"eea9d495ca5578ca1bd2a03a6ff9608776cbd734","path":"native/src/temporal_allocation.hpp","lines":"11-55,69-80","observation":"Static denial message, requested live capacity, growth admission and noexcept counters; per-Core budget only."},
+    {"commit":"eea9d495ca5578ca1bd2a03a6ff9608776cbd734","path":"native/src/temporal_control.hpp","lines":"18-60","observation":"Immutable per-invocation cap, same-token mutex, successful max peak/completions; no shared byte ledger."},
+    {"commit":"eea9d495ca5578ca1bd2a03a6ff9608776cbd734","path":"native/src/temporal_datalog.cpp","lines":"379-422","observation":"Engine construction/import then run_to sink and copied DuckDB vector encoding while Core lives."},
+    {"commit":"f867076d006f90bd1cc7ba5730b2da1a0f7f1f77","path":"projects/temporal-datalog/research/issues/28-native-memory-20261105/REPORT.md","lines":"44-121","observation":"Proposed request/shared reservations, pre-LIST compatibility, host boundaries, cancellation, collection staging and persistent generations."}
+  ],
+  "executionBoundary": "No tests, compiler, database, benchmark, dependency install or large fixture I/O performed. Only bounded local source/receipt reads, small captured-report hashing and new independent evidence authored. SDK acceptance implementation remains blocked on root approval of its explicit contract, not this research."
+}

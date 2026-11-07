@@ -1,0 +1,106 @@
+{
+  "format": "triplex-measured-bottleneck-hypotheses/1",
+  "id": "xtdb-identity-read-hypotheses-v1",
+  "state": "PROPOSED_NOT_IMPLEMENTED_OR_EXECUTED",
+  "problemTag": "transaction-identity-read-duplication",
+  "sharedFoundation": "XTDB writes shared by the Datalog and native query surfaces",
+  "measuredReference": "xtdb-driver-stages-observed-v1/0001",
+  "measurement": {
+    "attribution": "qualification/reviews/xtdb-driver-stages-observed-v1-attribution.json",
+    "independent": "qualification/reviews/xtdb-driver-stages-observed-v1-trace-independent.json",
+    "correctReads": 480,
+    "writerCommands": 6,
+    "allWritersVisibleInside30Seconds": true,
+    "identitySelectsPerTenTargetCommand": 20,
+    "sameSqlAndTypedParameterDuplicatePairsPerCommand": 10,
+    "aggregateAckWallFractionBeforeBegin": 0.9394001331613625,
+    "aggregateAckWallFractionInIdentityDriverSpans": 0.9125665931049839,
+    "meaning": "Driver dispatch-to-settlement wall spans; COMMIT SYNC remains composite. No independent engine CPU, wire execution or indexing instant was observed.",
+    "limits": "One 1k sparse FACT-subject scope and one 30s diagnostic. No configured-entity/full-scale coverage, sustainable-rate calibration, comparative promotion, host-idleness or Rust case. Earlier co-run failures remain unchanged."
+  },
+  "owningSource": [
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "line": 433,
+      "mechanism": "Each retraction reads getById for reserved-write validation and transaction change capture before calling adapter.retract"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "line": 111,
+      "mechanism": "queryRows captures sourceK, applies original scope/id/recorded/retirement predicates, and then recomputes pending row overlays"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "line": 529,
+      "mechanism": "retract performs a second independent queryRows by id; getById at line546 invokes the same source lookup"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "line": 219,
+      "mechanism": "Existing persisted assertion document key is JSON.stringify([scopeKey,row.id]); this supports a separate native-key predicate hypothesis without a second store"
+    },
+    {
+      "path": "packages/xtdb/src/TransactionContext.ts",
+      "line": 11,
+      "mechanism": "Per-adapter transaction state owns sourceK, pending rows, claims and nested savepoint state; no shared committed identity cache exists"
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "A-single-read-handoff",
+      "recommendation": "FIRST_NARROW_CANDIDATE",
+      "mechanism": "Keep getById's current backend read. Retain one private immutable copy of that result (or miss) in the active transaction; let the immediately matching retract consume it once if the same transaction/sourceK/id and unchanged pending row snapshot still prove equivalence. Any failed eligibility check uses the original queryRows path.",
+      "changes": [
+        "Private TransactionState handoff and XTDB adapter implementation only; no user schema, query DSL, public API or driver protocol change",
+        "Maximum one handoff entry and64KiB of scalar payload per transaction state; oversize/non-flat values bypass reuse",
+        "Private cached rows contain only copied primitive assertion columns. Returned objects retain their current behavior; their mutation cannot corrupt the private handoff",
+        "Compare the pending-row snapshot field by field with Object.is, including in-place mutation and signed zero. A changed or newly inserted/retracted pending row invalidates reuse",
+        "Nested child states and every retry start with an empty handoff; failed/successful children do not leak it into the parent. No cache survives transaction completion",
+        "Only the same scope/generation-bound adapter state and sourceK qualify. Outside-transaction, history, basis-qualified and arbitrary query reads stay on the original route",
+        "Do not alter reserved-write authorization, command claims, source-position CAS, conflict/replay-safety or unknown-ACK reconciliation"
+      ],
+      "prediction": "Ten unchanged target retractions require10 committed identity SELECT callbacks instead of20, while original source-basis/claim/submit/receipt/visibility calls and returned rows remain equivalent",
+      "retirementAndConcurrentWrites": "A captured source result may only be reused for internal mutation at that same sourceK; public getById still executes its normal read. Own pending changes invalidate the handoff. A foreign commit must still produce the existing source-CAS conflict and an explicitly replay-safe retry must reacquire sourceK and an empty handoff. Test this interleaving instead of assuming raw retirement metadata is immutable.",
+      "failurePolicy": "Any uncertainty, unsupported row shape, id mismatch, child-state crossing, changed overlay, payload cap or incomplete lookup falls back to the existing lookup. Correctness and uncertainty tests precede any timed trial."
+    },
+    {
+      "id": "B-existing-native-document-key",
+      "recommendation": "SEPARATE_SECOND_CANDIDATE_AFTER_SOURCE_COMPLETENESS_GATE",
+      "mechanism": "For the existing id-specific source lookup, add parameterized _id=JSON.stringify([scopeKey,id]) while retaining original scope/id/recorded/retirement predicates, projection, decoder and pending overlay. No row-layout or write change.",
+      "prediction": "Identity callback count stays20, but per-lookup driver wall time may fall if the pinned native planner uses its document identity path. That planner benefit is a hypothesis, not an established fact.",
+      "gates": [
+        "Verify the admitted source writer always supplies this exact key, including correction replacement, scope/generation separation, unusual Unicode/id spellings and reopened stores",
+        "Refuse or fall back for source mappings whose native-key completeness is not established; never silently omit a legacy or externally authored row",
+        "Retain original half-open/recorded/source cuts and mutable pending overlays; compare all identities and retirement metadata with the unchanged reference",
+        "Measure observed SQL shape, callback count, public ACK and per-lookup wall spans rather than treating key syntax as proof of an optimization"
+      ]
+    },
+    {
+      "id": "C-bounded-target-prefetch",
+      "recommendation": "DEFER_UNTIL_A_AND_B_MEASURED",
+      "mechanism": "The core already owns the validated transaction operations, so it could invoke an optional internal adapter prefetch SPI inside the same transaction to fetch only the known retraction target IDs in bounded chunks at sourceK. Subsequent reads still recompute current pending overlays.",
+      "prediction": "Ten targets can use one bounded source identity query rather than10 or20, without loading the whole store or changing the user transaction API",
+      "additionalCost": "Requires separately justified shared internal SPI/core integration and cross-backend fallback tests. The XTDB adapter cannot infer all future target IDs from an arbitrary Effect callback; do not invent a batch from expected answers or evaluate facts in the host.",
+      "gates": [
+        "Bound IDs, payload, chunk width and map lifetime; preserve absent IDs, duplicates, command order and sourceK across every chunk",
+        "Keep pending inserts/retractions, required/reserved authorization and transaction change records identical to the existing sequential path",
+        "Retain independent nested/parallel transaction, foreign scope/generation, retirement, retry, cancellation and unknown-ACK controls"
+      ]
+    }
+  ],
+  "firstCandidateGates": [
+    "Focused real-adapter controls: hit/miss/different-id/direct-retract, consumed-once behavior and exact driver counts",
+    "Caller mutation of returned base/pending rows, pending assert/retract/repeated retract, cap/unsupported-shape fallback and signed-zero field identity",
+    "Caught nested rollback, successful child, parallel sibling protection, scope/generation isolation and no handoff retained across transactions",
+    "Foreign commit between getById and retract, terminal non-replay-safe conflict, replay-safe retry with new sourceK, lost-ACK operation reconciliation and cancellation",
+    "Fresh unchanged44 foundation, translated142 and native142 plus affected native13/parameter34 gates on the candidate's exact build before interpreting load results"
+  ],
+  "timedPilotContract": {
+    "state": "NO_NEW_EXECUTION_GRANTED",
+    "control": "Freeze a fresh unmodified control before the first product edit; the isolated observed run is measured attribution, not a three-repeat promotion control",
+    "numericProfile": "Same1k sparse subject fixture,256logical clients,480offers at16/s,dispatch16,pending4096,30swindow,30sscheduled-offer deadline,6ten-entity corrections at0.2/s,896MiB1CPU client plus existing3GiB XTDB and2GiB Q reservations",
+    "sourceAndEvidence": "Separate named source/build/fixture/oracle/profile identities and exact driver callbacks; fresh scopes; no query deadline, write semantics, staleness or resource-cap relaxation",
+    "decision": "Correctness or unresolved lifecycle failure rejects the candidate. Any availability/liveness failure remains failed. A small gate can validate the predicted call-count mechanism; performance promotion still needs actual common-path capacity controls, adequate samples and matched repeats."
+  },
+  "executionHold": "Proposal only. Root selects and grants the first candidate before any product edit, build, engine trial or adoption."
+}

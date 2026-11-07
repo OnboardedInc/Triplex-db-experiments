@@ -1,0 +1,122 @@
+{
+  "role": "cpp_candidate",
+  "terminal": {
+    "role": "cpp_candidate",
+    "pid": 73616,
+    "argv": [
+      "node",
+      "<qualified-build02-runtime>/adapter/benchmark-scale.mjs",
+      "--runtime",
+      "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+      "--sizes",
+      "10000000",
+      "--readers",
+      "1,4,16",
+      "--samples",
+      "5",
+      "--warmup",
+      "1",
+      "--writes",
+      "8",
+      "--group-size",
+      "256",
+      "--fixture-mode",
+      "mixed",
+      "--threads",
+      "4",
+      "--memory-limit",
+      "2GB",
+      "--max-temp-directory-size",
+      "4GB",
+      "--max-intermediate-bytes",
+      "4294967296",
+      "--duration-seconds",
+      "60",
+      "--read-duration-seconds",
+      "0",
+      "--max-writes",
+      "12000",
+      "--clone-database",
+      "<canonical-runtime>/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "--clone-evidence",
+      "<canonical-runtime>/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "<writer-source-runtime>/build/native-writer-lab-broad-20261106/forward-01/cpp_candidate/result.json"
+    ],
+    "startedAtUtc": "2026-11-06T07:11:16.262257+00:00",
+    "status": "terminal",
+    "exitCode": 0,
+    "exitedAtUtc": "2026-11-06T07:15:36.777072+00:00",
+    "elapsedMs": 260514.43854090758
+  },
+  "functional": "PASS",
+  "exactLoadedImageSet": true,
+  "roleAssociation": "PASS",
+  "zeroCleanup": {
+    "liveHandles": 0,
+    "pendingCompletions": 0,
+    "asyncContexts": 0,
+    "asyncResources": 0,
+    "lifecycleOwners": 0
+  },
+  "routes": {
+    "nativeEnrollment": 11,
+    "nativeGenerated": 1193,
+    "sdkGenerated": 0,
+    "errors": 0,
+    "unknown": 0
+  },
+  "mixed": {
+    "reads": 353,
+    "qps": 5.669545892070055,
+    "p50": 2769.215082999988,
+    "p99": 4715.080124999979,
+    "acks": 1163,
+    "ackRate": 19.363173244489996,
+    "wallMs": 62262.48216700001,
+    "rss": 2808201216
+  },
+  "closedOwnedClone": {
+    "path": "<qualified-build02-runtime>/build/scale-runs/20261106T071116384Z-4c35ee93/facts-10000000.duckdb",
+    "walAbsent": true,
+    "bytes": 3905433600
+  },
+  "fixed": {
+    "1-count": {
+      "p50": 437.91291699999965,
+      "p99": 455.05983299999934
+    },
+    "1-grouped_count": {
+      "p50": 530.6565840000003,
+      "p99": 612.8195830000004
+    },
+    "1-projection": {
+      "p50": 14.572291999997105,
+      "p99": 22.232458999998926
+    },
+    "4-count": {
+      "p50": 943.4157080000004,
+      "p99": 1171.2036660000012
+    },
+    "4-grouped_count": {
+      "p50": 1041.2738339999923,
+      "p99": 1491.1554580000084
+    },
+    "4-projection": {
+      "p50": 20.63529199999175,
+      "p99": 28.877542000001995
+    },
+    "16-count": {
+      "p50": 3312.2106249999924,
+      "p99": 7185.386833000011
+    },
+    "16-grouped_count": {
+      "p50": 3747.083292000025,
+      "p99": 7405.800749999995
+    },
+    "16-projection": {
+      "p50": 59.409708999999566,
+      "p99": 86.14100000000326
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "saved_source_ref": "99cf5ebc441c8291a4fd24eb20f02776c33f261a",
+  "saved_result_ref": "e5e2e9ad6988e44f7b676d0d8c56f40023fe7a2f",
+  "inspected_project_sources": [
+    {
+      "path": "projects/temporal-datalog/prototype/standalone/aggregate_reducer_v1/include/aggregate_reducer_v1.hpp",
+      "bytes": 12081,
+      "sha256": "2dfb6e9437bcf9c8c89c27cd9619cd42d7f9f41d0fbedc4f0a2e25af46896dbc"
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/standalone/aggregate_reducer_v1/src/aggregate_reducer_v1.cpp",
+      "bytes": 46914,
+      "sha256": "6d1562326905c7f9758eb3c148c9008674315a6ae13206abb09c5c05b8229d30"
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/standalone/aggregate_reducer_v1/performance/native-scaling-001/native_scaling_unit.cpp",
+      "bytes": 42814,
+      "sha256": "0d826c951d2bbaf83aaae9415d3190d1218dd8e6ebd4497b1306d876b1689583"
+    }
+  ],
+  "identity_limit": "Matched named selected project text, not proof of bytes actually consumed at runtime or installed capability",
+  "actual_compile_cause": "UNKNOWN",
+  "new_research_execution_import_probe_counts": 0,
+  "stopped_native_action_retry_or_alternate_route": false
+}

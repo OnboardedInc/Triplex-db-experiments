@@ -1,0 +1,18 @@
+UTC: 2026-10-31T07:27:14Z
+
+COMMAND: strings -a HOST | anchored version/pin markers (bounded selected output)
+d54cbbe3df
+v2.0.0
+
+COMMAND: readelf -d HOST | FLAGS and FLAGS_1
+
+COMMAND: readelf -S HOST | debug-info or symbol-table names
+  [ 2] .dynsym           DYNSYM          00000000000002d0 0002d0 0d6f50 18   A  6   1  8
+  [30] .comment          PROGBITS        0000000000000000 407ed08 0000ae 01  MS  0   0  1
+
+COMMAND: readelf --version-info runtime candidate | maximum CXXABI marker
+CXXABI_1.3.15
+
+COMMAND: library and interpreter symlinks (filesystem only; not loaded-module state)
+/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3.12

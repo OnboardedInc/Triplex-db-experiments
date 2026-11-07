@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-11-06T02:10:44.237838+00:00",
+  "pins": {
+    "build/adapter/native-entity.js": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "testSetup": {
+    "copiedCanonicalSourceFiles": {
+      "public-backend.mjs": "c763e86f4faf7c35de9c166813d590603321b2b7617022b6263e5f8df5c395bf",
+      "transaction-owner.mjs": "4d1de7e32e298a39c4dd19a9d26f93045b1f575c1da2f3135c77507d5fa03c8b",
+      "public-schema.sql": "50d23fc33b22f49c732a0e77d7b517c7fdffad1a9eac40b0be674d5cdd84be88",
+      "owned-duckdb-port.mjs": "65caca13d12022265bb0b45f9d9e69459871e6ab5f986ff84fe29c3958483ae8"
+    },
+    "readOnlyDependency": "[LOCAL_PATH_0061]",
+    "nativeBuild": "none"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "status": "terminal",
+  "pid": 4110,
+  "argv": [
+    "<task-workspace>/.venv/bin/python",
+    "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/setup-repair-initial-fingerprint.py"
+  ],
+  "startedAtUtc": "2026-11-06T08:41:29.720278+00:00",
+  "exitCode": 0,
+  "exitedAtUtc": "2026-11-06T08:41:32.649041+00:00",
+  "elapsedMs": 2928.695207927376
+}

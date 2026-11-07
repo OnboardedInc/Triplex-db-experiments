@@ -1,0 +1,393 @@
+{
+  "schema": "td.antijoin-config-screen-receipt/1",
+  "arm": "B2",
+  "status": "failed_budget",
+  "promotion": "REJECT first one-thread screen; no threshold change or retry",
+  "commonSourceCommit": "8651acc1d243b4803a55e2d08913fc08abd3ae4b",
+  "executionReceiptHead": "57a6c93ce8f9a7f895372206619d0e7351ccd4f2",
+  "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+  "raw": {
+    "file": "evidence/config-wave-b2-10m-16-20261105.raw.json",
+    "sha256": "8eaf320fb00ec22358814fcd9d3f9796dac8ba3ea2dcae9d0a2cad8cc58632e8",
+    "bytes": 954772,
+    "byteIdenticalProjectOnly": true
+  },
+  "configuration": {
+    "readers": [
+      16
+    ],
+    "samples": 20,
+    "warmup": 1,
+    "durationSeconds": 60,
+    "maxWrites": 12000,
+    "threads": 1,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296
+  },
+  "originalBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+  "configBindingSha256": "2b30d92b3907c6c2075d6d34c676728e3cd9333077b7727fa966aa6367db959f",
+  "nativeBindingSha256": "0eaf2187d65289cbbb2902ae58867ab64127d4c973d6fe59341065e50356f963",
+  "actualNativePins": {
+    "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "commonHarnessBefore": {
+    "adapter/benchmark-antijoin-cost.mjs": "5376a279ceda839ac0b6c8567e2a1b7b05be4151d7402d17412ae41724a103da",
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/native-write-candidate-binding.mjs": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610",
+    "adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "commonHarnessAfter": {
+    "adapter/benchmark-antijoin-cost.mjs": "5376a279ceda839ac0b6c8567e2a1b7b05be4151d7402d17412ae41724a103da",
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/native-write-candidate-binding.mjs": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610",
+    "adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "source": {
+    "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+    "bytes": 3905433600,
+    "mtimeMs": 1793911060600.3289,
+    "ctimeMs": 1793911060600.3289,
+    "sha256Before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "sha256After": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3"
+  },
+  "sourceFixture": {
+    "size": 10000000,
+    "groupSize": 256,
+    "groups": 39063,
+    "initialAdded": 22,
+    "position": "39087",
+    "latestCut": true
+  },
+  "sourceUnchanged": true,
+  "candidateArtifactsAndSourceUnchanged": true,
+  "configUnchanged": true,
+  "archive": {
+    "filesBefore": 445,
+    "filesAfter": 445,
+    "before": "passed",
+    "after": "passed",
+    "sha256SumsSha256": "b17f748f92f8fa94bd5b9218602993e8b0e5f4b9ab863b38d7941fb11769580b"
+  },
+  "gates": {
+    "fixedP50": true,
+    "fixedP99": false,
+    "mixedQPS": false,
+    "mixedP50": false,
+    "mixedP99": false,
+    "writes": false,
+    "writesPerSecond": false,
+    "sampledRss": true
+  },
+  "passedGates": 2,
+  "totalGates": 8,
+  "limits": {
+    "readers": 16,
+    "maxFixedP50Ms": 3500,
+    "maxFixedP99Ms": 6500,
+    "minMixedQueriesPerSecond": 4.8,
+    "maxMixedP50Ms": 3200,
+    "maxMixedP99Ms": 6500,
+    "minAcknowledgedWrites": 40,
+    "minAcknowledgedWritesPerSecond": 0.5,
+    "maxSampledRssBytes": 3500000000
+  },
+  "inputAdmission": {
+    "scopedInputFacts": 1680202,
+    "rightSideFacts": "1679946",
+    "positiveSideFacts": 256,
+    "exactSucceeded": true,
+    "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+    "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+  },
+  "openAuditMs": 30263.321208,
+  "probeSetupMs": 1594.3589580000007,
+  "reopenAuditMs": 33385.30891600001,
+  "fixed": {
+    "samples": 320,
+    "latencyMs": {
+      "count": 320,
+      "min": 2440.4717500000115,
+      "p50": 3407.782542000001,
+      "p95": 6789.285374999992,
+      "p99": 8295.536874999998,
+      "max": 8575.853292
+    },
+    "qps": 4.135180422066105,
+    "wallMs": 77384.773417,
+    "physicalControlScopes": {
+      "calls": 337,
+      "maxActive": 16,
+      "distinctPorts": 16,
+      "portIds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+    },
+    "pool": {
+      "before": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "after": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "maxObservedActive": 16,
+      "maxObservedWaiting": 0,
+      "sampleIntervalMs": 25
+    },
+    "executionAdmission": {
+      "limit": 16,
+      "scope": "no extra harness admission"
+    },
+    "sampledRssBytes": 2764881920,
+    "cpuUsage": {
+      "userMicroseconds": 259416453,
+      "systemMicroseconds": 22822534,
+      "totalMicroseconds": 282238987,
+      "averageCores": 3.647216041831781,
+      "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+    }
+  },
+  "mixed": {
+    "samples": 185,
+    "latencyMs": {
+      "count": 185,
+      "min": 2762.6833749999932,
+      "p50": 4778.318375000003,
+      "p95": 9332.468375000026,
+      "p99": 10931.991792000015,
+      "max": 11166.991165999993
+    },
+    "qps": 2.881934034477889,
+    "wallMs": 64193.002958,
+    "physicalControlScopes": {
+      "calls": 203,
+      "maxActive": 16,
+      "distinctPorts": 16,
+      "portIds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+    },
+    "pool": {
+      "before": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "after": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "maxObservedActive": 16,
+      "maxObservedWaiting": 0,
+      "sampleIntervalMs": 25
+    },
+    "executionAdmission": {
+      "limit": 16,
+      "scope": "no extra harness admission"
+    },
+    "sampledRssBytes": 2526347264,
+    "cpuUsage": {
+      "userMicroseconds": 178846687,
+      "systemMicroseconds": 26842404,
+      "totalMicroseconds": 205689091,
+      "averageCores": 3.2042291452633496,
+      "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+    },
+    "writes": 20,
+    "requestedDurationMs": 60000,
+    "drainMs": 4193.002957999997,
+    "writeLatencyMs": {
+      "count": 20,
+      "min": 245.91574999998556,
+      "p50": 3774.4167080000043,
+      "p95": 6587.851332999999,
+      "p99": 6679.597208000021,
+      "max": 6679.597208000021
+    },
+    "writesPerSecond": 0.3151384070649698,
+    "writeBurstDurationMs": 63464.17812499999,
+    "windows": [
+      {
+        "startMs": 0,
+        "endMs": 10000,
+        "reads": 27,
+        "acknowledgedWrites": 3
+      },
+      {
+        "startMs": 10000,
+        "endMs": 20000,
+        "reads": 14,
+        "acknowledgedWrites": 1
+      },
+      {
+        "startMs": 20000,
+        "endMs": 30000,
+        "reads": 39,
+        "acknowledgedWrites": 4
+      },
+      {
+        "startMs": 30000,
+        "endMs": 40000,
+        "reads": 28,
+        "acknowledgedWrites": 4
+      },
+      {
+        "startMs": 40000,
+        "endMs": 50000,
+        "reads": 24,
+        "acknowledgedWrites": 2
+      },
+      {
+        "startMs": 50000,
+        "endMs": 60000,
+        "reads": 37,
+        "acknowledgedWrites": 5
+      },
+      {
+        "startMs": 60000,
+        "endMs": 64193.002958,
+        "reads": 16,
+        "acknowledgedWrites": 1
+      }
+    ],
+    "fullWindows": 6,
+    "engineSnapshots": {
+      "before": {
+        "processBytes": {
+          "rss": 2063237120,
+          "heapTotal": 85360640,
+          "heapUsed": 23228976,
+          "external": 3372371,
+          "arrayBuffers": 956458
+        },
+        "duckdb": {
+          "available": true,
+          "memoryBytes": "481819696",
+          "temporaryStorageBytes": "589824"
+        }
+      },
+      "beforeMeasured": {
+        "processBytes": {
+          "rss": 2157871104,
+          "heapTotal": 85622784,
+          "heapUsed": 34940112,
+          "external": 4257543,
+          "arrayBuffers": 1841630
+        },
+        "duckdb": {
+          "available": true,
+          "memoryBytes": "439352368",
+          "temporaryStorageBytes": "589824"
+        }
+      },
+      "after": {
+        "processBytes": {
+          "rss": 2281799680,
+          "heapTotal": 85295104,
+          "heapUsed": 30614696,
+          "external": 3976649,
+          "arrayBuffers": 1560736
+        },
+        "duckdb": {
+          "available": true,
+          "memoryBytes": "505453456",
+          "temporaryStorageBytes": "0"
+        }
+      },
+      "maxSampledRssBytes": 2526347264
+    },
+    "tailEvidence": "smoke_only"
+  },
+  "maxSampledRssAcrossCells": 2764881920,
+  "correctness": {
+    "allLiveTypedOracleChecks": true,
+    "queryErrors": 0,
+    "ackErrors": 0,
+    "consecutiveReceipts": true,
+    "all16PhysicalPorts": true,
+    "poolReturned": true,
+    "writeCapHit": false,
+    "finalReadVerified": true,
+    "reuseChecks": 16,
+    "reopenVerified": true,
+    "reopenPositions": [
+      "39087",
+      "39091",
+      "39095",
+      "39105",
+      "39115"
+    ],
+    "lastAcknowledgedPosition": "39115"
+  },
+  "independentNumericRecomputation": "Nearest-rank quantiles,all8gates,ACK windows and consecutive positions match raw; QPS equivalent arithmetic agrees within1e-12 relative tolerance.",
+  "normalizationNotes": "Initial exact QPS assertion differed by one floating-point ULP (4.135180422066106 versus4.135180422066105); raw and gates unchanged. No engine retry occurred.",
+  "preEngineReceiptPathFailure": "Preserved separately;445hashes already passed,no engine had started; logging path corrected without changing common source/config/runtime.",
+  "limitations": [
+    "One ordered screen,not a matched/reversed statistical comparison.",
+    "Most saved samples retain row counts,route and cut; full typed answers were compared live.",
+    "All quantiles are smoke_only empirical measurements,not tail SLOs.",
+    "RSS samples and engine snapshots do not prove physical containment or startup/transient peaks.",
+    "Sixteen physical control scopes include queue waits and first/warmup/final calls,not simultaneous native execution.",
+    "Only threads4 to1 changed; native f44/55/af and application v1/UV4/default16admission remained frozen."
+  ],
+  "terminalExitCode": 1,
+  "engineQuiet": true
+}

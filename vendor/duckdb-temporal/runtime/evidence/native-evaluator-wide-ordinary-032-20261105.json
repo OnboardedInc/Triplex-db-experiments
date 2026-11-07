@@ -1,0 +1,118 @@
+{
+  "schema": "td.native-evaluator-budget-wide/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-06T02:30:21.986Z",
+  "configuration": {
+    "settings": {
+      "readers": 1,
+      "threads": 1,
+      "memoryLimit": "128MB",
+      "maxTempDirectorySize": "64MB"
+    },
+    "logical": {
+      "maxFacts": 100000,
+      "maxRounds": 1000,
+      "maxWork": 5000000,
+      "deadlineMs": 1000,
+      "timeoutMs": 60000,
+      "forceNative": true
+    },
+    "defaultRetainedCap": 67108864
+  },
+  "fixtureRecipe": {
+    "chain": 64,
+    "disconnected": 2048,
+    "validAt": 0,
+    "wideProjection": {
+      "activeFacts": 45000,
+      "answerRows": 40000,
+      "groupSize": 4096
+    }
+  },
+  "program": "answer(?v) :- triple(?e,'i',?v),[?v < 40000].",
+  "cells": [
+    {
+      "name": "first",
+      "result": "PASS",
+      "answerRows": 40000,
+      "position": "76",
+      "route": "native",
+      "reason": "forced_native",
+      "counters": {
+        "rounds": "1",
+        "derivedFacts": "40000",
+        "work": "180000"
+      },
+      "retainedMemory": {
+        "maxEvaluatorBytes": "67108864",
+        "peakBytes": "17184432",
+        "peakIndexBytes": "786800",
+        "completedEvaluators": "1"
+      },
+      "answerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    },
+    {
+      "name": "same_connection_repeat",
+      "result": "PASS",
+      "answerRows": 40000,
+      "position": "76",
+      "route": "native",
+      "reason": "forced_native",
+      "counters": {
+        "rounds": "1",
+        "derivedFacts": "40000",
+        "work": "180000"
+      },
+      "retainedMemory": {
+        "maxEvaluatorBytes": "67108864",
+        "peakBytes": "17184432",
+        "peakIndexBytes": "786800",
+        "completedEvaluators": "1"
+      },
+      "answerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    },
+    {
+      "name": "reopened",
+      "result": "PASS",
+      "answerRows": 40000,
+      "position": "76",
+      "route": "native",
+      "reason": "forced_native",
+      "counters": {
+        "rounds": "1",
+        "derivedFacts": "40000",
+        "work": "180000"
+      },
+      "retainedMemory": {
+        "maxEvaluatorBytes": "67108864",
+        "peakBytes": "17184432",
+        "peakIndexBytes": "786800",
+        "completedEvaluators": "1"
+      },
+      "answerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    }
+  ],
+  "errors": [],
+  "scope": "Three exact ordinary public native reads with the unchanged45000-input/40000-output recipe. No timing comparison, profiling, cap relaxation or process-memory claim.",
+  "artifacts": {
+    "build/artifact.json": "1b358b3ea0db5fa1705ac9f1057b37f0b3f9a29c9892b307548080a55644ca19",
+    "build/temporal_datalog.duckdb_extension": "979a6ee1e85db731ac3e7c593cd85beaadfd881335ae148de211fe7592d1b975",
+    "build/temporal_control.node": "17887eebe0c0da8b7aadeb54ecacbe24907addbf85dfd92a22a71ad8737c8e35",
+    "build/owner_probe/artifact.json": "b25596cebda7615ad54b8667510d037367c9d28746baf7c1b6aff534990416ea",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "7d6a0283500884ff7b86c3eb74f281eb66ad8d95a1d3d69184f545d2c0994f12",
+    "build/adapter/native-entity.js": "2d6e50caf6ac59ca12f951f83f91bc45126aed340cff28f43839697c0cea98eb",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "83b5f2ca6068d67ba843c3c39f204c2cb20a4c51b5912f9d42e58d8e69152d7b"
+  },
+  "harnessSha256": "3a0c5f79891612b046f7f74629aabbd5c4750d248fffee70ea3f5b8108f11386",
+  "fixtureHelperSha256": "811653b6e8ee2e8c87cef69f0599cef0b1ecf637fbc212158bdc4773233952a8",
+  "scaleFixtureHelperSha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+  "engineLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "fixtureDatabase": "build/evaluator-budget-stage2-032-20261105/evaluator-budget-wide-i2MKz2/facts.duckdb",
+  "fixture": {
+    "position": "76",
+    "retainedFacts": 47112,
+    "relevantFacts": 45000,
+    "answerRows": 40000
+  }
+}

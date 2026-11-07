@@ -1,0 +1,37 @@
+{
+  "recordedAtUtc": "2026-11-06T04:37:30.847756+00:00",
+  "sourceCommit": "a37ee6e45aab2a0da334114669c51d1556e911a1",
+  "tscExitCode": 0,
+  "pins": {
+    "build/adapter/native-entity.js": "57516761338c48be5c8ade1b70bf85d52527a507c62e5a378cec336f05366583",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "build/artifact.json": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "build/owner_probe/artifact.json": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+    "adapter/native-entity.ts": "61ae774311d35a963ef91097129093d074fc7e79d6d65919cb3e905d3f460a1e",
+    "adapter/test-sdk-work-conserving.ts": "f80ba4c10703a5da3164abee59407c96d92840652407964b5443aa5510bb4deb",
+    "SDK-QUERY-ADMISSION.md": "a80b2f77158b410782c9c240323290561cfb5603cdf01a381d598a1a7c57db5a",
+    "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+    "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b"
+  },
+  "compiledTests": {
+    "build/adapter/native-entity.d.ts": "915d3898172f8f8e45b1afc92d4d74abae3a9f40cf86068247b2d6ca079b4540",
+    "build/adapter/test-sdk-work-conserving.js": "970a5a782b7ec131ed001f668320c73a3edc5e4ed8163842d29e1c9ae3a3bbc6",
+    "build/adapter/test-sdk-work-conserving.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+  },
+  "onlyChangedSelectedRuntimeModule": [
+    "build/adapter/native-entity.js"
+  ],
+  "plannedTestCommand": [
+    "node",
+    "--test",
+    "build/adapter/test-sdk-work-conserving.js"
+  ],
+  "engine": "not_yet_started"
+}

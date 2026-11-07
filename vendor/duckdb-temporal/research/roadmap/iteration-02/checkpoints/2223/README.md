@@ -1,0 +1,15 @@
+# Item 2 correctness and performance evidence
+
+Captured 30 October 2026. **Item2 acceptance is held; source remains8b14300c.** Native correctness and the declared native SQL performance screen pass, but a distinct public persisted float-output path has a measured26–27% median cost. A renewed primary-source gate selected a constrained batch-codec trial; [decision](../../fp-cost-research/DECISION.md) is saved before implementation.
+
+The source-only archive has1,339 regular UTF8 members /70,406,812 logical bytes, gzip3,383,839bytes, SHA256e05ef14721f59e866533e18a09c1d0be7e337120e0b60c19ab2e4fd6e1c0e61c. Sixteen checked Base64 parts and archive-manifest.json reconstruct it with restore_archive.py, which verifies but never extracts or executes. EVIDENCE-MANIFEST.json pins every normalized0644 member size/SHA256. Local archive readback verified every member/type/mode/hash/UTF8; originals remain unchanged.
+
+Included: released final native/FP/store/browser-independent reviews, root clean-export verification and raw16,828-case normal/sanitized differentials,26migration/old-host receipts, source/PR/Page publication audits, both native timing methods/raw outcomes, distinct persisted study, profiles, negatives, exclusions and progress snapshots. No runtime/ELF/database/cache or full third-party source/PDF is included. The subsequent [86-entry blocker research/decision archive](../../fp-cost-research/checkpoints/2243/README.md) is separate.
+
+## Measured scope
+
+[Performance report](reports/performance.md) and [selected native summary](reports/native-paired-summary.json) distinguish42 paired resampling units from3,024 measured+2,016 warmup calls. All84 corrected fresh processes/PASS outcomes and exact rows/f64bits/counters/provenance checks pass. Median candidate/accepted native SQL full-fetch+strict-decode ratios across12 workloads are0.9686–1.0491; all95% intervals include1, some upper bounds about1.10–1.11. No declared primary signal is not a proof of universal non-regression/speedup. Both round/load-order strata and initial diagnostic run are retained.
+
+[Separate persisted summary](reports/persisted-summary.json):12pairs/24fresh processes,480 exact public outcomes. Float256 query1.2729 [1.1439,1.3261], query_json1.2632 [1.1782,1.3424], roughly3.5→4.2–4.4ms. Mixed64 intervals include1. These are public persisted methods on identical synthetic320fact/10commit physical histories, not native kernel times. Unchanged-source profiles count514/515 FP reads per float256 call versus0 in the accepted predecessor; this supports a contribution, not exclusive causal attribution. Do not erase the regression or weaken guards to improve a headline.
+
+The original100001-carrier Python sanitizer test remains SIGKILL/incomplete, also localized bind-only without the extension. Distinct instrumented SQL-native100000/100001 cap/recovery coverage passes; covered56 typed sanitizer methods are not relabeled57. Leak checking is off. Current code is bounded experimental work, not production certification or all10 goals.

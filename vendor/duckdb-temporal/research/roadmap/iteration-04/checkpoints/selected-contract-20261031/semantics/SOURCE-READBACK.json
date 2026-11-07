@@ -1,0 +1,135 @@
+{
+  "utc": "2026-10-31T17:33:24Z",
+  "status": "pre-code source-only contract research",
+  "coordinator_checkpoint_context": {
+    "main": "ecc8e134b8c130e80b7368ad3e98a2ea89a2cd83",
+    "page_sequence": 32,
+    "provenance": "coordinator-reported; this worker did not perform remote Git/Page verification or mutation"
+  },
+  "published_source_attribution": {
+    "commit": "52b1e81f1d71590bdefb376e62924c9f717d4344",
+    "safe_mirror": ".agent-logs/goal3-coordinator/integration/candidate-002",
+    "manifest": ".agent-logs/goal3-coordinator/integration/candidate-002-SOURCE-MANIFEST.json",
+    "manifest_sha256": "5e30c8b2dfaaac103c647a42440fb7d6c39d83846cc107913452b4e62db2c384",
+    "limits": "coordinator identifies published baseline; worker verified named local bytes only, not complete280-file tree or remote Git head"
+  },
+  "named_source_files": [
+    {
+      "path": "engine/src/temporal_core.cpp",
+      "size_bytes": 41463,
+      "sha256": "c583da8f2d885b28396e74771697601b6ba1a33828690ebdd62a95b33653be84",
+      "read_scope": "65-100,108-230,350-439,439-590,600-653: names/variables/safety, relation identity, eager filters, all-rule run, input admission, compiler-only IR1",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_typed_core.hpp",
+      "size_bytes": 1698,
+      "sha256": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "read_scope": "8-58: four tags, owned values, one-shot TypedEngine",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_value_domain.hpp",
+      "size_bytes": 8863,
+      "sha256": "e41516e1c8b761b25935049fbb19e75ebca0789c2b95b6d4cfbd65cea6409a63",
+      "read_scope": "21-53,107-124,157-183: UTF8/NUL, finite f64 and canonical-bit dictionary",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_expression.hpp",
+      "size_bytes": 7310,
+      "sha256": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "read_scope": "1-30,122-152 plus targeted error grep: 13 opcodes, bounds, checked eager evaluator",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_plan_ir.hpp",
+      "size_bytes": 1895,
+      "sha256": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "read_scope": "10-58: owned IR1 shape, opaque filter_count and compiler-only API",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_datalog.cpp",
+      "size_bytes": 23210,
+      "sha256": "651af8794e68eecebb73ac0762db27f56c47aea9b438feef80284b1e378f2629",
+      "read_scope": "45-65,245-326,343-398: error transport, typed callback admission/run, registration and volatile IR1 compiler",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    },
+    {
+      "path": "engine/ITERATION-02.md",
+      "size_bytes": 17213,
+      "sha256": "77ed4f1f2ae24a98d1ef9b0810e11db97dc6b67ad134e7e50f51f14ae4a68a58",
+      "read_scope": "1-20 relied on: accepted expression grammar/error/cap contract; later historical text encountered but not relied on",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    },
+    {
+      "path": "storage/planner_v1.py",
+      "size_bytes": 36205,
+      "sha256": "d95145f39b214b61f7acfc9ad0fd682a42e72362321302183ea76ac20b5548f4",
+      "read_scope": "197-220,254-276: strict schema1/language/keys and unbound-variable validation; targeted name grep only elsewhere",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    },
+    {
+      "path": "storage/typed_store.py",
+      "size_bytes": 37740,
+      "sha256": "7edd1b26428b60268c2d677e1cea8efe2635b1f850b3b02fd641e2e3f7b59a87",
+      "read_scope": "53-62,665-687: all-retained NATIVE_SQL and transaction/point invocation; targeted query/position grep only elsewhere",
+      "verification": "named-file local byte hash and targeted source text only; no import/execution"
+    }
+  ],
+  "fresh_primary_sources": [
+    {
+      "title": "Modern Datalog: Concepts, Methods, Applications",
+      "author": "Markus Kr\u00f6tzsch",
+      "date": "2025-11-28",
+      "version": "OASIcs138, article7; DOI10.4230/OASIcs.RW.2024/2025.7",
+      "url": "https://drops.dagstuhl.de/storage/01oasics/oasics-vol138-rw2024%2Brw2025/html/OASIcs.RW.2024-2025.7/OASIcs.RW.2024-2025.7.html",
+      "actual_read": "primary publisher HTML definitions31-32, safety/built-in discussion501-507, dialect/underscore discussion; publisher metadata date separately inspected",
+      "use": "fresh stratification and safe concrete built-in support, not proof of partial-error/budget behavior"
+    },
+    {
+      "title": "DATALOG-TEXT Atoms & Terms / Errors",
+      "date": "live unversioned; read2026-10-31",
+      "url": "https://datalog-specs.info/vnd_datalog_text/grammar_atoms.html",
+      "companion_url": "https://datalog-specs.info/vnd_datalog_text/errors.html",
+      "actual_read": "named-versus-anonymous underscore grammar; error kind/context recommendations",
+      "use": "contrast only; this project does not adopt anonymous underscore or that grammar"
+    },
+    {
+      "title": "SPARQL1.1 Query Language",
+      "date": "2013-03-21 W3C Recommendation",
+      "url": "https://www.w3.org/TR/2013/REC-sparql11-query-20130321/",
+      "actual_read": "official grammar143,165,166 (VAR1/PN_CHARS_U/VARNAME); recommendation date verified",
+      "use": "contrast that ?_ can be a named variable; no SPARQL semantics or Unicode identifier expansion adopted"
+    },
+    {
+      "title": "Souffl\u00e9 Arguments",
+      "date": "live site generated2026-07-12; read2026-10-31",
+      "url": "https://souffle-lang.github.io/arguments",
+      "actual_read": "variable grammar section237-244 and current site date",
+      "use": "additional primary dialect contrast, not project wildcard semantics"
+    },
+    {
+      "title": "PostgreSQL18 Value Expressions",
+      "date": "version18; read2026-10-31",
+      "url": "https://www.postgresql.org/docs/18/sql-expressions.html#SYNTAX-EXPRESS-EVAL",
+      "actual_read": "section4.2.14 evaluation-order warnings",
+      "use": "comparative warning about SQL expression reordering, not DuckDB proof or reason to activate SQL"
+    },
+    {
+      "title": "Foundations of Databases chapter15",
+      "date": "1995 book; authors-hosted draft read earlier2026-10-31",
+      "url": "https://webdam.di.ens.fr/Alice/pdfs/Chapter-15.pdf",
+      "actual_read": "previous theory primary pass: definitions15.2.4/proposition15.2.7/theorem15.2.10; not refetched in this phase",
+      "use": "prior signed SCC/classical set theorem; prior inventory retains exact provenance"
+    }
+  ],
+  "cross_lane_contract_review": {
+    "path": ".agent-logs/goal4-contract-execution/revision-001/IR2-CONTRACT.md",
+    "actual_read": "direct full draft text at17:25-17:26UTC; full owned named-postfix filters, no facts array, compiler-only, no caller IR execution; exact query fields supplied by execution worker",
+    "status": "draft/proposal review, not immutable author-manifest attestation or implementation approval",
+    "coordinator_followup": "root subsequently confirmed no-facts/full-owned-postfix IR2 as proposal with QA precision; final merged cross-review remains separate"
+  },
+  "mutations": "Only this new contract research directory written. Published source, own frozen prior research/review and other author files unchanged. No app/source/compiler/module/native/database/supervisor/test/benchmark/Git/Page/external mutation."
+}

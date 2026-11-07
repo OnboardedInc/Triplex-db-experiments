@@ -1,0 +1,45 @@
+{
+  "archive": "fp-observer-research.tar.gz",
+  "bytes": 1298841,
+  "sha256": "4f44178345b4888cefb5170de9b785d56f3916814656ef60a09c7df4b45de095",
+  "entries": 186,
+  "source_bytes": 19785484,
+  "parts": [
+    {
+      "path": "fp-archive.part01.b64",
+      "bytes": 300001,
+      "sha256": "70de1d76a7ee18bc9447087383bb79b720288109945969a2727b4304295a964c",
+      "git_sha": "971b32a0baad917991f3e17102d9c237e1de838b"
+    },
+    {
+      "path": "fp-archive.part02.b64",
+      "bytes": 300001,
+      "sha256": "fbd510d1bdeb861353126c119fa2b5d888e2a0bf9482acc4d2810eaba377f9fa",
+      "git_sha": "fd1669174c7dfc47ac55518e1496c69e994003b0"
+    },
+    {
+      "path": "fp-archive.part03.b64",
+      "bytes": 300001,
+      "sha256": "44c27d95bbcb9cefe654adb3d56a8fda93b9e4b2817053bc11f89445854c5582",
+      "git_sha": "1bff1c90d5a68174347e2568c54241576ababdc8"
+    },
+    {
+      "path": "fp-archive.part04.b64",
+      "bytes": 300001,
+      "sha256": "ab353d9508b4c806a7c5aa0b31d8308c1da337d848c815795cad38bcfcf704d6",
+      "git_sha": "5537e44bbf37d9c4fdfe2a96df0ecda9a4451cc9"
+    },
+    {
+      "path": "fp-archive.part05.b64",
+      "bytes": 300001,
+      "sha256": "0e923e18337dff8fd5e9e02ce93832fb09364e4e30840adc8878abf6bbc3828a",
+      "git_sha": "7c410d91ccee6218709ae72f06fc3e8d8e2cdf76"
+    },
+    {
+      "path": "fp-archive.part06.b64",
+      "bytes": 231789,
+      "sha256": "9ab80842fc2e9f73cd7af5209c00f32ab025b965bcc6fca3e7662a6a3595977d",
+      "git_sha": "2aad69f0035c76bb7af6704cfb113809ff23dc41"
+    }
+  ]
+}

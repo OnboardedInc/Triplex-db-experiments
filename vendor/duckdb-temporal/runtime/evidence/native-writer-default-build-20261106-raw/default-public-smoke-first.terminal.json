@@ -1,0 +1,16 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "build/adapter/test-native-writer.js",
+    "build/adapter/test-native-writer-values.js"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime",
+  "pid": 49575,
+  "exitCode": 0,
+  "startedAtUtc": "2026-11-06T10:39:56.455245+00:00",
+  "exitedAtUtc": "2026-11-06T10:40:09.057362+00:00",
+  "elapsedMs": 12601.887416094542,
+  "UV_THREADPOOL_SIZE": 4
+}

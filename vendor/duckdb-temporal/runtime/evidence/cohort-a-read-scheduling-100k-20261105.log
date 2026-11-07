@@ -1,0 +1,16 @@
+{"contract":2,"case":"tentative_then_ack","preCommitK":"585","postFirstAckK":"586","postSecondAckK":"587","ownerObservations":[{"connection":2,"generation":3},{"connection":2,"generation":3},{"connection":2,"generation":3},{"connection":2,"generation":3},{"connection":2,"generation":3},{"connection":2,"generation":3}]}
+✔ contract2 pooled reads start during tentative native writes and obey post-ACK/FIFO/old-K boundaries (2693.698583ms)
+{"contract":2,"case":"native_rollback","preCommitK":"585","postRollbackK":"585","ownerObservations":[{"connection":2,"generation":3},{"connection":2,"generation":3},{"connection":2,"generation":3}]}
+✔ tentative native rollback exposes neither facts nor receipts and leaves ownership/reader reuse valid (1963.195667ms)
+{"contract":2,"case":"running_snapshot","runningK":"585","laterAckK":"586","postAckK":"586"}
+✔ a running reader keeps one old MVCC snapshot while a later acknowledged patch commits (1623.449875ms)
+{"contract":2,"case":"no_reader_fifo","ackK":"586","readK":"586"}
+✔ no-reader stores retain FIFO serialization and exact post-ACK visibility (1589.197125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8054.303958

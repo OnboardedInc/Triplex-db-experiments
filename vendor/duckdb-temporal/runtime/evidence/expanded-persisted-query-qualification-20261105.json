@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "scope": "Isolated audited query evaluator and SQL lowering on macOS ARM64, DuckDB 2.0.0 Node SDK",
+  "verified_source": "1fb7a0a4484af739c193affdcf25572625423000",
+  "source_base": "4c535dc4",
+  "command": "node --test --test-reporter=tap build/adapter/test-expanded-carriers.js build/adapter/test-scalable-comparison.js",
+  "core_extension_sha256": "ebbd6a4a7e0cdecbfe0d5d4b58cb523b87f34745cd6ac07a774002a2a50b53a2",
+  "companion_extension_sha256": "2b988eb0fadb79028c602be337aed16fc9d05a00932b9cdf006f3bb7314adda3",
+  "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "companion_pins_core": true,
+  "typecheck": "passed",
+  "first_run": {
+    "passed": 12,
+    "failed": 0,
+    "log_sha256": "7e0676b5c909e86ede9873b2c3c78dee24db82c3bbc94c4a06c7565465f1de0e"
+  },
+  "coverage": [
+    "Actual Triplex tag-5 references and tag-6 datetime compatibility rows in format five",
+    "Bounded native and scalable SQL exact datetime bits, comparison, extrema and reference cast joins",
+    "Wrong reference tags, empty product, uncast distinctness and stable four-tag raw wire behavior",
+    "Both controlled v2 templates reject an invalidated live owner generation and work after revalidation",
+    "Audited simple comparison scans preserve comparison, admission, bounded native, cached cut and cancellation semantics"
+  ],
+  "limitations": [
+    "Temporary local schema switch cases rejected expanded schema writes for this isolated build.",
+    "Expanded schema registration, format activation, typed mutation and default SDK v2 dispatch were not present in this artifact.",
+    "No performance comparison was conducted."
+  ]
+}

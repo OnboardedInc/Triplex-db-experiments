@@ -1,0 +1,103 @@
+{
+  "scope": "Root supplemental verifier sources and small text reports read/hash-checked only; not executed by this reviewer, no raw/all-input/binary/DB replay",
+  "files": [
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/verify_postrun.py",
+      "bytes": 14467,
+      "sha256": "ac0fa134e6cc85c11e58a73d0ae0fc0f8b63107ed7e28583d74a9a00171f43cc"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/independent-closure.json",
+      "bytes": 90966,
+      "sha256": "b521bc9e08832530d226d79c20d0d33d59bdc487c70f6121ad70b08acdffcc82"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/verify_derivation.py",
+      "bytes": 6398,
+      "sha256": "c1a15578e180f1e0efe9ccc0435240763ba47025d2b5097970adb56e5c1bbd9d"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/derivation-verification.json",
+      "bytes": 31194,
+      "sha256": "a93e6ea41369456f96bed032a56a3c27f84b7376c118678877c217ac4a689c3c"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/audit_json_types.py",
+      "bytes": 3729,
+      "sha256": "a88d16e2ec8c26a147a26999fd216e01de4ed27333378c7707a30e3c91a448c9"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/json-type-audit.json",
+      "bytes": 1192,
+      "sha256": "35d4c96479ee9b33b588dac5e7a23c2a8b313964ea2d7e448d788dfc51adc346"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/SOURCE-FREEZE.json",
+      "bytes": 382,
+      "sha256": "7a3a13db81c626a2054e48f1aff9d243372c8c6bcba2c6a690517a3cf0c26f78"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/SOURCE-FREEZE-TIMESTAMP-CORRECTION.json",
+      "bytes": 528,
+      "sha256": "dd971cfe0d71a50705248ba21d56be230f63318b25fe1737f54567efca34186b"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/DERIVATION-SOURCE-FREEZE.json",
+      "bytes": 229,
+      "sha256": "d19ecdc2a3d9b3b0500c4c08d9d845d10530564e59359b4b1176ba0ea49a80ad"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/DERIVATION-STARTED.json",
+      "bytes": 364,
+      "sha256": "3e36892010bd02fab8207f9a70d0ec788c036ce21408a4b0b2169554ea5ee807"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/TYPE-AUDIT-PROVENANCE.json",
+      "bytes": 383,
+      "sha256": "03278e8f8d3d1fe86beb29502b0c3118b5a106eb1e915988381b5cf2a35cb1b9"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/optimized-negative.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/optimized-negative.stderr",
+      "bytes": 314,
+      "sha256": "601f5e4f40f3dd71ba0befd725581d125b4f43c0b9f6219ecbc072e1bf6efea1"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/optimized-env-negative.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-postrun-verification/optimized-env-negative.stderr",
+      "bytes": 314,
+      "sha256": "601f5e4f40f3dd71ba0befd725581d125b4f43c0b9f6219ecbc072e1bf6efea1"
+    }
+  ],
+  "closure": {
+    "status": "PASS_INDEPENDENT_POSTRUN_CLOSURE",
+    "fresh_processes_verified_by_root": 168,
+    "raw_outcomes_verified_by_root": 11760,
+    "negative_controls_by_root": 53
+  },
+  "derivation": {
+    "status": "PASS_INDEPENDENT_RECORDED_RAW_CLOSURE_AND_EXACT_DERIVATION",
+    "pair_rows_by_root": 1176,
+    "bootstrap_resamples_by_root": 560000,
+    "altered_statistics_by_root": 140
+  },
+  "type_audit": {
+    "status": "PASS_EXACT_JSON_METADATA_TYPES_AND_REGISTER_RANGES",
+    "processes_by_root": 168,
+    "observations_by_root": 11760,
+    "negative_controls_by_root": 19
+  },
+  "provenance_limits": [
+    "Original source-freeze manual future timestamp was explicitly corrected in a preserved separate receipt; use source hash/tool event order rather than erroneous label.",
+    "Type audit is explicitly write-before-execution/source-hash evidenced, not separately prefrozen.",
+    "Metadata does not independently observe historic OS state/mapped module/continuing FP controls or recompute post-open logical history."
+  ]
+}

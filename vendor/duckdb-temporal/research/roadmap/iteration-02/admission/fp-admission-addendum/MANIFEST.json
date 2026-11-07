@@ -1,0 +1,162 @@
+{
+  "format": "temporal-roadmap-adjacent-fp-admission-research-manifest",
+  "version": 1,
+  "date_utc": "2026-10-30",
+  "root": "/tmp/temporal-roadmap-research/iteration-02/admission/fp-admission-addendum",
+  "main_research_snapshot_unchanged_manifest_sha256": "569e306f800ee5bb674c7202b625c48bab0ddec2a3e6b29bb5473effba19b5ca",
+  "files": [
+    {
+      "path": "ADDENDUM.md",
+      "bytes": 16699,
+      "sha256": "fea5c834afac2944c546c31cbc195e669746d9ebdebef19701fcf26a64595519"
+    },
+    {
+      "path": "SOURCES.json",
+      "bytes": 2207,
+      "sha256": "c1689efb9c4f5221f98eb11554c5af16cc364308d882c733df81b9a55355fa3a"
+    },
+    {
+      "path": "ENVIRONMENT.json",
+      "bytes": 609,
+      "sha256": "3c95a170e971b4a72257c46f50cd35b3a196a4d987447460308f2e18251a621c"
+    },
+    {
+      "path": "FP-REGRESSION-SPEC.json",
+      "bytes": 2017,
+      "sha256": "c8ce0f644598d2ae5da93e31fb1dc15d61ead542d30b6aed39d203f3e724a6a7"
+    },
+    {
+      "path": "fp_controls_probe.cpp",
+      "bytes": 1704,
+      "sha256": "7c446627cfaa9ac0489ab2284da38d22721b07f03a848f55848778e0b5595562"
+    },
+    {
+      "path": "run_fp_admission_probes.py",
+      "bytes": 13503,
+      "sha256": "71d0e46da24dbfe0edfb268ac6842ecad2c8f729499378d4cb3b5fa7555313f8"
+    },
+    {
+      "path": "readonly_fenv_prototype.py",
+      "bytes": 1617,
+      "sha256": "39abcba24933f8d44be4266a23e48d053b5c241b6fc1e20ac93c7e7aa4de2a2c"
+    },
+    {
+      "path": "run_readonly_guard_probe.py",
+      "bytes": 2143,
+      "sha256": "e1c355d188a499002b9a3030cf002af78a59b1354ae5a7e489ed2f621683e8c8"
+    },
+    {
+      "path": "RUN-SUMMARY.json",
+      "bytes": 2869,
+      "sha256": "075024dc3f8ba0e1fe3df316ad317888886352f00ab007e193b404428f581ce7"
+    },
+    {
+      "path": "READONLY-GUARD-PROBE.json",
+      "bytes": 1948,
+      "sha256": "80b15b49921b4bd92909db5295c2bf12c5f36c8c48881b26f0e247978ada6123"
+    },
+    {
+      "path": "run.log",
+      "bytes": 73,
+      "sha256": "9f28a70574a68a9bfee3236251b0946e0bf5970d4a6904402a7d5da35705fd38"
+    },
+    {
+      "path": "readonly-guard.log",
+      "bytes": 1765,
+      "sha256": "caa7de581d3dc38d1c35e5850b08fef850bed00a7819013e971c334d4c001a7d"
+    },
+    {
+      "path": "validate_addendum.py",
+      "bytes": 3434,
+      "sha256": "8745d72388457b8d1f8a0a2bd1bde1bac561910e76d0352a3e8304fa95738d69"
+    },
+    {
+      "path": "VALIDATION.json",
+      "bytes": 642,
+      "sha256": "c769f6253e1424bb6ffbbb07d1555957d07770d8214351608a32d967c7ed50ca"
+    },
+    {
+      "path": "validation.log",
+      "bytes": 642,
+      "sha256": "c769f6253e1424bb6ffbbb07d1555957d07770d8214351608a32d967c7ed50ca"
+    },
+    {
+      "path": "pure_values-normal.json",
+      "bytes": 7838,
+      "sha256": "284c176132350145eb53ff59dcd66ab76b792898f04e6f41a1d7d847e9278bd7"
+    },
+    {
+      "path": "pure_values-daz.json",
+      "bytes": 7773,
+      "sha256": "5f234434ac04e5e46b4e7995ddaa8563b46ed8552b491957424427d589237cda"
+    },
+    {
+      "path": "pure_values-ftz.json",
+      "bytes": 7835,
+      "sha256": "a476dc3a8ee5067b69b65e562c169a73ff837f61eee3da3a8cd83ef840ad9f23"
+    },
+    {
+      "path": "pure_values-daz_ftz.json",
+      "bytes": 7777,
+      "sha256": "a9df3afb5852ff3fed90c8be6394d4bbb5593eecfc8beef5e4d98335a8b6482c"
+    },
+    {
+      "path": "raw_duckdb-normal.json",
+      "bytes": 2973,
+      "sha256": "2246cccf7f19481e3691d4d19a1d53adc2fdf05fbcec754e2eb95e56c95362e6"
+    },
+    {
+      "path": "raw_duckdb-daz.json",
+      "bytes": 2966,
+      "sha256": "fd1480675c26a228ed0b6dc444a87746936bd24e3de203fdad1d1bd83b46a4b8"
+    },
+    {
+      "path": "raw_duckdb-ftz.json",
+      "bytes": 2970,
+      "sha256": "32e7b85f5b8262e96db1cc3ae56d5d38311e2aa171b37980de63349b2cac00c9"
+    },
+    {
+      "path": "raw_duckdb-daz_ftz.json",
+      "bytes": 2970,
+      "sha256": "0e5e08a5fea40917cd495a2224a6b19c1b8ac295ec5bfce0291d7546eee24041"
+    },
+    {
+      "path": "typed_store-normal.json",
+      "bytes": 2829,
+      "sha256": "53cce8bf89228a9c7005e34248bf6f94eb52bc9771590fc0891ea2b0cf83839d"
+    },
+    {
+      "path": "typed_store-daz.json",
+      "bytes": 2820,
+      "sha256": "585d1e35da8f5897086085e6f76d6d5159c3fa3eba5406886d9587fd363afff3"
+    },
+    {
+      "path": "typed_store-ftz.json",
+      "bytes": 2826,
+      "sha256": "add7177a673e27ca9c3e719195f764576f643a5e4db7c005f5405f38ea571188"
+    },
+    {
+      "path": "typed_store-daz_ftz.json",
+      "bytes": 2824,
+      "sha256": "d7256e1434da331a898509ec85936289e84ea8367d91bb6c102ebe845ea4beff"
+    }
+  ],
+  "publication_boundary": "Publish ONLY these textual/source files plus this MANIFEST.json and SHA256SUMS. Do not recurse over the root.",
+  "excluded": [
+    "fp_controls_probe.so (compiled research helper)",
+    "work/ (exact copied source/schema closures, databases, WAL and spill)",
+    "any runtime copies/binaries"
+  ],
+  "observations": {
+    "isolated_value_storage_children": 12,
+    "readonly_guard_children": 4,
+    "all_controls_restored": true,
+    "DAZ_value_identity_json_and_persistence_hazards_observed": true,
+    "FTZ_JSON_decode_loss_observed": true,
+    "no_engine_persistence_actually_exercised": true,
+    "helper_free_readonly_glibc_guard_prototype_observed": true
+  },
+  "production_hardening": "NOT_IMPLEMENTED",
+  "item2_feature_acceptance": "UNRUN",
+  "no_external_mutation": true
+}

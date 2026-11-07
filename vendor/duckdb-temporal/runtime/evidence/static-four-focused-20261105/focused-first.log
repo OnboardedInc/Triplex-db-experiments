@@ -1,0 +1,17 @@
+✔ four held real scopes isolate queued abort/deadline and recycle all16 physical ports (1327.013792ms)
+✔ close and revalidate drain four actual scopes plus twelve accepted calls (837.3155ms)
+✔ pooled original writer barrier is not recaptured after heavy admission (402.08125ms)
+✔ readers zero queued full-call deadline cannot advance the real writer tail (420.288208ms)
+✔ all five heavy APIs share one FIFO while retaining all16 physical readers (709.982875ms)
+✔ heavy capacity follows configured one through four reader pools without changing admission limits (1256.204375ms)
+✔ canceling a heavy lease waiter cannot consume or interrupt a light-read connection (602.837834ms)
+✔ all heavy controls validate before queuing and invocation deadlines own no queued token (462.454166ms)
+✔ native query failures release heavy admission before healthy mixed-family reuse (488.511834ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8171.382958

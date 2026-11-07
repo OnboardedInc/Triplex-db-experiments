@@ -1,0 +1,517 @@
+{
+  "schema": "native-controlled-query-comparison/1",
+  "timestamp_utc": "2026-11-05T08:31:25.079Z",
+  "warmup_rounds": 2,
+  "measured_rounds": 5,
+  "scope": "Same program/data/binary; rotating plain/controlled forced-native and proved-SQL full NativeEntityStore projections, including native retained schema/history validation and exact output. Canonical fixtures written through native schema-bound commands, closed/reopened; ingestion/open excluded. Controlled mode has a 5000ms whole-query timeout and live AbortSignal; both modes retain 5000ms evaluator deadline. Every value and listener release checked. Selected overhead measurements, not a cross-version speedup claim.",
+  "native_build": {
+    "engine": "2.0.0",
+    "extension_version": "0.14.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "6ca1c74bf8fbe074cbebe29f154602373d625a80296546abc635043cdfcf6fa3",
+      "native/src/temporal_command.hpp": "9dbb3130aed244f9dedbceb212853370969fc462cbcf4c3b8d68a8b89c134e16",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_datalog.cpp": "454c246185d40591f57707fc6e03a0cc948201d64641ee633a54e8e3084074c7",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_join_plan.hpp": "f55a8b0d4c0ac440e3182b928fc2cb817985aa2f21b2b0c54d45ca57a0718b81",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_scan_plan.hpp": "07ccb4fe75a97d0fd5086842fc5faacfc7889d2090656811425302e55a9181dc",
+      "native/src/temporal_schema.cpp": "5c4777b3d867d4a57aa5de3cebf457d425055296e6c2fad2c311455f98b41ea6",
+      "native/src/temporal_schema.hpp": "05ca882152b3f4de4599ee48305c942495759e2187c3bab40f5587961c6fbc14",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "10c1f13868b2764c7388073600776f006919c1b660dfe020025b1af4fac5bd87",
+      "native/src/temporal_store_query.hpp": "f0991fcf94d277912634d2031ee6a24b42800adf8056880f7707fb5bebd14e51",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "8b6981faabf0ab719f85fbb8c9e9800e7eae7cf2529d3942997559a10f5d84e1",
+    "extension_sha256": "c3ca4a0fe9f810e29ced009186a2c015d497e725f620205c86632ba2a61f7a62"
+  },
+  "source_sha256": {
+    "adapter/benchmark-control.mjs": "9d6ed5af904aabbf2b6a02cf0d645bffd9880340bc9e62280944755dfd820500",
+    "adapter/native-entity.ts": "56e10f9a93d5108747baa416334568c84eaabf77f7fb8a42d435aa541a56cb0a",
+    "adapter/native-duckdb-port.mjs": "8d5177c260ff6591b4a793c365e04b07641768ba269d74aaf55b0d0c1ce5f34b",
+    "build_native.py": "bf44d5b938bc63899ef3b557fa472b454fee05fb30f88947fe66484173063d5a",
+    "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+    "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+    "native/src/temporal_datalog.cpp": "454c246185d40591f57707fc6e03a0cc948201d64641ee633a54e8e3084074c7",
+    "native/src/temporal_store_query.cpp": "10c1f13868b2764c7388073600776f006919c1b660dfe020025b1af4fac5bd87",
+    "native/catalog.sql": "ac0c79e9ebfbacd752cfc7e7c266f7a6a2443d59d2964c0cfd549e9f251e0a04"
+  },
+  "summary": [
+    {
+      "size": 512,
+      "route": "native",
+      "plain_ms": 12.461457999999993,
+      "controlled_ms": 22.09287500000005,
+      "ratio": 1.772896478084672
+    },
+    {
+      "size": 512,
+      "route": "sql",
+      "plain_ms": 14.010166000000027,
+      "controlled_ms": 26.624708999999996,
+      "ratio": 1.900384977594123
+    },
+    {
+      "size": 4096,
+      "route": "native",
+      "plain_ms": 26.816417,
+      "controlled_ms": 37.466499999999996,
+      "ratio": 1.3971478740056882
+    },
+    {
+      "size": 4096,
+      "route": "sql",
+      "plain_ms": 28.469333000000006,
+      "controlled_ms": 41.03058399999986,
+      "ratio": 1.4412204177737447
+    },
+    {
+      "size": 20000,
+      "route": "native",
+      "plain_ms": 95.16741600000023,
+      "controlled_ms": 108.28866599999992,
+      "ratio": 1.137875446781067
+    },
+    {
+      "size": 20000,
+      "route": "sql",
+      "plain_ms": 97.26350000000002,
+      "controlled_ms": 106.54416599999968,
+      "ratio": 1.0954177671994083
+    }
+  ],
+  "samples": [
+    {
+      "size": 512,
+      "mode": "sql_plain",
+      "round": 0,
+      "elapsed_ms": 14.334582999999952,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_controlled",
+      "round": 0,
+      "elapsed_ms": 26.624708999999996,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_plain",
+      "round": 0,
+      "elapsed_ms": 12.265792000000033,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_controlled",
+      "round": 0,
+      "elapsed_ms": 21.368624999999952,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_controlled",
+      "round": 1,
+      "elapsed_ms": 27.615750000000048,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_plain",
+      "round": 1,
+      "elapsed_ms": 12.461457999999993,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_controlled",
+      "round": 1,
+      "elapsed_ms": 22.09287500000005,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_plain",
+      "round": 1,
+      "elapsed_ms": 14.010166000000027,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_plain",
+      "round": 2,
+      "elapsed_ms": 12.235666999999921,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_controlled",
+      "round": 2,
+      "elapsed_ms": 21.71029199999998,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_plain",
+      "round": 2,
+      "elapsed_ms": 13.849041000000057,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_controlled",
+      "round": 2,
+      "elapsed_ms": 27.784541999999988,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_controlled",
+      "round": 3,
+      "elapsed_ms": 22.606292000000053,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_plain",
+      "round": 3,
+      "elapsed_ms": 12.989874999999984,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_controlled",
+      "round": 3,
+      "elapsed_ms": 23.905541000000085,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_plain",
+      "round": 3,
+      "elapsed_ms": 13.442333000000076,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_plain",
+      "round": 4,
+      "elapsed_ms": 14.281957999999918,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "sql_controlled",
+      "round": 4,
+      "elapsed_ms": 25.703290999999922,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_plain",
+      "round": 4,
+      "elapsed_ms": 12.58345799999995,
+      "rows": 512
+    },
+    {
+      "size": 512,
+      "mode": "native_controlled",
+      "round": 4,
+      "elapsed_ms": 22.21041600000001,
+      "rows": 512
+    },
+    {
+      "size": 4096,
+      "mode": "sql_plain",
+      "round": 0,
+      "elapsed_ms": 28.919749999999794,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_controlled",
+      "round": 0,
+      "elapsed_ms": 41.03058399999986,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_plain",
+      "round": 0,
+      "elapsed_ms": 23.98345900000004,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_controlled",
+      "round": 0,
+      "elapsed_ms": 37.07691599999998,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_controlled",
+      "round": 1,
+      "elapsed_ms": 40.97833299999979,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_plain",
+      "round": 1,
+      "elapsed_ms": 26.816417,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_controlled",
+      "round": 1,
+      "elapsed_ms": 38.08679199999983,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_plain",
+      "round": 1,
+      "elapsed_ms": 28.469333000000006,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_plain",
+      "round": 2,
+      "elapsed_ms": 27.84916700000008,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_controlled",
+      "round": 2,
+      "elapsed_ms": 37.27383299999997,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_plain",
+      "round": 2,
+      "elapsed_ms": 27.41904199999999,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_controlled",
+      "round": 2,
+      "elapsed_ms": 46.22316599999999,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_controlled",
+      "round": 3,
+      "elapsed_ms": 37.466499999999996,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_plain",
+      "round": 3,
+      "elapsed_ms": 29.485750000000053,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_controlled",
+      "round": 3,
+      "elapsed_ms": 41.32129199999986,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_plain",
+      "round": 3,
+      "elapsed_ms": 26.990584000000126,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_plain",
+      "round": 4,
+      "elapsed_ms": 26.911125000000084,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "sql_controlled",
+      "round": 4,
+      "elapsed_ms": 40.96833300000003,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_plain",
+      "round": 4,
+      "elapsed_ms": 26.398625000000038,
+      "rows": 4096
+    },
+    {
+      "size": 4096,
+      "mode": "native_controlled",
+      "round": 4,
+      "elapsed_ms": 37.542416,
+      "rows": 4096
+    },
+    {
+      "size": 20000,
+      "mode": "sql_plain",
+      "round": 0,
+      "elapsed_ms": 88.70387500000015,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_controlled",
+      "round": 0,
+      "elapsed_ms": 105.66037499999993,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_plain",
+      "round": 0,
+      "elapsed_ms": 94.29208300000028,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_controlled",
+      "round": 0,
+      "elapsed_ms": 105.2965409999997,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_controlled",
+      "round": 1,
+      "elapsed_ms": 103.4213749999999,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_plain",
+      "round": 1,
+      "elapsed_ms": 95.16741600000023,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_controlled",
+      "round": 1,
+      "elapsed_ms": 108.28866599999992,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_plain",
+      "round": 1,
+      "elapsed_ms": 98.49170800000002,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_plain",
+      "round": 2,
+      "elapsed_ms": 94.56674999999996,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_controlled",
+      "round": 2,
+      "elapsed_ms": 114.44837499999994,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_plain",
+      "round": 2,
+      "elapsed_ms": 87.27312500000062,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_controlled",
+      "round": 2,
+      "elapsed_ms": 106.54416599999968,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_controlled",
+      "round": 3,
+      "elapsed_ms": 114.92754199999945,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_plain",
+      "round": 3,
+      "elapsed_ms": 97.26350000000002,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_controlled",
+      "round": 3,
+      "elapsed_ms": 114.02587500000027,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_plain",
+      "round": 3,
+      "elapsed_ms": 106.31687500000044,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_plain",
+      "round": 4,
+      "elapsed_ms": 100.23733399999946,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "sql_controlled",
+      "round": 4,
+      "elapsed_ms": 111.83249999999953,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_plain",
+      "round": 4,
+      "elapsed_ms": 106.75354100000004,
+      "rows": 20000
+    },
+    {
+      "size": 20000,
+      "mode": "native_controlled",
+      "round": 4,
+      "elapsed_ms": 107.32929200000035,
+      "rows": 20000
+    }
+  ]
+}

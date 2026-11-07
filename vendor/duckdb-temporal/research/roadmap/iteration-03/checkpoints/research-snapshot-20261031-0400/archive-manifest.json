@@ -1,0 +1,15 @@
+{
+  "archive": "goal3-heavy-research-snapshot-and-acceptance-sync.tar.gz",
+  "bytes": 170167,
+  "sha256": "22a254e30fba599ff791d4e89d9b83c3211497ed8781f8b7454081eb23d80633",
+  "entries": 103,
+  "source_bytes": 575075,
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 226892,
+      "sha256": "462feac3da45d6efe46488a4e2bc9f614435f97907fc1c4790d95ab31f699028",
+      "git_sha": "f57a5012788bcb1288b667e1e771e31873ed74ab"
+    }
+  ]
+}

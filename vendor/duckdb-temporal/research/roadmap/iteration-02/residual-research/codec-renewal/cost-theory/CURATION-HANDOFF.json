@@ -1,0 +1,14 @@
+{
+  "status": "COMPLETE_RESEARCH_ONLY_ROOT_SELECTION_PENDING",
+  "created_utc": "2026-10-31T01:37:09.331246+00:00",
+  "worker": "/root/orchestrate_triple_store/iteration02_codec_renewed_cost",
+  "path": "/tmp/temporal-roadmap-research/iteration-02/residual-research/codec-renewal/cost-theory",
+  "manifest_sha256": "556a0a26c0c2a12cefb04526203b3612088f28b196a351e52b2eeeb2f7c28402",
+  "decision_sha256": "7d733d9986fad471bf8b515ec4d16966f2f7c832c6b121e5fdc6bb5b614f0259",
+  "report_sha256": "fdfc49380d30e2ae02d8dea0443ad92cf9cd23af33cad6387447a54a07786960",
+  "recommended_static_variant": "C1p+C2: entire public carrier function verbatim; private identical after-key tail with AST-equivalence invariant; private frozenset metadata",
+  "actual_checks": "17 fresh exact primary source reads;4 primary web/paper curations;42 existing profile count reports/294 existing result records;3 actual existing exit0/profilePASS closures; current/old FP API/predicate AST equality;12 fresh source hashes match independent prior receipts.",
+  "result": "Per-cell key work removal is real but no speed forecast:2C+1 source-level ephemeral sets/C duplicate comparisons. FP reads6/7, native boxing and required domain/wire work remain.",
+  "no_execution": "No app imports, DB/native/FP execution, new timing/profiling, app/Git/Page edits.",
+  "root_next": "Select/save exact variant before writer; independent semantic lane and current full correctness/FP/native/adversarial/preflight gates; then original A=currentAE/newcandidate same480456 and B=accepteditem1/newcandidate, no result selection."
+}

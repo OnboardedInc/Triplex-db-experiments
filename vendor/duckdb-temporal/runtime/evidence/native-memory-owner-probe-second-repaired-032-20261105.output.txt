@@ -1,0 +1,10 @@
+✔ public unbounded and timed controls retain owner through cancel/drained close and fresh reopen/copy (1197.714667ms)
+ℹ Preserved owned fixture: build/memory-owner-public-oyqEzI
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1328.888292

@@ -1,0 +1,1236 @@
+{
+  "format": "temporal-datalog-research-contract-fixtures",
+  "version": 1,
+  "value_format_version": 2,
+  "status": "Unexecuted declarative expectations; not conformance evidence",
+  "target": "New native v2 and independent browser/reference v2 paths; store has narrower known-at admission",
+  "cases": [
+    {
+      "name": "four_tagged_ground_values",
+      "program_version": 2,
+      "program": "answer('1'). answer(true). answer(1). answer(1.0).",
+      "facts": [],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "str",
+            "v": "1"
+          }
+        ],
+        [
+          {
+            "t": "bool",
+            "v": true
+          }
+        ],
+        [
+          {
+            "t": "i64",
+            "v": "1"
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 1.0
+          }
+        ]
+      ]
+    },
+    {
+      "name": "four_tags_survive_base_values",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "bool",
+            "v": true
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 1.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "str",
+            "v": "1"
+          }
+        ],
+        [
+          {
+            "t": "bool",
+            "v": true
+          }
+        ],
+        [
+          {
+            "t": "i64",
+            "v": "1"
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 1.0
+          }
+        ]
+      ]
+    },
+    {
+      "name": "duplicate_values_are_sets_not_bags",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "bool",
+            "v": true
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "bool",
+            "v": true
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "bool",
+            "v": true
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 1.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 1.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 1.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "str",
+            "v": "1"
+          }
+        ],
+        [
+          {
+            "t": "bool",
+            "v": true
+          }
+        ],
+        [
+          {
+            "t": "i64",
+            "v": "1"
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 1.0
+          }
+        ]
+      ]
+    },
+    {
+      "name": "derived_first_position_remains_typed",
+      "program_version": 2,
+      "program": "vals(?v,'slot') :- triple('e','a',?v). answer(?v,?s) :- vals(?v,?s).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "bool",
+            "v": true
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 1.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "str",
+            "v": "1"
+          },
+          {
+            "t": "str",
+            "v": "slot"
+          }
+        ],
+        [
+          {
+            "t": "bool",
+            "v": true
+          },
+          {
+            "t": "str",
+            "v": "slot"
+          }
+        ],
+        [
+          {
+            "t": "i64",
+            "v": "1"
+          },
+          {
+            "t": "str",
+            "v": "slot"
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 1.0
+          },
+          {
+            "t": "str",
+            "v": "slot"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "typed_value_does_not_unify_with_text_entity",
+      "program_version": 2,
+      "program": "answer(?x) :- triple(?x,'same',?x).",
+      "facts": [
+        {
+          "e": "1",
+          "a": "same",
+          "v": {
+            "t": "str",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "1",
+          "a": "same",
+          "v": {
+            "t": "bool",
+            "v": true
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "1",
+          "a": "same",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "1",
+          "a": "same",
+          "v": {
+            "t": "f64",
+            "v": 1.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "str",
+            "v": "1"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "numeric_entity_literal_cannot_match_text_entity",
+      "program_version": 2,
+      "program": "answer(?v) :- triple(1,'a',?v).",
+      "facts": [
+        {
+          "e": "1",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": []
+    },
+    {
+      "name": "different_float_spellings_normalize_within_float_tag",
+      "program_version": 2,
+      "program": "answer(1). answer(1.0). answer(1e0). answer(1.00).",
+      "facts": [],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "i64",
+            "v": "1"
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 1.0
+          }
+        ]
+      ]
+    },
+    {
+      "name": "signed_zero_is_normalized_only_within_its_tag",
+      "program_version": 2,
+      "program": "answer(0). answer(-0). answer(0.0). answer(-0.0).",
+      "facts": [],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "i64",
+            "v": "0"
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 0.0
+          }
+        ]
+      ]
+    },
+    {
+      "name": "full_int64_and_adjacent_unsafe_js_integers",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "9223372036854775807"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "9007199254740993"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "9007199254740992"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "-9223372036854775808"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "-9007199254740993"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "i64",
+            "v": "-9223372036854775808"
+          }
+        ],
+        [
+          {
+            "t": "i64",
+            "v": "-9007199254740993"
+          }
+        ],
+        [
+          {
+            "t": "i64",
+            "v": "9007199254740992"
+          }
+        ],
+        [
+          {
+            "t": "i64",
+            "v": "9007199254740993"
+          }
+        ],
+        [
+          {
+            "t": "i64",
+            "v": "9223372036854775807"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "float_order_is_numeric_not_spelling_or_intern_id",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 10.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": -5e-324
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 2.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 5e-324
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": -2.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "f64",
+            "v": 0.0
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "f64",
+            "v": -2.0
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": -5e-324
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 0.0
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 5e-324
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 2.0
+          }
+        ],
+        [
+          {
+            "t": "f64",
+            "v": 10.0
+          }
+        ]
+      ]
+    },
+    {
+      "name": "strings_use_utf8_byte_order_not_js_utf16_order",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "😀"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": ""
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "é"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "é"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "str",
+            "v": "é"
+          }
+        ],
+        [
+          {
+            "t": "str",
+            "v": "é"
+          }
+        ],
+        [
+          {
+            "t": "str",
+            "v": ""
+          }
+        ],
+        [
+          {
+            "t": "str",
+            "v": "😀"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "legacy_looking_text_is_never_inferred",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "true"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "01"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "1e0"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "2026-10-30"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "9223372036854775807"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        },
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "str",
+            "v": "null"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "str",
+            "v": "01"
+          }
+        ],
+        [
+          {
+            "t": "str",
+            "v": "1e0"
+          }
+        ],
+        [
+          {
+            "t": "str",
+            "v": "2026-10-30"
+          }
+        ],
+        [
+          {
+            "t": "str",
+            "v": "9223372036854775807"
+          }
+        ],
+        [
+          {
+            "t": "str",
+            "v": "null"
+          }
+        ],
+        [
+          {
+            "t": "str",
+            "v": "true"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "full_int64_time_cut_is_lossless",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "9007199254740993",
+          "valid_to": "9007199254740995",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "9007199254740993",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "i64",
+            "v": "1"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "half_open_upper_time_cut_is_excluded",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "9007199254740993",
+          "valid_to": "9007199254740995",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "9007199254740995",
+      "known_at": "1",
+      "expected_rows": []
+    },
+    {
+      "name": "rounded_valid_boundary_must_not_admit_earlier_cut",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "9007199254740993",
+          "valid_to": "9007199254740994",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "9007199254740992",
+      "known_at": "1",
+      "expected_rows": []
+    },
+    {
+      "name": "rounded_recorded_boundary_must_not_admit_earlier_cut",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "9007199254740993",
+          "tx_to": "9007199254740994"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "9007199254740992",
+      "expected_rows": []
+    },
+    {
+      "name": "max_int64_valid_cut_is_excluded_by_open_end",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "9223372036854775806",
+          "valid_to": "9223372036854775807",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "9223372036854775807",
+      "known_at": "1",
+      "expected_rows": []
+    },
+    {
+      "name": "max_int64_predecessor_valid_cut_is_included",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "9223372036854775806",
+          "valid_to": "9223372036854775807",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "9223372036854775806",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "i64",
+            "v": "1"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "max_int64_recorded_cut_is_excluded_by_open_end",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "0",
+          "valid_to": "100",
+          "tx_from": "9223372036854775806",
+          "tx_to": "9223372036854775807"
+        }
+      ],
+      "valid_at": "1",
+      "known_at": "9223372036854775807",
+      "expected_rows": []
+    },
+    {
+      "name": "native_extreme_interval_comparison_never_subtracts",
+      "program_version": 2,
+      "program": "answer(?v) :- triple('e','a',?v).",
+      "facts": [
+        {
+          "e": "e",
+          "a": "a",
+          "v": {
+            "t": "i64",
+            "v": "1"
+          },
+          "valid_from": "-9223372036854775808",
+          "valid_to": "9223372036854775807",
+          "tx_from": "0",
+          "tx_to": "100"
+        }
+      ],
+      "valid_at": "-9223372036854775808",
+      "known_at": "1",
+      "expected_rows": [
+        [
+          {
+            "t": "i64",
+            "v": "1"
+          }
+        ]
+      ]
+    }
+  ],
+  "rejections": [
+    {
+      "name": "integer_overflow",
+      "program": "answer(9223372036854775808)."
+    },
+    {
+      "name": "integer_underflow",
+      "program": "answer(-9223372036854775809)."
+    },
+    {
+      "name": "float_overflow",
+      "program": "answer(1e400)."
+    },
+    {
+      "name": "nonzero_float_underflow_to_zero",
+      "program": "answer(1e-400)."
+    },
+    {
+      "name": "malformed_number_suffix",
+      "program": "answer(1e0junk)."
+    },
+    {
+      "name": "malformed_boolean_suffix",
+      "program": "answer(truex)."
+    },
+    {
+      "name": "leading_zero",
+      "program": "answer(01)."
+    },
+    {
+      "name": "unsupported_null_literal",
+      "program": "answer(null)."
+    },
+    {
+      "name": "json_number_is_not_an_i64_payload",
+      "value": {
+        "t": "i64",
+        "v": 1
+      }
+    },
+    {
+      "name": "json_number_is_not_a_v2_valid_clock",
+      "valid_at": 9007199254740992
+    },
+    {
+      "name": "json_number_is_not_a_v2_recorded_clock",
+      "known_at": 9007199254740992
+    },
+    {
+      "name": "json_string_is_not_a_boolean_payload",
+      "value": {
+        "t": "bool",
+        "v": "true"
+      }
+    },
+    {
+      "name": "unsupported_reference_tag",
+      "value": {
+        "t": "ref",
+        "v": "e"
+      }
+    },
+    {
+      "name": "unsupported_date_tag",
+      "value": {
+        "t": "date",
+        "v": "2026-10-30"
+      }
+    },
+    {
+      "name": "unsupported_null_tag",
+      "value": {
+        "t": "null",
+        "v": null
+      }
+    }
+  ],
+  "metamorphic_checks": [
+    "permute input and rule order without changing canonical rows",
+    "repeat each base assertion without changing logical answers",
+    "typed JSON export then import preserves every canonical value"
+  ]
+}

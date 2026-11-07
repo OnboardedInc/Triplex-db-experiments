@@ -1,0 +1,123 @@
+{
+  "runtime": "1.4.3",
+  "context": "in-memory, no prototype source changes",
+  "queries": [
+    {
+      "name": "combination_equal",
+      "sql": "SELECT true = 1, 1 = '1', 1 = 1.0",
+      "rows": [
+        [
+          true,
+          true,
+          true
+        ]
+      ]
+    },
+    {
+      "name": "list_inference",
+      "sql": "SELECT typeof([true,1::BIGINT]), [true,1::BIGINT]",
+      "rows": [
+        [
+          "BIGINT[]",
+          [
+            1,
+            1
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "large_int_comparison",
+      "sql": "SELECT 9007199254740993::BIGINT = 9007199254740992::DOUBLE, 9223372036854775807::BIGINT = 9223372036854775808::DOUBLE",
+      "rows": [
+        [
+          true,
+          true
+        ]
+      ]
+    },
+    {
+      "name": "union_return_payloads",
+      "sql": "SELECT union_value(s:='1')::UNION(s VARCHAR,b BOOLEAN,i BIGINT,f DOUBLE), union_value(b:=true)::UNION(s VARCHAR,b BOOLEAN,i BIGINT,f DOUBLE), union_value(i:=1::BIGINT)::UNION(s VARCHAR,b BOOLEAN,i BIGINT,f DOUBLE), union_value(f:=1::DOUBLE)::UNION(s VARCHAR,b BOOLEAN,i BIGINT,f DOUBLE)",
+      "rows": [
+        [
+          "1",
+          true,
+          1,
+          1.0
+        ]
+      ]
+    },
+    {
+      "name": "union_tag_distinctions",
+      "sql": "WITH t(v) AS (VALUES (union_value(i:=1::BIGINT)::UNION(s VARCHAR,b BOOLEAN,i BIGINT,f DOUBLE)), (union_value(f:=1::DOUBLE)::UNION(s VARCHAR,b BOOLEAN,i BIGINT,f DOUBLE)), (union_value(s:='1')::UNION(s VARCHAR,b BOOLEAN,i BIGINT,f DOUBLE)), (union_value(b:=true)::UNION(s VARCHAR,b BOOLEAN,i BIGINT,f DOUBLE))) SELECT union_tag(v), v FROM t ORDER BY v",
+      "rows": [
+        [
+          "s",
+          "1"
+        ],
+        [
+          "b",
+          true
+        ],
+        [
+          "i",
+          1
+        ],
+        [
+          "f",
+          1.0
+        ]
+      ]
+    },
+    {
+      "name": "typed_struct",
+      "sql": "SELECT {'tag':2::UTINYINT,'s':NULL::VARCHAR,'b':NULL::BOOLEAN,'i':9223372036854775807::BIGINT,'f':NULL::DOUBLE}",
+      "rows": [
+        [
+          {
+            "tag": 2,
+            "s": null,
+            "b": null,
+            "i": 9223372036854775807,
+            "f": null
+          }
+        ]
+      ]
+    },
+    {
+      "name": "finite_and_nan_checks",
+      "sql": "SELECT isfinite('NaN'::DOUBLE), isfinite('Infinity'::DOUBLE), isfinite(-0.0::DOUBLE), 'NaN'::DOUBLE='NaN'::DOUBLE, -0.0::DOUBLE=0.0::DOUBLE",
+      "rows": [
+        [
+          false,
+          false,
+          true,
+          true,
+          true
+        ]
+      ]
+    },
+    {
+      "name": "legacy_struct_coercion_BIGINT",
+      "sql": "SELECT td_query(?,[struct_pack(e:='e',a:='a',v:=1::BIGINT,valid_from:=0::BIGINT,valid_to:=100::BIGINT,tx_from:=0::BIGINT,tx_to:=100::BIGINT)],10,10,100,100,100).rows",
+      "error": "Binder Error: No function matches the given name and argument types 'td_query(STRING_LITERAL, STRUCT(e VARCHAR, a VARCHAR, v BIGINT, valid_from BIGINT, valid_to BIGINT, tx_from BIGINT, tx_to BIGINT)[], INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL)'. You might need to add explicit type casts.\n\tCandidate functions:\n\ttd_query(VARCHAR, STRUCT(e VARCHAR, a VARCHAR, v VARCHAR, valid_from BIGINT, valid_to BIGINT, tx_from BIGINT, tx_to BIGINT)[], BIGINT, BIGINT, BIGINT, BIGINT, BIGINT) -> STRUCT(\"rows\" VARCHAR[][], rounds BIGINT, derived_facts BIGINT, \"work\" BIGINT)\n\n\nLINE 1: SELECT td_query(?,[struct_pack(e:='e',a:='a',v:=1::BIGINT,valid_from...\n               ^"
+    },
+    {
+      "name": "legacy_struct_coercion_BOOLEAN",
+      "sql": "SELECT td_query(?,[struct_pack(e:='e',a:='a',v:=true::BOOLEAN,valid_from:=0::BIGINT,valid_to:=100::BIGINT,tx_from:=0::BIGINT,tx_to:=100::BIGINT)],10,10,100,100,100).rows",
+      "error": "Binder Error: No function matches the given name and argument types 'td_query(STRING_LITERAL, STRUCT(e VARCHAR, a VARCHAR, v BOOLEAN, valid_from BIGINT, valid_to BIGINT, tx_from BIGINT, tx_to BIGINT)[], INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL)'. You might need to add explicit type casts.\n\tCandidate functions:\n\ttd_query(VARCHAR, STRUCT(e VARCHAR, a VARCHAR, v VARCHAR, valid_from BIGINT, valid_to BIGINT, tx_from BIGINT, tx_to BIGINT)[], BIGINT, BIGINT, BIGINT, BIGINT, BIGINT) -> STRUCT(\"rows\" VARCHAR[][], rounds BIGINT, derived_facts BIGINT, \"work\" BIGINT)\n\n\nLINE 1: SELECT td_query(?,[struct_pack(e:='e',a:='a',v:=true::BOOLEAN,vali...\n               ^"
+    },
+    {
+      "name": "legacy_struct_coercion_DOUBLE",
+      "sql": "SELECT td_query(?,[struct_pack(e:='e',a:='a',v:=1.25::DOUBLE,valid_from:=0::BIGINT,valid_to:=100::BIGINT,tx_from:=0::BIGINT,tx_to:=100::BIGINT)],10,10,100,100,100).rows",
+      "error": "Binder Error: No function matches the given name and argument types 'td_query(STRING_LITERAL, STRUCT(e VARCHAR, a VARCHAR, v DOUBLE, valid_from BIGINT, valid_to BIGINT, tx_from BIGINT, tx_to BIGINT)[], INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL)'. You might need to add explicit type casts.\n\tCandidate functions:\n\ttd_query(VARCHAR, STRUCT(e VARCHAR, a VARCHAR, v VARCHAR, valid_from BIGINT, valid_to BIGINT, tx_from BIGINT, tx_to BIGINT)[], BIGINT, BIGINT, BIGINT, BIGINT, BIGINT) -> STRUCT(\"rows\" VARCHAR[][], rounds BIGINT, derived_facts BIGINT, \"work\" BIGINT)\n\n\nLINE 1: SELECT td_query(?,[struct_pack(e:='e',a:='a',v:=1.25::DOUBLE,valid...\n               ^"
+    },
+    {
+      "name": "legacy_struct_coercion_DATE",
+      "sql": "SELECT td_query(?,[struct_pack(e:='e',a:='a',v:=DATE '2026-10-30'::DATE,valid_from:=0::BIGINT,valid_to:=100::BIGINT,tx_from:=0::BIGINT,tx_to:=100::BIGINT)],10,10,100,100,100).rows",
+      "error": "Binder Error: No function matches the given name and argument types 'td_query(STRING_LITERAL, STRUCT(e VARCHAR, a VARCHAR, v DATE, valid_from BIGINT, valid_to BIGINT, tx_from BIGINT, tx_to BIGINT)[], INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL)'. You might need to add explicit type casts.\n\tCandidate functions:\n\ttd_query(VARCHAR, STRUCT(e VARCHAR, a VARCHAR, v VARCHAR, valid_from BIGINT, valid_to BIGINT, tx_from BIGINT, tx_to BIGINT)[], BIGINT, BIGINT, BIGINT, BIGINT, BIGINT) -> STRUCT(\"rows\" VARCHAR[][], rounds BIGINT, derived_facts BIGINT, \"work\" BIGINT)\n\n\nLINE 1: SELECT td_query(?,[struct_pack(e:='e',a:='a',v:=DATE '2026-10-30...\n               ^"
+    }
+  ],
+  "extension_sha256": "62c9f24e3f8951771ff0f7ceae7dd255843885b203c818bb53e3c232baa45662"
+}

@@ -1,0 +1,52 @@
+{
+  "duckdb": "2.0.0",
+  "coercion": [
+    true,
+    true
+  ],
+  "explicit_struct_roundtrip": [
+    {
+      "tag": 1,
+      "s": "1",
+      "b": null,
+      "i": null,
+      "f": null
+    },
+    {
+      "tag": 2,
+      "s": null,
+      "b": true,
+      "i": null,
+      "f": null
+    },
+    {
+      "tag": 3,
+      "s": null,
+      "b": null,
+      "i": 9223372036854775807,
+      "f": null
+    },
+    {
+      "tag": 4,
+      "s": null,
+      "b": null,
+      "i": null,
+      "f": 1.0
+    },
+    {
+      "tag": 4,
+      "s": null,
+      "b": null,
+      "i": null,
+      "f": -0.0
+    },
+    {
+      "tag": 4,
+      "s": null,
+      "b": null,
+      "i": null,
+      "f": 5e-324
+    }
+  ],
+  "distinct_tagged_rows": 4
+}

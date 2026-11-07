@@ -1,0 +1,57 @@
+{
+  "schema": "td.item5.selected-contract-documents/2",
+  "scope": "new N1 interface/math/re-review and additive source-only decision; no code/execution plan",
+  "empirical_status": "UNRUN",
+  "preservation": "selected source documents retained exact UTF8 content bytes",
+  "files": [
+    {
+      "name": "README.md",
+      "bytes": 4273,
+      "sha256": "5b323641f95b578761dc80cdac0f7464072236fe7dfe1107aa12acb2b6fae461",
+      "git_blob_sha": "dc185962bd86c0925ff00fafff71be492a6caaea"
+    },
+    {
+      "name": "CONTRACT.md",
+      "bytes": 23381,
+      "sha256": "94ebe3e5878da8393ad8fba72f1570bc0c04e561efea1e248f224345f1e4ee6d",
+      "git_blob_sha": "2b615bf289a629c401e186da8d43e06a5f41cbe1"
+    },
+    {
+      "name": "ARITHMETIC-AND-ACCOUNTING.md",
+      "bytes": 27053,
+      "sha256": "689d33b26a31ddeab7255ad3ed3e21ec8b99fbf26e8e2bc5d4e2f81f2c641c98",
+      "git_blob_sha": "ecc8acedd19f06c56a2c384684b8c5c320d8cb20"
+    },
+    {
+      "name": "REFERENCES-AND-GATES.md",
+      "bytes": 14610,
+      "sha256": "6e5d148a08bb137bf01057c39333bc344602feacadc61d6ff53b743b546a7c6d",
+      "git_blob_sha": "eab5aec42911625b5c37c81f2289e16b4278700d"
+    },
+    {
+      "name": "REVISION-NOTES.md",
+      "bytes": 6160,
+      "sha256": "4778bc68681abfac4bde24d58aebbe55d2802dec082365a68174c75b99fb290e",
+      "git_blob_sha": "60340cb48805893cfc3012f7b79bdb8757248d3e"
+    },
+    {
+      "name": "INDEPENDENT-REREVIEW.md",
+      "bytes": 8065,
+      "sha256": "3f22048e3aec99879fbd6297f64a455dddd9cc6213babaa526bb0a79e65b3ef7",
+      "git_blob_sha": "e6bcb54065eade4912b832b664f5e1ab1d91a30d"
+    },
+    {
+      "name": "DECISION.md",
+      "bytes": 1510,
+      "sha256": "09e500986d689d5f954689003aef4a4014525113ef3afdf9c6ec82a1e39861b1",
+      "git_blob_sha": "a750d855da992c94a6304380a42002d1859eab5d"
+    },
+    {
+      "name": "SELECTION.json",
+      "bytes": 1855,
+      "sha256": "cc244388c9b0fca7e9e169429028b5046fc7f937922fa2146b208d708ce9d5cd",
+      "git_blob_sha": "aef9ce941b60b9cabf371bca7936c7c0b11ed353"
+    }
+  ],
+  "self_excluded": "FILES.json"
+}

@@ -1,0 +1,86 @@
+{
+  "status": "PASS",
+  "scope": "Pinned-runtime str-subclass bound-VARCHAR semantics and base-str snapshot, not Datalog feature/FP/transaction safety",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "optimize": 0,
+  "debug": true,
+  "PYTHONOPTIMIZE": null,
+  "duckdb": "2.0.0",
+  "runtime": "/tmp/temporal-datalog-20261030/engine/python2/_duckdb.abi3.so",
+  "runtime_sha256": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+  "cases": [
+    {
+      "case": 0,
+      "characters": 14,
+      "base_sha256_surrogatepass": "57b571c28e8b5eab57f76fffb95048db607b11005e7a766c0f5fd224894c6cdf",
+      "snapshot_exact_str": true,
+      "snapshot_base_characters_equal": true,
+      "generic_str_override_control": true,
+      "outcome": "PASS",
+      "bound_exact_str": true,
+      "bound_base_characters_equal": true,
+      "bound_override_calls": []
+    },
+    {
+      "case": 1,
+      "characters": 13,
+      "base_sha256_surrogatepass": "80e336132a5708f8653a70ab494ce2d18ab29b4088130dcc496190114959498a",
+      "snapshot_exact_str": true,
+      "snapshot_base_characters_equal": true,
+      "generic_str_override_control": true,
+      "outcome": "PASS",
+      "bound_exact_str": true,
+      "bound_base_characters_equal": true,
+      "bound_override_calls": []
+    },
+    {
+      "case": 2,
+      "characters": 0,
+      "base_sha256_surrogatepass": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "snapshot_exact_str": true,
+      "snapshot_base_characters_equal": true,
+      "generic_str_override_control": true,
+      "outcome": "PASS",
+      "bound_exact_str": true,
+      "bound_base_characters_equal": true,
+      "bound_override_calls": []
+    },
+    {
+      "case": 3,
+      "characters": 32768,
+      "base_sha256_surrogatepass": "427965f49a857174e308658227325dbd23ff4eccbe399d5ad4817dda3ec79f87",
+      "snapshot_exact_str": true,
+      "snapshot_base_characters_equal": true,
+      "generic_str_override_control": true,
+      "outcome": "PASS",
+      "bound_exact_str": true,
+      "bound_base_characters_equal": true,
+      "bound_override_calls": []
+    },
+    {
+      "case": 4,
+      "characters": 14,
+      "base_sha256_surrogatepass": "1a6071c47037dd811db4042408ab51afd58eb28df331178aa5506caf9d303f1e",
+      "snapshot_exact_str": true,
+      "snapshot_base_characters_equal": true,
+      "generic_str_override_control": true,
+      "outcome": "PASS",
+      "bound_exact_str": true,
+      "bound_base_characters_equal": true,
+      "bound_override_calls": []
+    },
+    {
+      "case": 5,
+      "characters": 1,
+      "base_sha256_surrogatepass": "91a681b998555fb475479817b126c94e57e52011fa1842c5d188795a4a05226b",
+      "snapshot_exact_str": true,
+      "snapshot_base_characters_equal": true,
+      "generic_str_override_control": true,
+      "outcome": "EXPECTED_INVALID_UNICODE_REJECTION",
+      "error_type": "InvalidInputException",
+      "bound_override_calls": []
+    }
+  ],
+  "program_limit_not_tightened": "32768-character value still binds; this probe does not set a512-byte EAV-string cap on programs",
+  "source_file_sha256": "29a5b752d3fc722b31d7d615d9b57b8ca85437ccbcd9ae3c5da354bfc103af2f"
+}

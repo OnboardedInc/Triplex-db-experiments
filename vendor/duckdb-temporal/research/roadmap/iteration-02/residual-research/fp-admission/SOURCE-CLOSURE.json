@@ -1,0 +1,39 @@
+{
+  "verified_utc": "2026-10-30T23:56:40.533199+00:00",
+  "kind": "source-only immutable-export and pinned-source integrity; no candidate imports",
+  "export_manifest_sha256": "eb52a0acd82a49d82e03c633793b8337e9c9c94cbab73a580227d3ec78e81b04",
+  "export_file_count": 267,
+  "changed_export_files": [],
+  "fresh_primary_pinned_receipts": 22,
+  "bad_receipts": [],
+  "research_script_imports": {
+    "verify_readonly_mechanisms.py": [
+      "__future__",
+      "ctypes",
+      "datetime",
+      "hashlib",
+      "json",
+      "os",
+      "pathlib",
+      "platform",
+      "struct",
+      "sys"
+    ],
+    "verify_isolated_mode_parity.py": [
+      "__future__",
+      "ctypes",
+      "datetime",
+      "hashlib",
+      "json",
+      "os",
+      "pathlib",
+      "subprocess",
+      "sys",
+      "verify_readonly_mechanisms"
+    ]
+  },
+  "status": "PASS",
+  "private_source_cache_excluded_from_publication": true,
+  "application_source_write_authorized": false,
+  "production_patch_written": false
+}

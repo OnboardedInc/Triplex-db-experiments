@@ -1,0 +1,77 @@
+{
+  "status": "SOURCE_ONLY_UTF8_RESEARCH_HANDOFF",
+  "created_utc": "2026-10-31T01:37:09.330906+00:00",
+  "base_directory": "/tmp/temporal-roadmap-research/iteration-02/residual-research/codec-renewal/cost-theory",
+  "source_context": "Current typed_store25e9a4f and FP92169be; closed reader study5a8277b3",
+  "candidate_selection": "Root must select/save C1p+C2 or explicit alternative before writer. This is research only.",
+  "contains_app_changes": false,
+  "contains_new_timings_or_profiles": false,
+  "contains_databases_binaries_vendor_cache": false,
+  "files": [
+    {
+      "path": "DECISION.json",
+      "bytes": 6027,
+      "sha256": "7d733d9986fad471bf8b515ec4d16966f2f7c832c6b121e5fdc6bb5b614f0259",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "LOCAL-SOURCE-RECEIPT.json",
+      "bytes": 2601,
+      "sha256": "138d4e4b1d00258fa715e966e58a6ece5fcafa02181bf51ad67d287fac4bfbd0",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "PRIMARY-SOURCE-RECEIPTS.json",
+      "bytes": 23376,
+      "sha256": "532fd3934f6908224f58eabadc545d85ba853e28b89f9f28dde5d045eaf4e284",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "PROFILE-COUNT-RECEIPT.json",
+      "bytes": 44671,
+      "sha256": "6bf29ba7bac7ff481286ea1f41c8818bcdfcc8f1da94b541f5b3df4d1390adf4",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "README.md",
+      "bytes": 861,
+      "sha256": "97ae613baf464e6626c3ca37f59db360793f16293b9072509682e29d8a5d524b",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "RESEARCH.md",
+      "bytes": 25759,
+      "sha256": "fdfc49380d30e2ae02d8dea0443ad92cf9cd23af33cad6387447a54a07786960",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "SOURCE-HASH-CROSSCHECK.json",
+      "bytes": 1970,
+      "sha256": "1d87405e5b948bba2a0d2f0c93b0209e3129d28d3404f58ea782e8b23f8ee451",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "STATIC-SHAPE-COST-COUNTS.json",
+      "bytes": 3594,
+      "sha256": "73136a09942c249d00c80e0af11a7129ec2f9103f8d8b2abedb4edc703478aed",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "WEB-PRIMARY-CURATION.json",
+      "bytes": 4812,
+      "sha256": "f9f5ffac3b39003c000ada73006d249f17b34f7fb98575f80c81f3a59fe1e5e9",
+      "encoding": "UTF-8"
+    },
+    {
+      "path": "collect_cost_evidence.py",
+      "bytes": 9997,
+      "sha256": "ecc66ea44ea12235b3543a86369c94d529f2e9276a7d0c219d5168853acb41da",
+      "encoding": "UTF-8"
+    }
+  ],
+  "total_bytes": 123668,
+  "excluded_mutable": [
+    "WORKER-PROGRESS.md"
+  ],
+  "manifest_and_handoff": "Manifest digest is in EXPORT-MANIFEST.sha256; CURATION-HANDOFF.json references that digest rather than creating a circular hash."
+}

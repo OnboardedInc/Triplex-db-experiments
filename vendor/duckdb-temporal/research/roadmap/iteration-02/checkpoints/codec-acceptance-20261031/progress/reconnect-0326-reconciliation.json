@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-31T03:27:12.804Z",
+  "main": "b8abf71b7ed5c2cfe1082c0f2b35b7d48f3d0fa3",
+  "parents": [
+    "20ad11ab6704ea1706e1fe27892cefda69284f33"
+  ],
+  "ledger_sha": "2d6dc8c81275a3f3ac89c5e9bb1eda9ca2065a35",
+  "ledger_unchanged_from20ad": true,
+  "source": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+  "PRbody_same_fbe": true,
+  "Page_sequence": 24,
+  "known_prior_root_writes_all_completed": true,
+  "last_root_operation": "Local bounded acceptance decision b00d645b successfully completed; no Git/PR/Page write in flight",
+  "owner_final_curated_manifest": "28648809b4a216449169f8e1ef9d4525be20564df1a995eae14fbe138043cb07",
+  "next": "Independently verify immutable1359raw payloads then preserve in distinct root paths; no performance rerun"
+}

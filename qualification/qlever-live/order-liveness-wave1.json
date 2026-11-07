@@ -1,0 +1,50 @@
+{
+  "format": "triplex-qlever-planner-wave/1",
+  "predeclaredAtUnix": 1794013975.3570938,
+  "problemTag": "qlever.planner-memory.unobserved-scalar-order",
+  "state": "PREDECLARED_BEFORE_IMPLEMENTATION_OR_EXECUTION",
+  "fixedProfile": {
+    "engineMemoryBytes": 2147483648,
+    "planningBudget": 100,
+    "sourcePlan": "persisted",
+    "negationPlan": "minus",
+    "retirementPlan": "paired",
+    "aggregateAnswerPlan": "bounded",
+    "clientBytes": 939524096,
+    "controllerOldSpaceMiB": 256
+  },
+  "control": {
+    "receipt": ".devloop/jobs/qlever-retirement-paired-family12-v1/attempts/0001",
+    "outcome": "First main-query plannerOOM137 at2GiB after actual pair/history/partial-row gate passed. No unchanged repeat."
+  },
+  "arm": {
+    "id": "E-order-channel-liveness",
+    "singleVariable": "For a variable-valued persisted assertion leaf, omit only its scalar_order triple and order projection when whole-query dependency analysis proves its logical variable order is unobserved. Preserve canonical family/lexical identity, every temporal filter, bag multiplicity, and all stored-channel completeness admission.",
+    "inspiration": [
+      "packages/qlever/src/native/NativeContext.ts",
+      "packages/qlever/src/compiler.ts"
+    ],
+    "adaptation": "Existing leaf projection is retained. The change removes only an unobserved order channel; it does not introduce leaf projection, materialize host facts, or change writes.",
+    "conservativeFallbacks": [
+      "Every projected variable retains its order",
+      "Every range-comparison or explicit sort dependency retains its order",
+      "Constant-valued scalar leaves retain their existing complete constant match",
+      "Wrapped/paged, aggregate, rule, OR, optional-projection, or pending-source shapes keep the existing path",
+      "Any use of order in equality/unification must be retained; current owning implementation compares canonical family+lexical channels only"
+    ]
+  },
+  "gates": [
+    "Actual failed family12 AST is eligible and generated scalar_order pattern/projection count decreases; otherwise reportNOT_ELIGIBLE and do not repeat unchangedOOM",
+    "Focused positive/negative dependency shape tests",
+    "Actual small typed shared/keyless/repeated-variable/ref-string/number-int64/signed-zero equality fixtures against independently declared answers, with Dcontrol where tractable",
+    "Eight same family12 current/reopen checks at unchanged2GiB",
+    "Full142 plus unchanged44 only if a survivor",
+    "Independent reviewer before default change"
+  ],
+  "limits": [
+    "Defaults remain unchanged",
+    "One-variable arm only; no additional retirement/source/negation rewrite bundled",
+    "Read-OOM recovery after any failure preserves exactCID/caps/ACK/history state",
+    "No performance or full10goal claim from a tiny semantic gate"
+  ]
+}

@@ -1,0 +1,390 @@
+{
+  "schema": "td.antijoin-reader-profile-frame-receipt/1",
+  "status": "PASSED_CORRECTNESS_ONLY",
+  "sourceCommit": "b7980c287a3f82ff0d86aed16a115961f770cb3b",
+  "frameSourceCommit": "25e5f579",
+  "firstAttempt": true,
+  "qualification": "22 pure policy/oracle/FIFO methods and one-client 100k short correctness; no full numerical gate or production-SDK qualification",
+  "syntaxChecks": 3,
+  "pureMethods": {
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0
+  },
+  "raw": {
+    "file": "antijoin-c2-frame-100k-one-reader-20261105.raw.json",
+    "sha256": "58a3170b08ad1e8a0396aed51b21cbda65799b5d3b81fe2a824068738f9c652d",
+    "bytes": 280196
+  },
+  "logs": {
+    "syntax-runner.log": {
+      "file": "antijoin-c2-frame-20261105-syntax-runner.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0
+    },
+    "syntax-helper.log": {
+      "file": "antijoin-c2-frame-20261105-syntax-helper.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0
+    },
+    "syntax-tests.log": {
+      "file": "antijoin-c2-frame-20261105-syntax-tests.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0
+    },
+    "pure.log": {
+      "file": "antijoin-c2-frame-20261105-pure.log",
+      "sha256": "d4848bf2b9946608e41e0394803102cde7af681f15c2136f32515b9367c416f0",
+      "exitCode": 0
+    },
+    "c2-small-terminal.log": {
+      "file": "antijoin-c2-frame-20261105-c2-small-terminal.log",
+      "sha256": "3b68d97d4cf8eb9b51878a825a8235e08d3fdcbc0eb2ef1e02924a998b50dba5",
+      "exitCode": 0
+    }
+  },
+  "originalBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+  "nativeBindingSha256": "0eaf2187d65289cbbb2902ae58867ab64127d4c973d6fe59341065e50356f963",
+  "profileBindingSha256": "1f2577589bb5324bd32fac45d79587c6f0213107da09b8631021e505aff57011",
+  "selectedRuntimePins": {
+    "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "actualBefore": {
+    "runtimePins": {
+      "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+      "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+      "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+      "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+      "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+    },
+    "coreManifestSha256": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "companionManifestSha256": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+    "sourceSha256": {
+      "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+      "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+      "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+      "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+      "native/src/temporal_command.cpp": "6b2c3a064050b64694c436b4769bc61be52494a1624c8cd361ed1cc53371c426",
+      "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+      "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+      "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+      "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+      "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+      "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+      "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+      "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+      "native/src/temporal_datalog.cpp": "c80961113dd0b2fd2d1c182cd03f434aee724a6ea6a867fb603322356179281c",
+      "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+      "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+      "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+      "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+      "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+      "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+      "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+      "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+      "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+      "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+      "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+      "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da"
+    },
+    "coreBuildOptions": {
+      "engine": "2.0.0",
+      "extension_version": "0.32.0",
+      "abi": "C_STRUCT_UNSTABLE",
+      "node_api_version": 8,
+      "schema_template_reuse": true,
+      "schema_borrowed_input": true,
+      "diagnostic_evaluator_profile": false,
+      "experimental_current_unique_fast_path": true,
+      "experimental_injective_projection_fast_path": true,
+      "experimental_identity_count_fast_path": false,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_streaming_source_fast_path": true
+    },
+    "catalogHeaderSha256": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+    "ownerSourceSha256": "62bda50850f24ef79c5b025301600d8db50ed4e7a17dfbfc52bf3586c6767c77",
+    "ownerIntegritySourceSha256": {
+      "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+      "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+      "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+      "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+      "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+      "native/catalog.sql": "5da97390c926dade88eee4803adec095be9661a63ee5154d17b1337bd92a82bd",
+      "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+    },
+    "ownerCompatSourceSha256": {
+      "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+      "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42"
+    },
+    "ownerCompatMutations": true,
+    "sdkEntrySha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+  },
+  "actualAfter": {
+    "runtimePins": {
+      "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+      "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+      "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+      "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+      "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+    },
+    "coreManifestSha256": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "companionManifestSha256": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+    "sourceSha256": {
+      "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+      "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+      "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+      "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+      "native/src/temporal_command.cpp": "6b2c3a064050b64694c436b4769bc61be52494a1624c8cd361ed1cc53371c426",
+      "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+      "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+      "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+      "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+      "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+      "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+      "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+      "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+      "native/src/temporal_datalog.cpp": "c80961113dd0b2fd2d1c182cd03f434aee724a6ea6a867fb603322356179281c",
+      "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+      "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+      "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+      "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+      "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+      "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+      "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+      "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+      "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+      "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+      "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+      "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da"
+    },
+    "coreBuildOptions": {
+      "engine": "2.0.0",
+      "extension_version": "0.32.0",
+      "abi": "C_STRUCT_UNSTABLE",
+      "node_api_version": 8,
+      "schema_template_reuse": true,
+      "schema_borrowed_input": true,
+      "diagnostic_evaluator_profile": false,
+      "experimental_current_unique_fast_path": true,
+      "experimental_injective_projection_fast_path": true,
+      "experimental_identity_count_fast_path": false,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_streaming_source_fast_path": true
+    },
+    "catalogHeaderSha256": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+    "ownerSourceSha256": "62bda50850f24ef79c5b025301600d8db50ed4e7a17dfbfc52bf3586c6767c77",
+    "ownerIntegritySourceSha256": {
+      "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+      "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+      "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+      "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+      "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+      "native/catalog.sql": "5da97390c926dade88eee4803adec095be9661a63ee5154d17b1337bd92a82bd",
+      "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+    },
+    "ownerCompatSourceSha256": {
+      "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+      "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42"
+    },
+    "ownerCompatMutations": true,
+    "sdkEntrySha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+  },
+  "source": {
+    "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "bytes": 52178944,
+    "mtimeMs": 1793904791622.1863,
+    "ctimeMs": 1793904791622.1863,
+    "sha256Before": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "evidenceSha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4",
+    "sha256After": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1"
+  },
+  "sourceUnchanged": true,
+  "candidateArtifactsAndSourceUnchanged": true,
+  "harnessPins": {
+    "adapter/benchmark-antijoin-cost.mjs": "253d25d34c1be24532cc775d0c53fc8976ce294b9e6c9937a1d7dca62f125cb4",
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/native-write-candidate-binding.mjs": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610",
+    "adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+    "adapter/antijoin-profile-binding.mjs": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4"
+  },
+  "harnessAfter": {
+    "adapter/benchmark-antijoin-cost.mjs": "253d25d34c1be24532cc775d0c53fc8976ce294b9e6c9937a1d7dca62f125cb4",
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/native-write-candidate-binding.mjs": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610",
+    "adapter/benchmark-scale.mjs": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+    "adapter/benchmark-identity-count.mjs": "76163b36ecc0428773f80dc4ca45b02fa2e8e29c8ce1047149480f576bd78cca",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+    "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+    "adapter/antijoin-profile-binding.mjs": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4"
+  },
+  "admission": {
+    "logicalClients": 1,
+    "nativeReaderConnections": 1,
+    "declaredExtraLimit": 3,
+    "effectiveExtraLimit": 1
+  },
+  "inputAdmissionProof": {
+    "scopedInputFacts": 17331,
+    "rightSideFacts": "17075",
+    "positiveSideFacts": 256,
+    "exactSucceeded": true,
+    "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+    "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+  },
+  "probe": {
+    "position": "585",
+    "entities": 256,
+    "asserted": 512
+  },
+  "seedBatches": 8,
+  "reuseChecks": 1,
+  "reopenChecks": 5,
+  "reopenVerified": true,
+  "cells": [
+    {
+      "mixedIngestion": false,
+      "readerCount": 1,
+      "status": "passed",
+      "pool": {
+        "before": {
+          "capacity": 1,
+          "available": 1,
+          "active": 0,
+          "waiting": 0
+        },
+        "after": {
+          "capacity": 1,
+          "available": 1,
+          "active": 0,
+          "waiting": 0
+        },
+        "maxObservedActive": 1,
+        "maxObservedWaiting": 0,
+        "sampleIntervalMs": 25
+      },
+      "physicalReaderControls": {
+        "calls": 3,
+        "maxActive": 1,
+        "distinctPorts": 1,
+        "portIds": [
+          1
+        ],
+        "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+      },
+      "executionAdmission": {
+        "limit": 1,
+        "active": 0,
+        "waiting": 0,
+        "maxActive": 1,
+        "maxQueued": 0,
+        "admitted": 3,
+        "completed": 3,
+        "rejected": 0,
+        "admissionWaitMs": {
+          "count": 3,
+          "min": 0.010875000000169166,
+          "p50": 0.018625000000156433,
+          "p95": 0.07324999999991633,
+          "p99": 0.07324999999991633,
+          "max": 0.07324999999991633
+        },
+        "scope": "whole public query calls admitted by a test-only FIFO; not native tasks"
+      },
+      "finalReadVerified": null,
+      "errors": [],
+      "writeAcknowledgementErrors": [],
+      "sampleCount": 2,
+      "acknowledgedWrites": 0
+    },
+    {
+      "mixedIngestion": true,
+      "readerCount": 1,
+      "status": "passed",
+      "pool": {
+        "before": {
+          "capacity": 1,
+          "available": 1,
+          "active": 0,
+          "waiting": 0
+        },
+        "after": {
+          "capacity": 1,
+          "available": 1,
+          "active": 0,
+          "waiting": 0
+        },
+        "maxObservedActive": 1,
+        "maxObservedWaiting": 0,
+        "sampleIntervalMs": 25
+      },
+      "physicalReaderControls": {
+        "calls": 25,
+        "maxActive": 1,
+        "distinctPorts": 1,
+        "portIds": [
+          1
+        ],
+        "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+      },
+      "executionAdmission": {
+        "limit": 1,
+        "active": 0,
+        "waiting": 0,
+        "maxActive": 1,
+        "maxQueued": 0,
+        "admitted": 25,
+        "completed": 25,
+        "rejected": 0,
+        "admissionWaitMs": {
+          "count": 25,
+          "min": 0.006125000000110958,
+          "p50": 0.013083000000278844,
+          "p95": 0.019708000000036918,
+          "p99": 0.03733299999976225,
+          "max": 0.03733299999976225
+        },
+        "scope": "whole public query calls admitted by a test-only FIFO; not native tasks"
+      },
+      "finalReadVerified": true,
+      "errors": [],
+      "writeAcknowledgementErrors": [],
+      "sampleCount": 23,
+      "acknowledgedWrites": 23
+    }
+  ],
+  "scopeLimitations": [
+    "Harness FIFO only; selected SDK remains original v1 SDK754.",
+    "Small timings are diagnostic only; no numerical qualification.",
+    "No B0 duplicate small run or full one-/sixteen-client run occurred.",
+    "The production SDK successor must own the sole admission gate and gets new artifact binding."
+  ]
+}

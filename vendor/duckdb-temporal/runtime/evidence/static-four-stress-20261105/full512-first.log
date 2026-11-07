@@ -1,0 +1,11 @@
+✔ independent full512 native patch trace retains every returned cut and restores all256 entities (53377.296208ms)
+ℹ Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-20261105-01/runtime/build/sdk-admission-independent-SR51XV/facts.duckdb
+ℹ Exact reads per client: 446,446,446,445,444,446,444,446,446,446,445,445,445,445,444,444; actual native patch ACKs: 512
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53533.008125

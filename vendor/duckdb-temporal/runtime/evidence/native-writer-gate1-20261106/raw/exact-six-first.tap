@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: native writer v2 pooled read keeps its original writer barrier and historical cut
+ok 1 - native writer v2 pooled read keeps its original writer barrier and historical cut
+  ---
+  duration_ms: 440.518125
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-controls-PRdOOM/facts.duckdb
+# Subtest: native writer readers zero deadline cannot advance an earlier real writer tail
+ok 2 - native writer readers zero deadline cannot advance an earlier real writer tail
+  ---
+  duration_ms: 420.277041
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-controls-Ab6tsc/facts.duckdb
+# Subtest: native writer commits while16 real read scopes isolate queued and active cancellation
+ok 3 - native writer commits while16 real read scopes isolate queued and active cancellation
+  ---
+  duration_ms: 437.66025
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-controls-i9gn93/facts.duckdb
+# Subtest: native writer close drains accepted writes and named read scopes before native and SDK retirement
+ok 4 - native writer close drains accepted writes and named read scopes before native and SDK retirement
+  ---
+  duration_ms: 361.891667
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-controls-4Dgn1z/facts.duckdb
+# Subtest: native writer revalidate drains accepted work then enrolls the same18 USER contexts
+ok 5 - native writer revalidate drains accepted work then enrolls the same18 USER contexts
+  ---
+  duration_ms: 493.932917
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-controls-UxUmHc/facts.duckdb
+# Subtest: native committed receipt decoder failure fences peers and reconciles exact canonical state after reopen
+ok 6 - native committed receipt decoder failure fences peers and reconciles exact canonical state after reopen
+  ---
+  duration_ms: 791.931833
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-build-20261105-02/runtime/build/native-writer-delivery-BnUrj3/facts.duckdb
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3150.790458

@@ -1,0 +1,17 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "build_owner_probe.py",
+    "--source-dir",
+    "[LOCAL_PATH_0041]",
+    "--engine-library",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "--compat-mutations"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+  "pid": 91231,
+  "startedAtUtc": "2026-11-06T12:07:40.966043+00:00",
+  "endedAtUtc": "2026-11-06T12:07:49.272986+00:00",
+  "exitCode": 0,
+  "elapsedMs": 8307.057209080085
+}

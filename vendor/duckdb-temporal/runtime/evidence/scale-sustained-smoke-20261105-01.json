@@ -1,0 +1,4346 @@
+{
+  "schema": "temporal-scale-benchmark/1",
+  "timestampUtc": "2026-11-05T13:45:43.229Z",
+  "configuration": {
+    "sizes": [
+      32
+    ],
+    "readers": [
+      1,
+      4
+    ],
+    "samples": 1,
+    "warmup": 0,
+    "writes": 2,
+    "groupSize": 8,
+    "fixtureMode": "native",
+    "threads": 4,
+    "memoryLimit": "1GB",
+    "maxTempDirectorySize": "2GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 2,
+    "maxWrites": 100000
+  },
+  "fixtureDirectory": "build/scale-runs/20261105T134543227Z-882e553f",
+  "limitations": [
+    "SQL-expanded setup is not native ingestion throughput evidence",
+    "Process memory before/after is not a peak or hard memory bound",
+    "Empirical quantiles from small sample counts are smoke measurements"
+  ],
+  "stages": [
+    {
+      "size": 32,
+      "database": "facts-32.duckdb",
+      "status": "passed",
+      "cells": [
+        {
+          "kind": "count",
+          "mixedIngestion": false,
+          "readerCount": 1,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 12.043833000000063,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.003708999999957996
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 12.079958999999917,
+          "throughputQueriesPerSecond": 82.7817379181508,
+          "latencyMs": {
+            "count": 1,
+            "min": 12.043833000000063,
+            "p50": 12.043833000000063,
+            "p95": 12.043833000000063,
+            "p99": 12.043833000000063,
+            "max": 12.043833000000063
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 142163968,
+                "heapTotal": 18186240,
+                "heapUsed": 8603920,
+                "external": 5364427,
+                "arrayBuffers": 3163833
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 145063936,
+                "heapTotal": 18186240,
+                "heapUsed": 8731512,
+                "external": 5371547,
+                "arrayBuffers": 3170913
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 145702912,
+                "heapTotal": 18186240,
+                "heapUsed": 8776088,
+                "external": 5378627,
+                "arrayBuffers": 3177993
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 145063936
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 0,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 27.314084000000037,
+            "position": "4",
+            "kind": "count",
+            "cut": "fixed",
+            "route": "sql",
+            "reason": "scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeLimit": 2,
+          "writeLimitReached": false,
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 12.079958999999917,
+              "completedReads": 1,
+              "latencyMs": {
+                "count": 1,
+                "min": 12.043833000000063,
+                "p50": 12.043833000000063,
+                "p95": 12.043833000000063,
+                "p99": 12.043833000000063,
+                "max": 12.043833000000063
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": null
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "sum",
+          "mixedIngestion": false,
+          "readerCount": 1,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 13.535958999999934,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.0037499999999681677
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 13.569792000000007,
+          "throughputQueriesPerSecond": 73.6930971381138,
+          "latencyMs": {
+            "count": 1,
+            "min": 13.535958999999934,
+            "p50": 13.535958999999934,
+            "p95": 13.535958999999934,
+            "p99": 13.535958999999934,
+            "max": 13.535958999999934
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 145752064,
+                "heapTotal": 18186240,
+                "heapUsed": 8928256,
+                "external": 6172833,
+                "arrayBuffers": 3972199
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 147275776,
+                "heapTotal": 18186240,
+                "heapUsed": 8985536,
+                "external": 6180281,
+                "arrayBuffers": 3979647
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 148406272,
+                "heapTotal": 18186240,
+                "heapUsed": 9080136,
+                "external": 6187729,
+                "arrayBuffers": 3987095
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 147275776
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 0,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 25.416124999999965,
+            "position": "4",
+            "kind": "sum",
+            "cut": "fixed",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeLimit": 2,
+          "writeLimitReached": false,
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 13.569792000000007,
+              "completedReads": 1,
+              "latencyMs": {
+                "count": 1,
+                "min": 13.535958999999934,
+                "p50": 13.535958999999934,
+                "p95": 13.535958999999934,
+                "p99": 13.535958999999934,
+                "max": 13.535958999999934
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": null
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "grouped_sum",
+          "mixedIngestion": false,
+          "readerCount": 1,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 14.508874999999989,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 0.0037499999999681677
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 14.55845899999997,
+          "throughputQueriesPerSecond": 68.68858853811396,
+          "latencyMs": {
+            "count": 1,
+            "min": 14.508874999999989,
+            "p50": 14.508874999999989,
+            "p95": 14.508874999999989,
+            "p99": 14.508874999999989,
+            "max": 14.508874999999989
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 148422656,
+                "heapTotal": 18186240,
+                "heapUsed": 9212264,
+                "external": 6986392,
+                "arrayBuffers": 4785758
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 152584192,
+                "heapTotal": 18186240,
+                "heapUsed": 9295280,
+                "external": 6994822,
+                "arrayBuffers": 4794188
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 152911872,
+                "heapTotal": 18186240,
+                "heapUsed": 9393000,
+                "external": 7003252,
+                "arrayBuffers": 4802618
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 152584192
+          },
+          "pool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 0,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 27.401834000000008,
+            "position": "4",
+            "kind": "grouped_sum",
+            "cut": "fixed",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 4
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeLimit": 2,
+          "writeLimitReached": false,
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 14.55845899999997,
+              "completedReads": 1,
+              "latencyMs": {
+                "count": 1,
+                "min": 14.508874999999989,
+                "p50": 14.508874999999989,
+                "p95": 14.508874999999989,
+                "p99": 14.508874999999989,
+                "max": 14.508874999999989
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": null
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "count",
+          "mixedIngestion": false,
+          "readerCount": 4,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 16.260125000000016,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.01895799999999781
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 37.144957999999974,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.004292000000077678
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 37.20391600000005,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.00941699999998491
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 37.55087500000002,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.013542000000029475
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 37.57958300000007,
+          "throughputQueriesPerSecond": 106.4407766312892,
+          "latencyMs": {
+            "count": 4,
+            "min": 16.260125000000016,
+            "p50": 37.144957999999974,
+            "p95": 37.55087500000002,
+            "p99": 37.55087500000002,
+            "max": 37.55087500000002
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 153059328,
+                "heapTotal": 18186240,
+                "heapUsed": 9561904,
+                "external": 7806395,
+                "arrayBuffers": 5605761
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 153387008,
+                "heapTotal": 18186240,
+                "heapUsed": 9621184,
+                "external": 7813475,
+                "arrayBuffers": 5612841
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 170246144,
+                "heapTotal": 18186240,
+                "heapUsed": 9847952,
+                "external": 7841747,
+                "arrayBuffers": 5641113
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 159350784
+          },
+          "pool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 3,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 24.929457999999954,
+            "position": "4",
+            "kind": "count",
+            "cut": "fixed",
+            "route": "sql",
+            "reason": "scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeLimit": 2,
+          "writeLimitReached": false,
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 37.57958300000007,
+              "completedReads": 4,
+              "latencyMs": {
+                "count": 4,
+                "min": 16.260125000000016,
+                "p50": 37.144957999999974,
+                "p95": 37.55087500000002,
+                "p99": 37.55087500000002,
+                "max": 37.55087500000002
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": {
+                "maxRssBytes": 159350784,
+                "maxActiveReaders": 3,
+                "maxWaitingReaders": 0,
+                "samples": 1
+              }
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "sum",
+          "mixedIngestion": false,
+          "readerCount": 4,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 17.490999999999985,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.012333000000012362
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 36.937584000000015,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.009457999999995081
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 37.76287500000001,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.003375000000005457
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 38.077541,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.010041999999998552
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 38.109500000000025,
+          "throughputQueriesPerSecond": 104.96070533593979,
+          "latencyMs": {
+            "count": 4,
+            "min": 17.490999999999985,
+            "p50": 36.937584000000015,
+            "p95": 38.077541,
+            "p99": 38.077541,
+            "max": 38.077541
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 170278912,
+                "heapTotal": 18186240,
+                "heapUsed": 10103704,
+                "external": 8650606,
+                "arrayBuffers": 6449972
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 171802624,
+                "heapTotal": 18186240,
+                "heapUsed": 10074944,
+                "external": 8658054,
+                "arrayBuffers": 6457420
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 179666944,
+                "heapTotal": 18186240,
+                "heapUsed": 10261168,
+                "external": 8687798,
+                "arrayBuffers": 6487164
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 175652864
+          },
+          "pool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 3,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 26.81629200000009,
+            "position": "4",
+            "kind": "sum",
+            "cut": "fixed",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 1
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeLimit": 2,
+          "writeLimitReached": false,
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 38.109500000000025,
+              "completedReads": 4,
+              "latencyMs": {
+                "count": 4,
+                "min": 17.490999999999985,
+                "p50": 36.937584000000015,
+                "p95": 38.077541,
+                "p99": 38.077541,
+                "max": 38.077541
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": {
+                "maxRssBytes": 175652864,
+                "maxActiveReaders": 3,
+                "maxWaitingReaders": 0,
+                "samples": 1
+              }
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "grouped_sum",
+          "mixedIngestion": false,
+          "readerCount": 4,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 17.78991599999995,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 0.007624999999961801
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 36.947124999999915,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 0.0072079999999914435
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 37.745874999999955,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 0.00333299999999781
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 37.88220899999999,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 0.00666599999999562
+            }
+          ],
+          "errors": [],
+          "writes": [],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 37.90908300000001,
+          "throughputQueriesPerSecond": 105.51560954402403,
+          "latencyMs": {
+            "count": 4,
+            "min": 17.78991599999995,
+            "p50": 36.947124999999915,
+            "p95": 37.88220899999999,
+            "p99": 37.88220899999999,
+            "max": 37.88220899999999
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 179765248,
+                "heapTotal": 18186240,
+                "heapUsed": 10527416,
+                "external": 9502332,
+                "arrayBuffers": 7301698
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 180551680,
+                "heapTotal": 18186240,
+                "heapUsed": 10536136,
+                "external": 9510762,
+                "arrayBuffers": 7310128
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 188809216,
+                "heapTotal": 18186240,
+                "heapUsed": 10778008,
+                "external": 9544434,
+                "arrayBuffers": 7343800
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 182288384
+          },
+          "pool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 3,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 27.452292000000057,
+            "position": "4",
+            "kind": "grouped_sum",
+            "cut": "fixed",
+            "route": "sql",
+            "reason": "scalable_aggregate",
+            "rows": 4
+          },
+          "finalReadVerified": null,
+          "overlappingQueryWrites": 0,
+          "writeMode": null,
+          "writeLimit": 2,
+          "writeLimitReached": false,
+          "requestedDurationMs": null,
+          "drainMs": null,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 37.90908300000001,
+              "completedReads": 4,
+              "latencyMs": {
+                "count": 4,
+                "min": 17.78991599999995,
+                "p50": 36.947124999999915,
+                "p95": 37.88220899999999,
+                "p99": 37.88220899999999,
+                "max": 37.88220899999999
+              },
+              "completedWrites": 0,
+              "errors": 0,
+              "resources": {
+                "maxRssBytes": 182288384,
+                "maxActiveReaders": 3,
+                "maxWaitingReaders": 0,
+                "samples": 1
+              }
+            }
+          ],
+          "writeBurstDurationMs": null,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only"
+        },
+        {
+          "kind": "count",
+          "mixedIngestion": true,
+          "readerCount": 4,
+          "status": "passed",
+          "samples": [
+            {
+              "reader": 3,
+              "round": 0,
+              "elapsedMs": 18.68870800000002,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.014291999999954896
+            },
+            {
+              "reader": 0,
+              "round": 0,
+              "elapsedMs": 31.83729100000005,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 0.010167000000024018
+            },
+            {
+              "reader": 1,
+              "round": 0,
+              "elapsedMs": 37.205834000000095,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 0.01320799999996325
+            },
+            {
+              "reader": 2,
+              "round": 0,
+              "elapsedMs": 37.51033300000006,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 0.01379199999996672
+            },
+            {
+              "reader": 3,
+              "round": 1,
+              "elapsedMs": 51.68620799999985,
+              "position": "5",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 18.728375000000028
+            },
+            {
+              "reader": 0,
+              "round": 1,
+              "elapsedMs": 38.924125000000004,
+              "position": "5",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 31.864208000000076
+            },
+            {
+              "reader": 2,
+              "round": 1,
+              "elapsedMs": 55.21420799999987,
+              "position": "6",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 37.547500000000014
+            },
+            {
+              "reader": 1,
+              "round": 1,
+              "elapsedMs": 59.083916000000045,
+              "position": "6",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 6,
+              "startOffsetMs": 37.23829199999989
+            },
+            {
+              "reader": 3,
+              "round": 2,
+              "elapsedMs": 54.520958000000064,
+              "position": "7",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 7,
+              "startOffsetMs": 70.43962499999986
+            },
+            {
+              "reader": 0,
+              "round": 2,
+              "elapsedMs": 54.46866699999987,
+              "position": "7",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 7,
+              "startOffsetMs": 70.79720800000007
+            },
+            {
+              "reader": 2,
+              "round": 2,
+              "elapsedMs": 55.062791999999945,
+              "position": "8",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 92.77645799999993
+            },
+            {
+              "reader": 1,
+              "round": 2,
+              "elapsedMs": 52.64466700000003,
+              "position": "8",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 96.36133299999995
+            },
+            {
+              "reader": 3,
+              "round": 3,
+              "elapsedMs": 49.126207999999906,
+              "position": "9",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 124.99129200000004
+            },
+            {
+              "reader": 0,
+              "round": 3,
+              "elapsedMs": 49.21816599999988,
+              "position": "9",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 125.27804200000003
+            },
+            {
+              "reader": 1,
+              "round": 3,
+              "elapsedMs": 55.939791000000014,
+              "position": "10",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 149.01254200000005
+            },
+            {
+              "reader": 2,
+              "round": 3,
+              "elapsedMs": 57.50658300000009,
+              "position": "10",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 10,
+              "startOffsetMs": 147.86174999999992
+            },
+            {
+              "reader": 3,
+              "round": 4,
+              "elapsedMs": 37.40795800000001,
+              "position": "11",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 174.13675
+            },
+            {
+              "reader": 0,
+              "round": 4,
+              "elapsedMs": 39.53454099999999,
+              "position": "11",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 174.50091699999996
+            },
+            {
+              "reader": 2,
+              "round": 4,
+              "elapsedMs": 35.16495899999995,
+              "position": "12",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 205.38933299999997
+            },
+            {
+              "reader": 1,
+              "round": 4,
+              "elapsedMs": 36.103791,
+              "position": "12",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 12,
+              "startOffsetMs": 204.96979199999998
+            },
+            {
+              "reader": 3,
+              "round": 5,
+              "elapsedMs": 44.742542000000185,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 211.56295799999987
+            },
+            {
+              "reader": 0,
+              "round": 5,
+              "elapsedMs": 44.553499999999985,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 214.04254200000003
+            },
+            {
+              "reader": 3,
+              "round": 6,
+              "elapsedMs": 19.764875000000075,
+              "position": "13",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 256.34795799999995
+            },
+            {
+              "reader": 0,
+              "round": 6,
+              "elapsedMs": 20.690625000000182,
+              "position": "13",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 258.6161249999999
+            },
+            {
+              "reader": 1,
+              "round": 5,
+              "elapsedMs": 51.06741699999998,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 241.10233299999993
+            },
+            {
+              "reader": 2,
+              "round": 5,
+              "elapsedMs": 52.49766599999998,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 240.56879199999992
+            },
+            {
+              "reader": 3,
+              "round": 7,
+              "elapsedMs": 37.635332999999946,
+              "position": "14",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 276.1342920000001
+            },
+            {
+              "reader": 1,
+              "round": 6,
+              "elapsedMs": 22.00216599999999,
+              "position": "14",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 292.18391699999995
+            },
+            {
+              "reader": 0,
+              "round": 7,
+              "elapsedMs": 35.19520899999998,
+              "position": "14",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 279.33495800000003
+            },
+            {
+              "reader": 2,
+              "round": 6,
+              "elapsedMs": 22.456750000000056,
+              "position": "14",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 14,
+              "startOffsetMs": 293.07570799999996
+            },
+            {
+              "reader": 2,
+              "round": 7,
+              "elapsedMs": 35.928874999999834,
+              "position": "15",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 315.5590000000001
+            },
+            {
+              "reader": 3,
+              "round": 8,
+              "elapsedMs": 37.78891700000008,
+              "position": "15",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 15,
+              "startOffsetMs": 313.79108299999996
+            },
+            {
+              "reader": 1,
+              "round": 7,
+              "elapsedMs": 37.63599999999997,
+              "position": "15",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 15,
+              "startOffsetMs": 314.192625
+            },
+            {
+              "reader": 0,
+              "round": 8,
+              "elapsedMs": 38.40487499999995,
+              "position": "15",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 15,
+              "startOffsetMs": 314.534458
+            },
+            {
+              "reader": 0,
+              "round": 9,
+              "elapsedMs": 32.709666999999854,
+              "position": "16",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 352.98525000000006
+            },
+            {
+              "reader": 3,
+              "round": 9,
+              "elapsedMs": 34.131000000000085,
+              "position": "16",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 351.608167
+            },
+            {
+              "reader": 2,
+              "round": 8,
+              "elapsedMs": 34.25816599999985,
+              "position": "16",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 351.50591700000007
+            },
+            {
+              "reader": 1,
+              "round": 8,
+              "elapsedMs": 35.41783299999997,
+              "position": "16",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 351.844375
+            },
+            {
+              "reader": 2,
+              "round": 9,
+              "elapsedMs": 33.983458000000155,
+              "position": "17",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 17,
+              "startOffsetMs": 385.7685419999999
+            },
+            {
+              "reader": 1,
+              "round": 9,
+              "elapsedMs": 35.66704200000004,
+              "position": "17",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 387.2728329999999
+            },
+            {
+              "reader": 0,
+              "round": 10,
+              "elapsedMs": 50.724958000000015,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 385.71387500000003
+            },
+            {
+              "reader": 3,
+              "round": 10,
+              "elapsedMs": 51.247292000000016,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 385.74195799999995
+            },
+            {
+              "reader": 0,
+              "round": 11,
+              "elapsedMs": 23.525333000000046,
+              "position": "18",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 18,
+              "startOffsetMs": 436.4543749999999
+            },
+            {
+              "reader": 3,
+              "round": 11,
+              "elapsedMs": 23.38975000000005,
+              "position": "18",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 18,
+              "startOffsetMs": 436.99745799999994
+            },
+            {
+              "reader": 2,
+              "round": 10,
+              "elapsedMs": 50.397500000000036,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 419.7852919999999
+            },
+            {
+              "reader": 1,
+              "round": 10,
+              "elapsedMs": 49.72287499999993,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 422.952083
+            },
+            {
+              "reader": 0,
+              "round": 12,
+              "elapsedMs": 36.59783299999981,
+              "position": "19",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 460.02816700000005
+            },
+            {
+              "reader": 2,
+              "round": 11,
+              "elapsedMs": 26.741792000000032,
+              "position": "19",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 470.19787499999995
+            },
+            {
+              "reader": 1,
+              "round": 11,
+              "elapsedMs": 24.41620899999998,
+              "position": "19",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 472.697583
+            },
+            {
+              "reader": 3,
+              "round": 12,
+              "elapsedMs": 36.83183400000007,
+              "position": "19",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 460.40708299999994
+            },
+            {
+              "reader": 3,
+              "round": 13,
+              "elapsedMs": 39.784458000000086,
+              "position": "20",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 497.2412499999999
+            },
+            {
+              "reader": 0,
+              "round": 13,
+              "elapsedMs": 40.525707999999895,
+              "position": "20",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 496.64316700000006
+            },
+            {
+              "reader": 2,
+              "round": 12,
+              "elapsedMs": 42.74233299999992,
+              "position": "20",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 20,
+              "startOffsetMs": 496.947417
+            },
+            {
+              "reader": 1,
+              "round": 12,
+              "elapsedMs": 43.4833329999999,
+              "position": "20",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 497.117625
+            },
+            {
+              "reader": 1,
+              "round": 13,
+              "elapsedMs": 35.035917000000154,
+              "position": "21",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 21,
+              "startOffsetMs": 540.6399579999999
+            },
+            {
+              "reader": 3,
+              "round": 14,
+              "elapsedMs": 38.79583400000001,
+              "position": "21",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 21,
+              "startOffsetMs": 537.042208
+            },
+            {
+              "reader": 2,
+              "round": 13,
+              "elapsedMs": 36.173,
+              "position": "21",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 539.7246670000001
+            },
+            {
+              "reader": 0,
+              "round": 14,
+              "elapsedMs": 40.65058399999998,
+              "position": "21",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 21,
+              "startOffsetMs": 537.179958
+            },
+            {
+              "reader": 1,
+              "round": 14,
+              "elapsedMs": 35.172209000000066,
+              "position": "22",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 575.717708
+            },
+            {
+              "reader": 3,
+              "round": 15,
+              "elapsedMs": 35.17079200000012,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 575.864708
+            },
+            {
+              "reader": 2,
+              "round": 14,
+              "elapsedMs": 35.165209000000004,
+              "position": "22",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 575.900708
+            },
+            {
+              "reader": 0,
+              "round": 15,
+              "elapsedMs": 33.812834000000066,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 577.8890829999999
+            },
+            {
+              "reader": 2,
+              "round": 15,
+              "elapsedMs": 35.468834000000015,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 611.0697079999999
+            },
+            {
+              "reader": 1,
+              "round": 15,
+              "elapsedMs": 35.675083000000086,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 610.909
+            },
+            {
+              "reader": 3,
+              "round": 16,
+              "elapsedMs": 36.57929200000012,
+              "position": "23",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 611.0436249999999
+            },
+            {
+              "reader": 0,
+              "round": 16,
+              "elapsedMs": 37.47029199999997,
+              "position": "23",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 611.7150829999999
+            },
+            {
+              "reader": 2,
+              "round": 16,
+              "elapsedMs": 35.75299999999993,
+              "position": "24",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 646.5627920000001
+            },
+            {
+              "reader": 0,
+              "round": 17,
+              "elapsedMs": 34.13583399999993,
+              "position": "24",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 24,
+              "startOffsetMs": 649.193083
+            },
+            {
+              "reader": 3,
+              "round": 17,
+              "elapsedMs": 36.31991700000003,
+              "position": "24",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 24,
+              "startOffsetMs": 647.6274999999999
+            },
+            {
+              "reader": 1,
+              "round": 16,
+              "elapsedMs": 38.04608300000018,
+              "position": "24",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 24,
+              "startOffsetMs": 646.5876669999999
+            },
+            {
+              "reader": 1,
+              "round": 17,
+              "elapsedMs": 34.91750000000002,
+              "position": "25",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 684.662792
+            },
+            {
+              "reader": 3,
+              "round": 18,
+              "elapsedMs": 35.82291600000008,
+              "position": "25",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 683.983292
+            },
+            {
+              "reader": 2,
+              "round": 17,
+              "elapsedMs": 37.8443749999999,
+              "position": "25",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 682.3335000000001
+            },
+            {
+              "reader": 0,
+              "round": 18,
+              "elapsedMs": 37.9236249999999,
+              "position": "25",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 683.3636250000001
+            },
+            {
+              "reader": 1,
+              "round": 18,
+              "elapsedMs": 34.246208000000024,
+              "position": "26",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 719.6045419999999
+            },
+            {
+              "reader": 0,
+              "round": 19,
+              "elapsedMs": 32.768708999999944,
+              "position": "26",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 721.294583
+            },
+            {
+              "reader": 3,
+              "round": 19,
+              "elapsedMs": 34.3643340000001,
+              "position": "26",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 719.817833
+            },
+            {
+              "reader": 2,
+              "round": 18,
+              "elapsedMs": 34.87954200000013,
+              "position": "26",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 26,
+              "startOffsetMs": 720.185625
+            },
+            {
+              "reader": 0,
+              "round": 20,
+              "elapsedMs": 34.72358299999996,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 754.071667
+            },
+            {
+              "reader": 1,
+              "round": 19,
+              "elapsedMs": 35.33375000000001,
+              "position": "27",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 27,
+              "startOffsetMs": 753.8822919999999
+            },
+            {
+              "reader": 3,
+              "round": 20,
+              "elapsedMs": 37.587416000000076,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 754.1937919999999
+            },
+            {
+              "reader": 2,
+              "round": 19,
+              "elapsedMs": 41.03562499999998,
+              "position": "27",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 755.1030420000001
+            },
+            {
+              "reader": 1,
+              "round": 20,
+              "elapsedMs": 29.427040999999917,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 789.2481670000001
+            },
+            {
+              "reader": 0,
+              "round": 21,
+              "elapsedMs": 30.032500000000027,
+              "position": "28",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 788.8226249999999
+            },
+            {
+              "reader": 2,
+              "round": 20,
+              "elapsedMs": 23.194291999999905,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 796.149125
+            },
+            {
+              "reader": 3,
+              "round": 21,
+              "elapsedMs": 29.175333999999793,
+              "position": "28",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 791.7928330000001
+            },
+            {
+              "reader": 3,
+              "round": 22,
+              "elapsedMs": 32.880125000000135,
+              "position": "29",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 820.9778749999999
+            },
+            {
+              "reader": 1,
+              "round": 21,
+              "elapsedMs": 35.647249999999985,
+              "position": "29",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 818.697292
+            },
+            {
+              "reader": 2,
+              "round": 21,
+              "elapsedMs": 35.105167000000165,
+              "position": "29",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 29,
+              "startOffsetMs": 819.3582499999999
+            },
+            {
+              "reader": 0,
+              "round": 22,
+              "elapsedMs": 35.662874999999985,
+              "position": "29",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 818.8594999999999
+            },
+            {
+              "reader": 2,
+              "round": 22,
+              "elapsedMs": 36.27887499999997,
+              "position": "30",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 854.4950829999999
+            },
+            {
+              "reader": 1,
+              "round": 22,
+              "elapsedMs": 36.50537499999996,
+              "position": "30",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 30,
+              "startOffsetMs": 854.3545419999999
+            },
+            {
+              "reader": 3,
+              "round": 23,
+              "elapsedMs": 38.925832999999784,
+              "position": "30",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 30,
+              "startOffsetMs": 853.8776670000001
+            },
+            {
+              "reader": 0,
+              "round": 23,
+              "elapsedMs": 38.47004100000004,
+              "position": "30",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 30,
+              "startOffsetMs": 854.524792
+            },
+            {
+              "reader": 3,
+              "round": 24,
+              "elapsedMs": 34.39854199999991,
+              "position": "31",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 892.83975
+            },
+            {
+              "reader": 1,
+              "round": 23,
+              "elapsedMs": 36.77633300000002,
+              "position": "31",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 890.891917
+            },
+            {
+              "reader": 0,
+              "round": 24,
+              "elapsedMs": 35.18383300000005,
+              "position": "31",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 893.025542
+            },
+            {
+              "reader": 2,
+              "round": 23,
+              "elapsedMs": 38.17562500000008,
+              "position": "31",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 890.791083
+            },
+            {
+              "reader": 3,
+              "round": 25,
+              "elapsedMs": 40.15129100000013,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 927.2564169999999
+            },
+            {
+              "reader": 0,
+              "round": 25,
+              "elapsedMs": 39.23308300000008,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 928.2177499999999
+            },
+            {
+              "reader": 1,
+              "round": 24,
+              "elapsedMs": 40.72262500000011,
+              "position": "32",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 927.6796249999999
+            },
+            {
+              "reader": 2,
+              "round": 24,
+              "elapsedMs": 39.79220800000007,
+              "position": "32",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 32,
+              "startOffsetMs": 928.975292
+            },
+            {
+              "reader": 3,
+              "round": 26,
+              "elapsedMs": 35.16529199999991,
+              "position": "33",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 33,
+              "startOffsetMs": 967.4267080000001
+            },
+            {
+              "reader": 2,
+              "round": 25,
+              "elapsedMs": 34.092083,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 968.809875
+            },
+            {
+              "reader": 0,
+              "round": 26,
+              "elapsedMs": 36.8068330000001,
+              "position": "33",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 33,
+              "startOffsetMs": 967.4536669999999
+            },
+            {
+              "reader": 1,
+              "round": 25,
+              "elapsedMs": 36.682458,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 968.407417
+            },
+            {
+              "reader": 3,
+              "round": 27,
+              "elapsedMs": 31.74974999999995,
+              "position": "34",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1002.6441249999999
+            },
+            {
+              "reader": 0,
+              "round": 27,
+              "elapsedMs": 30.576874999999973,
+              "position": "34",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1004.298833
+            },
+            {
+              "reader": 2,
+              "round": 26,
+              "elapsedMs": 32.158500000000004,
+              "position": "34",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1002.90675
+            },
+            {
+              "reader": 1,
+              "round": 26,
+              "elapsedMs": 30.012917000000016,
+              "position": "34",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1005.101583
+            },
+            {
+              "reader": 3,
+              "round": 28,
+              "elapsedMs": 33.83899999999994,
+              "position": "35",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1034.410375
+            },
+            {
+              "reader": 1,
+              "round": 27,
+              "elapsedMs": 33.474333000000115,
+              "position": "35",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1035.117542
+            },
+            {
+              "reader": 0,
+              "round": 28,
+              "elapsedMs": 33.88520799999992,
+              "position": "35",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1034.881292
+            },
+            {
+              "reader": 2,
+              "round": 27,
+              "elapsedMs": 34.99562499999979,
+              "position": "35",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 35,
+              "startOffsetMs": 1035.0765000000001
+            },
+            {
+              "reader": 2,
+              "round": 28,
+              "elapsedMs": 32.24437500000022,
+              "position": "36",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1070.1140419999997
+            },
+            {
+              "reader": 1,
+              "round": 28,
+              "elapsedMs": 34.295208,
+              "position": "36",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 36,
+              "startOffsetMs": 1068.5992499999998
+            },
+            {
+              "reader": 3,
+              "round": 29,
+              "elapsedMs": 34.86054200000035,
+              "position": "36",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 36,
+              "startOffsetMs": 1068.2684999999997
+            },
+            {
+              "reader": 0,
+              "round": 29,
+              "elapsedMs": 34.78916700000036,
+              "position": "36",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 36,
+              "startOffsetMs": 1068.7706249999997
+            },
+            {
+              "reader": 1,
+              "round": 29,
+              "elapsedMs": 31.941874999999982,
+              "position": "37",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1102.93775
+            },
+            {
+              "reader": 3,
+              "round": 30,
+              "elapsedMs": 32.075166999999965,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1103.1799999999998
+            },
+            {
+              "reader": 2,
+              "round": 29,
+              "elapsedMs": 32.949125000000095,
+              "position": "37",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1102.3774169999997
+            },
+            {
+              "reader": 0,
+              "round": 30,
+              "elapsedMs": 32.067375000000084,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1103.5904999999998
+            },
+            {
+              "reader": 3,
+              "round": 31,
+              "elapsedMs": 34.18187499999976,
+              "position": "38",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1135.266
+            },
+            {
+              "reader": 1,
+              "round": 30,
+              "elapsedMs": 34.97637500000019,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1134.8960829999996
+            },
+            {
+              "reader": 2,
+              "round": 30,
+              "elapsedMs": 35.09474999999975,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 1135.330833
+            },
+            {
+              "reader": 0,
+              "round": 31,
+              "elapsedMs": 35.21291700000029,
+              "position": "38",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1135.6640829999997
+            },
+            {
+              "reader": 2,
+              "round": 31,
+              "elapsedMs": 33.38304100000005,
+              "position": "39",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1170.4421669999997
+            },
+            {
+              "reader": 3,
+              "round": 32,
+              "elapsedMs": 34.91954100000021,
+              "position": "39",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 39,
+              "startOffsetMs": 1169.4689169999997
+            },
+            {
+              "reader": 1,
+              "round": 31,
+              "elapsedMs": 35.021124999999756,
+              "position": "39",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 39,
+              "startOffsetMs": 1169.8815
+            },
+            {
+              "reader": 0,
+              "round": 32,
+              "elapsedMs": 35.14037499999995,
+              "position": "39",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 39,
+              "startOffsetMs": 1170.8804999999998
+            },
+            {
+              "reader": 3,
+              "round": 33,
+              "elapsedMs": 31.580124999999953,
+              "position": "40",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1204.431208
+            },
+            {
+              "reader": 1,
+              "round": 32,
+              "elapsedMs": 31.301040999999714,
+              "position": "40",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1204.945917
+            },
+            {
+              "reader": 2,
+              "round": 32,
+              "elapsedMs": 32.614208999999846,
+              "position": "40",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1203.844333
+            },
+            {
+              "reader": 0,
+              "round": 33,
+              "elapsedMs": 31.0447079999999,
+              "position": "40",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1206.05125
+            },
+            {
+              "reader": 1,
+              "round": 33,
+              "elapsedMs": 33.75420800000029,
+              "position": "41",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1236.2594169999998
+            },
+            {
+              "reader": 3,
+              "round": 34,
+              "elapsedMs": 34.495542000000114,
+              "position": "41",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1236.0258749999998
+            },
+            {
+              "reader": 2,
+              "round": 33,
+              "elapsedMs": 34.61262500000021,
+              "position": "41",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 41,
+              "startOffsetMs": 1236.4657499999998
+            },
+            {
+              "reader": 0,
+              "round": 34,
+              "elapsedMs": 34.03737500000034,
+              "position": "41",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1237.1037079999996
+            },
+            {
+              "reader": 2,
+              "round": 34,
+              "elapsedMs": 30.96729200000027,
+              "position": "42",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1271.1153329999997
+            },
+            {
+              "reader": 1,
+              "round": 34,
+              "elapsedMs": 32.40341699999999,
+              "position": "42",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 42,
+              "startOffsetMs": 1270.0309579999998
+            },
+            {
+              "reader": 3,
+              "round": 35,
+              "elapsedMs": 32.131417000000056,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 1270.5310829999999
+            },
+            {
+              "reader": 0,
+              "round": 35,
+              "elapsedMs": 32.44095800000014,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 1271.1437499999997
+            },
+            {
+              "reader": 1,
+              "round": 35,
+              "elapsedMs": 31.777875000000222,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1302.4783749999997
+            },
+            {
+              "reader": 3,
+              "round": 36,
+              "elapsedMs": 32.00004099999978,
+              "position": "43",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1302.675667
+            },
+            {
+              "reader": 2,
+              "round": 35,
+              "elapsedMs": 32.880707999999686,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1302.098375
+            },
+            {
+              "reader": 0,
+              "round": 36,
+              "elapsedMs": 31.562207999999828,
+              "position": "43",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1303.591167
+            },
+            {
+              "reader": 1,
+              "round": 36,
+              "elapsedMs": 35.97112500000003,
+              "position": "44",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1334.2737079999997
+            },
+            {
+              "reader": 3,
+              "round": 37,
+              "elapsedMs": 35.88770799999975,
+              "position": "44",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1334.6825
+            },
+            {
+              "reader": 2,
+              "round": 36,
+              "elapsedMs": 36.467249999999694,
+              "position": "44",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 44,
+              "startOffsetMs": 1334.984958
+            },
+            {
+              "reader": 0,
+              "round": 37,
+              "elapsedMs": 36.43491700000004,
+              "position": "44",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1335.156958
+            },
+            {
+              "reader": 2,
+              "round": 37,
+              "elapsedMs": 32.38462499999969,
+              "position": "45",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1371.490667
+            },
+            {
+              "reader": 3,
+              "round": 38,
+              "elapsedMs": 33.78608299999996,
+              "position": "45",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 45,
+              "startOffsetMs": 1370.5825
+            },
+            {
+              "reader": 1,
+              "round": 37,
+              "elapsedMs": 34.80170799999996,
+              "position": "45",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 45,
+              "startOffsetMs": 1370.2637919999997
+            },
+            {
+              "reader": 0,
+              "round": 38,
+              "elapsedMs": 34.27616699999999,
+              "position": "45",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 45,
+              "startOffsetMs": 1371.59775
+            },
+            {
+              "reader": 3,
+              "round": 39,
+              "elapsedMs": 34.1869999999999,
+              "position": "46",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1404.4053749999998
+            },
+            {
+              "reader": 0,
+              "round": 39,
+              "elapsedMs": 33.0768750000002,
+              "position": "46",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1405.9123329999998
+            },
+            {
+              "reader": 2,
+              "round": 38,
+              "elapsedMs": 35.13920800000005,
+              "position": "46",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1403.8894999999998
+            },
+            {
+              "reader": 1,
+              "round": 38,
+              "elapsedMs": 33.994083000000046,
+              "position": "46",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1405.0940419999997
+            },
+            {
+              "reader": 0,
+              "round": 40,
+              "elapsedMs": 37.70933299999979,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1439.001542
+            },
+            {
+              "reader": 3,
+              "round": 40,
+              "elapsedMs": 38.27399999999989,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1438.609458
+            },
+            {
+              "reader": 2,
+              "round": 39,
+              "elapsedMs": 38.15824999999995,
+              "position": "47",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 47,
+              "startOffsetMs": 1439.0322919999999
+            },
+            {
+              "reader": 1,
+              "round": 39,
+              "elapsedMs": 38.15133300000025,
+              "position": "47",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1439.0944999999997
+            },
+            {
+              "reader": 2,
+              "round": 40,
+              "elapsedMs": 30.729333000000224,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1477.2254169999997
+            },
+            {
+              "reader": 3,
+              "round": 41,
+              "elapsedMs": 31.463708000000224,
+              "position": "48",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 48,
+              "startOffsetMs": 1476.8870419999998
+            },
+            {
+              "reader": 0,
+              "round": 41,
+              "elapsedMs": 31.870374999999967,
+              "position": "48",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 48,
+              "startOffsetMs": 1476.729875
+            },
+            {
+              "reader": 1,
+              "round": 40,
+              "elapsedMs": 32.82704100000001,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 1477.2477919999997
+            },
+            {
+              "reader": 3,
+              "round": 42,
+              "elapsedMs": 34.957374999999956,
+              "position": "49",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1508.3984999999998
+            },
+            {
+              "reader": 1,
+              "round": 41,
+              "elapsedMs": 33.3584579999997,
+              "position": "49",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1510.082875
+            },
+            {
+              "reader": 0,
+              "round": 42,
+              "elapsedMs": 35.24229100000002,
+              "position": "49",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1508.6367919999998
+            },
+            {
+              "reader": 2,
+              "round": 41,
+              "elapsedMs": 36.996042000000216,
+              "position": "49",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1507.9722079999997
+            },
+            {
+              "reader": 1,
+              "round": 42,
+              "elapsedMs": 35.23570800000016,
+              "position": "50",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1543.4442919999997
+            },
+            {
+              "reader": 3,
+              "round": 43,
+              "elapsedMs": 35.78887500000019,
+              "position": "50",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1543.3762499999998
+            },
+            {
+              "reader": 0,
+              "round": 43,
+              "elapsedMs": 35.421749999999975,
+              "position": "50",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1543.892042
+            },
+            {
+              "reader": 2,
+              "round": 42,
+              "elapsedMs": 35.46291599999995,
+              "position": "50",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 50,
+              "startOffsetMs": 1544.9734169999997
+            },
+            {
+              "reader": 2,
+              "round": 43,
+              "elapsedMs": 33.9375,
+              "position": "51",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1580.4817079999998
+            },
+            {
+              "reader": 1,
+              "round": 43,
+              "elapsedMs": 36.215791999999965,
+              "position": "51",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 51,
+              "startOffsetMs": 1578.6982079999998
+            },
+            {
+              "reader": 3,
+              "round": 44,
+              "elapsedMs": 36.57349999999997,
+              "position": "51",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 51,
+              "startOffsetMs": 1579.1767919999998
+            },
+            {
+              "reader": 0,
+              "round": 44,
+              "elapsedMs": 37.261625000000095,
+              "position": "51",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 51,
+              "startOffsetMs": 1579.323375
+            },
+            {
+              "reader": 1,
+              "round": 44,
+              "elapsedMs": 31.972000000000207,
+              "position": "52",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1614.9606669999998
+            },
+            {
+              "reader": 3,
+              "round": 45,
+              "elapsedMs": 31.58729200000016,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1615.7931249999997
+            },
+            {
+              "reader": 2,
+              "round": 44,
+              "elapsedMs": 33.33899999999994,
+              "position": "52",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1614.436667
+            },
+            {
+              "reader": 0,
+              "round": 45,
+              "elapsedMs": 31.32979099999966,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1616.635542
+            },
+            {
+              "reader": 0,
+              "round": 46,
+              "elapsedMs": 34.15087500000027,
+              "position": "53",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1647.9678329999997
+            },
+            {
+              "reader": 1,
+              "round": 45,
+              "elapsedMs": 35.56533300000001,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1646.9509169999997
+            },
+            {
+              "reader": 2,
+              "round": 45,
+              "elapsedMs": 35.4836250000003,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 1647.7817499999996
+            },
+            {
+              "reader": 3,
+              "round": 46,
+              "elapsedMs": 36.22941600000013,
+              "position": "53",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1647.3982919999999
+            },
+            {
+              "reader": 2,
+              "round": 46,
+              "elapsedMs": 34.31187499999987,
+              "position": "54",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1683.285542
+            },
+            {
+              "reader": 1,
+              "round": 46,
+              "elapsedMs": 35.51845900000035,
+              "position": "54",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 54,
+              "startOffsetMs": 1682.5235829999997
+            },
+            {
+              "reader": 0,
+              "round": 47,
+              "elapsedMs": 36.17454099999986,
+              "position": "54",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 54,
+              "startOffsetMs": 1682.1349169999999
+            },
+            {
+              "reader": 3,
+              "round": 47,
+              "elapsedMs": 35.06275000000005,
+              "position": "54",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 54,
+              "startOffsetMs": 1683.6352079999997
+            },
+            {
+              "reader": 0,
+              "round": 48,
+              "elapsedMs": 30.840458000000126,
+              "position": "55",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1718.3448749999998
+            },
+            {
+              "reader": 1,
+              "round": 47,
+              "elapsedMs": 31.426625000000058,
+              "position": "55",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1718.0856249999997
+            },
+            {
+              "reader": 3,
+              "round": 48,
+              "elapsedMs": 30.884624999999687,
+              "position": "55",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1718.746458
+            },
+            {
+              "reader": 2,
+              "round": 47,
+              "elapsedMs": 32.045500000000175,
+              "position": "55",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1717.6164169999997
+            },
+            {
+              "reader": 1,
+              "round": 48,
+              "elapsedMs": 33.488292,
+              "position": "56",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1749.5233749999998
+            },
+            {
+              "reader": 3,
+              "round": 49,
+              "elapsedMs": 33.651208000000224,
+              "position": "56",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1749.6370419999998
+            },
+            {
+              "reader": 0,
+              "round": 49,
+              "elapsedMs": 34.23483299999998,
+              "position": "56",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1749.20325
+            },
+            {
+              "reader": 2,
+              "round": 48,
+              "elapsedMs": 35.00891700000011,
+              "position": "56",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 56,
+              "startOffsetMs": 1749.665
+            },
+            {
+              "reader": 2,
+              "round": 49,
+              "elapsedMs": 33.1184159999998,
+              "position": "57",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1784.709417
+            },
+            {
+              "reader": 1,
+              "round": 49,
+              "elapsedMs": 35.237125000000106,
+              "position": "57",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 57,
+              "startOffsetMs": 1783.028875
+            },
+            {
+              "reader": 3,
+              "round": 50,
+              "elapsedMs": 35.30966699999999,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 1783.294708
+            },
+            {
+              "reader": 0,
+              "round": 50,
+              "elapsedMs": 36.54899999999998,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 1783.444375
+            },
+            {
+              "reader": 3,
+              "round": 51,
+              "elapsedMs": 32.53595899999982,
+              "position": "58",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1818.6179579999998
+            },
+            {
+              "reader": 1,
+              "round": 50,
+              "elapsedMs": 33.092125000000124,
+              "position": "4",
+              "kind": "count",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1818.3113749999998
+            },
+            {
+              "reader": 0,
+              "round": 51,
+              "elapsedMs": 32.37441600000011,
+              "position": "58",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1820.0077919999999
+            },
+            {
+              "reader": 2,
+              "round": 50,
+              "elapsedMs": 34.56337500000018,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1817.8446249999997
+            },
+            {
+              "reader": 1,
+              "round": 51,
+              "elapsedMs": 36.24583299999995,
+              "position": "59",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1851.4140419999999
+            },
+            {
+              "reader": 0,
+              "round": 52,
+              "elapsedMs": 35.7690419999999,
+              "position": "59",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1852.388458
+            },
+            {
+              "reader": 3,
+              "round": 52,
+              "elapsedMs": 37.236209000000144,
+              "position": "59",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1851.1715829999998
+            },
+            {
+              "reader": 2,
+              "round": 51,
+              "elapsedMs": 37.395958000000064,
+              "position": "59",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 59,
+              "startOffsetMs": 1852.4111669999998
+            },
+            {
+              "reader": 3,
+              "round": 53,
+              "elapsedMs": 35.497041999999965,
+              "position": "60",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 60,
+              "startOffsetMs": 1888.4142499999998
+            },
+            {
+              "reader": 1,
+              "round": 52,
+              "elapsedMs": 36.370750000000044,
+              "position": "60",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 60,
+              "startOffsetMs": 1887.676708
+            },
+            {
+              "reader": 0,
+              "round": 53,
+              "elapsedMs": 35.99537499999997,
+              "position": "60",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 60,
+              "startOffsetMs": 1888.1654169999997
+            },
+            {
+              "reader": 2,
+              "round": 52,
+              "elapsedMs": 42.8246250000002,
+              "position": "60",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1889.8545829999998
+            },
+            {
+              "reader": 1,
+              "round": 53,
+              "elapsedMs": 21.644416000000092,
+              "position": "61",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1924.0804169999997
+            },
+            {
+              "reader": 3,
+              "round": 54,
+              "elapsedMs": 21.901417000000038,
+              "position": "61",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1923.9609579999997
+            },
+            {
+              "reader": 0,
+              "round": 54,
+              "elapsedMs": 22.061083000000053,
+              "position": "61",
+              "kind": "count",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_count",
+              "rows": 1,
+              "startOffsetMs": 1924.1926669999998
+            },
+            {
+              "reader": 3,
+              "round": 55,
+              "elapsedMs": 25.861625000000004,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1945.8686669999997
+            },
+            {
+              "reader": 2,
+              "round": 53,
+              "elapsedMs": 39.41304100000025,
+              "position": "62",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1932.6901669999997
+            },
+            {
+              "reader": 1,
+              "round": 54,
+              "elapsedMs": 27.267917000000125,
+              "position": "62",
+              "kind": "sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1945.7399579999997
+            },
+            {
+              "reader": 0,
+              "round": 55,
+              "elapsedMs": 27.49462500000027,
+              "position": "4",
+              "kind": "sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 1,
+              "startOffsetMs": 1946.2598749999997
+            },
+            {
+              "reader": 3,
+              "round": 56,
+              "elapsedMs": 34.26458300000013,
+              "position": "63",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 63,
+              "startOffsetMs": 1971.7448749999999
+            },
+            {
+              "reader": 0,
+              "round": 56,
+              "elapsedMs": 32.87866699999995,
+              "position": "63",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 63,
+              "startOffsetMs": 1973.7633329999999
+            },
+            {
+              "reader": 2,
+              "round": 54,
+              "elapsedMs": 35.052332999999635,
+              "position": "63",
+              "kind": "grouped_sum",
+              "cut": "latest",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 63,
+              "startOffsetMs": 1972.108917
+            },
+            {
+              "reader": 1,
+              "round": 55,
+              "elapsedMs": 34.653999999999996,
+              "position": "4",
+              "kind": "grouped_sum",
+              "cut": "fixed",
+              "route": "sql",
+              "reason": "scalable_aggregate",
+              "rows": 4,
+              "startOffsetMs": 1973.013125
+            }
+          ],
+          "errors": [],
+          "writes": [
+            {
+              "index": 0,
+              "position": "5",
+              "reconciled": false,
+              "startOffsetMs": 0.01641699999993307,
+              "elapsedMs": 35.53270799999996
+            },
+            {
+              "index": 1,
+              "position": "6",
+              "reconciled": false,
+              "startOffsetMs": 35.74854199999993,
+              "elapsedMs": 25.385750000000144
+            },
+            {
+              "index": 2,
+              "position": "7",
+              "reconciled": false,
+              "startOffsetMs": 61.24362499999995,
+              "elapsedMs": 28.154625000000124
+            },
+            {
+              "index": 3,
+              "position": "8",
+              "reconciled": false,
+              "startOffsetMs": 89.50091699999996,
+              "elapsedMs": 25.43170800000007
+            },
+            {
+              "index": 4,
+              "position": "9",
+              "reconciled": false,
+              "startOffsetMs": 115.0564579999999,
+              "elapsedMs": 27.538917000000083
+            },
+            {
+              "index": 5,
+              "position": "10",
+              "reconciled": false,
+              "startOffsetMs": 142.70695799999987,
+              "elapsedMs": 26.45904200000018
+            },
+            {
+              "index": 6,
+              "position": "11",
+              "reconciled": false,
+              "startOffsetMs": 169.28108299999997,
+              "elapsedMs": 25.095291999999972
+            },
+            {
+              "index": 7,
+              "position": "12",
+              "reconciled": false,
+              "startOffsetMs": 194.47070799999995,
+              "elapsedMs": 27.173749999999927
+            },
+            {
+              "index": 8,
+              "position": "13",
+              "reconciled": false,
+              "startOffsetMs": 221.78108299999997,
+              "elapsedMs": 36.86941700000011
+            },
+            {
+              "index": 9,
+              "position": "14",
+              "reconciled": false,
+              "startOffsetMs": 258.784542,
+              "elapsedMs": 35
+            },
+            {
+              "index": 10,
+              "position": "15",
+              "reconciled": false,
+              "startOffsetMs": 293.9225,
+              "elapsedMs": 35.13037499999996
+            },
+            {
+              "index": 11,
+              "position": "16",
+              "reconciled": false,
+              "startOffsetMs": 329.1691669999999,
+              "elapsedMs": 35.65679100000011
+            },
+            {
+              "index": 12,
+              "position": "17",
+              "reconciled": false,
+              "startOffsetMs": 364.98345800000004,
+              "elapsedMs": 36.70116699999994
+            },
+            {
+              "index": 13,
+              "position": "18",
+              "reconciled": false,
+              "startOffsetMs": 401.83116699999994,
+              "elapsedMs": 36.151791
+            },
+            {
+              "index": 14,
+              "position": "19",
+              "reconciled": false,
+              "startOffsetMs": 438.12258299999996,
+              "elapsedMs": 36.628791999999976
+            },
+            {
+              "index": 15,
+              "position": "20",
+              "reconciled": false,
+              "startOffsetMs": 474.91987499999993,
+              "elapsedMs": 40.14887500000009
+            },
+            {
+              "index": 16,
+              "position": "21",
+              "reconciled": false,
+              "startOffsetMs": 515.178833,
+              "elapsedMs": 37.10370899999998
+            },
+            {
+              "index": 17,
+              "position": "22",
+              "reconciled": false,
+              "startOffsetMs": 552.4087920000001,
+              "elapsedMs": 36.98887500000001
+            },
+            {
+              "index": 18,
+              "position": "23",
+              "reconciled": false,
+              "startOffsetMs": 589.592125,
+              "elapsedMs": 36.21462500000007
+            },
+            {
+              "index": 19,
+              "position": "24",
+              "reconciled": false,
+              "startOffsetMs": 625.923167,
+              "elapsedMs": 34.63316599999985
+            },
+            {
+              "index": 20,
+              "position": "25",
+              "reconciled": false,
+              "startOffsetMs": 660.6877920000001,
+              "elapsedMs": 37.15162499999997
+            },
+            {
+              "index": 21,
+              "position": "26",
+              "reconciled": false,
+              "startOffsetMs": 697.9460419999999,
+              "elapsedMs": 34.893583000000035
+            },
+            {
+              "index": 22,
+              "position": "27",
+              "reconciled": false,
+              "startOffsetMs": 732.954458,
+              "elapsedMs": 34.83837500000004
+            },
+            {
+              "index": 23,
+              "position": "28",
+              "reconciled": false,
+              "startOffsetMs": 767.905417,
+              "elapsedMs": 28.812124999999924
+            },
+            {
+              "index": 24,
+              "position": "29",
+              "reconciled": false,
+              "startOffsetMs": 796.8300419999999,
+              "elapsedMs": 35.24783300000013
+            },
+            {
+              "index": 25,
+              "position": "30",
+              "reconciled": false,
+              "startOffsetMs": 832.216708,
+              "elapsedMs": 35.92366700000002
+            },
+            {
+              "index": 26,
+              "position": "31",
+              "reconciled": false,
+              "startOffsetMs": 868.261417,
+              "elapsedMs": 38.63037499999996
+            },
+            {
+              "index": 27,
+              "position": "32",
+              "reconciled": false,
+              "startOffsetMs": 907.075917,
+              "elapsedMs": 37.74091599999997
+            },
+            {
+              "index": 28,
+              "position": "33",
+              "reconciled": false,
+              "startOffsetMs": 944.945292,
+              "elapsedMs": 38.569165999999996
+            },
+            {
+              "index": 29,
+              "position": "34",
+              "reconciled": false,
+              "startOffsetMs": 983.630417,
+              "elapsedMs": 33.60333300000002
+            },
+            {
+              "index": 30,
+              "position": "35",
+              "reconciled": false,
+              "startOffsetMs": 1017.342458,
+              "elapsedMs": 32.87033399999996
+            },
+            {
+              "index": 31,
+              "position": "36",
+              "reconciled": false,
+              "startOffsetMs": 1050.326,
+              "elapsedMs": 33.47770799999989
+            },
+            {
+              "index": 32,
+              "position": "37",
+              "reconciled": false,
+              "startOffsetMs": 1083.9123329999998,
+              "elapsedMs": 34.27237500000001
+            },
+            {
+              "index": 33,
+              "position": "38",
+              "reconciled": false,
+              "startOffsetMs": 1118.316292,
+              "elapsedMs": 31.763332999999875
+            },
+            {
+              "index": 34,
+              "position": "39",
+              "reconciled": false,
+              "startOffsetMs": 1150.1794999999997,
+              "elapsedMs": 34.935457999999926
+            },
+            {
+              "index": 35,
+              "position": "40",
+              "reconciled": false,
+              "startOffsetMs": 1185.221708,
+              "elapsedMs": 33.82154199999968
+            },
+            {
+              "index": 36,
+              "position": "41",
+              "reconciled": false,
+              "startOffsetMs": 1219.164167,
+              "elapsedMs": 32.01929100000007
+            },
+            {
+              "index": 37,
+              "position": "42",
+              "reconciled": false,
+              "startOffsetMs": 1251.294417,
+              "elapsedMs": 33.51383299999998
+            },
+            {
+              "index": 38,
+              "position": "43",
+              "reconciled": false,
+              "startOffsetMs": 1284.9177919999997,
+              "elapsedMs": 31.938458000000082
+            },
+            {
+              "index": 39,
+              "position": "44",
+              "reconciled": false,
+              "startOffsetMs": 1316.9744579999997,
+              "elapsedMs": 33.228000000000065
+            },
+            {
+              "index": 40,
+              "position": "45",
+              "reconciled": false,
+              "startOffsetMs": 1350.334625,
+              "elapsedMs": 35.41837499999974
+            },
+            {
+              "index": 41,
+              "position": "46",
+              "reconciled": false,
+              "startOffsetMs": 1385.878792,
+              "elapsedMs": 33.40462499999967
+            },
+            {
+              "index": 42,
+              "position": "47",
+              "reconciled": false,
+              "startOffsetMs": 1419.404458,
+              "elapsedMs": 34.9079999999999
+            },
+            {
+              "index": 43,
+              "position": "48",
+              "reconciled": false,
+              "startOffsetMs": 1454.417,
+              "elapsedMs": 34.474666999999954
+            },
+            {
+              "index": 44,
+              "position": "49",
+              "reconciled": false,
+              "startOffsetMs": 1488.9821669999997,
+              "elapsedMs": 34.552415999999994
+            },
+            {
+              "index": 45,
+              "position": "50",
+              "reconciled": false,
+              "startOffsetMs": 1523.6656669999998,
+              "elapsedMs": 35.93074999999999
+            },
+            {
+              "index": 46,
+              "position": "51",
+              "reconciled": false,
+              "startOffsetMs": 1559.7072079999998,
+              "elapsedMs": 34.459334000000126
+            },
+            {
+              "index": 47,
+              "position": "52",
+              "reconciled": false,
+              "startOffsetMs": 1594.2815,
+              "elapsedMs": 35.170624999999745
+            },
+            {
+              "index": 48,
+              "position": "53",
+              "reconciled": false,
+              "startOffsetMs": 1629.5741669999998,
+              "elapsedMs": 33.85570800000005
+            },
+            {
+              "index": 49,
+              "position": "54",
+              "reconciled": false,
+              "startOffsetMs": 1663.537667,
+              "elapsedMs": 35.126124999999774
+            },
+            {
+              "index": 50,
+              "position": "55",
+              "reconciled": false,
+              "startOffsetMs": 1698.7895829999998,
+              "elapsedMs": 32.47404200000028
+            },
+            {
+              "index": 51,
+              "position": "56",
+              "reconciled": false,
+              "startOffsetMs": 1731.3804999999998,
+              "elapsedMs": 33.35287500000004
+            },
+            {
+              "index": 52,
+              "position": "57",
+              "reconciled": false,
+              "startOffsetMs": 1764.8718749999998,
+              "elapsedMs": 34.45270800000026
+            },
+            {
+              "index": 53,
+              "position": "58",
+              "reconciled": false,
+              "startOffsetMs": 1799.4451249999997,
+              "elapsedMs": 34.11912500000017
+            },
+            {
+              "index": 54,
+              "position": "59",
+              "reconciled": false,
+              "startOffsetMs": 1833.686083,
+              "elapsedMs": 33.74437499999976
+            },
+            {
+              "index": 55,
+              "position": "60",
+              "reconciled": false,
+              "startOffsetMs": 1867.564292,
+              "elapsedMs": 36.48895799999991
+            },
+            {
+              "index": 56,
+              "position": "61",
+              "reconciled": false,
+              "startOffsetMs": 1904.180292,
+              "elapsedMs": 25.184249999999793
+            },
+            {
+              "index": 57,
+              "position": "62",
+              "reconciled": false,
+              "startOffsetMs": 1929.4522079999997,
+              "elapsedMs": 24.54300000000012
+            },
+            {
+              "index": 58,
+              "position": "63",
+              "reconciled": false,
+              "startOffsetMs": 1954.1283329999997,
+              "elapsedMs": 33.10716700000012
+            },
+            {
+              "index": 59,
+              "position": "64",
+              "reconciled": false,
+              "startOffsetMs": 1987.353458,
+              "elapsedMs": 34.28800000000001
+            }
+          ],
+          "writeAcknowledgementErrors": [],
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000000,
+            "maxIntermediateRows": 10000000,
+            "maxIntermediateBytes": 4294967296
+          },
+          "wallMs": 2021.675792,
+          "throughputQueriesPerSecond": 111.29380926969125,
+          "latencyMs": {
+            "count": 225,
+            "min": 18.68870800000002,
+            "p50": 35.105167000000165,
+            "p95": 51.06741699999998,
+            "p99": 55.939791000000014,
+            "max": 59.083916000000045
+          },
+          "resources": {
+            "before": {
+              "processBytes": {
+                "rss": 189054976,
+                "heapTotal": 18186240,
+                "heapUsed": 10965040,
+                "external": 10364743,
+                "arrayBuffers": 8164109
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "262144",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "beforeMeasured": {
+              "processBytes": {
+                "rss": 190529536,
+                "heapTotal": 18186240,
+                "heapUsed": 11029048,
+                "external": 10371823,
+                "arrayBuffers": 8171189
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "1572864",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "after": {
+              "processBytes": {
+                "rss": 415531008,
+                "heapTotal": 19234816,
+                "heapUsed": 11260928,
+                "external": 3163565,
+                "arrayBuffers": 962931
+              },
+              "duckdb": {
+                "available": true,
+                "memoryBytes": "13040944",
+                "temporaryStorageBytes": "0"
+              }
+            },
+            "maxSampledRssBytes": 414842880
+          },
+          "pool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "firstReadAfterOpen": {
+            "reader": 0,
+            "round": 0,
+            "elapsedMs": 24.45016600000008,
+            "position": "4",
+            "kind": "count",
+            "cut": "fixed",
+            "route": "sql",
+            "reason": "scalable_count",
+            "rows": 1
+          },
+          "finalReadVerified": true,
+          "overlappingQueryWrites": 461,
+          "writeMode": "sustained",
+          "writeLimit": 100000,
+          "writeLimitReached": false,
+          "requestedDurationMs": 2000,
+          "drainMs": 21.675792,
+          "windows": [
+            {
+              "startMs": 0,
+              "endMs": 2021.675792,
+              "completedReads": 225,
+              "latencyMs": {
+                "count": 225,
+                "min": 18.68870800000002,
+                "p50": 35.105167000000165,
+                "p95": 51.06741699999998,
+                "p99": 55.939791000000014,
+                "max": 59.083916000000045
+              },
+              "completedWrites": 60,
+              "errors": 0,
+              "resources": {
+                "maxRssBytes": 414842880,
+                "maxActiveReaders": 4,
+                "maxWaitingReaders": 0,
+                "samples": 78
+              }
+            }
+          ],
+          "writeBurstDurationMs": 2021.6250410000002,
+          "timingScope": "public_call_through_complete_typed_decoding; exact_oracle_check_excluded",
+          "throughputScope": "measured_phase_only; oracle_overhead_included; warmup_excluded",
+          "tailEvidence": "smoke_only",
+          "reopenVerified": true
+        }
+      ],
+      "openConfiguration": {
+        "threads": 4,
+        "memoryLimit": "1GB",
+        "maxTempDirectorySize": "2GB",
+        "retainedLimits": {
+          "maxFacts": 100032,
+          "maxBytes": 4294967296
+        }
+      },
+      "fixture": {
+        "size": 32,
+        "groupSize": 8,
+        "groups": 4,
+        "position": "4",
+        "schemaHash": "1df92efaaf577c73d62cac22c68011dc23aec9345e33477e354afcf5c288dbf1",
+        "setupRoute": "native_put_record",
+        "audit": {
+          "retainedCarrier": true,
+          "allNativeHistoryBindings": true,
+          "usage": true,
+          "receipts": true,
+          "nativeReplay": true
+        },
+        "setupMs": 375.10633399999995,
+        "databaseBytes": 4993024
+      }
+    }
+  ],
+  "status": "passed",
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.19.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "schema_borrowed_input": true,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "74cf165a2f9d24323474a0be10cbe10b30c930a73de666503e449a202cbafb7c",
+      "native/src/temporal_command.hpp": "0e72ef0ec9dce8a8cef085b6e81fba624dec33602e1fb3cf649a6629e21c51ce",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_count_plan.hpp": "0885641b3279d71c5064c069bcaf0a7c520dd46bd25fa3d2e31650bb6ac02e45",
+      "native/src/temporal_datalog.cpp": "d165717e450a3c8d40c9810d29b761f92dd620a88e391d9e842b267459142d19",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_join_plan.hpp": "b2cfc07956e011c42bfc860fe157b2a0bbc311fdc7423e152eeb659f16674857",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_scan_plan.hpp": "c7d94b7b43d1e02fd26594d8ea3a643a20ceca6b6c9ce413d9fcaa42e2bccb3a",
+      "native/src/temporal_schema.cpp": "5c4777b3d867d4a57aa5de3cebf457d425055296e6c2fad2c311455f98b41ea6",
+      "native/src/temporal_schema.hpp": "05ca882152b3f4de4599ee48305c942495759e2187c3bab40f5587961c6fbc14",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "6b9c2b47be2d34f48efe32079d1b915ce1e4ca94ca5d8dd27868c2c680b18469",
+      "native/src/temporal_store_query.hpp": "ab96f3eff8affaf01c23da724d7c5eead9691a3efdb46d601ad011a2af5ca8f0",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "b53556d123c9e3c8a9c4d5140ffe8ace112753a50afa33a7987af6a8fc95e6dd",
+    "extension_sha256": "47e9e7629b034bc1f9d5b953a73bc0c93dcae7f0f46775ab5eae2e717f8caccf"
+  },
+  "runtimeArtifactSha256": {
+    "build/adapter/native-entity.js": "ff7a17ae22590c0bc1d70fc65124b1c700f463977f961ddf15fa030e4372068d",
+    "build/adapter/native-duckdb-port.mjs": "622561f962ad72631440b778f667caf7a5bf2e81f6ecc9f9d38706d16065ee16"
+  },
+  "runtimeSourceSha256": {
+    "adapter/native-entity.ts": "26f6a59d2fff9bd618ca45b85cbc5d8d53613d2f0d17439c2290b1e3f9df9a37",
+    "adapter/native-duckdb-port.mjs": "622561f962ad72631440b778f667caf7a5bf2e81f6ecc9f9d38706d16065ee16"
+  },
+  "harnessSha256": "00ea1026f252791227127f8cb4366f77401953114bb0cd1120bdec4cd2adf403",
+  "fixtureSha256": "a5bc84cad56e32548537ef94a1977e4e964dd27dfc0f2ecb2178c47bc3c4449c",
+  "capabilities": {
+    "scalableQuery": true
+  }
+}

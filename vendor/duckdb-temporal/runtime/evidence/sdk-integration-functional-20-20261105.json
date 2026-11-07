@@ -1,0 +1,453 @@
+{
+  "schema": "temporal.sdk-integration-functional20.v1",
+  "status": "passed",
+  "recordedAt": "2026-11-06T03:04:52.779133+00:00",
+  "testedSourceCommit": "9261c96d8ac0ffcc52c0735d396fcbcbf18e4ef0",
+  "codeCommit": "041264f26757e891c8053d8a0e594c09aaead94f",
+  "fullVerificationCommit": "9261c96d8ac0ffcc52c0735d396fcbcbf18e4ef0",
+  "firstAttempt": true,
+  "terminal": {
+    "started_at": "2026-11-06T02:58:05.087354+00:00",
+    "finished_at": "2026-11-06T02:58:24.132292+00:00",
+    "pid": 61904,
+    "exit_code": 0,
+    "elapsed_seconds": 19.04479325003922,
+    "first_terminal": true,
+    "unchanged_before_after": true
+  },
+  "counts": {
+    "families": 20,
+    "profiles": [
+      "naive_sql",
+      "direct_duckdb",
+      "temporal_store"
+    ],
+    "freshEngineRuns": 60,
+    "selectedCases": 71,
+    "passedEngineCaseAnswers": 213,
+    "failedEngineCaseAnswers": 0,
+    "reopenProfilesPassed": 60
+  },
+  "families": {
+    "01": {
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    },
+    "02": {
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "03": {
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "04": {
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    },
+    "05": {
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    },
+    "06": {
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    },
+    "07": {
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "08": {
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "09": {
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "10": {
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    },
+    "11": {
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "12": {
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    },
+    "13": {
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    },
+    "14": {
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "15": {
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "16": {
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "17": {
+      "direct_duckdb": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 3,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 3,
+        "reopen": "PASS"
+      }
+    },
+    "18": {
+      "temporal_store": {
+        "cases": 5,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 5,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 5,
+        "reopen": "PASS"
+      }
+    },
+    "19": {
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    },
+    "20": {
+      "direct_duckdb": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "temporal_store": {
+        "cases": 4,
+        "reopen": "PASS"
+      },
+      "naive_sql": {
+        "cases": 4,
+        "reopen": "PASS"
+      }
+    }
+  },
+  "configuration": {
+    "workloads": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20"
+    ],
+    "samples": 1,
+    "warmup": 0,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "python": "python"
+  },
+  "scope": "all20 synthetic workloadfamilies through actualthree complete paths; independent event/SQL oracles, historical cuts and fresh reopen checks",
+  "timingClaim": "functional gate only; one sample, zero warmup; no final comparative performance qualification",
+  "beforeAfter": {
+    "sourceCount": 216,
+    "frozenSdkDependencyFiles": 395,
+    "allUnchanged": true,
+    "pins": {
+      "build/adapter/native-entity.js": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+      "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+      "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+      "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+      "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+      "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+      "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    },
+    "additionalEntries": {
+      "effect": {
+        "path": "[LOCAL_PATH_0058]",
+        "sha256": "fa0b1ffb925b4c771d8ca81012cdf47e25a8060b4bcddd7e6416bbe9cb23db98"
+      },
+      "typescript": {
+        "path": "[LOCAL_PATH_0059]",
+        "sha256": "630f808ac32d968a49a392c42cc06fd72abd939aaa7edfe3302810c067934653"
+      },
+      "@triplex-build/triplex": {
+        "path": "__HANDOFF_ROOT__/references/triplex-upstream/packages/core/dist/index.js",
+        "sha256": "adbf5cf63caf2ce8516a86b4a0084687eed3177f26e2da32cb7ce305b375666c"
+      },
+      "@triplex-build/triplex/runtime": {
+        "path": "__HANDOFF_ROOT__/references/triplex-upstream/packages/core/dist/runtime/index.js",
+        "sha256": "981879ace80fa9dd90355a010b061dc024454fcc911fbec92f1fc2395a7a4b76"
+      },
+      "@triplex-build/triplex-testkit": {
+        "path": "__HANDOFF_ROOT__/references/triplex-upstream/packages/testkit/dist/index.js",
+        "sha256": "5ba405078ceb227daa733f88cba3b5717ef9f1e237c715fc9746865c0c5e1ce3"
+      },
+      "@triplex-build/triplex-sql": {
+        "path": "__HANDOFF_ROOT__/references/triplex-upstream/packages/sql/dist/index.js",
+        "sha256": "86ad4525826bec81f01b99464938ed22112b64ef36e98aae7c36f51f960b6921"
+      }
+    },
+    "pythonNative": {
+      "path": "[LOCAL_PATH_0060]",
+      "sha256": "1e0c41d7d52834b43bf66c1e8b25d6aeee7911609515c9563383b3ffb28919b3"
+    }
+  },
+  "packetSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "runtimeArtifactSha256": {
+    "build/artifact.json": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/adapter/native-entity.js": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/owner_probe/artifact.json": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390"
+  },
+  "runnerSourceSha256": {
+    "workloads/run_three_engines.mjs": "001df67ddac5d1242ec681dc46926f95908ee883a19fa5173e88ab45aa48c5a5",
+    "workloads/engine_cases.mjs": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50",
+    "workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+    "workloads/containment_cases.mjs": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+    "workloads/uptime_cases.mjs": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9",
+    "workloads/training_cases.mjs": "1474e7fd1ace7d18906d347de2a515149880542086e59feaf8cbcc0ffd1bd076",
+    "workloads/support_cases.mjs": "3114043605a922218ae3fe1feeb4949d280f4dbe5e24d98159a8a691c5cebc02",
+    "workloads/interval_join_cases.mjs": "8155ee3655fa8c8be4d20d90e6523cf1448e47aef4fdae45723833ae93eeed85",
+    "workloads/webhook_cases.mjs": "084549364af26a6efdf472e521e1a1a8fde7c08389e96810816da43d3d151e54",
+    "workloads/dependency_cases.mjs": "faaa7ef47c4112ff06d69d1f888b373be48587cbc00f340e8f72cdfb842fe261",
+    "workloads/recall_cases.mjs": "261247cc646e5eab3bf8c6bcdf84404f4b6b9cda07b885c94ca3d7a3906ac99c",
+    "workloads/funnel_cases.mjs": "ce3bf3ee86bb8db657ed3a643b8515bea309232d6db86dd96e76a18e7cbb2faa",
+    "workloads/event_oracles.py": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02",
+    "workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+  },
+  "previousFullFirstFailure": "evidence/sdk-integration-first-outcome-20261105.json",
+  "fixedTargetedProof": "evidence/sdk-integration-fixture-fix-20261105.json",
+  "full422Success": "evidence/sdk-integration-full-20261105.json",
+  "remaining": "paired/reverse/broader performance confirmation and root integration; no main merge or version change",
+  "raw": {
+    "first.json": {
+      "path": "evidence/sdk-integration-functional-20-20261105/first.json",
+      "sha256": "84281332e872637ec6da725131d1c613bb1862959c78364b9a11da51288a899e"
+    },
+    "first.log": {
+      "path": "evidence/sdk-integration-functional-20-20261105/first.log",
+      "sha256": "7c4451dd49829a17edc211c3c7912c0a6c08ba86604aae29c4ab25f7310e980e"
+    },
+    "before.json": {
+      "path": "evidence/sdk-integration-functional-20-20261105/before.json",
+      "sha256": "e5665175761303a6f8517cf6e0b750c9a12da4d6977291cbfba5589667195af8"
+    },
+    "after.json": {
+      "path": "evidence/sdk-integration-functional-20-20261105/after.json",
+      "sha256": "e720831dc8fa3e4ff73172bfdd613e35fc7b89884640eca20047f2f4ed735db6"
+    },
+    "launch.json": {
+      "path": "evidence/sdk-integration-functional-20-20261105/launch.json",
+      "sha256": "e06f27a28aea68deb00e0977d2d3b0bf8daa4257b747131632c530f8f922d48a"
+    },
+    "terminal.json": {
+      "path": "evidence/sdk-integration-functional-20-20261105/terminal.json",
+      "sha256": "caa7c18f86b423e2e0f65443a15cc64c2740cb7763193a057e873d4517284ec6"
+    },
+    "launcher.py": {
+      "path": "evidence/sdk-integration-functional-20-20261105/launcher.py",
+      "sha256": "34119426a4cc24a4c441c464690636f9a48a2966f9b7ddfaa6b6feccd9fe00ee"
+    }
+  }
+}

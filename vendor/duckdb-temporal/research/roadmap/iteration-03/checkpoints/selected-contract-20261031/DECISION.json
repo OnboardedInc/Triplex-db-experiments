@@ -1,0 +1,17 @@
+{
+  "selected_utc": "2026-10-31T04:38:17.956651+00:00",
+  "status": "SELECTED_FOR_IMPLEMENTATION_AFTER_DURABLE_GATE_NOT_IMPLEMENTED",
+  "contract_sha256": "ea95d719241adab0ef69bf94d80dc5e898bfeae419d419f10efb68b5db545a1e",
+  "contract_bytes": 14813,
+  "research_main": "a310228729d32662affa893d38ccba397e806c60",
+  "input_snapshot_sha256": "849c98fee64ca679ca70d6fbe1ddd133708dc8c1639d4d8d4e5fc28125f59123",
+  "semantics_QA_sha256": "95fd7e9a2b6c91dc767d9b95edf84a5e14c56da32f624f3355963f55ccaa0d1e",
+  "v2_QA_sha256": "d07fc8c1cc2a367f55e2ed71dcbc05799a8bc29bfbbf5bebcaa496cce60fdb06",
+  "implementation_authority": "NOT_RELEASED_UNTIL_REMOTE_CONTRACT_READBACK",
+  "sql_subset": "whole-program positive acyclic filter-free with strict tag/snapshot/all-row admission and proven legacy budgets",
+  "fallback": "whole original native for every filter/recursive SCC/unsupported/unproved condition",
+  "legacy_APIs_unchanged": true,
+  "application_acceptance": "UNRUN",
+  "finalized_utc": "2026-10-31T04:40:40.790021+00:00",
+  "native_work_bound": "full relation cardinalities, never filtered pattern counts"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "td.native-writer-lab-process/1",
+  "role": "cpp_candidate",
+  "pid": 5799,
+  "parentPid": 4882,
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "preloadSha256": "1cfa9efa476ab4bfeaeb923fb1ed9fe4bf9306cb7d5af10bb0fe5145fb909fb9",
+  "runtime": "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+  "selectedPortUrl": "file://<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/adapter/native-duckdb-port.mjs",
+  "entry": "<qualified-build02-runtime>/adapter/benchmark-antijoin-cost.mjs",
+  "entryKind": "measured_child",
+  "childOutput": "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate-children/readers-16.json",
+  "readerCount": 16,
+  "UV_THREADPOOL_SIZE": "4",
+  "routes": {
+    "nativeEnrollment": 0,
+    "nativeGenerated": 0,
+    "sdkGenerated": 0,
+    "errors": 0,
+    "unknown": 0
+  },
+  "writerPorts": [],
+  "mechanism": "Generated writer dispatch only; native lifecycle remains active in both roles",
+  "preloadWallMs": 80.49025,
+  "receipts": {
+    "ready": "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate-children/roles/cpp_candidate-5799-ready.json",
+    "exit": "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate-children/roles/cpp_candidate-5799-exit.json"
+  }
+}

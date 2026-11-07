@@ -1,0 +1,30 @@
+{
+  "status": "PASS_EXACT_JSON_METADATA_TYPES_AND_REGISTER_RANGES",
+  "completed_utc": "2026-10-30T23:44:55.950806+00:00",
+  "verifier_sha256": "a88d16e2ec8c26a147a26999fd216e01de4ed27333378c7707a30e3c91a448c9",
+  "processes": 168,
+  "observations": 11760,
+  "synthetic_wrong_type_range_denials": 19,
+  "negative_controls": [
+    "affinity[8.0]",
+    "affinity[True]",
+    "caps{'MAX_FACTS': 512.0, 'MAX_OPERATIONS': 32}",
+    "caps{'MAX_FACTS': 512, 'MAX_OPERATIONS': 32.0}",
+    "peak_rss_kibFalse",
+    "peak_rss_kib0",
+    "fp_controls{'round': 0, 'mxcsr': -1, 'x87': 895}",
+    "fp_controls{'round': 0, 'mxcsr': 4294967296, 'x87': 895}",
+    "fp_controls{'round': 0, 'mxcsr': 8099, 'x87': 65536}",
+    "fp_controls{'round': False, 'mxcsr': 8099, 'x87': 895}",
+    "roundsFalse",
+    "rounds0.0",
+    "rounds-1",
+    "derived_factsFalse",
+    "derived_facts0.0",
+    "derived_facts-1",
+    "workFalse",
+    "work0.0",
+    "work-1"
+  ],
+  "scope": "Supplement only: captured JSON integer/bool/affinity/cap/counter types, FP register widths and positive diagnostic RSS. Does not independently observe historic OS state or rerun queries; original closure and derivation remain unchanged."
+}

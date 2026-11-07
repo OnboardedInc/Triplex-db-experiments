@@ -1,0 +1,378 @@
+{
+  "schema": "td.static-four-preparation/1",
+  "status": "PASSED_FILE_ONLY_PREPARATION_UNPROMOTED",
+  "firstAttempt": true,
+  "sourceCheckpoint": "b0429633088af085a92a6b97882280fc17a6ade6",
+  "sourcePushedRemoteVerified": true,
+  "checks": {
+    "syntaxCommandGroups": 4,
+    "syntaxFiles": 5,
+    "pureTests": 28,
+    "purePassed": 28,
+    "pureFailed": 0,
+    "pureSkipped": 0
+  },
+  "firstSetupFailures": [],
+  "originalB0Unchanged": true,
+  "originalB0InventorySha256": "b17f748f92f8fa94bd5b9218602993e8b0e5f4b9ab863b38d7941fb11769580b",
+  "originalB0RuntimeFiles": 404,
+  "originalB0SourceReferences": 40,
+  "originalB0BindingSha256": "5db1d86dcbbb791926631cbf4f018683fd3a3cc2b29b5237dcfe9afa35a9e6aa",
+  "originalNativeBindingSha256": "0eaf2187d65289cbbb2902ae58867ab64127d4c973d6fe59341065e50356f963",
+  "subjects": {
+    "b0": {
+      "archive": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-frozen-032-20261105/b0",
+      "inventorySha256": "c09ad7d6d6f80a023c62f4494906001fd1772bd9e284dae20e941ec9872d6cee",
+      "counts": {
+        "runtime": 405,
+        "source": 40,
+        "sidecars": 1,
+        "inventoryEntries": 446
+      },
+      "resolvedSdkFiles": {
+        "api": {
+          "relativePath": "node_modules/@duckdb/node-api/lib/index.js",
+          "sha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+        },
+        "bindings": {
+          "relativePath": "node_modules/@duckdb/node-bindings/duckdb.js",
+          "sha256": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce"
+        },
+        "platform": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+          "sha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+        },
+        "engine": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+          "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+        }
+      },
+      "sdkSourceCommit": "fe9ca9aa00b454f7555fe6f1392ef8ad2a3f5840",
+      "compiledEntitySha256": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+      "exactSetAndByteEquality": true,
+      "beforeAfterExact": true
+    },
+    "static4": {
+      "archive": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-frozen-032-20261105/static4",
+      "inventorySha256": "eef00df1b0cae8a8405741751e5b7a42bb8d058a83db935620f39124d7d6eeeb",
+      "counts": {
+        "runtime": 405,
+        "source": 40,
+        "sidecars": 1,
+        "inventoryEntries": 446
+      },
+      "resolvedSdkFiles": {
+        "api": {
+          "relativePath": "node_modules/@duckdb/node-api/lib/index.js",
+          "sha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+        },
+        "bindings": {
+          "relativePath": "node_modules/@duckdb/node-bindings/duckdb.js",
+          "sha256": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce"
+        },
+        "platform": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+          "sha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+        },
+        "engine": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+          "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+        }
+      },
+      "sdkSourceCommit": "eb32f43544eb9e24b2c624fc41f9c61eb61dbff0",
+      "compiledEntitySha256": "3769fb975d3d621418f91a0bebfffcfce656cdcc98c3e002f61b03c203089afe",
+      "exactSetAndByteEquality": true,
+      "beforeAfterExact": true
+    }
+  },
+  "bindings": {
+    "control-1": {
+      "file": "evidence/antijoin-static-four-control-10m-1-20261105.json",
+      "sha256": "214cf381dd483f94dfaa08db4a9f99fadf53164c926d9bcac7f91c7287aec3ec",
+      "artifactRole": "STATIC4_B0_MAPPED_CONTROL",
+      "queryContractVersion": 1,
+      "readerProfile": 1,
+      "admission": {
+        "owner": "none",
+        "logicalClients": 1,
+        "nativeReaderConnections": 1,
+        "declaredLimit": null,
+        "effectiveLimit": null,
+        "outerGateway": false
+      },
+      "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-frozen-032-20261105/b0/runtime",
+      "runtimePins": {
+        "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+        "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+        "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      }
+    },
+    "control-16": {
+      "file": "evidence/antijoin-static-four-control-10m-16-20261105.json",
+      "sha256": "1b1071cf2983b78b75854a2f8966dc7c5619537413d22a9bedddba9cb2b6aa94",
+      "artifactRole": "STATIC4_B0_MAPPED_CONTROL",
+      "queryContractVersion": 1,
+      "readerProfile": 16,
+      "admission": {
+        "owner": "none",
+        "logicalClients": 16,
+        "nativeReaderConnections": 16,
+        "declaredLimit": null,
+        "effectiveLimit": null,
+        "outerGateway": false
+      },
+      "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-frozen-032-20261105/b0/runtime",
+      "runtimePins": {
+        "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+        "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+        "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      }
+    },
+    "candidate-1": {
+      "file": "evidence/antijoin-static-four-candidate-10m-1-20261105.json",
+      "sha256": "d7f3e11e01e0ec0f9b136ac9997c416892a4899504265f91f1f2085891a3d853",
+      "artifactRole": "STATIC4_SDK_CANDIDATE",
+      "queryContractVersion": 2,
+      "readerProfile": 1,
+      "admission": {
+        "owner": "NativeEntityStore",
+        "logicalClients": 1,
+        "nativeReaderConnections": 1,
+        "declaredLimit": 4,
+        "effectiveLimit": 1,
+        "outerGateway": false
+      },
+      "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-frozen-032-20261105/static4/runtime",
+      "runtimePins": {
+        "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+        "adapter/native-entity.js": "3769fb975d3d621418f91a0bebfffcfce656cdcc98c3e002f61b03c203089afe",
+        "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      }
+    },
+    "candidate-16": {
+      "file": "evidence/antijoin-static-four-candidate-10m-16-20261105.json",
+      "sha256": "64adfa42286a7fe6bbfda3ae845569c5259fdb33f81d32b23338901e4d6587be",
+      "artifactRole": "STATIC4_SDK_CANDIDATE",
+      "queryContractVersion": 2,
+      "readerProfile": 16,
+      "admission": {
+        "owner": "NativeEntityStore",
+        "logicalClients": 16,
+        "nativeReaderConnections": 16,
+        "declaredLimit": 4,
+        "effectiveLimit": 4,
+        "outerGateway": false
+      },
+      "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-frozen-032-20261105/static4/runtime",
+      "runtimePins": {
+        "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+        "adapter/native-entity.js": "3769fb975d3d621418f91a0bebfffcfce656cdcc98c3e002f61b03c203089afe",
+        "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      }
+    }
+  },
+  "sourceInputs": {
+    "adapter/antijoin-config-binding.mjs": {
+      "sha256": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "adapter/antijoin-profile-binding.mjs": {
+      "sha256": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "adapter/antijoin-sdk-binding.mjs": {
+      "sha256": "74839060c5382ca78cd89629ebf3882db26adbc1febbebdb19aa2961f18b855a",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "adapter/benchmark-antijoin-cost.mjs": {
+      "sha256": "1f76395dfe3e4bf91464aee84e80927600e36a11ab5a29c2ebbcc5a62baeded5",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "adapter/antijoin-static-four-binding.mjs": {
+      "sha256": "eb5f6e078560c86f3501020d39afdbcd9925663a1a00c0f76b254b89757c524b",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "freeze_static_four_runtime.py": {
+      "sha256": "4a524076d42e47bf9c6671650f1446c0e524120cea060c0e283d10c61b298a58",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "STATIC-FOUR-PERFORMANCE-PROTOCOL.md": {
+      "sha256": "3afa0ecf118cfb7f603982766a69dbde5957bcc5ddb087776a4a8ec3c693458b",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "stage_broad_sdk_runtime.py": {
+      "sha256": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "adapter/native-entity.ts": {
+      "sha256": "6101c9eb6059e051520b29fab50cf400bf12d18d24f0fc4714cfd8804b443969",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "adapter/native-schema.ts": {
+      "sha256": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "adapter/native-duckdb-port.mjs": {
+      "sha256": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "tsconfig.json": {
+      "sha256": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    },
+    "package.json": {
+      "sha256": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b",
+      "gitCommit": "b0429633088af085a92a6b97882280fc17a6ade6",
+      "matchesGit": true
+    }
+  },
+  "reusedPureTestInputs": {
+    "adapter/test-antijoin-cost.mjs": {
+      "sha256": "aa60560a2147472be3d415d26273d968da386716222ac3b05b1167eee470e719",
+      "sourceCommit": "6fbb377587ab599d03cf522a565bda2b9d93854c",
+      "gitBlob": "0d424470daa94638ba6df163b8dfbcbc223a9c64",
+      "exactByteEquality": true
+    },
+    "adapter/test-antijoin-config-binding.mjs": {
+      "sha256": "64261ab7c6150ec0f7676ad7b6790b5075b7501fcb0077e8dd8dbdcfc3af008f",
+      "sourceCommit": "6fbb377587ab599d03cf522a565bda2b9d93854c",
+      "gitBlob": "35474114a1a425fe757e45a3e7c191e2f404006f",
+      "exactByteEquality": true
+    },
+    "adapter/test-antijoin-profile-binding.mjs": {
+      "sha256": "68ce1f13ab39b3f6c3480cbe4ae57dc53cde812659296cfcb262b5fe2ee8040e",
+      "sourceCommit": "6fbb377587ab599d03cf522a565bda2b9d93854c",
+      "gitBlob": "193bc2e013cd53bf8684a29191579d4b1c542fba",
+      "exactByteEquality": true
+    },
+    "adapter/test-antijoin-sdk-binding.mjs": {
+      "sha256": "e2639b6682b4a17b8285b4af197172c2c96029002402272789f743b47d740b9d",
+      "sourceCommit": "6fbb377587ab599d03cf522a565bda2b9d93854c",
+      "gitBlob": "cca4f6707479e6961bcd214a810d68ef652914a2",
+      "exactByteEquality": true
+    },
+    "adapter/test-native-write-binding.mjs": {
+      "sha256": "bd116dbe7a6c63c93e23ab5b83fe6c4df53e551cf5d88bc4cc3e1c8ed192bee2",
+      "sourceCommit": "6fbb377587ab599d03cf522a565bda2b9d93854c",
+      "gitBlob": "c47df6b36ada51ba7395f9036242f5d18c7dd575",
+      "exactByteEquality": true
+    }
+  },
+  "measuredRunnerDeltaFrom6fbb": "Only sdkRole import removal and SDK admission-owner metadata condition; exact remaining bytes equal.",
+  "measuredSupportingFilesExact6fbb": true,
+  "rawFiles": {
+    "binding-candidate-1-first.log": {
+      "file": "static-four-preparation-20261105/binding-candidate-1-first.log",
+      "sha256": "8b549adbdb39cdd059b8c4531e86b522e79152c968508d3cf3cb7d807af576b2"
+    },
+    "binding-candidate-16-first.log": {
+      "file": "static-four-preparation-20261105/binding-candidate-16-first.log",
+      "sha256": "787930388ac58db0b2c4407deddd47f08d1e90bfa15adfb2bc6875ecfc0f8956"
+    },
+    "binding-control-1-first.log": {
+      "file": "static-four-preparation-20261105/binding-control-1-first.log",
+      "sha256": "f2bb9ee018b59b96f451eae460220b07e4995084a940aff71a8e3079980097c0"
+    },
+    "binding-control-16-first.log": {
+      "file": "static-four-preparation-20261105/binding-control-16-first.log",
+      "sha256": "ee65734fdfc99b82e3ea3a7a66b07954f1a31c9f7a27a71b08a12bf2e3a4f964"
+    },
+    "bindings-first-terminals.json": {
+      "file": "static-four-preparation-20261105/bindings-first-terminals.json",
+      "sha256": "eb50aabce146d644653d5f211b443af767805d4bf559f3f3e6ae3ced7a42ea47"
+    },
+    "checks-first.json": {
+      "file": "static-four-preparation-20261105/checks-first.json",
+      "sha256": "178e758b76dc3e55a83a826e68a93cd6e12dca5ebfa6a40c157dca926f9c2838"
+    },
+    "freeze-first-terminal.json": {
+      "file": "static-four-preparation-20261105/freeze-first-terminal.json",
+      "sha256": "59d9f8533414b091e3d60f9bed2c0964d10545cf3fbb43e7db2d1b4b06e1ccf7"
+    },
+    "freeze-first.json": {
+      "file": "static-four-preparation-20261105/freeze-first.json",
+      "sha256": "7f32c5a56433f531ed1dee9339769de20cea1d4f05f46a0127b0a1b73f8de737"
+    },
+    "freeze-first.log": {
+      "file": "static-four-preparation-20261105/freeze-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "inspect-after-first-terminal.json": {
+      "file": "static-four-preparation-20261105/inspect-after-first-terminal.json",
+      "sha256": "810d29d6aa1b92db4a99c63dd0ecd6354a2d65dd5e8c08b42633d58bc51b6ba8"
+    },
+    "inspect-after-first.json": {
+      "file": "static-four-preparation-20261105/inspect-after-first.json",
+      "sha256": "32cf0b1c07cb922db2e52a4d986641ef88de23dd7814e1525dc7b9d7f8ea839c"
+    },
+    "inspect-after-first.log": {
+      "file": "static-four-preparation-20261105/inspect-after-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "pure-first.log": {
+      "file": "static-four-preparation-20261105/pure-first.log",
+      "sha256": "731e5151adaba3319753d61ece7728b06f18ea82fd5664bdd81d193959ab4701"
+    },
+    "syntax-freezer.log": {
+      "file": "static-four-preparation-20261105/syntax-freezer.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "syntax-runner.log": {
+      "file": "static-four-preparation-20261105/syntax-runner.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "syntax-sdk.log": {
+      "file": "static-four-preparation-20261105/syntax-sdk.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "syntax-static4.log": {
+      "file": "static-four-preparation-20261105/syntax-static4.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "boundary": {
+    "nativeBuild": "none",
+    "installation": "none",
+    "TSC": "none",
+    "databaseOpen": "none",
+    "DuckDBQuery": "none",
+    "benchmark": "none",
+    "nativeModuleImport": "none",
+    "packageResolution": "createRequire.resolve only; actual subject package files and engine identity fully mapped",
+    "test407StageCopied": false
+  },
+  "pending": [
+    "Root review of fresh inventories/bindings",
+    "Separately granted small actual-engine qualification",
+    "Unchanged broad and anti performance gates",
+    "Full qualification; no promotion"
+  ]
+}

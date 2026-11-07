@@ -1,0 +1,341 @@
+{
+  "schema": "td.concurrent-public-read-diagnostic/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T21:02:55.119865+00:00",
+  "platform": "macOS ARM64",
+  "source": "1a69a6bfc94d61614478fa8036d9dfe881ad8984",
+  "coreSha256": "71bb2f13af3f08271f0991b26d79728e0ebe3767627c3da5806f769450fed3e1",
+  "companionSha256": "7bd8b7456b0a37e3ebee712d0b771a5fb46f488a973e009bc10e32dfceb330c5",
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "controlSha256": "734b2b798551528a35e35907ba37e9d4a90605987efa1002e3212857e89ab672",
+  "raw": {
+    "concurrent-matrix.json": "034a998320939d15f8187a5233068e8ace051aa4c3cb1a250798d4b394c7980d",
+    "concurrent-smoke.json": "0a7a53d33fb908119d609235bc06f4a212b08780c7091b6e38309048f76d85ad"
+  },
+  "fixture": {
+    "recipe": {
+      "chain": 64,
+      "disconnected": 2048,
+      "validAt": 0,
+      "wideProjection": {
+        "activeFacts": 45000,
+        "answerRows": 40000,
+        "groupSize": 4096
+      }
+    },
+    "knownAt": "76",
+    "retainedFacts": 47112,
+    "bytes": 27013120,
+    "sha256": "5c39a9aa5969247a4b20b66e6dad9141857f6dac95e24fc1a5cdbe8fe2fd175d",
+    "seedCloseWallMs": 5029.097083,
+    "sourceMetadataUnchanged": true,
+    "sourceBytesUnchanged": true
+  },
+  "configuration": {
+    "readers": [
+      1,
+      4,
+      16
+    ],
+    "kinds": [
+      "tiny_constant",
+      "native_projection_40000",
+      "sql_projection_40000",
+      "native_count",
+      "sql_count"
+    ],
+    "samplesPerWarmMode": 3,
+    "mode": "both",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "validAt": "0",
+    "timeoutMs": 60000,
+    "nativeBudget": {
+      "maxFacts": 100000,
+      "maxRounds": 1000,
+      "maxWork": 5000000,
+      "deadlineMs": 1000,
+      "forceNative": true
+    },
+    "scalableBudget": {
+      "maxInputFacts": 10000000,
+      "maxIntermediateRows": 10000000,
+      "maxIntermediateBytes": 4294967296,
+      "maxOutputRows": 100000,
+      "maxOutputBytes": 16777216
+    }
+  },
+  "exactPublicChecks": 735,
+  "scope": {
+    "wave": "One simultaneous submission per enrolled reader. Request wall ends before any answer in the wave is checked.",
+    "sdk": "SDK prepare/stream/fetch await wall intervals can nest and include engine execution and event-loop scheduling. Union time counts overlap once within a request.",
+    "transport": "Controlled template and execution port call wall. Time outside SDK awaits includes bindings, synchronous SDK row extraction, admission, copies, cleanup and scheduling.",
+    "assembly": "Final transport return to controlled-work completion includes typed decoding, validation, poll calls and promise handoff. It is a wall boundary rather than exclusive JS decode CPU.",
+    "cpp": "Invocation-owned C++ durations cover bounded evaluator import, fixed point, native answer materialization and vector encoding. They have no common timestamp with the JS spans. SQL-only routes have no bounded evaluator capture.",
+    "overlap": "C++ spans sit inside a full controlled request. Measurements across requests overlap and are not additive. EXPLAIN ANALYZE uses a separate run of profile-read-plan.mjs and is not part of this breakdown."
+  },
+  "cells": [
+    {
+      "readers": 1,
+      "kind": "tiny_constant",
+      "profiledWarmSamples": 3,
+      "profiledMedianMs": {
+        "publicWallMs": 7.0885410000000775,
+        "sdkAwaitUnionWallMs": 6.641835000001265,
+        "transportOutsideSdkAwaitWallMs": 0.285331999999471,
+        "typedResultAssemblyWallMs": 0.05095900000014808,
+        "templateTransportWallMs": 0.4306670000005397
+      },
+      "explicitHostScopesMedianMs": 0.3350000000000364,
+      "explicitHostShareMedian": 0.049407602841932866,
+      "cppEvaluatorScopesMedianMs": 0.013624,
+      "ordinaryWarmPublicMedianMs": 8.161165999999866,
+      "exactExpectedAnswerSha256": "a92b0f69ea975a4f24535e29afaa28914750b7ca4cf4f9fc09a833a8b856fbc6"
+    },
+    {
+      "readers": 1,
+      "kind": "native_projection_40000",
+      "profiledWarmSamples": 3,
+      "profiledMedianMs": {
+        "publicWallMs": 185.93529099999978,
+        "sdkAwaitUnionWallMs": 71.23782899999605,
+        "transportOutsideSdkAwaitWallMs": 72.8557469999987,
+        "typedResultAssemblyWallMs": 42.33441700000003,
+        "templateTransportWallMs": 1.0855000000001382
+      },
+      "explicitHostScopesMedianMs": 115.17378799999915,
+      "explicitHostShareMedian": 0.6194294121388676,
+      "cppEvaluatorScopesMedianMs": 21.804541,
+      "ordinaryWarmPublicMedianMs": 245.3771659999993,
+      "exactExpectedAnswerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    },
+    {
+      "readers": 1,
+      "kind": "sql_projection_40000",
+      "profiledWarmSamples": 3,
+      "profiledMedianMs": {
+        "publicWallMs": 180.97679100000005,
+        "sdkAwaitUnionWallMs": 36.0787509999991,
+        "transportOutsideSdkAwaitWallMs": 87.36899900000117,
+        "typedResultAssemblyWallMs": 54.86295799999971,
+        "templateTransportWallMs": 0.6255000000001019
+      },
+      "explicitHostScopesMedianMs": 144.77899900000102,
+      "explicitHostShareMedian": 0.7999865518667584,
+      "cppEvaluatorScopesMedianMs": null,
+      "ordinaryWarmPublicMedianMs": 169.3563749999994,
+      "exactExpectedAnswerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    },
+    {
+      "readers": 1,
+      "kind": "native_count",
+      "profiledWarmSamples": 3,
+      "profiledMedianMs": {
+        "publicWallMs": 34.03120800000033,
+        "sdkAwaitUnionWallMs": 33.60429100000147,
+        "transportOutsideSdkAwaitWallMs": 0.3806250000034197,
+        "typedResultAssemblyWallMs": 0.0566659999985859,
+        "templateTransportWallMs": 0.480916000000434
+      },
+      "explicitHostScopesMedianMs": 0.4372910000020056,
+      "explicitHostShareMedian": 0.013188083095801642,
+      "cppEvaluatorScopesMedianMs": 15.457333,
+      "ordinaryWarmPublicMedianMs": 34.325417000000016,
+      "exactExpectedAnswerSha256": "e2216faa87385ed54d7084b0762bc71c0d3f32b55b883ae4c9fe93657ce6ecb2"
+    },
+    {
+      "readers": 1,
+      "kind": "sql_count",
+      "profiledWarmSamples": 3,
+      "profiledMedianMs": {
+        "publicWallMs": 14.47729099999924,
+        "sdkAwaitUnionWallMs": 14.057958999999755,
+        "transportOutsideSdkAwaitWallMs": 0.30670900000041,
+        "typedResultAssemblyWallMs": 0.04125000000021828,
+        "templateTransportWallMs": 0.48504200000024866
+      },
+      "explicitHostScopesMedianMs": 0.3495419999999285,
+      "explicitHostShareMedian": 0.024549793676573166,
+      "cppEvaluatorScopesMedianMs": null,
+      "ordinaryWarmPublicMedianMs": 15.019125000000713,
+      "exactExpectedAnswerSha256": "e2216faa87385ed54d7084b0762bc71c0d3f32b55b883ae4c9fe93657ce6ecb2"
+    },
+    {
+      "readers": 4,
+      "kind": "tiny_constant",
+      "profiledWarmSamples": 12,
+      "profiledMedianMs": {
+        "publicWallMs": 9.599124999998821,
+        "sdkAwaitUnionWallMs": 9.289790999997422,
+        "transportOutsideSdkAwaitWallMs": 0.1745840000021417,
+        "typedResultAssemblyWallMs": 0.012040999999953783,
+        "templateTransportWallMs": 0.6506250000002183
+      },
+      "explicitHostScopesMedianMs": 0.19208299999627343,
+      "explicitHostShareMedian": 0.019867331658069563,
+      "cppEvaluatorScopesMedianMs": 0.010791,
+      "ordinaryWarmPublicMedianMs": 9.835499999999229,
+      "exactExpectedAnswerSha256": "a92b0f69ea975a4f24535e29afaa28914750b7ca4cf4f9fc09a833a8b856fbc6"
+    },
+    {
+      "readers": 4,
+      "kind": "native_projection_40000",
+      "profiledWarmSamples": 12,
+      "profiledMedianMs": {
+        "publicWallMs": 469.5955419999991,
+        "sdkAwaitUnionWallMs": 355.2557459999989,
+        "transportOutsideSdkAwaitWallMs": 61.23737599999913,
+        "typedResultAssemblyWallMs": 42.84412499999962,
+        "templateTransportWallMs": 0.9758750000000873
+      },
+      "explicitHostScopesMedianMs": 105.12971000000107,
+      "explicitHostShareMedian": 0.23480549788372007,
+      "cppEvaluatorScopesMedianMs": 25.639875,
+      "ordinaryWarmPublicMedianMs": 466.74466700000085,
+      "exactExpectedAnswerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    },
+    {
+      "readers": 4,
+      "kind": "sql_projection_40000",
+      "profiledWarmSamples": 12,
+      "profiledMedianMs": {
+        "publicWallMs": 442.34108299999934,
+        "sdkAwaitUnionWallMs": 325.6555429999953,
+        "transportOutsideSdkAwaitWallMs": 65.07637399997839,
+        "typedResultAssemblyWallMs": 43.861166000000594,
+        "templateTransportWallMs": 1.3426670000008016
+      },
+      "explicitHostScopesMedianMs": 114.82716500002425,
+      "explicitHostShareMedian": 0.2594218518370947,
+      "cppEvaluatorScopesMedianMs": null,
+      "ordinaryWarmPublicMedianMs": 438.4055840000001,
+      "exactExpectedAnswerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    },
+    {
+      "readers": 4,
+      "kind": "native_count",
+      "profiledWarmSamples": 12,
+      "profiledMedianMs": {
+        "publicWallMs": 44.462374999999156,
+        "sdkAwaitUnionWallMs": 44.1089999999931,
+        "transportOutsideSdkAwaitWallMs": 0.19658400000844267,
+        "typedResultAssemblyWallMs": 0.027457999996840954,
+        "templateTransportWallMs": 0.4915419999997539
+      },
+      "explicitHostScopesMedianMs": 0.23641800000768853,
+      "explicitHostShareMedian": 0.004810459231324083,
+      "cppEvaluatorScopesMedianMs": 17.397791,
+      "ordinaryWarmPublicMedianMs": 45.638584000000264,
+      "exactExpectedAnswerSha256": "e2216faa87385ed54d7084b0762bc71c0d3f32b55b883ae4c9fe93657ce6ecb2"
+    },
+    {
+      "readers": 4,
+      "kind": "sql_count",
+      "profiledWarmSamples": 12,
+      "profiledMedianMs": {
+        "publicWallMs": 19.04241700000057,
+        "sdkAwaitUnionWallMs": 18.709960000000137,
+        "transportOutsideSdkAwaitWallMs": 0.15154199999960838,
+        "typedResultAssemblyWallMs": 0.022625000001426088,
+        "templateTransportWallMs": 0.43412499999976717
+      },
+      "explicitHostScopesMedianMs": 0.1736669999991136,
+      "explicitHostShareMedian": 0.008860486181551323,
+      "cppEvaluatorScopesMedianMs": null,
+      "ordinaryWarmPublicMedianMs": 20.325417000000016,
+      "exactExpectedAnswerSha256": "e2216faa87385ed54d7084b0762bc71c0d3f32b55b883ae4c9fe93657ce6ecb2"
+    },
+    {
+      "readers": 16,
+      "kind": "tiny_constant",
+      "profiledWarmSamples": 48,
+      "profiledMedianMs": {
+        "publicWallMs": 27.504750000000058,
+        "sdkAwaitUnionWallMs": 26.87479099999473,
+        "transportOutsideSdkAwaitWallMs": 0.16724900000554044,
+        "typedResultAssemblyWallMs": 0.0070410000007541385,
+        "templateTransportWallMs": 2.136125000000902
+      },
+      "explicitHostScopesMedianMs": 0.18195899999773246,
+      "explicitHostShareMedian": 0.006624323698847519,
+      "cppEvaluatorScopesMedianMs": 0.011124,
+      "ordinaryWarmPublicMedianMs": 30.324500000002445,
+      "exactExpectedAnswerSha256": "a92b0f69ea975a4f24535e29afaa28914750b7ca4cf4f9fc09a833a8b856fbc6"
+    },
+    {
+      "readers": 16,
+      "kind": "native_projection_40000",
+      "profiledWarmSamples": 48,
+      "profiledMedianMs": {
+        "publicWallMs": 1597.586457999998,
+        "sdkAwaitUnionWallMs": 1485.3227949999964,
+        "transportOutsideSdkAwaitWallMs": 63.23241399999097,
+        "typedResultAssemblyWallMs": 42.83024999999907,
+        "templateTransportWallMs": 1.1063340000000608
+      },
+      "explicitHostScopesMedianMs": 108.10591600000043,
+      "explicitHostShareMedian": 0.06574790372089388,
+      "cppEvaluatorScopesMedianMs": 22.762333,
+      "ordinaryWarmPublicMedianMs": 1599.7069579999988,
+      "exactExpectedAnswerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    },
+    {
+      "readers": 16,
+      "kind": "sql_projection_40000",
+      "profiledWarmSamples": 48,
+      "profiledMedianMs": {
+        "publicWallMs": 1401.277667000002,
+        "sdkAwaitUnionWallMs": 1294.010667999988,
+        "transportOutsideSdkAwaitWallMs": 60.49187500001426,
+        "typedResultAssemblyWallMs": 39.49925000000076,
+        "templateTransportWallMs": 1.3450830000001588
+      },
+      "explicitHostScopesMedianMs": 101.65395500000159,
+      "explicitHostShareMedian": 0.07568441599118862,
+      "cppEvaluatorScopesMedianMs": null,
+      "ordinaryWarmPublicMedianMs": 1417.8612920000014,
+      "exactExpectedAnswerSha256": "d8629b972bba17a1324087b1b8c5930276d4865b8403f5041a9e4ed17bfc5d52"
+    },
+    {
+      "readers": 16,
+      "kind": "native_count",
+      "profiledWarmSamples": 48,
+      "profiledMedianMs": {
+        "publicWallMs": 96.72354199999972,
+        "sdkAwaitUnionWallMs": 96.0659169999999,
+        "transportOutsideSdkAwaitWallMs": 0.16133400000398979,
+        "typedResultAssemblyWallMs": 0.016541000004508533,
+        "templateTransportWallMs": 0.873833999998169
+      },
+      "explicitHostScopesMedianMs": 0.18579200000385754,
+      "explicitHostShareMedian": 0.001991574862666417,
+      "cppEvaluatorScopesMedianMs": 15.856168,
+      "ordinaryWarmPublicMedianMs": 103.48170799999934,
+      "exactExpectedAnswerSha256": "e2216faa87385ed54d7084b0762bc71c0d3f32b55b883ae4c9fe93657ce6ecb2"
+    },
+    {
+      "readers": 16,
+      "kind": "sql_count",
+      "profiledWarmSamples": 48,
+      "profiledMedianMs": {
+        "publicWallMs": 39.836708000002545,
+        "sdkAwaitUnionWallMs": 39.577459000007366,
+        "transportOutsideSdkAwaitWallMs": 0.09916699999303091,
+        "typedResultAssemblyWallMs": 0.011167000004206784,
+        "templateTransportWallMs": 0.7535420000058366
+      },
+      "explicitHostScopesMedianMs": 0.11174899999605259,
+      "explicitHostShareMedian": 0.0027754963723763187,
+      "cppEvaluatorScopesMedianMs": null,
+      "ordinaryWarmPublicMedianMs": 41.149334000001545,
+      "exactExpectedAnswerSha256": "e2216faa87385ed54d7084b0762bc71c0d3f32b55b883ae4c9fe93657ce6ecb2"
+    }
+  ],
+  "limitations": [
+    "Read-only synthetic concurrent waves on one diagnostic build.",
+    "SDK await wall includes engine work, Node scheduling and binding waits. Explicit host scopes are wall intervals, not JS CPU.",
+    "Four C++ evaluator phases sit within SDK await wall, alongside DuckDB and scheduling work.",
+    "Three warm waves per mode and reader tier. The Rust comparison follows acceptance."
+  ]
+}

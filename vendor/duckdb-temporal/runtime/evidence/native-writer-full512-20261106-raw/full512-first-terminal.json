@@ -1,0 +1,21 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "--test-name-pattern=^independent full512 native patch trace retains every returned cut and restores all256 entities$",
+    "build/adapter/test-sdk-admission-independent.js"
+  ],
+  "startedAtUtc": "2026-11-06T06:40:27.206444+00:00",
+  "sourceCommit": "0eb57f6aa62632eae25acc709987d34f594905ea",
+  "unchangedTestSource": "d9137f5c53b94dec813ee3e490b69e22d31defe7",
+  "environment": {
+    "UV_THREADPOOL_SIZE": "4",
+    "TD_SDK_ADMISSION_SOURCE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "TD_SDK_ADMISSION_RECIPE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json"
+  },
+  "pid": 61169,
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T06:41:16.710942+00:00"
+}

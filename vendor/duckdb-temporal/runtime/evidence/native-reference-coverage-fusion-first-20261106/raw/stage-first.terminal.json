@@ -1,0 +1,11 @@
+{
+  "phase": "stage-first",
+  "pid": 87471,
+  "command": [
+    "<task>/.venv/bin/python",
+    "<task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/build/qualification-reference-coverage-fusion-20261106-01/stage-selected.py"
+  ],
+  "startedAtUtc": "2026-11-06T12:00:20.755508+00:00",
+  "endedAtUtc": "2026-11-06T12:00:22.022841+00:00",
+  "exitCode": 0
+}

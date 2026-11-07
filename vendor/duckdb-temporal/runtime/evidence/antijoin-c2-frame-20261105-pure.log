@@ -1,0 +1,30 @@
+✔ only three fixed B-native arms are allowed and numerical baseline labels remain intact (3.720834ms)
+✔ undeclared thread, admission, UV and client changes are rejected (1.422875ms)
+✔ original budgets, profile limits, native binding, fixed artifacts and source recipe cannot drift (1.631208ms)
+✔ small correctness screen preserves each arm and its runtime while changing only declared sample scope (1.591542ms)
+✔ common harness, unchanged native helper and exact reference runtime are bound separately (0.768125ms)
+✔ anti-join cut oracle agrees with an independent sequential map through repeated correction cycles (64.651041ms)
+✔ knowledge oracle distinguishes pre-seed, partial atomic seed batches, pinned old state and later corrections (0.612875ms)
+✔ cost query has no entity or measure literal and every patch preserves both typed probe attributes (0.25225ms)
+✔ CLI and larger-scale numeric budget contract reject omitted profiles and changed inputs (1.53375ms)
+✔ bounded admission is FIFO, includes queue time and recovers after an admitted rejection (0.806584ms)
+✔ queued cancellation and deadline never dispatch or disturb the active read (5.595125ms)
+✔ confirmation selects exactly one untouched original numerical profile (4.012042ms)
+✔ declared cap three has effective cap one or three without changing connection counts (1.385792ms)
+✔ mixed profiles, undeclared client or setting changes and wrong profile limits reject (3.564834ms)
+✔ small correctness scope changes only declared sample values and source identity (0.925083ms)
+✔ baseline native artifact recipe and successor harness identities cannot drift (2.289166ms)
+✔ old sixteen-only schema cannot be relabeled as successor one-reader evidence (0.236875ms)
+✔ unchanged original budget remains baseline while selected artifact is candidate (1.703959ms)
+✔ altered original bytes, numeric limits, or baseline identities are rejected (3.022125ms)
+✔ declared candidate cannot replace actual artifact or source hashes (0.335375ms)
+✔ extra native changes, changed build switches and SDK are rejected even when declared (0.463084ms)
+✔ engine and application adapter changes are not part of this native-write candidate (0.348125ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 133.479041

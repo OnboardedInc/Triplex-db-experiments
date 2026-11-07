@@ -1,0 +1,23 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "build/adapter/test-native-presence-intervals.js"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "pid": 18937,
+  "startedAtUtc": "2026-11-06T09:15:39.315322+00:00",
+  "endedAtUtc": "2026-11-06T09:15:53.456743+00:00",
+  "exitCode": 0,
+  "elapsedMs": 14141.078167129308,
+  "environment": {
+    "UV_THREADPOOL_SIZE": "4"
+  },
+  "fixtureLimits": {
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB"
+  }
+}

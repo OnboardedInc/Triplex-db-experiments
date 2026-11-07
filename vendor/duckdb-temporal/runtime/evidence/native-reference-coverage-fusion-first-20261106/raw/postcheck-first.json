@@ -1,0 +1,58 @@
+{
+  "schema": "td.reference-coverage-fusion-focused-first/1",
+  "status": "FIRST_PASS",
+  "sourceCommit": "1a1e261ff3a52ab4b1500247b2cfcc1478ad8765",
+  "createdAtUtc": "2026-11-06T12:03:43.503055+00:00",
+  "tests": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "retries": 0,
+    "testRunnerDurationMs": 11077.039417,
+    "publicProfile": "unchanged readers2/threads1/128MB/64MB; UV4"
+  },
+  "beforeSha256": "3ebc88968d76401bbea836b5e2a2acba08ab1fbc878202ec586fe9400450fc80",
+  "afterSha256": "43d631760c8066aaa6efcb701d3e9c013f67163550340a35e01c4a5c66b869de",
+  "unchanged": {
+    "sources": 43,
+    "dependencies": 395,
+    "routes": 5,
+    "externalEntries": 7,
+    "headers": 36,
+    "node": true,
+    "artifacts": 9,
+    "compiledFiles": 192
+  },
+  "fixtures": [
+    {
+      "database": "build/reference-coverage-ptrDUj/facts.duckdb",
+      "bytes": 9187328,
+      "walAbsent": true,
+      "testProcessExited": true,
+      "closureEvidence": "test finally close plus terminal exit0; no independent database reopen in postcheck"
+    },
+    {
+      "database": "build/reference-coverage-gap-zXVSXh/facts.duckdb",
+      "bytes": 7876608,
+      "walAbsent": true,
+      "testProcessExited": true,
+      "closureEvidence": "test finally close plus terminal exit0; no independent database reopen in postcheck"
+    },
+    {
+      "database": "build/reference-coverage-cycle-oSAzBR/facts.duckdb",
+      "bytes": 7090176,
+      "walAbsent": true,
+      "testProcessExited": true,
+      "closureEvidence": "test finally close plus terminal exit0; no independent database reopen in postcheck"
+    },
+    {
+      "database": "build/reference-coverage-policy-GHIv6e/facts.duckdb",
+      "bytes": 8400896,
+      "walAbsent": true,
+      "testProcessExited": true,
+      "closureEvidence": "test finally close plus terminal exit0; no independent database reopen in postcheck"
+    }
+  ],
+  "scope": "Fresh qualified fusion pair and unchanged4 independent coverage cases only. No speed or full-suite/promotion claim. Explicit precedence/empty-admission limits, larger growth OOM and broader regression/cost gates remain pending."
+}

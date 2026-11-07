@@ -1,0 +1,24 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "--test-name-pattern=^(a native writer transport fatal fences writer, active readers and queued readers with its original cause|ordinary writer transport OOM and an embedded fatal phrase preserve healthy instance reuse)$",
+    "build/adapter/test-fatal.js"
+  ],
+  "pid": 77706,
+  "startedAtUtc": "2026-11-06T07:24:02.799316+00:00",
+  "status": "terminal",
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T07:24:03.735561+00:00",
+  "elapsedMs": 936.24775018543,
+  "tapPass": 2,
+  "expectedSelectedPass": 2,
+  "tapFail": [
+    "0"
+  ],
+  "tapCancelled": [
+    "0"
+  ]
+}

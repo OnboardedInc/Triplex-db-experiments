@@ -1,0 +1,64 @@
+{
+  "schema": "td.native-presence-intervals-sdk-root-review/1",
+  "recordedAtUtc": "2026-11-06T09:53:54.290436+00:00",
+  "status": "accepted_sdk5_isolated_not_full_integration",
+  "evidenceCommit": "4674135bafce0cb5d50e3773c1391848974e9079",
+  "sourceCommit": "43c82a834684b2b3ce8022e333de8368b5d3ad6e",
+  "receiptSha256": "84aa1471f39e6d7d62411be5735d915fdb6dabf9793e8ff1ab1013d4c37ce605",
+  "rawFiles": 11,
+  "packagedHashesAndSizesVerified": true,
+  "sourceReview": "Root reviewed entire40-line SDK delta,186-line five-method test and28-line API docs; same native2f/109 pair and #read causal ownership.",
+  "testPid": 29873,
+  "passed": 5,
+  "settings": {
+    "readerProfilesByMethod": [
+      0,
+      16,
+      2,
+      16,
+      1
+    ],
+    "threadsDefault": 1,
+    "memoryLimitDefault": "128MB",
+    "maxTempDirectorySizeDefault": "64MB",
+    "UV_THREADPOOL_SIZE": "4",
+    "sdkCapsUnchanged": true
+  },
+  "postchecks": {
+    "allBeforeAfterEqual": true,
+    "nativeArtifactCount": 9,
+    "dependencies": 395,
+    "compiledOutputsAndHelpers": 184,
+    "targetedSourceGitPins": 41,
+    "headers": 36,
+    "routes": 5,
+    "compilerEntries": 7,
+    "diskFixtures": [
+      {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-sdk-VmBmvY/facts.duckdb",
+        "bytes": 6565888,
+        "sha256": "3d6c561584c1498a451ff73b1836acb76fee26909a2438b84e6d88d7a3b0ce4d",
+        "walPresent": false
+      },
+      {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-sdk-dUewdo/facts.duckdb",
+        "bytes": 6565888,
+        "sha256": "3af80ee43b6108e2b604e87b6572fcd2573080aa0388b62de02a897fcaad7c68",
+        "walPresent": false
+      }
+    ],
+    "allDiskFixturesClosedNoWal": true,
+    "memoryMethods": 3,
+    "memoryClosure": "NativeEntityStore.close in finally and successful test process exit.",
+    "details": "native-presence-intervals-sdk-20261106-raw/post-first.json"
+  },
+  "preservedSetupStop": {
+    "record": "native-presence-intervals-sdk-20261106-raw/compile-delta-first-failure.json",
+    "toolChunk": "e19628",
+    "testsStartedBeforeStop": false,
+    "reason": "Sorted actual delta compared to unsorted expected lists; exact same path sets and bytes.",
+    "correction": "Normalize both path lists; original before-first/failure unchanged. No source, native, dependency, cap or oracle repair.",
+    "originalProcessPidCaptured": false
+  },
+  "scope": "Thin SDK actual C++ endpoint, prior-write barrier/readers0+16, native cap errors/reuse/Unicode/replay/reopen and malformed-wire decode after real execution. Pool16 hold is after native completion; no16-native-CPU or performance/full-verifier claim."
+}

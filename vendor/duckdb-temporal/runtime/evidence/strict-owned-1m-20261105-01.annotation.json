@@ -1,0 +1,8 @@
+{
+  "schema": "temporal-benchmark-annotation/1",
+  "sourceEvidence": "strict-owned-1m-20261105-01.json",
+  "sourceSha256": "ffb8c090d0ac672a6533116f9757647d845bf53438da889635a16a3e1f295748",
+  "reportedBy": "orchestrator",
+  "reportedActivity": "A TypeScript check ran briefly during the 16-reader stage around 14:24 UTC; the orchestrator stopped further compiler activity.",
+  "interpretation": "Retain the complete original samples as a screening run with possible compiler interference. Confirm the 16-reader tier in a separate exclusive run."
+}

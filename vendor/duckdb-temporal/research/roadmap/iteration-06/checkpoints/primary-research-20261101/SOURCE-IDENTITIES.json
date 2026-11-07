@@ -1,0 +1,219 @@
+{
+  "schema": "item6-cross-lane-research-synthesis-source-identities/v1",
+  "packet": "goal6-research-synthesis/draft-001",
+  "date_utc": "2026-11-01",
+  "status": "AUTHOR_DRAFT_FOR_INDEPENDENT_SYNTHESIS_PEER_NOT_OVERALL_CLOSURE",
+  "author_role": {
+    "authored_D": true,
+    "this_is_independent_D_review": false,
+    "independent_D_evidence": "C correctness-001 review",
+    "not_selected": [
+      "source contract",
+      "implementation",
+      "algorithm",
+      "quota",
+      "logical unit schedule",
+      "cancellation protocol",
+      "execution plan",
+      "overall acceptance",
+      "publication or action permission"
+    ]
+  },
+  "review_status_at_handoff": {
+    "heavy_lanes_A_B_D": "FROZEN",
+    "D": "Scoped independent C review closed; not implementation/runtime closure.",
+    "B": "Scoped independent C review closed with nonblocking wording/citation qualifications; not implementation/runtime closure.",
+    "A": "Coordinator reports scoped source peer closed; frozen independent B erratum delta closes P2-01/P2-02 only for source/citation precision. Original peer qualifications, including incomplete public-source-content rehash, survive. Initial review not newly re-audited by this synthesis.",
+    "synthesis": "DRAFT; independent peer pending.",
+    "older_goals": "4/4.1/5 incomplete; all ITEM6 empirical checks UNRUN."
+  },
+  "sources": [
+    {
+      "lane": "A",
+      "owner_role": "APIv2/cancellation/error/ownership research",
+      "prefix": ".agent-logs/goal6-v2-cancellation-primary/research-001/",
+      "read_scope": "Complete REPORT and SOURCES-AND-LIMITS; focused manifest status/source/identity metadata. No raw acquisition response or registry payload opened.",
+      "files": [
+        {
+          "file": "REPORT.md",
+          "sha256": "ed508f8f74bb8b5ad818127b4ce8cbab9b230c246bfb930b1220f0280290b51e"
+        },
+        {
+          "file": "SOURCES-AND-LIMITS.md",
+          "sha256": "9402d42f858f9756b00443fa2537fa3e156b113281fb9e93174391e099ea0f07"
+        },
+        {
+          "file": "MANIFEST.json",
+          "sha256": "db710b3ffa62282e0c204b305b417676cd082e6bd235590a7c13ebf0a2d19d69"
+        }
+      ]
+    },
+    {
+      "lane": "A_additive_erratum",
+      "owner_role": "A's separately additive citation/deadline precision; originals frozen",
+      "prefix": ".agent-logs/goal6-v2-cancellation-primary/additive-errata-001/",
+      "read_scope": "Complete named ERRATA and PROVENANCE texts; no retained acquisition payload or fresh public source read.",
+      "files": [
+        {
+          "file": "ERRATA.md",
+          "sha256": "7e7cb845f3cc5a3aa354b1f611e24ab3f0c8edbd1b0b58400c22d0ea47b11f9d"
+        },
+        {
+          "file": "PROVENANCE.md",
+          "sha256": "4621a7980d208bfebd57097e8279f666962f89fc9c282265c8865178953f3eaf"
+        }
+      ]
+    },
+    {
+      "lane": "B_A_erratum_peer",
+      "owner_role": "Independent B delta review of A's additive precision",
+      "prefix": ".agent-logs/goal6-v2-primary-actual-peer/revision-001/",
+      "read_scope": "Complete frozen 20-ERRATUM-DELTA; source checks and surviving original-peer qualifications attributed to that peer, not repeated.",
+      "files": [
+        {
+          "file": "20-ERRATUM-DELTA.md",
+          "sha256": "25b8bfa8afd1aafb9909481fe668042de422f37c9fa130f0dfc44fe97c242df1"
+        }
+      ]
+    },
+    {
+      "lane": "B",
+      "owner_role": "Resource/algorithm theory",
+      "prefix": ".agent-logs/goal6-resource-theory-primary/research-001/",
+      "read_scope": "Complete named narrative, mathematical, primary-source, public-gap and open-question documents; focused manifest metadata. No new public source acquisition.",
+      "files": [
+        {
+          "file": "RESEARCH.md",
+          "sha256": "4fefef3b781f877b75037616f6b03ccf4984e87ed00526d11a8b8fb478164cca"
+        },
+        {
+          "file": "DERIVED-BOUNDS.md",
+          "sha256": "d23c0461ffd23b3625f7ab0e8b3084dba669c083e08022823f18b331a773961b"
+        },
+        {
+          "file": "PRIMARY-SOURCES.md",
+          "sha256": "9445280859c31bbcca0774e46b818cbeaff7cd72391238cdb617ca45e7212051"
+        },
+        {
+          "file": "PUBLIC-READ-GAPS.md",
+          "sha256": "1739e1ca15b9297811ffbbee53074b91203ae8152640acfeaa1b84ddf8154191"
+        },
+        {
+          "file": "OPEN-QUESTIONS.md",
+          "sha256": "97f8d32b72caad9fe2e978785ed6488e4982be200203c4c31de2655ca181376e"
+        },
+        {
+          "file": "MANIFEST.json",
+          "sha256": "f2c2e75a7f01978f78b5d738ec039b99c2d20b13080c05a50be0a23838d1cc06"
+        }
+      ]
+    },
+    {
+      "lane": "D",
+      "owner_role": "This author's frozen cancellation/correctness and adversarial-oracle research",
+      "prefix": ".agent-logs/goal6-cancellation-correctness-primary/research-001/",
+      "read_scope": "Existing full author/freeze reads reused and all named input identities rechecked unchanged; not a new independent D review.",
+      "files": [
+        {
+          "file": "10-RESEARCH.md",
+          "sha256": "6c5c455d6e9450426c04b0230c0c60a4eca1c65a3db2e34edb7d7467ec7cadd8"
+        },
+        {
+          "file": "20-ACCEPTANCE-OBLIGATIONS.md",
+          "sha256": "28f534bb92ef3a15bd133aa97fe31480a13e0a1d4eb60a021f44609d897d70bd"
+        },
+        {
+          "file": "30-HAND-FIXTURE-SPECS.md",
+          "sha256": "ba44e1d2b12e6322f47a56335dca0b71d0b267aad060e9fcad7477dc8e782d8c"
+        },
+        {
+          "file": "40-SOURCE-LEDGER.md",
+          "sha256": "4619882b9b87de39d67744a8f07ef382034438d8a82040debd62f561d24e4a25"
+        },
+        {
+          "file": "MANIFEST.json",
+          "sha256": "783e05b3296ae5f0617571afa8daeafe101e64918aad2ec2e46b468057f365f8"
+        }
+      ]
+    },
+    {
+      "lane": "C_D_peer",
+      "owner_role": "Independent C review of D",
+      "prefix": ".agent-logs/goal6-primary-actual-peer/correctness-001/",
+      "read_scope": "Complete frozen 10-REVIEW; independent-source checks attributed to that peer, not repeated.",
+      "files": [
+        {
+          "file": "10-REVIEW.md",
+          "sha256": "d81e5df141cf5e24179c3985b5d273fce57b029c9e19575c6893487608c7419b"
+        }
+      ]
+    },
+    {
+      "lane": "C_B_peer",
+      "owner_role": "Independent C review of B",
+      "prefix": ".agent-logs/goal6-primary-actual-peer/resource-001/",
+      "read_scope": "Complete frozen 10-REVIEW; mathematical/citation precision integrated additively, originals unchanged.",
+      "files": [
+        {
+          "file": "10-REVIEW.md",
+          "sha256": "69acfd2f302ff3dff9a0446076ccd52de994e0d3c9e6e54eb4613a742119bf15"
+        }
+      ]
+    }
+  ],
+  "input_identity_check": "All supplied A/B/C/D and additive erratum/delta identities matched; supplemental B primary/gap/question/manifest hashes recorded from literal permitted files. INPUT-SHA256SUMS preserves and rechecks the 19 selected file identities.",
+  "source_target": {
+    "repository": "duckdb/duckdb",
+    "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "declared_API": "unstable C APIv2 / v2.0.0 per A source metadata",
+    "not_installed_observation": true
+  },
+  "carried_qualifications": [
+    "B supplementary scalar can use two unicode escapes (12 bytes); conditional 6B+2 bound remains valid; no JSON format selected.",
+    "Finite-ground atoms/domain locator is semiring v5 section2.3; program grounding section4.3, not section2.4.",
+    "Final poll rejects only already-observed requests; later prepublication race needs a future contract.",
+    "Ordinary interrupt suppression in one explicit successful-commit path is not blanket deadline immunity or proof of every commit path.",
+    "Deadline256 uses persistent thread_local counter incremented on eligible deadline-valid checks; not a per-query work/time quantum."
+  ],
+  "coordinator_routed_A_peer_precision": {
+    "provenance": "Initial coordinator precision was subsequently reconciled with the three exact frozen erratum/provenance/independent-delta texts identified above. Original before-progress open labels remain historical.",
+    "vector_reference_locator": "api_spec/v2/vector/vector.yaml lines512-527",
+    "arena_lifetime_locators": [
+      "api_spec/v2/vector/vector.yaml lines698-708",
+      "api_spec/v2/common/common.yaml lines130-135"
+    ],
+    "limit": "Reference locator does not establish arena lifetime. Exact additive delta closes P2-01/P2-02 for source/citation precision only. Surviving original-peer qualifications and synthesis/overall openness are preserved; no fresh primary acquisition or runtime acceptance claimed."
+  },
+  "failed_read_history_preserved": {
+    "A": "Three known NOT_FOUND topics, prior web cache misses and an unrelied-on truncated optional documentation open remain as recorded; bounded surface findings are not API-wide absence.",
+    "B": "Explicit DataFusion version and pinned include-tree failed reads stay stopped; successful latest-page evidence is limited and not an immutable-version/source audit.",
+    "C_B": "Supplementary DuckDB memory-management article read failed; not newly acquired or independently corroborated here.",
+    "D": "Thirteen pinned-file unavailable reads and ARIES full-text timeout remain historical gaps. A's separately authorized evidence does not retroactively change D read outcomes or automatically close every selected-design obligation."
+  },
+  "cross_lane_result": "No new material cross-lane contradiction identified. Compatible source constraints, conditional mathematical bounds and unselected options are not implementation/overall acceptance.",
+  "performance_status": "Only unmeasured hypotheses on copies/lifetimes, payload/index reuse, candidate reduction, incremental reservation/batching and polling tradeoffs; no selected algorithm, quota, quantum, forecast, benchmark or experiment.",
+  "activity": {
+    "new_public_acquisitions": 0,
+    "raw_acquisition_payload_reads": 0,
+    "old_stopped_or_paused_material_reads_or_reconstruction": 0,
+    "other_owners_path_edits": 0,
+    "implementation_or_executable_plan_created": 0,
+    "runtime_import_parser_AST_protocol_feed_generator_fixture_test_probe_compiler_native_host_calls": 0,
+    "computer_environment_snapshot_or_detail_collection": 0,
+    "Git_Page_or_other_external_writes": 0,
+    "deletions": 0,
+    "Codex_tasks": 0,
+    "failed_primary_or_action_retries": 0,
+    "own_new_local_draft_text_hash_utilities_only": true
+  },
+  "outputs": [
+    "00-PROGRESS-BEFORE.md",
+    "RESEARCH-SYNTHESIS.md",
+    "SOURCE-IDENTITIES.json",
+    "70-PROGRESS-AFTER.md",
+    "INPUT-SHA256SUMS",
+    "SHA256SUMS"
+  ],
+  "output_identity_policy": "SHA256SUMS identifies the other five draft artifacts; its own SHA-256 is separately reported at handoff.",
+  "next": "Independent synthesis peer before any publication. Primary source-peer scopes closed at their stated limits; selected contract, implementation and overall acceptance remain open. No implementation or action authority follows."
+}

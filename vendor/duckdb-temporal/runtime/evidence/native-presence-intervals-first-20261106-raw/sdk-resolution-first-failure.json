@@ -1,0 +1,19 @@
+{
+  "schema": "td.presence-first-setup-failure/1",
+  "observedAtUtc": "2026-11-06T09:13:44.630574+00:00",
+  "phase": "SDK path resolution before companion or test load",
+  "status": "failed_setup",
+  "attempt": 1,
+  "operation": "createRequire(bindings).resolve('@duckdb/node-bindings-darwin-arm64')",
+  "errorCode": "MODULE_NOT_FOUND",
+  "errorMessage": "Cannot find module '@duckdb/node-bindings-darwin-arm64'",
+  "nodeVersion": "v24.13.0",
+  "processPid": "not captured",
+  "originalToolChunk": "b6f488",
+  "cause": "Platform package has no bare-package entry point; production loader resolves its duckdb.node subpath.",
+  "coreBuildStartedAfterFailure": true,
+  "corePid": 17982,
+  "repair": "Change only resolver subpath to @duckdb/node-bindings-darwin-arm64/duckdb.node; verify actual paired libduckdb before companion.",
+  "productionSourceChanged": false,
+  "dependencyBytesChanged": false
+}

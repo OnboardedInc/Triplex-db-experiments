@@ -1,0 +1,67 @@
+SELECT DISTINCT ("string" AS ?v0_type) (?b0_value AS ?v0_value) (?b0_value AS ?v0_order) (?b1_type AS ?v1_type) (?b1_value AS ?v1_value) (?b1_order AS ?v1_order) (?b2_type AS ?v2_type) (?b2_value AS ?v2_value) (?b2_order AS ?v2_order) (?b3_type AS ?v3_type) (?b3_value AS ?v3_value) (?b3_order AS ?v3_order) (?b4_type AS ?v4_type) (?b4_value AS ?v4_value) (?b4_order AS ?v4_order) (?b5_type AS ?v5_type) (?b5_value AS ?v5_value) (?b5_order AS ?v5_order) (?b6_type AS ?v6_type) (?b6_value AS ?v6_value) (?b6_order AS ?v6_order) WHERE { { SELECT ?assertion0 ?b0_value ?b1_type ?b1_value ?b1_order WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> {
+?assertion0 <urn:triplex:field:entity_id> ?b0_value .
+?assertion0 <urn:triplex:field:attribute> ":conf/code" .
+?assertion0 <urn:triplex:field:scalar_family> ?b1_type ; <urn:triplex:field:scalar_lexical> ?b1_value ; <urn:triplex:field:scalar_order> ?b1_order .
+?assertion0 <urn:triplex:field:valid_from_order> ?validFrom0 ; <urn:triplex:field:recorded_position_order> ?recorded0 .
+FILTER(?validFrom0 <= "c33fffffffffffff" && ?recorded0 <= "bff0000000000000")
+OPTIONAL { ?assertion0 <urn:triplex:field:valid_to_order> ?validTo0 . }
+OPTIONAL { ?assertion0 <urn:triplex:field:retracted_position_order> ?retracted0 .  }
+FILTER(!BOUND(?validTo0) || ?validTo0 > "c33fffffffffffff")
+FILTER(!BOUND(?retracted0) || ?retracted0 > "bff0000000000000")
+} } }
+{ SELECT ?assertion1 ?b0_value ?b2_type ?b2_value ?b2_order WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> {
+?assertion1 <urn:triplex:field:entity_id> ?b0_value .
+?assertion1 <urn:triplex:field:attribute> ":conf/count" .
+?assertion1 <urn:triplex:field:scalar_family> ?b2_type ; <urn:triplex:field:scalar_lexical> ?b2_value ; <urn:triplex:field:scalar_order> ?b2_order .
+?assertion1 <urn:triplex:field:valid_from_order> ?validFrom1 ; <urn:triplex:field:recorded_position_order> ?recorded1 .
+FILTER(?validFrom1 <= "c33fffffffffffff" && ?recorded1 <= "bff0000000000000")
+OPTIONAL { ?assertion1 <urn:triplex:field:valid_to_order> ?validTo1 . }
+OPTIONAL { ?assertion1 <urn:triplex:field:retracted_position_order> ?retracted1 .  }
+FILTER(!BOUND(?validTo1) || ?validTo1 > "c33fffffffffffff")
+FILTER(!BOUND(?retracted1) || ?retracted1 > "bff0000000000000")
+} } }
+{ SELECT ?assertion2 ?b0_value ?b3_type ?b3_value ?b3_order WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> {
+?assertion2 <urn:triplex:field:entity_id> ?b0_value .
+?assertion2 <urn:triplex:field:attribute> ":conf/enabled" .
+?assertion2 <urn:triplex:field:scalar_family> ?b3_type ; <urn:triplex:field:scalar_lexical> ?b3_value ; <urn:triplex:field:scalar_order> ?b3_order .
+?assertion2 <urn:triplex:field:valid_from_order> ?validFrom2 ; <urn:triplex:field:recorded_position_order> ?recorded2 .
+FILTER(?validFrom2 <= "c33fffffffffffff" && ?recorded2 <= "bff0000000000000")
+OPTIONAL { ?assertion2 <urn:triplex:field:valid_to_order> ?validTo2 . }
+OPTIONAL { ?assertion2 <urn:triplex:field:retracted_position_order> ?retracted2 .  }
+FILTER(!BOUND(?validTo2) || ?validTo2 > "c33fffffffffffff")
+FILTER(!BOUND(?retracted2) || ?retracted2 > "bff0000000000000")
+} } }
+{ SELECT ?assertion3 ?b0_value ?b4_type ?b4_value ?b4_order WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> {
+?assertion3 <urn:triplex:field:entity_id> ?b0_value .
+?assertion3 <urn:triplex:field:attribute> ":conf/instant" .
+?assertion3 <urn:triplex:field:scalar_family> ?b4_type ; <urn:triplex:field:scalar_lexical> ?b4_value ; <urn:triplex:field:scalar_order> ?b4_order .
+?assertion3 <urn:triplex:field:valid_from_order> ?validFrom3 ; <urn:triplex:field:recorded_position_order> ?recorded3 .
+FILTER(?validFrom3 <= "c33fffffffffffff" && ?recorded3 <= "bff0000000000000")
+OPTIONAL { ?assertion3 <urn:triplex:field:valid_to_order> ?validTo3 . }
+OPTIONAL { ?assertion3 <urn:triplex:field:retracted_position_order> ?retracted3 .  }
+FILTER(!BOUND(?validTo3) || ?validTo3 > "c33fffffffffffff")
+FILTER(!BOUND(?retracted3) || ?retracted3 > "bff0000000000000")
+} } }
+{ SELECT ?assertion4 ?b0_value ?b5_type ?b5_value ?b5_order WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> {
+?assertion4 <urn:triplex:field:entity_id> ?b0_value .
+?assertion4 <urn:triplex:field:attribute> ":conf/data" .
+?assertion4 <urn:triplex:field:scalar_family> ?b5_type ; <urn:triplex:field:scalar_lexical> ?b5_value ; <urn:triplex:field:scalar_order> ?b5_order .
+?assertion4 <urn:triplex:field:valid_from_order> ?validFrom4 ; <urn:triplex:field:recorded_position_order> ?recorded4 .
+FILTER(?validFrom4 <= "c33fffffffffffff" && ?recorded4 <= "bff0000000000000")
+OPTIONAL { ?assertion4 <urn:triplex:field:valid_to_order> ?validTo4 . }
+OPTIONAL { ?assertion4 <urn:triplex:field:retracted_position_order> ?retracted4 .  }
+FILTER(!BOUND(?validTo4) || ?validTo4 > "c33fffffffffffff")
+FILTER(!BOUND(?retracted4) || ?retracted4 > "bff0000000000000")
+} } }
+{ SELECT ?assertion5 ?b0_value ?b6_type ?b6_value ?b6_order WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> {
+?assertion5 <urn:triplex:field:entity_id> ?b0_value .
+?assertion5 <urn:triplex:field:attribute> ":conf/owner" .
+?assertion5 <urn:triplex:field:scalar_family> ?b6_type ; <urn:triplex:field:scalar_lexical> ?b6_value ; <urn:triplex:field:scalar_order> ?b6_order .
+?assertion5 <urn:triplex:field:valid_from_order> ?validFrom5 ; <urn:triplex:field:recorded_position_order> ?recorded5 .
+FILTER(?validFrom5 <= "c33fffffffffffff" && ?recorded5 <= "bff0000000000000")
+OPTIONAL { ?assertion5 <urn:triplex:field:valid_to_order> ?validTo5 . }
+OPTIONAL { ?assertion5 <urn:triplex:field:retracted_position_order> ?retracted5 .  }
+FILTER(!BOUND(?validTo5) || ?validTo5 > "c33fffffffffffff")
+FILTER(!BOUND(?retracted5) || ?retracted5 > "bff0000000000000")
+} } }
+ } LIMIT 1001

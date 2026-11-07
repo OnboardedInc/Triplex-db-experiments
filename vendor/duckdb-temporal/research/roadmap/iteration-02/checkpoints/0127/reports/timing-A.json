@@ -1,0 +1,380 @@
+{
+  "status": "PASS_FULL_CAPTURED_EXIT_STATUS_PROVENANCE_SEQUENCE_AND_PUBLIC_RESULTS",
+  "comparison": "reader_implementation",
+  "study_manifest_sha256": "5a8277b3fdb12a4fd4f79ebad4e49504db1671aabc4a083d5af0b0bf46ca87b2",
+  "paired_units": 42,
+  "fresh_processes": 84,
+  "measured": 3528,
+  "warmup": 2352,
+  "all5880_outcomes_pass": true,
+  "technical_repetitions_not_independent_samples": true,
+  "ratio_direction": "reader-only/baseline; >1 slower",
+  "endpoint": "Original public statement-level result=fn assignment interval; prior result disposal may occur before stop; external benchmark normalize/checks after stop",
+  "fixed_native_artifact": true,
+  "controls": [
+    {
+      "control": "float256-query",
+      "shape": "float256",
+      "api": "query",
+      "rows": 256,
+      "float_cells": 256,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 3718574.5,
+      "proposed_median_ns": 3666330.0,
+      "median_paired_ratio": 0.9828693872059142,
+      "bootstrap95_interval": [
+        0.9361367709310633,
+        1.0168718633290081
+      ],
+      "round_medians": {
+        "1": 0.9799769345479218,
+        "2": 0.9857618398639065
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 1.0119755935794472,
+        "reader-only": 0.9565645195435476
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "float256-query_json",
+      "shape": "float256",
+      "api": "query_json",
+      "rows": 256,
+      "float_cells": 256,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 3917534.0,
+      "proposed_median_ns": 3810216.5,
+      "median_paired_ratio": 0.9703277246731319,
+      "bootstrap95_interval": [
+        0.927241664206066,
+        1.0098064874455384
+      ],
+      "round_medians": {
+        "1": 0.9511431429316329,
+        "2": 1.003479992383012
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 0.9963160202514942,
+        "reader-only": 0.9554630229398882
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "mixed64-query",
+      "shape": "mixed64",
+      "api": "query",
+      "rows": 64,
+      "float_cells": 16,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2556007.0,
+      "proposed_median_ns": 2483473.5,
+      "median_paired_ratio": 0.9721643806693899,
+      "bootstrap95_interval": [
+        0.9474064639811319,
+        1.014923055873615
+      ],
+      "round_medians": {
+        "1": 0.9627598915497957,
+        "2": 0.9840188525729927
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 0.9678493631037165,
+        "reader-only": 0.9840188525729927
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "mixed64-query_json",
+      "shape": "mixed64",
+      "api": "query_json",
+      "rows": 64,
+      "float_cells": 16,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2705652.5,
+      "proposed_median_ns": 2462807.0,
+      "median_paired_ratio": 0.9566720972253387,
+      "bootstrap95_interval": [
+        0.9200219018203588,
+        0.989160079764223
+      ],
+      "round_medians": {
+        "1": 0.9820820697820031,
+        "2": 0.9408889230389853
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 0.9767610234388862,
+        "reader-only": 0.9543303944083095
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "empty-query",
+      "shape": "empty",
+      "api": "query",
+      "rows": 0,
+      "float_cells": 0,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2078055.0,
+      "proposed_median_ns": 2066644.5,
+      "median_paired_ratio": 0.9849346199532094,
+      "bootstrap95_interval": [
+        0.931597901873997,
+        1.0404644258248692
+      ],
+      "round_medians": {
+        "1": 0.9850775575084163,
+        "2": 0.9609276850825714
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 1.032330565284721,
+        "reader-only": 0.9609276850825714
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "empty-query_json",
+      "shape": "empty",
+      "api": "query_json",
+      "rows": 0,
+      "float_cells": 0,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2030886.0,
+      "proposed_median_ns": 2078459.0,
+      "median_paired_ratio": 0.9763284109080748,
+      "bootstrap95_interval": [
+        0.9282311055648039,
+        1.0170753718910284
+      ],
+      "round_medians": {
+        "1": 0.9698779298499783,
+        "2": 0.9827788919661711
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 0.9930336050279321,
+        "reader-only": 0.9558527173222359
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "no_float64-query",
+      "shape": "no_float64",
+      "api": "query",
+      "rows": 64,
+      "float_cells": 0,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2525972.5,
+      "proposed_median_ns": 2383026.5,
+      "median_paired_ratio": 0.9682639472702451,
+      "bootstrap95_interval": [
+        0.9431531220575657,
+        1.0028897104447565
+      ],
+      "round_medians": {
+        "1": 0.9649050466797874,
+        "2": 0.9985798672009918
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 0.9441803140080909,
+        "reader-only": 0.9992889179582014
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "no_float64-query_json",
+      "shape": "no_float64",
+      "api": "query_json",
+      "rows": 64,
+      "float_cells": 0,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2371846.0,
+      "proposed_median_ns": 2298235.5,
+      "median_paired_ratio": 0.9649691798511918,
+      "bootstrap95_interval": [
+        0.9234349679288967,
+        1.0199174796762915
+      ],
+      "round_medians": {
+        "1": 0.9487112039536849,
+        "2": 0.9685479683847654
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 1.0079175744005446,
+        "reader-only": 0.9487112039536849
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "tiny_float1-query",
+      "shape": "tiny_float1",
+      "api": "query",
+      "rows": 1,
+      "float_cells": 1,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2184122.5,
+      "proposed_median_ns": 2057244.0,
+      "median_paired_ratio": 0.9518223497796181,
+      "bootstrap95_interval": [
+        0.9167720223873705,
+        0.9853400444329937
+      ],
+      "round_medians": {
+        "1": 0.9519816062210655,
+        "2": 0.9334762606103034
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 0.9808362841451077,
+        "reader-only": 0.9335127170572683
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "tiny_float1-query_json",
+      "shape": "tiny_float1",
+      "api": "query_json",
+      "rows": 1,
+      "float_cells": 1,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2073512.5,
+      "proposed_median_ns": 2158753.5,
+      "median_paired_ratio": 1.0193288433327685,
+      "bootstrap95_interval": [
+        0.9805097765188746,
+        1.0722680460875813
+      ],
+      "round_medians": {
+        "1": 0.9962230616589135,
+        "2": 1.049664998872931
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 1.049664998872931,
+        "reader-only": 0.9859108207476756
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "tiny_no_float1-query",
+      "shape": "tiny_no_float1",
+      "api": "query",
+      "rows": 1,
+      "float_cells": 0,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2167762.0,
+      "proposed_median_ns": 2153941.5,
+      "median_paired_ratio": 0.9856668821021066,
+      "bootstrap95_interval": [
+        0.9552188731510345,
+        1.0537970860432337
+      ],
+      "round_medians": {
+        "1": 1.0101141056353078,
+        "2": 0.9808819991273392
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 1.0378113307741967,
+        "reader-only": 0.969993557323514
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "tiny_no_float1-query_json",
+      "shape": "tiny_no_float1",
+      "api": "query_json",
+      "rows": 1,
+      "float_cells": 0,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 2313975.0,
+      "proposed_median_ns": 2228848.0,
+      "median_paired_ratio": 0.9462760931667007,
+      "bootstrap95_interval": [
+        0.9064968501931017,
+        0.978951220370731
+      ],
+      "round_medians": {
+        "1": 0.957585072251053,
+        "2": 0.933708434253705
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 1.0052580841686518,
+        "reader-only": 0.933708434253705
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "wide_float256-query",
+      "shape": "wide_float256",
+      "api": "query",
+      "rows": 256,
+      "float_cells": 1024,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 7816300.0,
+      "proposed_median_ns": 7697032.0,
+      "median_paired_ratio": 0.9630697935073556,
+      "bootstrap95_interval": [
+        0.9401532356693165,
+        0.9755464791399266
+      ],
+      "round_medians": {
+        "1": 0.9646259072873564,
+        "2": 0.9621402497372761
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 0.9646259072873564,
+        "reader-only": 0.9621402497372761
+      },
+      "regression_investigation_signal": false
+    },
+    {
+      "control": "wide_float256-query_json",
+      "shape": "wide_float256",
+      "api": "query_json",
+      "rows": 256,
+      "float_cells": 1024,
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "baseline_median_ns": 7892681.5,
+      "proposed_median_ns": 7658872.0,
+      "median_paired_ratio": 0.9708874149607694,
+      "bootstrap95_interval": [
+        0.9519433819321548,
+        1.0043232623646534
+      ],
+      "round_medians": {
+        "1": 0.9659249860554998,
+        "2": 0.9861947798884982
+      },
+      "load_order_medians": {
+        "ffc-current-reader": 1.0124564432896908,
+        "reader-only": 0.9620628491483225
+      },
+      "regression_investigation_signal": false
+    }
+  ],
+  "investigation_signals": [],
+  "setup_separate": {
+    "ffc-current-reader": {
+      "source_import_ns": 70671955.0,
+      "physical_template_copy_ns": 1519367.0,
+      "store_open_ns": 117259034.0
+    },
+    "reader-only": {
+      "source_import_ns": 72783378.0,
+      "physical_template_copy_ns": 1490717.0,
+      "store_open_ns": 116905396.0
+    }
+  },
+  "limits": "Exact small physical history/host/builds; descriptive per-control intervals, not family-wise/equivalence/universal/native-only/full-storage inference. No prior campaign pooling or macro recovery claim."
+}

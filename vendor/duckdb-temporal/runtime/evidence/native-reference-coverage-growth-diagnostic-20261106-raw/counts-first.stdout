@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "pid": 61725,
+  "output": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/diagnostic-reference-coverage-growth-20261106-01/result.json",
+  "reconciliation": {
+    "expectedProductCommands": 260,
+    "persistedProductCommands": 260,
+    "contiguousPersistedPrefix": 260,
+    "firstAbsentCommand": null,
+    "persistedAfterFirstAbsent": [],
+    "interpretation": "All authored command IDs are persisted; the failure may be in the post-write queries, revalidation, reopen or final checks. Counts do not distinguish these phases.",
+    "acknowledgementCaveat": "Persisted headers/receipts reconcile committed state. They do not prove that JavaScript observed an ACK; the first test emitted no per-command ACK log."
+  },
+  "cleanupErrors": []
+}
+

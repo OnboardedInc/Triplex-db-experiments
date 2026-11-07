@@ -1,0 +1,21 @@
+{
+  "name": "triplex-config-explorer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsdown && node smoke.mjs",
+    "test": "pnpm build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf build"
+  },
+  "dependencies": {
+    "@triplex-build/triplex": "workspace:^",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  }
+}

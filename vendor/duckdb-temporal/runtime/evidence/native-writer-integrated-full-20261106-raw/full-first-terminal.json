@@ -1,0 +1,14 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "-B",
+    "verify.py",
+    "--with-direct"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/integration-native-writer-20261106-01/runtime",
+  "pid": 40811,
+  "exitCode": 0,
+  "startedAtUtc": "2026-11-06T10:10:33.855382+00:00",
+  "exitedAtUtc": "2026-11-06T10:17:10.821437+00:00",
+  "elapsedMs": 396962.1532079764
+}

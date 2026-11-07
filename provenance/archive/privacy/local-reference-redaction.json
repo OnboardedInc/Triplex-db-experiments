@@ -1,0 +1,9 @@
+{
+  "format": "conservative-local-reference-redaction/1",
+  "file": "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-03/checkpoints/closed-verification-20261031-0548/archive.decoded/payloads/adcb66cf0be0979f08cd34ac5aeacd498ed99b625f036fcb07bd572c294161fe",
+  "count": 2,
+  "reason": "Two unclassified local-style reference tokens conservatively removed from archived project-authored research. Not a confirmed personal-hostname finding. Original source remains unchanged; public technical citations retained.",
+  "exportSha256": "6beb0aa08c46ec69cb5fd2ae070b796b72e26ee6053540b3ba3f5df68be08afc",
+  "redactedValuesIncluded": false,
+  "priorExportSha256": "adcb66cf0be0979f08cd34ac5aeacd498ed99b625f036fcb07bd572c294161fe"
+}

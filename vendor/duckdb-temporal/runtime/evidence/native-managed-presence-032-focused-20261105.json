@@ -1,0 +1,156 @@
+{
+  "schema": "native-managed-presence-integration-gate/1",
+  "timestamp_utc": "2026-11-05T22:12:02.739473+00:00",
+  "source_ref": "7723e10f7f4e7d86e27d691d5baed1b433249c48",
+  "base_publication": "8f964f04",
+  "prior_presence_qualification": "54877047",
+  "result": "PASS",
+  "execution_profile": "Mac ARM64; DuckDB 2.0.0; focused correctness with other small proof builds allowed",
+  "build": {
+    "extension_version": "0.32.0",
+    "core_extension_sha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "core_library_sha256": "bcf8c5c6667a41369f50829146a6a87b418c274e6e217f1593e3f0df6409f4f1",
+    "control_bridge_sha256": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "owner_extension_sha256": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "owner_library_sha256": "752136a9a848fa1bc0c26c029db6e49c62a1185699c026e5fb6d6ecf618b137f",
+    "core_manifest_sha256": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+    "owner_manifest_sha256": "0fd59063a4ad3cf3f25cac4f28961f94b5ee9b9e25631b2dddf3e84e4469a571",
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "duckdb_source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "duckdb_source_archive_sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+    "current_unique": true,
+    "injective_projection": true,
+    "all_cut_unique": true,
+    "streaming_source": true,
+    "identity_count": false,
+    "compat_mutations": true
+  },
+  "qualification": {
+    "typescript": "PASS",
+    "focused_public": {
+      "methods": 26,
+      "result": "PASS",
+      "suites": {
+        "native-presence": 10,
+        "native-uniqueness": 5,
+        "batch-owned": 6,
+        "batch-limits": 3,
+        "batch-recovery": 2
+      }
+    },
+    "owner_pairing": {
+      "methods": 5,
+      "result": "PASS"
+    },
+    "archived_predecessors": [
+      {
+        "version": "0.31.0",
+        "core_extension_sha256": "5191449b92d71209f9739771c8e5d03c6a5525b5e800ffdde91e28db83b4b946",
+        "owner_extension_sha256": "4b872cb97f4c95536f1139e215351c717c03e557476e18fb580ffb21a1f183f4",
+        "result": "PASS",
+        "methods": 1
+      },
+      {
+        "version": "0.28.0",
+        "core_extension_sha256": "0e5c2a02c15f146d9040c7f41ea21f8d6bb8080b98468cdb1d5667f24c404fa5",
+        "owner_extension_sha256": "fe13a80efe5202d73e34f6a69e1452a8abee35f4e6c4b1b5459bc925e50b37e2",
+        "result": "PASS",
+        "methods": 1
+      }
+    ]
+  },
+  "first_attempt_failures": [],
+  "observed_scope": [
+    "format-11 activation rollback, replay and policy immutability",
+    "authored empty put/patch and mixed managed/unmanaged batch presence at one cut",
+    "old-K reads, exact interval endpoints, correction carries and reopen",
+    "eight exact carriers through managed batch and native/scalable/multi-cut/lookup/interval/anti-join reads",
+    "preserved uniqueness and ordinary batch behavior",
+    "archived .31 and .28 create format-10 stores, successor preserves data/receipt/unique constraint, old writers reject format-11 clones"
+  ],
+  "remaining_gates": [
+    "current complete verifier",
+    "managed presence batch crash qualification",
+    "backup qualification",
+    "historical audit and managed presence scale qualification",
+    "intermediate single-command-only format-11 predecessor compatibility"
+  ],
+  "performance_claim": null,
+  "source_sha256": {
+    "build_native.py": "eb3a4bf7793beb08c9134e6eae188146f7ef7b4b5e143bc5ed0c2e36590c82f8",
+    "build_owner_probe.py": "8ff887b0c95e5f9071877c672fb5a41abf12487536e142be5c555fa06fc57f38",
+    "verify.py": "354216841650ed491d42c91cbffe9bf2a0c34bfdad58d8374f7867c4f062cfd0",
+    "adapter/native-entity.ts": "84ce8b336e5cc654ebe134ea76bccf7bb8f05ee7bb814edd5426ebd97a6878ec",
+    "adapter/test-native-presence.ts": "4017b2b52ef5afd5110a3b22f1da833c1f68a93d2f14ffc2902ee6c5e64ac19a",
+    "adapter/test-native-uniqueness.ts": "19e0a81da90988e6f362b39721b65a5dab3aeb29b828767159e2d53a32f6a9a0",
+    "adapter/test-batch-owned.ts": "09bb0da8712b6dbf2ce8b2d462b5c614287c0051c593bfce0a9c944c024d7a48",
+    "adapter/test-batch-limits.ts": "3d07f1277a9d536fbaf913cb2d92111fcff2380c6dc03eb5dc2a3e51a4424aad",
+    "adapter/test-batch-recovery.ts": "5013f09ad221c7acb1462d40d0fa7deb70d197f57395770e193c26ce9df09e97",
+    "adapter/test-presence-upgrade.mjs": "5d9cb043244950b28afb34f04ea21f72b172f382a43fc4c1f4604744aeb3332a",
+    "test_owner_pairing.py": "7dceb2a1a8228dba33653469cb4c127beecce9f2c23f133e24ff8c607c6eaf50"
+  },
+  "native_source_sha256": {
+    "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+    "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+    "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+    "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+    "native/src/temporal_command.cpp": "d95cc48d2ee4c5567d20cc3446cbc8f30bd0312191090df2f59f9ae82f95d5d2",
+    "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+    "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+    "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+    "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+    "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+    "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+    "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+    "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+    "native/src/temporal_datalog.cpp": "c80961113dd0b2fd2d1c182cd03f434aee724a6ea6a867fb603322356179281c",
+    "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+    "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+    "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+    "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+    "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+    "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+    "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+    "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+    "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+    "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+    "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+    "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+    "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+    "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+    "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+    "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+    "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+    "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da"
+  },
+  "logs": {
+    "core-build.log": {
+      "path": "build/combined-032-20261105/core-build.log",
+      "sha256": "60dee5fc9c6aba182fb0af3a3f631ea09ed27200d02e7fcfafff02876afacb7a"
+    },
+    "owner-build.log": {
+      "path": "build/combined-032-20261105/owner-build.log",
+      "sha256": "a62572119c9eadbad447558e40eb7f2ddf716c041512592a32d014f3684e9e78"
+    },
+    "typescript.log": {
+      "path": "build/combined-032-20261105/typescript.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "focused-01.log": {
+      "path": "build/combined-032-20261105/focused-01.log",
+      "sha256": "fe341f8ae924e8d6758e88385960d51b6f4f01452b8a01f2526c10dee295bf0a"
+    },
+    "pairing-01.log": {
+      "path": "build/combined-032-20261105/pairing-01.log",
+      "sha256": "a1f8216c4083921b2b16b9a865c726ec35d163c3db6d59a42b2237cf03d92944"
+    },
+    "upgrade-031-01.log": {
+      "path": "build/combined-032-20261105/upgrade-031-01.log",
+      "sha256": "97f8ef22420bc03f35a1e03452b3e041b41a52835d95df4afee184bbeda26a28"
+    },
+    "upgrade-028-01.log": {
+      "path": "build/combined-032-20261105/upgrade-028-01.log",
+      "sha256": "6a865e445d10bfb11d86c3280a0730b8087d33c367d314bebd1c76c7d85be053"
+    }
+  }
+}

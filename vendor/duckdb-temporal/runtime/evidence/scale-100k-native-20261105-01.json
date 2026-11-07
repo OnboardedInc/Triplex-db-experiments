@@ -1,0 +1,101 @@
+{
+  "schema": "temporal-scale-benchmark/1",
+  "timestampUtc": "2026-11-05T13:39:09.112Z",
+  "configuration": {
+    "sizes": [
+      100000
+    ],
+    "readers": [
+      1,
+      4,
+      16
+    ],
+    "samples": 2,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 4096,
+    "fixtureMode": "native",
+    "threads": 4,
+    "memoryLimit": "1GB",
+    "maxTempDirectorySize": "2GB",
+    "maxIntermediateBytes": 4294967296
+  },
+  "fixtureDirectory": "build/scale-runs/20261105T133909111Z-901b4d3a",
+  "limitations": [
+    "SQL-expanded setup is not native ingestion throughput evidence",
+    "Process memory before/after is not a peak or hard memory bound",
+    "Empirical quantiles from small sample counts are smoke measurements"
+  ],
+  "stages": [
+    {
+      "size": 100000,
+      "database": "facts-100000.duckdb",
+      "status": "failed",
+      "cells": [],
+      "openConfiguration": {
+        "threads": 4,
+        "memoryLimit": "1GB",
+        "maxTempDirectorySize": "2GB",
+        "retainedLimits": {
+          "maxFacts": 200000,
+          "maxBytes": 4294967296
+        }
+      },
+      "error": {
+        "name": "Error",
+        "code": null,
+        "fixturePhase": "full_fixture_audit",
+        "message": "Out of Memory Error: could not allocate block of size 272.0 KiB (953.5 MiB/953.6 MiB used)\n\nPossible solutions:\n* Reducing the number of threads (SET threads=X)\n* Disabling insertion-order preservation (SET preserve_insertion_order=false)\n* Increasing the memory limit (SET memory_limit='...GB')\n\nSee also https://duckdb.org/docs/current/guides/performance/how_to_tune_workloads"
+      }
+    }
+  ],
+  "status": "failed",
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.19.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "schema_borrowed_input": true,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "74cf165a2f9d24323474a0be10cbe10b30c930a73de666503e449a202cbafb7c",
+      "native/src/temporal_command.hpp": "0e72ef0ec9dce8a8cef085b6e81fba624dec33602e1fb3cf649a6629e21c51ce",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_count_plan.hpp": "0885641b3279d71c5064c069bcaf0a7c520dd46bd25fa3d2e31650bb6ac02e45",
+      "native/src/temporal_datalog.cpp": "d165717e450a3c8d40c9810d29b761f92dd620a88e391d9e842b267459142d19",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_join_plan.hpp": "b2cfc07956e011c42bfc860fe157b2a0bbc311fdc7423e152eeb659f16674857",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_scan_plan.hpp": "c7d94b7b43d1e02fd26594d8ea3a643a20ceca6b6c9ce413d9fcaa42e2bccb3a",
+      "native/src/temporal_schema.cpp": "5c4777b3d867d4a57aa5de3cebf457d425055296e6c2fad2c311455f98b41ea6",
+      "native/src/temporal_schema.hpp": "05ca882152b3f4de4599ee48305c942495759e2187c3bab40f5587961c6fbc14",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "6b9c2b47be2d34f48efe32079d1b915ce1e4ca94ca5d8dd27868c2c680b18469",
+      "native/src/temporal_store_query.hpp": "ab96f3eff8affaf01c23da724d7c5eead9691a3efdb46d601ad011a2af5ca8f0",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "b53556d123c9e3c8a9c4d5140ffe8ace112753a50afa33a7987af6a8fc95e6dd",
+    "extension_sha256": "47e9e7629b034bc1f9d5b953a73bc0c93dcae7f0f46775ab5eae2e717f8caccf"
+  },
+  "runtimeArtifactSha256": {
+    "build/adapter/native-entity.js": "99650aaa2c86443f80824b46b7f40e9995adaf2191f9955b8f303e9d671dd003",
+    "build/adapter/native-duckdb-port.mjs": "622561f962ad72631440b778f667caf7a5bf2e81f6ecc9f9d38706d16065ee16"
+  },
+  "runtimeSourceSha256": {
+    "adapter/native-entity.ts": "963b9249e8ecfc59a363e3bd8aa628481ce7eaa24177a163b613c26f8fb3f6d1",
+    "adapter/native-duckdb-port.mjs": "622561f962ad72631440b778f667caf7a5bf2e81f6ecc9f9d38706d16065ee16"
+  },
+  "harnessSha256": "220e5711fdaad8922736454ee3c0632e230089a48bc6aa798a43d8d354974e76",
+  "fixtureSha256": "2fe3bd608ea646bd3b1351574a2c3a9386a3a0d00cbb666ebf22c1dbc58e5ba1",
+  "capabilities": {
+    "scalableQuery": true
+  }
+}

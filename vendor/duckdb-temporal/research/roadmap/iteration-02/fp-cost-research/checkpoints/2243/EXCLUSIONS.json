@@ -1,0 +1,74 @@
+[
+  {
+    "path": "batch-theory/primary-sources/cpython/Modules/_ctypes/callproc.c",
+    "bytes": 60455,
+    "sha256": "c501c0b868eebbdd934f352a1283d75fff75a5857088d71cb4564edae1cb4db7",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/cpython/Modules/_struct.c",
+    "bytes": 73803,
+    "sha256": "f78e301ba2fc79eee58e355e5b4a8dd721000f4b4a796e66367a53d3e68fd3f0",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/cpython/Objects/floatobject.c",
+    "bytes": 72465,
+    "sha256": "d558f168de7ec864b64ffad7ee2b056bda4efca1ee68ca690189354b893ccc76",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/cpython/Objects/unicodeobject.c",
+    "bytes": 468976,
+    "sha256": "dd21107aaed90e06b85cae80de86f43f09e6c0bcb35b00037344cf96960bd431",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/duckdb/unary_executor.hpp",
+    "bytes": 8539,
+    "sha256": "e4748e055c0fa9b3be015b74fdcc577336ba8e5cd0cb6a220c24055527e0f6e3",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/duckdb-python/src/native/python_conversion.cpp",
+    "bytes": 46262,
+    "sha256": "b5450a7a2ddcfaeb962e50fb6a47f8e6bf03a93652dcdeccc21d2834934b3946",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/duckdb-python/src/native/python_objects.cpp",
+    "bytes": 28566,
+    "sha256": "4f59f1c04ce34891c9d85b217c1ba2ac32bac95fd6010cbcad989d79c3d400d6",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/duckdb-python/src/pyconnection/seam.cpp",
+    "bytes": 59405,
+    "sha256": "92e4e75565ead6112e1704194f084a67261e622e9083f1b4221676e01a8d48c6",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/duckdb-python/src/pyconnection.cpp",
+    "bytes": 70198,
+    "sha256": "5c33473dbd459851144f19d2eba6069b0d1cd171bd20ccf47124fc823b649857",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/duckdb-python/src/pyresult.cpp",
+    "bytes": 23544,
+    "sha256": "e49b68f854c856361c4a6ae35e378e21631d16cba59735e575df31c046c8b2f5",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/duckdb-python/src/pystatement.cpp",
+    "bytes": 3974,
+    "sha256": "74627dcdbcc9114117fdf8dc588cdf77c990e54e0ad2acd9c200a20f08d56cf0",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  },
+  {
+    "path": "batch-theory/primary-sources/glibc/fegetenv.c",
+    "bytes": 1201,
+    "sha256": "30d4b9914cde2a3f1ed551c980c086e039a547fe32ee4e0154611c928260d4f8",
+    "reason": "Full primary third-party source cache omitted; exact immutable URLs/Git blob/SHA256 retained in SOURCES/RETRIEVED-MANIFEST/provenance bridge"
+  }
+]

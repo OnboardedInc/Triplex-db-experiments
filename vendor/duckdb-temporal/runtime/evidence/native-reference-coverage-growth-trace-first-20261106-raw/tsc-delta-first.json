@@ -1,0 +1,9 @@
+{
+  "changed": {},
+  "added": [
+    "build/adapter/test-native-reference-coverage-growth-trace.d.ts",
+    "build/adapter/test-native-reference-coverage-growth-trace.js"
+  ],
+  "count": 190,
+  "prior188Exact": true
+}

@@ -1,0 +1,43 @@
+{
+  "schema": "td.wal-enospc-qualification/1",
+  "observed_utc": "2026-11-05T20:15:54Z",
+  "tested_harness_source": "37c14d86b4db9685a4bf98c95f7ff4148185f83c",
+  "source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "extension_version": "0.29.0",
+  "artifact_sha256": {
+    "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "core": "0d3e1531acf9440de7732a01d796dd8791ccb9ea621abcec63cb419edadf06a3",
+    "owner": "852e7e838ba9764e0bf3a8d4d60e59f325d427603122c5aad11ef860360f1fe8"
+  },
+  "test_source_sha256": "57cb8461541d92132353c9c7802e09137a9a06299ac1b9044d8c5e8eacd4635d",
+  "launcher_sha256": "e850299b7e92884a44d13b5cf331f3f6cbb3ae2885eee0c6f8b81e024f88c63f",
+  "test_binary_sha256": "ede1dc5554c821e28ae0118666b56fedba305f1fac11473f4cadeccc4df4bd33",
+  "observed": {
+    "result": "PASS",
+    "method": "partial synthetic WAL write then ENOSPC",
+    "errno": 28,
+    "intercepted_writes": 1,
+    "requested_bytes": 4096,
+    "partial_bytes": 17,
+    "prior_wal_bytes": 140496,
+    "prior_position": 1,
+    "retry_position": 2
+  },
+  "platform": "macOS arm64",
+  "engine_package": "@duckdb/node-bindings-darwin-arm64@2.0.0-r.1",
+  "core_manifest_sha256": "df3aee3d9644ec6cc63920bad45a9e49481d31bfa392768bb46af9753e0b70b6",
+  "owner_manifest_sha256": "2996196218d0663992aadc9c29c4e4148a216ad0e7d9bbac5631ddeb135dcf2e",
+  "local_run": "build/wal-enospc-qpgkui5i",
+  "log_sha256": {
+    "compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.json": "46ac1ea36ba601ce29389f0bb6f9f02575f7849a4529673a2abba033d4cfd832",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "receipt.json": "f0009ee3bb04d62b80a15a48ec0b9304d81b586b3e98d37b15b0c5364f950ade"
+  },
+  "checks": [
+    "An exact-path filesystem override wrote a 17-byte WAL prefix, confirmed the resulting file growth, and returned the pinned Unix IO exception with injected ENOSPC.",
+    "The explicit COMMIT reported the corresponding transaction error. The prior WAL bytes, format 5/revision 2 metadata, clock, facts and history, and seed receipt were unchanged, and the attempted batch receipt was absent.",
+    "Normal-filesystem reopen recovered the same state. The identical mixed put/patch batch committed at position 2 with the same staged receipt, and the exact format 9/revision 3 state and historical cuts survived another reopen and replay."
+  ],
+  "scope": "One fault on the first WAL write of a synthetic batch commit using the custom filesystem on the exact pinned engine. This is filesystem fault injection without filling the host disk."
+}

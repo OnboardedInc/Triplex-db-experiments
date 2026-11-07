@@ -1,0 +1,269 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.000005666,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 0.000169374,
+                    "type": "BATCH_INSERT",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Projections": [
+                                    "#0",
+                                    "#1",
+                                    "#2",
+                                    "#3",
+                                    "#4",
+                                    "#5",
+                                    "#6",
+                                    "#7",
+                                    "#8",
+                                    "#9",
+                                    "CAST(#10 AS VARCHAR)",
+                                    "#11",
+                                    "#12",
+                                    "#13",
+                                    "#14",
+                                    "#15",
+                                    "#16",
+                                    "#17",
+                                    "CAST(#18 AS DOUBLE)",
+                                    "#19",
+                                    "#20",
+                                    "CAST(#21 AS VARCHAR)",
+                                    "#22",
+                                    "#23",
+                                    "CAST(#24 AS VARCHAR)",
+                                    "#25",
+                                    "#26",
+                                    "#27"
+                                ],
+                                "Estimated Cardinality": "1"
+                            },
+                            "intermediate_rows": 1,
+                            "intermediate_size_bytes": 10563,
+                            "timing": 0.000001458,
+                            "type": "PROJECTION",
+                            "children": [
+                                {
+                                    "extra_info": {
+                                        "Projections": [
+                                            "assertion_id",
+                                            "e",
+                                            "a",
+                                            "tag",
+                                            "payload",
+                                            "valid_from",
+                                            "valid_to",
+                                            "position",
+                                            "9223372036854775807",
+                                            "command_id",
+                                            "NULL",
+                                            "sha256(payload)",
+                                            "v_tag",
+                                            "v_s",
+                                            "v_b",
+                                            "v_i",
+                                            "v_f",
+                                            "recorded_at",
+                                            "NULL",
+                                            "CASE  WHEN (#15) THEN (CAST(valid_from AS DOUBLE)) ELSE NULL::DOUBLE END",
+                                            "CASE  WHEN (#16) THEN (CAST(valid_to AS DOUBLE)) ELSE NULL::DOUBLE END",
+                                            "NULL",
+                                            "entity_type",
+                                            "command_id",
+                                            "NULL",
+                                            "extra_json",
+                                            "'triplex'",
+                                            "(#15 AND #16)"
+                                        ],
+                                        "Estimated Cardinality": "1"
+                                    },
+                                    "intermediate_rows": 1,
+                                    "intermediate_size_bytes": 10523,
+                                    "timing": 0.000004417,
+                                    "type": "PROJECTION",
+                                    "children": [
+                                        {
+                                            "extra_info": {
+                                                "Projections": [
+                                                    "assertion_id",
+                                                    "e",
+                                                    "a",
+                                                    "tag",
+                                                    "payload",
+                                                    "valid_from",
+                                                    "valid_to",
+                                                    "position",
+                                                    "command_id",
+                                                    "v_tag",
+                                                    "v_s",
+                                                    "v_b",
+                                                    "v_i",
+                                                    "v_f",
+                                                    "recorded_at",
+                                                    "true",
+                                                    "true",
+                                                    "entity_type",
+                                                    "extra_json"
+                                                ],
+                                                "Estimated Cardinality": "1"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 5316,
+                                            "timing": 5.84e-7,
+                                            "type": "PROJECTION",
+                                            "children": [
+                                                {
+                                                    "extra_info": {},
+                                                    "intermediate_rows": 1,
+                                                    "intermediate_size_bytes": 5314,
+                                                    "timing": 0.000017916999999999998,
+                                                    "type": "CROSS_PRODUCT",
+                                                    "children": [
+                                                        {
+                                                            "extra_info": {
+                                                                "Table": "\"temp\".main.__td_native_pending",
+                                                                "Type": "Sequential Scan",
+                                                                "Projections": [
+                                                                    "assertion_id",
+                                                                    "e",
+                                                                    "a",
+                                                                    "tag",
+                                                                    "payload",
+                                                                    "valid_from",
+                                                                    "valid_to",
+                                                                    "v_tag",
+                                                                    "v_s",
+                                                                    "v_b",
+                                                                    "v_i",
+                                                                    "v_f",
+                                                                    "extra_json"
+                                                                ],
+                                                                "Estimated Cardinality": "1"
+                                                            },
+                                                            "intermediate_rows": 1,
+                                                            "intermediate_size_bytes": 1170,
+                                                            "row_groups_scanned": 1,
+                                                            "rows_scanned": 1,
+                                                            "timing": 0.000008249,
+                                                            "total_row_groups_to_scan": 1,
+                                                            "type": "TABLE_SCAN"
+                                                        },
+                                                        {
+                                                            "extra_info": {
+                                                                "Table": "\"temp\".main.__td_native_ctx",
+                                                                "Type": "Sequential Scan",
+                                                                "Projections": [
+                                                                    "position",
+                                                                    "command_id",
+                                                                    "recorded_at",
+                                                                    "entity_type"
+                                                                ],
+                                                                "Estimated Cardinality": "1"
+                                                            },
+                                                            "intermediate_rows": 1,
+                                                            "intermediate_size_bytes": 48,
+                                                            "row_groups_scanned": 1,
+                                                            "rows_scanned": 1,
+                                                            "timing": 0.0000065829999999999995,
+                                                            "total_row_groups_to_scan": 1,
+                                                            "type": "TABLE_SCAN"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000009458,
+        "aggregate_reuse": 0.00000425,
+        "build_side_probe_side": 0.000005542,
+        "column_lifetime": 0.00001025,
+        "common_aggregate": 2.08e-7,
+        "common_subexpressions": 0.000072959,
+        "common_subplan": 0.000020625,
+        "cte_filter_pusher": 0.000001208,
+        "cte_inlining": 9.58e-7,
+        "deliminator": 0.000002166,
+        "duplicate_groups": 0.000007209,
+        "empty_result_pullup": 4.17e-7,
+        "expression_rewriter": 0.000115833,
+        "filter_pullup": 0.000003083,
+        "filter_pushdown": 0.0000135,
+        "grouping_sets": 0.000001334,
+        "in_clause": 0.000001875,
+        "join_elimination": 0.000004708,
+        "join_filter_pushdown": 0.000001042,
+        "join_order": 0.000126333,
+        "late_materialization": 7.08e-7,
+        "limit_pushdown": 3.75e-7,
+        "outer_join_simplification": 0.000009416,
+        "partial_aggregate_pushdown": 0.000002209,
+        "partitioned_execution": 7.08e-7,
+        "projection_placement": 0.000024125,
+        "projection_pullup": 0.000030792,
+        "redundant_order_keys": 0.000002542,
+        "regex_range": 0.000001541,
+        "reorder_filter": 0.000001875,
+        "row_group_pruner": 2.08e-7,
+        "row_number_rewriter": 4.17e-7,
+        "sampling_pushdown": 2.5e-7,
+        "scalar_fn_pushdown": 3.33e-7,
+        "statistics_propagation": 0.000050959,
+        "top_n": 3.75e-7,
+        "top_n_window_elimination": 0.000003,
+        "total_time": 0.000617333,
+        "type_pushdown": 5.83e-7,
+        "unnest_rewriter": 0.000001334,
+        "unused_columns": 0.000033707,
+        "window_self_join": 0.000001041
+    },
+    "physical_planner": {
+        "column_binding": 0.000007166,
+        "create_plan": 0.000013709,
+        "resolve_types": 3.33e-7,
+        "total_time": 0.000025708
+    },
+    "planner": {
+        "binding_time": 0.000322916,
+        "total_time": 0.000413875
+    },
+    "query": {
+        "cpu_time": 0.000214248,
+        "sql": "INSERT INTO main.assertions\n SELECT p.assertion_id,p.e,p.a,p.tag,p.payload,p.valid_from,p.valid_to,c.position,9223372036854775807,\n c.command_id,NULL,sha256(p.payload),p.v_tag,p.v_s,p.v_b,p.v_i,p.v_f,c.recorded_at,NULL,\n CASE WHEN p.valid_from BETWEEN 0 AND 9007199254740991 THEN p.valid_from::DOUBLE END,\n CASE WHEN p.valid_to BETWEEN 0 AND 9007199254740991 THEN p.valid_to::DOUBLE END,\n NULL,c.entity_type,c.command_id,NULL,p.extra_json,'triplex',\n p.valid_from BETWEEN 0 AND 9007199254740991 AND (p.valid_to=9223372036854775807 OR p.valid_to BETWEEN 0 AND 9007199254740991)\n AND (p.v_tag<>3 OR p.v_i BETWEEN -9007199254740991 AND 9007199254740991)\n FROM __td_native_pending p CROSS JOIN __td_native_ctx c;\n",
+        "total_intermediate_rows": 7,
+        "total_intermediate_size_bytes": 32942,
+        "total_row_groups_scanned": 2,
+        "total_row_groups_to_scan": 2,
+        "total_rows_scanned": 2,
+        "total_time": 0.001745834
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 22391680,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 262144
+    }
+}

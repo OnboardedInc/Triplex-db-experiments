@@ -1,0 +1,13 @@
+{
+  "phase": "tsc-first",
+  "pid": 88201,
+  "command": [
+    "<node24.13>/bin/node",
+    "node_modules/typescript/bin/tsc",
+    "-p",
+    "tsconfig.json"
+  ],
+  "startedAtUtc": "2026-11-06T12:01:44.764181+00:00",
+  "endedAtUtc": "2026-11-06T12:01:47.034975+00:00",
+  "exitCode": 0
+}

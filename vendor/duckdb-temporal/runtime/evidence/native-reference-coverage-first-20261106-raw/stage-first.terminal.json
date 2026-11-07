@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "exitCode": 0,
+  "execSession": 25745,
+  "processPid": "not captured",
+  "observedAtUtc": "2026-11-06T10:23:29.476279+00:00",
+  "receipt": "stage-before-first.json",
+  "originalToolChunks": [
+    "2af5de",
+    "d1867b"
+  ]
+}

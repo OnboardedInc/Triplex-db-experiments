@@ -1,0 +1,13 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--check",
+    "adapter/diagnose-reference-coverage-growth.mjs"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+  "pid": 61724,
+  "startedAtUtc": "2026-11-06T11:07:07.203640+00:00",
+  "endedAtUtc": "2026-11-06T11:07:07.229683+00:00",
+  "exitCode": 0,
+  "elapsedMs": 25.66683292388916
+}

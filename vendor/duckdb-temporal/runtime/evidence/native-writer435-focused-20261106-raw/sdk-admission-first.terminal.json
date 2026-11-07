@@ -1,0 +1,23 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "build/adapter/test-sdk-admission.js"
+  ],
+  "pid": 77616,
+  "startedAtUtc": "2026-11-06T07:23:51.385284+00:00",
+  "status": "terminal",
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T07:23:56.586145+00:00",
+  "elapsedMs": 5200.8885841351,
+  "tapPass": 5,
+  "expectedSelectedPass": 5,
+  "tapFail": [
+    "0"
+  ],
+  "tapCancelled": [
+    "0"
+  ]
+}

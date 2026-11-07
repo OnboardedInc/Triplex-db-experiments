@@ -1,0 +1,144 @@
+{
+  "schema": "native-mixed-million-integrated-qualification/1",
+  "result": "PASS",
+  "platform": "macOS ARM64",
+  "coreSource": "0453f279d245a5f2caeb2dc2b115dcc1449f1c6c",
+  "verificationSource": "bdd4b6bef63ead76432f1b23d5c043ff69557025",
+  "timestampUtc": "2026-11-05T19:40:13.197Z",
+  "configuration": {
+    "sizes": [
+      1000000
+    ],
+    "readers": [
+      16
+    ],
+    "samples": 3,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 536870912,
+    "durationSeconds": 60,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 12000,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "budget": {
+    "queriesPerSecondMin": 15,
+    "p50MsMax": 1000,
+    "p99MsMax": 3000,
+    "rssBytesMax": 3500000000
+  },
+  "fixture": {
+    "baseRetainedFacts": 1000000,
+    "priorAcknowledgedWrites": 136,
+    "initialKnowledgePosition": "4045",
+    "sourceFileSha256BeforeAndAfter": "1f3dc5123ae349c7831d8082f310854fc2d2749fe91f5e2671bf3ac14e07a4f2",
+    "sourceWalAbsent": true,
+    "cloneMethod": "Darwin APFS clonefile",
+    "originalQualificationSha256": "fa0f111fe41ecaa2c7d791f42c30a16595d6114670831c212e39db8054fff0e5"
+  },
+  "rawEvidence": {
+    "file": "build/combined-028-20261105/mixed-million.json",
+    "sha256": "d3d0eab304d9978292b9111d2b658700c4778f4bb00f16d2c9da6498bbef2cf7"
+  },
+  "artifactSha256": {
+    "build/adapter/native-entity.js": "dcad01a37ae791e5925f48db12e65a4bf27b4ed046711594779dd7c405a8dfac",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "coreSha256": "0e5c2a02c15f146d9040c7f41ea21f8d6bb8080b98468cdb1d5667f24c404fa5",
+  "companionSha256": "fe13a80efe5202d73e34f6a69e1452a8abee35f4e6c4b1b5459bc925e50b37e2",
+  "harnessSha256": "071b237f4a8e31ada86f438e08bc4b05d436011c53039459561238ef3efe8144",
+  "mixedFixtureSha256": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+  "archived027UpgradeGate": {
+    "pass": 1,
+    "file": "build/combined-028-20261105/unique-upgrade.tap",
+    "sha256": "3d30cd0b3b1997387d341f9b1e15c853a0f402c8ec776aa7f31a999cdbae4b7f"
+  },
+  "initialVerificationFailure": {
+    "reason": "The synthetic companion-pairing fixture lacked the new shared uniqueness header.",
+    "file": "build/combined-028-20261105/verify-first-failure.log",
+    "sha256": "96f0ba67674b2d2a1a04c30d7387c8e47414ce24659f081a19e4a7042df6ac58"
+  },
+  "mixed": {
+    "readSamples": 1904,
+    "writes": 212,
+    "errors": 0,
+    "throughputQueriesPerSecond": 31.52577059374251,
+    "latencyMs": {
+      "count": 1904,
+      "min": 152.05174999999872,
+      "p50": 488.2912499999984,
+      "p95": 715.6495839999989,
+      "p99": 1028.5520830000023,
+      "max": 1612.2907919999961
+    },
+    "rssBytes": 2167062528,
+    "observedReaders": 16,
+    "allLeasesReturned": true,
+    "finalAndReopenVerified": true,
+    "writesByCompleteWindow": [
+      36,
+      35,
+      33,
+      32,
+      36,
+      39
+    ],
+    "routeCounts": {
+      "fixed/count/owned_allcut_unique_scalable_count": 128,
+      "fixed/grouped_count/owned_allcut_unique_scalable_count": 128,
+      "fixed/projection/owned_allcut_unique_scalable_single_atom": 128,
+      "latest/count/owned_allcut_unique_scalable_count": 507,
+      "latest/grouped_count/owned_allcut_unique_scalable_count": 506,
+      "latest/projection/owned_allcut_unique_scalable_single_atom": 507
+    }
+  },
+  "fixedCells": [
+    {
+      "kind": "count",
+      "latencyMs": {
+        "count": 48,
+        "min": 213.21779200000037,
+        "p50": 382.3137499999998,
+        "p95": 555.5723339999997,
+        "p99": 716.922,
+        "max": 716.922
+      },
+      "exact": true
+    },
+    {
+      "kind": "grouped_count",
+      "latencyMs": {
+        "count": 48,
+        "min": 206.7786670000005,
+        "p50": 428.5967920000003,
+        "p95": 626.9961249999997,
+        "p99": 733.492542,
+        "max": 733.492542
+      },
+      "exact": true
+    },
+    {
+      "kind": "projection",
+      "latencyMs": {
+        "count": 48,
+        "min": 234.43837499999972,
+        "p50": 425.502708,
+        "p95": 701.6518749999996,
+        "p99": 761.9811669999999,
+        "max": 761.9811669999999
+      },
+      "exact": true
+    }
+  ],
+  "limitations": [
+    "One sustained run per release. The difference in observed throughput, p99 and RSS cannot isolate individual native changes.",
+    "The cloned baseline has no format-ten uniqueness activation. Dense uniqueness workloads and the ten-million-fact eight-type gate are separate."
+  ]
+}

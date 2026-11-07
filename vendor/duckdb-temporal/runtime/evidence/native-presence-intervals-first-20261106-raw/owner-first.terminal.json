@@ -1,0 +1,17 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "build_owner_probe.py",
+    "--source-dir",
+    "[LOCAL_PATH_0041]",
+    "--engine-library",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "--compat-mutations"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "pid": 18466,
+  "startedAtUtc": "2026-11-06T09:14:04.286657+00:00",
+  "endedAtUtc": "2026-11-06T09:14:12.482594+00:00",
+  "exitCode": 0,
+  "elapsedMs": 8195.75266703032
+}

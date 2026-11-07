@@ -1,0 +1,416 @@
+{
+  "schema": "td.antijoin-concurrency-c-10m16/1",
+  "result": "REJECTED_UNCHANGED_MIXED_GATES",
+  "auditRecordedUtc": "2026-11-06T00:15:37.419792+00:00",
+  "testedSource": "316333163973fc1933780405e539162f947c3b66",
+  "implementationSource": "50a5cbf9e7b8d955ac4658822d6c92774f18dfa2",
+  "commonBase": "773f7746466caf0ba4eff70a741e9594d07f39cc",
+  "runtime": "accepted-032-runtime",
+  "startedUtc": "2026-11-06T00:10:19.123Z",
+  "rawEvidence": {
+    "file": "evidence/native-antijoin-concurrency-c-10m-16-raw-20261105.json",
+    "originalFile": "build/antijoin-concurrency-c-20261105-02/10m-16.json",
+    "sha256": "cdad0f54770f57ac92dbc2ad9e21c18f2632e6854230160811d10581cb45edaa",
+    "bytes": 863598
+  },
+  "candidateBudget": {
+    "file": "evidence/antijoin-concurrency-c-10m-16-budget-20261105.json",
+    "sha256": "ec2b907922e46484c3dd7a026fb6580b7b4c1d93d54f3b9b81463f2aa3e0e2ae"
+  },
+  "harnessSha256": "6210ee4b20442546340e02fd884fe1d42373beb625af6a07a99012a51e3469a3",
+  "runtimePinsBefore": {
+    "core_manifest": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+    "companion_manifest": "0fd59063a4ad3cf3f25cac4f28961f94b5ee9b9e25631b2dddf3e84e4469a571",
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "runtimePinsAfter": {
+    "core_manifest": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+    "companion_manifest": "0fd59063a4ad3cf3f25cac4f28961f94b5ee9b9e25631b2dddf3e84e4469a571",
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "runtimePinsUnchanged": true,
+  "source": {
+    "file": "../../../../research-reference/projects/temporal-datalog/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+    "bytes": 3905433600,
+    "mtimeMs": 1793911060600.3289,
+    "ctimeMs": 1793911060600.3289,
+    "sha256Before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "sha256After": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3"
+  },
+  "sourceFixture": {
+    "size": 10000000,
+    "groupSize": 256,
+    "groups": 39063,
+    "initialAdded": 22,
+    "position": "39087",
+    "latestCut": true
+  },
+  "sourceUnchanged": true,
+  "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+  "configuration": {
+    "readers": [
+      16
+    ],
+    "samples": 20,
+    "warmup": 1,
+    "durationSeconds": 60,
+    "maxWrites": 12000,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "readAdmission": 3
+  },
+  "inputAdmissionProof": {
+    "scopedInputFacts": 1680202,
+    "rightSideFacts": "1679946",
+    "positiveSideFacts": 256,
+    "exactSucceeded": true,
+    "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT",
+    "scope": "Logical snapshot admission before anti membership; not physical operator row-count evidence"
+  },
+  "metrics": [
+    {
+      "phase": "fixed",
+      "samples": 320,
+      "wallMs": 41544.835208000004,
+      "queriesPerSecond": 7.702521827271078,
+      "latencyMs": {
+        "count": 320,
+        "min": 329.576833000001,
+        "p50": 2068.5283750000017,
+        "p95": 2216.994166999997,
+        "p99": 2302.977999999999,
+        "max": 2366.246959
+      },
+      "writeAcks": 0,
+      "writeBurstDurationMs": null,
+      "writeAckLatencyMs": null,
+      "writesPerComplete10sWindow": null,
+      "drainMs": null,
+      "sampledMaxRssBytes": 2692464640,
+      "duckdbSnapshotBefore": {
+        "available": true,
+        "memoryBytes": "494402608",
+        "temporaryStorageBytes": "0"
+      },
+      "duckdbSnapshotAfter": {
+        "available": true,
+        "memoryBytes": "494402608",
+        "temporaryStorageBytes": "0"
+      },
+      "cpuUsage": {
+        "userMicroseconds": 242448631,
+        "systemMicroseconds": 2290433,
+        "totalMicroseconds": 244739064,
+        "averageCores": 5.890962445143416,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      "pool": {
+        "before": {
+          "capacity": 16,
+          "available": 16,
+          "active": 0,
+          "waiting": 0
+        },
+        "after": {
+          "capacity": 16,
+          "available": 16,
+          "active": 0,
+          "waiting": 0
+        },
+        "maxObservedActive": 3,
+        "maxObservedWaiting": 0,
+        "sampleIntervalMs": 25
+      },
+      "logicalClients": 16,
+      "nativePoolCapacity": 16,
+      "admission": {
+        "limit": 3,
+        "active": 0,
+        "waiting": 0,
+        "maxActive": 3,
+        "maxQueued": 13,
+        "admitted": 337,
+        "completed": 337,
+        "rejected": 0,
+        "admissionWaitMs": {
+          "count": 337,
+          "min": 0.0010419999998703133,
+          "p50": 1679.9546660000015,
+          "p95": 1833.7244590000046,
+          "p99": 1895.6046669999996,
+          "max": 1967.9045000000006
+        },
+        "scope": "whole public query calls admitted by a test-only FIFO; not native tasks"
+      },
+      "physicalControlScopes": {
+        "calls": 337,
+        "maxActive": 3,
+        "distinctPorts": 16,
+        "portIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+      }
+    },
+    {
+      "phase": "mixed",
+      "samples": 73,
+      "wallMs": 63734.142959000004,
+      "queriesPerSecond": 1.1453829393604726,
+      "latencyMs": {
+        "count": 73,
+        "min": 3756.198583000005,
+        "p50": 15355.521500000003,
+        "p95": 18588.261500000008,
+        "p99": 19231.358833,
+        "max": 19231.358833
+      },
+      "writeAcks": 20,
+      "writeBurstDurationMs": 61644.631166,
+      "writeAckLatencyMs": {
+        "p50": 3073.3841250000114,
+        "p95": 3216.7272920000105,
+        "p99": 3263.1357080000016
+      },
+      "writesPerComplete10sWindow": [
+        3,
+        3,
+        3,
+        3,
+        4,
+        3
+      ],
+      "drainMs": 3734.1429590000043,
+      "sampledMaxRssBytes": 2323529728,
+      "duckdbSnapshotBefore": {
+        "available": true,
+        "memoryBytes": "494402608",
+        "temporaryStorageBytes": "0"
+      },
+      "duckdbSnapshotAfter": {
+        "available": true,
+        "memoryBytes": "675584912",
+        "temporaryStorageBytes": "0"
+      },
+      "cpuUsage": {
+        "userMicroseconds": 272234270,
+        "systemMicroseconds": 5268676,
+        "totalMicroseconds": 277502946,
+        "averageCores": 4.354070410557131,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      "pool": {
+        "before": {
+          "capacity": 16,
+          "available": 16,
+          "active": 0,
+          "waiting": 0
+        },
+        "after": {
+          "capacity": 16,
+          "available": 16,
+          "active": 0,
+          "waiting": 0
+        },
+        "maxObservedActive": 3,
+        "maxObservedWaiting": 0,
+        "sampleIntervalMs": 25
+      },
+      "logicalClients": 16,
+      "nativePoolCapacity": 16,
+      "admission": {
+        "limit": 3,
+        "active": 0,
+        "waiting": 0,
+        "maxActive": 3,
+        "maxQueued": 13,
+        "admitted": 91,
+        "completed": 91,
+        "rejected": 0,
+        "admissionWaitMs": {
+          "count": 91,
+          "min": 0.000540999993972946,
+          "p50": 12263.455999999991,
+          "p95": 15359.037750000003,
+          "p99": 16014.184874999999,
+          "max": 16014.184874999999
+        },
+        "scope": "whole public query calls admitted by a test-only FIFO; not native tasks"
+      },
+      "physicalControlScopes": {
+        "calls": 91,
+        "maxActive": 3,
+        "distinctPorts": 16,
+        "portIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "scope": "actual NativeDuckDBPort control scopes, including first/warmup/final calls; not native execution tasks"
+      }
+    }
+  ],
+  "numericGates": {
+    "fixedP50": true,
+    "fixedP99": true,
+    "mixedQPS": false,
+    "mixedP50": false,
+    "mixedP99": false,
+    "writes": false,
+    "writesPerSecond": false,
+    "sampledRss": true
+  },
+  "numericGatePassCount": 3,
+  "numericGateFailCount": 5,
+  "limits": {
+    "readers": 16,
+    "maxFixedP50Ms": 3500,
+    "maxFixedP99Ms": 6500,
+    "minMixedQueriesPerSecond": 4.8,
+    "maxMixedP50Ms": 3200,
+    "maxMixedP99Ms": 6500,
+    "minAcknowledgedWrites": 40,
+    "minAcknowledgedWritesPerSecond": 0.5,
+    "maxSampledRssBytes": 3500000000
+  },
+  "writesPerSecond": 0.32444025735417115,
+  "controlComparison": {
+    "rawEvidence": "build/antijoin-qualification-20261105-04/10m.json",
+    "sha256": "8da3ec523841a4fd5bea597e0641fa40a5192fc91474c1219fb6fc146bc0596f",
+    "scope": "Existing qualified control reused; no fresh paired or reverse control in this diagnostic. Identical source/runtime/query/settings apart from test-only FIFO scheduling and scope instrumentation.",
+    "metrics": {
+      "fixedQPS": {
+        "control": 6.662613305126946,
+        "candidate": 7.702521827271078,
+        "percentChange": 15.608117633720564
+      },
+      "fixedP50Ms": {
+        "control": 2237.381416000004,
+        "candidate": 2068.5283750000017,
+        "percentChange": -7.546904599836979
+      },
+      "fixedP99Ms": {
+        "control": 4660.104750000002,
+        "candidate": 2302.977999999999,
+        "percentChange": -50.580982112043756
+      },
+      "mixedQPS": {
+        "control": 3.2385476906656936,
+        "candidate": 1.1453829393604726,
+        "percentChange": -64.63282159896076
+      },
+      "mixedP50Ms": {
+        "control": 4121.2988329999935,
+        "candidate": 15355.521500000003,
+        "percentChange": 272.5893734529885
+      },
+      "mixedP99Ms": {
+        "control": 7998.524874999988,
+        "candidate": 19231.358833,
+        "percentChange": 140.43631961574698
+      },
+      "writeAcks": {
+        "control": 15,
+        "candidate": 20,
+        "percentChange": 33.33333333333333
+      },
+      "writesPerSecond": {
+        "control": 0.23696734016269322,
+        "candidate": 0.32444025735417115,
+        "percentChange": 36.91349075000048
+      },
+      "mixedSampledRssBytes": {
+        "control": 2663366656,
+        "candidate": 2323529728,
+        "percentChange": -12.759674948787826
+      },
+      "overallSampledRssBytes": {
+        "control": 2663366656,
+        "candidate": 2692464640,
+        "percentChange": 1.0925264057972894
+      },
+      "mixedAverageProcessCores": {
+        "control": 6.233134462150194,
+        "candidate": 4.354070410557131,
+        "percentChange": -30.146374396435817
+      }
+    }
+  },
+  "correctness": {
+    "inlineTypedAnswers": true,
+    "independentStoredAnswersAndSampleWidths": true,
+    "exactReturnedK": true,
+    "seedBatchPositions": "39088..39095",
+    "patchAckPositions": "39096..39115",
+    "all20ReceiptsHave2AssertedAnd2Retracted": true,
+    "zeroQueryOrAckErrors": true,
+    "all16LogicalClientsUsed": true,
+    "all16PhysicalReaderPortsObserved": true,
+    "nativeControlScopesAtMost3": true,
+    "allAdmissionAndLeaseQueuesDrained": true,
+    "healthyReuseCalls": 16,
+    "reopenedExactCuts": 5,
+    "writeInAllSixCompleteWindows": true,
+    "finalAnswerRows": 236,
+    "reopenVerified": true
+  },
+  "decision": {
+    "promote": false,
+    "oneReaderRerun": false,
+    "originalOneReaderFailureRemains": true,
+    "fullScaleQualification": false,
+    "mechanismOutcome": "Fixed tail improves and sampled mixed RSS/CPU fall; additional writes do not meet the40-ACK/0.5-per-second floors. Queue waits dominate mixed full-call latency and read throughput regresses.",
+    "nextRunStarted": false,
+    "engineLeaseReleased": true
+  },
+  "limitations": [
+    "One candidate-only diagnostic against an earlier frozen control; not a fresh paired estimate.",
+    "Queue-wait quantiles cover first/warmup/final calls as well as measured calls; do not subtract them from measured latency quantiles.",
+    "Logical clients16, physical pool16 and maximum3 admitted/control scopes are distinct; no claim of16 simultaneous native tasks.",
+    "Process CPU includes all process threads, oracle, sampling and drain; RSS is sampled and DuckDB spill values are snapshots.",
+    "No one-reader rerun, no restored full gate and no production API/default changes."
+  ]
+}

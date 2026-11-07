@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "native_tests_run": 57,
+  "fixture_sha256": "247e80d77a51f3a6287f40b078c5b090690992a64b15101779e64a006a796edf",
+  "answer_fixtures": 20,
+  "native_program_rejection_fixtures": 8,
+  "harness_prebinding_source_rejections_checked": 7,
+  "selected_integration_tests": 57,
+  "large_cases_included": true,
+  "python": "3.12.14",
+  "duckdb": "2.0.0",
+  "extension": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/checkpoints/5b661f38/temporal_datalog.duckdb_extension",
+  "extension_sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+  "platform": "linux_amd64",
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0
+}

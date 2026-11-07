@@ -1,0 +1,15 @@
+{
+  "archive": "fp-cost-research-and-decision.tar.gz",
+  "bytes": 125397,
+  "sha256": "6e0220413c3c37de6a5ee56527087ee7d904653c0d72185a078ba97251cf3886",
+  "entries": 86,
+  "source_bytes": 818569,
+  "excluded_full_primary_source_files": 12,
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 167197,
+      "sha256": "6d290ea4c614ce1e0de1ce30d107f87b4570001975381f5587f8f03fcac3a7e6"
+    }
+  ]
+}

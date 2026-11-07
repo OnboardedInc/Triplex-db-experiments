@@ -1,0 +1,34 @@
+{
+  "format": "offline-public-runtime-images/1",
+  "platformQualification": "Retained images are linux/arm64. Other architectures require independently obtained upstream images and fresh qualification.",
+  "images": [
+    {
+      "file": "xtdb-2.2.0-linux-arm64.docker.tar.gz",
+      "sha256": "8e8c56ea94eefeb92f1944de8c3868d74da563e81f7af317b38f2c8d162f232a",
+      "bytes": 147539213,
+      "publicReference": "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "repoDigests": [
+        "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+      ],
+      "architecture": "arm64",
+      "os": "linux",
+      "format": "docker-save-gzip",
+      "contains": "Public immutable image layers only. No containers, volumes, client credentials, application data or host Docker configuration."
+    },
+    {
+      "file": "qlever-0.6.0-linux-arm64.docker.tar.gz",
+      "sha256": "40674a2630e2c85d4cddfd3c34a0e00075f5542f8d8809d5e62c3970b1c185cf",
+      "bytes": 216627256,
+      "publicReference": "adfreiburg/qlever@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "repoDigests": [
+        "adfreiburg/qlever@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+      ],
+      "architecture": "arm64",
+      "os": "linux",
+      "format": "docker-save-gzip",
+      "contains": "Public immutable image layers only. No containers, volumes, client credentials, application data or host Docker configuration."
+    }
+  ]
+}

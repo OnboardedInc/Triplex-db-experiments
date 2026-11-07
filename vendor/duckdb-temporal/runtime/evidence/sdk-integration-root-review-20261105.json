@@ -1,0 +1,38 @@
+{
+  "schema": "temporal.sdk-integration-root-review.v1",
+  "reviewedAt": "2026-11-06T03:22:26.170293+00:00",
+  "status": "integrated_correctness_and_all20_functional_passed_performance_promotion_pending",
+  "scope": "isolated integration candidate only; main production remains qualified0.32 until explicit source promotion",
+  "integrationEvidenceCommit": "23ca13c1622501fd4684b9af0ffb5eacb13fc8c5",
+  "codeCommit": "041264f26757e891c8053d8a0e594c09aaead94f",
+  "checks": {
+    "fullVerification": 422,
+    "methodChecks": 378,
+    "unchangedTriplexCases": 44,
+    "typescript": "PASS",
+    "sourceHashes": 216,
+    "rootSourceHashAndFullCountReview": "PASS; root independently matched all216 to tested59d185 and recomputed378+44 beforecopy",
+    "functionalFamilies": 20,
+    "freshEngineProfiles": 60,
+    "typedAnswers": 213,
+    "rootThreeProfileRowsIncludingFirstRead": "all213 agree exactly across naiveSQL/directDuckDB/temporalStore and first/sampled reads after unordered relational row sorting; duplicate rows retained",
+    "reopenProfiles": 60,
+    "finalTimedTwentyWorkloadComparison": false
+  },
+  "candidateVerification": {
+    "path": "evidence/sdk-integration-full-20261105/verification.json",
+    "sha256": "d08c0dbfceb007104c656c12b98e3bfe8626ad6f7ae13af6b6099d1e3b9cab0f"
+  },
+  "functionalRaw": {
+    "path": "evidence/sdk-integration-functional-20-20261105/first.json",
+    "sha256": "84281332e872637ec6da725131d1c613bb1862959c78364b9a11da51288a899e"
+  },
+  "preservedFailure": "evidence/sdk-integration-first-outcome-20261105.json",
+  "fixtureOnlyRepair": "evidence/sdk-integration-fixture-fix-20261105.json",
+  "remaining": [
+    "reverse paired sixteen-reader performance",
+    "broader1/4/16-reader regression gates",
+    "source promotion and exact integration build identity"
+  ],
+  "inheritedMainReceiptUnchanged": "evidence/verification.json still405 on main; candidate422 stored separately"
+}

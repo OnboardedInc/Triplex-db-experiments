@@ -1,0 +1,879 @@
+{
+  "schema_version": 1,
+  "title": "Pinned Triplex source ledger and product-map review sources",
+  "inspected_date_utc": "2026-11-03",
+  "method": "Read-only primary-source text inspection and hand derivation; no imports, fixture/model evaluation, compilation, dependency, database or runtime action.",
+  "scope_limits": [
+    "Repository text is not loaded-build authentication.",
+    "Conformance case assertions were read and never executed.",
+    "No adapter, capability subset, numeric conversion policy or runtime action was selected.",
+    "Default-branch search was used only to discover paths; no default-branch excerpt supplies a pinned semantic assertion.",
+    "Dependency implementation of effect4.0.3 Schema.Number was not inspected."
+  ],
+  "triplex_revision": {
+    "repository": "bjacobso/triplex",
+    "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0"
+  },
+  "source_only": true,
+  "controls_executed": false,
+  "triplex_sources": [
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/Value.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "d5e673ad24ba69267aa3dbae8a7cea1839225c97",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Value.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 4,
+          "end": 13,
+          "purpose": "Seven tags",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Value.ts#L4-L13"
+        },
+        {
+          "start": 15,
+          "end": 57,
+          "purpose": "Tagged value schemas",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Value.ts#L15-L57"
+        },
+        {
+          "start": 59,
+          "end": 79,
+          "purpose": "Direct-object constructors",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Value.ts#L59-L79"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/Branded.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "3a936cec2eff6ce5b48960ebe21376701f70d24f",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Branded.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 12,
+          "end": 19,
+          "purpose": "Nonempty branded EntityId",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Branded.ts#L12-L19"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/Triple.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "aa3d33cebb5dcc7de4d8dc236e599f70354b0538",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Triple.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 8,
+          "end": 17,
+          "purpose": "Typed assertion input",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Triple.ts#L8-L17"
+        },
+        {
+          "start": 43,
+          "end": 74,
+          "purpose": "Typed triple/response values",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Triple.ts#L43-L74"
+        },
+        {
+          "start": 76,
+          "end": 101,
+          "purpose": "SQL row shape",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Triple.ts#L76-L101"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/datalog/schema.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "3a3a1356473336aac8ec571a0cfa8c32aecac5ad",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/schema.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 13,
+          "end": 22,
+          "purpose": "Variable shape",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/schema.ts#L13-L22"
+        },
+        {
+          "start": 39,
+          "end": 95,
+          "purpose": "Typed ref-only Constant and identity terms",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/schema.ts#L39-L95"
+        },
+        {
+          "start": 101,
+          "end": 122,
+          "purpose": "Predicate contract and pattern tuples",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/schema.ts#L101-L122"
+        },
+        {
+          "start": 395,
+          "end": 429,
+          "purpose": "Query, optional projection",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/schema.ts#L395-L429"
+        },
+        {
+          "start": 526,
+          "end": 537,
+          "purpose": "Wrapped result records",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/schema.ts#L526-L537"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/datalog/types.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "54d5ef36338ed899f31c47bd5b15924566fafac2",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/types.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 54,
+          "end": 75,
+          "purpose": "Context and query-result type",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/types.ts#L54-L75"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/datalog/validation.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "f271306ef9d7bf772a7dc0b36cfd5028df358742",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/validation.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 37,
+          "end": 47,
+          "purpose": "Schema decode",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/validation.ts#L37-L47"
+        },
+        {
+          "start": 60,
+          "end": 80,
+          "purpose": "Raw ordered predicate preflight",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/validation.ts#L60-L80"
+        },
+        {
+          "start": 207,
+          "end": 218,
+          "purpose": "Positive/value-position bindings",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/validation.ts#L207-L218"
+        },
+        {
+          "start": 333,
+          "end": 358,
+          "purpose": "Validated query entrypoints",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/validation.ts#L333-L358"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/datalog/compiler.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "e1df2e3f61fd72e574f77418160448b885045c5f",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 208,
+          "end": 215,
+          "purpose": "Parameterized and physical constants",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L208-L215"
+        },
+        {
+          "start": 268,
+          "end": 340,
+          "purpose": "Scalar families, exact typed-ref pattern and flattened joins",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L268-L340"
+        },
+        {
+          "start": 343,
+          "end": 407,
+          "purpose": "Predicate constants/equality/numeric ordering",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L343-L407"
+        },
+        {
+          "start": 624,
+          "end": 631,
+          "purpose": "Raw inequality complement",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L624-L631"
+        },
+        {
+          "start": 825,
+          "end": 875,
+          "purpose": "Distinct count and canonical-family projections",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L825-L875"
+        },
+        {
+          "start": 878,
+          "end": 923,
+          "purpose": "Optional projection expressions",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L878-L923"
+        },
+        {
+          "start": 1070,
+          "end": 1089,
+          "purpose": "SQL result ordering without explicit collation",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L1070-L1089"
+        },
+        {
+          "start": 1131,
+          "end": 1168,
+          "purpose": "SQL aggregate expressions",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L1131-L1168"
+        },
+        {
+          "start": 1172,
+          "end": 1240,
+          "purpose": "Projected variables/constants and hidden columns",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L1172-L1240"
+        },
+        {
+          "start": 1243,
+          "end": 1262,
+          "purpose": "Canonical-family group expressions",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L1243-L1262"
+        },
+        {
+          "start": 1352,
+          "end": 1364,
+          "purpose": "SELECT DISTINCT",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts#L1352-L1364"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/datalog/wrapper.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "46cca1f25f7f3bc6e6fb296de5fe9e7aa41b456d",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/wrapper.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 176,
+          "end": 245,
+          "purpose": "Family-ranked wrapper ordering",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/wrapper.ts#L176-L245"
+        },
+        {
+          "start": 318,
+          "end": 357,
+          "purpose": "Carry hidden projection columns",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/wrapper.ts#L318-L357"
+        },
+        {
+          "start": 409,
+          "end": 427,
+          "purpose": "Count filtered logical inner rows without cursor",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/wrapper.ts#L409-L427"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/kv/datalog/pattern.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "e1bb99316774cabde1ec9e57f3f74c9d44a4517e",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/pattern.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 21,
+          "end": 94,
+          "purpose": "Storage flattening and compatible scan encodings",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/pattern.ts#L21-L94"
+        },
+        {
+          "start": 187,
+          "end": 259,
+          "purpose": "Bind datom, exact typed-ref patterns, flattened equality",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/pattern.ts#L187-L259"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/kv/datalog/predicate.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "86f8151df41dc483013f841e79f03d8cb81879a5",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/predicate.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 24,
+          "end": 77,
+          "purpose": "Typed-ref resolution, numeric ordering, raw strict equality",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/predicate.ts#L24-L77"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/kv/datalog/executor.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "1f524d44426f0b33338a74f2f8050bda6d5c2f19",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 216,
+          "end": 228,
+          "purpose": "Normalize typed constants",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts#L216-L228"
+        },
+        {
+          "start": 403,
+          "end": 443,
+          "purpose": "Projection DISTINCT versus undeduplicated aggregate inputs",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts#L403-L443"
+        },
+        {
+          "start": 445,
+          "end": 458,
+          "purpose": "Optional value flattening",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts#L445-L458"
+        },
+        {
+          "start": 461,
+          "end": 505,
+          "purpose": "Missing optional result null",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts#L461-L505"
+        },
+        {
+          "start": 527,
+          "end": 609,
+          "purpose": "Grouping, distinct source-value count, numeric aggregate multiplicity",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts#L527-L609"
+        },
+        {
+          "start": 631,
+          "end": 675,
+          "purpose": "Result sorting, family ranks, JS string comparison",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts#L631-L675"
+        },
+        {
+          "start": 705,
+          "end": 749,
+          "purpose": "Execution pipeline",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts#L705-L749"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/sql/src/SqlQueryExecutor.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "d53f1d9baa3a88d0900222ea16724f77a5ec63ea",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/SqlQueryExecutor.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 48,
+          "end": 56,
+          "purpose": "Projected numeric conversion",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/SqlQueryExecutor.ts#L48-L56"
+        },
+        {
+          "start": 58,
+          "end": 129,
+          "purpose": "Decode typed scalar-family hidden columns and constants",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/SqlQueryExecutor.ts#L58-L129"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/sql/src/queries.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "947e60bbe3acfaaf26fd1d62652116b968606d7a",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/queries.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 3,
+          "end": 47,
+          "purpose": "Physical value packing, plain JSON.stringify and blob metadata",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/queries.ts#L3-L47"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "d6ef6b0fae64c8a5599dc0757333229766050bd8",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/TriplesLive.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 77,
+          "end": 111,
+          "purpose": "Typed row reconstruction",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/TriplesLive.ts#L77-L111"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/Temporal.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "a8b64d1b699f3ea2de55b2cfca4139b288686d8c",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Temporal.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 11,
+          "end": 23,
+          "purpose": "Read-basis types",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Temporal.ts#L11-L23"
+        },
+        {
+          "start": 25,
+          "end": 45,
+          "purpose": "Finite nonnegative resolver checks without integer requirement",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Temporal.ts#L25-L45"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/Pagination.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "96768cf49ed11a5777e2c6c37c3e6a8e78ef6c6d",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Pagination.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 99,
+          "end": 123,
+          "purpose": "Projected-variable tie-break ordering",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Pagination.ts#L99-L123"
+        },
+        {
+          "start": 176,
+          "end": 189,
+          "purpose": "Cursor finite numeric values and safe commit position checks",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Pagination.ts#L176-L189"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/src/content/CanonicalJson.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "133cbcdf0ecebfeca5edebb55172c20bf9f1b9e0",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/content/CanonicalJson.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 1,
+          "end": 24,
+          "purpose": "Content encoder scope and normalization",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/content/CanonicalJson.ts#L1-L24"
+        },
+        {
+          "start": 69,
+          "end": 79,
+          "purpose": "Explicit nonfinite rejection",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/content/CanonicalJson.ts#L69-L79"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/testkit/src/index.ts",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "d410781a7dc61a3833991a6fc9463c7dbf9c1a77",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 402,
+          "end": 445,
+          "purpose": "Declared scalar projection expectations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L402-L445"
+        },
+        {
+          "start": 450,
+          "end": 529,
+          "purpose": "Declared exact five-fact collapse/group/page expectations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L450-L529"
+        },
+        {
+          "start": 533,
+          "end": 568,
+          "purpose": "Declared constant projection expectations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L533-L568"
+        },
+        {
+          "start": 572,
+          "end": 631,
+          "purpose": "Declared numeric/text pattern and exact-ref expectations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L572-L631"
+        },
+        {
+          "start": 669,
+          "end": 717,
+          "purpose": "Declared value-join/JSON/blob expectations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L669-L717"
+        },
+        {
+          "start": 721,
+          "end": 807,
+          "purpose": "Declared raw equality/inequality expectations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L721-L807"
+        },
+        {
+          "start": 812,
+          "end": 846,
+          "purpose": "Declared numeric-only ordered predicates",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L812-L846"
+        },
+        {
+          "start": 1218,
+          "end": 1267,
+          "purpose": "Declared sum20/count1 and empty-null expectations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L1218-L1267"
+        },
+        {
+          "start": 1579,
+          "end": 1685,
+          "purpose": "Declared ASCII/mixed-family ordering and pagination expectations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L1579-L1685"
+        },
+        {
+          "start": 1689,
+          "end": 1724,
+          "purpose": "Declared bare string/ref versus typed-ref distinction",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts#L1689-L1724"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "ARCHITECTURE.md",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "36f12b88e92ec7eeb9ad04bc0cdc503d4c12da2e",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/ARCHITECTURE.md",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 15,
+          "end": 38,
+          "purpose": "Architecture intent for query validation and scalar identity",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/ARCHITECTURE.md#L15-L38"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "pnpm-workspace.yaml",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "1d5970910a788353b39181083d67ba851e5e42d9",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/pnpm-workspace.yaml",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 17,
+          "end": 40,
+          "purpose": "Pinned catalog includes effect4.0.3",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/pnpm-workspace.yaml#L17-L40"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "path": "packages/core/package.json",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "blob_id": "8786d9fc207c952e3c1b7a6f3abb963239e509a3",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/package.json",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 92,
+          "end": 108,
+          "purpose": "Effect dependency catalog and peer declarations",
+          "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/package.json#L92-L108"
+        }
+      ],
+      "execution_evidence": false
+    }
+  ],
+  "product_review_revision": {
+    "repository": "Contributor/research-reference",
+    "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241"
+  },
+  "product_review_sources": [
+    {
+      "repository": "Contributor/research-reference",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_typed_core.hpp",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "blob_id": "f94113a07230f8a450c06b46cae6eb9c7a25eb8c",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 8,
+          "end": 34,
+          "purpose": "Four tags and declared comparator contract",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_core.cpp",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "blob_id": "217b1b42aafe1aea490baa3b95b84b5ef12c4ad2",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 37,
+          "end": 117,
+          "purpose": "Full-tuple equality and relation deduplication",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 71,
+          "end": 77,
+          "purpose": "Aggregate kind inventory",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 790,
+          "end": 820,
+          "purpose": "WideSum zero-initialized magnitudes and finish",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 822,
+          "end": 900,
+          "purpose": "Native grouping, full-row count, measure rules, empty-global behavior",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 1447,
+          "end": 1513,
+          "purpose": "Value admission, cross-tag equality and byte comparator",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_expression.hpp",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "blob_id": "81372c05af37c3bef6e65223e4905e01f2a16869",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 85,
+          "end": 121,
+          "purpose": "Same-tag ordered comparisons and mixed-tag rejection",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_integration004/source/engine/src/temporal_value_domain.hpp",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "blob_id": "99ff9118354d3bba5e48ad461442ef2493e94086",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 25,
+          "end": 53,
+          "purpose": "Strict non-NUL UTF-8 scalar text",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 91,
+          "end": 200,
+          "purpose": "Separate typed dictionary identities",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/typed_store.py",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "blob_id": "100a4cbb7867f1454a304635ed6ba618d0ef04ce",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 35,
+          "end": 52,
+          "purpose": "Legacy helper linkage and five-field carrier",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 68,
+          "end": 70,
+          "purpose": "Canonical signed decimal regular expression",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 114,
+          "end": 123,
+          "purpose": "Scalar UTF-8 error translation",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 124,
+          "end": 167,
+          "purpose": "Exact signed-decimal i64 and typed carrier admission",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 246,
+          "end": 256,
+          "purpose": "Signed-int64 query cut",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 259,
+          "end": 343,
+          "purpose": "Value identity, exact i64 wire and UTF-8 sort key",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/store.py",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "blob_id": "479d6a9133acddfd32a6c93a723f8c77155db4e4",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 25,
+          "end": 33,
+          "purpose": "Signed-int64 and persisted text limits",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        },
+        {
+          "start": 116,
+          "end": 139,
+          "purpose": "Text and exact-int admission helpers",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        }
+      ],
+      "execution_evidence": false
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/schema_v2.sql",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "blob_id": "5f8cff5ee6980e45df0e5094ac378514b750de0c",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "read_method": "GitHub connector fetch_file",
+      "line_ranges": [
+        {
+          "start": 21,
+          "end": 49,
+          "purpose": "Four-tag one-payload carrier, finite DOUBLE, intervals and persisted text guards",
+          "url": "[PRIVATE_REFERENCE_REMOVED]"
+        }
+      ],
+      "execution_evidence": false
+    }
+  ],
+  "supplemental_standards": [
+    {
+      "publisher": "Ecma TC39",
+      "title": "ECMAScript Number type",
+      "url": "https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-ecmascript-language-types-number-type",
+      "retrieved_date_utc": "2026-11-03",
+      "section": "6.1.6.1",
+      "retrieved_line_ranges": [
+        [
+          2510,
+          2527
+        ]
+      ],
+      "purpose": "Binary64 and roundTiesToEven basis for mathematical integer hand derivation",
+      "pinned_to_triplex_revision": false
+    },
+    {
+      "publisher": "Ecma TC39",
+      "title": "ECMAScript String type",
+      "url": "https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-ecmascript-language-types-string-type",
+      "retrieved_date_utc": "2026-11-03",
+      "section": "6.1.4",
+      "retrieved_line_ranges": [
+        [
+          2376,
+          2383
+        ]
+      ],
+      "purpose": "UTF-16 elements and surrogate-pair formula",
+      "pinned_to_triplex_revision": false
+    },
+    {
+      "publisher": "Ecma TC39",
+      "title": "ECMAScript IsLessThan",
+      "url": "https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islessthan",
+      "retrieved_date_utc": "2026-11-03",
+      "section": "7.2.12",
+      "retrieved_line_ranges": [
+        [
+          2815,
+          2824
+        ],
+        [
+          2849,
+          2851
+        ]
+      ],
+      "purpose": "String comparison uses UTF-16 code-unit order",
+      "pinned_to_triplex_revision": false
+    }
+  ]
+}
+

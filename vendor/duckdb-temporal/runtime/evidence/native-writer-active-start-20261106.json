@@ -1,0 +1,600 @@
+{
+  "schema": "td.native-writer-active-start-qualification/1",
+  "recordedAtUtc": "2026-11-06T08:13:52.531926+00:00",
+  "status": "passed_started_before_termination_recovery_only",
+  "firstActualEngineAttempt": true,
+  "sourcePins": {
+    "adapter/test-native-writer-active-teardown.ts": {
+      "commit": "011fcb44ef29d06557186a85d703a68575105169",
+      "sha256": "02ac615f0a76e3c31044dc9d30844204a301acc073cb327e62c289755beade9a"
+    },
+    "adapter/native-writer-active-teardown-worker.mjs": {
+      "commit": "4902695462c043cf68947d28170a65c8c5c9af71",
+      "sha256": "5eca7508e8ea77114b125bff8f046735f4f3205a4e758071a279475828a749fe"
+    },
+    "NATIVE-WRITER-ACTIVE-TEARDOWN.md": {
+      "commit": "f9a9874ac886f6b545947945010d8daeb3dc3da6",
+      "sha256": "a6bdb5369e8c87b506fb9a8732b39a9f0ae2bb9a99f322c557ec87154b96062f"
+    }
+  },
+  "artifactPins": {
+    "core": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "core_plain": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "control": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "core_manifest": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "owner": "0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9",
+    "owner_plain": "884e708dcb9161d9d1c94790bec52b1cf1a388bf42115c7ed98e25b4f502fccd",
+    "owner_manifest": "1dcf48f7dfa69262f6b18bdb48ac2020205c9f702a63737cb13299297f749331",
+    "writer_addon": "02270b0840dd4bab9c3beb00986e06bc0e8125c2971f9ac6f9a407f6fe03418c",
+    "entity_sdk": "48c6a5d6443fc706e59e31779437e4b24d7ce6ea6de1b07d22501f54e8b9d8f8",
+    "schema_sdk": "723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226",
+    "port": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+    "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "preparationChronology": [
+    {
+      "phase": "initial_staging",
+      "pid": 85834,
+      "status": "failed_before_TSC_and_engine",
+      "error": {
+        "name": "TypeError",
+        "message": "symlink: src should be string, bytes or os.PathLike, not dict",
+        "traceback": "Traceback (most recent call last):\n  File \"<stdin>\", line 52, in <module>\nTypeError: symlink: src should be string, bytes or os.PathLike, not dict\n"
+      },
+      "preservedPartialCopiedFiles": 581,
+      "assetOverwrite": false
+    },
+    {
+      "phase": "authorized_setup_helper_repair",
+      "status": "existing581_rechecked_no_recopy_then_only_five_absent_routes_added",
+      "addedRoutes": {
+        "@triplex-build": {
+          "literalTarget": "[LOCAL_PATH_0061]",
+          "resolvedTarget": "[LOCAL_PATH_0061]",
+          "use": "read-only selected existing dependency"
+        },
+        "@types": {
+          "literalTarget": "[LOCAL_PATH_0062]",
+          "resolvedTarget": "[LOCAL_PATH_0062]",
+          "use": "read-only selected existing dependency"
+        },
+        "effect": {
+          "literalTarget": "[LOCAL_PATH_0063]",
+          "resolvedTarget": "[LOCAL_PATH_0063]",
+          "use": "read-only selected existing dependency"
+        },
+        "typescript": {
+          "literalTarget": "[LOCAL_PATH_0064]",
+          "resolvedTarget": "[LOCAL_PATH_0064]",
+          "use": "read-only selected existing dependency"
+        },
+        ".bin/tsc": {
+          "literalTarget": "[LOCAL_PATH_0044]",
+          "resolvedTarget": "[LOCAL_PATH_0044]",
+          "use": "read-only selected existing dependency"
+        }
+      },
+      "schemaReadBeforeRepair": true
+    },
+    {
+      "phase": "first_TSC",
+      "terminal": {
+        "command": [
+          "[LOCAL_PATH_0043]",
+          "[LOCAL_PATH_0044]",
+          "-p",
+          "tsconfig.json"
+        ],
+        "startedAtUtc": "2026-11-06T07:55:46.364646+00:00",
+        "pid": 88374,
+        "exitCode": 1,
+        "endedAtUtc": "2026-11-06T07:55:48.268335+00:00"
+      },
+      "status": "failed_before_engine",
+      "diagnostic": "TS18046 at test source113: Worker error callback parameter is unknown",
+      "emittedNewOutputs": {
+        "build/adapter/test-native-writer-active-teardown.js": {
+          "exists": false
+        },
+        "build/adapter/test-native-writer-active-teardown.d.ts": {
+          "exists": false
+        }
+      }
+    },
+    {
+      "phase": "authorized_one_line_source_fix",
+      "commit": "011fcb44ef29d06557186a85d703a68575105169",
+      "change": "Use existing failure(error) diagnostic helper; no controls/oracles/caps/native/SDK changes"
+    },
+    {
+      "phase": "corrected_source_TSC",
+      "terminal": {
+        "command": [
+          "[LOCAL_PATH_0043]",
+          "[LOCAL_PATH_0044]",
+          "-p",
+          "tsconfig.json"
+        ],
+        "startedAtUtc": "2026-11-06T08:01:54.930028+00:00",
+        "sourceCommit": "011fcb44ef29d06557186a85d703a68575105169",
+        "pid": 90507,
+        "exitCode": 0,
+        "endedAtUtc": "2026-11-06T08:01:56.947393+00:00"
+      },
+      "status": "passed",
+      "allOriginal186CompiledUnchanged": true,
+      "onlyAdditions": {
+        "build/adapter/test-native-writer-active-teardown.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+        "build/adapter/test-native-writer-active-teardown.js": "a9c3aead8dfe0b9639bdf5a75a533af8911ae8cdf90e914f213f27a465cf57c9",
+        "build/adapter/native-writer-active-teardown-worker.mjs": "5eca7508e8ea77114b125bff8f046735f4f3205a4e758071a279475828a749fe"
+      },
+      "compiledArtifacts": 189,
+      "sdkDependencies": 395,
+      "physicalMap": 584
+    }
+  ],
+  "metadataException": {
+    "path": "NATIVE-WRITER-VALUES-QUALIFICATION.md",
+    "testedSha256": "1580e8823a6dfb082027f7100ab3ae561e6a9570b352f6b78601b30aba0c1661",
+    "acceptedSha256": "89b1bff1eb79f1447b1a231075c1258658728071b5000d031d39baf917b579e0",
+    "gitCommit": "51d4d0f738d6ca6a17413aaf218d2389d39f90f0"
+  },
+  "stdinTranscriptProvenance": {
+    "schema": "td.stdin-driver-preservation/1",
+    "recordedAtUtc": "2026-11-06T07:53:39.428553+00:00",
+    "source": "Verbatim transcription of previously executed tool-call Python stdin after its first failure",
+    "originalExecution": "python3 - (stdin); first.py did not exist when executed",
+    "transcribedFile": "first.py",
+    "executedAgain": false,
+    "originalFirstReceiptUntouched": "preparation-first.json"
+  },
+  "execution": {
+    "schema": "td.native-writer-active-start-first-execution/1",
+    "status": "passed",
+    "requestedAtUtc": "2026-11-06T08:06:04.607187+00:00",
+    "launcherPid": 91743,
+    "driverSha256": "c5b1ad6f9e1b54bda31fd028b4a9bd74f40250955d8619bb37ef6edc33b0cab1",
+    "sourceCommit": "011fcb44ef29d06557186a85d703a68575105169",
+    "workerSourceCommit": "4902695462c043cf68947d28170a65c8c5c9af71",
+    "protocolCommit": "f9a9874ac886f6b545947945010d8daeb3dc3da6",
+    "scope": "Started before termination request, not active-at-cleanup or per-Worker zero metrics",
+    "argv": [
+      "[LOCAL_PATH_0043]",
+      "--test",
+      "--test-concurrency=1",
+      "--test-reporter=tap",
+      "build/adapter/test-native-writer-active-teardown.js"
+    ],
+    "environment": {
+      "UV_THREADPOOL_SIZE": "4",
+      "NODE_OPTIONS": null,
+      "TD_NATIVE_WRITER_LAB_variables": []
+    },
+    "startedAtUtc": "2026-11-06T08:06:04.841311+00:00",
+    "pid": 91744,
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T08:06:09.313018+00:00",
+    "watchdogOccurred": false,
+    "signal": null,
+    "fixed584PrePostExact": true,
+    "priorFailuresUnchanged": true,
+    "ownedFixtureCount": 1,
+    "terminalSha256": "631217409f7eee58856ee896545ad7adec6f557ed039373e0126b108f1cdd60f"
+  },
+  "tap": {
+    "methods": 1,
+    "pass": 1,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 4394.471709,
+    "methodDurationMs": 3441.2445
+  },
+  "processHierarchy": {
+    "nodeTestRunnerPid": 91744,
+    "actualTestProcessPid": 91745,
+    "workerSameProcessPid": 91745,
+    "workerThreadId": 1,
+    "workerExitCode": 1
+  },
+  "actualObservation": {
+    "marker": "1",
+    "pendingPublicWrite": true,
+    "nativeWorkerConnectionId": "4",
+    "alreadyEnrolledObserverConnectionId": "3",
+    "ownerAudited": true,
+    "ownerGeneration": 4,
+    "baselineSequence": 133,
+    "nativeQueryBeginSequence": 157,
+    "lastObservedNativeQueryEndSequence": 0,
+    "workerEvents": [
+      {
+        "sequence": 140,
+        "kind": "transaction_begin",
+        "connection": 4,
+        "transaction": 35,
+        "generation": 4
+      },
+      {
+        "sequence": 155,
+        "kind": "transaction_commit",
+        "connection": 4,
+        "transaction": 35,
+        "generation": 4
+      },
+      {
+        "sequence": 156,
+        "kind": "transaction_begin",
+        "connection": 4,
+        "transaction": 40,
+        "generation": 4
+      },
+      {
+        "sequence": 157,
+        "kind": "query_begin",
+        "connection": 4,
+        "transaction": 0,
+        "generation": 4
+      },
+      {
+        "sequence": 164,
+        "kind": "check",
+        "connection": 4,
+        "transaction": 0,
+        "generation": 4
+      }
+    ],
+    "observedAfterDispatchMs": 45.84958299999971,
+    "recordedWriteSettlementEvents": 0
+  },
+  "causalClockObservations": {
+    "observationNs": "1803552740695500",
+    "capturedTerminationRequestNs": "1803552741429583",
+    "laterParentJournalEventNs": "1803552741479833",
+    "loggedWorkerExitNs": "1803553007253833",
+    "observationToCapturedRequestMs": 0.734083,
+    "capturedRequestToLoggedExitMs": 265.82425,
+    "observationToLaterParentJournalEventMs": 0.784333,
+    "scope": "Distinct real monotonic timestamp origins; no engine-duration/active-at-cleanup inference"
+  },
+  "recovery": {
+    "firstReopenOutcome": "complete_old_state_K1",
+    "firstReopenReceipt": null,
+    "firstReopenActualLedger": [
+      [
+        "1",
+        "2",
+        true,
+        "2",
+        "1",
+        "1",
+        "0"
+      ]
+    ],
+    "reconciledWholeCommandRetryK": "2",
+    "retryAsserted": 4096,
+    "retryRetracted": 2,
+    "healthyK": "3",
+    "healthyAsserted": 2,
+    "healthyRetracted": 4096,
+    "finalHistoryRows": 4100,
+    "historyByCommand": {
+      "seed": 2,
+      "terminate-command": 4096,
+      "healthy": 2
+    },
+    "authoredValidFrom": "0",
+    "authoredValidTo": "100",
+    "completeReceiptReplaysWithoutKnowledgeOrHistoryChange": true,
+    "oldAndCorrectedAndHealthyCutsAndExclusiveEndExact": true,
+    "secondReopenExactReceiptsAndHistory": true
+  },
+  "fixedMaps": {
+    "beforeSha256": "9feb13f2727c8b0c76e10402f8b0153a572bce1905e9b02aad30bf099a934472",
+    "afterSha256": "9feb13f2727c8b0c76e10402f8b0153a572bce1905e9b02aad30bf099a934472",
+    "prePostEqual": true,
+    "physicalFiles": 584,
+    "nativeInputs": 48,
+    "acceptedOldSourceInputs": 128,
+    "newGitInputs": 3,
+    "headers": 36,
+    "externalRoutes": 5,
+    "selectedExternalEntries": 7,
+    "originalSetupAndCompilerFailurePinsUnchanged": true,
+    "newOwnedFixtureOutputsClassifiedSeparately": true
+  },
+  "nodeExecutable": {
+    "file": "[LOCAL_PATH_0043]",
+    "sha256": "6f2e835e57feb7a29ffcd53a4d4eb60224ec264a1e002c3ba6d99999ea29807d"
+  },
+  "sdkResolution": {
+    "api": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-active-teardown-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js",
+    "bindings": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-active-teardown-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+    "platform": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-active-teardown-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-active-teardown-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "nodeExecutable": "[LOCAL_PATH_0043]",
+    "nodeVersion": "v24.13.0"
+  },
+  "caps": {
+    "readers": 1,
+    "threads": 1,
+    "memoryLimit": "128MB_public_default",
+    "maxTempDirectorySize": "64MB_public_default",
+    "recordValues": 4096,
+    "authoredValidity": "[0,100)",
+    "markerObserveMs": 8000,
+    "parentPhaseMs": 10000,
+    "retirementAndStdioMs": 10000,
+    "wholeTestMs": 30000,
+    "outerDiagnosticWatchdogSeconds": 60,
+    "UV_THREADPOOL_SIZE": "4",
+    "NODE_OPTIONS": null,
+    "labVariables": [],
+    "changedAfterFailure": false
+  },
+  "retainedDatabase": {
+    "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-active-teardown-20261106/runtime/build/native-writer-active-start-tT8w65/facts.duckdb",
+    "bytes": 10498048,
+    "regularFile": true,
+    "walAbsent": true,
+    "preservedInPlace": true,
+    "includedInGit": false,
+    "sha256NotComputedDuringOtherLaneTiming": true
+  },
+  "independentRootReview": {
+    "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/root-review-first.json",
+    "sha256": "f11a7869608a74c72a0aa17edacf2f5e23f340ab4b70ac9f0f74909aebf3bbfa",
+    "status": "accepted_started_before_termination_recovery_only",
+    "historyRowsIndependentlyChecked": 4100
+  },
+  "scope": [
+    "Actual native INSERT and unresolved public command were observed before a real Worker.terminate request; no explicit Worker store.close.",
+    "One actual engine attempt passed after separately preserved setup and compiler failures and reviewed source-only fixes.",
+    "Full actual receipt/history/typed fixture results remain in raw recovery evidence; no fake SQL/result/receipt/ACK was substituted.",
+    "All fixed584 runtime bytes and source/dependency/header/Node/routes remained unchanged; owned test output files were separate."
+  ],
+  "notQualified": [
+    "SQL/executor activity at async cleanup entry",
+    "Per-Worker zero addon handles/counters after destruction",
+    "All active-job, delivery/allocation failure permutations",
+    "Timed performance, reverse/anti or originalB0 qualification",
+    "Whole435 regression or promotion"
+  ],
+  "engineLease": "explicitly_released_after_first_terminal_and_fixed_postpins",
+  "rawIndex": [
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-01/first-driver-provenance.json",
+      "original": "build/qualification-active-start-20261106-01/first-driver-provenance.json",
+      "bytes": 414,
+      "sha256": "672ce9fbece6081f1b13ab6615d6497dac816ea5d525daf358b376431765eceb"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-01/first.py",
+      "original": "build/qualification-active-start-20261106-01/first.py",
+      "bytes": 11385,
+      "sha256": "f6dfcfcc8d4a823debcf7d1cdedf97791782c006d7f151c874bedfaf2de8f647"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-01/preparation-first.json",
+      "original": "build/qualification-active-start-20261106-01/preparation-first.json",
+      "bytes": 76780,
+      "sha256": "ea65175725475ac82646a8ade2b88f2ffd4417ab9abff9d0e9532b2059725c87"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-02/before-compile-first.json",
+      "original": "build/qualification-active-start-20261106-02/before-compile-first.json",
+      "bytes": 120408,
+      "sha256": "025d95e855257b0f2a33b2bbc0fcaae857a5a62f93a5498b409448f00eb80a20"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-02/launch-repair-first.py",
+      "original": "build/qualification-active-start-20261106-02/launch-repair-first.py",
+      "bytes": 995,
+      "sha256": "7dad98ed25eeb8653fc8b38ce0be80088358d070e5b98367890a5cb3d17c6fa9"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-02/preparation-repair-first.json",
+      "original": "build/qualification-active-start-20261106-02/preparation-repair-first.json",
+      "bytes": 78471,
+      "sha256": "fa0320aa21343b4748f4fc409ff8c9e1e74cf31b20a9c7b1d11f2c0ba8fe571f"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-02/repair-driver-first-terminal.json",
+      "original": "build/qualification-active-start-20261106-02/repair-driver-first-terminal.json",
+      "bytes": 460,
+      "sha256": "72c4f05721755652e53df19711aaf977bbd67cf196bb02b5e2a4ea2438097b19"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-02/repair-driver-first.log",
+      "original": "build/qualification-active-start-20261106-02/repair-driver-first.log",
+      "bytes": 1330,
+      "sha256": "f99fa33ef843b7a2eddb645c5050d0ef6553d1ac80285a43ebce8599c094637a"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-02/repair.py",
+      "original": "build/qualification-active-start-20261106-02/repair.py",
+      "bytes": 13049,
+      "sha256": "d7d43a2fd5c3a75f31ec042954ae20ee63edd92071a3749e54b9889c7aef6130"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-02/tsc-first-terminal.json",
+      "original": "build/qualification-active-start-20261106-02/tsc-first-terminal.json",
+      "bytes": 356,
+      "sha256": "9d879a0f40dcdf371708971e36027c4ebf43b9432de6ade43eef0579f65b07f7"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-02/tsc-first.log",
+      "original": "build/qualification-active-start-20261106-02/tsc-first.log",
+      "bytes": 201,
+      "sha256": "75d05047efc6764f0c9607aa78f8c758a739f070492b3a81a2612bdd95fb0234"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-03/source-fix-admission.json",
+      "original": "build/qualification-active-start-20261106-03/source-fix-admission.json",
+      "bytes": 95717,
+      "sha256": "f4dbecf3d26f3cc9ada2492e30d2f4a1bafbabb7bbed0a6e4ef92d1c44001a47"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/after-preparation-first.json",
+      "original": "build/qualification-active-start-20261106-04/after-preparation-first.json",
+      "bytes": 196487,
+      "sha256": "f1b7a2a094842abfa95e087eefb1e26926cc9cac4bcb05afb8057d7315b87abf"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/before-compile-first.json",
+      "original": "build/qualification-active-start-20261106-04/before-compile-first.json",
+      "bytes": 120408,
+      "sha256": "9ec1e5dd7b23efa5a251896af01c16cfdf46ce476c2606d117ee1a9425a33cbe"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/compile-corrected.py",
+      "original": "build/qualification-active-start-20261106-04/compile-corrected.py",
+      "bytes": 8370,
+      "sha256": "69198d35dbd9928633dd99c2ec23cdf6b742630c5df33376d5b9b9cd5b98f48c"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/driver-first-terminal.json",
+      "original": "build/qualification-active-start-20261106-04/driver-first-terminal.json",
+      "bytes": 472,
+      "sha256": "f44e420fc03ac0016614ee1fe932f8b37233026bdd292db8af5d73530194b98f"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/driver-first.log",
+      "original": "build/qualification-active-start-20261106-04/driver-first.log",
+      "bytes": 920,
+      "sha256": "8249e5bdec7abf65897a2f8cc79eadab471132c9af089141b31845481efb1353"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/launch-first.py",
+      "original": "build/qualification-active-start-20261106-04/launch-first.py",
+      "bytes": 929,
+      "sha256": "cce5657e2d0db15ae7ee51135e9ed2742c7fe64fb0f149c86923815eb9ddbe80"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/preparation-first.json",
+      "original": "build/qualification-active-start-20261106-04/preparation-first.json",
+      "bytes": 1286,
+      "sha256": "3351f744c478ee8110d87cd86545fc5cce7a9a43cc7490c5d9351be77fc45904"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/tsc-first-terminal.json",
+      "original": "build/qualification-active-start-20261106-04/tsc-first-terminal.json",
+      "bytes": 418,
+      "sha256": "9a0b058ca065e7ed015dcc4b91ecb6114a60f16cbde125e5a4275a2c747acab7"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-04/tsc-first.log",
+      "original": "build/qualification-active-start-20261106-04/tsc-first.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/after-first.json",
+      "original": "build/qualification-active-start-20261106-05/after-first.json",
+      "bytes": 108849,
+      "sha256": "9feb13f2727c8b0c76e10402f8b0153a572bce1905e9b02aad30bf099a934472"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/before-first.json",
+      "original": "build/qualification-active-start-20261106-05/before-first.json",
+      "bytes": 108849,
+      "sha256": "9feb13f2727c8b0c76e10402f8b0153a572bce1905e9b02aad30bf099a934472"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/driver-first-terminal.json",
+      "original": "build/qualification-active-start-20261106-05/driver-first-terminal.json",
+      "bytes": 463,
+      "sha256": "4800efd8ee589d31379b0f1e3b999793beab5c96ca692431b8b0adaa61e5960e"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/driver-first.log",
+      "original": "build/qualification-active-start-20261106-05/driver-first.log",
+      "bytes": 1247,
+      "sha256": "5fe288f872c95cfd1e5d2d92255374f05260e82e242d44c89bdc567ade32f46d"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/execution-first.json",
+      "original": "build/qualification-active-start-20261106-05/execution-first.json",
+      "bytes": 1247,
+      "sha256": "5ec7b299fa47a7c9e5f8f060723710ba8102fa105a266861b579df6d1d3f9709"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/fixture-paths-before.json",
+      "original": "build/qualification-active-start-20261106-05/fixture-paths-before.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/launch-first.py",
+      "original": "build/qualification-active-start-20261106-05/launch-first.py",
+      "bytes": 921,
+      "sha256": "4360ae5c7865ecaa5ca1802093b461c803d35d8fffd11945e3bb8e29d2682064"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/owned-fixture-output-classification.json",
+      "original": "build/qualification-active-start-20261106-05/owned-fixture-output-classification.json",
+      "bytes": 1494,
+      "sha256": "8d435b5c110f48d3080ea34fa9f184e29f447e2d78115ceb69ca7133c6cb2abc"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/root-review-first.json",
+      "original": "build/qualification-active-start-20261106-05/root-review-first.json",
+      "bytes": 2774,
+      "sha256": "f11a7869608a74c72a0aa17edacf2f5e23f340ab4b70ac9f0f74909aebf3bbfa"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/run-first.py",
+      "original": "build/qualification-active-start-20261106-05/run-first.py",
+      "bytes": 6170,
+      "sha256": "c5b1ad6f9e1b54bda31fd028b4a9bd74f40250955d8619bb37ef6edc33b0cab1"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/preparation-05/test-first.tap",
+      "original": "build/qualification-active-start-20261106-05/test-first.tap",
+      "bytes": 587,
+      "sha256": "631217409f7eee58856ee896545ad7adec6f557ed039373e0126b108f1cdd60f"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/fixture/parent-observations.jsonl",
+      "original": "build/native-writer-active-start-tT8w65/parent-observations.jsonl",
+      "bytes": 205,
+      "sha256": "f02fdc2ac3b60859cf58219e66c719b1192ebf6fe84b87e0516b1aed8b8e94e3"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/fixture/recovery.json",
+      "original": "build/native-writer-active-start-tT8w65/recovery.json",
+      "bytes": 2800010,
+      "sha256": "4a29c91357e0fa1434cb34305d41b4eaa9e74e8cc22396084910d0bc8f4b4fd1"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/fixture/seed.json",
+      "original": "build/native-writer-active-start-tT8w65/seed.json",
+      "bytes": 1744,
+      "sha256": "0b683842d2961da32b2ad9e32114624c04639b4763bdcf1634d84640981a0a33"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/fixture/termination.json",
+      "original": "build/native-writer-active-start-tT8w65/termination.json",
+      "bytes": 43101,
+      "sha256": "0a1aca4d92c41d48e73ee29c7c1dae41bf6f50fba3ca3fb8b1edc63bcb04c051"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/fixture/worker-observations.jsonl",
+      "original": "build/native-writer-active-start-tT8w65/worker-observations.jsonl",
+      "bytes": 34766,
+      "sha256": "514803a660e094ea26b7fe929cab094ebe0349452d116c7c224ae739b40cf85b"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/fixture/worker.stderr.log",
+      "original": "build/native-writer-active-start-tT8w65/worker.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "evidence/native-writer-active-start-20261106-raw/fixture/worker.stdout.log",
+      "original": "build/native-writer-active-start-tT8w65/worker.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

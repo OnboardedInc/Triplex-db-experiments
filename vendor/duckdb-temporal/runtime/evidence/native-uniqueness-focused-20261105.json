@@ -1,0 +1,63 @@
+{
+  "schema": "td.native-uniqueness-qualification/1",
+  "observed_utc": "2026-11-05T19:28:36Z",
+  "tested_source": "0abaa2ec65129246e53f701bf83c4c8caa4e4767",
+  "verified_base": "655bf528a3697286cb11732eb23227cd17873a4a",
+  "result": "PASS",
+  "platform": "macOS arm64",
+  "artifact": {
+    "extension_version": "0.27.0",
+    "core_sha256": "ef50d87003bbb7ca8506795b3fc7080f225ffc987f89ac6834c7412fbafa9be2",
+    "owner_sha256": "8b6a25abb8f48b8b031dd62524ec612c8b0a2fceb84c20db00645b9ad50f7837",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_sha256": "1400f686ac7f97ebf44bd75eddf82dc2eaf26d343a8142251d2b3c198aa6f15a",
+    "catalog_header_sha256": "026a81894b477721d438d76a8a2a36574c1f9fbbe3ddabc7272795c59b52426c",
+    "owner_source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "owner_source_archive_sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+    "direct_compatibility_enabled": true,
+    "core_manifest_sha256": "6cb7871b982edd1cde25cbcbd1f57fb25a48bb5525c8f6657578fbc083ef5e48",
+    "owner_manifest_sha256": "603aa81fb719a6a9c72eff84eb5489469c19237cb692da18a2059947d015293c"
+  },
+  "first_runs": {
+    "core_and_owner_build": "PASS",
+    "typescript": "PASS",
+    "tests": [
+      {"command": "node --test build/adapter/test-native-uniqueness.js", "pass": 5, "fail": 0, "skipped": 0},
+      {"command": "TD_TEST_LEGACY_027_BUILD=<accepted-027> node --test adapter/test-uniqueness-upgrade.mjs", "pass": 1, "fail": 0, "skipped": 0},
+      {"command": "node --test build/adapter/test-batch-limits.js", "pass": 3, "fail": 0, "skipped": 0}
+    ]
+  },
+  "behavior_checked": [
+    "Conflicted activation leaves the prior clock and history intact. Successful registration claims one K and exact replay does not advance it.",
+    "Typed domains persist across schema versions and separate schema, entity type and tag. Half-open adjacency is accepted.",
+    "Single patch conflicts and within-batch duplicates roll back. A one-K interval swap keeps the correct outer carries and format ten supports catalog revision three.",
+    "Audited reopen rejects a postactivation conflict in inactive history and an altered activation receipt.",
+    "A stale writer and a stale activation each fail to commit their competing snapshot.",
+    "Legacy schemas without a unique domain still pass the 32-member, 4096-input and 8192-carry batch limits at the default memory setting."
+  ],
+  "prior_binary_fence": {
+    "extension_version": "0.27.0",
+    "core_sha256": "47f2775c53267dc4ad4645ed03324e22d5121304f8cbd4a091dc7307814c9340",
+    "owner_sha256": "fbb59eec7a76290a99b3fc1d48e91f9f02a86519c36361c30a7dd74372b9d10f",
+    "archive_sha256sums": "PASS",
+    "result": "A real format-nine revision-three fixture preserved schema IR2, batch replay and history on upgrade. The prior pair rejected initialization, owner activation, receipt access and a write on a separate format-ten copy. Copy state and original database SHA256 remained unchanged."
+  },
+  "test_sha256": {
+    "build/adapter/test-native-uniqueness.js": "853b0f2205b2839eaf715035ad4fd8880d8a0c743607a8ef3b317c9265ea66e3",
+    "adapter/test-uniqueness-upgrade.mjs": "77988cd991b995632b65c98102a2f446b364cf13208add5fac3f0eb1939edaa6",
+    "build/adapter/test-batch-limits.js": "8f3ef1df2f1482b9a17701964ebeddeecf8efcb9d69865e6e328dd6133d57808"
+  },
+  "local_log_sha256": {
+    "uniqueness-core-first.log": "6b04b37f6ca1dcef9833ee92343b48cc84548a7016828b5a0edabb817fdcb966",
+    "uniqueness-owner-first.log": "3352179dfc9f925ffd26f269ed47cc25d2f24c0398c96bad823ab7cb63418612",
+    "uniqueness-tsc-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "uniqueness-focused-first.log": "44bed843329535eb0c1c52e1d4162416dca14b79e794d3f902204684ef62033a",
+    "uniqueness-upgrade-first.log": "d61c90e60585a0f92b3a39bc1536659f87fb52eb0ce89e73b256e40755545fc3",
+    "uniqueness-batch-first.log": "ded67cd3f35cef6c4d0574bcbce0c99cc1e5642213326c10e0542e4457aa6293"
+  },
+  "remaining_qualification": [
+    "Integrated full suite and uniqueness-specific crash recovery.",
+    "Legacy command overhead and uniqueness write/admission cost at scale.",
+    "Startup audit cost for dense temporal reuse of an identical typed key."
+  ]
+}

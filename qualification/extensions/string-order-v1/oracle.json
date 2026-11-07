@@ -1,0 +1,507 @@
+{
+  "format": "triplex-shared-string-order-extension/1",
+  "status": "SOURCE_ONLY_REVIEW_PROPOSAL_NOT_IMPLEMENTED_NOT_EXECUTED",
+  "existing71LogicalAnd142PacketOracle": "UNCHANGED_SEPARATE_EXTENSION",
+  "firstProposedPaths": [
+    "qlever-datalog",
+    "qlever-native"
+  ],
+  "allPathExecutionStatus": {
+    "duckdb-datalog": "UNEXECUTED",
+    "xtdb-datalog": "UNEXECUTED",
+    "qlever-datalog": "UNEXECUTED",
+    "xtdb-native": "UNEXECUTED",
+    "qlever-native": "UNEXECUTED"
+  },
+  "schema": {
+    "attributeKey": ":string-order/label",
+    "primitive": "TypeExpr.text",
+    "oneRequiredLabelPerEntity": true,
+    "writes": "Triples.transact with schema handle; no raw RDF/SQL mutation"
+  },
+  "scopes": {
+    "ascii": "fresh DatabaseScope.test(UUID ASCII cohort)",
+    "unicode": "different fresh DatabaseScope.test(UUID Unicode cohort)",
+    "physicalStoreCopies": 1,
+    "historyRetention": "retain every created assertion/retirement/command and all first failures"
+  },
+  "validBasis": {
+    "validFrom": 10.25,
+    "validTo": 10.75,
+    "queryValidAt": 10.5
+  },
+  "asciiInput": [
+    {
+      "entity": "string-order:ascii:00",
+      "label": "A"
+    },
+    {
+      "entity": "string-order:ascii:01",
+      "label": "E"
+    },
+    {
+      "entity": "string-order:ascii:02",
+      "label": "c"
+    },
+    {
+      "entity": "string-order:ascii:03",
+      "label": "z"
+    }
+  ],
+  "unicodeInput": [
+    {
+      "entity": "string-order:unicode:00",
+      "label": "E",
+      "codepoints": [
+        "0045"
+      ]
+    },
+    {
+      "entity": "string-order:unicode:01",
+      "label": "c",
+      "codepoints": [
+        "0063"
+      ]
+    },
+    {
+      "entity": "string-order:unicode:02",
+      "label": "e\u0301",
+      "codepoints": [
+        "0065",
+        "0301"
+      ]
+    },
+    {
+      "entity": "string-order:unicode:03",
+      "label": "\u00e9",
+      "codepoints": [
+        "00e9"
+      ]
+    },
+    {
+      "entity": "string-order:unicode:04",
+      "label": "\ue000",
+      "codepoints": [
+        "E000"
+      ]
+    },
+    {
+      "entity": "string-order:unicode:05",
+      "label": "\ud800\udc00",
+      "codepoints": [
+        "10000"
+      ]
+    },
+    {
+      "entity": "string-order:unicode:06",
+      "label": "\ud83d\ude00",
+      "codepoints": [
+        "1F600"
+      ]
+    }
+  ],
+  "correction": {
+    "entity": "string-order:ascii:02",
+    "oldLabel": "c",
+    "newLabel": "0",
+    "method": "retract returned initial assertion ID plus assert replacement in one acknowledged Triplex command",
+    "basis": "P2 after initialP1; receipts checked by command ID"
+  },
+  "commonTasks": [
+    {
+      "id": "string.ascii.order.asc.p1",
+      "api": "ordered complete public read",
+      "expectedRows": [
+        {
+          "entity": "string-order:ascii:00",
+          "label": "A"
+        },
+        {
+          "entity": "string-order:ascii:01",
+          "label": "E"
+        },
+        {
+          "entity": "string-order:ascii:02",
+          "label": "c"
+        },
+        {
+          "entity": "string-order:ascii:03",
+          "label": "z"
+        }
+      ],
+      "population": "ASCII_COMMON_COMPATIBILITY",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    },
+    {
+      "id": "string.ascii.order.desc.p1",
+      "api": "ordered complete public read",
+      "expectedRows": [
+        {
+          "entity": "string-order:ascii:03",
+          "label": "z"
+        },
+        {
+          "entity": "string-order:ascii:02",
+          "label": "c"
+        },
+        {
+          "entity": "string-order:ascii:01",
+          "label": "E"
+        },
+        {
+          "entity": "string-order:ascii:00",
+          "label": "A"
+        }
+      ],
+      "population": "ASCII_COMMON_COMPATIBILITY",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    },
+    {
+      "id": "string.ascii.wrapper_gt_E.p1",
+      "api": "supported wrapper/native text filter, not a Datalog WHERE range",
+      "operator": ">",
+      "bound": "E",
+      "expectedRows": [
+        {
+          "entity": "string-order:ascii:02",
+          "label": "c"
+        },
+        {
+          "entity": "string-order:ascii:03",
+          "label": "z"
+        }
+      ],
+      "population": "ASCII_COMMON_COMPATIBILITY",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    },
+    {
+      "id": "string.ascii.wrapper_lt_c.p1",
+      "api": "supported wrapper/native text filter, not a Datalog WHERE range",
+      "operator": "<",
+      "bound": "c",
+      "expectedRows": [
+        {
+          "entity": "string-order:ascii:00",
+          "label": "A"
+        },
+        {
+          "entity": "string-order:ascii:01",
+          "label": "E"
+        }
+      ],
+      "population": "ASCII_COMMON_COMPATIBILITY",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    },
+    {
+      "id": "string.ascii.page.first.p1",
+      "pageSize": 2,
+      "expectedRows": [
+        {
+          "entity": "string-order:ascii:00",
+          "label": "A"
+        },
+        {
+          "entity": "string-order:ascii:01",
+          "label": "E"
+        }
+      ],
+      "population": "ASCII_COMMON_COMPATIBILITY",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    },
+    {
+      "id": "string.ascii.page.continue_p1_after_p2",
+      "pageSize": 2,
+      "expectedRows": [
+        {
+          "entity": "string-order:ascii:02",
+          "label": "c"
+        },
+        {
+          "entity": "string-order:ascii:03",
+          "label": "z"
+        }
+      ],
+      "requiredBasis": "captured original P1; do not re-resolve latest",
+      "population": "ASCII_COMMON_COMPATIBILITY",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    },
+    {
+      "id": "string.ascii.page.reopen_p1_after_p2",
+      "pageSize": 2,
+      "expectedRows": [
+        {
+          "entity": "string-order:ascii:02",
+          "label": "c"
+        },
+        {
+          "entity": "string-order:ascii:03",
+          "label": "z"
+        }
+      ],
+      "requiredBasis": "same cursor/nativeP1 on new public adapter/provider, no engine restart",
+      "population": "ASCII_COMMON_COMPATIBILITY",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    },
+    {
+      "id": "string.ascii.latest.order.asc.p2",
+      "expectedRows": [
+        {
+          "entity": "string-order:ascii:02",
+          "label": "0"
+        },
+        {
+          "entity": "string-order:ascii:00",
+          "label": "A"
+        },
+        {
+          "entity": "string-order:ascii:01",
+          "label": "E"
+        },
+        {
+          "entity": "string-order:ascii:03",
+          "label": "z"
+        }
+      ],
+      "population": "ASCII_COMMON_COMPATIBILITY",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    },
+    {
+      "id": "string.unicode.exact_membership",
+      "expectedRowsByIdentity": [
+        {
+          "entity": "string-order:unicode:00",
+          "label": "E"
+        },
+        {
+          "entity": "string-order:unicode:01",
+          "label": "c"
+        },
+        {
+          "entity": "string-order:unicode:02",
+          "label": "e\u0301"
+        },
+        {
+          "entity": "string-order:unicode:03",
+          "label": "\u00e9"
+        },
+        {
+          "entity": "string-order:unicode:04",
+          "label": "\ue000"
+        },
+        {
+          "entity": "string-order:unicode:05",
+          "label": "\ud800\udc00"
+        },
+        {
+          "entity": "string-order:unicode:06",
+          "label": "\ud83d\ude00"
+        }
+      ],
+      "orderRequirement": "NONE_FOR_THIS_MEMBERSHIP_CHECK; returned order separately retained",
+      "population": "UNICODE_EXACT_PAYLOAD_MEMBERSHIP",
+      "appliesTo": [
+        "duckdb-datalog",
+        "xtdb-datalog",
+        "qlever-datalog",
+        "xtdb-native",
+        "qlever-native"
+      ],
+      "currentStatus": {
+        "duckdb-datalog": "UNEXECUTED",
+        "xtdb-datalog": "UNEXECUTED",
+        "qlever-datalog": "UNEXECUTED",
+        "xtdb-native": "UNEXECUTED",
+        "qlever-native": "UNEXECUTED"
+      }
+    }
+  ],
+  "nativeSparqlOnlyTasks": [
+    {
+      "id": "string.sparql.unicode.order.asc",
+      "appliesTo": [
+        "qlever-native"
+      ],
+      "status": "UNEXECUTED",
+      "queryOrder": "ORDER BY STR(?label) STR(?entity)",
+      "expectedEntityOrder": [
+        "string-order:unicode:00",
+        "string-order:unicode:01",
+        "string-order:unicode:02",
+        "string-order:unicode:03",
+        "string-order:unicode:04",
+        "string-order:unicode:05",
+        "string-order:unicode:06"
+      ],
+      "authority": "SPARQL1.1 STR + ORDER BY + operator mapping codepoint collation"
+    },
+    {
+      "id": "string.sparql.unicode.gt_private_use",
+      "appliesTo": [
+        "qlever-native"
+      ],
+      "status": "UNEXECUTED",
+      "bound": "\ue000",
+      "operator": ">",
+      "expression": "STR(?label)",
+      "expectedEntityOrder": [
+        "string-order:unicode:05",
+        "string-order:unicode:06"
+      ],
+      "authority": "SPARQL1.1 simple-string comparison"
+    }
+  ],
+  "unresolvedDatalogUnicodeObservation": {
+    "id": "string.datalog.unicode.order.observe",
+    "appliesTo": [
+      "duckdb-datalog",
+      "xtdb-datalog",
+      "qlever-datalog"
+    ],
+    "status": "POLICY_UNRESOLVED_UNEXECUTED",
+    "qualificationOrderFailureAllowed": false,
+    "preserveUnmodifiedReturnedOrder": true,
+    "candidateExpectedEntityOrders": {
+      "UTF16_CODE_UNITS": [
+        "string-order:unicode:00",
+        "string-order:unicode:01",
+        "string-order:unicode:02",
+        "string-order:unicode:03",
+        "string-order:unicode:05",
+        "string-order:unicode:06",
+        "string-order:unicode:04"
+      ],
+      "UNICODE_CODEPOINTS": [
+        "string-order:unicode:00",
+        "string-order:unicode:01",
+        "string-order:unicode:02",
+        "string-order:unicode:03",
+        "string-order:unicode:04",
+        "string-order:unicode:05",
+        "string-order:unicode:06"
+      ],
+      "UTF8_BYTES_VALID_UNICODE_ONLY": [
+        "string-order:unicode:00",
+        "string-order:unicode:01",
+        "string-order:unicode:02",
+        "string-order:unicode:03",
+        "string-order:unicode:04",
+        "string-order:unicode:05",
+        "string-order:unicode:06"
+      ]
+    },
+    "note": "These independently frozen alternatives document the BMP/astral distinction; no global Triplex Unicode policy is selected or inferred from engine output."
+  },
+  "forbiddenNormalization": [
+    "casefold/lowercasing as an oracle",
+    "client order sort-to-pass",
+    "backend-generated expectations",
+    "rewriting existing44/142 expectations",
+    "applying SPARQL Unicode requirements to SQL/XTQL/Datalog without a declared policy"
+  ],
+  "nativeExecutionAuthorized": false,
+  "futureManifestRequired": true
+}

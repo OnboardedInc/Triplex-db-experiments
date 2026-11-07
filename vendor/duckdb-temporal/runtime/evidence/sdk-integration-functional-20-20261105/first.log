@@ -1,0 +1,360 @@
+{
+  "workload": "01",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "01",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "01",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "02",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "02",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "02",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "03",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "03",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "03",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "04",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "04",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "04",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "05",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "05",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "05",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "06",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "06",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "06",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "07",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "07",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "07",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "08",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "08",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "08",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "09",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "09",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "09",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "10",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "10",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "10",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "11",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "11",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "11",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "12",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "12",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "12",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "13",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "13",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "13",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "14",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "14",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "14",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "15",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "15",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "15",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "16",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "16",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "16",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "17",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "17",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "17",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 3
+}
+{
+  "workload": "18",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 5
+}
+{
+  "workload": "18",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 5
+}
+{
+  "workload": "18",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 5
+}
+{
+  "workload": "19",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "19",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "19",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "20",
+  "profile": "direct_duckdb",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "20",
+  "profile": "temporal_store",
+  "status": "passed",
+  "cases": 4
+}
+{
+  "workload": "20",
+  "profile": "naive_sql",
+  "status": "passed",
+  "cases": 4
+}

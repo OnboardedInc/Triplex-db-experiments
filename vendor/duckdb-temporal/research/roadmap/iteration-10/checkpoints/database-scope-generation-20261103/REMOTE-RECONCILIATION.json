@@ -1,0 +1,53 @@
+{
+  "repository": "Contributor/research-reference",
+  "repository_visibility": "private",
+  "main_before_publication": "b023709a04708c8a685e218cb145331ca0c8903e",
+  "page": {
+    "url": "[PRIVATE_APPLICATION_REFERENCE_REMOVED]",
+    "sequence": 94,
+    "last_updated_utc": "2026-11-03T09:36:52.679178Z"
+  },
+  "pull_requests": [
+    {
+      "number": 7,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "a7ddd79021ce3f5a7030420ebc1003e855fccfde"
+    },
+    {
+      "number": 8,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "0e8823973f5e1b886b7ef96e8dc5a899f467f241"
+    },
+    {
+      "number": 9,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "dbb7d27a20430e09413f92259007961ad8e66ac3",
+      "commits": 29,
+      "changed_files": 189,
+      "additions": 46339,
+      "deletions": 0
+    }
+  ],
+  "pr9_combined_statuses": [],
+  "pr9_pull_request_triggered_workflow_runs": [],
+  "required_ci_pass_attested": false,
+  "full_pr_source_tree_reverified": false,
+  "original_owner_visibility": "Live state and pending calls are not established by published records or PR/source metadata.",
+  "goal_acceptance": "Goals 1-2 retain bounded acceptance. Goal 3 and original goal 4 remain held and incomplete. Independent 4.1 and goal 5 have bounded results, not full acceptance. Goals 6-10 remain unaccepted.",
+  "later_pr9_outcomes": [
+    "Budget preflight NONPASS before native execution",
+    "IR gate NONPASS before unit entry; zero observed golden comparisons",
+    "Goal 7 STORE_UNIT NONPASS, absent result/evidence and unobserved database-level command, rollback, health and close outcomes"
+  ],
+  "new_runtime_actions": 0,
+  "new_subject_imports_or_compiles": 0,
+  "stopped_material_inspected": false,
+  "held_actions_changed": false,
+  "checked_during_utc": "3 November 2026, 10:24-10:31 UTC"
+}

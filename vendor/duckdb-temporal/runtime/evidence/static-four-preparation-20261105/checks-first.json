@@ -1,0 +1,51 @@
+[
+  {
+    "phase": "syntax-freezer",
+    "command": [
+      "[LOCAL_PATH_0034]",
+      "-c",
+      "import ast,pathlib; ast.parse(pathlib.Path('freeze_static_four_runtime.py').read_text()); ast.parse(pathlib.Path('stage_broad_sdk_runtime.py').read_text())"
+    ],
+    "exitCode": 0
+  },
+  {
+    "phase": "syntax-static4",
+    "command": [
+      "node",
+      "--check",
+      "adapter/antijoin-static-four-binding.mjs"
+    ],
+    "exitCode": 0
+  },
+  {
+    "phase": "syntax-sdk",
+    "command": [
+      "node",
+      "--check",
+      "adapter/antijoin-sdk-binding.mjs"
+    ],
+    "exitCode": 0
+  },
+  {
+    "phase": "syntax-runner",
+    "command": [
+      "node",
+      "--check",
+      "adapter/benchmark-antijoin-cost.mjs"
+    ],
+    "exitCode": 0
+  },
+  {
+    "phase": "pure-first",
+    "command": [
+      "node",
+      "--test",
+      "adapter/test-antijoin-cost.mjs",
+      "adapter/test-antijoin-config-binding.mjs",
+      "adapter/test-antijoin-profile-binding.mjs",
+      "adapter/test-antijoin-sdk-binding.mjs",
+      "adapter/test-native-write-binding.mjs"
+    ],
+    "exitCode": 0
+  }
+]

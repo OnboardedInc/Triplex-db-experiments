@@ -1,0 +1,174 @@
+{
+  "schema": "td.native-semantic-closure-qualification/1",
+  "result": "PASS",
+  "timestamp_utc": "2026-11-05T22:52:04.513147+00:00",
+  "platform": "macOS arm64",
+  "tested_source": "105bc3c06066328152683c7b00cd0230d95086a3",
+  "published_base": "ce7c53b9",
+  "runtime": {
+    "version": "0.32.0",
+    "archive": "accepted-032-runtime",
+    "native_rebuild": false,
+    "core_source_manifest_exact": true,
+    "companion_source_manifest_exact": true,
+    "compiled_runtime_imports_exact_to_archive": true,
+    "artifacts_sha256": {
+      "build/artifact.json": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+      "build/temporal_datalog.duckdb_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+      "build/temporal_control.node": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+      "build/owner_probe/artifact.json": "0fd59063a4ad3cf3f25cac4f28961f94b5ee9b9e25631b2dddf3e84e4469a571",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16"
+    },
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "attempts": [
+    {
+      "number": 1,
+      "tested_source": "cb5ee9c95eb15d05a05835d14c7f8c6fbf76624a",
+      "typescript_exit": 0,
+      "methods_exit": 1,
+      "passed": 3,
+      "failed": 2,
+      "failure": "TD_E_AGG_UNSUPPORTED on f64(\"bits\") ground-head fixtures; the query DSL accepts decimal binary64 literals, while this constructor is record-codec syntax.",
+      "changed_expectations": false,
+      "initial_test_source_sha256": "1ed985e861290b7dea770292cf1442a0b3982d7103f4c4ce753c7d25cef732d5"
+    },
+    {
+      "number": 2,
+      "tested_source": "105bc3c06066328152683c7b00cd0230d95086a3",
+      "typescript_exit": 0,
+      "methods_exit": 0,
+      "passed": 5,
+      "failed": 0,
+      "duration_ms": 10537.3475,
+      "repair": "Use 5e-324, 1e-323, -0.0 and 1.7976931348623157e308 in the query fixtures. Expected values, exact wire bits, fault codes, arithmetic operations and native/SDK source are unchanged."
+    }
+  ],
+  "methods": [
+    {
+      "number": 1,
+      "name": "original typed arithmetic and comparisons agree through public and both raw generations",
+      "duration_ms": 2041.9175,
+      "result": "PASS"
+    },
+    {
+      "number": 2,
+      "name": "arithmetic faults remain eager and exact without partial answers or lost reader reuse",
+      "duration_ms": 2575.318917,
+      "result": "PASS"
+    },
+    {
+      "number": 3,
+      "name": "recursive completed relations and layered absence retain correction cuts and reopen",
+      "duration_ms": 2419.233667,
+      "result": "PASS"
+    },
+    {
+      "number": 4,
+      "name": "multi-rule negated sources complete sums before extrema and downstream joins",
+      "duration_ms": 2335.663916,
+      "result": "PASS"
+    },
+    {
+      "number": 5,
+      "name": "signed cycles, unsafe negatives and invalid aggregate producers reject before empty evaluation",
+      "duration_ms": 988.996167,
+      "result": "PASS"
+    }
+  ],
+  "raw_terminal_logs": {
+    "preflight.json": {
+      "path": "build/semantic-closure-032-20261105/preflight.json",
+      "sha256": "ac798d9d7458483e6e76cdb8d8dd1859ce76b5c7e68a8d026579625c1c4602b6"
+    },
+    "typescript-01.log": {
+      "path": "build/semantic-closure-032-20261105/typescript-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "methods-01.log": {
+      "path": "build/semantic-closure-032-20261105/methods-01.log",
+      "sha256": "2b92edb7f8f966fe8ff3b2dc36ca16b0596e3ff2e103275b6c33a380ac381f71"
+    },
+    "typescript-02.log": {
+      "path": "build/semantic-closure-032-20261105/typescript-02.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "methods-02.log": {
+      "path": "build/semantic-closure-032-20261105/methods-02.log",
+      "sha256": "9eef70cf78aa8129ed0a762fe1e7f55cc4672f8851e9a9b242c971cc2469a0d2"
+    }
+  },
+  "source_sha256": {
+    "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+    "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+    "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+    "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+    "native/src/temporal_command.cpp": "d95cc48d2ee4c5567d20cc3446cbc8f30bd0312191090df2f59f9ae82f95d5d2",
+    "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+    "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+    "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+    "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+    "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+    "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+    "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+    "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+    "native/src/temporal_datalog.cpp": "c80961113dd0b2fd2d1c182cd03f434aee724a6ea6a867fb603322356179281c",
+    "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+    "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+    "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+    "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+    "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+    "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+    "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+    "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+    "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+    "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+    "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+    "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+    "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+    "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+    "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+    "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+    "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+    "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da",
+    "adapter/native-entity.ts": "84ce8b336e5cc654ebe134ea76bccf7bb8f05ee7bb814edd5426ebd97a6878ec",
+    "adapter/native-schema.ts": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "adapter/native-test-fixture.ts": "082eeb0a0d2d4b685618968dcbef5c1d1616ee3228be6fcae63f0ee4fffa48ca",
+    "adapter/query-result-boundary.mjs": "c9673b3a01a84bfe526459f05d456a740665dae0a719167f03deaf5167bd1947",
+    "adapter/owned-duckdb-port.mjs": "65caca13d12022265bb0b45f9d9e69459871e6ab5f986ff84fe29c3958483ae8",
+    "adapter/test-native-semantic-closure.ts": "de3e552f30713495d69f34ada366b6081235683607ecb77b0ac952bf374843bb",
+    "verify.py": "bd33782df0818b9be8fc22a33b1b49260124284b5425b175fdf87765da00c091"
+  },
+  "compiled_sha256": {
+    "build/adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/adapter/native-test-fixture.js": "e6588a14c56b164c57265c82885e5f5131b0039f09c320a9227a22d0fff3a625",
+    "build/adapter/query-result-boundary.mjs": "c9673b3a01a84bfe526459f05d456a740665dae0a719167f03deaf5167bd1947",
+    "build/adapter/owned-duckdb-port.mjs": "65caca13d12022265bb0b45f9d9e69459871e6ab5f986ff84fe29c3958483ae8",
+    "build/adapter/test-native-semantic-closure.js": "e93a73384a22fbe919f9d697fa642ae2acc5e807a78ee65a8241a5bff9da29c2"
+  },
+  "commands": {
+    "typescript": "node_modules/.bin/tsc --pretty false --outDir build/semantic-closure-032-20261105/runtime/build/adapter",
+    "methods": "node --test --test-reporter=tap build/adapter/test-native-semantic-closure.js",
+    "methods_cwd": "build/semantic-closure-032-20261105/runtime"
+  },
+  "scope": [
+    "Public query forceNative true/false and documented persisted raw v2 physical routes; original four-tag expressions also use both legacy v1 persisted entrypoints.",
+    "22 exact arithmetic/comparison successes and 16 exact fault cases; successful healthy query follows every failing route, with reader pool fully returned.",
+    "Nine correction-aware K/V cuts in two equivalent recursive/layered-negation orderings, public before close, direct audited raw SQL and same-database public reopen.",
+    "Thirteen completed aggregate-chain/group/fault cuts over multi-rule negated full-tuple producers, with exact duplicate support, corrected contributions, heterogeneous valid groups and tag-before-range; direct raw and reopened public parity.",
+    "Ten exact static signed-cycle/unsafe/aggregate descriptor/producer rejection cases before empty evaluation, followed by healthy reuse."
+  ],
+  "closure_recommendation": {
+    "goal_2": "The original bounded expression semantic contract is qualified on the final supported Mac runtime. Wider SQL arithmetic lowering is a separate Goal 3 optimization and was not added or claimed here.",
+    "goal_5": "The finite public command/correction/cut/error-health/completed-stratum/reopen gap is qualified. Combined with the same .32 full aggregate/count and business-workload evidence, this supports closing original completed-aggregate semantics.",
+    "goal_4": "Larger completed lower-stratum semantics are qualified here; concurrent large anti-join cost remains an independent unrun acceptance gate."
+  },
+  "limitations": [
+    "Five focused methods, not a full verifier rerun. Existing frozen .32 verification remains the separate full-gate receipt.",
+    "No new language, API or native implementation; no performance, physical-memory, broader SQL-lowering or anti-join cost claim.",
+    "The initial failed terminal log is retained verbatim under the ignored project build tree; the failure is not erased by the successful corrected-fixture run."
+  ]
+}

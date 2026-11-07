@@ -1,0 +1,33 @@
+{
+  "archive": "actual-reader-untimed-preflights-and-final-study.tar.gz",
+  "bytes": 683341,
+  "sha256": "b74058767f751886491d185c398874c47fcdbaa0c4ca6ec070b7549cdbe22f9a",
+  "entries": 261,
+  "source_bytes": 7657328,
+  "parts": [
+    {
+      "path": "preflight.part01.b64",
+      "bytes": 300001,
+      "sha256": "c6f6228338df4e391500f177a46acc8c778c1a466e4d9ac9041ab8d7c8e92128",
+      "git_sha": "f7e899abad049bf71cd29aba1a9e51f9100ee90d"
+    },
+    {
+      "path": "preflight.part02.b64",
+      "bytes": 300001,
+      "sha256": "5b7a76952285211f1e15a9cba1d34ad1d8e1c5f0a80bc7bccaf1c3284f98e066",
+      "git_sha": "48a63a457d0c1cd58d521a7718bc56b4b48ffa3a"
+    },
+    {
+      "path": "preflight.part03.b64",
+      "bytes": 300001,
+      "sha256": "baeeef266e9317a4a1fa818d458db5540ca16cf2a634d34e8cb5515957d0a814",
+      "git_sha": "6bb053f27d257d86858ee0a648c924bd8412fa91"
+    },
+    {
+      "path": "preflight.part04.b64",
+      "bytes": 11125,
+      "sha256": "7fd7a87fbe69068bf88869d000367ac90fa4ad63e7c885e6903c0dc5f949be07",
+      "git_sha": "e0895e26572da3d41026b415d84cd8598ca47af4"
+    }
+  ]
+}

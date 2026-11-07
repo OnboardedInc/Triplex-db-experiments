@@ -1,0 +1,62 @@
+{
+  "schema": "native-format-fence-verification/1",
+  "timestamp_utc": "2026-11-05T14:51:22.562365+00:00",
+  "status": "passed",
+  "base_commit": "0f4b7cfd3dcdb3cb57a41866921cbfe93bf23883",
+  "scope": "Running-binary literal format/revision guards for native writes and reads, including permissive future persisted views; existing empty metadata fails while absent-table bootstrap remains supported.",
+  "source_sha256": {
+    "native/catalog.sql": "bb19a6e50a5b6a8941f770f66eb14a4913daf05339be9bf52a812f5b56b5daad",
+    "native/src/temporal_command.cpp": "286bd783958228eace0a9d5cffdd11f0dd9bd2b8be471a7fb96663d59442e228",
+    "native/src/temporal_integrity.hpp": "a7313ffca05545763885717d7221b48e9e3bcd02d5ef0fb0bef0c865b4248de3",
+    "native/src/temporal_schema.cpp": "4ee5c1548e803bcb0e53f64f62ba22e236227672b3d51e75d4afff239cb6be29",
+    "native/src/temporal_datalog.cpp": "e73a74b8caf9b3d29c684691e45227ac008494c452fca6e8124b2fb17ef8356d",
+    "adapter/test-format-fence.ts": "de87f354d55f088bcf897d3d822661a6af261dfaf47e8e4c6c85790afc473d36"
+  },
+  "artifact": {
+    "engine": "2.0.0",
+    "candidate_extension_version": "0.20.0",
+    "extension_sha256": "f0a57dbff82393e04fed136896a4ced70ea8500692e935b8f0164c3e3f5beead",
+    "catalog_sql_sha256": "663d1b22087fe54440fd8423744c23bce1677d011e28a838de19a478390e6837",
+    "owner_extension_sha256": "db3effa748018804f2c23203e1774829e6672954263878c6e49f58a7c427a71f",
+    "owner_core_extension_sha256": "f0a57dbff82393e04fed136896a4ced70ea8500692e935b8f0164c3e3f5beead"
+  },
+  "checks": [
+    {
+      "command": "node --test --test-concurrency=1 build/adapter/test-format-fence.js build/adapter/test-interval-patch.js build/adapter/test-interval-crash.js",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "duration_ms": 10438.282166,
+      "output_sha256": "2525dae501207815c588fd41150fd8da427df1378ed637c967cdda089b0f92ba"
+    },
+    {
+      "command": "node --test --test-concurrency=1 build/adapter/test-format-fence.js build/adapter/test-entity.js build/adapter/test-owned-store.js build/adapter/test-store-query.js build/adapter/test-control.js build/adapter/test-cleanup.js build/adapter/test-schema.js",
+      "tests": 51,
+      "passed": 51,
+      "failed": 0,
+      "duration_ms": 17538.3385,
+      "output_sha256": "e498f5d0060ba012cde2246b8fa8390161dee5e3cce8fdf8ca58e32e7d4e0dda"
+    },
+    {
+      "command": "node_modules/.bin/tsc --pretty false",
+      "status": "passed"
+    }
+  ],
+  "overlap": "The three format methods appear in both test commands. The final compatibility command additionally includes null-singleton coverage.",
+  "cases": [
+    "Unknown format7 or catalog revision3 with persisted native_catalog_integrity replaced by SELECT TRUE",
+    "New schema, schema replay, new entity, entity replay, bounded put, new-entity patch, bounded patch, initializer and migration all preserve complete before/after state on rejection",
+    "Raw history/at/receipt on missing data and native/scalable query paths reject future metadata",
+    "Empty/multiple/null format rows and empty/multiple/false/null revision/singleton values reject before data changes",
+    "Raw format5 revision0 supports ordinary writes; migration produces revision2 while retaining format5; successful patch produces format6; supported reads and writes continue"
+  ],
+  "initial_failure": {
+    "observation": "A single NULL metadata version passed the migration <>5 predicate as SQL UNKNOWN and reached a NOT NULL constraint failure after the metadata rebuild began. The expanded pragma still rolled back.",
+    "fix": "Use IS DISTINCT FROM 5 for the migration entry condition, giving the explicit format error before DDL."
+  },
+  "compatibility_change": "Existing empty store_meta is treated as corrupt and rejected; only absence of the owning current-database main.store_meta table bootstraps version5.",
+  "limitations": [
+    "The public factory already rejected incompatible metadata; these regressions additionally exercise raw native entrypoints without factory reinitialization.",
+    "Candidate build version remains0.20.0; release integration and repository-wide verification remain separate."
+  ]
+}

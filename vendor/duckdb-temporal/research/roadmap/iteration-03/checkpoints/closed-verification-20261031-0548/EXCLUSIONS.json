@@ -1,0 +1,283 @@
+{
+  "scope": "No excluded payloads are copied; app source is on PR7; old DB archive is metadata only",
+  "records": [
+    {
+      "path": "coordinator/cold-archive-20261031-0531/data",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/cold-archive-20261031-0531/data",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "coordinator/integration/candidate-002",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/integration/candidate-002",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "coordinator/integration/main-ledger-freshseed-0546.json",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/integration/main-ledger-freshseed-0546.json",
+      "kind": "file",
+      "bytes": 42092,
+      "mode": "0644",
+      "reason": "opaque main-ledger/user-history seed; outside goal3 evidence scope and root retains publication state",
+      "sha256": "7833864823d203321293fdc1a4edf6f470da5ad3d7b2a554cbcb7978e9bb300d"
+    },
+    {
+      "path": "coordinator/publication-002/api-tree-request.json",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/publication-002/api-tree-request.json",
+      "kind": "file",
+      "bytes": 8049,
+      "mode": "0644",
+      "reason": "inline application source/patch; code retained only on PR7",
+      "sha256": "7f8ec8649841ee6ed0e851c355be659582d7a68261467068fd3132c3fe8969d9"
+    },
+    {
+      "path": "coordinator/publication/api-tree-request.json",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/publication/api-tree-request.json",
+      "kind": "file",
+      "bytes": 221295,
+      "mode": "0644",
+      "reason": "inline application source/patch; code retained only on PR7",
+      "sha256": "7cebc9c0b55b1bc005bf2d21dfff3e7df95af3b3443b30b8c55a468f4cabfed4"
+    },
+    {
+      "path": "coordinator/tmp",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-coordinator/tmp",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "full-regression/full-regression-evidence.tar.gz",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-full-regression/full-regression-evidence.tar.gz",
+      "kind": "file",
+      "bytes": 99456,
+      "mode": "0644",
+      "reason": "binary/generated/archive or non-evidence type; retain identity, not payload",
+      "sha256": "62c036689899f9d9df69cf027716586224143a33b3ae3a7c37e7f0d3d5e5d6d2"
+    },
+    {
+      "path": "full-regression/mirror",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-full-regression/mirror",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "full-regression/mirror-002",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-full-regression/mirror-002",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "full-regression/supplemental-003",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-full-regression/supplemental-003",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "full-regression/tmp",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-full-regression/tmp",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "independent-original-tmp/root-candidate-001",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/independent-acceptance/root-candidate-001",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "independent-workspace/development-003",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "independent-workspace/performance-methods-001",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/performance-methods-001",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "independent-workspace/root-candidate-001",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/root-candidate-001",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "independent-workspace/tmp",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/tmp",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "native-ir/checkpoint-final/build",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-final/build",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "native-ir/checkpoint-final/source",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-final/source",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "native-ir/checkpoint-first/build",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-first/build",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "native-ir/checkpoint-first/source",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-first/source",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "native-ir/checkpoint-second/build",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-second/build",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "native-ir/checkpoint-second/sanitizer-o0-g1/core.o",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-second/sanitizer-o0-g1/core.o",
+      "kind": "file",
+      "bytes": 8328816,
+      "mode": "0644",
+      "reason": "binary/generated/archive or non-evidence type; retain identity, not payload"
+    },
+    {
+      "path": "native-ir/checkpoint-second/sanitizer-o0-g1/expressions",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-second/sanitizer-o0-g1/expressions",
+      "kind": "file",
+      "bytes": 8754944,
+      "mode": "0755",
+      "reason": "binary/generated/archive or non-evidence type; retain identity, not payload"
+    },
+    {
+      "path": "native-ir/checkpoint-second/sanitizer-o0-g1/legacy",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-second/sanitizer-o0-g1/legacy",
+      "kind": "file",
+      "bytes": 6637192,
+      "mode": "0755",
+      "reason": "binary/generated/archive or non-evidence type; retain identity, not payload"
+    },
+    {
+      "path": "native-ir/checkpoint-second/sanitizer-o0-g1/owned-ir",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-second/sanitizer-o0-g1/owned-ir",
+      "kind": "file",
+      "bytes": 7265656,
+      "mode": "0755",
+      "reason": "binary/generated/archive or non-evidence type; retain identity, not payload"
+    },
+    {
+      "path": "native-ir/checkpoint-second/sanitizer-o0-g1/typed",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-second/sanitizer-o0-g1/typed",
+      "kind": "file",
+      "bytes": 8736128,
+      "mode": "0755",
+      "reason": "binary/generated/archive or non-evidence type; retain identity, not payload"
+    },
+    {
+      "path": "native-ir/checkpoint-second/source",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/checkpoint-second/source",
+      "kind": "directory",
+      "reason": "excluded app/source/candidate/build/runtime/cache or in-flight performance tree"
+    },
+    {
+      "path": "native-ir/native-source.diff",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/native-ir/native-source.diff",
+      "kind": "file",
+      "bytes": 47257,
+      "mode": "0644",
+      "reason": "inline application source/patch; code retained only on PR7",
+      "sha256": "7e9644449fe802291fd6dc83b902bce071bca04089c13cf45fe7e6a2845e7f8d"
+    },
+    {
+      "path": "python-fp-002/__pycache__",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-fp-002/__pycache__",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-fp-002/fp_helper.so",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-fp-002/fp_helper.so",
+      "kind": "file",
+      "bytes": 16312,
+      "mode": "0644",
+      "reason": "binary/generated/archive or non-evidence type; retain identity, not payload",
+      "sha256": "c1392bdce0962092aa1000d0b5537715b08a29484fb24763834d533daa067b46"
+    },
+    {
+      "path": "python-fp-002/source",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-fp-002/source",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-fp-002/tmp",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-fp-002/tmp",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-fp-preparation-001/fp_control.so",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-fp-001/fp_control.so",
+      "kind": "file",
+      "bytes": 15152,
+      "mode": "0644",
+      "reason": "binary/generated/archive or non-evidence type; retain identity, not payload",
+      "sha256": "8a102763198b66739980e621dacf7ad77fcd4c929de5bf1c0e9e3f21dd3ab165"
+    },
+    {
+      "path": "python-genuine-001/source",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-001/source",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-planner/baseline",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/python-planner/baseline",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-planner/freeze-001",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/python-planner/freeze-001",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-planner/freeze-002",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/python-planner/freeze-002",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-planner/genuine-001",
+      "source": "/tmp/temporal-roadmap-research/iteration-03/python-planner/genuine-001",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-workspace/genuine-001",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-001",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-workspace/genuine-fp-001",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-fp-001",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    },
+    {
+      "path": "python-workspace/genuine-fp-002",
+      "source": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-python-planner/genuine-fp-002",
+      "kind": "directory",
+      "reason": "top-files-only scope; separately selected evidence subroots have their own aliases"
+    }
+  ],
+  "missing_roots": []
+}

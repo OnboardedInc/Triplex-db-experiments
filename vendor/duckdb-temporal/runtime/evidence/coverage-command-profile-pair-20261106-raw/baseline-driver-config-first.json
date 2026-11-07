@@ -1,0 +1,10 @@
+{
+  "role": "baseline",
+  "scenario": "zero",
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "costRoot": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime",
+  "output": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/baseline-zero",
+  "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-02/baseline-zero/facts.duckdb",
+  "begin": "TD_COVERAGE_PROFILE_BEGIN d3f6f583-2215-4bbf-b9b0-3b6842dca216",
+  "end": "TD_COVERAGE_PROFILE_END d3f6f583-2215-4bbf-b9b0-3b6842dca216"
+}

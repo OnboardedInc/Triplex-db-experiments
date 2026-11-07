@@ -1,0 +1,1302 @@
+{
+  "format": "triplex-ten-goal-qualification-ledger/3",
+  "projectCompletion": "UNACHIEVED",
+  "policy": "Only real public-API behavior, relevant failure cases and applicable scale/comparison evidence on the same build can close a goal. Implementation and diagnostic evidence are checkpoints.",
+  "goals": [
+    {
+      "id": 1,
+      "name": "Typed facts and schemas",
+      "remaining": "Schema evolution with historical schema meaning, complete temporal references/uniqueness/cardinality/required-field failures and expanded-value contract.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Typed storage, original schema frontend, exact signed64 payloads, batches/retractions and focused schema tests exist. Latest union-bounds fix is a newer build than the retained base44/142 qualification.",
+        "qlever": "Exact typed payloads are preserved as text with explicit native numeric channels and public storage tests. Complete schema/evolution/reference behavior remains incomplete."
+      }
+    },
+    {
+      "id": 2,
+      "name": "Expressions",
+      "remaining": "Complete typed arithmetic/computed-value boundaries, invalid mixtures, overflow and consistent errors across strategies.",
+      "backendStates": {
+        "xtdb": "implemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Typed comparisons and bounded arithmetic/computed expression lowering exist; focused integer/division/remainder tests passed. Full boundary/error qualification remains open.",
+        "qlever": "Typed comparisons/order and selected exact aggregate encodings exist. Arbitrary binary64 arithmetic cannot rely on native numeric values; full public compute semantics remain absent."
+      }
+    },
+    {
+      "id": 3,
+      "name": "Query planning and execution",
+      "remaining": "General rule composition/planning, selective large joins, completed recursive relations and admission behavior at agreed scale.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "SQL joins/unions and constrained binary recursion run server-side. Public20-family packet passed142 executions on a retained build; this does not implement a general stratified program.",
+        "qlever": "SPARQL joins/unions and bounded binary derived-relation execution exist. Original4GiB profile suffered three read OOMs. Bounded full-compiler wave4 passed7 cases per candidate; no public44/142 acceptance on the selected candidate yet."
+      }
+    },
+    {
+      "id": 4,
+      "name": "Stratified negation",
+      "remaining": "A public stratified program/rule representation, dependency ordering, binding safety, negative-cycle rejection, and negation over completed derived relations.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Correlated NOT EXISTS and historical absence cases pass within the current AST. General stratification and negative-cycle validation are absent.",
+        "qlever": "Correlated NOT EXISTS subset exists. A general stratified program and completed-derived negation are absent."
+      }
+    },
+    {
+      "id": 5,
+      "name": "Aggregates",
+      "remaining": "Full duplicate/empty/join/overflow semantics and aggregates over completed derived relations.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Native count/group/SUM/extrema and exact-i64 channels exist; public packet aggregate cases passed. Completed arbitrary derived-relation aggregates are absent.",
+        "qlever": "Count/group/SUM/extrema/AVG subsets exist, with full-i64 text/chunk channels and bounded numeric-domain checks. Full completed-derived/duplicate/overflow semantics remain open."
+      }
+    },
+    {
+      "id": 6,
+      "name": "Cancellation and resource behavior",
+      "remaining": "Backend work termination/reclamation, cleanup, physical client/server memory/intermediate-result limits and complete cancellation failure matrix.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Transport deadlines/cancellation and owned-process sampling exist; native57014 was observed. Sampled RSS and a cancelled client do not establish physical reclamation.",
+        "qlever": "HTTP deadlines and cooperative cancellation plus resource admission exist. Three original-profile OOMs are preserved. Bounded wave4 survived; no full cancellation/reclamation guarantee."
+      }
+    },
+    {
+      "id": 7,
+      "name": "Transactions, recovery and evolution",
+      "remaining": "Full atomic mutation/replay/visibility/crash/restore/evolution contract, including interrupted writes and acknowledgement ambiguity.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Optimistic callback bridge stages pending overlays and publishes guarded claims/positions/receipts. Clean backup/restore and selected replay/lost-ack cases passed; broader crash/evolution qualification remains open.",
+        "qlever": "Direct adapter stages callbacks and sends one guarded modify with CAS/receipts. Focused storage and read-OOM recovery passed; complete interrupted-write failure atomicity remains unresolved. Managed writer is a separate offline candidate, not a public backend."
+      }
+    },
+    {
+      "id": 8,
+      "name": "Reuse and maintained derived relations",
+      "remaining": "Maintained joins, aggregates and recursive relationships across commits/time/restart/rebuild, alternate supports and measured maintenance/storage costs.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Public persisted complete-generation rebuild supports exact source positions and alternate recursive support tests. This is not incremental delta maintenance; all required automatic temporal transitions/costs are not qualified.",
+        "qlever": "Dependency/freshness hooks and ordinary derived-query frontend subsets exist. No public maintained-query provider implements this goal."
+      }
+    },
+    {
+      "id": 9,
+      "name": "History and intervals",
+      "remaining": "Historical schema meaning, interval recursion, complete temporal reference/deletion/cascade behavior and multiple temporal cuts.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Explicit assertion identity and valid/recorded metadata plus public native SQL interval/coalescing implementation exist. Recursive interval execution and complete historical schema/reference/cascade meaning are absent.",
+        "qlever": "Explicit assertion valid/recorded metadata and a public interval provider exist. QLever orchestrates bounded temporal cuts and coalescing in the host while native Datalog point queries resolve facts; no recursive intervals or complete schema/reference/cascade meaning."
+      }
+    },
+    {
+      "id": 10,
+      "name": "Complete Triplex runtime integration",
+      "remaining": "All required public runtime contracts, honest capabilities/explanations/pagination and additional ten-goal failure coverage beyond the base44.",
+      "backendStates": {
+        "xtdb": "unimplemented",
+        "qlever": "unimplemented"
+      },
+      "wholeGoalQualified": false,
+      "backendProgress": {
+        "xtdb": "Public RuntimeDefinition/storage/executor facade exists. Retained unchanged44 and142 public workload executions passed; broader semantics and capabilities remain incomplete.",
+        "qlever": "Public RuntimeDefinition/storage/executor facade exists. Prior diagnostic44 and packet failed with retained OOM evidence; newer bounded query candidates require fresh public conformance/packet qualification."
+      }
+    }
+  ],
+  "checkpoints": {
+    "referenceIsolation": {
+      "status": "PASS_TRACKED_REFERENCES",
+      "evidence": "source-manifest.json",
+      "files": 2542
+    },
+    "copiedWorkloadOracleValidation": {
+      "status": "PASS_ORACLE_ONLY",
+      "evidence": "evidence/oracle-validation-initial.json",
+      "families": 20,
+      "cases": 71,
+      "oracleUnitTests": 8
+    },
+    "upstreamConformance": {
+      "status": "PASS_BASE_CONTRACT_ONLY",
+      "caseCount": 44,
+      "evidence": "evidence/suite-2026-11-06T13-33-22-897Z-31c03342-receipt.json",
+      "sourceStable": true,
+      "protectedReferencesUnchanged": true
+    },
+    "publicPilot": {
+      "status": "PASS_DIAGNOSTIC_ONLY",
+      "profiles": [
+        {
+          "entities": 100,
+          "activeFacts": 100,
+          "evidence": "evidence/pilot-2026-11-06T13-35-28-126Z-5251588b-pilot.json"
+        },
+        {
+          "entities": 100,
+          "activeFacts": 1000,
+          "evidence": "evidence/pilot-2026-11-06T13-36-36-190Z-c9842dd5-pilot.json"
+        }
+      ],
+      "readerClients": [1, 4, 16],
+      "claims": [
+        "public/native query-only aggregate equality",
+        "correction",
+        "stable cursor continuation",
+        "old knowledge-position native read",
+        "durable receipt",
+        "reopen"
+      ],
+      "qualifiedPercentiles": false
+    },
+    "numericSLOCalibration": {
+      "status": "NOT_RUN",
+      "resourceProfile": "resource-profile.json"
+    },
+    "coreRegression": {
+      "status": "PASS",
+      "tests": 711,
+      "files": 46,
+      "evidence": "evidence/core-unit-initial.log",
+      "note": "Before exact-integer extension; later717-test results belong to their separate evidence."
+    },
+    "capacityExperiments": {
+      "status": "PASS_CORRECTNESS_ONLY_SOURCE_CHANGED",
+      "evidence": "evidence/capacity-2026-11-06T13-47-21-074Z-6aff15a5-capacity.json",
+      "simultaneousVariants": 3,
+      "batchAssertions": [100, 500, 2000],
+      "entitiesPerVariant": 2000,
+      "timingsQualified": false
+    },
+    "partialEntityScale": {
+      "status": "PASS_PREFIX_ORIGINAL_STAGE_BLOCKED",
+      "distinctEntities": 28500,
+      "activeDomainFacts": 28500,
+      "acknowledgedCommands": 57,
+      "evidence": "evidence/scale-2026-11-06T13-42-31-028Z-ff25891d-scale-prefix-verification.json",
+      "originalBlock": "Conservative model extrapolated concurrent dependency growth; not physical OOM or proof100k is impossible.",
+      "supersededBy": "evidence/scale-2026-11-06T13-54-56-325Z-420b2001-scale-prefix-verification.json"
+    },
+    "phaseCapacityModelV2": {
+      "status": "CALIBRATED",
+      "evidence": "evidence/capacity-model-v2-initial.json",
+      "resourceCapsChanged": false,
+      "uncertaintyMultiplier": 2,
+      "note": "Database owner attribution and max(loading/compaction,stoppedbackuprestore) phases; prior failed estimate retained."
+    },
+    "sharedHarness": {
+      "status": "IMPLEMENTED_BUILD_PASS_SHARED_XTDB44_PASS_QLEVER44_DIAGNOSTIC",
+      "runtimeConformance": "Same unchanged44cases selected byTRIPLEX_BACKEND",
+      "workloads": "Same copied20families/71cases, event projections, structuredDatalog, time mapping and final normalization acrossboth",
+      "resourcePolicy": "Combined12GiBowned/12GiBhostreserve; devXTDB8+QLever4; fairserialized8GiB4CPUeach"
+    },
+    "upstreamExpandedConformance": {
+      "status": "FAIL_HARNESS_DEADLINE_SOURCE_CHANGED",
+      "caseCount": 44,
+      "evidence": "evidence/xtdb/suite-2026-11-06T14-22-35-929Z-cc092b1d-receipt.json",
+      "deadlineMs": 240000,
+      "note": "No semantic case identified; isolated unchanged cases next, without increasing resource caps or claiming backendtermination"
+    },
+    "upstreamIsolatedConformanceFinalXtdb": {
+      "state": "correctness-qualified",
+      "scopeOfState": "All44unchangedcaseeffectsindividuallyisolated;whole-scope runtimeConformancepending",
+      "passed": 44,
+      "failed": 0,
+      "sourceStable": true,
+      "protectedReferencesUnchanged": true,
+      "evidence": "evidence/xtdb/cases-2026-11-06T14-34-59-035Z-8bbdedcb-receipt.json"
+    },
+    "qleverOomTwoCandidates": {
+      "state": "implemented",
+      "scopeOfState": "Explicit feasibility wave: two 2 GiB/2 CPU owners replace one 4 GiB node. This does not qualify the 4 GiB baseline or the fair 8 GiB profile.",
+      "profile": "qlever-two-candidates-v1",
+      "resourceAdmission": "evidence/qlever-two-candidate-independent-admission-20261106T1500.json",
+      "immutableCopyAudit": "evidence/qlever-two-candidate-independent-copy-audit-20261106T1500.json",
+      "queryResults": {
+        "state": "implemented",
+        "outcome": "NO_SURVIVOR",
+        "scopeOfState": "Both candidates remained alive without OOM. Nine observed typed answers passed the independent oracle; A then returned an incorrect empty funnel answer, and B reached a native allocation limit. No candidate passed the complete matrix.",
+        "executedCases": 11,
+        "passedCases": 9,
+        "failedCases": 2,
+        "unexecutedCases": 9,
+        "evidence": "evidence/qlever-wide-independent-summary-c46ec38a.json",
+        "sampledServerRssPeakBytes": {
+          "projected": 286420992,
+          "persisted": 867094528
+        },
+        "sampledAggregateServerRssPeakBytes": 1086189568
+      },
+      "promotion": "A survivor must return to the 4 GiB backend profile and pass shared 44-case conformance and 142 workload executions; earlier OOM failures remain recorded.",
+      "wave2": {
+        "state": "correctness-qualified",
+        "scopeOfState": "All 20 bounded feasibility stages only; neither candidate was promoted. The later original-profile integration failed and is recorded separately.",
+        "evidence": "evidence/qlever-wide-independent-summary-977e65de.json",
+        "independentRegistryEvidence": "evidence/qlever-wide-independent-poststate-977e65de.json",
+        "all20Passed": true,
+        "sampledAggregateServerRssPeakBytes": 747278336
+      }
+    },
+    "latestXtdbBaseConformance": {
+      "state": "correctness-qualified",
+      "scopeOfState": "Unchanged public44 on the retained Unicode/optional-interval guard build; the same build completed142 workload executions. Newer shared union-bounds build requires fresh qualification.",
+      "evidence": "evidence/xtdb/suite-2026-11-06T15-30-06-453Z-4117112d-receipt.json",
+      "sourceStable": true,
+      "elapsedMsDiagnostic": 218040
+    },
+    "auxiliaryPostgresRegression": {
+      "state": "correctness-qualified",
+      "scopeOfState": "Required existing PostgreSQL adapter regression only, not a third competitor. Root observed 20/20 integration cases. The owned container/data remain stopped and retained.",
+      "evidence": "evidence/postgres-regression-admission-20261106.json",
+      "independentResourceEvidence": "evidence/postgres-auxiliary-independent-resource-audit-20261106T1525.json",
+      "comparisonParticipant": false
+    },
+    "schemaBoundsUnion": {
+      "state": "implemented",
+      "scopeOfState": "Current accepted frontend failed 5 of 16 constrained-union boundary cases. Two offline fixes passed 16/16; promotion waits for the active XTDB source freeze to end.",
+      "evidence": "evidence/schema-bounds-3e570860-514b-4bff-a912-f4674070933f.json",
+      "wholeGoalQualified": false
+    },
+    "latestXtdbPublicPacket": {
+      "state": "correctness-qualified",
+      "scopeOfState": "Retained Unicode/optional-interval guard build:20 small families,71 cases executed current+reopened,142/142 PASS. Newer shared-core builds are not covered.",
+      "sourceStable": true,
+      "evidence": "evidence/xtdb/workloads-2026-11-06T15-34-12-560Z-d6f37cb7-workloads.json",
+      "receipt": "evidence/xtdb/workloads-2026-11-06T15-34-12-560Z-d6f37cb7-receipt.json"
+    },
+    "qleverFullCompilerWave3": {
+      "state": "implemented",
+      "outcome": "NO_SURVIVOR",
+      "scopeOfState": "Two2GiB candidates each completed scalar7 then timed out during main17.2/14 complete cases executed and failed;12 unexecuted. No OOM or threshold.",
+      "evidence": "evidence/qlever-common-independent-summary-3e034ab5.json"
+    },
+    "qleverFullCompilerWave4": {
+      "state": "correctness-qualified",
+      "scopeOfState": "Experimental2x2GiB full-compiler fixed-profile candidates only: both7/7 focused cases PASS, all336 HTTP responses200, no OOM/threshold, stable540 hashes. No public44/142 or original4GiB qualification.",
+      "evidence": "evidence/qlever-common-independent-summary-56e246a9-corrected.json",
+      "performanceState": "unimplemented"
+    },
+    "qleverCompactV3": {
+      "state": "implemented",
+      "scopeOfState": "New separately owned4GiB/4CPU profile with512M allocator/j4/cache64M/eager32M/planner100. Named-profile public44/142 not yet executed. Original failed4GiB profile and both2GiB candidates remain stopped/retained.",
+      "provisionEvidence": "evidence/qlever-compact-v3-provision-1793981268491266000.json",
+      "independentCopyAudit": "evidence/qlever-compact-v3-independent-copy-audit-20261106T1611.json",
+      "independentAdmission": "evidence/qlever-compact-v3-independent-admission-20261106T1611.json",
+      "retainedDataRecovery": "evidence/qlever-compact-v3-data-recovery-1793981306328510000.json",
+      "performanceState": "unimplemented"
+    }
+  },
+  "scaleGates": [
+    {
+      "distinctEntities": 100000,
+      "sparseActiveFacts": 100000,
+      "representativeActiveFacts": 1000000,
+      "backendStates": {
+        "xtdb": {
+          "sparse": {
+            "state": "implemented",
+            "scopeOfState": "100000 loaded and functional current/reopen/readercounts passed; stable rebuild verification pending",
+            "stablePrefixVerification": "PASS_100000_INDEPENDENT_DISTINCT_ENTITY_PROJECTION"
+          },
+          "representative": {
+            "state": "capacity-blocked",
+            "scopeOfState": "The measured owner V2 model rejects this new fixture under the fixed combined 12 GiB cap before writes. This does not prove physical impossibility.",
+            "acknowledgedEntities": 0,
+            "projectedPeakOwnedBytes": 58200714516.10868,
+            "ownedCapBytes": 12884901888,
+            "evidence": "evidence/xtdb/scale-2026-11-06T14-51-11-520Z-7f81e897-scale.json"
+          }
+        },
+        "qlever": {
+          "sparse": {
+            "state": "unimplemented",
+            "scopeOfState": "Requested stage has no completed public load gate"
+          },
+          "representative": {
+            "state": "unimplemented",
+            "scopeOfState": "Capacity admission and public loading not completed"
+          }
+        }
+      },
+      "previousCheckpointSummary": "XTDB_SPARSE_LOAD_AND_SMALL_READERS_PASS_REPRESENTATIVE_AND_QLEVER_OPEN"
+    },
+    {
+      "distinctEntities": 1000000,
+      "sparseActiveFacts": 1000000,
+      "representativeActiveFacts": 10000000,
+      "backendStates": {
+        "xtdb": {
+          "sparse": {
+            "state": "capacity-blocked",
+            "scopeOfState": "The measured owner V2 model rejects this new fixture under the fixed combined 12 GiB cap before writes. This does not prove physical impossibility.",
+            "acknowledgedEntities": 0,
+            "projectedPeakOwnedBytes": 58200714516.10868,
+            "ownedCapBytes": 12884901888,
+            "evidence": "evidence/xtdb/scale-2026-11-06T14-51-11-520Z-9ac59246-scale.json"
+          },
+          "representative": {
+            "state": "capacity-blocked",
+            "scopeOfState": "The measured owner V2 model rejects this new fixture under the fixed combined 12 GiB cap before writes. This does not prove physical impossibility.",
+            "acknowledgedEntities": 0,
+            "projectedPeakOwnedBytes": 512601615496.0868,
+            "ownedCapBytes": 12884901888,
+            "evidence": "evidence/xtdb/scale-2026-11-06T14-51-49-353Z-8390813d-scale.json"
+          }
+        },
+        "qlever": {
+          "sparse": {
+            "state": "unimplemented",
+            "scopeOfState": "Requested stage has no completed public load gate"
+          },
+          "representative": {
+            "state": "unimplemented",
+            "scopeOfState": "Capacity admission and public loading not completed"
+          }
+        }
+      },
+      "previousCheckpointSummary": "NOT_RUN"
+    },
+    {
+      "distinctEntities": 10000000,
+      "sparseActiveFacts": 10000000,
+      "representativeActiveFacts": 100000000,
+      "backendStates": {
+        "xtdb": {
+          "sparse": {
+            "state": "capacity-blocked",
+            "scopeOfState": "The measured owner V2 model rejects this new fixture under the fixed combined 12 GiB cap before writes. This does not prove physical impossibility.",
+            "acknowledgedEntities": 0,
+            "projectedPeakOwnedBytes": 512601615496.0868,
+            "ownedCapBytes": 12884901888,
+            "evidence": "evidence/xtdb/scale-2026-11-06T14-51-49-353Z-e6d018a2-scale.json"
+          },
+          "representative": {
+            "state": "capacity-blocked",
+            "scopeOfState": "The measured owner V2 model rejects this new fixture under the fixed combined 12 GiB cap before writes. This does not prove physical impossibility.",
+            "acknowledgedEntities": 0,
+            "projectedPeakOwnedBytes": 5056604112655.867,
+            "ownedCapBytes": 12884901888,
+            "evidence": "evidence/xtdb/scale-2026-11-06T14-51-49-353Z-a01f788f-scale.json"
+          }
+        },
+        "qlever": {
+          "sparse": {
+            "state": "unimplemented",
+            "scopeOfState": "Requested stage has no completed public load gate"
+          },
+          "representative": {
+            "state": "unimplemented",
+            "scopeOfState": "Capacity admission and public loading not completed"
+          }
+        }
+      },
+      "previousCheckpointSummary": "NOT_RUN_REQUIRES_CAPACITY_ADMISSION"
+    }
+  ],
+  "separateMilestones": {
+    "tenMillionRetainedFacts": "NOT_RUN",
+    "millionFactQueryInputs": "NOT_RUN",
+    "sixteenReadersDuringIngestion": {
+      "status": "PASS_FUNCTIONAL_SMALL_SAMPLE_ONLY",
+      "clients": 16,
+      "checks": 48,
+      "evidence": "evidence/readers-during-ingestion-1793973465141.json",
+      "qualifiedPercentiles": false,
+      "sourcePositionBefore": 106,
+      "sourcePositionAfter": 107
+    }
+  },
+  "comparisonPaths": ["public-triplex-xtdb", "public-triplex-qlever"],
+  "correctnessOracle": "Independent event replay; no competitor timing",
+  "nativeProbes": "Per-backend diagnostics only",
+  "duckdbExecution": "PROHIBITED_READ_ONLY_REFERENCE",
+  "twoBackendTwentyWorkloadComparison": {
+    "state": "unimplemented",
+    "scopeOfState": "Whole two-backend comparison is incomplete. Retained XTDB142/142 and QLever70/113 observed passes are diagnostic evidence, not an equivalent completed comparison. Strict reader requires receipt-bound bytes, exact142 case keys, same packet/common public build and shared harness.",
+    "performanceState": "unimplemented",
+    "xtdbEvidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+    "qleverEvidence": "evidence/qlever/workloads-2026-11-06T14-37-48-090Z-ef903d8b-workloads.json",
+    "strictComparisonEvidence": "evidence/xtdb-qlever-functional-comparison-strict-initial.json",
+    "strictStatus": "INCOMPLETE"
+  },
+  "backendStatuses": {
+    "xtdb": {
+      "status": "unimplemented",
+      "sharedRuntimeConformance": {
+        "state": "correctness-qualified",
+        "scopeOfState": "The unchanged base 44-case contract passed on the frozen public build. The full ten-goal target remains open.",
+        "caseCount": 44,
+        "sourceStable": true,
+        "publicDistStable": true,
+        "protectedReferencesUnchanged": true,
+        "evidence": "evidence/xtdb/suite-2026-11-06T15-30-06-453Z-4117112d-receipt.json",
+        "individualCasesEvidence": "evidence/xtdb/cases-2026-11-06T14-34-59-035Z-8bbdedcb-receipt.json",
+        "wholeTestDurationMs": 218040,
+        "watchdogMs": 240000
+      },
+      "publicWorkloads": {
+        "state": "correctness-qualified",
+        "scopeOfState": "All 20 small families and 71 logical cases passed current and reopened execution through public event projections and structured Datalog. Bounded final normalization is documented. Broader language and performance qualification remain open. These retained bytes precede the latest shared-core union-bounds fix.",
+        "logicalCases": 71,
+        "currentAndReopenedExecutions": 142,
+        "passedExecutions": 142,
+        "failedExecutions": 0,
+        "sourceStable": true,
+        "publicDistStable": true,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T15-34-12-560Z-d6f37cb7-workloads.json",
+        "receipt": "evidence/xtdb/workloads-2026-11-06T15-34-12-560Z-d6f37cb7-receipt.json"
+      },
+      "entityScale": {
+        "distinctEntities": 100000,
+        "activeDomainFacts": 100000,
+        "profile": "sparse",
+        "loadAndSmallReaderCorrectness": "PASS",
+        "stablePrefixVerification": "PASS_INDEPENDENT_DISTINCT_PROJECTION",
+        "evidence": "evidence/scale-2026-11-06T13-54-56-325Z-420b2001-scale-prefix-verification.json",
+        "qualificationLimits": "Loading overlapped source/artifact development; no qualified latency or representative/large-scale claim",
+        "stablePrefixReceipt": "evidence/xtdb/verify-2026-11-06T14-51-11-520Z-8f777d50-receipt.json",
+        "stablePrefixEvidence": "evidence/scale-2026-11-06T13-54-56-325Z-420b2001-scale-xtdb-prefix-verification-1793976682956.json",
+        "scopeOfEntityCount": "Distinct Triples fact-subject EntityIds; the configured Entity.create presence/version metadata profile remains unqualified."
+      },
+      "targetedWorkloadFixes": {
+        "status": "PASS_FUNCTIONAL_SOURCE_CHANGED",
+        "families": ["05", "09", "10", "12"],
+        "currentAndReopenedExecutions": 30,
+        "passedExecutions": 30,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-22-35-929Z-802cc059-workloads.json",
+        "actualDeliveryTraces": 4,
+        "duplicateCommandsActuallySubmitted": 1
+      },
+      "scopeOfState": "Whole ten-goal target remains unimplemented; retained public foundation checkpoints below are qualified only for stated builds."
+    },
+    "qlever": {
+      "status": "unimplemented",
+      "nativeServer": "New compact-v3 profile ready7019 at4GiB/4CPU, native512M/j4/cache64M/eager32M/planner100; old failed native2G/j16 profile and both2GiB candidates stopped/retained. New public44/142 qualification pending.",
+      "sharedRuntimeConformance": {
+        "state": "implemented",
+        "scopeOfState": "Latest stable public candidate attempt: seven cases passed, case eight caused server OOM, and 36 subsequent cases could not access the server. The whole suite was not rerun after this failure.",
+        "passedBeforeBackendFailure": 7,
+        "serverOomCases": 1,
+        "subsequentUnavailableCases": 36,
+        "sourceStable": true,
+        "evidence": "evidence/qlever/cases-2026-11-06T14-53-16-698Z-2891552e-receipt.json",
+        "failureEvidence": "evidence/qlever-oom-conformance-20261106T145356.json",
+        "patternCountCorrection": "evidence/qlever-oom-conformance-20261106T145356-correction.json",
+        "previousDiagnostic": "evidence/qlever/cases-2026-11-06T14-32-41-688Z-be7783ec-summary.json"
+      },
+      "publicWorkloads": {
+        "state": "implemented",
+        "scopeOfState": "Initial shared public packet diagnostics used a fixed compiled backend. Source edits were recorded, and server OOM prevented completion.",
+        "logicalCasesExpected": 71,
+        "executionsExpected": 142,
+        "executionsObserved": 113,
+        "passedExecutions": 70,
+        "failedExecutions": 43,
+        "unexecutedExecutions": 29,
+        "evidence": "evidence/qlever/workloads-2026-11-06T14-37-48-090Z-ef903d8b-workloads.json",
+        "failureEvidence": "evidence/qlever-oom-workloads-20261106T144001.json"
+      },
+      "entityScale": {
+        "state": "unimplemented",
+        "capacityStatus": "unknown",
+        "scopeOfState": "QLever-specific1k/5k physical calibration is required before100k admission; XTDB unit-cost model must not be reused."
+      },
+      "nativeCapabilityProbes": {
+        "evidence": "evidence/qlever-native-capabilities-1793974911301.json",
+        "nativeNumericLoss": "2^59 wraps sign; int64 max becomes-1;1.0000000000000002 becomes1.0",
+        "atomicCompareAndSwap": "16concurrentrequests produced exactlyoneclaim/position1",
+        "multiOperationAtomicity": "FAIL:HTTP500 after firstINSERT left thatINSERT visible immediately and afterfollowingcommit",
+        "publicMitigation": "Exactpayloadstoredastext; one guarded modify with isolated guard SELECT candidate; publicqualificationpending",
+        "compatibility": "Native numeric storage and multi-operation request transactions cannot supply the required contract directly"
+      },
+      "scopeOfState": "Whole ten-goal target unimplemented; selected storage/interval/query subsets exist.",
+      "publicStorage": {
+        "state": "correctness-qualified",
+        "scopeOfState": "Six focused storage contracts on the stated build only; whole goal7 remains incomplete.",
+        "passedCases": 6,
+        "evidence": "evidence/qlever-storage-six-20261106T1433.json",
+        "wholeGoalQualified": false
+      },
+      "serverResourceFailure": {
+        "state": "implemented",
+        "outcome": "FAIL_SERVER_OOM_AT_FIXED_DEVELOPMENT_CAP",
+        "serverMemoryBytes": 4294967296,
+        "nanoCpus": 4000000000,
+        "stage": "Smallfamily17MTLwideconjunction",
+        "evidence": "evidence/qlever-oom-workloads-20261106T144001.json",
+        "scopeOfState": "Observed OOMKilled=true and exit 137 at the fixed 4 GiB development cap. This is neither an 8 GiB fair qualification nor a capacity-model block."
+      },
+      "serverResourceFailures": [
+        {
+          "state": "implemented",
+          "outcome": "FAIL_SERVER_OOM_AT_FIXED_DEVELOPMENT_CAP",
+          "serverMemoryBytes": 4294967296,
+          "scopeOfState": "Small MTL wide query; this is not a capacity-model block.",
+          "evidence": "evidence/qlever-oom-workloads-20261106T144001.json"
+        },
+        {
+          "state": "implemented",
+          "outcome": "FAIL_SERVER_OOM_AT_FIXED_DEVELOPMENT_CAP",
+          "serverMemoryBytes": 4294967296,
+          "logicalPatterns": 7,
+          "scopeOfState": "Small upstream seven-fact scalar projection; the eight-pattern guard was insufficient. This is an operational failure, not a capacity-model block.",
+          "evidence": "evidence/qlever-oom-conformance-20261106T145356.json",
+          "correction": "evidence/qlever-oom-conformance-20261106T145356-correction.json"
+        },
+        {
+          "state": "implemented",
+          "outcome": "FAIL_SERVER_OOM_AT_FIXED_DEVELOPMENT_CAP",
+          "serverMemoryBytes": 4294967296,
+          "logicalPatterns": 7,
+          "scopeOfState": "The integrated common compiler exhausted the original development node on the seven-field scalar query. This was a focused regression probe, not public qualification.",
+          "evidence": "evidence/qlever-third-oom-independent-20261106T153006.json",
+          "nativeStartup": "-j16 -m2G -c256M -e64M",
+          "plannerAtFailure": "unobserved",
+          "restartedDefaultPlanner": 1500,
+          "plannerEvidenceLimit": "The restarted default does not prove the former process setting."
+        }
+      ],
+      "readOomRecovery": {
+        "state": "correctness-qualified",
+        "scopeOfState": "Read-OOM recovery only; this does not prove write-failure atomicity.",
+        "evidence": "evidence/qlever-oom-recovery-1793976333671.json",
+        "secondOomEvidence": "evidence/qlever-second-oom-recovery-1793977028367.json",
+        "firstRecoveredAcknowledgedScopes": 17,
+        "firstRecoveredCommands": 43,
+        "allJournalChangesMatchedHistory": true
+      },
+      "capacity": {
+        "state": "unimplemented",
+        "scopeOfState": "Independent QLever calibration remains unmeasured. Reusing the XTDB 8,414 bytes/domain-fact model is prohibited. Paired 1,000/5,000-entity physical measurements are required before 100,000-entity admission."
+      },
+      "independentReadRecovery": {
+        "state": "correctness-qualified",
+        "scopeOfState": "Selected retained data through public storage APIs after read OOM and owned restart; interrupted-write atomicity remains open.",
+        "typedFacts": 45,
+        "scopeSourceCuts": [1, 1, 1],
+        "evidence": "evidence/qlever/recovery-2026-11-06T15-36-27-247Z-e7626d8a-recovery.json",
+        "receipt": "evidence/qlever/recovery-2026-11-06T15-36-27-247Z-e7626d8a-receipt.json",
+        "sourceStable": true
+      }
+    }
+  },
+  "stateVocabulary": [
+    "unimplemented",
+    "implemented",
+    "correctness-qualified",
+    "performance-qualified",
+    "capacity-blocked",
+    "incompatible"
+  ],
+  "statePolicy": "Top-level goals.backendStates and backendGoalStates.state describe implementation of the WHOLE requested goal. Essential missing public semantics keep that whole-goal state unimplemented, even when substantial subset code exists. Partial implementations and exact correctness-qualified checkpoints are recorded separately and never imply whole-goal completion. Implemented means the complete stated implementation exists but qualification may remain. Correctness-qualified requires all semantics/failures for its stated scope on stable public builds; performance-qualified additionally requires admitted scale and frozen SLO gates. Capacity-blocked means the fixed declared admission model rejects a stage, not physical impossibility. Native incompatibility is scoped to the evidenced native mode and never silently removes the public requirement.",
+  "backendGoalStates": {
+    "xtdb": [
+      {
+        "goal": 1,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Typed storage, original schema frontend, exact signed64 payloads, batches/retractions and focused schema tests exist. Latest union-bounds fix is a newer build than the retained base44/142 qualification.",
+        "remaining": "Schema evolution with historical schema meaning, complete temporal references/uniqueness/cardinality/required-field failures and expanded-value contract.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Typed fact/schema subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 2,
+        "state": "implemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Typed comparisons and bounded arithmetic/computed expression lowering exist; focused integer/division/remainder tests passed. Full boundary/error qualification remains open.",
+        "remaining": "Complete typed arithmetic/computed-value boundaries, invalid mixtures, overflow and consistent errors across strategies.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Typed expression subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 3,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "SQL joins/unions and constrained binary recursion run server-side. Public20-family packet passed142 executions on a retained build; this does not implement a general stratified program.",
+        "remaining": "General rule composition/planning, selective large joins, completed recursive relations and admission behavior at agreed scale.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Public selective query/legacy binary-rule subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 4,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Correlated NOT EXISTS and historical absence cases pass within the current AST. General stratification and negative-cycle validation are absent.",
+        "remaining": "A public stratified program/rule representation, dependency ordering, binding safety, negative-cycle rejection, and negation over completed derived relations.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Correlated fact negation subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 5,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Native count/group/SUM/extrema and exact-i64 channels exist; public packet aggregate cases passed. Completed arbitrary derived-relation aggregates are absent.",
+        "remaining": "Full duplicate/empty/join/overflow semantics and aggregates over completed derived relations.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Grouping and selected exact aggregate subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 6,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Transport deadlines/cancellation and owned-process sampling exist; native57014 was observed. Sampled RSS and a cancelled client do not establish physical reclamation.",
+        "remaining": "Backend work termination/reclamation, cleanup, physical client/server memory/intermediate-result limits and complete cancellation failure matrix.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Deadlines, cancellation requests and sampled resource subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 7,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Optimistic callback bridge stages pending overlays and publishes guarded claims/positions/receipts. Clean backup/restore and selected replay/lost-ack cases passed; broader crash/evolution qualification remains open.",
+        "remaining": "Full atomic mutation/replay/visibility/crash/restore/evolution contract, including interrupted writes and acknowledgement ambiguity.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Callback transaction, receipts and selected recovery subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 8,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Public persisted complete-generation rebuild supports exact source positions and alternate recursive support tests. This is not incremental delta maintenance; all required automatic temporal transitions/costs are not qualified.",
+        "remaining": "Maintained joins, aggregates and recursive relationships across commits/time/restart/rebuild, alternate supports and measured maintenance/storage costs.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Maintained complete-generation subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 9,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Explicit assertion identity and valid/recorded metadata plus public native SQL interval/coalescing implementation exist. Recursive interval execution and complete historical schema/reference/cascade meaning are absent.",
+        "remaining": "Historical schema meaning, interval recursion, complete temporal reference/deletion/cascade behavior and multiple temporal cuts.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Explicit bitemporal assertions and bounded intervals subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 10,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Public RuntimeDefinition/storage/executor facade exists. Retained unchanged44 and142 public workload executions passed; broader semantics and capabilities remain incomplete.",
+        "remaining": "All required public runtime contracts, honest capabilities/explanations/pagination and additional ten-goal failure coverage beyond the base44.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Public runtime facade and base conformance subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      }
+    ],
+    "qlever": [
+      {
+        "goal": 1,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Exact typed payloads are preserved as text with explicit native numeric channels and public storage tests. Complete schema/evolution/reference behavior remains incomplete.",
+        "remaining": "Schema evolution with historical schema meaning, complete temporal references/uniqueness/cardinality/required-field failures and expanded-value contract.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Typed fact/schema subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 2,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "incompatibleNativeSemantics": {
+          "state": "incompatible",
+          "scope": "QLever0.6.0 native fullbinary64/i64 numeric representation; text/chunk encodings must implement or explicitly reject affected public operations",
+          "evidence": "evidence/qlever-native-capabilities-1793974911301.json"
+        },
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Typed comparisons/order and selected exact aggregate encodings exist. Arbitrary binary64 arithmetic cannot rely on native numeric values; full public compute semantics remain absent.",
+        "remaining": "Complete typed arithmetic/computed-value boundaries, invalid mixtures, overflow and consistent errors across strategies.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Typed expression subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 3,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "SPARQL joins/unions and bounded binary derived-relation execution exist. Original4GiB profile suffered three read OOMs. Bounded full-compiler wave4 passed7 cases per candidate; no public44/142 acceptance on the selected candidate yet.",
+        "remaining": "General rule composition/planning, selective large joins, completed recursive relations and admission behavior at agreed scale.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Public selective query/legacy binary-rule subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 4,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Correlated NOT EXISTS subset exists. A general stratified program and completed-derived negation are absent.",
+        "remaining": "A public stratified program/rule representation, dependency ordering, binding safety, negative-cycle rejection, and negation over completed derived relations.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Correlated fact negation subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 5,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Count/group/SUM/extrema/AVG subsets exist, with full-i64 text/chunk channels and bounded numeric-domain checks. Full completed-derived/duplicate/overflow semantics remain open.",
+        "remaining": "Full duplicate/empty/join/overflow semantics and aggregates over completed derived relations.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Grouping and selected exact aggregate subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 6,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "HTTP deadlines and cooperative cancellation plus resource admission exist. Three original-profile OOMs are preserved. Bounded wave4 survived; no full cancellation/reclamation guarantee.",
+        "remaining": "Backend work termination/reclamation, cleanup, physical client/server memory/intermediate-result limits and complete cancellation failure matrix.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Deadlines, cancellation requests and sampled resource subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 7,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "incompatibleNativeSemantics": {
+          "state": "incompatible",
+          "scope": "Multioperation SPARQL HTTP requests are not atomic after a later operation fails; adapter uses one guarded modify instead",
+          "evidence": "evidence/qlever-native-capabilities-1793974911301.json"
+        },
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Direct adapter stages callbacks and sends one guarded modify with CAS/receipts. Focused storage and read-OOM recovery passed; complete interrupted-write failure atomicity remains unresolved. Managed writer is a separate offline candidate, not a public backend.",
+        "remaining": "Full atomic mutation/replay/visibility/crash/restore/evolution contract, including interrupted writes and acknowledgement ambiguity.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Callback transaction, receipts and selected recovery subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        },
+        "runtimeModes": {
+          "guardedDirectAdapter": {
+            "state": "unimplemented",
+            "scopeOfState": "Full goal7 contract including interrupted single-modify publication/recovery remains unresolved; selected happy-path contracts passed.",
+            "compatibilityAssessment": {
+              "evidenceKind": "SOURCE_AUDIT_INFERENCE",
+              "assessment": "Failure-atomicity incompatibility suspected for direct native writes; empirical single-modify fault packet remains unexecuted. This is not proof that every guarded single modify fails.",
+              "empiricalSingleModifyCounterexample": false,
+              "evidence": "evidence/qlever-single-modify-source-audit-20261106/audit.json",
+              "sourceSha256": "1d04230a7f8e539b1958d8715ddc53661ce11a90842966712067bb0aa83e506a",
+              "sourceAnchors": {
+                "locateAndAddTriples": "200\u2013220: add permutation then check cancellation",
+                "modifyTriplesImpl": "440\u2013479: mutate inverse/permutation/target maps",
+                "DeltaTriplesManager.modify": "515\u2013573: functor\u2192metadata\u2192writeToDisk\u2192publish snapshot; no rollback observed",
+                "writeToDisk": "648\u2013671: full snapshot temp+rename; no explicit fsync observed"
+              }
+            }
+          },
+          "multiOperationNativeHTTP": {
+            "state": "incompatible",
+            "scope": "Multioperation SPARQL HTTP requests are not atomic after a later operation fails; adapter uses one guarded modify instead",
+            "evidence": "evidence/qlever-native-capabilities-1793974911301.json"
+          },
+          "managedWriterCandidate": {
+            "state": "unimplemented",
+            "scopeOfState": "Offline broker model/source exists; no public Triplex native managed-writer qualification."
+          }
+        }
+      },
+      {
+        "goal": 8,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Dependency/freshness hooks and ordinary derived-query frontend subsets exist. No public maintained-query provider implements this goal.",
+        "remaining": "Maintained joins, aggregates and recursive relationships across commits/time/restart/rebuild, alternate supports and measured maintenance/storage costs.",
+        "partialImplementation": {
+          "state": "unimplemented",
+          "scopeOfState": "No maintained-query provider; dependency hooks do not establish maintained results.",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 9,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Explicit assertion valid/recorded metadata and a public interval provider exist. QLever orchestrates bounded temporal cuts and coalescing in the host while native Datalog point queries resolve facts; no recursive intervals or complete schema/reference/cascade meaning.",
+        "remaining": "Historical schema meaning, interval recursion, complete temporal reference/deletion/cascade behavior and multiple temporal cuts.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Explicit bitemporal assertions and bounded intervals subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      },
+      {
+        "goal": 10,
+        "state": "unimplemented",
+        "wholeGoalQualified": false,
+        "performanceState": "unimplemented",
+        "scopeOfState": "Whole requested goal implementation; essential missing semantics are listed in remaining. Qualification of smaller subsets is separate.",
+        "progress": "Public RuntimeDefinition/storage/executor facade exists. Prior diagnostic44 and packet failed with retained OOM evidence; newer bounded query candidates require fresh public conformance/packet qualification.",
+        "remaining": "All required public runtime contracts, honest capabilities/explanations/pagination and additional ten-goal failure coverage beyond the base44.",
+        "partialImplementation": {
+          "state": "implemented",
+          "scopeOfState": "Public runtime facade and base conformance subset",
+          "qualification": "See exact stable-build checkpoints; no whole-goal qualification is implied."
+        }
+      }
+    ]
+  },
+  "backendWorkloadStates": {
+    "xtdb": [
+      {
+        "family": "01",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "02",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "03",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "04",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "05",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "06",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "07",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "08",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "09",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "10",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "11",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "12",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "13",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "14",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "15",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "16",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "17",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "18",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "19",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      },
+      {
+        "family": "20",
+        "state": "correctness-qualified",
+        "scopeOfState": "Small immutable-event packet, current and reopened execution only. General query-language, performance and full-goal qualification remain open.",
+        "wholeFamilyQualified": false,
+        "evidence": "evidence/xtdb/workloads-2026-11-06T14-43-04-085Z-2d576543-workloads.json",
+        "smallFixtureQualified": true
+      }
+    ],
+    "qlever": [
+      {
+        "family": "01",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 8,
+        "failedObserved": 0,
+        "executionOutcome": "PASS_FUNCTIONAL_ONLY"
+      },
+      {
+        "family": "02",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 6,
+        "failedObserved": 0,
+        "executionOutcome": "PASS_FUNCTIONAL_ONLY"
+      },
+      {
+        "family": "03",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 6,
+        "failedObserved": 0,
+        "executionOutcome": "PASS_FUNCTIONAL_ONLY"
+      },
+      {
+        "family": "04",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 8,
+        "failedObserved": 0,
+        "executionOutcome": "PASS_FUNCTIONAL_ONLY"
+      },
+      {
+        "family": "05",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 8,
+        "failedObserved": 0,
+        "executionOutcome": "PASS_FUNCTIONAL_ONLY"
+      },
+      {
+        "family": "06",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 8,
+        "failedObserved": 0,
+        "executionOutcome": "PASS_FUNCTIONAL_ONLY"
+      },
+      {
+        "family": "07",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 6,
+        "executionOutcome": "FAIL"
+      },
+      {
+        "family": "08",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 2,
+        "failedObserved": 4,
+        "executionOutcome": "FAIL"
+      },
+      {
+        "family": "09",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 4,
+        "failedObserved": 2,
+        "executionOutcome": "FAIL"
+      },
+      {
+        "family": "10",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 8,
+        "failedObserved": 0,
+        "executionOutcome": "PASS_FUNCTIONAL_ONLY"
+      },
+      {
+        "family": "11",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 6,
+        "executionOutcome": "FAIL"
+      },
+      {
+        "family": "12",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 8,
+        "failedObserved": 0,
+        "executionOutcome": "PASS_FUNCTIONAL_ONLY"
+      },
+      {
+        "family": "13",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 8,
+        "executionOutcome": "FAIL"
+      },
+      {
+        "family": "14",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 6,
+        "executionOutcome": "FAIL"
+      },
+      {
+        "family": "15",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 6,
+        "executionOutcome": "FAIL"
+      },
+      {
+        "family": "16",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 4,
+        "failedObserved": 2,
+        "executionOutcome": "FAIL"
+      },
+      {
+        "family": "17",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 3,
+        "executionOutcome": "FAIL_INGESTION"
+      },
+      {
+        "family": "18",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 0,
+        "executionOutcome": "FAIL_INGESTION"
+      },
+      {
+        "family": "19",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 0,
+        "executionOutcome": "FAIL_INGESTION"
+      },
+      {
+        "family": "20",
+        "state": "implemented",
+        "scopeOfState": "Diagnostics used the earlier compiled public backend; source changed during the run. The full family remains unqualified.",
+        "wholeFamilyQualified": false,
+        "passedObserved": 0,
+        "failedObserved": 0,
+        "executionOutcome": "FAIL_INGESTION"
+      }
+    ]
+  }
+}

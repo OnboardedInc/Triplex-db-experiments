@@ -1,0 +1,197 @@
+{
+  "schema": "temporal-workspace-cleanup/1",
+  "timestamp_utc": "2026-11-05T16:41:02.146014+00:00",
+  "completed_utc": "2026-11-05T16:42:54.932141+00:00",
+  "authorization": "User requested removal of completed worktrees and unused example data. Preserve current work, reusable fixtures, diagnostics and branch refs.",
+  "available_before_bytes": 15184449536,
+  "available_after_bytes": 88979611648,
+  "observed_available_change_bytes": 73795162112,
+  "retained_fixtures": [
+    {
+      "previous_path": "[LOCAL_PATH_0045]",
+      "path": "build/retained-fixtures/scale-1m-native.duckdb",
+      "bytes": 314060800,
+      "sha256": "d308783ed4e276c906c5db2e76dd4191022abced813a2ee0680bc295e335e526"
+    },
+    {
+      "previous_path": "[LOCAL_PATH_0046]",
+      "path": "build/retained-fixtures/scale-10m-native.duckdb",
+      "bytes": 3299356672,
+      "sha256": "2797eb25983f8d2159a3562fe10f8c4476a2810557baeaa9909229c9a69e1af6"
+    }
+  ],
+  "removed_worktrees": [
+    {
+      "path": "[LOCAL_PATH_0047]",
+      "head": "b628ec8d57409130ffb1db598095ddbe1e88bf11",
+      "branch": "codex/temporal-allcut-20261105",
+      "pre_cleanup_status": "",
+      "branch_preserved": true,
+      "removed_database_files": 4,
+      "removed_database_logical_bytes": 9903587328
+    },
+    {
+      "path": "[LOCAL_PATH_0048]",
+      "head": "3f6d56d5ff4d4be60ab9663c957a38c489145559",
+      "branch": "codex/temporal-streaming-20261105",
+      "pre_cleanup_status": "",
+      "branch_preserved": true,
+      "removed_database_files": 7,
+      "removed_database_logical_bytes": 19801657344
+    },
+    {
+      "path": "[LOCAL_PATH_0049]",
+      "head": "601375a743732b7c95afe85e5b586fb05bb99daf",
+      "branch": "codex/temporal-read-candidates-20261105",
+      "pre_cleanup_status": "",
+      "branch_preserved": true,
+      "removed_database_files": 16,
+      "removed_database_logical_bytes": 7701725184
+    },
+    {
+      "path": "[LOCAL_PATH_0050]",
+      "head": "dfa9429a0961eb8733aaf0f1d1a359a868254a6a",
+      "branch": "codex/temporal-native-scale-20261105",
+      "pre_cleanup_status": " M projects/temporal-datalog/runtime/adapter/benchmark-identity-count.mjs\n M projects/temporal-datalog/runtime/adapter/test-current-unique.mjs\n M projects/temporal-datalog/runtime/build_identity_count_spike.py\n M projects/temporal-datalog/runtime/build_native.py\n M projects/temporal-datalog/runtime/native/src/temporal_command.cpp\n M projects/temporal-datalog/runtime/native/src/temporal_command.hpp\n?? projects/temporal-datalog/runtime/adapter/test-capacity.ts\n",
+      "branch_preserved": true,
+      "removed_database_files": 30,
+      "removed_database_logical_bytes": 7570563072
+    },
+    {
+      "path": "[LOCAL_PATH_0051]",
+      "head": "5c3c3ac269bc3c67e8b1bf284e8a425ee11fb0f9",
+      "branch": "codex/temporal-readers-20261105",
+      "pre_cleanup_status": "",
+      "branch_preserved": true,
+      "removed_database_files": 5,
+      "removed_database_logical_bytes": 1570304000
+    },
+    {
+      "path": "[LOCAL_PATH_0052]",
+      "head": "1e6879fbaec5377f3de8c85c8291564d08701c5a",
+      "branch": "codex/temporal-compat-kernel-20261105",
+      "pre_cleanup_status": "",
+      "branch_preserved": true,
+      "removed_database_files": 0,
+      "removed_database_logical_bytes": 0
+    },
+    {
+      "path": "[LOCAL_PATH_0053]",
+      "head": "157d382ac518e6914f8c83e4dfe989f5725a598b",
+      "branch": "codex/temporal-direct-kernel-20261105",
+      "pre_cleanup_status": "",
+      "branch_preserved": true,
+      "removed_database_files": 1,
+      "removed_database_logical_bytes": 5517312
+    },
+    {
+      "path": "[LOCAL_PATH_0054]",
+      "head": "a8b20930694b4560dacacde35034e8e3c56f1185",
+      "branch": "codex/temporal-benchmarks-20261105",
+      "pre_cleanup_status": "",
+      "branch_preserved": true,
+      "removed_database_files": 19,
+      "removed_database_logical_bytes": 3305422709
+    },
+    {
+      "path": "[LOCAL_PATH_0055]",
+      "head": "c8b5b36cd66f63c27f866d3e3a21df5ec1153078",
+      "branch": "codex/temporal-auto-owned-20261105",
+      "pre_cleanup_status": "",
+      "branch_preserved": true,
+      "removed_database_files": 0,
+      "removed_database_logical_bytes": 0,
+      "note": "Removed after automatic-mode integration and full286-check verification."
+    }
+  ],
+  "removed_root_databases": [
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/0-1-optimized.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/0-1-strict.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/0-16-optimized.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/0-16-strict.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/0-4-optimized.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/0-4-strict.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/1-1-optimized.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/1-1-strict.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/1-16-optimized.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/1-16-strict.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/1-4-optimized.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/final-023-performance-20261105/identity-count-98284788-e4b8-4b8e-8f58-796051a6cc76/1-4-strict.duckdb",
+      "bytes": 314060800
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T143404856Z-646e8442/facts-10000000.duckdb",
+      "bytes": 3299356672
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T162041222Z-f5a7a8af/facts-10000000.duckdb",
+      "bytes": 3299356672
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/owner_probe/activation-1549b81e-85fe-472e-8ad1-6b1db33b6585.duckdb",
+      "bytes": 5517312
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/owner_probe/activation-34a7e7a1-8a51-47a2-aa41-acc3ab08716d.duckdb",
+      "bytes": 5517312
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/owner_probe/activation-44c4dd81-2243-4bda-b463-c73eb212f3fe.duckdb",
+      "bytes": 5517312
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/owner_probe/activation-71c7817c-cde9-40ab-ad1b-20043b9a7cac.duckdb",
+      "bytes": 5517312
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/owner_probe/activation-963633a0-6dd6-4f4c-8a0c-d916ed5b22f3.duckdb",
+      "bytes": 5517312
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/owner_probe/activation-bd236f87-6431-41ab-860b-4cece251c422.duckdb",
+      "bytes": 5517312
+    }
+  ],
+  "archived_diagnostics": {
+    "path": "build/retained-diagnostics-20261105",
+    "files": 1729,
+    "bytes": 53188901,
+    "manifest": "build/cleanup-plan-20261105.json",
+    "includes": "Raw logs, profiles, exact binary manifests/artifacts, and superseded dirty source patch. Branch refs retained."
+  },
+  "additional_cleanup_utc": "2026-11-05T16:54:50.668472+00:00"
+}

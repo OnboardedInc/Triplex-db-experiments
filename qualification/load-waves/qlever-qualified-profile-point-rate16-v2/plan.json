@@ -1,0 +1,193 @@
+{
+  "format": "triplex-qualified-profile-feasibility-successor/1",
+  "id": "qlever-qualified-profile-point-rate16-v2",
+  "recordedAt": "2026-11-07T02:14:33.072557+00:00",
+  "status": "PREPARED_FOR_ROOT_REVIEW_NO_EXECUTION_AUTHORITY_YET",
+  "predecessor": "qualification/load-waves/five-surface-point-rate16-v1/plan.json",
+  "scope": "Two QLever query surfaces over one shared commissioned foundation; the original Qdefault100 contracts remain unexecuted. Other three surfaces retain their original outcomes and do not become matched performance winners.",
+  "numericContract": {
+    "logicalClients": 256,
+    "dispatchSlots": 16,
+    "pendingLimit": 4096,
+    "mode": "open-loop",
+    "readOffersPerSecond": 16,
+    "measurementMilliseconds": 30000,
+    "scheduledReadDeadlineMilliseconds": 30000,
+    "maximumReads": 10000,
+    "expectedOfferedReads": 480,
+    "expectedOffersPerClass": 240,
+    "classes": [
+      "point-current",
+      "point-history"
+    ],
+    "writerMode": "rate",
+    "writerCommandsPerSecond": 0.2,
+    "writerOfferMilliseconds": [
+      0,
+      5000,
+      10000,
+      15000,
+      20000,
+      25000
+    ],
+    "writerCommand": "One atomic retract-and-replace correction on each of ten entities;20 operations total",
+    "warmupExcluded": false,
+    "applicationRetries": false,
+    "clockPolicy": "monotonic-scheduled-offer-deadline/1"
+  },
+  "fixture": {
+    "model": "packages/qualification/load/model.ts",
+    "schema": "packages/qualification/load/schema.ts",
+    "entitiesPerScope": 1000,
+    "activeDomainFactsPerEntity": 1,
+    "assertionsPerSeedCommand": 500,
+    "seedCommandsPerScope": 2,
+    "probeEntities": 64,
+    "maximumWriterCommands": 6,
+    "validAt": 1.25,
+    "instancesPerFoundationBundle": 2,
+    "foundations": [
+      "qlever"
+    ],
+    "seededScopes": 2,
+    "totalSeedDomainAssertions": 2000,
+    "unusedButChargedScopes": [],
+    "countMeaning": "1000 distinct fact-subject IDs in each isolated scope; the two tiny namespaces are not2000 distinct configured entities in one database. No configured entity-presence/type-version events are seeded.",
+    "configuredEntityPresenceAndTypeVersionEvents": 0,
+    "oracleAuthority": "Frozen schema and immutable generator/correction ordinal. Actual seed receipts supply only scope, recorded position/time and assertion IDs; no query result supplies expected answers",
+    "oraclePublication": "After each actual verified seed, pin its receipt and the independently generated returned-cut catalog before preparing the load job"
+  },
+  "surfaces": [
+    {
+      "queryPath": "qlever-datalog",
+      "instance": 0,
+      "profile": "qualified-F-threshold1-persisted-minus-paired-bounded-Eoff"
+    },
+    {
+      "queryPath": "qlever-native",
+      "instance": 1,
+      "profile": "authored-native-point-baseline100-all-query-candidate-flags-absent"
+    }
+  ],
+  "settings": {
+    "engine": {
+      "image": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "containerId": "e225d359e2a8211de8c5b3551e1aff8952b92b41922c4f90505ca4c6afc30b3f",
+      "memoryBytes": 2147483648,
+      "cpuUnits": 1.5,
+      "sharedWritesHistoryReceipts": true
+    },
+    "seed": {
+      "plannerBudget": 100,
+      "queryPath": "qlever-native",
+      "settingsGuard": "read100 before and after; no native parameter mutation",
+      "meaning": "One two-instance bundle uses shared Triplex writes and currentPosition receipts; it is not a second database or native write architecture."
+    },
+    "datalog": {
+      "plannerBudget": 1,
+      "sourcePlan": "persisted",
+      "negationPlan": "minus",
+      "retirementPlan": "paired",
+      "aggregateAnswerPlan": "bounded",
+      "scalarOrderPlan": "default-off",
+      "settingsGuard": "bounded before100/set1/read1/finallyset100/read100; actual oracle required even on task failure",
+      "admissionCosts": "Per-call exact-scope/history scalar-channel completeness and per-row retirement-pair admission remain charged. Complete final aggregate population cap remains1000."
+    },
+    "native": {
+      "plannerBudget": 100,
+      "candidateFlags": "ALL_ABSENT",
+      "settingsGuard": "read100 before and after; no native parameter mutation"
+    },
+    "controller": {
+      "outerOldSpaceMiB": 256,
+      "stateFormat": "triplex-devloop-state/2",
+      "sourcePreimages": "declared and invocation source/controller bytes required"
+    }
+  },
+  "qualificationGatesBeforeSeed": {
+    "requiredCanonicalAttempts": [
+      "qlever-datalog-budget1-packet-v1/0001",
+      "qlever-foundation-budget1-v1/0001",
+      "qlever-native-packet-v5/0001",
+      "qlever-native-entry-final-v1/0001"
+    ],
+    "independentReview": "D must independently clear current F142/native142/F44 and fresh entry11; historical worker-only terminals are not adopted.",
+    "sourceCurrency": "Prepare both base manifests from final current src/dist and preserve source/controller preimages. Any later drift rejects admission; do not silently refresh a queued profile."
+  },
+  "resources": {
+    "maximumHeavyTrials": 3,
+    "poolMemoryBytes": 10737418240,
+    "poolCpuUnits": 8,
+    "residentOwner": "foundation-qlever",
+    "residentMemoryBytes": 2147483648,
+    "residentCpuUnits": 1.5,
+    "clientMemoryBytes": 939524096,
+    "clientCpuUnits": 1,
+    "perJobDiskReservationBytes": 268435456,
+    "perJobTimeoutMilliseconds": 600000,
+    "maximumReadObservationBytes": 134217728,
+    "hardTotalOwnedDiskBytes": 50000000000,
+    "operationalStopBytes": 46000000000,
+    "quotaImageMaximumBytes": 45000000000,
+    "externalZipAndAllowanceCounted": true,
+    "containment": "Qengine Linux cgroup cap; Mac controller/adapter RSS watchdog is not hard containment. VMOS overhead is separate. No extra foundation/copy/fault server."
+  },
+  "schedule": {
+    "rootReview": "No seed or load execution before parent reviews this exact successor.",
+    "admission": "Canonical fair queue with fresh required-owner inspection and global vector limits; no bypass or fourth heavy group.",
+    "stageOrder": [
+      "seed native-baseline100 fresh two-instance bundle",
+      "consume and pin actual seed receipts; independently generate returned-cut catalog",
+      "Datalog instance0 under explicitly wrapped Fthreshold1",
+      "verify terminal and settings restoration100; independently review all required load gates",
+      "native instance1 under independently wrapped read-only baseline100 only if preceding foundation gates pass"
+    ],
+    "settingsExclusivity": "No other Q query or global parameter mutation during each settings-wrapped stage. Different physical engines may co-run through canonical admission; receipts record exact contention.",
+    "failure": "Retain first failure and all ACK/history/raw events; stop later Qload stages on any semantic, read-availability, writer-in-window, settings/health/cleanup gate failure. A canonically verified byte receipt alone is not availability/liveness acceptance.",
+    "retention": "Keep both fresh owned scopes and corrections/history and all evidence charged; no deletion of forensic or historical data."
+  },
+  "gates": {
+    "seed": [
+      "fresh scopes",
+      "1000 domain assertions per scope",
+      "two500-assertion commands per scope",
+      "actual seed position/time/assertion-ID receipts",
+      "source/preimage and owned-storage integrity"
+    ],
+    "read": [
+      "all480 offers accounted",
+      "all returned result bytes match independent oracle at actual returned cut",
+      "zero errors or overload rejections at256",
+      "all256 logical clients make progress",
+      "complete scheduled latency includes queue and bounded drain"
+    ],
+    "writer": [
+      "exactly six unique atomic correction commands",
+      "all six reconciled without replay",
+      "all six ACKed and publicly visible within the fixed30s window",
+      "raw ACK/probe/visibility/backlog timing retained"
+    ],
+    "lifecycle": [
+      "actual dispatch and pending maxima retained",
+      "no partial answers or hidden retries",
+      "group gone and canonical terminal publication verified",
+      "unknown backend work retained for explicit reconciliation"
+    ],
+    "failure": "Retain all source, raw observations, first failures and cleanup evidence; stop further load jobs for that foundation. A failed liveness or availability gate is not acceptance"
+  },
+  "interpretation": {
+    "existingEvidence": "Both current Qfull142 paths and unchanged F44 have passed at2GiB; independent combined review and fresh native-entry11 are separate required gates. No Q256 load executed yet.",
+    "notFrozenFromExistingEvidence": [
+      "sustainable read rate",
+      "writer capacity",
+      "calibrated writer floor",
+      "product latency SLA",
+      "full binary64 domain",
+      "all71 scaled tasks",
+      "10m or configured-entity scale"
+    ],
+    "calibrationNext": "Only after common feasibility, measure at least three correct closed-loop-writer capacity controls per surface. Freeze half the minimum observed visible capacity and measured gap/backlog through the controller; never relabel these rate-limited diagnostics",
+    "promotionLimit": "At16reads/s and equal classes,10000 observations per class need1250s. Existing runner limit600s cannot supply that per-run tail population; future promotion requires an explicit bounded-window extension or a separately measured higher rate",
+    "performanceComparison": "Same numeric offers as the original five-surface wave; distinct qualified query representations and settings are named explicitly. Co-runners, retained global engine history and windows may differ. No comparative throughput winner or promotion."
+  }
+}

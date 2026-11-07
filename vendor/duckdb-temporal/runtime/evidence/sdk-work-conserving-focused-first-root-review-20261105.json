@@ -1,0 +1,14 @@
+{
+  "schema": "td.fair-followup-first-root-review/1",
+  "source": "4db33475a55558065aad62f2f30d6bbfd390bd59",
+  "rawHashesVerified": 7,
+  "sourceGitPinsVerified": 11,
+  "tscExit": 0,
+  "actualTests": 6,
+  "pass": 5,
+  "testTimeout": 1,
+  "allNativeSdkSourceAndDependencyMapsEqual": true,
+  "sourceHypothesis": "Fixture uses stream completion index0 as active-cancel identity; completion order is not guaranteed. Failed index/await was not logged, so root does not claim observed diagnosis. Identity-based fixture repair remains unrun.",
+  "productionPromoted": false,
+  "engineInvokedByReview": false
+}

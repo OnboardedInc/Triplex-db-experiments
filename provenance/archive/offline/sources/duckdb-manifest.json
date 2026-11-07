@@ -1,0 +1,14 @@
+{
+  "format": "public-duckdb-source/1",
+  "repository": "https://github.com/duckdb/duckdb",
+  "commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "archive": {
+    "bytes": 106492327,
+    "sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+    "path": "sources/duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa.tar.gz",
+    "sriVerified": []
+  },
+  "originalPublicArchiveUrl": "https://codeload.github.com/duckdb/duckdb/tar.gz/d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "licenseRetainedInsideArchive": true,
+  "noOriginalAbsolutePath": true
+}

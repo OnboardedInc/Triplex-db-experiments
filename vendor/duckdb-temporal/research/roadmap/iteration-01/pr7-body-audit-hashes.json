@@ -1,0 +1,13 @@
+{
+  "pr": "[PRIVATE_REFERENCE_REMOVED]",
+  "current_updated_at": "2026-10-30T19:24:45Z",
+  "current_head": "0d9d55138b13f5ac5fea5ca32df6251250cb7d9b",
+  "first_update_response_timestamp": "2026-10-30T19:09:20Z",
+  "old_snapshot_available": true,
+  "original_suffix_matches": true,
+  "method": "Current body re-read; prior body reconstructed by reversing the exact own paragraph replacement. Per-action hashes were not recorded at submission.",
+  "current_re_read_sha256": "60fc341e4cd5ee3b8aa15b982b78aa69841ddab61eeafc110f1cca286f1502c1",
+  "current_re_read_bytes": 4058,
+  "first_reconstructed_sha256": "d2c0a1e60681ed6b182799a99498f2bc806f91b640dc2adaf916dc7d6515abf5",
+  "first_reconstructed_bytes": 3914
+}

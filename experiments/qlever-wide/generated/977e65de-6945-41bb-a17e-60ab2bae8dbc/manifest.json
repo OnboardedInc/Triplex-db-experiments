@@ -1,0 +1,1724 @@
+{
+  "format": "qlever-wide-experiment/1",
+  "status": "PREPARED_NOT_EXECUTED",
+  "runId": "977e65de-6945-41bb-a17e-60ab2bae8dbc",
+  "wave": 2,
+  "mechanisms": {
+    "projected": "A2: constant-predicate numeric-order lookups, otherwise A1 unchanged",
+    "persisted": "B2: per-assertion scoped canonical relation with local temporal OPTIONAL guards"
+  },
+  "createdAt": "2026-11-06T15:18:43.887Z",
+  "sourcePacketSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "sourceSha256": {
+    "PACKET.md": "1cbfa30be613e1014f9ed1b1af3506b6c5ee1865599c50b6606aeb751614cf86",
+    "candidates.ts": "25b550cfedb5f0c7d944feefa9f0ccc3bed8778e68d34a27116708e391ec3fa5",
+    "canonical-source.ts": "49fe3a8a226871314686de44ae22d329eed50c691636dfceb7f8ba324d7bbccf",
+    "canonical-scoped-source.ts": "0048bd194fd909aa3236e729454449b26cace49cf6fc6d1c2a2c906531cd01f9",
+    "public-runtime.ts": "d8369fec6b8f55e719149ac300d5e1fda03057826b31da4dd2cc1a5b26234123",
+    "prepare.ts": "64c861901b53d09e5a29763b01d14bc8486c01467f17366ce6a170f401f7e508",
+    "run.ts": "cbfa971e460b2f530e75cf96fab0c8b837255cc85b515099391e433c638fd3d3"
+  },
+  "baseline": "Stopped after two real4GiBOOMs; not rerun",
+  "profile": {
+    "perCandidateMemoryBytes": 2147483648,
+    "cpus": 2,
+    "queryAllocatorArgument": "512M",
+    "cacheArgument": "64M",
+    "plannerBudget": 100,
+    "aggregateQleverMemoryBytes": 4294967296,
+    "nativeTimeoutMs": 5000,
+    "clientDeadlineMs": 6000,
+    "maxResultRows": 1000,
+    "maxResponseBytes": 4194304,
+    "stopRssBytes": 1610612736
+  },
+  "nodes": [
+    {
+      "strategy": "projected",
+      "container": "triplex-qlever-candidate-a",
+      "url": "http://127.0.0.1:7021"
+    },
+    {
+      "strategy": "persisted",
+      "container": "triplex-qlever-candidate-b",
+      "url": "http://127.0.0.1:7022"
+    }
+  ],
+  "fixture": {
+    "copiedScalarScope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+    "scalarExpectedAssertionCount": 7,
+    "funnelScope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+    "funnelFixtureFile": "funnel-public-fixture.json",
+    "funnelExpectedAssertions": 36
+  },
+  "cases": [
+    {
+      "id": "scalar-1",
+      "query": {
+        "find": [
+          "?entity",
+          "?code"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007"
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-scalar-1.rq",
+      "queryBytes": 2265,
+      "querySha256": "19b2b5ae6a352bda3bf33460a722af148ec4771855323dcb9a551f978ed51998",
+      "patternCount": 1
+    },
+    {
+      "id": "scalar-2",
+      "query": {
+        "find": [
+          "?entity",
+          "?code",
+          "?count"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ],
+          [
+            "?entity",
+            ":conf/count",
+            "?count"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007",
+          "?count": 7
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-scalar-2.rq",
+      "queryBytes": 4408,
+      "querySha256": "edb9b170805b2758853e22dfd8d3f4f7180397694adfc7e834e1dbd9cfd591de",
+      "patternCount": 2
+    },
+    {
+      "id": "scalar-4",
+      "query": {
+        "find": [
+          "?entity",
+          "?code",
+          "?count",
+          "?enabled",
+          "?instant"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ],
+          [
+            "?entity",
+            ":conf/count",
+            "?count"
+          ],
+          [
+            "?entity",
+            ":conf/enabled",
+            "?enabled"
+          ],
+          [
+            "?entity",
+            ":conf/instant",
+            "?instant"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007",
+          "?count": 7,
+          "?enabled": true,
+          "?instant": 1700000000000
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-scalar-4.rq",
+      "queryBytes": 8722,
+      "querySha256": "ac9fa47ab4625382795af58e5c663278246ea1cc1561a9dd2465a4a33363f433",
+      "patternCount": 4
+    },
+    {
+      "id": "scalar-6",
+      "query": {
+        "find": [
+          "?entity",
+          "?code",
+          "?count",
+          "?enabled",
+          "?instant",
+          "?data",
+          "?owner"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ],
+          [
+            "?entity",
+            ":conf/count",
+            "?count"
+          ],
+          [
+            "?entity",
+            ":conf/enabled",
+            "?enabled"
+          ],
+          [
+            "?entity",
+            ":conf/instant",
+            "?instant"
+          ],
+          [
+            "?entity",
+            ":conf/data",
+            "?data"
+          ],
+          [
+            "?entity",
+            ":conf/owner",
+            "?owner"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007",
+          "?count": 7,
+          "?enabled": true,
+          "?instant": 1700000000000,
+          "?data": "{\"ok\":true}",
+          "?owner": "7"
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-scalar-6.rq",
+      "queryBytes": 13001,
+      "querySha256": "ba3e09af05e7e72ac99a08098536c351f55616eef023e2b9f38b1d11ae7cb146",
+      "patternCount": 6
+    },
+    {
+      "id": "scalar-7",
+      "query": {
+        "find": [
+          "?entity",
+          "?code",
+          "?count",
+          "?enabled",
+          "?instant",
+          "?data",
+          "?owner",
+          "?blob"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ],
+          [
+            "?entity",
+            ":conf/count",
+            "?count"
+          ],
+          [
+            "?entity",
+            ":conf/enabled",
+            "?enabled"
+          ],
+          [
+            "?entity",
+            ":conf/instant",
+            "?instant"
+          ],
+          [
+            "?entity",
+            ":conf/data",
+            "?data"
+          ],
+          [
+            "?entity",
+            ":conf/owner",
+            "?owner"
+          ],
+          [
+            "?entity",
+            ":conf/blob",
+            "?blob"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007",
+          "?count": 7,
+          "?enabled": true,
+          "?instant": 1700000000000,
+          "?data": "{\"ok\":true}",
+          "?owner": "7",
+          "?blob": "sha256:artifact"
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-scalar-7.rq",
+      "queryBytes": 15137,
+      "querySha256": "fe476f0e75d9855774f4075dcc63d56cfb37c02fe15cef712951d306a755c9ab",
+      "patternCount": 7
+    },
+    {
+      "id": "funnel-3",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?session": "S"
+        },
+        {
+          "?session": "T"
+        },
+        {
+          "?session": "U"
+        },
+        {
+          "?session": "equal"
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-funnel-3.rq",
+      "domainFile": "projected-funnel-3.domains.rq",
+      "queryBytes": 6772,
+      "querySha256": "4c41f0462e4b14502fb4c169c9b79e5cddf570f18d50cb7f6b66b9df21dd0ab3",
+      "patternCount": 3
+    },
+    {
+      "id": "funnel-6",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?checkout",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?checkout",
+            ":w17/a73746570",
+            "checkout"
+          ],
+          [
+            "?checkout",
+            ":w17/a6174",
+            "?c"
+          ],
+          [
+            ">=",
+            "?c",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?c",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            "?c"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?session": "S"
+        },
+        {
+          "?session": "T"
+        },
+        {
+          "?session": "U"
+        },
+        {
+          "?session": "equal"
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-funnel-6.rq",
+      "domainFile": "projected-funnel-6.domains.rq",
+      "queryBytes": 13573,
+      "querySha256": "00bd5d0c4432063070a4cc89ef02e5621e39f301500f2b10b6b6405fefe71f3c",
+      "patternCount": 6
+    },
+    {
+      "id": "funnel-9",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?checkout",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?checkout",
+            ":w17/a73746570",
+            "checkout"
+          ],
+          [
+            "?checkout",
+            ":w17/a6174",
+            "?c"
+          ],
+          [
+            ">=",
+            "?c",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?c",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?payment",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?payment",
+            ":w17/a73746570",
+            "payment"
+          ],
+          [
+            "?payment",
+            ":w17/a6174",
+            "?p"
+          ],
+          [
+            ">=",
+            "?p",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?p",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            "?c"
+          ],
+          [
+            "<",
+            "?c",
+            "?p"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?session": "S"
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-funnel-9.rq",
+      "domainFile": "projected-funnel-9.domains.rq",
+      "queryBytes": 20358,
+      "querySha256": "63a8a3f074902b296b94aa9e7caa36cbb869d7b9bb928f5b941ee7ed7cd39001",
+      "patternCount": 9
+    },
+    {
+      "id": "funnel-boundary-41",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "41"
+            }
+          ],
+          [
+            "?checkout",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?checkout",
+            ":w17/a73746570",
+            "checkout"
+          ],
+          [
+            "?checkout",
+            ":w17/a6174",
+            "?c"
+          ],
+          [
+            ">=",
+            "?c",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?c",
+            {
+              "type": "integer",
+              "value": "41"
+            }
+          ],
+          [
+            "?payment",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?payment",
+            ":w17/a73746570",
+            "payment"
+          ],
+          [
+            "?payment",
+            ":w17/a6174",
+            "?p"
+          ],
+          [
+            ">=",
+            "?p",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?p",
+            {
+              "type": "integer",
+              "value": "41"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            "?c"
+          ],
+          [
+            "<",
+            "?c",
+            "?p"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?session": "S"
+        },
+        {
+          "?session": "U"
+        }
+      ],
+      "strategy": "projected",
+      "queryFile": "projected-funnel-boundary-41.rq",
+      "domainFile": "projected-funnel-boundary-41.domains.rq",
+      "queryBytes": 20358,
+      "querySha256": "466a40f6baadca753eb373a0042fa5492968e8bc47593c8af70f29886afde53d",
+      "patternCount": 9
+    },
+    {
+      "id": "funnel-equal-steps",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?checkout",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?checkout",
+            ":w17/a73746570",
+            "checkout"
+          ],
+          [
+            "?checkout",
+            ":w17/a6174",
+            "?c"
+          ],
+          [
+            ">=",
+            "?c",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?c",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?payment",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?payment",
+            ":w17/a73746570",
+            "payment"
+          ],
+          [
+            "?payment",
+            ":w17/a6174",
+            "?p"
+          ],
+          [
+            ">=",
+            "?p",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?p",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            "?c"
+          ],
+          [
+            "<",
+            "?c",
+            "?p"
+          ],
+          [
+            "=",
+            "?session",
+            "equal"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [],
+      "strategy": "projected",
+      "queryFile": "projected-funnel-equal-steps.rq",
+      "domainFile": "projected-funnel-equal-steps.domains.rq",
+      "queryBytes": 19670,
+      "querySha256": "a0c133e22e48248e6464a1753a5783230b2e3c7d7c7664e58cbabac89c7f0887",
+      "patternCount": 9
+    },
+    {
+      "id": "scalar-1",
+      "query": {
+        "find": [
+          "?entity",
+          "?code"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007"
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-scalar-1.rq",
+      "layoutFile": "persisted-scalar-1.layout.rq",
+      "queryBytes": 1141,
+      "querySha256": "a54eccb7781e6f78d4300a322e6e3c8f1c832d586b111fa4d5e0b99b47c6d1c5",
+      "patternCount": 1
+    },
+    {
+      "id": "scalar-2",
+      "query": {
+        "find": [
+          "?entity",
+          "?code",
+          "?count"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ],
+          [
+            "?entity",
+            ":conf/count",
+            "?count"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007",
+          "?count": 7
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-scalar-2.rq",
+      "layoutFile": "persisted-scalar-2.layout.rq",
+      "queryBytes": 2173,
+      "querySha256": "c6da5fdc8ac5e3861d0f42f0e952e7f172f13a12bf72593009aa6dc4c14b784c",
+      "patternCount": 2
+    },
+    {
+      "id": "scalar-4",
+      "query": {
+        "find": [
+          "?entity",
+          "?code",
+          "?count",
+          "?enabled",
+          "?instant"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ],
+          [
+            "?entity",
+            ":conf/count",
+            "?count"
+          ],
+          [
+            "?entity",
+            ":conf/enabled",
+            "?enabled"
+          ],
+          [
+            "?entity",
+            ":conf/instant",
+            "?instant"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007",
+          "?count": 7,
+          "?enabled": true,
+          "?instant": 1700000000000
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-scalar-4.rq",
+      "layoutFile": "persisted-scalar-4.layout.rq",
+      "queryBytes": 4241,
+      "querySha256": "2aff8df07f4e1f42a16fe65b78a0ba710ab25d3d40fbab39f525e77f16172564",
+      "patternCount": 4
+    },
+    {
+      "id": "scalar-6",
+      "query": {
+        "find": [
+          "?entity",
+          "?code",
+          "?count",
+          "?enabled",
+          "?instant",
+          "?data",
+          "?owner"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ],
+          [
+            "?entity",
+            ":conf/count",
+            "?count"
+          ],
+          [
+            "?entity",
+            ":conf/enabled",
+            "?enabled"
+          ],
+          [
+            "?entity",
+            ":conf/instant",
+            "?instant"
+          ],
+          [
+            "?entity",
+            ":conf/data",
+            "?data"
+          ],
+          [
+            "?entity",
+            ":conf/owner",
+            "?owner"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007",
+          "?count": 7,
+          "?enabled": true,
+          "?instant": 1700000000000,
+          "?data": "{\"ok\":true}",
+          "?owner": "7"
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-scalar-6.rq",
+      "layoutFile": "persisted-scalar-6.layout.rq",
+      "queryBytes": 6304,
+      "querySha256": "70a55ac515fc4fc38011a97c9db12d772e58aa5d19384798bfda337e42e4712c",
+      "patternCount": 6
+    },
+    {
+      "id": "scalar-7",
+      "query": {
+        "find": [
+          "?entity",
+          "?code",
+          "?count",
+          "?enabled",
+          "?instant",
+          "?data",
+          "?owner",
+          "?blob"
+        ],
+        "where": [
+          [
+            "?entity",
+            ":conf/code",
+            "?code"
+          ],
+          [
+            "?entity",
+            ":conf/count",
+            "?count"
+          ],
+          [
+            "?entity",
+            ":conf/enabled",
+            "?enabled"
+          ],
+          [
+            "?entity",
+            ":conf/instant",
+            "?instant"
+          ],
+          [
+            "?entity",
+            ":conf/data",
+            "?data"
+          ],
+          [
+            "?entity",
+            ":conf/owner",
+            "?owner"
+          ],
+          [
+            "?entity",
+            ":conf/blob",
+            "?blob"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-case-4a742ee1-307a-4779-b92d-11dbecb7457d\",0]",
+      "basis": {
+        "validAt": 9007199254740991,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?entity": "42",
+          "?code": "007",
+          "?count": 7,
+          "?enabled": true,
+          "?instant": 1700000000000,
+          "?data": "{\"ok\":true}",
+          "?owner": "7",
+          "?blob": "sha256:artifact"
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-scalar-7.rq",
+      "layoutFile": "persisted-scalar-7.layout.rq",
+      "queryBytes": 7335,
+      "querySha256": "1e2a31180e159689fd47ec6108c9c481bd0dbe79a5a8e89276db2c32d90cb19f",
+      "patternCount": 7
+    },
+    {
+      "id": "funnel-3",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?session": "S"
+        },
+        {
+          "?session": "T"
+        },
+        {
+          "?session": "U"
+        },
+        {
+          "?session": "equal"
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-funnel-3.rq",
+      "domainFile": "persisted-funnel-3.domains.rq",
+      "layoutFile": "persisted-funnel-3.layout.rq",
+      "queryBytes": 3825,
+      "querySha256": "3eaf0443a78690c0af7e09a8a1bfa3dcb86e8cd37fcee15a37dde5cb8937e4a4",
+      "patternCount": 3
+    },
+    {
+      "id": "funnel-6",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?checkout",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?checkout",
+            ":w17/a73746570",
+            "checkout"
+          ],
+          [
+            "?checkout",
+            ":w17/a6174",
+            "?c"
+          ],
+          [
+            ">=",
+            "?c",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?c",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            "?c"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?session": "S"
+        },
+        {
+          "?session": "T"
+        },
+        {
+          "?session": "U"
+        },
+        {
+          "?session": "equal"
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-funnel-6.rq",
+      "domainFile": "persisted-funnel-6.domains.rq",
+      "layoutFile": "persisted-funnel-6.layout.rq",
+      "queryBytes": 7640,
+      "querySha256": "6fc53b6ad1167146d578952033854f4f8c5b7d3d37783e52a1fcae8f69bbf4ee",
+      "patternCount": 6
+    },
+    {
+      "id": "funnel-9",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?checkout",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?checkout",
+            ":w17/a73746570",
+            "checkout"
+          ],
+          [
+            "?checkout",
+            ":w17/a6174",
+            "?c"
+          ],
+          [
+            ">=",
+            "?c",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?c",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?payment",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?payment",
+            ":w17/a73746570",
+            "payment"
+          ],
+          [
+            "?payment",
+            ":w17/a6174",
+            "?p"
+          ],
+          [
+            ">=",
+            "?p",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?p",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            "?c"
+          ],
+          [
+            "<",
+            "?c",
+            "?p"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?session": "S"
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-funnel-9.rq",
+      "domainFile": "persisted-funnel-9.domains.rq",
+      "layoutFile": "persisted-funnel-9.layout.rq",
+      "queryBytes": 11453,
+      "querySha256": "a882150dd5d7c3a69b262db2445af9720b925a926814dd89ddeb1639c7f4261c",
+      "patternCount": 9
+    },
+    {
+      "id": "funnel-boundary-41",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "41"
+            }
+          ],
+          [
+            "?checkout",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?checkout",
+            ":w17/a73746570",
+            "checkout"
+          ],
+          [
+            "?checkout",
+            ":w17/a6174",
+            "?c"
+          ],
+          [
+            ">=",
+            "?c",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?c",
+            {
+              "type": "integer",
+              "value": "41"
+            }
+          ],
+          [
+            "?payment",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?payment",
+            ":w17/a73746570",
+            "payment"
+          ],
+          [
+            "?payment",
+            ":w17/a6174",
+            "?p"
+          ],
+          [
+            ">=",
+            "?p",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?p",
+            {
+              "type": "integer",
+              "value": "41"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            "?c"
+          ],
+          [
+            "<",
+            "?c",
+            "?p"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [
+        {
+          "?session": "S"
+        },
+        {
+          "?session": "U"
+        }
+      ],
+      "strategy": "persisted",
+      "queryFile": "persisted-funnel-boundary-41.rq",
+      "domainFile": "persisted-funnel-boundary-41.domains.rq",
+      "layoutFile": "persisted-funnel-boundary-41.layout.rq",
+      "queryBytes": 11453,
+      "querySha256": "4204390e2c308d051e1c10fd436669bdaed11c3f5cfa08e35b988cea0d61d392",
+      "patternCount": 9
+    },
+    {
+      "id": "funnel-equal-steps",
+      "query": {
+        "find": [
+          "?session"
+        ],
+        "where": [
+          [
+            "?view",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?view",
+            ":w17/a73746570",
+            "view"
+          ],
+          [
+            "?view",
+            ":w17/a6174",
+            "?v"
+          ],
+          [
+            ">=",
+            "?v",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?checkout",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?checkout",
+            ":w17/a73746570",
+            "checkout"
+          ],
+          [
+            "?checkout",
+            ":w17/a6174",
+            "?c"
+          ],
+          [
+            ">=",
+            "?c",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?c",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "?payment",
+            ":w17/a73657373696f6e",
+            "?session"
+          ],
+          [
+            "?payment",
+            ":w17/a73746570",
+            "payment"
+          ],
+          [
+            "?payment",
+            ":w17/a6174",
+            "?p"
+          ],
+          [
+            ">=",
+            "?p",
+            {
+              "type": "integer",
+              "value": "0"
+            }
+          ],
+          [
+            "<",
+            "?p",
+            {
+              "type": "integer",
+              "value": "40"
+            }
+          ],
+          [
+            "<",
+            "?v",
+            "?c"
+          ],
+          [
+            "<",
+            "?c",
+            "?p"
+          ],
+          [
+            "=",
+            "?session",
+            "equal"
+          ]
+        ]
+      },
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"wide-funnel:977e65de-6945-41bb-a17e-60ab2bae8dbc\",0]",
+      "basis": {
+        "validAt": 1000050,
+        "recordedAt": 1001,
+        "recordedPosition": 1
+      },
+      "expected": [],
+      "strategy": "persisted",
+      "queryFile": "persisted-funnel-equal-steps.rq",
+      "domainFile": "persisted-funnel-equal-steps.domains.rq",
+      "layoutFile": "persisted-funnel-equal-steps.layout.rq",
+      "queryBytes": 11401,
+      "querySha256": "9da8d811c1f074d42eb91c43fd0a7638d9856ee23790f2b5420177302b1d3005",
+      "patternCount": 9
+    }
+  ]
+}

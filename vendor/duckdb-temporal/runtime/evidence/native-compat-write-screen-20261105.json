@@ -1,0 +1,1274 @@
+{
+  "schema": "native-compatibility-write-comparison/1",
+  "timestamp_utc": "2026-11-05T15:18:54.640Z",
+  "status": "passed",
+  "sizes": [
+    1,
+    16,
+    128,
+    1024
+  ],
+  "history_rows": [
+    0,
+    4096
+  ],
+  "warmups": 2,
+  "measured_pairs": 5,
+  "scope": "Claim, position, public normalization, transport, native lowering or typed Appender, logical usage and COMMIT. Reads include full public decoding. Queued read latency includes writer wait on the same serialized backend. A shared lightweight plan capture runs inside timing; its byte accounting runs afterward. Open, seed, snapshots and assertions are outside timing.",
+  "fixture": "Separate in-memory database per profile/cell. Existing Appender inserts retained seed facts; canonical bulk SQL closes even-indexed seed facts in one later transaction. Inputs and receipts are identical across each pair.",
+  "limits": {
+    "native_append_rows": 128,
+    "native_json_bytes": 32768,
+    "format": 5
+  },
+  "source_sha256": {
+    "adapter/benchmark-compat-write.mjs": "29f13a4206d0842669bcff19c4b19aab76875fe98b5b48fd903020bea7aee345",
+    "adapter/native-compat-backend.ts": "692c23f6fa26ebc4a8ce5767e5838b85800204d8e063b420189fac8f6540073b",
+    "adapter/native-compat-runtime.ts": "1cd419469d454aaf1d2f947f12ac5757ee24c76c9c75a2ae4cd0b9abc9c541da",
+    "adapter/public-backend.mjs": "9d993207539943c47a85cdd69d25400fc9870d05b2165ee0a4ccf711ddedfce0",
+    "adapter/native-duckdb-port.mjs": "b427bfd0e391548a5b0aa95c7cdc2bbdee02a3df350dab11e46dc201e633c11b",
+    "adapter/transaction-owner.mjs": "5f9c762033d8916f054c7aed10457856fed1f91ace87a8a12147c7279cac4feb",
+    "native/src/temporal_compat.cpp": "e77c01ca724dee539a9cd8da6237db8e56ed0884a56e05d825007c3ca5f70b8c",
+    "native/src/temporal_datalog.cpp": "f3fc9f687febfb9f1c8b426b5c734c3de61b5072badacc2f40908becf6085a43"
+  },
+  "executed_adapter_sha256": {
+    "native-compat-backend.js": "5a8ca0d589d95f53045475d8f8fe080dedbed7765af749184305c00b2be57529",
+    "native-compat-runtime.js": "f8650effaf7f9b8cfd1aaf281a0bea197534e367e0c8ed3ceb3e57e0bd34f98c",
+    "public-backend.mjs": "9d993207539943c47a85cdd69d25400fc9870d05b2165ee0a4ccf711ddedfce0",
+    "native-duckdb-port.mjs": "b427bfd0e391548a5b0aa95c7cdc2bbdee02a3df350dab11e46dc201e633c11b"
+  },
+  "native_build": {
+    "engine": "2.0.0",
+    "extension_version": "0.21.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "catalog_sql_sha256": "52bf5736155afda31b6c37bf896ed7789fc41f2d4e063c1ce086cc8c9aea39fd",
+    "control_bridge_sha256": "a996668f64b2f5206c105084a952389f236cd379cf437988114f440ea4c3ad4b",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "schema_borrowed_input": true,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "286bd783958228eace0a9d5cffdd11f0dd9bd2b8be471a7fb96663d59442e228",
+      "native/src/temporal_command.hpp": "92ef654a3466a02aac383739e0cff947247cdf145167f753df6812f261ac9d7c",
+      "native/src/temporal_compat.cpp": "e77c01ca724dee539a9cd8da6237db8e56ed0884a56e05d825007c3ca5f70b8c",
+      "native/src/temporal_compat.hpp": "7a58d0d65069782f36b3321020f255569cc25056b9af6ebb9e5792483f285c77",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_count_plan.hpp": "c057fa522e0ac3ad39bdb42589a036362df8bcc991965fb6a9f72ade01aa5bde",
+      "native/src/temporal_current_unique.hpp": "90e8af10cd90edf66434a36ebbbf3fa389fc47e0057b71ea35c7c06e03bd4ddb",
+      "native/src/temporal_datalog.cpp": "f3fc9f687febfb9f1c8b426b5c734c3de61b5072badacc2f40908becf6085a43",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_integrity.hpp": "a7313ffca05545763885717d7221b48e9e3bcd02d5ef0fb0bef0c865b4248de3",
+      "native/src/temporal_join_plan.hpp": "b2cfc07956e011c42bfc860fe157b2a0bbc311fdc7423e152eeb659f16674857",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_scan_plan.hpp": "1c16be3ca60d3bea07d32bf7e20aef5aca9003fccfb5cf8e51c24dff491701aa",
+      "native/src/temporal_schema.cpp": "4ee5c1548e803bcb0e53f64f62ba22e236227672b3d51e75d4afff239cb6be29",
+      "native/src/temporal_schema.hpp": "05ca882152b3f4de4599ee48305c942495759e2187c3bab40f5587961c6fbc14",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "6ae2dda9331c8da80e22ad28f5878f35f74379e163a20b1f87846ffb0fb6c267",
+      "native/src/temporal_store_query.hpp": "3f135c45509c27346986034feb4a26d840e1e3b9bf9584511e5f57dae92cde70",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "a77bec35bee85669844d19c83f8f78377e2c0515cd7426bd4f972e47ff4a98d4",
+    "extension_sha256": "7cff5d5bb30d3ea5d807b479bbe4583f07838a47dc0ef4f21ada934dbba95b7c"
+  },
+  "cells": [
+    {
+      "seed_retained": 0,
+      "batch_rows": 1,
+      "status": "passed",
+      "samples": [
+        {
+          "profile": "appender",
+          "attempt": 2,
+          "retained_before": 2,
+          "write_commit_ms": 4.600167000000056,
+          "queued_read_call_ms": 6.261833000000024,
+          "subsequent_read_ms": 1.910874999999919,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 2,
+          "retained_before": 2,
+          "write_commit_ms": 25.021624999999972,
+          "queued_read_call_ms": 26.996999999999957,
+          "subsequent_read_ms": 2.365792000000056,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 3,
+          "retained_before": 3,
+          "write_commit_ms": 27.88250000000005,
+          "queued_read_call_ms": 30.57904199999996,
+          "subsequent_read_ms": 1.9249159999999392,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        },
+        {
+          "profile": "appender",
+          "attempt": 3,
+          "retained_before": 3,
+          "write_commit_ms": 7.402667000000065,
+          "queued_read_call_ms": 10.518750000000068,
+          "subsequent_read_ms": 6.037207999999964,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 4,
+          "retained_before": 4,
+          "write_commit_ms": 4.365167000000042,
+          "queued_read_call_ms": 6.20316600000001,
+          "subsequent_read_ms": 2.5837920000000167,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 4,
+          "retained_before": 4,
+          "write_commit_ms": 25.34445800000003,
+          "queued_read_call_ms": 27.363749999999982,
+          "subsequent_read_ms": 1.7513750000000528,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 5,
+          "retained_before": 5,
+          "write_commit_ms": 31.49204199999997,
+          "queued_read_call_ms": 39.20595899999989,
+          "subsequent_read_ms": 7.35941600000001,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        },
+        {
+          "profile": "appender",
+          "attempt": 5,
+          "retained_before": 5,
+          "write_commit_ms": 15.594417000000021,
+          "queued_read_call_ms": 21.041958000000022,
+          "subsequent_read_ms": 7.252250000000004,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 6,
+          "retained_before": 6,
+          "write_commit_ms": 9.704624999999965,
+          "queued_read_call_ms": 13.697332999999958,
+          "subsequent_read_ms": 4.694459000000052,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 6,
+          "retained_before": 6,
+          "write_commit_ms": 37.486582999999996,
+          "queued_read_call_ms": 40.63808299999994,
+          "subsequent_read_ms": 2.303625000000011,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        }
+      ],
+      "summary": {
+        "appender": {
+          "write_commit_ms": 7.402667000000065,
+          "queued_read_call_ms": 10.518750000000068,
+          "subsequent_read_ms": 4.694459000000052
+        },
+        "native-compat": {
+          "write_commit_ms": 27.88250000000005,
+          "queued_read_call_ms": 30.57904199999996,
+          "subsequent_read_ms": 2.303625000000011
+        }
+      }
+    },
+    {
+      "seed_retained": 0,
+      "batch_rows": 16,
+      "status": "passed",
+      "samples": [
+        {
+          "profile": "appender",
+          "attempt": 2,
+          "retained_before": 32,
+          "write_commit_ms": 8.712832999999819,
+          "queued_read_call_ms": 12.170957999999928,
+          "subsequent_read_ms": 3.7427909999998974,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 2,
+          "retained_before": 32,
+          "write_commit_ms": 37.06108300000005,
+          "queued_read_call_ms": 39.7209170000001,
+          "subsequent_read_ms": 3.1992079999999987,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 3,
+          "retained_before": 48,
+          "write_commit_ms": 36.71804099999986,
+          "queued_read_call_ms": 41.69425000000001,
+          "subsequent_read_ms": 1.8972909999999956,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        },
+        {
+          "profile": "appender",
+          "attempt": 3,
+          "retained_before": 48,
+          "write_commit_ms": 4.429874999999811,
+          "queued_read_call_ms": 7.529207999999926,
+          "subsequent_read_ms": 1.908625000000029,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 4,
+          "retained_before": 64,
+          "write_commit_ms": 3.6428750000000036,
+          "queued_read_call_ms": 5.4957090000000335,
+          "subsequent_read_ms": 2.0865000000001146,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 4,
+          "retained_before": 64,
+          "write_commit_ms": 25.64479099999994,
+          "queued_read_call_ms": 27.875541999999996,
+          "subsequent_read_ms": 1.935959000000139,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 5,
+          "retained_before": 80,
+          "write_commit_ms": 26.154167000000143,
+          "queued_read_call_ms": 35.27300000000014,
+          "subsequent_read_ms": 4.1336250000001655,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        },
+        {
+          "profile": "appender",
+          "attempt": 5,
+          "retained_before": 80,
+          "write_commit_ms": 20.889208000000053,
+          "queued_read_call_ms": 24.082166000000143,
+          "subsequent_read_ms": 5.382082999999966,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 6,
+          "retained_before": 96,
+          "write_commit_ms": 8.540041999999858,
+          "queued_read_call_ms": 12.168499999999995,
+          "subsequent_read_ms": 3.5278330000001006,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 6,
+          "retained_before": 96,
+          "write_commit_ms": 46.59516699999995,
+          "queued_read_call_ms": 50.53424999999993,
+          "subsequent_read_ms": 3.974665999999843,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        }
+      ],
+      "summary": {
+        "appender": {
+          "write_commit_ms": 8.540041999999858,
+          "queued_read_call_ms": 12.168499999999995,
+          "subsequent_read_ms": 3.5278330000001006
+        },
+        "native-compat": {
+          "write_commit_ms": 36.71804099999986,
+          "queued_read_call_ms": 39.7209170000001,
+          "subsequent_read_ms": 3.1992079999999987
+        }
+      }
+    },
+    {
+      "seed_retained": 0,
+      "batch_rows": 128,
+      "status": "passed",
+      "samples": [
+        {
+          "profile": "appender",
+          "attempt": 2,
+          "retained_before": 256,
+          "write_commit_ms": 6.36870799999997,
+          "queued_read_call_ms": 10.437208000000055,
+          "subsequent_read_ms": 3.356832999999824,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 2,
+          "retained_before": 256,
+          "write_commit_ms": 60.23483299999998,
+          "queued_read_call_ms": 63.91429100000005,
+          "subsequent_read_ms": 3.5110830000000988,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 3,
+          "retained_before": 384,
+          "write_commit_ms": 62.14499999999998,
+          "queued_read_call_ms": 65.49183300000004,
+          "subsequent_read_ms": 3.5535409999999956,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        },
+        {
+          "profile": "appender",
+          "attempt": 3,
+          "retained_before": 384,
+          "write_commit_ms": 6.22395900000015,
+          "queued_read_call_ms": 9.463915999999926,
+          "subsequent_read_ms": 2.950125000000071,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 4,
+          "retained_before": 512,
+          "write_commit_ms": 10.28245899999979,
+          "queued_read_call_ms": 13.607917000000043,
+          "subsequent_read_ms": 3.1492920000000595,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 4,
+          "retained_before": 512,
+          "write_commit_ms": 67.72775000000001,
+          "queued_read_call_ms": 72.60745799999995,
+          "subsequent_read_ms": 3.590332999999646,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 5,
+          "retained_before": 640,
+          "write_commit_ms": 69.78875000000016,
+          "queued_read_call_ms": 74.13162499999999,
+          "subsequent_read_ms": 6.5200840000002245,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        },
+        {
+          "profile": "appender",
+          "attempt": 5,
+          "retained_before": 640,
+          "write_commit_ms": 9.025709000000006,
+          "queued_read_call_ms": 12.329458000000159,
+          "subsequent_read_ms": 3.632166999999754,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 6,
+          "retained_before": 768,
+          "write_commit_ms": 6.451958000000104,
+          "queued_read_call_ms": 9.688499999999749,
+          "subsequent_read_ms": 3.0233330000000933,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 6,
+          "retained_before": 768,
+          "write_commit_ms": 67.89975000000004,
+          "queued_read_call_ms": 72.830375,
+          "subsequent_read_ms": 3.814166000000114,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        }
+      ],
+      "summary": {
+        "appender": {
+          "write_commit_ms": 6.451958000000104,
+          "queued_read_call_ms": 10.437208000000055,
+          "subsequent_read_ms": 3.1492920000000595
+        },
+        "native-compat": {
+          "write_commit_ms": 67.72775000000001,
+          "queued_read_call_ms": 72.60745799999995,
+          "subsequent_read_ms": 3.590332999999646
+        }
+      }
+    },
+    {
+      "seed_retained": 0,
+      "batch_rows": 1024,
+      "status": "passed",
+      "samples": [
+        {
+          "profile": "appender",
+          "attempt": 2,
+          "retained_before": 2048,
+          "write_commit_ms": 14.941707999999835,
+          "queued_read_call_ms": 27.634791999999834,
+          "subsequent_read_ms": 9.303625000000011,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 2,
+          "retained_before": 2048,
+          "write_commit_ms": 465.116,
+          "queued_read_call_ms": 476.48862499999996,
+          "subsequent_read_ms": 10.18683400000009,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 3,
+          "retained_before": 3072,
+          "write_commit_ms": 436.8385420000004,
+          "queued_read_call_ms": 449.0181249999996,
+          "subsequent_read_ms": 11.150542000000314,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        },
+        {
+          "profile": "appender",
+          "attempt": 3,
+          "retained_before": 3072,
+          "write_commit_ms": 17.222875000000386,
+          "queued_read_call_ms": 26.46333400000003,
+          "subsequent_read_ms": 9.974792000000889,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 4,
+          "retained_before": 4096,
+          "write_commit_ms": 16.429125000000568,
+          "queued_read_call_ms": 26.708166999999776,
+          "subsequent_read_ms": 9.793791000000056,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 4,
+          "retained_before": 4096,
+          "write_commit_ms": 591.091625,
+          "queued_read_call_ms": 604.7872079999997,
+          "subsequent_read_ms": 9.881374999999935,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 5,
+          "retained_before": 5120,
+          "write_commit_ms": 540.9519999999993,
+          "queued_read_call_ms": 551.5569999999998,
+          "subsequent_read_ms": 11.992083999999522,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        },
+        {
+          "profile": "appender",
+          "attempt": 5,
+          "retained_before": 5120,
+          "write_commit_ms": 58.33716699999968,
+          "queued_read_call_ms": 134.22983300000033,
+          "subsequent_read_ms": 21.216959000000315,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 6,
+          "retained_before": 6144,
+          "write_commit_ms": 16.743792000000212,
+          "queued_read_call_ms": 27.678541999999652,
+          "subsequent_read_ms": 10.147875000000568,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 6,
+          "retained_before": 6144,
+          "write_commit_ms": 422.11041699999987,
+          "queued_read_call_ms": 431.1779580000002,
+          "subsequent_read_ms": 8.839458000000377,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        }
+      ],
+      "summary": {
+        "appender": {
+          "write_commit_ms": 16.743792000000212,
+          "queued_read_call_ms": 27.634791999999834,
+          "subsequent_read_ms": 9.974792000000889
+        },
+        "native-compat": {
+          "write_commit_ms": 465.116,
+          "queued_read_call_ms": 476.48862499999996,
+          "subsequent_read_ms": 10.18683400000009
+        }
+      }
+    },
+    {
+      "seed_retained": 4096,
+      "batch_rows": 1,
+      "status": "passed",
+      "samples": [
+        {
+          "profile": "appender",
+          "attempt": 2,
+          "retained_before": 4098,
+          "write_commit_ms": 3.362042000000656,
+          "queued_read_call_ms": 5.6695419999996375,
+          "subsequent_read_ms": 1.8918750000002547,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 2,
+          "retained_before": 4098,
+          "write_commit_ms": 23.860208000000057,
+          "queued_read_call_ms": 25.675458000000617,
+          "subsequent_read_ms": 1.561000000000604,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 3,
+          "retained_before": 4099,
+          "write_commit_ms": 24.483750000000327,
+          "queued_read_call_ms": 26.346292000000176,
+          "subsequent_read_ms": 1.6552500000007058,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        },
+        {
+          "profile": "appender",
+          "attempt": 3,
+          "retained_before": 4099,
+          "write_commit_ms": 3.4984999999996944,
+          "queued_read_call_ms": 5.42816700000003,
+          "subsequent_read_ms": 2.050250000000233,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 4,
+          "retained_before": 4100,
+          "write_commit_ms": 3.3442089999998643,
+          "queued_read_call_ms": 5.0806249999996,
+          "subsequent_read_ms": 1.529167000000598,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 4,
+          "retained_before": 4100,
+          "write_commit_ms": 24.400416999999834,
+          "queued_read_call_ms": 26.535083999999188,
+          "subsequent_read_ms": 1.6762079999998605,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 5,
+          "retained_before": 4101,
+          "write_commit_ms": 23.743458999999348,
+          "queued_read_call_ms": 26.51445800000056,
+          "subsequent_read_ms": 2.3455830000002607,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        },
+        {
+          "profile": "appender",
+          "attempt": 5,
+          "retained_before": 4101,
+          "write_commit_ms": 4.090666999999485,
+          "queued_read_call_ms": 5.958958999999595,
+          "subsequent_read_ms": 2.0039170000000013,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 6,
+          "retained_before": 4102,
+          "write_commit_ms": 4.076500000000124,
+          "queued_read_call_ms": 5.99487500000032,
+          "subsequent_read_ms": 1.6887090000000171,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 6,
+          "retained_before": 4102,
+          "write_commit_ms": 26.326915999999983,
+          "queued_read_call_ms": 28.47979200000009,
+          "subsequent_read_ms": 2.162333000000217,
+          "retained_logical_bytes_added": 39,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 441,
+          "compatibility_sql_bytes": 472
+        }
+      ],
+      "summary": {
+        "appender": {
+          "write_commit_ms": 3.4984999999996944,
+          "queued_read_call_ms": 5.6695419999996375,
+          "subsequent_read_ms": 1.8918750000002547
+        },
+        "native-compat": {
+          "write_commit_ms": 24.400416999999834,
+          "queued_read_call_ms": 26.51445800000056,
+          "subsequent_read_ms": 1.6762079999998605
+        }
+      }
+    },
+    {
+      "seed_retained": 4096,
+      "batch_rows": 16,
+      "status": "passed",
+      "samples": [
+        {
+          "profile": "appender",
+          "attempt": 2,
+          "retained_before": 4128,
+          "write_commit_ms": 3.764458999999988,
+          "queued_read_call_ms": 5.939957999999933,
+          "subsequent_read_ms": 1.9117089999999735,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 2,
+          "retained_before": 4128,
+          "write_commit_ms": 25.14104099999986,
+          "queued_read_call_ms": 27.00041599999986,
+          "subsequent_read_ms": 1.6673329999994166,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 3,
+          "retained_before": 4144,
+          "write_commit_ms": 25.744166999999834,
+          "queued_read_call_ms": 27.788166000000274,
+          "subsequent_read_ms": 1.6836249999996653,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        },
+        {
+          "profile": "appender",
+          "attempt": 3,
+          "retained_before": 4144,
+          "write_commit_ms": 3.5019579999998314,
+          "queued_read_call_ms": 5.263334000000214,
+          "subsequent_read_ms": 1.748207999999977,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 4,
+          "retained_before": 4160,
+          "write_commit_ms": 3.609625000000051,
+          "queued_read_call_ms": 5.57549999999992,
+          "subsequent_read_ms": 1.9218330000003334,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 4,
+          "retained_before": 4160,
+          "write_commit_ms": 24.35962500000005,
+          "queued_read_call_ms": 26.18854200000078,
+          "subsequent_read_ms": 2.0212910000000193,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 5,
+          "retained_before": 4176,
+          "write_commit_ms": 25.80108299999938,
+          "queued_read_call_ms": 27.861499999999978,
+          "subsequent_read_ms": 1.618083000000297,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        },
+        {
+          "profile": "appender",
+          "attempt": 5,
+          "retained_before": 4176,
+          "write_commit_ms": 3.4698749999997744,
+          "queued_read_call_ms": 5.094207999999526,
+          "subsequent_read_ms": 1.474833000000217,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 6,
+          "retained_before": 4192,
+          "write_commit_ms": 3.17975000000024,
+          "queued_read_call_ms": 4.816458000000239,
+          "subsequent_read_ms": 1.5465830000002825,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 6,
+          "retained_before": 4192,
+          "write_commit_ms": 25.628458000001046,
+          "queued_read_call_ms": 27.776834000000235,
+          "subsequent_read_ms": 1.7489999999997963,
+          "retained_logical_bytes_added": 752,
+          "appender_calls": 0,
+          "compatibility_calls": 1,
+          "json_envelope_bytes": 7114,
+          "compatibility_sql_bytes": 7147
+        }
+      ],
+      "summary": {
+        "appender": {
+          "write_commit_ms": 3.5019579999998314,
+          "queued_read_call_ms": 5.263334000000214,
+          "subsequent_read_ms": 1.748207999999977
+        },
+        "native-compat": {
+          "write_commit_ms": 25.628458000001046,
+          "queued_read_call_ms": 27.776834000000235,
+          "subsequent_read_ms": 1.6836249999996653
+        }
+      }
+    },
+    {
+      "seed_retained": 4096,
+      "batch_rows": 128,
+      "status": "passed",
+      "samples": [
+        {
+          "profile": "appender",
+          "attempt": 2,
+          "retained_before": 4352,
+          "write_commit_ms": 4.8868750000001455,
+          "queued_read_call_ms": 7.352999999999156,
+          "subsequent_read_ms": 2.6392089999990276,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 2,
+          "retained_before": 4352,
+          "write_commit_ms": 52.15129100000013,
+          "queued_read_call_ms": 54.87354100000084,
+          "subsequent_read_ms": 2.485333000000537,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 3,
+          "retained_before": 4480,
+          "write_commit_ms": 51.86645800000042,
+          "queued_read_call_ms": 54.81854199999907,
+          "subsequent_read_ms": 2.5624580000003334,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        },
+        {
+          "profile": "appender",
+          "attempt": 3,
+          "retained_before": 4480,
+          "write_commit_ms": 4.892165999999634,
+          "queued_read_call_ms": 7.394874999999956,
+          "subsequent_read_ms": 2.5430839999989985,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 4,
+          "retained_before": 4608,
+          "write_commit_ms": 4.588166999999885,
+          "queued_read_call_ms": 6.946541999999681,
+          "subsequent_read_ms": 2.3276669999995647,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 4,
+          "retained_before": 4608,
+          "write_commit_ms": 52.07020899999952,
+          "queued_read_call_ms": 54.63233299999956,
+          "subsequent_read_ms": 2.2945419999996375,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 5,
+          "retained_before": 4736,
+          "write_commit_ms": 51.775792000000365,
+          "queued_read_call_ms": 54.7783330000002,
+          "subsequent_read_ms": 2.849041000001307,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        },
+        {
+          "profile": "appender",
+          "attempt": 5,
+          "retained_before": 4736,
+          "write_commit_ms": 4.596665999999459,
+          "queued_read_call_ms": 7.166208000000552,
+          "subsequent_read_ms": 2.7908339999994496,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 6,
+          "retained_before": 4864,
+          "write_commit_ms": 4.713292000000365,
+          "queued_read_call_ms": 7.126749999999447,
+          "subsequent_read_ms": 2.234667000000627,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 6,
+          "retained_before": 4864,
+          "write_commit_ms": 53.478165999998964,
+          "queued_read_call_ms": 56.592625000001135,
+          "subsequent_read_ms": 3.206000000000131,
+          "retained_logical_bytes_added": 6316,
+          "appender_calls": 0,
+          "compatibility_calls": 2,
+          "json_envelope_bytes": 57361,
+          "compatibility_sql_bytes": 57440
+        }
+      ],
+      "summary": {
+        "appender": {
+          "write_commit_ms": 4.713292000000365,
+          "queued_read_call_ms": 7.166208000000552,
+          "subsequent_read_ms": 2.5430839999989985
+        },
+        "native-compat": {
+          "write_commit_ms": 52.07020899999952,
+          "queued_read_call_ms": 54.81854199999907,
+          "subsequent_read_ms": 2.5624580000003334
+        }
+      }
+    },
+    {
+      "seed_retained": 4096,
+      "batch_rows": 1024,
+      "status": "passed",
+      "samples": [
+        {
+          "profile": "appender",
+          "attempt": 2,
+          "retained_before": 6144,
+          "write_commit_ms": 11.465750000001208,
+          "queued_read_call_ms": 20.070417000000816,
+          "subsequent_read_ms": 9.321500000000015,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 2,
+          "retained_before": 6144,
+          "write_commit_ms": 387.47400000000016,
+          "queued_read_call_ms": 396.82566699999916,
+          "subsequent_read_ms": 9.288582999999562,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 3,
+          "retained_before": 7168,
+          "write_commit_ms": 389.7841669999998,
+          "queued_read_call_ms": 399.8794170000001,
+          "subsequent_read_ms": 9.078000000001339,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        },
+        {
+          "profile": "appender",
+          "attempt": 3,
+          "retained_before": 7168,
+          "write_commit_ms": 11.58283400000073,
+          "queued_read_call_ms": 21.788124999999127,
+          "subsequent_read_ms": 10.318124999999782,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 4,
+          "retained_before": 8192,
+          "write_commit_ms": 11.99200000000019,
+          "queued_read_call_ms": 20.072125000000597,
+          "subsequent_read_ms": 9.950874999998632,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 4,
+          "retained_before": 8192,
+          "write_commit_ms": 391.37733300000036,
+          "queued_read_call_ms": 400.24762499999997,
+          "subsequent_read_ms": 9.047500000000582,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 5,
+          "retained_before": 9216,
+          "write_commit_ms": 391.7474579999998,
+          "queued_read_call_ms": 400.98775000000023,
+          "subsequent_read_ms": 8.976042000000234,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        },
+        {
+          "profile": "appender",
+          "attempt": 5,
+          "retained_before": 9216,
+          "write_commit_ms": 11.816333000000668,
+          "queued_read_call_ms": 20.5378329999985,
+          "subsequent_read_ms": 10.454583999999159,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "appender",
+          "attempt": 6,
+          "retained_before": 10240,
+          "write_commit_ms": 11.519415999999183,
+          "queued_read_call_ms": 20.898290999999517,
+          "subsequent_read_ms": 8.103917000000365,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 1,
+          "compatibility_calls": 0,
+          "json_envelope_bytes": 0,
+          "compatibility_sql_bytes": 0
+        },
+        {
+          "profile": "native-compat",
+          "attempt": 6,
+          "retained_before": 10240,
+          "write_commit_ms": 400.14508299999943,
+          "queued_read_call_ms": 409.415500000001,
+          "subsequent_read_ms": 8.879415999999765,
+          "retained_logical_bytes_added": 52121,
+          "appender_calls": 0,
+          "compatibility_calls": 15,
+          "json_envelope_bytes": 461480,
+          "compatibility_sql_bytes": 462077
+        }
+      ],
+      "summary": {
+        "appender": {
+          "write_commit_ms": 11.58283400000073,
+          "queued_read_call_ms": 20.5378329999985,
+          "subsequent_read_ms": 9.950874999998632
+        },
+        "native-compat": {
+          "write_commit_ms": 391.37733300000036,
+          "queued_read_call_ms": 400.24762499999997,
+          "subsequent_read_ms": 9.047500000000582
+        }
+      }
+    }
+  ]
+}

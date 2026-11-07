@@ -1,0 +1,108 @@
+{
+  "format": "triplex-qlever-wrapper-repair-plan/1",
+  "status": "SOURCE_ONLY_NO_BUILD_OR_BACKEND_GRANT",
+  "mechanism": "EXPLICIT_WRAPPER_TEXT_FAMILY_BRANCH_ONLY",
+  "liveCompilerUnchanged": true,
+  "sourcePatch": {
+    "path": ".artifacts/qlever-wrapper-text-lowering-v1/candidate.patch",
+    "sha256": "19d552e2db4447631df4b58f4829033e1f33bcf93eb36a9a63e8b25d29766bc7",
+    "baseSha256": "9c60e5a7f491a92ffdb5f7d42cdf57d28dd01d6959066d2b4ed32850e14b012f",
+    "candidateSha256": "304e2d527cbc0083a4ed75ea7c2f730e1b69d2337734f6d86c2ded5fbb96a01e"
+  },
+  "sdkArtifactStrategy": "ONE_ISOLATED_ORDINARY_Q_PACKAGE_BUILD_WITH_PUBLIC_PACKAGE_SELF_REFERENCE_NO_NATIVE_ENGINE_BUILD",
+  "sdkBuild": {
+    "resourcesProposed": {
+      "memoryBytes": 2147483648,
+      "cpuUnits": 2,
+      "diskBytes": 536870912,
+      "timeoutMilliseconds": 300000,
+      "outerNodeOldSpaceMiB": 256,
+      "childNodeOldSpaceMiB": 768
+    },
+    "commands": [
+      "Pinned ordinary tsdown configuration against copied src into private dist",
+      "Pinned tsc --declaration --emitDeclarationOnly against copied src into the same private dist"
+    ],
+    "inputsPending": [
+      "Frozen build worker/config/source copies",
+      "Reviewed recursive installed tsdown/TypeScript/Core/Effect dependency graph",
+      "Exact canonical manifest/source preimages"
+    ],
+    "actualManifest": null,
+    "acceptance": "Live src/dist unchanged; original src copies exact except reviewed compiler patch; private public export graph complete; noncompiler executable identity unchanged; actual generated declarations and tiny public import type witness."
+  },
+  "lowercaseProbe": {
+    "resourcesProposed": {
+      "memoryBytes": 939524096,
+      "cpuUnits": 1,
+      "diskBytes": 67108864,
+      "timeoutMilliseconds": 180000
+    },
+    "sdkCalls": [
+      "fresh-lowercase",
+      "seed-lowercase",
+      "ack-seed-lowercase",
+      "native-lowercase-membership",
+      "native-gt-b",
+      "native-ge-c",
+      "native-lt-e",
+      "native-le-e",
+      "datalog-lowercase-membership",
+      "datalog-gt-b",
+      "datalog-ge-c",
+      "datalog-lt-e",
+      "datalog-le-e",
+      "datalog-reopen-gt-b",
+      "datalog-reopen-ge-c",
+      "datalog-reopen-lt-e",
+      "datalog-reopen-le-e"
+    ],
+    "sdkCallCount": 17,
+    "settingsControls": [
+      "before",
+      "select-f1",
+      "selected-f1",
+      "restore-before-native",
+      "native-after-f1",
+      "finally-restore",
+      "finally-readback"
+    ],
+    "maximumControlIdsIncludingEarlyFailure": 9,
+    "replyBytes": 2097152,
+    "resultRows": 32,
+    "evidenceBytes": 33554432,
+    "sdkDispatchWindowMilliseconds": 120000,
+    "perSdkCallMilliseconds": 5000,
+    "nativeQueryMilliseconds": 5000,
+    "scopePolicy": "Fresh unique scope; proveP0 then freeze actual seedACK/P1/R1000.25; no later writes or cut substitution.",
+    "profile": {
+      "engineMemoryBytes": 2147483648,
+      "nativePlannerBudget": 100,
+      "datalogPlannerBudget": 1,
+      "datalogOptions": {
+        "aggregateAnswerPlan": "bounded",
+        "sourcePlan": "persisted",
+        "negationPlan": "minus",
+        "retirementPlan": "paired",
+        "unusedOrderPruning": false
+      }
+    },
+    "actualManifest": null
+  },
+  "mixedCaseSuccessor": {
+    "workerOriginal": "packages/qlever/experiments/string-order-probe.ts",
+    "workerSha256": "33695bf500c6bc4f03a652bf4f0985401496f7912515588d712f035944d9a709",
+    "oracleUnchanged": true,
+    "logicalCasesUnchanged": {
+      "qlever-datalog": 9,
+      "qlever-native": 11
+    },
+    "sdkCalls": 31,
+    "rootAndHelperImportRelocationOnly": true,
+    "newRunAndScopes": true,
+    "expectedKnownOrderingFailuresPreserved": true,
+    "noFormatOracleRepeat": "New input-identity oracle must use the actual ordinary exclusiveJson serialization; old v6 formatting failure stays retained.",
+    "actualManifest": null
+  },
+  "operationalAuthorization": "NONE: no source integration, build, native request, service setting or container action until exact staged artifacts/manifests are reviewed and granted."
+}

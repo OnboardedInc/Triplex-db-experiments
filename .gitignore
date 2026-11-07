@@ -1,0 +1,47 @@
+node_modules/
+dist/
+.turbo/
+coverage/
+*.tgz
+*.tsbuildinfo
+.DS_Store
+**/.vitepress/cache/
+.alchemy/
+playwright-report/
+test-results/
+**/.openai/hosting.json
+.xtdb/
+.qlever/
+.pnpm-store/
+.experiments/
+__pycache__/
+qualification/evidence/*.log
+.cache/
+.local/
+.runtime/
+.devloop/
+.artifacts/
+.fseventsd/
+
+# Local qualification captures stay charged and retained outside source commits.
+/qualification/evidence/
+/qualification/native-jobs/
+/qualification/load-jobs/
+/qualification/devloop/evidence/
+/qualification/reviews/*.json
+/qualification/reviews/*.tap
+/provenance/auxiliary-postgres-bootstrap.json
+/provenance/bootstrap-node-headers.json
+/provenance/external-mount-helper.json
+/provenance/full-export-integrity-run.json
+/provenance/node-header-prefix-layout.json
+/provenance/node-npm-layout-20261106.json
+/provenance/node-npm-ready-20261106.json
+/provenance/python-duckdb-build-dependency.json
+/provenance/storage-maintenance-20261106.json
+
+# triplex-db-2 independent effort: cloned reference source lives here but is
+# pinned by references/MANIFEST.json rather than committed (size).
+/references/*/
+.colima-triplex2/
+/runs/

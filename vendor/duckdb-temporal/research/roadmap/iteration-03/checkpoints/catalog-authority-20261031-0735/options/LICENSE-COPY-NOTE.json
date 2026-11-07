@@ -1,0 +1,10 @@
+{
+  "schema": "td.primary_license_retained_copy/1",
+  "source_bytes": 1072,
+  "source_sha256": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3",
+  "retained_bytes": 1073,
+  "retained_sha256": "332e19171f85a7ea54842f234cd68e15cc33f4fc974ce11fffd9ede1625be80f",
+  "transformation": "exact returned MIT license UTF8 bytes followed by exactly one LF added by apply_patch",
+  "verified": true,
+  "source_receipt_unchanged": true
+}

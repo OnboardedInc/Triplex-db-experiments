@@ -1,0 +1,650 @@
+{
+  "schema": "td.antijoin-sdk-cycle-receipt/1",
+  "status": "PASSED_NATIVE_CYCLE_CORRECTNESS_ONLY",
+  "sourceCommit": "21528ae269f88f98de72e76f48acc16fcaedd611",
+  "firstAttempt": true,
+  "raw": {
+    "file": "antijoin-sdk-cycle-20261105.raw.json",
+    "sha256": "7e7fd1eb9878110a882a908b983cbc0edaa15e49f6c77b2f6c964f566e6900e5",
+    "bytes": 890431
+  },
+  "terminal": {
+    "file": "antijoin-sdk-cycle-20261105-terminal.log",
+    "sha256": "ad652a298921517ca9ca82e574d81eefc517481e53477d6b471aad88424dd2f0",
+    "exitCode": 0
+  },
+  "scope": "One fresh owned CoW fork of the unchanged closed forward442-ACK database. Seventy original-prefix public native patches only; no fixture regeneration, timed run or outer FIFO.",
+  "sdkPromotionStatus": "UNPROMOTED_BROAD_MEDIAN_FAILURE; this gate supplies correction/replay correctness only.",
+  "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+  "openConfiguration": {
+    "readers": 16,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "retainedLimits": {
+      "maxFacts": 10024534,
+      "maxBytes": 4294967296
+    }
+  },
+  "originalMixedQueryOptions": {
+    "validAt": "0",
+    "timeoutMs": 60000,
+    "maxInputFacts": 10012534,
+    "maxIntermediateRows": 10012534,
+    "maxIntermediateBytes": 4294967296
+  },
+  "effectiveQueryOptions": {
+    "validAt": "0",
+    "timeoutMs": 60000,
+    "maxInputFacts": 1680202,
+    "maxIntermediateRows": 10012534,
+    "maxIntermediateBytes": 4294967296,
+    "maxOutputRows": 100000,
+    "maxOutputBytes": 16777216
+  },
+  "originalPins": {
+    "budgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+    "nativeBindingSha256": "0eaf2187d65289cbbb2902ae58867ab64127d4c973d6fe59341065e50356f963",
+    "selectedBindingSha256": "bc6394cee5a6f7e6caa57635fe1377cd94105c58ce5565257d8ef9f2add63596"
+  },
+  "gateSourceSha256Before": "5c862a1d34d74aa5adc2996f0820c53f01549c46eb4f37ccc89add71355b9d45",
+  "gateSourceSha256After": "5c862a1d34d74aa5adc2996f0820c53f01549c46eb4f37ccc89add71355b9d45",
+  "source": {
+    "file": "build/antijoin-runs/run-h9J3TP/readers-16.duckdb",
+    "rawFile": "evidence/antijoin-sdk-forward-candidate-16-20261105.raw.json",
+    "rawSha256": "942c7c69b5f14c9172db7337ff2c436cca867e1b7908ddcb6043af5f759a69ba",
+    "bytes": 3905433600,
+    "mtimeMs": 1793934638748.8008,
+    "ctimeMs": 1793934638748.8008,
+    "sha256": "89451474890a392bc5b718aacc0d2571daf97d77583d3f9c809de508e8e85516"
+  },
+  "sourceAfter": {
+    "bytes": 3905433600,
+    "mtimeMs": 1793934638748.8008,
+    "ctimeMs": 1793934638748.8008,
+    "sha256": "89451474890a392bc5b718aacc0d2571daf97d77583d3f9c809de508e8e85516"
+  },
+  "sourceUnchanged": true,
+  "rawSha256After": "942c7c69b5f14c9172db7337ff2c436cca867e1b7908ddcb6043af5f759a69ba",
+  "rawUnchanged": true,
+  "fork": {
+    "file": "build/c2-sdk-cycle-20261105/cycle-7BxWE6/facts.duckdb",
+    "clone": {
+      "mode": "darwin_clonefile",
+      "status": "cloned"
+    },
+    "before": {
+      "bytes": 3905433600,
+      "mtimeMs": 1793934638748.8008,
+      "ctimeMs": 1793937651394.3647,
+      "sha256": "89451474890a392bc5b718aacc0d2571daf97d77583d3f9c809de508e8e85516"
+    },
+    "after": {
+      "bytes": 3905433600,
+      "mtimeMs": 1793937693722.262,
+      "ctimeMs": 1793937693722.262,
+      "sha256": "18537bf1874370ec20ca5e5839b0eafcd4bb7e646f4c9b1508224bcb6e5952f6"
+    }
+  },
+  "forkBeforeEqualsSource": true,
+  "runtimeBeforeSha256": "a16e579b86280e353c967a5960674aedc6ef49feb391740d0ae8db34a037e1ed",
+  "runtimeAfterSha256": "a16e579b86280e353c967a5960674aedc6ef49feb391740d0ae8db34a037e1ed",
+  "runtimeBeforeEqualsAfter": true,
+  "runtimeAndGateUnchanged": true,
+  "selectedRuntimePins": {
+    "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "adapter/native-entity.js": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "selectedArchiveBefore": {
+    "sha256": "8f1bfbcb69409f308a74a32a62f787693739798cc0c72df3710d92dba3798d71",
+    "files": 445,
+    "allFilesVerified": true
+  },
+  "selectedArchiveAfter": {
+    "sha256": "8f1bfbcb69409f308a74a32a62f787693739798cc0c72df3710d92dba3798d71",
+    "files": 445,
+    "allFilesVerified": true
+  },
+  "inputAdmission": {
+    "knownAt": "39351",
+    "exact": 1680202,
+    "exactSucceeded": true,
+    "minusOneRejected": "TD_E_QUERY_SCALE_LIMIT"
+  },
+  "validBoundary": {
+    "fromInclusive": "0",
+    "toExclusive": "9223372036854775807",
+    "lastValidTickVerified": true,
+    "sentinelCutRejected": "TD_E_QUERY_INPUT"
+  },
+  "originalPrefix": "anti-01635d0c-8a44-467c-9ab0-ea37ca980660-",
+  "newAcknowledgedWrites": 70,
+  "firstNewOrdinal": 442,
+  "lastNewOrdinal": 511,
+  "firstNewPosition": "39538",
+  "lastNewPosition": "39607",
+  "replays": [
+    {
+      "ordinal": 0,
+      "position": "39096",
+      "fullReceiptEqualsOriginal": true
+    },
+    {
+      "ordinal": 441,
+      "position": "39537",
+      "fullReceiptEqualsOriginal": true
+    },
+    {
+      "ordinal": 511,
+      "position": "39607",
+      "fullReceiptEqualsOriginal": true
+    }
+  ],
+  "historiesEqualBeforeAfterReopen": true,
+  "historyCounts": {
+    "probe-000": 6,
+    "probe-255": 6
+  },
+  "reopenVerified": true,
+  "drainedChecks": [
+    {
+      "name": "before_append_drained",
+      "pool": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "control": {
+        "active": 0,
+        "calls": 19,
+        "completed": 19,
+        "maxActive": 3,
+        "distinctPorts": 16,
+        "allPortsReady": true,
+        "scope": "Actual public control-scope calls; not native task or allocator counts"
+      }
+    },
+    {
+      "name": "after_replay_drained",
+      "pool": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "control": {
+        "active": 0,
+        "calls": 43,
+        "completed": 43,
+        "maxActive": 3,
+        "distinctPorts": 16,
+        "allPortsReady": true,
+        "scope": "Actual public control-scope calls; not native task or allocator counts"
+      }
+    },
+    {
+      "name": "reopened_drained",
+      "pool": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "control": {
+        "active": 0,
+        "calls": 7,
+        "completed": 7,
+        "maxActive": 1,
+        "distinctPorts": 7,
+        "allPortsReady": true,
+        "scope": "Actual public control-scope calls; not native task or allocator counts"
+      }
+    }
+  ],
+  "typedCutChecks": [
+    {
+      "name": "timed_latest_before_completion",
+      "knownAt": null,
+      "position": "39537",
+      "validAt": "0",
+      "typedRows": 186,
+      "rowsSha256": "a4d1eb0bec66191c3b6ce2d7b732df50c7354b77a10c7ecd68b33aec2dd3d3ed",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_2_all_removed",
+      "knownAt": "39351",
+      "position": "39351",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_1_initial",
+      "knownAt": "39095",
+      "position": "39095",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_0_pre_probe",
+      "knownAt": "39087",
+      "position": "39087",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_3_first_restore",
+      "knownAt": "39352",
+      "position": "39352",
+      "validAt": "0",
+      "typedRows": 1,
+      "rowsSha256": "112342ca8a8105ecb7c1b26d17653c472120c45a79cecc279e1ed4eb0c39a3fe",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_4_timed_final",
+      "knownAt": "39537",
+      "position": "39537",
+      "validAt": "0",
+      "typedRows": 186,
+      "rowsSha256": "a4d1eb0bec66191c3b6ce2d7b732df50c7354b77a10c7ecd68b33aec2dd3d3ed",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_5_pre_probe",
+      "knownAt": "39087",
+      "position": "39087",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_6_initial",
+      "knownAt": "39095",
+      "position": "39095",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_7_all_removed",
+      "knownAt": "39351",
+      "position": "39351",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_8_first_restore",
+      "knownAt": "39352",
+      "position": "39352",
+      "validAt": "0",
+      "typedRows": 1,
+      "rowsSha256": "112342ca8a8105ecb7c1b26d17653c472120c45a79cecc279e1ed4eb0c39a3fe",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_9_timed_final",
+      "knownAt": "39537",
+      "position": "39537",
+      "validAt": "0",
+      "typedRows": 186,
+      "rowsSha256": "a4d1eb0bec66191c3b6ce2d7b732df50c7354b77a10c7ecd68b33aec2dd3d3ed",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_10_pre_probe",
+      "knownAt": "39087",
+      "position": "39087",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_11_initial",
+      "knownAt": "39095",
+      "position": "39095",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_12_all_removed",
+      "knownAt": "39351",
+      "position": "39351",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_13_first_restore",
+      "knownAt": "39352",
+      "position": "39352",
+      "validAt": "0",
+      "typedRows": 1,
+      "rowsSha256": "112342ca8a8105ecb7c1b26d17653c472120c45a79cecc279e1ed4eb0c39a3fe",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_14_timed_final",
+      "knownAt": "39537",
+      "position": "39537",
+      "validAt": "0",
+      "typedRows": 186,
+      "rowsSha256": "a4d1eb0bec66191c3b6ce2d7b732df50c7354b77a10c7ecd68b33aec2dd3d3ed",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_15_pre_probe",
+      "knownAt": "39087",
+      "position": "39087",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "empty_cut_exact_input_cap",
+      "knownAt": "39351",
+      "position": "39351",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "full_restored_latest",
+      "knownAt": null,
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_2_all_removed",
+      "knownAt": "39351",
+      "position": "39351",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_1_initial",
+      "knownAt": "39095",
+      "position": "39095",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_0_pre_probe",
+      "knownAt": "39087",
+      "position": "39087",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_3_first_restore",
+      "knownAt": "39352",
+      "position": "39352",
+      "validAt": "0",
+      "typedRows": 1,
+      "rowsSha256": "112342ca8a8105ecb7c1b26d17653c472120c45a79cecc279e1ed4eb0c39a3fe",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_4_timed_final",
+      "knownAt": "39537",
+      "position": "39537",
+      "validAt": "0",
+      "typedRows": 186,
+      "rowsSha256": "a4d1eb0bec66191c3b6ce2d7b732df50c7354b77a10c7ecd68b33aec2dd3d3ed",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_5_full_restored",
+      "knownAt": "39607",
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_6_pre_probe",
+      "knownAt": "39087",
+      "position": "39087",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_7_initial",
+      "knownAt": "39095",
+      "position": "39095",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_8_all_removed",
+      "knownAt": "39351",
+      "position": "39351",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_9_first_restore",
+      "knownAt": "39352",
+      "position": "39352",
+      "validAt": "0",
+      "typedRows": 1,
+      "rowsSha256": "112342ca8a8105ecb7c1b26d17653c472120c45a79cecc279e1ed4eb0c39a3fe",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_10_timed_final",
+      "knownAt": "39537",
+      "position": "39537",
+      "validAt": "0",
+      "typedRows": 186,
+      "rowsSha256": "a4d1eb0bec66191c3b6ce2d7b732df50c7354b77a10c7ecd68b33aec2dd3d3ed",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_11_full_restored",
+      "knownAt": "39607",
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_12_pre_probe",
+      "knownAt": "39087",
+      "position": "39087",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_13_initial",
+      "knownAt": "39095",
+      "position": "39095",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_14_all_removed",
+      "knownAt": "39351",
+      "position": "39351",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_15_first_restore",
+      "knownAt": "39352",
+      "position": "39352",
+      "validAt": "0",
+      "typedRows": 1,
+      "rowsSha256": "112342ca8a8105ecb7c1b26d17653c472120c45a79cecc279e1ed4eb0c39a3fe",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "before_valid_start",
+      "knownAt": "39607",
+      "position": "39607",
+      "validAt": "-1",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "last_valid_tick",
+      "knownAt": "39607",
+      "position": "39607",
+      "validAt": "9223372036854775806",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "healthy_after_sentinel_rejection",
+      "knownAt": "39607",
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_delayed_replay_0",
+      "knownAt": null,
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_delayed_replay_441",
+      "knownAt": null,
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "after_delayed_replay_511",
+      "knownAt": null,
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "reopened_pre_probe",
+      "knownAt": "39087",
+      "position": "39087",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "reopened_initial",
+      "knownAt": "39095",
+      "position": "39095",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "reopened_all_removed",
+      "knownAt": "39351",
+      "position": "39351",
+      "validAt": "0",
+      "typedRows": 0,
+      "rowsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "reopened_first_restore",
+      "knownAt": "39352",
+      "position": "39352",
+      "validAt": "0",
+      "typedRows": 1,
+      "rowsSha256": "112342ca8a8105ecb7c1b26d17653c472120c45a79cecc279e1ed4eb0c39a3fe",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "reopened_timed_final",
+      "knownAt": "39537",
+      "position": "39537",
+      "validAt": "0",
+      "typedRows": 186,
+      "rowsSha256": "a4d1eb0bec66191c3b6ce2d7b732df50c7354b77a10c7ecd68b33aec2dd3d3ed",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "reopened_full_restored",
+      "knownAt": "39607",
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    },
+    {
+      "name": "reopened_latest_after_replays",
+      "knownAt": null,
+      "position": "39607",
+      "validAt": "0",
+      "typedRows": 256,
+      "rowsSha256": "6f335ed0888aad834a887260d758a9ad1927e3b4e59a317dc264f541f842f113",
+      "reason": "owned_allcut_unique_scalable_anti_join"
+    }
+  ],
+  "packagingErrors": [],
+  "limitations": [
+    "No SDK performance promotion: broad first run failed6/27 median gates and remains preserved.",
+    "Control scopes describe actual public calls, not private native tasks or physical memory containment.",
+    "INT64_MAX is the prohibited temporal sentinel; exclusive-end coverage uses known-cut boundaries, last legal valid tick and sentinel rejection."
+  ]
+}

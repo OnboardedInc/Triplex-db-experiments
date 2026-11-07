@@ -1,0 +1,13 @@
+{
+  "schema": "td.native-writer-b0-broad-coordination-update/1",
+  "recordedAtUtc": "2026-11-06T09:33:44.721477+00:00",
+  "source": "A retainedtoolresults",
+  "commitFastForward": "9a539 to da7cc",
+  "pushWallSeconds": 1.460960667,
+  "remoteReadbackWallSeconds": 0.365246875,
+  "exactActivityUtcInterval": null,
+  "overlapClassification": "possible overlap, unlocated; commit date is not push start",
+  "causalEffect": "Unknown",
+  "furtherActivity": "A reports no furtherpush/check/engine",
+  "action": "Keep original pair and thresholds; no favorable rerun"
+}

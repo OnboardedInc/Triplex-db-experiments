@@ -1,0 +1,35 @@
+{
+  "schema": "source-research-manifest-v1",
+  "generated_utc": "2026-10-31T16:27:42Z",
+  "task_id": "goal4-negation-theory",
+  "worker_id": "iteration04_negation_theory",
+  "status": "source-only research; no implementation or acceptance",
+  "scope": "new local revision-001 research only",
+  "manifest_self_excluded": true,
+  "fixture_obligations": 77,
+  "files": [
+    {
+      "path": "REPORT.md",
+      "size_bytes": 29463,
+      "sha256": "d6e980e59099b5fa11213dcdcb7fa8f56f1635b6d12b34cd315b3b608b693081",
+      "words": 3952
+    },
+    {
+      "path": "SOURCE-INVENTORY.md",
+      "size_bytes": 8996,
+      "sha256": "cbea49c755494eef1724eb43f10bdd49ed92f61bcbbc93446affa7f29a3a4990",
+      "words": 1050
+    },
+    {
+      "path": "FIXTURE-OBLIGATIONS.md",
+      "size_bytes": 15316,
+      "sha256": "d410da5bca874fda6e0f305b334b9f96110c613ef47aba52a566886b71004287",
+      "words": 2371
+    },
+    {
+      "path": "progress.jsonl",
+      "size_bytes": 4612,
+      "sha256": "95879feb04f07cdcd16b1a0751debad38b0d37b34c2ded03d1d0731c497e8e35"
+    }
+  ]
+}

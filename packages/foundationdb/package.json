@@ -1,0 +1,64 @@
+{
+  "name": "@triplex-build/triplex-foundationdb",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FoundationDB backend for Triplex",
+  "keywords": [
+    "database",
+    "effect",
+    "foundationdb",
+    "triplestore"
+  ],
+  "homepage": "https://github.com/bjacobso/triplex#readme",
+  "bugs": {
+    "url": "https://github.com/bjacobso/triplex/issues"
+  },
+  "license": "MIT",
+  "author": "Ben Jacobson",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bjacobso/triplex.git",
+    "directory": "packages/foundationdb"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist",
+    "dev": "tsdown --watch",
+    "test": "vitest --run --exclude test/fdb-triples.test.ts",
+    "test:integration": "vitest --run test/fdb-triples.test.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@triplex-build/triplex": "workspace:^",
+    "foundationdb": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@types/node": "catalog:",
+    "effect": "catalog:",
+    "testcontainers": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "effect": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

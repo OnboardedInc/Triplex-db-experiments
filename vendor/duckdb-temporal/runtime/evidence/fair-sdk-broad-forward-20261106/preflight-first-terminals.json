@@ -1,0 +1,63 @@
+[
+  {
+    "phase": "preflight-maps",
+    "command": [
+      "[LOCAL_PATH_0034]",
+      "-B",
+      "freeze_fair_sdk_runtime.py",
+      "inspect",
+      "--receipt",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/fair-sdk-broad-20261106/forward-01/preflight-maps.json"
+    ],
+    "startedAtUtc": "2026-11-06T06:06:02.766584+00:00",
+    "terminalAtUtc": "2026-11-06T06:06:05.345395+00:00",
+    "exitCode": 0,
+    "engineExecution": "none"
+  },
+  {
+    "phase": "b0-artifact-preflight",
+    "command": [
+      "node",
+      "adapter/antijoin-fair-sdk-binding.mjs",
+      "--artifact-role",
+      "FAIR4_B0_MAPPED_CONTROL",
+      "--readers",
+      "16",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/fair-sdk-broad-20261106/forward-01/b0-artifact-preflight.json"
+    ],
+    "startedAtUtc": "2026-11-06T06:06:05.345903+00:00",
+    "terminalAtUtc": "2026-11-06T06:06:08.975704+00:00",
+    "exitCode": 0,
+    "engineExecution": "none"
+  },
+  {
+    "phase": "fair4-artifact-preflight",
+    "command": [
+      "node",
+      "adapter/antijoin-fair-sdk-binding.mjs",
+      "--artifact-role",
+      "FAIR4_SDK_CANDIDATE",
+      "--readers",
+      "16",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/fair-sdk-broad-20261106/forward-01/fair4-artifact-preflight.json"
+    ],
+    "startedAtUtc": "2026-11-06T06:06:08.976239+00:00",
+    "terminalAtUtc": "2026-11-06T06:06:12.541403+00:00",
+    "exitCode": 0,
+    "engineExecution": "none"
+  }
+]

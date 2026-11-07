@@ -1,0 +1,154 @@
+{
+  "format": "triplex-devloop-hypothesis-wave/1",
+  "status": "FROZEN_DESIGN_UNEXECUTED",
+  "jobs": [
+    {
+      "format": "triplex-devloop-job/1",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "author": "duckdb-owner-audit-wave-author",
+      "goals": [
+        5,
+        6,
+        7,
+        9
+      ],
+      "dependsOn": [
+        "duckdb-sdk-entry-v8",
+        "duckdb-datalog-packet-v4",
+        "duckdb-public-read-stages-v1"
+      ],
+      "command": null,
+      "resources": null,
+      "inputs": [],
+      "inspiration": [
+        {
+          "reference": "qualification/evidence/duckdb-public-read-stages-v1-analysis.json",
+          "mechanism": "Measured repeated complete owner-activation wall dominates these public point reads",
+          "adaptation": "Keep C++ ownership and guards while comparing separate mechanisms"
+        },
+        {
+          "reference": "qualification/devloop/DUCKDB-OWNER-WAVE1.md",
+          "mechanism": "Frozen candidate/fallback/error/cut contract",
+          "adaptation": "No implementation or outcome is implied by this queued declaration"
+        }
+      ],
+      "id": "duckdb-owner-audit-a-read-scope",
+      "kind": "hypothesis",
+      "problemId": "duckdb-owner-audit-cycles",
+      "logicalTaskId": "public-current-history-stage-and-owner-safety",
+      "hypothesis": "Combine captured basis and final answer in one acknowledged same-bundle read scope; retain all owner audits and non-Duck/default fallback"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "author": "duckdb-owner-audit-wave-author",
+      "goals": [
+        5,
+        6,
+        7,
+        9
+      ],
+      "dependsOn": [
+        "duckdb-sdk-entry-v8",
+        "duckdb-datalog-packet-v4",
+        "duckdb-public-read-stages-v1"
+      ],
+      "command": null,
+      "resources": null,
+      "inputs": [],
+      "inspiration": [
+        {
+          "reference": "qualification/evidence/duckdb-public-read-stages-v1-analysis.json",
+          "mechanism": "Measured repeated complete owner-activation wall dominates these public point reads",
+          "adaptation": "Keep C++ ownership and guards while comparing separate mechanisms"
+        },
+        {
+          "reference": "qualification/devloop/DUCKDB-OWNER-WAVE1.md",
+          "mechanism": "Frozen candidate/fallback/error/cut contract",
+          "adaptation": "No implementation or outcome is implied by this queued declaration"
+        }
+      ],
+      "id": "duckdb-owner-audit-b-read-epoch",
+      "kind": "hypothesis",
+      "problemId": "duckdb-owner-audit-cycles",
+      "logicalTaskId": "public-current-history-stage-and-owner-safety",
+      "hypothesis": "Reuse validation only under a proven unchanged physical/catalog/context/mutation epoch, with complete validation or fencing after interference"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "author": "duckdb-owner-audit-wave-author",
+      "goals": [
+        5,
+        6,
+        7,
+        9
+      ],
+      "dependsOn": [
+        "duckdb-sdk-entry-v8",
+        "duckdb-datalog-packet-v4",
+        "duckdb-public-read-stages-v1"
+      ],
+      "command": null,
+      "resources": null,
+      "inputs": [],
+      "inspiration": [
+        {
+          "reference": "qualification/evidence/duckdb-public-read-stages-v1-analysis.json",
+          "mechanism": "Measured repeated complete owner-activation wall dominates these public point reads",
+          "adaptation": "Keep C++ ownership and guards while comparing separate mechanisms"
+        },
+        {
+          "reference": "qualification/devloop/DUCKDB-OWNER-WAVE1.md",
+          "mechanism": "Frozen candidate/fallback/error/cut contract",
+          "adaptation": "No implementation or outcome is implied by this queued declaration"
+        }
+      ],
+      "id": "duckdb-owner-audit-c-complete-cost",
+      "kind": "hypothesis",
+      "problemId": "duckdb-owner-audit-cost",
+      "logicalTaskId": "public-current-history-stage-and-owner-safety",
+      "hypothesis": "After internal audit spans, reduce planning/scanning cost while preserving every complete native validation obligation"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "author": "duckdb-owner-audit-wave-author",
+      "goals": [
+        5,
+        6,
+        7,
+        9
+      ],
+      "dependsOn": [
+        "duckdb-sdk-entry-v8",
+        "duckdb-datalog-packet-v4",
+        "duckdb-public-read-stages-v1"
+      ],
+      "command": null,
+      "resources": null,
+      "inputs": [],
+      "inspiration": [
+        {
+          "reference": "qualification/evidence/duckdb-public-read-stages-v1-analysis.json",
+          "mechanism": "Measured repeated complete owner-activation wall dominates these public point reads",
+          "adaptation": "Keep C++ ownership and guards while comparing separate mechanisms"
+        },
+        {
+          "reference": "qualification/devloop/DUCKDB-OWNER-WAVE1.md",
+          "mechanism": "Frozen candidate/fallback/error/cut contract",
+          "adaptation": "No implementation or outcome is implied by this queued declaration"
+        }
+      ],
+      "id": "duckdb-read-acquisition-withdrawal",
+      "kind": "prerequisite",
+      "problemId": "duckdb-cancelled-queued-physical-work",
+      "logicalTaskId": "public-current-history-stage-and-owner-safety",
+      "hypothesis": "Withdraw cancelled read/metadata work before physical acquisition; preserve acquired rollback/ACK and never cancel another active request"
+    }
+  ]
+}

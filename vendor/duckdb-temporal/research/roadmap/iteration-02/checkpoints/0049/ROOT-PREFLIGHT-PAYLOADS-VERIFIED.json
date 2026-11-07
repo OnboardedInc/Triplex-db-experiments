@@ -1,0 +1,38 @@
+{
+  "status": "PASS_ROOT_INDEPENDENT_TYPED_PREFLIGHT_ROWS_EXITS_NO_TIMING",
+  "verified_utc": "2026-10-31T01:03:29.777480+00:00",
+  "outputs": 56,
+  "roles": [
+    {
+      "comparison": "reader_implementation",
+      "variant": "ffc-current-reader",
+      "process_sha256": "70e9ee53c0053a7e5b778b5ed71f87395072fd462836be8d1ecfe2ca69723a37",
+      "full_payload_sha256": "fbe8e3092df17a74db999ec94362a41ddb14b954da5f1dbbbea784c3313a74aa",
+      "outputs": 14
+    },
+    {
+      "comparison": "reader_implementation",
+      "variant": "reader-only",
+      "process_sha256": "5c38077f2ca1fcf0dee850348162719349b033141f182edaf272d273dd3748b6",
+      "full_payload_sha256": "6d9007eab193309d74b00761b959262c7a9d71693c117a329905a15348c6b62b",
+      "outputs": 14
+    },
+    {
+      "comparison": "accepted_to_reader",
+      "variant": "accepted-item1",
+      "process_sha256": "329af1424cddfe1135169f5ecf0f519d87c3bcbf633d71cb1604428f99255f62",
+      "full_payload_sha256": "c34cd49b09d3d3697731663ffa73a943387c5b3803eb3ff238de4230c337bed6",
+      "outputs": 14
+    },
+    {
+      "comparison": "accepted_to_reader",
+      "variant": "reader-only",
+      "process_sha256": "f38cffae680fc85df819f6bed6f60b79fe643d33572232cec06292f4c8cb8712",
+      "full_payload_sha256": "d943f3b0c7ff7a6cc54cc2ddfb196cf16fc53ac7bbd4b1532f83b30f3998a7fc",
+      "outputs": 14
+    }
+  ],
+  "candidate_admission_sha256": "1c1c9332e2af4c08fc1db8c3a4461cd77fdbca54f118efe8f248a77f8c50ca55",
+  "study_sha256": "5a8277b3fdb12a4fd4f79ebad4e49504db1671aabc4a083d5af0b0bf46ca87b2",
+  "scope": "Stdlib-only reread joins captured4exitrecords/actualthreadscaps14exacttypedresultrowsperrole againstfrozenoracles. Complements228inputhashreadbackand397controls/staticreview; noDB/native/harnessimportorrun. Noexecutiongate."
+}

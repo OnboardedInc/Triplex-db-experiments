@@ -1,0 +1,147 @@
+{
+  "schema": "td.native-writer-first-build/1",
+  "recordedAtUtc": "2026-11-06T05:18:14.200127+00:00",
+  "status": "failed_compile",
+  "implementationSource": "f558c24aa754babb93017517e473f17419ab4fb3",
+  "testedSource": "1d2fc09e1bb9b3b8c62a370820d102df484f5a42",
+  "stage": {
+    "filesVerified": 445,
+    "source": "b5ea1f3c49645dad295a264119acf4ea5e3c7b40",
+    "reportSha256": "246729d5e873db4cff11171ea666f14cd99256145efd1b6055735c43b775ca22"
+  },
+  "sourceBeforeAfterMatched": true,
+  "checks": {
+    "coreInputs": 32,
+    "immutable": 4,
+    "dependencyFiles": 395,
+    "nativeFiles": 48,
+    "candidateFiles": 8
+  },
+  "nativeSourcePins": {
+    "native/bench_engine.cpp": "031cb16756a91ce51455a30f2299a84fde919c72294a65e92873c3cf4e9d453a",
+    "native/catalog.sql": "5da97390c926dade88eee4803adec095be9661a63ee5154d17b1337bd92a82bd",
+    "native/experimental/emit_entity_patch.cpp": "e37638cb62615a3410284ea449db0d743dacf8069607a3878cb8a3abf7f12dc0",
+    "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42",
+    "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+    "native/owner_probe/native_writer.cpp": "85d6b8c35592cc7c14585af138677967541534823bb9fbe34bc26e8b44b1d57d",
+    "native/owner_probe/native_writer.hpp": "3ddef91e643cefa17dad9776a67b495c1f0ea087859eeaeec357d8764a4bd447",
+    "native/owner_probe/native_writer_abi.h": "c8085b2b7ef52910c906f811b76dd9303a93f28f07a2f6c0ec444cd0ec0093c2",
+    "native/owner_probe/node_writer.cpp": "a1143833cd97861bf80ec150985fd8363c93fdf34eb15d677d493bd55a443035",
+    "native/owner_probe/owner_probe.cpp": "a7514a21c8df5354cd1e4faf8b0e8573f6741711f4d7d931ab6f14388dfc46e7",
+    "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+    "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+    "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+    "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+    "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+    "native/src/temporal_command.cpp": "6b2c3a064050b64694c436b4769bc61be52494a1624c8cd361ed1cc53371c426",
+    "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+    "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+    "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+    "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+    "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+    "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+    "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+    "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+    "native/src/temporal_datalog.cpp": "c80961113dd0b2fd2d1c182cd03f434aee724a6ea6a867fb603322356179281c",
+    "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+    "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+    "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+    "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+    "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+    "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+    "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+    "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+    "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+    "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+    "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+    "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+    "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+    "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+    "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+    "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+    "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+    "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da",
+    "native/test_wal_enospc.cpp": "57cb8461541d92132353c9c7802e09137a9a06299ac1b9044d8c5e8eacd4635d",
+    "native/vendor/LICENSE.duckdb-v2": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3",
+    "native/vendor/append_extension_metadata.py": "2430f62ef7b36eb76b005a377a0294fa01b1fdb0768ba9d23c4650de032a8239",
+    "native/vendor/duckdb_extension_v2.h": "fa0871d3f5b8e5da9a686c019fcaf8210349440831d5e9228720cbba31ccaa51",
+    "native/vendor/duckdb_v2.h": "73026a28e5b55952afb6e2e9ce80fd4f76614afedce329da895ccaf85a4a8be6"
+  },
+  "candidateSourcePins": {
+    "build_owner_probe.py": "d4b79116ab6c84715cd8b939f129b846707d88c44117c9e47c7907519227377c",
+    "adapter/native-entity.ts": "0a4978d608e972ac8c51682234c81d9118ed30090e3db61f9f729a18abe19f23",
+    "adapter/native-schema.ts": "91c13a223f0d240ffa5bde20321547c3e45bd5acac9701a87dcc20697c6c45de",
+    "adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+    "adapter/native-duckdb-port.d.mts": "7124a036df718114302e706e5869a094b21582db5ec4d264ed5321887a1ccacd",
+    "adapter/test-native-writer.ts": "f81eb8e0ca8df442b20629bd96c5d3c41999242c453c6a28846997e1a8d91b3b",
+    "NATIVE-WRITER-EXECUTOR.md": "520d74b5ae85f869598641654b5895d4d57c1d456bae07d5602a07a3719d0fea",
+    "SDK-QUERY-ADMISSION.md": "0fa33875ed502ee85a7fda825e839f8fef0a31535540eb29e9906dcd8667cdfb"
+  },
+  "artifacts": {
+    "build/artifact.json": {
+      "present": true,
+      "sha256": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7"
+    },
+    "build/catalog_sql.hpp": {
+      "present": true,
+      "sha256": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99"
+    },
+    "build/temporal_datalog.duckdb_extension": {
+      "present": true,
+      "sha256": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82"
+    },
+    "build/temporal_datalog.so": {
+      "present": true,
+      "sha256": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae"
+    },
+    "build/temporal_control.node": {
+      "present": true,
+      "sha256": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88"
+    },
+    "build/owner_probe/artifact.json": {
+      "present": true,
+      "sha256": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a"
+    },
+    "build/owner_probe/temporal_owner_probe.so": {
+      "present": true,
+      "sha256": "59bd1d9fa3cacfa8573efe245a1978f84c7485a0cbb57191fea01a28ac8ee3e0"
+    },
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": {
+      "present": true,
+      "sha256": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390"
+    },
+    "build/owner_probe/temporal_writer.node": {
+      "present": false
+    },
+    "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": {
+      "present": true,
+      "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    }
+  },
+  "failure": {
+    "file": "native/owner_probe/node_writer.cpp",
+    "line": 246,
+    "compiler": "clang -Werror -Wmisleading-indentation",
+    "detail": "throw guarded by unbraced if at245, followed by same-line return handle; compiler reports misleading indentation",
+    "companionLibraryCompile": "succeeded",
+    "addonCompile": "failed",
+    "newCompanionPackaging": "not reached; copied original55 extension and manifest remain",
+    "tsc": "not run",
+    "publicTests": "not run",
+    "databaseOrEngineExecution": "not run",
+    "retry": "none"
+  },
+  "rawLogs": {
+    "stagingSha256": "246729d5e873db4cff11171ea666f14cd99256145efd1b6055735c43b775ca22",
+    "fastForwardSha256": "663d705c34d1eea8731b041c5c1636ffd594cd896f10a1646d174119b617fc09",
+    "buildSha256": "a89a48589b2e75382b5e8e0ad4de61c258c5f638bac45558298853758e4d63ae"
+  },
+  "remainingGates": [
+    "successful addon/paired companion build",
+    "TSC",
+    "four actual public methods",
+    "active-job environment cleanup",
+    "allocation/delivery fault coverage",
+    "same-v2-policy mechanism comparison; extra18th USER startup and RSS"
+  ]
+}

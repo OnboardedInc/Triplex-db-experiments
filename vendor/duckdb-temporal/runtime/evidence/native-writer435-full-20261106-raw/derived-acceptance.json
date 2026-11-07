@@ -1,0 +1,72 @@
+{
+  "schema": "td.native-writer435-offline-acceptance/1",
+  "status": "passed_full435_after_exact_test_output_partition",
+  "sourceCommit": "506698215b8bebdf604de2f41d281d3cdc611929",
+  "engineRerun": false,
+  "sourceOrTestChange": false,
+  "verifierFirstExitCode": 0,
+  "wrapperFirstExitCode": 1,
+  "originalFailureSummarySha256": "ecffdbcd5b3b434c20f60320f05329b4685f0f50a4b72c63b8330ffb24a46064",
+  "originalWrapperFailurePreserved": true,
+  "cause": "The post-check wrapper treated all direct owner_probe files as immutable runtime; the existing tests create exactly these three additional data/evidence files there.",
+  "immutableRuntime": {
+    "files": 583,
+    "exactBeforeAfterMapEqualAfterSubtractingOnlyDeclaredThree": true
+  },
+  "testOutputs": {
+    "build/owner_probe/activation-db4dfd91-6139-4dd6-a3e6-082afdbe38e2.duckdb": {
+      "sha256": "b88c0613857e4974f6146a66294c8238bcdf484e863e4dc71f33d497b515f9f8",
+      "bytes": 6041600,
+      "classification": "retained_existing_ownership_test_output",
+      "preservedAt": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/build/owner_probe/activation-db4dfd91-6139-4dd6-a3e6-082afdbe38e2.duckdb",
+      "closedObservation": {
+        "noWal": true,
+        "lsofCommand": [
+          "/usr/sbin/lsof",
+          "-Fpn",
+          "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/build/owner_probe/activation-db4dfd91-6139-4dd6-a3e6-082afdbe38e2.duckdb"
+        ],
+        "lsofExitCode": 1,
+        "lsofStdout": "",
+        "lsofStderr": ""
+      }
+    },
+    "build/owner_probe/activation-evidence.json": {
+      "sha256": "c767c00d2ab972d82d30f3c889c48d5eee166ebb89542490873059b3a599d1f2",
+      "bytes": 270706,
+      "classification": "retained_existing_ownership_test_output",
+      "preservedAt": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/build/owner_probe/activation-evidence.json"
+    },
+    "build/owner_probe/evidence.json": {
+      "sha256": "1c1b35cc48e5d4a2a4e5a1252eeb7677456ced0881a6901ceb6ecc5dbc4b1e75",
+      "bytes": 39547,
+      "classification": "retained_existing_ownership_test_output",
+      "preservedAt": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime/build/owner_probe/evidence.json"
+    }
+  },
+  "allOtherSectionsExact": true,
+  "actualCounts": {
+    "python": 31,
+    "fixedNode": 76,
+    "additionalNode": 263,
+    "workloadOracle": 8,
+    "workloadPlans": 13,
+    "scopedMethods": 391,
+    "triplex": 44,
+    "total": 435
+  },
+  "typescript": "PASS",
+  "sourcePins": {
+    "count": 226,
+    "gitCommit": "506698215b8bebdf604de2f41d281d3cdc611929",
+    "allGitObjectsAndCurrentBytesEqual": true
+  },
+  "stdoutEqualsReportMinusSources": true,
+  "verificationSha256": "30aecf908244837b51617eb3aeec752225cf711872c0cc0044092141518afe93",
+  "independentRootReview": "root-prepackage-review.json",
+  "mainVerificationUnchangedSha256": "aced40cd39edf63c2af8bc0a2ff53d76746b9a741ffb089cbbb9e8a9fb1244d6",
+  "limits": [
+    "Correctness435 plus TSC only; no performance/promotion or active-job environment-teardown claim.",
+    "Generated six-MiB synthetic activation database stays preserved in its original owned path; binary DB is not copied into Git."
+  ]
+}

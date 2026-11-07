@@ -1,0 +1,214 @@
+{
+  "schema": "native-reference-end-to-end/1",
+  "timestamp_utc": "2026-11-05T07:29:18.117Z",
+  "scope": "Native C++ declared-reference commands, closed/reopened same-binary catalog, then complete persisted two-atom graph queries. Query timing includes all retained history/reference/schema validation, fresh proof/statistics or bounded native evaluation and exact output conversion. Query fixture/open/ingestion excluded. Every returned value checked. Two alternating warmup pairs and five measured pairs. Current-path measurements, no cross-version speedup claim.",
+  "native_build": {
+    "engine": "2.0.0",
+    "extension_version": "0.13.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "schema_template_reuse": true,
+    "source_sha256": {
+      "native/src/temporal_command.cpp": "6ca1c74bf8fbe074cbebe29f154602373d625a80296546abc635043cdfcf6fa3",
+      "native/src/temporal_command.hpp": "9dbb3130aed244f9dedbceb212853370969fc462cbcf4c3b8d68a8b89c134e16",
+      "native/src/temporal_control.hpp": "7fc6a2962413303383c98eeb65b5222423c5a351571a7adc0fbe8fff32d49ba8",
+      "native/src/temporal_core.cpp": "4f51676a58e3274c20583267930e8b5f9196cec1a61e507270490d43d020593e",
+      "native/src/temporal_core.hpp": "6e2e7c373da26aac105a6111807ca9c787b1ef003d5922db1d11745b630a6e1e",
+      "native/src/temporal_datalog.cpp": "77ba01a32f5b94141b192b0cee828e1a3120d8ecf1a3441055e6972327f460e7",
+      "native/src/temporal_expression.hpp": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "native/src/temporal_float.hpp": "4375046380a9d5799c98662aca1aad1ceeac2242cbb49b988acc8aa91b10f5ec",
+      "native/src/temporal_join_plan.hpp": "f55a8b0d4c0ac440e3182b928fc2cb817985aa2f21b2b0c54d45ca57a0718b81",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "9ac8f87f680a08786194229a163603fb28c8e0f3115871fabda3a68e454376ef",
+      "native/src/temporal_scan_plan.hpp": "07ccb4fe75a97d0fd5086842fc5faacfc7889d2090656811425302e55a9181dc",
+      "native/src/temporal_schema.cpp": "5c4777b3d867d4a57aa5de3cebf457d425055296e6c2fad2c311455f98b41ea6",
+      "native/src/temporal_schema.hpp": "05ca882152b3f4de4599ee48305c942495759e2187c3bab40f5587961c6fbc14",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "92b340b4b1cdd1323bdee5a05355f830e4c228f224c15114f26d819a6389b69d",
+      "native/src/temporal_store_query.hpp": "e80a00868646321dfafcb81a43118611585eb7d3f150ac0390fe054c8c4053b6",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "native/src/temporal_value_domain.hpp": "097d130a57a72daf1d3b20222e10c74b4098bd63c9828d4c551049260ee332ed"
+    },
+    "library_sha256": "e2a4316f97b2061894b7621824d8c804ae3e5a0a99eb435a5d84941c46870dc6",
+    "extension_sha256": "fa24b595f142f9c5ed2635ceaba1572de9eb3167ec06b1e4522c2426b3a1dffc"
+  },
+  "source_sha256": {
+    "adapter/benchmark-reference.mjs": "08dac4e5f4fee003b62efdb5a28ffb9f3e0b11af260a72f65d5bfebf5b5b8521",
+    "adapter/native-entity.ts": "99a4a596ad477b41d027fdad8d1bfbbaf08c4ee2746477ff96e8aa87e12d1891",
+    "adapter/native-duckdb-port.mjs": "6312fc96f98eb12eb783c73c3c0c03a50ad0bfefb2497c67f5ae772328c179ba",
+    "native/catalog.sql": "ac0c79e9ebfbacd752cfc7e7c266f7a6a2443d59d2964c0cfd549e9f251e0a04",
+    "native/src/temporal_schema.hpp": "05ca882152b3f4de4599ee48305c942495759e2187c3bab40f5587961c6fbc14",
+    "native/src/temporal_schema.cpp": "5c4777b3d867d4a57aa5de3cebf457d425055296e6c2fad2c311455f98b41ea6",
+    "native/src/temporal_datalog.cpp": "77ba01a32f5b94141b192b0cee828e1a3120d8ecf1a3441055e6972327f460e7",
+    "native/src/temporal_command.cpp": "6ca1c74bf8fbe074cbebe29f154602373d625a80296546abc635043cdfcf6fa3",
+    "native/src/temporal_store_query.cpp": "92b340b4b1cdd1323bdee5a05355f830e4c228f224c15114f26d819a6389b69d",
+    "native/src/temporal_join_plan.hpp": "f55a8b0d4c0ac440e3182b928fc2cb817985aa2f21b2b0c54d45ca57a0718b81",
+    "native/src/temporal_scan_plan.hpp": "07ccb4fe75a97d0fd5086842fc5faacfc7889d2090656811425302e55a9181dc"
+  },
+  "ingestion": [
+    {
+      "entities": 64,
+      "elapsed_ms": 1501.985833,
+      "scope": "Complete sequential native reference commands, durable receipt decoding/checks; schema/root/open excluded."
+    },
+    {
+      "entities": 512,
+      "elapsed_ms": 12275.333334,
+      "scope": "Complete sequential native reference commands, durable receipt decoding/checks; schema/root/open excluded."
+    }
+  ],
+  "summary": [
+    {
+      "entities": 64,
+      "native_ms": 11.328457999999955,
+      "sql_ms": 36.36441600000012
+    },
+    {
+      "entities": 512,
+      "native_ms": 13.630166999999346,
+      "sql_ms": 39.23841700000048
+    }
+  ],
+  "samples": [
+    {
+      "entities": 64,
+      "mode": "native",
+      "round": 0,
+      "elapsed_ms": 11.328457999999955,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "sql",
+      "round": 0,
+      "elapsed_ms": 38.30458300000009,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "sql",
+      "round": 1,
+      "elapsed_ms": 36.04191700000001,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "native",
+      "round": 1,
+      "elapsed_ms": 11.231833999999935,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "native",
+      "round": 2,
+      "elapsed_ms": 12.216499999999996,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "sql",
+      "round": 2,
+      "elapsed_ms": 36.35149999999999,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "sql",
+      "round": 3,
+      "elapsed_ms": 36.36441600000012,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "native",
+      "round": 3,
+      "elapsed_ms": 12.08137499999998,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "native",
+      "round": 4,
+      "elapsed_ms": 9.610999999999876,
+      "rows": 64
+    },
+    {
+      "entities": 64,
+      "mode": "sql",
+      "round": 4,
+      "elapsed_ms": 38.64870799999994,
+      "rows": 64
+    },
+    {
+      "entities": 512,
+      "mode": "native",
+      "round": 0,
+      "elapsed_ms": 13.671916000001147,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "sql",
+      "round": 0,
+      "elapsed_ms": 39.91687499999898,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "sql",
+      "round": 1,
+      "elapsed_ms": 40.05962500000169,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "native",
+      "round": 1,
+      "elapsed_ms": 14.632792000000336,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "native",
+      "round": 2,
+      "elapsed_ms": 13.630166999999346,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "sql",
+      "round": 2,
+      "elapsed_ms": 39.23841700000048,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "sql",
+      "round": 3,
+      "elapsed_ms": 39.183750000000146,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "native",
+      "round": 3,
+      "elapsed_ms": 13.299791999999798,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "native",
+      "round": 4,
+      "elapsed_ms": 12.926416999998764,
+      "rows": 512
+    },
+    {
+      "entities": 512,
+      "mode": "sql",
+      "round": 4,
+      "elapsed_ms": 36.684917000000496,
+      "rows": 512
+    }
+  ]
+}

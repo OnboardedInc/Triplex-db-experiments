@@ -1,0 +1,142 @@
+{
+  "format": "triplex-q-private-owned-client-plans/1",
+  "status": "SOURCE_ONLY_NOT_EXECUTABLE_NO_MANIFEST_OR_GRANT",
+  "scope": "CODEX_QLEVER_TRIPLEX_DATALOG_ONLY;NO_NATIVE142_ORCHESTRATION",
+  "sourceCopies": {
+    "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/source-copies.json",
+    "bytes": 23923,
+    "sha256": "16a2f7856ed9f6c11c747ae00431ef3e43f4cb796c3a91aafa4704ae3fd28b77"
+  },
+  "arms": [
+    "control",
+    "candidate"
+  ],
+  "interArmDifference": [
+    "src/compiler.ts"
+  ],
+  "sameBorrowedClientApiSource": {
+    "path": "packages/qlever/.artifacts/owned-client-seam-source-v1/control/src/index.ts",
+    "bytes": 3905,
+    "sha256": "a13aad49ecf2c4380ddeeda9b3d08ccabedac32f36b7118c69133d65f1cf36d8"
+  },
+  "build": {
+    "commands": [
+      "ordinary tsdown",
+      "ordinary tsc --declaration --emitDeclarationOnly"
+    ],
+    "sequentialArms": true,
+    "proposedResources": {
+      "memoryBytes": 2147483648,
+      "cpuUnits": 2,
+      "diskBytes": 536870912,
+      "timeoutMilliseconds": 300000,
+      "outerNodeHeapMiB": 256,
+      "childNodeHeapMiB": 768
+    },
+    "outputOwnership": "Fresh separately owned Q package descendants; never write dist into these frozen inputs or original70-member artifact.",
+    "inputsBeforeAnyGeneration": "Exact21 source/config members per arm, current public Core, full declared installed runtime/type/compiler graph via reviewed multiversion collector, Node/flags/config/recipe and source preimages.",
+    "actualOutputsRequiredBeforeLaterEnvelopes": true,
+    "artifactGate": "Index API/JS/DTS/maps may change from seam; compiler JS/map may differ only by existing reviewed string branch. Inspect any additional member/JS/DTS drift; never loosen retrospectively.",
+    "noNewOutputHashesInvented": true
+  },
+  "pureObservation": {
+    "source": {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.test.mjs",
+      "bytes": 5990,
+      "sha256": "3152206b2215d0e876e190f6907496cb53917d3121e1ecbbaa4d8001e33eaba1"
+    },
+    "definitions": [
+      "admitted query update command preserve receiver arguments original Promise and result identity",
+      "caught inner rejection is observed before the consumer and blocks every next request",
+      "absolute deadline refuses transport without a timer and after a deferred callback advances time",
+      "signal abort is sticky even if the admitted original later resolves",
+      "synchronous original throws keep their exact cause and make uncertainty sticky",
+      "local typed constraint after a fulfilled original response does not fabricate uncertainty",
+      "observer callback failure stays contained and refuses later dispatch",
+      "explicit cancel and close retain original Promises and never clear prior uncertainty"
+    ],
+    "executed": 0,
+    "proposedResources": {
+      "memoryBytes": 805306368,
+      "cpuUnits": 1,
+      "diskBytes": 134217728,
+      "timeoutMilliseconds": 120000
+    },
+    "runner": "Future exact source-bound Node24 builtin TAP; no SDK/network/hold import.",
+    "countsAreDefinitionsOnly": true
+  },
+  "generatedSdkFake": {
+    "source": {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/sdk-observation.test.mjs",
+      "bytes": 3819,
+      "sha256": "25a8053bf34163391564bb30e3fe2344d94935dde3c642c843c08e6a5a63cd27"
+    },
+    "definitions": [
+      "real public runtime may catch an inner ReadError but observed borrowed client keeps it unknown",
+      "real public local Pagination failure after successful metadata stays a local typed constraint"
+    ],
+    "executed": 0,
+    "proposedResources": {
+      "memoryBytes": 805306368,
+      "cpuUnits": 1,
+      "diskBytes": 134217728,
+      "timeoutMilliseconds": 120000
+    },
+    "requires": "Actual anchored generated public package per arm; copy test/helper under private package probes for ordinary self-reference, current public Core/Effect identity, no ancestor fallback.",
+    "fakeClientOnlyNoHttp": true,
+    "scope": "Consumed inner metadata ReadError vs local PaginationCursorError and borrowed close ownership; no native/SDK-server acceptance."
+  },
+  "publicDtsWitness": {
+    "positive": {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/public.types.positive.ts",
+      "bytes": 1138,
+      "sha256": "40d34057d3de734dc5eb47ce0af20db1c261bd4f9d175ac40b1c208a77af4923"
+    },
+    "unmarkedNegative": {
+      "path": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/public.types.negative.ts",
+      "bytes": 355,
+      "sha256": "5d58314e74979cc4c8ff062c56fa7024bffc20391e81f8a743fe8e23acc9678e"
+    },
+    "proposedResources": {
+      "memoryBytes": 1610612736,
+      "cpuUnits": 2,
+      "diskBytes": 134217728,
+      "timeoutMilliseconds": 120000
+    },
+    "requires": "Actual generated per-arm public DTS and unchanged strict witness-only options; exact positive success and incomplete-client negative location/type diagnostics.",
+    "wholeHarnessTypeClaim": false,
+    "broad103DiagnosticsRemainFailed": true
+  },
+  "laterDatalogOnlyQualification": {
+    "sequence": [
+      "unchanged foundation44 F1",
+      "unchanged71 current+reopen=142 Datalog F1"
+    ],
+    "proposedResourcesPerArm": {
+      "memoryBytes": 939524096,
+      "cpuUnits": 1,
+      "diskBytes": 134217728,
+      "timeoutMilliseconds": 900000
+    },
+    "dispatchMilliseconds": 840000,
+    "settlementMilliseconds": 45000,
+    "normalRestorationMilliseconds": 15000,
+    "requires": "Separately frozen worker integrating observer snapshot+notification with outer fence and default-unresolved marker; exact actual build/result/oracle/preimage bindings and independent source/actual review plus root grant.",
+    "native142Included": false,
+    "sameObservedClientForRuntimeAndIntervals": true
+  },
+  "costs": [
+    "Borrowed shared client lifetime requires caller retirement after all scopes/users; close is not physical drain.",
+    "One original Promise reaction and bounded safe event/counter/listener work per admitted method plus active-deadline/admission checks; charge rather than assume neutral timing.",
+    "Additional API/observer maintenance and fake/type/functional qualification for both control and candidate."
+  ],
+  "operationsRun": {
+    "sourceModulesImported": 0,
+    "tests": 0,
+    "compilersOrBuilds": 0,
+    "sdkConnections": 0,
+    "nativeOrSettingsCalls": 0,
+    "operationalHoldFileActions": 0,
+    "queueOrPolicyMutation": 0
+  }
+}

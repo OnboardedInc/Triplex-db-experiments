@@ -1,0 +1,196 @@
+{
+  "schema": "td.native_writer_qualification/1",
+  "status": "passed_correctness_only_unpromoted",
+  "sourceCommit": "0eb57f6aa62632eae25acc709987d34f594905ea",
+  "baseWriterSourceReceiptCommit": "d9137f5c53b94dec813ee3e490b69e22d31defe7",
+  "newTestSourceCommit": "88a2c4e18635a010d67deb49930675ed81f877a3",
+  "artifactPins": {
+    "core": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "core_plain": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "core_manifest": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "control": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "owner": "0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9",
+    "owner_plain": "884e708dcb9161d9d1c94790bec52b1cf1a388bf42115c7ed98e25b4f502fccd",
+    "owner_manifest": "1dcf48f7dfa69262f6b18bdb48ac2020205c9f702a63737cb13299297f749331",
+    "writer_addon": "02270b0840dd4bab9c3beb00986e06bc0e8125c2971f9ac6f9a407f6fe03418c",
+    "entity_sdk": "48c6a5d6443fc706e59e31779437e4b24d7ce6ea6de1b07d22501f54e8b9d8f8",
+    "schema_sdk": "723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226",
+    "port": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+    "new_test_js": "d8f18049147a3efa22047b36905a4347496c82bcc132386f3466fbefe7319570",
+    "new_test_dts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "unchanged_full512_js": "1c7db04cfaf412c124c36bf4923bdbfccc97e0b50b90fd029c8a3d16fc18358b",
+    "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "nativeSourcePinsCount": 48,
+  "sdkDependencyPinsCount": 395,
+  "compiledArtifactPinsCount": 186,
+  "ownedSourcePinsCount": 128,
+  "prePostMapsEqual": true,
+  "productionSourceChanges": false,
+  "nativeRebuild": false,
+  "packageInstall": false,
+  "initialSetupFailure": {
+    "receipt": "evidence/native-writer-values-stage-first-20261106.json",
+    "sourceCorrectionCommit": "0eb57f6aa62632eae25acc709987d34f594905ea",
+    "explanation": "Original authorized181+395 maps omitted three immutable core/control artifacts. First preparation stopped before TSC or engine; the separately authorized repair added exactly the three absent originals. No test, expected answer, budget or production code changed."
+  },
+  "limitations": [
+    "Four targeted public methods total across this gate; not full92/422 verification.",
+    "No timed performance, broad/anti promotion or universal throughput claim.",
+    "Expected results are the independently authored fixture/events; receipts were captured from actual public calls.",
+    "External compiler routes and selected entry files are pinned; no claim to inventory every transitive external compiler/type file."
+  ],
+  "engineLease": "explicitly_released_after_terminal_and_postpins",
+  "gate": "unchanged_full512_exact_positive_filter",
+  "actualTestTerminal": {
+    "command": [
+      "node",
+      "--test",
+      "--test-concurrency=1",
+      "--test-reporter=tap",
+      "--test-name-pattern=^independent full512 native patch trace retains every returned cut and restores all256 entities$",
+      "build/adapter/test-sdk-admission-independent.js"
+    ],
+    "startedAtUtc": "2026-11-06T06:40:27.206444+00:00",
+    "sourceCommit": "0eb57f6aa62632eae25acc709987d34f594905ea",
+    "unchangedTestSource": "d9137f5c53b94dec813ee3e490b69e22d31defe7",
+    "environment": {
+      "UV_THREADPOOL_SIZE": "4",
+      "TD_SDK_ADMISSION_SOURCE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+      "TD_SDK_ADMISSION_RECIPE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json"
+    },
+    "pid": 61169,
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T06:41:16.710942+00:00"
+  },
+  "tap": {
+    "methods": 1,
+    "pass": 1,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 49465.6575
+  },
+  "firstEngineAttempt": true,
+  "unchangedSourceAtBaseExact": true,
+  "source": {
+    "file": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+    "identity": {
+      "bytes": 52178944,
+      "mtimeNs": 1793904791622186339,
+      "ctimeNs": 1793904791622186339
+    },
+    "sha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "walAbsent": true
+  },
+  "recipe": {
+    "file": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json",
+    "identity": {
+      "bytes": 1085833,
+      "mtimeNs": 1793904791633451089,
+      "ctimeNs": 1793904791633451089
+    },
+    "sha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4"
+  },
+  "cloneHelperSha256": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+  "testMethod": "independent full512 native patch trace retains every returned cut and restores all256 entities",
+  "actualReadsPerClient": [
+    513,
+    512,
+    513,
+    513,
+    512,
+    513,
+    512,
+    512,
+    513,
+    513,
+    512,
+    512,
+    512,
+    513,
+    513,
+    514
+  ],
+  "actualExactReadsTotal": 8202,
+  "actualPatchAcks": 512,
+  "clockAndReceiptChecks": {
+    "sourceK": "577",
+    "probeK": "585",
+    "allRemovedK": "841",
+    "restoredK": "1097",
+    "seedBatches": 8,
+    "membersPerBatch": 32,
+    "patches": 512,
+    "assertionsPerPatch": 2,
+    "retractionsPerPatch": 2,
+    "delayedFullReceiptReplayOrdinals": [
+      0,
+      255,
+      256,
+      511
+    ]
+  },
+  "unchangedCaps": {
+    "readers": 16,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxQueuedReads": 32,
+    "retainedMaxFacts": 200000,
+    "retainedMaxBytes": 1073741824,
+    "queryMaxInputFacts": 200000,
+    "queryMaxIntermediateRows": 200000,
+    "queryMaxIntermediateBytes": 536870912,
+    "queryMaxOutputRows": 256,
+    "queryTimeoutMs": 60000,
+    "testTimeoutMs": 240000,
+    "UV_THREADPOOL_SIZE": "4"
+  },
+  "coverage": [
+    "Every actual returned cut checked against immutable issued events, including commit before JS ACK resumption.",
+    "Explicit old/latest cuts, all-removed/restored states, complete receipt replay with no K advance, retained history and unmanaged presence.",
+    "Owner revalidation, drained16-port pool, close/reopen, unchanged source DB/recipe and absence of source WAL."
+  ],
+  "sourceAndDependencyPrePostExact": true,
+  "headerPinsCount": 36,
+  "nodeExecutable": {
+    "file": "[LOCAL_PATH_0043]",
+    "sha256": "6f2e835e57feb7a29ffcd53a4d4eb60224ec264a1e002c3ba6d99999ea29807d"
+  },
+  "sdkResolution": {
+    "api": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js",
+    "bindings": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+    "platform": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "nodeExecutable": "[LOCAL_PATH_0043]",
+    "nodeVersion": "v24.13.0"
+  },
+  "preservedOwnedDatabase": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/build/sdk-admission-independent-mpShWw/facts.duckdb",
+  "raw": [
+    {
+      "path": "evidence/native-writer-full512-20261106-raw/before-first.json",
+      "original": "build/qualification-values-512-20261106-01/before-first.json",
+      "bytes": 108513,
+      "sha256": "93589de738a7d73dd397a46efcedbd2b73f3dd4fa81f9e084e4ecd2340bedd77"
+    },
+    {
+      "path": "evidence/native-writer-full512-20261106-raw/full512-first.tap",
+      "original": "build/qualification-values-512-20261106-01/full512-first.tap",
+      "bytes": 702,
+      "sha256": "7207b4e6b32e7c631427d87ff344eb3ccd0ad5af7047cd20623585e6a846eaef"
+    },
+    {
+      "path": "evidence/native-writer-full512-20261106-raw/full512-first-terminal.json",
+      "original": "build/qualification-values-512-20261106-01/full512-first-terminal.json",
+      "bytes": 984,
+      "sha256": "e0acb13ceb2095f72f810e464c38a31ed75b6d41bf154400272564c16a92b08e"
+    },
+    {
+      "path": "evidence/native-writer-full512-20261106-raw/after-first.json",
+      "original": "build/qualification-values-512-20261106-01/after-first.json",
+      "bytes": 108513,
+      "sha256": "93589de738a7d73dd397a46efcedbd2b73f3dd4fa81f9e084e4ecd2340bedd77"
+    }
+  ]
+}

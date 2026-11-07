@@ -1,0 +1,19 @@
+{
+  "archive": "goal3-closed-research-QA-and-selected-contract.tar.gz",
+  "bytes": 59026,
+  "sha256": "dfa75dd852ca7e51e54c32c3994b71d2f9a436203e04303c5a74944d7051e28c",
+  "entries": 42,
+  "source_bytes": 176431,
+  "modes_preserved": [
+    "0444",
+    "0644"
+  ],
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 78704,
+      "sha256": "34b050a2d7e25551aa87f8f5de8dfcea4bf39d79e5cb211f97894796024bfc3e",
+      "git_sha": "7a23d51d4c9fe3a54ab7828ef074e673af75285b"
+    }
+  ]
+}

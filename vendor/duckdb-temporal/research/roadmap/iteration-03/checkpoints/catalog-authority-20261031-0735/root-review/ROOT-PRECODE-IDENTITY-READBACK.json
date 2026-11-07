@@ -1,0 +1,22 @@
+{
+  "utc": "2026-10-31T07:29:09.001092+00:00",
+  "scope": "stdlib source/hash/mode readback only, no application import or execution",
+  "api_manifest_sha256": "407cdfc26359bca23341ca27df980c2da9dcd3a91a35001940bf41fa307af5fa",
+  "api_files": 7,
+  "api_bytes": 113447,
+  "api_all_exact": true,
+  "source_manifest_sha256": "5e30c8b2dfaaac103c647a42440fb7d6c39d83846cc107913452b4e62db2c384",
+  "source_files": 280,
+  "candidate_and_working_source_exact": true,
+  "artifacts": {
+    ".agent-logs/goal3-coordinator/integration/candidate-002/engine/build/temporal_datalog.duckdb_extension": {
+      "bytes": 235446,
+      "sha256": "260b430a462a66b53e71728e860e9920b524a31c63dd117158e8524d73353a1a"
+    },
+    "temporal-roadmap-20261030/implementation/engine/build/temporal_datalog.duckdb_extension": {
+      "bytes": 192606,
+      "sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d"
+    }
+  },
+  "pending": null
+}

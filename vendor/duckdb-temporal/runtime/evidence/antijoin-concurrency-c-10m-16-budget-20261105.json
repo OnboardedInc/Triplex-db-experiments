@@ -1,0 +1,109 @@
+{
+  "schema": "td.antijoin-cost-budget/1",
+  "status": "PREDECLARED_UNRUN",
+  "fixtureSize": 10000000,
+  "coreSha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+  "querySha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+  "UV_THREADPOOL_SIZE": "4",
+  "configuration": {
+    "readers": [
+      16
+    ],
+    "samples": 20,
+    "warmup": 1,
+    "durationSeconds": 60,
+    "maxWrites": 12000,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "readAdmission": 3
+  },
+  "baseline": {
+    "file": "../build/antijoin-qualification-20261105-02/100k.json",
+    "sha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474"
+  },
+  "profiles": [
+    {
+      "readers": 16,
+      "maxFixedP50Ms": 3500,
+      "maxFixedP99Ms": 6500,
+      "minMixedQueriesPerSecond": 4.8,
+      "maxMixedP50Ms": 3200,
+      "maxMixedP99Ms": 6500,
+      "minAcknowledgedWrites": 40,
+      "minAcknowledgedWritesPerSecond": 0.5,
+      "maxSampledRssBytes": 3500000000
+    }
+  ],
+  "runtime": "accepted-032-runtime",
+  "runtimePins": {
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "baselineReceipt": {
+    "file": "native-antijoin-cost-100k-20261105.json",
+    "sha256": "b20cc58126b0d77cd27fbeb80f2b37c814b8e32c0482efc26921b80d260affba"
+  },
+  "scope": "One fresh original10m clone and child,16 logical clients/reader connections, FIFO3 whole-call admission, unchanged numeric16-client gates. One-reader baseline failure remains and full promotion is ineligible. No10m C run has occurred.",
+  "requiredCorrectness": "Exact typed answer and returned-K oracle after every call; scoped input exact/minus-one proof; zero query or acknowledgment errors; all 16 leases used/returned; reuse; a write in every full 10 s window; consecutive receipts; final/reopen and unchanged source.",
+  "experiment": {
+    "cohort": "C",
+    "mechanism": "FIFO admission of at most3 whole query calls; writer bypasses this gate",
+    "logicalClients": [
+      16
+    ],
+    "nativePoolConnections": [
+      16
+    ],
+    "queryAdmissionLimits": [
+      3
+    ],
+    "DuckDBThreads": 4,
+    "UV_THREADPOOL_SIZE": "4",
+    "publicApiChanged": false,
+    "timing": "readCell starts before FIFO entry; queue wait included in full-call latency; timeout includes queue wait",
+    "physicalOwnership": "test-only NativeDuckDBPort control-scope IDs distinct from logical client indices and admission counters; not native task instrumentation",
+    "unchangedAbsoluteGates": true,
+    "sourceBase": "773f7746466caf0ba4eff70a741e9594d07f39cc",
+    "fullQualificationPending": true,
+    "oneReader": {
+      "rerun": false,
+      "status": "Original control remains failed",
+      "reason": "FIFO cap3 cannot affect one-client execution; no new one-reader outcome is implied."
+    },
+    "fullPromotionEligible": false,
+    "diagnosticOnly": "Isolated16-client scheduling gate; preserves unchanged16-client absolute limits. Even a full16-client pass cannot close the failed one-reader/full-scale gate."
+  },
+  "controlEvidence": {
+    "file": "../build/antijoin-qualification-20261105-04/10m.json",
+    "sha256": "8da3ec523841a4fd5bea597e0641fa40a5192fc91474c1219fb6fc146bc0596f",
+    "result": "failed_budget; correctness/lifecycle/source passed"
+  },
+  "harnessSha256": "6210ee4b20442546340e02fd884fe1d42373beb625af6a07a99012a51e3469a3",
+  "control16Evidence": {
+    "file": "../build/antijoin-runs/run-AKX0AU/readers-16.json",
+    "sha256": "04aa0cbf396d9a8129241d102feaa81ff5f4bc6381f6f4a1c2d8fab680a951e6",
+    "queriesPerSecond": 3.2385476906656936,
+    "p50Ms": 4121.2988329999935,
+    "p99Ms": 7998.524874999988,
+    "acknowledgedWrites": 15
+  },
+  "sourceFixture": {
+    "sha256BeforeAndAfter": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "knowledgePosition": "39087",
+    "logicalInputFacts": 1680202,
+    "positiveFacts": 256,
+    "rightSideFacts": 1679946
+  },
+  "sharedProtocol": {
+    "file": "CONCURRENT-INGESTION-COHORT.md",
+    "sha256": "7dbe9e0b6b0722586163fe07b06fbcdc1a7938a482a18acf9fc6c03fa0007791",
+    "scopeException": "Parent explicitly scheduled16-only diagnostic because the mechanism cannot affect one client."
+  }
+}

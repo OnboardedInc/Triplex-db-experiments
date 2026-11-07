@@ -1,0 +1,148 @@
+{
+  "schema": "native-owned-query/1",
+  "scope": "Experimental scalable SQL reads guarded at execution by an actual audited native owner. Strict query entry points retain full retained-carrier and entity-history checks.",
+  "core_build": {
+    "engine": "2.0.0",
+    "extension_version": "0.19.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "extension_sha256": "84aedf1b0c68c7b31c9649752f2156ff5d7e31e3ab080548d594f68fe0e420ee",
+    "library_sha256": "8b84278b1f020dae6f41cc989f468bd949eb412075e301df32a1ffa1ce285d9d",
+    "catalog_sql_sha256": "dd6601e31c17a6f3af115cc9045d25198b5492dc62bd197c97b3eae2bdf80ced"
+  },
+  "companion_build": {
+    "schema": "native-owner-probe-build/1",
+    "engine": "2.0.0",
+    "abi": "CPP",
+    "test_command": [
+      "node",
+      "adapter/test-owner-probe.mjs"
+    ],
+    "source_revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "source_archive_sha256": "93e3d1f9c84b6ec3493237d21565c01c2c19b9862e54e5552d3d7999ccc3bbb4",
+    "headers_sha256": {
+      "duckdb/common/exception.hpp": "225053a2f1bb4171d3fa066e78783800210041b31f5c06ecb839239ea59c4e51",
+      "duckdb/common/types/data_chunk.hpp": "2a4201a20b74f0dfe17d92e0d1d9b52684a11e0c7010cdc21ce11510f43cb649",
+      "duckdb/common/types/value.hpp": "2bf173b58b09f1292abaa89da509860cce7c9d2ae01f4c7909dc0f0f8b0a32fe",
+      "duckdb/function/scalar_function.hpp": "e4c44b31c3c853a13160da48d69c8209deec936fe0e4d14e94e31adf9e4fb7dd",
+      "duckdb/main/client_context.hpp": "c753b9242ec947e56db73881caa12476648dc44b38711a9aa829493cf4438691",
+      "duckdb/main/client_context_state.hpp": "a4ec23711715d9163f86cd7533c58fbbb8a3d5f2934b7a2e563ee31b94056447",
+      "duckdb/main/connection_manager.hpp": "66a506a2a6fcdc927a4caadf5709bda6affdf180b23544ab6d7180457408f20d",
+      "duckdb/main/database.hpp": "45834eb51cdb83e6ead27c580399331186289fbca2fb3500a15dccadc55fbb68",
+      "duckdb/main/connection.hpp": "bf2c26ff4b8c26e1e6bf58a1944a40db9bf237f4db979d4c0fc106b175ca1556",
+      "duckdb/main/query_result.hpp": "d614035b27d91e08e98f1caffca22e3f1518feb67a975a37097b495c50ab50b3",
+      "duckdb/main/query_parameters.hpp": "dadc90d8f8b820966affe3cae9af05e8ae2a7cb177c3f95b652b7b209be8a326",
+      "duckdb/common/enums/query_result_state.hpp": "9a8551fb1c73f1c43f4d1232c95283c4f50bccffc26775f9672d5445c940fa5f",
+      "duckdb/main/extension/extension_loader.hpp": "8518760b6c391ace37c9ede72f0e4fbcc63cdb1cf750a06427849af297f490dd",
+      "duckdb/planner/extension_callback.hpp": "39a1227729d44d73da36f03f246d4602a0c5216fb46a8c2fb272b86fadca4599",
+      "duckdb/transaction/meta_transaction.hpp": "1a5d1f9fbde38dfb541dea6b2774ca6360450e0b6ff983bcc97163bd9a60e2fa"
+    },
+    "dependency_license_sha256": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3",
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "core_extension_sha256": "84aedf1b0c68c7b31c9649752f2156ff5d7e31e3ab080548d594f68fe0e420ee",
+    "probe_source_sha256": "a9136b8de83ece247185d32edc07ea4c13bcc215f48522307d911f90e8bce263",
+    "integrity_sources_sha256": {
+      "native/src/temporal_integrity.hpp": "30783255f0e0115d6b01aa01e5d692b8177649da9c344db3c255b1f45d580f1a",
+      "native/retained_validity.sql": "c9f862a4c7b7d4fe5910c8687799c79c35ffbe49f2e188aefb628395162eb54b",
+      "native/catalog.sql": "ac0c79e9ebfbacd752cfc7e7c266f7a6a2443d59d2964c0cfd549e9f251e0a04",
+      "build/catalog_sql.hpp": "dd6601e31c17a6f3af115cc9045d25198b5492dc62bd197c97b3eae2bdf80ced"
+    },
+    "library_sha256": "c890632178f53ab161dd60b3981ecf08121c51430354a3809b904bb88aed695a",
+    "extension_sha256": "1a72f2ac40722613fff29a5ed66a0891c5d12108c7ef704baf1a2757b3bb5f8c"
+  },
+  "source_sha256": {
+    "native/src/temporal_integrity.hpp": "30783255f0e0115d6b01aa01e5d692b8177649da9c344db3c255b1f45d580f1a",
+    "native/src/temporal_store_query.hpp": "3f135c45509c27346986034feb4a26d840e1e3b9bf9584511e5f57dae92cde70",
+    "native/src/temporal_store_query.cpp": "66aeca7a385419418add4afa5549ac84fa6adb18b9f9d9317916b530506037b8",
+    "native/src/temporal_datalog.cpp": "911e1134e695b92c42e585f0f8cc6591f2c19a3399594a482752df49f65a3d75",
+    "native/owner_probe/owner_probe.cpp": "a9136b8de83ece247185d32edc07ea4c13bcc215f48522307d911f90e8bce263",
+    "build_owner_probe.py": "11f468814f50c94ddeb8f9e6fb5d6e87e8375348a3878d9821aba09c218ded35",
+    "adapter/test-owned-query.mjs": "be4235d91b5063d714817da43b57012aed5def14ed0d86388b45577c21121d4c",
+    "test_owner_pairing.py": "3e7773e8752bd30525b9a47fc29862d84e5276d3f5966ceb12d575aa37ad73ad"
+  },
+  "verification": {
+    "node_command": "node --test --test-reporter=tap adapter/test-owned-query.mjs adapter/test-owner-probe.mjs adapter/test-owner-activation.mjs",
+    "first_attempt": {
+      "passed": 18,
+      "failed": 1,
+      "duration_ms": 8506.429417,
+      "test_source_sha256": "7a8318edc1b963d69fd6e8c18c92259fd88cbdffd69a1d41ac5cf706c737a948",
+      "tap_sha256": "b5b7578b645bb39588cd04fbb633f1600804ca8f8d95b6109cffc327f27d3b93",
+      "diagnostic": "Binder Error: td_query_store_owned_sql_v1 received STRING_LITERAL,HUGEINT,HUGEINT,HUGEINT,HUGEINT,HUGEINT,HUGEINT,HUGEINT; signature requires VARCHAR followed by BIGINT.",
+      "resolution": "The direct Node test now casts numeric parameters to BIGINT. Native implementation and artifact were unchanged."
+    },
+    "final_attempt": {
+      "passed": 19,
+      "failed": 0,
+      "duration_ms": 8133.961167,
+      "tap_sha256": "e49dec3280be6d4558827a94a3f6151d0a19330ff5a0be1c778b505f9560a11a",
+      "tests": [
+        "owned queries require the companion and a real audit instead of enrollment-only arm",
+        "owned scans joins count and typed aggregates preserve strict answers and identify their profile",
+        "cached owned templates recheck the current audited generation on every execution",
+        "a failed retained-history revalidation keeps owned queries invalid and strict queries reject corruption",
+        "owned plans retain scalable input intermediate output and unsupported-plan admission",
+        "concurrent owned and strict readers return exact explicit and latest committed cuts after revalidation",
+        "actual retained audit activates only after the caller query and transaction acknowledge",
+        "inactive corrupt history and outer query failure cannot publish an audited owner",
+        "explicit caller and peer transactions reject activation and permit later clean revalidation",
+        "transactions opened before observer installation require fresh enrollment",
+        "unknown connections and fresh peer transactions discard in-progress audit candidates",
+        "outer interruption during delayed activation leaves the owner invalid",
+        "outer interruption is forwarded during a real retained-history audit",
+        "reopen discards live ownership and requires another successful full audit",
+        "CPP companion loads into the packaged Node instance and enrolls real contexts",
+        "an unknown connection invalidates before its first SQL statement",
+        "prepared execution repeats the native owner guard",
+        "explicit dispatch invalidation precedes raw SQL and transaction callbacks are observable",
+        "a fresh instance starts unarmed without inheriting another owner scope"
+      ]
+    },
+    "strict_regression": {
+      "command": "python -m unittest -v test_native_scale",
+      "passed": 6,
+      "failed": 0,
+      "duration_seconds": 16.689,
+      "log_sha256": "67cafe9a9906c6c05cd2cc6acbfabc0d04a12c13f7070656a2d9a780dbfaeb64",
+      "native_ingested_assertions": 1003529
+    },
+    "pairing_regression": {
+      "command": "python -m unittest -v test_owner_pairing",
+      "passed": 3,
+      "failed": 0,
+      "duration_seconds": 0.011,
+      "log_sha256": "8b99f6bf53baecb61538cb08c6b8104697dfbf11f9478218e7606912933c5dad",
+      "cases": [
+        "stale core extension hash",
+        "stale shared integrity helper hash",
+        "stale compiled catalog hash"
+      ],
+      "fixture": "Temporary local files with a mocked compiler. Every mismatch rejects before compilation."
+    }
+  },
+  "interface": {
+    "pragma": "td_query_store_owned(program,valid_at,known_at,max_input_facts,max_intermediate_rows,max_intermediate_bytes,max_output_rows,max_output_bytes,control)",
+    "scalar": "td_query_store_owned_sql_v1(program,valid_at,known_at,max_input_facts,max_intermediate_rows,max_intermediate_bytes,max_output_rows,max_output_bytes)",
+    "execution_guard": "td_owner_probe_validated_check()",
+    "activation": "td_owner_probe_activate(0)",
+    "route": "sql",
+    "reasons": [
+      "owned_scalable_single_atom",
+      "owned_scalable_edb_join",
+      "owned_scalable_count",
+      "owned_scalable_aggregate"
+    ]
+  },
+  "limitations": [
+    "The owned entry points require a matching companion and successful full retained audit activation. Enrollment-only arm cannot satisfy the execution guard.",
+    "The host must keep enrolled handles private, submit standalone activation, and invalidate before raw or legacy dispatch. The native observer does not prevent arbitrary SQL on an enrolled handle.",
+    "No fast native-write maintenance is included. A host invalidation requires full revalidation before subsequent owned reads.",
+    "The only planner difference is the integrity CTE and explicit owned reason prefix. DISTINCT, typed value semantics, temporal cuts, and logical input/intermediate/output gates are retained.",
+    "Logical query budgets do not guarantee a physical DuckDB allocator or process-memory ceiling.",
+    "These are functional parity and invalidation tests. No performance adoption claim has been measured in this slice.",
+    "The worker uses copied integration build metadata version 0.19.0. The integrating branch must rebuild its core and then the companion so their pinned hashes agree."
+  ],
+  "review": {
+    "reviewer_role": "independent orchestration operations agent",
+    "result": "No blocker after checking shared control/attachment/FP guard retention, volatile validated ownership, unchanged planner bounds, and explicit owned reasons. Trusted-dispatch contract remains required."
+  }
+}

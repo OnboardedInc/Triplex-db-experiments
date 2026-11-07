@@ -1,0 +1,461 @@
+{
+  "schema": "td.native-writer-broad-forward-receipt/1",
+  "recordedAtUtc": "2026-11-06T07:19:23.761708+00:00",
+  "status": "FORWARD_27_OF_27_PASS",
+  "planCommit": "9499d3b410be5a18183eb625f3c66df711b53b43",
+  "labSourceCommit": "213bf0b6e9f30703ee35f937d5fb414a49a4d8ce",
+  "nativeSourceCommit": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "comparison": "matched querycontract2 readerwide18context SDK transport versus CPP transport; not originalB0",
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "sourceSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+  "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+  "closureBeforeBetweenAfterMatched": true,
+  "sourceMetadataAndNoWalMatched": true,
+  "calculatorSha256": "06d188bc21ed6f36c7207aa4249ab4f8ca3ed1d7caadc08b4302645e127d18d8",
+  "numericSummarySha256": "90e2fe05261ea030e5fc31b3aa6510b265c4a4188fd30cfc9245069f41d70862",
+  "controlAbsoluteMisses": [],
+  "metrics": {
+    "control": {
+      "qps": 5.744189508689785,
+      "p50": 2540.754082999978,
+      "p99": 4640.975166999997,
+      "acks": 50,
+      "ackRate": 0.8276791798042794,
+      "rss": 2803597312
+    },
+    "candidate": {
+      "qps": 5.669545892070055,
+      "p50": 2769.215082999988,
+      "p99": 4715.080124999979,
+      "acks": 1163,
+      "ackRate": 19.363173244489996,
+      "rss": 2808201216
+    },
+    "qpsRatio": 0.9870053701210921,
+    "ackRateRatio": 23.39453947490716,
+    "mixedP50Ratio": 1.0899185802863127,
+    "mixedP99Ratio": 1.0159675402977613,
+    "rssRatio": 1.0016421416800103
+  },
+  "fixed": [
+    {
+      "readers": 1,
+      "kind": "count",
+      "control": {
+        "p50": 467.3129579999986,
+        "p99": 471.0488749999986,
+        "samples": 5
+      },
+      "candidate": {
+        "p50": 437.91291699999965,
+        "p99": 455.05983299999934,
+        "samples": 5
+      }
+    },
+    {
+      "readers": 1,
+      "kind": "grouped_count",
+      "control": {
+        "p50": 495.5700829999987,
+        "p99": 519.0538750000014,
+        "samples": 5
+      },
+      "candidate": {
+        "p50": 530.6565840000003,
+        "p99": 612.8195830000004,
+        "samples": 5
+      }
+    },
+    {
+      "readers": 1,
+      "kind": "projection",
+      "control": {
+        "p50": 14.210542000000714,
+        "p99": 20.924332999995386,
+        "samples": 5
+      },
+      "candidate": {
+        "p50": 14.572291999997105,
+        "p99": 22.232458999998926,
+        "samples": 5
+      }
+    },
+    {
+      "readers": 4,
+      "kind": "count",
+      "control": {
+        "p50": 1044.2717499999999,
+        "p99": 1379.3581249999988,
+        "samples": 20
+      },
+      "candidate": {
+        "p50": 943.4157080000004,
+        "p99": 1171.2036660000012,
+        "samples": 20
+      }
+    },
+    {
+      "readers": 4,
+      "kind": "grouped_count",
+      "control": {
+        "p50": 1168.0381249999919,
+        "p99": 1527.5511249999981,
+        "samples": 20
+      },
+      "candidate": {
+        "p50": 1041.2738339999923,
+        "p99": 1491.1554580000084,
+        "samples": 20
+      }
+    },
+    {
+      "readers": 4,
+      "kind": "projection",
+      "control": {
+        "p50": 18.765749999991385,
+        "p99": 24.30520799999067,
+        "samples": 20
+      },
+      "candidate": {
+        "p50": 20.63529199999175,
+        "p99": 28.877542000001995,
+        "samples": 20
+      }
+    },
+    {
+      "readers": 16,
+      "kind": "count",
+      "control": {
+        "p50": 3609.119083999991,
+        "p99": 6730.919458000004,
+        "samples": 80
+      },
+      "candidate": {
+        "p50": 3312.2106249999924,
+        "p99": 7185.386833000011,
+        "samples": 80
+      }
+    },
+    {
+      "readers": 16,
+      "kind": "grouped_count",
+      "control": {
+        "p50": 3983.8716249999998,
+        "p99": 6760.260458000004,
+        "samples": 80
+      },
+      "candidate": {
+        "p50": 3747.083292000025,
+        "p99": 7405.800749999995,
+        "samples": 80
+      }
+    },
+    {
+      "readers": 16,
+      "kind": "projection",
+      "control": {
+        "p50": 58.42766700001084,
+        "p99": 86.24604100000579,
+        "samples": 80
+      },
+      "candidate": {
+        "p50": 59.409708999999566,
+        "p99": 86.14100000000326,
+        "samples": 80
+      }
+    }
+  ],
+  "roles": {
+    "sdk_control": {
+      "pid": 71489,
+      "wrapperPid": 71479,
+      "startedAtUtc": "2026-11-06T07:05:11.382849+00:00",
+      "exitedAtUtc": "2026-11-06T07:09:35.629073+00:00",
+      "elapsedMs": 264245.94658380374,
+      "status": "passed",
+      "cells": 10,
+      "successfulSamples": 667,
+      "firstReads": 10,
+      "mixedReads": 352,
+      "mixedKinds": {
+        "count": 117,
+        "grouped_count": 118,
+        "projection": 117
+      },
+      "mixedCuts": {
+        "fixed": 80,
+        "latest": 272
+      },
+      "mixedWallMs": 61279.315292000014,
+      "mixedDrainMs": 1279.3152920000139,
+      "fullAckWindows": [
+        7,
+        8,
+        9,
+        8,
+        9,
+        8
+      ],
+      "finalK": "39137",
+      "cpu": {
+        "userMicroseconds": 421835002,
+        "systemMicroseconds": 1575608,
+        "totalMicroseconds": 423410610,
+        "averageCores": 6.909519272244155,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      "sampledPoolMaximum": 16,
+      "poolAfter": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "routeCounters": {
+        "nativeEnrollment": 11,
+        "nativeGenerated": 0,
+        "sdkGenerated": 80,
+        "errors": 0,
+        "unknown": 0
+      },
+      "exactSixImages": [
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "cleanup": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "closedOwnedClone": {
+        "path": "<qualified-build02-runtime>/build/scale-runs/20261106T070511523Z-77844a00/facts-10000000.duckdb",
+        "walAbsent": true,
+        "bytes": 3905433600
+      }
+    },
+    "cpp_candidate": {
+      "pid": 73616,
+      "wrapperPid": 73606,
+      "startedAtUtc": "2026-11-06T07:11:16.262257+00:00",
+      "exitedAtUtc": "2026-11-06T07:15:36.777072+00:00",
+      "elapsedMs": 260514.43854090758,
+      "status": "passed",
+      "cells": 10,
+      "successfulSamples": 668,
+      "firstReads": 10,
+      "mixedReads": 353,
+      "mixedKinds": {
+        "count": 119,
+        "grouped_count": 117,
+        "projection": 117
+      },
+      "mixedCuts": {
+        "fixed": 80,
+        "latest": 273
+      },
+      "mixedWallMs": 62262.48216700001,
+      "mixedDrainMs": 2262.482167000009,
+      "fullAckWindows": [
+        186,
+        197,
+        201,
+        203,
+        187,
+        188
+      ],
+      "finalK": "40250",
+      "cpu": {
+        "userMicroseconds": 480179972,
+        "systemMicroseconds": 2820536,
+        "totalMicroseconds": 483000508,
+        "averageCores": 7.757488798864448,
+        "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+      },
+      "sampledPoolMaximum": 16,
+      "poolAfter": {
+        "capacity": 16,
+        "available": 16,
+        "active": 0,
+        "waiting": 0
+      },
+      "routeCounters": {
+        "nativeEnrollment": 11,
+        "nativeGenerated": 1193,
+        "sdkGenerated": 0,
+        "errors": 0,
+        "unknown": 0
+      },
+      "exactSixImages": [
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+        "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+      ],
+      "cleanup": {
+        "liveHandles": 0,
+        "pendingCompletions": 0,
+        "asyncContexts": 0,
+        "asyncResources": 0,
+        "lifecycleOwners": 0
+      },
+      "closedOwnedClone": {
+        "path": "<qualified-build02-runtime>/build/scale-runs/20261106T071116384Z-4c35ee93/facts-10000000.duckdb",
+        "walAbsent": true,
+        "bytes": 3905433600
+      }
+    }
+  },
+  "prePostBindingFiles": {
+    "before": {
+      "sha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "between": {
+      "sha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "after": {
+      "sha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "rawIndex": {
+    "sdk_control/result.json": {
+      "originalSha256": "719be7553d13d5c85b3326b4eaddf6467e591e2d1b2094bdbc3a32686ae1c217",
+      "projectOnlySha256": "719be7553d13d5c85b3326b4eaddf6467e591e2d1b2094bdbc3a32686ae1c217",
+      "bytes": 349272,
+      "originalMtimeNs": 1793948975559292006
+    },
+    "sdk_control/terminal.json": {
+      "originalSha256": "8ea0e04cb95bf06e64c709c80bcbbfb3d876d53f35022bee39e1aaf755a87a5a",
+      "projectOnlySha256": "e3fd5a826c1365d01a9c3a4f59d99ec71522f3bb994124b0eff2ccf930d15d13",
+      "bytes": 1610,
+      "originalMtimeNs": 1793948975629815303
+    },
+    "sdk_control/stdout.log": {
+      "originalSha256": "36f1ea1171650250f0caa97324cc47b236efc89e5226dce24b6d0bfa04524891",
+      "projectOnlySha256": "36f1ea1171650250f0caa97324cc47b236efc89e5226dce24b6d0bfa04524891",
+      "bytes": 92,
+      "originalMtimeNs": 1793948975559552423
+    },
+    "sdk_control/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793948711383262209
+    },
+    "sdk_control/functional-checkpoint.json": {
+      "originalSha256": "74e013d2d16330e71fbcac147723843dedc293d4acaaf41c29785bc31dfbe94f",
+      "projectOnlySha256": "0d2c89133ed44f94c1a2e0ca75d8a8ce2851fd739bfec1b281b29db8596c6bd7",
+      "bytes": 3473,
+      "originalMtimeNs": 1793949032318545593
+    },
+    "sdk_control/process/sdk_control-71489-ready.json": {
+      "originalSha256": "b1f766ee1997f5153387381a832d97053c98241acf61396567c36ad3289eda19",
+      "projectOnlySha256": "b23784bcb8f1a06ba943182fc297f1a80cfe3431bc55be25609b96842f3d7a8d",
+      "bytes": 1696,
+      "originalMtimeNs": 1793948711519477841
+    },
+    "sdk_control/process/sdk_control-71489-exit.json": {
+      "originalSha256": "528adbb3b08b93af425e0a796e3e7de37a0bed7054a2bd550aa58a194496584a",
+      "projectOnlySha256": "1df6e2d744659f6c3d8062b82bad85a03c2b94534be398730f4cbfdc1a652bb3",
+      "bytes": 4894,
+      "originalMtimeNs": 1793948975569286179
+    },
+    "cpp_candidate/result.json": {
+      "originalSha256": "6982ce846138e242cd4fddfd6edf6ac000c5c3a766da07e9cdb208be9181e74b",
+      "projectOnlySha256": "6982ce846138e242cd4fddfd6edf6ac000c5c3a766da07e9cdb208be9181e74b",
+      "bytes": 802603,
+      "originalMtimeNs": 1793949336688408445
+    },
+    "cpp_candidate/terminal.json": {
+      "originalSha256": "16f2e13912c494bd67e577c2d67d40d27dfa3eb8324d20c6fef6789e7c502b3f",
+      "projectOnlySha256": "33da21d6a6c6b161ae74422c4099b5ceb016f0c78d22e38c7cd2bebfee6b4267",
+      "bytes": 1614,
+      "originalMtimeNs": 1793949336777950962
+    },
+    "cpp_candidate/stdout.log": {
+      "originalSha256": "36f1ea1171650250f0caa97324cc47b236efc89e5226dce24b6d0bfa04524891",
+      "projectOnlySha256": "36f1ea1171650250f0caa97324cc47b236efc89e5226dce24b6d0bfa04524891",
+      "bytes": 92,
+      "originalMtimeNs": 1793949336688828112
+    },
+    "cpp_candidate/stderr.log": {
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "projectOnlySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "originalMtimeNs": 1793949076262726204
+    },
+    "cpp_candidate/functional-checkpoint.json": {
+      "originalSha256": "b172257f9a29e397899b478873f6c104af7570707eb1fa2ccdc37c211b3768e0",
+      "projectOnlySha256": "731e1fc28ef7872bd8fca06118e058646227b452ab79a87038250813dcaa32bb",
+      "bytes": 3484,
+      "originalMtimeNs": 1793949362940665337
+    },
+    "cpp_candidate/process/cpp_candidate-73616-ready.json": {
+      "originalSha256": "434e9cfa56419ca3cf467058003cf59dc7f997719dff45dae49648b94ef41f2d",
+      "projectOnlySha256": "dcb6efbdc9fd0d7af3b1c5d9dcf6b4f3f5cbdab2a72adac6ed383b1c2b015689",
+      "bytes": 1697,
+      "originalMtimeNs": 1793949076381669949
+    },
+    "cpp_candidate/process/cpp_candidate-73616-exit.json": {
+      "originalSha256": "0bf0423c76d69b9ce9356bd23e4662a99dc841107c9dba1a62ecec761c0b700d",
+      "projectOnlySha256": "ba583f7663f8e5abe9399fc0d69513809432b09f9c7a8c368de7cb0eae333454",
+      "bytes": 4899,
+      "originalMtimeNs": 1793949336699796744
+    },
+    "summary-first.json": {
+      "originalSha256": "90e2fe05261ea030e5fc31b3aa6510b265c4a4188fd30cfc9245069f41d70862",
+      "projectOnlySha256": "90e2fe05261ea030e5fc31b3aa6510b265c4a4188fd30cfc9245069f41d70862"
+    },
+    "plan.json": {
+      "originalSha256": "d7de24fc3eaf4f918ddd2ba3cc1c0d6c683163f66b6523e8909ab2b4f43a4074",
+      "projectOnlySha256": "d7de24fc3eaf4f918ddd2ba3cc1c0d6c683163f66b6523e8909ab2b4f43a4074"
+    },
+    "sdk_control-launch-parent.json": {
+      "originalSha256": "37fd27937efb4706e686d12abad32eb0f78d128849f23c337ba3c7dac36f55d1",
+      "projectOnlySha256": "37fd27937efb4706e686d12abad32eb0f78d128849f23c337ba3c7dac36f55d1"
+    },
+    "cpp_candidate-launch-parent.json": {
+      "originalSha256": "dc9c218902d3d7b8361a1463c12edf31247155d5103c566c215890cd0e312c89",
+      "projectOnlySha256": "dc9c218902d3d7b8361a1463c12edf31247155d5103c566c215890cd0e312c89"
+    },
+    "source-before.json": {
+      "originalSha256": "abe5dd9942a65202976e1de825ec2c740d26d3dc9f7caa01e37c45a33362d6a5",
+      "projectOnlySha256": "abe5dd9942a65202976e1de825ec2c740d26d3dc9f7caa01e37c45a33362d6a5"
+    },
+    "source-between.json": {
+      "originalSha256": "598315e8eb393909458828fd70dfc19517d2acf74c1b57215284c707ffcb2035",
+      "projectOnlySha256": "598315e8eb393909458828fd70dfc19517d2acf74c1b57215284c707ffcb2035"
+    },
+    "source-after.json": {
+      "originalSha256": "3b861ade8988d04bb4a6f49b546fb651567a22ce64961f723fdf769f6117e969",
+      "projectOnlySha256": "3b861ade8988d04bb4a6f49b546fb651567a22ce64961f723fdf769f6117e969"
+    }
+  },
+  "sanitization": "Only listed task/source/Node path prefixes replaced; original bytes/hashes remain in owned forward01 raw folder. No IDs/numerics/answers/timestamps changed.",
+  "limitations": [
+    "one order only; source/cache/thermal/order variation remains",
+    "fulltypedanswers compared in-flight by unchanged driver; saved per-query records contain rowcounts not complete typed tuples",
+    "latency through publictypeddecode; oracle excluded from call latency but includedQPS/CPU/drain",
+    "all18context startup/open/audit/reopen/close includedwholeprocess wall, not per-query; full10m exclusiveopen time and transientopenRSSunmeasured",
+    "p99samplecounts andRSSsmoke_only, not serviceobjective or physical ceiling",
+    "instantaneousall16nativeexecution/perportidentity not established by25ms occupancy; separatefunctional tests cover actualports",
+    "not originalSDK754/native55 B0 regression evidence; no fallback/mode/default change"
+  ],
+  "remainingBeforePromotion": [
+    "fresh independentlygranted reverseCPP\u2192SDK broad pair",
+    "fresh separatelygranted anti1/16 original16gates",
+    "fresh separatelylabeled originalB0 regression comparison",
+    "actual active-job environment cleanup",
+    "full435/native/Triplex exactsource verification"
+  ]
+}

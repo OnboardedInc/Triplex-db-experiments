@@ -1,0 +1,24 @@
+{
+  "schema": "td.native-reference-coverage-policy-view-first.root-review/1",
+  "reviewedAtUtc": "2026-11-06T12:22:47.806025+00:00",
+  "status": "ACCEPT_FOCUSED_EVIDENCE_ONLY",
+  "sourceCommit": "d1e5e30d64d2c5fdaf8efbd06694cd04ad5cefe2",
+  "receipt": "evidence/native-reference-coverage-policy-view-first-20261106.json",
+  "receiptSha256": "e369356b99520c03e20700ec963cb0b9eedc5bc4dbdd2275031c3dc2efb21ef4",
+  "checks": {
+    "rawHashesBytesAndJson": 35,
+    "originalBytesCopied": 355542,
+    "actualTapMethods": 5,
+    "allPhaseExitsZero": true,
+    "dependencies395Source43Compiled192Native9AndExternalMapsUnchanged": true,
+    "pairedCoreOwnerEngineAndCompatFlag": true,
+    "fixturesClosedNoWal": 6
+  },
+  "limits": [
+    "Exact cf7 six-child cost matrix with fixed1.05 zero-policy median/1.15p95 both orders and1.10 policy phase budgets; not executed",
+    "Direct five-column/type projection parity and prepared lookup across first activation/rollback remains a separate planned check",
+    "No full verifier or cap-boundary run in this gate",
+    "Preexisting128MB cumulative-history revalidation OOM remains open; no claim this view fixes it",
+    "No production promotion or Goals1/9 closure"
+  ]
+}

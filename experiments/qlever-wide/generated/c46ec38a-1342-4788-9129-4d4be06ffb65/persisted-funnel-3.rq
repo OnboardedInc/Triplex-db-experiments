@@ -1,0 +1,28 @@
+SELECT DISTINCT (?b1_type AS ?v0_type) (?b1_value AS ?v0_value) (?b1_order AS ?v0_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJ3aWRlLWZ1bm5lbDpjNDZlYzM4YS0xMzQyLTQ3ODgtOTEyOS00ZDRiZTA2ZmZiNjUiLDBd> {
+?assertion0 <urn:triplex:field:entity_id> ?b0_value .
+?assertion0 <urn:triplex:field:attribute> ":w17/a73657373696f6e" .
+?assertion0 <urn:triplex:field:scalar_family> ?b1_type ; <urn:triplex:field:scalar_lexical> ?b1_value ; <urn:triplex:field:scalar_order> ?b1_order .
+?assertion0 <urn:triplex:field:valid_from_order> ?validFrom0 ; <urn:triplex:field:recorded_position_order> ?recorded0 .
+FILTER(?validFrom0 <= "c12e84e400000000" && ?recorded0 <= "bff0000000000000")
+?assertion0 <urn:triplex:field:recorded_at_order> ?recordedTime0 . FILTER(?recordedTime0 <= "c08f480000000000")
+FILTER NOT EXISTS { ?assertion0 <urn:triplex:field:valid_to_order> ?validTo0 . FILTER(?validTo0 <= "c12e84e400000000") }
+FILTER NOT EXISTS { ?assertion0 <urn:triplex:field:retracted_position_order> ?retracted0 . ?assertion0 <urn:triplex:field:retracted_at_order> ?retractedTime0 . FILTER(?retracted0 <= "bff0000000000000" && ?retractedTime0 <= "c08f480000000000") }
+?assertion1 <urn:triplex:field:entity_id> ?b0_value .
+?assertion1 <urn:triplex:field:attribute> ":w17/a73746570" .
+?assertion1 <urn:triplex:field:scalar_family> "string" ; <urn:triplex:field:scalar_lexical> "view" ; <urn:triplex:field:scalar_order> "view" .
+?assertion1 <urn:triplex:field:valid_from_order> ?validFrom1 ; <urn:triplex:field:recorded_position_order> ?recorded1 .
+FILTER(?validFrom1 <= "c12e84e400000000" && ?recorded1 <= "bff0000000000000")
+?assertion1 <urn:triplex:field:recorded_at_order> ?recordedTime1 . FILTER(?recordedTime1 <= "c08f480000000000")
+FILTER NOT EXISTS { ?assertion1 <urn:triplex:field:valid_to_order> ?validTo1 . FILTER(?validTo1 <= "c12e84e400000000") }
+FILTER NOT EXISTS { ?assertion1 <urn:triplex:field:retracted_position_order> ?retracted1 . ?assertion1 <urn:triplex:field:retracted_at_order> ?retractedTime1 . FILTER(?retracted1 <= "bff0000000000000" && ?retractedTime1 <= "c08f480000000000") }
+?assertion2 <urn:triplex:field:entity_id> ?b0_value .
+?assertion2 <urn:triplex:field:attribute> ":w17/a6174" .
+?assertion2 <urn:triplex:field:scalar_family> ?b2_type ; <urn:triplex:field:scalar_lexical> ?b2_value ; <urn:triplex:field:scalar_order> ?b2_order .
+?assertion2 <urn:triplex:field:valid_from_order> ?validFrom2 ; <urn:triplex:field:recorded_position_order> ?recorded2 .
+FILTER(?validFrom2 <= "c12e84e400000000" && ?recorded2 <= "bff0000000000000")
+?assertion2 <urn:triplex:field:recorded_at_order> ?recordedTime2 . FILTER(?recordedTime2 <= "c08f480000000000")
+FILTER NOT EXISTS { ?assertion2 <urn:triplex:field:valid_to_order> ?validTo2 . FILTER(?validTo2 <= "c12e84e400000000") }
+FILTER NOT EXISTS { ?assertion2 <urn:triplex:field:retracted_position_order> ?retracted2 . ?assertion2 <urn:triplex:field:retracted_at_order> ?retractedTime2 . FILTER(?retracted2 <= "bff0000000000000" && ?retractedTime2 <= "c08f480000000000") }
+FILTER((?b2_type IN ("number","integer") && ?b2_type = "integer" && ?b2_order >= "8000000000000000"))
+FILTER((?b2_type IN ("number","integer") && ?b2_type = "integer" && ?b2_order < "8000000000000028"))
+} } LIMIT 1001

@@ -1,0 +1,116 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.00000275,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 0.000035584000000000004,
+                    "type": "BATCH_INSERT",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Table": "\"temp\".main.__td_native_ctx",
+                                "Type": "Sequential Scan",
+                                "Projections": [
+                                    "command_id",
+                                    "valid_from",
+                                    "valid_to"
+                                ],
+                                "Estimated Cardinality": "1"
+                            },
+                            "intermediate_rows": 1,
+                            "intermediate_size_bytes": 32,
+                            "row_groups_scanned": 1,
+                            "rows_scanned": 1,
+                            "timing": 0.000003,
+                            "total_row_groups_to_scan": 1,
+                            "type": "TABLE_SCAN"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000003917,
+        "aggregate_reuse": 0.000013417,
+        "build_side_probe_side": 7.92e-7,
+        "column_lifetime": 0.000001292,
+        "common_aggregate": 1.67e-7,
+        "common_subexpressions": 6.25e-7,
+        "common_subplan": 0.000003667,
+        "cte_filter_pusher": 3.75e-7,
+        "cte_inlining": 1.66e-7,
+        "deliminator": 5.42e-7,
+        "duplicate_groups": 7.5e-7,
+        "empty_result_pullup": 5.42e-7,
+        "expression_rewriter": 0.000005208,
+        "filter_pullup": 7.92e-7,
+        "filter_pushdown": 0.000006959,
+        "grouping_sets": 2.5e-7,
+        "in_clause": 4.17e-7,
+        "join_elimination": 0.000001333,
+        "join_filter_pushdown": 2.08e-7,
+        "join_order": 0.000016875,
+        "late_materialization": 5.83e-7,
+        "limit_pushdown": 3.34e-7,
+        "outer_join_simplification": 0.000001583,
+        "partial_aggregate_pushdown": 5.83e-7,
+        "partitioned_execution": 3.33e-7,
+        "projection_placement": 8.75e-7,
+        "projection_pullup": 0.000001708,
+        "redundant_order_keys": 0.000001958,
+        "regex_range": 2.92e-7,
+        "reorder_filter": 1.66e-7,
+        "row_group_pruner": 1.25e-7,
+        "row_number_rewriter": 3.75e-7,
+        "sampling_pushdown": 2.91e-7,
+        "scalar_fn_pushdown": 1.25e-7,
+        "statistics_propagation": 0.000008042,
+        "top_n": 2.92e-7,
+        "top_n_window_elimination": 0.000001166,
+        "total_time": 0.000122166,
+        "type_pushdown": 1.67e-7,
+        "unnest_rewriter": 5.83e-7,
+        "unused_columns": 0.000008791,
+        "window_self_join": 2.92e-7
+    },
+    "physical_planner": {
+        "column_binding": 0.000001208,
+        "create_plan": 0.000004917,
+        "resolve_types": 8.3e-8,
+        "total_time": 0.000008291
+    },
+    "planner": {
+        "binding_time": 0.000059875,
+        "total_time": 0.000092459
+    },
+    "query": {
+        "cpu_time": 0.000041334,
+        "sql": "INSERT INTO td_catalog_v1.entity_patch_commands\n SELECT command_id,valid_from,valid_to FROM __td_native_ctx WHERE NOT is_replay;\n",
+        "total_intermediate_rows": 2,
+        "total_intermediate_size_bytes": 40,
+        "total_row_groups_scanned": 1,
+        "total_row_groups_to_scan": 1,
+        "total_rows_scanned": 1,
+        "total_time": 0.000355958
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 19060128,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 0
+    }
+}

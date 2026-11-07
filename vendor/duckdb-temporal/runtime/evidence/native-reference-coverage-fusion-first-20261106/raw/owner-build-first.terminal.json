@@ -1,0 +1,17 @@
+{
+  "phase": "owner-build-first",
+  "pid": 87920,
+  "command": [
+    "<task>/.venv/bin/python",
+    "build_owner_probe.py",
+    "--source-dir",
+    "<task>/dependencies/duckdb-d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "--engine-library",
+    "<task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "--compat-mutations"
+  ],
+  "startedAtUtc": "2026-11-06T12:01:07.980999+00:00",
+  "endedAtUtc": "2026-11-06T12:01:16.375017+00:00",
+  "exitCode": 0,
+  "selectedNode": "<node24.13>/bin/node"
+}

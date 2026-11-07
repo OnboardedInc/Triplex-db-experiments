@@ -1,0 +1,364 @@
+{
+  "schema": "td.anti-driver-pruning-qualification/1",
+  "result": "FUNCTIONAL_AND_PHYSICAL_PLAN_PROOF_PASSED_NOT_PROMOTED",
+  "recorded_utc": "2026-11-06T01:02:36.528303+00:00",
+  "native_source_commit": "2bef891f05af1eefc1c00db238a90bb544c9dc8d",
+  "base_commit": "fe9ca9aa",
+  "app_read_contract": 1,
+  "public_API_format_wire_changed": false,
+  "new_runtime_modes_or_build_flags": false,
+  "first_outcomes": {
+    "syntax": 0,
+    "core_build": 0,
+    "owner_build": 0,
+    "typescript": 0,
+    "focused_methods_pass": 6,
+    "focused_methods_fail": 0,
+    "plans_pass": 4,
+    "plans_fail": 0,
+    "source_fixes": 0,
+    "numeric_budget_relaxations": 0
+  },
+  "focused_methods": [
+    "eight-tag exact membership, repeated positive bindings and head supports",
+    "full logical row/byte/output caps and empty/full blocking",
+    "wide prunable RHS profile error before membership and healthy reuse",
+    "existing typed/correction anti membership",
+    "existing duplicate-head support",
+    "existing repeated variables/ground negatives/native fallback bounds"
+  ],
+  "source_and_build": {
+    "native_manifest_changed_files_vs_B0": [
+      "native/src/temporal_anti_join_plan.hpp"
+    ],
+    "anti_header_sha256": "b8971fcfc85846a8d43c474068c53de2cde190f27832abd0ff633e9694a86a65",
+    "core": "000def11b9907b4733c80a399a2bbee813abf627386478d33f762035ac8b27de",
+    "owner": "593315c03fc502aa7af0a9e63242d6fd5fac0da4820b52270b2da1dbf02604d4",
+    "control_actual": "c886d7cd2e950aa4f73d552ae10a80ce724bcc4d676bc2ff94c5b50b1d118b1f",
+    "control_B0": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "control_source_unchanged": true,
+    "owner_source_unchanged": true,
+    "build_options_unchanged": true,
+    "manifest_rewritten": false,
+    "SDK_v1_sha256": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "source_after_all_native_manifest_and_actual_artifact_pins_verified": true,
+    "A1_preserved_runtime": "build/cohort-a-screen-20261105/retained-candidate-runtime",
+    "A1_SHA256SUMS_sha256": "965dd27eab27f898c9d9ff77aa43ebc9c86fb223e9d03d591b7f71537573b536"
+  },
+  "profiles": [
+    {
+      "variant": "b0",
+      "size": "100k",
+      "status": "passed",
+      "first_attempt": true,
+      "query_sha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+      "artifact_pins": {
+        "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+        "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      },
+      "logical_admission": {
+        "logicalInput": 17331,
+        "fullRightFacts": "17075",
+        "positiveFacts": 256,
+        "exactCapPassed": true,
+        "minusOneRejected": true
+      },
+      "physical_hash_joins": [
+        {
+          "type": "ANTI",
+          "left_rows": 256,
+          "right_build_rows": 17075,
+          "output_rows": 255,
+          "conditions": [
+            "encode(e) IS NOT DISTINCT FROM encode(e)",
+            "v_tag IS NOT DISTINCT FROM v_tag",
+            "v_s IS NOT DISTINCT FROM v_s",
+            "v_b IS NOT DISTINCT FROM v_b",
+            "v_i IS NOT DISTINCT FROM v_i",
+            "v_f IS NOT DISTINCT FROM v_f"
+          ]
+        }
+      ],
+      "pruning_ctes_present": false,
+      "source_sha256_before": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+      "source_sha256_after": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+      "source_unchanged": true,
+      "patch_K": "586",
+      "reopen_verified": true,
+      "known_cut_old_and_current_verified": true,
+      "exact_native_patch_replay_verified": true,
+      "raw_files": {
+        "raw": {
+          "file": "evidence/anti-driver-b0-100k-20261105.raw.json",
+          "sha256": "be6cb5384f54d714659e49badd43b59240d3243f2154ff485a393aa4bf6ee607",
+          "bytes": 113886
+        },
+        "sql": {
+          "file": "evidence/anti-driver-b0-100k-20261105.sql.sql",
+          "sha256": "1b666df048897e72d60c041185f7bc884f53bdd38d5ee2fb79faaf2b89e8943b",
+          "bytes": 7906
+        },
+        "profile": {
+          "file": "evidence/anti-driver-b0-100k-20261105.profile.json",
+          "sha256": "cb49b175b4b7899edb3876723e7a1a19c5ca6e859a972bf87c3f2515ba7da052",
+          "bytes": 195227
+        }
+      }
+    },
+    {
+      "variant": "b0",
+      "size": "10m",
+      "status": "passed",
+      "first_attempt": true,
+      "query_sha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+      "artifact_pins": {
+        "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+        "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      },
+      "logical_admission": {
+        "logicalInput": 1680202,
+        "fullRightFacts": "1679946",
+        "positiveFacts": 256,
+        "exactCapPassed": true,
+        "minusOneRejected": true
+      },
+      "physical_hash_joins": [
+        {
+          "type": "ANTI",
+          "left_rows": 256,
+          "right_build_rows": 1679946,
+          "output_rows": 255,
+          "conditions": [
+            "encode(e) IS NOT DISTINCT FROM encode(e)",
+            "v_tag IS NOT DISTINCT FROM v_tag",
+            "v_s IS NOT DISTINCT FROM v_s",
+            "v_b IS NOT DISTINCT FROM v_b",
+            "v_i IS NOT DISTINCT FROM v_i",
+            "v_f IS NOT DISTINCT FROM v_f"
+          ]
+        }
+      ],
+      "pruning_ctes_present": false,
+      "source_sha256_before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "source_sha256_after": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "source_unchanged": true,
+      "patch_K": "39096",
+      "reopen_verified": true,
+      "known_cut_old_and_current_verified": true,
+      "exact_native_patch_replay_verified": true,
+      "raw_files": {
+        "raw": {
+          "file": "evidence/anti-driver-b0-10m-20261105.raw.json",
+          "sha256": "96de3ead57bfbd1e9f69161c024bcb38b36a79ff16461f956f5541f9f22fdda4",
+          "bytes": 114089
+        },
+        "sql": {
+          "file": "evidence/anti-driver-b0-10m-20261105.sql.sql",
+          "sha256": "98e05c3030cf97a629772bcd53f1f876117c841c325f7ed88db2a4fff3748e91",
+          "bytes": 7916
+        },
+        "profile": {
+          "file": "evidence/anti-driver-b0-10m-20261105.profile.json",
+          "sha256": "c271f4953b1c9a86ffe9639ef2f3d9b2443ff6432a39e865775dddb379b2fb66",
+          "bytes": 195478
+        }
+      }
+    },
+    {
+      "variant": "a2",
+      "size": "100k",
+      "status": "passed",
+      "first_attempt": true,
+      "query_sha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+      "artifact_pins": {
+        "core_extension": "000def11b9907b4733c80a399a2bbee813abf627386478d33f762035ac8b27de",
+        "companion_extension": "593315c03fc502aa7af0a9e63242d6fd5fac0da4820b52270b2da1dbf02604d4",
+        "control_bridge": "c886d7cd2e950aa4f73d552ae10a80ce724bcc4d676bc2ff94c5b50b1d118b1f",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+        "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      },
+      "logical_admission": {
+        "logicalInput": 17331,
+        "fullRightFacts": "17075",
+        "positiveFacts": 256,
+        "exactCapPassed": true,
+        "minusOneRejected": true
+      },
+      "physical_hash_joins": [
+        {
+          "type": "SEMI",
+          "left_rows": 17075,
+          "right_build_rows": 256,
+          "output_rows": 1,
+          "conditions": [
+            "encode(e) IS NOT DISTINCT FROM encode(e)",
+            "v_tag IS NOT DISTINCT FROM v_tag",
+            "v_s IS NOT DISTINCT FROM v_s",
+            "v_b IS NOT DISTINCT FROM v_b",
+            "v_i IS NOT DISTINCT FROM v_i",
+            "v_f IS NOT DISTINCT FROM v_f"
+          ]
+        },
+        {
+          "type": "ANTI",
+          "left_rows": 256,
+          "right_build_rows": 1,
+          "output_rows": 255,
+          "conditions": [
+            "encode(e) IS NOT DISTINCT FROM encode(e)",
+            "v_tag IS NOT DISTINCT FROM v_tag",
+            "v_s IS NOT DISTINCT FROM v_s",
+            "v_b IS NOT DISTINCT FROM v_b",
+            "v_i IS NOT DISTINCT FROM v_i",
+            "v_f IS NOT DISTINCT FROM v_f"
+          ]
+        }
+      ],
+      "pruning_ctes_present": true,
+      "source_sha256_before": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+      "source_sha256_after": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+      "source_unchanged": true,
+      "patch_K": "586",
+      "reopen_verified": true,
+      "known_cut_old_and_current_verified": true,
+      "exact_native_patch_replay_verified": true,
+      "raw_files": {
+        "raw": {
+          "file": "evidence/anti-driver-a2-100k-20261105.raw.json",
+          "sha256": "b19b20608637c7785f763477649e8cfeb2051d8f8c16444c5e66e1c7919e4226",
+          "bytes": 118986
+        },
+        "sql": {
+          "file": "evidence/anti-driver-a2-100k-20261105.sql.sql",
+          "sha256": "6a8ef0eea11148e96720f310082f7fda3c0cea62f5ff8a60094c17990bd606a4",
+          "bytes": 9171
+        },
+        "profile": {
+          "file": "evidence/anti-driver-a2-100k-20261105.profile.json",
+          "sha256": "9124bbee26823a57a54bdb4c095f5b899962de5cd8fd6a62dc8b60506ed36125",
+          "bytes": 211179
+        }
+      }
+    },
+    {
+      "variant": "a2",
+      "size": "10m",
+      "status": "passed",
+      "first_attempt": true,
+      "query_sha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+      "artifact_pins": {
+        "core_extension": "000def11b9907b4733c80a399a2bbee813abf627386478d33f762035ac8b27de",
+        "companion_extension": "593315c03fc502aa7af0a9e63242d6fd5fac0da4820b52270b2da1dbf02604d4",
+        "control_bridge": "c886d7cd2e950aa4f73d552ae10a80ce724bcc4d676bc2ff94c5b50b1d118b1f",
+        "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+        "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+        "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      },
+      "logical_admission": {
+        "logicalInput": 1680202,
+        "fullRightFacts": "1679946",
+        "positiveFacts": 256,
+        "exactCapPassed": true,
+        "minusOneRejected": true
+      },
+      "physical_hash_joins": [
+        {
+          "type": "SEMI",
+          "left_rows": 1679946,
+          "right_build_rows": 256,
+          "output_rows": 1,
+          "conditions": [
+            "encode(e) IS NOT DISTINCT FROM encode(e)",
+            "v_tag IS NOT DISTINCT FROM v_tag",
+            "v_s IS NOT DISTINCT FROM v_s",
+            "v_b IS NOT DISTINCT FROM v_b",
+            "v_i IS NOT DISTINCT FROM v_i",
+            "v_f IS NOT DISTINCT FROM v_f"
+          ]
+        },
+        {
+          "type": "ANTI",
+          "left_rows": 256,
+          "right_build_rows": 1,
+          "output_rows": 255,
+          "conditions": [
+            "encode(e) IS NOT DISTINCT FROM encode(e)",
+            "v_tag IS NOT DISTINCT FROM v_tag",
+            "v_s IS NOT DISTINCT FROM v_s",
+            "v_b IS NOT DISTINCT FROM v_b",
+            "v_i IS NOT DISTINCT FROM v_i",
+            "v_f IS NOT DISTINCT FROM v_f"
+          ]
+        }
+      ],
+      "pruning_ctes_present": true,
+      "source_sha256_before": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "source_sha256_after": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "source_unchanged": true,
+      "patch_K": "39096",
+      "reopen_verified": true,
+      "known_cut_old_and_current_verified": true,
+      "exact_native_patch_replay_verified": true,
+      "raw_files": {
+        "raw": {
+          "file": "evidence/anti-driver-a2-10m-20261105.raw.json",
+          "sha256": "ee4b4a7ce76328390434201bad04591d77218dd523667cf1f742340775b3c0c3",
+          "bytes": 119281
+        },
+        "sql": {
+          "file": "evidence/anti-driver-a2-10m-20261105.sql.sql",
+          "sha256": "0cfb4c95064c2d8e910b56823c675f54cadb71976117364d3264e7402ccbc33e",
+          "bytes": 9181
+        },
+        "profile": {
+          "file": "evidence/anti-driver-a2-10m-20261105.profile.json",
+          "sha256": "3521cce09623f2fb239c3f4f944e3cf2fc063435bf0b947c9c0fd1e02a5b1a09",
+          "bytes": 211499
+        }
+      }
+    }
+  ],
+  "logs": {
+    "syntax-01.log": {
+      "file": "evidence/anti-driver-syntax-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "core-01.log": {
+      "file": "evidence/anti-driver-core-01.log",
+      "sha256": "7900de60c4a1a7d888791f7db985e7cfac74dbaa13459845e3ef62bba1ab95f8"
+    },
+    "owner-01.log": {
+      "file": "evidence/anti-driver-owner-01.log",
+      "sha256": "2cccc0a0a0507ebbfd6081c1b6bf1f3366644860a8abdcb7c414efaed7846270"
+    },
+    "typescript-01.log": {
+      "file": "evidence/anti-driver-typescript-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "focused-01.log": {
+      "file": "evidence/anti-driver-focused-01.log",
+      "sha256": "6bff88e389ec17418c36c4df00026d8e155abb410ab2e272b4301e2762e42a57"
+    }
+  },
+  "inference": "Actual ANTI build child falls from17075/1679946 rows to1 after the single matching patch; additional SEMI build has256 rows. Logical source admission remains17331/1680202. This supports a timed unchanged-workload test, not a throughput or latency conclusion.",
+  "limits": [
+    "EXPLAIN ANALYZE is a separate diagnostic invocation with fresh control token and profiling overhead. Its wall/operator times are not public throughput qualification and are not summed.",
+    "The full RHS scan/admission is deliberately preserved. Hash-build cardinality reduction does not establish reduced physical memory, RSS, total row reads, or a process allocation ceiling.",
+    "No mixed60s gate or promotion occurred. Ground, bounded and four-tag routes remain shape-ineligible and were covered by original tests.",
+    "The engine window was explicitly released after all actual source/artifact-after checks; subsequent work is source-only."
+  ]
+}

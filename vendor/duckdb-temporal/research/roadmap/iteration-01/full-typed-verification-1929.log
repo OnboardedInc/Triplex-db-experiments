@@ -1,0 +1,282 @@
+Verified exact DuckDB v2.0.0 header: 73026a28e5b55952afb6e2e9ce80fd4f76614afedce329da895ccaf85a4a8be6
+Created /workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/temporal_datalog.duckdb_extension (C_STRUCT_UNSTABLE v2.0.0; linux_amd64)
+5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d  /workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/temporal_datalog.duckdb_extension
+test_bad_part_rejected_without_output (__main__.HeaderMaterialization.test_bad_part_rejected_without_output) ... ok
+test_exact_missing_header_recovery_and_repeat (__main__.HeaderMaterialization.test_exact_missing_header_recovery_and_repeat) ... ok
+test_existing_different_header_never_overwritten (__main__.HeaderMaterialization.test_existing_different_header_never_overwritten) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.133s
+
+OK
+Runtime: 2.0.0 platform: linux_amd64
+Memory status: ['VmSize:\t 2785284 kB', 'VmRSS:\t   62604 kB']
+test_01_loaded_is_native (__main__.ExtensionTests.test_01_loaded_is_native) ... ok
+test_02_half_open_valid (__main__.ExtensionTests.test_02_half_open_valid) ... ok
+test_03_half_open_knowledge (__main__.ExtensionTests.test_03_half_open_knowledge) ... ok
+test_04_late_correction_and_retraction (__main__.ExtensionTests.test_04_late_correction_and_retraction) ... ok
+test_05_no_last_write_wins (__main__.ExtensionTests.test_05_no_last_write_wins) ... ok
+test_06_cycle_duplicate_set_semantics (__main__.ExtensionTests.test_06_cycle_duplicate_set_semantics) ... ok
+test_07_repeated_variable_and_constants (__main__.ExtensionTests.test_07_repeated_variable_and_constants) ... ok
+test_08_mutual_recursion (__main__.ExtensionTests.test_08_mutual_recursion) ... ok
+test_09_nonlinear_recursive_join (__main__.ExtensionTests.test_09_nonlinear_recursive_join) ... ok
+test_10_ground_comments_escaping_unicode (__main__.ExtensionTests.test_10_ground_comments_escaping_unicode) ... ok
+test_11_empty_and_null_list (__main__.ExtensionTests.test_11_empty_and_null_list) ... ok
+test_12_reject_invalid_programs (__main__.ExtensionTests.test_12_reject_invalid_programs) ... ok
+test_13_invalid_intervals_and_null_fields (__main__.ExtensionTests.test_13_invalid_intervals_and_null_fields) ... ok
+test_14_limits_never_return_partial (__main__.ExtensionTests.test_14_limits_never_return_partial) ... ok
+test_15_null_parameters (__main__.ExtensionTests.test_15_null_parameters) ... ok
+test_16_long_and_large_input (__main__.ExtensionTests.test_16_long_and_large_input) ... ok
+test_17_actual_duckdb_storage_and_transaction (__main__.ExtensionTests.test_17_actual_duckdb_storage_and_transaction) ... ok
+test_18_vectorized_multiple_invocations (__main__.ExtensionTests.test_18_vectorized_multiple_invocations) ... ok
+test_19_random_temporal_closure_oracle (__main__.ExtensionTests.test_19_random_temporal_closure_oracle) ... ok
+test_20_integer_extremes_no_overflow (__main__.ExtensionTests.test_20_integer_extremes_no_overflow) ... ok
+test_21_irrelevant_edb_count_and_variable_attribute (__main__.ExtensionTests.test_21_irrelevant_edb_count_and_variable_attribute) ... ok
+test_22_apostrophe_extension_path (__main__.ExtensionTests.test_22_apostrophe_extension_path) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 1.627s
+
+OK
+test_answer_derived_first_position_remains_typed (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_derived_first_position_remains_typed) ... ok
+test_answer_different_float_spellings_normalize_within_float_tag (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_different_float_spellings_normalize_within_float_tag) ... ok
+test_answer_duplicate_values_are_sets_not_bags (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_duplicate_values_are_sets_not_bags) ... ok
+test_answer_float_order_is_numeric_not_spelling_or_intern_id (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_float_order_is_numeric_not_spelling_or_intern_id) ... ok
+test_answer_four_tagged_ground_values (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_four_tagged_ground_values) ... ok
+test_answer_four_tags_survive_base_values (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_four_tags_survive_base_values) ... ok
+test_answer_full_int64_and_adjacent_unsafe_js_integers (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_full_int64_and_adjacent_unsafe_js_integers) ... ok
+test_answer_full_int64_time_cut_is_lossless (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_full_int64_time_cut_is_lossless) ... ok
+test_answer_half_open_upper_time_cut_is_excluded (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_half_open_upper_time_cut_is_excluded) ... ok
+test_answer_legacy_looking_text_is_never_inferred (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_legacy_looking_text_is_never_inferred) ... ok
+test_answer_max_int64_predecessor_valid_cut_is_included (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_max_int64_predecessor_valid_cut_is_included) ... ok
+test_answer_max_int64_recorded_cut_is_excluded_by_open_end (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_max_int64_recorded_cut_is_excluded_by_open_end) ... ok
+test_answer_max_int64_valid_cut_is_excluded_by_open_end (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_max_int64_valid_cut_is_excluded_by_open_end) ... ok
+test_answer_native_extreme_interval_comparison_never_subtracts (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_native_extreme_interval_comparison_never_subtracts) ... ok
+test_answer_numeric_entity_literal_cannot_match_text_entity (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_numeric_entity_literal_cannot_match_text_entity) ... ok
+test_answer_rounded_recorded_boundary_must_not_admit_earlier_cut (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_rounded_recorded_boundary_must_not_admit_earlier_cut) ... ok
+test_answer_rounded_valid_boundary_must_not_admit_earlier_cut (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_rounded_valid_boundary_must_not_admit_earlier_cut) ... ok
+test_answer_signed_zero_is_normalized_only_within_its_tag (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_signed_zero_is_normalized_only_within_its_tag) ... ok
+test_answer_strings_use_utf8_byte_order_not_js_utf16_order (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_strings_use_utf8_byte_order_not_js_utf16_order) ... ok
+test_answer_typed_value_does_not_unify_with_text_entity (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_answer_typed_value_does_not_unify_with_text_entity) ... ok
+test_reject_float_overflow (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_float_overflow) ... ok
+test_reject_integer_overflow (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_integer_overflow) ... ok
+test_reject_integer_underflow (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_integer_underflow) ... ok
+test_reject_leading_zero (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_leading_zero) ... ok
+test_reject_malformed_boolean_suffix (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_malformed_boolean_suffix) ... ok
+test_reject_malformed_number_suffix (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_malformed_number_suffix) ... ok
+test_reject_nonzero_float_underflow_to_zero (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_nonzero_float_underflow_to_zero) ... ok
+test_reject_unsupported_null_literal (__main__.fixture_suite.<locals>.ExplicitFixtureTests.test_reject_unsupported_null_literal) ... ok
+test_boolean_false_and_true_order (__main__.TypedCarrierTests.test_boolean_false_and_true_order) ... ok
+test_carrier_zero_is_normalized_and_subnormal_bits_retained (__main__.TypedCarrierTests.test_carrier_zero_is_normalized_and_subnormal_bits_retained) ... ok
+test_empty_typed_list_is_valid (__main__.TypedCarrierTests.test_empty_typed_list_is_valid) ... ok
+test_every_inactive_payload_must_be_null (__main__.TypedCarrierTests.test_every_inactive_payload_must_be_null) ... ok
+test_float_literals_preserve_representable_subnormals_and_extremes (__main__.TypedCarrierTests.test_float_literals_preserve_representable_subnormals_and_extremes) ... ok
+test_invalid_intervals_rejected_even_when_invisible (__main__.TypedCarrierTests.test_invalid_intervals_rejected_even_when_invisible) ... ok
+test_nonfinite_floats_rejected_after_successful_binding (__main__.TypedCarrierTests.test_nonfinite_floats_rejected_after_successful_binding) ... ok
+test_nul_strings_rejected_in_v2 (__main__.TypedCarrierTests.test_nul_strings_rejected_in_v2) ... ok
+test_null_list_and_fact_are_rejected (__main__.TypedCarrierTests.test_null_list_and_fact_are_rejected) ... ok
+test_required_fact_fields_are_not_null (__main__.TypedCarrierTests.test_required_fact_fields_are_not_null) ... ok
+test_required_scalar_arguments_are_not_null (__main__.TypedCarrierTests.test_required_scalar_arguments_are_not_null) ... ok
+test_selected_payload_must_be_present (__main__.TypedCarrierTests.test_selected_payload_must_be_present) ... ok
+test_tag_is_required_and_unknown_tags_rejected (__main__.TypedCarrierTests.test_tag_is_required_and_unknown_tags_rejected) ... ok
+test_typed_value_propagates_each_of_eight_derived_positions (__main__.TypedCarrierTests.test_typed_value_propagates_each_of_eight_derived_positions) ... ok
+test_v2_registered_as_scalar (__main__.TypedCarrierTests.test_v2_registered_as_scalar) ... ok
+test_fact_work_and_round_limits_fail_without_rows (__main__.BoundsTests.test_fact_work_and_round_limits_fail_without_rows) ... ok
+test_invalid_admission_limits (__main__.BoundsTests.test_invalid_admission_limits) ... ok
+test_numeric_token_128_byte_boundary_is_independent_of_overflow (__main__.BoundsTests.test_numeric_token_128_byte_boundary_is_independent_of_overflow) ... ok
+test_term_and_program_byte_bounds (__main__.BoundsTests.test_term_and_program_byte_bounds) ... ok
+test_long_string_ownership_during_output_growth (__main__.BatchTests.test_long_string_ownership_during_output_growth) ... ok
+test_mixed_valid_invalid_scalar_batch_leaves_connection_usable (__main__.BatchTests.test_mixed_valid_invalid_scalar_batch_leaves_connection_usable) ... ok
+test_nonzero_input_list_offsets_and_chunk_boundaries (__main__.BatchTests.test_nonzero_input_list_offsets_and_chunk_boundaries) ... ok
+test_varying_output_tuple_lengths_and_payload_kinds (__main__.BatchTests.test_varying_output_tuple_lengths_and_payload_kinds) ... ok
+test_v1_null_fact_list_retains_legacy_empty_semantics (__main__.LegacyCompatibilityTests.test_v1_null_fact_list_retains_legacy_empty_semantics) ... ok
+test_v1_numeric_and_boolean_literals_remain_unsupported (__main__.LegacyCompatibilityTests.test_v1_numeric_and_boolean_literals_remain_unsupported) ... ok
+test_v1_still_registered_as_scalar (__main__.LegacyCompatibilityTests.test_v1_still_registered_as_scalar) ... ok
+test_v1_string_embedding_agrees_at_temporal_cuts (__main__.LegacyCompatibilityTests.test_v1_string_embedding_agrees_at_temporal_cuts) ... ok
+test_v1_string_rows_and_quoted_literals_unchanged (__main__.LegacyCompatibilityTests.test_v1_string_rows_and_quoted_literals_unchanged) ... ok
+test_input_row_cap_includes_duplicate_rows (__main__.LargeInputTests.test_input_row_cap_includes_duplicate_rows) ... ok
+
+----------------------------------------------------------------------
+Ran 57 tests in 5.168s
+
+OK
+{
+  "status": "PASS",
+  "native_tests_run": 57,
+  "fixture_sha256": "247e80d77a51f3a6287f40b078c5b090690992a64b15101779e64a006a796edf",
+  "answer_fixtures": 20,
+  "native_program_rejection_fixtures": 8,
+  "harness_prebinding_source_rejections_checked": 7,
+  "selected_integration_tests": 57,
+  "large_cases_included": true,
+  "python": "3.12.14",
+  "duckdb": "2.0.0",
+  "extension": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/temporal_datalog.duckdb_extension",
+  "extension_sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+  "platform": "linux_amd64",
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0
+}
+g++ (Debian 14.2.0-19) 14.2.0
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+500 nonlinear-recursion oracle trials passed; 10000/10000 fuzz programs rejected cleanly
+Independent corpus: 20 answers and 8 native parser rejections passed
+Typed core checks passed (515 explicit checks, value laws, 10000 bounded parser fuzz cases)
+12024 frozen/current legacy comparisons passed (rows, rounds, derived, work, exact errors)
+test_atomic_correction_preserves_both_knowledge_cuts (test_store.StorageTests.test_atomic_correction_preserves_both_knowledge_cuts) ... ok
+test_bounded_admission_and_observed_disk_budget (test_store.StorageTests.test_bounded_admission_and_observed_disk_budget) ... ok
+test_commit_cap_and_physical_footprint_at_limit (test_store.StorageTests.test_commit_cap_and_physical_footprint_at_limit) ... ok
+test_database_location_and_closed_store_guards (test_store.StorageTests.test_database_location_and_closed_store_guards) ... ok
+test_duplicate_command_is_not_applied_twice (test_store.StorageTests.test_duplicate_command_is_not_applied_twice) ... ok
+test_empty_table_calls_native_and_pins_zero_snapshot (test_store.StorageTests.test_empty_table_calls_native_and_pins_zero_snapshot) ... ok
+test_future_and_invalid_query_basis_rejected (test_store.StorageTests.test_future_and_invalid_query_basis_rejected) ... ok
+test_history_admission_cap_is_enforced_before_writes (test_store.StorageTests.test_history_admission_cap_is_enforced_before_writes) ... ok
+test_insert_and_real_timestamptz (test_store.StorageTests.test_insert_and_real_timestamptz) ... ok
+test_interruption_rolls_back_all_changes (test_store.StorageTests.test_interruption_rolls_back_all_changes) ... ok
+test_invalid_inputs_do_not_allocate_position (test_store.StorageTests.test_invalid_inputs_do_not_allocate_position) ... ok
+test_multivalued_eav_has_no_last_writer_wins (test_store.StorageTests.test_multivalued_eav_has_no_last_writer_wins) ... ok
+test_native_failure_rolls_back_correction_and_commit_ledger (test_store.StorageTests.test_native_failure_rolls_back_correction_and_commit_ledger) ... ok
+test_native_sees_uncommitted_command_in_same_transaction (test_store.StorageTests.test_native_sees_uncommitted_command_in_same_transaction) ... ok
+test_post_commit_budget_error_reports_acknowledgement_ambiguity (test_store.StorageTests.test_post_commit_budget_error_reports_acknowledgement_ambiguity) ... ok
+test_quote_like_data_is_never_sql (test_store.StorageTests.test_quote_like_data_is_never_sql) ... ok
+test_read_snapshot_remains_pinned_across_other_connection_commit (test_store.StorageTests.test_read_snapshot_remains_pinned_across_other_connection_commit) ... ok
+test_reopen_persists_facts_clock_receipt_and_native_load (test_store.StorageTests.test_reopen_persists_facts_clock_receipt_and_native_load) ... ok
+test_retraction_retains_assertion_history (test_store.StorageTests.test_retraction_retains_assertion_history) ... ok
+test_same_object_threads_are_serialized (test_store.StorageTests.test_same_object_threads_are_serialized) ... ok
+test_stale_retraction_rolls_back_prior_retraction_and_clock (test_store.StorageTests.test_stale_retraction_rolls_back_prior_retraction_and_clock) ... ok
+test_tick_extremes_and_epoch_microsecond_convention (test_store.StorageTests.test_tick_extremes_and_epoch_microsecond_convention) ... ok
+test_valid_intervals_are_half_open (test_store.StorageTests.test_valid_intervals_are_half_open) ... ok
+Largest observed fixture after close: 4468736 bytes
+test_all_four_histories_metadata_and_400_independent_sql_snapshots (test_typed_store.MigrationTests.test_all_four_histories_metadata_and_400_independent_sql_snapshots) ... ok
+test_all_four_transaction_faults_restore_exact_v1_then_retry (test_typed_store.MigrationTests.test_all_four_transaction_faults_restore_exact_v1_then_retry) ... ok
+test_existing_empty_or_missing_migration_target_is_not_bootstrapped (test_typed_store.MigrationTests.test_existing_empty_or_missing_migration_target_is_not_bootstrapped) ... ok
+test_explicit_migration_noop_and_reopen (test_typed_store.MigrationTests.test_explicit_migration_noop_and_reopen) ... ok
+test_postcommit_lost_ack_is_committed_and_retry_noop (test_typed_store.MigrationTests.test_postcommit_lost_ack_is_committed_and_retry_noop) ... ok
+test_unknown_and_malformed_schema_reject_without_mutation (test_typed_store.MigrationTests.test_unknown_and_malformed_schema_reject_without_mutation) ... ok
+test_genuine_native_four_way_identity_and_historical_cuts (test_typed_store.NativeTypedTests.test_genuine_native_four_way_identity_and_historical_cuts) ... ok
+test_real_native_evaluation_failure_rolls_back_the_command (test_typed_store.NativeTypedTests.test_real_native_evaluation_failure_rolls_back_the_command) ... ok
+test_duplicate_and_stale_multioperation_roll_back_everything (test_typed_store.TypedPersistenceTests.test_duplicate_and_stale_multioperation_roll_back_everything) ... ok
+test_explicit_types_endpoints_subnormal_zero_and_real_timestamps_reopen (test_typed_store.TypedPersistenceTests.test_explicit_types_endpoints_subnormal_zero_and_real_timestamps_reopen) ... ok
+test_live_connection_quota_is_actually_enforced_not_just_reported (test_typed_store.TypedPersistenceTests.test_live_connection_quota_is_actually_enforced_not_just_reported) ... ok
+test_migration_does_not_reset_fact_commit_or_operation_caps (test_typed_store.TypedPersistenceTests.test_migration_does_not_reset_fact_commit_or_operation_caps) ... ok
+test_path_and_symlink_escape_rejected_without_path_override (test_typed_store.TypedPersistenceTests.test_path_and_symlink_escape_rejected_without_path_override) ... ok
+test_persisted_payload_constraints_require_real_constraint_errors (test_typed_store.TypedPersistenceTests.test_persisted_payload_constraints_require_real_constraint_errors) ... ok
+test_unavailable_evaluate_cannot_commit (test_typed_store.TypedPersistenceTests.test_unavailable_evaluate_cannot_commit) ... skipped 'genuine native artifact now available; absence arm is inapplicable'
+test_canonical_integer_and_clock_json (test_typed_store.ValueTests.test_canonical_integer_and_clock_json) ... ok
+test_carrier_roundtrip_and_shape (test_typed_store.ValueTests.test_carrier_roundtrip_and_shape) ... ok
+test_four_disjoint_tags_and_hash_zero (test_typed_store.ValueTests.test_four_disjoint_tags_and_hash_zero) ... ok
+test_strict_payload_admission (test_typed_store.ValueTests.test_strict_payload_admission) ... ok
+
+----------------------------------------------------------------------
+Ran 42 tests in 13.017s
+
+OK (skipped=1)
+✔ independent oracle + native conformance 1: snapshot_before_correction (4.800418ms)
+✔ independent oracle + native conformance 2: snapshot_after_correction (2.119595ms)
+✔ independent oracle + native conformance 3: valid_upper_excluded (1.092692ms)
+✔ independent oracle + native conformance 4: historical_known_late (1.090059ms)
+✔ independent oracle + native conformance 5: valid_future_known_early (0.90589ms)
+✔ independent oracle + native conformance 6: graph_reach_union (0.882003ms)
+✔ independent oracle + native conformance 7: graph_reach_union (1.532077ms)
+✔ independent oracle + native conformance 8: graph_eav_join3 (0.54234ms)
+✔ independent oracle + native conformance 9: graph_self_loop (0.995275ms)
+✔ both half-open axes, including exact endpoints (7.402562ms)
+✔ retroactive correction changes knowledge, not valid time (1.147635ms)
+✔ recursive cycle terminates with set semantics (0.884347ms)
+✔ mutual recursion, ground facts and shared variables (0.464262ms)
+✔ quotes, escapes, unicode and empty strings (0.852789ms)
+✔ join and constants (0.356379ms)
+✔ invalid programs are rejected without partial output (0.723594ms)
+✔ fact validation rejects nulls, empty intervals and unsafe time (0.449259ms)
+✔ fact, work and round caps are all-or-nothing (0.905028ms)
+✔ empty snapshot is a typed empty result (0.414757ms)
+✔ embedded NUL fact values are length-aware, program NUL remains invalid (0.316909ms)
+✔ UTF8 byte ordering agrees with native, not UTF16 ordering (0.335077ms)
+✔ malformed surrogate text and aggregate input memory are rejected (5.276287ms)
+✔ native grammar whitespace and separated rule delimiter match (0.351872ms)
+✔ long shared constants cannot amplify serialized IDB keys without a guard (7.475237ms)
+✔ large repeated answer payload is refused before materializing all answers (7.244449ms)
+✔ typed declarative corpus: four_tagged_ground_values (4.872587ms)
+✔ typed declarative corpus: four_tags_survive_base_values (1.247166ms)
+✔ typed declarative corpus: duplicate_values_are_sets_not_bags (3.12149ms)
+✔ typed declarative corpus: derived_first_position_remains_typed (0.895254ms)
+✔ typed declarative corpus: typed_value_does_not_unify_with_text_entity (1.456082ms)
+✔ typed declarative corpus: numeric_entity_literal_cannot_match_text_entity (0.347095ms)
+✔ typed declarative corpus: different_float_spellings_normalize_within_float_tag (0.365253ms)
+✔ typed declarative corpus: signed_zero_is_normalized_only_within_its_tag (0.626257ms)
+✔ typed declarative corpus: full_int64_and_adjacent_unsafe_js_integers (0.955805ms)
+✔ typed declarative corpus: float_order_is_numeric_not_spelling_or_intern_id (0.991789ms)
+✔ typed declarative corpus: strings_use_utf8_byte_order_not_js_utf16_order (1.181346ms)
+✔ typed declarative corpus: legacy_looking_text_is_never_inferred (0.841783ms)
+✔ typed declarative corpus: full_int64_time_cut_is_lossless (0.355167ms)
+✔ typed declarative corpus: half_open_upper_time_cut_is_excluded (0.170929ms)
+✔ typed declarative corpus: rounded_valid_boundary_must_not_admit_earlier_cut (0.640579ms)
+✔ typed declarative corpus: rounded_recorded_boundary_must_not_admit_earlier_cut (0.188144ms)
+✔ typed declarative corpus: max_int64_valid_cut_is_excluded_by_open_end (0.168876ms)
+✔ typed declarative corpus: max_int64_predecessor_valid_cut_is_included (0.189626ms)
+✔ typed declarative corpus: max_int64_recorded_cut_is_excluded_by_open_end (0.240904ms)
+✔ typed declarative corpus: native_extreme_interval_comparison_never_subtracts (0.226642ms)
+✔ typed declarative rejection: integer_overflow (0.547488ms)
+✔ typed declarative rejection: integer_underflow (0.088775ms)
+✔ typed declarative rejection: float_overflow (0.090928ms)
+✔ typed declarative rejection: nonzero_float_underflow_to_zero (0.065989ms)
+✔ typed declarative rejection: malformed_number_suffix (0.091288ms)
+✔ typed declarative rejection: malformed_boolean_suffix (0.121955ms)
+✔ typed declarative rejection: leading_zero (0.113401ms)
+✔ typed declarative rejection: unsupported_null_literal (0.110307ms)
+✔ typed declarative rejection: json_number_is_not_an_i64_payload (0.218951ms)
+✔ typed declarative rejection: json_number_is_not_a_v2_valid_clock (0.128765ms)
+✔ typed declarative rejection: json_number_is_not_a_v2_recorded_clock (0.201925ms)
+✔ typed declarative rejection: json_string_is_not_a_boolean_payload (0.13945ms)
+✔ typed declarative rejection: unsupported_reference_tag (0.139241ms)
+✔ typed declarative rejection: unsupported_date_tag (0.647549ms)
+✔ typed declarative rejection: unsupported_null_tag (0.138299ms)
+✔ v1 string embedding 1: snapshot_before_correction (1.990279ms)
+✔ v1 string embedding 2: snapshot_after_correction (1.083138ms)
+✔ v1 string embedding 3: valid_upper_excluded (0.823335ms)
+✔ v1 string embedding 4: historical_known_late (2.701004ms)
+✔ v1 string embedding 5: valid_future_known_early (0.888484ms)
+✔ v1 string embedding 6: graph_reach_union (1.21667ms)
+✔ v1 string embedding 7: graph_reach_union (0.798978ms)
+✔ v1 string embedding 8: graph_eav_join3 (0.734391ms)
+✔ v1 string embedding 9: graph_self_loop (0.733509ms)
+✔ every off-diagonal member of the four-tag equality matrix is a nonmatch (2.533581ms)
+✔ each of eight derived tuple positions preserves each type (0.52266ms)
+✔ typed nonlinear recursion reaches a set fixed point independently of rule order (1.985551ms)
+✔ mutual recursion and int64 minimum ground constants retain exact identity (0.289607ms)
+✔ quoted strings retain doubled quotes, escapes, comments and true predicate names (0.343089ms)
+✔ all tags use stable rank and semantic payload order, not insertion order (1.175197ms)
+✔ finite binary64 bit patterns round-trip without key collisions or epsilon equality (20.328938ms)
+✔ int64 extrema and deterministic full-width samples remain distinct and ordered (7.545469ms)
+✔ decimal float parsing rounds ties to even and retains representable subnormals (0.552405ms)
+✔ numeric token bytes, complete consumption and explicit unsupported families fail closed (1.238841ms)
+✔ wire int64 and both temporal axes require canonical strings before bounded BigInt conversion (4.772967ms)
+✔ full int64 half-open comparisons use both exact axes, including endpoint extrema (1.00017ms)
+✔ all supplied facts validate even when invisible; sparse arrays and malformed records are rejected (1.11957ms)
+✔ a custom empty iterator cannot hide a malformed own indexed row (0.186602ms)
+✔ an empty array never admits rows supplied only by a custom iterator (0.448728ms)
+✔ a custom empty iterator cannot hide a sparse array hole (0.283959ms)
+✔ indexed accessors and inherited rows are rejected without executing getters (0.600527ms)
+✔ valid own indexed rows ignore even an accessor for Symbol.iterator (0.375848ms)
+✔ array admission snapshots length once and reads each own index descriptor once (0.385672ms)
+✔ record descriptor snapshots never read Proxy get traps or admit their changing f64 payload (0.347605ms)
+✔ strings admit exact scalar UTF-8 without normalization and reject NUL/lone surrogates (0.906609ms)
+✔ JSON transport has tagged values, no raw BigInt, no inference and no mutation (0.816263ms)
+✔ limits are strict positive safe integers, cannot raise fixed ceilings and are query-local (32.832781ms)
+✔ fact/work/round errors never return partial answers and leave the next query healthy (1.191118ms)
+✔ numeric-payload tuples still consume allocation budgets (22.343075ms)
+✔ input, symbol, binding and output amplification remain bounded (39.784538ms)
+✔ structural grammar bounds and unsupported future operators remain enforced (2.597562ms)
+ℹ tests 96
+ℹ suites 0
+ℹ pass 96
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 306.661552
+Bounded typed/native/store/reference checks passed; roadmap items2–10 remain separate.

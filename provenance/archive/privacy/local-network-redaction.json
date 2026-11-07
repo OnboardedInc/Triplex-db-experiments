@@ -1,0 +1,17 @@
+{
+  "format": "local-container-network-redaction/1",
+  "scope": "Exported copies only; native/source originals unchanged. Local container network addresses, MAC and sandbox metadata are not needed for the research handoff. Resource/query measurements retained as historical sanitized evidence.",
+  "files": {
+    "triplex-backends/qualification/evidence/qlever-common-wave-3e034ab5-9228-42a9-8b30-69a3c1c07ff9.json": {
+      "sha256": "eb54cabd2cfa33c68b6489ac1a8536f74cc08c74dfa4a7667b322f80d871f23d",
+      "bytes": 140421,
+      "objectsRedacted": 5
+    },
+    "triplex-backends/qualification/evidence/qlever-common-wave-56e246a9-cf9a-4249-9de0-129df5289a7f.json": {
+      "sha256": "c946a438743d20ae79154f50260d2c25819a48a84a2e611ced87e5369d2ffb0c",
+      "bytes": 347940,
+      "objectsRedacted": 5
+    }
+  },
+  "redactedValuesIncluded": false
+}

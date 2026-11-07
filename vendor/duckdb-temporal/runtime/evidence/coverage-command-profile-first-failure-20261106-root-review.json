@@ -1,0 +1,11 @@
+{
+  "schema": "td.native-research-package-root-review/1",
+  "packageCommit": "3e8b02e4",
+  "receipt": "coverage-command-profile-first-failure-20261106.json",
+  "receiptSha256": "3febb6c2a617a6a641c8b610f45b05a4cced343fcf21b109394c40a01b929e10",
+  "rawFiles": 21,
+  "allHashesAndSizesMatch": true,
+  "sourceReviewedBeforeEngine": true,
+  "acceptance": "Diagnostic only; no production/goal closure. Independent numerical/trace recomputation follows separately.",
+  "reviewedAtUtc": "2026-11-06T11:48:46.935291+00:00"
+}

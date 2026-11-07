@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", "module": "NodeNext", "moduleResolution": "NodeNext",
+    "strict": true, "skipLibCheck": true, "noEmitOnError": true,
+    "rootDir": "adapter", "outDir": "build/adapter", "declaration": true,
+    "exactOptionalPropertyTypes": true, "noUncheckedIndexedAccess": true,
+    "types": ["node"]
+  },
+  "include": ["adapter/**/*.ts", "adapter/**/*.mts"]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "td.fair-small-root-review/1",
+  "source": "631846e3078042e0095dbfe4376e48115a16db70",
+  "rawHashesVerified": 15,
+  "independentSampleCardinalities": 338,
+  "independentStoredTypedAnswers": 31,
+  "consecutiveTwoAssertTwoRetractReceipts": 44,
+  "logicalClients": [
+    1,
+    16
+  ],
+  "actualDistinctPorts": [
+    1,
+    16
+  ],
+  "actualMaxScopes": [
+    1,
+    4
+  ],
+  "actualFullBeforeBetweenAfterMapsEqual": true,
+  "exactAdmission": 17331,
+  "minusOneRejected": true,
+  "reopenCutsPerProfile": 5,
+  "scope": "Small correctness only; no numerical performance qualification or promotion."
+}

@@ -1,0 +1,62 @@
+{
+  "format": "v2-source-pinned-reproduction-v1",
+  "status": "PASS",
+  "source_hashes_before": {
+    "src/temporal_datalog.cpp": "3897a07f7acf7f181c3bbff6c7ac1bd0700afd703a7c8baf55e573b96427c31d",
+    "src/temporal_core.cpp": "58eaddcd16de74a6f61dc245b81683e5f752c81d332b758271fa295929ac2275",
+    "src/temporal_core.hpp": "870f946e1128fc109c1e3242cc0695fc01a5894eba67864dd14bd374b24c6658",
+    "src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+    "src/temporal_value_domain.hpp": "987aaa9892fdbec72d63f656f0f3d893b09a632d5e7724a40f12f1d3b2fd2794",
+    "vendor/duckdb_v2.h": "73026a28e5b55952afb6e2e9ce80fd4f76614afedce329da895ccaf85a4a8be6",
+    "vendor/duckdb_extension_v2.h": "fa0871d3f5b8e5da9a686c019fcaf8210349440831d5e9228720cbba31ccaa51",
+    "build.sh": "b4a745f66429185515cd8d000793f3f9052330ecf9415987abd2d79c3c4ecc7c",
+    "vendor/append_extension_metadata.py": "2430f62ef7b36eb76b005a377a0294fa01b1fdb0768ba9d23c4650de032a8239",
+    "vendor/materialize_duckdb_v2.py": "bb21962b6b60d3a6a929cef658e04dff9fb9167be1b5e5f68a72cf31620e1b5e",
+    "vendor/duckdb_v2.parts.json": "a7ca869ffde1bc0239af8eda7ca1d50aa6805b09e4d62c12ff5f729303f0c999"
+  },
+  "source_hashes_after": {
+    "src/temporal_datalog.cpp": "3897a07f7acf7f181c3bbff6c7ac1bd0700afd703a7c8baf55e573b96427c31d",
+    "src/temporal_core.cpp": "58eaddcd16de74a6f61dc245b81683e5f752c81d332b758271fa295929ac2275",
+    "src/temporal_core.hpp": "870f946e1128fc109c1e3242cc0695fc01a5894eba67864dd14bd374b24c6658",
+    "src/temporal_typed_core.hpp": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+    "src/temporal_value_domain.hpp": "987aaa9892fdbec72d63f656f0f3d893b09a632d5e7724a40f12f1d3b2fd2794",
+    "vendor/duckdb_v2.h": "73026a28e5b55952afb6e2e9ce80fd4f76614afedce329da895ccaf85a4a8be6",
+    "vendor/duckdb_extension_v2.h": "fa0871d3f5b8e5da9a686c019fcaf8210349440831d5e9228720cbba31ccaa51",
+    "build.sh": "b4a745f66429185515cd8d000793f3f9052330ecf9415987abd2d79c3c4ecc7c",
+    "vendor/append_extension_metadata.py": "2430f62ef7b36eb76b005a377a0294fa01b1fdb0768ba9d23c4650de032a8239",
+    "vendor/materialize_duckdb_v2.py": "bb21962b6b60d3a6a929cef658e04dff9fb9167be1b5e5f68a72cf31620e1b5e",
+    "vendor/duckdb_v2.parts.json": "a7ca869ffde1bc0239af8eda7ca1d50aa6805b09e4d62c12ff5f729303f0c999"
+  },
+  "sources_unchanged": true,
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "artifacts": {
+    "typed": {
+      "artifact": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/checkpoints/source-pinned-typed/temporal_datalog.duckdb_extension",
+      "sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+      "expected_initial_sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+      "bit_identical_reproduction": true,
+      "core_source": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/src/temporal_core.cpp",
+      "core_sha256": "58eaddcd16de74a6f61dc245b81683e5f752c81d332b758271fa295929ac2275",
+      "build_env": {
+        "TD_BUILD_DIR": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/checkpoints/source-pinned-typed",
+        "TD_CONTROL_CORE": null
+      },
+      "exit_code": 0
+    },
+    "api-only": {
+      "artifact": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/checkpoints/source-pinned-api-only/temporal_datalog.duckdb_extension",
+      "sha256": "69916109931921a0499ddcdedcfb34e4a48635ad6953713b8b18d7bde52e0b4f",
+      "expected_initial_sha256": "69916109931921a0499ddcdedcfb34e4a48635ad6953713b8b18d7bde52e0b4f",
+      "bit_identical_reproduction": true,
+      "core_source": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/frozen-baseline/engine/src/temporal_core.cpp",
+      "core_sha256": "470bb3c29392637e57ae61b3faaea6557874a79834b3b748510e2fd8594dad24",
+      "build_env": {
+        "TD_BUILD_DIR": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/engine/build/checkpoints/source-pinned-api-only",
+        "TD_CONTROL_CORE": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/frozen-baseline/engine/src/temporal_core.cpp"
+      },
+      "exit_code": 0
+    }
+  },
+  "runtime": "DuckDB2.0.0",
+  "original_and_frozen_unchanged": true
+}

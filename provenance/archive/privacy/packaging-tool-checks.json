@@ -1,0 +1,124 @@
+{
+  "format": "handoff-packaging-tool-checks/1",
+  "scope": "New packaging helpers only, private synthetic fixtures, no native database, build, dependency installation or benchmark execution. Prepare helper was tested without startup.",
+  "checks": [
+    {
+      "case": "valid-tree",
+      "pass": true
+    },
+    {
+      "case": "tampered-bytes",
+      "pass": true
+    },
+    {
+      "case": "extra-file",
+      "pass": true
+    },
+    {
+      "case": "zip-traversal",
+      "pass": true
+    },
+    {
+      "case": "real-variant-materialization",
+      "pass": true
+    },
+    {
+      "case": "existing-destination-refusal",
+      "pass": true
+    },
+    {
+      "case": "fresh-prepare-starts-nothing",
+      "pass": true
+    },
+    {
+      "case": "syntax-offline_registry.py",
+      "pass": true
+    },
+    {
+      "case": "syntax-prepare_local_run.py",
+      "pass": true
+    },
+    {
+      "case": "syntax-materialize_variant.py",
+      "pass": true
+    },
+    {
+      "case": "syntax-verify_bundle.py",
+      "pass": true
+    },
+    {
+      "case": "all-registry-tarball-hashes-and-package-identities",
+      "pass": true
+    },
+    {
+      "case": "scoped-registry-metadata-and-tarball",
+      "pass": true
+    },
+    {
+      "case": "version-specific-pnpm-metadata",
+      "pass": true
+    },
+    {
+      "case": "uncaptured-package-refused-no-proxy",
+      "pass": true
+    },
+    {
+      "case": "extra-root-directory",
+      "pass": true
+    },
+    {
+      "case": "global-zip-comment",
+      "pass": true
+    },
+    {
+      "case": "edited-run-image-rejected-before-docker",
+      "pass": true
+    },
+    {
+      "case": "edited-bootstrap-map-rejected-before-docker",
+      "pass": true
+    },
+    {
+      "case": "xtdb-config-symlink-rejected-before-docker",
+      "pass": true
+    },
+    {
+      "case": "symlink-directory-member",
+      "pass": true
+    },
+    {
+      "case": "fifo-member",
+      "pass": true
+    },
+    {
+      "case": "fifo-in-bootstrap-refused-before-docker",
+      "pass": true
+    },
+    {
+      "case": "unexpected-directory-in-bootstrap-refused-before-docker",
+      "pass": true
+    },
+    {
+      "case": "required-zip64-offset",
+      "pass": true
+    },
+    {
+      "case": "false-zip64-offset",
+      "pass": true
+    },
+    {
+      "case": "unneeded-zip64-offset",
+      "pass": true
+    },
+    {
+      "case": "uid-extra-rejected",
+      "pass": true
+    },
+    {
+      "case": "truncated-extra-rejected",
+      "pass": true
+    }
+  ],
+  "result": "PASS",
+  "formatCorrection": "The first complete archive byte/CRC review passed. Its legitimate ZIP64 offset extra fields exposed an overly strict recipient verifier. Required offset metadata now has explicit value/length/tag checks; unrelated identifying metadata remains rejected. Full regenerated archive validation is a final delivery gate."
+}

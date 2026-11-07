@@ -1,0 +1,100 @@
+{
+  "utc": "2026-10-31T03:19:40.348166+00:00",
+  "status": "PASS_23_OWN_STDLIB_DERIVATION_PRIMITIVE_CONTROLS",
+  "checks": [
+    {
+      "name": "valid-json-0",
+      "outcome": "PASS"
+    },
+    {
+      "name": "valid-json-1",
+      "outcome": "PASS"
+    },
+    {
+      "name": "valid-json-2",
+      "outcome": "PASS"
+    },
+    {
+      "name": "valid-json-3",
+      "outcome": "PASS"
+    },
+    {
+      "name": "json-denial-0",
+      "outcome": "PASS"
+    },
+    {
+      "name": "json-denial-1",
+      "outcome": "PASS"
+    },
+    {
+      "name": "json-denial-2",
+      "outcome": "PASS"
+    },
+    {
+      "name": "json-denial-3",
+      "outcome": "PASS"
+    },
+    {
+      "name": "json-denial-4",
+      "outcome": "PASS"
+    },
+    {
+      "name": "exacttype-denial-0",
+      "outcome": "PASS"
+    },
+    {
+      "name": "exacttype-denial-1",
+      "outcome": "PASS"
+    },
+    {
+      "name": "exacttype-denial-2",
+      "outcome": "PASS"
+    },
+    {
+      "name": "exacttype-denial-3",
+      "outcome": "PASS"
+    },
+    {
+      "name": "exacttype-denial-4",
+      "outcome": "PASS"
+    },
+    {
+      "name": "exacttype-denial-5",
+      "outcome": "PASS"
+    },
+    {
+      "name": "exacttype-denial-6",
+      "outcome": "PASS"
+    },
+    {
+      "name": "deep-exact-positive",
+      "outcome": "PASS"
+    },
+    {
+      "name": "median-0",
+      "outcome": "PASS"
+    },
+    {
+      "name": "median-1",
+      "outcome": "PASS"
+    },
+    {
+      "name": "median-2",
+      "outcome": "PASS"
+    },
+    {
+      "name": "linear-percentile-0",
+      "outcome": "PASS"
+    },
+    {
+      "name": "linear-percentile-1",
+      "outcome": "PASS"
+    },
+    {
+      "name": "linear-percentile-2",
+      "outcome": "PASS"
+    }
+  ],
+  "verifier_sha256": "e17046c6848c5404af61850961c559e643ae8d73192f84b0e79c2b587ddcaa1f",
+  "scope": "Own helpers only; no actual campaign/statistics import or application/FP/DB/native execution; same declared estimator independently implemented from owner."
+}

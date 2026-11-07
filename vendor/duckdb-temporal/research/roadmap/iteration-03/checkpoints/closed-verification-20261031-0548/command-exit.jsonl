@@ -1,0 +1,4 @@
+{"utc": "2026-10-31T05:52:33.389086+00:00", "command": "python prepare_evidence.py --inventory-only", "exit_code": 0, "result": "0; sanitized inventory, explicit exclusions"}
+{"utc": "2026-10-31T05:52:33.389113+00:00", "command": "python prepare_evidence.py; python restore_bundle.py (initial local capture)", "exit_code": 0, "result": "0; deterministic build/parts/full restore; later narrowed by root, retained without deletion"}
+{"utc": "2026-10-31T05:52:33.389120+00:00", "command": "python prepare_evidence.py; python restore_bundle.py (final capture)", "exit_code": 0, "result": "0; deterministic build/parts/all 1206 members +1922 logical paths verified"}
+{"utc": "2026-10-31T05:52:33.389125+00:00", "command": "python /workspace/scratch/497cfb3c035e/.agent-logs/goal3-durable-prep/finalize_package.py", "exit_code": 0, "result": "0; final part hashes/Git blob identities/raw reference closure/known closed manifests verified; no app execution"}

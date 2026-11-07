@@ -1,0 +1,216 @@
+{
+  "research_date": "2026-11-03",
+  "scope": "Named project source provenance only. Git blob identities are connector-returned source metadata, not loaded-build authentication, a local binary survey or an independently rehashed upstream archive.",
+  "sources": [
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/runtime/DatabaseScope.ts",
+      "git_blob_sha": "52543077e932e0fcf3d72194d5e7d73762098817",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/runtime/DatabaseScope.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/runtime/Runtime.ts",
+      "git_blob_sha": "05d0dc5103425c88534f3d32f427ffc59239a109",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/runtime/Runtime.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/TripleStoreRuntime.ts",
+      "git_blob_sha": "85b96c997704577ab92b50f6b600ca68eaa7dde8",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/TripleStoreRuntime.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "docs/custom-runtimes.md",
+      "git_blob_sha": "df7813e8fbf95d6f595c2aaee8af95318b2de0b1",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/docs/custom-runtimes.md"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "docs/host-integration.md",
+      "git_blob_sha": "d673c53637b7f5a076e5fe9e7263e32b610824ac",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/docs/host-integration.md"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/DatabaseManager.ts",
+      "git_blob_sha": "a10c8d4d566e55de254a5e218ef3b389af594b7b",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/DatabaseManager.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/DatabaseRegistry.ts",
+      "git_blob_sha": "08339bf3c6cd2b17cf3687dcbe534c5af1213b65",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/DatabaseRegistry.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/sql/src/DatabaseManagerLayer.ts",
+      "git_blob_sha": "9808cf0e8a29f070e54cc5288920e79059034089",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/DatabaseManagerLayer.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/sql/src/DatabaseRegistryLayer.ts",
+      "git_blob_sha": "f3af3a9cf08e105e67baa5803a433c6d6f1ec67b",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/DatabaseRegistryLayer.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/sql/src/StorageBackend.ts",
+      "git_blob_sha": "14fa44c793001f391a9ef83cf8e05989ecd986d7",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/StorageBackend.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/storage/StorageAdapter.ts",
+      "git_blob_sha": "fe0a39f867cae25171c067907333eb68757f5f55",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/storage/StorageAdapter.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/EntityPage.ts",
+      "git_blob_sha": "2dd9d9de8d425a4416b94a38e594ae6512ce1a1b",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/EntityPage.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/Pagination.ts",
+      "git_blob_sha": "96768cf49ed11a5777e2c6c37c3e6a8e78ef6c6d",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Pagination.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "git_blob_sha": "d6ef6b0fae64c8a5599dc0757333229766050bd8",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/TriplesLive.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "git_blob_sha": "d617ebf4e101e7aed3de262f3278c8d7cd699d0f",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/layers/KvTriplesLive.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/test/runtime/runtime.test.ts",
+      "git_blob_sha": "63dc2d2de8103be6b7fac38dd05a03db123d7bc1",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/test/runtime/runtime.test.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/test/kv/layers/KvTriples.test.ts",
+      "git_blob_sha": "4ab6fc4c5bc299ba45552b55e02fd730c39bbc56",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/test/kv/layers/KvTriples.test.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/testkit/src/index.ts",
+      "git_blob_sha": "d410781a7dc61a3833991a6fc9463c7dbf9c1a77",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/cli/test/database-operations.test.ts",
+      "git_blob_sha": "8eb4b69a827de2fb5d6e6265b3aef4270c6cc4c1",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/cli/test/database-operations.test.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/sqlite/src/SqliteBackend.ts",
+      "git_blob_sha": "2657d3b46755a44f8dfbc723b4c9cddacdd8c6e5",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sqlite/src/SqliteBackend.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/postgres/src/PostgresqlBackend.ts",
+      "git_blob_sha": "f0027f893f7b6a9121179e0ae0fd73adf393dbc1",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/postgres/src/PostgresqlBackend.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/postgres/test/integration/postgresql.test.ts",
+      "git_blob_sha": "87deb46cac4479cf6ae8ab8074b3ff5a5231403f",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/postgres/test/integration/postgresql.test.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/foundationdb/src/FdbKvBackend.ts",
+      "git_blob_sha": "ab9df02bc0bbba541df37ddc6040ba3aad8c8efb",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/foundationdb/src/FdbKvBackend.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/foundationdb/test/FdbKvBackend.test.ts",
+      "git_blob_sha": "8d7c4c15f4a3d8980bd384aaab4cbdb128a5724d",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/foundationdb/test/FdbKvBackend.test.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/host/src/Identity.ts",
+      "git_blob_sha": "877160f68ed35f516ab48e7f4c473e639950c087",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/host/src/Identity.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "revision": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "examples/tenant-host-cloudflare/src/worker.ts",
+      "git_blob_sha": "3bc99033cecc09aa34a430865b00d1cad31ae9da",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/examples/tenant-host-cloudflare/src/worker.ts"
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "revision": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/store.py",
+      "git_blob_sha": "479d6a9133acddfd32a6c93a723f8c77155db4e4",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "revision": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/typed_store.py",
+      "git_blob_sha": "100a4cbb7867f1454a304635ed6ba618d0ef04ce",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "revision": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/schema.sql",
+      "git_blob_sha": "28d87765fd3f4426d503676cddea2986117e1e28",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "revision": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/schema_v2.sql",
+      "git_blob_sha": "5f8cff5ee6980e45df0e5094ac378514b750de0c",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    }
+  ]
+}

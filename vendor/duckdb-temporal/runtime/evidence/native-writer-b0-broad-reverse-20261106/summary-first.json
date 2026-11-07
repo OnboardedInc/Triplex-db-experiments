@@ -1,0 +1,205 @@
+{
+  "schema": "td.native-writer-b0-broad/1",
+  "status": "passed",
+  "roles": [
+    "original_B0_SDK754_owner55_contract1_17contexts",
+    "cpp_candidate_contract2_18contexts"
+  ],
+  "gates": [
+    {
+      "name": "fixed_count_1_p50_relative",
+      "actual": 455.55570799999987,
+      "limit": 518.2727528499992,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_1_p50_relative",
+      "actual": 489.8554589999985,
+      "limit": 569.4195766999993,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_1_p50_relative",
+      "actual": 14.894499999994878,
+      "limit": 16.712709650005852,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_4_p50_relative",
+      "actual": 1001.5457499999975,
+      "limit": 1140.7875891999988,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_4_p50_relative",
+      "actual": 1003.8580829999992,
+      "limit": 1217.271598300003,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_4_p50_relative",
+      "actual": 16.711999999999534,
+      "limit": 24.12977954999078,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_16_p50_relative",
+      "actual": 3508.1400830000057,
+      "limit": 3903.854256249996,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_16_p50_relative",
+      "actual": 3718.5136660000135,
+      "limit": 4242.095801700011,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_16_p50_relative",
+      "actual": 57.77104199997848,
+      "limit": 69.30316875002462,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_4_p99_relative",
+      "actual": 1353.9590420000022,
+      "limit": 1622.4387504000042,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_4_p99_relative",
+      "actual": 1603.1712079999998,
+      "limit": 1667.030200799997,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_4_p99_relative",
+      "actual": 25.002999999996973,
+      "limit": 32.661600000009635,
+      "passed": true
+    },
+    {
+      "name": "fixed_count_16_p99_relative",
+      "actual": 6087.3583329999965,
+      "limit": 7554.770099999994,
+      "passed": true
+    },
+    {
+      "name": "fixed_grouped_count_16_p99_relative",
+      "actual": 6909.258709000016,
+      "limit": 8503.187300400004,
+      "passed": true
+    },
+    {
+      "name": "fixed_projection_16_p99_relative",
+      "actual": 86.28516699999454,
+      "limit": 105.68954999997513,
+      "passed": true
+    },
+    {
+      "name": "projection_1_p50_absolute",
+      "actual": 14.894499999994878,
+      "limit": 19,
+      "passed": true
+    },
+    {
+      "name": "projection_16_p50_absolute",
+      "actual": 57.77104199997848,
+      "limit": 115,
+      "passed": true
+    },
+    {
+      "name": "projection_16_p99_absolute",
+      "actual": 86.28516699999454,
+      "limit": 185,
+      "passed": true
+    },
+    {
+      "name": "mixed_qps_relative",
+      "actual": 5.490636543160455,
+      "limit": 5.161008583591638,
+      "passed": true
+    },
+    {
+      "name": "mixed_qps_absolute",
+      "actual": 5.490636543160455,
+      "limit": 4.8,
+      "passed": true
+    },
+    {
+      "name": "mixed_p50_relative",
+      "actual": 2849.211875000008,
+      "limit": 3055.167384649989,
+      "passed": true
+    },
+    {
+      "name": "mixed_p50_absolute",
+      "actual": 2849.211875000008,
+      "limit": 3200,
+      "passed": true
+    },
+    {
+      "name": "mixed_p99_relative",
+      "actual": 4687.181209000002,
+      "limit": 5215.597970450013,
+      "passed": true
+    },
+    {
+      "name": "mixed_p99_absolute",
+      "actual": 4687.181209000002,
+      "limit": 6500,
+      "passed": true
+    },
+    {
+      "name": "ack_rate_relative",
+      "actual": 19.067873988395277,
+      "limit": 0.7748016521475718,
+      "passed": true
+    },
+    {
+      "name": "ack_count_absolute",
+      "actual": 1145,
+      "limit": 40,
+      "passed": true
+    },
+    {
+      "name": "mixed_rss_absolute",
+      "actual": 2555691008,
+      "limit": 3500000000,
+      "passed": true
+    }
+  ],
+  "passed": 27,
+  "controlAbsolute": {
+    "projection_1_p50": true,
+    "projection_16_p50": true,
+    "projection_16_p99": true,
+    "mixed_qps": true,
+    "mixed_p50": true,
+    "mixed_p99": true,
+    "ack_count": true,
+    "mixed_rss": true
+  },
+  "controlAbsoluteMisses": [],
+  "mixedRssRatio": 0.9362684193151466,
+  "maxFixedRss": {
+    "control": 2772926464,
+    "candidate": 2691432448
+  },
+  "control": {
+    "qps": 5.734453981768486,
+    "p50": 2656.6672909999907,
+    "p99": 4535.3025830000115,
+    "acks": 53,
+    "ackRate": 0.8608907246084131,
+    "rss": 2729656320
+  },
+  "candidate": {
+    "qps": 5.490636543160455,
+    "p50": 2849.211875000008,
+    "p99": 4687.181209000002,
+    "acks": 1145,
+    "ackRate": 19.067873988395277,
+    "rss": 2555691008
+  }
+}

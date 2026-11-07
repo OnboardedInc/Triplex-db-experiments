@@ -1,0 +1,19 @@
+{
+  "python": "3.12.14",
+  "python_bool_is_int": true,
+  "python_numeric_equality": true,
+  "python_untagged_numeric_set_size": 1,
+  "python_tagged_numeric_set_size": 3,
+  "i64_max": "9223372036854775807",
+  "float_i64_max_collides_with_out_of_range": true,
+  "epsilon_example": {
+    "a": 0.0,
+    "b": 0.75,
+    "c": 1.5,
+    "epsilon": 1.0,
+    "a_close_b": true,
+    "b_close_c": true,
+    "a_close_c": false
+  },
+  "float_json_corpus_count": 1024
+}

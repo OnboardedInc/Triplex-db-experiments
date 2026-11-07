@@ -1,0 +1,7 @@
+{
+  "scope": "metadata packaging only; no measured process rerun",
+  "error": "SyntaxError: expected else after if expression",
+  "offendingExcerpt": "10012022 if c['mixedIngestion']else10000030",
+  "effect": "Python parsing failed before file actions; no source/runtime/report changes",
+  "repair": "Add whitespace after else in metadata assertion; rerun packaging only"
+}

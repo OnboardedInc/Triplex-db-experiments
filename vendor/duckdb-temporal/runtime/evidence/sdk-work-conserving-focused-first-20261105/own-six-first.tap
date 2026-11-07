@@ -1,0 +1,20 @@
+✔ read-only peers use four slots and all five heavy families share their FIFO (962.028208ms)
+✔ a writer gets the third cleanup slot and read-only service returns to four (490.691208ms)
+✔ prior-write barriers own no permits and cannot be extended by a later writer (486.025333ms)
+✖ queued cancellation owns no token while active cleanup retains its slot (30001.843375ms)
+✔ close and revalidate drain accepted peers without acquiring a maintenance permit (946.29525ms)
+✔ light lease FIFO and a blocked heavy reader cannot prevent a writer peer (1034.657459ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34069.967625
+
+✖ failing tests:
+
+test at build/adapter/test-sdk-work-conserving.js:240:1
+✖ queued cancellation owns no token while active cleanup retains its slot (30001.843375ms)
+  'test timed out after 30000ms'

@@ -1,0 +1,134 @@
+{
+  "format": "public-source-corpus/1",
+  "repositories": [
+    {
+      "name": "oxigraph",
+      "repository": "https://github.com/oxigraph/oxigraph.git",
+      "commit": "6fd4584114ddc4e8168af68df2b6ed530ab9bb12",
+      "path": "public-source/oxigraph",
+      "files": 910,
+      "bytes": 5223325,
+      "manifest": "public-source-manifests/oxigraph.json"
+    },
+    {
+      "name": "qlever",
+      "repository": "https://github.com/ad-freiburg/qlever.git",
+      "commit": "e8e6ed5af4388cc7406eab7f95c7565c90987d86",
+      "path": "public-source/qlever",
+      "files": 1534,
+      "bytes": 112166550,
+      "manifest": "public-source-manifests/qlever.json"
+    },
+    {
+      "name": "jena",
+      "repository": "https://github.com/apache/jena.git",
+      "commit": "3b1fbbce8b6dbc94d5aceeaf125930f224e0ac60",
+      "path": "public-source/jena",
+      "files": 18093,
+      "bytes": 67626687,
+      "manifest": "public-source-manifests/jena.json"
+    },
+    {
+      "name": "foundationdb",
+      "repository": "https://github.com/apple/foundationdb.git",
+      "commit": "a77f7f16b302f9ec1a774d23dfbe559b449eef3f",
+      "path": "public-source/foundationdb",
+      "files": 2644,
+      "bytes": 40597997,
+      "manifest": "public-source-manifests/foundationdb.json"
+    },
+    {
+      "name": "fdb-record-layer",
+      "repository": "https://github.com/FoundationDB/fdb-record-layer.git",
+      "commit": "13cd362a5bb77b3e62329f2ccd0245fa2e69d05f",
+      "path": "public-source/fdb-record-layer",
+      "files": 4094,
+      "bytes": 55704333,
+      "manifest": "public-source-manifests/fdb-record-layer.json"
+    },
+    {
+      "name": "KurrentDB",
+      "repository": "https://github.com/kurrent-io/KurrentDB.git",
+      "commit": "0f781a5fd8bdbcb29caca0374e9e74adbb934e38",
+      "path": "public-source/KurrentDB",
+      "files": 4860,
+      "bytes": 31270998,
+      "manifest": "public-source-manifests/KurrentDB.json"
+    },
+    {
+      "name": "marten",
+      "repository": "https://github.com/JasperFx/marten.git",
+      "commit": "8ed8870e692d37eca2446cdbe8a2643a33374820",
+      "path": "public-source/marten",
+      "files": 3205,
+      "bytes": 59939526,
+      "manifest": "public-source-manifests/marten.json"
+    },
+    {
+      "name": "xtdb",
+      "repository": "https://github.com/xtdb/xtdb.git",
+      "commit": "98256466058f80a2d39d639d1588943322cec6eb",
+      "path": "public-source/xtdb",
+      "files": 2840,
+      "bytes": 1150060250,
+      "manifest": "public-source-manifests/xtdb.json"
+    },
+    {
+      "name": "MeTeoR",
+      "repository": "https://github.com/wdimmy/MeTeoR.git",
+      "commit": "bc17a154c949f5beb4847de111b0b8eac6fe5046",
+      "path": "public-source/MeTeoR",
+      "files": 160,
+      "bytes": 22709618,
+      "manifest": "public-source-manifests/MeTeoR.json"
+    },
+    {
+      "name": "souffle",
+      "repository": "https://github.com/souffle-lang/souffle.git",
+      "commit": "2adf8c07210fe54f235e6e2d343c49b9d131463d",
+      "path": "public-source/souffle",
+      "files": 4089,
+      "bytes": 56280546,
+      "manifest": "public-source-manifests/souffle.json"
+    },
+    {
+      "name": "cozo",
+      "repository": "https://github.com/cozodb/cozo.git",
+      "commit": "481af058abac9444ea8c9c52c78f096ed4b5bfc4",
+      "path": "public-source/cozo",
+      "files": 229,
+      "bytes": 5809426,
+      "manifest": "public-source-manifests/cozo.json"
+    },
+    {
+      "name": "differential-dataflow",
+      "repository": "https://github.com/TimelyDataflow/differential-dataflow.git",
+      "commit": "e7c24703f4b1935cd6c99779ed0c140b0fea8ac6",
+      "path": "public-source/differential-dataflow",
+      "files": 1084,
+      "bytes": 10194729,
+      "manifest": "public-source-manifests/differential-dataflow.json"
+    },
+    {
+      "name": "timely-dataflow",
+      "repository": "https://github.com/TimelyDataflow/timely-dataflow.git",
+      "commit": "da506a18cde010d37d88ab19bf97f447d78ea3d8",
+      "path": "public-source/timely-dataflow",
+      "files": 192,
+      "bytes": 1084361,
+      "manifest": "public-source-manifests/timely-dataflow.json"
+    },
+    {
+      "name": "feldera",
+      "repository": "https://github.com/feldera/feldera.git",
+      "commit": "0f3c32534cbc1ba00467010566b288cd7b0b6b4e",
+      "path": "public-source/feldera",
+      "files": 10119,
+      "bytes": 112426071,
+      "manifest": "public-source-manifests/feldera.json"
+    }
+  ],
+  "status": "VERIFIED",
+  "sourceCatalogSha256": "e71647c418837e6a082aa369cc3fadc06a9d6389d353af63cd0099935e853290",
+  "originalAbsolutePathsExcluded": true
+}

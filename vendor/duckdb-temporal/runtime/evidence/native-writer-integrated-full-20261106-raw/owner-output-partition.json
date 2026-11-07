@@ -1,0 +1,17 @@
+{
+  "build/owner_probe/evidence.json": {
+    "bytes": 39547,
+    "kind": "owned_test_observation",
+    "sha256": "1c1b35cc48e5d4a2a4e5a1252eeb7677456ced0881a6901ceb6ecc5dbc4b1e75"
+  },
+  "build/owner_probe/activation-evidence.json": {
+    "bytes": 270706,
+    "kind": "owned_test_observation",
+    "sha256": "c767c00d2ab972d82d30f3c889c48d5eee166ebb89542490873059b3a599d1f2"
+  },
+  "build/owner_probe/activation-29136ac3-a918-4245-b3aa-cf3833139864.duckdb": {
+    "bytes": 6041600,
+    "kind": "owned_test_database",
+    "walAbsent": true
+  }
+}

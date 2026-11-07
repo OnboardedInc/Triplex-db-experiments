@@ -1,0 +1,66 @@
+{
+  "schema": "fresh-signed-graph-checker14-research/v1",
+  "scope": "New independent project-only primary research, hand specification, source review and prospective source-only selection",
+  "all14_cases": "UNRUN",
+  "public_API_calls": 0,
+  "fixture_implementation_or_action_permission": false,
+  "computer_environment_details": false,
+  "stopped_payload_or_dependency": false,
+  "files_excludes_self": true,
+  "files": [
+    {
+      "name": "INDEPENDENT-SPEC-REVIEW.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-04-1/checkpoints/fresh-checker-14-20261101/INDEPENDENT-SPEC-REVIEW.md",
+      "bytes": 11608,
+      "sha256": "e479067294ad2d1f5b15ba9642d83b7e5904115a4b60756d41875949ee04a1c6",
+      "git_blob_sha": "80cb7e789f969ebd6292a2025194bc6962de32d7",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "NEXT-SLICE-SPEC.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-04-1/checkpoints/fresh-checker-14-20261101/NEXT-SLICE-SPEC.md",
+      "bytes": 11528,
+      "sha256": "f1c52f29df0439d498574afd91c4f1db4d554bdfe5d1aa6c03a543ab8f6e3a4e",
+      "git_blob_sha": "13e28bce0b68917560151ca159c99b05a4eac135",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "PRECISION-AND-SELECTION.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-04-1/checkpoints/fresh-checker-14-20261101/PRECISION-AND-SELECTION.md",
+      "bytes": 2922,
+      "sha256": "1f7b14144eaaad8141efdea68dbfe3f0524fdae4bfdc628de52cceb3a07edd05",
+      "git_blob_sha": "e7c1534fc0da814aa4ef192b2bf9e4e892be9120",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "README.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-04-1/checkpoints/fresh-checker-14-20261101/README.md",
+      "bytes": 2345,
+      "sha256": "0f30c5e398b94b9339c115676b604708a950fdbd83d250e2c61d3913d0b13f0f",
+      "git_blob_sha": "474e36e86669bdb28d9a9ab2b7efd8408b1d9dfd",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "RESEARCH-AND-REVIEW.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-04-1/checkpoints/fresh-checker-14-20261101/RESEARCH-AND-REVIEW.md",
+      "bytes": 13293,
+      "sha256": "017db4248b3ba8b10a122fd4176fd7681337db9f30426e24f52d349b314b0357",
+      "git_blob_sha": "10f0fa6b56748c0be655a6b2c3e5ef01dd0fc6e3",
+      "mode": "100644",
+      "type": "blob"
+    },
+    {
+      "name": "SOURCE-IDENTITIES.md",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-04-1/checkpoints/fresh-checker-14-20261101/SOURCE-IDENTITIES.md",
+      "bytes": 5557,
+      "sha256": "ee4a8aba063281f93d74d48bfa14b6c7d169c356d849613fe7bb6534f7eaa2b2",
+      "git_blob_sha": "161fa340a379d8db7e1ec25783a36ef1dac1afb0",
+      "mode": "100644",
+      "type": "blob"
+    }
+  ]
+}

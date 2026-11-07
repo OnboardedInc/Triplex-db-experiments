@@ -1,0 +1,126 @@
+{
+  "schema": "td.sdk-work-conserving-focused-first/1",
+  "status": "FAILED_TEST_TIMEOUT",
+  "firstAttempt": true,
+  "recordedAtUtc": "2026-11-06T04:58:59.832526+00:00",
+  "sourceCommit": "4db33475a55558065aad62f2f30d6bbfd390bd59",
+  "priorSixPassSource": "a37ee6e45aab2a0da334114669c51d1556e911a1",
+  "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+  "tsc": {
+    "session": 31770,
+    "command": [
+      "node_modules/.bin/tsc",
+      "--pretty",
+      "false"
+    ],
+    "exitCode": 0
+  },
+  "test": {
+    "session": 43881,
+    "command": [
+      "node",
+      "--test",
+      "build/adapter/test-sdk-work-conserving.js"
+    ],
+    "exitCode": 1,
+    "methods": 6,
+    "passed": 5,
+    "assertionFailures": 0,
+    "canceledByTestTimeout": 1,
+    "skipped": 0,
+    "durationMs": 34069.967625,
+    "failedMethod": "queued cancellation owns no token while active cleanup retains its slot",
+    "observedFailure": "test timed out after30000ms",
+    "exactUnresolvedAwait": "not recorded by this first run; source-only diagnosis pending"
+  },
+  "passedConditions": [
+    "four slots/five-family FIFO/all16ports and bounded resourceStats before held-result release",
+    "third-cleanup writer admission, serialized writer lane and return to four read-only scopes",
+    "original writer barrier/no blocked read permits/pending bound and later writer",
+    "close/revalidate accepted drain",
+    "light lease FIFO/writer progress and readers-zero ordering"
+  ],
+  "notStarted": [
+    "inherited own5",
+    "independent4small",
+    "reader/control/cleanup/fatal suites",
+    "single-strategy2",
+    "independent512trace",
+    "any benchmark/full verification"
+  ],
+  "pins": {
+    "build/adapter/native-entity.js": "7f6020483d4c10b60e05fcbbc476c649edeff16d06cb6e0de03156bfa6250e55",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "build/artifact.json": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "build/owner_probe/artifact.json": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+    "build/adapter/test-sdk-work-conserving.js": "e52d6d07f8a98556c98204fca1f9ed732f6b2f567936a705bdd04be8ea880f43",
+    "build/adapter/test-sdk-admission.js": "b5e1370744ece967502465f8194ce2501f1a76c0c73ff291c0a816d47381467d",
+    "build/adapter/test-sdk-admission-independent.js": "2c247309c47927875f6a0e7edb97a318cdf51606640ed0c1d8a7750e926e4bfc",
+    "build/adapter/test-readers.js": "41ede58f912015f3ee7c6b657e5d22d27b00af504312374e4c45e926dd074f32",
+    "build/adapter/test-control.js": "92c89e9a35e7e46ab06913304c56f082652593a646be8a3ebb7e0dd1ab61ab21",
+    "build/adapter/test-cleanup.js": "f19f065b41d438ddeaaf06c788291f329640e377ce420d8fd606e873d0c096d2",
+    "build/adapter/test-fatal.js": "ebd8c687c789222db6a3087d9bec9abc533ad346f7389d3f992bfcde7cb0d624",
+    "build/adapter/test-single-strategy.js": "0e31917dfb94fc2b73d976dee0d513407226fc5e93f0dfc813788f6b5b8f5aff"
+  },
+  "sourcePins": {
+    "adapter/native-entity.ts": "9ea2e507d1bf6ae91092698ac0dd00d47aa560492aad266a02c46128973b6616",
+    "adapter/test-sdk-work-conserving.ts": "ae7df4d155865eec5acedfa6d4576b0a968dfb866b178d6a85563aeaf8caa911",
+    "adapter/test-sdk-admission.ts": "4906cae6dadd4e54d852c405f2208a4542f62611ee3eddf821d5faf180cffecb",
+    "adapter/test-sdk-admission-independent.ts": "53ed3b0543f8f8f46d7c0771aebdf6ab72215cb958bde104229728e8f2bf5a00",
+    "adapter/test-readers.ts": "fc1d46c29fa58cfa686b9a36dd527fbcfe5cd87e7fb7eced7a864567d1d000e5",
+    "adapter/test-single-strategy.ts": "9d908b5fbd2fc795d281a22b058dc3f69b0b787628674ac6e31306b324386210",
+    "SDK-QUERY-ADMISSION.md": "6e79a2e604c78e88c1ab65964cda2fad4cb012f1551f42b6ee381dd9866fba4a",
+    "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+    "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "adapter/native-schema.ts": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0"
+  },
+  "postIdentity": "all checked runtime/source/395localSDK and selectedexternal file/symlink maps unchanged",
+  "rawFiles": {
+    "after-engine.json": {
+      "file": "sdk-work-conserving-focused-first-20261105/after-engine.json",
+      "sha256": "8e01866cd29990ce3460f4d53c4e822374ab51412b5da0dc5b1d8f9b1e0db461",
+      "bytes": 358753
+    },
+    "before-engine.json": {
+      "file": "sdk-work-conserving-focused-first-20261105/before-engine.json",
+      "sha256": "99438a99d55b7b54a72198295e7c9733c43b3326fc3e46813a0e3807d3dcf022",
+      "bytes": 3469
+    },
+    "before-tsc.json": {
+      "file": "sdk-work-conserving-focused-first-20261105/before-tsc.json",
+      "sha256": "92cc1bfdb749c31aa10e2ca460b12d723ef2cc55ee6ffaaba946c80271bae67f",
+      "bytes": 357804
+    },
+    "own-six-first.exit": {
+      "file": "sdk-work-conserving-focused-first-20261105/own-six-first.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2
+    },
+    "own-six-first.tap": {
+      "file": "sdk-work-conserving-focused-first-20261105/own-six-first.tap",
+      "sha256": "5336a829480b2c26936c9e792a313b8bbb7a77a8d0c6227e8341ae9c72d0399d",
+      "bytes": 890
+    },
+    "tsc-first.exit": {
+      "file": "sdk-work-conserving-focused-first-20261105/tsc-first.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "tsc-first.log": {
+      "file": "sdk-work-conserving-focused-first-20261105/tsc-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "sourceHypothesis": "The fixture releases held index0 then awaits active cancellation; actual controlled two-step compilation/stream completion may reorder against three uncontrolled streams. No actual held-index trace was logged, so this is a source defect candidate, not an observed frame identity.",
+  "stoppingRule": "No source/fixture/cap changes or rerun after this first failure. Node test subprocess is terminal; package/release before separately reviewed repair.",
+  "scope": "No native rebuild, installation, full512trace, performance, broader suite or user-database mutation."
+}

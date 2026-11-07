@@ -1,0 +1,8 @@
+{
+  "node": "<node24.13>/bin/node",
+  "version": "v24.13.0",
+  "api": "<task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/node_modules/@duckdb/node-api/lib/index.js",
+  "bindings": "<task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+  "platform": "<task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+  "engine": "<task>/temporal-coverage-fusion-20261106/projects/temporal-datalog/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+}

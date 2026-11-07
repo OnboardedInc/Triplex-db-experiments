@@ -1,0 +1,110 @@
+{
+  "format": "independent-privacy-review/v1",
+  "reviewer": "Independent privacy and adversarial reviewer A",
+  "status": "CONTENT_REVIEW_PASS",
+  "scope": "The staged handoff copy, recovered text, public offline dependencies and source, image archives, and citations. Original project source, databases, Git state, dependencies, and running services were not modified by this privacy review.",
+  "privateValuesExcludedFromReport": true,
+  "researchRecovery": {
+    "base64Parts": 105,
+    "outerArchives": 19,
+    "nestedArchives": 3,
+    "materializedTextAndJsonFiles": 11045,
+    "materializedTextBytes": 261285172,
+    "materializedHashesVerified": 11045,
+    "unsafeLinksOrPathsMaterialized": 0,
+    "archiveOwnerPaxAndGzipFilenameMetadataNotMaterialized": true,
+    "textLicenseFilesNamedDuckdbPreserved": true,
+    "nativeDatabasesOpened": 0,
+    "restoredCppSourcePreviouslyUnderBuildDirectory": true
+  },
+  "archiveLayerCoverage": {
+    "topLevelArtifactFiles": 1988,
+    "decodedLeafPayloads": 197257,
+    "decodedLeafBytes": 11029314976,
+    "gzipContainers": 1282,
+    "tarContainers": 960,
+    "zipContainers": 35,
+    "tarMembers": 133523,
+    "zipMembers": 75801,
+    "linkMetadataInspectedWithoutFollowing": 1366,
+    "methods": [
+      "Streaming read-only traversal; no archive extraction or execution",
+      "Tar names, owner metadata, PAX fields, ZIP names, and gzip headers inspected",
+      "Docker image config and nested layers included",
+      "Configured identities matched in UTF-8 and UTF-16",
+      "HTML entity, percent, slash, Unicode escape, and readable base64 decoding",
+      "Public source files and binary/test fixtures matched against pinned SHA256 and Git blob manifests"
+    ],
+    "limits": {
+      "archiveDepth": 8,
+      "zipBufferBytes": 134217728,
+      "pdfBufferBytes": 67108864,
+      "totalDecodedBytes": 42949672960,
+      "pdfProcessSeconds": 15
+    },
+    "limitsReached": false,
+    "qualifiedPublicDecodeExceptions": 5,
+    "exceptionReport": "privacy/independent-archive-coverage-exceptions.json"
+  },
+  "ownedContentFinalCheck": {
+    "files": 22135,
+    "bytes": 910820887,
+    "pdfDocumentsWithMetadataAndTextChecked": 61,
+    "readableBase64StringsDecoded": 826,
+    "configuredIdentityPrivateHomeNamespaceAndRepositoryMatches": 0,
+    "privateApplicationUrlMatchesAfterDecoding": 0,
+    "contextualPrivateChatThreadIdentifierMatches": 0,
+    "publicBinaryVendorScopesReviewedSeparatelyByProvenance": true
+  },
+  "publicationMetadataClosure": {
+    "knownOriginalPublicationIdentifiersChecked": 78,
+    "checkedFiles": 22137,
+    "checkedBytes": 910861068,
+    "knownOriginalIdentifierMatches": 0,
+    "barePrivatePageSpaceHandleMatches": 0,
+    "filesystemPathsChecked": 89074,
+    "privateIdentifierPathMatches": 0,
+    "originalIdentifierMapIncluded": false,
+    "method": "Targeted raw, decoded, PDF metadata/text and readable-base64 checks after the final identifier pseudonymization"
+  },
+  "redactionVerification": {
+    "privateApplicationReferencesExcludedOrReplaced": true,
+    "privateApplicationReferenceRecord": "privacy/private-application-reference-redaction.json",
+    "networkReceiptFilesChecked": 2,
+    "remainingPrivateIpOrMacStringValuesInThoseReceipts": 0,
+    "networkSettingsObjectsReplacedWithMarkers": 10,
+    "unclassifiedLocalReferenceTokensRemoved": true,
+    "decodedResearchFileCountAfterCorrections": 11045
+  },
+  "publicMaterialRetained": {
+    "licensesAndAttributionPreserved": true,
+    "credentialShapedUpstreamTestMaterialNotUsedOrValidated": true,
+    "provenanceVerifiedPublicFixtureAndApplicationLinkFiles": 27,
+    "provenanceReport": "privacy/independent-public-fixture-provenance.json",
+    "knownHomePrefixHitsClassifiedAsPublicSourceExamplesOrPrefixCollisions": true,
+    "transactionSnapshotAwaitTokensClassifiedAsTechnicalMetadata": true
+  },
+  "secretScanner": {
+    "tool": "gitleaks 8.30.1",
+    "mode": "Directory scan with redacted output, ignored allow comments disabled, recursive string decoding depth 3",
+    "postHtmlTransformCandidateCount": 4700,
+    "candidateClasses": {
+      "generic-api-key": 4660,
+      "curl-auth-user": 6,
+      "private-key": 12,
+      "jwt": 20,
+      "pkcs12-file": 2
+    },
+    "triage": "4600 generic candidates are source/checksum manifest contexts, one is local XTDB query-basis metadata, four are official XTDB transaction-token examples, and 55 are pinned public source contexts. All 40 credential-shaped findings are confined to byte-verified public upstream source. No private authentication credential was identified.",
+    "rawFindingsAndPrivateMapsIncluded": false
+  },
+  "limitsAndMeaning": [
+    "This is a pattern, decoding, metadata, and provenance review, not a proof that arbitrary opaque content has no information.",
+    "Five byte-provenance-confirmed public regression fixtures have incomplete normal decompression; exact limitations are listed in the exception report.",
+    "Public vendor data, test credentials, certificates, examples, image layers and native tools were retained when provenance-qualified. They were not executed, authenticated, or semantically validated by this review.",
+    "No runtime correctness, performance, ten-goal completion, or deployment approval follows from this privacy result.",
+    "Content review is complete. The first complete candidate audit is preserved separately; final rebuilt ZIP parity and the external whole-ZIP checksum gate final delivery."
+  ],
+  "archiveReview": "privacy/independent-archive-review.json",
+  "finalDeliveryGate": "The rebuilt package includes these review receipts and a refreshed manifest. Its whole-ZIP checksum is external; post-rebuild independent ZIP parity and metadata verification gate final delivery. The first-candidate hash is not the final artifact identity."
+}

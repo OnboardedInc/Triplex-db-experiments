@@ -1,0 +1,7 @@
+{
+  "build/artifact.json": "1baa2cc1e17c0ec9ffe4f269625be0144bb30df9296c0ca6ba02009c2d9f0264",
+  "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+  "build/temporal_datalog.duckdb_extension": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+  "build/temporal_datalog.so": "0b6f83bb2c3b25635594f5384a3238e305459513d92bc850deae6ca69e4352b0",
+  "build/temporal_control.node": "9fb218ba0236365c74a088c3a2da93f7ca8d2898dfddd86851f73769a028eea3"
+}

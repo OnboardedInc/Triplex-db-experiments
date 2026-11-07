@@ -1,0 +1,1288 @@
+{
+  "schema": "bridge_static_bounded_source_excerpts/1",
+  "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "excerpts": [
+    {
+      "path": "src/include/duckdb/main/capi_v2/capi_v2_internal.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/main/capi_v2/capi_v2_internal.hpp",
+      "source_sha256": "a2b8ab49007c438a8b1099e9435920b98c4ac897860eeca0e151284ceed9f82f",
+      "ranges": [
+        {
+          "first": 11,
+          "last": 43,
+          "lines": [
+            {
+              "line": 11,
+              "text": "// DuckDB C++ internals (also pulls in duckdb.h which defines idx_t, etc.)"
+            },
+            {
+              "line": 12,
+              "text": "#include \"duckdb.hpp\""
+            },
+            {
+              "line": 13,
+              "text": "#include \"duckdb/common/types.hpp\""
+            },
+            {
+              "line": 14,
+              "text": "#include \"duckdb/common/types/data_chunk.hpp\""
+            },
+            {
+              "line": 15,
+              "text": "#include \"duckdb/common/types/vector.hpp\""
+            },
+            {
+              "line": 16,
+              "text": "#include \"duckdb/common/types/string_type.hpp\""
+            },
+            {
+              "line": 17,
+              "text": "#include \"duckdb/common/types/bignum.hpp\""
+            },
+            {
+              "line": 18,
+              "text": "#include \"duckdb/main/appender.hpp\""
+            },
+            {
+              "line": 19,
+              "text": "#include \"duckdb/common/case_insensitive_map.hpp\""
+            },
+            {
+              "line": 20,
+              "text": "#include \"duckdb/main/client_context.hpp\""
+            },
+            {
+              "line": 21,
+              "text": "#include \"duckdb/main/client_context_state.hpp\""
+            },
+            {
+              "line": 22,
+              "text": "#include \"duckdb/main/extension/extension_loader.hpp\""
+            },
+            {
+              "line": 23,
+              "text": "#include \"duckdb/main/parse_iterator.hpp\""
+            },
+            {
+              "line": 24,
+              "text": "#include \"duckdb/main/table_description.hpp\""
+            },
+            {
+              "line": 25,
+              "text": "#include \"duckdb/parser/qualified_name.hpp\""
+            },
+            {
+              "line": 26,
+              "text": "#include \"duckdb/parser/sql_statement.hpp\""
+            },
+            {
+              "line": 27,
+              "text": "#include \"duckdb/planner/expression.hpp\""
+            },
+            {
+              "line": 28,
+              "text": "#include \"duckdb/planner/expression/bound_parameter_data.hpp\""
+            },
+            {
+              "line": 29,
+              "text": "#include \"duckdb/main/db_instance_cache.hpp\""
+            },
+            {
+              "line": 30,
+              "text": ""
+            },
+            {
+              "line": 31,
+              "text": "// DuckDB internals used by the option set/get bridge."
+            },
+            {
+              "line": 32,
+              "text": "#include \"duckdb/main/setting_info.hpp\""
+            },
+            {
+              "line": 33,
+              "text": "#include \"duckdb/execution/operator/helper/physical_set.hpp\""
+            },
+            {
+              "line": 34,
+              "text": "#include \"duckdb/main/database.hpp\""
+            },
+            {
+              "line": 35,
+              "text": "#include \"duckdb/common/query_context.hpp\""
+            },
+            {
+              "line": 36,
+              "text": "#include \"duckdb/common/file_system.hpp\""
+            },
+            {
+              "line": 37,
+              "text": ""
+            },
+            {
+              "line": 38,
+              "text": "// The engine implements the whole V2 C API, including the unstable surface"
+            },
+            {
+              "line": 39,
+              "text": "#ifndef DUCKDB_V2_API_ALLOW_UNSTABLE"
+            },
+            {
+              "line": 40,
+              "text": "#define DUCKDB_V2_API_ALLOW_UNSTABLE 1"
+            },
+            {
+              "line": 41,
+              "text": "#endif"
+            },
+            {
+              "line": 42,
+              "text": "// V2 C API header -- all types use duckdb_v2_ prefix, no collision with V1."
+            },
+            {
+              "line": 43,
+              "text": "#include \"duckdb_v2.h\""
+            }
+          ]
+        },
+        {
+          "first": 404,
+          "last": 442,
+          "lines": [
+            {
+              "line": 404,
+              "text": "//! A context handle: the client context plus how a call through it obtains a transaction."
+            },
+            {
+              "line": 405,
+              "text": "class CV2Context {"
+            },
+            {
+              "line": 406,
+              "text": "public:"
+            },
+            {
+              "line": 407,
+              "text": "\texplicit CV2Context(ClientContext &context)"
+            },
+            {
+              "line": 408,
+              "text": "\t    : context(context), factory(*this), config_handle(context),"
+            },
+            {
+              "line": 409,
+              "text": "\t      file_system(FileSystem::GetFileSystem(context), QueryContext(context)) {"
+            },
+            {
+              "line": 410,
+              "text": "\t}"
+            },
+            {
+              "line": 411,
+              "text": "\tvirtual ~CV2Context() = default;"
+            },
+            {
+              "line": 412,
+              "text": ""
+            },
+            {
+              "line": 413,
+              "text": "\t//! Runs `fn` with a transaction active on the context."
+            },
+            {
+              "line": 414,
+              "text": "\tvirtual void WithContext(const std::function<void(ClientContext &)> &fn) = 0;"
+            },
+            {
+              "line": 415,
+              "text": ""
+            },
+            {
+              "line": 416,
+              "text": "\tClientContext &context;"
+            },
+            {
+              "line": 417,
+              "text": "\tCV2ContextFactory factory;"
+            },
+            {
+              "line": 418,
+              "text": "\tCV2ClientConfig config_handle;"
+            },
+            {
+              "line": 419,
+              "text": "\tCV2FileSystem file_system;"
+            },
+            {
+              "line": 420,
+              "text": "};"
+            },
+            {
+              "line": 421,
+              "text": ""
+            },
+            {
+              "line": 422,
+              "text": "inline DatabaseInstance &CV2ContextFactory::GetDatabase() {"
+            },
+            {
+              "line": 423,
+              "text": "\treturn DatabaseInstance::GetDatabase(context.context);"
+            },
+            {
+              "line": 424,
+              "text": "}"
+            },
+            {
+              "line": 425,
+              "text": ""
+            },
+            {
+              "line": 426,
+              "text": "inline optional_ptr<ClientContext> CV2ContextFactory::TryGetClientContext() {"
+            },
+            {
+              "line": 427,
+              "text": "\treturn &context.context;"
+            },
+            {
+              "line": 428,
+              "text": "}"
+            },
+            {
+              "line": 429,
+              "text": ""
+            },
+            {
+              "line": 430,
+              "text": "inline void CV2ContextFactory::WithTransaction(const std::function<void(ClientContext &)> &fn) {"
+            },
+            {
+              "line": 431,
+              "text": "\tcontext.WithContext(fn);"
+            },
+            {
+              "line": 432,
+              "text": "}"
+            },
+            {
+              "line": 433,
+              "text": ""
+            },
+            {
+              "line": 434,
+              "text": "//! A context handed to a callback: the context lock is held and a transaction is already active."
+            },
+            {
+              "line": 435,
+              "text": "class CV2CallbackContext final : public CV2Context {"
+            },
+            {
+              "line": 436,
+              "text": "public:"
+            },
+            {
+              "line": 437,
+              "text": "\texplicit CV2CallbackContext(ClientContext &context) : CV2Context(context) {"
+            },
+            {
+              "line": 438,
+              "text": "\t}"
+            },
+            {
+              "line": 439,
+              "text": ""
+            },
+            {
+              "line": 440,
+              "text": "\tvoid WithContext(const std::function<void(ClientContext &)> &fn) override {"
+            },
+            {
+              "line": 441,
+              "text": "\t\tfn(context);"
+            },
+            {
+              "line": 442,
+              "text": "\t}"
+            }
+          ]
+        },
+        {
+          "first": 456,
+          "last": 461,
+          "lines": [
+            {
+              "line": 456,
+              "text": "inline auto Convert(duckdb_v2_context_handle ctx) -> CV2Context * {"
+            },
+            {
+              "line": 457,
+              "text": "\treturn reinterpret_cast<CV2Context *>(ctx);"
+            },
+            {
+              "line": 458,
+              "text": "}"
+            },
+            {
+              "line": 459,
+              "text": ""
+            },
+            {
+              "line": 460,
+              "text": "inline auto Convert(CV2Context *ctx) -> duckdb_v2_context_handle {"
+            },
+            {
+              "line": 461,
+              "text": "\treturn reinterpret_cast<duckdb_v2_context_handle>(ctx);"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/include/duckdb/main/database_manager.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/main/database_manager.hpp",
+      "source_sha256": "7b613fd6d5d3422c2a0c9c51a4d2f4c4dfce7ffdd7c8b63ab8b12432f6be8ed3",
+      "ranges": [
+        {
+          "first": 40,
+          "last": 43,
+          "lines": [
+            {
+              "line": 40,
+              "text": "public:"
+            },
+            {
+              "line": 41,
+              "text": "\tstatic DatabaseManager &Get(DatabaseInstance &db);"
+            },
+            {
+              "line": 42,
+              "text": "\tstatic DatabaseManager &Get(ClientContext &db);"
+            },
+            {
+              "line": 43,
+              "text": "\tstatic DatabaseManager &Get(AttachedDatabase &db);"
+            }
+          ]
+        },
+        {
+          "first": 97,
+          "last": 104,
+          "lines": [
+            {
+              "line": 97,
+              "text": "\t//! Scans the catalog set and adds each committed database entry, and each database entry of the current"
+            },
+            {
+              "line": 98,
+              "text": "\t//! transaction, to a vector holding AttachedDatabase references"
+            },
+            {
+              "line": 99,
+              "text": "\tvector<shared_ptr<AttachedDatabase>> GetDatabases(ClientContext &context,"
+            },
+            {
+              "line": 100,
+              "text": "\t                                                  const optional_idx max_db_count = optional_idx());"
+            },
+            {
+              "line": 101,
+              "text": "\t//! Scans the catalog set and returns each committed database entry"
+            },
+            {
+              "line": 102,
+              "text": "\tvector<shared_ptr<AttachedDatabase>> GetDatabases();"
+            },
+            {
+              "line": 103,
+              "text": "\t//! Returns the approximate count of attached databases."
+            },
+            {
+              "line": 104,
+              "text": "\tidx_t ApproxDatabaseCount();"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/main/database_manager.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/database_manager.cpp",
+      "source_sha256": "27fb0e2514676c69de6c3c19c77825afb8855602a4a52f76f9998693e980c925",
+      "ranges": [
+        {
+          "first": 542,
+          "last": 562,
+          "lines": [
+            {
+              "line": 542,
+              "text": "vector<shared_ptr<AttachedDatabase>> DatabaseManager::GetDatabases(ClientContext &context,"
+            },
+            {
+              "line": 543,
+              "text": "                                                                   const optional_idx max_db_count) {"
+            },
+            {
+              "line": 544,
+              "text": "\tvector<shared_ptr<AttachedDatabase>> result;"
+            },
+            {
+              "line": 545,
+              "text": ""
+            },
+            {
+              "line": 546,
+              "text": "\tlock_guard<mutex> guard(databases_lock);"
+            },
+            {
+              "line": 547,
+              "text": "\tidx_t count = 2;"
+            },
+            {
+              "line": 548,
+              "text": "\tfor (auto &entry : databases) {"
+            },
+            {
+              "line": 549,
+              "text": "\t\tif (max_db_count.IsValid() && count >= max_db_count.GetIndex()) {"
+            },
+            {
+              "line": 550,
+              "text": "\t\t\tbreak;"
+            },
+            {
+              "line": 551,
+              "text": "\t\t}"
+            },
+            {
+              "line": 552,
+              "text": "\t\tresult.push_back(entry.second);"
+            },
+            {
+              "line": 553,
+              "text": "\t\tcount++;"
+            },
+            {
+              "line": 554,
+              "text": "\t}"
+            },
+            {
+              "line": 555,
+              "text": "\tif (!max_db_count.IsValid() || max_db_count.GetIndex() >= 1) {"
+            },
+            {
+              "line": 556,
+              "text": "\t\tresult.push_back(system);"
+            },
+            {
+              "line": 557,
+              "text": "\t}"
+            },
+            {
+              "line": 558,
+              "text": "\tif (!max_db_count.IsValid() || max_db_count.GetIndex() >= 2) {"
+            },
+            {
+              "line": 559,
+              "text": "\t\tresult.push_back(context.client_data->temporary_objects);"
+            },
+            {
+              "line": 560,
+              "text": "\t}"
+            },
+            {
+              "line": 561,
+              "text": ""
+            },
+            {
+              "line": 562,
+              "text": "\treturn result;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/main/capi/v2/capi_v2_func_scalar.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/capi/v2/capi_v2_func_scalar.cpp",
+      "source_sha256": "96d8cb5b9deaf7aeb9d118ad40147e98e8f3edead54d8bfafd5c9945fa91dd3f",
+      "ranges": [
+        {
+          "first": 219,
+          "last": 230,
+          "lines": [
+            {
+              "line": 219,
+              "text": "\t\tconst auto &state_data = state_ptr->Cast<CV2FunctionLocalState>();"
+            },
+            {
+              "line": 220,
+              "text": "\t\targs.in_init_data = state_data.handle.GetData();"
+            },
+            {
+              "line": 221,
+              "text": "\t}"
+            },
+            {
+              "line": 222,
+              "text": ""
+            },
+            {
+              "line": 223,
+              "text": "\tCV2ErrorInfo err = {};"
+            },
+            {
+              "line": 224,
+              "text": "\tauto err_ptr = Convert(&err);"
+            },
+            {
+              "line": 225,
+              "text": ""
+            },
+            {
+              "line": 226,
+              "text": "\tCV2CallbackContext callback_context(state.GetContext());"
+            },
+            {
+              "line": 227,
+              "text": "\tinfo.exec_cb(Convert(&args), Convert(&callback_context), &err_ptr);"
+            },
+            {
+              "line": 228,
+              "text": ""
+            },
+            {
+              "line": 229,
+              "text": "\tif (err.HasError()) {"
+            },
+            {
+              "line": 230,
+              "text": "\t\terr.ThrowAsException();"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/include/duckdb/common/optional_idx.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/optional_idx.hpp",
+      "source_sha256": "403365e6c5bebf0cc133844605f3f097daf4e9e346bc7312744e93860d6c50fc",
+      "ranges": [
+        {
+          "first": 16,
+          "last": 22,
+          "lines": [
+            {
+              "line": 16,
+              "text": "class optional_idx {"
+            },
+            {
+              "line": 17,
+              "text": "public:"
+            },
+            {
+              "line": 18,
+              "text": "\tconstexpr optional_idx() {"
+            },
+            {
+              "line": 19,
+              "text": "\t}"
+            },
+            {
+              "line": 20,
+              "text": "\t// NOLINTNEXTLINE: allow implicit conversion from idx_t"
+            },
+            {
+              "line": 21,
+              "text": "\tconstexpr optional_idx(idx_t index_p) : index(index_p) {"
+            },
+            {
+              "line": 22,
+              "text": "\t}"
+            }
+          ]
+        },
+        {
+          "first": 51,
+          "last": 56,
+          "lines": [
+            {
+              "line": 51,
+              "text": "private:"
+            },
+            {
+              "line": 52,
+              "text": "\t//! Kept out-of-line so that the throwing path does not block inlining of the accessors"
+            },
+            {
+              "line": 53,
+              "text": "\t[[noreturn]] DUCKDB_API static void ThrowNotSet();"
+            },
+            {
+              "line": 54,
+              "text": ""
+            },
+            {
+              "line": 55,
+              "text": "private:"
+            },
+            {
+              "line": 56,
+              "text": "\toptional<idx_t> index;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/include/duckdb/common/vector.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/vector.hpp",
+      "source_sha256": "0d36397cb952756e37c42cf143930eb7c658715cad50dc446c2b80ae435f24b2",
+      "ranges": [
+        {
+          "first": 20,
+          "last": 24,
+          "lines": [
+            {
+              "line": 20,
+              "text": "template <class DATA_TYPE, bool SAFE = true, class ALLOCATOR = std::allocator<DATA_TYPE>>"
+            },
+            {
+              "line": 21,
+              "text": "class vector : public std::vector<DATA_TYPE, ALLOCATOR> { // NOLINT: matching name of std"
+            },
+            {
+              "line": 22,
+              "text": "public:"
+            },
+            {
+              "line": 23,
+              "text": "\tusing original = std::vector<DATA_TYPE, ALLOCATOR>;"
+            },
+            {
+              "line": 24,
+              "text": "\tusing original::original;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/include/duckdb/common/shared_ptr_ipp.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/shared_ptr_ipp.hpp",
+      "source_sha256": "c205b870cfcd373e28931ce4f2b8d7808e3e506b9e53dbc07b4e83c4f7d39848",
+      "ranges": [
+        {
+          "first": 13,
+          "last": 18,
+          "lines": [
+            {
+              "line": 13,
+              "text": "template <typename T, bool SAFE = true>"
+            },
+            {
+              "line": 14,
+              "text": "class shared_ptr { // NOLINT: invalid case style"
+            },
+            {
+              "line": 15,
+              "text": "public:"
+            },
+            {
+              "line": 16,
+              "text": "\tusing original = std::shared_ptr<T>;"
+            },
+            {
+              "line": 17,
+              "text": "\tusing element_type = typename original::element_type;"
+            },
+            {
+              "line": 18,
+              "text": "\tusing weak_type = weak_ptr<T, SAFE>;"
+            }
+          ]
+        },
+        {
+          "first": 41,
+          "last": 42,
+          "lines": [
+            {
+              "line": 41,
+              "text": "private:"
+            },
+            {
+              "line": 42,
+              "text": "\toriginal internal;"
+            }
+          ]
+        },
+        {
+          "first": 118,
+          "last": 120,
+          "lines": [
+            {
+              "line": 118,
+              "text": ""
+            },
+            {
+              "line": 119,
+              "text": "\t// Destructor"
+            },
+            {
+              "line": 120,
+              "text": "\t~shared_ptr() = default;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/include/duckdb/main/attached_database.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/main/attached_database.hpp",
+      "source_sha256": "45176b4ca1c8328ee6e0a8ec0a65d5adeba289060da939677be013ad52689c20",
+      "ranges": [
+        {
+          "first": 152,
+          "last": 163,
+          "lines": [
+            {
+              "line": 152,
+              "text": "\tconst Identifier &GetName() const {"
+            },
+            {
+              "line": 153,
+              "text": "\t\treturn name;"
+            },
+            {
+              "line": 154,
+              "text": "\t}"
+            },
+            {
+              "line": 155,
+              "text": "\tvoid SetName(const Identifier &new_name) {"
+            },
+            {
+              "line": 156,
+              "text": "\t\tname = new_name;"
+            },
+            {
+              "line": 157,
+              "text": "\t}"
+            },
+            {
+              "line": 158,
+              "text": "\t//! Move the deleter binding out, if any. Call once the attachment is out of the databases map and"
+            },
+            {
+              "line": 159,
+              "text": "\t//! held exclusively, and run the deleter only with no lock held -- it executes SQL."
+            },
+            {
+              "line": 160,
+              "text": "\tunique_ptr<ResourceDeleter> ExtractDeleter();"
+            },
+            {
+              "line": 161,
+              "text": "\tbool IsSystem() const;"
+            },
+            {
+              "line": 162,
+              "text": "\tbool IsTemporary() const;"
+            },
+            {
+              "line": 163,
+              "text": "\tbool IsReadOnly() const;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/include/duckdb/common/identifier.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/identifier.hpp",
+      "source_sha256": "77907e5932c1e18a5af290b10a75cce2a8018ddab990ba0acaf360b758ba37c7",
+      "ranges": [
+        {
+          "first": 65,
+          "last": 80,
+          "lines": [
+            {
+              "line": 65,
+              "text": "\t//! The raw underlying string (preserving original casing)"
+            },
+            {
+              "line": 66,
+              "text": "\tconst string &GetIdentifierName() const {"
+            },
+            {
+              "line": 67,
+              "text": "\t\treturn value;"
+            },
+            {
+              "line": 68,
+              "text": "\t}"
+            },
+            {
+              "line": 69,
+              "text": ""
+            },
+            {
+              "line": 70,
+              "text": "\tbool empty() const { // NOLINT: match std::string interface"
+            },
+            {
+              "line": 71,
+              "text": "\t\treturn value.empty();"
+            },
+            {
+              "line": 72,
+              "text": "\t}"
+            },
+            {
+              "line": 73,
+              "text": "\tvoid clear() { // NOLINT: match std::string interface"
+            },
+            {
+              "line": 74,
+              "text": "\t\tvalue.clear();"
+            },
+            {
+              "line": 75,
+              "text": "\t}"
+            },
+            {
+              "line": 76,
+              "text": "\tidx_t size() const { // NOLINT: match std::string interface"
+            },
+            {
+              "line": 77,
+              "text": "\t\treturn value.size();"
+            },
+            {
+              "line": 78,
+              "text": "\t}"
+            },
+            {
+              "line": 79,
+              "text": "\tconst char *c_str() const { // NOLINT: match std::string interface"
+            },
+            {
+              "line": 80,
+              "text": "\t\treturn value.c_str();"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/main/extension/extension_load.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/extension/extension_load.cpp",
+      "source_sha256": "595bed7921a693fa497f9eae7c68f6e293c40719fa3a12be8a190f5e7bdb7086",
+      "ranges": [
+        {
+          "first": 27,
+          "last": 36,
+          "lines": [
+            {
+              "line": 27,
+              "text": "//! Which C API family an extension targets. C_STRUCT_UNSTABLE always means V2: everything that was unstable in the V1"
+            },
+            {
+              "line": 28,
+              "text": "//! API was stabilized into v1.5.6, so a V1 extension pins that version rather than building against \"unstable\"."
+            },
+            {
+              "line": 29,
+              "text": "static bool UsesCAPIV2(const ExtensionInitResult &init_result) {"
+            },
+            {
+              "line": 30,
+              "text": "\tif (init_result.abi_type == ExtensionABIType::C_STRUCT_UNSTABLE) {"
+            },
+            {
+              "line": 31,
+              "text": "\t\treturn true;"
+            },
+            {
+              "line": 32,
+              "text": "\t}"
+            },
+            {
+              "line": 33,
+              "text": "\tif (init_result.abi_type != ExtensionABIType::C_STRUCT) {"
+            },
+            {
+              "line": 34,
+              "text": "\t\treturn false;"
+            },
+            {
+              "line": 35,
+              "text": "\t}"
+            },
+            {
+              "line": 36,
+              "text": "\treturn VersioningUtils::IsCAPIV2Version(init_result.duckdb_capi_version);"
+            }
+          ]
+        },
+        {
+          "first": 829,
+          "last": 845,
+          "lines": [
+            {
+              "line": 829,
+              "text": ""
+            },
+            {
+              "line": 830,
+              "text": "\t// C ABI, V2"
+            },
+            {
+              "line": 831,
+              "text": "\tif (UsesCAPIV2(extension_init_result)) {"
+            },
+            {
+              "line": 832,
+              "text": "\t\tauto init_fun_name = extension_init_result.filebase + \"_init_c_api_v2\";"
+            },
+            {
+              "line": 833,
+              "text": "\t\tauto init_fun_capi_v2 = reinterpret_cast<ext_init_c_api_v2_fun_t>("
+            },
+            {
+              "line": 834,
+              "text": "\t\t    db.config.GetExternalExtensionProvider().TryLoadFunction(extension_init_result.lib_hdl, init_fun_name));"
+            },
+            {
+              "line": 835,
+              "text": ""
+            },
+            {
+              "line": 836,
+              "text": "\t\tif (!init_fun_capi_v2) {"
+            },
+            {
+              "line": 837,
+              "text": "\t\t\tthrow IOException("
+            },
+            {
+              "line": 838,
+              "text": "\t\t\t    \"File \\\"%s\\\" did not contain function \\\"%s\\\". Extensions built against the unstable C API, or against \""
+            },
+            {
+              "line": 839,
+              "text": "\t\t\t    \"C API v2.x.y, must use the entrypoint from duckdb_extension_v2.h. To keep using the V1 C API, pin it \""
+            },
+            {
+              "line": 840,
+              "text": "\t\t\t    \"with build_loadable_extension_capi(%s 1 5 6 ...), which provides \\\"%s_init_c_api\\\" instead.\","
+            },
+            {
+              "line": 841,
+              "text": "\t\t\t    extension_init_result.filename, init_fun_name, extension_init_result.filebase,"
+            },
+            {
+              "line": 842,
+              "text": "\t\t\t    extension_init_result.filebase);"
+            },
+            {
+              "line": 843,
+              "text": "\t\t}"
+            },
+            {
+              "line": 844,
+              "text": ""
+            },
+            {
+              "line": 845,
+              "text": "\t\tdb.InvokeExtensionEntrypointV2(extension_init_result, extension, init_fun_capi_v2, context,"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/main/extension/extension_load_dynamic.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/extension/extension_load_dynamic.cpp",
+      "source_sha256": "837eb0d5cd4b8564f5def25399497ab25dd31674e2383e53a416e7b5bab04c29",
+      "ranges": [
+        {
+          "first": 68,
+          "last": 80,
+          "lines": [
+            {
+              "line": 68,
+              "text": "#else"
+            },
+            {
+              "line": 69,
+              "text": "\t\tconst auto &dopen_from = filename;"
+            },
+            {
+              "line": 70,
+              "text": "#endif"
+            },
+            {
+              "line": 71,
+              "text": ""
+            },
+            {
+              "line": 72,
+              "text": "\t\tauto lib_hdl = dlopen(dopen_from.c_str(), RTLD_NOW | RTLD_LOCAL);"
+            },
+            {
+              "line": 73,
+              "text": "\t\tif (!lib_hdl) {"
+            },
+            {
+              "line": 74,
+              "text": "\t\t\tthrow IOException(\"Extension \\\"%s\\\" could not be loaded: %s\", filename, GetDLError());"
+            },
+            {
+              "line": 75,
+              "text": "\t\t}"
+            },
+            {
+              "line": 76,
+              "text": "\t\treturn lib_hdl;"
+            },
+            {
+              "line": 77,
+              "text": "\t}"
+            },
+            {
+              "line": 78,
+              "text": ""
+            },
+            {
+              "line": 79,
+              "text": "\tvoid *TryLoadFunction(void *library, const string &function_name) override {"
+            },
+            {
+              "line": 80,
+              "text": "\t\treturn dlsym(library, function_name.c_str());"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "CMakeLists.txt",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/CMakeLists.txt",
+      "source_sha256": "e40a2a3234c3b06ea88ef87216014cfe492ac07afb3bc294a0f9e705e9298ca3",
+      "ranges": [
+        {
+          "first": 60,
+          "last": 75,
+          "lines": [
+            {
+              "line": 60,
+              "text": "if(DEFINED CMAKE_CXX_STANDARD)"
+            },
+            {
+              "line": 61,
+              "text": "  set(_duckdb_allowed_cxx_std 17 20 23 26)"
+            },
+            {
+              "line": 62,
+              "text": "  if(NOT CMAKE_CXX_STANDARD IN_LIST _duckdb_allowed_cxx_std)"
+            },
+            {
+              "line": 63,
+              "text": "    message("
+            },
+            {
+              "line": 64,
+              "text": "      FATAL_ERROR"
+            },
+            {
+              "line": 65,
+              "text": "        \"DuckDB requires C++17 or higher; got CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}. \""
+            },
+            {
+              "line": 66,
+              "text": "        \"Pass -DCMAKE_CXX_STANDARD=17 (or higher), or unset it to use the default.\""
+            },
+            {
+              "line": 67,
+              "text": "    )"
+            },
+            {
+              "line": 68,
+              "text": "  endif()"
+            },
+            {
+              "line": 69,
+              "text": "endif()"
+            },
+            {
+              "line": 70,
+              "text": ""
+            },
+            {
+              "line": 71,
+              "text": "set(CMAKE_CXX_STANDARD"
+            },
+            {
+              "line": 72,
+              "text": "    17"
+            },
+            {
+              "line": 73,
+              "text": "    CACHE STRING \"Default C++ standard (minimum 17)\")"
+            },
+            {
+              "line": 74,
+              "text": "set(CMAKE_CXX_STANDARD_REQUIRED ON)"
+            },
+            {
+              "line": 75,
+              "text": "set(CMAKE_CXX_EXTENSIONS OFF)"
+            }
+          ]
+        },
+        {
+          "first": 829,
+          "last": 838,
+          "lines": [
+            {
+              "line": 829,
+              "text": "# Build without C++ RTTI. A dependency that cannot build this way can re-enable"
+            },
+            {
+              "line": 830,
+              "text": "# it for its own targets, but only if its class hierarchy is self-contained: a"
+            },
+            {
+              "line": 831,
+              "text": "# type deriving from a duckdb type needs the base's typeinfo, which this build"
+            },
+            {
+              "line": 832,
+              "text": "# never emits."
+            },
+            {
+              "line": 833,
+              "text": "if(DISABLE_RTTI)"
+            },
+            {
+              "line": 834,
+              "text": "  if(MSVC)"
+            },
+            {
+              "line": 835,
+              "text": "    set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} /GR-\")"
+            },
+            {
+              "line": 836,
+              "text": "  else()"
+            },
+            {
+              "line": 837,
+              "text": "    set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -fno-rtti\")"
+            },
+            {
+              "line": 838,
+              "text": "  endif()"
+            }
+          ]
+        },
+        {
+          "first": 1127,
+          "last": 1148,
+          "lines": [
+            {
+              "line": 1127,
+              "text": "include_directories(src/include)"
+            },
+            {
+              "line": 1128,
+              "text": "if(NOT EXTENSION_CONFIG_BUILD)"
+            },
+            {
+              "line": 1129,
+              "text": "  include_directories(third_party/fsst)"
+            },
+            {
+              "line": 1130,
+              "text": "  include_directories(third_party/fmt/include)"
+            },
+            {
+              "line": 1131,
+              "text": "  include_directories(third_party/hyperloglog)"
+            },
+            {
+              "line": 1132,
+              "text": "  include_directories(third_party/fastpforlib)"
+            },
+            {
+              "line": 1133,
+              "text": "  include_directories(third_party/skiplist)"
+            },
+            {
+              "line": 1134,
+              "text": "  include_directories(third_party/ska_sort)"
+            },
+            {
+              "line": 1135,
+              "text": "  include_directories(third_party/fast_float)"
+            },
+            {
+              "line": 1136,
+              "text": "  include_directories(third_party/re2)"
+            },
+            {
+              "line": 1137,
+              "text": "  include_directories(third_party/miniz)"
+            },
+            {
+              "line": 1138,
+              "text": "  include_directories(third_party/utf8proc/include)"
+            },
+            {
+              "line": 1139,
+              "text": "  include_directories(third_party/concurrentqueue)"
+            },
+            {
+              "line": 1140,
+              "text": "  include_directories(third_party/pcg)"
+            },
+            {
+              "line": 1141,
+              "text": "  include_directories(third_party/pdqsort)"
+            },
+            {
+              "line": 1142,
+              "text": "  include_directories(third_party/tdigest)"
+            },
+            {
+              "line": 1143,
+              "text": "  include_directories(third_party/mbedtls/include)"
+            },
+            {
+              "line": 1144,
+              "text": "  include_directories(third_party/httplib)"
+            },
+            {
+              "line": 1145,
+              "text": "  include_directories(third_party/jaro_winkler)"
+            },
+            {
+              "line": 1146,
+              "text": "  include_directories(third_party/vergesort)"
+            },
+            {
+              "line": 1147,
+              "text": "  include_directories(third_party/yyjson/include)"
+            },
+            {
+              "line": 1148,
+              "text": "  include_directories(third_party/zstd/include)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

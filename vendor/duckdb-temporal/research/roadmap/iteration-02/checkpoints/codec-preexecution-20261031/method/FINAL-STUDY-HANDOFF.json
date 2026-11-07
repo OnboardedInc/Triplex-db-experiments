@@ -1,0 +1,23 @@
+{
+  "schema": "codec-final-study-source-only-handoff-v1",
+  "completed_utc": "2026-10-31T02:57:43.617142+00:00",
+  "status": "FROZEN_UNTIMED_PREFLIGHT_COMPLETE_WAITING_ROOT_EXECUTION_AUTHORITY",
+  "study": {
+    "path": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-codec/revision-02/STUDY-MANIFEST.json",
+    "sha256": "05314589bd181c3ff7500f8cf1c0e45a82e7cc9c7a84233b2c94a9385c6a447b",
+    "members": 278
+  },
+  "selected_public_directory": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-codec/revision-02/curated-final-study",
+  "selected_manifest_sha256": "b7be88c5b88a5fd258e7bc3fe4051d4ea29b9565ffcf599892fb6528dbd5cc50",
+  "content_tree_sha256": "2f417a17469f6c7366fcfac56c4a69f3be60772de6f50989e20ccbb055b31ea0",
+  "content_files": 305,
+  "content_bytes": 7330888,
+  "physical_files": 307,
+  "all_members_rehashed": true,
+  "source_only_freezer_actual_exit": 0,
+  "all56genuine_untimed_outputs_exact": true,
+  "actual_outer_controller_child_exits": "PASS_exact_int0_timeoutFalse_validationerrorNone",
+  "binary_runtime_DB_files_excluded": 5,
+  "execution_gate": "ABSENT",
+  "timing_profile": "NOT_RUN"
+}

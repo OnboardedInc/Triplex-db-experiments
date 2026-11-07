@@ -1,0 +1,8 @@
+Updating c76f0f41..05cfbda1
+Fast-forward
+ .../runtime/adapter/test-native-writer.ts          |  43 +++-
+ .../native-writer-first-public-20261106/first.tap  |  50 ++++
+ .../receipt.json                                   | 284 +++++++++++++++++++++
+ 3 files changed, 366 insertions(+), 11 deletions(-)
+ create mode 100644 projects/temporal-datalog/runtime/evidence/native-writer-first-public-20261106/first.tap
+ create mode 100644 projects/temporal-datalog/runtime/evidence/native-writer-first-public-20261106/receipt.json

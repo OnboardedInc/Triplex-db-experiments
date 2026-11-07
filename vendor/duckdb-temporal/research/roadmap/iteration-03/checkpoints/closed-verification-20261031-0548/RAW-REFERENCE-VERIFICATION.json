@@ -1,0 +1,90 @@
+{
+  "status": "PASS_CAPTURED_RAW_REFERENCE_CLOSURE",
+  "raw_stream_references_verified": 730,
+  "exact_path_or_content_resolution": true,
+  "content_only_resolutions": [
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker-command-control-05ney9d9/nonzero.receipt.json",
+      "stream": "stdout",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker-command-control-05ney9d9/nonzero.stdout",
+      "retained_as": "independent-workspace/checkpoint-003/checker-command-control-ixr5bltg/timeout.stdout"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker-command-control-05ney9d9/nonzero.receipt.json",
+      "stream": "stderr",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker-command-control-05ney9d9/nonzero.stderr",
+      "retained_as": "python-fp-002/x87-unmask-5.stderr.txt"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker-command-control-5kucst3f/absent.receipt.json",
+      "stream": "stdout",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker-command-control-5kucst3f/absent.stdout",
+      "retained_as": "python-fp-002/x87-unmask-5.stderr.txt"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker-command-control-5kucst3f/absent.receipt.json",
+      "stream": "stderr",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker-command-control-5kucst3f/absent.stderr",
+      "retained_as": "python-fp-002/x87-unmask-5.stderr.txt"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker-command-control-ixr5bltg/timeout.receipt.json",
+      "stream": "stdout",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker-command-control-ixr5bltg/timeout.stdout",
+      "retained_as": "independent-workspace/checkpoint-003/checker-command-control-ixr5bltg/timeout.stdout"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker-command-control-ixr5bltg/timeout.receipt.json",
+      "stream": "stderr",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker-command-control-ixr5bltg/timeout.stderr",
+      "retained_as": "python-fp-002/x87-unmask-5.stderr.txt"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker-command-control-rgbd0q9a/first.receipt.json",
+      "stream": "stdout",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker-command-control-rgbd0q9a/first.stdout",
+      "retained_as": "python-fp-002/x87-unmask-5.stderr.txt"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker-command-control-rgbd0q9a/first.receipt.json",
+      "stream": "stderr",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker-command-control-rgbd0q9a/first.stderr",
+      "retained_as": "python-fp-002/x87-unmask-5.stderr.txt"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker003-control-receipts/all-controls.receipt.json",
+      "stream": "stdout",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker003-control-receipts/all-controls.stdout",
+      "retained_as": "python-fp-002/x87-unmask-5.stderr.txt"
+    },
+    {
+      "receipt": "independent-workspace/checkpoint-003/checker003-control-receipts/all-controls.receipt.json",
+      "stream": "stderr",
+      "declared_source_path": "/workspace/scratch/497cfb3c035e/.agent-logs/goal3-independent-acceptance/development-003/checker003-control-receipts/all-controls.stderr",
+      "retained_as": "independent-workspace/checkpoint-003/checker003-control-receipts/all-controls.stderr"
+    }
+  ],
+  "unresolved": [],
+  "app_campaign_receipts": {
+    "independent-original-tmp/checkpoint-002/genuine-candidate-001-run-001": 6,
+    "independent-workspace/checkpoint-002/genuine-candidate-001-workspace-campaign-001": 156,
+    "independent-workspace/checkpoint-003/genuine-candidate-001-checker003-campaign-001": 156
+  },
+  "partial006": {
+    "bytes": 32768,
+    "sha256": "f5d2b10a9a58587950e65e67a8678e849656b31e3e5e75b7004f0461e0300918",
+    "utf8_valid": true,
+    "complete_json": false,
+    "terminal_receipt": "absent as originally observed; outcome unknown, not passed"
+  },
+  "required_closed_receipts": {
+    "python-fp-002/EVIDENCE-MANIFEST.json": "54fc5e6bcdae8c12db965223f8c2bc10ef895193b4071506abff3421ee508ee2",
+    "independent-workspace/INDEPENDENT-REPORT.md": "71c0f0080c91921d2954743569997f6356407e89476d5ff98d62e5ef9475b3bf",
+    "independent-workspace/candidate001-checker003-final-receipt.json": "b7c5595f3b1a5358e75d3ae626936ea2b52fffc0becf2f6362dbde980a126e93",
+    "full-regression/HANDOFF.json": "c31b494516ebf6fd61415a9f5da6d8a2592aa5a93c4d943d1687b7faeefb447f",
+    "full-regression/FINAL-CHECK-INDEX.json": "e843bbcfec2035acf7bb401e7e6e2c7ea69e28281f6f12f6c33d7c331f4329c2",
+    "full-regression/EVIDENCE-MANIFEST.json": "e9d172649ed8488c1f60ef176fb45cc4f8712e31043f046d5d3a5e76fd1c1a50",
+    "code-review-semantics/EVIDENCE-MANIFEST.json": "297a9068cde669c364254b13a8c9a74dd0546c8e4d44f32d66537c70b255ad13"
+  },
+  "PRbody11713_exact_three_copies": true
+}

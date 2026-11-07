@@ -1,0 +1,24 @@
+{
+  "schema": "item4-peer-review-manifest-v1",
+  "frozen_utc": "2026-10-31T16:47:02Z",
+  "scope": "New disjoint theory-to-root-and-execution source-only research peer review",
+  "status": "CurrentQA002 and execution14dce4 reviewed; no runtime or implementation approval",
+  "self_excluded": true,
+  "files": [
+    {
+      "path": "REVIEW.md",
+      "size_bytes": 16705,
+      "sha256": "ce46edfc5728a35e645b4677d8c4618b34e6efdfdc33819105ca83f0f51c1d82"
+    },
+    {
+      "path": "EVIDENCE.json",
+      "size_bytes": 8881,
+      "sha256": "83fba691506500d1ec72c359359016b8590f3bf465b767308295774e69d1186f"
+    },
+    {
+      "path": "progress.jsonl",
+      "size_bytes": 4888,
+      "sha256": "e63405951efe818793328eae47e646f75a3aeb0c355475634afcc3d373e2c1ef"
+    }
+  ]
+}

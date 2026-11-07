@@ -1,0 +1,16 @@
+{
+  "at_utc": "2026-10-31T01:43:41.357429+00:00",
+  "status": "PASS_ROOT_RESTORED_ARCHIVE_ALL_MEMBERS_MODES_HASHES",
+  "archive_sha256": "88fd8a217a2a96f7bbe0b277799331615b93ca12be812be779481d19682879cd",
+  "archive_bytes": 2434478,
+  "archive_members": 1630,
+  "logical_UTF8_bytes": 25760215,
+  "evidence_manifest_sha256": "aa0f406e9d8dff57831c44f04c5f97552d797b8fd13dc23c74c3bad3d527a703",
+  "all1570_reader_publication_members_included": true,
+  "all37_renewed_research_payloads_plus_manifests_receipts_included": true,
+  "selected_decision_sha256": "55bb41d35b005760ace90ea0c504302d4aeacddc075b8e887c152abf03ad1686",
+  "codec_source_patch": "NOT_STARTED",
+  "extraction_or_archive_execution": false,
+  "compiled_runtime_database_full_vendor_caches": "EXCLUDED_WITH_ORIGINAL_HASH_REFERENCES",
+  "base64_parts": 11
+}

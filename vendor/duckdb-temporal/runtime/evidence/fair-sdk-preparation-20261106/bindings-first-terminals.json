@@ -1,0 +1,86 @@
+[
+  {
+    "phase": "binding-control-1-first",
+    "command": [
+      "node",
+      "adapter/antijoin-fair-sdk-binding.mjs",
+      "--artifact-role",
+      "FAIR4_B0_MAPPED_CONTROL",
+      "--readers",
+      "1",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "evidence/antijoin-fair-sdk-control-10m-1-20261106.json"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:29:57.173959+00:00"
+  },
+  {
+    "phase": "binding-control-16-first",
+    "command": [
+      "node",
+      "adapter/antijoin-fair-sdk-binding.mjs",
+      "--artifact-role",
+      "FAIR4_B0_MAPPED_CONTROL",
+      "--readers",
+      "16",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "evidence/antijoin-fair-sdk-control-10m-16-20261106.json"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:30:01.542161+00:00"
+  },
+  {
+    "phase": "binding-candidate-1-first",
+    "command": [
+      "node",
+      "adapter/antijoin-fair-sdk-binding.mjs",
+      "--artifact-role",
+      "FAIR4_SDK_CANDIDATE",
+      "--readers",
+      "1",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "evidence/antijoin-fair-sdk-candidate-10m-1-20261106.json"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:30:05.400059+00:00"
+  },
+  {
+    "phase": "binding-candidate-16-first",
+    "command": [
+      "node",
+      "adapter/antijoin-fair-sdk-binding.mjs",
+      "--artifact-role",
+      "FAIR4_SDK_CANDIDATE",
+      "--readers",
+      "16",
+      "--budget",
+      "evidence/antijoin-cost-10m-budget-20261105.json",
+      "--native-binding",
+      "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+      "--evidence",
+      "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "--output",
+      "evidence/antijoin-fair-sdk-candidate-10m-16-20261106.json"
+    ],
+    "exitCode": 0,
+    "terminalAtUtc": "2026-11-06T05:30:09.068317+00:00"
+  }
+]

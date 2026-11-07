@@ -1,0 +1,86 @@
+{
+  "format": "triplex-qlever-read-priority-attribution/1",
+  "recordedAt": "2026-11-07T02:28:46.284191+00:00",
+  "status": "SOURCE_AND_RETAINED_RAW_ATTRIBUTION_WITH_MEASUREMENT_GAPS",
+  "observation": "qualification/evidence/qlever-qualified-rate16-datalog-v2-failure.json",
+  "sources": [
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "line": 690,
+      "meaning": "includeBasis obtains authoritative source position before executing public query."
+    },
+    {
+      "path": "packages/qlever/src/QleverQueryExecutor.ts",
+      "line": 213,
+      "meaning": "Pinned position is reused; runtime executes every compiled admission before final query."
+    },
+    {
+      "path": "packages/qlever/src/compiler.ts",
+      "line": 693,
+      "meaning": "Paired-retirement and persisted-scalar completeness admissions each scan exactscope/history withLIMIT1 malformed-row search."
+    },
+    {
+      "path": "packages/qlever/src/QleverQueryExecutor.ts",
+      "line": 335,
+      "meaning": "Final native answer SELECT is a separate call after checks/domain probes."
+    },
+    {
+      "path": "packages/qlever/src/native/NativeQueries.ts",
+      "line": 124,
+      "meaning": "Native provider records one sourcecut query, then one typed answer query for this point recipe."
+    },
+    {
+      "path": "packages/qlever/src/QleverClient.ts",
+      "line": 64,
+      "meaning": "Globalfetch dispatch is not timed separately; cooperative timeout and best-effort websocket cancellation are distinct from physicalstop."
+    },
+    {
+      "path": "packages/qualification/load/runner.ts",
+      "line": 586,
+      "meaning": "Read timestamps expose scheduled/enqueued/dispatched/complete intervals."
+    },
+    {
+      "path": "packages/qualification/load/runner.ts",
+      "line": 761,
+      "meaning": "Writer timestamps separate offer,start,SDKack and publicvisibility; no separate nativecommit/index timestamp is available."
+    }
+  ],
+  "observed": {
+    "successfulReads": 215,
+    "deadlineErrors": 265,
+    "successfulQueueMedianMs": 16331.837124999998,
+    "successfulScheduledLatencyMedianMs": 19735.414291,
+    "allSuccessfulReadsAtPosition": "2",
+    "firstWriterStartToAckMs": 56764.662875,
+    "firstWriterAckToVisibleMs": 2673.892125000013,
+    "writeReconciliationAfterDrain": 6,
+    "writersVisibleWithin30s": 0
+  },
+  "hypotheses": [
+    {
+      "id": "native-two-call-point",
+      "status": "newplanprepared",
+      "mechanism": "Remove Datalog-specific percall admissions by selecting independently authored native point path; shared writes unchanged",
+      "plan": "qualification/load-waves/qlever-native-only-point-rate16-v1/plan.json",
+      "limit": "Different query surface/settings; no causal/performance winner until matchedmeasurement."
+    },
+    {
+      "id": "transparent-HTTP-phase-observer",
+      "status": "PROPOSED_NOT_IMPLEMENTED_OR_EXECUTED",
+      "mechanism": "Isolated preload delegates exact same fetch/ReadableStream/WebSocket behavior, records metadata-only request IDs/bodyhashes, driver-call/header/body-end/abort/cancel-request boundaries and bounded/redacted sourcequery dictionary. Must pass independent apparatus tests before any mixedload.",
+      "limit": "HTTPelapsed includes driverqueue/network/server; responseheaders are not engineexecutionstart, cancelrequest is not physicalstop. No inferred phase duration from query text alone."
+    },
+    {
+      "id": "consolidated-integrity-admission",
+      "status": "MODEL_ONLY_NOT_APPROVED_OR_EXECUTED",
+      "mechanism": "If actual phase data makes the two fullscope/history admissions dominant, test a onecall native integrity relation preserving both malformedchannel and partialpair detection.",
+      "limit": "No skipped/incrementallycached checks or weakened rawdamage semantics. Requires actual two-direction partialpair/missingchannel controls, current44/full142regates at2GiB."
+    }
+  ],
+  "limits": [
+    "No source/runtime edit, engine query or new performance trial is implied by this attribution note.",
+    "Existing queries.jsonl is empty for the Datalog load; rawDatalog patterns are preserved, but nativephase timings cannot be reconstructed.",
+    "Deadline errors occur after driverdispatch with remainingbudget; they do not prove when server work stopped.",
+    "No Rust rewrite is justified by this evidence."
+  ]
+}

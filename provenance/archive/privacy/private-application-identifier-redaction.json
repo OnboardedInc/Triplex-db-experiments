@@ -1,0 +1,164 @@
+{
+  "format": "private-application-reference-redaction/1",
+  "scope": "Project-authored direct text and content-addressed variants; original sources unchanged. Account-scoped conversation/document/deep links removed conservatively, without asserting their ownership. Public technical documentation and provenance-verified upstream archives retained.",
+  "files": {
+    "duckdb-temporal/variant-objects/0ba227504653024e8fe64bafa1e6c87e5cff4b663c4f75f570f790af8dbd9d4f": {
+      "priorExportSha256": "0ba227504653024e8fe64bafa1e6c87e5cff4b663c4f75f570f790af8dbd9d4f",
+      "exportSha256": "2244cc08851b54ba1d4a711ffbe38bf1bd75a8ad3785d09e550a8a7a99a77f62",
+      "bytes": 7677
+    },
+    "duckdb-temporal/variant-objects/b142cef5ab9d89176531399f3af86452ff19ce2561448963c37b180edab9cc8a": {
+      "priorExportSha256": "b142cef5ab9d89176531399f3af86452ff19ce2561448963c37b180edab9cc8a",
+      "exportSha256": "3005f700c10b32e9575741f2590e0ba778fcb49d518e514fc94e70caff881177",
+      "bytes": 650
+    },
+    "duckdb-temporal/variant-objects/3eac3aed3fe23fbfa03b142213714b5d201887b7893b407700c171515a268d6b": {
+      "priorExportSha256": "3eac3aed3fe23fbfa03b142213714b5d201887b7893b407700c171515a268d6b",
+      "exportSha256": "0c4b7ce8b674e46bc3a72e99e258a033cab9dd40f367166bdd7a9ae8151861f5",
+      "bytes": 1879
+    },
+    "duckdb-temporal/variant-objects/50a4e43f12550d1a30f8041c31d38be21b9df1b93ad3f69c898a46fb617ba3fb": {
+      "priorExportSha256": "50a4e43f12550d1a30f8041c31d38be21b9df1b93ad3f69c898a46fb617ba3fb",
+      "exportSha256": "c0fd237d5e2bff1ba1c961994992eb696f5b4621ea29a9a0300d7ed1e0dbb9fa",
+      "bytes": 1554
+    },
+    "duckdb-temporal/variant-objects/ea0d45ab9057b66f6b03ba1128e1bb80ef1c26bbac254ee07b79dd143e4cd76c": {
+      "priorExportSha256": "ea0d45ab9057b66f6b03ba1128e1bb80ef1c26bbac254ee07b79dd143e4cd76c",
+      "exportSha256": "b897d55e2998ea3dee0ce5c771e717f2a7448974b2e5d8fddf4c0e62f4a37bfe",
+      "bytes": 1636
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-03/checkpoints/research-snapshot-20261031-0400/page-progress-seq25.json": {
+      "priorExportSha256": "50a4e43f12550d1a30f8041c31d38be21b9df1b93ad3f69c898a46fb617ba3fb",
+      "exportSha256": "c0fd237d5e2bff1ba1c961994992eb696f5b4621ea29a9a0300d7ed1e0dbb9fa",
+      "bytes": 1554
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-02/checkpoints/2158/page-seq14-readback.json": {
+      "priorExportSha256": "ea0d45ab9057b66f6b03ba1128e1bb80ef1c26bbac254ee07b79dd143e4cd76c",
+      "exportSha256": "b897d55e2998ea3dee0ce5c771e717f2a7448974b2e5d8fddf4c0e62f4a37bfe",
+      "bytes": 1636
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-02/checkpoints/2027/page-accepted-seq11.json": {
+      "priorExportSha256": "3eac3aed3fe23fbfa03b142213714b5d201887b7893b407700c171515a268d6b",
+      "exportSha256": "0c4b7ce8b674e46bc3a72e99e258a033cab9dd40f367166bdd7a9ae8151861f5",
+      "bytes": 1879
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-02/checkpoints/2223/progress-snapshot/RECOVERY.md": {
+      "priorExportSha256": "0ba227504653024e8fe64bafa1e6c87e5cff4b663c4f75f570f790af8dbd9d4f",
+      "exportSha256": "2244cc08851b54ba1d4a711ffbe38bf1bd75a8ad3785d09e550a8a7a99a77f62",
+      "bytes": 7677
+    },
+    "duckdb-temporal/recovered-research/research/roadmap/iteration-02/checkpoints/codec-acceptance-20261031/progress/page-progress-seq24.json": {
+      "priorExportSha256": "b142cef5ab9d89176531399f3af86452ff19ce2561448963c37b180edab9cc8a",
+      "exportSha256": "3005f700c10b32e9575741f2590e0ba778fcb49d518e514fc94e70caff881177",
+      "bytes": 650
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-03/checkpoints/research-snapshot-20261031-0400/page-progress-seq25.json": {
+      "priorExportSha256": "50a4e43f12550d1a30f8041c31d38be21b9df1b93ad3f69c898a46fb617ba3fb",
+      "exportSha256": "c0fd237d5e2bff1ba1c961994992eb696f5b4621ea29a9a0300d7ed1e0dbb9fa",
+      "bytes": 1554
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-02/checkpoints/2158/page-seq14-readback.json": {
+      "priorExportSha256": "ea0d45ab9057b66f6b03ba1128e1bb80ef1c26bbac254ee07b79dd143e4cd76c",
+      "exportSha256": "b897d55e2998ea3dee0ce5c771e717f2a7448974b2e5d8fddf4c0e62f4a37bfe",
+      "bytes": 1636
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-02/checkpoints/2027/page-accepted-seq11.json": {
+      "priorExportSha256": "3eac3aed3fe23fbfa03b142213714b5d201887b7893b407700c171515a268d6b",
+      "exportSha256": "0c4b7ce8b674e46bc3a72e99e258a033cab9dd40f367166bdd7a9ae8151861f5",
+      "bytes": 1879
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-02/checkpoints/2223/progress-snapshot/RECOVERY.md": {
+      "priorExportSha256": "0ba227504653024e8fe64bafa1e6c87e5cff4b663c4f75f570f790af8dbd9d4f",
+      "exportSha256": "2244cc08851b54ba1d4a711ffbe38bf1bd75a8ad3785d09e550a8a7a99a77f62",
+      "bytes": 7677
+    },
+    "duckdb-temporal/current/research/roadmap/iteration-02/checkpoints/codec-acceptance-20261031/progress/page-progress-seq24.json": {
+      "priorExportSha256": "b142cef5ab9d89176531399f3af86452ff19ce2561448963c37b180edab9cc8a",
+      "exportSha256": "3005f700c10b32e9575741f2590e0ba778fcb49d518e514fc94e70caff881177",
+      "bytes": 650
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-03/checkpoints/research-snapshot-20261031-0400/archive.decoded/progress/page25-started.json": {
+      "priorExportSha256": "c00880788f65c7ed32dd1943f810e83b97d91c41a69860bbbb9f16a3442b9f06",
+      "exportSha256": "31062c70432b06888e1de040ebba6bf15a5fe94b6ccdbd50eb65f33b34ee981a",
+      "bytes": 6943
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-03/checkpoints/research-snapshot-20261031-0400/archive.decoded/progress/page-progress-seq25.json": {
+      "priorExportSha256": "50a4e43f12550d1a30f8041c31d38be21b9df1b93ad3f69c898a46fb617ba3fb",
+      "exportSha256": "c0fd237d5e2bff1ba1c961994992eb696f5b4621ea29a9a0300d7ed1e0dbb9fa",
+      "bytes": 1554
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-03/checkpoints/closed-verification-20261031-0548/archive.decoded/payloads/a9c2c36454f666db1feb4e85440cdecfda650ab235f02d96c82eb2a823792b6b": {
+      "priorExportSha256": "939eb34dee62d8147b507d52a23c2707b8d83fb7bd3fa32ddb79f6dbc0cb42aa",
+      "exportSha256": "960bfc1d5f58616d3ed090b4467623cca2fbbeb016d1352507552fc003243ceb",
+      "bytes": 19023
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/0049/archive.decoded/progress-snapshot/RECOVERY.md": {
+      "priorExportSha256": "3aa541199fcd9daacffe79c8322ced7da63884a38ef651ca55b94f8389e989aa",
+      "exportSha256": "c4720c82f4fde6c05adfed9c466b79a7c26a75ae5cdc083d6fc67c0ff73cf44e",
+      "bytes": 15189
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2350/archive.decoded/progress-snapshot/RECOVERY.md": {
+      "priorExportSha256": "8cedbb10a6adba2b75b03ad4060f9702c46aa276b2ef270d453dfdbe90883246",
+      "exportSha256": "b0cef656e85b9c5ba6f1587d37251bb9f5cf20f12c099b0a0807c01d3978adb9",
+      "bytes": 12716
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2350/archive.decoded/progress-snapshot/page18-edit-started.json": {
+      "priorExportSha256": "95e9040a050214efff81b50a7b9afa2a1f7cc2b61289e9406a51f7676a0816dc",
+      "exportSha256": "63fca95f282ee5844d6ce59f464d3fbfaf10b988f66b17268f4470f0b6307fa2",
+      "bytes": 2941
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/codec-correctness-20261031/archive.decoded/progress/snapshot/RECOVERY.md": {
+      "priorExportSha256": "ea5e09cbc0e16f00dadb59dfd0f527ec779cc299c513b0cfea6233101724de1b",
+      "exportSha256": "d1b92a835a1ed7267f98ca17c89076ec1414e32c2f738bdb40c3acd042cea6db",
+      "bytes": 20948
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2223/archive.decoded/progress/page-progress-seq15.json": {
+      "priorExportSha256": "de26cfad1cf1bc965c95ec880d9aed2826dffbb393d9ce7fb4de24a87cb734d9",
+      "exportSha256": "9fbbda431174d727765d27b0d1f07b52ce26952ab4e7ad9629178544caaef43f",
+      "bytes": 887
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2223/archive.decoded/progress/RECOVERY.md": {
+      "priorExportSha256": "0ba227504653024e8fe64bafa1e6c87e5cff4b663c4f75f570f790af8dbd9d4f",
+      "exportSha256": "2244cc08851b54ba1d4a711ffbe38bf1bd75a8ad3785d09e550a8a7a99a77f62",
+      "bytes": 7677
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2223/archive.decoded/source-storage-publication/page-integration-seq14.json": {
+      "priorExportSha256": "ea0d45ab9057b66f6b03ba1128e1bb80ef1c26bbac254ee07b79dd143e4cd76c",
+      "exportSha256": "b897d55e2998ea3dee0ce5c771e717f2a7448974b2e5d8fddf4c0e62f4a37bfe",
+      "bytes": 1636
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/0127/archive.decoded/coordinator/progress-snapshot/RECOVERY.md": {
+      "priorExportSha256": "1a0fd9a014c41bab57d4eb72ec371373f232331ce06b591fabb2a5b2a785f0cc",
+      "exportSha256": "af4b9b3107e46102d866303d6a6bb1badb1fb353f36b46d56cdb7c660e4aae4c",
+      "bytes": 16549
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/codec-acceptance-20261031/archive.decoded/progress/page-progress-seq24.json": {
+      "priorExportSha256": "b142cef5ab9d89176531399f3af86452ff19ce2561448963c37b180edab9cc8a",
+      "exportSha256": "3005f700c10b32e9575741f2590e0ba778fcb49d518e514fc94e70caff881177",
+      "bytes": 650
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/codec-acceptance-20261031/archive.decoded/progress-snapshot/RECOVERY.md": {
+      "priorExportSha256": "5b22163429ef97b874cf83aea454ead89ba219e92523e4e0ced252d54666f21d",
+      "exportSha256": "9f73257323ac527669ed0f55a29fdf9180a51a4b3e4b8c3077f02791aa8ffc27",
+      "bytes": 24878
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2325/archive.decoded/progress-snapshot/page17-edit-started.json": {
+      "priorExportSha256": "b4950f4057d5fc263c88915b6454a8f951de65e1382ee0a3817080d74baeef33",
+      "exportSha256": "e190a02b4ba41256048791b5e59357579d2d49f7c74068ece951256b2254090a",
+      "bytes": 3573
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/2132/archive.decoded/source-publication/page-integration-seq13.json": {
+      "priorExportSha256": "01135bd31c4ad6d594916ac3e4866251e319936054539d3d2d2e3bf9b664b44b",
+      "exportSha256": "e84283000f6655e7bb580d6698e3b0cf77dd6eefde56c9f58875324051dbbb08",
+      "bytes": 2992
+    },
+    "duckdb-temporal/decoded-research-artifacts/research/roadmap/iteration-02/checkpoints/codec-preexecution-20261031/archive.decoded/progress-snapshot/coordinator/RECOVERY.md": {
+      "priorExportSha256": "1eea245dc3a08a1e94430901f59621bef3e02f7819db124f112be0d47ec1d8e4",
+      "exportSha256": "552d2702e4c9ee01e7212b5ac7164f2829c821d317a6350d264962d8025b9282",
+      "bytes": 21886
+    }
+  },
+  "remappedContentObjects": 5,
+  "excludedCitationCaptures": 0,
+  "matchedValuesIncluded": false
+}

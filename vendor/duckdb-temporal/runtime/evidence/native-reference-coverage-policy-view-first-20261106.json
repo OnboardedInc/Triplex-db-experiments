@@ -1,0 +1,362 @@
+{
+  "schema": "td.native-reference-coverage-policy-view-first-gate/1",
+  "status": "focused_pass",
+  "packagedAtUtc": "2026-11-06T12:11:32.781115+00:00",
+  "sourceCommit": "d1e5e30d64d2c5fdaf8efbd06694cd04ad5cefe2",
+  "qualifiedBase": "1fd53bf5bf450a391b91289a95c37908d4daae44",
+  "productionDelta": {
+    "onlyFile": "native/catalog.sql",
+    "insertions": 8,
+    "deletions": 4,
+    "behavior": "Private five-column coverage policy view filters canonicalIR5, decodes typed entities/attributes, and selects explicit reference_policy=coverage. Public schema_references/native compiler/audits/validator joins/mutation semantics unchanged."
+  },
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/build/qualification-reference-coverage-policy-view-20261106-01",
+  "rawDirectory": "evidence/native-reference-coverage-policy-view-first-20261106-raw",
+  "rawFiles": {
+    "after-tests-first.json": {
+      "sha256": "05d401ff26c465441a17161b2c1323a388c15eb14fe8c29bbc915e7177d87ea9",
+      "sizeBytes": 99543
+    },
+    "boundary-definition-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "boundary-definition-first.tap": {
+      "sha256": "9ce0316150e3d34dc1b71eedf84d9952215a7e211e157a8fda77759ffe7d9457",
+      "sizeBytes": 622
+    },
+    "boundary-definition-first.terminal.json": {
+      "sha256": "bdaa65fb55b727dfed5378289b80aaf39cc2db2c63db1c1856e696bc6d883fce",
+      "sizeBytes": 886
+    },
+    "compiled-before-tests-first.json": {
+      "sha256": "2db77f2884776f0da5cb3e9a97a5706a198cee4f183aef32d396ed7135eae65e",
+      "sizeBytes": 21464
+    },
+    "core-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "core-first.stdout": {
+      "sha256": "5e04bfa44f771be30872cf9e6fdbbbe3b564d93520106a408117c24a9d75d181",
+      "sizeBytes": 4377
+    },
+    "core-first.terminal.json": {
+      "sha256": "8a65b0129c0c69aa529170c2e1abe76e393b1ee6c68401242416eccc95a7d827",
+      "sizeBytes": 413
+    },
+    "coverage-four-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "coverage-four-first.tap": {
+      "sha256": "8ec39adfd026f4fd9d071a2be6aa101dcc3ee1b18650cbc9cbbfc3e4f8635f23",
+      "sizeBytes": 1976
+    },
+    "coverage-four-first.terminal.json": {
+      "sha256": "c6852be140a7dc9dd59f788a1156b6a2ccf50387ff1c6e3bc1853c076e7e92e0",
+      "sizeBytes": 806
+    },
+    "owner-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "owner-first.stdout": {
+      "sha256": "b4fd558a827291550dca948c1ecab8d399fef9280e6b23058a5598a8f3ef163c",
+      "sizeBytes": 6943
+    },
+    "owner-first.terminal.json": {
+      "sha256": "380f21d1ff84b05502d5cc7a0963e39c0e07b7c4deaa2055342437daf6ccd284",
+      "sizeBytes": 786
+    },
+    "paired-before-first.json": {
+      "sha256": "154d3c715e88bc743772320bead3b98f8650b87f27aae8390313351bdaa30e2d",
+      "sizeBytes": 16686
+    },
+    "sdk-resolution-first.json": {
+      "sha256": "3da24f456ddc4d3264955590ef42d413126f4b8e56bc16f8147d9690d427fc00",
+      "sizeBytes": 929
+    },
+    "sdk-resolution-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "sdk-resolution-first.stdout": {
+      "sha256": "445c830b666b29548dacfb6f0e4b7bb18f213c9e9b83f2baf7bb7c8555fff99e",
+      "sizeBytes": 900
+    },
+    "sdk-resolution-first.terminal.json": {
+      "sha256": "15b43ecb530d62001bc83899194bc0643c6c5c22e239fe2ede42581fbdbc520b",
+      "sizeBytes": 1306
+    },
+    "stage-before-first.json": {
+      "sha256": "7dc7fa3878cfeabb71fca2e8e13398f57b819fa68703cfcdf221ff7c2e78181f",
+      "sizeBytes": 72342
+    },
+    "stage-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "stage-first.stdout": {
+      "sha256": "7475706af1d6b1cd0dfc733f687a04b071ee842fef06196034ea314301885afc",
+      "sizeBytes": 235
+    },
+    "stage-first.terminal.json": {
+      "sha256": "b245a4cfe6e68c14a7d98481e971e4952a828d2f4911958a54b8faca34d3dc6f",
+      "sizeBytes": 681
+    },
+    "stage-selected.py": {
+      "sha256": "ebac4aff2a49df9bde44e50afa5f1ed5d77cbe8c620fc62c6316511d3dd38ab6",
+      "sizeBytes": 3821
+    },
+    "tsc-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tsc-first.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "tsc-first.terminal.json": {
+      "sha256": "0907536c97ee2984727eb813648a4d7f33dbf3c5fd46369dc4e02ed8b4792ca7",
+      "sizeBytes": 461
+    },
+    "predecessor-fence.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "predecessor-fence.stdout": {
+      "sha256": "92ade02dd8388d869c7e90dd73c37565318e47dc3ca77d82a88fa8cbac2f8bdb",
+      "sizeBytes": 80040
+    },
+    "predecessor-fence.terminal.json": {
+      "sha256": "d5e7bfdae62e78084e922fd5e4c3322f8d86c19d26729565a7aacdb6bc7b4ae8",
+      "sizeBytes": 69
+    },
+    "predecessor-ir.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "predecessor-ir.stdout": {
+      "sha256": "af82a3ad99c0bf41fc714135abfc2e1e6b7b251aae6ac9a2e85c4f1a786a4e7b",
+      "sizeBytes": 28211
+    },
+    "predecessor-ir.terminal.json": {
+      "sha256": "d5bfb96fefc6258383e22a571ac4eb49dd29e94d08f393faef737f3ac404a452",
+      "sizeBytes": 69
+    },
+    "core-artifact.json": {
+      "sha256": "6f235c453429d482e9dd0b752ce67715026b6717300eafd4fdbcaba1e2f057d6",
+      "sizeBytes": 4553
+    },
+    "owner-artifact.json": {
+      "sha256": "e9d3b35c6a9248146a89263cfcdfcdb8df64a2dfdd23f532ffc607578833654e",
+      "sizeBytes": 7423
+    }
+  },
+  "actualOutcomes": {
+    "staging": "first_pass",
+    "sdkResolution": "first_pass",
+    "coreBuild": "first_pass",
+    "matchedOwnerControlAddonBuild": "first_pass",
+    "tsc": "first_pass",
+    "selectedMethods": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "repairsOrRetries": []
+  },
+  "terminals": {
+    "stage-first": {
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/build/qualification-reference-coverage-policy-view-20261106-01/stage-selected.py"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+      "pid": 90598,
+      "startedAtUtc": "2026-11-06T12:05:59.265262+00:00",
+      "endedAtUtc": "2026-11-06T12:06:00.797603+00:00",
+      "exitCode": 0,
+      "elapsedMs": 1532.1878748945892,
+      "helperSha256": "ebac4aff2a49df9bde44e50afa5f1ed5d77cbe8c620fc62c6316511d3dd38ab6"
+    },
+    "sdk-resolution-first": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--input-type=module",
+        "-e",
+        "import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {resolve,dirname,join} from 'node:path';import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';const require=createRequire(resolve('build/adapter/native-duckdb-port.mjs'));const api=require.resolve('@duckdb/node-api'),bindings=createRequire(api).resolve('@duckdb/node-bindings'),platform=createRequire(bindings).resolve('@duckdb/node-bindings-darwin-arm64/duckdb.node'),engine=join(dirname(platform),'libduckdb.dylib');const engineSha256=createHash('sha256').update(readFileSync(engine)).digest('hex');assert.equal(process.version,'v24.13.0');assert.equal(engineSha256,'72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c');console.log(JSON.stringify({api,bindings,platform,engine,engineSha256,node:process.execPath,nodeVersion:process.version}));"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+      "pid": 91180,
+      "startedAtUtc": "2026-11-06T12:07:28.636775+00:00",
+      "endedAtUtc": "2026-11-06T12:07:28.717098+00:00",
+      "exitCode": 0,
+      "elapsedMs": 80.18104080110788
+    },
+    "core-first": {
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "build_native.py"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+      "pid": 91181,
+      "startedAtUtc": "2026-11-06T12:07:28.718041+00:00",
+      "endedAtUtc": "2026-11-06T12:07:40.965367+00:00",
+      "exitCode": 0,
+      "elapsedMs": 12247.47887486592
+    },
+    "owner-first": {
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "build_owner_probe.py",
+        "--source-dir",
+        "[LOCAL_PATH_0041]",
+        "--engine-library",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "--compat-mutations"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+      "pid": 91231,
+      "startedAtUtc": "2026-11-06T12:07:40.966043+00:00",
+      "endedAtUtc": "2026-11-06T12:07:49.272986+00:00",
+      "exitCode": 0,
+      "elapsedMs": 8307.057209080085
+    },
+    "tsc-first": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+      "pid": 91377,
+      "startedAtUtc": "2026-11-06T12:07:50.384037+00:00",
+      "endedAtUtc": "2026-11-06T12:07:52.603070+00:00",
+      "exitCode": 0,
+      "elapsedMs": 2219.042541924864
+    },
+    "coverage-four-first": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "build/adapter/test-native-reference-coverage.js"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+      "pid": 91724,
+      "startedAtUtc": "2026-11-06T12:08:45.753621+00:00",
+      "endedAtUtc": "2026-11-06T12:08:56.223729+00:00",
+      "exitCode": 0,
+      "elapsedMs": 10470.134791918099,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4",
+        "NODE_OPTIONS": "",
+        "TD_REFERENCE_COVERAGE_PREDECESSOR_RUNTIME": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+        "TD_NATIVE_WRITER_LAB_prefix": "removed"
+      }
+    },
+    "boundary-definition-first": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^coverage definitions preserve predecessor",
+        "build/adapter/test-native-reference-coverage-boundaries.js"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+      "pid": 91794,
+      "startedAtUtc": "2026-11-06T12:08:56.224443+00:00",
+      "endedAtUtc": "2026-11-06T12:08:57.817630+00:00",
+      "exitCode": 0,
+      "elapsedMs": 1593.226124998182,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4",
+        "NODE_OPTIONS": "",
+        "TD_REFERENCE_COVERAGE_PREDECESSOR_RUNTIME": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+        "TD_NATIVE_WRITER_LAB_prefix": "removed"
+      }
+    }
+  },
+  "methods": [
+    "coverage accepts adjacent empty-target presence and validates source removal plus target reset at one batch cut",
+    "coverage rejects a real target gap atomically and admits the same failed source command after filling it",
+    "coverage validates same-batch forward cyclic and self edges against one final overlay",
+    "coverage remains bound to each immutable schema through patch carries and delayed legacy replay",
+    "coverage definitions preserve predecessor IR1 through4 and caller rollback restores format schema activation and receipts"
+  ],
+  "staging": {
+    "copiedSdkFiles": 395,
+    "externalRoutes": 5,
+    "compilerReferences": 7,
+    "headers": 36,
+    "sourceInputs": 43,
+    "allowedSourceDelta": [
+      "native/catalog.sql"
+    ],
+    "allSourceInputsGitExact": true,
+    "helperSha256": "ebac4aff2a49df9bde44e50afa5f1ed5d77cbe8c620fc62c6316511d3dd38ab6",
+    "standardHelpers": 56,
+    "compiledOutputs": 192,
+    "oldNativeArtifactAdapterHeaderOrDatabaseCopies": false,
+    "dependencyInstall": false
+  },
+  "nativePins": {
+    "build/artifact.json": "6f235c453429d482e9dd0b752ce67715026b6717300eafd4fdbcaba1e2f057d6",
+    "build/catalog_sql.hpp": "688ecafd5bdda85f9c6e479595add09abd69840682c17ca543fdc4d857b887c8",
+    "build/temporal_datalog.duckdb_extension": "840a252db7fecbeeeab4b845e876262aa34bbdb9dfea3b9df36ffdf9e7dbbbb8",
+    "build/temporal_datalog.so": "a48be6399b7af7efb864ced234edf7ca46ba37356d2fabab213b2f5d052a5f09",
+    "build/temporal_control.node": "5a6cdd62105592c3e4761485f4068a007131515edd3b6ea973a1e435d5ad0f8b",
+    "build/owner_probe/artifact.json": "e9d3b35c6a9248146a89263cfcdfcdb8df64a2dfdd23f532ffc607578833654e",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "4b62322d12e95772f67885b3ef30826491f11bc5770f33574e9b0fbcbdacc87c",
+    "build/owner_probe/temporal_owner_probe.so": "3d303cd6c5557ec5e231256d1b7c97d2b714e2a8bf902203d9914b1b27aeb14f",
+    "build/owner_probe/temporal_writer.node": "253d176a9af1a55666a25b6c4357503bbcb0cb06f3d5191ec4ce53585e7b5323"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "sdkEntityJsSha256": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+  "previousSdk4CompiledPinsUnchanged": true,
+  "coreFlags": {
+    "experimental_current_unique_fast_path": true,
+    "experimental_injective_projection_fast_path": true,
+    "experimental_identity_count_fast_path": false,
+    "experimental_all_cut_unique_fast_path": true,
+    "experimental_streaming_source_fast_path": true
+  },
+  "settings": {
+    "readers": 2,
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "UV_THREADPOOL_SIZE": "4"
+  },
+  "coverage": [
+    "Independent adjacent/gap presence cases with both reference carriers and unchanged incoming target-shrink rejection",
+    "Atomic source removal/target reset and forward/self/cyclic final batch overlays",
+    "Original immutable schema-policy binding through carried fragments and delayed replay",
+    "Revalidation/reopen on the bounded legal fixtures",
+    "Actual old2f IR1..4 canonical strings/hashes, invalid definitions, caller-transaction IR5/format12 rollback/read-your-writes and old initializer format12 rejection on a separate owned copy"
+  ],
+  "postchecks": {
+    "native9Unchanged": true,
+    "dependencies395Unchanged": true,
+    "source43Unchanged": true,
+    "compiled192Unchanged": true,
+    "headers36Routes5References7NodeHelperUnchanged": true,
+    "sourceClean": true,
+    "closedNoWalDatabaseCount": 6,
+    "oldChildRawReports": 6,
+    "details": "after-tests-first.json",
+    "additionalSqlOrReopenAfterGate": false
+  },
+  "remaining": [
+    "Exact cf7 six-child cost matrix with fixed1.05 zero-policy median/1.15p95 both orders and1.10 policy phase budgets; not executed",
+    "Direct five-column/type projection parity and prepared lookup across first activation/rollback remains a separate planned check",
+    "No full verifier or cap-boundary run in this gate",
+    "Preexisting128MB cumulative-history revalidation OOM remains open; no claim this view fixes it",
+    "No production promotion or Goals1/9 closure"
+  ]
+}

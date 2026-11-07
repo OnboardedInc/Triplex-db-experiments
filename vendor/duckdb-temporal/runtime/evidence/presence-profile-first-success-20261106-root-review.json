@@ -1,0 +1,33 @@
+{
+  "schema": "td.research-engine-package-review/1",
+  "reviewedAtUtc": "2026-11-06T10:42:26.274540+00:00",
+  "packageCommit": "a2e4aa51e9e2b4f1419b3227b27f919cc976130e",
+  "receipt": "presence-profile-first-success-20261106.json",
+  "receiptSha256": "13842bd09ee585f405d4df4b2f85c3d4634690706422ed587818d6f27bdd71d5",
+  "rawFiles": 26,
+  "allManifestHashesAndSizesMatch": true,
+  "sourceCommit": "1706d28457aa301cd4a41078b31b7173d9f6381c",
+  "acceptance": "Focused gate only; not main code or435 result; no goals1/9 closure.",
+  "review": "Three exact endpoint results atK18 with149operatornodes each; per-cell generatedWITH query association and capturedJSON before nextSQL. DuckDB2query/operator schema; two prior failures retained in pushed packages. Diagnostic times are not productionSLO or exclusive C++ attribution.",
+  "independentlyRecomputedProfiles": [
+    {
+      "id": "nested",
+      "nodes": 149,
+      "queryTotalMs": 10.853958,
+      "peakBufferBytes": 24403216
+    },
+    {
+      "id": "reset",
+      "nodes": 149,
+      "queryTotalMs": 10.889458,
+      "peakBufferBytes": 24706392
+    },
+    {
+      "id": "missing",
+      "nodes": 149,
+      "queryTotalMs": 9.598749999999999,
+      "peakBufferBytes": 21675208
+    }
+  ],
+  "offlineReviewCorrection": "Initial offline reviewer compared complete query object to selected metric subset and stopped on extra metadata/SQL keys; corrected subset comparison and operator/cardinality sums, without engine rerun or fixture change."
+}

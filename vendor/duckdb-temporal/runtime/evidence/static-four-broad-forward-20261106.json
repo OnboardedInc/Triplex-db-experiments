@@ -1,0 +1,1683 @@
+{
+  "schema": "td.static-four-broad-forward/1",
+  "status": "FAILED_NUMERIC_UNPROMOTED",
+  "firstAttempt": true,
+  "order": [
+    "mapped_B0",
+    "static4"
+  ],
+  "sourceCheckpoint": "75ce727bd599d0b8c1046be7ccd55abe05f737d6",
+  "owningBroadProtocol": {
+    "file": "SDK-BROAD-REGRESSION-PROTOCOL.md",
+    "sha256": "9b017efdf445370e26af8750767f1125a5a973a694c1b7de8dc1afb0d57ad19f"
+  },
+  "predeclaredPlan": {
+    "file": "STATIC-FOUR-BROAD-FORWARD-PLAN.md",
+    "sha256": "50031c9456f7899225e0e9c1a6750de91c8bda3b628407f3b94191daaeab6c3c"
+  },
+  "original27Gates": {
+    "passed": 23,
+    "failed": 4,
+    "gates": [
+      {
+        "id": "fixed_p50_count_1",
+        "baseline": 462.6069580000003,
+        "candidate": 459.02300000000105,
+        "limit": 531.9980017000003,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p50_grouped_count_1",
+        "baseline": 489.9537080000009,
+        "candidate": 497.2331250000025,
+        "limit": 563.446764200001,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p50_projection_1",
+        "baseline": 15.319125000001804,
+        "candidate": 17.571083000002545,
+        "limit": 17.616993750002074,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p50_count_4",
+        "baseline": 961.3714580000014,
+        "candidate": 1054.5172499999971,
+        "limit": 1105.5771767000015,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p50_grouped_count_4",
+        "baseline": 1012.0197090000001,
+        "candidate": 1062.999125000002,
+        "limit": 1163.82266535,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p50_projection_4",
+        "baseline": 17.04466699999466,
+        "candidate": 17.230083000002196,
+        "limit": 19.601367049993858,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p50_count_16",
+        "baseline": 3869.707917000007,
+        "candidate": 3944.7622499999998,
+        "limit": 4450.164104550007,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p50_grouped_count_16",
+        "baseline": 3725.440957999992,
+        "candidate": 4374.147041999997,
+        "limit": 4284.25710169999,
+        "comparison": "<=",
+        "passed": false
+      },
+      {
+        "id": "fixed_p50_projection_16",
+        "baseline": 63.397624999983236,
+        "candidate": 65.26500000001397,
+        "limit": 72.90726874998072,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p99_count_4",
+        "baseline": 1345.639916,
+        "candidate": 1981.4417499999981,
+        "limit": 1614.7678992,
+        "comparison": "<=",
+        "passed": false
+      },
+      {
+        "id": "fixed_p99_grouped_count_4",
+        "baseline": 1466.6619999999966,
+        "candidate": 1460.4328749999986,
+        "limit": 1759.994399999996,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p99_projection_4",
+        "baseline": 25.198999999993248,
+        "candidate": 30.75958399999945,
+        "limit": 30.238799999991897,
+        "comparison": "<=",
+        "passed": false
+      },
+      {
+        "id": "fixed_p99_count_16",
+        "baseline": 8008.966665999993,
+        "candidate": 4434.3475409999955,
+        "limit": 9610.75999919999,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p99_grouped_count_16",
+        "baseline": 6739.871374999988,
+        "candidate": 4899.005499999999,
+        "limit": 8087.845649999985,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "fixed_p99_projection_16",
+        "baseline": 89.403707999998,
+        "candidate": 79.17587499998626,
+        "limit": 107.2844495999976,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "projection_absolute_p50_1",
+        "baseline": 15.319125000001804,
+        "candidate": 17.571083000002545,
+        "limit": 19,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "projection_absolute_p50_16",
+        "baseline": 63.397624999983236,
+        "candidate": 65.26500000001397,
+        "limit": 115,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "projection_absolute_p99_16",
+        "baseline": 89.403707999998,
+        "candidate": 79.17587499998626,
+        "limit": 185,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "mixed_qps_relative",
+        "baseline": 5.72550611588529,
+        "candidate": 5.407291775075129,
+        "limit": 5.152955504296761,
+        "comparison": ">=",
+        "passed": true
+      },
+      {
+        "id": "mixed_qps_absolute",
+        "baseline": 5.72550611588529,
+        "candidate": 5.407291775075129,
+        "limit": 4.8,
+        "comparison": ">=",
+        "passed": true
+      },
+      {
+        "id": "mixed_p50_relative",
+        "baseline": 2621.973917000025,
+        "candidate": 3064.044750000001,
+        "limit": 3015.2700045500283,
+        "comparison": "<=",
+        "passed": false
+      },
+      {
+        "id": "mixed_p50_absolute",
+        "baseline": 2621.973917000025,
+        "candidate": 3064.044750000001,
+        "limit": 3200,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "mixed_p99_relative",
+        "baseline": 4138.567749999987,
+        "candidate": 3783.8337499999907,
+        "limit": 4759.352912499985,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "mixed_p99_absolute",
+        "baseline": 4138.567749999987,
+        "candidate": 3783.8337499999907,
+        "limit": 6500,
+        "comparison": "<=",
+        "passed": true
+      },
+      {
+        "id": "write_rate_relative",
+        "baseline": 0.8371621246232271,
+        "candidate": 5.578606204484169,
+        "limit": 0.7534459121609044,
+        "comparison": ">=",
+        "passed": true
+      },
+      {
+        "id": "ack_count_absolute",
+        "baseline": 51,
+        "candidate": 335,
+        "limit": 40,
+        "comparison": ">=",
+        "passed": true
+      },
+      {
+        "id": "mixed_rss_absolute",
+        "baseline": 2779856896,
+        "candidate": 2464038912,
+        "limit": 3500000000,
+        "comparison": "<=",
+        "passed": true
+      }
+    ],
+    "failedIds": [
+      "fixed_p50_grouped_count_16",
+      "fixed_p99_count_4",
+      "fixed_p99_projection_4",
+      "mixed_p50_relative"
+    ],
+    "thresholdChanges": "none"
+  },
+  "functional": {
+    "arms": 2,
+    "cellsPassed": 20,
+    "storedMeasuredSamplesRecomputed": 1324,
+    "consecutiveUniqueUnreconciledACKs": 386,
+    "driverTypedOracle": "Existing unchanged driver compares complete typed rows on every call; raw samples retain cardinality, not all returned tuple bytes. Offline recomputation checks stored widths/cuts/quantiles/counts without claiming unrecorded tuple reconstruction.",
+    "reopen": "Per arm all3kinds at original/finalK; fixed cells are closed, not individually reopened.",
+    "queryAckCloseErrors": 0
+  },
+  "arms": {
+    "b0": {
+      "status": "FUNCTIONAL_PASSED",
+      "fixed": [
+        {
+          "kind": "count",
+          "readers": 1,
+          "mixed": false,
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 459.29099999999926,
+            "p50": 462.6069580000003,
+            "p95": 492.5765420000007,
+            "p99": 492.5765420000007,
+            "max": 492.5765420000007
+          },
+          "wallMs": 2339.0554580000007,
+          "QPS": 2.1376149859547273,
+          "sampledRssBytes": 2455552000,
+          "cpuUsage": {
+            "userMicroseconds": 8908365,
+            "systemMicroseconds": 56345,
+            "totalMicroseconds": 8964710,
+            "averageCores": 3.8326196881476413,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "grouped_count",
+          "readers": 1,
+          "mixed": false,
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 478.11491699999897,
+            "p50": 489.9537080000009,
+            "p95": 503.7416669999984,
+            "p99": 503.7416669999984,
+            "max": 503.7416669999984
+          },
+          "wallMs": 2453.25475,
+          "QPS": 2.038108761432134,
+          "sampledRssBytes": 2773303296,
+          "cpuUsage": {
+            "userMicroseconds": 9422666,
+            "systemMicroseconds": 48814,
+            "totalMicroseconds": 9471480,
+            "averageCores": 3.8607812743458463,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "projection",
+          "readers": 1,
+          "mixed": false,
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 14.526959000002535,
+            "p50": 15.319125000001804,
+            "p95": 15.999875000001339,
+            "p99": 15.999875000001339,
+            "max": 15.999875000001339
+          },
+          "wallMs": 79.32425000000512,
+          "QPS": 63.03242703208259,
+          "sampledRssBytes": 2685992960,
+          "cpuUsage": {
+            "userMicroseconds": 154000,
+            "systemMicroseconds": 8023,
+            "totalMicroseconds": 162023,
+            "averageCores": 2.0425405850038234,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "count",
+          "readers": 4,
+          "mixed": false,
+          "samples": 20,
+          "latencyMs": {
+            "count": 20,
+            "min": 761.6477089999971,
+            "p50": 961.3714580000014,
+            "p95": 1215.9623340000035,
+            "p99": 1345.639916,
+            "max": 1345.639916
+          },
+          "wallMs": 5200.965625000004,
+          "QPS": 3.8454397590831957,
+          "sampledRssBytes": 2551578624,
+          "cpuUsage": {
+            "userMicroseconds": 34692707,
+            "systemMicroseconds": 172742,
+            "totalMicroseconds": 34865449,
+            "averageCores": 6.703649190144373,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "grouped_count",
+          "readers": 4,
+          "mixed": false,
+          "samples": 20,
+          "latencyMs": {
+            "count": 20,
+            "min": 855.3156250000029,
+            "p50": 1012.0197090000001,
+            "p95": 1391.9669589999976,
+            "p99": 1466.6619999999966,
+            "max": 1466.6619999999966
+          },
+          "wallMs": 5699.883667000002,
+          "QPS": 3.5088435428589237,
+          "sampledRssBytes": 2534998016,
+          "cpuUsage": {
+            "userMicroseconds": 37379371,
+            "systemMicroseconds": 200417,
+            "totalMicroseconds": 37579788,
+            "averageCores": 6.5930798232903625,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "projection",
+          "readers": 4,
+          "mixed": false,
+          "samples": 20,
+          "latencyMs": {
+            "count": 20,
+            "min": 14.827750000011292,
+            "p50": 17.04466699999466,
+            "p95": 24.31429099998786,
+            "p99": 25.198999999993248,
+            "max": 25.198999999993248
+          },
+          "wallMs": 100.77970800000185,
+          "QPS": 198.45264882092766,
+          "sampledRssBytes": 2580021248,
+          "cpuUsage": {
+            "userMicroseconds": 589408,
+            "systemMicroseconds": 14241,
+            "totalMicroseconds": 603649,
+            "averageCores": 5.989787150405208,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "count",
+          "readers": 16,
+          "mixed": false,
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3106.4922090000036,
+            "p50": 3869.707917000007,
+            "p95": 7945.614916000006,
+            "p99": 8008.966665999993,
+            "max": 8008.966665999993
+          },
+          "wallMs": 23652.387292,
+          "QPS": 3.3823224274303416,
+          "sampledRssBytes": 1681883136,
+          "cpuUsage": {
+            "userMicroseconds": 138319962,
+            "systemMicroseconds": 797032,
+            "totalMicroseconds": 139116994,
+            "averageCores": 5.8817316105361535,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "grouped_count",
+          "readers": 16,
+          "mixed": false,
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 3244.624792000017,
+            "p50": 3725.440957999992,
+            "p95": 6559.989333000005,
+            "p99": 6739.871374999988,
+            "max": 6739.871374999988
+          },
+          "wallMs": 21634.03675,
+          "QPS": 3.6978766803657206,
+          "sampledRssBytes": 2535981056,
+          "cpuUsage": {
+            "userMicroseconds": 146965709,
+            "systemMicroseconds": 669987,
+            "totalMicroseconds": 147635696,
+            "averageCores": 6.824232467849534,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "projection",
+          "readers": 16,
+          "mixed": false,
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 46.25816600001417,
+            "p50": 63.397624999983236,
+            "p95": 77.19529100001091,
+            "p99": 89.403707999998,
+            "max": 89.403707999998
+          },
+          "wallMs": 343.81233300000895,
+          "QPS": 232.68507939183763,
+          "sampledRssBytes": 2541240320,
+          "cpuUsage": {
+            "userMicroseconds": 2261635,
+            "systemMicroseconds": 47387,
+            "totalMicroseconds": 2309022,
+            "averageCores": 6.715937092343746,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 16,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        }
+      ],
+      "mixed": {
+        "kind": "count",
+        "readers": 16,
+        "mixed": true,
+        "samples": 354,
+        "latencyMs": {
+          "count": 354,
+          "min": 1294.2452080000076,
+          "p50": 2621.973917000025,
+          "p95": 3941.4419580000103,
+          "p99": 4138.567749999987,
+          "max": 4445.845874999999
+        },
+        "wallMs": 61828.59520800001,
+        "QPS": 5.72550611588529,
+        "sampledRssBytes": 2779856896,
+        "cpuUsage": {
+          "userMicroseconds": 422633642,
+          "systemMicroseconds": 1921983,
+          "totalMicroseconds": 424555625,
+          "averageCores": 6.866654879861587,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        },
+        "sampledPool": {
+          "before": {
+            "capacity": 16,
+            "available": 16,
+            "active": 0,
+            "waiting": 0
+          },
+          "after": {
+            "capacity": 16,
+            "available": 16,
+            "active": 0,
+            "waiting": 0
+          },
+          "maxObservedActive": 16,
+          "maxObservedWaiting": 0,
+          "sampleIntervalMs": 25
+        },
+        "queryOptions": {
+          "validAt": "0",
+          "timeoutMs": 60000,
+          "maxInputFacts": 10012022,
+          "maxIntermediateRows": 10012022,
+          "maxIntermediateBytes": 4294967296
+        },
+        "acknowledgedWrites": 51,
+        "writesPerSecond": 0.8371621246232271,
+        "writeBurstDurationMs": 60920.09958399998,
+        "drainMs": 1828.5952080000134,
+        "windowCounts": [
+          {
+            "startMs": 0,
+            "endMs": 10000,
+            "reads": 53,
+            "writes": 8,
+            "errors": 0
+          },
+          {
+            "startMs": 10000,
+            "endMs": 20000,
+            "reads": 60,
+            "writes": 8,
+            "errors": 0
+          },
+          {
+            "startMs": 20000,
+            "endMs": 30000,
+            "reads": 52,
+            "writes": 8,
+            "errors": 0
+          },
+          {
+            "startMs": 30000,
+            "endMs": 40000,
+            "reads": 58,
+            "writes": 9,
+            "errors": 0
+          },
+          {
+            "startMs": 40000,
+            "endMs": 50000,
+            "reads": 59,
+            "writes": 9,
+            "errors": 0
+          },
+          {
+            "startMs": 50000,
+            "endMs": 60000,
+            "reads": 56,
+            "writes": 8,
+            "errors": 0
+          },
+          {
+            "startMs": 60000,
+            "endMs": 61828.59520800001,
+            "reads": 16,
+            "writes": 1,
+            "errors": 0
+          }
+        ],
+        "measuredQueryKinds": {
+          "projection": 119,
+          "count": 118,
+          "grouped_count": 117
+        },
+        "measuredCuts": {
+          "fixed": 80,
+          "latest": 274
+        },
+        "finalKnownAt": "39138",
+        "consecutiveUniqueUnreconciledReceipts": true,
+        "finalThreeQueriesVerified": true,
+        "reopenThreeKindsAtOldAndFinalKVerified": true
+      },
+      "maxFixedSampledRssBytes": 2773303296,
+      "openConfiguration": {
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "retainedLimits": {
+          "maxFacts": 10100022,
+          "maxBytes": 4294967296
+        }
+      },
+      "clone": {
+        "route": "closed_file_required_darwin_clonefile",
+        "elapsedMs": 36.87041599999998,
+        "files": [
+          {
+            "file": "facts-10000000.duckdb",
+            "bytes": 3905433600
+          }
+        ]
+      },
+      "fixture": {
+        "size": 10000000,
+        "groupSize": 256,
+        "groups": 39063,
+        "initialAdded": 22,
+        "position": "39087",
+        "latestCut": true,
+        "setupRoute": "closed_fixture_clone",
+        "writePrefix": "campaign-e-20261106T053420288Z-e3953549-",
+        "commandPrefix": "campaign-c-20261106T053420288Z-e3953549-",
+        "setupMs": 36.92741699999999,
+        "databaseBytes": 3905433600
+      },
+      "closedOwnedDatabase": {
+        "file": "build/scale-runs/20261106T053420288Z-e3953549/facts-10000000.duckdb",
+        "bytes": 3905433600,
+        "walAbsent": true,
+        "hash": "not newly measured after performance lease release"
+      },
+      "runtimeArtifactSha256": {
+        "build/adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+        "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      },
+      "companion": {
+        "engine": "2.0.0",
+        "abi": "CPP",
+        "extensionSha256": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "coreExtensionSha256": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "engineLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "manifestSha256": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+        "actualExtensionSha256": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390"
+      },
+      "driverAndFixturePins": {
+        "driver": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+        "scale": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+        "mixed": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+        "clone": {
+          "module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+          "python": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+        }
+      }
+    },
+    "static4": {
+      "status": "FUNCTIONAL_PASSED",
+      "fixed": [
+        {
+          "kind": "count",
+          "readers": 1,
+          "mixed": false,
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 444.62816699999894,
+            "p50": 459.02300000000105,
+            "p95": 467.1935000000012,
+            "p99": 467.1935000000012,
+            "max": 467.1935000000012
+          },
+          "wallMs": 2282.1425409999993,
+          "QPS": 2.1909236211902336,
+          "sampledRssBytes": 2424520704,
+          "cpuUsage": {
+            "userMicroseconds": 8759149,
+            "systemMicroseconds": 81087,
+            "totalMicroseconds": 8840236,
+            "averageCores": 3.8736563738592533,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "grouped_count",
+          "readers": 1,
+          "mixed": false,
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 482.54425000000265,
+            "p50": 497.2331250000025,
+            "p95": 517.1259160000009,
+            "p99": 517.1259160000009,
+            "max": 517.1259160000009
+          },
+          "wallMs": 2489.4510839999966,
+          "QPS": 2.0084748931744856,
+          "sampledRssBytes": 2489745408,
+          "cpuUsage": {
+            "userMicroseconds": 9554294,
+            "systemMicroseconds": 75748,
+            "totalMicroseconds": 9630042,
+            "averageCores": 3.8683395154431617,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "projection",
+          "readers": 1,
+          "mixed": false,
+          "samples": 5,
+          "latencyMs": {
+            "count": 5,
+            "min": 14.630708000004233,
+            "p50": 17.571083000002545,
+            "p95": 26.33812499999476,
+            "p99": 26.33812499999476,
+            "max": 26.33812499999476
+          },
+          "wallMs": 94.99179200000071,
+          "QPS": 52.63612670871566,
+          "sampledRssBytes": 2352119808,
+          "cpuUsage": {
+            "userMicroseconds": 156271,
+            "systemMicroseconds": 9448,
+            "totalMicroseconds": 165719,
+            "averageCores": 1.74456125640833,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 1,
+              "available": 1,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 1,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "count",
+          "readers": 4,
+          "mixed": false,
+          "samples": 20,
+          "latencyMs": {
+            "count": 20,
+            "min": 774.2157079999961,
+            "p50": 1054.5172499999971,
+            "p95": 1868.0223340000011,
+            "p99": 1981.4417499999981,
+            "max": 1981.4417499999981
+          },
+          "wallMs": 6426.106707999999,
+          "QPS": 3.1123043716503442,
+          "sampledRssBytes": 2467938304,
+          "cpuUsage": {
+            "userMicroseconds": 35024381,
+            "systemMicroseconds": 235926,
+            "totalMicroseconds": 35260307,
+            "averageCores": 5.487040381091662,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "grouped_count",
+          "readers": 4,
+          "mixed": false,
+          "samples": 20,
+          "latencyMs": {
+            "count": 20,
+            "min": 724.6607079999958,
+            "p50": 1062.999125000002,
+            "p95": 1452.7925000000105,
+            "p99": 1460.4328749999986,
+            "max": 1460.4328749999986
+          },
+          "wallMs": 5579.561750000008,
+          "QPS": 3.5845109161127167,
+          "sampledRssBytes": 2480553984,
+          "cpuUsage": {
+            "userMicroseconds": 37428163,
+            "systemMicroseconds": 198308,
+            "totalMicroseconds": 37626471,
+            "averageCores": 6.743624801714928,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "projection",
+          "readers": 4,
+          "mixed": false,
+          "samples": 20,
+          "latencyMs": {
+            "count": 20,
+            "min": 15.588666999989073,
+            "p50": 17.230083000002196,
+            "p95": 28.76583400000527,
+            "p99": 30.75958399999945,
+            "max": 30.75958399999945
+          },
+          "wallMs": 108.87799999999697,
+          "QPS": 183.69183857161735,
+          "sampledRssBytes": 2544173056,
+          "cpuUsage": {
+            "userMicroseconds": 604130,
+            "systemMicroseconds": 18071,
+            "totalMicroseconds": 622201,
+            "averageCores": 5.714662282554945,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 4,
+              "available": 4,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "count",
+          "readers": 16,
+          "mixed": false,
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 686.5830419999984,
+            "p50": 3944.7622499999998,
+            "p95": 4194.302416000006,
+            "p99": 4434.3475409999955,
+            "max": 4434.3475409999955
+          },
+          "wallMs": 20073.935333,
+          "QPS": 3.9852673963976644,
+          "sampledRssBytes": 2669887488,
+          "cpuUsage": {
+            "userMicroseconds": 137371525,
+            "systemMicroseconds": 554209,
+            "totalMicroseconds": 137925734,
+            "averageCores": 6.87088663543021,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "grouped_count",
+          "readers": 16,
+          "mixed": false,
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 875.3852910000132,
+            "p50": 4374.147041999997,
+            "p95": 4640.221166000003,
+            "p99": 4899.005499999999,
+            "max": 4899.005499999999
+          },
+          "wallMs": 22201.354292000004,
+          "QPS": 3.603383782259943,
+          "sampledRssBytes": 2190508032,
+          "cpuUsage": {
+            "userMicroseconds": 149530561,
+            "systemMicroseconds": 708002,
+            "totalMicroseconds": 150238563,
+            "averageCores": 6.767090017302985,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        },
+        {
+          "kind": "projection",
+          "readers": 16,
+          "mixed": false,
+          "samples": 80,
+          "latencyMs": {
+            "count": 80,
+            "min": 18.01350000000093,
+            "p50": 65.26500000001397,
+            "p95": 70.425499999983,
+            "p99": 79.17587499998626,
+            "max": 79.17587499998626
+          },
+          "wallMs": 342.880084000004,
+          "QPS": 233.31772165571178,
+          "sampledRssBytes": 2505523200,
+          "cpuUsage": {
+            "userMicroseconds": 2280324,
+            "systemMicroseconds": 43150,
+            "totalMicroseconds": 2323474,
+            "averageCores": 6.776345750078541,
+            "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+          },
+          "sampledPool": {
+            "before": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "after": {
+              "capacity": 16,
+              "available": 16,
+              "active": 0,
+              "waiting": 0
+            },
+            "maxObservedActive": 4,
+            "maxObservedWaiting": 0,
+            "sampleIntervalMs": 25
+          },
+          "queryOptions": {
+            "validAt": "0",
+            "timeoutMs": 60000,
+            "maxInputFacts": 10000030,
+            "maxIntermediateRows": 10000030,
+            "maxIntermediateBytes": 4294967296
+          }
+        }
+      ],
+      "mixed": {
+        "kind": "count",
+        "readers": 16,
+        "mixed": true,
+        "samples": 340,
+        "latencyMs": {
+          "count": 340,
+          "min": 18.272832999995444,
+          "p50": 3064.044750000001,
+          "p95": 3674.956582999992,
+          "p99": 3783.8337499999907,
+          "max": 3966.3225000000093
+        },
+        "wallMs": 62878.05691700001,
+        "QPS": 5.407291775075129,
+        "sampledRssBytes": 2464038912,
+        "cpuUsage": {
+          "userMicroseconds": 427597466,
+          "systemMicroseconds": 2148008,
+          "totalMicroseconds": 429745474,
+          "averageCores": 6.834585785105773,
+          "scope": "all_process_threads_during_measured_phase_including_oracle_sampling_and_drain; not_engine_only"
+        },
+        "sampledPool": {
+          "before": {
+            "capacity": 16,
+            "available": 16,
+            "active": 0,
+            "waiting": 0
+          },
+          "after": {
+            "capacity": 16,
+            "available": 16,
+            "active": 0,
+            "waiting": 0
+          },
+          "maxObservedActive": 4,
+          "maxObservedWaiting": 0,
+          "sampleIntervalMs": 25
+        },
+        "queryOptions": {
+          "validAt": "0",
+          "timeoutMs": 60000,
+          "maxInputFacts": 10012022,
+          "maxIntermediateRows": 10012022,
+          "maxIntermediateBytes": 4294967296
+        },
+        "acknowledgedWrites": 335,
+        "writesPerSecond": 5.578606204484169,
+        "writeBurstDurationMs": 60050.842042000004,
+        "drainMs": 2878.056917000009,
+        "windowCounts": [
+          {
+            "startMs": 0,
+            "endMs": 10000,
+            "reads": 53,
+            "writes": 60,
+            "errors": 0
+          },
+          {
+            "startMs": 10000,
+            "endMs": 20000,
+            "reads": 54,
+            "writes": 58,
+            "errors": 0
+          },
+          {
+            "startMs": 20000,
+            "endMs": 30000,
+            "reads": 53,
+            "writes": 55,
+            "errors": 0
+          },
+          {
+            "startMs": 30000,
+            "endMs": 40000,
+            "reads": 55,
+            "writes": 54,
+            "errors": 0
+          },
+          {
+            "startMs": 40000,
+            "endMs": 50000,
+            "reads": 55,
+            "writes": 53,
+            "errors": 0
+          },
+          {
+            "startMs": 50000,
+            "endMs": 60000,
+            "reads": 54,
+            "writes": 54,
+            "errors": 0
+          },
+          {
+            "startMs": 60000,
+            "endMs": 62878.05691700001,
+            "reads": 16,
+            "writes": 1,
+            "errors": 0
+          }
+        ],
+        "measuredQueryKinds": {
+          "projection": 112,
+          "count": 115,
+          "grouped_count": 113
+        },
+        "measuredCuts": {
+          "fixed": 79,
+          "latest": 261
+        },
+        "finalKnownAt": "39422",
+        "consecutiveUniqueUnreconciledReceipts": true,
+        "finalThreeQueriesVerified": true,
+        "reopenThreeKindsAtOldAndFinalKVerified": true
+      },
+      "maxFixedSampledRssBytes": 2669887488,
+      "openConfiguration": {
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "retainedLimits": {
+          "maxFacts": 10100022,
+          "maxBytes": 4294967296
+        }
+      },
+      "clone": {
+        "route": "closed_file_required_darwin_clonefile",
+        "elapsedMs": 37.216291999999996,
+        "files": [
+          {
+            "file": "facts-10000000.duckdb",
+            "bytes": 3905433600
+          }
+        ]
+      },
+      "fixture": {
+        "size": 10000000,
+        "groupSize": 256,
+        "groups": 39063,
+        "initialAdded": 22,
+        "position": "39087",
+        "latestCut": true,
+        "setupRoute": "closed_fixture_clone",
+        "writePrefix": "campaign-e-20261106T053856559Z-334ca7c2-",
+        "commandPrefix": "campaign-c-20261106T053856559Z-334ca7c2-",
+        "setupMs": 37.286417,
+        "databaseBytes": 3905433600
+      },
+      "closedOwnedDatabase": {
+        "file": "build/scale-runs/20261106T053856559Z-334ca7c2/facts-10000000.duckdb",
+        "bytes": 3905433600,
+        "walAbsent": true,
+        "hash": "not newly measured after performance lease release"
+      },
+      "runtimeArtifactSha256": {
+        "build/adapter/native-entity.js": "3769fb975d3d621418f91a0bebfffcfce656cdcc98c3e002f61b03c203089afe",
+        "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+      },
+      "companion": {
+        "engine": "2.0.0",
+        "abi": "CPP",
+        "extensionSha256": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+        "coreExtensionSha256": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+        "engineLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+        "manifestSha256": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+        "actualExtensionSha256": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390"
+      },
+      "driverAndFixturePins": {
+        "driver": "b3b5d27b0576397b8839506a73bbb52614e94e20f625aea04433b3d884a1af0c",
+        "scale": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+        "mixed": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+        "clone": {
+          "module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+          "python": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+        }
+      }
+    }
+  },
+  "pairDeltas": {
+    "mixedQPSRatio": 0.9444216224086667,
+    "mixedP50Ratio": 1.1686023000205048,
+    "mixedP99Ratio": 0.9142858057597347,
+    "writeRateRatio": 6.663710696413641,
+    "mixedRssRatio": 0.8863905604441589
+  },
+  "beforeBetweenAfter": {
+    "sourceChecks": [
+      {
+        "label": "before",
+        "recordedAtUtc": "2026-11-06T05:34:10.112580+00:00",
+        "database": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+        "identity": {
+          "bytes": 3905433600,
+          "mtimeNs": 1793911060600328880,
+          "ctimeNs": 1793911060600328880
+        },
+        "databaseSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+        "recipe": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+        "sourceWalAbsent": true
+      },
+      {
+        "label": "between",
+        "recordedAtUtc": "2026-11-06T05:38:50.151726+00:00",
+        "database": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+        "identity": {
+          "bytes": 3905433600,
+          "mtimeNs": 1793911060600328880,
+          "ctimeNs": 1793911060600328880
+        },
+        "databaseSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+        "recipe": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+        "sourceWalAbsent": true
+      },
+      {
+        "label": "after",
+        "recordedAtUtc": "2026-11-06T05:43:28.936902+00:00",
+        "database": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+        "identity": {
+          "bytes": 3905433600,
+          "mtimeNs": 1793911060600328880,
+          "ctimeNs": 1793911060600328880
+        },
+        "databaseSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+        "recipe": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+        "sourceWalAbsent": true
+      }
+    ],
+    "allOriginalAndMapped405MapsEqual": true,
+    "inventories": {
+      "b0": "c09ad7d6d6f80a023c62f4494906001fd1772bd9e284dae20e941ec9872d6cee",
+      "static4": "eef00df1b0cae8a8405741751e5b7a42bb8d058a83db935620f39124d7d6eeeb"
+    },
+    "fixedArtifactAttestationsMatchDeclaredBindings": true,
+    "sourceAndHarnessEqual": {
+      "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+      "adapter/antijoin-profile-binding.mjs": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4",
+      "adapter/antijoin-sdk-binding.mjs": "74839060c5382ca78cd89629ebf3882db26adbc1febbebdb19aa2961f18b855a",
+      "adapter/benchmark-antijoin-cost.mjs": "1f76395dfe3e4bf91464aee84e80927600e36a11ab5a29c2ebbcc5a62baeded5",
+      "adapter/antijoin-static-four-binding.mjs": "eb5f6e078560c86f3501020d39afdbcd9925663a1a00c0f76b254b89757c524b",
+      "freeze_static_four_runtime.py": "4a524076d42e47bf9c6671650f1446c0e524120cea060c0e283d10c61b298a58",
+      "STATIC-FOUR-PERFORMANCE-PROTOCOL.md": "3afa0ecf118cfb7f603982766a69dbde5957bcc5ddb087776a4a8ec3c693458b",
+      "stage_broad_sdk_runtime.py": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb",
+      "adapter/native-entity.ts": "6101c9eb6059e051520b29fab50cf400bf12d18d24f0fc4714cfd8804b443969",
+      "adapter/native-schema.ts": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0",
+      "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+      "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+      "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b"
+    }
+  },
+  "rawFiles": {
+    "b0-artifact-after.json": {
+      "file": "static-four-broad-forward-20261106/b0-artifact-after.json",
+      "sha256": "1b1071cf2983b78b75854a2f8966dc7c5619537413d22a9bedddba9cb2b6aa94"
+    },
+    "b0-artifact-after.stderr.log": {
+      "file": "static-four-broad-forward-20261106/b0-artifact-after.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "b0-artifact-after.stdout.log": {
+      "file": "static-four-broad-forward-20261106/b0-artifact-after.stdout.log",
+      "sha256": "b64bcbf7ba950a5e65e06f6125b800f61d2ded8770d93f63c3dec6b33a8bec7e"
+    },
+    "b0-artifact-before.json": {
+      "file": "static-four-broad-forward-20261106/b0-artifact-before.json",
+      "sha256": "1b1071cf2983b78b75854a2f8966dc7c5619537413d22a9bedddba9cb2b6aa94"
+    },
+    "b0-artifact-before.stderr.log": {
+      "file": "static-four-broad-forward-20261106/b0-artifact-before.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "b0-artifact-before.stdout.log": {
+      "file": "static-four-broad-forward-20261106/b0-artifact-before.stdout.log",
+      "sha256": "89e68ad0a846bdb2005a0a21e7741ce53dc9f625b366f21af2b5ea151628d4c6"
+    },
+    "b0-broad-first.stderr.log": {
+      "file": "static-four-broad-forward-20261106/b0-broad-first.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "b0-broad-first.stdout.log": {
+      "file": "static-four-broad-forward-20261106/b0-broad-first.stdout.log",
+      "sha256": "a58b5001ede726c7ae9f6970b31254663dd52b73819a2160c4699d3466a60c0d"
+    },
+    "b0.json": {
+      "file": "static-four-broad-forward-20261106/b0.json",
+      "sha256": "cb59ef042edb4919ba8c7f90a1edf9220937507f3659c4e1a218b77b217d10f9"
+    },
+    "execution-first.json": {
+      "file": "static-four-broad-forward-20261106/execution-first.json",
+      "sha256": "a20d96f93826df4503eefc6fb1ee675722e1b57be53d3e0e9822fd8a6828984d"
+    },
+    "maps-after.json": {
+      "file": "static-four-broad-forward-20261106/maps-after.json",
+      "sha256": "32cf0b1c07cb922db2e52a4d986641ef88de23dd7814e1525dc7b9d7f8ea839c"
+    },
+    "maps-after.stderr.log": {
+      "file": "static-four-broad-forward-20261106/maps-after.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "maps-after.stdout.log": {
+      "file": "static-four-broad-forward-20261106/maps-after.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "maps-before.json": {
+      "file": "static-four-broad-forward-20261106/maps-before.json",
+      "sha256": "32cf0b1c07cb922db2e52a4d986641ef88de23dd7814e1525dc7b9d7f8ea839c"
+    },
+    "maps-before.stderr.log": {
+      "file": "static-four-broad-forward-20261106/maps-before.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "maps-before.stdout.log": {
+      "file": "static-four-broad-forward-20261106/maps-before.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "maps-between.json": {
+      "file": "static-four-broad-forward-20261106/maps-between.json",
+      "sha256": "32cf0b1c07cb922db2e52a4d986641ef88de23dd7814e1525dc7b9d7f8ea839c"
+    },
+    "maps-between.stderr.log": {
+      "file": "static-four-broad-forward-20261106/maps-between.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "maps-between.stdout.log": {
+      "file": "static-four-broad-forward-20261106/maps-between.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "static4-artifact-after.json": {
+      "file": "static-four-broad-forward-20261106/static4-artifact-after.json",
+      "sha256": "64adfa42286a7fe6bbfda3ae845569c5259fdb33f81d32b23338901e4d6587be"
+    },
+    "static4-artifact-after.stderr.log": {
+      "file": "static-four-broad-forward-20261106/static4-artifact-after.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "static4-artifact-after.stdout.log": {
+      "file": "static-four-broad-forward-20261106/static4-artifact-after.stdout.log",
+      "sha256": "0798933af7aa42d250e285f3d6c5157380c6f7aa9f1084ce4a571003dccee500"
+    },
+    "static4-artifact-before.json": {
+      "file": "static-four-broad-forward-20261106/static4-artifact-before.json",
+      "sha256": "64adfa42286a7fe6bbfda3ae845569c5259fdb33f81d32b23338901e4d6587be"
+    },
+    "static4-artifact-before.stderr.log": {
+      "file": "static-four-broad-forward-20261106/static4-artifact-before.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "static4-artifact-before.stdout.log": {
+      "file": "static-four-broad-forward-20261106/static4-artifact-before.stdout.log",
+      "sha256": "5e730df5229ed603ee7ecc43b499b8e14a4236723f61ef0a8485ed6cee8e34e1"
+    },
+    "static4-broad-first.stderr.log": {
+      "file": "static-four-broad-forward-20261106/static4-broad-first.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "static4-broad-first.stdout.log": {
+      "file": "static-four-broad-forward-20261106/static4-broad-first.stdout.log",
+      "sha256": "a6c3335dcf22f1f9e95a1e23f76086c51c1730c9ff877d53d625ad54edd81d3d"
+    },
+    "static4.json": {
+      "file": "static-four-broad-forward-20261106/static4.json",
+      "sha256": "d57acc6df9ff74aab6a72721ea80d917eabae63408cd9212a00bad47469da507"
+    }
+  },
+  "setupIdentityOracleLifecycleFailures": [],
+  "engineLease": "Explicitly released after allterminals/postmaps/sourcechecks; no further engines/builds/tests/hashsweeps/reverse/anti",
+  "promotion": "Rejected on original broad forward numeric failure. No reverse/retry/anti launch or cap relaxation under this grant; full qualification remains incomplete.",
+  "limitations": [
+    "Only B0\u2192static4 order measured; candidate failed original27 gate.",
+    "No universal plan/admission win or root cause inferred from these measurements.",
+    "Sampled fixedp99 is based on5/20/80 observations perkind; RSS/pool25ms samples are not peak containment or instantaneous physical execution proof.",
+    "Both roles retain the same nativef44/55/af and engine72; SDKv1 versus SDKv2 contract labels remain explicit."
+  ]
+}

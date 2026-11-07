@@ -1,0 +1,45 @@
+{
+  "schema": "goal4.research.sha256-manifest/1",
+  "utc": "2026-10-31T16:37:31.446823+00:00",
+  "revision": "001",
+  "scope": "Only new item4 execution research records; source-only, no runtime or implementation evidence",
+  "hash": "SHA256",
+  "self_excluded": "SHA256-MANIFEST.json",
+  "files": [
+    {
+      "path": "FROZEN-READY.json",
+      "bytes": 1010,
+      "sha256": "6b555a966c8b90ea321507d4b31985b3f928fb281dd273bad067279e858cfb15"
+    },
+    {
+      "path": "benchmark-and-explain-plan.md",
+      "bytes": 18029,
+      "sha256": "9664b4fa9ee4020efc1429cabca8285302596495fd25fcd92b243d2f076e144e"
+    },
+    {
+      "path": "execution-research.md",
+      "bytes": 43508,
+      "sha256": "5208865bbc176e04719b5e505fab104cabba9308c1f690b6af04808aa475cfd0"
+    },
+    {
+      "path": "progress.jsonl",
+      "bytes": 5763,
+      "sha256": "5d0d58bc6394f357c1941f3a90c5b93c2df6b3af64f588186aef8fa5107da85c"
+    },
+    {
+      "path": "published-source-inventory.json",
+      "bytes": 4944,
+      "sha256": "0468eab37900c0c3edf8b3ddf87609b8d04fd8c127550afd955a39c1d2b9be64"
+    },
+    {
+      "path": "upstream-source-inventory.json",
+      "bytes": 5494,
+      "sha256": "0bfb135ea3dd9193f7960f745edeb7c18b9ea32d597da9804216ab4226286389"
+    },
+    {
+      "path": "web-primary-inventory.json",
+      "bytes": 9166,
+      "sha256": "78bad24df63f69beab939358f0ffad9045a2cd222b00ca6fa66a5ca2ea343095"
+    }
+  ]
+}

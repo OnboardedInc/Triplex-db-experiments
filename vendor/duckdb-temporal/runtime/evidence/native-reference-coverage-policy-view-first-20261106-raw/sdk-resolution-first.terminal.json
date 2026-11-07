@@ -1,0 +1,14 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--input-type=module",
+    "-e",
+    "import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {resolve,dirname,join} from 'node:path';import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';const require=createRequire(resolve('build/adapter/native-duckdb-port.mjs'));const api=require.resolve('@duckdb/node-api'),bindings=createRequire(api).resolve('@duckdb/node-bindings'),platform=createRequire(bindings).resolve('@duckdb/node-bindings-darwin-arm64/duckdb.node'),engine=join(dirname(platform),'libduckdb.dylib');const engineSha256=createHash('sha256').update(readFileSync(engine)).digest('hex');assert.equal(process.version,'v24.13.0');assert.equal(engineSha256,'72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c');console.log(JSON.stringify({api,bindings,platform,engine,engineSha256,node:process.execPath,nodeVersion:process.version}));"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-coverage-policy-view-20261106/runtime",
+  "pid": 91180,
+  "startedAtUtc": "2026-11-06T12:07:28.636775+00:00",
+  "endedAtUtc": "2026-11-06T12:07:28.717098+00:00",
+  "exitCode": 0,
+  "elapsedMs": 80.18104080110788
+}

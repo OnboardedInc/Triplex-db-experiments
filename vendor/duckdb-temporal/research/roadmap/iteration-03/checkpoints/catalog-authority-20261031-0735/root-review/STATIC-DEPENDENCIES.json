@@ -1,0 +1,339 @@
+{
+  "schema": "td.planner.static_dependency_inventory/1",
+  "utc": "2026-10-31T07:16:58.189217+00:00",
+  "scope": "AST/source inspection only; no application import, runtime, DB query, repair, backup or remote mutation",
+  "source_commit": "52b1e81f1d71590bdefb376e62924c9f717d4344",
+  "files": {
+    "storage/planner_v1.py": {
+      "bytes": 36205,
+      "sha256": "d95145f39b214b61f7acfc9ad0fd682a42e72362321302183ea76ac20b5548f4",
+      "functions": [
+        {
+          "name": "_trust",
+          "line": 533,
+          "end_line": 557,
+          "sql_calls": [
+            {
+              "line": 536,
+              "call": "conn.execute('SELECT database_name,path FROM main.duckdb_databases() WHERE NOT internal').fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 536,
+              "call": "conn.execute",
+              "first_argument": "'SELECT database_name,path FROM main.duckdb_databases() WHERE NOT internal'"
+            },
+            {
+              "line": 537,
+              "call": "conn.execute(\"SELECT current_database(),current_schema(),current_setting('search_path'),current_setting('default_collation'),current_setting('enable_external_access'),current_setting('threads'),current_setting('autoinstall_known_extensions'),current_setting('autoload_known_extensions')\").fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 537,
+              "call": "conn.execute",
+              "first_argument": "\"SELECT current_database(),current_schema(),current_setting('search_path'),current_setting('default_collation'),current_setting('enable_external_access'),current_setting('threads'),current_setting('autoinstall_known_extensions'),current_setting('autoload_known_extensions')\""
+            },
+            {
+              "line": 545,
+              "call": "conn.execute('SELECT (SELECT count(*) FROM main.duckdb_tables() WHERE temporary AND NOT internal)+(SELECT count(*) FROM main.duckdb_views() WHERE temporary AND NOT internal)+(SELECT count(*) FROM main.duckdb_functions() WHERE NOT internal)').fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 545,
+              "call": "conn.execute",
+              "first_argument": "'SELECT (SELECT count(*) FROM main.duckdb_tables() WHERE temporary AND NOT internal)+(SELECT count(*) FROM main.duckdb_views() WHERE temporary AND NOT internal)+(SELECT count(*) FROM main.duckdb_functions() WHERE NOT internal)'"
+            },
+            {
+              "line": 554,
+              "call": "conn.execute(\"SELECT parameter_types,return_type,internal FROM main.duckdb_functions() WHERE function_name='td_plan_ir_v1' AND function_type='scalar'\").fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 554,
+              "call": "conn.execute",
+              "first_argument": "\"SELECT parameter_types,return_type,internal FROM main.duckdb_functions() WHERE function_name='td_plan_ir_v1' AND function_type='scalar'\""
+            }
+          ]
+        },
+        {
+          "name": "_input_stats",
+          "line": 572,
+          "end_line": 583,
+          "sql_calls": [
+            {
+              "line": 574,
+              "call": "conn.execute('WITH s AS (SELECT *, (' + visible + ') AS visible FROM main.temporal_facts) SELECT count(*),count(*) FILTER (WHERE NOT COALESCE((' + _VALID_INPUT + '),FALSE)),count(*) FILTER (WHERE visible),COALESCE(max(greatest(main.octet_length(main.encode(e)),main.octet_length(main.encode(a)),COALESCE(main.octet_length(main.encode(v_s)),0))),0),COALESCE(sum(CASE WHEN visible THEN main.octet_length(main.encode(e))+main.octet_length(main.encode(a))+COALESCE(main.octet_length(main.encode(v_s)),0) ELSE 0 END),0) FROM s', [valid_at, valid_at, known_at, known_at]).fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 574,
+              "call": "conn.execute",
+              "first_argument": "'WITH s AS (SELECT *, (' + visible + ') AS visible FROM main.temporal_facts) SELECT count(*),count(*) FILTER (WHERE NOT COALESCE((' + _VALID_INPUT + '),FALSE)),count(*) FILTER (WHERE visible),COALESCE(max(greatest(main.octet_length(main.encode(e)),main.octet_length(main.encode(a)),COALESCE(main.octet_length(main.encode(v_s)),0))),0),COALESCE(sum(CASE WHEN visible THEN main.octet_length(main.encode(e))+main.octet_length(main.encode(a))+COALESCE(main.octet_length(main.encode(v_s)),0) ELSE 0 END),0) FROM s'"
+            }
+          ]
+        },
+        {
+          "name": "_select_plan",
+          "line": 586,
+          "end_line": 639,
+          "sql_calls": [
+            {
+              "line": 601,
+              "call": "store._conn.execute('SELECT main.td_plan_ir_v1(?::VARCHAR)', [query.program]).fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 601,
+              "call": "store._conn.execute",
+              "first_argument": "'SELECT main.td_plan_ir_v1(?::VARCHAR)'"
+            },
+            {
+              "line": 615,
+              "call": "store._conn.execute(pattern_sql, pattern_params).fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 615,
+              "call": "store._conn.execute",
+              "first_argument": "pattern_sql"
+            }
+          ]
+        },
+        {
+          "name": "_run",
+          "line": 685,
+          "end_line": 722,
+          "sql_calls": [
+            {
+              "line": 692,
+              "call": "store._conn.execute",
+              "first_argument": "'BEGIN TRANSACTION'"
+            },
+            {
+              "line": 707,
+              "call": "store._conn.execute(plan.sql, params).fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 707,
+              "call": "store._conn.execute",
+              "first_argument": "plan.sql"
+            },
+            {
+              "line": 717,
+              "call": "store._conn.execute",
+              "first_argument": "'COMMIT'"
+            }
+          ]
+        }
+      ]
+    },
+    "storage/typed_store.py": {
+      "bytes": 37740,
+      "sha256": "7edd1b26428b60268c2d677e1cea8efe2635b1f850b3b02fd641e2e3f7b59a87",
+      "functions": [
+        {
+          "name": "_signature",
+          "line": 426,
+          "end_line": 445,
+          "sql_calls": [
+            {
+              "line": 427,
+              "call": "conn.execute(\"SELECT count(*) FROM duckdb_tables() WHERE NOT internal AND NOT temporary AND schema_name!='main'\").fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 427,
+              "call": "conn.execute",
+              "first_argument": "\"SELECT count(*) FROM duckdb_tables() WHERE NOT internal AND NOT temporary AND schema_name!='main'\""
+            },
+            {
+              "line": 430,
+              "call": "conn.execute(\"SELECT table_name FROM duckdb_tables() WHERE NOT internal AND NOT temporary AND schema_name='main' ORDER BY table_name\").fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 430,
+              "call": "conn.execute",
+              "first_argument": "\"SELECT table_name FROM duckdb_tables() WHERE NOT internal AND NOT temporary AND schema_name='main' ORDER BY table_name\""
+            },
+            {
+              "line": 436,
+              "call": "conn.execute(f'DESCRIBE \"{name}\"').fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 436,
+              "call": "conn.execute",
+              "first_argument": "f'DESCRIBE \"{name}\"'"
+            },
+            {
+              "line": 437,
+              "call": "conn.execute(\"SELECT constraint_type,constraint_text FROM duckdb_constraints() WHERE schema_name='main' AND table_name=? ORDER BY 1,2\", [name]).fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 437,
+              "call": "conn.execute",
+              "first_argument": "\"SELECT constraint_type,constraint_text FROM duckdb_constraints() WHERE schema_name='main' AND table_name=? ORDER BY 1,2\""
+            },
+            {
+              "line": 440,
+              "call": "conn.execute('SELECT count(*) FROM duckdb_views() WHERE NOT internal AND NOT temporary').fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 440,
+              "call": "conn.execute",
+              "first_argument": "'SELECT count(*) FROM duckdb_views() WHERE NOT internal AND NOT temporary'"
+            },
+            {
+              "line": 441,
+              "call": "conn.execute('SELECT count(*) FROM duckdb_indexes()').fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 441,
+              "call": "conn.execute",
+              "first_argument": "'SELECT count(*) FROM duckdb_indexes()'"
+            },
+            {
+              "line": 442,
+              "call": "conn.execute('SELECT count(*) FROM duckdb_sequences() WHERE NOT temporary').fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 442,
+              "call": "conn.execute",
+              "first_argument": "'SELECT count(*) FROM duckdb_sequences() WHERE NOT temporary'"
+            }
+          ]
+        },
+        {
+          "name": "_expected_signature",
+          "line": 449,
+          "end_line": 459,
+          "sql_calls": [
+            {
+              "line": 456,
+              "call": "conn.execute",
+              "first_argument": "(legacy.SCHEMA if version == 1 else SCHEMA_V2).read_text(encoding='utf-8')"
+            }
+          ]
+        },
+        {
+          "name": "_version",
+          "line": 462,
+          "end_line": 482,
+          "sql_calls": [
+            {
+              "line": 463,
+              "call": "conn.execute(\"SELECT table_name FROM duckdb_tables() WHERE NOT internal AND NOT temporary AND schema_name='main'\").fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 463,
+              "call": "conn.execute",
+              "first_argument": "\"SELECT table_name FROM duckdb_tables() WHERE NOT internal AND NOT temporary AND schema_name='main'\""
+            },
+            {
+              "line": 471,
+              "call": "conn.execute('DESCRIBE td_schema_version').fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 471,
+              "call": "conn.execute",
+              "first_argument": "'DESCRIBE td_schema_version'"
+            },
+            {
+              "line": 474,
+              "call": "conn.execute('SELECT singleton,version FROM td_schema_version').fetchall",
+              "first_argument": null
+            },
+            {
+              "line": 474,
+              "call": "conn.execute",
+              "first_argument": "'SELECT singleton,version FROM td_schema_version'"
+            }
+          ]
+        },
+        {
+          "name": "_ready",
+          "line": 626,
+          "end_line": 631,
+          "sql_calls": []
+        },
+        {
+          "name": "_query",
+          "line": 654,
+          "end_line": 669,
+          "sql_calls": [
+            {
+              "line": 666,
+              "call": "self._conn.execute(NATIVE_SQL, [request.program, valid_at, known_at, request.max_facts, request.max_rounds, request.max_work]).fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 666,
+              "call": "self._conn.execute",
+              "first_argument": "NATIVE_SQL"
+            }
+          ]
+        }
+      ]
+    },
+    "storage/store.py": {
+      "bytes": 15286,
+      "sha256": "10fe4928a74ac0230b07d4ea8871399651fcb82a54c43ffa94c47dfb350c6552",
+      "functions": [
+        {
+          "name": "_ready",
+          "line": 205,
+          "end_line": 207,
+          "sql_calls": []
+        },
+        {
+          "name": "_check_budget",
+          "line": 216,
+          "end_line": 219,
+          "sql_calls": []
+        },
+        {
+          "name": "_position",
+          "line": 227,
+          "end_line": 228,
+          "sql_calls": [
+            {
+              "line": 228,
+              "call": "self._conn.execute('SELECT position FROM td_clock WHERE singleton = 1').fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 228,
+              "call": "self._conn.execute",
+              "first_argument": "'SELECT position FROM td_clock WHERE singleton = 1'"
+            }
+          ]
+        },
+        {
+          "name": "_query",
+          "line": 245,
+          "end_line": 260,
+          "sql_calls": [
+            {
+              "line": 256,
+              "call": "self._conn.execute(NATIVE_SQL, [request.program, valid_at, known_at, request.max_facts, request.max_rounds, request.max_work]).fetchone",
+              "first_argument": null
+            },
+            {
+              "line": 256,
+              "call": "self._conn.execute",
+              "first_argument": "NATIVE_SQL"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

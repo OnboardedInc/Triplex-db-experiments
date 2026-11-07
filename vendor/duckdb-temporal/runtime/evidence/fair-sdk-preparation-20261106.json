@@ -1,0 +1,380 @@
+{
+  "schema": "td.fair-sdk-runtime-preparation/1",
+  "status": "FIRSTPASS_FILE_ONLY",
+  "recordedAtUtc": "2026-11-06T05:31:51.380067+00:00",
+  "preparationSourceCommit": "098303cd3b1c4fba054e74938c64a21778b43f00",
+  "productionSourceCommit": "4db33475a55558065aad62f2f30d6bbfd390bd59",
+  "qualifiedScopedReceipt": "sdk-work-conserving-functional-20261106.json",
+  "pureFixtureSourceCommit": "164e9beead76e6577b4947d2b6f8ca754e1ad033",
+  "byteFaithfulPureFixtureHashes": {
+    "adapter/test-antijoin-cost.mjs": "aa60560a2147472be3d415d26273d968da386716222ac3b05b1167eee470e719",
+    "adapter/test-antijoin-config-binding.mjs": "64261ab7c6150ec0f7676ad7b6790b5075b7501fcb0077e8dd8dbdcfc3af008f",
+    "adapter/test-antijoin-profile-binding.mjs": "68ce1f13ab39b3f6c3480cbe4ae57dc53cde812659296cfcb262b5fe2ee8040e",
+    "adapter/test-antijoin-sdk-binding.mjs": "e2639b6682b4a17b8285b4af197172c2c96029002402272789f743b47d740b9d",
+    "adapter/test-native-write-binding.mjs": "bd116dbe7a6c63c93e23ab5b83fe6c4df53e551cf5d88bc4cc3e1c8ed192bee2"
+  },
+  "syntaxChecks": 4,
+  "pureTests": {
+    "methods": 28,
+    "passed": 28,
+    "durationMs": 127.045417
+  },
+  "subjects": {
+    "b0": {
+      "archive": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/fair-sdk-frozen-032-20261105/b0",
+      "counts": {
+        "runtime": 405,
+        "source": 40,
+        "sidecars": 1,
+        "inventoryEntries": 446
+      },
+      "inventorySha256": "a97a939803b0c7ad807c92c8f287c8366a4025492a6e11ef2c50b4c94f176f21",
+      "compiledEntitySha256": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+      "sdkSourceCommit": "fe9ca9aa00b454f7555fe6f1392ef8ad2a3f5840",
+      "executionPeerPolicy": null,
+      "actualResolvedSdk": {
+        "api": {
+          "relativePath": "node_modules/@duckdb/node-api/lib/index.js",
+          "sha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+        },
+        "bindings": {
+          "relativePath": "node_modules/@duckdb/node-bindings/duckdb.js",
+          "sha256": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce"
+        },
+        "platform": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+          "sha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+        },
+        "engine": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+          "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+        }
+      },
+      "exactSetAndByteEquality": true,
+      "beforeAfterEqual": true
+    },
+    "fair4": {
+      "archive": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/fair-sdk-frozen-032-20261105/fair4",
+      "counts": {
+        "runtime": 405,
+        "source": 40,
+        "sidecars": 1,
+        "inventoryEntries": 446
+      },
+      "inventorySha256": "daf45753f1f594cd8863231ee151139d12a193275fef76518c7583db1b5f15a9",
+      "compiledEntitySha256": "7f6020483d4c10b60e05fcbbc476c649edeff16d06cb6e0de03156bfa6250e55",
+      "sdkSourceCommit": "4db33475a55558065aad62f2f30d6bbfd390bd59",
+      "executionPeerPolicy": {
+        "heavyPlusMutatingLimit": 4,
+        "maxWriters": 1,
+        "readCleanupQuantum": 3,
+        "inspectionWithinPeerCount": false,
+        "lightReadsWithinPeerCount": false
+      },
+      "actualResolvedSdk": {
+        "api": {
+          "relativePath": "node_modules/@duckdb/node-api/lib/index.js",
+          "sha256": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3"
+        },
+        "bindings": {
+          "relativePath": "node_modules/@duckdb/node-bindings/duckdb.js",
+          "sha256": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce"
+        },
+        "platform": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+          "sha256": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+        },
+        "engine": {
+          "relativePath": "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+          "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+        }
+      },
+      "exactSetAndByteEquality": true,
+      "beforeAfterEqual": true
+    }
+  },
+  "onlyRuntimeByteDelta": [
+    "build/adapter/native-entity.js"
+  ],
+  "originalB0": {
+    "inventorySha256": "b17f748f92f8fa94bd5b9218602993e8b0e5f4b9ab863b38d7941fb11769580b",
+    "bindingSha256": "5db1d86dcbbb791926631cbf4f018683fd3a3cc2b29b5237dcfe9afa35a9e6aa",
+    "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a"
+  },
+  "budgetDependencies": {
+    "budget": "evidence/antijoin-cost-10m-budget-20261105.json",
+    "sha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+    "assets": {
+      "baseline": {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/build/antijoin-qualification-20261105-02/100k.json",
+        "sha256": "f4d93fc4b1ae313beb784b78ef1ce98e5667a6db7019d18fe5fe82555692b474",
+        "bytes": 2788372,
+        "preparation": "exclusive exact copy; source unchanged"
+      },
+      "baselineReceipt": {
+        "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-work-conserving-20261105/runtime/evidence/native-antijoin-cost-100k-20261105.json",
+        "sha256": "b20cc58126b0d77cd27fbeb80f2b37c814b8e32c0482efc26921b80d260affba",
+        "bytes": 17486,
+        "preparation": "already present"
+      }
+    }
+  },
+  "bindings": {
+    "control-1": {
+      "file": "antijoin-fair-sdk-control-10m-1-20261106.json",
+      "sha256": "0967258d5b988eff8e5342029300613458f2312dac385095c04489ba4133c510",
+      "bytes": 292898,
+      "artifactRole": "FAIR4_B0_MAPPED_CONTROL",
+      "queryContractVersion": 1,
+      "admission": {
+        "owner": "none",
+        "logicalClients": 1,
+        "nativeReaderConnections": 1,
+        "declaredLimit": null,
+        "effectiveLimit": null,
+        "outerGateway": false
+      },
+      "configuration": {
+        "readers": [
+          1
+        ],
+        "samples": 20,
+        "warmup": 1,
+        "durationSeconds": 60,
+        "maxWrites": 12000,
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "maxIntermediateBytes": 4294967296
+      }
+    },
+    "control-16": {
+      "file": "antijoin-fair-sdk-control-10m-16-20261106.json",
+      "sha256": "06f653d063be909e5593ee6dddf0a06e52e95b73190a339fb6dda6438056923b",
+      "bytes": 292902,
+      "artifactRole": "FAIR4_B0_MAPPED_CONTROL",
+      "queryContractVersion": 1,
+      "admission": {
+        "owner": "none",
+        "logicalClients": 16,
+        "nativeReaderConnections": 16,
+        "declaredLimit": null,
+        "effectiveLimit": null,
+        "outerGateway": false
+      },
+      "configuration": {
+        "readers": [
+          16
+        ],
+        "samples": 20,
+        "warmup": 1,
+        "durationSeconds": 60,
+        "maxWrites": 12000,
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "maxIntermediateBytes": 4294967296
+      }
+    },
+    "candidate-1": {
+      "file": "antijoin-fair-sdk-candidate-10m-1-20261106.json",
+      "sha256": "1e428ef76cf0ca3bf4859144618a9146b1069cd920961e419b76768452d0c9b4",
+      "bytes": 293262,
+      "artifactRole": "FAIR4_SDK_CANDIDATE",
+      "queryContractVersion": 2,
+      "admission": {
+        "owner": "NativeEntityStore",
+        "logicalClients": 1,
+        "nativeReaderConnections": 1,
+        "declaredLimit": 4,
+        "effectiveLimit": 1,
+        "outerGateway": false,
+        "sharedHeavyAndMutatingLimit": 4,
+        "maxWriterPeers": 1,
+        "readCleanupQuantum": 3,
+        "inspectionWithinPeerCount": false,
+        "lightReadsWithinPeerCount": false
+      },
+      "configuration": {
+        "readers": [
+          1
+        ],
+        "samples": 20,
+        "warmup": 1,
+        "durationSeconds": 60,
+        "maxWrites": 12000,
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "maxIntermediateBytes": 4294967296
+      }
+    },
+    "candidate-16": {
+      "file": "antijoin-fair-sdk-candidate-10m-16-20261106.json",
+      "sha256": "ffc27bf562197573af620e8a6deb21b844a1fa7411663e84b5264087e2ab948d",
+      "bytes": 293266,
+      "artifactRole": "FAIR4_SDK_CANDIDATE",
+      "queryContractVersion": 2,
+      "admission": {
+        "owner": "NativeEntityStore",
+        "logicalClients": 16,
+        "nativeReaderConnections": 16,
+        "declaredLimit": 4,
+        "effectiveLimit": 4,
+        "outerGateway": false,
+        "sharedHeavyAndMutatingLimit": 4,
+        "maxWriterPeers": 1,
+        "readCleanupQuantum": 3,
+        "inspectionWithinPeerCount": false,
+        "lightReadsWithinPeerCount": false
+      },
+      "configuration": {
+        "readers": [
+          16
+        ],
+        "samples": 20,
+        "warmup": 1,
+        "durationSeconds": 60,
+        "maxWrites": 12000,
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "maxIntermediateBytes": 4294967296
+      }
+    }
+  },
+  "postPins": {
+    "build/adapter/native-entity.js": "7f6020483d4c10b60e05fcbbc476c649edeff16d06cb6e0de03156bfa6250e55",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "build/artifact.json": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "build/owner_probe/artifact.json": "abae4e98bb2f3153824df87363e4d84d41c8ae2b915543a78108031382e8aa2a",
+    "build/adapter/test-sdk-work-conserving.js": "8559e5538d9a6f10be4cf663472fcb9194ce306387f8a60fc706feba46d3db18",
+    "build/adapter/test-sdk-admission.js": "b5e1370744ece967502465f8194ce2501f1a76c0c73ff291c0a816d47381467d",
+    "build/adapter/test-sdk-admission-independent.js": "2c247309c47927875f6a0e7edb97a318cdf51606640ed0c1d8a7750e926e4bfc",
+    "build/adapter/test-readers.js": "41ede58f912015f3ee7c6b657e5d22d27b00af504312374e4c45e926dd074f32",
+    "build/adapter/test-control.js": "92c89e9a35e7e46ab06913304c56f082652593a646be8a3ebb7e0dd1ab61ab21",
+    "build/adapter/test-cleanup.js": "f19f065b41d438ddeaaf06c788291f329640e377ce420d8fd606e873d0c096d2",
+    "build/adapter/test-fatal.js": "ebd8c687c789222db6a3087d9bec9abc533ad346f7389d3f992bfcde7cb0d624",
+    "build/adapter/test-single-strategy.js": "0e31917dfb94fc2b73d976dee0d513407226fc5e93f0dfc813788f6b5b8f5aff"
+  },
+  "postSourcePins": {
+    "adapter/native-entity.ts": "9ea2e507d1bf6ae91092698ac0dd00d47aa560492aad266a02c46128973b6616",
+    "adapter/test-sdk-work-conserving.ts": "b9d40194556fbe3eca5707d4cb53f2beb0231fd3a41fbf139bff0ad4429e5791",
+    "adapter/test-sdk-admission.ts": "4906cae6dadd4e54d852c405f2208a4542f62611ee3eddf821d5faf180cffecb",
+    "adapter/test-sdk-admission-independent.ts": "53ed3b0543f8f8f46d7c0771aebdf6ab72215cb958bde104229728e8f2bf5a00",
+    "adapter/test-readers.ts": "fc1d46c29fa58cfa686b9a36dd527fbcfe5cd87e7fb7eced7a864567d1d000e5",
+    "adapter/test-single-strategy.ts": "9d908b5fbd2fc795d281a22b058dc3f69b0b787628674ac6e31306b324386210",
+    "SDK-QUERY-ADMISSION.md": "6e79a2e604c78e88c1ab65964cda2fad4cb012f1551f42b6ee381dd9866fba4a",
+    "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+    "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "adapter/native-schema.ts": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0",
+    "adapter/benchmark-antijoin-cost.mjs": "1f76395dfe3e4bf91464aee84e80927600e36a11ab5a29c2ebbcc5a62baeded5",
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/antijoin-profile-binding.mjs": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4",
+    "adapter/antijoin-sdk-binding.mjs": "81bb2c036b19a0a16f4a0935b84091b13c64a02a214724d836a162136825c95d",
+    "adapter/antijoin-fair-sdk-binding.mjs": "ba88cd8b6a2f61af762e27e9962a49dff431ab43a9f8608d56f0f153bc85bcea",
+    "freeze_fair_sdk_runtime.py": "ac60ce0e4e65e67da2e889fac2c15f98dce28c288609fa24fb86e73934cf22b9",
+    "FAIR-SDK-PERFORMANCE-PROTOCOL.md": "5a5b9d90ae774e7ba011f68174607cc17c64b0230249aac5eda4fdeb05ab6d84",
+    "stage_broad_sdk_runtime.py": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb"
+  },
+  "rawFiles": {
+    "binding-candidate-1-first.log": {
+      "file": "fair-sdk-preparation-20261106/binding-candidate-1-first.log",
+      "sha256": "ec1a78137d980c3c1f4187bbe3766d7fad6d0c897c0e3922b6ec1f94992b0808",
+      "bytes": 172
+    },
+    "binding-candidate-16-first.log": {
+      "file": "fair-sdk-preparation-20261106/binding-candidate-16-first.log",
+      "sha256": "c2d17f6ac740ff497f59edba4c7c6cda340fb9eab783780729eadb9b53ae47d6",
+      "bytes": 173
+    },
+    "binding-control-1-first.log": {
+      "file": "fair-sdk-preparation-20261106/binding-control-1-first.log",
+      "sha256": "9c257db2ca0d11a58c57266d3d2200ed541088de47f0160ebf372d5f557ac95c",
+      "bytes": 170
+    },
+    "binding-control-16-first.log": {
+      "file": "fair-sdk-preparation-20261106/binding-control-16-first.log",
+      "sha256": "894436b570e46cbca3ac29cf575a09e2a2150ebfc6ce3185fcab80cfab7ebf90",
+      "bytes": 171
+    },
+    "bindings-first-terminals.json": {
+      "file": "fair-sdk-preparation-20261106/bindings-first-terminals.json",
+      "sha256": "1fada76a69200604d8c60c7b70d8f5d60587d8c484199918e9ec20047d0c330e",
+      "bytes": 2885
+    },
+    "checks-first.json": {
+      "file": "fair-sdk-preparation-20261106/checks-first.json",
+      "sha256": "f056255dcf360d2b65c57beb01cbf565306e3ea9a20a2c7939276394c18489f0",
+      "bytes": 1416
+    },
+    "freeze-first.exit": {
+      "file": "fair-sdk-preparation-20261106/freeze-first.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "freeze-first.json": {
+      "file": "fair-sdk-preparation-20261106/freeze-first.json",
+      "sha256": "1875ac678ba3683222e12ba14d738c33e10098cc541c823b583d4def47e34dc7",
+      "bytes": 559953
+    },
+    "freeze-first.log": {
+      "file": "fair-sdk-preparation-20261106/freeze-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "inspect-after-first.exit": {
+      "file": "fair-sdk-preparation-20261106/inspect-after-first.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "inspect-after-first.json": {
+      "file": "fair-sdk-preparation-20261106/inspect-after-first.json",
+      "sha256": "0152b8e0ca109ed6c617e9be88eaef72b3c540179029855c6e11857d8ad85845",
+      "bytes": 559930
+    },
+    "inspect-after-first.log": {
+      "file": "fair-sdk-preparation-20261106/inspect-after-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "pure-first.log": {
+      "file": "fair-sdk-preparation-20261106/pure-first.log",
+      "sha256": "895801c890bd24b6f03f64705fe33ba07046c3b705b7a2a18cad9970c5ef9604",
+      "bytes": 2976
+    },
+    "syntax-fair.log": {
+      "file": "fair-sdk-preparation-20261106/syntax-fair.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "syntax-freezer.log": {
+      "file": "fair-sdk-preparation-20261106/syntax-freezer.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "syntax-runner.log": {
+      "file": "fair-sdk-preparation-20261106/syntax-runner.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "syntax-sdk.log": {
+      "file": "fair-sdk-preparation-20261106/syntax-sdk.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "nativeBuild": false,
+  "installation": false,
+  "nativeImport": false,
+  "databaseExecution": false,
+  "performance": "UNRUN; root must separately schedule and review actual maps/bindings, small correctness screens and original broad27/anti8 qualification. Existing scope45 is not fullverification."
+}

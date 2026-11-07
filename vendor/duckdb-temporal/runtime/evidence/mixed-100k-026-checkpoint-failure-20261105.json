@@ -1,0 +1,147 @@
+{
+  "schema": "temporal-scale-benchmark/1",
+  "timestampUtc": "2026-11-05T18:41:03.061Z",
+  "configuration": {
+    "sizes": [
+      100000
+    ],
+    "readers": [
+      1,
+      4,
+      16
+    ],
+    "samples": 3,
+    "warmup": 1,
+    "writes": 8,
+    "groupSize": 256,
+    "fixtureMode": "mixed",
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "durationSeconds": 15,
+    "readOnlyDurationSeconds": 0,
+    "maxWrites": 1200,
+    "resumeCommands": 0,
+    "probeOnly": null
+  },
+  "fixtureDirectory": "build/scale-runs/20261105T184103059Z-a43c9b50",
+  "limitations": [
+    "SQL-expanded setup is not native ingestion throughput evidence",
+    "Process memory before/after is not a peak or hard memory bound",
+    "Empirical quantiles from small sample counts are smoke measurements"
+  ],
+  "stages": [
+    {
+      "size": 100000,
+      "database": "facts-100000.duckdb",
+      "status": "failed",
+      "setupEvents": [
+        {
+          "phase": "mixed_native_ingestion",
+          "acknowledgedFixtureFacts": 257,
+          "completedCommands": 2,
+          "requestedFacts": 100000,
+          "setupRoute": "mixed_native_commands"
+        }
+      ],
+      "cells": [],
+      "openConfiguration": {
+        "threads": 4,
+        "memoryLimit": "2GB",
+        "maxTempDirectorySize": "4GB",
+        "retainedLimits": {
+          "maxFacts": 200000,
+          "maxBytes": 4294967296
+        }
+      },
+      "setupProgress": {
+        "phase": "mixed_native_ingestion",
+        "acknowledgedFixtureFacts": 257,
+        "completedCommands": 2,
+        "requestedFacts": 100000,
+        "setupRoute": "mixed_native_commands"
+      },
+      "error": {
+        "name": "NativeCommandError",
+        "code": "TD_E_OWNER_PROBE_INVALID",
+        "message": "Invalid Input Error: TD_E_OWNER_PROBE_INVALID: owner scope is not armed"
+      },
+      "setupElapsedMs": 4266.859624999999
+    }
+  ],
+  "status": "failed",
+  "nativeBuild": {
+    "engine": "2.0.0",
+    "extension_version": "0.26.0",
+    "abi": "C_STRUCT_UNSTABLE",
+    "catalog_sql_sha256": "3ff4165c48ad45c70b510f0664b896e74f3fe16a1a41b4a42d686a737d833562",
+    "control_bridge_sha256": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+    "node_api_version": 8,
+    "schema_template_reuse": true,
+    "schema_borrowed_input": true,
+    "experimental_current_unique_fast_path": true,
+    "experimental_injective_projection_fast_path": true,
+    "experimental_identity_count_fast_path": false,
+    "experimental_all_cut_unique_fast_path": true,
+    "experimental_streaming_source_fast_path": true,
+    "source_sha256": {
+      "native/src/node_control.cpp": "c53c13ce5d3676728b5c060a2659c1c62a22ff311176233187ac468cddbb8077",
+      "native/src/temporal_command.cpp": "a740182ab07ceb176e9a253d0c4fbfa48bcd8d1c362cf7263b57ca406b4671a2",
+      "native/src/temporal_command.hpp": "a646e8949995fe0652ce1c3b1d508da289368eeeec079c9e33b7bae7d24e8467",
+      "native/src/temporal_compat.cpp": "4e7523b766ab366732f1e3ae5e3aa7d86668969786e793102c2b3a9ed19d6ca4",
+      "native/src/temporal_compat.hpp": "7a58d0d65069782f36b3321020f255569cc25056b9af6ebb9e5792483f285c77",
+      "native/src/temporal_control.hpp": "74e4db305b4315c64a12b5d218260e62ebbb6d5f894b6f4dffeffa7dacd47464",
+      "native/src/temporal_core.cpp": "d022a12706b5abf9493df41d72657b0f84e8668e9a645788ce625d09c482bb31",
+      "native/src/temporal_core.hpp": "bf476bf4328996f931045db8b7ead9e532ea1fbfc90759a4164a3a232465943f",
+      "native/src/temporal_count_plan.hpp": "db34d5b54e64e5046cff7cc765e21eb849e12ac1ec81323f4dc929b204c2cd05",
+      "native/src/temporal_current_unique.hpp": "2b4b3782bfdad09cae18fad5250a5644a5b9b57f20e53664d478db0f27a90171",
+      "native/src/temporal_datalog.cpp": "cfab48c1cc2150267eb734ab24d56b03f93e4e7c3487cfd3dd11131fa142c676",
+      "native/src/temporal_expression.hpp": "2c09926cba3764fbfdffd9ca98737853e3a159f763a32ff76586f1a5023938f2",
+      "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+      "native/src/temporal_integrity.hpp": "b211163d91c0ce8d243470ff3f32a5d9fd81cd1cfe11673079d5a5ae8a7032c6",
+      "native/src/temporal_join_plan.hpp": "663e0ed5a2c1982b14b965ab832a9b21e6f6d441ec68fbc796a1db85176f609e",
+      "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "87e5dd35ed2566a2936453f195ed43b97412e0e6849c196cd0b1d1760a4e0f1d",
+      "native/src/temporal_scan_plan.hpp": "f4c6fa376d89bdd58c6e4c9e1638b824358042e178660c22c2d58ba42dce42fe",
+      "native/src/temporal_schema.cpp": "b5befcc9c60fbeced1c8c2037bc4fc16279394133105276bb92da4048fe3fd4e",
+      "native/src/temporal_schema.hpp": "5ba7657d14d0b130a1c252483f40b696397c21d919f5e887ee96ceae86c3129a",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "6b51545ca37f0c404458af4a5014092dfc0ace664c1b157d7339db375ca3581e",
+      "native/src/temporal_store_query.hpp": "31eb44f84716c084446cb741f3f43a1e7089ee86480318258bb90dffed8a8d9f",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+      "native/src/temporal_value_domain.hpp": "22330d5f9a201293d902a0e06b3d247bade4ab6b61921a1cbbebe23aa66febba"
+    },
+    "library_sha256": "9de5796973f4c02af80b336a56c5803972fbc93da8dda507c379daad02279d71",
+    "extension_sha256": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b"
+  },
+  "companion": {
+    "engine": "2.0.0",
+    "abi": "CPP",
+    "extensionSha256": "68a4f021b8bc9ec38c2ddda4370460ed0d9aa6bdd81d847e30205b67486b1af6",
+    "coreExtensionSha256": "52a21dd374798d57521c5cb9e72da2123888c7642c84c59d8f2465ce8201039b",
+    "engineLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "manifestSha256": "8dad69e642b374f3e3a755bd039ddcd1ea79cce60db87673728a9fc711e32c02",
+    "actualExtensionSha256": "68a4f021b8bc9ec38c2ddda4370460ed0d9aa6bdd81d847e30205b67486b1af6"
+  },
+  "runtimeArtifactSha256": {
+    "build/adapter/native-entity.js": "86d36a999928ec656a7c58419de83fd3bc3c7cf3610b9c1972400bc65ea36c3b",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "runtimeSourceSha256": {
+    "adapter/native-entity.ts": "cb929e55a24208d39e5330a5cee4fea1e36dc14fe3ecf1f8fa082eb080306c1d",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "harnessSha256": "21c4af9100b8c14e5ddb7ba7522f1da4af4b332a36ffd727133e51dac6ac5769",
+  "fixtureSha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+  "mixedFixtureSha256": "5b317bcdda4a42ea872a285e05a58f56830a5aace5c92f4b4d168f5ae73d16b3",
+  "cloneSetupSha256": {
+    "module": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+    "python": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+  },
+  "capabilities": {
+    "scalableQuery": true
+  }
+}

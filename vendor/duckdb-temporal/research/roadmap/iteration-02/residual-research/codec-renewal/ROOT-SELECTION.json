@@ -1,0 +1,10 @@
+{
+  "selected_at_utc": "2026-10-31T01:40:37.100754+00:00",
+  "decision_sha256": "55bb41d35b005760ace90ea0c504302d4aeacddc075b8e887c152abf03ad1686",
+  "selected": "C1-P+C2: public carrier verbatim, private identical tail with AST invariant, private immutable metadata",
+  "source_before": "ae50094cd242c4d46950f8a9a99d1ecdca03b7f8",
+  "application_codec_patch": "NOT_STARTED",
+  "writer_authorization": "WAIT root verified durable decision/raw checkpoint and explicit handoff",
+  "semantics_manifest_sha256": "6f6e4cf316c95bbbfdf38134808e824b165dcf62f0748515d5e30c5b901059b8",
+  "cost_manifest_sha256": "556a0a26c0c2a12cefb04526203b3612088f28b196a351e52b2eeeb2f7c28402"
+}

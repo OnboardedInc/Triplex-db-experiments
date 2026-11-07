@@ -1,0 +1,82 @@
+{
+  "status": "SEALED_LOCAL_RESTORE_AND_RAW_REFERENCE_PASS_ROOT_PUBLICATION_REQUIRED",
+  "capture_utc": "2026-10-31T05:50:52.893808+00:00",
+  "verification_completed_utc": "2026-10-31T05:52:33.385542+00:00",
+  "archive": {
+    "path": "goal3-closed-evidence.tar.gz",
+    "bytes": 1687814,
+    "sha256": "13d766c5a99d65c82dfcb5687abb8bbc21fbdcbe34508c686b9b918e713071b1",
+    "expected_git_blob_sha1": "4c0ea7aee9aef3c09194f777d0a18a54a47b4a65"
+  },
+  "parts": 10,
+  "part_max_bytes": 240000,
+  "logical_paths": 1922,
+  "logical_bytes": 27783298,
+  "archive_members": 1206,
+  "unique_payloads": 1202,
+  "embedded_manifest": {
+    "path": "EVIDENCE-MANIFEST.json",
+    "bytes": 1358814,
+    "sha256": "dced2532c60c759c632baef7c0f3d10c05f91133e91459a5fcb1ac59345b05b0",
+    "publication": "inside archive only; do not submit as an oversized individual blob"
+  },
+  "package_manifest_sha256": "eee970f9367edd5eeeef3831ab1244630bb7a9827d37dc6e98d0a00973761094",
+  "restoration": {
+    "status": "PASS_ALL_MEMBERS_AND_LOGICAL_FILES_RESTORED",
+    "archive_sha256": "13d766c5a99d65c82dfcb5687abb8bbc21fbdcbe34508c686b9b918e713071b1",
+    "archive_members": 1206,
+    "logical_files": 1922,
+    "logical_bytes": 27783298,
+    "unique_payloads": 1202,
+    "evidence_manifest_sha256": "dced2532c60c759c632baef7c0f3d10c05f91133e91459a5fcb1ac59345b05b0",
+    "archive_pathset_bytes_hashes_modes": "all verified",
+    "logical_pathset_bytes_hashes_modes": "all verified",
+    "raw_bytes_repaired_or_normalized": false,
+    "application_code_imported_or_executed": false
+  },
+  "raw_reference_summary": {
+    "status": "PASS_CAPTURED_RAW_REFERENCE_CLOSURE",
+    "raw_stream_references_verified": 730,
+    "exact_path_or_content_resolution": true,
+    "unresolved": [],
+    "app_campaign_receipts": {
+      "independent-original-tmp/checkpoint-002/genuine-candidate-001-run-001": 6,
+      "independent-workspace/checkpoint-002/genuine-candidate-001-workspace-campaign-001": 156,
+      "independent-workspace/checkpoint-003/genuine-candidate-001-checker003-campaign-001": 156
+    },
+    "partial006": {
+      "bytes": 32768,
+      "sha256": "f5d2b10a9a58587950e65e67a8678e849656b31e3e5e75b7004f0461e0300918",
+      "utf8_valid": true,
+      "complete_json": false,
+      "terminal_receipt": "absent as originally observed; outcome unknown, not passed"
+    },
+    "required_closed_receipts": {
+      "python-fp-002/EVIDENCE-MANIFEST.json": "54fc5e6bcdae8c12db965223f8c2bc10ef895193b4071506abff3421ee508ee2",
+      "independent-workspace/INDEPENDENT-REPORT.md": "71c0f0080c91921d2954743569997f6356407e89476d5ff98d62e5ef9475b3bf",
+      "independent-workspace/candidate001-checker003-final-receipt.json": "b7c5595f3b1a5358e75d3ae626936ea2b52fffc0becf2f6362dbde980a126e93",
+      "full-regression/HANDOFF.json": "c31b494516ebf6fd61415a9f5da6d8a2592aa5a93c4d943d1687b7faeefb447f",
+      "full-regression/FINAL-CHECK-INDEX.json": "e843bbcfec2035acf7bb401e7e6e2c7ea69e28281f6f12f6c33d7c331f4329c2",
+      "full-regression/EVIDENCE-MANIFEST.json": "e9d172649ed8488c1f60ef176fb45cc4f8712e31043f046d5d3a5e76fd1c1a50",
+      "code-review-semantics/EVIDENCE-MANIFEST.json": "297a9068cde669c364254b13a8c9a74dd0546c8e4d44f32d66537c70b255ad13"
+    },
+    "PRbody11713_exact_three_copies": true
+  },
+  "exclusions": {
+    "records": 41,
+    "missing_roots": [],
+    "mutable_during_capture": [],
+    "sensitive_content_matches": [],
+    "application_code_binaries_DB_cache_instructions": "excluded; metadata/digests only",
+    "opaque_main_ledger_seeds": "excluded",
+    "inflight_performance_methods": "excluded"
+  },
+  "status_scope": "Embedded earlier pending statuses are historical inputs; this external index and restore PASS supersede them. Not goal3 acceptance/performance or durable publication.",
+  "previous_local_capture": {
+    "sha256": "cf047376d5514d7c4f72bbfd76fb110c7c17194033d290413b7d042ab4f54e2a",
+    "path": "attempt-001-capture/",
+    "preserved_not_published": true
+  },
+  "goal_state": "1\u20132 bounded accepted;3 not accepted/performance UNRUN;4\u201310 queued",
+  "remote_actions_by_packager": 0
+}

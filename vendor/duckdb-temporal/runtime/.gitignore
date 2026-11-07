@@ -1,0 +1,5 @@
+build/
+__pycache__/
+*.duckdb
+*.wal
+node_modules

@@ -1,0 +1,8 @@
+{
+  "planCommit": "9499d3b410be5a18183eb625f3c66df711b53b43",
+  "planSha256": "1fb10d550d82bf343011e7d60a502bb842e6d6132d5a6a9d1f17599fe415d0a8",
+  "calculatorSha256": "06d188bc21ed6f36c7207aa4249ab4f8ca3ed1d7caadc08b4302645e127d18d8",
+  "labCommit": "213bf0b6e9f30703ee35f937d5fb414a49a4d8ce",
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "rootGrant": "exclusive forward sdk_control then cpp_candidate only"
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "td.notes_writer_first_failure/1",
+  "observed_exec_chunk_id": "d7c4a2",
+  "observed_exec_exit": 1,
+  "classification": "Python notes-writer parse error before any statement executed",
+  "error": "SyntaxError: closing parenthesis '}' does not match opening parenthesis '[' in critical_proofs list",
+  "effect": "No files created by that command; no application/DB/native execution",
+  "correction": "Use structured JSON artifact creation, then separate stdlib manifest writer; retain this failure"
+}

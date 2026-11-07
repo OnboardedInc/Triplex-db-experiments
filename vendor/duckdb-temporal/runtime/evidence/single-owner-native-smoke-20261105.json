@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "scope": "macOS arm64, DuckDB 2.0.0 Node SDK, synthetic in-memory store",
+  "command": "node --test --test-reporter=tap adapter/test-single-owner-native.mjs",
+  "core_extension_version": "0.24.0",
+  "core_extension_sha256": "a39f0211301b0d580180f0b03566e676aeb077c98a6e4b6de4c8c0c68bbc9397",
+  "companion_extension_sha256": "d4d7d9a3e78021e85aeb7838ba29db163dcccefd621f0a0e390b0522e458abe2",
+  "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "companion_pins_core": true,
+  "test_source_sha256": "a2a0164005a1ccf6a6028f47838bbc17161fba1daadc35be02702cbdefcdc965",
+  "tests_passed": 4,
+  "checks": [
+    "Enrolled but unaudited connections cannot use native persisted read/write aliases, including empty reads.",
+    "A single audited generation authorizes bounded/native/scalable queries, reads, schema registration, put and patch.",
+    "Explicit invalidation and new unknown connections reject the same cached prepared query.",
+    "Invalidated replay after raw mutation cannot advance the clock.",
+    "Activation independently rejects retained carrier corruption, native history corruption, orphan interval provenance and missing clock.",
+    "Repair and a new full audit restore the same cached answer.",
+    "Persisted and temporary SQL macros cannot impersonate the native owner check or authorize an unaudited write.",
+    "Activation rejects tampered or missing managed view definitions using the pinned DuckDB parse tree.",
+    "Activation rejects a mismatch between retained usage and retained rows; repairing usage restores authorization."
+  ],
+  "earlier_runs": [
+    {
+      "log_sha256": "b61d18801fa406fe6f9df2906e2c98a1db5a1952931938d6169e3b1abe91a3e5",
+      "passed": 0,
+      "failed": 2,
+      "finding": "The test pointed at the wrong companion artifact directory; no audit or persisted query ran."
+    },
+    {
+      "log_sha256": "851734dc2d836f181fff0f0b0fd0cc47976fe7f0df320959e3a42b1f3844d403",
+      "passed": 1,
+      "failed": 1,
+      "finding": "A corrupted native-owned row could be detected by either retained or history proof. The corrected test corrupts a legacy row outside entity_history to isolate the retained proof."
+    },
+    {
+      "log_sha256": "e5414549e83085781da8024d629e10fe90313d516e339e7cead91d39cad98fb2",
+      "finding": "The first one-strategy artifact allowed persisted macros to shadow unqualified companion calls. An unaudited schema definition was accepted. Explicit system catalog calls resolved the real companion and rejected the unaudited context."
+    },
+    {
+      "log_sha256": "b4454c3e1154e12b5e313b2d72f9fc61afc7c7b8023e69711acbc966384aa823",
+      "passed": 4,
+      "failed": 0,
+      "finding": "The system-qualified native helpers and canonical catalog checks passed before storage accounting equality was added."
+    }
+  ],
+  "final_log_sha256": "7f3cbbdd8c5113980bc6d852ba7a3f1981d4fc805489a89e7697be3313e00fc3"
+}

@@ -1,0 +1,77 @@
+UTC: 2026-10-31T07:25:24Z
+
+COMMAND: readelf -Ws HOST | relevant GLOBAL DEFAULT declarations
+  1404: 00000000039b9670     5 FUNC    GLOBAL DEFAULT   15 _ZN6duckdb15DatabaseManager3GetERNS_16DatabaseInstanceE
+ 12969: 000000000399b120    11 FUNC    GLOBAL DEFAULT   15 _ZNK6duckdb16AttachedDatabase11IsTemporaryEv
+ 13540: 00000000039dbf80    12 FUNC    GLOBAL DEFAULT   15 _ZN6duckdb15DatabaseManager3GetERNS_16AttachedDatabaseE
+ 18365: 00000000039a0b80    19 FUNC    GLOBAL DEFAULT   15 _ZN6duckdb15DatabaseManager3GetERNS_13ClientContextE
+ 19337: 000000000399b110    11 FUNC    GLOBAL DEFAULT   15 _ZNK6duckdb16AttachedDatabase8IsSystemEv
+ 20146: 00000000039d2400   463 FUNC    GLOBAL DEFAULT   15 _ZN6duckdb15DatabaseManager12GetDatabasesEv
+ 29943: 00000000039b1260   851 FUNC    GLOBAL DEFAULT   15 _ZN6duckdb15DatabaseManager12GetDatabasesERNS_13ClientContextENS_12optional_idxE
+
+COMMAND: readelf -p .comment HOST
+
+String dump of section '.comment':
+  [     0]  GCC: (GNU) 15.2.1 20260123 (Red Hat 15.2.1-7)
+  [    2e]  clang version 21.1.8 ( 21.1.8-1.module_el8.10.0+4172+b6b13d75)
+  [    6e]  GCC: (GNU) 8.5.0 20210514 (Red Hat 8.5.0-29)
+  [    9b]  Linker: LLD 21.1.8
+
+
+COMMAND: nm -D --defined-only HOST | c++filt | inline-helper and exception dependency candidates
+0000000003264580 T duckdb::optional_idx::ThrowNotSet()
+000000000322bf20 T duckdb::InvalidInputException::InvalidInputException(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+000000000322bf40 T duckdb::InvalidInputException::InvalidInputException(std::unordered_map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::hash<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::equal_to<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+000000000322bf20 T duckdb::InvalidInputException::InvalidInputException(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+000000000322bf40 T duckdb::InvalidInputException::InvalidInputException(std::unordered_map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::hash<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::equal_to<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+000000000323fbc0 T duckdb::ThrowVectorIndexOutOfBounds(unsigned long, unsigned long)
+000000000323f800 T duckdb::ThrowNullSharedPtrDereference()
+000000000323f420 T duckdb::operator==(duckdb::Identifier const&, char const*)
+000000000323f0a0 T duckdb::Identifier::Hash() const
+
+COMMAND: nm -D --defined-only HOST | c++filt | RTTI declarations for CV2 context/ClientContext (no rows means no matching dynamic exports)
+0000000003fe3d28 V typeinfo for duckdb::ClientContextState
+00000000040503f8 D typeinfo for duckdb::ClientContextWrapper
+0000000004049850 D typeinfo for duckdb::ClientContextFileOpener
+0000000004051ac8 V typeinfo for duckdb::capiv2::CV2Context
+0000000004051a00 V typeinfo for duckdb::capiv2::CV2ContextFactory
+0000000004051ab0 V typeinfo for duckdb::capiv2::CV2CallbackContext
+0000000004050408 D vtable for duckdb::ClientContextWrapper
+0000000004050298 D vtable for duckdb::ClientContextFileOpener
+
+COMMAND: nm -D --undefined-only HOST | filtered Python symbol examples
+                 U PyErr_SetString
+                 U PyExc_RuntimeError
+                 U PyGILState_Ensure
+                 U PyModuleDef_Init
+                 U PyUnicode_FromString
+
+COMMAND: nm -D --defined-only PY | matching Python symbol examples
+000000000186bedc T PyErr_SetString
+000000000143fdc0 D PyExc_RuntimeError
+0000000001881dc0 T PyGILState_Ensure
+0000000001a2f60c T PyModuleDef_Init
+000000000182be40 T PyUnicode_FromString
+
+COMMAND: readelf --version-info /lib/x86_64-linux-gnu/libstdc++.so.6 | filtered runtime version endpoints
+GLIBCXX_3.4.26
+GLIBCXX_3.4.27
+GLIBCXX_3.4.28
+GLIBCXX_3.4.29
+GLIBCXX_3.4.30
+GLIBCXX_3.4.31
+GLIBCXX_3.4.32
+GLIBCXX_3.4.33
+
+COMMAND: readlink -f /lib/x86_64-linux-gnu/libstdc++.so.6; file and sha256sum resolved library
+/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33
+/lib/x86_64-linux-gnu/libstdc++.so.6: symbolic link to libstdc++.so.6.0.33
+972bb2a18b71140dab0240f8a1f68ab3fb1d56bcd4c4f824a91b70888faf5a00  /lib/x86_64-linux-gnu/libstdc++.so.6
+
+COMMAND: wheel WHEEL metadata (static text)
+Wheel-Version: 1.0
+Generator: scikit-build-core 1.1.1
+Root-Is-Purelib: false
+Tag: cp312-abi3-manylinux_2_27_x86_64
+Tag: cp312-abi3-manylinux_2_28_x86_64
+

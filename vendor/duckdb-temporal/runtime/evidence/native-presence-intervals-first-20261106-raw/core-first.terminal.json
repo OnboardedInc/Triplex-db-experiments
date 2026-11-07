@@ -1,0 +1,12 @@
+{
+  "command": [
+    "[LOCAL_PATH_0034]",
+    "build_native.py"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "pid": 17982,
+  "startedAtUtc": "2026-11-06T09:12:27.278903+00:00",
+  "endedAtUtc": "2026-11-06T09:12:39.244976+00:00",
+  "exitCode": 0,
+  "elapsedMs": 11965.826290892437
+}

@@ -1,0 +1,482 @@
+{
+  "title": "Triplex explain and provenance source ledger",
+  "research_date_utc": "2026-11-03",
+  "scope": "Pinned public source reading and hand controls only. No subject execution or source-body hashing.",
+  "goal10_status": "source-only and unaccepted",
+  "identity_limit": "These are returned Git blob IDs, not loaded-build authentication or an independently rehashed source archive.",
+  "sources": [
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/storage/QueryExecutor.ts",
+      "git_blob_id": "8c1d3e3b9cf9cc8c14586e0fc48780075086157f",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/storage/QueryExecutor.ts",
+      "line_ranges": [
+        [
+          35,
+          98
+        ],
+        [
+          113,
+          168
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/sql/src/SqlQueryExecutor.ts",
+      "git_blob_id": "d53f1d9baa3a88d0900222ea16724f77a5ec63ea",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/sql/src/SqlQueryExecutor.ts",
+      "line_ranges": [
+        [
+          39,
+          43
+        ],
+        [
+          166,
+          224
+        ],
+        [
+          250,
+          367
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "git_blob_id": "d617ebf4e101e7aed3de262f3278c8d7cd699d0f",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/layers/KvTriplesLive.ts",
+      "line_ranges": [
+        [
+          231,
+          251
+        ],
+        [
+          824,
+          930
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "git_blob_id": "d6ef6b0fae64c8a5599dc0757333229766050bd8",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/TriplesLive.ts",
+      "line_ranges": [
+        [
+          636,
+          696
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/Triples.ts",
+      "git_blob_id": "fd05e0539f9a9c5a24cf4e7c460469cfc80c7016",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/Triples.ts",
+      "line_ranges": [
+        [
+          170,
+          203
+        ],
+        [
+          279,
+          297
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/datalog/validation.ts",
+      "git_blob_id": "f271306ef9d7bf772a7dc0b36cfd5028df358742",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/validation.ts",
+      "line_ranges": [
+        [
+          37,
+          47
+        ],
+        [
+          138,
+          336
+        ],
+        [
+          355,
+          419
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/datalog/schema.ts",
+      "git_blob_id": "3a3a1356473336aac8ec571a0cfa8c32aecac5ad",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/schema.ts",
+      "line_ranges": [
+        [
+          87,
+          171
+        ],
+        [
+          254,
+          294
+        ],
+        [
+          395,
+          427
+        ],
+        [
+          503,
+          517
+        ],
+        [
+          720,
+          766
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/datalog/compiler.ts",
+      "git_blob_id": "e1df2e3f61fd72e574f77418160448b885045c5f",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts",
+      "line_ranges": [
+        [
+          164,
+          188
+        ],
+        [
+          1292,
+          1307
+        ],
+        [
+          1804,
+          1815
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/datalog/wrapper.ts",
+      "git_blob_id": "46cca1f25f7f3bc6e6fb296de5fe9e7aa41b456d",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/wrapper.ts",
+      "line_ranges": [
+        [
+          318,
+          337
+        ],
+        [
+          378,
+          431
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/kv/datalog/executor.ts",
+      "git_blob_id": "1f524d44426f0b33338a74f2f8050bda6d5c2f19",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/kv/datalog/executor.ts",
+      "line_ranges": [
+        [
+          461,
+          512
+        ],
+        [
+          705,
+          749
+        ],
+        [
+          775,
+          818
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/Pagination.ts",
+      "git_blob_id": "96768cf49ed11a5777e2c6c37c3e6a8e78ef6c6d",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Pagination.ts",
+      "line_ranges": [
+        [
+          98,
+          143
+        ],
+        [
+          148,
+          327
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/derivation/Derivation.ts",
+      "git_blob_id": "8d59400518df4cd36a90aa64c79748d9bc3ff1ae",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/derivation/Derivation.ts",
+      "line_ranges": [
+        [
+          76,
+          168
+        ],
+        [
+          170,
+          205
+        ],
+        [
+          232,
+          338
+        ],
+        [
+          346,
+          485
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/derivation/Overlay.ts",
+      "git_blob_id": "5df2a26a301ce4558e34706bec30a662a07d1c44",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/derivation/Overlay.ts",
+      "line_ranges": [
+        [
+          50,
+          55
+        ],
+        [
+          103,
+          119
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/derivation/Materialization.ts",
+      "git_blob_id": "bd55753d52e4fce60c91c0a337ad9602f1ab1362",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/derivation/Materialization.ts",
+      "line_ranges": [
+        [
+          208,
+          240
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/derivation/index.ts",
+      "git_blob_id": "e60ead57b561fbd2ea09ccdfe940e1cf7efa10d0",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/derivation/index.ts",
+      "line_ranges": [
+        [
+          1,
+          3
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/subscriptions/extract-dependencies.ts",
+      "git_blob_id": "3fc4b8ec7ed800d155939ed72778d3740c465bee",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/subscriptions/extract-dependencies.ts",
+      "line_ranges": [
+        [
+          94,
+          207
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/runtime/Capabilities.ts",
+      "git_blob_id": "abf4fcf9949d12078cbed2b9526988583f533ce2",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/runtime/Capabilities.ts",
+      "line_ranges": [
+        [
+          71,
+          99
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/runtime/Runtime.ts",
+      "git_blob_id": "05d0dc5103425c88534f3d32f427ffc59239a109",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/runtime/Runtime.ts",
+      "line_ranges": [
+        [
+          84,
+          101
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/StoreCapability.ts",
+      "git_blob_id": "aa432e4de2fc4524458e2e238bb59bff5854ef14",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/StoreCapability.ts",
+      "line_ranges": [
+        [
+          30,
+          78
+        ],
+        [
+          98,
+          111
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/errors/index.ts",
+      "git_blob_id": "5098faef3dd76bbb6e12471b12e12441ff970bff",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/errors/index.ts",
+      "line_ranges": [
+        [
+          119,
+          156
+        ],
+        [
+          185,
+          191
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/package.json",
+      "git_blob_id": "8786d9fc207c952e3c1b7a6f3abb963239e509a3",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/package.json",
+      "line_ranges": [
+        [
+          60,
+          64
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/test/derivation/Derivation.e2e.test.ts",
+      "git_blob_id": "34e200ba3aebf58ed2d088c547d3529054fdcb2b",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/test/derivation/Derivation.e2e.test.ts",
+      "line_ranges": [
+        [
+          382,
+          395
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "docs/derivations.md",
+      "git_blob_id": "fb971b0e5e764042a5aa2a4f1ad35e1ba30d3256",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/docs/derivations.md",
+      "line_ranges": [
+        [
+          40,
+          61
+        ],
+        [
+          126,
+          129
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "docs/datalog.md",
+      "git_blob_id": "89ca70125e150c2b8fb89750bcb7db4632cdf271",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/docs/datalog.md",
+      "line_ranges": [
+        [
+          119,
+          144
+        ],
+        [
+          216,
+          244
+        ],
+        [
+          280,
+          288
+        ]
+      ]
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "docs/custom-runtimes.md",
+      "git_blob_id": "df7813e8fbf95d6f595c2aaee8af95318b2de0b1",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/docs/custom-runtimes.md",
+      "line_ranges": [
+        [
+          216,
+          229
+        ]
+      ]
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "ref": "d69b51885a86bd10cf0f050c9cbed69576c620ae",
+      "path": "projects/temporal-datalog/research/triplex-interoperability-20261030.md",
+      "git_blob_id": "de30df3fdd47036a82006fba499b84d5cdb11840",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "role": "published context only"
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "ref": "d69b51885a86bd10cf0f050c9cbed69576c620ae",
+      "path": "projects/temporal-datalog/research/roadmap/iteration-10/checkpoints/cursor-receipt-contract-20261103/README.md",
+      "git_blob_id": "8301cc613c1ed6d0853a0aaad47184b902f30392",
+      "source_id_kind": "connector-returned Git blob SHA",
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "role": "published context only"
+    }
+  ]
+}
+

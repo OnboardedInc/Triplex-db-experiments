@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "exit_code": 0,
+  "clean_export_root": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/export/item2-full-verification-2142",
+  "exported_source_files": 265,
+  "all_exported_source_pre_post_hashes_match": true,
+  "artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+  "reports": {
+    "engine/build/item2-core-verification/verification.json": {
+      "sha256": "ba6f2ce0f4cfc15ae579414ca93f9150c9a860cab6b5d2b276e41dd8a558b631",
+      "status": "PASS"
+    },
+    "engine/build/item2-core-verification-sanitized/verification.json": {
+      "sha256": "b73d1efe7927b977f3f3487082389f6f5078b8005bdb1cdefcb1b37e6ec86c59",
+      "status": "PASS"
+    },
+    "engine/build/core-verification/verification.json": {
+      "sha256": "60ae439ae8d6e8990c52151cbb97e2794fe0df743eb1b3735488fd3f6ecc12b2",
+      "status": "PASS"
+    },
+    "engine/build/item2-store-verification.json": {
+      "sha256": "8767fc9825a6c10bd7d0aaf520162e07304c93acde02a5bb9da5de2ae5a6c57a",
+      "status": "PASS"
+    }
+  },
+  "scope": "Complete offline verify_expressions.sh in clean export, TD_SANITIZE=1 and both immutable baseline directories; not independent SQL/full-path sanitizer/performance acceptance",
+  "original_external_fixture_dependency_removed": true
+}

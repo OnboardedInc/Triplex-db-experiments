@@ -1,0 +1,205 @@
+{
+  "schema": "goal4.research.web-sources/1",
+  "documents": [
+    {
+      "title": "DuckDB 2.0 FROM/JOIN",
+      "url": "https://duckdb.org/docs/2.0/sql/query_syntax/from",
+      "role": "ANTI set/bag and NULL matching semantics",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 subqueries",
+      "url": "https://duckdb.org/docs/2.0/sql/expressions/subqueries",
+      "role": "NOT EXISTS and automatic antijoin detection",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 NULLs",
+      "url": "https://duckdb.org/docs/2.0/sql/data_types/nulls",
+      "role": "ordinary vs null-safe equality",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 typecasting",
+      "url": "https://duckdb.org/docs/2.0/sql/data_types/typecasting",
+      "role": "combination casting risk",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 IN",
+      "url": "https://duckdb.org/docs/2.0/sql/expressions/in",
+      "role": "NOT IN NULL behavior and RHS shapes",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 BLOB",
+      "url": "https://duckdb.org/docs/2.0/sql/data_types/blob",
+      "role": "opaque binary identity carrier",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 C overview",
+      "url": "https://duckdb.org/docs/2.0/clients/c/overview",
+      "role": "actual unstable C API v2, not stability forecast",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 WITH",
+      "url": "https://duckdb.org/docs/2.0/sql/query_syntax/with",
+      "role": "materialization/inlining scope",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 concurrency",
+      "url": "https://duckdb.org/docs/2.0/connect/concurrency",
+      "role": "MVCC/OCC does not widen prototype trust/concurrency",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 transactions",
+      "url": "https://duckdb.org/docs/2.0/sql/statements/transactions",
+      "role": "explicit transaction and full page body isolation/batch semantics",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 tuning",
+      "url": "https://duckdb.org/docs/2.0/guides/performance/how_to_tune_workloads",
+      "role": "blocking memory limitations, EXPLAIN vs ANALYZE",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB 2.0 EXPLAIN",
+      "url": "https://duckdb.org/docs/2.0/guides/meta/explain",
+      "role": "plan inspection reference",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    },
+    {
+      "title": "DuckDB official correlated subqueries article",
+      "url": "https://duckdb.org/2023/05/26/correlated-subqueries-in-sql",
+      "role": "historical optimizer design; exact d54 source takes precedence",
+      "retrieved_utc_date": "2026-10-31",
+      "evidence": "web tool full page body",
+      "version": "2.0 documentation except dated 2023 article",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Underlying raw HTML bytes not captured; no fabricated content digest."
+    }
+  ],
+  "papers": [
+    {
+      "title": "Unnesting Arbitrary Queries",
+      "authors": "Thomas Neumann; Alfons Kemper",
+      "year": 2015,
+      "url": "https://15799.courses.cs.cmu.edu/spring2025/papers/11-unnesting/neumann-btw2015.pdf",
+      "evidence": "primary paper academic-course mirror; text extracted, sections 3–4 inspected",
+      "pages": 20,
+      "role": "NULL-aware decorrelation, duplicate-binding domains, anti-join example",
+      "retrieved_utc_date": "2026-10-31",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Web reader metadata/text, not captured raw PDF bytes; no fabricated digest."
+    },
+    {
+      "title": "Saving Private Hash Join",
+      "authors": "Laurens Kuiper; Paul Groß; Peter Boncz; Hannes Mühleisen",
+      "year": 2025,
+      "url": "https://www.vldb.org/pvldb/vol18/p2748-kuiper.pdf",
+      "evidence": "primary PVLDB paper; abstract and memory/external processing sections inspected",
+      "pages": 13,
+      "doi": "10.14778/3742728.3742762",
+      "role": "external hash-join memory hypotheses, not prototype results",
+      "retrieved_utc_date": "2026-10-31",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Web reader metadata/text, not captured raw PDF bytes; no fabricated digest."
+    },
+    {
+      "title": "An Amateur's Introduction to Recursive Query Processing Strategies",
+      "authors": "Francois Bancilhon; Raghu Ramakrishnan",
+      "year": 1988,
+      "url": "https://research.cs.wisc.edu/techreports/viewreport.php?report=772",
+      "pdf_url": "https://research.cs.wisc.edu/techreports/1988/TR772.pdf",
+      "evidence": "primary institutional catalog read; PDF has no extracted text in web tool; no substantive report claim relies on unread PDF",
+      "pages": 46,
+      "role": "retrieval record only",
+      "retrieved_utc_date": "2026-10-31",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Web reader metadata/text, not captured raw PDF bytes; no fabricated digest."
+    },
+    {
+      "title": "Automatic Index Selection for Large-Scale Datalog Computation",
+      "authors": "Pavle Subotic; Herbert Jordan; Lijun Chang; Alan Fekete; Bernhard Scholz",
+      "year": 2018,
+      "url": "https://psubotic.github.io/papers/p141-subotic.pdf",
+      "doi": "10.14778/3282495.3282500",
+      "evidence": "primary paper author-hosted copy; abstract and section 3.1 primitive/negative-search passages inspected",
+      "pages": 13,
+      "role": "negative search emptiness and index-reuse research; no paper speedup imported",
+      "retrieved_utc_date": "2026-10-31",
+      "raw_bytes_sha256": null,
+      "raw_bytes_size": null,
+      "hash_note": "Web reader metadata/text, not captured raw PDF bytes; no fabricated digest."
+    }
+  ]
+}

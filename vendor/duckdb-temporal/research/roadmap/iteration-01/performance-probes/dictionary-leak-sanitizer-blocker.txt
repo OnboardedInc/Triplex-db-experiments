@@ -1,0 +1,8 @@
+Original leak-enabled attempt: ASAN_OPTIONS=detect_leaks=1 ./dictionary_probe_sanitized 1000 1 > dictionary-sanitized.jsonl
+Exit code: 1
+Observed stderr:
+==11==LeakSanitizer has encountered a fatal error.
+==11==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==11==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+Separate ASan/UBSan check with leak detection explicitly disabled is not leak verification.

@@ -1,0 +1,77 @@
+{
+  "schema": "td.native-memory-owner-probe-first/1",
+  "result": "PASS_FIRST_LIFETIME_METHOD_ONLY",
+  "attempts": 1,
+  "exitCode": 0,
+  "sourceCommit": "fd034365bf34a3c3509a8c4c445985f1bb84c703",
+  "implementationCommit": "1532bf5b",
+  "independentSourceReview": "5277b8a843ec75745121e8c1aadb6856ae2f4d92",
+  "buildTarget": "temporal-native-memory-owner-probe-build-20261105-01/projects/temporal-datalog/runtime",
+  "command": "node --test --test-name-pattern='per-instance user data' build/adapter/test-native-memory-owner-probe.js",
+  "builds": {
+    "coreAndAddon": "FIRST_PASS",
+    "pairedCompanionWithCompatibilityMutations": "FIRST_PASS",
+    "typescript": "FIRST_PASS",
+    "requiredMjsCopied": true
+  },
+  "runtime": {
+    "extensionVersion": "0.32.0",
+    "diagnosticNativeMemoryOwnerProbe": true,
+    "diagnosticEvaluatorProfile": false,
+    "allocationDiagnosticSelector": false,
+    "retainedDefaultBytes": 67108864,
+    "borrowedScalarAnswers": true,
+    "coreSha256": "7f98f400cb14d39e5d7fb2279c77327901b1529f058968bddb4f22d461033a18",
+    "controlSha256": "303906e556517d9504c6645d44aaeae06e3aaa212bc179d7f3677d5f69a6a1a1",
+    "companionSha256": "edaa59146751b0d5aa9f7de914da94927707931fd1febb0d30b77a5e754eb7b0",
+    "engineLibrarySha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "nativeSourceInputsMatched": 34,
+    "prePostSourceInputsMatched": 42,
+    "prePostArtifactInputsMatched": 12,
+    "afterSelectedDependencyFilesMatched": 11
+  },
+  "test": {
+    "matchedMethods": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "methodMs": 874.699792,
+    "processMs": 1376.18125,
+    "verifiedAssertions": [
+      "One entrypoint user-data owner shared by17actual connections and all7ordinary query scalar signatures; raw tokenzero and positive controls both exercised.",
+      "A second real two-connection instance has a distinct owner; its calls and destruction do not affect the first owner.",
+      "Repeated LOAD and same-byte alternate-path LOAD do not split/reset the first owner; subsequent actual callbacks increment the bridge-pinned DSO counters.",
+      "ATTACH/USE/DETACH retains the containing instance owner, followed by real owner revalidation.",
+      "Prepared/materialized result remains exact through8replacement evaluator calls and reader close; expected constant rows/counters preserved.",
+      "Canceled token invokes actual error unwind, one failed-callback increment, no live callback afterward, and healthy ownership.",
+      "Final destruction occurs exactly once for each tested owner, only after callbacks drain and all registration wrappers retire."
+    ],
+    "observationBoundary": "Owner identities and counters are asserted in-process by the pinned test source but not dumped in the text output. No unsaved exact per-owner numeric sample is claimed."
+  },
+  "localRawFileSha256": {
+    "owner-probe-core-first.log": "493d38e9885f74d29a80eb49b1f09eb892afc14c3d10457f31d57045f849ad2b",
+    "owner-probe-companion-first.log": "01338f52350cf59d41812b1ea0b8cc7b78c0bb7c3e05f70ed57d1c56334cdfb3",
+    "owner-probe-typescript-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "owner-probe-lifetime-first.tap": "4aa8a9e5ed8b4c3aa54f2af03aa3f9b43872538119ad4063dbc6333e05e695da",
+    "owner-probe-preflight-before.json": "86a2f5d74cd1a70e05f51b2ba89fa928a33897c50289c4b7ec1e7a7a4280dedd",
+    "owner-probe-artifact-before.json": "2b4768066cf605132dc172328e75e0cc0f2845fe3dae9150ce559af6d470ea50",
+    "owner-probe-after.json": "0d34dbab60b4511be9bb9fd24d6d6b860dca7eaaa47698a5d9637a826246770b"
+  },
+  "savedOutput": {
+    "file": "native-memory-owner-probe-first-032-20261105.output.txt",
+    "sha256": "8e87a8dc07a225e3c6f0ef0f29e7c0ff07ea3c670ab206e61831e28ffd37769b",
+    "sanitization": "Only owned build-runtime host prefix changed to project-relative path"
+  },
+  "savedPins": {
+    "file": "native-memory-owner-probe-first-032-20261105.pins.json",
+    "sha256": "53fcb63b00aa6e8937287333cf01a6c11e8b6349fe3dfe8a82f0b33fcc1a2e07"
+  },
+  "remainingGates": [
+    "Second public4096-value16reader/cancel/drained-close/reopen/copy method NOT EXECUTED; requires a separate grant.",
+    "Partial LOAD failure/retry, registration replacement,32-slot cumulative diagnostic capacity overflow and handles surviving final instance teardown remain unqualified.",
+    "Per-field atomic snapshots are not linearizable during active work and are not a chronological event trace;32slots record cumulative owners, not a live byte quota.",
+    "No shared byte policy, requested-capacity implementation, compiler/import coverage, pre-LIST/engine/SDK/V8 containment or Goal6 completion is claimed.",
+    "Isolated stage-two public query always controls; current qualified SDK8240 uncontrolled-tokenzero transport remains unchanged and must be preserved by future integration."
+  ],
+  "executionBoundary": "Only the authorized first filtered method, once. No second method/fullfile/wider suite/retry/cap change/install/source modification/frozen mutation. Engine stopped and lease released immediately after first terminal PASS."
+}

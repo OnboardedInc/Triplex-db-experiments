@@ -1,0 +1,57 @@
+{
+  "schema": "temporal.sdk-integration-first-outcome.v1",
+  "status": "failed_fixture_observation",
+  "recordedAt": "2026-11-06T02:42:46.525686+00:00",
+  "sourceCommit": "beaab6eef7d8b08456a53e8ab6ee5b6f6e1835dc",
+  "codeCommit": "fbaa3acd43f1043c5ac08c7fc67df66c41300fc4",
+  "plannedTotal": 422,
+  "passedFullTotal": null,
+  "terminal": {
+    "started_at": "2026-11-06T02:35:08.853102+00:00",
+    "finished_at": "2026-11-06T02:40:09.779783+00:00",
+    "exit_code": 1,
+    "elapsed_seconds": 300.9282833340112,
+    "pid": 22671,
+    "first_terminal": true,
+    "unchanged_before_after": true
+  },
+  "failure": {
+    "suite": "single-strategy",
+    "test": "a queued controlled read rechecks ownership before executing its cached statement",
+    "observedPass": 1,
+    "observedFail": 1,
+    "expectedPhysicalLeaseWaiters": 1,
+    "actualPhysicalLeaseWaiters": 0,
+    "cause": "SDK contractv2 queues this call in heavy admission before acquiring a physical reader lease",
+    "ownershipAssertionsAfterThisPoint": "not reached in this first attempt"
+  },
+  "sourceNativeSdkDependenciesUnchanged": true,
+  "rerun": "none before preserving this receipt",
+  "previousVerificationJson": "historical prior checkpoint; no fresh full report was written by failed run",
+  "raw": {
+    "sdk-integration-full-first.log": {
+      "path": "evidence/sdk-integration-first-20261105/sdk-integration-full-first.log",
+      "sha256": "b34110e75d4ad1e6080e98e29505de7eb453f2cf58ef568447a0566d3235ff37"
+    },
+    "sdk-integration-full-first-terminal.json": {
+      "path": "evidence/sdk-integration-first-20261105/sdk-integration-full-first-terminal.json",
+      "sha256": "964a04869446774633a1a0f3a1eb8ddd7234c7d9298fba7f0bf23a6a045fc382"
+    },
+    "sdk-integration-full-before.json": {
+      "path": "evidence/sdk-integration-first-20261105/sdk-integration-full-before.json",
+      "sha256": "f36319f9ef7bda5097e5c8d4a88b8ea47cab2c2753b8c46825667c4b7750a29a"
+    },
+    "sdk-integration-full-after.json": {
+      "path": "evidence/sdk-integration-first-20261105/sdk-integration-full-after.json",
+      "sha256": "ccfe07d0aa6cd865e2aef2020dc3efdcd1030689b5603838aa61e46ab4ccc256"
+    },
+    "sdk-integration-full-launch.json": {
+      "path": "evidence/sdk-integration-first-20261105/sdk-integration-full-launch.json",
+      "sha256": "d7be5fc36bbf79bcdb43e3277410f4a0cded62458a4dff35cb16d72954b5799f"
+    },
+    "run-sdk-integrated-verification.py": {
+      "path": "evidence/sdk-integration-first-20261105/run-sdk-integrated-verification.py",
+      "sha256": "fbf8a86fc44acfc8e8d0c3769724924471202a84fff21d1a1d434c2eec1b10c5"
+    }
+  }
+}

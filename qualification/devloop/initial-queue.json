@@ -1,0 +1,577 @@
+{
+  "format": "triplex-devloop-initial-queue/1",
+  "status": "QUEUED_UNEXECUTED_HYPOTHESES_AND_PREREQUISITES",
+  "selectionRule": "Read baseline and profile first. These menus may be replaced by explicit new hypotheses for the measured stage; they are not measured priorities.",
+  "jobs": [
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "command": null,
+      "dependsOn": [],
+      "inspiration": [
+        {
+          "reference": "qualification/devloop/PLAN.md",
+          "mechanism": "Measured public-entrypoint proof before scale or promotion",
+          "adaptation": "Fresh portable-export evidence; historical receipts remain historical"
+        }
+      ],
+      "id": "foundation-duckdb-public",
+      "kind": "prerequisite",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "problemId": "foundation-duckdb-public",
+      "logicalTaskId": "foundation-and-calibration",
+      "hypothesis": "Build the exact existing Mac C++ owner and bridge the expanded Triplex public contract; old44 and native435 are historical scoped evidence"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "command": null,
+      "dependsOn": [],
+      "inspiration": [
+        {
+          "reference": "qualification/devloop/PLAN.md",
+          "mechanism": "Measured public-entrypoint proof before scale or promotion",
+          "adaptation": "Fresh portable-export evidence; historical receipts remain historical"
+        }
+      ],
+      "id": "foundation-xtdb-public",
+      "kind": "prerequisite",
+      "queryPath": "xtdb-datalog",
+      "backend": "xtdb",
+      "problemId": "foundation-xtdb-public",
+      "logicalTaskId": "foundation-and-calibration",
+      "hypothesis": "Qualify local owned XTDB plus shared native schema/basis facade, typed writes/history/receipts and fresh public checks"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "command": null,
+      "dependsOn": [],
+      "inspiration": [
+        {
+          "reference": "qualification/devloop/PLAN.md",
+          "mechanism": "Measured public-entrypoint proof before scale or promotion",
+          "adaptation": "Fresh portable-export evidence; historical receipts remain historical"
+        }
+      ],
+      "id": "foundation-qlever-public",
+      "kind": "prerequisite",
+      "queryPath": "qlever-datalog",
+      "backend": "qlever",
+      "problemId": "foundation-qlever-public",
+      "logicalTaskId": "foundation-and-calibration",
+      "hypothesis": "Qualify local owned QLever, fix and regress translated self-rule behavior, then qualify schema-bound SPARQL facade"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "command": null,
+      "dependsOn": [],
+      "inspiration": [
+        {
+          "reference": "qualification/devloop/PLAN.md",
+          "mechanism": "Measured public-entrypoint proof before scale or promotion",
+          "adaptation": "Fresh portable-export evidence; historical receipts remain historical"
+        }
+      ],
+      "id": "controller-independent-review",
+      "kind": "prerequisite",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "problemId": "controller-independent-review",
+      "logicalTaskId": "foundation-and-calibration",
+      "hypothesis": "Independent source/evidence review of the actual scheduler, process ownership, controller tests and source/output bindings"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "command": null,
+      "dependsOn": [
+        "foundation-duckdb-public",
+        "foundation-xtdb-public",
+        "foundation-qlever-public",
+        "controller-independent-review"
+      ],
+      "inspiration": [
+        {
+          "reference": "qualification/devloop/PLAN.md",
+          "mechanism": "Measured public-entrypoint proof before scale or promotion",
+          "adaptation": "Fresh portable-export evidence; historical receipts remain historical"
+        }
+      ],
+      "id": "calibration-five-paths",
+      "kind": "prerequisite",
+      "queryPath": "xtdb-native",
+      "backend": "xtdb",
+      "problemId": "calibration-five-paths",
+      "logicalTaskId": "foundation-and-calibration",
+      "hypothesis": "Obtain correct public read/write capacity controls across all five paths; freeze256-client schedule and writer floor, then512/1024stress"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "vendor/duckdb-temporal/runtime/native/src/temporal_store_query.cpp",
+          "mechanism": "legal-pruning",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "duckdb-datalog-legal-pruning",
+      "kind": "hypothesis",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "problemId": "duckdb-selective-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "If the local read profile shows unnecessary source work, extend legal binding/predicate pruning while preserving eager faults, typed cuts and admission"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "https://duckdb.org/docs/2.0/guides/performance/indexing",
+          "mechanism": "engine-access-path",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "duckdb-datalog-engine-access-path",
+      "kind": "hypothesis",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "problemId": "duckdb-selective-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "For that same question, compare a verified eligible single-column index or ordered layout; demand physical scan evidence and charge build/write/storage"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "vendor/duckdb-temporal/runtime/RESEARCH-SYNTHESIS.md",
+          "mechanism": "covering-projection",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "duckdb-datalog-covering-projection",
+      "kind": "hypothesis",
+      "queryPath": "duckdb-datalog",
+      "backend": "duckdb",
+      "problemId": "duckdb-selective-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "For that same question, compare a narrow rebuildable covering projection with transactional publication and complete maintenance costs"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/xtdb/src/query/compiler.ts",
+          "mechanism": "native-plan-shape",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "xtdb-datalog-native-plan-shape",
+      "kind": "hypothesis",
+      "queryPath": "xtdb-datalog",
+      "backend": "xtdb",
+      "problemId": "xtdb-translated-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "If translation/source planning dominates, compare equivalent generated SQL plan shapes on the identical task and cut"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/xtdb/src/XtdbQueryExecutor.ts",
+          "mechanism": "source-reuse",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "xtdb-datalog-source-reuse",
+      "kind": "hypothesis",
+      "queryPath": "xtdb-datalog",
+      "backend": "xtdb",
+      "problemId": "xtdb-translated-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare bounded shared source/metadata work in that same generated query, without stale data or basis reuse"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/xtdb/src/MaintainedQueries.ts",
+          "mechanism": "typed-projection",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "xtdb-datalog-typed-projection",
+      "kind": "hypothesis",
+      "queryPath": "xtdb-datalog",
+      "backend": "xtdb",
+      "problemId": "xtdb-translated-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare a transactional typed projection for that same read bottleneck, charging updates, rebuild and storage"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/qlever/src/compiler.ts",
+          "mechanism": "translation-size",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "qlever-datalog-translation-size",
+      "kind": "hypothesis",
+      "queryPath": "qlever-datalog",
+      "backend": "qlever",
+      "problemId": "qlever-translated-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "If expansion/planning dominates, reduce equivalent generated SPARQL size without dropping general required semantics"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/qlever/src/FamilyDomains.ts",
+          "mechanism": "typed-domain-pruning",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "qlever-datalog-typed-domain-pruning",
+      "kind": "hypothesis",
+      "queryPath": "qlever-datalog",
+      "backend": "qlever",
+      "problemId": "qlever-translated-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare legal typed-domain/source restriction for that same task, preserving unions, recursion and exact absence"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/qlever/src/PersistedScalarSource.ts",
+          "mechanism": "narrow-source",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "qlever-datalog-narrow-source",
+      "kind": "hypothesis",
+      "queryPath": "qlever-datalog",
+      "backend": "qlever",
+      "problemId": "qlever-translated-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare a maintained narrow scalar source for that same task; charge all publication, update and storage work"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/xtdb/src/XtdbClient.ts",
+          "mechanism": "authored-native-plan",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "xtdb-native-authored-native-plan",
+      "kind": "hypothesis",
+      "queryPath": "xtdb-native",
+      "backend": "xtdb",
+      "problemId": "xtdb-authored-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare independently hand-tuned SQL or XTQL shapes for the same logical task through the real schema-bound SDK"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/xtdb/src/XtdbStorageAdapter.ts",
+          "mechanism": "native-layout",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "xtdb-native-native-layout",
+      "kind": "hypothesis",
+      "queryPath": "xtdb-native",
+      "backend": "xtdb",
+      "problemId": "xtdb-authored-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare a justified native layout/access path while sharing Triplex writes/history/receipts and charging every conversion"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/xtdb/src/MaintainedQueries.ts",
+          "mechanism": "native-maintenance",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "xtdb-native-native-maintenance",
+      "kind": "hypothesis",
+      "queryPath": "xtdb-native",
+      "backend": "xtdb",
+      "problemId": "xtdb-authored-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare maintained projection versus native recomputation on that same task and update trace"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/qlever/src/QleverClient.ts",
+          "mechanism": "authored-sparql-shape",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "qlever-native-authored-sparql-shape",
+      "kind": "hypothesis",
+      "queryPath": "qlever-native",
+      "backend": "qlever",
+      "problemId": "qlever-authored-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare independently authored equivalent SPARQL shapes and typed bindings through the real schema-bound SDK"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/qlever/src/rdf.ts",
+          "mechanism": "native-scan-strategy",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "qlever-native-native-scan-strategy",
+      "kind": "hypothesis",
+      "queryPath": "qlever-native",
+      "backend": "qlever",
+      "problemId": "qlever-authored-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare index-aware pattern/access strategies for the same question and complete temporal/typed semantics"
+    },
+    {
+      "format": "triplex-devloop-job/1",
+      "author": "orchestrated-devloop",
+      "goals": [
+        3,
+        6,
+        8
+      ],
+      "command": null,
+      "dependsOn": [
+        "calibration-five-paths"
+      ],
+      "inspiration": [
+        {
+          "reference": "packages/qlever/src/QleverStorageAdapter.ts",
+          "mechanism": "native-maintenance",
+          "adaptation": "Candidate mechanism only; freeze the actual measured bottleneck, public call, oracle, pins and budgets before making this runnable"
+        }
+      ],
+      "id": "qlever-native-native-maintenance",
+      "kind": "hypothesis",
+      "queryPath": "qlever-native",
+      "backend": "qlever",
+      "problemId": "qlever-authored-read-source",
+      "logicalTaskId": "selected-after-public-read-baseline",
+      "hypothesis": "Compare a maintained narrow RDF representation for that same read bottleneck with complete update/history/storage costs"
+    }
+  ]
+}

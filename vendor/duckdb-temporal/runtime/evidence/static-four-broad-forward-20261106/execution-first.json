@@ -1,0 +1,327 @@
+{
+  "schema": "td.static-four-broad-forward-execution/1",
+  "sourceCheckpoint": "75ce727bd599d0b8c1046be7ccd55abe05f737d6",
+  "status": "functional_pair_passed_numeric_unreviewed",
+  "phases": [
+    {
+      "phase": "maps-before",
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "-B",
+        "freeze_static_four_runtime.py",
+        "inspect",
+        "--receipt",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/maps-before.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:34:13.025483+00:00",
+      "pid": 79483,
+      "endedAtUtc": "2026-11-06T05:34:16.417695+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "b0-artifact-before",
+      "command": [
+        "node",
+        "adapter/antijoin-static-four-binding.mjs",
+        "--artifact-role",
+        "STATIC4_B0_MAPPED_CONTROL",
+        "--readers",
+        "16",
+        "--budget",
+        "evidence/antijoin-cost-10m-budget-20261105.json",
+        "--native-binding",
+        "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+        "--evidence",
+        "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "--output",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/b0-artifact-before.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:34:16.419727+00:00",
+      "pid": 79724,
+      "endedAtUtc": "2026-11-06T05:34:20.250406+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "b0-broad-first",
+      "command": [
+        "node",
+        "adapter/benchmark-scale.mjs",
+        "--runtime",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-frozen-032-20261105/b0/runtime",
+        "--sizes",
+        "10000000",
+        "--readers",
+        "1,4,16",
+        "--samples",
+        "5",
+        "--warmup",
+        "1",
+        "--writes",
+        "8",
+        "--group-size",
+        "256",
+        "--fixture-mode",
+        "mixed",
+        "--threads",
+        "4",
+        "--memory-limit",
+        "2GB",
+        "--max-temp-directory-size",
+        "4GB",
+        "--max-intermediate-bytes",
+        "4294967296",
+        "--duration-seconds",
+        "60",
+        "--read-duration-seconds",
+        "0",
+        "--max-writes",
+        "12000",
+        "--clone-database",
+        "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+        "--clone-evidence",
+        "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "--output",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/b0.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:34:20.251504+00:00",
+      "pid": 80325,
+      "endedAtUtc": "2026-11-06T05:38:44.057180+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "b0-artifact-after",
+      "command": [
+        "node",
+        "adapter/antijoin-static-four-binding.mjs",
+        "--artifact-role",
+        "STATIC4_B0_MAPPED_CONTROL",
+        "--readers",
+        "16",
+        "--budget",
+        "evidence/antijoin-cost-10m-budget-20261105.json",
+        "--native-binding",
+        "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+        "--evidence",
+        "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "--output",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/b0-artifact-after.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:38:44.061270+00:00",
+      "pid": 90107,
+      "endedAtUtc": "2026-11-06T05:38:47.755533+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "maps-between",
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "-B",
+        "freeze_static_four_runtime.py",
+        "inspect",
+        "--receipt",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/maps-between.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:38:47.756980+00:00",
+      "pid": 90709,
+      "endedAtUtc": "2026-11-06T05:38:50.146837+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "static4-artifact-before",
+      "command": [
+        "node",
+        "adapter/antijoin-static-four-binding.mjs",
+        "--artifact-role",
+        "STATIC4_SDK_CANDIDATE",
+        "--readers",
+        "16",
+        "--budget",
+        "evidence/antijoin-cost-10m-budget-20261105.json",
+        "--native-binding",
+        "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+        "--evidence",
+        "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "--output",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/static4-artifact-before.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:38:52.701992+00:00",
+      "pid": 91040,
+      "endedAtUtc": "2026-11-06T05:38:56.522708+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "static4-broad-first",
+      "command": [
+        "node",
+        "adapter/benchmark-scale.mjs",
+        "--runtime",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-frozen-032-20261105/static4/runtime",
+        "--sizes",
+        "10000000",
+        "--readers",
+        "1,4,16",
+        "--samples",
+        "5",
+        "--warmup",
+        "1",
+        "--writes",
+        "8",
+        "--group-size",
+        "256",
+        "--fixture-mode",
+        "mixed",
+        "--threads",
+        "4",
+        "--memory-limit",
+        "2GB",
+        "--max-temp-directory-size",
+        "4GB",
+        "--max-intermediate-bytes",
+        "4294967296",
+        "--duration-seconds",
+        "60",
+        "--read-duration-seconds",
+        "0",
+        "--max-writes",
+        "12000",
+        "--clone-database",
+        "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+        "--clone-evidence",
+        "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "--output",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/static4.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:38:56.523975+00:00",
+      "pid": 91614,
+      "endedAtUtc": "2026-11-06T05:43:22.166376+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "static4-artifact-after",
+      "command": [
+        "node",
+        "adapter/antijoin-static-four-binding.mjs",
+        "--artifact-role",
+        "STATIC4_SDK_CANDIDATE",
+        "--readers",
+        "16",
+        "--budget",
+        "evidence/antijoin-cost-10m-budget-20261105.json",
+        "--native-binding",
+        "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+        "--evidence",
+        "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+        "--output",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/static4-artifact-after.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:43:22.170285+00:00",
+      "pid": 1143,
+      "endedAtUtc": "2026-11-06T05:43:26.317786+00:00",
+      "exitCode": 0
+    },
+    {
+      "phase": "maps-after",
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "-B",
+        "freeze_static_four_runtime.py",
+        "inspect",
+        "--receipt",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-limit-four-20261105/runtime/build/static-four-broad-20261106/forward-01/maps-after.json"
+      ],
+      "startedAtUtc": "2026-11-06T05:43:26.319233+00:00",
+      "pid": 1600,
+      "endedAtUtc": "2026-11-06T05:43:28.922378+00:00",
+      "exitCode": 0
+    }
+  ],
+  "sourceChecks": [
+    {
+      "label": "before",
+      "recordedAtUtc": "2026-11-06T05:34:10.112580+00:00",
+      "database": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "identity": {
+        "bytes": 3905433600,
+        "mtimeNs": 1793911060600328880,
+        "ctimeNs": 1793911060600328880
+      },
+      "databaseSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "recipe": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+      "sourceWalAbsent": true
+    },
+    {
+      "label": "between",
+      "recordedAtUtc": "2026-11-06T05:38:50.151726+00:00",
+      "database": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "identity": {
+        "bytes": 3905433600,
+        "mtimeNs": 1793911060600328880,
+        "ctimeNs": 1793911060600328880
+      },
+      "databaseSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "recipe": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+      "sourceWalAbsent": true
+    },
+    {
+      "label": "after",
+      "recordedAtUtc": "2026-11-06T05:43:28.936902+00:00",
+      "database": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+      "identity": {
+        "bytes": 3905433600,
+        "mtimeNs": 1793911060600328880,
+        "ctimeNs": 1793911060600328880
+      },
+      "databaseSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+      "recipe": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/combined-028-20261105/mixed-10m-pilot.json",
+      "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+      "sourceWalAbsent": true
+    }
+  ],
+  "arms": [
+    {
+      "role": "b0",
+      "status": "functional_passed",
+      "cells": 10,
+      "numericGates": "Not inferred from driver exit; original27 require separate raw recomputation"
+    },
+    {
+      "role": "static4",
+      "status": "functional_passed",
+      "cells": 10,
+      "numericGates": "Not inferred from driver exit; original27 require separate raw recomputation"
+    }
+  ],
+  "sourceAndHarnessBefore": {
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/antijoin-profile-binding.mjs": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4",
+    "adapter/antijoin-sdk-binding.mjs": "74839060c5382ca78cd89629ebf3882db26adbc1febbebdb19aa2961f18b855a",
+    "adapter/benchmark-antijoin-cost.mjs": "1f76395dfe3e4bf91464aee84e80927600e36a11ab5a29c2ebbcc5a62baeded5",
+    "adapter/antijoin-static-four-binding.mjs": "eb5f6e078560c86f3501020d39afdbcd9925663a1a00c0f76b254b89757c524b",
+    "freeze_static_four_runtime.py": "4a524076d42e47bf9c6671650f1446c0e524120cea060c0e283d10c61b298a58",
+    "STATIC-FOUR-PERFORMANCE-PROTOCOL.md": "3afa0ecf118cfb7f603982766a69dbde5957bcc5ddb087776a4a8ec3c693458b",
+    "stage_broad_sdk_runtime.py": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb",
+    "adapter/native-entity.ts": "6101c9eb6059e051520b29fab50cf400bf12d18d24f0fc4714cfd8804b443969",
+    "adapter/native-schema.ts": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+    "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b"
+  },
+  "sourceAndHarnessAfter": {
+    "adapter/antijoin-config-binding.mjs": "bfdb418d830dba12fcc459ddc7945cb2f63432a89b4e94bc4c90e39f61a4adb5",
+    "adapter/antijoin-profile-binding.mjs": "37956b0d8d797e09a4aec74653282873b3f8c73a786372eb09045fa2f2e428a4",
+    "adapter/antijoin-sdk-binding.mjs": "74839060c5382ca78cd89629ebf3882db26adbc1febbebdb19aa2961f18b855a",
+    "adapter/benchmark-antijoin-cost.mjs": "1f76395dfe3e4bf91464aee84e80927600e36a11ab5a29c2ebbcc5a62baeded5",
+    "adapter/antijoin-static-four-binding.mjs": "eb5f6e078560c86f3501020d39afdbcd9925663a1a00c0f76b254b89757c524b",
+    "freeze_static_four_runtime.py": "4a524076d42e47bf9c6671650f1446c0e524120cea060c0e283d10c61b298a58",
+    "STATIC-FOUR-PERFORMANCE-PROTOCOL.md": "3afa0ecf118cfb7f603982766a69dbde5957bcc5ddb087776a4a8ec3c693458b",
+    "stage_broad_sdk_runtime.py": "593849a7a5b1a5bcb83f205ba6a79d0da567127b3ec601a7e2cb13bc298458cb",
+    "adapter/native-entity.ts": "6101c9eb6059e051520b29fab50cf400bf12d18d24f0fc4714cfd8804b443969",
+    "adapter/native-schema.ts": "465f286b410647ffb48db4ac66a81d90138fdf3929fbd9d842bafe94ce0884e0",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "tsconfig.json": "8b7bac4639daa61e782ca70e0a8c9590ab99a012cf14e3d68cf6eda5f3fda9ca",
+    "package.json": "af4f38df04b6e86360db5b80d2bf4682250b0de905cff029dbde9cc2242d969b"
+  },
+  "endedAtUtc": "2026-11-06T05:43:32.426019+00:00"
+}

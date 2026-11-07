@@ -1,0 +1,87 @@
+{
+  "format": "triplex-string-order-policy-decision/1",
+  "status": "SOURCE_ONLY_CONTRACT_REQUIRES_INDEPENDENT_REVIEW",
+  "commonAsciiPolicy": "Root-approved explicit extension policy A<E<c<z; not a new global Unicode contract",
+  "nativeSparqlPolicy": "Normative Unicode codepoints for STR ordering/comparison",
+  "datalogUnicodePolicy": "UNRESOLVED; record UTF16/codepoint/UTF8 alternatives without qualification failure",
+  "orderedDatalogWhereTextRange": "NOT_A_SUPPORTED_FEATURE; use wrapper filters for text range",
+  "sourceAuthority": [
+    {
+      "path": "docs/datalog.md",
+      "sha256": "2527912280204291840bb9b29e90938a2d027d4e82bf795f7284b07653593fe8",
+      "meaning": "numeric-only WHERE predicates; stable family/cursor public contract"
+    },
+    {
+      "path": "packages/core/src/kv/datalog/executor.ts",
+      "sha256": "87770b124f41b99c89bf615925c290f8b176c7c1a5fdeb90dc3f3da91b5a7f1e",
+      "meaning": "JS string comparison in order/cursor and wrapper filters; implementation evidence, not chosen global Unicode policy"
+    },
+    {
+      "path": "packages/core/src/kv/datalog/predicate.ts",
+      "sha256": "fee33c520c074ac693a2b0078de949c291b30229d9ae20709a64813adf0f31ea",
+      "meaning": "ordered WHERE predicates require numeric operands"
+    },
+    {
+      "path": "packages/core/src/datalog/compiler.ts",
+      "sha256": "68df9285ac5e23ee5c46c3974f870d13be87387925fafbdd1bf89ef52620c0d5",
+      "meaning": "SQL text ordering delegates to orderText columns"
+    },
+    {
+      "path": "packages/core/src/datalog/wrapper.ts",
+      "sha256": "9a24a60bb57dd1d89a4c89601c56dc8153fb9f93f587b8780f236eb97f992b87",
+      "meaning": "supported wrapper text filters and keyset comparison"
+    },
+    {
+      "path": "packages/core/src/store/Triples.ts",
+      "sha256": "f8c0d35c1308c96796843ef15da8047ae9acfb0d08064f4f5cb60fe7d8e8b62a",
+      "meaning": "queryAll DatalogQuery versus queryPage WrappedQuery public APIs"
+    },
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "sha256": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+      "meaning": "basis P capture and public cursor preparation"
+    },
+    {
+      "path": "packages/qlever/src/rdf.ts",
+      "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b",
+      "meaning": "raw string scalar_order persistence"
+    },
+    {
+      "path": "packages/qlever/src/PersistedScalarSource.ts",
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919",
+      "meaning": "persisted scalar_order exposure"
+    },
+    {
+      "path": "packages/qlever/src/native/NativeContext.ts",
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8",
+      "meaning": "schema-aware typed lexical fact fragments"
+    },
+    {
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "sha256": "6789260d8618ef31238d31ce9e4aeab96508d9b37bdd34ace0335535fbe956ee",
+      "meaning": "actual public schema/transact/receipt/history/provider reopen patterns"
+    }
+  ],
+  "primaryAuthority": [
+    {
+      "url": "https://www.w3.org/TR/sparql11-query/#func-str",
+      "meaning": "STR(IRI) yields simple literal codepoint representation"
+    },
+    {
+      "url": "https://www.w3.org/TR/sparql11-query/#modOrderBy",
+      "meaning": "ascending ORDER BY uses less-than comparator"
+    },
+    {
+      "url": "https://www.w3.org/TR/sparql11-query/#OperatorMapping",
+      "meaning": "simple-string comparison selects codepoint collation"
+    },
+    {
+      "url": "https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islessthan",
+      "meaning": "JavaScript string relational operator compares UTF16 code units; this explains KV implementation behavior without selecting global Triplex policy"
+    }
+  ],
+  "oracleSha256": "8f4da85e806e2503c62b373bfeaa44c8d91be55a029dc01c08eb2a3d53a6b19d",
+  "contractSha256": "3a10aa8f1a0bfff9c39f967417afcb2a362a62976ca28867492721cde7e433f8",
+  "nativeMutationsOrQueries": 0,
+  "existingPacketsOrDefaultsChanged": false
+}

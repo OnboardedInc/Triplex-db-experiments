@@ -1,0 +1,206 @@
+{
+  "schema": "td.mixed_scale_independent_review/1",
+  "source_checkpoint": "75f3aa959f8b6b67b6fa451b4b376c365f4c9694",
+  "verdict": "absolute_mixed_gate_passed",
+  "receipts": {
+    "run": "single-strategy-10m-024-20261105.json",
+    "run_sha256": "914a64c015b2222a61063c255dfac46ba9c49d8ae7df1e3c220494511ff1e5bc",
+    "provenance": "single-strategy-10m-024-provenance-20261105.json",
+    "provenance_sha256": "14c40aeb6be450fde664728024cc1a00d95b81bf376842c72d9c9cb0286c6efa",
+    "verification": "verification.json",
+    "verification_sha256": "53372380403e0f143860f62270d695ef5bee2821b5fbc259c422035b7c9eab9b",
+    "verification_scopes": 298,
+    "typescript_semantic_check": "PASS"
+  },
+  "fixture": {
+    "source": "build/retained-fixtures/scale-10m-native.duckdb",
+    "source_sha256_recomputed": "2797eb25983f8d2159a3562fe10f8c4476a2810557baeaa9909229c9a69e1af6",
+    "source_bytes": 3299356672,
+    "source_wal_present": false,
+    "source_receipt": "scale-10m-public-count-20261105-01.json",
+    "source_receipt_sha256": "241b18cd22788f8f84400e1feb91f4ca4d4bfb6f35a1984ca8251e18e2bcc740",
+    "clone_route": "closed_file_required_darwin_clonefile",
+    "base_retained_facts": 10000000,
+    "base_knowledge_position": 2442,
+    "group_size": 4096
+  },
+  "provenance": {
+    "extension_version": "0.24.0",
+    "duckdb_version": "2.0.0",
+    "sdk_engine_resolution": "@duckdb/node-api -> @duckdb/node-bindings -> @duckdb/node-bindings-darwin-arm64/duckdb.node -> libduckdb.dylib",
+    "before_after_and_recomputed_hashes_match": true,
+    "artifact_and_source_sha256_recomputed": {
+      "build/artifact.json": "bb94d418f315121c5105572aed7e9bdca4f4791f30685ae8e975338505171a19",
+      "build/temporal_datalog.duckdb_extension": "6086cafdcb344cbfcfeb8b24b15957e34a0c65c04b0eed39819e915422371aaf",
+      "build/temporal_control.node": "32eae773f88838d668133a24a49d099a70397024a5615abd75c0d699c26dce8a",
+      "build/owner_probe/artifact.json": "af8abbd6ef08a90012b27f813087c617238bebb43fb5cf72a8e6c48c95abb1c3",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "9aea136f073be9063f95fb1808b1c6f7d99c863d6fdce4e21f6a59df12ec877a",
+      "build/adapter/native-entity.js": "c02923c68c14692863e6ed4546fe1e9c78162e0c5d38961773080d74023a2e6e",
+      "build/adapter/native-schema.js": "b0e333e2b83b518f11d0eec8753480e1a5b530dabf53c8c51fd79acf1593b5f1",
+      "build/adapter/native-duckdb-port.mjs": "ff99937e028b97d6cb2d113d90a1b57f0bb78b16abb2456caa7e9a34191cca2f",
+      "adapter/benchmark-scale.mjs": "3f78182733e1a7d87b9421817ffb7c335ce15e59860c81b799dc6aa103e994be",
+      "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+      "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+      "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad",
+      "evidence/scale-10m-public-count-20261105-01.json": "241b18cd22788f8f84400e1feb91f4ca4d4bfb6f35a1984ca8251e18e2bcc740",
+      "evidence/verification.json": "53372380403e0f143860f62270d695ef5bee2821b5fbc259c422035b7c9eab9b",
+      "actual_sdk_engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    },
+    "verification_source_hashes_matched": 157,
+    "compiled_flags": {
+      "current_unique_fast_path": true,
+      "injective_projection_fast_path": true,
+      "identity_count_fast_path": false,
+      "all_cut_unique_fast_path": true,
+      "streaming_source_fast_path": true
+    }
+  },
+  "recomputed": {
+    "passed_cells": 10,
+    "short_cells": [
+      [
+        1,
+        "count",
+        1
+      ],
+      [
+        1,
+        "sum",
+        1
+      ],
+      [
+        1,
+        "grouped_sum",
+        1
+      ],
+      [
+        4,
+        "count",
+        4
+      ],
+      [
+        4,
+        "sum",
+        4
+      ],
+      [
+        4,
+        "grouped_sum",
+        4
+      ],
+      [
+        16,
+        "count",
+        16
+      ],
+      [
+        16,
+        "sum",
+        16
+      ],
+      [
+        16,
+        "grouped_sum",
+        16
+      ]
+    ],
+    "short_measured_reads": 63,
+    "mixed_measured_reads": 1671,
+    "read_counts_by_cut_and_kind": {
+      "fixed": {
+        "count": 114,
+        "sum": 112,
+        "grouped_sum": 113
+      },
+      "latest": {
+        "sum": 445,
+        "grouped_sum": 444,
+        "count": 443
+      }
+    },
+    "measured_reads_per_reader": [
+      106,
+      105,
+      104,
+      105,
+      104,
+      106,
+      106,
+      104,
+      105,
+      103,
+      103,
+      105,
+      104,
+      104,
+      103,
+      104
+    ],
+    "highest_measured_knowledge_position": 2675,
+    "acknowledged_native_writes": 233,
+    "final_knowledge_position": 2675,
+    "acknowledgements_per_full_10_second_window": [
+      13,
+      13,
+      12,
+      13,
+      13,
+      12,
+      14,
+      13,
+      13,
+      13,
+      12,
+      12,
+      14,
+      14,
+      14,
+      11,
+      13,
+      13
+    ],
+    "acknowledgements_during_drain": 1,
+    "latency_ms": {
+      "count": 1671,
+      "min": 757.9774170000164,
+      "p50": 1580.284375000003,
+      "p95": 2778.2867499999993,
+      "p99": 3135.9312079999945,
+      "max": 3504.718875000006
+    },
+    "submission_window_ms": 180000,
+    "measured_wall_ms": 181136.035792,
+    "drain_ms": 1136.0357920000097,
+    "throughput_queries_per_second": 9.22511079970207,
+    "mixed_measured_sampled_rss_bytes": 2504556544,
+    "highest_rss_across_cells_and_snapshots_bytes": 2952282112,
+    "max_observed_reader_leases": 16,
+    "pool_fully_drained": true,
+    "overlapping_public_read_write_interval_pairs": 5352,
+    "distinct_measured_reads_overlapping_a_write": 1671,
+    "query_write_or_cleanup_errors": 0,
+    "write_acknowledgement_errors": 0,
+    "write_bound_reached": false,
+    "final_answers_verified": true,
+    "reopened_answers_verified": true,
+    "tail_evidence": "smoke_only"
+  },
+  "review_checks": [
+    "All nine short cells and the sustained cell have the expected typed row counts, owned SQL routes, cuts and reader leases.",
+    "Every mixed round and writer position is contiguous. Latest cuts fall between acknowledgements before the call and writes issued before completion.",
+    "The pinned harness compares complete typed answers before saving each row count and repeats the exact oracle at both cuts after reopening.",
+    "The mixed cell clears the fixed 180-second, 1000-read, 5 QPS, 5000 ms p50, 15000 ms p99, 3.5 GB sampled RSS, sixteen-reader and eighteen write-window gates."
+  ],
+  "limitations": [
+    "Saved samples contain row counts and metadata. Complete typed values were checked during the pinned run.",
+    "The smoke-only tail estimate describes this run. Its sample size cannot establish a production latency SLO.",
+    "Sampled RSS and DuckDB snapshots do not capture owner activation peaks, transient spill or hard allocation containment.",
+    "Public call overlap includes queue waits and does not establish concurrent native execution phases.",
+    "Matching file hashes do not authenticate live loaded mappings."
+  ],
+  "review_execution": {
+    "engine_invocations": 0,
+    "builds": 0,
+    "test_suites": 0
+  }
+}

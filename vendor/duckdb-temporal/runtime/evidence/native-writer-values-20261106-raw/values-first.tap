@@ -1,0 +1,31 @@
+TAP version 13
+# Subtest: native writer eight-tag schema evolution patch batch and replay preserve exact public cuts and history
+ok 1 - native writer eight-tag schema evolution patch batch and replay preserve exact public cuts and history
+  ---
+  duration_ms: 3761.402333
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/build/native-writer-values-0kzRaG/facts.duckdb
+# Subtest: native writer invalid eight-tag values and failed batch leave receipts history and knowledge unchanged
+ok 2 - native writer invalid eight-tag values and failed batch leave receipts history and knowledge unchanged
+  ---
+  duration_ms: 1987.527875
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/build/native-writer-values-DkIKaX/facts.duckdb
+# Subtest: native writer public uniqueness rollback and one-K interval swap preserve valid-time boundaries
+ok 3 - native writer public uniqueness rollback and one-K interval swap preserve valid-time boundaries
+  ---
+  duration_ms: 2140.901375
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-validation-20261106/runtime/build/native-writer-values-238465/facts.duckdb
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8954.660083

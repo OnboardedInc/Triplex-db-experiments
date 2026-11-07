@@ -1,0 +1,38 @@
+--- packages/qlever/.artifacts/wrapper-repair-sdk-v1/qlever-wrapper-sdk-build-v3-0001/src/index.ts
++++ packages/qlever/.artifacts/owned-client-seam-source-v1/BOTH/src/index.ts
+@@ -12,6 +12,8 @@
+ import { makeQleverQueryExecutor, type QleverQueryOptions } from "./QleverQueryExecutor.js";
+ 
+ export interface QleverRuntimeOptions {
++  /** Optional borrowed client; its caller owns close() after all users settle. */
++  readonly client?: QleverClient;
+   readonly url: string;
+   readonly accessToken?: string;
+   readonly maxRetries?: number;
+@@ -26,16 +28,21 @@
+ export const makeQleverRuntime = (
+   options: QleverRuntimeOptions,
+ ): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> => {
++  const suppliedClient = options.client;
+   const connection = Layer.effect(
+     Connection,
+     Effect.acquireRelease(
+       Effect.sync(() =>
+-        makeQleverClient(
+-          options.url,
+-          options.accessToken ? { accessToken: options.accessToken } : {},
+-        ),
++        suppliedClient === undefined
++          ? makeQleverClient(
++              options.url,
++              options.accessToken ? { accessToken: options.accessToken } : {},
++            )
++          : suppliedClient,
+       ),
+-      (client) => Effect.promise(() => client.close()).pipe(Effect.ignore),
++      (client) => suppliedClient === undefined
++        ? Effect.promise(() => client.close()).pipe(Effect.ignore)
++        : Effect.void,
+     ),
+   );
+   const backend = Layer.effect(

@@ -1,0 +1,80 @@
+{
+  "schema": "goal4.contract.source-inventory/1",
+  "utc": "2026-10-31T17:40:57.362750+00:00",
+  "published_head": "52b1e81f1d71590bdefb376e62924c9f717d4344",
+  "supplied_source_manifest_sha256": "5e30c8b2dfaaac103c647a42440fb7d6c39d83846cc107913452b4e62db2c384",
+  "duckdb_pin": "2.0.0/d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "prior_new_item4_execution_manifest_sha256": "14dce4c69f27b53bbad62a4e72af052786beda576eb65f322d47a6f0da486b29",
+  "files": [
+    {
+      "path": "engine/src/temporal_core.hpp",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_core.hpp",
+      "bytes": 1053,
+      "sha256": "870f946e1128fc109c1e3242cc0695fc01a5894eba67864dd14bd374b24c6658",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_typed_core.hpp",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_typed_core.hpp",
+      "bytes": 1698,
+      "sha256": "aada0f109eb42e4fd091baedf5cf1f00f8045b5d8b0a92b3bd458ff742b61d3d",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_core.cpp",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_core.cpp",
+      "bytes": 41463,
+      "sha256": "c583da8f2d885b28396e74771697601b6ba1a33828690ebdd62a95b33653be84",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_plan_ir.hpp",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_plan_ir.hpp",
+      "bytes": 1895,
+      "sha256": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_value_domain.hpp",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_value_domain.hpp",
+      "bytes": 8863,
+      "sha256": "e41516e1c8b761b25935049fbb19e75ebca0789c2b95b6d4cfbd65cea6409a63",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_expression.hpp",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_expression.hpp",
+      "bytes": 7310,
+      "sha256": "5bbb4ebeff3a4211a80806fe34264686b8f533f82b3601865f71d050e78b56ab",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_float.hpp",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_float.hpp",
+      "bytes": 2561,
+      "sha256": "edb0876be464fda9744129f47b88bdaafdf564faf4417d274e57ddf355189c62",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "engine/src/temporal_datalog.cpp",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/engine/src/temporal_datalog.cpp",
+      "bytes": 23210,
+      "sha256": "651af8794e68eecebb73ac0762db27f56c47aea9b438feef80284b1e378f2629",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "storage/planner_v1.py",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/storage/planner_v1.py",
+      "bytes": 36205,
+      "sha256": "d95145f39b214b61f7acfc9ad0fd682a42e72362321302183ea76ac20b5548f4",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    },
+    {
+      "path": "storage/typed_store.py",
+      "source52_path": ".agent-logs/goal3-coordinator/integration/candidate-002/storage/typed_store.py",
+      "bytes": 37740,
+      "sha256": "7edd1b26428b60268c2d677e1cea8efe2635b1f850b3b02fd641e2e3f7b59a87",
+      "inspection": "narrow source line inspection or exact previously inspected reference; no import/execution"
+    }
+  ]
+}

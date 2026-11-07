@@ -1,0 +1,26 @@
+{
+  "role": "baseline",
+  "pid": 72739,
+  "argv": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/baseline/growth.mjs"
+  ],
+  "startedAtUtc": "2026-11-06T11:35:19.911Z"
+}
+
+{
+  "role": "candidate",
+  "pid": 73503,
+  "argv": [
+    "[LOCAL_PATH_0043]",
+    "--test",
+    "--test-concurrency=1",
+    "--test-reporter=tap",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/qualification-reference-identity-growth-pair-20261106-01/pair/candidate/growth.mjs"
+  ],
+  "startedAtUtc": "2026-11-06T11:35:45.470Z"
+}
+

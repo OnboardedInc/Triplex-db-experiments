@@ -1,0 +1,221 @@
+{
+  "schema": "td.native-evaluator-allocation-stage1/1",
+  "result": "PASS",
+  "timestamp_utc": "2026-11-05T23:05:00.938765+00:00",
+  "platform": "macOS arm64",
+  "tested_native_source": "58e4089e28ee7497594ad1094b794f5a0238b7c7",
+  "tested_standalone_source": "b9bd56916c5e84a92d2126ca9c9285b380397941",
+  "published_base": "ce7c53b9",
+  "runtime": {
+    "extension_version": "0.32.0",
+    "experimental_evaluator_allocation": true,
+    "core_source_manifest_matches_worktree": true,
+    "companion_integrity_sources_match_worktree": true,
+    "artifacts_sha256": {
+      "build/artifact.json": "b2ede5ff765bf91d23ad89ddeaf31a39336773fd54ddf2733cab02c595052b77",
+      "build/temporal_datalog.duckdb_extension": "a4cbd147f0960a6c80395532175b07e39b98fd8be832c0abf58a8dce43a7df11",
+      "build/temporal_control.node": "537e6410cdde98a4a95409bc96fc642bddbcb44c59daa361602a649fb67a2a1f",
+      "build/owner_probe/artifact.json": "210fa8eb440712d76d1c53b3a6409552cd4cdee7fe12bae407145148e6a37fd8",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "7d6a0283500884ff7b86c3eb74f281eb66ad8d95a1d3d69184f545d2c0994f12"
+    },
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "standalone_binary_sha256": "d5ff20a1b895201963a6d208da59bef8a2cdbb6f0f6032db777d0f6e168be93c"
+  },
+  "first_outcomes": [
+    {
+      "step": "standalone-build-01",
+      "exit": 1,
+      "cause": "Standalone command omitted the qualified core warning option -Wno-missing-field-initializers; an existing .32 PlanRule reference_join initializer was diagnosed by -Werror. No native source repair."
+    },
+    {
+      "step": "standalone-build-02",
+      "exit": 0
+    },
+    {
+      "step": "standalone-01",
+      "exit": 1,
+      "cause": "Low-cap poisoning fixture constructed an 8192-byte evaluator outside its expected-failure scope. The correctly tracked 128-relation reservation exceeds 8192 before add_triple."
+    },
+    {
+      "step": "standalone-build-03",
+      "exit": 0,
+      "change": "Phase/peak diagnostics only."
+    },
+    {
+      "step": "standalone-02",
+      "exit": 1,
+      "cause": "Diagnostics localized the same fixture constructor failure; growth and grouped exact-peak checks had passed."
+    },
+    {
+      "step": "core-build-01",
+      "exit": 0
+    },
+    {
+      "step": "node-diagnostic-01",
+      "exit": 0,
+      "passed": 3,
+      "failed": 0,
+      "duration_ms": 612.643166
+    },
+    {
+      "step": "owner-build-01",
+      "exit": 0
+    },
+    {
+      "step": "standalone-build-04",
+      "exit": 0,
+      "change": "Retain 8192-byte constructor rejection and separately measure a sufficient empty-evaluator cap for postconstruction failure poisoning; no allocator or limit relaxation."
+    },
+    {
+      "step": "standalone-03",
+      "exit": 0
+    },
+    {
+      "step": "typescript-01",
+      "exit": 0
+    },
+    {
+      "step": "paired-public-smoke-01",
+      "exit": 0
+    }
+  ],
+  "standalone": {
+    "assertions_enabled": true,
+    "retained_peak_bytes": 452904,
+    "retained_index_peak_bytes": 51848,
+    "empty_evaluator_peak_bytes": 31256,
+    "qualified": [
+      "temporary allocation-growth overlap rejects before allocation",
+      "nested relation/index/dictionary/group allocations participate",
+      "exact retained peak succeeds and peak-minus-one fails",
+      "eight-tag recursive grouped answers own valid bytes after engine destruction",
+      "tracked and untracked rows/counters are identical",
+      "8192-byte constructor rejection",
+      "postconstruction budget failure poisons add_triple and run"
+    ]
+  },
+  "node_diagnostic": {
+    "methods": 3,
+    "result": "PASS",
+    "typed_groups": 8,
+    "rounds": 2,
+    "derived_facts": 24,
+    "work": 44,
+    "positive_cap_bytes": 1073741824,
+    "rejected_cap_bytes": 8192,
+    "rejected_invalid_caps": [
+      "NULL",
+      0,
+      -1,
+      1073741825
+    ],
+    "stable_error": "TD_E_QUERY_MEMORY_LIMIT",
+    "same_connection_reuse": true,
+    "asserted_canonical_answer_sha256": "be1915b523c4c3092498a46a8902fe4f49ef025109f7d43dd6cc8b50ef15262f",
+    "answer_hash_method": "SHA256 of UTF8 JSON with sorted keys/no insignificant whitespace; exact asserted rows and decimal-string bigint counters/cells. Derived from the independently specified expected answer after the actual Node assertions passed, not a captured engine serialization."
+  },
+  "paired_smoke": {
+    "owner_loaded_and_activated": true,
+    "native_command_position": 1,
+    "normal_public_forced_native_exact_answer": 7,
+    "query_wire_changed": false
+  },
+  "covered_requested_bytes": [
+    "relation vector/rows/tuple sets",
+    "column-index maps, buckets and nested posting capacities",
+    "typed dictionary entries, text/numeric maps, buckets and owned string buffers",
+    "pending relation sets",
+    "aggregate groups/group maps/canonical-order vector",
+    "temporary overlap during covered container growth"
+  ],
+  "exclusions": [
+    "allocator metadata, malloc rounding and process RSS",
+    "parser/program/IR/names and bounded scheduling/binding/callback scratch",
+    "imported temporary values",
+    "owning returned row vectors and copied text; retained peak sampled before these copies",
+    "DuckDB result vectors, buffer manager/spill, transport and SDK/host allocations"
+  ],
+  "commands": {
+    "core": "python build_native.py",
+    "owner": "python build_owner_probe.py --source-dir <pinned-d54cbbe3-source> --engine-library <pinned-node-engine/libduckdb.dylib> --compat-mutations",
+    "standalone_compile": "c++ -std=c++17 -O2 -fno-fast-math -frounding-math -ffp-contract=off -Wall -Wextra -Wpedantic -Werror -Wno-missing-field-initializers native/test_evaluator_allocation.cpp native/src/temporal_core.cpp -o build/evaluator-budget-032-20261105/test_evaluator_allocation",
+    "standalone": "build/evaluator-budget-032-20261105/test_evaluator_allocation",
+    "typescript": "node_modules/.bin/tsc --pretty false",
+    "node": "node --test --test-reporter=tap adapter/test-evaluator-allocation.mjs"
+  },
+  "source_sha256": {
+    "build_native.py": "f131792469c4bddecda54e5f16d78e101450ad69f084bee9c7cd1185593ade2e",
+    "native/src/temporal_allocation.hpp": "0d5889f1152f6fb4257ee2422bf75f6e3598dbfc332a8485a8d74bb79fecad54",
+    "native/src/temporal_core.cpp": "8e12eb12646e1f9a15a035319a7466155a965b91bd4f94021dde1c589eca4120",
+    "native/src/temporal_core.hpp": "2b5ed4db9d1d60e6110d17cc0f80dd959b6f573a58355e1c5568ed508fb8c8fa",
+    "native/src/temporal_typed_core.hpp": "4806210aa3e93ed09c32a13ca5853a23d6b9d7568ecddaf5bc0e9e847783744f",
+    "native/src/temporal_value_domain.hpp": "8d7da9d6125d909c90436c3e02da6be51dce9e41b0d7ad237430d00cdcbc73eb",
+    "native/src/temporal_datalog.cpp": "1ec757093cdc36ea96589cec12d5617ad01bcc17f5a76dc6c98e9934dad9b7ba",
+    "native/test_evaluator_allocation.cpp": "83519c53668625d5e5e774b0c3a880aa18b33b7968912d72fda09427253811d2",
+    "adapter/test-evaluator-allocation.mjs": "a797a3d255ca79a6cf87d8111bfb8376e3c94eef5833c6f672cda94a4fafe0ab",
+    "test_evaluator_allocation.py": "69b4cff0d9175acb67433ea26b72d12965c87e1fa7f7454cf24812007704ab80",
+    "NATIVE-EVALUATOR-BUDGET.md": "9f0288b1ea421195784eba4832eba8e68318d4d1a939fac97ed222b97d61e38d"
+  },
+  "raw_project_logs": {
+    "source-ref.txt": {
+      "path": "build/evaluator-budget-032-20261105/source-ref.txt",
+      "sha256": "fcc0ac75a0a16a8e17b39649e7ec75930246e123b4e2b27598e511d049dca3ae"
+    },
+    "standalone-build-01.log": {
+      "path": "build/evaluator-budget-032-20261105/standalone-build-01.log",
+      "sha256": "133f656f5dc98f220209c167db9b341e6b1efb7d3adfc351e8fe7f93ed2cb5cf"
+    },
+    "standalone-build-02.log": {
+      "path": "build/evaluator-budget-032-20261105/standalone-build-02.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "standalone-01.log": {
+      "path": "build/evaluator-budget-032-20261105/standalone-01.log",
+      "sha256": "9fc095fc78976bbf833538aac21cd57036e8237db63cb4419337db8d88d98c7c"
+    },
+    "standalone-build-03.log": {
+      "path": "build/evaluator-budget-032-20261105/standalone-build-03.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "standalone-02.log": {
+      "path": "build/evaluator-budget-032-20261105/standalone-02.log",
+      "sha256": "f2e295d31f963e7957bc19cbb38f0b64f3236a699632e2881b8812f13ba21954"
+    },
+    "standalone-build-04.log": {
+      "path": "build/evaluator-budget-032-20261105/standalone-build-04.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "standalone-03.log": {
+      "path": "build/evaluator-budget-032-20261105/standalone-03.log",
+      "sha256": "383e3133a8d619722987b785cd9f8119a7d5235caea66ce03639f6566abeddc9"
+    },
+    "core-build-01.log": {
+      "path": "build/evaluator-budget-032-20261105/core-build-01.log",
+      "sha256": "7e60cc2c305f41d35422f040087e3f054268d7496b27bfd3906fcd3556c0ce1b"
+    },
+    "owner-build-01.log": {
+      "path": "build/evaluator-budget-032-20261105/owner-build-01.log",
+      "sha256": "8345c3c82f6be6e50db7ee67644e5e86402900ed65e77091fb17d5fd17f21938"
+    },
+    "typescript-01.log": {
+      "path": "build/evaluator-budget-032-20261105/typescript-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "node-diagnostic-01.log": {
+      "path": "build/evaluator-budget-032-20261105/node-diagnostic-01.log",
+      "sha256": "766ba43e9b8feb1c457503d620e64d7563c3a2e62ccfd0ef0c1eff1dbdd751ab"
+    },
+    "paired-public-smoke-01.log": {
+      "path": "build/evaluator-budget-032-20261105/paired-public-smoke-01.log",
+      "sha256": "bfa1ef7ccf595e985332734392cd54d3accf1512dc3de389eb3391fe9a06595d"
+    }
+  },
+  "next_gate": "Source review of ordinary invocation-token finite enforcement and a borrowed-answer lifetime covering C++ output overlap; no public selector/API or normal-budget behavior implemented in stage1.",
+  "limitations": [
+    "No full verifier or timed performance run.",
+    "Existing ordinary queries retain prior budget behavior; only this isolated direct-input diagnostic selects tracked allocation.",
+    "No output-copy or whole-process physical containment claim.",
+    "The low 8192-byte Node failure occurs during construction, not specifically during index growth.",
+    "Python duplicate binding check intentionally not run."
+  ]
+}

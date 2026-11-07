@@ -1,0 +1,38 @@
+{
+  "schema": "td.selected-sdk-binding-independent-source-review/1",
+  "status": "SOURCE_REVIEW_CLEAR_RUNTIME_UNRUN_BY_REVIEWER",
+  "reviewedCommit": "6fbb377587ab599d03cf522a565bda2b9d93854c",
+  "sourceSha256AtCommit": {
+    "adapter/antijoin-sdk-binding.mjs": "45ccb8d95aa9d8e148dee01f25c156cd867035f4e3ae4df34b266f6771c23c8c",
+    "adapter/benchmark-antijoin-cost.mjs": "9f8d0d4b8456b2f6811fe24b112aa5186874927f9f28232053ce35ce502e99c0",
+    "adapter/test-antijoin-sdk-binding.mjs": "e2639b6682b4a17b8285b4af197172c2c96029002402272789f743b47d740b9d"
+  },
+  "roleSeparation": {
+    "baseline": "B0_CONTROL: fixed B native f44/55/af and old SDK75479398; query contract1, no extra heavy cap",
+    "candidate": "C2_SDK_CANDIDATE: identical B native/manifests/engine/schema/port/dependencies, only selected store JS8240cebc differs; query contract2 with automatic min(3,readers) heavy admission",
+    "originalBudget": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43 and original dd6/d45 baseline labels retained verbatim; candidate is not relabeled baseline",
+    "selectedSource": "d024e9b8e0c2eee16d4e992c7514048115e6f80b; five source/build inputs compare actual working bytes to git show and fixed hashes; only native-entity.ts changes",
+    "qualifiedTestSource": "2bb4ca2adb63c784e53b3d5c3b24664d3c5ed043 is an explicit qualification pointer; this source review does not independently rerun its TSC/tests or prove source-to-compiled reproducibility"
+  },
+  "checksReviewed": [
+    "Unchanged native helper verifies actual B native source/artifacts; selected SDK separately checks actual native/core/companion/control/engine and three resolved DuckDB package trees against the reference, plus fixed selected compiled module and445-file frozen archive inventory before/after.",
+    "Approved10m and100k database/recipe identities remain predeclared and actual run compares source fingerprints to the selected scope. Original source DB stays closed and each child receives a fresh mandatory CoW clone.",
+    "SDKpath rejects readAdmission at CLI and binding checks; sdkConfiguration selects B0-shaped harness configuration without an outer admission field. The measured queryScalable function binds directly to store.queryScalable. No duplicate FIFO owner is introduced.",
+    "Original e992 eight numeric fields are selected by unchanged1/16 reader profile. Small screens retain the artifacts/profile while explicitly declining numeric qualification and reducing only samples/warmup/duration under their declared scope.",
+    "Native anti query, seed batches, cyclic complete-record patch mutator, typed returned-K oracle, fixed/mixed loops, invocation timer scopes, receipt checks, ten-second writer windows, reuse and reopen logic are unchanged by this commit.",
+    "benchmark-scale.mjs, mixed-scale-fixture.mjs and scale-fixture.mjs have no diff between fe9ca9aa00b454f7555fe6f1392ef8ad2a3f5840 and reviewed6fbb3775. The adapter diff adds binding/provenance and physical observations rather than changing readCell/oracle loops.",
+    "Reports distinguish sixteen logical clients/configured readers/distinct physical ports from overlapping physical control scopes and leased readers. C's maximum is min(3,readers); B0 has no extra cap. Scope counters include warmup/final calls and do not claim native worker concurrency.",
+    "Six new pure policy methods challenge roles/profiles, double admission, dependency/native/source drift, immutable budget/helper/recipe fields, small-scope deltas and CLI exclusivity. This review read them without executing them."
+  ],
+  "unchangedNumericLimits": {
+    "oneReader": {"maxFixedP50Ms":1500,"maxFixedP99Ms":2500,"minMixedQPS":0.75,"maxMixedP50Ms":1500,"maxMixedP99Ms":3000,"minACKs":40,"minACKsPerSecond":0.5,"maxSampledRssBytes":3500000000},
+    "sixteenReaders": {"maxFixedP50Ms":3500,"maxFixedP99Ms":6500,"minMixedQPS":4.8,"maxMixedP50Ms":3200,"maxMixedP99Ms":6500,"minACKs":40,"minACKsPerSecond":0.5,"maxSampledRssBytes":3500000000}
+  },
+  "remainingAcceptance": [
+    "Actual helper preflight, syntax/pure checks and small1/16 correctness require parent-authorized execution and exact frozen selected runtime bytes.",
+    "One-reader full-budget gate and repeated/reverse paired sixteen-reader measurements remain necessary; no single successful outer-C2 experiment promotes the SDK.",
+    "Contract2 intentionally starts timeoutMs at original public invocation rather than after queue waits. Data ordering and returned cuts remain contract1-compatible; timeout semantics are explicitly versioned, not claimed identical.",
+    "Sampled RSS and physical control scopes do not establish aggregate native allocation containment, true native-task concurrency or tail SLOs. Full broader regressions, canonical/Triplex conformance and integrated verification remain independent gates."
+  ],
+  "executionBoundary": "Only bounded source/diff reads and small git-object source hashing. No compiler, tests, engine, fixture reads/hashes, source edits in A/C/B or artifact mutation. This note is the sole added review artifact."
+}

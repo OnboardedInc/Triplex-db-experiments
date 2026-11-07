@@ -1,0 +1,221 @@
+{
+  "utc": "2026-10-31T07:33:51.778130+00:00",
+  "scope": "NEW independent primary-only research package inspection; no stopped-material source paths/content accessed or copied by this check",
+  "packages": [
+    {
+      "package": "api-review",
+      "manifest": "EVIDENCE-MANIFEST.json",
+      "manifest_sha256": "407cdfc26359bca23341ca27df980c2da9dcd3a91a35001940bf41fa307af5fa",
+      "files": [
+        {
+          "path": "API-REVIEW.md",
+          "bytes": 11700,
+          "sha256": "d474f14f7e3c76450d640b274f893298e627ef983b043423646869ee213a5a2a",
+          "git_blob_sha1": "4557f0de2bde699ae41657145a870b4d52b91462",
+          "local_mode": "0444"
+        },
+        {
+          "path": "PINNED-SOURCE-RECEIPTS.json",
+          "bytes": 15190,
+          "sha256": "04d091b8705fce6b9bc4f5d82eecea70c3e479f0f354f61e505dab09352f2b3c",
+          "git_blob_sha1": "d9d97a8e49a1fe264b819e0cd71e351cab924772",
+          "local_mode": "0444"
+        },
+        {
+          "path": "PUBLIC-SURFACE-INVENTORY.json",
+          "bytes": 77726,
+          "sha256": "e4332b86b9f7e5af9dd24aabd6a3b5b83a617b41b25e21707056095d55a689d4",
+          "git_blob_sha1": "b9dd7a6b7b3a0315b226a80802e76d648037f293",
+          "local_mode": "0444"
+        },
+        {
+          "path": "STATIC-RECEIPT.json",
+          "bytes": 1765,
+          "sha256": "7e342b4600403c08f02571891b2fc0c0227f39b11db6df8dff90d2dc8354ffb1",
+          "git_blob_sha1": "a3a9ecdd199a13de40af149144da18ac52533991",
+          "local_mode": "0444"
+        },
+        {
+          "path": "command-exit.jsonl",
+          "bytes": 1309,
+          "sha256": "39fc9a1b148033028a699120effaa1acbcd68382c390a4a04110f3b6146f34e6",
+          "git_blob_sha1": "1ef133be83b0556214aa04259f2b97e996d55011",
+          "local_mode": "0444"
+        },
+        {
+          "path": "progress.jsonl",
+          "bytes": 2903,
+          "sha256": "c95911f9f37a8020903059a11e2bd3a1d718adeb3fea6ea6881a13133e2d49e0",
+          "git_blob_sha1": "f1664d50807a809d229dda6aa42268737648a551",
+          "local_mode": "0444"
+        },
+        {
+          "path": "source-hash-checker.js",
+          "bytes": 2854,
+          "sha256": "a5e9d39a8c2e7651e05d580dd9fe1332de211ea382b782096b0e5c6665801f45",
+          "git_blob_sha1": "ce3ad9f20182442e10b62cab444d747e3b93abdc",
+          "local_mode": "0444"
+        }
+      ],
+      "file_count": 7,
+      "bytes": 113447,
+      "all_exact": true
+    },
+    {
+      "package": "python-owner/contract-options",
+      "manifest": "MANIFEST.json",
+      "manifest_sha256": "b65ca6a7c2677e8b385f5587f9904898163309e622ea3f10390921dde1d7d0b9",
+      "files": [
+        {
+          "path": "CLOSURE-WRITER-001-FIRST-FAILURE.json",
+          "bytes": 514,
+          "sha256": "a0fad23f61ee97916b8057192b777a4b9145abb04dd401066bca27231b3d481c",
+          "git_blob_sha1": "3120d50d048885aa2ab6d9e46b719ee96d7bedbe",
+          "local_mode": "0644"
+        },
+        {
+          "path": "CONTRACT-OPTIONS.md",
+          "bytes": 25129,
+          "sha256": "afb2cbe97c91a3d98d88e48656359a7e6300ce5bcb88d19ada8412d8438e4b9a",
+          "git_blob_sha1": "769445ef0899e30b5bcd70c7b7ea7a95694f08e1",
+          "local_mode": "0644"
+        },
+        {
+          "path": "HANDOFF.json",
+          "bytes": 3441,
+          "sha256": "9e600b6f564586f6872d8662b553fa9d2e0c1ea6281e4b1878dce84fdfdc44be",
+          "git_blob_sha1": "b9bb0ac92019e8a6649d8d962234e9dbbb4a9222",
+          "local_mode": "0644"
+        },
+        {
+          "path": "LICENSE-COPY-NOTE.json",
+          "bytes": 444,
+          "sha256": "2929d7d4965fc4c885557e163013ea2b50dbb3947bc4b0b0c189ed6fc94b93a3",
+          "git_blob_sha1": "eea603b6aa9d0d7f3af595c7b0759c21386142fc",
+          "local_mode": "0644"
+        },
+        {
+          "path": "LICENSE-SOURCE-RECEIPT.json",
+          "bytes": 524,
+          "sha256": "19d790e6c61a22e033ff6393bf8f2af131034acf8bc45350c02c06417dd77d5a",
+          "git_blob_sha1": "d7f3449d4a6da7cb199e0c260437393f4865455c",
+          "local_mode": "0644"
+        },
+        {
+          "path": "LICENSE.duckdb",
+          "bytes": 1073,
+          "sha256": "332e19171f85a7ea54842f234cd68e15cc33f4fc974ce11fffd9ede1625be80f",
+          "git_blob_sha1": "384489dbca1ac0df40ac50fc380582795babed1c",
+          "local_mode": "0644"
+        },
+        {
+          "path": "PINNED-SOURCE-ADDENDUM.json",
+          "bytes": 5889,
+          "sha256": "962af82288c36449e841d338ff5e32202149e5b6d8e1c273a0392de6be28ba58",
+          "git_blob_sha1": "202d3a7cc2e60f923e7cc0f6c3acf78bdda763a1",
+          "local_mode": "0644"
+        },
+        {
+          "path": "PINNED-SOURCE-RECEIPTS.json",
+          "bytes": 29017,
+          "sha256": "e4c847091c3b7c76212a49306646a42daf4b9981e75c5b02755de58c60a14e28",
+          "git_blob_sha1": "73e0415ef097c2df87e0cbe063b15b3be22c896e",
+          "local_mode": "0644"
+        },
+        {
+          "path": "PRIMARY-EXCERPTS.md",
+          "bytes": 56516,
+          "sha256": "6b859a49538eec431853efb05b8dfd259c80c5a976ddc32b2fe110a725e28529",
+          "git_blob_sha1": "c7d91ba16d100b4ae3bb5cc3a11d475c8eca614d",
+          "local_mode": "0644"
+        },
+        {
+          "path": "SOURCE-ONLY-CHECK-001-FIRST-FAILURE.json",
+          "bytes": 740,
+          "sha256": "eacbf1af5e427c76dabfd3fcc3de6be61583c97da1c891f187d950c9d3cf4494",
+          "git_blob_sha1": "0f6bdcb094bd292dc92533ab66b71f512c0fcca4",
+          "local_mode": "0644"
+        },
+        {
+          "path": "SOURCE-ONLY-CHECKS-002.json",
+          "bytes": 1947,
+          "sha256": "40e9c9356c470c5fcfbafd26872fdc1f623c61512d66f10e5839f5dbe08e7862",
+          "git_blob_sha1": "0e7b9c61674d4aa28f5199c7651baac7f1ad98b2",
+          "local_mode": "0644"
+        }
+      ],
+      "file_count": 11,
+      "bytes": 125234,
+      "all_exact": true
+    },
+    {
+      "package": "bridge-feasibility",
+      "manifest": "EVIDENCE-MANIFEST.json",
+      "manifest_sha256": "b9d78af49296976d94c7ee5b28e50e7a3aba1918b7284d5a270df315912f3024",
+      "files": [
+        {
+          "path": "SOURCE-RECEIPTS.json",
+          "bytes": 12009,
+          "sha256": "6fdeb0da1b699d7145420ccfd821033804e257ae8c3004f773eb3dbfc9b15c32",
+          "git_blob_sha1": "9e1f6cf26ab7499eead6fca960aca5aeea16954c",
+          "local_mode": "0644"
+        },
+        {
+          "path": "SOURCE-EXCERPTS.json",
+          "bytes": 37916,
+          "sha256": "82b443ebf2322b45e4eff3cb0a811fa14a48eedc99348f7aa03e1460191649fb",
+          "git_blob_sha1": "5f25f4aea96bb574ea9caf62e67b15ed3018369c",
+          "local_mode": "0644"
+        },
+        {
+          "path": "host-elf-static.txt",
+          "bytes": 7665,
+          "sha256": "66e41e932b063a4cd4bd6a9ed52c61633442304017ed49e0f17f3d10115b40ca",
+          "git_blob_sha1": "180ce608fc1319047e0881145dcbea85e74a4b0a",
+          "local_mode": "0644"
+        },
+        {
+          "path": "cpp-dependencies-static.txt",
+          "bytes": 5290,
+          "sha256": "82f058111754e59607eafa4c14f55f49e5b4c41205cfd35ff24eaff6a429e131",
+          "git_blob_sha1": "45a18646488db440736a189e3a47f3f3765b3a40",
+          "local_mode": "0644"
+        },
+        {
+          "path": "host-pin-static.txt",
+          "bytes": 727,
+          "sha256": "231e5d2af46ec86d1e87de732f2ec58693a4e946e76641797eb2eaf588c82b82",
+          "git_blob_sha1": "449d8413cc8019fba1dd59ce00b0c3dec70198a3",
+          "local_mode": "0644"
+        },
+        {
+          "path": "build-static.txt",
+          "bytes": 2408,
+          "sha256": "432738e1f8766bec0674c6181d945deff6bcdec81f25e8c2728060e851b5fab6",
+          "git_blob_sha1": "23d21e4a518a739c5ee507ffb99d763fa333541f",
+          "local_mode": "0644"
+        },
+        {
+          "path": "final-readback-static.txt",
+          "bytes": 769,
+          "sha256": "ea23d773cc7fdd5125e193631fb5f28463752805c8d375f3d11bbb33199e3b09",
+          "git_blob_sha1": "0103b0d96ad9563e7f7ea105ad8f472634c45d8d",
+          "local_mode": "0644"
+        },
+        {
+          "path": "FEASIBILITY.md",
+          "bytes": 11963,
+          "sha256": "83138061902588c4d68eab1efe72afdad7efcb3bffa3ddaf35b5d3e627ac7439",
+          "git_blob_sha1": "51034fc3ba8c407e003ed8ce6dc36307b49f7c6b",
+          "local_mode": "0644"
+        }
+      ],
+      "file_count": 8,
+      "bytes": 78747,
+      "all_exact": true
+    }
+  ],
+  "prohibited_old_material_markers_absent": true,
+  "no_app_import_runtime": true,
+  "pending": null
+}

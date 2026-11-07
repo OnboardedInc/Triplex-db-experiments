@@ -1,0 +1,356 @@
+{
+  "status": "PASS_BOUNDED_STATIC_TEXT_HASH_AST_AND_RECEIPT_INSPECTION_ONLY",
+  "selected_root": "/tmp/temporal-roadmap-research/iteration-02/residual-performance-reader/verified-preparation-v2",
+  "manifest_sha256_verified": {
+    "PREPARATION-MANIFEST.json": "79a386fd0a9f84722024189081eaa00fea5968284580dbe5f08c463acbdd5b52",
+    "curated-preparation/MANIFEST.json": "4276ef94b176f2f23954b413ef62197389e88e99c91f4e0600eb9eef19a2a9e6",
+    "terminal-handoff/MANIFEST.json": "9776514ff1c790273c8620e10f10711b912ee1a47a52a4487a121f9df85fcedf"
+  },
+  "preparation_declared_members": 190,
+  "curated_declared_members": 188,
+  "curated_declared_tree_sha256": "6a472f4ba87abcc88ce5ffb30cf6bc3611de58f85209f75bed9e4afac0f49d14",
+  "scope": "Only listed text members and curated copies hashed; no full190/binary/runtime/template-byte verification by this reviewer. AST parsing is not study/candidate/test execution. Root independently owns full byte closure.",
+  "text_members": [
+    {
+      "path": "admit_candidate.py",
+      "scope": "active_python",
+      "bytes": 5734,
+      "sha256": "bdb81787d2295a02d1bc37da0479039f83b81039486beb63592e4b3a5cf01e5a",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "analyze.py",
+      "scope": "active_python",
+      "bytes": 6698,
+      "sha256": "b56072a263b276dcec6a60b54031e068f761b7c89746a2cd6a76816c16e722ab",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "common.py",
+      "scope": "active_python",
+      "bytes": 14969,
+      "sha256": "a96a0e082859c9e20e30743de8645d7150edbddbd8d8f138bc2bc396a62b0382",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "controller.py",
+      "scope": "active_python",
+      "bytes": 6676,
+      "sha256": "f462dcedbf9c3dc9aa8bae406fb94f440fc06f6f40acee60bc8aa635d5bf9e9e",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "execution.py",
+      "scope": "active_python",
+      "bytes": 4340,
+      "sha256": "e74ace7377c9153c482a632ade3821d4f1f8bb8c92c4e79bb4d7254728702d67",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "freeze_preparation.py",
+      "scope": "active_python",
+      "bytes": 7101,
+      "sha256": "b266cb0d933acd22809ecb03f3d0c56801c1c8060d4ab440eb0678a4e83ac407",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "freeze_study.py",
+      "scope": "active_python",
+      "bytes": 2403,
+      "sha256": "cfa560eff452865661ed1e0e7324c7b943723a393de580c291998fc08aa4c7f8",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "record_progress.py",
+      "scope": "active_python",
+      "bytes": 1726,
+      "sha256": "7e41a108767e34143686f25a538ee818351f79dd2bc5dbdbb017199ebca76df1",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "run_study.py",
+      "scope": "active_python",
+      "bytes": 4940,
+      "sha256": "a8deda7c898d7af6ae239518ace07c3792b58a74ea9dda68160c74ee61cacde6",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "synthetic_fixtures.py",
+      "scope": "active_python",
+      "bytes": 6343,
+      "sha256": "c7b447339ff3d964054dd4e7f59067d497a598f0ad1fa7cfb88491678261e7cd",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "test_no_engine.py",
+      "scope": "active_python",
+      "bytes": 18747,
+      "sha256": "2402d19bd7c6c5d8464d39cc90a4d797929bef62b1743027b727d3e727f5f2b0",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "validation.py",
+      "scope": "active_python",
+      "bytes": 20573,
+      "sha256": "cb7b9b693089eb8517aa5e8f5f25d458a78c3ed3d35427f6e1d1a0cc7a8031e3",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "verify_analysis.py",
+      "scope": "active_python",
+      "bytes": 1901,
+      "sha256": "afb01320a6d1c9c55506a17dc9e880484e777af6468942dc7352cdc201786568",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "worker.py",
+      "scope": "active_python",
+      "bytes": 10179,
+      "sha256": "9bdb707c5ad8267498884e42094c3174e59eef1751b0d38a8cd78ffb11e963c8",
+      "receipt_preparation_curated_join": "PASS",
+      "ast_syntax": "PARSED_ONLY_NOT_COMPILED_OR_EXECUTED",
+      "assert_nodes": 0
+    },
+    {
+      "path": "controls.json",
+      "scope": "method_input",
+      "bytes": 570373,
+      "sha256": "6e0a998200d3ec2ab10dbf81c8cc22249246719161556709aeef19b10ae167b8",
+      "receipt_preparation_curated_join": "PASS"
+    },
+    {
+      "path": "schedule.json",
+      "scope": "method_input",
+      "bytes": 38702,
+      "sha256": "b8293ba38dac49d30b5af5018b229d840da634f3ddf2f98f9abf154d3675ef8a",
+      "receipt_preparation_curated_join": "PASS"
+    },
+    {
+      "path": "settings.json",
+      "scope": "method_input",
+      "bytes": 1052,
+      "sha256": "beb038d47dd7c63f53e9e5faef904649236a50858734e87df33f42e5d6eb7089",
+      "receipt_preparation_curated_join": "PASS"
+    },
+    {
+      "path": "baseline-registry.json",
+      "scope": "method_input",
+      "bytes": 4699,
+      "sha256": "39b2ef8ef4a2362392b1e4f19959ec2c4c23ea09a176d5b45b799fea0a3ad2ba",
+      "receipt_preparation_curated_join": "PASS"
+    },
+    {
+      "path": "inputs/runtime-pins.json",
+      "scope": "method_input",
+      "bytes": 1509,
+      "sha256": "6134bab7cc6c8d2fb967a25022b8cda1cab8cbb2ebebcf4e53a57218d5314c27",
+      "receipt_preparation_curated_join": "PASS"
+    },
+    {
+      "path": "templates/template-receipt.json",
+      "scope": "method_input",
+      "bytes": 526,
+      "sha256": "8aba24f58d7b68fc07d6fc7d063f670b8f7530d409fd8fbf49929e266fe302ff",
+      "receipt_preparation_curated_join": "PASS"
+    },
+    {
+      "path": "inputs/ffc-EXPORT-MANIFEST.json",
+      "scope": "method_input",
+      "bytes": 45961,
+      "sha256": "eb52a0acd82a49d82e03c633793b8337e9c9c94cbab73a580227d3ec78e81b04",
+      "receipt_preparation_curated_join": "PASS"
+    },
+    {
+      "path": "PROTOCOL.md",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 9794,
+      "sha256": "d2ad1457c356d970e10331ffee14877c15be9107e00a750e097a810d62a41a48"
+    },
+    {
+      "path": "GATE-SCHEMAS.md",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 2418,
+      "sha256": "1dead3cb6e2c47ed183c63a026aa0cd49ee4b7d149a52fd9fcee0e2f16fb8413"
+    },
+    {
+      "path": "README.md",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 2994,
+      "sha256": "60bb849529543b7670ae70cb2b9b901ea06c7994b43e181b74c5bc63578a8010"
+    },
+    {
+      "path": "REVISION-HISTORY.md",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 2003,
+      "sha256": "d2273f71589277beea2186f88c90dcc57b8cb49197b8604238ae51b669531074"
+    },
+    {
+      "path": "PRIMARY-SOURCES.json",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 1960,
+      "sha256": "051cd2c5ae7bc695826a90cbfa7bdd578cbfc57ce1cfaf660a873d3145dac02d"
+    },
+    {
+      "path": "PREPARATION-STATUS.json",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 714,
+      "sha256": "1be3d8e9572320f5f71e2c924fd6e41b3fdc5ec7c58feac6028357a0bfa2ee7e"
+    },
+    {
+      "path": "STDLIB-CONTROL-SUMMARY.json",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 476,
+      "sha256": "70c341607c7015cac9a5caf7bbb7d8addcc586f72b2c52982d11f65bbb8b9944"
+    },
+    {
+      "path": "tests/NO-ENGINE-RESULTS-final.json",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 116178,
+      "sha256": "3cd40d421ee02dac4f560e3c31bd8e7a50c2d81d97b4eb25c388c7edb98be8d2"
+    },
+    {
+      "path": "PREPARATION-HANDOFF.json",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 780,
+      "sha256": "3cfe2cecbf2edd88b1b90da4d2911dad3856b12d24bbe77d35c912f55b712936"
+    },
+    {
+      "path": "POST-FREEZE-READBACK.json",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 1389,
+      "sha256": "5f316e554cf5e5b37f5ece71be299d42d59ee6f62fc8ea9387986de4eeec9e81"
+    },
+    {
+      "path": "references/FREEZE-SELF-CAPTURE-DEFECT.json",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 791,
+      "sha256": "8b2ebed30808bc8cae8426e5064a1bb9129a0ef9f72f0180ba18b0859ba55d28"
+    },
+    {
+      "path": "inputs/method-references/root-measurement-REPORT.md",
+      "scope": "protocol_or_frozen_receipt",
+      "bytes": 6722,
+      "sha256": "a89a9f47d69da0dc336078ae19ed9b62360f0d639c15b9a1f2f0a9a903a7c948"
+    }
+  ],
+  "terminal_members_verified": [
+    {
+      "path": "POST-FREEZE-READBACK.json",
+      "bytes": 1389,
+      "sha256": "5f316e554cf5e5b37f5ece71be299d42d59ee6f62fc8ea9387986de4eeec9e81"
+    },
+    {
+      "path": "PREPARATION-HANDOFF.json",
+      "bytes": 780,
+      "sha256": "3cfe2cecbf2edd88b1b90da4d2911dad3856b12d24bbe77d35c912f55b712936"
+    },
+    {
+      "path": "STAGE-STATUS.md",
+      "bytes": 1134,
+      "sha256": "d7102a5c565981d1df27f8deabc39cbf035d046f4d6dd0c896bcbb0faf114f8e"
+    },
+    {
+      "path": "WORKER-PROGRESS.jsonl",
+      "bytes": 7991,
+      "sha256": "52e74fb94750ce1fbdb405daf2fc19107b7127cbd03788afa87ff3b75be81066"
+    },
+    {
+      "path": "WORKER-PROGRESS.md",
+      "bytes": 7793,
+      "sha256": "b4345baaa190af4a7cf458697ec73ebacd8f2f4f800db70cdc0cccfe1ba4bec3"
+    },
+    {
+      "path": "freeze-execution/exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "freeze-execution/stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "freeze-execution/stdout",
+      "bytes": 754,
+      "sha256": "f0c5859e4c2c283724eb04a1f1f248547124d149e12a61fe4d45d0b9c75dd663"
+    }
+  ],
+  "recorded_synthetic_receipt": {
+    "checks": 397,
+    "outcomes": {
+      "PASS_ACCEPTED_SYNTHETIC_ONLY": 11,
+      "PASS_REJECTED": 386
+    },
+    "not_rerun": true,
+    "literal_fake_nanoseconds": 1,
+    "no_engine_or_FP_execution_claim": true
+  },
+  "schedule_static_summary": [
+    {
+      "name": "reader_implementation",
+      "baseline": "ffc-current-reader",
+      "proposed": "reader-only",
+      "pairs": 42,
+      "round_counts": {
+        "1": 21,
+        "2": 21
+      },
+      "first_variant_counts": {
+        "reader-only": 21,
+        "ffc-current-reader": 21
+      }
+    },
+    {
+      "name": "accepted_to_reader",
+      "baseline": "accepted-item1",
+      "proposed": "reader-only",
+      "pairs": 42,
+      "round_counts": {
+        "1": 21,
+        "2": 21
+      },
+      "first_variant_counts": {
+        "accepted-item1": 21,
+        "reader-only": 21
+      }
+    }
+  ],
+  "controls": 14,
+  "stage_absence_observed": {
+    "ROOT-CANDIDATE-AUTHORIZATION.json": true,
+    "CANDIDATE-ADMISSION.json": true,
+    "study-registry.json": true,
+    "ROOT-FREEZE-AUTHORIZATION.json": true,
+    "STUDY-MANIFEST.json": true,
+    "EXECUTION-GATE.json": true,
+    "runs": true,
+    "variants/reader-only": true
+  },
+  "runtime_or_DB_or_hardware_FP_or_benchmark_import_or_execution_by_reviewer": false
+}

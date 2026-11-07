@@ -1,0 +1,33 @@
+{
+  "schema": "td.native-research-package-root-review/1",
+  "packageCommit": "ff86c3dc5fd2d7af781c291c984b292edae5e73c",
+  "receipt": "coverage-command-profile-pair-20261106.json",
+  "receiptSha256": "1b634d59a6f494e7c508adefcf97a6cc77d4430520502bc0e3a8d660d06275ca",
+  "rawFiles": 100,
+  "allHashesAndSizesMatch": true,
+  "sourceReviewedBeforeEngine": true,
+  "acceptance": "Two actual public path statement diagnostics accepted; rawFD2 and all60 extractedJSON objects independently matched, no exclusive timing or service/performancepromotion claim.",
+  "reviewedAtUtc": "2026-11-06T11:48:46.995785+00:00",
+  "independentlyDecodedRawFD2": {
+    "baseline": {
+      "profiles": 29,
+      "ctas": 8,
+      "actualChildPid": 74887,
+      "publicProfiledMs": 92.68704099999991
+    },
+    "candidate": {
+      "profiles": 31,
+      "ctas": 9,
+      "actualChildPid": 76392,
+      "publicProfiledMs": 125.92887500000006
+    }
+  },
+  "independentGuardCheck": {
+    "queryMs": 30.362417,
+    "optimizerMs": 21.768584,
+    "operators": 231,
+    "intermediateRows": 216,
+    "parserAbsent": true,
+    "actualRequestReceiptFullHistoryEqual": true
+  }
+}

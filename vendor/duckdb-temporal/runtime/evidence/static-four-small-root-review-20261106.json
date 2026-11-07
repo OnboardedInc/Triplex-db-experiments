@@ -1,0 +1,26 @@
+{
+  "schema": "td.static-four-small-root-review/1",
+  "source": "220b21bc44a479b24c7697f2dcbffcad152eb67c",
+  "rawHashesVerified": 9,
+  "preservedPackagingFailureHashesVerified": 10,
+  "actualProfiles": [
+    1,
+    16
+  ],
+  "independentSampleCardinalities": 364,
+  "independentStoredTypedAnswers": 31,
+  "consecutiveExactTwoAssertTwoRetractReceipts": 47,
+  "actualDistinctPorts": [
+    1,
+    16
+  ],
+  "observedMaxScopes": [
+    1,
+    4
+  ],
+  "exactAdmission": 17331,
+  "minusOneRejected": true,
+  "runtimeAndReferenceBeforeAfterMapsEqual": true,
+  "reopenCutsPerProfile": 5,
+  "scope": "Small correctness only, not latency/throughput qualification. No promotion."
+}

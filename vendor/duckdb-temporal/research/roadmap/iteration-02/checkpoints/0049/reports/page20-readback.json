@@ -1,0 +1,158 @@
+{
+  "at_utc": "2026-10-31T00:43:59.680Z",
+  "sequence": 20,
+  "all_block_ids": [
+    "3909d945-df70-5519-b68e-a0b4d4cda5ba",
+    "149840da-9aa8-57cd-bf90-09ef0f19bd94",
+    "5be0dc9d-d758-541e-8347-87297393d4a3",
+    "90e1cf17-2cf7-51bf-8c28-e22e71a4c2bc",
+    "1bf9a3ba-ba87-570f-9805-316a451db827",
+    "c00e0ef3-6ab6-5ef3-b181-85dcb7c03ab3",
+    "0839035e-d573-5d6e-8107-bcc9e9468023",
+    "41a2423a-7b64-5e53-baf1-f7b7aa7b9578",
+    "803fa828-891f-555f-aef3-2070a6298b8f",
+    "4007d2f5-63fd-54d9-ad16-c52053b56c90",
+    "e10e17cf-c9d7-557d-884b-661bd1916737",
+    "6b5df3c4-905a-5bdc-94ac-3eb3784a6649",
+    "981d798a-18ac-5c40-b325-96b142b57e62",
+    "c1fad295-bd5b-5c55-b526-daa52e02ae2b",
+    "e94c9980-be37-56b5-ada4-39adbdb885de",
+    "1d94769e-2c87-5fcd-a1d8-480075701adc",
+    "65ded388-f588-5589-a4b0-be58d5451fe2",
+    "70da2f80-8149-50d6-8d1e-18bcaadc1689",
+    "4e5d2377-410e-5ee4-9d22-34f2dc3ed120",
+    "8203a574-6280-5a4c-a242-fd4debdae66a",
+    "5814792b-bb8b-5c20-bc84-0619c174f3c9",
+    "2231268e-4e7e-5891-a838-247c007aeb74",
+    "252a1cec-edec-5bce-8a2b-a95800068cf7",
+    "a27b960a-b4a2-5493-8cfc-2cf4e77316c4",
+    "e8e17831-3922-526b-9539-54d0ac4cf628",
+    "54fa450a-3c6e-5062-8403-1f723c83b697",
+    "b70424fa-794c-5ecf-8d94-3c6536b4a053",
+    "776dc5a7-48c0-54cf-9b21-2f802ae70d5b",
+    "778dc6f8-c39e-5f2e-85d0-c20cc8d2caa5",
+    "3ae82fbe-3e2e-50ed-bfa7-181f1bccae8c",
+    "7b88829e-a6d8-5bc3-b2b4-b245de564e20",
+    "1e9465f9-6f2c-5688-800b-90ca10eb2b75",
+    "23138ae6-9ffb-531c-99be-a91918874545",
+    "163a1680-9422-5b6a-a821-30504a2ac2cc",
+    "b24d1cd7-c463-5532-8a46-a8fc0d39a80a",
+    "51fe0ec3-edb1-50c8-8080-9a656f629040",
+    "eda56c48-7cd9-5c0a-911b-2de535142891",
+    "95b9499f-281b-5b2c-9053-fb394820a032",
+    "798f8b59-9901-5567-8af2-e575f21cc86c",
+    "d2eea2bc-ef43-5293-b706-639d23eb9164",
+    "ae9279f6-7d1a-56d7-a18b-38c867ae5407",
+    "970d938e-f613-58f4-8505-b72f2f58bcd5",
+    "44d07a89-f84e-57b2-b0fa-59c835b1c395",
+    "49d8a9e5-c395-50cc-a489-808a22a97a23",
+    "4e5409be-5dc4-5974-8d1d-55c0a42c23db",
+    "4e583eb1-3bac-5109-a858-14b4ad8ac757",
+    "cf559d25-3e9a-51e4-b21d-1250ef3c75e8",
+    "720adde8-6041-5106-975a-807eeea04734",
+    "fcb21d40-78cc-5109-b917-7361e0e516de",
+    "41faa14f-8a24-53fc-b7d3-3de0f1929552",
+    "65e7117c-eb7f-5734-957d-f26d2d4555ee",
+    "9e44d3d2-8548-5647-a2cc-d90bd8f4c29f",
+    "4f36da38-8e58-542f-a276-96dedec4c798",
+    "b5d5af12-6275-5457-aa53-e274181b5330",
+    "73176ab2-5810-5145-ac82-a4c54610dc5e",
+    "873b259f-e526-5486-a5ad-7ebd7484bed8",
+    "d7060936-f738-5974-a7f2-626de5d35b58",
+    "5902397f-0702-5e00-a965-d8f9eb5d4ae5",
+    "447b991b-c2df-5fa1-b798-af8fff1b2e56",
+    "4e602687-28c6-5b2f-a1ef-f78d8b8e5bec",
+    "1ffe1311-b933-51cb-b27d-b7a19788c31d",
+    "57ac973d-a7e6-5dc2-978d-96bc8e10a05e",
+    "42fc93b5-1667-5196-a29f-7a8d5917108e",
+    "46d26bb7-cc78-5560-944d-a0e75ff288b2",
+    "553a7e30-1898-5aac-a579-64aa23da3858",
+    "fa5a12b9-0628-5530-8f0d-b56d3af9c19f",
+    "2c843e51-6de3-5f16-a2a8-ed298b5b0837",
+    "7d248364-fba0-5889-b54e-995dbc86b0c7",
+    "00a2bae6-f9b5-5ed7-b980-4e894954f52a",
+    "3b7376dd-4f79-5b01-992b-76605b736a6d",
+    "80b26700-6700-5429-bfda-6a33504f088f",
+    "8b57ca4f-12c0-5a34-a6e9-7295c001319f",
+    "7753547b-04ed-578c-8f66-65b7508b2363",
+    "46a3b06b-33af-56a0-8969-da0da4e6e892",
+    "87b81f19-d63f-5f1f-a3cf-b9225f1e75ff",
+    "7cca8012-92c4-5bf9-8dfa-63337826a5ee",
+    "1b19eaa7-e3b2-5e58-b0d4-8176dc9dafd8",
+    "8d0ca393-185c-5948-b38f-3172dba0cdec"
+  ],
+  "blocks": [
+    {
+      "id": "3909d945-df70-5519-b68e-a0b4d4cda5ba",
+      "kind": "markdown",
+      "markdown": "**Updated 31 October 2026.** The temporal triple store is a working experimental DuckDB extension and persisted-store prototype—not a production database, complete Datalog implementation, or Triplex adapter. The strongest direction is a **SQL-first hybrid**: let DuckDB handle relational scans and joins, and retain native recursion where equivalent-answer measurements justify it.",
+      "hash": "87839394591a82f2917681968210d93d56230e948f9ffc581706f476dcd8fd67",
+      "metadata": {}
+    },
+    {
+      "id": "0839035e-d573-5d6e-8107-bcc9e9468023",
+      "kind": "markdown",
+      "markdown": "[Draft PR 7]([PRIVATE_REFERENCE_REMOVED]) is open, unmerged and verified at `ae50094c`: bounded native/browser expressions, guarded typed persistence, the batch codec and an isolated fresh public FP-mode reader with unchanged guard topology. The full 268-source clean-export normal/direct-sanitizer, native/store/browser, independent QA/review and migration gates pass. Reader-only macro timings and item-2 acceptance remain pending; previous batch ratios apply to source `ffc5241a`, not this unmeasured reader revision. The [reader-only research and selected decision]([PRIVATE_REFERENCE_REMOVED]) were preserved before implementation. [Earlier raw post-batch evidence/strict closures]([PRIVATE_REFERENCE_REMOVED]) and [deferred codec research]([PRIVATE_REFERENCE_REMOVED]) remain intact. Accepted item-1 source `e42a8adc`, exact v1 `fcc3e71f`, original/frozen source and deployed private v1 Site are unchanged.",
+      "hash": "795ce79b495a6dc14299b94feeb5ae5c4972179736318c3cc0ffa8144a32366e",
+      "metadata": {}
+    },
+    {
+      "id": "1d94769e-2c87-5fcd-a1d8-480075701adc",
+      "kind": "markdown",
+      "markdown": "**Iteration 1 is accepted within its bounded four-type contract. Iteration 2 remains held after a partial performance recovery; iterations 3–10 stay queued in order.** Previous post-batch correctness/performance evidence is for source `ffc5241a`. The new reader-only source `ae50094c` passes full 268-source clean-export normal/direct-sanitizer/native/browser/store, 26 migrations, independent QA/review and 79 mode-control children; its macro performance is still UNRUN. Counts overlap, not a certification score. The earlier corrected native SQL study (42 pairs/12 workloads, median ratios 0.969–1.049×) has no declared primary signal; all 95% intervals include 1 and modest regressions remain possible. The original distinct persisted float256 study measured 26–27% median cost (~3.5→4.2–4.4 ms), with all 480 exact outcomes; it remains preserved, not replaced. After researched batch conversion, two ordered studies each use 42 fresh-process pairs/two rounds/14 controls on the same closed 320-fact/10-commit history. All 168 processes/11,760 public outcomes pass, with recorded exits/provenance/schedule and all 1,176 pair records/statistics independently reverified. Against hardened8b with the SAME native artifact, float256 improves ~11% (ratios 0.890/0.887) and wide output ~24% (0.757/0.762). Against accepted item1, float256 still costs ~5.6%/8.5% and wide output ~12%; tiny/empty controls also retain investigation signals. Wide means 256 rows ×8 cells/1,024 float cells, not 1,024 stored facts. Thus full recovery and item-2 acceptance are NOT claimed. Profiles show constant 6/7 fresh FP reads per query/query_json across shapes, without skipping per-cell validation; counts are not exclusive causation. Original analyzer acceptance omissions are retained and closed for these recorded runs by separate fail-closed checks, not rewritten results. The timed Python assignment can include previous-result disposal; intervals are descriptive per-control, not family-wise or universal guarantees. Fresh primary-source research/decision was saved before the now-published narrow public fegetmode reader: fresh owned 8-byte storage, same Controls API/predicates and every 6/7 guard, no permission cache/repair/fallback/guard removal. FNSTCW condition codes remain architecturally undefined, so no whole-fenv/hostile-mode atomicity guarantee. Codec-key optimization is researched/backed up but deferred, not bundled. A separate new strict benchmark preparation has 397 stdlib controls and valid corrected-v2 hashes; its first stdout-self-capture freeze failure is retained, not admitted. Independent method review precedes any candidate/preflight/quiet timing gate. No reader speedup or item-2 acceptance is claimed. [Durable correctness/negative-candidate checkpoint]([PRIVATE_REFERENCE_REMOVED]) and prior raw/research archives remain intact; [all new raw timings/independent closures]([PRIVATE_REFERENCE_REMOVED]) are now verified in main checkpoint `4c6c79cc`. The first candidate's close/subtype defects, original diagnostics and incomplete large Python-carrier sanitizer transport remain retained, not relabeled passes. For item 1, initial 23–36% isolated losses did not reproduce in 756 CPU-pinned A/B pairs (paired medians ~0.97–1.03×); both datasets are preserved. Production readiness is not claimed.",
+      "hash": "e250e6f13f73a3eb2107dfe61666b8541830556661f7630d46fa35aea26205f8",
+      "metadata": {}
+    }
+  ],
+  "result": {
+    "new_sequence": 20,
+    "through_sequence": 20,
+    "operation_results": [
+      {
+        "operation_index": 0,
+        "preceding_block_id": "c00e0ef3-6ab6-5ef3-b181-85dcb7c03ab3",
+        "created_block_ids": [],
+        "continuation_position": {
+          "block_id": "0839035e-d573-5d6e-8107-bcc9e9468023",
+          "relative_position_base64": "AMGM/csCnRdB"
+        },
+        "affected_blocks": [
+          {
+            "block_id": "0839035e-d573-5d6e-8107-bcc9e9468023",
+            "hash": "795ce79b495a6dc14299b94feeb5ae5c4972179736318c3cc0ffa8144a32366e"
+          }
+        ]
+      },
+      {
+        "operation_index": 1,
+        "preceding_block_id": "e94c9980-be37-56b5-ada4-39adbdb885de",
+        "created_block_ids": [],
+        "continuation_position": {
+          "block_id": "1d94769e-2c87-5fcd-a1d8-480075701adc",
+          "relative_position_base64": "AMGM/csCtCVB"
+        },
+        "affected_blocks": [
+          {
+            "block_id": "1d94769e-2c87-5fcd-a1d8-480075701adc",
+            "hash": "e250e6f13f73a3eb2107dfe61666b8541830556661f7630d46fa35aea26205f8"
+          }
+        ]
+      },
+      {
+        "operation_index": 2,
+        "preceding_block_id": null,
+        "created_block_ids": [],
+        "continuation_position": {
+          "block_id": "3909d945-df70-5519-b68e-a0b4d4cda5ba",
+          "relative_position_base64": "AMGM/csCrwNB"
+        },
+        "affected_blocks": [
+          {
+            "block_id": "3909d945-df70-5519-b68e-a0b4d4cda5ba",
+            "hash": "87839394591a82f2917681968210d93d56230e948f9ffc581706f476dcd8fd67"
+          }
+        ]
+      }
+    ]
+  }
+}

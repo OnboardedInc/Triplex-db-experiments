@@ -1,0 +1,63 @@
+{
+  "schema": "native-interval-patch-crash/1",
+  "timestamp_utc": "2026-11-05T14:44:29.639780+00:00",
+  "status": "passed",
+  "base_commit": "dec187c3e8cbbb50ddfe81e46e2ed548059a6d01",
+  "engine": "2.0.0",
+  "candidate_extension_version": "0.20.0",
+  "extension_sha256": "6a253937745382f25624278495d375a0c95c12878396fb6c62c62700079dcfd4",
+  "catalog_sql_sha256": "9149189aefaee13c19b91b9a91c2f408018ef42f3b4241650b05c2ef79378ae6",
+  "source_sha256": {
+    "adapter/crash-native-command.mjs": "1dcafe870dd2126f1fe13b8455160de01a06feb885a919bf5cf569bea61e9bb1",
+    "adapter/test-interval-crash.ts": "d75686ea6ba156d7f7827930a356cbb7c5d3fc8681829abb2e1b4ed7d14b8412"
+  },
+  "command": "node --test --test-concurrency=1 build/adapter/test-interval-crash.js",
+  "passed_methods": 1,
+  "passed_observed_sigkill_phases": 3,
+  "duration_ms": 3309.822458,
+  "output_sha256": "f1ccf0c19108f6a14e5a46961dc355ebb7b5672b12938fcb19e0f20ac150e916",
+  "phases": [
+    {
+      "phase": "inside_insert",
+      "observation": "Sequence advanced inside native assertion INSERT while the write promise remained pending; worker terminated by SIGKILL.",
+      "replacement_values": 4092,
+      "new_fragments": 4,
+      "recovered_format": 5,
+      "recovered_clock": 1,
+      "recovered_assertions": 2,
+      "recovered_patch_commands": 0,
+      "recovered_provenance_rows": 0,
+      "receipt": "absent"
+    },
+    {
+      "phase": "before_commit",
+      "observation": "Expanded patch completed in explicit transaction; worker terminated by SIGKILL before COMMIT.",
+      "replacement_values": 2,
+      "new_fragments": 4,
+      "recovered_format": 5,
+      "recovered_clock": 1,
+      "recovered_assertions": 2,
+      "recovered_patch_commands": 0,
+      "recovered_provenance_rows": 0,
+      "receipt": "absent"
+    },
+    {
+      "phase": "after_commit",
+      "observation": "Autocommit patch acknowledged before worker terminated by SIGKILL.",
+      "replacement_values": 2,
+      "new_fragments": 4,
+      "recovered_format": 6,
+      "recovered_clock": 2,
+      "recovered_assertions": 8,
+      "recovered_patch_commands": 1,
+      "recovered_provenance_rows": 4,
+      "receipt": "present, six asserted and two retracted IDs"
+    }
+  ],
+  "reconciliation": "Inspect durable receipt before retry. Replay the exact original phase-specific request at position two, then commit a healthy patch at position three. Outside [2,8), values and original knowledge cut remain unchanged. Retained count/bytes agree with physical assertions before retry.",
+  "scope_notes": [
+    "Test-owned temporary databases only.",
+    "The existing worker default remains put; its regression suite will run in root integration after this harness extension.",
+    "Candidate artifact is the same tested patch core from the preceding verification receipt; release version and full integration remain separate."
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "checked_at_utc": "2026-11-03T11:41:00Z",
+  "repository": {
+    "full_name": "Contributor/research-reference",
+    "private": true,
+    "default_branch": "main"
+  },
+  "goal10_latest_project_commit": "b38e0a1567fbb66fa471eed14eb8e0d9ebb1ea42",
+  "page": {
+    "url": "[PRIVATE_APPLICATION_REFERENCE_REMOVED]",
+    "sequence": 95,
+    "last_updated_at": "2026-11-03T10:37:11.654058Z"
+  },
+  "pull_requests": [
+    {
+      "number": 7,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "a7ddd79021ce3f5a7030420ebc1003e855fccfde"
+    },
+    {
+      "number": 8,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "0e8823973f5e1b886b7ef96e8dc5a899f467f241"
+    },
+    {
+      "number": 9,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "dbb7d27a20430e09413f92259007961ad8e66ac3",
+      "base": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "commits": 29,
+      "changed_files": 189,
+      "additions": 46339,
+      "deletions": 0,
+      "full_tree_reverified": false
+    }
+  ],
+  "pr9_head_connector_results": {
+    "combined_status_records": [],
+    "pr_triggered_workflow_records": [],
+    "required_ci_pass_attested": false
+  },
+  "owner_visibility": {
+    "published_records": "Original live execution state and pending calls remain unobservable.",
+    "this_pass": "No live-owner, pending-call, process or original-workspace observation was obtained."
+  },
+  "acceptance": {
+    "bounded_accepted": [
+      1,
+      2
+    ],
+    "incomplete_held": [
+      "3",
+      "original 4"
+    ],
+    "bounded_results_not_full_acceptance": [
+      "independent 4.1",
+      "5"
+    ],
+    "unaccepted": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "persisted50": "UNRUN",
+    "comparison84": "UNRUN"
+  },
+  "later_attempts": [
+    {
+      "subject": "goal6 logical budget",
+      "outer_outcome": "known terminal NONPASS",
+      "stage": "preflight",
+      "accepted_additional_runtime_coverage": false
+    },
+    {
+      "subject": "goal6 compiler-owned IR serialization",
+      "outer_outcome": "known terminal NONPASS",
+      "stage": "compiler returned 0 with six stderr bytes; unit NOT_ENTERED",
+      "observed_golden_comparisons": 0,
+      "diagnostic_content": "unknown",
+      "accepted_additional_runtime_coverage": false
+    },
+    {
+      "subject": "goal7 current schema2 rollback",
+      "outer_outcome": "known terminal 4",
+      "stage": "STORE_UNIT",
+      "stdout": "GOAL7STOP:STORE_UNIT plus newline",
+      "stderr": "empty",
+      "result_evidence_files": "absent",
+      "command_rollback_health_close_acknowledgements": "not accepted; database-level outcomes unobserved",
+      "accepted_additional_runtime_coverage": false
+    }
+  ],
+  "source_only_research_scope": "Pinned public Triplex QueryExecutor language/operator semantics and conformance coverage, mapped to unchanged published product source.",
+  "not_performed": [
+    "stopped test-database inspection, read, query, hash, copy or adoption",
+    "runtime retry or reset",
+    "subject import",
+    "compilation",
+    "fixture/model evaluation",
+    "database or conformance action",
+    "package action",
+    "computer-environment snapshot",
+    "Codex task",
+    "merge",
+    "deployment",
+    "GitHub deletion"
+  ]
+}

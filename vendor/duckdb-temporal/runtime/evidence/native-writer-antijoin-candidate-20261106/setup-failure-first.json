@@ -1,0 +1,23 @@
+{
+  "schema": "td.native-writer-antijoin-setup-failure/1",
+  "atUtc": "2026-11-06T08:38:58.581758+00:00",
+  "status": "SETUP_FAILED_BEFORE_ENGINE",
+  "action": "Invoked an existing source checkpoint comparator as initial before checkpoint; comparator requires a preexisting source-before.json.",
+  "command": [
+    "<task-workspace>/.venv/bin/python",
+    "<writer-source-runtime>/build/native-writer-lab-broad-20261106/reverse-01/source-checkpoint.py",
+    "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01",
+    "before"
+  ],
+  "exitCode": 1,
+  "error": {
+    "type": "FileNotFoundError",
+    "missingPath": "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/source-before.json"
+  },
+  "engineOrOuterLaunched": false,
+  "sourceFixtureReadByFailedCommand": false,
+  "artifactSourceEdits": false,
+  "retryPerformed": false,
+  "pendingFileOnlyAdmission": "maps-before verify finished exit0; no identity issue reported",
+  "stopping": "Parent notified. Preserve this first setup failure; initial fingerprint repair requires explicit parent grant."
+}

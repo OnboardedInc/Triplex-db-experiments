@@ -1,0 +1,18 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "--check",
+    "adapter/diagnose-reference-identity-growth.mjs"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+  "pid": 72397,
+  "startedAtUtc": "2026-11-06T11:35:18.527574+00:00",
+  "endedAtUtc": "2026-11-06T11:35:18.561291+00:00",
+  "exitCode": 0,
+  "elapsedMs": 33.74799992889166,
+  "environment": {
+    "UV_THREADPOOL_SIZE": "4",
+    "NODE_OPTIONS": "",
+    "TD_NATIVE_WRITER_LAB_prefix": "removed"
+  }
+}

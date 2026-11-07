@@ -1,0 +1,77 @@
+{
+  "format": "triplex-bounded-storage/1",
+  "state": "MOUNTED_SELECTED_IMPORT_VERIFIED",
+  "root": "/Users/sam/projects/triplex-db",
+  "rootRealpath": "/Users/sam/projects/triplex-db",
+  "volume": {
+    "device": "disk6s1",
+    "uuid": "13E39903-A2D7-4DA4-8B93-8D00E463499C",
+    "container": "disk6",
+    "filesystem": "apfs",
+    "mountpoint": "/Users/sam/projects/triplex-db",
+    "volumeBytes": 44790247424
+  },
+  "mechanism": "fixed-address-space-APFS-sparse-disk-image",
+  "backingPath": "/Users/sam/projects/.triplex-db-storage/triplex-db.sparseimage",
+  "imageVirtualBytes": 45000000000,
+  "imageSectorCount": 87890625,
+  "hardOwnedMaximumBytes": 50000000000,
+  "operationalMaximumBytes": 46000000000,
+  "originalZip": {
+    "path": "/Users/sam/Downloads/download.zip",
+    "logicalBytes": 3305968479,
+    "allocatedBytes": 3305971712,
+    "sha256": "f9031e347b551bd39d54bd03e18e2d4cdc697e863872a4310fbbb650bce5c23b",
+    "mtimeNs": 1793989538333664796
+  },
+  "outsideAllowanceBytes": 1000000000,
+  "maximumConservativeOwnershipBytes": 49305971712,
+  "outsideOwnerRoot": "/Users/sam/projects/.triplex-db-storage",
+  "outsideFilesAtCommissioning": [
+    {
+      "path": "/Users/sam/projects/.triplex-db-storage/create-receipt.json",
+      "logicalBytes": 568,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/sam/projects/.triplex-db-storage/triplex-db.sparseimage",
+      "logicalBytes": 241176576,
+      "allocatedBytes": 241176576
+    },
+    {
+      "path": "/Users/sam/projects/.triplex-db-storage/create-explicit-sector-receipt.json",
+      "logicalBytes": 666,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/sam/projects/.triplex-db-storage/detach-empty-first-image-receipt.json",
+      "logicalBytes": 163,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/sam/projects/.triplex-db-storage/failed-size-unit.sparseimage",
+      "logicalBytes": 20975616,
+      "allocatedBytes": 20975616
+    },
+    {
+      "path": "/Users/sam/projects/.triplex-db-storage/attach-explicit-sector-receipt.json",
+      "logicalBytes": 3470,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/sam/projects/.triplex-db-storage/attach-receipt.json",
+      "logicalBytes": 3459,
+      "allocatedBytes": 4096
+    }
+  ],
+  "accounting": "Count outer backing allocation once, ZIP once, and other outside files; never add nested VM/database allocations again. Reserve worst growth inside mounted filesystem separately. The1GB allowance covers sparse-image metadata and bounded outer commissioning files.",
+  "mountRequiredBeforeWrites": true,
+  "resizeAllowed": false,
+  "baselinePath": "/Users/sam/projects/triplex-db/provenance/portable-export-baseline.json",
+  "baselineSha256": "334b4f7aeeb9784e985a193bac7f06adac90d1918be17e892c3b94eb6f67d03c",
+  "currentProfile": "bootstrap-heavy-001",
+  "notes": [
+    "First size-suffix attempt created wrong virtual size; it received no import and was detached. Its~21MB backing and receipts remain charged in outside allowance.",
+    "Source import verifies exported member hashes only. No original Git-origin PASS or runtime result is asserted."
+  ]
+}

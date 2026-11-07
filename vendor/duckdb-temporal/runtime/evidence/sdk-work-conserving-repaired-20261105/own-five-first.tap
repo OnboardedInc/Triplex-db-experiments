@@ -1,0 +1,13 @@
+✔ all five heavy APIs share one FIFO while retaining all16 physical readers (723.516958ms)
+✔ heavy capacity follows configured one through four reader pools without changing admission limits (1232.890333ms)
+✔ canceling a heavy lease waiter cannot consume or interrupt a light-read connection (601.768041ms)
+✔ all heavy controls validate before queuing and invocation deadlines own no queued token (488.85025ms)
+✔ native query failures release heavy admission before healthy mixed-family reuse (481.3295ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3644.215833

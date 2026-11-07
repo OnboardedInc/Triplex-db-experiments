@@ -1,0 +1,67 @@
+{
+  "schema": "td.sdk-broad-forward-setup-first/1",
+  "status": "FAILED_SETUP_CLOSURE",
+  "firstAttempt": true,
+  "recordedAtUtc": "2026-11-06T03:34:35.865697+00:00",
+  "sourceCommit": "0d2cbb1d1279856c41cb05456bf6f0831842ab4d",
+  "protocol": "SDK-BROAD-REGRESSION-PROTOCOL.md",
+  "arm": "B0_CONTROL",
+  "terminalExitCode": 1,
+  "stageCount": 0,
+  "queriesExecuted": 0,
+  "databaseCloneOrOpen": "not_reached",
+  "candidateArm": "not_started",
+  "failure": {
+    "code": "ENOENT",
+    "requiredFile": "native/retained_validity.sql",
+    "location": "under each selected frozen runtime",
+    "b0FilePresent": false,
+    "sdkFilePresent": false,
+    "owningRead": "adapter/benchmark-scale.mjs Promise.all before stage construction"
+  },
+  "preflight": {
+    "fiveMeasuredFilesExact": true,
+    "both445FileInventoriesExact": true,
+    "actualArtifactBindingsMatchReferences": true,
+    "sourceSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "sourceWalAbsent": true
+  },
+  "rawFiles": {
+    "b0.json": {
+      "sha256": "0fb67d8f9a700cf1f3fe3b34ec9189ae14e8cd530124000b59cc948a943b34be",
+      "bytes": 1476
+    },
+    "b0.log": {
+      "sha256": "3b7392b30a733cb4758d564a136acb244c4308ef4711f29b38b452a283ca045f",
+      "bytes": 41
+    },
+    "b0.exit": {
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2
+    },
+    "b0-artifact-before.json": {
+      "sha256": "5db1d86dcbbb791926631cbf4f018683fd3a3cc2b29b5237dcfe9afa35a9e6aa",
+      "bytes": 102909
+    },
+    "sdk-artifact-before.json": {
+      "sha256": "bc6394cee5a6f7e6caa57635fe1377cd94105c58ce5565257d8ef9f2add63596",
+      "bytes": 103085
+    },
+    "identity-before.json": {
+      "sha256": "4d6f6248eb961d8eaf6bc2ceac4496045da8178317ff6b831e233b125dd5596d",
+      "bytes": 130350
+    },
+    "harness-before.json": {
+      "sha256": "7048d73677a83b5c6929b3e33f1e181eb1786dde2db38c7caf8ac2af59806b22",
+      "bytes": 525
+    },
+    "launch.json": {
+      "sha256": "d274dc7ced2eb74de6dc2a0c2b0163779cc867a81e815b81db8d0574030af5b9",
+      "bytes": 273
+    }
+  },
+  "nextAction": "Stop comparison. Proposed separately reviewed fresh staging paths containing exact frozen runtime bytes plus the pinned source SQL file; no retry or frozen/harness edit performed.",
+  "numericQualification": "not_reached",
+  "scope": "No engine execution, native build, installation, candidate launch or source fixture mutation occurred."
+}

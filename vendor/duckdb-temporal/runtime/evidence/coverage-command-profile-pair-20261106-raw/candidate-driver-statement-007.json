@@ -1,0 +1,448 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.000011458,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 6.67e-7,
+                    "type": "BATCH_INSERT",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Projections": [
+                                    "#0",
+                                    "#1",
+                                    "#2",
+                                    "#3",
+                                    "#4",
+                                    "#5",
+                                    "#6",
+                                    "#7",
+                                    "#8",
+                                    "#9",
+                                    "#10",
+                                    "CAST(#11 AS VARCHAR)",
+                                    "#12",
+                                    "#13",
+                                    "#14",
+                                    "#15",
+                                    "#16",
+                                    "#17"
+                                ],
+                                "Estimated Cardinality": "2"
+                            },
+                            "intermediate_rows": 0,
+                            "intermediate_size_bytes": 0,
+                            "timing": 0.0,
+                            "type": "PROJECTION",
+                            "children": [
+                                {
+                                    "extra_info": {
+                                        "Projections": [
+                                            "(4096 + #16)",
+                                            "sha256(CAST(to_json(struct_pack('td.entity.patch.fragment/1', command_id, source_assertion_id, side)) AS VARCHAR))",
+                                            "e",
+                                            "a",
+                                            "tag",
+                                            "payload",
+                                            "v_tag",
+                                            "v_s",
+                                            "v_b",
+                                            "v_i",
+                                            "v_f",
+                                            "NULL",
+                                            "extra_json",
+                                            "valid_from",
+                                            "valid_to",
+                                            "source_assertion_id",
+                                            "validation_command_id",
+                                            "side"
+                                        ],
+                                        "Estimated Cardinality": "2"
+                                    },
+                                    "intermediate_rows": 0,
+                                    "intermediate_size_bytes": 0,
+                                    "timing": 0.0,
+                                    "type": "PROJECTION",
+                                    "children": [
+                                        {
+                                            "extra_info": {
+                                                "Projections": [
+                                                    "#0",
+                                                    "#1",
+                                                    "#2",
+                                                    "#3",
+                                                    "#4",
+                                                    "#5",
+                                                    "#6",
+                                                    "#7",
+                                                    "#8",
+                                                    "#9",
+                                                    "#10",
+                                                    "#11",
+                                                    "#12",
+                                                    "#13",
+                                                    "#14",
+                                                    "#15",
+                                                    "#16"
+                                                ],
+                                                "Estimated Cardinality": "2"
+                                            },
+                                            "intermediate_rows": 0,
+                                            "intermediate_size_bytes": 0,
+                                            "timing": 0.0,
+                                            "type": "PROJECTION",
+                                            "children": [
+                                                {
+                                                    "extra_info": {
+                                                        "Projections": "row_number() OVER (ORDER BY source_assertion_id ASC NULLS LAST, side ASC NULLS LAST)",
+                                                        "Estimated Cardinality": "2"
+                                                    },
+                                                    "intermediate_rows": 0,
+                                                    "intermediate_size_bytes": 0,
+                                                    "timing": 2.09e-7,
+                                                    "type": "WINDOW",
+                                                    "children": [
+                                                        {
+                                                            "extra_info": {
+                                                                "Projections": [
+                                                                    "command_id",
+                                                                    "e",
+                                                                    "a",
+                                                                    "tag",
+                                                                    "payload",
+                                                                    "v_tag",
+                                                                    "v_s",
+                                                                    "v_b",
+                                                                    "v_i",
+                                                                    "v_f",
+                                                                    "extra_json",
+                                                                    "valid_from",
+                                                                    "valid_to",
+                                                                    "source_assertion_id",
+                                                                    "validation_command_id",
+                                                                    "side"
+                                                                ],
+                                                                "Estimated Cardinality": "2"
+                                                            },
+                                                            "intermediate_rows": 0,
+                                                            "intermediate_size_bytes": 0,
+                                                            "timing": 0.0,
+                                                            "type": "PROJECTION",
+                                                            "children": [
+                                                                {
+                                                                    "extra_info": {
+                                                                        "Projections": [
+                                                                            "command_id",
+                                                                            "e",
+                                                                            "a",
+                                                                            "tag",
+                                                                            "payload",
+                                                                            "v_tag",
+                                                                            "v_s",
+                                                                            "v_b",
+                                                                            "v_i",
+                                                                            "v_f",
+                                                                            "extra_json",
+                                                                            "(side = 'left')",
+                                                                            "valid_from",
+                                                                            "valid_to",
+                                                                            "valid_from",
+                                                                            "valid_to",
+                                                                            "source_assertion_id",
+                                                                            "validation_command_id",
+                                                                            "command_id",
+                                                                            "side",
+                                                                            "#18"
+                                                                        ],
+                                                                        "Estimated Cardinality": "2"
+                                                                    },
+                                                                    "intermediate_rows": 0,
+                                                                    "intermediate_size_bytes": 0,
+                                                                    "timing": 0.0,
+                                                                    "type": "PROJECTION",
+                                                                    "children": [
+                                                                        {
+                                                                            "extra_info": {
+                                                                                "Join Type": "INNER",
+                                                                                "Condition": "(((valid_from < valid_from) AND (side = 'left')) OR ((valid_to < valid_to) AND (side = 'right')))",
+                                                                                "Estimated Cardinality": "2"
+                                                                            },
+                                                                            "intermediate_rows": 0,
+                                                                            "intermediate_size_bytes": 0,
+                                                                            "timing": 0.000015166999999999999,
+                                                                            "type": "BLOCKWISE_NL_JOIN",
+                                                                            "children": [
+                                                                                {
+                                                                                    "extra_info": {
+                                                                                        "Projections": [
+                                                                                            "#0",
+                                                                                            "#1",
+                                                                                            "#2",
+                                                                                            "#3",
+                                                                                            "#4",
+                                                                                            "#5",
+                                                                                            "#6",
+                                                                                            "#7",
+                                                                                            "#8",
+                                                                                            "#9",
+                                                                                            "#10",
+                                                                                            "#11",
+                                                                                            "#12",
+                                                                                            "#13",
+                                                                                            "#14",
+                                                                                            "#15",
+                                                                                            "#16",
+                                                                                            "#17",
+                                                                                            "validation_command_id"
+                                                                                        ],
+                                                                                        "Estimated Cardinality": "1"
+                                                                                    },
+                                                                                    "intermediate_rows": 1,
+                                                                                    "intermediate_size_bytes": 5602,
+                                                                                    "timing": 0.000004625,
+                                                                                    "type": "PROJECTION",
+                                                                                    "children": [
+                                                                                        {
+                                                                                            "extra_info": {
+                                                                                                "Join Type": "LEFT",
+                                                                                                "Conditions": "assertion_id = assertion_id",
+                                                                                                "Estimated Cardinality": "1"
+                                                                                            },
+                                                                                            "intermediate_rows": 1,
+                                                                                            "intermediate_size_bytes": 5586,
+                                                                                            "timing": 0.000048417,
+                                                                                            "type": "HASH_JOIN",
+                                                                                            "children": [
+                                                                                                {
+                                                                                                    "extra_info": {
+                                                                                                        "Join Type": "INNER",
+                                                                                                        "Conditions": "assertion_id = assertion_id",
+                                                                                                        "Estimated Cardinality": "1"
+                                                                                                    },
+                                                                                                    "intermediate_rows": 1,
+                                                                                                    "intermediate_size_bytes": 5314,
+                                                                                                    "timing": 0.000040791,
+                                                                                                    "type": "HASH_JOIN",
+                                                                                                    "children": [
+                                                                                                        {
+                                                                                                            "extra_info": {
+                                                                                                                "Table": "facts.main.assertions",
+                                                                                                                "Type": "Index Scan",
+                                                                                                                "Projections": [
+                                                                                                                    "assertion_id",
+                                                                                                                    "valid_from",
+                                                                                                                    "valid_to",
+                                                                                                                    "e",
+                                                                                                                    "a",
+                                                                                                                    "tag",
+                                                                                                                    "payload",
+                                                                                                                    "v_tag",
+                                                                                                                    "v_s",
+                                                                                                                    "v_b",
+                                                                                                                    "v_i",
+                                                                                                                    "v_f",
+                                                                                                                    "extra_json",
+                                                                                                                    "command_id"
+                                                                                                                ],
+                                                                                                                "Dynamic Filters": "(assertion_id = 'f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62')",
+                                                                                                                "Estimated Cardinality": "20"
+                                                                                                            },
+                                                                                                            "intermediate_rows": 1,
+                                                                                                            "intermediate_size_bytes": 1186,
+                                                                                                            "row_groups_scanned": 0,
+                                                                                                            "rows_scanned": 1,
+                                                                                                            "timing": 0.000019708000000000002,
+                                                                                                            "total_row_groups_to_scan": 1,
+                                                                                                            "type": "TABLE_SCAN"
+                                                                                                        },
+                                                                                                        {
+                                                                                                            "extra_info": {},
+                                                                                                            "intermediate_rows": 1,
+                                                                                                            "intermediate_size_bytes": 4144,
+                                                                                                            "timing": 0.000007875,
+                                                                                                            "type": "CROSS_PRODUCT",
+                                                                                                            "children": [
+                                                                                                                {
+                                                                                                                    "extra_info": {
+                                                                                                                        "Table": "\"temp\".main.__td_native_ctx",
+                                                                                                                        "Type": "Sequential Scan",
+                                                                                                                        "Projections": [
+                                                                                                                            "valid_from",
+                                                                                                                            "valid_to",
+                                                                                                                            "command_id"
+                                                                                                                        ],
+                                                                                                                        "Estimated Cardinality": "1"
+                                                                                                                    },
+                                                                                                                    "intermediate_rows": 1,
+                                                                                                                    "intermediate_size_bytes": 32,
+                                                                                                                    "row_groups_scanned": 1,
+                                                                                                                    "rows_scanned": 1,
+                                                                                                                    "timing": 0.0000032510000000000003,
+                                                                                                                    "total_row_groups_to_scan": 1,
+                                                                                                                    "type": "TABLE_SCAN"
+                                                                                                                },
+                                                                                                                {
+                                                                                                                    "extra_info": {
+                                                                                                                        "Table": "\"temp\".main.__td_native_old",
+                                                                                                                        "Type": "Sequential Scan",
+                                                                                                                        "Projections": "assertion_id",
+                                                                                                                        "Estimated Cardinality": "1"
+                                                                                                                    },
+                                                                                                                    "intermediate_rows": 1,
+                                                                                                                    "intermediate_size_bytes": 16,
+                                                                                                                    "row_groups_scanned": 1,
+                                                                                                                    "rows_scanned": 1,
+                                                                                                                    "timing": 0.000003999,
+                                                                                                                    "total_row_groups_to_scan": 1,
+                                                                                                                    "type": "TABLE_SCAN"
+                                                                                                                }
+                                                                                                            ]
+                                                                                                        }
+                                                                                                    ]
+                                                                                                },
+                                                                                                {
+                                                                                                    "extra_info": {
+                                                                                                        "Table": "facts.td_catalog_v1.entity_assertion_sources",
+                                                                                                        "Type": "Sequential Scan",
+                                                                                                        "Projections": [
+                                                                                                            "assertion_id",
+                                                                                                            "validation_command_id"
+                                                                                                        ],
+                                                                                                        "Estimated Cardinality": "2"
+                                                                                                    },
+                                                                                                    "intermediate_rows": 2,
+                                                                                                    "intermediate_size_bytes": 64,
+                                                                                                    "row_groups_scanned": 1,
+                                                                                                    "rows_scanned": 2,
+                                                                                                    "timing": 0.000005541,
+                                                                                                    "total_row_groups_to_scan": 1,
+                                                                                                    "type": "TABLE_SCAN"
+                                                                                                }
+                                                                                            ]
+                                                                                        }
+                                                                                    ]
+                                                                                },
+                                                                                {
+                                                                                    "extra_info": {
+                                                                                        "Expression": "((side = 'left') OR (side = 'right'))",
+                                                                                        "Estimated Cardinality": "2"
+                                                                                    },
+                                                                                    "intermediate_rows": 2,
+                                                                                    "intermediate_size_bytes": 32,
+                                                                                    "timing": 0.000013584,
+                                                                                    "type": "FILTER",
+                                                                                    "children": [
+                                                                                        {
+                                                                                            "extra_info": {
+                                                                                                "Estimated Cardinality": "2"
+                                                                                            },
+                                                                                            "intermediate_rows": 2,
+                                                                                            "intermediate_size_bytes": 32,
+                                                                                            "timing": 0.000001959,
+                                                                                            "type": "COLUMN_DATA_SCAN"
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000003958,
+        "aggregate_reuse": 0.000006458,
+        "build_side_probe_side": 0.000015542,
+        "column_lifetime": 0.000021417,
+        "common_aggregate": 0.000001833,
+        "common_subexpressions": 0.000020583,
+        "common_subplan": 0.000042541,
+        "cte_filter_pusher": 8.34e-7,
+        "cte_inlining": 3.75e-7,
+        "deliminator": 7.92e-7,
+        "duplicate_groups": 0.000008292,
+        "empty_result_pullup": 5.84e-7,
+        "expression_rewriter": 0.00011475,
+        "filter_pullup": 0.000003208,
+        "filter_pushdown": 0.000030375,
+        "grouping_sets": 0.000001625,
+        "in_clause": 0.000001542,
+        "join_elimination": 0.00000625,
+        "join_filter_pushdown": 0.000017375,
+        "join_order": 0.0001755,
+        "late_materialization": 7.08e-7,
+        "limit_pushdown": 6.25e-7,
+        "outer_join_simplification": 0.000010042,
+        "partial_aggregate_pushdown": 0.000003042,
+        "partitioned_execution": 7.5e-7,
+        "projection_placement": 0.000049541,
+        "projection_pullup": 0.000012833,
+        "redundant_order_keys": 0.000006416,
+        "regex_range": 7.91e-7,
+        "reorder_filter": 0.000004875,
+        "row_group_pruner": 3.34e-7,
+        "row_number_rewriter": 5.83e-7,
+        "sampling_pushdown": 2.92e-7,
+        "scalar_fn_pushdown": 2.5e-7,
+        "statistics_propagation": 0.000043917,
+        "top_n": 4.58e-7,
+        "top_n_window_elimination": 0.000001667,
+        "total_time": 0.000677083,
+        "type_pushdown": 6.25e-7,
+        "unnest_rewriter": 9.58e-7,
+        "unused_columns": 0.000022,
+        "window_self_join": 0.000002791
+    },
+    "physical_planner": {
+        "column_binding": 0.000012875,
+        "create_plan": 0.00003825,
+        "resolve_types": 0.000001,
+        "total_time": 0.000057334
+    },
+    "planner": {
+        "binding_time": 0.000334,
+        "total_time": 0.000489791
+    },
+    "query": {
+        "cpu_time": 0.00017725100000000001,
+        "sql": "INSERT INTO __td_native_pending\n SELECT 4096+row_number() OVER(ORDER BY source_assertion_id,side),\n sha256(to_json(struct_pack(kind:='td.entity.patch.fragment/1',command_id:=command_id,\n source_assertion_id:=source_assertion_id,side:=side))),\n e,a,tag,payload,v_tag,v_s,v_b,v_i,v_f,NULL,extra_json,valid_from,valid_to,source_assertion_id,validation_command_id,side\n FROM (\n SELECT c.command_id,a.e,a.a,a.tag,a.payload,a.v_tag,a.v_s,a.v_b,a.v_i,a.v_f,a.extra_json,\n CASE WHEN piece.side='left' THEN a.valid_from ELSE c.valid_to END valid_from,\n CASE WHEN piece.side='left' THEN c.valid_from ELSE a.valid_to END valid_to,\n a.assertion_id source_assertion_id,coalesce(s.validation_command_id,a.command_id) validation_command_id,piece.side\n FROM main.assertions a JOIN __td_native_old old USING(assertion_id)\n LEFT JOIN td_catalog_v1.entity_assertion_sources s USING(assertion_id)\n CROSS JOIN __td_native_ctx c CROSS JOIN (VALUES ('left'),('right')) piece(side)\n WHERE (piece.side='left' AND a.valid_from<c.valid_from) OR (piece.side='right' AND c.valid_to<a.valid_to)\n ) pieces;\n\n",
+        "total_intermediate_rows": 14,
+        "total_intermediate_size_bytes": 22016,
+        "total_row_groups_scanned": 3,
+        "total_row_groups_to_scan": 4,
+        "total_rows_scanned": 5,
+        "total_time": 0.002173666
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 23174896,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 2359296
+    }
+}

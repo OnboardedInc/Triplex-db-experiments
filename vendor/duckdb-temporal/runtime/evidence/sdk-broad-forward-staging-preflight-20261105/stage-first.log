@@ -1,0 +1,1 @@
+{"receipt": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-sdk-integration-20261105/runtime/build/sdk-broad-regression-20261105/forward-02/stage-before.json", "counts": {"b0": {"inventory": 445, "runtime": 404, "source": 40, "sidecars": 1, "actualStagedRuntime": 405}, "sdk": {"inventory": 445, "runtime": 404, "source": 40, "sidecars": 1, "actualStagedRuntime": 405}}}

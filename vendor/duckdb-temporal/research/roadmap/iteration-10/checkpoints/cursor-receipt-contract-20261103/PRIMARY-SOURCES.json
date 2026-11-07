@@ -1,0 +1,166 @@
+{
+  "schema": "temporal-datalog/goal10-cursor-source-ledger/1",
+  "research_date_utc": "2026-11-03",
+  "status": "SOURCE_RESEARCH_AND_HAND_SPECIFICATIONS_ONLY",
+  "provenance_limit": "Git blob IDs are connector-returned source identities. No independent bulk public-content rehash or runtime/loaded-build authentication is claimed.",
+  "reconciled_project_state": {
+    "progress_page_url": "[PRIVATE_APPLICATION_REFERENCE_REMOVED]",
+    "progress_page_sequence": 90,
+    "pr9": {
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "head": "dbb7d27a20430e09413f92259007961ad8e66ac3",
+      "state": "open draft unmerged"
+    },
+    "pr8_head": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "pr7_head": "a7ddd79021ce3f5a7030420ebc1003e855fccfde",
+    "goal_acceptance": "Goals 1-2 bounded accepted. Goals 3/original 4 incomplete/held; goals 4.1-10 unaccepted. This packet changes no acceptance or runtime outcome."
+  },
+  "upstream_sources": [
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "docs/custom-runtimes.md",
+      "returned_git_blob_sha": "df7813e8fbf95d6f595c2aaee8af95318b2de0b1",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/docs/custom-runtimes.md"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/Temporal.ts",
+      "returned_git_blob_sha": "a8b64d1b699f3ea2de55b2cfca4139b288686d8c",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Temporal.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/Pagination.ts",
+      "returned_git_blob_sha": "96768cf49ed11a5777e2c6c37c3e6a8e78ef6c6d",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Pagination.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/runtime/DatabaseScope.ts",
+      "returned_git_blob_sha": "52543077e932e0fcf3d72194d5e7d73762098817",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/runtime/DatabaseScope.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/runtime/Runtime.ts",
+      "returned_git_blob_sha": "05d0dc5103425c88534f3d32f427ffc59239a109",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/runtime/Runtime.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/RuntimeServices.ts",
+      "returned_git_blob_sha": "23d0c7e76baf446c796c8c8677d9741313d2b55f",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/RuntimeServices.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/TripleStoreRuntime.ts",
+      "returned_git_blob_sha": "85b96c997704577ab92b50f6b600ca68eaa7dde8",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/TripleStoreRuntime.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/storage/StorageAdapter.ts",
+      "returned_git_blob_sha": "fe0a39f867cae25171c067907333eb68757f5f55",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/storage/StorageAdapter.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/storage/QueryExecutor.ts",
+      "returned_git_blob_sha": "8c1d3e3b9cf9cc8c14586e0fc48780075086157f",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/storage/QueryExecutor.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "returned_git_blob_sha": "d6ef6b0fae64c8a5599dc0757333229766050bd8",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/TriplesLive.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/store/transactionMetadata.ts",
+      "returned_git_blob_sha": "7b1b94006490c806a03f8c3b3c76f15143329da6",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/store/transactionMetadata.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/datalog/compiler.ts",
+      "returned_git_blob_sha": "e1df2e3f61fd72e574f77418160448b885045c5f",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/datalog/compiler.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/Triple.ts",
+      "returned_git_blob_sha": "aa3d33cebb5dcc7de4d8dc236e599f70354b0538",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Triple.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/core/src/Value.ts",
+      "returned_git_blob_sha": "d5e673ad24ba69267aa3dbae8a7cea1839225c97",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/core/src/Value.ts"
+    },
+    {
+      "repository": "bjacobso/triplex",
+      "ref": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+      "path": "packages/testkit/src/index.ts",
+      "returned_git_blob_sha": "d410781a7dc61a3833991a6fc9463c7dbf9c1a77",
+      "url": "https://github.com/bjacobso/triplex/blob/e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0/packages/testkit/src/index.ts"
+    }
+  ],
+  "published_product_sources": [
+    {
+      "repository": "Contributor/research-reference",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/schema_v2.sql",
+      "returned_git_blob_sha": "5f8cff5ee6980e45df0e5094ac378514b750de0c",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/typed_store.py",
+      "returned_git_blob_sha": "100a4cbb7867f1454a304635ed6ba618d0ef04ce",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    },
+    {
+      "repository": "Contributor/research-reference",
+      "ref": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "path": "projects/temporal-datalog/prototype/native-cloud-v06/native_negagg_persisted06_integration001/source/storage/store.py",
+      "returned_git_blob_sha": "479d6a9133acddfd32a6c93a723f8c77155db4e4",
+      "url": "[PRIVATE_REFERENCE_REMOVED]"
+    }
+  ],
+  "existing_context": {
+    "repository": "Contributor/research-reference",
+    "path": "projects/temporal-datalog/research/triplex-interoperability-20261030.md",
+    "returned_git_blob_sha": "de30df3fdd47036a82006fba499b84d5cdb11840",
+    "role": "Earlier broad interoperability research; no adapter or runtime result."
+  },
+  "hand_specifications": {
+    "count": 18,
+    "status": "UNEXECUTED",
+    "groups": [
+      "T01-T06 temporal intersections",
+      "Q01-Q06 query identity and ordering",
+      "J01-J03 global journal continuation",
+      "R01-R02 receipt identity",
+      "F01 fixed-clock fixture configuration"
+    ]
+  },
+  "execution_statement": "No repository subject, fixture/model, compiler, import, package, native/helper, database, WAL, conformance or benchmark action was run. Text-file creation, readback and review are documentation work only."
+}

@@ -1,0 +1,6 @@
+{
+  "reviewed_contract_sha256": "7419e181ba833911a672f89e972b6475af37db4bf4b6e28928c85e9cf64797a2",
+  "final_contract_sha256": "56c7b0c54670d95c4b012e925e8d931963951129663f49f94e58d6ed76950180",
+  "change": "Post-review wording clarifies already selected filter-budget TD_E_EXPR_LIMIT versus unchanged old candidate-limit messages, and no globally canonical resource-versus-data-fault priority. No operator/grammar/numeric/limit/work policy changed.",
+  "final_frozen_at_utc": "2026-10-30T20:40:00Z"
+}

@@ -1,0 +1,33 @@
+{
+  "archive": "codec-correctness-source-and-review-evidence.tar.gz",
+  "bytes": 676190,
+  "sha256": "46df472f3d43cc53cea092b80ad0d041c958f9c05d645c141aea01231d747b2f",
+  "entries": 374,
+  "source_bytes": 2818041,
+  "parts": [
+    {
+      "path": "archive.part01.b64",
+      "bytes": 300001,
+      "sha256": "1955a49dd1c8a66ab44fb16ada73b0d5c51d79b57f25c7704b5b2805179cfe10",
+      "git_sha": "62d7c990681d6e904ebf3a94ff4545fb34600483"
+    },
+    {
+      "path": "archive.part02.b64",
+      "bytes": 300001,
+      "sha256": "69b501f90cee26db5cfebdea553f58b88885824649d3d08f4e56a3611b27f2c7",
+      "git_sha": "95b7a68a03b2e8c80d9a8e51e74c018e4c2ab18f"
+    },
+    {
+      "path": "archive.part03.b64",
+      "bytes": 300001,
+      "sha256": "3fccc8341abbd8e6dfd4c8a4426c6625e6b17cf40121d94a9cee8f7bd1eda046",
+      "git_sha": "5cd5ed3599733a3d725c91bd4805571617d7856d"
+    },
+    {
+      "path": "archive.part04.b64",
+      "bytes": 1585,
+      "sha256": "f11c66574af486862381c851ef24051c8993d565f448929c8836b97fa5542572",
+      "git_sha": "c848b49b9f04f5c244163a0203c6c56ab1b8b2f7"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+test_absent_v2_is_nonpassing_unavailable_with_no_test_run (__main__.HarnessSelfTests.test_absent_v2_is_nonpassing_unavailable_with_no_test_run) ... ok
+test_explicit_expected_order_is_not_silently_sorted (__main__.HarnessSelfTests.test_explicit_expected_order_is_not_silently_sorted) ... ok
+test_fixture_snapshot_validates_without_native_execution (__main__.HarnessSelfTests.test_fixture_snapshot_validates_without_native_execution) ... ok
+test_i64_source_boundary_and_source_type_checks (__main__.HarnessSelfTests.test_i64_source_boundary_and_source_type_checks) ... ok
+test_missing_extension_is_nonpassing_unavailable (__main__.HarnessSelfTests.test_missing_extension_is_nonpassing_unavailable) ... ok
+test_output_decoder_does_not_hide_zero_or_mask_bugs (__main__.HarnessSelfTests.test_output_decoder_does_not_hide_zero_or_mask_bugs) ... ok
+test_source_values_reject_bad_types_before_sql (__main__.HarnessSelfTests.test_source_values_reject_bad_types_before_sql) ... ok
+test_tags_do_not_collapse_python_numeric_equality (__main__.HarnessSelfTests.test_tags_do_not_collapse_python_numeric_equality) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.008s
+
+OK

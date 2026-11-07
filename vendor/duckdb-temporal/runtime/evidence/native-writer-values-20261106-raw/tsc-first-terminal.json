@@ -1,0 +1,12 @@
+{
+  "command": [
+    "node",
+    "[LOCAL_PATH_0044]",
+    "-p",
+    "tsconfig.json"
+  ],
+  "startedAtUtc": "2026-11-06T06:35:48.268283+00:00",
+  "pid": 58929,
+  "exitCode": 0,
+  "endedAtUtc": "2026-11-06T06:35:50.011172+00:00"
+}

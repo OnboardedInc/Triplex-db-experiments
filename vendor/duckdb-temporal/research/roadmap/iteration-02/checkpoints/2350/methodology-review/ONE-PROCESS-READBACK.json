@@ -1,0 +1,95 @@
+{
+  "scope": "One completed controller/process JSON inspected as text only; not all168-process verification or execution",
+  "campaign_path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-performance/runs/comparison-A/campaign.json",
+  "campaign_sha256_at_read": "42cf8b429d6573e3fe25ca4d72b960a5f8b2de8fa96d53fa41be4ec400b11a9c",
+  "campaign_status": "PASS",
+  "campaign_metadata": {
+    "status": "PASS",
+    "comparison": "isolate_wrapper_batch",
+    "study_manifest_sha256": "357664ce0a6af25efc171f5687e917cf4cc4ffd2d37ea580bfc6e89ac4119a0a",
+    "optimization": 0,
+    "debug": true,
+    "child_PYTHONOPTIMIZE": "0",
+    "started_utc": "2026-10-30T23:31:11.984901+00:00",
+    "finished_utc": "2026-10-30T23:32:12.223320+00:00"
+  },
+  "controller_record": {
+    "name": "round1-pair01-proposed",
+    "block": 0,
+    "round": 1,
+    "pair": 1,
+    "variant_order": [
+      "proposed",
+      "hardened8b"
+    ],
+    "variant": "proposed",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "/tmp/temporal-roadmap-research/iteration-02/fp-cost-performance/worker.py",
+      "--variant",
+      "proposed",
+      "--comparison",
+      "isolate_wrapper_batch",
+      "--mode",
+      "run",
+      "--block",
+      "0",
+      "--out",
+      "/tmp/temporal-roadmap-research/iteration-02/fp-cost-performance/runs/comparison-A/round1-pair01-proposed"
+    ],
+    "returncode": 0,
+    "timeout": false,
+    "whole_fresh_process_wall_ns": 666148667,
+    "status": "PASS",
+    "validation_error": null
+  },
+  "process_path": "/tmp/temporal-roadmap-research/iteration-02/fp-cost-performance/runs/comparison-A/round1-pair01-proposed/process.json",
+  "process_sha256_at_read": "dd3a071d2a1e7365ef76bc503f715ea628d6a5ed2802c08df87d238955abe150",
+  "process_metadata": {
+    "status": "PASS",
+    "variant": "proposed",
+    "comparison": "isolate_wrapper_batch",
+    "block": 0,
+    "mode": "run",
+    "study_manifest_sha256": "357664ce0a6af25efc171f5687e917cf4cc4ffd2d37ea580bfc6e89ac4119a0a",
+    "candidate_admission_sha256": "ad9bfc675cb9e335c1f189dcca58149068ebfa646e53ab26adb4c5c33006c1cb",
+    "source_registry_sha256": "50152399d590ae4b5f51e20dcb7d7d7b9c5768c5df21b9b43dfc584cbc2eb04a",
+    "artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+    "runtime_native_module_sha256": "e7cda112749d860a36cb1524ff465cefecdb0acc5c4e2ff4510ecc1b6f6c061a",
+    "template_sha256": "9a22f33e305134cb05f52cb4829039e14869073c76075042f9c7146208621183",
+    "history_checksum_from_exact_template_receipt": "2fe50bd9fa8cd1a29fea8633241b602f6635f3235fd15f4f179489d76e31d642",
+    "optimization": 0,
+    "debug": true,
+    "PYTHONOPTIMIZE": "0",
+    "affinity": [
+      8
+    ],
+    "gc_enabled": true,
+    "caps": {
+      "MAX_FACTS": 512,
+      "MAX_OPERATIONS": 32
+    },
+    "setup_ns": {
+      "source_import_ns": 71267867,
+      "physical_template_copy_ns": 1191804,
+      "store_open_ns": 113904961
+    },
+    "started_utc": "2026-10-30T23:31:12.350682+00:00",
+    "runtime": [
+      [
+        "v2.0.0",
+        "d54cbbe3df",
+        "Cyanoptera"
+      ]
+    ],
+    "fp_controls": {
+      "round": 0,
+      "mxcsr": 8099,
+      "x87": 895
+    },
+    "observations": 70,
+    "measured": 42,
+    "peak_rss_kib": 81832,
+    "finished_utc": "2026-10-30T23:31:12.645607+00:00"
+  }
+}

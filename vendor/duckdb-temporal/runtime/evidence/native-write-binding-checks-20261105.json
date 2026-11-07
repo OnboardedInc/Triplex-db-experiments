@@ -1,0 +1,109 @@
+{
+  "schema": "td.native-write-binding-checks/1",
+  "status": "passed",
+  "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+  "commonBase": "773f7746466caf0ba4eff70a741e9594d07f39cc",
+  "binding": {
+    "file": "evidence/antijoin-native-write-candidate-binding-v2-20261105.json",
+    "sha256": "0eaf2187d65289cbbb2902ae58867ab64127d4c973d6fe59341065e50356f963"
+  },
+  "actualCandidatePins": {
+    "core_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "companion_extension": "55e588fe07eeed3116721b5b2b0511be5a5cdd5566879d3b5dc2773b260e3390",
+    "control_bridge": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "baselinePins": {
+    "core_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+    "companion_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+    "control_bridge": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+    "engine_library": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "adapter/native-entity.js": "75479398072e725d1c5871699b49b4940f03f1af79f71b95efac730bddf2b57d",
+    "adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "originalBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+  "approvedSourceFixture": {
+    "databaseSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "evidenceSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "knownAt": "39087",
+    "size": 10000000,
+    "initialAdded": 22,
+    "groupSize": 256
+  },
+  "sourceCommitProof": {
+    "trackedInputs": 37,
+    "tree": "f764d07530516a86172d93557f05a922d0bd1f80",
+    "allTrackedInputsMatched": true,
+    "generatedHeaderBoundSeparately": true
+  },
+  "checks": {
+    "syntax": 2,
+    "purePolicyCases": 5,
+    "commonOracleAndBudgetCases": 4,
+    "allPassed": true,
+    "actualBindingGeneration": true,
+    "actualVerificationAPI": true,
+    "wrongBaselineCommitRejected": true,
+    "wrongCommitBindingCreated": false,
+    "nativeRebuild": false,
+    "mixedRunStarted": false
+  },
+  "initialUnqualified": {
+    "file": "evidence/antijoin-native-write-candidate-binding-initial-unqualified-20261105.json",
+    "sha256": "ca8143ffa2f43ca82311a78b6071ce709c5202e92a8e510acd1e61f9a4a966cd",
+    "initialSyntaxAndNineCasesPassed": true,
+    "reviewGap": "Commit label was only syntax checked and common fixture/recipe not enforced. Corrected with37 tracked-input git-show checks and existing source preflight hashes before timing."
+  },
+  "source": {
+    "helperSha256": "32b196aaa07268e050d601d906570cea29541505f0d61b0a2f83ab3f9b63f610",
+    "harnessSha256": "b57ec6acf0efd993c6b86d801e0af3295ee4ef2e15deb5e8e1dd76786d3518bc",
+    "pureTestSha256": "bd116dbe7a6c63c93e23ab5b83fe6c4df53e551cf5d88bc4cc3e1c8ed192bee2"
+  },
+  "logs": [
+    {
+      "file": "build/native-write-binding-gate-01/helper-syntax-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/harness-syntax-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/pure-01.tap",
+      "sha256": "1ed4ae7379d6dc424f9e6e6de6fecab3719a776f0fb44114ec26014dea8b228f"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/binding-01.log",
+      "sha256": "4e329fc48ad11ef829fd1e16e3e4086cb1117fa0edef4e3b04fd6c85cc065242"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/helper-syntax-02.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/harness-syntax-02.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/pure-02.tap",
+      "sha256": "f0b99c83642e71d5d3410b71a88378d5f7d1ed9dfbcc8478afc8eb69e0ae2753"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/binding-02.log",
+      "sha256": "0f835f9bc11f8b21f8c6cfeabf84743a7c087a731c80f3c7c67b7aad2dca45fe"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/verification-02.log",
+      "sha256": "9a40a7aaad786ebcea2d35a685886dfc18a2b255608c4ffbeb1871b0756297c6"
+    },
+    {
+      "file": "build/native-write-binding-gate-01/commit-negative-01.log",
+      "sha256": "3990ed36318011bc207536e8310c8b9fbf763dd8e4cb48f04debb298148b885f"
+    }
+  ],
+  "scope": "No DuckDB instance, native rebuild, query or benchmark was run in this binding qualification. Numeric limits and all child read/write loops are unchanged. Initial binding is retained but cannot pass current admission."
+}

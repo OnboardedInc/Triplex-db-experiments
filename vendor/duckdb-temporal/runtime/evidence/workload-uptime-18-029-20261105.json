@@ -1,0 +1,285 @@
+{
+  "schema": "td.workload-three-engine-functional/1",
+  "result": "PASS",
+  "timestampUtc": "2026-11-05T19:57:10.602Z",
+  "runtimeSource": "00b7b8f814081bb49f693a6ee30eb88499f0cf4f",
+  "workloadSource": "5c035921c80daa44a838c9fac12402e2db0670f8",
+  "rawEvidence": {
+    "file": "build/workload-runs/uptime-18-029-20261105.json",
+    "sha256": "20f9f22070382f0698e0eb19e4dd88ea7674cb11e10c34959001c47c7571b515"
+  },
+  "artifactSha256": {
+    "build/artifact.json": "43dadeac8510f2e172dd1f93bc3f4d559319f3681e67f5bcc09287c30d19119c",
+    "build/temporal_datalog.duckdb_extension": "01f451d1d59943cfbced162580cc800527614474e50150994ddb99775312eb8b",
+    "build/temporal_control.node": "57557b073784a65295449d21ebb9e98be939e5862e3df23728d4574339a10c3c",
+    "build/adapter/native-entity.js": "dce9f786f042f0df8d7c2adca08abdab2d317bcfcb40b642629f7e775959f04b",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/owner_probe/artifact.json": "b398eee79974b2b6a510b3358f3ada83cf86a21d7d7a6327a2ff0bc481e40c70",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "852e7e838ba9764e0bf3a8d4d60e59f325d427603122c5aad11ef860360f1fe8"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "packetSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "runnerSourcesSha256": {
+    "workloads/run_three_engines.mjs": "fa7d592d831e7c486ebb3bd51b91756bd662ce83327ed6040c727429bceefec2",
+    "workloads/engine_cases.mjs": "089413b9d36e6b8667ee4cccfe22061368d0c551b6ca8cfa4a10f7b8d9e26ebc",
+    "workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+    "workloads/containment_cases.mjs": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+    "workloads/uptime_cases.mjs": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9",
+    "workloads/event_oracles.py": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02",
+    "workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+  },
+  "oracleCoverage": {
+    "immutableEventCases": 71,
+    "workloads": 20
+  },
+  "exactEngineAnswers": 15,
+  "allReopenChecksPassed": true,
+  "scope": "Machine uptime duration from exact intervals on the owned route, raw event replay and typed interval union in DuckDB. One sample per case, correctness only.",
+  "profiles": [
+    {
+      "profile": "naive_sql",
+      "reopenVerified": true,
+      "cases": [
+        {
+          "id": "union10",
+          "cut": {
+            "known_at": "1"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "10"
+              }
+            ]
+          ],
+          "route": "naive_sql"
+        },
+        {
+          "id": "duplicate-stays10",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "10"
+              }
+            ]
+          ],
+          "route": "naive_sql"
+        },
+        {
+          "id": "clipped",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "5"
+              }
+            ]
+          ],
+          "route": "naive_sql"
+        },
+        {
+          "id": "gap",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "0"
+              }
+            ]
+          ],
+          "route": "naive_sql"
+        },
+        {
+          "id": "bridge-known",
+          "cut": {
+            "known_at": "3"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "12"
+              }
+            ]
+          ],
+          "route": "naive_sql"
+        }
+      ]
+    },
+    {
+      "profile": "direct_duckdb",
+      "reopenVerified": true,
+      "cases": [
+        {
+          "id": "union10",
+          "cut": {
+            "known_at": "1"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "10"
+              }
+            ]
+          ],
+          "route": "direct_duckdb"
+        },
+        {
+          "id": "duplicate-stays10",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "10"
+              }
+            ]
+          ],
+          "route": "direct_duckdb"
+        },
+        {
+          "id": "clipped",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "5"
+              }
+            ]
+          ],
+          "route": "direct_duckdb"
+        },
+        {
+          "id": "gap",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "0"
+              }
+            ]
+          ],
+          "route": "direct_duckdb"
+        },
+        {
+          "id": "bridge-known",
+          "cut": {
+            "known_at": "3"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "12"
+              }
+            ]
+          ],
+          "route": "direct_duckdb"
+        }
+      ]
+    },
+    {
+      "profile": "temporal_store",
+      "reopenVerified": true,
+      "cases": [
+        {
+          "id": "union10",
+          "cut": {
+            "known_at": "1"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "10"
+              }
+            ]
+          ],
+          "route": "bounded_native_intervals"
+        },
+        {
+          "id": "duplicate-stays10",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "10"
+              }
+            ]
+          ],
+          "route": "bounded_native_intervals"
+        },
+        {
+          "id": "clipped",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "5"
+              }
+            ]
+          ],
+          "route": "bounded_native_intervals"
+        },
+        {
+          "id": "gap",
+          "cut": {
+            "known_at": "2"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "0"
+              }
+            ]
+          ],
+          "route": "bounded_native_intervals"
+        },
+        {
+          "id": "bridge-known",
+          "cut": {
+            "known_at": "3"
+          },
+          "typedAnswer": [
+            [
+              {
+                "tag": "i64",
+                "value": "12"
+              }
+            ]
+          ],
+          "route": "bounded_native_intervals"
+        }
+      ]
+    }
+  ]
+}

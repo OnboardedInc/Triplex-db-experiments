@@ -1,0 +1,16 @@
+{
+  "schema": "td.native-writer-first-build-root-review/1",
+  "implementationSource": "f558c24aa754babb93017517e473f17419ab4fb3",
+  "testedSource": "1d2fc09e1bb9b3b8c62a370820d102df484f5a42",
+  "gitSourcePinsVerified": 56,
+  "actualCompilerLogSha256": "a89a48589b2e75382b5e8e0ad4de61c258c5f638bac45558298853758e4d63ae",
+  "actualFirstError": "-Wmisleading-indentation",
+  "newCompanionCompiled": true,
+  "newAddonCompiled": false,
+  "actualPublicTests": 0,
+  "tscRun": false,
+  "engineQueriesRun": false,
+  "repairSource": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "repairReview": "Only braces and separate return in get_handle, error/behavior unchanged.",
+  "rootAndIndependentSourceReview": "Root reviewed worker/CABI/bootstrap/dispatch/scopes/health; independent C f558 review found no blocker. Active-job teardown/delivery fault gates remain open."
+}

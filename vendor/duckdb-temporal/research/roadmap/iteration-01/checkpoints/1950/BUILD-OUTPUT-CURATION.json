@@ -1,0 +1,39 @@
+[
+  {
+    "label": "initial-balanced",
+    "original_sha256": "f3da62e6362e18264e93e2befdb7826e06967f5f156b61151dc4e1f78d985b1c",
+    "removed": [
+      {
+        "path": "evidence/real-artifact-provenance-1857/artifacts/A_stable_legacy/temporal_datalog.duckdb_extension",
+        "bytes": 100894,
+        "sha256": "62c9f24e3f8951771ff0f7ceae7dd255843885b203c818bb53e3c232baa45662",
+        "reason": "reproducible compiled build output, not needed in durable source/research notes"
+      },
+      {
+        "path": "evidence/real-artifact-provenance-1857/artifacts/B_actual_v2_same_core/temporal_datalog.duckdb_extension",
+        "bytes": 117326,
+        "sha256": "69916109931921a0499ddcdedcfb34e4a48635ad6953713b8b18d7bde52e0b4f",
+        "reason": "reproducible compiled build output, not needed in durable source/research notes"
+      },
+      {
+        "path": "evidence/real-artifact-provenance-1857/artifacts/T_actual_v2_typed/temporal_datalog.duckdb_extension",
+        "bytes": 192606,
+        "sha256": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+        "reason": "reproducible compiled build output, not needed in durable source/research notes"
+      }
+    ],
+    "retained": 309
+  },
+  {
+    "label": "paired-followup",
+    "original_sha256": "130a5f8089663d1d10f04d3fc426589da51dd046b9ea5d0d58e677bdfac98743",
+    "removed": [],
+    "retained": 204
+  },
+  {
+    "label": "compact-host-negative",
+    "original_sha256": "957f1b5336a1ef43095cc03b6d7bfa8200b44257144882dc76c2191a018c9045",
+    "removed": [],
+    "retained": 58
+  }
+]

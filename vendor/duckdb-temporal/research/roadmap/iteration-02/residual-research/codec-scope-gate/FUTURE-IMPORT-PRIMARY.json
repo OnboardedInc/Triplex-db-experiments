@@ -1,0 +1,11 @@
+{
+  "at_utc": "2026-10-31T02:19:14.455Z",
+  "repository": "python/cpython",
+  "source_commit": "2abcf904b8dac8c999d2b3aac76681abb333798a",
+  "path": "Doc/reference/simple_stmts.rst",
+  "git_blob_sha": "5e3ede69d1e5d78f193af5f1dbcc12c6f53d69ab",
+  "characters": 40936,
+  "paraphrase": "Future imports must precede ordinary declarations, apart from a module docstring/comments/blank lines/other future imports. AST parsing does not substitute for all compiler validity checks.",
+  "selected_fix": "Before erasure require added declarations after unchanged future-import prefix; retain450 revision02 and future-placement specimen, add tiny revised-source negative.",
+  "no_application_execution": true
+}

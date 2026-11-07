@@ -1,0 +1,13 @@
+{
+  "verified_utc": "2026-10-30T23:57:03.446246+00:00",
+  "archive": "research-evidence.tar.gz",
+  "bytes": 1298841,
+  "sha256": "4f44178345b4888cefb5170de9b785d56f3916814656ef60a09c7df4b45de095",
+  "curated_files_manifest_sha256": "1f2c4656561459cc3258702722c57c0c3b085dd3fde64d9600bc43f786118bc2",
+  "archived_file_count": 186,
+  "every_archived_file_hash_verified": true,
+  "source_closure_sha256": "352a2bd56231f73048f43108d0487dc77a2751a4832587e9c26d43ad1d0516ca",
+  "report_sha256": "0c8375148fcd52728220e94d6a75e9e20473d809a78873bd2f331957d8ebd792",
+  "excluded_full_third_party_sources_and_binary": true,
+  "status": "PASS"
+}

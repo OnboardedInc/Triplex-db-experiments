@@ -1,0 +1,16 @@
+{
+  "command": [
+    "[LOCAL_PATH_0043]",
+    "adapter/diagnose-reference-coverage-growth.mjs",
+    "--database",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/reference-coverage-growth-FPDV3o/facts.duckdb",
+    "--output",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime/build/diagnostic-reference-coverage-growth-20261106-01/result.json"
+  ],
+  "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-reference-coverage-20261106/runtime",
+  "pid": 61725,
+  "startedAtUtc": "2026-11-06T11:07:07.230089+00:00",
+  "endedAtUtc": "2026-11-06T11:07:07.456772+00:00",
+  "exitCode": 0,
+  "elapsedMs": 226.71537497080863
+}

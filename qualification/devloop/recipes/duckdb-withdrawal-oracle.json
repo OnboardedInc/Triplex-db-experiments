@@ -1,0 +1,69 @@
+{
+  "format": "triplex-prospective-queued-read-withdrawal-oracle/1",
+  "status": "FROZEN_EXPECTATIONS_UNEXECUTED",
+  "baseCommit": "ca2dd6d321aaf4e479bfe31eb3e0b0163309cbad",
+  "control": {
+    "reference": "duckdb-public-read-stages-v1/0001",
+    "terminalSha256": "efccbbde64a67467e036b98a067788de991e4074111bb670346658e57f0e5009",
+    "cancelledRequest": "burst-15-cancel",
+    "callerInterruptedMs": 0.4359580000000278,
+    "cancelledTicketLaterNativeCurrentPositionCalls": 1,
+    "cancelledTicketLaterServiceMs": 104.9132089999996,
+    "meaning": "Observed control failure retained; wrapper wall, not independent engine CPU."
+  },
+  "candidateRequiredOutcomes": {
+    "normalAnswers": 17,
+    "explicitCallerCancellations": 1,
+    "applicationWrites": 0,
+    "positionBefore": 2,
+    "positionAfter": 2,
+    "queuedRequestConfirmedBeforeCancellation": true,
+    "withdrawalOutcome": "not_started",
+    "cancelledTicketResourceReadbackAfterWithdrawal": 0,
+    "cancelledTicketBeginCallsAfterWithdrawal": 0,
+    "cancelledTicketNativeSqlCallsAfterWithdrawal": 0,
+    "cancelledTicketCommitCallsAfterWithdrawal": 0,
+    "cancelledTicketOwnershipActivationsAfterWithdrawal": 0,
+    "otherRequestsInterrupted": 0,
+    "nativeWorkPendingAfterDrain": 0,
+    "JavaScriptSkipContinuationMeaning": "A cancelled FIFO node may later perform a pure skip. It must call no native operation and close must still drain the chain."
+  },
+  "actualAcquisitionRace": {
+    "ifWithdrawalReturnsFalse": "Retain acquiring/acquired classification. Await start, run no cancelled user body, preserve real rollback/audit/unknown handling; do not claim queued acceptance.",
+    "queuedGate": "INCONCLUSIVE_REQUIRES_NEW_BOUNDED_ATTEMPT_IF_INTENDED_REQUEST_ALREADY_ACQUIRING"
+  },
+  "activeCancellationOracle": {
+    "realOwnedInterruptRequested": true,
+    "sameRequestNativeStatementSettled": true,
+    "rollbackAndOwnershipAcknowledgmentObserved": true,
+    "subsequentHealthyReadExact": true,
+    "callerSettlementAloneQualifies": false
+  },
+  "retainedAcquiredStandaloneMetadata": {
+    "callerMayReturnBeforePhysicalCompletion": true,
+    "readMayCommitAndAuditAfterCallerInterruption": true,
+    "otherOwnerMustNeverBeInterrupted": true,
+    "qualifiesAsQueuedWithdrawalOrCallerAcknowledgedDrain": false
+  },
+  "profile": {
+    "threads": 1,
+    "memoryBytes": 128000000,
+    "maximumSpillBytes": 64000000,
+    "requestDeadlineMs": 30000,
+    "diagnosticEnvelopeMs": 120000,
+    "aggregateReservationBytes": 2147483648,
+    "aggregateCpuUnits": 2
+  },
+  "unchanged": [
+    "Existing Triplex values, rows, scope/P/V/R, compiler, query defaults and page behavior",
+    "Ordinary write acquisition and commit/rollback acknowledgment",
+    "C++ owner audits for every actual physical transaction",
+    "Same-owner caught nested failure poisoning and existing caught-foreign preflight refusal behavior",
+    "Active native interrupt and cleanup/fencing",
+    "Separate basis/answer transactions; candidate A is not part of this repair"
+  ],
+  "limits": [
+    "No draft build, candidate engine trial, cancellation qualification or performance result exists yet.",
+    "A follows only after this independent correctness prerequisite qualifies; B/C remain competing unimplemented hypotheses."
+  ]
+}

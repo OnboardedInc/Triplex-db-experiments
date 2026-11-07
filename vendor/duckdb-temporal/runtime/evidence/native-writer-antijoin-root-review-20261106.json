@@ -1,0 +1,65 @@
+{
+  "schema": "td.native-writer-antijoin-root-review/1",
+  "status": "accepted_original16_not_promotion",
+  "recordedAtUtc": "2026-11-06T09:01:23.077426+00:00",
+  "gatesPassed": 16,
+  "gatesTotal": 16,
+  "profiles": [
+    {
+      "readers": 1,
+      "pid": 5388,
+      "fixedSamples": 20,
+      "mixedSamples": 264,
+      "qps": 4.392711204827173,
+      "p50": 225.8812079999916,
+      "p99": 266.9560410000049,
+      "acks": 527,
+      "ackRate": 8.780253866649934,
+      "rss": 2607661056,
+      "tenSecondWindows": [
+        87,
+        87,
+        89,
+        87,
+        88,
+        88
+      ],
+      "finalK": 39622,
+      "rawSha256": "ad37e498f567412a2bfa89de26781c5b9f95950ff6548a3870b66358a43b4518"
+    },
+    {
+      "readers": 16,
+      "pid": 5799,
+      "fixedSamples": 320,
+      "mixedSamples": 467,
+      "qps": 7.567275509885292,
+      "p50": 2059.9590420000022,
+      "p99": 3089.1542090000003,
+      "acks": 365,
+      "ackRate": 6.080798172565213,
+      "rss": 2868035584,
+      "tenSecondWindows": [
+        60,
+        58,
+        62,
+        62,
+        62,
+        60
+      ],
+      "finalK": 39460,
+      "rawSha256": "e59334464f98c1a2317e277f9c054a2de2ace7283f01131b744b1b7502184cc0"
+    }
+  ],
+  "totalSavedSamples": 1071,
+  "totalACKs": 892,
+  "sourceAndMapsUnchanged": true,
+  "outerSha256": "e3f03d4adba89594ddd99bc1558818910e681a98779e90ce27586773884717da",
+  "scope": "Frozen driver checks full typed answers in-flight; independent root checks saved typed reuse/reopen tuples, cardinalities/frontiers, original limits, quantiles, writer positions/windows, actual PID/argv/runtime binding, exact six images, zero cleanup and closed clones. Not original B0 comparison or production promotion.",
+  "packagedEvidence": {
+    "commit": "8a8e3f56e2472ef5aa7a33521d13e3be0d175e01",
+    "receiptSha256": "a4100b105073774469abd55958c62351e37ed7b3462da52d4c77df5e49af9a18",
+    "rawFiles": 35,
+    "originalAndPackagedHashesVerified": true,
+    "exactFivePathPrefixNormalizationVerified": true
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "at_utc": "2026-10-31T02:20:47.614741+00:00",
+  "status": "PASS_ROOT_FINAL_CODEC_CORRECTNESS_CLOSURE",
+  "full_clean_export_actual_exit": 0,
+  "manifest_sha256": "cb63b5055b4e58dc9a2cfbaaf4d316a107be8c807b4cac6d387d40446151273d",
+  "source_files_all269_unchanged_in_export_working_and_noengine_mirror": true,
+  "typed_presence": "18PASS+1inapplicable absence-arm skip; both genuine NativeTyped methodsPASS",
+  "typed_absence": "17PASS+2native-only UNRUN skips; noartifact natural path, no monkeypatch",
+  "independent_migration_counts": {
+    "PASS": 26,
+    "FAIL": 0,
+    "UNRUN": 0
+  },
+  "independent_QA_report_sha256": "8a5d76b9782f451b50f0ae7d4647ec0c4c54c39510cafb2d4f5d5cea86336090",
+  "independent_QA_curated_manifest_sha256": "d9dabfc1b036d4cd5dd180f0103e13dc27d9ea457a9c3d56eece82f6efd672a2",
+  "independent_QA_all175_payload_hashes_verified": true,
+  "independent_QA_current": "60768focused+6genuine-store/GC+9restored controlchildren PASS; earlier2harness failures preserved, no appfix",
+  "writer11_commands": "all actualexit0; exactfirst269sourcefreeze31ad before imports",
+  "native_artifact_sha256": "480456248ffa53e453d41737a37cc2a2d54764ffbd449b9e6ea95f3d805d68b4",
+  "scope": "Correctness on exact executed source; direct-core SAN not full-host/binding SAN; no new performance/timing or item2 acceptance",
+  "codec_macro_performance": "NOT_RUN"
+}

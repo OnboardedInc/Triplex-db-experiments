@@ -1,0 +1,20 @@
+# Post-fix paired studies and independent closure
+
+**Item2 remains unaccepted: partial performance recovery, residual signals, fresh research before any more patch.** Source remains draftPR7ffc5241a, actualunstable-v2hostDuckDB2.0.0 and normalartifact480456. No further appsource edit, campaign rerun, merge, deployment, forcepush, GitHubdeletion, Codex or usercomputer action.
+
+## Findings
+
+Two ordered comparisons each42pairs/84freshprocesses/tworounds/14publiccontrols retain168processes/11,760outcomes(7,056measured), allcorrectness/status/provenancechecksPASS. The samephysical320fact/10commithistory and original512fact/32operationcaps/roots/guards are unchanged. Against hardened8b onthe SAME480456nativeartifact, float256 ratios0.890/0.887 andwideF1024 0.757/0.762 improveabout11%/24%. Against accepteditem1+5b661, float256 still1.056[1.021,1.080]/1.085[1.050,1.099] andwide1.121[1.100,1.176]/1.119[1.097,1.151]; tiny/emptycontrols retaininvestigationsignals. Wideis256rows×8cells/1024floatcells, not1024storedfacts. Original1.27persistedregressionandearliernative/diagnosticdatasetsremainseparate, notoverwritten. ProfilesfreshFPreadsareconstant6/query7/query_json;per-cellvalidationstillruns. Counts/profilesecondsarenotexclusivecausationorbenchmarkratios.
+
+## What is preserved
+
+Thecheckedarchivecontains1,015regularUTF8text/source members,12,427,241logicalbytes; gzip871,412bytes SHA256`707006210ff78622e78bd2962bb96f681efca6974fdd8f19bfc905fa8fad075d`. FourBase64partsandEVIDENCE-MANIFEST allowbyte/hash/modeverifiedrestore. `python3 restore_archive.py` reconstructsandverifiesgziponly, neverextractsorexecutes. The999-content-fileperformancehandoff(manifest6ef3dc7a…, canonicaltree63e69cb7…) includesall773rawrun/preflight/profilefiles,completeexpectedrows/bitsinoraclesandactualpreflights,rawtimedresultchecksums/counters,allpairedanalyses/strata,fullprofilediagnosticseconds,admission/gates/negativecontrols/sourceclosures androotverifiers. Thearchivealsoincludesfreshmeasurementtheory/untimedlifecycleprobeandUTCprogress/Page18snapshot. EvolvingFP/codec-researchfilesareexcludeduntiltheirownfreeze.
+
+Staticmethodologyreviewisalsopreservedasdirectfilesbesidethisarchive; its11-checksumentrymanifestisf7b52713…. The originalanalyzerprocess-envelope/provenanceomissionisretained; independentrootclosurejoinsall168recordedexits/status/timeouts/provenance/scheduleand11,760outcomes. Exactderivationrebuilds1,176pairrows/all28statistics/intervals, with53bundlefault+140alteredstatistic+19JSONtype/registerrangecontrols andtwooptimizedentrydenials. Thisdoesnotrewriteorclaimtheoriginalanalyzerwasfullyfailclosed. Source/saveddataunchanged, no timingrerun. MetadatajoinsarenotindependenthistoricOSaffinity/module-mappingobservation; historychecksumreceipt-derived, threads1assertedbyfrozenworkerbutnotmetarecorded.
+
+The timedstatementcanincludeprevious-resultdisposalatPythonrebinding; externalnormalize/checksum/loggingrunsafterclockstop. Untimedsentinelmechanismproofdoesnotmeasurethiscostorexplaintheregression. Intervalsaredescriptive/percontrol/singlebuildhost, notfamily-wiseornonregression/equivalenceguarantees. Fullitem2acceptanceandproductionreadinessarenotclaimed.
+
+## Next
+
+FinishfreshprimaryFP-observer/codec/vectorizationresearch, saveitsselecteddecisionbeforeanynewsourcechange, proveunchangedFP/public/lifetime/domain/fault/rollbackcontracts, thenrunfinalexact-sourcegatesanddistinctcontrolledmeasurementsifselected. Item3researchstartsonlyafterboundeditem2acceptance. Orderedroadmap (private application reference omitted).
+

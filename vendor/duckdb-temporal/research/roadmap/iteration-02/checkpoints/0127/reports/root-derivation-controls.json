@@ -1,0 +1,33 @@
+{
+  "at_utc": "2026-10-31T01:22:19.117786+00:00",
+  "status": "PASS_STDLIB_ONLY_INDEPENDENT_VERIFIER_CONTROLS",
+  "verifier_sha256": "e509cec194f0997df4c7a057a7e38e888c849fc1dedc1b8f20382525d1070137",
+  "controls": [
+    "median-0",
+    "median-1",
+    "median-2",
+    "median-3",
+    "median-4",
+    "median-5",
+    "median-6",
+    "strict-denial-7",
+    "strict-denial-8",
+    "strict-denial-9",
+    "strict-denial-10",
+    "strict-denial-11",
+    "strict-denial-12",
+    "strict-denial-13",
+    "strict-denial-14",
+    "strict-denial-15",
+    "JSON-denial-16",
+    "JSON-denial-17",
+    "JSON-denial-18",
+    "JSON-denial-19",
+    "JSON-positive-20",
+    "JSON-positive-21",
+    "optimized CLI denied before args/data"
+  ],
+  "count": 23,
+  "application_DB_native_FP_profile_timing_import_or_execution": false,
+  "actual_recorded_data_derivation": "NOT_RUN"
+}

@@ -1,0 +1,42 @@
+TAP version 13
+# Subtest: presence SDK keeps the invocation writer barrier, explicit old cuts and reopen with readers=0
+ok 1 - presence SDK keeps the invocation writer barrier, explicit old cuts and reopen with readers=0
+  ---
+  duration_ms: 1731.242625
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-sdk-VmBmvY/facts.duckdb
+# Subtest: presence SDK keeps the invocation writer barrier, explicit old cuts and reopen with readers=16
+ok 2 - presence SDK keeps the invocation writer barrier, explicit old cuts and reopen with readers=16
+  ---
+  duration_ms: 1164.395125
+  type: 'test'
+  ...
+# Preserved owned fixture: __HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-sdk-dUewdo/facts.duckdb
+# Subtest: presence SDK delegates caps to C++, maps typed errors and permits healthy reuse
+ok 3 - presence SDK delegates caps to C++, maps typed errors and permits healthy reuse
+  ---
+  duration_ms: 667.59975
+  type: 'test'
+  ...
+# Subtest: presence SDK uses every pooled reader and drains accepted interval reads before close
+ok 4 - presence SDK uses every pooled reader and drains accepted interval reads before close
+  ---
+  duration_ms: 379.075416
+  type: 'test'
+  ...
+# Subtest: presence SDK rejects malformed native transport rows without replacing native reconstruction
+ok 5 - presence SDK rejects malformed native transport rows without replacing native reconstruction
+  ---
+  duration_ms: 768.210083
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4827.617375

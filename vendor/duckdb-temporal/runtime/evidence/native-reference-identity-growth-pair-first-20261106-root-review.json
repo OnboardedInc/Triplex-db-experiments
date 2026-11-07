@@ -1,0 +1,12 @@
+{
+  "schema": "td.native-research-package-root-review/1",
+  "packageCommit": "1fd53bf5bf450a391b91289a95c37908d4daae44",
+  "receipt": "native-reference-identity-growth-pair-first-20261106.json",
+  "receiptSha256": "5b2b2e7812b9af7ac2cb94c0295fde34c63a519b25c81cc7e624850b2d244294",
+  "rawFiles": 23,
+  "allHashesAndSizesMatch": true,
+  "sourceReviewedBeforeEngine": true,
+  "acceptance": "Preexisting2f failure reproduced in identity-onlysame-schema diagnostic; no coveredgrowth acceptance or subaudit attribution.",
+  "reviewedAtUtc": "2026-11-06T11:48:46.924812+00:00",
+  "independentRecompute": "BothsameIR/hash, twoactualchildexit1OOMat revalidate after195+65ACK/K261/threeexact65count answers; two1060eventraws, beforeafter maps/zerolifetimes. Parentdiagnostic_complete/exit0 doesnotturn childfailuresinto passes."
+}

@@ -1,0 +1,60 @@
+{
+  "schema": "td.native-write-thread-experiment-plan/1",
+  "status": "PREDECLARED_UNRUN_NOT_AN_EXECUTABLE_BINDING",
+  "arm": "B2",
+  "sharedHarnessOwner": "orchestration_operations",
+  "hypothesis": "Reducing DuckDB scheduler parallelism may reduce contention among concurrent queries and native patches. Four UV workers and sixteen admitted reader calls stay unchanged. Fixed-query latency may worsen; actual plan and full-call measurements must decide.",
+  "onlyConfigurationDelta": {
+    "threads": {"from": 4, "to": 1}
+  },
+  "unchanged": {
+    "runtime": "build/native-write-frozen-032-20261105/runtime",
+    "archiveChecksumsSha256": "b17f748f92f8fa94bd5b9218602993e8b0e5f4b9ab863b38d7941fb11769580b",
+    "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+    "productionAdapter": "Original v1 submitted-write barrier and FIFO writes; same three baseline adapter hashes",
+    "UV_THREADPOOL_SIZE": "4",
+    "logicalClients": 16,
+    "readerConnections": 16,
+    "admissionCap": null,
+    "FIFO3Mechanism": false,
+    "queryAndOracle": "Exact common anti-join program and immutable correction oracle",
+    "sourceDatabaseSha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+    "sourceRecipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7",
+    "sourceKnownAt": "39087",
+    "probeSetup": "Same eight native batches, 256 entities, two int64 fields, cyclic full-record patch sequence",
+    "fixedSamplesPerReader": 20,
+    "warmupPerReader": 1,
+    "mixedSeconds": 60,
+    "maxWrites": 12000,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "maxIntermediateBytes": 4294967296,
+    "logicalInputAdmission": 1680202
+  },
+  "originalBudgetSha256": "e992830b1427176b97a6bb8bd6ebfb4658da8c4eb4e044dbec43746e23f43d43",
+  "sixteenReaderNumericGates": {
+    "maxFixedP50Ms": 3500,
+    "maxFixedP99Ms": 6500,
+    "minMixedQueriesPerSecond": 4.8,
+    "maxMixedP50Ms": 3200,
+    "maxMixedP99Ms": 6500,
+    "minAcknowledgedWrites": 40,
+    "minAcknowledgedWritesPerSecond": 0.5,
+    "maxSampledRssBytes": 3500000000
+  },
+  "requiredCorrectness": [
+    "Complete live typed answers at every returned K, exact fixed old cuts and post-ACK visibility",
+    "Exact input-cap success and one-below rejection; all retained and wire limits unchanged",
+    "Consecutive receipts, no replay counted as ingestion, no query/ACK errors or early write cap",
+    "Writes in every complete ten-second window, sixteen leases used and all returned",
+    "Final, reuse, reopened and source/runtime/recipe/binding/hash checks unchanged"
+  ],
+  "readOperatorEvidencePlan": [
+    "Under a later explicit diagnostic lease only, make one native-seeded closed clone at the common initial Probe cut K39095; clone that exact same retained history for threads4 and threads1 observations.",
+    "Use the unchanged anti-join at V0/K39095 and the full exact256-Probe typed oracle. Verify a public query before profiling; separately time the existing C++ scalable SQL template generation call with the same caps.",
+    "Execute separate pinned DuckDB EXPLAIN ANALYZE JSON observations with actual owner and fresh invocation tokens, preserving full input admission. Record scan/filter/join cardinalities, operator timing, planner/query wall and available engine metrics.",
+    "Compare actual operator work and scheduler-related wall differences; DuckDB global scheduler threads are distinct from UV workers and sixteen public reader leases. Do not assume sixteen native executions ran simultaneously.",
+    "EXPLAIN is a profiling rerun and may change scheduling. Operator timers overlap and contain callbacks; do not sum or subtract them as exclusive CPU phases. Setup/audit/template/public/profiling scopes remain separate."
+  ],
+  "acceptanceBoundary": "Use C's shared configuration-aware harness/binding unchanged. No duplicate runner, native rebuild, read pruning, FIFO cap, numerical gate relaxation or public strategy option. One ordered screen is not promotion; fresh B0 control and reversed promising comparisons remain necessary. No further engine/test/benchmark has run for B2."
+}

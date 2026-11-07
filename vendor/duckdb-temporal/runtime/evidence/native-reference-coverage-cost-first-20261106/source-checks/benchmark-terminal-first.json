@@ -1,0 +1,33 @@
+{
+  "status": "terminal",
+  "pid": 56513,
+  "parentPid": 56503,
+  "startedUtc": "2026-11-06T11:02:08.511577+00:00",
+  "argv": [
+    "<pinned-node-installation>/bin/node",
+    "adapter/benchmark-reference-coverage-cost.mjs",
+    "--baseline",
+    "<presence-intervals-runtime>",
+    "--candidate",
+    "<coverage-candidate-runtime>",
+    "--sourceCommit",
+    "cf7f0d86645383944cac77c2f49e331428c75a33",
+    "--noise",
+    "0:1",
+    "--scenarios",
+    "zero,unrelated,incoming",
+    "--warmup",
+    "4",
+    "--samples",
+    "16",
+    "--opens",
+    "3",
+    "--pairs",
+    "2",
+    "--output",
+    "build/reference-coverage-cost-20261106-01/report.json"
+  ],
+  "code": 0,
+  "completedUtc": "2026-11-06T11:05:59.872066+00:00",
+  "elapsedMs": 231358.96983393468
+}

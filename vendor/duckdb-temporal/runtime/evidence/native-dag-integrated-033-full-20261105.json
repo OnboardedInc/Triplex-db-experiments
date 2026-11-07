@@ -1,0 +1,22 @@
+{
+  "schema": "td.native-dag-integrated-full/1",
+  "result": "PASS",
+  "testedSource": "86e71578e4acd911d13971d5b2d05d0f17ae9b17",
+  "version": "0.33.0",
+  "methods": 370,
+  "unchangedTriplex": 44,
+  "integratedChecks": 414,
+  "sourceHashCount": 210,
+  "allSourceHashesMatched": true,
+  "coreSha256": "1c54d1108ecd36597cded7bfe7aafb9f73351af62dc098fdd360c1301626cf3e",
+  "ownerSha256": "dd15a969d9535199a8eb76a8ad3047483f7d142102ebc31f669de63da1d6a220",
+  "rawLog": {
+    "path": "build/combined-033-20261105/full-01.log",
+    "sha256": "ef872abbc3db7ce5fbaed86ca91c6caea1a919221dde336650ec7e462fc4318b"
+  },
+  "artifactReuse": "Exact focused b2b913cf artifacts; all36 core native source hashes match combined source before execution. Current adapters compiled by full verifier.",
+  "limitations": [
+    "Functional full verification only; no unregistered overhead, registered maintenance performance or complete20-family engine repeat in this gate.",
+    "Exact same core/owner SDK sources as the separate focused archived0.32 stale-writer proof."
+  ]
+}

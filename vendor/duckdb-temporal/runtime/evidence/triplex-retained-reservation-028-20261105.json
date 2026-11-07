@@ -1,0 +1,55 @@
+{
+  "schema": "td.triplex-retained-reservation-qualification/1",
+  "observed_utc": "2026-11-05T19:56:07Z",
+  "tested_source": "ff7151703b067a9333bdf35cacf70aea978a7f0a",
+  "base_source": "1f25aca9d4ab93d9557801974368e53db32c141c",
+  "result": "PASS",
+  "artifact": {
+    "extension_version": "0.28.0",
+    "platform": "macOS arm64",
+    "engine": "2.0.0",
+    "node": "24.13.0",
+    "node_api_package": "2.0.0-r.1",
+    "manifest_sha256": "7ac84488e9baa2859496693a03fd2373a3e21839c1f32e21754236dd2e06ce73",
+    "core_sha256": "7debda95c6648d81e98adcc3e7c8b203bae3ceac0f8423fe90673d67ce527c29",
+    "engine_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "control_sha256": "efc3e8225da5a76f0835a27c381cadc3d95961edde4869af966532a00df34fbe",
+    "loaded_owner_companion": false
+  },
+  "executed_sha256": {
+    "build/adapter/index.js": "96bf97ec32c299c3b812b34f7daec1c624b5505206fa60a9e820250f8b014346",
+    "build/adapter/public-backend.mjs": "c763e86f4faf7c35de9c166813d590603321b2b7617022b6263e5f8df5c395bf",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/adapter/test-triplex-reservation.js": "f6a3cd8a366cf89a064f334f6ebd1d8196739a22175efe3f8bd7590fcbf08ff0",
+    "build/adapter/test-adapter.js": "a3b193ca1c67c0b631c1f8720fda886a7d98e19bf8010881abf2f5f44ef1d682",
+    "build/adapter/test-triplex-dependency.js": "23233e58cf871cd0fae8b2981b1519a658bb308eb75bad2f1e1a043d8100c936",
+    "build/adapter/conformance.js": "5a9d1314284ed9c39e8a06d2e91fecf53f05577f9f201e6ce05a164982acd492"
+  },
+  "focused": {
+    "typecheck": "PASS",
+    "command": "node --test --test-concurrency=1 --test-reporter=tap build/adapter/test-triplex-reservation.js build/adapter/test-adapter.js build/adapter/test-triplex-dependency.js",
+    "pass": {
+      "reservation": 2,
+      "adapter": 11,
+      "dependency": 2
+    },
+    "fail": 0,
+    "skip": 0,
+    "tap_sha256": "3b0c52b9a29865d9d6d7b49236705dc03b538c18b13cb9851af167ffc17aee58"
+  },
+  "conformance": {
+    "suite": "pinned-runtimeConformance-public-factory",
+    "upstream": "e24dcdbfce4e61da3e2f08c0e4f2a4531c7df0a0",
+    "cases": 44,
+    "result": "PASS",
+    "log_sha256": "861c0a98d06e4a4300551f87576c19b00574bd92bd393aa3ddd9c89a3080dc91"
+  },
+  "qualified_edges": [
+    "Actual UPDATE admits both exact quota limits and rejects either limit plus one before invoking the Appender. Synthetic accounting seeds exercise the boundaries without a full-capacity dataset.",
+    "UTF-8 entity, attribute, payload, and blob metadata bytes match the physical assertion.",
+    "An unsafe prior counter yields the existing safe-number diagnostic before arithmetic. Missing singleton and invalid native arguments are rejected.",
+    "The first 2048-row append succeeds and the second two-row append fails. Both successful reservations, clock, claim, and first chunk roll back on the caller transaction.",
+    "Same-ID retry sees its own writes, and replay neither appends nor reserves usage."
+  ],
+  "scope": "Triplex raw format-5 backend. Structural removal of one usage statement per append chunk. No latency or throughput measurement."
+}

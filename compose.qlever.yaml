@@ -1,0 +1,17 @@
+name: triplex-qlever
+services:
+  qlever:
+    image: adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec
+    container_name: triplex-qlever-local
+    platform: linux/arm64
+    cpus: 4
+    mem_limit: 4g
+    memswap_limit: 4g
+    working_dir: /data
+    entrypoint: ["/bin/bash", "/config/start.sh"]
+    ports:
+      - "127.0.0.1:7019:7019"
+    volumes:
+      - ./.qlever/data:/data
+      - ./qlever-start.sh:/config/start.sh:ro
+    restart: "no"

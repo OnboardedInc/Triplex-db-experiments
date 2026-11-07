@@ -1,0 +1,83 @@
+{
+  "status": "EIGHT_LOCAL_SOURCE_IDENTITIES_MATCH_FROZEN_MANIFEST_NOT_APP_TEST",
+  "timestamp_utc": "2026-10-31T17:47:52Z",
+  "owner_directory": ".agent-logs/goal4-contract-execution/revision-001",
+  "frozen_ready_utc": "2026-10-31T17:44:20.271717+00:00",
+  "root_candidate_contract": {
+    "path": ".agent-logs/goal4-contract-coordinator/proposal-001/CONTRACT.md",
+    "bytes": 11028,
+    "sha256_observed": "1230df6e474341cabcf277fae4b170796b5a6927b0010edf760e88fb9c92d3c6",
+    "immutable_claim": false
+  },
+  "owner_manifest_sha256": "4615f510898a14ffd3cc1145e826113b42cf41d0b4891e0e10922a73b405deb5",
+  "readback": [
+    {
+      "path": "BUDGET-MODEL.json",
+      "bytes": 1741,
+      "sha256": "45a0cf56a1656cd8cc6cd45985226e6c5e90f49792f736630ff385c6e8c18d73",
+      "actual_bytes": 1741,
+      "actual_sha256": "45a0cf56a1656cd8cc6cd45985226e6c5e90f49792f736630ff385c6e8c18d73",
+      "matches": true
+    },
+    {
+      "path": "DIAGNOSTICS.md",
+      "bytes": 8690,
+      "sha256": "1465cc039786db2bb5699f7f275b4afafa15daad6bbd2b04c11baed1f2a29aae",
+      "actual_bytes": 8690,
+      "actual_sha256": "1465cc039786db2bb5699f7f275b4afafa15daad6bbd2b04c11baed1f2a29aae",
+      "matches": true
+    },
+    {
+      "path": "FROZEN-READY.json",
+      "bytes": 1260,
+      "sha256": "5daaf8a36a03b9d6e05560384483428433df4816b3f0d4fdd5dc6aa2a4dd92d4",
+      "actual_bytes": 1260,
+      "actual_sha256": "5daaf8a36a03b9d6e05560384483428433df4816b3f0d4fdd5dc6aa2a4dd92d4",
+      "matches": true
+    },
+    {
+      "path": "IR2-CONTRACT.md",
+      "bytes": 9890,
+      "sha256": "c680654909a0b480889feb193e4d30395ea525ef1466fca070f1744b09314bd6",
+      "actual_bytes": 9890,
+      "actual_sha256": "c680654909a0b480889feb193e4d30395ea525ef1466fca070f1744b09314bd6",
+      "matches": true
+    },
+    {
+      "path": "NATIVE-CONTRACT.md",
+      "bytes": 31269,
+      "sha256": "1160eb56cabf5468c1115931d95395be3350f45e8448f45f417cf49e4d55822e",
+      "actual_bytes": 31269,
+      "actual_sha256": "1160eb56cabf5468c1115931d95395be3350f45e8448f45f417cf49e4d55822e",
+      "matches": true
+    },
+    {
+      "path": "SOURCE-INVENTORY.json",
+      "bytes": 4376,
+      "sha256": "9d09c5f25536334ec1a7ac7bb0331472c100ecdd37d8864c30d58f2e46b21021",
+      "actual_bytes": 4376,
+      "actual_sha256": "9d09c5f25536334ec1a7ac7bb0331472c100ecdd37d8864c30d58f2e46b21021",
+      "matches": true
+    },
+    {
+      "path": "SOURCE-MAP.md",
+      "bytes": 6708,
+      "sha256": "1fd056708ed475545abc81cd66a82934b45c04407d02d64e722fa27d29bcef64",
+      "actual_bytes": 6708,
+      "actual_sha256": "1fd056708ed475545abc81cd66a82934b45c04407d02d64e722fa27d29bcef64",
+      "matches": true
+    },
+    {
+      "path": "progress.jsonl",
+      "bytes": 5267,
+      "sha256": "5ee302ff66bba6482023978da94fce093c81e94d693ae14bc430aaf520574afb",
+      "actual_bytes": 5267,
+      "actual_sha256": "5ee302ff66bba6482023978da94fce093c81e94d693ae14bc430aaf520574afb",
+      "matches": true
+    }
+  ],
+  "exposed_shell_chunks": [
+    "00e16a",
+    "e084d5"
+  ]
+}

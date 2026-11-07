@@ -1,0 +1,12 @@
+SELECT DISTINCT (?q_entity_type AS ?v0_type) (?q_entity_value AS ?v0_value) (?q_entity_order AS ?v0_order) (?q_code_type AS ?v1_type) (?q_code_value AS ?v1_value) (?q_code_order AS ?v1_order) WHERE { { SELECT ?q_entity_value ("string" AS ?q_entity_type) (?q_entity_value AS ?q_entity_order) (IF(?w0_storage_type IN ("number","datetime"),"number",IF(?w0_storage_type="integer","integer",IF(?w0_storage_type="boolean","boolean","string"))) AS ?q_code_type) (IF(?w0_storage_type IN ("number","datetime") && ?w0_payload="-0","0",?w0_payload) AS ?q_code_value) (IF(?w0_storage_type IN ("number","datetime","integer"),COALESCE(?w0_number_order,?w0_datetime_order,?w0_integer_order),IF(?w0_storage_type IN ("number","datetime") && ?w0_payload="-0","0",?w0_payload)) AS ?q_code_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJxbGV2ZXItY2FzZS00YTc0MmVlMS0zMDdhLTQ3NzktYjkyZC0xMWRiZWNiNzQ1N2QiLDBd> { ?w0 <urn:triplex:field:valid_from_order> ?w0_vf ; <urn:triplex:field:recorded_position_order> ?w0_rp . 
+OPTIONAL { ?w0 <urn:triplex:field:valid_to_order> ?w0_vt }
+OPTIONAL { ?w0 <urn:triplex:field:retracted_position_order> ?w0_xp }
+
+?w0 <urn:triplex:field:entity_id> ?q_entity_value .
+?w0 <urn:triplex:field:attribute> ":conf/code" .
+?w0 <urn:triplex:field:value_type> ?w0_storage_type ; ?w0_payload_property ?w0_payload .
+OPTIONAL { ?w0 <urn:triplex:field:value_number_order> ?w0_number_order . }
+OPTIONAL { ?w0 <urn:triplex:field:value_datetime_order> ?w0_datetime_order . }
+OPTIONAL { ?w0 <urn:triplex:field:value_integer_order> ?w0_integer_order . } FILTER(?w0_vf <= "c33fffffffffffff" && (!BOUND(?w0_vt) || ?w0_vt > "c33fffffffffffff") && ?w0_rp <= "bff0000000000000" && (!BOUND(?w0_xp) || ?w0_xp > "bff0000000000000") && ((?w0_storage_type IN ("string","ref","integer","blob") && ?w0_payload_property = <urn:triplex:field:value_string>) || (?w0_storage_type = "number" && ?w0_payload_property = <urn:triplex:field:value_number>) || (?w0_storage_type = "datetime" && ?w0_payload_property = <urn:triplex:field:value_datetime>) || (?w0_storage_type = "boolean" && ?w0_payload_property = <urn:triplex:field:value_boolean>) || (?w0_storage_type = "json" && ?w0_payload_property = <urn:triplex:field:value_json>))) } } }
+
+ } LIMIT 1001

@@ -1,0 +1,3188 @@
+{
+  "schema": "duckdb_d54_public_capi_v2_inventory/1",
+  "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "scope": "Identifier-and-line inventory extracted from complete returned primary header/vtable bodies; not a third-party source cache. Presence is ABI-source evidence, not runtime symbol availability or behavior acceptance.",
+  "header": "src/include/duckdb_v2.h",
+  "extension_vtable": "src/include/duckdb_extension_v2.h",
+  "declaration_regex": "^DUCKDB_C_API[ \\\\t]+([^;]+); with multiline anchor; function identifier from each declaration",
+  "declarations": 620,
+  "distinct_functions": 620,
+  "vtable_slots": 620,
+  "vtable_equal": true,
+  "functions": [
+    {
+      "name": "duckdb_v2_arena_allocate",
+      "header_line": 823,
+      "vtable_line": 82
+    },
+    {
+      "name": "duckdb_v2_cast_function_create",
+      "header_line": 908,
+      "vtable_line": 711
+    },
+    {
+      "name": "duckdb_v2_cast_function_set_source_type",
+      "header_line": 929,
+      "vtable_line": 729
+    },
+    {
+      "name": "duckdb_v2_cast_function_set_target_type",
+      "header_line": 950,
+      "vtable_line": 732
+    },
+    {
+      "name": "duckdb_v2_cast_function_set_implicit_cast_cost",
+      "header_line": 973,
+      "vtable_line": 727
+    },
+    {
+      "name": "duckdb_v2_cast_function_set_user_data",
+      "header_line": 996,
+      "vtable_line": 735
+    },
+    {
+      "name": "duckdb_v2_cast_function_set_exec_callback",
+      "header_line": 1017,
+      "vtable_line": 724
+    },
+    {
+      "name": "duckdb_v2_cast_function_exec_get_user_data",
+      "header_line": 1035,
+      "vtable_line": 722
+    },
+    {
+      "name": "duckdb_v2_cast_function_exec_get_row_count",
+      "header_line": 1056,
+      "vtable_line": 720
+    },
+    {
+      "name": "duckdb_v2_cast_function_exec_get_input",
+      "header_line": 1076,
+      "vtable_line": 714
+    },
+    {
+      "name": "duckdb_v2_cast_function_exec_get_output",
+      "header_line": 1097,
+      "vtable_line": 718
+    },
+    {
+      "name": "duckdb_v2_cast_function_exec_get_mode",
+      "header_line": 1118,
+      "vtable_line": 716
+    },
+    {
+      "name": "duckdb_v2_connection_register_cast_function",
+      "header_line": 1143,
+      "vtable_line": 739
+    },
+    {
+      "name": "duckdb_v2_extension_register_cast_function",
+      "header_line": 1167,
+      "vtable_line": 754
+    },
+    {
+      "name": "duckdb_v2_cast_function_destroy",
+      "header_line": 1185,
+      "vtable_line": 713
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_create",
+      "header_line": 1267,
+      "vtable_line": 101
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_reset",
+      "header_line": 1287,
+      "vtable_line": 105
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_clear",
+      "header_line": 1307,
+      "vtable_line": 737
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_destroy",
+      "header_line": 1324,
+      "vtable_line": 104
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_combine",
+      "header_line": 1347,
+      "vtable_line": 98
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_row_count",
+      "header_line": 1367,
+      "vtable_line": 107
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_append_state_create",
+      "header_line": 1386,
+      "vtable_line": 93
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_append_state_destroy",
+      "header_line": 1403,
+      "vtable_line": 96
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_append",
+      "header_line": 1425,
+      "vtable_line": 90
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_shared_scan_state_create",
+      "header_line": 1445,
+      "vtable_line": 114
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_shared_scan_state_destroy",
+      "header_line": 1463,
+      "vtable_line": 117
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_worker_scan_state_create",
+      "header_line": 1483,
+      "vtable_line": 119
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_worker_scan_state_destroy",
+      "header_line": 1501,
+      "vtable_line": 122
+    },
+    {
+      "name": "duckdb_v2_column_data_collection_scan",
+      "header_line": 1531,
+      "vtable_line": 109
+    },
+    {
+      "name": "duckdb_v2_instance_get_config",
+      "header_line": 1592,
+      "vtable_line": 1319
+    },
+    {
+      "name": "duckdb_v2_connection_get_config",
+      "header_line": 1614,
+      "vtable_line": 1310
+    },
+    {
+      "name": "duckdb_v2_context_get_config",
+      "header_line": 1635,
+      "vtable_line": 1317
+    },
+    {
+      "name": "duckdb_v2_config_get_option_value",
+      "header_line": 1658,
+      "vtable_line": 1301
+    },
+    {
+      "name": "duckdb_v2_config_set_option_value",
+      "header_line": 1689,
+      "vtable_line": 1307
+    },
+    {
+      "name": "duckdb_v2_config_set_option_text",
+      "header_line": 1715,
+      "vtable_line": 1304
+    },
+    {
+      "name": "duckdb_v2_config_get_option_by_name",
+      "header_line": 1741,
+      "vtable_line": 127
+    },
+    {
+      "name": "duckdb_v2_config_get_option_count",
+      "header_line": 1763,
+      "vtable_line": 130
+    },
+    {
+      "name": "duckdb_v2_config_get_option_by_index",
+      "header_line": 1785,
+      "vtable_line": 124
+    },
+    {
+      "name": "duckdb_v2_option_destroy",
+      "header_line": 1803,
+      "vtable_line": 210
+    },
+    {
+      "name": "duckdb_v2_option_get_name",
+      "header_line": 1822,
+      "vtable_line": 219
+    },
+    {
+      "name": "duckdb_v2_option_get_default_value",
+      "header_line": 1841,
+      "vtable_line": 215
+    },
+    {
+      "name": "duckdb_v2_option_get_description",
+      "header_line": 1859,
+      "vtable_line": 217
+    },
+    {
+      "name": "duckdb_v2_option_supports_scope",
+      "header_line": 1881,
+      "vtable_line": 1328
+    },
+    {
+      "name": "duckdb_v2_option_get_default_scope",
+      "header_line": 1899,
+      "vtable_line": 1326
+    },
+    {
+      "name": "duckdb_v2_option_get_alias_count",
+      "header_line": 1919,
+      "vtable_line": 213
+    },
+    {
+      "name": "duckdb_v2_option_get_alias",
+      "header_line": 1939,
+      "vtable_line": 211
+    },
+    {
+      "name": "duckdb_v2_connection_create",
+      "header_line": 1980,
+      "vtable_line": 132
+    },
+    {
+      "name": "duckdb_v2_connection_destroy",
+      "header_line": 1998,
+      "vtable_line": 134
+    },
+    {
+      "name": "duckdb_v2_connection_interrupt",
+      "header_line": 2018,
+      "vtable_line": 135
+    },
+    {
+      "name": "duckdb_v2_connection_progress_get",
+      "header_line": 2045,
+      "vtable_line": 137
+    },
+    {
+      "name": "duckdb_v2_custom_type_create",
+      "header_line": 2099,
+      "vtable_line": 747
+    },
+    {
+      "name": "duckdb_v2_custom_type_set_name",
+      "header_line": 2120,
+      "vtable_line": 752
+    },
+    {
+      "name": "duckdb_v2_custom_type_set_base_type",
+      "header_line": 2143,
+      "vtable_line": 750
+    },
+    {
+      "name": "duckdb_v2_connection_register_custom_type",
+      "header_line": 2167,
+      "vtable_line": 741
+    },
+    {
+      "name": "duckdb_v2_extension_register_custom_type",
+      "header_line": 2190,
+      "vtable_line": 756
+    },
+    {
+      "name": "duckdb_v2_custom_type_destroy",
+      "header_line": 2208,
+      "vtable_line": 749
+    },
+    {
+      "name": "duckdb_v2_data_chunk_create",
+      "header_line": 2248,
+      "vtable_line": 143
+    },
+    {
+      "name": "duckdb_v2_data_chunk_copy",
+      "header_line": 2272,
+      "vtable_line": 140
+    },
+    {
+      "name": "duckdb_v2_data_chunk_destroy",
+      "header_line": 2291,
+      "vtable_line": 146
+    },
+    {
+      "name": "duckdb_v2_data_chunk_clear",
+      "header_line": 2310,
+      "vtable_line": 1464
+    },
+    {
+      "name": "duckdb_v2_data_chunk_get_size",
+      "header_line": 2326,
+      "vtable_line": 147
+    },
+    {
+      "name": "duckdb_v2_data_chunk_get_capacity",
+      "header_line": 2343,
+      "vtable_line": 1195
+    },
+    {
+      "name": "duckdb_v2_data_chunk_get_vector_count",
+      "header_line": 2361,
+      "vtable_line": 152
+    },
+    {
+      "name": "duckdb_v2_data_chunk_get_vector",
+      "header_line": 2381,
+      "vtable_line": 149
+    },
+    {
+      "name": "duckdb_v2_environment_create",
+      "header_line": 2416,
+      "vtable_line": 154
+    },
+    {
+      "name": "duckdb_v2_environment_destroy",
+      "header_line": 2433,
+      "vtable_line": 156
+    },
+    {
+      "name": "duckdb_v2_environment_get_instance_count",
+      "header_line": 2452,
+      "vtable_line": 157
+    },
+    {
+      "name": "duckdb_v2_error_info_get_code",
+      "header_line": 2489,
+      "vtable_line": 160
+    },
+    {
+      "name": "duckdb_v2_error_info_get_text",
+      "header_line": 2507,
+      "vtable_line": 162
+    },
+    {
+      "name": "duckdb_v2_error_info_get_raw_text",
+      "header_line": 2528,
+      "vtable_line": 161
+    },
+    {
+      "name": "duckdb_v2_error_info_set_code",
+      "header_line": 2546,
+      "vtable_line": 163
+    },
+    {
+      "name": "duckdb_v2_error_info_set_text",
+      "header_line": 2563,
+      "vtable_line": 164
+    },
+    {
+      "name": "duckdb_v2_error_info_destroy",
+      "header_line": 2579,
+      "vtable_line": 159
+    },
+    {
+      "name": "duckdb_v2_instance_get_factory",
+      "header_line": 2674,
+      "vtable_line": 1297
+    },
+    {
+      "name": "duckdb_v2_connection_get_factory",
+      "header_line": 2696,
+      "vtable_line": 1293
+    },
+    {
+      "name": "duckdb_v2_context_get_factory",
+      "header_line": 2717,
+      "vtable_line": 1295
+    },
+    {
+      "name": "duckdb_v2_context_get_file_system",
+      "header_line": 2841,
+      "vtable_line": 745
+    },
+    {
+      "name": "duckdb_v2_instance_get_file_system",
+      "header_line": 2863,
+      "vtable_line": 1321
+    },
+    {
+      "name": "duckdb_v2_connection_get_file_system",
+      "header_line": 2886,
+      "vtable_line": 1312
+    },
+    {
+      "name": "duckdb_v2_file_open_options_create",
+      "header_line": 2913,
+      "vtable_line": 762
+    },
+    {
+      "name": "duckdb_v2_file_open_options_set_flag",
+      "header_line": 2937,
+      "vtable_line": 766
+    },
+    {
+      "name": "duckdb_v2_file_open_options_set_value",
+      "header_line": 2964,
+      "vtable_line": 768
+    },
+    {
+      "name": "duckdb_v2_file_open_options_destroy",
+      "header_line": 2983,
+      "vtable_line": 765
+    },
+    {
+      "name": "duckdb_v2_file_system_open",
+      "header_line": 3015,
+      "vtable_line": 779
+    },
+    {
+      "name": "duckdb_v2_file_system_path_exists",
+      "header_line": 3038,
+      "vtable_line": 1411
+    },
+    {
+      "name": "duckdb_v2_file_system_path_is_remote",
+      "header_line": 3060,
+      "vtable_line": 1417
+    },
+    {
+      "name": "duckdb_v2_file_system_path_expand",
+      "header_line": 3084,
+      "vtable_line": 1414
+    },
+    {
+      "name": "duckdb_v2_file_system_path_glob",
+      "header_line": 3110,
+      "vtable_line": 1465
+    },
+    {
+      "name": "duckdb_v2_file_system_path_move",
+      "header_line": 3134,
+      "vtable_line": 1468
+    },
+    {
+      "name": "duckdb_v2_file_system_path_remove",
+      "header_line": 3156,
+      "vtable_line": 1471
+    },
+    {
+      "name": "duckdb_v2_file_read",
+      "header_line": 3184,
+      "vtable_line": 771
+    },
+    {
+      "name": "duckdb_v2_file_write",
+      "header_line": 3210,
+      "vtable_line": 784
+    },
+    {
+      "name": "duckdb_v2_file_read_at",
+      "header_line": 3236,
+      "vtable_line": 773
+    },
+    {
+      "name": "duckdb_v2_file_write_at",
+      "header_line": 3263,
+      "vtable_line": 787
+    },
+    {
+      "name": "duckdb_v2_file_tell",
+      "header_line": 3280,
+      "vtable_line": 782
+    },
+    {
+      "name": "duckdb_v2_file_size",
+      "header_line": 3297,
+      "vtable_line": 777
+    },
+    {
+      "name": "duckdb_v2_file_seek",
+      "header_line": 3317,
+      "vtable_line": 775
+    },
+    {
+      "name": "duckdb_v2_file_sync",
+      "header_line": 3336,
+      "vtable_line": 778
+    },
+    {
+      "name": "duckdb_v2_file_close",
+      "header_line": 3354,
+      "vtable_line": 760
+    },
+    {
+      "name": "duckdb_v2_file_destroy",
+      "header_line": 3370,
+      "vtable_line": 761
+    },
+    {
+      "name": "duckdb_v2_function_bind_get_user_data",
+      "header_line": 3419,
+      "vtable_line": 1240
+    },
+    {
+      "name": "duckdb_v2_function_bind_set_bind_data",
+      "header_line": 3441,
+      "vtable_line": 1242
+    },
+    {
+      "name": "duckdb_v2_function_bind_get_arg_count",
+      "header_line": 3469,
+      "vtable_line": 1225
+    },
+    {
+      "name": "duckdb_v2_function_bind_get_arg_type",
+      "header_line": 3492,
+      "vtable_line": 1234
+    },
+    {
+      "name": "duckdb_v2_function_bind_get_arg_value",
+      "header_line": 3515,
+      "vtable_line": 1237
+    },
+    {
+      "name": "duckdb_v2_function_bind_get_arg_name",
+      "header_line": 3539,
+      "vtable_line": 1231
+    },
+    {
+      "name": "duckdb_v2_function_bind_get_arg_index",
+      "header_line": 3565,
+      "vtable_line": 1228
+    },
+    {
+      "name": "duckdb_v2_function_docs_set_description",
+      "header_line": 3614,
+      "vtable_line": 1346
+    },
+    {
+      "name": "duckdb_v2_function_docs_add_example",
+      "header_line": 3635,
+      "vtable_line": 1343
+    },
+    {
+      "name": "duckdb_v2_function_docs_add_category",
+      "header_line": 3656,
+      "vtable_line": 1341
+    },
+    {
+      "name": "duckdb_v2_function_signature_add_parameter",
+      "header_line": 3740,
+      "vtable_line": 489
+    },
+    {
+      "name": "duckdb_v2_function_signature_set_return_type",
+      "header_line": 3761,
+      "vtable_line": 492
+    },
+    {
+      "name": "duckdb_v2_identifier_render_quoted",
+      "header_line": 3813,
+      "vtable_line": 1053
+    },
+    {
+      "name": "duckdb_v2_instance_create",
+      "header_line": 3864,
+      "vtable_line": 183
+    },
+    {
+      "name": "duckdb_v2_instance_create_with_options",
+      "header_line": 3897,
+      "vtable_line": 185
+    },
+    {
+      "name": "duckdb_v2_instance_destroy",
+      "header_line": 3916,
+      "vtable_line": 188
+    },
+    {
+      "name": "duckdb_v2_instance_attach",
+      "header_line": 3954,
+      "vtable_line": 180
+    },
+    {
+      "name": "duckdb_v2_instance_detach",
+      "header_line": 3979,
+      "vtable_line": 189
+    },
+    {
+      "name": "duckdb_v2_instance_set_default",
+      "header_line": 4004,
+      "vtable_line": 1137
+    },
+    {
+      "name": "duckdb_v2_attach_options_create",
+      "header_line": 4025,
+      "vtable_line": 1130
+    },
+    {
+      "name": "duckdb_v2_attach_options_set",
+      "header_line": 4050,
+      "vtable_line": 1134
+    },
+    {
+      "name": "duckdb_v2_attach_options_destroy",
+      "header_line": 4068,
+      "vtable_line": 1133
+    },
+    {
+      "name": "duckdb_v2_library_version",
+      "header_line": 4083,
+      "vtable_line": 191
+    },
+    {
+      "name": "duckdb_v2_context_log",
+      "header_line": 4148,
+      "vtable_line": 484
+    },
+    {
+      "name": "duckdb_v2_instance_log",
+      "header_line": 4172,
+      "vtable_line": 1323
+    },
+    {
+      "name": "duckdb_v2_connection_log",
+      "header_line": 4196,
+      "vtable_line": 1314
+    },
+    {
+      "name": "duckdb_v2_qname_parse",
+      "header_line": 4248,
+      "vtable_line": 804
+    },
+    {
+      "name": "duckdb_v2_qname_create",
+      "header_line": 4271,
+      "vtable_line": 792
+    },
+    {
+      "name": "duckdb_v2_qname_get_part_count",
+      "header_line": 4291,
+      "vtable_line": 800
+    },
+    {
+      "name": "duckdb_v2_qname_get_part",
+      "header_line": 4313,
+      "vtable_line": 798
+    },
+    {
+      "name": "duckdb_v2_qname_render",
+      "header_line": 4345,
+      "vtable_line": 806
+    },
+    {
+      "name": "duckdb_v2_qname_equals",
+      "header_line": 4367,
+      "vtable_line": 796
+    },
+    {
+      "name": "duckdb_v2_qname_hash",
+      "header_line": 4388,
+      "vtable_line": 802
+    },
+    {
+      "name": "duckdb_v2_qname_destroy",
+      "header_line": 4405,
+      "vtable_line": 795
+    },
+    {
+      "name": "duckdb_v2_connection_get_query_metrics",
+      "header_line": 4464,
+      "vtable_line": 1460
+    },
+    {
+      "name": "duckdb_v2_connection_enable_profiling",
+      "header_line": 4487,
+      "vtable_line": 1458
+    },
+    {
+      "name": "duckdb_v2_query_metrics_get_root",
+      "header_line": 4505,
+      "vtable_line": 1475
+    },
+    {
+      "name": "duckdb_v2_query_metrics_node_get_name",
+      "header_line": 4524,
+      "vtable_line": 1493
+    },
+    {
+      "name": "duckdb_v2_query_metrics_node_get_child_count",
+      "header_line": 4543,
+      "vtable_line": 1481
+    },
+    {
+      "name": "duckdb_v2_query_metrics_node_get_child",
+      "header_line": 4562,
+      "vtable_line": 1478
+    },
+    {
+      "name": "duckdb_v2_query_metrics_node_get_metric_count",
+      "header_line": 4582,
+      "vtable_line": 1486
+    },
+    {
+      "name": "duckdb_v2_query_metrics_node_get_metric_name",
+      "header_line": 4602,
+      "vtable_line": 1488
+    },
+    {
+      "name": "duckdb_v2_query_metrics_node_get_metric_value",
+      "header_line": 4622,
+      "vtable_line": 1490
+    },
+    {
+      "name": "duckdb_v2_query_metrics_node_get_metric",
+      "header_line": 4643,
+      "vtable_line": 1483
+    },
+    {
+      "name": "duckdb_v2_query_metrics_destroy",
+      "header_line": 4662,
+      "vtable_line": 1474
+    },
+    {
+      "name": "duckdb_v2_schema_get_count",
+      "header_line": 4703,
+      "vtable_line": 244
+    },
+    {
+      "name": "duckdb_v2_schema_get_field",
+      "header_line": 4724,
+      "vtable_line": 246
+    },
+    {
+      "name": "duckdb_v2_schema_destroy",
+      "header_line": 4743,
+      "vtable_line": 243
+    },
+    {
+      "name": "duckdb_v2_tokenize_sql",
+      "header_line": 4823,
+      "vtable_line": 1127
+    },
+    {
+      "name": "duckdb_v2_token_iterator_next",
+      "header_line": 4846,
+      "vtable_line": 1124
+    },
+    {
+      "name": "duckdb_v2_token_iterator_ends_unterminated",
+      "header_line": 4869,
+      "vtable_line": 1122
+    },
+    {
+      "name": "duckdb_v2_token_iterator_destroy",
+      "header_line": 4884,
+      "vtable_line": 1121
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_create",
+      "header_line": 5023,
+      "vtable_line": 549
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_name",
+      "header_line": 5044,
+      "vtable_line": 599
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_get_docs",
+      "header_line": 5066,
+      "vtable_line": 1331
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_get_signature",
+      "header_line": 5088,
+      "vtable_line": 573
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_user_data",
+      "header_line": 5110,
+      "vtable_line": 608
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_property",
+      "header_line": 5134,
+      "vtable_line": 635
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_bind_callback",
+      "header_line": 5158,
+      "vtable_line": 584
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_size_callback",
+      "header_line": 5180,
+      "vtable_line": 602
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_init_callback",
+      "header_line": 5201,
+      "vtable_line": 596
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_update_callback",
+      "header_line": 5222,
+      "vtable_line": 605
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_combine_callback",
+      "header_line": 5243,
+      "vtable_line": 587
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_finalize_callback",
+      "header_line": 5264,
+      "vtable_line": 593
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_set_destroy_callback",
+      "header_line": 5284,
+      "vtable_line": 590
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_bind_set_return_type",
+      "header_line": 5306,
+      "vtable_line": 536
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_size_get_user_data",
+      "header_line": 5324,
+      "vtable_line": 612
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_size_get_bind_data",
+      "header_line": 5341,
+      "vtable_line": 610
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_size_set_state_size",
+      "header_line": 5359,
+      "vtable_line": 614
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_init_get_user_data",
+      "header_line": 5376,
+      "vtable_line": 582
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_init_get_bind_data",
+      "header_line": 5393,
+      "vtable_line": 576
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_init_get_state_count",
+      "header_line": 5411,
+      "vtable_line": 578
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_init_get_states",
+      "header_line": 5429,
+      "vtable_line": 580
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_update_get_user_data",
+      "header_line": 5446,
+      "vtable_line": 628
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_update_get_bind_data",
+      "header_line": 5463,
+      "vtable_line": 622
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_update_get_row_count",
+      "header_line": 5481,
+      "vtable_line": 624
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_update_get_arg_count",
+      "header_line": 5506,
+      "vtable_line": 619
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_update_get_arg",
+      "header_line": 5530,
+      "vtable_line": 616
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_update_get_states",
+      "header_line": 5549,
+      "vtable_line": 626
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_combine_get_user_data",
+      "header_line": 5566,
+      "vtable_line": 547
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_combine_get_bind_data",
+      "header_line": 5583,
+      "vtable_line": 539
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_combine_get_state_count",
+      "header_line": 5601,
+      "vtable_line": 543
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_combine_get_sources",
+      "header_line": 5620,
+      "vtable_line": 541
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_combine_get_targets",
+      "header_line": 5638,
+      "vtable_line": 545
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_finalize_get_user_data",
+      "header_line": 5655,
+      "vtable_line": 571
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_finalize_get_bind_data",
+      "header_line": 5672,
+      "vtable_line": 560
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_finalize_get_state_count",
+      "header_line": 5690,
+      "vtable_line": 567
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_finalize_get_states",
+      "header_line": 5708,
+      "vtable_line": 569
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_finalize_get_result",
+      "header_line": 5728,
+      "vtable_line": 562
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_finalize_get_result_offset",
+      "header_line": 5747,
+      "vtable_line": 565
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_destroy_get_user_data",
+      "header_line": 5764,
+      "vtable_line": 558
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_destroy_get_bind_data",
+      "header_line": 5781,
+      "vtable_line": 552
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_destroy_get_state_count",
+      "header_line": 5798,
+      "vtable_line": 554
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_destroy_get_states",
+      "header_line": 5816,
+      "vtable_line": 556
+    },
+    {
+      "name": "duckdb_v2_connection_register_aggregate_function",
+      "header_line": 5841,
+      "vtable_line": 630
+    },
+    {
+      "name": "duckdb_v2_extension_register_aggregate_function",
+      "header_line": 5865,
+      "vtable_line": 632
+    },
+    {
+      "name": "duckdb_v2_aggregate_function_destroy",
+      "header_line": 5883,
+      "vtable_line": 551
+    },
+    {
+      "name": "duckdb_v2_connection_describe_table",
+      "header_line": 5946,
+      "vtable_line": 868
+    },
+    {
+      "name": "duckdb_v2_table_description_get_qname",
+      "header_line": 5969,
+      "vtable_line": 1072
+    },
+    {
+      "name": "duckdb_v2_table_description_is_readonly",
+      "header_line": 5990,
+      "vtable_line": 1074
+    },
+    {
+      "name": "duckdb_v2_table_description_get_column_count",
+      "header_line": 6010,
+      "vtable_line": 1070
+    },
+    {
+      "name": "duckdb_v2_table_description_get_column",
+      "header_line": 6032,
+      "vtable_line": 1067
+    },
+    {
+      "name": "duckdb_v2_table_description_destroy",
+      "header_line": 6051,
+      "vtable_line": 1066
+    },
+    {
+      "name": "duckdb_v2_column_description_get_name",
+      "header_line": 6069,
+      "vtable_line": 860
+    },
+    {
+      "name": "duckdb_v2_column_description_get_type",
+      "header_line": 6087,
+      "vtable_line": 862
+    },
+    {
+      "name": "duckdb_v2_column_description_has_default",
+      "header_line": 6108,
+      "vtable_line": 864
+    },
+    {
+      "name": "duckdb_v2_column_description_has_generated",
+      "header_line": 6128,
+      "vtable_line": 866
+    },
+    {
+      "name": "duckdb_v2_column_description_destroy",
+      "header_line": 6146,
+      "vtable_line": 859
+    },
+    {
+      "name": "duckdb_v2_copy_function_create",
+      "header_line": 6352,
+      "vtable_line": 946
+    },
+    {
+      "name": "duckdb_v2_copy_function_set_name",
+      "header_line": 6374,
+      "vtable_line": 949
+    },
+    {
+      "name": "duckdb_v2_copy_function_set_file_extension",
+      "header_line": 6397,
+      "vtable_line": 1462
+    },
+    {
+      "name": "duckdb_v2_copy_function_set_user_data",
+      "header_line": 6419,
+      "vtable_line": 951
+    },
+    {
+      "name": "duckdb_v2_copy_to_set_bind_callback",
+      "header_line": 6441,
+      "vtable_line": 1020
+    },
+    {
+      "name": "duckdb_v2_copy_to_set_batch_size_callback",
+      "header_line": 6466,
+      "vtable_line": 1017
+    },
+    {
+      "name": "duckdb_v2_copy_to_set_init_callback",
+      "header_line": 6489,
+      "vtable_line": 1029
+    },
+    {
+      "name": "duckdb_v2_copy_to_set_batch_callback",
+      "header_line": 6513,
+      "vtable_line": 1014
+    },
+    {
+      "name": "duckdb_v2_copy_to_set_flush_callback",
+      "header_line": 6535,
+      "vtable_line": 1026
+    },
+    {
+      "name": "duckdb_v2_copy_to_set_finalize_callback",
+      "header_line": 6556,
+      "vtable_line": 1023
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_get_user_data",
+      "header_line": 6574,
+      "vtable_line": 988
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_set_bind_data",
+      "header_line": 6595,
+      "vtable_line": 990
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_get_file_path",
+      "header_line": 6617,
+      "vtable_line": 978
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_get_column_count",
+      "header_line": 6638,
+      "vtable_line": 970
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_get_column_type",
+      "header_line": 6659,
+      "vtable_line": 975
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_get_column_name",
+      "header_line": 6680,
+      "vtable_line": 972
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_get_option_count",
+      "header_line": 6702,
+      "vtable_line": 980
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_get_option_name",
+      "header_line": 6723,
+      "vtable_line": 982
+    },
+    {
+      "name": "duckdb_v2_copy_to_bind_get_option_value",
+      "header_line": 6747,
+      "vtable_line": 985
+    },
+    {
+      "name": "duckdb_v2_copy_to_batch_size_get_user_data",
+      "header_line": 6765,
+      "vtable_line": 963
+    },
+    {
+      "name": "duckdb_v2_copy_to_batch_size_get_bind_data",
+      "header_line": 6782,
+      "vtable_line": 961
+    },
+    {
+      "name": "duckdb_v2_copy_to_batch_size_set_target",
+      "header_line": 6801,
+      "vtable_line": 965
+    },
+    {
+      "name": "duckdb_v2_copy_to_init_get_user_data",
+      "header_line": 6818,
+      "vtable_line": 1010
+    },
+    {
+      "name": "duckdb_v2_copy_to_init_get_bind_data",
+      "header_line": 6835,
+      "vtable_line": 1006
+    },
+    {
+      "name": "duckdb_v2_copy_to_init_get_file_path",
+      "header_line": 6856,
+      "vtable_line": 1008
+    },
+    {
+      "name": "duckdb_v2_copy_to_init_set_init_data",
+      "header_line": 6879,
+      "vtable_line": 1012
+    },
+    {
+      "name": "duckdb_v2_copy_to_batch_get_user_data",
+      "header_line": 6897,
+      "vtable_line": 957
+    },
+    {
+      "name": "duckdb_v2_copy_to_batch_get_bind_data",
+      "header_line": 6914,
+      "vtable_line": 953
+    },
+    {
+      "name": "duckdb_v2_copy_to_batch_get_init_data",
+      "header_line": 6931,
+      "vtable_line": 955
+    },
+    {
+      "name": "duckdb_v2_copy_to_batch_take_input",
+      "header_line": 6955,
+      "vtable_line": 967
+    },
+    {
+      "name": "duckdb_v2_copy_to_batch_set_batch_data",
+      "header_line": 6977,
+      "vtable_line": 959
+    },
+    {
+      "name": "duckdb_v2_copy_to_flush_get_user_data",
+      "header_line": 6995,
+      "vtable_line": 1004
+    },
+    {
+      "name": "duckdb_v2_copy_to_flush_get_bind_data",
+      "header_line": 7012,
+      "vtable_line": 1000
+    },
+    {
+      "name": "duckdb_v2_copy_to_flush_get_init_data",
+      "header_line": 7029,
+      "vtable_line": 1002
+    },
+    {
+      "name": "duckdb_v2_copy_to_flush_get_batch_data",
+      "header_line": 7046,
+      "vtable_line": 998
+    },
+    {
+      "name": "duckdb_v2_copy_to_finalize_get_user_data",
+      "header_line": 7063,
+      "vtable_line": 996
+    },
+    {
+      "name": "duckdb_v2_copy_to_finalize_get_bind_data",
+      "header_line": 7080,
+      "vtable_line": 992
+    },
+    {
+      "name": "duckdb_v2_copy_to_finalize_get_init_data",
+      "header_line": 7097,
+      "vtable_line": 994
+    },
+    {
+      "name": "duckdb_v2_copy_from_set_bind_callback",
+      "header_line": 7120,
+      "vtable_line": 931
+    },
+    {
+      "name": "duckdb_v2_copy_from_set_init_global_callback",
+      "header_line": 7142,
+      "vtable_line": 937
+    },
+    {
+      "name": "duckdb_v2_copy_from_set_init_local_callback",
+      "header_line": 7163,
+      "vtable_line": 940
+    },
+    {
+      "name": "duckdb_v2_copy_from_set_exec_callback",
+      "header_line": 7185,
+      "vtable_line": 934
+    },
+    {
+      "name": "duckdb_v2_copy_from_set_progress_callback",
+      "header_line": 7207,
+      "vtable_line": 943
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_get_user_data",
+      "header_line": 7225,
+      "vtable_line": 891
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_set_bind_data",
+      "header_line": 7246,
+      "vtable_line": 893
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_get_file_path",
+      "header_line": 7267,
+      "vtable_line": 881
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_get_column_count",
+      "header_line": 7289,
+      "vtable_line": 873
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_get_column_type",
+      "header_line": 7310,
+      "vtable_line": 878
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_get_column_name",
+      "header_line": 7331,
+      "vtable_line": 875
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_get_option_count",
+      "header_line": 7352,
+      "vtable_line": 883
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_get_option_name",
+      "header_line": 7373,
+      "vtable_line": 885
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_get_option_value",
+      "header_line": 7397,
+      "vtable_line": 888
+    },
+    {
+      "name": "duckdb_v2_copy_from_bind_set_cardinality",
+      "header_line": 7419,
+      "vtable_line": 895
+    },
+    {
+      "name": "duckdb_v2_copy_from_init_global_get_user_data",
+      "header_line": 7437,
+      "vtable_line": 909
+    },
+    {
+      "name": "duckdb_v2_copy_from_init_global_get_bind_data",
+      "header_line": 7454,
+      "vtable_line": 907
+    },
+    {
+      "name": "duckdb_v2_copy_from_init_global_set_global_state",
+      "header_line": 7475,
+      "vtable_line": 911
+    },
+    {
+      "name": "duckdb_v2_copy_from_init_global_set_max_threads",
+      "header_line": 7495,
+      "vtable_line": 913
+    },
+    {
+      "name": "duckdb_v2_copy_from_init_local_get_user_data",
+      "header_line": 7512,
+      "vtable_line": 919
+    },
+    {
+      "name": "duckdb_v2_copy_from_init_local_get_bind_data",
+      "header_line": 7529,
+      "vtable_line": 915
+    },
+    {
+      "name": "duckdb_v2_copy_from_init_local_get_global_state",
+      "header_line": 7548,
+      "vtable_line": 917
+    },
+    {
+      "name": "duckdb_v2_copy_from_init_local_set_local_state",
+      "header_line": 7570,
+      "vtable_line": 921
+    },
+    {
+      "name": "duckdb_v2_copy_from_exec_get_user_data",
+      "header_line": 7587,
+      "vtable_line": 905
+    },
+    {
+      "name": "duckdb_v2_copy_from_exec_get_bind_data",
+      "header_line": 7604,
+      "vtable_line": 897
+    },
+    {
+      "name": "duckdb_v2_copy_from_exec_get_global_state",
+      "header_line": 7623,
+      "vtable_line": 899
+    },
+    {
+      "name": "duckdb_v2_copy_from_exec_get_local_state",
+      "header_line": 7640,
+      "vtable_line": 901
+    },
+    {
+      "name": "duckdb_v2_copy_from_exec_get_output_chunk",
+      "header_line": 7663,
+      "vtable_line": 903
+    },
+    {
+      "name": "duckdb_v2_copy_from_progress_get_user_data",
+      "header_line": 7681,
+      "vtable_line": 927
+    },
+    {
+      "name": "duckdb_v2_copy_from_progress_get_bind_data",
+      "header_line": 7698,
+      "vtable_line": 923
+    },
+    {
+      "name": "duckdb_v2_copy_from_progress_get_global_state",
+      "header_line": 7718,
+      "vtable_line": 925
+    },
+    {
+      "name": "duckdb_v2_copy_from_progress_set_progress",
+      "header_line": 7738,
+      "vtable_line": 929
+    },
+    {
+      "name": "duckdb_v2_connection_register_copy_function",
+      "header_line": 7764,
+      "vtable_line": 871
+    },
+    {
+      "name": "duckdb_v2_extension_register_copy_function",
+      "header_line": 7789,
+      "vtable_line": 1051
+    },
+    {
+      "name": "duckdb_v2_copy_function_destroy",
+      "header_line": 7807,
+      "vtable_line": 948
+    },
+    {
+      "name": "duckdb_v2_copy_to_set_statistics_callback",
+      "header_line": 7828,
+      "vtable_line": 1182
+    },
+    {
+      "name": "duckdb_v2_copy_to_statistics_get_user_data",
+      "header_line": 7846,
+      "vtable_line": 1189
+    },
+    {
+      "name": "duckdb_v2_copy_to_statistics_get_bind_data",
+      "header_line": 7863,
+      "vtable_line": 1185
+    },
+    {
+      "name": "duckdb_v2_copy_to_statistics_get_init_data",
+      "header_line": 7880,
+      "vtable_line": 1187
+    },
+    {
+      "name": "duckdb_v2_copy_to_statistics_set_row_count",
+      "header_line": 7897,
+      "vtable_line": 1193
+    },
+    {
+      "name": "duckdb_v2_copy_to_statistics_set_file_size",
+      "header_line": 7915,
+      "vtable_line": 1191
+    },
+    {
+      "name": "duckdb_v2_custom_option_create",
+      "header_line": 7979,
+      "vtable_line": 1374
+    },
+    {
+      "name": "duckdb_v2_custom_option_set_name",
+      "header_line": 8000,
+      "vtable_line": 1383
+    },
+    {
+      "name": "duckdb_v2_custom_option_set_type",
+      "header_line": 8020,
+      "vtable_line": 1388
+    },
+    {
+      "name": "duckdb_v2_custom_option_set_default_value",
+      "header_line": 8041,
+      "vtable_line": 1379
+    },
+    {
+      "name": "duckdb_v2_custom_option_set_description",
+      "header_line": 8061,
+      "vtable_line": 1381
+    },
+    {
+      "name": "duckdb_v2_custom_option_set_default_scope",
+      "header_line": 8082,
+      "vtable_line": 1377
+    },
+    {
+      "name": "duckdb_v2_custom_option_set_supports_scope",
+      "header_line": 8104,
+      "vtable_line": 1385
+    },
+    {
+      "name": "duckdb_v2_custom_option_set_user_data",
+      "header_line": 8127,
+      "vtable_line": 1393
+    },
+    {
+      "name": "duckdb_v2_custom_option_set_update_callback",
+      "header_line": 8150,
+      "vtable_line": 1390
+    },
+    {
+      "name": "duckdb_v2_custom_option_update_get_user_data",
+      "header_line": 8168,
+      "vtable_line": 1397
+    },
+    {
+      "name": "duckdb_v2_custom_option_update_get_value",
+      "header_line": 8187,
+      "vtable_line": 1399
+    },
+    {
+      "name": "duckdb_v2_custom_option_update_set_value",
+      "header_line": 8206,
+      "vtable_line": 1403
+    },
+    {
+      "name": "duckdb_v2_custom_option_update_get_scope",
+      "header_line": 8225,
+      "vtable_line": 1395
+    },
+    {
+      "name": "duckdb_v2_custom_option_update_is_reset",
+      "header_line": 8243,
+      "vtable_line": 1401
+    },
+    {
+      "name": "duckdb_v2_connection_register_custom_option",
+      "header_line": 8266,
+      "vtable_line": 1372
+    },
+    {
+      "name": "duckdb_v2_extension_register_custom_option",
+      "header_line": 8290,
+      "vtable_line": 1405
+    },
+    {
+      "name": "duckdb_v2_custom_option_destroy",
+      "header_line": 8308,
+      "vtable_line": 1376
+    },
+    {
+      "name": "duckdb_v2_expression_get_type",
+      "header_line": 8444,
+      "vtable_line": 1049
+    },
+    {
+      "name": "duckdb_v2_expression_get_return_type",
+      "header_line": 8465,
+      "vtable_line": 1047
+    },
+    {
+      "name": "duckdb_v2_expression_get_child_count",
+      "header_line": 8486,
+      "vtable_line": 1045
+    },
+    {
+      "name": "duckdb_v2_expression_get_child",
+      "header_line": 8507,
+      "vtable_line": 1042
+    },
+    {
+      "name": "duckdb_v2_expression_constant_get_value",
+      "header_line": 8528,
+      "vtable_line": 1036
+    },
+    {
+      "name": "duckdb_v2_expression_column_ref_get_index",
+      "header_line": 8551,
+      "vtable_line": 1034
+    },
+    {
+      "name": "duckdb_v2_expression_function_get_name",
+      "header_line": 8573,
+      "vtable_line": 1038
+    },
+    {
+      "name": "duckdb_v2_expression_function_get_qname",
+      "header_line": 8595,
+      "vtable_line": 1040
+    },
+    {
+      "name": "duckdb_v2_expression_cast_get_mode",
+      "header_line": 8616,
+      "vtable_line": 1032
+    },
+    {
+      "name": "duckdb_v2_log_sink_create",
+      "header_line": 8706,
+      "vtable_line": 1422
+    },
+    {
+      "name": "duckdb_v2_log_sink_set_name",
+      "header_line": 8727,
+      "vtable_line": 1427
+    },
+    {
+      "name": "duckdb_v2_log_sink_set_user_data",
+      "header_line": 8749,
+      "vtable_line": 1429
+    },
+    {
+      "name": "duckdb_v2_log_sink_set_write_callback",
+      "header_line": 8769,
+      "vtable_line": 1431
+    },
+    {
+      "name": "duckdb_v2_log_sink_set_flush_callback",
+      "header_line": 8791,
+      "vtable_line": 1425
+    },
+    {
+      "name": "duckdb_v2_log_sink_write_info_get_connection_id",
+      "header_line": 8811,
+      "vtable_line": 1433
+    },
+    {
+      "name": "duckdb_v2_log_sink_write_info_get_transaction_id",
+      "header_line": 8831,
+      "vtable_line": 1439
+    },
+    {
+      "name": "duckdb_v2_log_sink_write_info_get_query_id",
+      "header_line": 8851,
+      "vtable_line": 1435
+    },
+    {
+      "name": "duckdb_v2_log_sink_write_info_get_thread_id",
+      "header_line": 8872,
+      "vtable_line": 1437
+    },
+    {
+      "name": "duckdb_v2_instance_register_log_sink",
+      "header_line": 8897,
+      "vtable_line": 1420
+    },
+    {
+      "name": "duckdb_v2_extension_register_log_sink",
+      "header_line": 8919,
+      "vtable_line": 1407
+    },
+    {
+      "name": "duckdb_v2_log_sink_destroy",
+      "header_line": 8937,
+      "vtable_line": 1424
+    },
+    {
+      "name": "duckdb_v2_factory_create_type_from_id",
+      "header_line": 9084,
+      "vtable_line": 165
+    },
+    {
+      "name": "duckdb_v2_factory_create_type_from_name",
+      "header_line": 9133,
+      "vtable_line": 169
+    },
+    {
+      "name": "duckdb_v2_factory_create_type_from_text",
+      "header_line": 9166,
+      "vtable_line": 173
+    },
+    {
+      "name": "duckdb_v2_logical_type_copy",
+      "header_line": 9186,
+      "vtable_line": 192
+    },
+    {
+      "name": "duckdb_v2_logical_type_destroy",
+      "header_line": 9203,
+      "vtable_line": 194
+    },
+    {
+      "name": "duckdb_v2_logical_type_is_equal",
+      "header_line": 9223,
+      "vtable_line": 204
+    },
+    {
+      "name": "duckdb_v2_logical_type_get_id",
+      "header_line": 9240,
+      "vtable_line": 195
+    },
+    {
+      "name": "duckdb_v2_logical_type_get_name",
+      "header_line": 9262,
+      "vtable_line": 197
+    },
+    {
+      "name": "duckdb_v2_logical_type_to_text",
+      "header_line": 9296,
+      "vtable_line": 207
+    },
+    {
+      "name": "duckdb_v2_logical_type_get_param_count",
+      "header_line": 9319,
+      "vtable_line": 202
+    },
+    {
+      "name": "duckdb_v2_logical_type_get_param",
+      "header_line": 9344,
+      "vtable_line": 199
+    },
+    {
+      "name": "duckdb_v2_factory_create_type_with_alias",
+      "header_line": 9372,
+      "vtable_line": 176
+    },
+    {
+      "name": "duckdb_v2_factory_create_common_type",
+      "header_line": 9405,
+      "vtable_line": 1338
+    },
+    {
+      "name": "duckdb_v2_macro_function_create",
+      "header_line": 9471,
+      "vtable_line": 1441
+    },
+    {
+      "name": "duckdb_v2_macro_function_set_name",
+      "header_line": 9493,
+      "vtable_line": 1452
+    },
+    {
+      "name": "duckdb_v2_macro_function_set_body",
+      "header_line": 9516,
+      "vtable_line": 1450
+    },
+    {
+      "name": "duckdb_v2_macro_function_get_signature",
+      "header_line": 9540,
+      "vtable_line": 1447
+    },
+    {
+      "name": "duckdb_v2_macro_function_get_docs",
+      "header_line": 9562,
+      "vtable_line": 1445
+    },
+    {
+      "name": "duckdb_v2_extension_register_macro_function",
+      "header_line": 9587,
+      "vtable_line": 1409
+    },
+    {
+      "name": "duckdb_v2_macro_function_destroy",
+      "header_line": 9605,
+      "vtable_line": 1444
+    },
+    {
+      "name": "duckdb_v2_pragma_function_create",
+      "header_line": 9676,
+      "vtable_line": 1348
+    },
+    {
+      "name": "duckdb_v2_pragma_function_set_name",
+      "header_line": 9697,
+      "vtable_line": 1361
+    },
+    {
+      "name": "duckdb_v2_pragma_function_get_docs",
+      "header_line": 9719,
+      "vtable_line": 1351
+    },
+    {
+      "name": "duckdb_v2_pragma_function_get_signature",
+      "header_line": 9741,
+      "vtable_line": 1353
+    },
+    {
+      "name": "duckdb_v2_pragma_function_set_user_data",
+      "header_line": 9763,
+      "vtable_line": 1366
+    },
+    {
+      "name": "duckdb_v2_pragma_function_set_query_callback",
+      "header_line": 9786,
+      "vtable_line": 1363
+    },
+    {
+      "name": "duckdb_v2_pragma_function_set_exec_callback",
+      "header_line": 9808,
+      "vtable_line": 1358
+    },
+    {
+      "name": "duckdb_v2_pragma_function_query_set_query",
+      "header_line": 9829,
+      "vtable_line": 1356
+    },
+    {
+      "name": "duckdb_v2_connection_register_pragma_function",
+      "header_line": 9854,
+      "vtable_line": 1334
+    },
+    {
+      "name": "duckdb_v2_extension_register_pragma_function",
+      "header_line": 9878,
+      "vtable_line": 1336
+    },
+    {
+      "name": "duckdb_v2_pragma_function_destroy",
+      "header_line": 9896,
+      "vtable_line": 1350
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_create",
+      "header_line": 9961,
+      "vtable_line": 814
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_set_callback",
+      "header_line": 9985,
+      "vtable_line": 824
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_set_user_data",
+      "header_line": 10008,
+      "vtable_line": 834
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_get_user_data",
+      "header_line": 10026,
+      "vtable_line": 819
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_get_name",
+      "header_line": 10048,
+      "vtable_line": 817
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_set_function_name",
+      "header_line": 10076,
+      "vtable_line": 830
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_add_argument",
+      "header_line": 10098,
+      "vtable_line": 809
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_add_named_argument",
+      "header_line": 10121,
+      "vtable_line": 811
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_set_collection",
+      "header_line": 10163,
+      "vtable_line": 827
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_set_subquery",
+      "header_line": 10190,
+      "vtable_line": 832
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_set_alias",
+      "header_line": 10212,
+      "vtable_line": 821
+    },
+    {
+      "name": "duckdb_v2_connection_register_replacement_scan",
+      "header_line": 10238,
+      "vtable_line": 743
+    },
+    {
+      "name": "duckdb_v2_instance_register_replacement_scan",
+      "header_line": 10264,
+      "vtable_line": 790
+    },
+    {
+      "name": "duckdb_v2_extension_register_replacement_scan",
+      "header_line": 10290,
+      "vtable_line": 758
+    },
+    {
+      "name": "duckdb_v2_replacement_scan_destroy",
+      "header_line": 10308,
+      "vtable_line": 816
+    },
+    {
+      "name": "duckdb_v2_scalar_function_create",
+      "header_line": 10414,
+      "vtable_line": 494
+    },
+    {
+      "name": "duckdb_v2_scalar_function_set_name",
+      "header_line": 10435,
+      "vtable_line": 532
+    },
+    {
+      "name": "duckdb_v2_scalar_function_get_docs",
+      "header_line": 10457,
+      "vtable_line": 1368
+    },
+    {
+      "name": "duckdb_v2_scalar_function_get_signature",
+      "header_line": 10479,
+      "vtable_line": 514
+    },
+    {
+      "name": "duckdb_v2_scalar_function_set_user_data",
+      "header_line": 10502,
+      "vtable_line": 534
+    },
+    {
+      "name": "duckdb_v2_scalar_function_set_property",
+      "header_line": 10526,
+      "vtable_line": 638
+    },
+    {
+      "name": "duckdb_v2_scalar_function_set_resolve_types_callback",
+      "header_line": 10551,
+      "vtable_line": 1277
+    },
+    {
+      "name": "duckdb_v2_scalar_function_set_bind_callback",
+      "header_line": 10575,
+      "vtable_line": 523
+    },
+    {
+      "name": "duckdb_v2_scalar_function_set_init_callback",
+      "header_line": 10597,
+      "vtable_line": 529
+    },
+    {
+      "name": "duckdb_v2_scalar_function_set_exec_callback",
+      "header_line": 10618,
+      "vtable_line": 526
+    },
+    {
+      "name": "duckdb_v2_scalar_function_resolve_types_set_return_type",
+      "header_line": 10640,
+      "vtable_line": 1274
+    },
+    {
+      "name": "duckdb_v2_scalar_function_bind_set_bind_data",
+      "header_line": 10663,
+      "vtable_line": 1299
+    },
+    {
+      "name": "duckdb_v2_scalar_function_init_get_user_data",
+      "header_line": 10680,
+      "vtable_line": 519
+    },
+    {
+      "name": "duckdb_v2_scalar_function_init_get_bind_data",
+      "header_line": 10697,
+      "vtable_line": 517
+    },
+    {
+      "name": "duckdb_v2_scalar_function_init_set_init_data",
+      "header_line": 10718,
+      "vtable_line": 521
+    },
+    {
+      "name": "duckdb_v2_scalar_function_exec_get_user_data",
+      "header_line": 10735,
+      "vtable_line": 512
+    },
+    {
+      "name": "duckdb_v2_scalar_function_exec_get_bind_data",
+      "header_line": 10752,
+      "vtable_line": 503
+    },
+    {
+      "name": "duckdb_v2_scalar_function_exec_get_init_data",
+      "header_line": 10769,
+      "vtable_line": 505
+    },
+    {
+      "name": "duckdb_v2_scalar_function_exec_get_row_count",
+      "header_line": 10788,
+      "vtable_line": 510
+    },
+    {
+      "name": "duckdb_v2_scalar_function_exec_get_arg_count",
+      "header_line": 10813,
+      "vtable_line": 500
+    },
+    {
+      "name": "duckdb_v2_scalar_function_exec_get_arg",
+      "header_line": 10837,
+      "vtable_line": 497
+    },
+    {
+      "name": "duckdb_v2_scalar_function_exec_get_result",
+      "header_line": 10858,
+      "vtable_line": 507
+    },
+    {
+      "name": "duckdb_v2_connection_register_scalar_function",
+      "header_line": 10884,
+      "vtable_line": 482
+    },
+    {
+      "name": "duckdb_v2_extension_register_scalar_function",
+      "header_line": 10909,
+      "vtable_line": 487
+    },
+    {
+      "name": "duckdb_v2_scalar_function_destroy",
+      "header_line": 10927,
+      "vtable_line": 496
+    },
+    {
+      "name": "duckdb_v2_parse_sql",
+      "header_line": 11022,
+      "vtable_line": 221
+    },
+    {
+      "name": "duckdb_v2_statement_iterator_next",
+      "header_line": 11044,
+      "vtable_line": 258
+    },
+    {
+      "name": "duckdb_v2_statement_bind",
+      "header_line": 11080,
+      "vtable_line": 250
+    },
+    {
+      "name": "duckdb_v2_statement_add_collection",
+      "header_line": 11121,
+      "vtable_line": 1495
+    },
+    {
+      "name": "duckdb_v2_sql_statement_get_type",
+      "header_line": 11146,
+      "vtable_line": 1119
+    },
+    {
+      "name": "duckdb_v2_sql_statement_get_text",
+      "header_line": 11168,
+      "vtable_line": 1117
+    },
+    {
+      "name": "duckdb_v2_sql_statement_get_parameter_count",
+      "header_line": 11188,
+      "vtable_line": 1112
+    },
+    {
+      "name": "duckdb_v2_sql_statement_get_parameter_name",
+      "header_line": 11213,
+      "vtable_line": 1114
+    },
+    {
+      "name": "duckdb_v2_sql_statement_destroy",
+      "header_line": 11231,
+      "vtable_line": 249
+    },
+    {
+      "name": "duckdb_v2_statement_iterator_destroy",
+      "header_line": 11247,
+      "vtable_line": 257
+    },
+    {
+      "name": "duckdb_v2_vector_get_vector_type",
+      "header_line": 11313,
+      "vtable_line": 466
+    },
+    {
+      "name": "duckdb_v2_vector_get_logical_type",
+      "header_line": 11333,
+      "vtable_line": 460
+    },
+    {
+      "name": "duckdb_v2_vector_get_view",
+      "header_line": 11369,
+      "vtable_line": 468
+    },
+    {
+      "name": "duckdb_v2_vector_get_size",
+      "header_line": 11389,
+      "vtable_line": 462
+    },
+    {
+      "name": "duckdb_v2_vector_set_size",
+      "header_line": 11408,
+      "vtable_line": 478
+    },
+    {
+      "name": "duckdb_v2_vector_get_value",
+      "header_line": 11433,
+      "vtable_line": 464
+    },
+    {
+      "name": "duckdb_v2_vector_set_value",
+      "header_line": 11461,
+      "vtable_line": 480
+    },
+    {
+      "name": "duckdb_v2_vector_get_data_mutable",
+      "header_line": 11482,
+      "vtable_line": 458
+    },
+    {
+      "name": "duckdb_v2_vector_flatten",
+      "header_line": 11502,
+      "vtable_line": 451
+    },
+    {
+      "name": "duckdb_v2_vector_cast",
+      "header_line": 11537,
+      "vtable_line": 1454
+    },
+    {
+      "name": "duckdb_v2_vector_reference",
+      "header_line": 11560,
+      "vtable_line": 474
+    },
+    {
+      "name": "duckdb_v2_vector_make_constant",
+      "header_line": 11581,
+      "vtable_line": 470
+    },
+    {
+      "name": "duckdb_v2_vector_make_sequence",
+      "header_line": 11603,
+      "vtable_line": 472
+    },
+    {
+      "name": "duckdb_v2_vector_set_null",
+      "header_line": 11630,
+      "vtable_line": 476
+    },
+    {
+      "name": "duckdb_v2_vector_flat_get_validity_mutable",
+      "header_line": 11654,
+      "vtable_line": 449
+    },
+    {
+      "name": "duckdb_v2_vector_constant_set_valid",
+      "header_line": 11673,
+      "vtable_line": 447
+    },
+    {
+      "name": "duckdb_v2_vector_get_arena",
+      "header_line": 11693,
+      "vtable_line": 452
+    },
+    {
+      "name": "duckdb_v2_vector_get_child_count",
+      "header_line": 11713,
+      "vtable_line": 456
+    },
+    {
+      "name": "duckdb_v2_vector_get_child",
+      "header_line": 11737,
+      "vtable_line": 454
+    },
+    {
+      "name": "duckdb_v2_bignum_decode",
+      "header_line": 11778,
+      "vtable_line": 84
+    },
+    {
+      "name": "duckdb_v2_bignum_encode",
+      "header_line": 11816,
+      "vtable_line": 87
+    },
+    {
+      "name": "duckdb_v2_validate_utf8",
+      "header_line": 11839,
+      "vtable_line": 1179
+    },
+    {
+      "name": "duckdb_v2_prepared_statement_create",
+      "header_line": 11935,
+      "vtable_line": 1056
+    },
+    {
+      "name": "duckdb_v2_prepared_statement_execute",
+      "header_line": 11985,
+      "vtable_line": 1060
+    },
+    {
+      "name": "duckdb_v2_prepared_statement_reuses_plan",
+      "header_line": 12017,
+      "vtable_line": 1064
+    },
+    {
+      "name": "duckdb_v2_prepared_statement_destroy",
+      "header_line": 12036,
+      "vtable_line": 1059
+    },
+    {
+      "name": "duckdb_v2_statement_execute",
+      "header_line": 12140,
+      "vtable_line": 253
+    },
+    {
+      "name": "duckdb_v2_result_destroy",
+      "header_line": 12164,
+      "vtable_line": 224
+    },
+    {
+      "name": "duckdb_v2_result_step",
+      "header_line": 12196,
+      "vtable_line": 239
+    },
+    {
+      "name": "duckdb_v2_result_fetch_chunk",
+      "header_line": 12223,
+      "vtable_line": 227
+    },
+    {
+      "name": "duckdb_v2_result_wait",
+      "header_line": 12243,
+      "vtable_line": 242
+    },
+    {
+      "name": "duckdb_v2_result_render_box",
+      "header_line": 12286,
+      "vtable_line": 235
+    },
+    {
+      "name": "duckdb_v2_result_drain",
+      "header_line": 12313,
+      "vtable_line": 225
+    },
+    {
+      "name": "duckdb_v2_result_get_result_type",
+      "header_line": 12336,
+      "vtable_line": 229
+    },
+    {
+      "name": "duckdb_v2_result_get_statement_type",
+      "header_line": 12356,
+      "vtable_line": 233
+    },
+    {
+      "name": "duckdb_v2_result_get_schema",
+      "header_line": 12383,
+      "vtable_line": 231
+    },
+    {
+      "name": "duckdb_v2_table_function_create",
+      "header_line": 12604,
+      "vtable_line": 651
+    },
+    {
+      "name": "duckdb_v2_table_function_set_name",
+      "header_line": 12625,
+      "vtable_line": 704
+    },
+    {
+      "name": "duckdb_v2_table_function_get_docs",
+      "header_line": 12647,
+      "vtable_line": 1370
+    },
+    {
+      "name": "duckdb_v2_table_function_get_signature",
+      "header_line": 12669,
+      "vtable_line": 665
+    },
+    {
+      "name": "duckdb_v2_table_function_set_user_data",
+      "header_line": 12692,
+      "vtable_line": 709
+    },
+    {
+      "name": "duckdb_v2_table_function_set_bind_callback",
+      "header_line": 12715,
+      "vtable_line": 692
+    },
+    {
+      "name": "duckdb_v2_table_function_set_init_global_callback",
+      "header_line": 12737,
+      "vtable_line": 698
+    },
+    {
+      "name": "duckdb_v2_table_function_set_init_local_callback",
+      "header_line": 12758,
+      "vtable_line": 701
+    },
+    {
+      "name": "duckdb_v2_table_function_set_exec_callback",
+      "header_line": 12780,
+      "vtable_line": 695
+    },
+    {
+      "name": "duckdb_v2_table_function_set_progress_callback",
+      "header_line": 12802,
+      "vtable_line": 706
+    },
+    {
+      "name": "duckdb_v2_table_function_set_projection_pushdown",
+      "header_line": 12826,
+      "vtable_line": 1110
+    },
+    {
+      "name": "duckdb_v2_table_function_set_filter_pushdown_callback",
+      "header_line": 12852,
+      "vtable_line": 1107
+    },
+    {
+      "name": "duckdb_v2_table_function_set_partition_data_callback",
+      "header_line": 12876,
+      "vtable_line": 1173
+    },
+    {
+      "name": "duckdb_v2_table_function_set_partitioning_callback",
+      "header_line": 12902,
+      "vtable_line": 1176
+    },
+    {
+      "name": "duckdb_v2_table_function_bind_add_result_column",
+      "header_line": 12926,
+      "vtable_line": 645
+    },
+    {
+      "name": "duckdb_v2_table_function_bind_set_cardinality",
+      "header_line": 12948,
+      "vtable_line": 648
+    },
+    {
+      "name": "duckdb_v2_table_function_bind_set_order_preservation",
+      "header_line": 12972,
+      "vtable_line": 1244
+    },
+    {
+      "name": "duckdb_v2_table_function_init_global_get_user_data",
+      "header_line": 12990,
+      "vtable_line": 670
+    },
+    {
+      "name": "duckdb_v2_table_function_init_global_get_bind_data",
+      "header_line": 13007,
+      "vtable_line": 668
+    },
+    {
+      "name": "duckdb_v2_table_function_init_global_set_global_state",
+      "header_line": 13028,
+      "vtable_line": 672
+    },
+    {
+      "name": "duckdb_v2_table_function_init_global_set_max_threads",
+      "header_line": 13048,
+      "vtable_line": 674
+    },
+    {
+      "name": "duckdb_v2_table_function_init_global_get_column_count",
+      "header_line": 13070,
+      "vtable_line": 1097
+    },
+    {
+      "name": "duckdb_v2_table_function_init_global_get_column_index",
+      "header_line": 13092,
+      "vtable_line": 1099
+    },
+    {
+      "name": "duckdb_v2_table_function_init_local_get_user_data",
+      "header_line": 13110,
+      "vtable_line": 680
+    },
+    {
+      "name": "duckdb_v2_table_function_init_local_get_bind_data",
+      "header_line": 13127,
+      "vtable_line": 676
+    },
+    {
+      "name": "duckdb_v2_table_function_init_local_get_global_state",
+      "header_line": 13146,
+      "vtable_line": 678
+    },
+    {
+      "name": "duckdb_v2_table_function_init_local_set_local_state",
+      "header_line": 13168,
+      "vtable_line": 682
+    },
+    {
+      "name": "duckdb_v2_table_function_init_local_get_column_count",
+      "header_line": 13190,
+      "vtable_line": 1102
+    },
+    {
+      "name": "duckdb_v2_table_function_init_local_get_column_index",
+      "header_line": 13212,
+      "vtable_line": 1104
+    },
+    {
+      "name": "duckdb_v2_table_function_exec_get_user_data",
+      "header_line": 13230,
+      "vtable_line": 663
+    },
+    {
+      "name": "duckdb_v2_table_function_exec_get_bind_data",
+      "header_line": 13247,
+      "vtable_line": 654
+    },
+    {
+      "name": "duckdb_v2_table_function_exec_get_global_state",
+      "header_line": 13266,
+      "vtable_line": 656
+    },
+    {
+      "name": "duckdb_v2_table_function_exec_get_local_state",
+      "header_line": 13283,
+      "vtable_line": 658
+    },
+    {
+      "name": "duckdb_v2_table_function_exec_get_output_chunk",
+      "header_line": 13306,
+      "vtable_line": 660
+    },
+    {
+      "name": "duckdb_v2_table_function_exec_get_column_count",
+      "header_line": 13329,
+      "vtable_line": 1076
+    },
+    {
+      "name": "duckdb_v2_table_function_exec_get_column_index",
+      "header_line": 13351,
+      "vtable_line": 1078
+    },
+    {
+      "name": "duckdb_v2_table_function_progress_get_user_data",
+      "header_line": 13368,
+      "vtable_line": 688
+    },
+    {
+      "name": "duckdb_v2_table_function_progress_get_bind_data",
+      "header_line": 13385,
+      "vtable_line": 684
+    },
+    {
+      "name": "duckdb_v2_table_function_progress_get_global_state",
+      "header_line": 13405,
+      "vtable_line": 686
+    },
+    {
+      "name": "duckdb_v2_table_function_progress_set_progress",
+      "header_line": 13425,
+      "vtable_line": 690
+    },
+    {
+      "name": "duckdb_v2_table_function_filter_pushdown_get_user_data",
+      "header_line": 13442,
+      "vtable_line": 1095
+    },
+    {
+      "name": "duckdb_v2_table_function_filter_pushdown_get_bind_data",
+      "header_line": 13462,
+      "vtable_line": 1083
+    },
+    {
+      "name": "duckdb_v2_table_function_filter_pushdown_get_filter_count",
+      "header_line": 13483,
+      "vtable_line": 1093
+    },
+    {
+      "name": "duckdb_v2_table_function_filter_pushdown_get_filter",
+      "header_line": 13506,
+      "vtable_line": 1090
+    },
+    {
+      "name": "duckdb_v2_table_function_filter_pushdown_accept",
+      "header_line": 13528,
+      "vtable_line": 1081
+    },
+    {
+      "name": "duckdb_v2_table_function_filter_pushdown_get_column_count",
+      "header_line": 13549,
+      "vtable_line": 1085
+    },
+    {
+      "name": "duckdb_v2_table_function_filter_pushdown_get_column_index",
+      "header_line": 13571,
+      "vtable_line": 1087
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_get_user_data",
+      "header_line": 13589,
+      "vtable_line": 1150
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_get_bind_data",
+      "header_line": 13606,
+      "vtable_line": 1139
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_get_global_state",
+      "header_line": 13625,
+      "vtable_line": 1141
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_get_local_state",
+      "header_line": 13643,
+      "vtable_line": 1143
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_requires_batch_index",
+      "header_line": 13664,
+      "vtable_line": 1152
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_requires_partition_columns",
+      "header_line": 13684,
+      "vtable_line": 1154
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_get_partition_column_count",
+      "header_line": 13705,
+      "vtable_line": 1145
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_get_partition_column_index",
+      "header_line": 13726,
+      "vtable_line": 1147
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_set_batch_index",
+      "header_line": 13753,
+      "vtable_line": 1156
+    },
+    {
+      "name": "duckdb_v2_table_function_partition_data_set_partition_value",
+      "header_line": 13781,
+      "vtable_line": 1158
+    },
+    {
+      "name": "duckdb_v2_table_function_partitioning_get_user_data",
+      "header_line": 13799,
+      "vtable_line": 1168
+    },
+    {
+      "name": "duckdb_v2_table_function_partitioning_get_bind_data",
+      "header_line": 13816,
+      "vtable_line": 1161
+    },
+    {
+      "name": "duckdb_v2_table_function_partitioning_get_partition_column_count",
+      "header_line": 13836,
+      "vtable_line": 1163
+    },
+    {
+      "name": "duckdb_v2_table_function_partitioning_get_partition_column_index",
+      "header_line": 13857,
+      "vtable_line": 1165
+    },
+    {
+      "name": "duckdb_v2_table_function_partitioning_set_partition_info",
+      "header_line": 13881,
+      "vtable_line": 1170
+    },
+    {
+      "name": "duckdb_v2_connection_register_table_function",
+      "header_line": 13907,
+      "vtable_line": 641
+    },
+    {
+      "name": "duckdb_v2_extension_register_table_function",
+      "header_line": 13932,
+      "vtable_line": 643
+    },
+    {
+      "name": "duckdb_v2_table_function_destroy",
+      "header_line": 13950,
+      "vtable_line": 653
+    },
+    {
+      "name": "duckdb_v2_table_function_set_claim_batch_callback",
+      "header_line": 13982,
+      "vtable_line": 1222
+    },
+    {
+      "name": "duckdb_v2_table_function_claim_batch_get_user_data",
+      "header_line": 14000,
+      "vtable_line": 1218
+    },
+    {
+      "name": "duckdb_v2_table_function_claim_batch_get_bind_data",
+      "header_line": 14017,
+      "vtable_line": 1212
+    },
+    {
+      "name": "duckdb_v2_table_function_claim_batch_get_global_state",
+      "header_line": 14036,
+      "vtable_line": 1214
+    },
+    {
+      "name": "duckdb_v2_table_function_claim_batch_get_local_state",
+      "header_line": 14053,
+      "vtable_line": 1216
+    },
+    {
+      "name": "duckdb_v2_table_function_claim_batch_set_claimed",
+      "header_line": 14072,
+      "vtable_line": 1220
+    },
+    {
+      "name": "duckdb_v2_table_function_set_get_bind_info_callback",
+      "header_line": 14096,
+      "vtable_line": 1290
+    },
+    {
+      "name": "duckdb_v2_table_function_get_bind_info_get_user_data",
+      "header_line": 14114,
+      "vtable_line": 1282
+    },
+    {
+      "name": "duckdb_v2_table_function_get_bind_info_get_bind_data",
+      "header_line": 14131,
+      "vtable_line": 1280
+    },
+    {
+      "name": "duckdb_v2_table_function_get_bind_info_set_column_identifier",
+      "header_line": 14161,
+      "vtable_line": 1284
+    },
+    {
+      "name": "duckdb_v2_table_function_get_bind_info_set_option",
+      "header_line": 14185,
+      "vtable_line": 1287
+    },
+    {
+      "name": "duckdb_v2_multi_file_function_create",
+      "header_line": 14211,
+      "vtable_line": 1200
+    },
+    {
+      "name": "duckdb_v2_multi_file_function_set_name",
+      "header_line": 14232,
+      "vtable_line": 1206
+    },
+    {
+      "name": "duckdb_v2_multi_file_function_set_single_file_function",
+      "header_line": 14264,
+      "vtable_line": 1210
+    },
+    {
+      "name": "duckdb_v2_multi_file_function_set_reader_type",
+      "header_line": 14284,
+      "vtable_line": 1208
+    },
+    {
+      "name": "duckdb_v2_multi_file_function_set_file_extension",
+      "header_line": 14305,
+      "vtable_line": 1204
+    },
+    {
+      "name": "duckdb_v2_connection_register_multi_file_function",
+      "header_line": 14332,
+      "vtable_line": 1180
+    },
+    {
+      "name": "duckdb_v2_extension_register_multi_file_function",
+      "header_line": 14358,
+      "vtable_line": 1197
+    },
+    {
+      "name": "duckdb_v2_multi_file_function_destroy",
+      "header_line": 14376,
+      "vtable_line": 1203
+    },
+    {
+      "name": "duckdb_v2_value_destroy",
+      "header_line": 14409,
+      "vtable_line": 376
+    },
+    {
+      "name": "duckdb_v2_value_get_bool",
+      "header_line": 14427,
+      "vtable_line": 381
+    },
+    {
+      "name": "duckdb_v2_value_get_utinyint",
+      "header_line": 14446,
+      "vtable_line": 436
+    },
+    {
+      "name": "duckdb_v2_value_get_usmallint",
+      "header_line": 14465,
+      "vtable_line": 434
+    },
+    {
+      "name": "duckdb_v2_value_get_uint",
+      "header_line": 14484,
+      "vtable_line": 432
+    },
+    {
+      "name": "duckdb_v2_value_get_ubigint",
+      "header_line": 14503,
+      "vtable_line": 428
+    },
+    {
+      "name": "duckdb_v2_value_get_uhugeint",
+      "header_line": 14522,
+      "vtable_line": 430
+    },
+    {
+      "name": "duckdb_v2_value_get_tinyint",
+      "header_line": 14541,
+      "vtable_line": 424
+    },
+    {
+      "name": "duckdb_v2_value_get_smallint",
+      "header_line": 14560,
+      "vtable_line": 404
+    },
+    {
+      "name": "duckdb_v2_value_get_int",
+      "header_line": 14579,
+      "vtable_line": 398
+    },
+    {
+      "name": "duckdb_v2_value_get_bigint",
+      "header_line": 14598,
+      "vtable_line": 377
+    },
+    {
+      "name": "duckdb_v2_value_get_hugeint",
+      "header_line": 14617,
+      "vtable_line": 396
+    },
+    {
+      "name": "duckdb_v2_value_get_varchar",
+      "header_line": 14638,
+      "vtable_line": 440
+    },
+    {
+      "name": "duckdb_v2_value_get_blob",
+      "header_line": 14659,
+      "vtable_line": 379
+    },
+    {
+      "name": "duckdb_v2_value_get_float",
+      "header_line": 14678,
+      "vtable_line": 394
+    },
+    {
+      "name": "duckdb_v2_value_get_double",
+      "header_line": 14697,
+      "vtable_line": 392
+    },
+    {
+      "name": "duckdb_v2_value_get_date",
+      "header_line": 14718,
+      "vtable_line": 387
+    },
+    {
+      "name": "duckdb_v2_value_get_time",
+      "header_line": 14739,
+      "vtable_line": 406
+    },
+    {
+      "name": "duckdb_v2_value_get_time_ns",
+      "header_line": 14760,
+      "vtable_line": 408
+    },
+    {
+      "name": "duckdb_v2_value_get_time_tz",
+      "header_line": 14782,
+      "vtable_line": 410
+    },
+    {
+      "name": "duckdb_v2_value_get_timestamp",
+      "header_line": 14803,
+      "vtable_line": 412
+    },
+    {
+      "name": "duckdb_v2_value_get_timestamp_sec",
+      "header_line": 14824,
+      "vtable_line": 418
+    },
+    {
+      "name": "duckdb_v2_value_get_timestamp_ms",
+      "header_line": 14845,
+      "vtable_line": 414
+    },
+    {
+      "name": "duckdb_v2_value_get_timestamp_ns",
+      "header_line": 14866,
+      "vtable_line": 416
+    },
+    {
+      "name": "duckdb_v2_value_get_timestamp_tz",
+      "header_line": 14887,
+      "vtable_line": 420
+    },
+    {
+      "name": "duckdb_v2_value_get_timestamp_tz_ns",
+      "header_line": 14908,
+      "vtable_line": 422
+    },
+    {
+      "name": "duckdb_v2_value_get_interval",
+      "header_line": 14929,
+      "vtable_line": 400
+    },
+    {
+      "name": "duckdb_v2_value_get_uuid",
+      "header_line": 14949,
+      "vtable_line": 438
+    },
+    {
+      "name": "duckdb_v2_value_get_decimal",
+      "header_line": 14972,
+      "vtable_line": 389
+    },
+    {
+      "name": "duckdb_v2_value_get_type",
+      "header_line": 14992,
+      "vtable_line": 426
+    },
+    {
+      "name": "duckdb_v2_value_create_null",
+      "header_line": 15012,
+      "vtable_line": 310
+    },
+    {
+      "name": "duckdb_v2_value_create_bool",
+      "header_line": 15033,
+      "vtable_line": 279
+    },
+    {
+      "name": "duckdb_v2_value_create_utinyint",
+      "header_line": 15053,
+      "vtable_line": 367
+    },
+    {
+      "name": "duckdb_v2_value_create_usmallint",
+      "header_line": 15073,
+      "vtable_line": 364
+    },
+    {
+      "name": "duckdb_v2_value_create_uint",
+      "header_line": 15093,
+      "vtable_line": 361
+    },
+    {
+      "name": "duckdb_v2_value_create_ubigint",
+      "header_line": 15113,
+      "vtable_line": 355
+    },
+    {
+      "name": "duckdb_v2_value_create_uhugeint",
+      "header_line": 15133,
+      "vtable_line": 358
+    },
+    {
+      "name": "duckdb_v2_value_create_tinyint",
+      "header_line": 15154,
+      "vtable_line": 346
+    },
+    {
+      "name": "duckdb_v2_value_create_smallint",
+      "header_line": 15174,
+      "vtable_line": 313
+    },
+    {
+      "name": "duckdb_v2_value_create_int",
+      "header_line": 15194,
+      "vtable_line": 297
+    },
+    {
+      "name": "duckdb_v2_value_create_bigint",
+      "header_line": 15214,
+      "vtable_line": 267
+    },
+    {
+      "name": "duckdb_v2_value_create_hugeint",
+      "header_line": 15234,
+      "vtable_line": 294
+    },
+    {
+      "name": "duckdb_v2_value_create_varchar",
+      "header_line": 15255,
+      "vtable_line": 373
+    },
+    {
+      "name": "duckdb_v2_value_create_blob",
+      "header_line": 15276,
+      "vtable_line": 276
+    },
+    {
+      "name": "duckdb_v2_value_create_float",
+      "header_line": 15297,
+      "vtable_line": 291
+    },
+    {
+      "name": "duckdb_v2_value_create_double",
+      "header_line": 15317,
+      "vtable_line": 288
+    },
+    {
+      "name": "duckdb_v2_value_create_type",
+      "header_line": 15337,
+      "vtable_line": 352
+    },
+    {
+      "name": "duckdb_v2_value_create_date",
+      "header_line": 15359,
+      "vtable_line": 282
+    },
+    {
+      "name": "duckdb_v2_value_create_time",
+      "header_line": 15380,
+      "vtable_line": 319
+    },
+    {
+      "name": "duckdb_v2_value_create_time_ns",
+      "header_line": 15401,
+      "vtable_line": 322
+    },
+    {
+      "name": "duckdb_v2_value_create_time_tz",
+      "header_line": 15423,
+      "vtable_line": 325
+    },
+    {
+      "name": "duckdb_v2_value_create_timestamp",
+      "header_line": 15444,
+      "vtable_line": 328
+    },
+    {
+      "name": "duckdb_v2_value_create_timestamp_sec",
+      "header_line": 15465,
+      "vtable_line": 337
+    },
+    {
+      "name": "duckdb_v2_value_create_timestamp_ms",
+      "header_line": 15486,
+      "vtable_line": 331
+    },
+    {
+      "name": "duckdb_v2_value_create_timestamp_ns",
+      "header_line": 15507,
+      "vtable_line": 334
+    },
+    {
+      "name": "duckdb_v2_value_create_timestamp_tz",
+      "header_line": 15529,
+      "vtable_line": 340
+    },
+    {
+      "name": "duckdb_v2_value_create_timestamp_tz_ns",
+      "header_line": 15551,
+      "vtable_line": 343
+    },
+    {
+      "name": "duckdb_v2_value_create_interval",
+      "header_line": 15572,
+      "vtable_line": 300
+    },
+    {
+      "name": "duckdb_v2_value_create_decimal",
+      "header_line": 15598,
+      "vtable_line": 285
+    },
+    {
+      "name": "duckdb_v2_value_create_uuid",
+      "header_line": 15621,
+      "vtable_line": 370
+    },
+    {
+      "name": "duckdb_v2_value_create_bit",
+      "header_line": 15644,
+      "vtable_line": 273
+    },
+    {
+      "name": "duckdb_v2_value_create_bignum",
+      "header_line": 15666,
+      "vtable_line": 270
+    },
+    {
+      "name": "duckdb_v2_value_create_list",
+      "header_line": 15695,
+      "vtable_line": 303
+    },
+    {
+      "name": "duckdb_v2_value_create_array",
+      "header_line": 15722,
+      "vtable_line": 264
+    },
+    {
+      "name": "duckdb_v2_value_create_struct",
+      "header_line": 15750,
+      "vtable_line": 316
+    },
+    {
+      "name": "duckdb_v2_value_create_tuple",
+      "header_line": 15776,
+      "vtable_line": 349
+    },
+    {
+      "name": "duckdb_v2_value_create_map",
+      "header_line": 15807,
+      "vtable_line": 306
+    },
+    {
+      "name": "duckdb_v2_value_get_child_count",
+      "header_line": 15829,
+      "vtable_line": 385
+    },
+    {
+      "name": "duckdb_v2_value_get_child",
+      "header_line": 15857,
+      "vtable_line": 383
+    },
+    {
+      "name": "duckdb_v2_value_cast",
+      "header_line": 15886,
+      "vtable_line": 261
+    },
+    {
+      "name": "duckdb_v2_value_is_null",
+      "header_line": 15903,
+      "vtable_line": 442
+    },
+    {
+      "name": "duckdb_v2_value_get_logical_type",
+      "header_line": 15921,
+      "vtable_line": 402
+    },
+    {
+      "name": "duckdb_v2_value_to_string",
+      "header_line": 15951,
+      "vtable_line": 444
+    },
+    {
+      "name": "duckdb_v2_arrow_importer_create",
+      "header_line": 16043,
+      "vtable_line": 850
+    },
+    {
+      "name": "duckdb_v2_arrow_importer_get_schema",
+      "header_line": 16069,
+      "vtable_line": 854
+    },
+    {
+      "name": "duckdb_v2_arrow_importer_append",
+      "header_line": 16115,
+      "vtable_line": 847
+    },
+    {
+      "name": "duckdb_v2_arrow_importer_next_chunk",
+      "header_line": 16142,
+      "vtable_line": 856
+    },
+    {
+      "name": "duckdb_v2_arrow_importer_destroy",
+      "header_line": 16161,
+      "vtable_line": 853
+    },
+    {
+      "name": "duckdb_v2_arrow_exporter_create",
+      "header_line": 16194,
+      "vtable_line": 839
+    },
+    {
+      "name": "duckdb_v2_arrow_exporter_get_schema",
+      "header_line": 16218,
+      "vtable_line": 843
+    },
+    {
+      "name": "duckdb_v2_arrow_exporter_append",
+      "header_line": 16255,
+      "vtable_line": 836
+    },
+    {
+      "name": "duckdb_v2_arrow_exporter_next_array",
+      "header_line": 16281,
+      "vtable_line": 845
+    },
+    {
+      "name": "duckdb_v2_arrow_exporter_destroy",
+      "header_line": 16300,
+      "vtable_line": 842
+    },
+    {
+      "name": "duckdb_v2_statement_execute_arrow",
+      "header_line": 16323,
+      "vtable_line": 1269
+    },
+    {
+      "name": "duckdb_v2_prepared_statement_execute_arrow",
+      "header_line": 16351,
+      "vtable_line": 1265
+    },
+    {
+      "name": "duckdb_v2_arrow_result_destroy",
+      "header_line": 16369,
+      "vtable_line": 1247
+    },
+    {
+      "name": "duckdb_v2_arrow_result_step",
+      "header_line": 16389,
+      "vtable_line": 1258
+    },
+    {
+      "name": "duckdb_v2_arrow_result_fetch_array",
+      "header_line": 16410,
+      "vtable_line": 1250
+    },
+    {
+      "name": "duckdb_v2_arrow_result_wait",
+      "header_line": 16427,
+      "vtable_line": 1263
+    },
+    {
+      "name": "duckdb_v2_arrow_result_drain",
+      "header_line": 16444,
+      "vtable_line": 1248
+    },
+    {
+      "name": "duckdb_v2_arrow_result_get_result_type",
+      "header_line": 16461,
+      "vtable_line": 1252
+    },
+    {
+      "name": "duckdb_v2_arrow_result_get_statement_type",
+      "header_line": 16479,
+      "vtable_line": 1256
+    },
+    {
+      "name": "duckdb_v2_arrow_result_get_schema",
+      "header_line": 16499,
+      "vtable_line": 1254
+    },
+    {
+      "name": "duckdb_v2_arrow_result_to_arrow_c_stream",
+      "header_line": 16524,
+      "vtable_line": 1261
+    }
+  ],
+  "context_parameter_functions": [
+    {
+      "name": "duckdb_v2_context_get_config",
+      "header_line": 1635
+    },
+    {
+      "name": "duckdb_v2_context_get_factory",
+      "header_line": 2717
+    },
+    {
+      "name": "duckdb_v2_context_get_file_system",
+      "header_line": 2841
+    },
+    {
+      "name": "duckdb_v2_context_log",
+      "header_line": 4148
+    },
+    {
+      "name": "duckdb_v2_arrow_importer_create",
+      "header_line": 16043
+    },
+    {
+      "name": "duckdb_v2_arrow_exporter_create",
+      "header_line": 16194
+    }
+  ],
+  "catalog_module_functions": [
+    {
+      "name": "duckdb_v2_connection_describe_table",
+      "header_line": 5946
+    },
+    {
+      "name": "duckdb_v2_table_description_get_qname",
+      "header_line": 5969
+    },
+    {
+      "name": "duckdb_v2_table_description_is_readonly",
+      "header_line": 5990
+    },
+    {
+      "name": "duckdb_v2_table_description_get_column_count",
+      "header_line": 6010
+    },
+    {
+      "name": "duckdb_v2_table_description_get_column",
+      "header_line": 6032
+    },
+    {
+      "name": "duckdb_v2_table_description_destroy",
+      "header_line": 6051
+    },
+    {
+      "name": "duckdb_v2_column_description_get_name",
+      "header_line": 6069
+    },
+    {
+      "name": "duckdb_v2_column_description_get_type",
+      "header_line": 6087
+    },
+    {
+      "name": "duckdb_v2_column_description_has_default",
+      "header_line": 6108
+    },
+    {
+      "name": "duckdb_v2_column_description_has_generated",
+      "header_line": 6128
+    },
+    {
+      "name": "duckdb_v2_column_description_destroy",
+      "header_line": 6146
+    }
+  ],
+  "absence_claim": "No attachment/catalog enumeration, hidden-aware attachment inventory, general SQL authorizer, context-to-connection/instance conversion, or public ClientContext/DatabaseManager accessor appears in this complete declared v2 function/vtable surface. SQL may still call metadata functions; that does not change their implementation's filtering.",
+  "runtime": "UNRUN"
+}

@@ -1,0 +1,179 @@
+{
+  "schema": "temporal-read-scheduling-cohort-a/1",
+  "status": "passed",
+  "scope": "small controlled correctness; not a timing or promotion result",
+  "created_utc": "2026-11-06T00:08:31.696394+00:00",
+  "source_commit": "8367e0a1937e67aa29db7d61b7b8276e038a1cd8",
+  "common_base": "773f7746466caf0ba4eff70a741e9594d07f39cc",
+  "read_contract": {
+    "version": 2,
+    "baseline_version": 1,
+    "compatible_with_v1_submission_barrier": false,
+    "public_mode_toggle": false,
+    "pooled": "One committed MVCC snapshot at SQL execution; earlier unacknowledged writes need not block",
+    "post_ack": "A newly submitted read includes prior committed ACKs",
+    "explicit_known_cut": "Exact committed K; a K beyond the reader committed frontier rejects",
+    "writes": "FIFO; no-reader queries retain FIFO writer connection serialization"
+  },
+  "fixture": {
+    "size": 100000,
+    "recipe": "mixed-100k-026-checkpoint-fixed.json",
+    "source_database_sha256": "7117a98ed30d0fbe24479cf962ea0b5857851cb49bf42b82efe81419e10700f1",
+    "source_recipe_sha256": "335cb983dc1a30c81dd2a8cd0fc0a863f03c547923a8b3af668c0459fa7af0c4",
+    "source_K": 577,
+    "prior_ACKs": 184,
+    "probe_entities": 256,
+    "probe_batch_commands": 8,
+    "probe_K": 585,
+    "closed_source_unchanged_checked_after_each_method": true,
+    "clone_mode": "Darwin clonefile, exclusive fresh paths, no full-copy fallback"
+  },
+  "configuration": {
+    "UV_THREADPOOL_SIZE": 4,
+    "threads": 4,
+    "memoryLimit": "2GB",
+    "maxTempDirectorySize": "4GB",
+    "readers": [
+      1,
+      0
+    ],
+    "retainedLimits": {
+      "maxFacts": 10024512,
+      "maxBytes": 4294967296
+    },
+    "query": {
+      "validAt": "0",
+      "timeoutMs": 60000,
+      "maxInputFacts": 10024512,
+      "maxIntermediateRows": 10024512,
+      "maxIntermediateBytes": 4294967296
+    }
+  },
+  "workload": {
+    "query_sha256": "998e12ddbb5f02494e6cf344b099cf1a961870c88579ba7d8a2c7627f28355c5",
+    "fixture_oracle": "shared immutable antiJoinRowsAfter and patchAt from common base"
+  },
+  "artifacts": {
+    "pins": {
+      "build/temporal_datalog.duckdb_extension": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+      "build/artifact.json": "494b2a391160a054f8672f1a621277ce31b2fcc6b6a1ca3b093b7efd13a58eda",
+      "build/temporal_control.node": "4f5157513cc0dfa98d0ad84397e9f704d5f13d0ebb0f4fb547b5fb0a4f572c69",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+      "build/owner_probe/artifact.json": "0fd59063a4ad3cf3f25cac4f28961f94b5ee9b9e25631b2dddf3e84e4469a571",
+      "build/adapter/native-entity.js": "6f466cee4993875914e75e7d00858d665424cec75f9ae050cd615998a273cc32",
+      "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+      "adapter/test-read-scheduling.mjs": "623ab54819f6e8dbdd37967eb424b5bb21cbdb2c8e5157977b43c3e652e19589",
+      "adapter/benchmark-antijoin-cost.mjs": "a0e21f66e48c9f126a9af9f78345550e46f6253c5fbebb840fe423c90f78ea30",
+      "adapter/mixed-scale-fixture.mjs": "7a02c2a834aa46be232f14a1681e1ad59c39501b295cda36f87447966454de09",
+      "adapter/clone-benchmark-fixture.mjs": "4a30f6deb087600432794d2ac07305cb7e3a4d2e8bedc9f041d0dea75144a5b6",
+      "adapter/clone-benchmark-fixture.py": "ae8a9d1028c8174d46bcea345c98d038e3e97884e82332801f8cf51a3fc383ad"
+    },
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "native_source_manifest_mismatches": [],
+    "compiled_schema_sha256": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "compiled_port_sha256": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "native_build_performed": false,
+    "basis": "Exact frozen accepted-032 core, paired companion and control; only compiled NativeEntityStore scheduling differs"
+  },
+  "checks": {
+    "typescript": {
+      "attempt": 1,
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "actual_node_engine": {
+      "attempt": 1,
+      "exit_code": 0,
+      "methods": 4,
+      "passed": 4,
+      "failed": 0,
+      "duration_ms": 8054.303958,
+      "raw_log": "evidence/cohort-a-read-scheduling-100k-20261105.log",
+      "raw_log_sha256": "ccaf39f8ead4c2de1a263a6fc18d13b74fd8c6122ae0ea99ed08ec420d843630",
+      "observations": [
+        {
+          "contract": 2,
+          "case": "tentative_then_ack",
+          "preCommitK": "585",
+          "postFirstAckK": "586",
+          "postSecondAckK": "587",
+          "ownerObservations": [
+            {
+              "connection": 2,
+              "generation": 3
+            },
+            {
+              "connection": 2,
+              "generation": 3
+            },
+            {
+              "connection": 2,
+              "generation": 3
+            },
+            {
+              "connection": 2,
+              "generation": 3
+            },
+            {
+              "connection": 2,
+              "generation": 3
+            },
+            {
+              "connection": 2,
+              "generation": 3
+            }
+          ]
+        },
+        {
+          "contract": 2,
+          "case": "native_rollback",
+          "preCommitK": "585",
+          "postRollbackK": "585",
+          "ownerObservations": [
+            {
+              "connection": 2,
+              "generation": 3
+            },
+            {
+              "connection": 2,
+              "generation": 3
+            },
+            {
+              "connection": 2,
+              "generation": 3
+            }
+          ]
+        },
+        {
+          "contract": 2,
+          "case": "running_snapshot",
+          "runningK": "585",
+          "laterAckK": "586",
+          "postAckK": "586"
+        },
+        {
+          "contract": 2,
+          "case": "no_reader_fifo",
+          "ackK": "586",
+          "readK": "586"
+        }
+      ]
+    },
+    "cases": [
+      "Real native mutations held before COMMIT: old coherent latest and explicit old K; first ACK visible while next FIFO write remains tentative; future K rejects",
+      "Real native mutations rolled back after error: no tentative facts or receipt, generation unchanged, retry and exact replay succeed",
+      "A running old-snapshot query remains coherent across later acknowledged native commit",
+      "No-reader query remains behind FIFO write and sees post-ACK state"
+    ],
+    "original_v1_contract_tests": "Preserved unchanged, not claimed passing under intentionally versioned candidate2"
+  },
+  "execution_notes": [
+    "This correctness window overlapped cohort B patch diagnostics under explicit root authorization; timings are not comparative measurements",
+    "No allocator/DAG modifications, no native builds, no 10m timing, no cap relaxation"
+  ],
+  "remaining": [
+    "Root-controlled same-workload candidate timing and freshness/K disclosure",
+    "Potential promotion requires explicit adoption/versioning of read contract2; this is not equivalent-v1 performance"
+  ]
+}

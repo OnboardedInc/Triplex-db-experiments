@@ -1,0 +1,428 @@
+{
+  "schema": "td.presence-profile-first-success/1",
+  "status": "passed_three_cell_diagnostic_after_preserved_prior_failures",
+  "sourceCommit": "1706d28457aa301cd4a41078b31b7173d9f6381c",
+  "driverSha256": "7ae1a740181033e58add024d441c964d86e5956857b44ef09f7cf178cc45b57e",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/qualification-presence-profile-20261106-03",
+  "outputDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03",
+  "rawDirectory": "presence-profile-first-success-20261106-raw",
+  "rawFiles": {
+    "after-first.json": {
+      "bytes": 552,
+      "sha256": "7fc8fc3e45a0a758e6395eb35af273a4aebf4aa08f7a45613eecb5823c53311f"
+    },
+    "before-first.json": {
+      "bytes": 880,
+      "sha256": "4e010a3cc0a63be3fbff7220bbb29a770baf5b4e31a337ae5961e54be0ae8a55"
+    },
+    "profile-first.started.json": {
+      "bytes": 896,
+      "sha256": "aeae5a350737ec91dfbe5e11697c6addbefb92062f38b8f05c8233df17aeceb8"
+    },
+    "profile-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "profile-first.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "profile-first.terminal.json": {
+      "bytes": 1036,
+      "sha256": "665ef715966375e678c1ac1b865f7bdc05550f09fc65b4c901fbfe8c738a4047"
+    },
+    "run-first.py": {
+      "bytes": 2603,
+      "sha256": "b9a7953f15d8cdf2083ca494ebe2ed90668e78dcaacafb2d002f08b73f52b940"
+    },
+    "syntax-first.started.json": {
+      "bytes": 598,
+      "sha256": "cce502ebb042448cb7da5f1e6436078a47ce64bdb13ceb2cda8ca674bc113a34"
+    },
+    "syntax-first.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "syntax-first.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "syntax-first.terminal.json": {
+      "bytes": 738,
+      "sha256": "c2b75aa0d24142f06aea7d55a8462b5b9b539ca254b9c6251e25d11cc9965f77"
+    },
+    "driver-missing.after-target.json": {
+      "bytes": 242466,
+      "sha256": "bc41557baeb8972248f42736bb24a8e86360c780d2b46a88981ca15d22933ab7"
+    },
+    "driver-missing.automatic.json": {
+      "bytes": 242466,
+      "sha256": "bc41557baeb8972248f42736bb24a8e86360c780d2b46a88981ca15d22933ab7"
+    },
+    "driver-missing.before-target.json": {
+      "bytes": 1709,
+      "sha256": "ce366601b7c7dbb8b13f4f16468ead24e8d9d955f22c572adcf4b9a68e52537b"
+    },
+    "driver-missing.observation.json": {
+      "bytes": 70918,
+      "sha256": "68a2b7e2a91bef4e56cd8507b35ddd5c8f19ac11396db9bda04a0bb14d2c876a"
+    },
+    "driver-nested.after-target.json": {
+      "bytes": 244053,
+      "sha256": "87cb2fcacaf84e43054b2b3f61bd7ab28076400e4cd935f4e2eb0229236f93c0"
+    },
+    "driver-nested.automatic.json": {
+      "bytes": 244053,
+      "sha256": "87cb2fcacaf84e43054b2b3f61bd7ab28076400e4cd935f4e2eb0229236f93c0"
+    },
+    "driver-nested.before-target.json": {
+      "bytes": 1708,
+      "sha256": "7e3bf90deac0fc4614f3439b44b3e6bdbb7c57bc8ddb6e62b28a45b0ee01c78b"
+    },
+    "driver-nested.observation.json": {
+      "bytes": 71482,
+      "sha256": "2ee42ac67989ac3fe83f0c52acad33d0fdf05fbcf154e94132c8a31741a23a25"
+    },
+    "driver-reset.after-target.json": {
+      "bytes": 245015,
+      "sha256": "8b6695c76aa43a802b09166ba4e88de4b38effff237b0e6c6727a3275e7ebb85"
+    },
+    "driver-reset.automatic.json": {
+      "bytes": 245015,
+      "sha256": "8b6695c76aa43a802b09166ba4e88de4b38effff237b0e6c6727a3275e7ebb85"
+    },
+    "driver-reset.before-target.json": {
+      "bytes": 1711,
+      "sha256": "13c2b88fd27b3df4cd009a638703cebd5fb674e52759a3ccfe7b3da8d9804e27"
+    },
+    "driver-reset.observation.json": {
+      "bytes": 72103,
+      "sha256": "e162af554d5ba9db1422a9b5ea45073da2b9f78920d13a65e47948e1ce39ab22"
+    },
+    "driver-result-first.json": {
+      "bytes": 247589,
+      "sha256": "d8fbba9dcb7f9c98fc1916e975a28c973c28d377374565b63f49d5d013c19d8d"
+    },
+    "driver-started.json": {
+      "bytes": 1439,
+      "sha256": "be5b20fa2db746ed27528615ac2eff9380022bf631b7ec831d4ecff41fed717f"
+    },
+    "executed-driver-1706.mjs": {
+      "bytes": 12174,
+      "sha256": "7ae1a740181033e58add024d441c964d86e5956857b44ef09f7cf178cc45b57e"
+    }
+  },
+  "syntaxTerminal": {
+    "pid": 44190,
+    "command": [
+      "[LOCAL_PATH_0043]",
+      "--check",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-native-presence-intervals.mjs"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+    "startedAtUtc": "2026-11-06T10:21:07.586604+00:00",
+    "environment": {
+      "UV_THREADPOOL_SIZE": "4",
+      "NODE_OPTIONS": "absent",
+      "TD_NATIVE_WRITER_LAB_*": "absent"
+    },
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T10:21:07.729434+00:00",
+    "elapsedMs": 142.60933292098343,
+    "outerWatchdogTerminated": false
+  },
+  "profileTerminal": {
+    "pid": 44191,
+    "command": [
+      "[LOCAL_PATH_0043]",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-native-presence-intervals.mjs",
+      "--runtime",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "--output",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime",
+    "startedAtUtc": "2026-11-06T10:21:07.729910+00:00",
+    "environment": {
+      "UV_THREADPOOL_SIZE": "4",
+      "NODE_OPTIONS": "absent",
+      "TD_NATIVE_WRITER_LAB_*": "absent"
+    },
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T10:21:09.357419+00:00",
+    "elapsedMs": 1627.6115830987692,
+    "outerWatchdogTerminated": false
+  },
+  "actualEndpointReads": 3,
+  "completedValidatedProfileCells": 3,
+  "authored": {
+    "knownAt": "18",
+    "targets": {
+      "nested": {
+        "visibleEvents": 5,
+        "expected": [
+          [
+            "0",
+            "20"
+          ]
+        ]
+      },
+      "reset": {
+        "visibleEvents": 4,
+        "expected": [
+          [
+            "4",
+            "6"
+          ],
+          [
+            "8",
+            "10"
+          ]
+        ]
+      },
+      "missing": {
+        "visibleEvents": 0,
+        "expected": []
+      }
+    },
+    "unrelatedEvents": 10
+  },
+  "settings": [
+    "1",
+    "122.0 MiB",
+    "61.0 MiB"
+  ],
+  "cells": [
+    {
+      "id": "nested",
+      "statement": "PRAGMA td_entity_presence_intervals_v1('nested',18,5,8,1048576)",
+      "limits": {
+        "maxEvents": 5,
+        "maxIntervals": 8,
+        "maxResultBytes": 1048576
+      },
+      "actualTypedRows": [
+        [
+          "nested",
+          "18",
+          true,
+          "0",
+          "20"
+        ]
+      ],
+      "columns": [
+        "entity_id",
+        "known_at",
+        "has_edit_at_cut",
+        "valid_from",
+        "valid_to"
+      ],
+      "profileSha256": "87cb2fcacaf84e43054b2b3f61bd7ab28076400e4cd935f4e2eb0229236f93c0",
+      "beforeProfileSha256": "7e3bf90deac0fc4614f3439b44b3e6bdbb7c57bc8ddb6e62b28a45b0ee01c78b",
+      "profileBytes": 244053,
+      "positiveQueryAssociation": "generated_presence_ctes",
+      "physicalOperatorNodes": 149,
+      "fullFetchWithProfilingMs": 13.018291999999974,
+      "nativeMetrics": {
+        "query": {
+          "total_time": 0.010853958,
+          "cpu_time": 0.001034873,
+          "total_intermediate_rows": 258,
+          "total_intermediate_size_bytes": 40825,
+          "total_rows_scanned": 49,
+          "total_row_groups_scanned": 9,
+          "total_row_groups_to_scan": 10
+        },
+        "system": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 24403216,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 17563648
+        }
+      }
+    },
+    {
+      "id": "reset",
+      "statement": "PRAGMA td_entity_presence_intervals_v1('reset',18,4,8,1048576)",
+      "limits": {
+        "maxEvents": 4,
+        "maxIntervals": 8,
+        "maxResultBytes": 1048576
+      },
+      "actualTypedRows": [
+        [
+          "reset",
+          "18",
+          true,
+          "4",
+          "6"
+        ],
+        [
+          "reset",
+          "18",
+          true,
+          "8",
+          "10"
+        ]
+      ],
+      "columns": [
+        "entity_id",
+        "known_at",
+        "has_edit_at_cut",
+        "valid_from",
+        "valid_to"
+      ],
+      "profileSha256": "8b6695c76aa43a802b09166ba4e88de4b38effff237b0e6c6727a3275e7ebb85",
+      "beforeProfileSha256": "13c2b88fd27b3df4cd009a638703cebd5fb674e52759a3ccfe7b3da8d9804e27",
+      "profileBytes": 245015,
+      "positiveQueryAssociation": "generated_presence_ctes",
+      "physicalOperatorNodes": 149,
+      "fullFetchWithProfilingMs": 12.64120899999989,
+      "nativeMetrics": {
+        "query": {
+          "total_time": 0.010889458,
+          "cpu_time": 0.000910254,
+          "total_intermediate_rows": 214,
+          "total_intermediate_size_bytes": 55235,
+          "total_rows_scanned": 30,
+          "total_row_groups_scanned": 8,
+          "total_row_groups_to_scan": 10
+        },
+        "system": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 24706392,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 18612224
+        }
+      }
+    },
+    {
+      "id": "missing",
+      "statement": "PRAGMA td_entity_presence_intervals_v1('missing',18,1,8,1048576)",
+      "limits": {
+        "maxEvents": 1,
+        "maxIntervals": 8,
+        "maxResultBytes": 1048576
+      },
+      "actualTypedRows": [
+        [
+          "missing",
+          "18",
+          false,
+          null,
+          null
+        ]
+      ],
+      "columns": [
+        "entity_id",
+        "known_at",
+        "has_edit_at_cut",
+        "valid_from",
+        "valid_to"
+      ],
+      "profileSha256": "bc41557baeb8972248f42736bb24a8e86360c780d2b46a88981ca15d22933ab7",
+      "beforeProfileSha256": "ce366601b7c7dbb8b13f4f16468ead24e8d9d955f22c572adcf4b9a68e52537b",
+      "profileBytes": 242466,
+      "positiveQueryAssociation": "generated_presence_ctes",
+      "physicalOperatorNodes": 149,
+      "fullFetchWithProfilingMs": 11.281750000000102,
+      "nativeMetrics": {
+        "query": {
+          "total_time": 0.00959875,
+          "cpu_time": 0.00032261999999999997,
+          "total_intermediate_rows": 138,
+          "total_intermediate_size_bytes": 38942,
+          "total_rows_scanned": 44,
+          "total_row_groups_scanned": 9,
+          "total_row_groups_to_scan": 10
+        },
+        "system": {
+          "blocked_thread_time": 0,
+          "peak_buffer_memory": 21675208,
+          "peak_streaming_buffer_size": 0,
+          "peak_temp_dir_size": 0,
+          "total_memory_allocated": 12320768
+        }
+      }
+    }
+  ],
+  "pins": {
+    "driver": "7ae1a740181033e58add024d441c964d86e5956857b44ef09f7cf178cc45b57e",
+    "coreManifest": "1baa2cc1e17c0ec9ffe4f269625be0144bb30df9296c0ca6ba02009c2d9f0264",
+    "ownerManifest": "a3075e1c059d72d3f2145fff341f57ebb00da3fc43073a1299f8dc9d55c2c9e3",
+    "core": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+    "owner": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+    "engine": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "allBeforeAfterEqual": true,
+  "retainedDatabase": {
+    "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/presence-profile-20261106-03/facts.duckdb",
+    "bytes": 7876608,
+    "closedWithoutWal": true,
+    "binaryCommitted": false
+  },
+  "priorFailures": [
+    {
+      "source": "e00da1ca96a4173aa1359692fff72317d5dba290",
+      "package": "2d0b8ad751d4af7931f26a1a1c0fd812af4513bf",
+      "receipt": "presence-profile-first-failure-20261106.json",
+      "scope": "Initial profiler setting order failed before any target read"
+    },
+    {
+      "source": "70618af8652230321f00fe23da127e04dbb39789",
+      "package": "6b510004",
+      "receipt": "presence-profile-second-failure-20261106.json",
+      "scope": "Typed nested target read and exact JSON saved; decoder stopped on root query_name assumption before remaining two cells"
+    }
+  ],
+  "metricUnits": {
+    "seconds": [
+      "query.total_time",
+      "query.cpu_time",
+      "operator.timing",
+      "system.blocked_thread_time"
+    ],
+    "rows": [
+      "query.total_intermediate_rows",
+      "query.total_rows_scanned",
+      "operator.intermediate_rows",
+      "operator.rows_scanned"
+    ],
+    "bytes": [
+      "query.total_intermediate_size_bytes",
+      "operator.intermediate_size_bytes",
+      "system.peak_buffer_memory",
+      "system.peak_streaming_buffer_size",
+      "system.peak_temp_dir_size",
+      "system.total_memory_allocated"
+    ],
+    "rowGroups": [
+      "query.total_row_groups_scanned",
+      "query.total_row_groups_to_scan",
+      "operator.row_groups_scanned",
+      "operator.total_row_groups_to_scan"
+    ]
+  },
+  "metricDefinitionSource": {
+    "revision": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+    "files": [
+      "src/main/query_profiler.cpp",
+      "src/include/duckdb/main/profiler/metrics.hpp"
+    ],
+    "scope": "Offline source inspection of nested renderer and native metric units; no copied implementation or altered engine"
+  },
+  "scope": "Fresh synthetic raw-owned endpoint profiling at one explicit actual K18; typed nested/batch-reset/no-edit results and associated physical operators observed. Profile bytes copied immediately after fully fetching each endpoint before another SQL statement. Retained launcher source is the actual saved executed Python script. No query substitution, cap/oracle change or runtime native build.",
+  "unmeasured": [
+    "C++ PRAGMA emission phase",
+    "exclusive DuckDB-versus-host time",
+    "whole-process allocation containment"
+  ],
+  "claims": {
+    "performanceWin": false,
+    "serviceLatency": false,
+    "emitterVersusSQLPhaseAttribution": false,
+    "goals1or9Closed": false
+  }
+}

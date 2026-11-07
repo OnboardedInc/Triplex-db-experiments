@@ -1,0 +1,237 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.000006667,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 0.000175792,
+                    "type": "UPDATE",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Projections": [
+                                    "position",
+                                    "command_id",
+                                    "recorded_at",
+                                    "command_id",
+                                    "#0",
+                                    "#1",
+                                    "#2",
+                                    "#3",
+                                    "#4",
+                                    "#5",
+                                    "#6",
+                                    "#7",
+                                    "#8",
+                                    "#9",
+                                    "#10",
+                                    "#11",
+                                    "#12",
+                                    "#13",
+                                    "#14",
+                                    "#15",
+                                    "#16",
+                                    "#17",
+                                    "#18",
+                                    "#19",
+                                    "#20",
+                                    "#21",
+                                    "#22",
+                                    "#23",
+                                    "rowid"
+                                ],
+                                "Estimated Cardinality": "1"
+                            },
+                            "intermediate_rows": 1,
+                            "intermediate_size_bytes": 9803,
+                            "timing": 4.17e-7,
+                            "type": "PROJECTION",
+                            "children": [
+                                {
+                                    "extra_info": {
+                                        "Join Type": "INNER",
+                                        "Conditions": "assertion_id = assertion_id",
+                                        "Estimated Cardinality": "1"
+                                    },
+                                    "intermediate_rows": 1,
+                                    "intermediate_size_bytes": 9787,
+                                    "timing": 0.000034416000000000004,
+                                    "type": "HASH_JOIN",
+                                    "children": [
+                                        {
+                                            "extra_info": {
+                                                "Table": "facts.main.assertions",
+                                                "Type": "Index Scan",
+                                                "Projections": [
+                                                    "assertion_id",
+                                                    "tx_from",
+                                                    "origin",
+                                                    "valid_from",
+                                                    "valid_to",
+                                                    "external_valid_from",
+                                                    "external_valid_to",
+                                                    "interop",
+                                                    "extra_json",
+                                                    "transaction_id",
+                                                    "entity_type",
+                                                    "created_by",
+                                                    "recorded_at",
+                                                    "v_f",
+                                                    "v_i",
+                                                    "v_b",
+                                                    "v_s",
+                                                    "v_tag",
+                                                    "payload_hash",
+                                                    "command_id",
+                                                    "payload",
+                                                    "tag",
+                                                    "a",
+                                                    "e",
+                                                    "assertion_id"
+                                                ],
+                                                "Dynamic Filters": "(assertion_id = 'f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62')",
+                                                "Estimated Cardinality": "20"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 1579,
+                                            "row_groups_scanned": 0,
+                                            "rows_scanned": 1,
+                                            "timing": 0.000017791,
+                                            "total_row_groups_to_scan": 1,
+                                            "type": "TABLE_SCAN"
+                                        },
+                                        {
+                                            "extra_info": {},
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 4144,
+                                            "timing": 0.000007293,
+                                            "type": "CROSS_PRODUCT",
+                                            "children": [
+                                                {
+                                                    "extra_info": {
+                                                        "Table": "\"temp\".main.__td_native_ctx",
+                                                        "Type": "Sequential Scan",
+                                                        "Projections": [
+                                                            "position",
+                                                            "command_id",
+                                                            "recorded_at"
+                                                        ],
+                                                        "Estimated Cardinality": "1"
+                                                    },
+                                                    "intermediate_rows": 1,
+                                                    "intermediate_size_bytes": 32,
+                                                    "row_groups_scanned": 1,
+                                                    "rows_scanned": 1,
+                                                    "timing": 0.000002126,
+                                                    "total_row_groups_to_scan": 1,
+                                                    "type": "TABLE_SCAN"
+                                                },
+                                                {
+                                                    "extra_info": {
+                                                        "Table": "\"temp\".main.__td_native_old",
+                                                        "Type": "Sequential Scan",
+                                                        "Projections": "assertion_id",
+                                                        "Estimated Cardinality": "1"
+                                                    },
+                                                    "intermediate_rows": 1,
+                                                    "intermediate_size_bytes": 16,
+                                                    "row_groups_scanned": 1,
+                                                    "rows_scanned": 1,
+                                                    "timing": 0.000002084,
+                                                    "total_row_groups_to_scan": 1,
+                                                    "type": "TABLE_SCAN"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000001833,
+        "aggregate_reuse": 0.000002583,
+        "build_side_probe_side": 0.000008667,
+        "column_lifetime": 0.000011083,
+        "common_aggregate": 7.92e-7,
+        "common_subexpressions": 7.5e-7,
+        "common_subplan": 0.00001275,
+        "cte_filter_pusher": 1.25e-7,
+        "cte_inlining": 1.26e-7,
+        "deliminator": 1.66e-7,
+        "duplicate_groups": 0.000005709,
+        "empty_result_pullup": 2.09e-7,
+        "expression_rewriter": 0.000016,
+        "filter_pullup": 3.75e-7,
+        "filter_pushdown": 0.000008125,
+        "grouping_sets": 7.92e-7,
+        "in_clause": 3.75e-7,
+        "join_elimination": 0.000002458,
+        "join_filter_pushdown": 0.000012,
+        "join_order": 0.0000745,
+        "late_materialization": 2.09e-7,
+        "limit_pushdown": 1.25e-7,
+        "outer_join_simplification": 0.0000035,
+        "partial_aggregate_pushdown": 7.5e-7,
+        "partitioned_execution": 1.25e-7,
+        "projection_placement": 0.000001,
+        "projection_pullup": 0.000004125,
+        "redundant_order_keys": 0.000003917,
+        "regex_range": 1.25e-7,
+        "reorder_filter": 0.00000125,
+        "row_group_pruner": 1.25e-7,
+        "row_number_rewriter": 1.67e-7,
+        "sampling_pushdown": 1.67e-7,
+        "scalar_fn_pushdown": 1.25e-7,
+        "statistics_propagation": 0.000019584,
+        "top_n": 8.3e-8,
+        "top_n_window_elimination": 4.17e-7,
+        "total_time": 0.000236166,
+        "type_pushdown": 2.08e-7,
+        "unnest_rewriter": 2.09e-7,
+        "unused_columns": 0.000013083,
+        "window_self_join": 1.25e-7
+    },
+    "physical_planner": {
+        "column_binding": 0.000006958,
+        "create_plan": 0.000011417,
+        "resolve_types": 5e-7,
+        "total_time": 0.000020709
+    },
+    "planner": {
+        "binding_time": 0.000159417,
+        "total_time": 0.000229834
+    },
+    "query": {
+        "cpu_time": 0.00024658600000000003,
+        "sql": "UPDATE main.assertions AS a SET tx_to=c.position,corrected_by=c.command_id,retracted_at=c.recorded_at,retract_transaction_id=c.command_id\n FROM __td_native_ctx c,__td_native_old old WHERE a.assertion_id=old.assertion_id;\n",
+        "total_intermediate_rows": 7,
+        "total_intermediate_size_bytes": 25369,
+        "total_row_groups_scanned": 2,
+        "total_row_groups_to_scan": 3,
+        "total_rows_scanned": 3,
+        "total_time": 0.001173084
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 21615488,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 1048576
+    }
+}

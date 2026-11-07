@@ -1,0 +1,17 @@
+{
+  "schema": "td.fair-repaired-root-review/1",
+  "source": "7e6a17a37c71f8dacf8428f1671056dbec41020b",
+  "productionSource": "4db33475a55558065aad62f2f30d6bbfd390bd59",
+  "rawHashesVerified": 12,
+  "gitSourcePinsVerified": 11,
+  "currentNewPassedMethods": 10,
+  "priorSameProductionPassedMethods": 5,
+  "scopedUnionMethods": 15,
+  "freshWholeGatePass": false,
+  "unexpectedSelectionSetupFailures": 1,
+  "full512WorkloadStarted": false,
+  "testFilterCause": "Node24.13 parent-name matching confirmed independently from exact builtin source and official Node source.",
+  "currentVsPriorProductionNativePinsEqual": true,
+  "allRuntimeSourceCompiledSdkAndExternalMapsUnchanged": true,
+  "limits": "Reader/control/cleanup/fatal/single-strategy and full512 remain unrun at this checkpoint. No performance qualification."
+}

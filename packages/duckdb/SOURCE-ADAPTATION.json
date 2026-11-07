@@ -1,0 +1,66 @@
+{
+  "format": "triplex-duckdb-source-adaptation/1",
+  "historicalProof": "NohistoricalPASStransferred",
+  "files": [
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/effect-storage.ts",
+      "destination": "packages/duckdb/src/effect-storage.ts",
+      "importedSha256": "813d62c69bf7dcf944b9b540fa33b8a936f238f5453290c07f5fadec6d4c42f5",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/query-executor-adapter.ts",
+      "destination": "packages/duckdb/src/query-executor-adapter.ts",
+      "importedSha256": "9f248fcbba0df81a37159c3d45fef3c418a10047bfe2e1ea4f74c71642a7de78",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/public-backend.mjs",
+      "destination": "packages/duckdb/src/public-backend.mjs",
+      "importedSha256": "c763e86f4faf7c35de9c166813d590603321b2b7617022b6263e5f8df5c395bf",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/public-backend.d.mts",
+      "destination": "packages/duckdb/src/public-backend.d.mts",
+      "importedSha256": "e17dca48c72ecb38631bd14e77df275bbf2cc47579893fe9418c146bbeb602dc",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/transaction-owner.mjs",
+      "destination": "packages/duckdb/src/transaction-owner.mjs",
+      "importedSha256": "4d1de7e32e298a39c4dd19a9d26f93045b1f575c1da2f3135c77507d5fa03c8b",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/native-duckdb-port.mjs",
+      "destination": "packages/duckdb/src/native-duckdb-port.mjs",
+      "importedSha256": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/native-duckdb-port.d.mts",
+      "destination": "packages/duckdb/src/native-duckdb-port.d.mts",
+      "importedSha256": "7124a036df718114302e706e5869a094b21582db5ec4d264ed5321887a1ccacd",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/owned-duckdb-port.d.mts",
+      "destination": "packages/duckdb/src/owned-duckdb-port.d.mts",
+      "importedSha256": "fd162bbe9e898efffe212c762de0d543901075382deb066be04910414812df05",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/query-result-boundary.mjs",
+      "destination": "packages/duckdb/src/query-result-boundary.mjs",
+      "importedSha256": "c9673b3a01a84bfe526459f05d456a740665dae0a719167f03deaf5167bd1947",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    },
+    {
+      "origin": "vendor/duckdb-temporal/runtime/adapter/query-result-boundary.d.mts",
+      "destination": "packages/duckdb/src/query-result-boundary.d.mts",
+      "importedSha256": "9c58c6f0fa7eb2cc15b9bb5968b9b0f2665051eb7096821dc9a70219b9cda210",
+      "status": "Adaptationrequiresfreshpublicqualification"
+    }
+  ]
+}

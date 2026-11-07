@@ -1,0 +1,431 @@
+{
+  "schema": "independent-codec-evidence-validator-controls-v1",
+  "recorded_utc": "2026-10-31T02:56:27.206690+00:00",
+  "scope": "Own stdlib in-memory recorded-data mutations only; no genuine app/query/engine/preflight reruns.",
+  "checks": 61,
+  "expected_denials": 54,
+  "positives": 7,
+  "status": "PASS",
+  "results": [
+    {
+      "name": "closed_campaign_header_positive",
+      "expected": "PASS",
+      "observed": "PASS",
+      "passed": true
+    },
+    {
+      "name": "closed_role_positive_preflight-codec_implementation-ae-current-codec",
+      "expected": "PASS",
+      "observed": "PASS",
+      "passed": true
+    },
+    {
+      "name": "closed_role_positive_preflight-codec_implementation-codec-only",
+      "expected": "PASS",
+      "observed": "PASS",
+      "passed": true
+    },
+    {
+      "name": "closed_role_positive_preflight-accepted_to_codec-accepted-item1",
+      "expected": "PASS",
+      "observed": "PASS",
+      "passed": true
+    },
+    {
+      "name": "closed_role_positive_preflight-accepted_to_codec-codec-only",
+      "expected": "PASS",
+      "observed": "PASS",
+      "passed": true
+    },
+    {
+      "name": "child_exit_bool_false_is_not_integer0",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller returncode: type"
+    },
+    {
+      "name": "child_exit_float0_is_not_integer0",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller returncode: type"
+    },
+    {
+      "name": "child_exit_null_not_completed",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller returncode: type"
+    },
+    {
+      "name": "child_exit_nonzero_preserved_failure",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller returncode: value"
+    },
+    {
+      "name": "child_timeout_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller timeout: value"
+    },
+    {
+      "name": "child_validation_error_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller validation_error: type"
+    },
+    {
+      "name": "child_FAIL_despite_zero_exit_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller status: value"
+    },
+    {
+      "name": "preflight_process_duration_zero_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller whole_fresh_process_wall_ns: type"
+    },
+    {
+      "name": "preflight_public_duration_zero_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full raw untimed observation 0.public_method_return_ns: type"
+    },
+    {
+      "name": "preflight_setup_timing_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child metadata setup_ns: fields"
+    },
+    {
+      "name": "omitted_control_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Fourteen raw observations per role: value"
+    },
+    {
+      "name": "extra_control_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Fourteen raw observations per role: value"
+    },
+    {
+      "name": "control_order_swap_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full raw untimed observation 0.control_id: value"
+    },
+    {
+      "name": "observation_status_FAIL_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full raw untimed observation 0.status: value"
+    },
+    {
+      "name": "observation_control_id_bool_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full raw untimed observation 0.control_id: type"
+    },
+    {
+      "name": "missing_full_payload_record_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full56 tagged rows/floatbits/counters/snapshot oracle: count"
+    },
+    {
+      "name": "full_result_float_bit_change_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full56 tagged rows/floatbits/counters/snapshot oracle[0].result.native.rows[0][1].v: value"
+    },
+    {
+      "name": "full_result_native_counter_change_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full56 tagged rows/floatbits/counters/snapshot oracle[0].result.native.work: value"
+    },
+    {
+      "name": "full_result_metadata_change_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full56 tagged rows/floatbits/counters/snapshot oracle[0].result.known_at: value"
+    },
+    {
+      "name": "full_result_bool_pass_false_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full56 tagged rows/floatbits/counters/snapshot oracle[0].passed: value"
+    },
+    {
+      "name": "full_result_bool_pass_integer1_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full56 tagged rows/floatbits/counters/snapshot oracle[0].passed: type"
+    },
+    {
+      "name": "full_payload_metadata_join_mismatch_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Full metadata/process join.observations: value"
+    },
+    {
+      "name": "source_registry_provenance_stale_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child metadata provenance.source_registry_sha256: value"
+    },
+    {
+      "name": "candidate_admission_provenance_stale_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child metadata provenance.candidate_admission_sha256: value"
+    },
+    {
+      "name": "native480456_A_changed_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child metadata provenance.artifact_sha256: value"
+    },
+    {
+      "name": "native5b661_B_changed_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child metadata provenance.artifact_sha256: value"
+    },
+    {
+      "name": "template_provenance_stale_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child metadata provenance.template_sha256: value"
+    },
+    {
+      "name": "cap_change_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child metadata caps.MAX_FACTS: value"
+    },
+    {
+      "name": "runtime_optimization1_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Runtime optimization: value"
+    },
+    {
+      "name": "runtime_threads2_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: DuckDB threads after: value"
+    },
+    {
+      "name": "runtime_affinity_bool_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Runtime affinity[0]: type"
+    },
+    {
+      "name": "runtime_gc_false_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Runtime gc_enabled: value"
+    },
+    {
+      "name": "runtime_unknown_env_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Runtime environment.LD_PRELOAD: type"
+    },
+    {
+      "name": "runtime_python_pin_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Runtime python_executable_sha256: value"
+    },
+    {
+      "name": "FP_nondefault_round_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Default round: value"
+    },
+    {
+      "name": "FP_nondefault_x87_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Default x87: value"
+    },
+    {
+      "name": "FP_nondefault_mxcsr_control_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Default MXCSR controls; sticky flags permitted: value"
+    },
+    {
+      "name": "FP_bool_state_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: FP round: exact integer range"
+    },
+    {
+      "name": "mapped_native_path_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Actual critical native mapping paths.native_extension: value"
+    },
+    {
+      "name": "mapped_native_hash_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Mapped file content hashes.native_extension: value"
+    },
+    {
+      "name": "child_wrong_role_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child controller comparison: value"
+    },
+    {
+      "name": "child_UTC_escape_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Child metadata/controller UTC containment"
+    },
+    {
+      "name": "campaign_PASS_cannot_mask_failure",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Preflight campaign failure: type"
+    },
+    {
+      "name": "campaign_wrong_role_count_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Exactly four genuine role records"
+    },
+    {
+      "name": "campaign_run_mode_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Preflight campaign mode: value"
+    },
+    {
+      "name": "campaign_execution_gate_nonnull_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Preflight campaign execution_gate_sha256: type"
+    },
+    {
+      "name": "actual_outer_integer0_positive",
+      "expected": "PASS",
+      "observed": "PASS",
+      "passed": true
+    },
+    {
+      "name": "outer_bool_false_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Actual captured outer exit integer0: type"
+    },
+    {
+      "name": "outer_float0_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Actual captured outer exit integer0: type"
+    },
+    {
+      "name": "outer_null_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Actual captured outer exit integer0: type"
+    },
+    {
+      "name": "outer_nonzero_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Actual captured outer exit integer0: value"
+    },
+    {
+      "name": "duplicate_JSON_key_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Duplicate JSON key: exit"
+    },
+    {
+      "name": "nonfinite_JSON_NaN_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Nonfinite JSON token NaN"
+    },
+    {
+      "name": "nonfinite_JSON_Infinity_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: Nonfinite JSON token Infinity"
+    },
+    {
+      "name": "exact_nested_bool_int_denied",
+      "expected": "DENY",
+      "observed": "DENY",
+      "passed": true,
+      "error": "EvidenceError: negative.x[0]: type"
+    },
+    {
+      "name": "default_MXCSR_sticky_flags_positive",
+      "expected": "PASS",
+      "observed": "PASS",
+      "passed": true
+    }
+  ]
+}

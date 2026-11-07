@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "scope": "Isolated raw typed evaluator on macOS ARM64 with the pinned DuckDB 2.0.0 Node SDK",
+  "source_commit": "ebf6f0ccad9bf9f76ec7926470045dd15cb5bf5d",
+  "command": "node --test --test-reporter=tap build/adapter/test-json-blob-carriers.js build/adapter/test-expanded-carriers.js",
+  "core_extension_version": "0.25.0",
+  "core_extension_sha256": "3910c47d3df916b087a4e5d480d9aa7204e2077e177bdf08cd81e0e279a5ff37",
+  "companion_extension_sha256": "34cc147fdb276ab40e632cecf4cfcfef14be203281b2a13e12e233467e288433",
+  "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "companion_pins_core": true,
+  "builds_and_typecheck": "passed",
+  "first_run": {
+    "node_passed": 10,
+    "node_failed": 0,
+    "log_sha256": "5b6a13ddb684e674531b2fcf878c2a83964aea4e7c84708dd2d8e1e09b0530fa",
+    "wrapper_issue": "The zsh wrapper attempted to assign reserved status after Node completed."
+  },
+  "verified_run": {
+    "exit_code": 0,
+    "passed": 10,
+    "failed": 0,
+    "log_sha256": "04847eba884a44c8fb0bbe7ceec8bef61df543a834c986bc5c90cae6ab88156c"
+  },
+  "coverage": [
+    "Four raw JSON/blob tests cover exact source byte identity and grouping, opaque blob IDs, scoped strict syntax/depth/width, tag masks, eager operator and aggregate rejection, and actual compatibility carriers.",
+    "Six preexisting datetime/reference tests exercise exact six-tag behavior, four-tag compatibility, audited persisted query lowering and controlled template generation."
+  ],
+  "scope_limits": [
+    "This isolated build changes raw evaluator admission only. Persisted JSON/blob reads and writes remain outside the qualification.",
+    "No performance comparison was conducted."
+  ]
+}

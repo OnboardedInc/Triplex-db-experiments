@@ -1,0 +1,317 @@
+{
+  "schema": "td.dag-unregistered-independent-review/1",
+  "result": "NO_PROMOTION",
+  "auditedUtc": "2026-11-05T23:17:25.701804+00:00",
+  "candidateTestedSource": "86e71578e4acd911d13971d5b2d05d0f17ae9b17",
+  "fullFunctionalChecks": 414,
+  "predeclaredBudgetSource": "d69ca5a0",
+  "harnessSource": "d69ca5a0",
+  "rawEvidence": {
+    "projectWorktree": "temporal-combined-030-20261105",
+    "path": "build/dag-unregistered-033-20261105/paired.json",
+    "sha256": "70e5464f4e681442873b8ab2eaeb9de0f5a533f5bbb1d303641f246b47ab7589",
+    "bytes": 3465203
+  },
+  "configuration": {
+    "maxTempDirectorySize": "4GB",
+    "memoryLimit": "2GB",
+    "pairs": 2,
+    "readers": 0,
+    "reopens": 12,
+    "threads": 4,
+    "warmup": 16,
+    "writes": 128
+  },
+  "exactCanonicalCellsReceiptsTypedAnswers": true,
+  "canonicalSha256": "5d8babf0297e5525bf14f75f828a2cb4e635253b21f01ae86b1dc21833ab68c8",
+  "allArtifactPinsUnchanged": true,
+  "checks": [
+    {
+      "pair": 0,
+      "order": "control->candidate",
+      "measurement": "writesP50Ratio",
+      "ratio": 1.0392260688241766,
+      "maximum": 1.1,
+      "passed": true
+    },
+    {
+      "pair": 0,
+      "order": "control->candidate",
+      "measurement": "writesP95Ratio",
+      "ratio": 1.083027283575833,
+      "maximum": 1.15,
+      "passed": true
+    },
+    {
+      "pair": 0,
+      "order": "control->candidate",
+      "measurement": "putP50Ratio",
+      "ratio": 1.2552387381311134,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "order": "control->candidate",
+      "measurement": "putP95Ratio",
+      "ratio": 1.2243220447850311,
+      "maximum": 1.15,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "order": "control->candidate",
+      "measurement": "patchP50Ratio",
+      "ratio": 1.12726246297105,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 0,
+      "order": "control->candidate",
+      "measurement": "patchP95Ratio",
+      "ratio": 1.1469747642861363,
+      "maximum": 1.15,
+      "passed": true
+    },
+    {
+      "pair": 0,
+      "order": "control->candidate",
+      "measurement": "populatedOpenP50Ratio",
+      "ratio": 1.0756093720699471,
+      "maximum": 1.15,
+      "passed": true
+    },
+    {
+      "pair": 1,
+      "order": "candidate->control",
+      "measurement": "writesP50Ratio",
+      "ratio": 1.1519753697458843,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "order": "candidate->control",
+      "measurement": "writesP95Ratio",
+      "ratio": 1.1597703469245664,
+      "maximum": 1.15,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "order": "candidate->control",
+      "measurement": "putP50Ratio",
+      "ratio": 1.3511991674899613,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "order": "candidate->control",
+      "measurement": "putP95Ratio",
+      "ratio": 1.2936815271512139,
+      "maximum": 1.15,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "order": "candidate->control",
+      "measurement": "patchP50Ratio",
+      "ratio": 1.1949595318288173,
+      "maximum": 1.1,
+      "passed": false
+    },
+    {
+      "pair": 1,
+      "order": "candidate->control",
+      "measurement": "patchP95Ratio",
+      "ratio": 1.0566827117551232,
+      "maximum": 1.15,
+      "passed": true
+    },
+    {
+      "pair": 1,
+      "order": "candidate->control",
+      "measurement": "populatedOpenP50Ratio",
+      "ratio": 1.0764329002804933,
+      "maximum": 1.15,
+      "passed": true
+    }
+  ],
+  "failedChecks": 8,
+  "passedChecks": 6,
+  "profiles": [
+    {
+      "pair": 0,
+      "profile": "control",
+      "latencyMs": {
+        "patch": {
+          "count": 64,
+          "max": 121.47725000000082,
+          "min": 74.374417,
+          "p50": 83.2541250000013,
+          "p95": 95.08349999999973,
+          "p99": 121.47725000000082
+        },
+        "populatedOpen": {
+          "count": 12,
+          "max": 320.41637499999706,
+          "min": 219.01645899999858,
+          "p50": 230.5093339999985,
+          "p95": 320.41637499999706,
+          "p99": 320.41637499999706
+        },
+        "put": {
+          "count": 64,
+          "max": 141.0818330000002,
+          "min": 38.56804199999988,
+          "p50": 45.404874999999265,
+          "p95": 52.92558300000019,
+          "p99": 141.0818330000002
+        },
+        "writes": {
+          "count": 128,
+          "max": 141.0818330000002,
+          "min": 38.56804199999988,
+          "p50": 74.374417,
+          "p95": 91.86387500000001,
+          "p99": 121.47725000000082
+        }
+      },
+      "coreSha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+      "ownerSha256": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    },
+    {
+      "pair": 0,
+      "profile": "candidate",
+      "latencyMs": {
+        "patch": {
+          "count": 64,
+          "max": 114.92529100000002,
+          "min": 89.66237499999988,
+          "p50": 93.84925000000112,
+          "p95": 109.05837500000052,
+          "p99": 114.92529100000002
+        },
+        "populatedOpen": {
+          "count": 12,
+          "max": 291.42362499999945,
+          "min": 241.21474999999919,
+          "p50": 247.9380000000001,
+          "p95": 291.42362499999945,
+          "p99": 291.42362499999945
+        },
+        "put": {
+          "count": 64,
+          "max": 77.291833,
+          "min": 52.832708999999795,
+          "p50": 56.99395800000002,
+          "p95": 64.79795800000011,
+          "p99": 77.291833
+        },
+        "writes": {
+          "count": 128,
+          "max": 114.92529100000002,
+          "min": 52.832708999999795,
+          "p50": 77.291833,
+          "p95": 99.49108299999989,
+          "p99": 111.57654200000002
+        }
+      },
+      "coreSha256": "1c54d1108ecd36597cded7bfe7aafb9f73351af62dc098fdd360c1301626cf3e",
+      "ownerSha256": "dd15a969d9535199a8eb76a8ad3047483f7d142102ebc31f669de63da1d6a220",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    },
+    {
+      "pair": 1,
+      "profile": "candidate",
+      "latencyMs": {
+        "patch": {
+          "count": 64,
+          "max": 103.75983400000041,
+          "min": 85.96445800000038,
+          "p50": 94.3154170000007,
+          "p95": 101.57049999999981,
+          "p99": 103.75983400000041
+        },
+        "populatedOpen": {
+          "count": 12,
+          "max": 346.037792000001,
+          "min": 234.15312500000073,
+          "p50": 241.43358299999818,
+          "p95": 346.037792000001,
+          "p99": 346.037792000001
+        },
+        "put": {
+          "count": 64,
+          "max": 66.39649999999983,
+          "min": 51.390290999999706,
+          "p50": 57.61670800000047,
+          "p95": 62.31345799999963,
+          "p99": 66.39649999999983
+        },
+        "writes": {
+          "count": 128,
+          "max": 103.75983400000041,
+          "min": 51.390290999999706,
+          "p50": 66.39649999999983,
+          "p95": 99.4190410000001,
+          "p99": 103.05129100000067
+        }
+      },
+      "coreSha256": "1c54d1108ecd36597cded7bfe7aafb9f73351af62dc098fdd360c1301626cf3e",
+      "ownerSha256": "dd15a969d9535199a8eb76a8ad3047483f7d142102ebc31f669de63da1d6a220",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    },
+    {
+      "pair": 1,
+      "profile": "control",
+      "latencyMs": {
+        "patch": {
+          "count": 64,
+          "max": 202.42412499999955,
+          "min": 73.52312500000016,
+          "p50": 78.92770799999926,
+          "p95": 96.12204199999996,
+          "p99": 202.42412499999955
+        },
+        "populatedOpen": {
+          "count": 12,
+          "max": 237.6888340000005,
+          "min": 220.27799999999843,
+          "p50": 224.29041599999982,
+          "p95": 237.6888340000005,
+          "p99": 237.6888340000005
+        },
+        "put": {
+          "count": 64,
+          "max": 57.63708300000053,
+          "min": 38.363582999999835,
+          "p50": 42.64116599999943,
+          "p95": 48.16754100000071,
+          "p99": 57.63708300000053
+        },
+        "writes": {
+          "count": 128,
+          "max": 202.42412499999955,
+          "min": 38.363582999999835,
+          "p50": 57.63708300000053,
+          "p95": 85.7230410000011,
+          "p99": 130.26770900000065
+        }
+      },
+      "coreSha256": "dd6fe3f4e8f2531edc2805aef3670a00c09bf8a29165b9f2d575bd088ec7baf0",
+      "ownerSha256": "d458284b04d0adbd97562c1fac4fefa76aec4424747ed9330df6222e9867ea16",
+      "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+    }
+  ],
+  "retainedRuntime": "build/retained-diagnostics-20261105/rejected-dag-033-empty-ddl-runtime",
+  "decision": "Do not promote empty-TEMP-DDL implementation. Simplify maintenance and repeat the same unchanged both-order gates.",
+  "limitations": [
+    "Fresh small synthetic histories; no registered DAG workload or large-history performance claim.",
+    "64 samples per operation per child and12 populated opens; sampled tails are a short screen, not an SLO.",
+    "Only observational recorded_at/retracted_at timestamps normalized in canonical comparison; every other canonical table cell agrees."
+  ]
+}

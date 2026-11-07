@@ -1,0 +1,123 @@
+{
+  "format": "triplex-devloop-job/1",
+  "id": "maintenance-recovery-foundation-qlever-v1",
+  "kind": "verification",
+  "queryPath": "qlever-datalog",
+  "backend": "qlever",
+  "author": "qlever-environment-owner",
+  "problemId": "owned-sparseimage-allocation-retention",
+  "logicalTaskId": "same-owned-engine-maintenance-readiness",
+  "hypothesis": "Same exact private CID/image/caps retains the quiescent native position/claim/history cardinalities after fixed-cap same-image compaction; full offline authoritative byte equality is separately anchored.",
+  "goals": [
+    6,
+    7,
+    9
+  ],
+  "dependsOn": [],
+  "requiredOwners": [],
+  "residentRecovery": {
+    "ownerId": "foundation-qlever",
+    "containerId": "e225d359e2a8211de8c5b3551e1aff8952b92b41922c4f90505ca4c6afc30b3f",
+    "imageSha256": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "readinessArtifact": "artifacts/readiness.json",
+    "requiredCheckKeys": [
+      "maintenance-readiness"
+    ]
+  },
+  "inspiration": [
+    {
+      "reference": "tools/bootstrap/restore-qlever.py",
+      "mechanism": "Exact private Docker ownership and native fixed-state recovery audit",
+      "adaptation": "Retain UNKNOWN reservation until new source-bound readiness and fresh startup identity; no write-crash or scale claim"
+    }
+  ],
+  "command": {
+    "argv": [
+      "/Users/sam/projects/triplex-db/.local/tools/node-v24.13.0-darwin-arm64/bin/node",
+      "tools/bootstrap/maintenance-readiness.mjs",
+      "--mode",
+      "after",
+      "--owner",
+      "foundation-qlever",
+      "--baseline",
+      ".runtime/bootstrap/maintenance-native-basis-20261106.json",
+      "--output",
+      "{RUN_ARTIFACTS}/readiness.json"
+    ],
+    "cwd": ".",
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=128"
+    }
+  },
+  "resources": {
+    "heavy": true,
+    "memoryBytes": 536870912,
+    "cpuUnits": 1,
+    "diskBytes": 16777216,
+    "timeoutMilliseconds": 120000,
+    "maximumLogBytes": 1048576
+  },
+  "inputs": [
+    {
+      "path": "tools/bootstrap/maintenance-readiness.mjs",
+      "role": "runner",
+      "sha256": "d037c32ca8e0ebda71d5c787cb4a6ce871fef51481dfe813fbd06b385891e1cd"
+    },
+    {
+      "path": "tools/bootstrap/with-env.sh",
+      "role": "runner",
+      "sha256": "cfd29a2d18e4e355bc30d6efdab7a8c19c006c5f1de191ca857409765201c838"
+    },
+    {
+      "path": "tools/bootstrap/check-storage.py",
+      "role": "source",
+      "sha256": "b056890b430ee5d56e4577dfb5d6e190f70691029564086eeffb9d4ac01caa41"
+    },
+    {
+      "path": ".runtime/bootstrap/maintenance-native-basis-20261106.json",
+      "role": "oracle",
+      "sha256": "26bc5827d2e183b839c654ae53574e81c99c92c69f40578ac7b512dd1f4aefbc"
+    },
+    {
+      "path": ".runtime/bootstrap/maintenance-authoritative-proof-20261106.json",
+      "role": "infrastructure",
+      "sha256": "74ddcbf03f9e9e93490bc63d4353bc312ef7bf60d904719a34cf79c2e32d2179"
+    },
+    {
+      "path": ".runtime/bootstrap/maintenance-engine-start-20261106.json",
+      "role": "infrastructure",
+      "sha256": "f5c0e11ee6af6c740f913e7113bc26f3712b5894503b9f1410d69cbf05183208"
+    },
+    {
+      "path": ".runtime/engines/owners.json",
+      "role": "mapping",
+      "sha256": "88be3c1e926f37a8b2f3a0c053230e5a7fefcdefc80603ae1c8186132c19a874"
+    },
+    {
+      "path": "qualification/maintenance-jobs/maintenance-recovery-foundation-qlever-v1/expected-status.json",
+      "role": "oracle",
+      "sha256": "21f5d077d5647fb08256453c9c2c88039f94107d7d614f4d4122a24ee903e6b8"
+    },
+    {
+      "path": ".runtime/engines/qlever-main/access-token",
+      "role": "credential-file",
+      "sha256": "7c825325d919a4ae839364e4a88f1e0fa67ee238129f14a4fa89e4faaa5fbbf5"
+    }
+  ],
+  "evidence": {
+    "checks": [
+      {
+        "key": "maintenance-readiness",
+        "expectedInput": "qualification/maintenance-jobs/maintenance-recovery-foundation-qlever-v1/expected-status.json",
+        "actual": "artifacts/status.json"
+      }
+    ],
+    "requiredCheckKeys": [
+      "maintenance-readiness"
+    ]
+  },
+  "retention": {
+    "scratch": "retain-forensic",
+    "meaning": "All existing data and pre/post offline hashes retained; no cleanup or recreate"
+  }
+}

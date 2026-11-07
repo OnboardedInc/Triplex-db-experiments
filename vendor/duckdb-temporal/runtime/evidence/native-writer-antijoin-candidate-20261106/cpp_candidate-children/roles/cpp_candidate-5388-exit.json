@@ -1,0 +1,64 @@
+{
+  "schema": "td.native-writer-lab-process/1",
+  "role": "cpp_candidate",
+  "pid": 5388,
+  "parentPid": 4882,
+  "bindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "preloadSha256": "1cfa9efa476ab4bfeaeb923fb1ed9fe4bf9306cb7d5af10bb0fe5145fb909fb9",
+  "runtime": "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime",
+  "selectedPortUrl": "file://<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/adapter/native-duckdb-port.mjs",
+  "entry": "<qualified-build02-runtime>/adapter/benchmark-antijoin-cost.mjs",
+  "entryKind": "measured_child",
+  "childOutput": "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate-children/readers-1.json",
+  "readerCount": 1,
+  "UV_THREADPOOL_SIZE": "4",
+  "routes": {
+    "nativeEnrollment": 2,
+    "nativeGenerated": 551,
+    "sdkGenerated": 0,
+    "errors": 0,
+    "unknown": 0
+  },
+  "writerPorts": [
+    {
+      "id": 1,
+      "enrollments": 1,
+      "nativeGenerated": 551,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "4"
+      ]
+    },
+    {
+      "id": 2,
+      "enrollments": 1,
+      "nativeGenerated": 0,
+      "sdkGenerated": 0,
+      "workerConnectionIds": [
+        "4"
+      ]
+    }
+  ],
+  "mechanism": "Generated writer dispatch only; native lifecycle remains active in both roles",
+  "preloadWallMs": 62.108125,
+  "receipts": {
+    "ready": "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate-children/roles/cpp_candidate-5388-ready.json",
+    "exit": "<writer-source-runtime>/build/native-writer-lab-antijoin-20261106/candidate-01/cpp_candidate-children/roles/cpp_candidate-5388-exit.json"
+  },
+  "loadedImages": [
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node"
+  ],
+  "afterCleanup": {
+    "liveHandles": 0,
+    "pendingCompletions": 0,
+    "asyncContexts": 0,
+    "asyncResources": 0,
+    "lifecycleOwners": 0
+  },
+  "status": "process_role_and_cleanup_verified"
+}

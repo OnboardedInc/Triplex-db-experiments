@@ -1,0 +1,32 @@
+{
+  "schema": "td.native-writer-b0-calculator-mapping/1",
+  "originalPlanSha256": "1fb10d550d82bf343011e7d60a502bb842e6d6132d5a6a9d1f17599fe415d0a8",
+  "originalCalculatorSha256": "06d188bc21ed6f36c7207aa4249ab4f8ca3ed1d7caadc08b4302645e127d18d8",
+  "adaptedSha256": "5e691589ddbf3e0c31faf3f0abe4845e1d16de45ed6d853bfbe3a8028a369d46",
+  "edits": [
+    [
+      "load('sdk_control')",
+      "load('original_B0')"
+    ],
+    [
+      "schema='td.native-writer-broad-mechanism/1'",
+      "schema='td.native-writer-b0-broad/1'"
+    ],
+    [
+      "roles=['sdk_control_v2_18contexts','cpp_candidate_v2_18contexts']",
+      "roles=['original_B0_SDK754_owner55_contract1_17contexts','cpp_candidate_contract2_18contexts']"
+    ]
+  ],
+  "protocolSource": {
+    "commit": "4349accbd5b97e42a01bb10e729cca861cdbcd94",
+    "pins": {
+      "adapter/native-writer-b0-broad.mjs": "ddee99642a4df1cd99af14b851dccd25a0072a9007c8b6fc99f664a66d2714a9",
+      "NATIVE-WRITER-B0-BROAD.md": "c0377b63743c4dc9dbe27063d448ac44d3603eaeeac9cdd40ab6e5ae18d07403"
+    }
+  },
+  "baselineRole": "original_B0",
+  "candidateRole": "cpp_candidate",
+  "admissionSha256": "6ea7e7e43e167b7f03cbfff20418f123e9e0717fc6b4e5c85b03d992b7b8fbb9",
+  "cppBindingSha256": "8fb1915bd21dc29f7a8567af561124802d47b2a188ed9c496f31a264436052fe",
+  "numericalEdits": 0
+}

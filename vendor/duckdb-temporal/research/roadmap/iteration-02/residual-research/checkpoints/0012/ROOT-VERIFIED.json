@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "all_original264_files_verified": true,
+  "subset_regular_UTF8_members": 219,
+  "excluded_fullthirdparty_or_webcache": 48,
+  "every_published_member_bytes_hashes_modes_verified": true,
+  "originals_unchanged": true,
+  "no_extraction_execution_or_source_patch": true
+}

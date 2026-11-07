@@ -1,0 +1,353 @@
+{
+  "schema": "td.native-presence-intervals-first/1",
+  "status": "passed_first_functional5_with_preserved_setup_resolver_failure",
+  "packagedAtUtc": "2026-11-06T09:18:58.911871+00:00",
+  "measuredSourceCommit": "31cbefd870274a3add6434508c3c5e50b5bc786b",
+  "nativeSourceCheckpoint": "3aa74c080334084c38a7f60b24bd327df0659ab6",
+  "independentQaSource": "9a539b49fceb476d7c0b607a97a56fb96b64496b",
+  "baseQualifiedWriterCheckpoint": "461683256602ee1520ce7c5d27e91bdec05679dc",
+  "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+  "captureDirectory": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/qualification-presence-20261106-01",
+  "rawDirectory": "native-presence-intervals-first-20261106-raw",
+  "rawFiles": {
+    "actual-core-manifest.json": {
+      "sha256": "1baa2cc1e17c0ec9ffe4f269625be0144bb30df9296c0ca6ba02009c2d9f0264",
+      "bytes": 4435
+    },
+    "actual-owner-manifest.json": {
+      "sha256": "a3075e1c059d72d3f2145fff341f57ebb00da3fc43073a1299f8dc9d55c2c9e3",
+      "bytes": 7183
+    },
+    "compiled-before-tests-first.json": {
+      "sha256": "090ddd8669743299a8fc8f48b37ec9cdff0dfbae3fefafc92a772c27d4f40dc4",
+      "bytes": 14181
+    },
+    "core-first.identity.json": {
+      "sha256": "d17d892dfadb4d2095e8d5c1793900dc7ac5c96c2ccc7d27efa80b93c0f23e3c",
+      "bytes": 504
+    },
+    "core-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "core-first.stdout": {
+      "sha256": "dd80c066efabd339f7240dd940b41485416a0bcc05d8a0df83a460e340a4c77b",
+      "bytes": 4263
+    },
+    "core-first.terminal.json": {
+      "sha256": "670204e0f75cb378f60a5af040c40b303892d7d83a0e9075f012c7bd7140b59a",
+      "bytes": 412
+    },
+    "owner-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "owner-first.stdout": {
+      "sha256": "2ed2396a1599c1f2ee8f54c22c137684b685384af54f98240a860bb73eb8104e",
+      "bytes": 6711
+    },
+    "owner-first.terminal.json": {
+      "sha256": "60856744d7e4af7a4d65cb7a70b607df04a3730392e9c7a83e93265c58795133",
+      "bytes": 781
+    },
+    "paired-first.identity.json": {
+      "sha256": "a028fbfbcb3a35c1c695941a8eb96cfa717e525a1a809faee9e5dd10ff941b73",
+      "bytes": 5118
+    },
+    "post-first.json": {
+      "sha256": "905e9374f16ed11467dea97b0def579ec9eb9e89f90dcfdbf99d316d24f319ad",
+      "bytes": 90414
+    },
+    "sdk-resolution-corrected.json": {
+      "sha256": "61c21de8ab845a5b1517c0b5b1c8284d6525a5194ac516f9d50a8ef61023fcb3",
+      "bytes": 1012
+    },
+    "sdk-resolution-first-failure.json": {
+      "sha256": "d0eb789074584e683deb03e80ab79aa9d353dd2e4cd009cbf56db7ef9ce08acb",
+      "bytes": 900
+    },
+    "stage-before-first.json": {
+      "sha256": "34c0f18be5732f84e591ae45bd5fafb05ce59948287dc5bf7a248534e424862a",
+      "bytes": 71247
+    },
+    "targeted-source-git-first.json": {
+      "sha256": "e8b2a62b2a9a36ef12ca4206684ca018bcccfdb2c535320eec685fa08be050bc",
+      "bytes": 4175
+    },
+    "tests-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "tests-first.tap": {
+      "sha256": "b5eb958f8b5cf8c0e9791dafbc8947f4629ba51a3154dbd84c2e10a71694d541",
+      "bytes": 2294
+    },
+    "tests-first.terminal.json": {
+      "sha256": "733782390bb70254019b67355dedccacd05274637677eccffba8bdc041008090",
+      "bytes": 675
+    },
+    "tsc-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "tsc-first.stdout": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "tsc-first.terminal.json": {
+      "sha256": "50011c9163c0438babbd06d30ca2f9e14f27623e101958d4ec3b2fcfd9f4ccaf",
+      "bytes": 460
+    }
+  },
+  "firstOutcomes": {
+    "dependencyCopy": "PASS395/5routes/7refs/36headers",
+    "sdkResolverAttempt1": "failed_setup_MODULE_NOT_FOUND_bare_platform_package",
+    "resolverFailure": "native-presence-intervals-first-20261106-raw/sdk-resolution-first-failure.json",
+    "sdkResolverCorrected": "PASS_actual_duckdb.node_subpath_engine72",
+    "coreBuild": "FIRSTPASS",
+    "companionBuild": "FIRSTPASS",
+    "typescript": "FIRSTPASS",
+    "realEngineTests": "FIRSTPASS5/5",
+    "testOrSourceRetries": 0,
+    "scopeOfRepair": "Only ad-hoc SDK provenance resolver used existing duckdb.node subpath; no source/dependency/limits/oracle change. Initial resolver process PID and redirected stderr were not captured; structured observed error/tool chunk preserved. Core build accidentally proceeded after that failed preflight; preserved explicitly."
+  },
+  "terminals": {
+    "core": {
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "build_native.py"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "pid": 17982,
+      "startedAtUtc": "2026-11-06T09:12:27.278903+00:00",
+      "endedAtUtc": "2026-11-06T09:12:39.244976+00:00",
+      "exitCode": 0,
+      "elapsedMs": 11965.826290892437
+    },
+    "owner": {
+      "command": [
+        "[LOCAL_PATH_0034]",
+        "build_owner_probe.py",
+        "--source-dir",
+        "[LOCAL_PATH_0041]",
+        "--engine-library",
+        "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+        "--compat-mutations"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "pid": 18466,
+      "startedAtUtc": "2026-11-06T09:14:04.286657+00:00",
+      "endedAtUtc": "2026-11-06T09:14:12.482594+00:00",
+      "exitCode": 0,
+      "elapsedMs": 8195.75266703032
+    },
+    "tsc": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "pid": 18692,
+      "startedAtUtc": "2026-11-06T09:14:52.960561+00:00",
+      "endedAtUtc": "2026-11-06T09:14:54.943487+00:00",
+      "exitCode": 0,
+      "elapsedMs": 1982.7059591189027
+    },
+    "tests": {
+      "command": [
+        "[LOCAL_PATH_0043]",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "build/adapter/test-native-presence-intervals.js"
+      ],
+      "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+      "pid": 18937,
+      "startedAtUtc": "2026-11-06T09:15:39.315322+00:00",
+      "endedAtUtc": "2026-11-06T09:15:53.456743+00:00",
+      "exitCode": 0,
+      "elapsedMs": 14141.078167129308,
+      "environment": {
+        "UV_THREADPOOL_SIZE": "4"
+      },
+      "fixtureLimits": {
+        "threads": 1,
+        "memoryLimit": "128MB",
+        "maxTempDirectorySize": "64MB"
+      }
+    }
+  },
+  "actualCounts": {
+    "nativeBuilds": 2,
+    "typescriptSemanticCheck": 1,
+    "realEngineMethods": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "fullVerifierExecuted": false
+  },
+  "testScope": {
+    "manualLedgers": 9,
+    "authoredEvents": 32,
+    "specifiedHistoricalCuts": 30,
+    "sharedUnicodeBatchCuts": 2,
+    "actualNativeRawEndpoint": true,
+    "independentEndpointCellOracle": true,
+    "emptyRecordPresence": true,
+    "valueHistoryAndReceipts": true,
+    "delayedReplayAuditReopen": true,
+    "exactLowerEventIslandUtf8Bytes": true,
+    "nullAndInvalidInputs": true,
+    "cachedOwnerAndFutureClockGuard": true,
+    "emptyFormatGuardRollback": true,
+    "callerTransactionReadYourWritesAndRollback": true,
+    "healthyNextPositionReuse": true
+  },
+  "settings": {
+    "threads": 1,
+    "memoryLimit": "128MB",
+    "maxTempDirectorySize": "64MB",
+    "UV_THREADPOOL_SIZE": "4",
+    "capsChanged": false
+  },
+  "artifacts": {
+    "sourceCommit": "31cbefd870274a3add6434508c3c5e50b5bc786b",
+    "pins": {
+      "build/artifact.json": "1baa2cc1e17c0ec9ffe4f269625be0144bb30df9296c0ca6ba02009c2d9f0264",
+      "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+      "build/temporal_datalog.duckdb_extension": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+      "build/temporal_datalog.so": "0b6f83bb2c3b25635594f5384a3238e305459513d92bc850deae6ca69e4352b0",
+      "build/temporal_control.node": "9fb218ba0236365c74a088c3a2da93f7ca8d2898dfddd86851f73769a028eea3",
+      "build/owner_probe/artifact.json": "a3075e1c059d72d3f2145fff341f57ebb00da3fc43073a1299f8dc9d55c2c9e3",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+      "build/owner_probe/temporal_owner_probe.so": "8e7b22e289328c9ca6fca8400c1112a58055461d01ac146b39321887ba8fdfa0",
+      "build/owner_probe/temporal_writer.node": "92ab7cb9de0efa47bec982d21b374e9f527fbcb9b244357912f1ca2104b1e840"
+    },
+    "coreNativeSources": {
+      "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+      "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+      "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+      "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+      "native/src/temporal_command.cpp": "48ef375247a4e393baec3750c5e66d0176d5213714326bf2174cc38a5d7003a5",
+      "native/src/temporal_command.hpp": "f755c6f25a31c828c54e074300abbe2028d07212e8876a241d33d7d235d58633",
+      "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+      "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+      "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+      "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+      "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+      "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+      "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+      "native/src/temporal_datalog.cpp": "72951f542146679105c1f4e08491c1479c80128db2956744b691d9c81b9f1f4f",
+      "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+      "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+      "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+      "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+      "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+      "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+      "native/src/temporal_presence_intervals.hpp": "7fc4be5ab6c2a11a7c1d6331fbaf4fd650fa314073351e00c05e8bf9942f3561",
+      "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+      "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+      "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+      "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+      "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+      "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da"
+    },
+    "coreFlags": {
+      "experimental_current_unique_fast_path": true,
+      "experimental_injective_projection_fast_path": true,
+      "experimental_identity_count_fast_path": false,
+      "experimental_all_cut_unique_fast_path": true,
+      "experimental_streaming_source_fast_path": true
+    },
+    "ownerCoreHash": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+    "engineHash": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "sdkResolution": {
+    "status": "passed",
+    "attempt": 2,
+    "scope": "Resolve-only; no SDK or native binary import",
+    "api": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js",
+    "bindings": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+    "platform": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "node": "[LOCAL_PATH_0043]",
+    "nodeVersion": "v24.13.0"
+  },
+  "compiledTestPins": {
+    "build/adapter/test-native-presence-intervals.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "build/adapter/test-native-presence-intervals.js": "73a00d607578faa1de3620e22452070bd98ead5d47c80164b229f7d0a65ea151"
+  },
+  "postchecks": {
+    "allBeforeAfterEqual": true,
+    "sourcePins": 38,
+    "sourceGitExact": true,
+    "dependencies": 395,
+    "nativeArtifacts": 9,
+    "compiledOutputs": 128,
+    "headers": 36,
+    "routes": 5,
+    "compilerEntries": 7,
+    "closedFixtureCount": 5,
+    "allClosedNoWal": true,
+    "details": "native-presence-intervals-first-20261106-raw/post-first.json"
+  },
+  "fixtures": [
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-ABiPtq/facts.duckdb",
+      "bytes": 8400896,
+      "sha256": "7368974d34211c4fe0fc0c46b821bf3bccc032d23e38c13caa72e1886a3cfbf0",
+      "walPresent": false
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-uTBLJj/facts.duckdb",
+      "bytes": 5779456,
+      "sha256": "4e8c70106e8cab18ed9a892be1860ef7d68e0af1e887b3def4e6f126d40d2bae",
+      "walPresent": false
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-Ls2DCB/facts.duckdb",
+      "bytes": 6565888,
+      "sha256": "6970388131e898515f9caf77592208c1388eba9c9d6b5447c57487794870fccb",
+      "walPresent": false
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-iXRpDp/facts.duckdb",
+      "bytes": 6041600,
+      "sha256": "2275b6ee9f7d9286ef0710ba7275c0108ff68db83101d7add38fb95cac8d2e1a",
+      "walPresent": false
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/presence-intervals-4fVqif/facts.duckdb",
+      "bytes": 7876608,
+      "sha256": "7f13c6042ddcee2f4974bf0789a763060c9a8e28859398d325146cf7ff27b0fe",
+      "walPresent": false
+    }
+  ],
+  "remainingGates": [
+    "unexposed bulk32 behavior",
+    "4096-event physical stress",
+    "actual plan pruning/cardinality/allocation profile",
+    "cancellation/concurrent readers",
+    "broader regression/full verifier",
+    "performance qualification",
+    "future immutable reference-coverage policy and complete final-overlay validation",
+    "deletion/cascade"
+  ],
+  "claims": {
+    "goals1or9Closed": false,
+    "performanceWin": false,
+    "allocatorContainment": false,
+    "sdkOrStorageSchemaMutation": false,
+    "oldBuildsModified": false,
+    "userOrCanonicalDatabasesUsed": false
+  }
+}

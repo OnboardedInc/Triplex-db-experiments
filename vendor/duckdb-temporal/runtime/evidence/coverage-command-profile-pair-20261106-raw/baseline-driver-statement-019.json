@@ -1,0 +1,283 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.000002667,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 0.000019375,
+                    "type": "UPDATE",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Projections": [
+                                    "SUBQUERY",
+                                    "rowid"
+                                ],
+                                "Estimated Cardinality": "1"
+                            },
+                            "intermediate_rows": 1,
+                            "intermediate_size_bytes": 16,
+                            "timing": 2.08e-7,
+                            "type": "PROJECTION",
+                            "children": [
+                                {
+                                    "extra_info": {},
+                                    "intermediate_rows": 1,
+                                    "intermediate_size_bytes": 17,
+                                    "timing": 0.000007125999999999999,
+                                    "type": "CROSS_PRODUCT",
+                                    "children": [
+                                        {
+                                            "extra_info": {
+                                                "Table": "facts.main.clock",
+                                                "Type": "Sequential Scan",
+                                                "Projections": "",
+                                                "Estimated Cardinality": "1"
+                                            },
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 8,
+                                            "row_groups_scanned": 1,
+                                            "rows_scanned": 1,
+                                            "timing": 0.000002333,
+                                            "total_row_groups_to_scan": 1,
+                                            "type": "TABLE_SCAN"
+                                        },
+                                        {
+                                            "extra_info": {},
+                                            "intermediate_rows": 1,
+                                            "intermediate_size_bytes": 9,
+                                            "timing": 0.0000037080000000000003,
+                                            "type": "CROSS_PRODUCT",
+                                            "children": [
+                                                {
+                                                    "extra_info": {
+                                                        "Projections": [
+                                                            "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+                                                            "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+                                                        ],
+                                                        "Estimated Cardinality": "1"
+                                                    },
+                                                    "intermediate_rows": 1,
+                                                    "intermediate_size_bytes": 8,
+                                                    "timing": 0.000001083,
+                                                    "type": "PROJECTION",
+                                                    "children": [
+                                                        {
+                                                            "extra_info": {
+                                                                "Aggregates": [
+                                                                    "\"first\"(#0)",
+                                                                    "count_star()"
+                                                                ],
+                                                                "Estimated Cardinality": "1"
+                                                            },
+                                                            "intermediate_rows": 1,
+                                                            "intermediate_size_bytes": 16,
+                                                            "timing": 0.0000015419999999999998,
+                                                            "type": "UNGROUPED_AGGREGATE",
+                                                            "children": [
+                                                                {
+                                                                    "extra_info": {
+                                                                        "Projections": "#0",
+                                                                        "Estimated Cardinality": "1"
+                                                                    },
+                                                                    "intermediate_rows": 1,
+                                                                    "intermediate_size_bytes": 8,
+                                                                    "timing": 2.5e-7,
+                                                                    "type": "PROJECTION",
+                                                                    "children": [
+                                                                        {
+                                                                            "extra_info": {
+                                                                                "Table": "\"temp\".main.__td_native_ctx",
+                                                                                "Type": "Sequential Scan",
+                                                                                "Projections": "position",
+                                                                                "Estimated Cardinality": "1"
+                                                                            },
+                                                                            "intermediate_rows": 1,
+                                                                            "intermediate_size_bytes": 8,
+                                                                            "row_groups_scanned": 1,
+                                                                            "rows_scanned": 1,
+                                                                            "timing": 0.000002375,
+                                                                            "total_row_groups_to_scan": 1,
+                                                                            "type": "TABLE_SCAN"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "extra_info": {
+                                                        "Expression": "SUBQUERY",
+                                                        "Estimated Cardinality": "1"
+                                                    },
+                                                    "intermediate_rows": 1,
+                                                    "intermediate_size_bytes": 1,
+                                                    "timing": 0.0000027919999999999997,
+                                                    "type": "FILTER",
+                                                    "children": [
+                                                        {
+                                                            "extra_info": {
+                                                                "Projections": [
+                                                                    "CASE  WHEN ((#1 > 1)) THEN (\"error\"('More than one row returned by a subquery used as an expression - scalar subqueries can only return a single row.",
+                                                                    "Use \"SET scalar_subquery_error_on_multiple_rows=false\" to revert to previous behavior of returning a random row.')) ELSE #0 END"
+                                                                ],
+                                                                "Estimated Cardinality": "1"
+                                                            },
+                                                            "intermediate_rows": 1,
+                                                            "intermediate_size_bytes": 1,
+                                                            "timing": 0.000002041,
+                                                            "type": "PROJECTION",
+                                                            "children": [
+                                                                {
+                                                                    "extra_info": {
+                                                                        "Aggregates": [
+                                                                            "\"first\"(#0)",
+                                                                            "count_star()"
+                                                                        ],
+                                                                        "Estimated Cardinality": "1"
+                                                                    },
+                                                                    "intermediate_rows": 1,
+                                                                    "intermediate_size_bytes": 9,
+                                                                    "timing": 0.000001834,
+                                                                    "type": "UNGROUPED_AGGREGATE",
+                                                                    "children": [
+                                                                        {
+                                                                            "extra_info": {
+                                                                                "Projections": "#0",
+                                                                                "Estimated Cardinality": "1"
+                                                                            },
+                                                                            "intermediate_rows": 1,
+                                                                            "intermediate_size_bytes": 1,
+                                                                            "timing": 4.2e-8,
+                                                                            "type": "PROJECTION",
+                                                                            "children": [
+                                                                                {
+                                                                                    "extra_info": {
+                                                                                        "Projections": "(NOT is_replay)",
+                                                                                        "Estimated Cardinality": "1"
+                                                                                    },
+                                                                                    "intermediate_rows": 1,
+                                                                                    "intermediate_size_bytes": 1,
+                                                                                    "timing": 5.41e-7,
+                                                                                    "type": "PROJECTION",
+                                                                                    "children": [
+                                                                                        {
+                                                                                            "extra_info": {
+                                                                                                "Table": "\"temp\".main.__td_native_ctx",
+                                                                                                "Type": "Sequential Scan",
+                                                                                                "Projections": "is_replay",
+                                                                                                "Estimated Cardinality": "1"
+                                                                                            },
+                                                                                            "intermediate_rows": 1,
+                                                                                            "intermediate_size_bytes": 1,
+                                                                                            "row_groups_scanned": 1,
+                                                                                            "rows_scanned": 1,
+                                                                                            "timing": 0.000001584,
+                                                                                            "total_row_groups_to_scan": 1,
+                                                                                            "type": "TABLE_SCAN"
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000002709,
+        "aggregate_reuse": 0.000001458,
+        "build_side_probe_side": 0.000003417,
+        "column_lifetime": 0.000002958,
+        "common_aggregate": 8.75e-7,
+        "common_subexpressions": 0.00000275,
+        "common_subplan": 0.000024375,
+        "cte_filter_pusher": 1.67e-7,
+        "cte_inlining": 2.08e-7,
+        "deliminator": 1.67e-7,
+        "duplicate_groups": 0.000002084,
+        "empty_result_pullup": 2.08e-7,
+        "expression_rewriter": 0.000016917,
+        "filter_pullup": 5.83e-7,
+        "filter_pushdown": 0.000008417,
+        "grouping_sets": 5.42e-7,
+        "in_clause": 5e-7,
+        "join_elimination": 0.000002916,
+        "join_filter_pushdown": 4.59e-7,
+        "join_order": 0.000042958,
+        "late_materialization": 2.08e-7,
+        "limit_pushdown": 1.67e-7,
+        "outer_join_simplification": 0.000002375,
+        "partial_aggregate_pushdown": 0.000001041,
+        "partitioned_execution": 2.09e-7,
+        "projection_placement": 0.000002208,
+        "projection_pullup": 0.000002791,
+        "redundant_order_keys": 0.000001166,
+        "regex_range": 2.09e-7,
+        "reorder_filter": 5.42e-7,
+        "row_group_pruner": 1.66e-7,
+        "row_number_rewriter": 2.5e-7,
+        "sampling_pushdown": 1.25e-7,
+        "scalar_fn_pushdown": 1.25e-7,
+        "statistics_propagation": 0.000007333,
+        "top_n": 1.25e-7,
+        "top_n_window_elimination": 4.16e-7,
+        "total_time": 0.000168375,
+        "type_pushdown": 1.67e-7,
+        "unnest_rewriter": 3.33e-7,
+        "unused_columns": 0.000009334,
+        "window_self_join": 1.66e-7
+    },
+    "physical_planner": {
+        "column_binding": 0.00000225,
+        "create_plan": 0.000007542,
+        "resolve_types": 1.67e-7,
+        "total_time": 0.000011792
+    },
+    "planner": {
+        "binding_time": 0.000063625,
+        "total_time": 0.000105042
+    },
+    "query": {
+        "cpu_time": 0.00004950099999999999,
+        "sql": "UPDATE main.clock SET position=(SELECT position FROM __td_native_ctx) WHERE singleton AND (SELECT NOT is_replay FROM __td_native_ctx);\n",
+        "total_intermediate_rows": 15,
+        "total_intermediate_size_bytes": 112,
+        "total_row_groups_scanned": 3,
+        "total_row_groups_to_scan": 3,
+        "total_rows_scanned": 3,
+        "total_time": 0.000554458
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 20810624,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 524288
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "SDK query contract v2 candidate; production qualification pending",
+  "createdAt": "2026-11-06T02:06:38.443293+00:00",
+  "sourceCommit": "2bb4ca2adb63c784e53b3d5c3b24664d3c5ed043",
+  "productionSdkSourceCommit": "d024e9b8e0c2eee16d4e992c7514048115e6f80b",
+  "nativeSourceCommit": "c3ff1d73398b46cc7019465f78fc44f7e598670a",
+  "sdkQueryContractVersion": 2,
+  "baselineRuntime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-write-cohort-20261105/runtime/build/native-write-frozen-032-20261105/runtime",
+  "baselineArchiveManifestSha256": "b17f748f92f8fa94bd5b9218602993e8b0e5f4b9ab863b38d7941fb11769580b",
+  "productionSdk": {
+    "native-entity.js": "8240cebcb75251ac06b5c1790c8abdf95bc394d926ee93057f89959df3a82607",
+    "native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af"
+  },
+  "typecheck": "pass",
+  "emittedCompile": "pass",
+  "focusedMethods": 37,
+  "fullVerification": "not run",
+  "performanceQualification": "not run"
+}

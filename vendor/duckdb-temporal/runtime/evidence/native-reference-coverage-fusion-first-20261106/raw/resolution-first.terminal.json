@@ -1,0 +1,10 @@
+{
+  "command": [
+    "<node24.13>/bin/node",
+    "-e",
+    "const{createRequire}=require('node:module');const{resolve,dirname,join}=require('node:path');const req=createRequire(resolve('build/adapter/native-duckdb-port.mjs'));const api=req.resolve('@duckdb/node-api'),bind=createRequire(api).resolve('@duckdb/node-bindings'),platform=createRequire(bind).resolve('@duckdb/node-bindings-darwin-arm64/duckdb.node');console.log(JSON.stringify({node:process.execPath,version:process.version,api,bindings:bind,platform,engine:join(dirname(platform),'libduckdb.dylib')}))"
+  ],
+  "startedAtUtc": "2026-11-06T12:02:38.741125+00:00",
+  "endedAtUtc": "2026-11-06T12:02:38.774686+00:00",
+  "exitCode": 0
+}

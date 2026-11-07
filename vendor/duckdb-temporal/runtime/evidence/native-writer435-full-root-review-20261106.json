@@ -1,0 +1,76 @@
+{
+  "schema": "td.native-writer435-full-root-review/1",
+  "recordedAtUtc": "2026-11-06T07:47:39.164348+00:00",
+  "status": "full435_pass_with_preserved_postcheck_bookkeeping_stop",
+  "verificationSha256": "30aecf908244837b51617eb3aeec752225cf711872c0cc0044092141518afe93",
+  "terminal": {
+    "command": [
+      "[LOCAL_PATH_0034]",
+      "verify.py",
+      "--with-direct"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-regression-20261106/runtime",
+    "pid": 81621,
+    "startedAtUtc": "2026-11-06T07:35:27.973386+00:00",
+    "status": "terminal",
+    "environment": {
+      "PATH": "[LOCAL_PATH_0056] Support/JetBrains/Toolbox/scripts:[LOCAL_PATH_0057]",
+      "UV_THREADPOOL_SIZE": "4",
+      "TD_TEST_PRE_BATCH_BUILD": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/retained-diagnostics-20261105/accepted-026",
+      "TD_SDK_ADMISSION_SOURCE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T185235542Z-394378fd/facts-100000.duckdb",
+      "TD_SDK_ADMISSION_RECIPE": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/expanded-value-integration/mixed-100k-026-checkpoint-fixed.json"
+    },
+    "exitCode": 0,
+    "endedAtUtc": "2026-11-06T07:42:44.761970+00:00",
+    "elapsedMs": 436789.6775000263
+  },
+  "counts": {
+    "python": 31,
+    "fixedNode": 76,
+    "additionalNode": 263,
+    "workloadOracle": 8,
+    "workloadPlans": 13,
+    "triplex": 44
+  },
+  "sourcePins": {
+    "actual": 226,
+    "trackedCommit506698": 226,
+    "generatedFromAdmittedRuntime": 0
+  },
+  "postcheck": {
+    "originalWrapperExit": 1,
+    "originalFailurePreserved": true,
+    "immutableRuntimeFilesUnchanged": 583,
+    "otherSectionsExact": true,
+    "onlyAdditions": {
+      "build/owner_probe/activation-db4dfd91-6139-4dd6-a3e6-082afdbe38e2.duckdb": {
+        "sha256": "b88c0613857e4974f6146a66294c8238bcdf484e863e4dc71f33d497b515f9f8",
+        "bytes": 6041600,
+        "classification": "retained_existing_ownership_test_output"
+      },
+      "build/owner_probe/activation-evidence.json": {
+        "sha256": "c767c00d2ab972d82d30f3c889c48d5eee166ebb89542490873059b3a599d1f2",
+        "bytes": 270706,
+        "classification": "retained_existing_ownership_test_output"
+      },
+      "build/owner_probe/evidence.json": {
+        "sha256": "1c1b35cc48e5d4a2a4e5a1252eeb7677456ced0881a6901ceb6ecc5dbc4b1e75",
+        "bytes": 39547,
+        "classification": "retained_existing_ownership_test_output"
+      }
+    },
+    "sourceProducers": [
+      "adapter/test-owner-probe.mjs:127",
+      "adapter/test-owner-activation.mjs:169",
+      "adapter/test-owner-activation.mjs:184"
+    ],
+    "resolution": "Partition only these three proven test outputs; no source/compiled/binary modification and no engine rerun."
+  },
+  "mainGlobalVerificationSha256": "aced40cd39edf63c2af8bc0a2ff53d76746b9a741ffb089cbbb9e8a9fb1244d6",
+  "acceptedAtUtc": "2026-11-06T07:54:09.358323+00:00",
+  "packageCommit": "461683256602ee1520ce7c5d27e91bdec05679dc",
+  "compactReceiptSha256": "66020fc42d813c8034c5bf53f07a23228b53a1906005b69017698e48e6179c92",
+  "rawPackageFilesVerified": 19,
+  "rawPackageBytes": 726791,
+  "scope": "Accepted isolated full435 correctness; main production receipt remains405 and candidate performance/teardown promotion gates remain open."
+}

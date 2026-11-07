@@ -1,0 +1,15 @@
+{
+  "at_utc": "2026-10-31T02:38:47.397133+00:00",
+  "status": "PASS_ROOT_RESTORED_CODEC_CORRECTNESS_ARCHIVE",
+  "sha256": "46df472f3d43cc53cea092b80ad0d041c958f9c05d645c141aea01231d747b2f",
+  "archive_bytes": 676190,
+  "entries": 374,
+  "logical_UTF8_bytes": 2818041,
+  "all175_QA_and88_method_review_payloads_retained": true,
+  "original597_writer_members_all_verified_before538_sourcebody_exclusions": true,
+  "root_full269_native480456_and_migration26_evidence_retained": true,
+  "source_code_durable_commit": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+  "no_archive_extraction_or_execution": true,
+  "codec_actual_preflights_timings_profiles": "NOT_RUN",
+  "parts": 4
+}

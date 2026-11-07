@@ -1,0 +1,17 @@
+{
+  "format": "triplex-maintenance-job-preflight-first-failures/1",
+  "atUnix": 1794009683.678693,
+  "errors": [
+    {
+      "jobs": "all3readiness manifests",
+      "code": "INPUTS",
+      "message": "Qualification/load jobs must pin actual built artifacts and independent oracles"
+    },
+    {
+      "job": "foundation-qlever",
+      "code": "NO_ADMISSION",
+      "message": "No ready job fits all resource dimensions"
+    }
+  ],
+  "diagnosis": "Native image identities were bound by residentRecovery, but manifest input roles omitted build proof. Add existing verified image import/inspect receipts as build pins; no engine restart or looser validator."
+}

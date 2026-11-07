@@ -1,0 +1,70 @@
+{
+  "schema": "td.correlated-temporal-lookup-focused/1",
+  "result": "PASS",
+  "platform": "macOS ARM64",
+  "source": "7f08a4fe3bd74da555d65dc93a1786668ac02e03",
+  "receiptUtc": "2026-11-05T20:59:03.480608+00:00",
+  "runtimeArtifactSha256": {
+    "build/artifact.json": "1e0ea381c43ce799d81ee03219f90964a7dc5390bf753c08dae6e2e4601770de",
+    "build/temporal_datalog.duckdb_extension": "6d7ceee41c8c91ea5e39158ede001ec19d8ea47b63b0e406a6bf0483a49754a5",
+    "build/temporal_control.node": "4c1c9b066efba6ddeff71196dda93f2adc7bd3506cb79fc828fadfc5dc16df25",
+    "build/adapter/native-entity.js": "13d0d9a74df6318c01076b4dd4300e4aeb393958650e11c2e8c406683c7b1ffe",
+    "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+    "build/adapter/native-duckdb-port.mjs": "bc5b36c61342927a2bf3e93c7a9ccd28d35f89528446bc9ef0dc2e55a0a420af",
+    "build/owner_probe/artifact.json": "dc2a3e22d7c469f2213c4b7a9b7471707a2525c8a244dfdfa6a2e181d3a12806",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "dfbba3af3e0185745755286b140959205fc6dc74a42081037b3268bb9f69dc99"
+  },
+  "workloadSourceSha256": {
+    "workloads/run_three_engines.mjs": "e21e073a193f1d216c1efd17960e4b35b90fcfc10fb0140c507752a9a132ee60",
+    "workloads/engine_cases.mjs": "93eeb65bf3b71ca8c79d1df37be083409347cf0e6d5fef6be8420e7dca408e70",
+    "workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+    "workloads/containment_cases.mjs": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+    "workloads/uptime_cases.mjs": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9",
+    "workloads/training_cases.mjs": "3be9c17165cd06340a56f4a7999d42e5840d387265c674b84c41f249f39a44ba",
+    "workloads/event_oracles.py": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02",
+    "workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+  },
+  "engineSha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+  "typecheck": "PASS",
+  "focused": {
+    "correlatedLookup": 3,
+    "multiCut": 6,
+    "interval": 4,
+    "scalableComparison": 6,
+    "typedUnion": 3
+  },
+  "workloads": {
+    "families": 13,
+    "exactAnswers": 141,
+    "reopenedProfiles": 39,
+    "independentPacketEventOracleCases": 71,
+    "training": {
+      "cases": 4,
+      "engineAnswerChecks": 12,
+      "reopenedProfiles": 3,
+      "logicalToNative": {
+        "1": "2",
+        "2": "3",
+        "3": "4",
+        "4": "5"
+      }
+    }
+  },
+  "limitations": [
+    "Functionally qualified with one sample per engine/case. No performance claim.",
+    "The native runner maps the fixture\u2019s completed logical groups to acknowledged native cuts. The first two disjoint feature intervals use two commands and the intermediate cut is outside this fixture\u2019s observation scope.",
+    "The driver is bounded positive EAV SQL. Candidate proof counts a conservative pre-join fanout and may reject broad retained history.",
+    "The controlled native lookup compiles its statement per call. Direct SQL prepare is reused. Both costs are included."
+  ],
+  "logSha256": {
+    "all-thirteen.json": "71a0af8ddaa46715e3e3cd2f1f0d27a28b72eb4b64282a41ad32e6c4a9d3910b",
+    "all-thirteen.log": "cc7212629e8c73644b04bb6b5b3502a38b259ef8e0ec7cb626447a176f9441f2",
+    "core.log": "bc653026b51cf7a441baef66d8d975dca556312cf0e9af76cf0f9f16b8872556",
+    "focused-first.tap": "d2e70f4f18343019f5302a2bb39173f27b49e1fae6c30ba6328428b57cb219df",
+    "owner.log": "e7c101b8a75c29324a28b310d00e736eb74a89f8d349f4b8205a2b2ac9827a40",
+    "tsc.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "workload-first.json": "f7cebe3e44278ff9c68913efccaf56f2d9d97d4e939f4a6fc6f8af324e2bc26b",
+    "workload-first.log": "edc425487781e714245722fc9f55d3252b00643f48d40cd95e8668ddc6314ea6"
+  }
+}

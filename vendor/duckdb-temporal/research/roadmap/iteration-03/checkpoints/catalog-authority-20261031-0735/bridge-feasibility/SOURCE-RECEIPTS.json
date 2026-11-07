@@ -1,0 +1,222 @@
+{
+  "schema": "bridge_static_source_receipts/1",
+  "utc": "2026-10-31T07:26:05Z",
+  "pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "retrieval": "Read-only GitHub fetch_file with exact ref; complete source bodies used in tool memory, not stored on disk",
+  "hashing": {
+    "helper": ".agent-logs/goal3-catalog-research/api-review/source-hash-checker.js",
+    "known_vectors": "SHA1/SHA256 abc and SHA256 empty matched standard vectors",
+    "byte_encoding": "UTF-8"
+  },
+  "files": [
+    {
+      "path": "src/include/duckdb/main/capi_v2/capi_v2_internal.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/main/capi_v2/capi_v2_internal.hpp",
+      "bytes": 39137,
+      "sha256": "a2b8ab49007c438a8b1099e9435920b98c4ac897860eeca0e151284ceed9f82f",
+      "returned_git_blob_sha1": "eedc6ce06664fdf7c17c910b65faa7d606ad1c96",
+      "recomputed_git_blob_sha1": "eedc6ce06664fdf7c17c910b65faa7d606ad1c96",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/main/database_manager.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/main/database_manager.hpp",
+      "bytes": 7759,
+      "sha256": "7b613fd6d5d3422c2a0c9c51a4d2f4c4dfce7ffdd7c8b63ab8b12432f6be8ed3",
+      "returned_git_blob_sha1": "e3e8efd7e0d4c01e7de95a3e72700e9aa9e315a6",
+      "recomputed_git_blob_sha1": "e3e8efd7e0d4c01e7de95a3e72700e9aa9e315a6",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/main/database_manager.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/database_manager.cpp",
+      "bytes": 22291,
+      "sha256": "27fb0e2514676c69de6c3c19c77825afb8855602a4a52f76f9998693e980c925",
+      "returned_git_blob_sha1": "86bf27271fc5e09e104db31395d955e19864cb9a",
+      "recomputed_git_blob_sha1": "86bf27271fc5e09e104db31395d955e19864cb9a",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/main/capi/v2/capi_v2_func_scalar.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/capi/v2/capi_v2_func_scalar.cpp",
+      "bytes": 22476,
+      "sha256": "96d8cb5b9deaf7aeb9d118ad40147e98e8f3edead54d8bfafd5c9945fa91dd3f",
+      "returned_git_blob_sha1": "5e5b1ff85f5b4ad056514f4b9313fffe034e0746",
+      "recomputed_git_blob_sha1": "5e5b1ff85f5b4ad056514f4b9313fffe034e0746",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/main/attached_database.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/main/attached_database.hpp",
+      "bytes": 10284,
+      "sha256": "45176b4ca1c8328ee6e0a8ec0a65d5adeba289060da939677be013ad52689c20",
+      "returned_git_blob_sha1": "d3c3adffbb6913bd98042f3ffe4c3f34deb02211",
+      "recomputed_git_blob_sha1": "d3c3adffbb6913bd98042f3ffe4c3f34deb02211",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/optional_idx.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/optional_idx.hpp",
+      "bytes": 1178,
+      "sha256": "403365e6c5bebf0cc133844605f3f097daf4e9e346bc7312744e93860d6c50fc",
+      "returned_git_blob_sha1": "540897cfe886f6f12a015c09a310b34f8b525771",
+      "recomputed_git_blob_sha1": "540897cfe886f6f12a015c09a310b34f8b525771",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/main/extension/extension_load.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/extension/extension_load.cpp",
+      "bytes": 38012,
+      "sha256": "595bed7921a693fa497f9eae7c68f6e293c40719fa3a12be8a190f5e7bdb7086",
+      "returned_git_blob_sha1": "e951fce32c4c76fd90496fa81e8c9417e6025190",
+      "recomputed_git_blob_sha1": "e951fce32c4c76fd90496fa81e8c9417e6025190",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/common/file_system.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/common/file_system.cpp",
+      "bytes": 32580,
+      "sha256": "3a12e3b921ebf5dd8729d90dcd0a6b4217a7b2592c75e51db00b684ed117bc1a",
+      "returned_git_blob_sha1": "62a7b2b8f5d6319236d9fa40c52074235dcf32f3",
+      "recomputed_git_blob_sha1": "62a7b2b8f5d6319236d9fa40c52074235dcf32f3",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/winapi.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/winapi.hpp",
+      "bytes": 785,
+      "sha256": "aabcad02a116692118e76dbca2a32b7a4d2ae8ee3907bc6f68e645a6ed5d566f",
+      "returned_git_blob_sha1": "3bde64945e4d0f633adb942e721fb08a061c700d",
+      "recomputed_git_blob_sha1": "3bde64945e4d0f633adb942e721fb08a061c700d",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/main/extension/external_extension_provider.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/extension/external_extension_provider.cpp",
+      "bytes": 1462,
+      "sha256": "beda3cfab9c2b06343e1fbe30e14ce19711f0515ab287f6ae2d7d3ad01189dbc",
+      "returned_git_blob_sha1": "280791fa75b785f15e7d61d0bf28f43a1934b4d2",
+      "recomputed_git_blob_sha1": "280791fa75b785f15e7d61d0bf28f43a1934b4d2",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/main/extension/external_extension_provider.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/main/extension/external_extension_provider.hpp",
+      "bytes": 1731,
+      "sha256": "4b8e2fb4b33910ef340c7d683aa59cdbeb7b4ac4fb6bf08b915a114c9a1af595",
+      "returned_git_blob_sha1": "7aadf00763b9629425a580fdc60fb8bb7d02a007",
+      "recomputed_git_blob_sha1": "7aadf00763b9629425a580fdc60fb8bb7d02a007",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb.hpp",
+      "bytes": 431,
+      "sha256": "aab42f263dfdaef6547b550a3a62e00201df56844087b44a6f10676412258438",
+      "returned_git_blob_sha1": "ce47149a0b13e86e6b800e421fed3141a1904bf7",
+      "recomputed_git_blob_sha1": "ce47149a0b13e86e6b800e421fed3141a1904bf7",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/vector.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/vector.hpp",
+      "bytes": 4519,
+      "sha256": "0d36397cb952756e37c42cf143930eb7c658715cad50dc446c2b80ae435f24b2",
+      "returned_git_blob_sha1": "e3d9ba485ec634b8d4e10c758425c37ac5d6b015",
+      "recomputed_git_blob_sha1": "e3d9ba485ec634b8d4e10c758425c37ac5d6b015",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/shared_ptr.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/shared_ptr.hpp",
+      "bytes": 444,
+      "sha256": "b2860bc636c72d3184a350a90e9907cb6bc18e89776d9b13f0b5aec6cc42444a",
+      "returned_git_blob_sha1": "49419753e019b6b836a105792a5235c4381acd1c",
+      "recomputed_git_blob_sha1": "49419753e019b6b836a105792a5235c4381acd1c",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/optional.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/optional.hpp",
+      "bytes": 355,
+      "sha256": "50f3bdf4f0faed7da78c83e4eea089256bfe453b516cc6935d04e746c9a66187",
+      "returned_git_blob_sha1": "b0cfe2956ea3bd605cb2ddfdf44c94d17b455916",
+      "recomputed_git_blob_sha1": "b0cfe2956ea3bd605cb2ddfdf44c94d17b455916",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/identifier.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/identifier.hpp",
+      "bytes": 7071,
+      "sha256": "77907e5932c1e18a5af290b10a75cce2a8018ddab990ba0acaf360b758ba37c7",
+      "returned_git_blob_sha1": "195c54154aa016760a6a7b79fb16a96458476905",
+      "recomputed_git_blob_sha1": "195c54154aa016760a6a7b79fb16a96458476905",
+      "git_blob_matches": true
+    },
+    {
+      "path": "CMakeLists.txt",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/CMakeLists.txt",
+      "bytes": 51726,
+      "sha256": "e40a2a3234c3b06ea88ef87216014cfe492ac07afb3bc294a0f9e705e9298ca3",
+      "returned_git_blob_sha1": "3e69d9b32e4d273d05e7ce307f24d0562652aa09",
+      "recomputed_git_blob_sha1": "3e69d9b32e4d273d05e7ce307f24d0562652aa09",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/shared_ptr_ipp.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/shared_ptr_ipp.hpp",
+      "bytes": 8832,
+      "sha256": "c205b870cfcd373e28931ce4f2b8d7808e3e506b9e53dbc07b4e83c4f7d39848",
+      "returned_git_blob_sha1": "b313c233a38a184783147679c4d362ac49931e20",
+      "recomputed_git_blob_sha1": "b313c233a38a184783147679c4d362ac49931e20",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/compatible_with_ipp.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/compatible_with_ipp.hpp",
+      "bytes": 1036,
+      "sha256": "add88db4b096dc287251c98a40168030b2097cc4a46216333481397daff71555",
+      "returned_git_blob_sha1": "ab25161570d640ec8471da75885fd1aedf39c3fd",
+      "recomputed_git_blob_sha1": "ab25161570d640ec8471da75885fd1aedf39c3fd",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/memory_safety.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/memory_safety.hpp",
+      "bytes": 2274,
+      "sha256": "e6c4ef6b421a3c0a6a023f56a176b5aa4c39555c43358d9f431bf74d1c1d2dd3",
+      "returned_git_blob_sha1": "7181f990c9669498a3b2e6c67b51bdf2f0957df0",
+      "recomputed_git_blob_sha1": "7181f990c9669498a3b2e6c67b51bdf2f0957df0",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/types.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/types.hpp",
+      "bytes": 28633,
+      "sha256": "8bd7ad9dc2fe2c04657cf749e3ea8e4d1c83d003540307e9e5d19b3dbcd4c2ce",
+      "returned_git_blob_sha1": "68c96362d2c2a993a185980bdf086e71a57c03b0",
+      "recomputed_git_blob_sha1": "68c96362d2c2a993a185980bdf086e71a57c03b0",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/include/duckdb/common/exception.hpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/include/duckdb/common/exception.hpp",
+      "bytes": 17368,
+      "sha256": "225053a2f1bb4171d3fa066e78783800210041b31f5c06ecb839239ea59c4e51",
+      "returned_git_blob_sha1": "38a814ce22a162a28bac98fbdb2eb6e6c7882319",
+      "recomputed_git_blob_sha1": "38a814ce22a162a28bac98fbdb2eb6e6c7882319",
+      "git_blob_matches": true
+    },
+    {
+      "path": "src/main/extension/extension_load_dynamic.cpp",
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/main/extension/extension_load_dynamic.cpp",
+      "bytes": 4103,
+      "sha256": "837eb0d5cd4b8564f5def25399497ab25dd31674e2383e53a416e7b5bab04c29",
+      "returned_git_blob_sha1": "5653a3d4207a0abdb0fff6160e76e3516e845e76",
+      "recomputed_git_blob_sha1": "5653a3d4207a0abdb0fff6160e76e3516e845e76",
+      "git_blob_matches": true
+    }
+  ],
+  "full_internal_header_closure_materialized": false,
+  "compile_link_runtime_all_unrun": true
+}

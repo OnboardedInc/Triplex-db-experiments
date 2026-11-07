@@ -1,0 +1,135 @@
+{
+    "io": {
+        "total_bytes_read": 0,
+        "total_bytes_written": 0
+    },
+    "operator": [
+        {
+            "extra_info": {},
+            "intermediate_rows": 0,
+            "intermediate_size_bytes": 0,
+            "timing": 0.000005042,
+            "type": "RESULT_COLLECTOR",
+            "children": [
+                {
+                    "extra_info": {},
+                    "intermediate_rows": 1,
+                    "intermediate_size_bytes": 8,
+                    "timing": 0.000087375,
+                    "type": "BATCH_INSERT",
+                    "children": [
+                        {
+                            "extra_info": {
+                                "Projections": [
+                                    "command_id",
+                                    "entity_id",
+                                    "'patch'",
+                                    "valid_from",
+                                    "valid_to"
+                                ],
+                                "Estimated Cardinality": "1"
+                            },
+                            "intermediate_rows": 1,
+                            "intermediate_size_bytes": 64,
+                            "timing": 0.000001667,
+                            "type": "PROJECTION",
+                            "children": [
+                                {
+                                    "extra_info": {
+                                        "Table": "\"temp\".main.__td_native_ctx",
+                                        "Type": "Sequential Scan",
+                                        "Projections": [
+                                            "command_id",
+                                            "entity_id",
+                                            "valid_from",
+                                            "valid_to"
+                                        ],
+                                        "Estimated Cardinality": "1"
+                                    },
+                                    "intermediate_rows": 1,
+                                    "intermediate_size_bytes": 48,
+                                    "row_groups_scanned": 1,
+                                    "rows_scanned": 1,
+                                    "timing": 0.000012292,
+                                    "total_row_groups_to_scan": 1,
+                                    "type": "TABLE_SCAN"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "optimizer": {
+        "aggregate_function_rewriter": 0.000003708,
+        "aggregate_reuse": 0.000002917,
+        "build_side_probe_side": 9.16e-7,
+        "column_lifetime": 0.000002417,
+        "common_aggregate": 3.75e-7,
+        "common_subexpressions": 8.75e-7,
+        "common_subplan": 0.000005417,
+        "cte_filter_pusher": 5e-7,
+        "cte_inlining": 1.67e-7,
+        "deliminator": 8.75e-7,
+        "duplicate_groups": 0.000001666,
+        "empty_result_pullup": 2.08e-7,
+        "expression_rewriter": 0.000007375,
+        "filter_pullup": 6.25e-7,
+        "filter_pushdown": 0.00001175,
+        "grouping_sets": 2.92e-7,
+        "in_clause": 5e-7,
+        "join_elimination": 0.00000125,
+        "join_filter_pushdown": 3.33e-7,
+        "join_order": 0.000047,
+        "late_materialization": 6.25e-7,
+        "limit_pushdown": 2.91e-7,
+        "outer_join_simplification": 0.000001875,
+        "partial_aggregate_pushdown": 0.000001167,
+        "partitioned_execution": 4.17e-7,
+        "projection_placement": 0.000001625,
+        "projection_pullup": 0.000002708,
+        "redundant_order_keys": 0.000002083,
+        "regex_range": 3.75e-7,
+        "reorder_filter": 2.5e-7,
+        "row_group_pruner": 1.25e-7,
+        "row_number_rewriter": 2.92e-7,
+        "sampling_pushdown": 2.92e-7,
+        "scalar_fn_pushdown": 2.09e-7,
+        "statistics_propagation": 0.000021041,
+        "top_n": 2.08e-7,
+        "top_n_window_elimination": 0.000007417,
+        "total_time": 0.000182584,
+        "type_pushdown": 5e-7,
+        "unnest_rewriter": 5.84e-7,
+        "unused_columns": 0.000016583,
+        "window_self_join": 3.33e-7
+    },
+    "physical_planner": {
+        "column_binding": 0.000002792,
+        "create_plan": 0.000015667,
+        "resolve_types": 1.25e-7,
+        "total_time": 0.000022708
+    },
+    "planner": {
+        "binding_time": 0.000093417,
+        "total_time": 0.000148791
+    },
+    "query": {
+        "cpu_time": 0.00010637599999999999,
+        "sql": "INSERT INTO td_catalog_v1.entity_presence_edits\n SELECT c.command_id,c.entity_id,'patch',c.valid_from,c.valid_to\n FROM __td_native_ctx c WHERE c.is_live_type AND NOT c.is_replay;\n\n",
+        "total_intermediate_rows": 3,
+        "total_intermediate_size_bytes": 120,
+        "total_row_groups_scanned": 1,
+        "total_row_groups_to_scan": 1,
+        "total_rows_scanned": 1,
+        "total_time": 0.000655875
+    },
+    "system": {
+        "blocked_thread_time": 0.0,
+        "peak_buffer_memory": 18797984,
+        "peak_streaming_buffer_size": 0,
+        "peak_temp_dir_size": 0,
+        "total_memory_allocated": 0
+    }
+}

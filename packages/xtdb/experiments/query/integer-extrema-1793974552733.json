@@ -1,0 +1,32 @@
+{
+  "kind": "parallel-native-capability-probe",
+  "observations": [
+    {
+      "name": "native-bigint-extrema",
+      "sql": "SELECT CAST(MIN(v) AS TEXT) AS low, CAST(MAX(v) AS TEXT) AS high FROM (SELECT CAST('-9223372036854775808' AS BIGINT) AS v UNION ALL SELECT CAST('9223372036854775807' AS BIGINT) AS v UNION ALL SELECT CAST('9007199254740993' AS BIGINT) AS v) values_",
+      "rows": [
+        {
+          "low": "-9223372036854775808",
+          "high": "9223372036854775807"
+        }
+      ],
+      "processed": true
+    },
+    {
+      "name": "server-sorted-extrema",
+      "sql": "SELECT CAST(v AS TEXT) AS high FROM (SELECT CAST('-9223372036854775808' AS BIGINT) AS v UNION ALL SELECT CAST('9223372036854775807' AS BIGINT) AS v UNION ALL SELECT CAST('9007199254740993' AS BIGINT) AS v) values_ ORDER BY v DESC LIMIT 1",
+      "rows": [
+        {
+          "high": "9223372036854775807"
+        }
+      ],
+      "processed": true
+    },
+    {
+      "name": "decimal-extrema-control",
+      "sql": "SELECT CAST(MAX(CAST(v AS DECIMAL(32,0))) AS TEXT) AS high FROM (SELECT CAST('-9223372036854775808' AS BIGINT) AS v UNION ALL SELECT CAST('9223372036854775807' AS BIGINT) AS v UNION ALL SELECT CAST('9007199254740993' AS BIGINT) AS v) values_",
+      "processed": false,
+      "error": "PostgresError: No method in multimethod 'set-value-code' for dispatch value: :decimal"
+    }
+  ]
+}

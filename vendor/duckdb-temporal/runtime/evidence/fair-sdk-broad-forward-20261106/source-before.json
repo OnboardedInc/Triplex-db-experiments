@@ -1,0 +1,11 @@
+{
+  "hashStartedAtUtc": "2026-11-06T06:11:55.111458+00:00",
+  "hashCompletedAtUtc": "2026-11-06T06:11:57.978212+00:00",
+  "source": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/scale-runs/20261105T194343420Z-abf92aa7/facts-10000000.duckdb",
+  "sha256": "3712516b8de8e371f71ae89aaab04f1d456da7a0fc6caa178ec0042926b0e6b3",
+  "bytes": 3905433600,
+  "mtimeNs": 1793911060600328880,
+  "ctimeNs": 1793911060600328880,
+  "walAbsent": true,
+  "recipeSha256": "5321690cd6e5cf26ca28332af19b6c59716ddaa785f4c8460657d1a6f95873e7"
+}

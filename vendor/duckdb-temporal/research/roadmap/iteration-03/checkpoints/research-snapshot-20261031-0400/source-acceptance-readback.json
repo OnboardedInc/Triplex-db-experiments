@@ -1,0 +1,38 @@
+{
+  "utc": "2026-10-31T03:47:14.079Z",
+  "status": "VERIFIED_DOCS_ONLY_ACCEPTED_ITEM2_SOURCE_NONFORCE_CAS_AND_READBACK",
+  "head": "8e682874c52c3f7cfc88e1cc6c006da684b04a9a",
+  "tree": "8943264a48c6616d40dec203ca254b58dae3b69c",
+  "proto": "3da4fab313a276274bd2ee6957644a9389235ac9",
+  "parent": "7c42861776af49610c62ca4aa1a4ccc6a143de97",
+  "files": [
+    {
+      "path": "projects/temporal-datalog/prototype/README.md",
+      "sha": "3a9a3cfe11d2118bf5ddf8a5c4835012b0c13c1d",
+      "exact": true
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/engine/ITERATION-02.md",
+      "sha": "9aa756c684f4d46bf4be4200a5fe0c9408bbe54d",
+      "exact": true
+    },
+    {
+      "path": "projects/temporal-datalog/prototype/storage/README.md",
+      "sha": "fd2b3a807a52936727e8f86c5285bc3e13a10fd4",
+      "exact": true
+    }
+  ],
+  "PR": {
+    "head": "8e682874c52c3f7cfc88e1cc6c006da684b04a9a",
+    "state": "open",
+    "draft": true,
+    "merged": false,
+    "base": "main"
+  },
+  "current_exported_sources_remote_git_sha_matched": 269,
+  "all266_other_runtime_test_sources_unchanged_from_tested7c": true,
+  "changed_files": 3,
+  "historical_v1_EXPORT_manifest_unchanged": "20e46bef850353152656c593a554bdf8d314db98",
+  "complete_results_main": "51c9e491588946d93c9e42ae18e9494e35510841",
+  "verification_scope": "Docs-only update; runtime/tests/native unchanged, no new full aggregate run asserted on modified documentation."
+}

@@ -1,0 +1,197 @@
+{
+  "schema": "td.native-writer-gate1/1",
+  "recordedAtUtc": "2026-11-06T05:46:01.548960+00:00",
+  "status": "PASS",
+  "testedSource": "74467cb078d7c1d255850dc2c695caa98e8501e7",
+  "nativeImplementationSource": "c76f0f416be8d600b0553600dd48c7e607fa1ddb",
+  "build": {
+    "native": "none; existing owner/addon reused",
+    "typescript": "PASS",
+    "install": "none"
+  },
+  "beforeAfter": {
+    "allMatched": true,
+    "nativeFiles": 48,
+    "dependencyFiles": 395,
+    "immutableArtifacts": 4,
+    "existingCompiledAndArtifactPins": 177,
+    "allCompiledAndArtifactPins": 181,
+    "existingCandidateSources": 6,
+    "newTestSources": 2
+  },
+  "newOutputsOnly": [
+    "build/adapter/test-native-writer-controls.d.ts",
+    "build/adapter/test-native-writer-controls.js",
+    "build/adapter/test-native-writer-delivery.d.ts",
+    "build/adapter/test-native-writer-delivery.js"
+  ],
+  "immutablePins": {
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82",
+    "build/temporal_datalog.so": "1ef5836267d0468ee556f422a796b010a9a9ab0f5313bd6fdd1fff115b0510ae",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c"
+  },
+  "artifactPins": {
+    "build/artifact.json": "6c36be1b07a6b44dac2f56972e4f7f04201676dcb74f57e1f26704dc49e965e7",
+    "build/owner_probe/artifact.json": "1dcf48f7dfa69262f6b18bdb48ac2020205c9f702a63737cb13299297f749331",
+    "build/owner_probe/temporal_owner_probe.so": "884e708dcb9161d9d1c94790bec52b1cf1a388bf42115c7ed98e25b4f502fccd",
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9",
+    "build/owner_probe/temporal_writer.node": "02270b0840dd4bab9c3beb00986e06bc0e8125c2971f9ac6f9a407f6fe03418c"
+  },
+  "sdkAndTestPins": {
+    "build/adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+    "build/adapter/native-entity.js": "48c6a5d6443fc706e59e31779437e4b24d7ce6ea6de1b07d22501f54e8b9d8f8",
+    "build/adapter/native-schema.js": "723e5de2397da9484518727b4fc7d5c3ffec5c59827c96c77d28712ab00c4226",
+    "build/adapter/test-native-writer-controls.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "build/adapter/test-native-writer-controls.js": "e84eb8263d475dce725e2c8a94f52362976b5b6d4cf51cbf956bedf3180a5ee4",
+    "build/adapter/test-native-writer-delivery.d.ts": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "build/adapter/test-native-writer-delivery.js": "894961a6cd72c68a2a311d70d1aa02f43a3ead4458d4a3dc9f911a189cb0a304"
+  },
+  "nativeSourcePins": {
+    "native/bench_engine.cpp": "031cb16756a91ce51455a30f2299a84fde919c72294a65e92873c3cf4e9d453a",
+    "native/catalog.sql": "5da97390c926dade88eee4803adec095be9661a63ee5154d17b1337bd92a82bd",
+    "native/experimental/emit_entity_patch.cpp": "e37638cb62615a3410284ea449db0d743dacf8069607a3878cb8a3abf7f12dc0",
+    "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42",
+    "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+    "native/owner_probe/native_writer.cpp": "85d6b8c35592cc7c14585af138677967541534823bb9fbe34bc26e8b44b1d57d",
+    "native/owner_probe/native_writer.hpp": "3ddef91e643cefa17dad9776a67b495c1f0ea087859eeaeec357d8764a4bd447",
+    "native/owner_probe/native_writer_abi.h": "c8085b2b7ef52910c906f811b76dd9303a93f28f07a2f6c0ec444cd0ec0093c2",
+    "native/owner_probe/node_writer.cpp": "0e3a673cba8310906800fc670825be0c90278d70c097250ac3d43ac56ca43872",
+    "native/owner_probe/owner_probe.cpp": "a7514a21c8df5354cd1e4faf8b0e8573f6741711f4d7d931ab6f14388dfc46e7",
+    "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+    "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+    "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+    "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+    "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+    "native/src/temporal_command.cpp": "6b2c3a064050b64694c436b4769bc61be52494a1624c8cd361ed1cc53371c426",
+    "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+    "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+    "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+    "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+    "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+    "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+    "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+    "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+    "native/src/temporal_datalog.cpp": "c80961113dd0b2fd2d1c182cd03f434aee724a6ea6a867fb603322356179281c",
+    "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+    "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+    "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+    "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+    "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+    "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+    "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+    "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+    "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+    "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+    "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+    "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+    "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+    "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+    "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+    "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+    "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+    "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da",
+    "native/test_wal_enospc.cpp": "57cb8461541d92132353c9c7802e09137a9a06299ac1b9044d8c5e8eacd4635d",
+    "native/vendor/LICENSE.duckdb-v2": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3",
+    "native/vendor/append_extension_metadata.py": "2430f62ef7b36eb76b005a377a0294fa01b1fdb0768ba9d23c4650de032a8239",
+    "native/vendor/duckdb_extension_v2.h": "fa0871d3f5b8e5da9a686c019fcaf8210349440831d5e9228720cbba31ccaa51",
+    "native/vendor/duckdb_v2.h": "73026a28e5b55952afb6e2e9ce80fd4f76614afedce329da895ccaf85a4a8be6"
+  },
+  "candidateSourcePins": {
+    "adapter/native-entity.ts": "0a4978d608e972ac8c51682234c81d9118ed30090e3db61f9f729a18abe19f23",
+    "adapter/native-schema.ts": "91c13a223f0d240ffa5bde20321547c3e45bd5acac9701a87dcc20697c6c45de",
+    "adapter/native-duckdb-port.mjs": "2301d7ce859479aae4785e9fc23548c0dd09dd513d58ebdef4f14988c272c268",
+    "adapter/native-duckdb-port.d.mts": "7124a036df718114302e706e5869a094b21582db5ec4d264ed5321887a1ccacd",
+    "adapter/test-native-writer.ts": "de420afa801e53e83d1a67b4e6238f539947aaa5bf3b82aca9d48253e03a57c6",
+    "build_owner_probe.py": "d4b79116ab6c84715cd8b939f129b846707d88c44117c9e47c7907519227377c"
+  },
+  "newTestSourcePins": {
+    "adapter/test-native-writer-controls.ts": "8f317bc5b426e102db9e5117fef6d7f8af9e443345e259c83b3e84baf627f299",
+    "adapter/test-native-writer-delivery.ts": "7022d84d71bd391790021fae3ff056ca0468e41d7b1d880119477c8b63796f74"
+  },
+  "tests": {
+    "command": [
+      "node",
+      "--test",
+      "--test-concurrency=1",
+      "--test-reporter=tap",
+      "build/adapter/test-native-writer-controls.js",
+      "build/adapter/test-native-writer-delivery.js"
+    ],
+    "count": 6,
+    "pass": 6,
+    "fail": 0,
+    "skipped": 0,
+    "durationMs": 3150.790458,
+    "results": [
+      {
+        "number": 1,
+        "status": "ok",
+        "name": "native writer v2 pooled read keeps its original writer barrier and historical cut",
+        "durationMs": 440.518125
+      },
+      {
+        "number": 2,
+        "status": "ok",
+        "name": "native writer readers zero deadline cannot advance an earlier real writer tail",
+        "durationMs": 420.277041
+      },
+      {
+        "number": 3,
+        "status": "ok",
+        "name": "native writer commits while16 real read scopes isolate queued and active cancellation",
+        "durationMs": 437.66025
+      },
+      {
+        "number": 4,
+        "status": "ok",
+        "name": "native writer close drains accepted writes and named read scopes before native and SDK retirement",
+        "durationMs": 361.891667
+      },
+      {
+        "number": 5,
+        "status": "ok",
+        "name": "native writer revalidate drains accepted work then enrolls the same18 USER contexts",
+        "durationMs": 493.932917
+      },
+      {
+        "number": 6,
+        "status": "ok",
+        "name": "native committed receipt decoder failure fences peers and reconciles exact canonical state after reopen",
+        "durationMs": 791.931833
+      }
+    ]
+  },
+  "fixtureProfile": {
+    "readers": 16,
+    "maxQueuedReads": 1,
+    "threads": 1,
+    "memoryLimit": "512MB",
+    "reason": "explicit bounded held16-result condition; public128MB default unchanged",
+    "zeroReaderMethod": 0,
+    "deliveryMethodReaders": 2,
+    "nativeWriterExtraUserConnection": true
+  },
+  "demonstrated": [
+    "v2 original-invocation writer barrier does not recapture later write",
+    "readers0 full-call timeout cannot advance earlier native write tail",
+    "16actualpreparedscopes;17th queued cancel;18th busy;activelease waits cleanup;only owned connection interrupted;native write commits while old results held",
+    "close drains accepted write and named reads;native joined before17SDK connections close",
+    "revalidate drains accepted work;18postcontexts enrolled;oneworkerID in metrics",
+    "real native committed rows trigger consumed typed-decoder Proxy fault;sharedfirstcause/restart fence;no healthy peer answer/laterACK/automaticretry;reopen actualreceipt IDs/K/history/replay/reuse"
+  ],
+  "proofLimits": [
+    "revalidate does not compare complete pre/postSDKconnectionIDsets",
+    "held read scopes delay actual SDK result delivery after engine stream call; not a sustainedperformance measurement",
+    "Proxy faults only Entity typed-decoder access over unmodified actualrows; does not cover every NAPI/allocationdeliverybranch",
+    "initial4methods remain prior3PASS+target1PASS union, notfresh4run",
+    "active-job environment teardown, broader eighttype/writer/fatal/control regressions, independent512trace and matchedsamev2 performance mechanism gate remain open"
+  ],
+  "rawPins": {
+    "before-compile.json": "b4b366c02acac00d0dade0bd7ae145e0c59ebbb0cf59c0003c7516294738f8d4",
+    "source-fast-forward.log": "3549a5331278b3a72164edc2a4bc5ed26e8685fea5b1b4e02cbdf403edaf833f",
+    "tsc-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before-tests.json": "14851c83ed7d74489782d903a02a3d20f4138de796d63794ddb463ef5bb460ef",
+    "exact-six-first.tap": "014e0fa8dc215b3b2dbea9ebbdd5bc19abbb939c7fda4e8f682ec45c14bb37d4"
+  }
+}

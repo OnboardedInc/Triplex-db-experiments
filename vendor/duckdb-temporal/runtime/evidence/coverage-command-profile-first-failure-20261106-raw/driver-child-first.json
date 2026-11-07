@@ -1,0 +1,597 @@
+{
+  "schema": "td.coverage-command-profile-child/1",
+  "status": "passed_public_semantics_profile_parse_pending",
+  "pid": 68398,
+  "parentPid": 68396,
+  "argv": [
+    "[LOCAL_PATH_0043]",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/adapter/profile-reference-coverage-command.mjs",
+    "--child",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-01/baseline-zero/config-first.json"
+  ],
+  "config": {
+    "role": "baseline",
+    "scenario": "zero",
+    "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+    "costRoot": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime",
+    "output": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-01/baseline-zero",
+    "database": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-qa-20261106/runtime/build/coverage-command-profile-20261106-01/baseline-zero/facts.duckdb",
+    "begin": "TD_COVERAGE_PROFILE_BEGIN 7305b279-456c-4261-aef5-32da75e649eb",
+    "end": "TD_COVERAGE_PROFILE_END 7305b279-456c-4261-aef5-32da75e649eb"
+  },
+  "costSource": "cf7f0d86645383944cac77c2f49e331428c75a33",
+  "scopes": {
+    "profile": "Real expanded statements inside one original public patch PRAGMA. Native JSON renderer prints at EndStatementInternal; no SQL splitting/insertion or new native binary.",
+    "timings": "Profiler query/planner/operator timers and public/native spans overlap. Final receipt profile may include commit because EndQueryInternal commits before profiler.EndQuery. Storage metrics are retained when emitted; no independent commit timer or exclusive phase subtraction is claimed.",
+    "configuration": "Diagnostic-only allowed_configs adds only three profiling settings before the existing configuration lock; memory, temp, threads and public scheduling unchanged."
+  },
+  "costPins": {
+    "adapter/reference-coverage-cost-fixture.mjs": "c6e217eed0f447447739916084141939d617d600d471534a44e8c242a7634a0a",
+    "adapter/benchmark-reference-coverage-cost.mjs": "1a20c9fd585643752a8692b8c6a07d247f33723e53d0a62208f85c9b8dab6cd4",
+    "adapter/test-reference-coverage-cost-fixture.mjs": "9e03984650a5f0abc38b601fae3094cedc3beb9a93d27a15c9777e65654923e8",
+    "NATIVE-REFERENCE-COVERAGE-COST.md": "08eb308b8c72df07fff4a8d68300ab2ef3d120934dff9fec845f290f43838b34"
+  },
+  "before": {
+    "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+    "sourceCommit": "4674135bafce0cb5d50e3773c1391848974e9079",
+    "api": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js",
+    "bindings": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+    "platform": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "hashes": {
+      "build/temporal_datalog.duckdb_extension": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+      "build/temporal_datalog.so": "0b6f83bb2c3b25635594f5384a3238e305459513d92bc850deae6ca69e4352b0",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+      "build/owner_probe/temporal_writer.node": "92ab7cb9de0efa47bec982d21b374e9f527fbcb9b244357912f1ca2104b1e840",
+      "build/temporal_control.node": "9fb218ba0236365c74a088c3a2da93f7ca8d2898dfddd86851f73769a028eea3",
+      "build/adapter/native-entity.js": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+    },
+    "sources": {
+      "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+      "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+      "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+      "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+      "native/src/temporal_command.cpp": "48ef375247a4e393baec3750c5e66d0176d5213714326bf2174cc38a5d7003a5",
+      "native/src/temporal_command.hpp": "f755c6f25a31c828c54e074300abbe2028d07212e8876a241d33d7d235d58633",
+      "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+      "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+      "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+      "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+      "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+      "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+      "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+      "native/src/temporal_datalog.cpp": "72951f542146679105c1f4e08491c1479c80128db2956744b691d9c81b9f1f4f",
+      "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+      "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+      "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+      "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+      "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+      "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+      "native/src/temporal_presence_intervals.hpp": "7fc4be5ab6c2a11a7c1d6331fbaf4fd650fa314073351e00c05e8bf9942f3561",
+      "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+      "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+      "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+      "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+      "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+      "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da",
+      "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+      "native/catalog.sql": "5da97390c926dade88eee4803adec095be9661a63ee5154d17b1337bd92a82bd",
+      "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+      "native/owner_probe/native_writer.cpp": "85d6b8c35592cc7c14585af138677967541534823bb9fbe34bc26e8b44b1d57d",
+      "native/owner_probe/native_writer.hpp": "3ddef91e643cefa17dad9776a67b495c1f0ea087859eeaeec357d8764a4bd447",
+      "native/owner_probe/native_writer_abi.h": "c8085b2b7ef52910c906f811b76dd9303a93f28f07a2f6c0ec444cd0ec0093c2",
+      "native/owner_probe/node_writer.cpp": "0e3a673cba8310906800fc670825be0c90278d70c097250ac3d43ac56ca43872",
+      "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+      "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42",
+      "native/owner_probe/owner_probe.cpp": "a7514a21c8df5354cd1e4faf8b0e8573f6741711f4d7d931ab6f14388dfc46e7"
+    },
+    "coreManifest": "1baa2cc1e17c0ec9ffe4f269625be0144bb30df9296c0ca6ba02009c2d9f0264",
+    "ownerManifest": "a3075e1c059d72d3f2145fff341f57ebb00da3fc43073a1299f8dc9d55c2c9e3",
+    "driver": "a20527876b422faa68c855e63c02acc48373f37720e3ba524cf398d364804e3a",
+    "operatorHelper": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24"
+  },
+  "createConfiguration": {
+    "allow_unsigned_extensions": "true",
+    "threads": "4",
+    "memory_limit": "128000000B",
+    "max_temp_directory_size": "64000000B",
+    "allowed_configs": "['enable_profiling','profiling_coverage','profiling_output']"
+  },
+  "seed": [
+    {
+      "commandId": "seed-targets",
+      "position": "2",
+      "schema": "coverage_cost",
+      "version": 1,
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "123e8291a2805968d8c23a2df28df537d8312dae657eee6bb17e355728bb205e",
+      "members": [
+        {
+          "operation": "put",
+          "type": "Target",
+          "entityId": "target-A",
+          "asserted": [
+            "4b25053f4828d1244287d6ce7c5218b30cbc743c151360a3aa7c5d0b18293ec5"
+          ],
+          "retracted": []
+        },
+        {
+          "operation": "put",
+          "type": "Target",
+          "entityId": "target-B",
+          "asserted": [
+            "ab4c14a1930b5150231de4439e2182102affaba1496484114e3236d01dc7c762"
+          ],
+          "retracted": []
+        }
+      ]
+    },
+    {
+      "commandId": "seed-sources",
+      "position": "3",
+      "schema": "coverage_cost",
+      "version": 1,
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "1c5cdb66535dcbecf2bac999ac5d156f1f7f840674189b3c4572d8905dae430d",
+      "members": [
+        {
+          "operation": "put",
+          "type": "Source",
+          "entityId": "source-0",
+          "asserted": [
+            "790e84c6e598b73dd3019cfa07c73171c97c948fff7957171cd0fb549372f89b"
+          ],
+          "retracted": []
+        },
+        {
+          "operation": "put",
+          "type": "Source",
+          "entityId": "source-1",
+          "asserted": [
+            "2d3764f7edc39f722230d0e1a1e4e406ea1cd9b704578424094a743889ca9507"
+          ],
+          "retracted": []
+        },
+        {
+          "operation": "put",
+          "type": "Source",
+          "entityId": "source-2",
+          "asserted": [
+            "dd98c04bd1241825c1d1a54efb2ffe0145521015f55ad45e85086dd4009494ec"
+          ],
+          "retracted": []
+        },
+        {
+          "operation": "put",
+          "type": "Source",
+          "entityId": "source-3",
+          "asserted": [
+            "3e4d757f87c977a916fd2bdccd35a17c877c4106b1e0b51ae519fe943b4c9176"
+          ],
+          "retracted": []
+        },
+        {
+          "operation": "put",
+          "type": "Source",
+          "entityId": "source-4",
+          "asserted": [
+            "f6cafac86741bb24b99210dcd1b4f160278722f7c43e5918bca74efcd837c940"
+          ],
+          "retracted": []
+        },
+        {
+          "operation": "put",
+          "type": "Source",
+          "entityId": "source-5",
+          "asserted": [
+            "78316363b5aad7c8d2d7bed43c8441206d7ad09d76dc04d3dceb30348b8ca75e"
+          ],
+          "retracted": []
+        },
+        {
+          "operation": "put",
+          "type": "Source",
+          "entityId": "source-6",
+          "asserted": [
+            "6aaedd5aac16de5bd8b0eb99e06fd615e521d7c64dea6c5ac39bf573dd0be877"
+          ],
+          "retracted": []
+        },
+        {
+          "operation": "put",
+          "type": "Source",
+          "entityId": "source-7",
+          "asserted": [
+            "4314fab3dc57cdbb0b3a63c17d42a65663c491300743b196a09fc5d2dbd76ffb"
+          ],
+          "retracted": []
+        }
+      ]
+    }
+  ],
+  "warmup": [
+    {
+      "commandId": "measure-0",
+      "position": "4",
+      "asserted": [
+        "a30ee02b13c9f0a7f6ee85867b0f74810f463a1c5ab197b7049ef524f0197331",
+        "3734298e1743e2292169898c54044b311bdb6eb6883fc413e0d10cab42d9ffef",
+        "1f479c56b9e69ef7d23d8d6e4d396db4a0d7d087cdbe18591c4c44850a460e28"
+      ],
+      "retracted": [
+        "4b25053f4828d1244287d6ce7c5218b30cbc743c151360a3aa7c5d0b18293ec5"
+      ],
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "entityId": "target-A",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "70f1e580c4d9d8527e6f6e59f2cce04155257475d3d9caa9815fb5acd58e99ec"
+    },
+    {
+      "commandId": "measure-1",
+      "position": "5",
+      "asserted": [
+        "2cbe75d2efa3182fbd47b2cf60dd0f4ade2ddfc2bacfc5d58f9b35f14e0302d4"
+      ],
+      "retracted": [
+        "a30ee02b13c9f0a7f6ee85867b0f74810f463a1c5ab197b7049ef524f0197331"
+      ],
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "entityId": "target-A",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "b234a960a6a51b186c0717917d9786c713959bf9ece56e6bfffe2dc81dac21d7"
+    },
+    {
+      "commandId": "measure-2",
+      "position": "6",
+      "asserted": [
+        "828c207ee5fece892ee49a5832c113063d0f210f2a668b7c7dd2b6c9c3286dee"
+      ],
+      "retracted": [
+        "2cbe75d2efa3182fbd47b2cf60dd0f4ade2ddfc2bacfc5d58f9b35f14e0302d4"
+      ],
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "entityId": "target-A",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "d03bd203d6458df9877f3bf5213fc26c86493b398afd3b526f37f5259d96b9e4"
+    },
+    {
+      "commandId": "measure-3",
+      "position": "7",
+      "asserted": [
+        "f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62"
+      ],
+      "retracted": [
+        "828c207ee5fece892ee49a5832c113063d0f210f2a668b7c7dd2b6c9c3286dee"
+      ],
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "entityId": "target-A",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+      "requestHash": "d034785d5202e9db66fd98d3201e2a23eebde7aa535d88e21a38dc07fb946e0b"
+    }
+  ],
+  "request": {
+    "schema": "coverage_cost",
+    "version": 1,
+    "type": "Target",
+    "entityId": "target-A",
+    "fields": [
+      {
+        "attribute": "n",
+        "value": {
+          "tag": "i64",
+          "value": "5"
+        }
+      }
+    ],
+    "operation": "patch",
+    "validFrom": "20",
+    "validTo": "80",
+    "commandId": "measure-4"
+  },
+  "expectedCall": "PRAGMA td_patch_entity_v2('coverage_cost',1,'Target','target-A','measure-4','{\"n\"=i64(5);}',20,80)",
+  "settings": [
+    [
+      true,
+      "json",
+      "ALL",
+      ""
+    ]
+  ],
+  "receipt": {
+    "commandId": "measure-4",
+    "position": "8",
+    "asserted": [
+      "82099c296de62e5450805cf925de168e4efcc5bfb640c8708ce6d968affc5a23"
+    ],
+    "retracted": [
+      "f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62"
+    ],
+    "schema": "coverage_cost",
+    "version": 1,
+    "type": "Target",
+    "entityId": "target-A",
+    "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d",
+    "requestHash": "46e774769a62f01662aefd991b0ed19e934cd5e8e87c831603b9654049821d60"
+  },
+  "publicWithProfilingMs": 86.77500000000009,
+  "actualCall": {
+    "sql": "PRAGMA td_patch_entity_v2('coverage_cost',1,'Target','target-A','measure-4','{\"n\"=i64(5);}',20,80)",
+    "params": [],
+    "metrics": {
+      "name": "native_entity_writer",
+      "nativeQueueNs": "8208",
+      "sqlCallNs": "86518958",
+      "copyAndCleanupNs": "17375",
+      "completionWaitNs": "13458",
+      "sequence": "16",
+      "connectionId": "4",
+      "bridgeAwaitMs": 86.61204199999997,
+      "portDecodeMs": 0.019000000000005457,
+      "portFullMs": 86.63162499999999
+    }
+  },
+  "history": [
+    {
+      "assertionId": "4b25053f4828d1244287d6ce7c5218b30cbc743c151360a3aa7c5d0b18293ec5",
+      "entityId": "target-A",
+      "attribute": "n",
+      "value": {
+        "tag": "i64",
+        "value": "0"
+      },
+      "validFrom": "0",
+      "validTo": "100",
+      "txFrom": "2",
+      "txTo": "4",
+      "commandId": "seed-targets",
+      "correctedBy": "measure-0",
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d"
+    },
+    {
+      "assertionId": "1f479c56b9e69ef7d23d8d6e4d396db4a0d7d087cdbe18591c4c44850a460e28",
+      "entityId": "target-A",
+      "attribute": "n",
+      "value": {
+        "tag": "i64",
+        "value": "0"
+      },
+      "validFrom": "80",
+      "validTo": "100",
+      "txFrom": "4",
+      "txTo": "9223372036854775807",
+      "commandId": "measure-0",
+      "correctedBy": null,
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d"
+    },
+    {
+      "assertionId": "3734298e1743e2292169898c54044b311bdb6eb6883fc413e0d10cab42d9ffef",
+      "entityId": "target-A",
+      "attribute": "n",
+      "value": {
+        "tag": "i64",
+        "value": "0"
+      },
+      "validFrom": "0",
+      "validTo": "20",
+      "txFrom": "4",
+      "txTo": "9223372036854775807",
+      "commandId": "measure-0",
+      "correctedBy": null,
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d"
+    },
+    {
+      "assertionId": "a30ee02b13c9f0a7f6ee85867b0f74810f463a1c5ab197b7049ef524f0197331",
+      "entityId": "target-A",
+      "attribute": "n",
+      "value": {
+        "tag": "i64",
+        "value": "1"
+      },
+      "validFrom": "20",
+      "validTo": "80",
+      "txFrom": "4",
+      "txTo": "5",
+      "commandId": "measure-0",
+      "correctedBy": "measure-1",
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d"
+    },
+    {
+      "assertionId": "2cbe75d2efa3182fbd47b2cf60dd0f4ade2ddfc2bacfc5d58f9b35f14e0302d4",
+      "entityId": "target-A",
+      "attribute": "n",
+      "value": {
+        "tag": "i64",
+        "value": "2"
+      },
+      "validFrom": "20",
+      "validTo": "80",
+      "txFrom": "5",
+      "txTo": "6",
+      "commandId": "measure-1",
+      "correctedBy": "measure-2",
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d"
+    },
+    {
+      "assertionId": "828c207ee5fece892ee49a5832c113063d0f210f2a668b7c7dd2b6c9c3286dee",
+      "entityId": "target-A",
+      "attribute": "n",
+      "value": {
+        "tag": "i64",
+        "value": "3"
+      },
+      "validFrom": "20",
+      "validTo": "80",
+      "txFrom": "6",
+      "txTo": "7",
+      "commandId": "measure-2",
+      "correctedBy": "measure-3",
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d"
+    },
+    {
+      "assertionId": "f05cc1053655fcfb3a0bc18f9855a58124d98de7b3d2a097d209e07c63642f62",
+      "entityId": "target-A",
+      "attribute": "n",
+      "value": {
+        "tag": "i64",
+        "value": "4"
+      },
+      "validFrom": "20",
+      "validTo": "80",
+      "txFrom": "7",
+      "txTo": "8",
+      "commandId": "measure-3",
+      "correctedBy": "measure-4",
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d"
+    },
+    {
+      "assertionId": "82099c296de62e5450805cf925de168e4efcc5bfb640c8708ce6d968affc5a23",
+      "entityId": "target-A",
+      "attribute": "n",
+      "value": {
+        "tag": "i64",
+        "value": "5"
+      },
+      "validFrom": "20",
+      "validTo": "80",
+      "txFrom": "8",
+      "txTo": "9223372036854775807",
+      "commandId": "measure-4",
+      "correctedBy": null,
+      "schema": "coverage_cost",
+      "version": 1,
+      "type": "Target",
+      "schemaHash": "d9d8f8ef615ff62497129028724b0dcab2632766e65d289fab4a415a68bd085d"
+    }
+  ],
+  "exactReplayAndOldCuts": true,
+  "closedWithoutWal": true,
+  "cleanup": {
+    "liveHandles": 0,
+    "pendingCompletions": 0,
+    "asyncContexts": 0,
+    "asyncResources": 0,
+    "lifecycleOwners": 0
+  },
+  "loadedImages": [
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_control.node",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/temporal_datalog.duckdb_extension",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/build/owner_probe/temporal_writer.node"
+  ],
+  "after": {
+    "runtime": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime",
+    "sourceCommit": "4674135bafce0cb5d50e3773c1391848974e9079",
+    "api": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js",
+    "bindings": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js",
+    "platform": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "engine": "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib",
+    "hashes": {
+      "build/temporal_datalog.duckdb_extension": "2f7f6c0eb20132d17511dfb531cf90fa00d549ea8451e1d5e30b9f08d45c4e70",
+      "build/temporal_datalog.so": "0b6f83bb2c3b25635594f5384a3238e305459513d92bc850deae6ca69e4352b0",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "109a16b2d42015fca92b949b28229c3b1dd17aba98e2de0076a2d9016bd9e522",
+      "build/owner_probe/temporal_writer.node": "92ab7cb9de0efa47bec982d21b374e9f527fbcb9b244357912f1ca2104b1e840",
+      "build/temporal_control.node": "9fb218ba0236365c74a088c3a2da93f7ca8d2898dfddd86851f73769a028eea3",
+      "build/adapter/native-entity.js": "19c2b02619ef738712ca359605e89394884242f0a0d098c71020e98f5f6054a0",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-api/lib/index.js": "9d78710fc48494f42133452f3e76ad62634fe9ad50dc7d7bcc55e3bcffff95e3",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings/duckdb.js": "19451f98da76e7db519b909d98a4401c92ffb14df5bc1c48ad7ce5b7b67113ce",
+      "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-presence-intervals-20261106/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node": "0b275625bd5f7664aa6b7802fc77785327ff0120249d6bea8df4b2de373a3902"
+    },
+    "sources": {
+      "native/src/node_control.cpp": "a671a123e976a2f0a32effc46a38b6ba4d206d3b6673bdffe649ba66465ece71",
+      "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+      "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+      "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+      "native/src/temporal_command.cpp": "48ef375247a4e393baec3750c5e66d0176d5213714326bf2174cc38a5d7003a5",
+      "native/src/temporal_command.hpp": "f755c6f25a31c828c54e074300abbe2028d07212e8876a241d33d7d235d58633",
+      "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+      "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+      "native/src/temporal_control.hpp": "62cdaec3522482eae2f1149d9965b9771a1a134e187f0c75dca211e533ec951c",
+      "native/src/temporal_core.cpp": "ae82f7408a64fafa6429ee68bf0fae3ae16be8f3571de47a1b3bc41eeeac0e78",
+      "native/src/temporal_core.hpp": "c29ef6b43c870d92ba3ba0a4847e6406bb1e3eda6a7b50147dc7a5e04e1a8da7",
+      "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+      "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+      "native/src/temporal_datalog.cpp": "72951f542146679105c1f4e08491c1479c80128db2956744b691d9c81b9f1f4f",
+      "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+      "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+      "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+      "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+      "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+      "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+      "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+      "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+      "native/src/temporal_presence_intervals.hpp": "7fc4be5ab6c2a11a7c1d6331fbaf4fd650fa314073351e00c05e8bf9942f3561",
+      "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+      "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+      "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+      "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+      "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+      "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+      "native/src/temporal_stratified_core.hpp": "98287b245cd5586fc80431d9da9dfe0a52853f7feab9ee248b12b1706c26ff53",
+      "native/src/temporal_typed_core.hpp": "733234db0bad94a6ba0b2a3d8c2e1b349e3a6f5c0102c486dd4213ca6598e9e9",
+      "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+      "native/src/temporal_value_domain.hpp": "fcdb7ca5f10b77d2fabfaf5a39f6f85b3e39bb59059a657b93f4839fa353e4da",
+      "native/retained_validity.sql": "b0bd0524469bb53b88feaddc4ae0782b9bb97e99c3aa056720e0cdc67a7767f4",
+      "native/catalog.sql": "5da97390c926dade88eee4803adec095be9661a63ee5154d17b1337bd92a82bd",
+      "build/catalog_sql.hpp": "2a03c548af6b5033c3737ca635c2406bdfb7d22df3b919abf14c3e4df3096f99",
+      "native/owner_probe/native_writer.cpp": "85d6b8c35592cc7c14585af138677967541534823bb9fbe34bc26e8b44b1d57d",
+      "native/owner_probe/native_writer.hpp": "3ddef91e643cefa17dad9776a67b495c1f0ea087859eeaeec357d8764a4bd447",
+      "native/owner_probe/native_writer_abi.h": "c8085b2b7ef52910c906f811b76dd9303a93f28f07a2f6c0ec444cd0ec0093c2",
+      "native/owner_probe/node_writer.cpp": "0e3a673cba8310906800fc670825be0c90278d70c097250ac3d43ac56ca43872",
+      "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+      "native/owner_probe/compat_mutation.cpp": "381ea7f28cddbeca00b815d017fb20d7351e86ab656d9bd23e2dc787197d9e42",
+      "native/owner_probe/owner_probe.cpp": "a7514a21c8df5354cd1e4faf8b0e8573f6741711f4d7d931ab6f14388dfc46e7"
+    },
+    "coreManifest": "1baa2cc1e17c0ec9ffe4f269625be0144bb30df9296c0ca6ba02009c2d9f0264",
+    "ownerManifest": "a3075e1c059d72d3f2145fff341f57ebb00da3fc43073a1299f8dc9d55c2c9e3",
+    "driver": "a20527876b422faa68c855e63c02acc48373f37720e3ba524cf398d364804e3a",
+    "operatorHelper": "34627aec5880587b5a046fd9a87c08fc02dc739635d49172bb8e96cfeda24b24"
+  },
+  "costPinsAfter": {
+    "adapter/reference-coverage-cost-fixture.mjs": "c6e217eed0f447447739916084141939d617d600d471534a44e8c242a7634a0a",
+    "adapter/benchmark-reference-coverage-cost.mjs": "1a20c9fd585643752a8692b8c6a07d247f33723e53d0a62208f85c9b8dab6cd4",
+    "adapter/test-reference-coverage-cost-fixture.mjs": "9e03984650a5f0abc38b601fae3094cedc3beb9a93d27a15c9777e65654923e8",
+    "NATIVE-REFERENCE-COVERAGE-COST.md": "08eb308b8c72df07fff4a8d68300ab2ef3d120934dff9fec845f290f43838b34"
+  }
+}

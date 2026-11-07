@@ -1,0 +1,17 @@
+{
+  "role": "sdk_control",
+  "pid": 63059,
+  "command": [
+    "node",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/adapter/native-writer-lab-small.mjs",
+    "--runtime",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/native-writer-lab-20261106-01/runtime",
+    "--output",
+    "__HANDOFF_ROOT__/duckdb-temporal/variants/temporal-native-writer-20261105/runtime/build/native-writer-lab-small-20261106-01/sdk_control/result.json"
+  ],
+  "startedAtUtc": "2026-11-06T06:45:09.396043+00:00",
+  "status": "terminal",
+  "exitCode": 0,
+  "exitedAtUtc": "2026-11-06T06:45:12.925846+00:00",
+  "elapsedMs": 3529.6525838784873
+}

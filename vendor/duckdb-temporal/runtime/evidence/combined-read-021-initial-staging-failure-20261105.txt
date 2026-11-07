@@ -1,0 +1,151 @@
+TAP version 13
+# Subtest: interval patches preserve old cuts and outside answers with deterministic fragment identities
+ok 1 - interval patches preserve old cuts and outside answers with deterministic fragment identities
+  ---
+  duration_ms: 911.110459
+  type: 'test'
+  ...
+# Subtest: patches span multiple prior intervals, fill gaps, retain disjoint IDs and allow schema-valid empty records
+ok 2 - patches span multiple prior intervals, fill gaps, retain disjoint IDs and allow schema-valid empty records
+  ---
+  duration_ms: 653.243125
+  type: 'test'
+  ...
+# Subtest: repeated fragments preserve their original schema and reference validation meaning
+ok 3 - repeated fragments preserve their original schema and reference validation meaning
+  ---
+  duration_ms: 522.756917
+  type: 'test'
+  ...
+# Subtest: retained row and byte admission include every new fragment at exact limits
+ok 4 - retained row and byte admission include every new fragment at exact limits
+  ---
+  duration_ms: 1356.287167
+  type: 'test'
+  ...
+# Subtest: strict and owned pooled queries keep prepared latest and historical patch cuts coherent
+ok 5 - strict and owned pooled queries keep prepared latest and historical patch cuts coherent
+  ---
+  duration_ms: 573.122958
+  type: 'test'
+  ...
+# Subtest: legacy format five migrates once and format six explicitly rejects old initializers and Python openers
+not ok 6 - legacy format five migrates once and format six explicitly rejects old initializers and Python openers
+  ---
+  duration_ms: 578.824917
+  type: 'test'
+  location: '<runtime>/build/native-read-spikes/combined-021-20261105-01/candidate/build/adapter/test-interval-patch.js:187:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: <venv-python> -c import sys
+    from temporal_store import Store
+    try:
+     Store(sys.argv[1])
+    except ValueError as e:
+     assert 'unsupported temporal-store schema version' in str(e),str(e)
+    else:
+     raise AssertionError('legacy Python accepted format six')
+     <test-temp>/store.duckdb
+    Traceback (most recent call last):
+      File "<string>", line 4, in <module>
+        Store(sys.argv[1])
+        ~~~~~^^^^^^^^^^^^^
+      File "<runtime>/temporal_store/store.py", line 145, in __init__
+        manifest = json.loads((ROOT / 'build/artifact.json').read_text())
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+      File "<python-install>/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+        with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+             ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "<python-install>/lib/python3.14/pathlib/__init__.py", line 771, in open
+        return io.open(self, mode, buffering, encoding, errors, newline)
+               ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    FileNotFoundError: [Errno 2] No such file or directory: '<runtime>/build/artifact.json'
+    
+  code: 1
+  stack: |-
+    genericNodeError (node:internal/errors:985:15)
+    wrappedFn (node:internal/errors:539:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:508:28)
+    maybeClose (node:internal/child_process:1101:16)
+    ChildProcess._handle.onexit (node:internal/child_process:305:5)
+  ...
+# Subtest: late fragment insertion failure and concurrent writers retain atomic metadata, receipts and clock
+ok 7 - late fragment insertion failure and concurrent writers retain atomic metadata, receipts and clock
+  ---
+  duration_ms: 489.174625
+  type: 'test'
+  ...
+# Subtest: full retained audit rejects orphan, cyclic, forward and schema-forged fragment provenance
+ok 8 - full retained audit rejects orphan, cyclic, forward and schema-forged fragment provenance
+  ---
+  duration_ms: 749.194791
+  type: 'test'
+  ...
+# Subtest: strict mode leaves optional companion unloaded and rejects owned revalidation
+ok 9 - strict mode leaves optional companion unloaded and rejects owned revalidation
+  ---
+  duration_ms: 54.148
+  type: 'test'
+  ...
+# Subtest: owned public store audits every connection and preserves native writes and strict query behavior
+ok 10 - owned public store audits every connection and preserves native writes and strict query behavior
+  ---
+  duration_ms: 291.559292
+  type: 'test'
+  ...
+# Subtest: native validation failure and injected SDK interruption preserve owned reads
+ok 11 - native validation failure and injected SDK interruption preserve owned reads
+  ---
+  duration_ms: 201.303083
+  type: 'test'
+  ...
+# Subtest: raw SQL and raw controlled SQL invalidate before dispatch while trusted native reads stay usable
+ok 12 - raw SQL and raw controlled SQL invalidate before dispatch while trusted native reads stay usable
+  ---
+  duration_ms: 224.515333
+  type: 'test'
+  ...
+# Subtest: revalidation drains admitted reads, blocks new work and requires unknown connections to close
+ok 13 - revalidation drains admitted reads, blocks new work and requires unknown connections to close
+  ---
+  duration_ms: 210.716709
+  type: 'test'
+  ...
+# Subtest: failed full audit leaves owned reads invalid and can be repaired through a fresh audit
+ok 14 - failed full audit leaves owned reads invalid and can be repaired through a fresh audit
+  ---
+  duration_ms: 281.066875
+  type: 'test'
+  ...
+# Subtest: uncertain activation cleanup keeps owned reads closed even if native invalidation cannot execute
+ok 15 - uncertain activation cleanup keeps owned reads closed even if native invalidation cannot execute
+  ---
+  duration_ms: 169.349292
+  type: 'test'
+  ...
+# Subtest: owned loader rejects stale companion pairing before any native LOAD
+not ok 16 - owned loader rejects stale companion pairing before any native LOAD
+  ---
+  duration_ms: 2.391291
+  type: 'test'
+  location: '<runtime>/build/native-read-spikes/combined-021-20261105-01/candidate/build/adapter/test-owned-store.js:270:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '<runtime>/build/native-read-spikes/combined-021-20261105-01/candidate/adapter/native-duckdb-port.mjs'"
+  code: 'ENOENT'
+  stack: |-
+    async open (node:internal/fs/promises:637:25)
+    async readFile (node:internal/fs/promises:1269:14)
+    async TestContext.<anonymous> (file://<runtime>/build/native-read-spikes/combined-021-20261105-01/candidate/build/adapter/test-owned-store.js:277:82)
+    async Test.run (node:internal/test_runner/test:1113:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 14
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5941.605375

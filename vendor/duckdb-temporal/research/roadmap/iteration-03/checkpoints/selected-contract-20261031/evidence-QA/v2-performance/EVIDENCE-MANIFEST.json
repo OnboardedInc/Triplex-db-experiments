@@ -1,0 +1,156 @@
+{
+  "schema": "closed-source-evidence-qa/v1",
+  "frozen_utc": "2026-10-31T04:13:18.803110+00:00",
+  "status": "CLOSED_SOURCE_ONLY_OUTPUT",
+  "scope": "New owned v2-performance evidence-QA output only; original workers/drafts untouched; coordinator sole source/ref/PR/Page/private-main integrator",
+  "input_manifest_sha256": "849c98fee64ca679ca70d6fbe1ddd133708dc8c1639d4d8d4e5fc28125f59123",
+  "source_pin": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "research_retrievals_terminal": true,
+  "pending_calls": [],
+  "pending_sessions": [],
+  "pending_approvals": [],
+  "checks": {
+    "source_only_audit_recipe": "python3 audit_evidence.py",
+    "actual_audit_child_exit": 0,
+    "actual_audit_outer_shell_exit": 0,
+    "audit_stdout": "audit.stdout.txt",
+    "audit_stderr": "audit.stderr.txt",
+    "audit_exit_receipt": "audit.exit.txt",
+    "strict_utf8_all_listed_files": true,
+    "snapshot_input_files": 60,
+    "snapshot_input_bytes": 137926,
+    "retained_upstream_excerpts": 16,
+    "header_lines": 209,
+    "extension_selected_symbols": 66,
+    "fresh_exact_source_reads": 2,
+    "source_url_host_syntax_audit_count": 47,
+    "no_general_http_crawl": true,
+    "targeted_sanitation_hits": 0,
+    "manual_content_review": true,
+    "all_checks_application_runtime_performance_acceptance": false
+  },
+  "unrun": [
+    "application tests/import",
+    "native extension/FP probes",
+    "DuckDB import/open/SQL/EXPLAIN",
+    "builds",
+    "benchmarks",
+    "production acceptance"
+  ],
+  "remote_writes": false,
+  "originals_modified": false,
+  "full_third_party_source_doc_paper_cache_retained": false,
+  "count": 18,
+  "bytes": 77356,
+  "files": [
+    {
+      "path": "LICENSE.duckdb-v2",
+      "bytes": 1072,
+      "mode": "0644",
+      "sha256": "075c33400ffcb0c586dd106a029d3e733e9da3693f8fcb9cebfc651c8a2f14e3"
+    },
+    {
+      "path": "QA.md",
+      "bytes": 15246,
+      "mode": "0644",
+      "sha256": "bc4aeabb5ae952f734121d77ebf27a12161911964854e04fe84f744f69da6ec0"
+    },
+    {
+      "path": "additional-local-source.receipt.json",
+      "bytes": 1133,
+      "mode": "0644",
+      "sha256": "a9a646376693efdc1a730849d9703e6189e21fd594fc8d20dc2209fa8323e8b1"
+    },
+    {
+      "path": "audit.exit.txt",
+      "bytes": 2,
+      "mode": "0644",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "audit.stderr.txt",
+      "bytes": 0,
+      "mode": "0644",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "audit.stdout.txt",
+      "bytes": 202,
+      "mode": "0644",
+      "sha256": "74db93b208d5b306a0552aa69e0114113a661271ab4fedb5a6b18591a882b3a4"
+    },
+    {
+      "path": "audit_evidence.py",
+      "bytes": 11415,
+      "mode": "0644",
+      "sha256": "e73d2258d783c8cd7436e9331355abc46f0eb7a746e72104ebb3d4d4c8beda07"
+    },
+    {
+      "path": "benchmark-protocol-addendum.md",
+      "bytes": 5880,
+      "mode": "0644",
+      "sha256": "073a089b65f64be367c5fd5658dc7fd7f2d9ef24ad1d41f355c538956806cbf5"
+    },
+    {
+      "path": "capi_v2_func_table.cpp.qa-excerpt.txt",
+      "bytes": 1663,
+      "mode": "0644",
+      "sha256": "a555dc9f558c8e5c99bca5ed38a307d6a14dd122210917ec8a2df66bf627c564"
+    },
+    {
+      "path": "capi_v2_func_table.cpp.qa-receipt.json",
+      "bytes": 909,
+      "mode": "0644",
+      "sha256": "85e64f224ea4201e37bf1a7b7c8e205c1e0bbca0f4c7a94cb0992f3765242569"
+    },
+    {
+      "path": "input-integrity.json",
+      "bytes": 13059,
+      "mode": "0644",
+      "sha256": "b3f464f7d5ee5b6d74e9ffb68c5f9ec57e8cf3a9e3b9d99d36a3ada054c01a06"
+    },
+    {
+      "path": "local-source-check.json",
+      "bytes": 2841,
+      "mode": "0644",
+      "sha256": "0a40494178c335de25e4dae471d98e20df25e82d592ed1f1bc8ca137b4105421"
+    },
+    {
+      "path": "physical_recursive_cte.cpp.qa-excerpt.txt",
+      "bytes": 1624,
+      "mode": "0644",
+      "sha256": "7a2d4ae0eb1c9bc72d332a0d155b66413f1ad43ac37f8099dc2891e1a275e44b"
+    },
+    {
+      "path": "physical_recursive_cte.cpp.qa-receipt.json",
+      "bytes": 903,
+      "mode": "0644",
+      "sha256": "7dad49a0d3a86a3df107d86ffd3ccb495333763a020ea449e9181db98be3e4df"
+    },
+    {
+      "path": "progress.jsonl",
+      "bytes": 6894,
+      "mode": "0644",
+      "sha256": "bb6206c18f46420ac3da1cd4bc579b775e853c7e01964de28b5f58a84f524fcc"
+    },
+    {
+      "path": "receipt-excerpt-check.json",
+      "bytes": 4697,
+      "mode": "0644",
+      "sha256": "ab759185fe21e90c396006c19f7635c3df3721683d17801d30ee1a273e5f4461"
+    },
+    {
+      "path": "recursive-article-qa.receipt.json",
+      "bytes": 1360,
+      "mode": "0644",
+      "sha256": "171949b8d00357d5c96cda67edef4404d4ea6c6aa9c8201c28b4cdae5fc0f9d4"
+    },
+    {
+      "path": "source-receipt-qa.json",
+      "bytes": 8456,
+      "mode": "0644",
+      "sha256": "09fb88d73aa9be39f2e6fdd5ec909c130cae7354d90a14aa9664a3d4e66c6e79"
+    }
+  ],
+  "manifest_self_excluded": "The manifest cannot self-hash; its SHA256 is reported to the coordinator separately. No listed file is modified after freezing."
+}

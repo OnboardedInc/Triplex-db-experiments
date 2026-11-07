@@ -1,0 +1,280 @@
+{
+  "schema": "td.native-evaluator-allocation-stage2/1",
+  "result": "PASS",
+  "timestamp_utc": "2026-11-05T23:46:23.888010+00:00",
+  "platform": "macOS arm64",
+  "tested_source": "dd86a40494f353a8b05081156de28f10938a329a",
+  "published_base": "ce7c53b9",
+  "runtime": {
+    "version": "0.32.0",
+    "default_retained_evaluator_bytes": 67108864,
+    "maximum_retained_evaluator_bytes": 1073741824,
+    "diagnostic_scalar_enabled": false,
+    "borrowed_scalar_answers": true,
+    "core_source_manifest_exact": true,
+    "companion_integrity_sources_exact": true,
+    "artifacts_sha256": {
+      "build/artifact.json": "1b358b3ea0db5fa1705ac9f1057b37f0b3f9a29c9892b307548080a55644ca19",
+      "build/temporal_datalog.duckdb_extension": "979a6ee1e85db731ac3e7c593cd85beaadfd881335ae148de211fe7592d1b975",
+      "build/temporal_control.node": "17887eebe0c0da8b7aadeb54ecacbe24907addbf85dfd92a22a71ad8737c8e35",
+      "build/owner_probe/artifact.json": "b25596cebda7615ad54b8667510d037367c9d28746baf7c1b6aff534990416ea",
+      "build/owner_probe/temporal_owner_probe.duckdb_extension": "7d6a0283500884ff7b86c3eb74f281eb66ad8d95a1d3d69184f545d2c0994f12"
+    },
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "compiled_sha256": {
+      "build/adapter/native-entity.js": "2d6e50caf6ac59ca12f951f83f91bc45126aed340cff28f43839697c0cea98eb",
+      "build/adapter/native-schema.js": "a2fa6e6433b2f52df6f5c1adf9e303c32ffbdc3bb4d1a58ac78e7bcf7a594ea6",
+      "build/adapter/native-duckdb-port.mjs": "83b5f2ca6068d67ba843c3c39f204c2cb20a4c51b5912f9d42e58d8e69152d7b",
+      "build/adapter/test-native-evaluator-budget.js": "56f1e84c308a871a51cc40858518234f4bbcac5da331ee174a7042b90880c150"
+    },
+    "retained_runtime": "build/evaluator-budget-stage2-032-20261105/accepted-runtime",
+    "retained_manifest_sha256": "d24e432df4afaed70f200487684c14b8264f770312d5ade297655cd7abb6b2c1"
+  },
+  "first_outcomes": {
+    "core_build": {
+      "attempts": 1,
+      "exit": 0
+    },
+    "companion_build": {
+      "attempts": 1,
+      "exit": 0
+    },
+    "typescript": {
+      "attempts": 1,
+      "exit": 0
+    },
+    "standalone_build": {
+      "attempts": 1,
+      "exit": 0
+    },
+    "standalone": {
+      "attempts": 1,
+      "exit": 0
+    },
+    "public_methods": {
+      "attempts": 1,
+      "exit": 0
+    }
+  },
+  "source_repairs": false,
+  "numeric_cap_relaxation": false,
+  "public_methods": {
+    "passed": 9,
+    "failed": 0,
+    "duration_ms": 7148.734166,
+    "methods": [
+      {
+        "number": 1,
+        "name": "ordinary queries enforce finite caps, preserve wire and recover without a diagnostic selector",
+        "result": "PASS"
+      },
+      {
+        "number": 2,
+        "name": "borrowed scalar output keeps exact wide eight-tag cells and reports its retained peak",
+        "result": "PASS"
+      },
+      {
+        "number": 3,
+        "name": "materialized eight-tag vectors retain long payload bytes after Core destruction and allocation churn",
+        "result": "PASS"
+      },
+      {
+        "number": 4,
+        "name": "an absent indexed match with maxWork one remains allocation-bounded and healthy",
+        "result": "PASS"
+      },
+      {
+        "number": 5,
+        "name": "completed recursive grouping records the same finite retained peak and exact answers",
+        "result": "PASS"
+      },
+      {
+        "number": 6,
+        "name": "one four and sixteen readers own independent caps while failed peers release their leases",
+        "result": "PASS"
+      },
+      {
+        "number": 7,
+        "name": "same-token interval and multi-cut callbacks preserve corrections and bounded reuse",
+        "result": "PASS"
+      },
+      {
+        "number": 8,
+        "name": "in-flight native cancellation releases a finite evaluator and permits a fresh query",
+        "result": "PASS"
+      },
+      {
+        "number": 9,
+        "name": "documented raw token-zero entry retains its original signature and exact wire",
+        "result": "PASS"
+      }
+    ]
+  },
+  "retained_peaks_bytes": {
+    "wide_eight_tag": {
+      "peak": 140792,
+      "index": 3512
+    },
+    "recursive_completed_grouping": {
+      "peak": 237056,
+      "index": 27272
+    },
+    "standalone_recursive_eight_tag": {
+      "peak": 452904,
+      "index": 51848,
+      "exact_peak_passes": true,
+      "peak_minus_one_rejects": true
+    },
+    "absent_index_max_work_one": {
+      "peak": 67532,
+      "index": 9152,
+      "work": 1,
+      "empty_answer": true,
+      "peak_minus_one_rejects": true
+    },
+    "one_four_sixteen_reader_query": {
+      "peak": 126096,
+      "index": 5568,
+      "positive_cap": 4194304,
+      "rejected_cap": 1
+    },
+    "same_token_interval_and_cuts": {
+      "peak": 31888,
+      "index": 464,
+      "completed_callbacks": [
+        3,
+        5
+      ],
+      "positive_cap": 1048576,
+      "rejected_cap": 1
+    }
+  },
+  "observations_sha256": "bcd33242a13e8af81e5845bb5e8ecb9bb30dae8051550b34ace40b63b4fafa65",
+  "standalone_qualified": [
+    "assertions enabled; growth overlap and exact peak boundary",
+    "owning and borrowed eight-tag recursive/grouped rows and counters equal",
+    "legacy UTF8 ordering and wire equal",
+    "borrowed post-encoding cancellation poll",
+    "cancellation while waiting for a same-token evaluator lease",
+    "independent token lease remains usable",
+    "constructor rejection and exhausted evaluator poisoning"
+  ],
+  "public_qualified": [
+    "finite ordinary no-timeout cap; low-cap/invalid-cap healthy reuse",
+    "unchanged scalar signatures and public result fields",
+    "exact wide eight-tag output and stable peak under 64MiB/1GiB caps",
+    "unfetched materialized vectors retain all eight tags after eight replacement native evaluator allocations/destructions",
+    "absent indexed match has work one and remains allocation bounded",
+    "exact completed recursive grouping",
+    "one/four/sixteen-reader mixed-cap submissions retain independent outcomes",
+    "correction-aware half-open intervals and ordered/duplicate/empty/historical multi-cut answers sharing tokens",
+    "in-flight SDK-dispatched cancellation and pool reuse",
+    "documented token-zero and original raw string-only wire",
+    "diagnostic-only scalar absent on the actual ordinary build"
+  ],
+  "covered_requested_bytes": [
+    "relation vectors/rows/tuple sets",
+    "typed and legacy dictionary entries/maps/buckets/owned text",
+    "column index maps/buckets/nested posting capacities",
+    "pending sets and aggregate groups/maps/order vectors",
+    "growth overlap; Core remains alive through synchronous borrowed vector encoding"
+  ],
+  "exclusions": [
+    "allocator bookkeeping, malloc rounding and process/aggregate RSS",
+    "parser/program/IR/names and bounded scheduler/binding/callback scratch",
+    "import temporaries",
+    "DuckDB-owned result vectors/arenas, buffers/spill and SDK/host allocations",
+    "independent direct C++ owning run() result copies"
+  ],
+  "default_acceptance": {
+    "status": "PROVISIONAL",
+    "remaining": [
+      "Existing actual 40000-row public native query on ordinary build; unchanged one thread/128MB memory/64MB temp/logical budgets.",
+      "Existing interval/multi-cut/native/SDK/control/cleanup suites and full integrated verification."
+    ],
+    "no_timing_or_containment_claim": true
+  },
+  "commands": {
+    "core": "python build_native.py",
+    "owner": "python build_owner_probe.py --source-dir <pinned-d54cbbe3-source> --engine-library <pinned-Node-libduckdb.dylib> --compat-mutations",
+    "typescript": "node_modules/.bin/tsc --pretty false",
+    "standalone_build": "c++ -std=c++17 -O2 -fno-fast-math -frounding-math -ffp-contract=off -Wall -Wextra -Wpedantic -Werror -Wno-missing-field-initializers native/test_evaluator_allocation.cpp native/src/temporal_core.cpp -o build/evaluator-budget-stage2-032-20261105/test_evaluator_allocation",
+    "standalone": "build/evaluator-budget-stage2-032-20261105/test_evaluator_allocation",
+    "public": "node --test --test-reporter=tap build/adapter/test-native-evaluator-budget.js"
+  },
+  "source_sha256": {
+    "native/src/node_control.cpp": "4175e7cf0f6ebb17e5a32145f6815d453559950bda3660c1dfe1ce9c7a1ec06e",
+    "native/src/temporal_allocation.hpp": "0d5889f1152f6fb4257ee2422bf75f6e3598dbfc332a8485a8d74bb79fecad54",
+    "native/src/temporal_anti_join_plan.hpp": "140528a6e7dbeaff0db9e5f28aab49ef450f732cac1bf1c1a37a5396362e2d2c",
+    "native/src/temporal_batch.cpp": "3269d84ebfa08ab259ab021ed94c3f23f9f863a2a166d317e939dcaa13843a7d",
+    "native/src/temporal_batch.hpp": "1e93f12842b65021ce42277b1314346e3ea32cea0481ad155bd8a414c3c4df24",
+    "native/src/temporal_command.cpp": "d95cc48d2ee4c5567d20cc3446cbc8f30bd0312191090df2f59f9ae82f95d5d2",
+    "native/src/temporal_command.hpp": "250f77be4bcff5cb01d702f16fc1d1f111ec069d1013ff0d0fa4680760333d1c",
+    "native/src/temporal_compat.cpp": "9d408deb6ba33b35eca32002b68535dbecbd72f9ebee3dc3cd3e0a70171ae24f",
+    "native/src/temporal_compat.hpp": "b7e63854558ca324f0a89cf83f21bb17fa2eeadd398df22166471887dd6d0a4d",
+    "native/src/temporal_control.hpp": "4e5961439b8dc2ef52b5372ef8df78ebe21da55c18ef7ad7779494090b32f9d1",
+    "native/src/temporal_core.cpp": "1ad8a726aba7794a35072e973830c0aecc680c2b060d7fc83389ce150b2f8d49",
+    "native/src/temporal_core.hpp": "0af687cec34c40701f8c7aed0ab52ce4d69b98ce4fcfee08775b9126f69fa110",
+    "native/src/temporal_count_plan.hpp": "0177ca74b8d1e90a2e2029642b40cb03ecd3b18bab584e0c64021ad93e4e9240",
+    "native/src/temporal_current_unique.hpp": "d0cc8501c3f54c3f5fc8cef128fdb773cb34690431114262ea66ca1d5eb184a3",
+    "native/src/temporal_datalog.cpp": "0e65260f24b0a2923e312b80d84d9a69f49ff2effec55b4f8551934d4954fac7",
+    "native/src/temporal_expression.hpp": "dbd85b334f4236140132ac1288e67dc2e9244d3283a2d2c2a9d56864c45ee0e7",
+    "native/src/temporal_float.hpp": "cb8484995a4490fe7e7ca0f48a5b33e7dac6ab155892767492ca80f01a0e2da1",
+    "native/src/temporal_integrity.hpp": "85b866b9ae128c00ba7c954af77c681d651e951735ee452f0ea1e519a5fa10ac",
+    "native/src/temporal_join_plan.hpp": "8507765b893240a41ea563cffff72347094f594b813adb964655e4729a69d9a5",
+    "native/src/temporal_json.hpp": "4c8695caae1fb9bbf88176f41762142fa09158622227afa3b41b34f21dd407c1",
+    "native/src/temporal_plan_ir.hpp": "b85857113e4b329bef40846a266040d368a0a4d360c76ae8e3084d01155fee39",
+    "native/src/temporal_plan_ir_v2.hpp": "0ad7822c36c1f46133dd595af0618305844a47628d3dd339748db0cec3b12a37",
+    "native/src/temporal_presence.hpp": "d0f2e5ceb3fc15e7372771aa7596365e9e94d76342322112e8572b2c824446d6",
+    "native/src/temporal_scan_plan.hpp": "dff4fa7c72601e41d791884f313e5639e8bd476945897112de852d4e42acd4bd",
+    "native/src/temporal_schema.cpp": "1e95c21f980b71d914453ccfed1c343e01bc052a3e935c94d49ff06b8b37da7a",
+    "native/src/temporal_schema.hpp": "89d90c78e8fe2ac8bda3f273086e9e5c4d0491c3f49bc168e6db65e965eda7e4",
+    "native/src/temporal_sql.hpp": "45a594ecbf26c6c867a623e97eeb8a1fa08ee8a3adf12bf43aa1b51af8af2d8c",
+    "native/src/temporal_store_query.cpp": "8ee406cfbb099a534f62f840570522b5afff9bf8dc8bcbbcb4eadf8d09074c36",
+    "native/src/temporal_store_query.hpp": "18703bd8f8c72fc77d45d1a6275b0e6dfb7a86870e79573707e42c8856f64b55",
+    "native/src/temporal_stratified_core.hpp": "c077f065eb4dce38d0e283bf890184085c3a409a7aabd8b2cd927ccd66837676",
+    "native/src/temporal_typed_core.hpp": "a4c8289b45f6a31d3bfe5d7e1b3eaf1db7f0cc2b2c371b0c9d939e1dd3facaed",
+    "native/src/temporal_uniqueness.hpp": "45d8a569300df43c30b6ee63e0a81b3c90d21740b3a39437a32393e70f2fe087",
+    "native/src/temporal_value_domain.hpp": "28eb132f740a63ba48c8a11e341db7886e097eaa127adafa1130de83008a7df3",
+    "build_native.py": "1b8c61caa008f8486e3eed1f5ea0f355ee7a44b1d81f984b8c01132a04d8100a",
+    "adapter/native-entity.ts": "3464405fc3ce5910a92b9bb37a900477d6fde1d87ee046620e1a872c8ecc9dea",
+    "adapter/native-duckdb-port.d.mts": "ad4080930e5614eac04d67c1da64cbd6b45fa323003642435f23aaedd74295cc",
+    "adapter/native-duckdb-port.mjs": "83b5f2ca6068d67ba843c3c39f204c2cb20a4c51b5912f9d42e58d8e69152d7b",
+    "adapter/test-native-evaluator-budget.ts": "2e4b23cf142544041f4957634d5c12304ace01cb568b8e1b248fdf07ca49dd4b",
+    "native/test_evaluator_allocation.cpp": "0d1be0bc7e9e36e351fef3e932a204091541ff510d89371f6a6a41c481a9c3ec"
+  },
+  "standalone_binary_sha256": "a46599a376013ddbdd0d2bf1ce95b0d5688c359a28a24b1ea718ed55bc9078cb",
+  "raw_project_logs": {
+    "core-build-01.log": {
+      "path": "build/evaluator-budget-stage2-032-20261105/core-build-01.log",
+      "sha256": "648e0e43c71cf63be40d9c2cbac113016a11c53ce2f49f761b39d2ea63310470"
+    },
+    "owner-build-01.log": {
+      "path": "build/evaluator-budget-stage2-032-20261105/owner-build-01.log",
+      "sha256": "b23acda9080dfd2f3ce8b87d7c25c2517977df982b704246fb66b4815592f0a1"
+    },
+    "typescript-01.log": {
+      "path": "build/evaluator-budget-stage2-032-20261105/typescript-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "standalone-build-01.log": {
+      "path": "build/evaluator-budget-stage2-032-20261105/standalone-build-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "standalone-01.log": {
+      "path": "build/evaluator-budget-stage2-032-20261105/standalone-01.log",
+      "sha256": "383e3133a8d619722987b785cd9f8119a7d5235caea66ce03639f6566abeddc9"
+    },
+    "public-01.log": {
+      "path": "build/evaluator-budget-stage2-032-20261105/public-01.log",
+      "sha256": "db899b0c2f9e3fa956026ce780471e83bd4ade841d1e46611a8874b4e67e2fac"
+    }
+  },
+  "limitations": [
+    "Focused only: no full verification or timed performance run.",
+    "The small eight-tag wide fixture is not the 40000-row wide gate.",
+    "Public cancel is after SDK dispatch, with precise post-encoding poll/wait cancellation checked separately in standalone; no public mid-encoding latency claim.",
+    "Public interval/multi-cut fixture uses default one thread; native same-token contention is separately exercised with a waiting thread.",
+    "Stage1 source/receipt/raw results remain preserved; its generated core cache was replaced by the authorized stage2 build. A late backup attempt failed validation and is labeled incomplete; the verified stage2 runtime is separately retained."
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "format": "typed-storage-missing-artifact-isolated-process-v1",
+  "captured_at": "2026-10-30T19:19:52.367912+00:00",
+  "status": "PASS",
+  "run_directory": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1",
+  "reproduction_command": "cd /tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage && PYTHONPATH=/tmp/temporal-datalog-20261030/engine/python2 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -B - < /tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/child.py",
+  "child_argv": [
+    "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "-B",
+    "-"
+  ],
+  "child_cwd": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage",
+  "child_pythonpath": "/tmp/temporal-datalog-20261030/engine/python2",
+  "child_returncode": 0,
+  "child_runner_sha256": "6ff88941fab31c367fd24165b5cb97aa18ad8555cf25cdba91a68ec80cdf27e4",
+  "copied_sources": {
+    "store.py": {
+      "source": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/storage/store.py",
+      "destination": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage/store.py",
+      "sha256": "10fe4928a74ac0230b07d4ea8871399651fcb82a54c43ffa94c47dfb350c6552"
+    },
+    "typed_store.py": {
+      "source": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/storage/typed_store.py",
+      "destination": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage/typed_store.py",
+      "sha256": "7135d22e2da65717b51c4a511c3b5c6642e9c28b966ec92aca1756aa06782de6"
+    },
+    "schema.sql": {
+      "source": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/storage/schema.sql",
+      "destination": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage/schema.sql",
+      "sha256": "67e06664208b554ad3ed9b56268ca2967711f651123e951ecce8602634e843a6"
+    },
+    "schema_v2.sql": {
+      "source": "/workspace/scratch/497cfb3c035e/temporal-roadmap-20261030/implementation/storage/schema_v2.sql",
+      "destination": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage/schema_v2.sql",
+      "sha256": "6c23294e685d7f17a69ccaf6de813f96235e6301cd57ac6ed8f21c8137d91135"
+    }
+  },
+  "frozen_implementation_sha256_before": {
+    "storage/typed_store.py": "7135d22e2da65717b51c4a511c3b5c6642e9c28b966ec92aca1756aa06782de6",
+    "storage/schema_v2.sql": "6c23294e685d7f17a69ccaf6de813f96235e6301cd57ac6ed8f21c8137d91135",
+    "storage/tests/test_typed_store.py": "54ede493644526557c6a450f436fa66ca71484717b73ce859eaa77f9fd324d42",
+    "storage/tests/migration_adapter.py": "bb51bd48819f1f902fdcaec2fc773f6119609256dc3672df6d0f601af840e51f"
+  },
+  "frozen_implementation_sha256_after": {
+    "storage/typed_store.py": "7135d22e2da65717b51c4a511c3b5c6642e9c28b966ec92aca1756aa06782de6",
+    "storage/schema_v2.sql": "6c23294e685d7f17a69ccaf6de813f96235e6301cd57ac6ed8f21c8137d91135",
+    "storage/tests/test_typed_store.py": "54ede493644526557c6a450f436fa66ca71484717b73ce859eaa77f9fd324d42",
+    "storage/tests/migration_adapter.py": "bb51bd48819f1f902fdcaec2fc773f6119609256dc3672df6d0f601af840e51f"
+  },
+  "active_artifact_sha256_before": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+  "active_artifact_sha256_after": "5b661f3843799cb97b5c7458f503eca9fefd0f58beb053bf22c740c05cb6270d",
+  "implementation_sources_unchanged": true,
+  "active_artifact_unchanged": true,
+  "child": {
+    "status": "PASS",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "duckdb_version": "2.0.0",
+    "module_files": {
+      "legacy": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage/store.py",
+      "typed": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage/typed_store.py"
+    },
+    "actual_storage_root": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage",
+    "trusted_extension": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/engine/build/temporal_datalog.duckdb_extension",
+    "engine_directory_exists": false,
+    "database": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/project/storage/data/absence.duckdb",
+    "persisted_position": 1,
+    "persisted_assertions": 5,
+    "persistence_reopen_passed": true,
+    "failed_evaluation_rolled_back": true,
+    "path_confinement_passed": true,
+    "exact_unavailable_observations": [
+      {
+        "stage": "fresh_public_query",
+        "exception_type": "typed_store.NativeUnavailable",
+        "message": "genuine typed td_query_v2 artifact is not available; evaluation is UNRUN"
+      },
+      {
+        "stage": "persisted_public_query",
+        "exception_type": "typed_store.NativeUnavailable",
+        "message": "genuine typed td_query_v2 artifact is not available; evaluation is UNRUN"
+      },
+      {
+        "stage": "public_query_json",
+        "exception_type": "typed_store.NativeUnavailable",
+        "message": "genuine typed td_query_v2 artifact is not available; evaluation is UNRUN"
+      },
+      {
+        "stage": "reopened_public_query",
+        "exception_type": "typed_store.NativeUnavailable",
+        "message": "genuine typed td_query_v2 artifact is not available; evaluation is UNRUN"
+      },
+      {
+        "stage": "public_transact_evaluate_rollback",
+        "exception_type": "typed_store.NativeUnavailable",
+        "message": "genuine typed td_query_v2 artifact is not available; evaluation is UNRUN"
+      }
+    ],
+    "spill_bytes_after_close": 0,
+    "physical_bytes_after_close": 2633728
+  },
+  "stdout": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/stdout.json",
+  "stderr": "/tmp/temporal-roadmap-research/iteration-01/storage-missing-artifact-n8t3y_q1/stderr.log",
+  "no_monkeypatch_or_root_override": true,
+  "no_evaluator_substitute": true,
+  "scope": "Separate genuine copied module environment; not a native-feature/performance or production-readiness pass"
+}

@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "atUtc": "2026-11-06T08:47:02.023562+00:00",
+  "pid": 5388,
+  "readers": 1,
+  "actualSixImages": [
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_owner_probe.duckdb_extension",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/owner_probe/temporal_writer.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_control.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/build/temporal_datalog.duckdb_extension",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/duckdb.node",
+    "<writer-source-runtime>/build/native-writer-lab-20261106-01/runtime/node_modules/@duckdb/node-bindings-darwin-arm64/libduckdb.dylib"
+  ],
+  "routes": {
+    "nativeEnrollment": 2,
+    "nativeGenerated": 551,
+    "sdkGenerated": 0,
+    "errors": 0,
+    "unknown": 0
+  },
+  "cleanup": {
+    "liveHandles": 0,
+    "pendingCompletions": 0,
+    "asyncContexts": 0,
+    "asyncResources": 0,
+    "lifecycleOwners": 0
+  }
+}

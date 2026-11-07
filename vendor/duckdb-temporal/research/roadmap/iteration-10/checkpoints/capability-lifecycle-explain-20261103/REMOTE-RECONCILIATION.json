@@ -1,0 +1,51 @@
+{
+  "check_window_utc": "3 November 2026, approximately 07:25–07:31 UTC",
+  "page": {
+    "url": "[PRIVATE_APPLICATION_REFERENCE_REMOVED]",
+    "sequence": 91,
+    "updated_at": "2026-11-03T05:38:41.007674Z"
+  },
+  "main_sha": "20f5f6d57155660672f6dc7a82d55129afbb7bd5",
+  "repository_visibility": "private",
+  "prs": [
+    {
+      "number": 7,
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "dot/temporal-datalog-prototype-20261030",
+      "head_sha": "a7ddd79021ce3f5a7030420ebc1003e855fccfde",
+      "base": "main",
+      "base_sha": "d049f45950469b2110950fb39189d2db3851f9ed"
+    },
+    {
+      "number": 8,
+      "url": "[PRIVATE_REFERENCE_REMOVED]",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "dot/native-cloud-v06-independent-20261102-0056",
+      "head_sha": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+      "base": "main",
+      "base_sha": "0a6525287e9987e5b57ee74eaa0c24ad3d9de038"
+    }
+  ],
+  "pr9": {
+    "url": "[PRIVATE_REFERENCE_REMOVED]",
+    "state": "open",
+    "draft": true,
+    "merged": false,
+    "head_sha": "dbb7d27a20430e09413f92259007961ad8e66ac3",
+    "base_sha": "0e8823973f5e1b886b7ef96e8dc5a899f467f241",
+    "combined_statuses_returned": 0,
+    "pr_triggered_workflow_runs_returned": 0,
+    "comments_returned": 0
+  },
+  "limits": [
+    "Remote refs and Page records do not establish original-owner execution or pending actions.",
+    "No whole source-tree reverification or required-CI pass is asserted.",
+    "Goals1–2 accepted only within bounded contracts;3/original4 incomplete and held;4.1/5 bounded only;6–10 unaccepted.",
+    "Three later PR9 NONPASS outcomes remain unchanged; no stopped subject, DB, artifact or dependency was inspected or adopted."
+  ]
+}

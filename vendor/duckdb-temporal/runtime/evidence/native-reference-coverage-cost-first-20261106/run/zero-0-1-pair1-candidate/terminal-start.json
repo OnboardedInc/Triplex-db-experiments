@@ -1,0 +1,26 @@
+{
+  "role": "candidate",
+  "scenario": "zero",
+  "profile": {
+    "noiseEntities": 0,
+    "noiseRevisions": 1
+  },
+  "pair": 1,
+  "argv": [
+    "<pinned-node-installation>/bin/node",
+    "<coverage-cost-source-runtime>/adapter/benchmark-reference-coverage-cost.mjs",
+    "--childConfig",
+    "<coverage-cost-source-runtime>/build/reference-coverage-cost-20261106-01/zero-0-1-pair1-candidate/config.json",
+    "--runtime",
+    "<coverage-candidate-runtime>",
+    "--role",
+    "candidate",
+    "--sourceCommit",
+    "cf7f0d86645383944cac77c2f49e331428c75a33",
+    "--output",
+    "<coverage-cost-source-runtime>/build/reference-coverage-cost-20261106-01/zero-0-1-pair1-candidate/result.json"
+  ],
+  "startedAtUtc": "2026-11-06T11:03:22.383Z",
+  "status": "running",
+  "pid": 58454
+}

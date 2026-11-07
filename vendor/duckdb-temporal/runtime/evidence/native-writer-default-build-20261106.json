@@ -1,0 +1,137 @@
+{
+  "schema": "td.native-writer-default-build/1",
+  "status": "accepted_first_install_and_public7",
+  "sourceCommit": "1d6378e2c6e9b74b024fe5ba89c6b26355990dea",
+  "report435Sha256": "6b072482e20562bf793651579bdcf401d0290eb8e6a3e31d09445d9dacd47560",
+  "installedFiles": 181,
+  "unchangedDependencyFiles": 395,
+  "unchangedCodePins": 216,
+  "omittedExperimentalBuildFiles": [
+    "build/adapter/benchmark-antijoin-cost.mjs",
+    "build/adapter/native-write-candidate-binding.mjs",
+    "build/adapter/patch-profile-sql.mjs",
+    "build/adapter/profile-native-patch.mjs",
+    "build/adapter/test-antijoin-cost.mjs",
+    "build/adapter/test-native-write-binding.mjs",
+    "build/adapter/test-patch-profile-sql.mjs"
+  ],
+  "previousGeneratedFilesRetainedAt": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/integration-native-writer-20261106-01/default-install-01/previous",
+  "terminal": {
+    "command": [
+      "[LOCAL_PATH_0043]",
+      "--test",
+      "--test-concurrency=1",
+      "build/adapter/test-native-writer.js",
+      "build/adapter/test-native-writer-values.js"
+    ],
+    "cwd": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime",
+    "pid": 49575,
+    "exitCode": 0,
+    "startedAtUtc": "2026-11-06T10:39:56.455245+00:00",
+    "exitedAtUtc": "2026-11-06T10:40:09.057362+00:00",
+    "elapsedMs": 12601.887416094542,
+    "UV_THREADPOOL_SIZE": 4
+  },
+  "publicMethods": 7,
+  "fixtures": [
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/native-writer-values-wZSc6a/facts.duckdb",
+      "bytes": 8138752,
+      "walAbsent": true,
+      "lsofExitCode": 1
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/native-writer-values-Q4RVwR/facts.duckdb",
+      "bytes": 6828032,
+      "walAbsent": true,
+      "lsofExitCode": 1
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/native-writer-values-FOaV6S/facts.duckdb",
+      "bytes": 8400896,
+      "walAbsent": true,
+      "lsofExitCode": 1
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/native-writer-public-sacQYW/facts.duckdb",
+      "bytes": 11022336,
+      "walAbsent": true,
+      "lsofExitCode": 1
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/native-writer-rollback-zFoqag/facts.duckdb",
+      "bytes": 9973760,
+      "walAbsent": true,
+      "lsofExitCode": 1
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/native-writer-factory-wRtttP/facts.duckdb",
+      "bytes": 5779456,
+      "walAbsent": true,
+      "lsofExitCode": 1
+    },
+    {
+      "path": "__HANDOFF_ROOT__/duckdb-temporal/current/runtime/build/native-writer-environment-Qj38DU/facts.duckdb",
+      "bytes": 5779456,
+      "walAbsent": true,
+      "lsofExitCode": 1
+    }
+  ],
+  "rawDirectory": "native-writer-default-build-20261106-raw",
+  "rawFiles": {
+    "install_default.py": {
+      "sha256": "abbb6815ca1da538c226fb503122847486ecef2a7a323e9b6267eb92be4ef3bf",
+      "bytes": 3388,
+      "original": "build/integration-native-writer-20261106-01/install_default.py"
+    },
+    "default-install-first.stdout": {
+      "sha256": "b8026d688ff76baee6f56ff255837aebe74ae6fd7202ee841236727f04280d40",
+      "bytes": 162,
+      "original": "build/integration-native-writer-20261106-01/default-install-first.stdout"
+    },
+    "default-install-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": "build/integration-native-writer-20261106-01/default-install-first.stderr"
+    },
+    "default-install-first.terminal.json": {
+      "sha256": "8d792f34d0948810b674f496e36a35e30bc7d8aa5497e6c8771f528c9df47327",
+      "bytes": 343,
+      "original": "build/integration-native-writer-20261106-01/default-install-first.terminal.json"
+    },
+    "before.json": {
+      "sha256": "dbb361d115c489f95ea8c989adf72b645f67f972acacbdbc4e5258797e08ef15",
+      "bytes": 19591,
+      "original": "build/integration-native-writer-20261106-01/default-install-01/before.json"
+    },
+    "accepted-first.json": {
+      "sha256": "9cbba1d7b7fc9fcec725ec7012671f4638322570351b94eb098175602c303de7",
+      "bytes": 40395,
+      "original": "build/integration-native-writer-20261106-01/default-install-01/accepted-first.json"
+    },
+    "default-public-smoke-first.stdout": {
+      "sha256": "0dea71e3a5a8d67063fa61af8edd630ebfbb401f219ec7bac13e3e916f899ad0",
+      "bytes": 5119,
+      "original": "build/integration-native-writer-20261106-01/default-public-smoke-first.stdout"
+    },
+    "default-public-smoke-first.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": "build/integration-native-writer-20261106-01/default-public-smoke-first.stderr"
+    },
+    "default-public-smoke-first.terminal.json": {
+      "sha256": "91c3a76d77f56129850e93dcf31b170b7510d3e06147b868afa543f4434cbfe6",
+      "bytes": 526,
+      "original": "build/integration-native-writer-20261106-01/default-public-smoke-first.terminal.json"
+    }
+  },
+  "nativePins": {
+    "build/owner_probe/temporal_owner_probe.duckdb_extension": "0e4ca0e3737dab51e0df52b007e03a330038e7934d5a094b77349485d235a0b9",
+    "build/owner_probe/temporal_writer.node": "02270b0840dd4bab9c3beb00986e06bc0e8125c2971f9ac6f9a407f6fe03418c",
+    "build/temporal_control.node": "af47c28bdac5b430501feb5fc7be1f2a13474d8f0042017af4c4ed63c3a2ae88",
+    "build/temporal_datalog.duckdb_extension": "f44d116c266cbe27ef4217fef6a07550230e87b22843627e9c63ed1997139b82"
+  },
+  "scope": "Exact matching generated default artifacts installed; previous generated files retained. Public SDK uses dedicated C++ writer automatically. All selected generated/code/dependency hashes unchanged after seven methods. No database removed; no package/native rebuild.",
+  "platform": "macOS ARM64 verified; Linux unverified",
+  "checkedAtUtc": "2026-11-06T10:41:05.280069+00:00"
+}

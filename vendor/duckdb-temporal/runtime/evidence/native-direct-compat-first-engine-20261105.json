@@ -1,0 +1,60 @@
+{
+  "schema": "temporal-direct-compatibility-first-engine/1",
+  "base": "1e6879fbaec5377f3de8c85c8291564d08701c5a",
+  "status": "first_engine_slice_passed_remaining_tests_pending",
+  "scope": "Experimental same-caller-transaction C++ append only; retraction stays on existing prepared SQL. Normal owner build and default public backend remain selected without explicit opt-in.",
+  "api": "SELECT td_compat_append_cpp_v1(?::VARCHAR)",
+  "build_flag": "build_owner_probe.py --compat-mutations",
+  "limits": {
+    "native_envelope_bytes": 2097152,
+    "native_rows": 4096,
+    "json_depth": 64,
+    "json_nodes": 1000000,
+    "host_parameter_envelope_bytes": 1048576,
+    "retained_rows": 1000000,
+    "retained_logical_bytes": 268435456,
+    "format": 5
+  },
+  "verification": {
+    "flagged_companion_build": "PASS",
+    "typescript": "PASS",
+    "first_node_command": "node --test --test-concurrency=1 --test-name-pattern='seven carriers|post-append usage' build/adapter/test-native-direct.js",
+    "passed_methods": 2,
+    "duration_ms": 1171.715708,
+    "passed": [
+      "All7carriers and allphysicalassertionfields versus existingAppender, withbinary64subnormals/maxfinite/signedzero, fractionalvalidtimesandmetadata.",
+      "Actualsame-transactionappend followedbyusageCHECKfailure, rollbackofrows/clock/claim, thenhealthyreuse."
+    ],
+    "pending": [
+      "Other5methodsincluding44Triplexconformance.",
+      "NULL/zero/multipleinvocation and2MiBboundaryruntime.",
+      "Read-onlytransaction, catalogdrop/recreate, reopen.",
+      "Complete-pathperformancecomparison."
+    ]
+  },
+  "source_review": [
+    "Independentreview found vector-cardinality alone did not enforceoneinvocationperstatement. Added per-ClientContext query-local mutexclaim acrossscalar expressions and transactioninvalidation onrepeatedinvocation.",
+    "DataTable.Update requires every referenced CHECK column present and doesnotmaintain updatedindexes. Rejectcross-singletonusagechecks/counterindexes beforemutation, preserveconstraintcheckednormalupdates.",
+    "InternalAppender usesflush_count4097 withatmost4096rows andnoallocatorflushthreshold; setmutatedbeforeexplicitFlush, invalidatecallertransactiononanylatererror."
+  ],
+  "first_compile_failure": {
+    "observed": "Pinned2.0headers rejectdeprecated DataChunk.SetValue/SetCardinality and countedToUnifiedFormat under-Werror; requireconstant-vectorcount and complete AttachedDatabase/TableUpdateState declarations.",
+    "fix": "UseVector.SetValue +SetChildCardinality, uncountedToUnifiedFormat, explicitcount_t(1), owningheaders."
+  },
+  "artifacts": {
+    "core_extension_sha256": "7cff5d5bb30d3ea5d807b479bbe4583f07838a47dc0ef4f21ada934dbba95b7c",
+    "owner_extension_sha256": "cecfe918962ffc3a786ac61eba1c36dd7e060ebe10351c45f313cf5b5f602127",
+    "owner_library_sha256": "3822814e562c14b2e1abd5923b569c161f345a848c242f776cf19cf4eef2d689",
+    "engine_library_sha256": "72b50268165284d321ec0263b39fafa9551379e72558e443d4b4f1eeb4f4042c",
+    "experimental_compat_mutations": true
+  },
+  "source_sha256": {
+    "native/owner_probe/compat_mutation.cpp": "97ff75b7ed00198aa178eb593ad2b9c7cbb9777419fd8ba8a8997bcc792b8a35",
+    "native/owner_probe/compat_mutation.hpp": "5965f5b22310eb7b048c7622a85239f4516293c9bec14755d7decab5c854b7f0",
+    "native/owner_probe/owner_probe.cpp": "ffda8922b881e20c0e797ba31bf5fb06a12dd61585e24a21262e20690ddc7eca",
+    "build_owner_probe.py": "ee7262e1087a4779fc4d1ea63f9f26a7ea6822b1bc938f028d8fa2584da14717",
+    "adapter/native-direct-backend.ts": "abc5b48af2b4cdbdc9c58cf5788778f4250fb00e4f57b085183372baf4341e5b",
+    "adapter/native-direct-runtime.ts": "0401112ca54879ef83bf4651fd2c85e1c634d230ed8e57f6d396414f6af29d21",
+    "adapter/test-native-direct.ts": "3121d190e0e4a1ab3256d36f9549272eb4c71568824d88e317bd8ae2f51aed94"
+  }
+}
