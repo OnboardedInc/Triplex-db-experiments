@@ -76,6 +76,17 @@ export const readOnlyNativeSql = (sql: string): string => {
     const word = /^[A-Za-z_][A-Za-z0-9_]*/.exec(sql.slice(index))?.[0];
     if (word) {
       words.push(word.toUpperCase());
+      // [EXP-X02] Why: in 2.2.0 `k = ANY($1) AND p` parses as `k = ANY(($1) AND p)` and returns
+      // zero or wrong rows (Sql.g4:753-756 @ c6c1962; R10, R14 H05). Allow a quantified
+      // comparison only over a subquery; write batch membership as
+      // `k IN (SELECT x FROM UNNEST($n) AS u(x))`. `UNION ALL`/`SELECT ALL` take no parenthesis.
+      if (["ANY", "SOME", "ALL"].includes(word.toUpperCase())) {
+        const rest = sql.slice(index + word.length);
+        if (/^\s*\(/.test(rest) && !/^\s*\(\s*(SELECT|VALUES|WITH|FROM)\b/i.test(rest))
+          throw new TypeError(
+            "Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
+          );
+      }
       index += word.length;
     } else index++;
   }

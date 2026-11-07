@@ -191,9 +191,12 @@ export const materializeNativeReachability = async (
       for (let round = 1; round <= maxRounds; round++) {
         signal.throwIfAborted();
         const params = [basis.scope, runId, definition.name, `${runId}/${definition.name}/`, round];
+        // [EXP-X02] Why: the correlated predicate is written `(p) IS TRUE`. XTDB 2.2.0 moves a
+        // subquery WHERE into a three-valued mark, so one NULL endpoint drops the candidate and the
+        // closure silently under-reaches (upstream #6313; R14 H02). // [EXP-X02] interim, replaced by EXP-X03
         await submit("working-round", [
           {
-            sql: `INSERT INTO tx_native_relations (_id, _valid_from, scope_key, run_id, relation_name, source, target, depth) SELECT $4 || CAST(CHARACTER_LENGTH(c.source) AS TEXT) || ':' || c.source || c.target, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', $1, $2, $3, c.source, c.target, $5 FROM (SELECT DISTINCT prior.source AS source, edge.target AS target FROM tx_native_relations FOR ALL VALID_TIME prior JOIN tx_native_relations FOR ALL VALID_TIME edge ON prior.target = edge.source WHERE prior.scope_key = $1 AND prior.run_id = $2 AND prior.relation_name = $3 AND prior.depth < $5 AND edge.scope_key = $1 AND edge.run_id = $2 AND edge.relation_name = $3 AND edge.depth = 0) c WHERE NOT EXISTS (SELECT 1 FROM tx_native_relations FOR ALL VALID_TIME seen WHERE seen.scope_key = $1 AND seen.run_id = $2 AND seen.relation_name = $3 AND seen.source = c.source AND seen.target = c.target) LIMIT ${maxRows + 1}`,
+            sql: `INSERT INTO tx_native_relations (_id, _valid_from, scope_key, run_id, relation_name, source, target, depth) SELECT $4 || CAST(CHARACTER_LENGTH(c.source) AS TEXT) || ':' || c.source || c.target, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', $1, $2, $3, c.source, c.target, $5 FROM (SELECT DISTINCT prior.source AS source, edge.target AS target FROM tx_native_relations FOR ALL VALID_TIME prior JOIN tx_native_relations FOR ALL VALID_TIME edge ON prior.target = edge.source WHERE prior.scope_key = $1 AND prior.run_id = $2 AND prior.relation_name = $3 AND prior.depth < $5 AND edge.scope_key = $1 AND edge.run_id = $2 AND edge.relation_name = $3 AND edge.depth = 0) c WHERE NOT EXISTS (SELECT 1 FROM tx_native_relations FOR ALL VALID_TIME seen WHERE seen.scope_key = $1 AND seen.run_id = $2 AND seen.relation_name = $3 AND (seen.source = c.source) IS TRUE AND (seen.target = c.target) IS TRUE) LIMIT ${maxRows + 1}`,
             params,
             parameterSyntax: "postgresql",
           },

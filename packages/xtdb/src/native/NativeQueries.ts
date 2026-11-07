@@ -13,7 +13,12 @@ import {
   type NativeQueryStep,
 } from "@triplex-build/triplex/runtime";
 import type { XtdbClient } from "../XtdbClient.js";
-import { makeNativeContext, xtqlStatement, type XtdbNativeContext } from "./Sources.js";
+import {
+  boundedXtqlStatement,
+  makeNativeContext,
+  sourceCutQuery,
+  type XtdbNativeContext,
+} from "./Sources.js";
 import { readOnlyNativeSql } from "./ReadOnlySql.js";
 import { materializeNativeReachability, type XtdbNativeReachability } from "./Reachability.js";
 
@@ -65,16 +70,19 @@ export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) 
           signal.throwIfAborted();
           const steps: NativeQueryStep[] = [];
           const sourceStarted = performance.now();
+          // [EXP-X02] Why: the cut is read in the answer's language (Sources.ts sourceCutQuery).
+          // A reachability read keeps its SQL working-relation shell, so it stays SQL throughout.
+          const cut = sourceCutQuery(relations ? "xtdb-sql" : language);
           const current = await client.query<{ position: unknown }>(
-            "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+            cut.query,
             [scope],
             undefined,
             { signal, parameterSyntax: "postgresql" },
           );
           steps.push({
             phase: "source-cut",
-            language: "xtdb-sql",
-            query: "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+            language: cut.language,
+            query: cut.query,
             parameters: [scope],
             elapsedMs: performance.now() - sourceStarted,
           });
@@ -107,11 +115,12 @@ export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) 
             const body = build(context, parameters);
             if (typeof body !== "string" || body.trim().length === 0)
               throw new TypeError("A native builder must return native query text");
-            const statement =
+            // [EXP-X02] Why: XTQL answers are whole XTQL statements bounded by XTQL `limit`
+            // (Sources.ts boundedXtqlStatement); only SQL answers keep the SQL LIMIT envelope.
+            const query =
               language === "xtql"
-                ? xtqlStatement(body, native.parameters.length)
-                : readOnlyNativeSql(body);
-            const query = `SELECT * FROM (${statement}\n) triplex_native_answer LIMIT ${maxRows + 1}`;
+                ? boundedXtqlStatement(body, native.parameters.length, maxRows + 1)
+                : `SELECT * FROM (${readOnlyNativeSql(body)}\n) triplex_native_answer LIMIT ${maxRows + 1}`;
             signal.throwIfAborted();
             const queryStarted = performance.now();
             const rawRows = await client.query(query, native.parameters, undefined, {
