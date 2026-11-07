@@ -1,0 +1,61 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/packages/qlever
+
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > projects shared scalar family and lexical keys for the two candidate plans 6ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > keeps disjoint/keyless negation globally existential instead of a no-op MINUS 0ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > preserves correlated outer-only predicates through the established EXISTS form 1ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > does not reinterpret a typed ref's question-prefixed literal as a shared AST variable 1ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > rejects unsupported double-NOT before inherited aliases can reach lowering 0ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > retains NOT expressions within OR instead of inserting a MINUS graph operator 1ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > pairs retirement OPTIONAL only under the explicit profile and admits complete pairs 1ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > prunes an unobserved leaf order while preserving a projected neighbor 0ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > keeps range orders but lets canonical equality use family and lexical identity 1ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > keeps wrapped, aggregate and OR shapes on the existing source path 1ms
+ ✓ test/negation.test.ts > native anti-join eligibility guards (shape only; live oracle still required) > changes the actual failing family12 shape without dropping constant matches 2ms
+ ✓ test/native.test.ts > schema-aware native QLever queries > executes authored SPARQL and decodes declared exact values without Datalog probes 6ms
+ ✓ test/native.test.ts > schema-aware native QLever queries > retains RDF kind, datatype, language and unbound fields for Any 1ms
+ ✓ test/native.test.ts > schema-aware native QLever queries > rejects invalid parameters before network calls and oversized answers without partial results 1ms
+ ✓ test/native.test.ts > schema-aware native QLever queries > rejects unsafe helper terms and native precision loss while allowing exact lexical comparisons 1ms
+ ✓ test/native.test.ts > schema-aware native QLever queries > materializes an equality self-rule without weakening public duplicate-projection validation 5ms
+ ✓ test/temporal-profile.test.ts > preserves the declared source, negation and retirement profile in interval point queries 8ms
+ ✓ test/native-relations.test.ts > native QLever basis relations > distinguishes a literal question-prefixed entity from an authored variable and closes recorded intervals 2ms
+ ✓ test/native-relations.test.ts > native QLever basis relations > reconciles a lost working update without replay, computes paths in the backend and records cleanup 2ms
+ ✓ test/aggregate-answers.test.ts > bounded complete native aggregate answers > matches the owning wrapper LIKE and ILIKE semantics across newlines 1ms
+ ✓ test/aggregate-answers.test.ts > bounded complete native aggregate answers > orders full decoded binary64 averages before inner LIMIT and wrapper filtering 1ms
+ ✓ test/aggregate-answers.test.ts > bounded complete native aggregate answers > uses exact int64, complete tie breakers and a returned decoded cursor boundary 0ms
+ ✓ test/aggregate-answers.test.ts > bounded complete native aggregate answers > keeps nulls last, scalar families distinct and Unicode text ordered by native lexical bytes 0ms
+ ✓ test/unicode.test.ts > QLever Unicode lexical boundary > rejects isolated surrogates before lexical or namespace encoding 2ms
+ ↓ test/unicode.test.ts > QLever public Unicode mutations > rejects unrepresentable text atomically and retains escaped JSON strings
+ ✓ test/storage.test.ts > QLever full precision order channels > preserves binary64 comparison keys independently of native rounded numbers 2ms
+ ↓ test/storage.test.ts > QLever native storage public boundary > preserves full values, corrections, history, command receipts and replay
+ ↓ test/storage.test.ts > QLever native storage public boundary > serializes sixteen concurrent public commands with complete receipts
+ ↓ test/storage.test.ts > QLever native storage public boundary > retains immutable assertion identity across commands and confirms lost acknowledgements
+ ↓ test/storage.test.ts > QLever native storage public boundary > keeps a successful parallel sibling when another nested callback rolls back
+ ↓ test/storage.test.ts > QLever native storage public boundary > pins entity pagination across fresh connections while a correction is committed
+ ↓ test/storage.test.ts > QLever dependency regressions > dependency state is attribute-scoped and schedules temporal edges
+ ↓ test/storage.test.ts > QLever dependency regressions > derivation materialization uses indexed dependency freshness
+ ↓ test/intervals.test.ts > QLever bounded public interval provider > coalesces adjacent support, preserves gaps, and pins historical corrections
+ ↓ test/intervals.test.ts > QLever bounded public interval provider > discovers dynamic and negated boundaries without changing variable names
+ ↓ test/intervals.test.ts > QLever bounded public interval provider > retains integer aggregate values and empty-result meaning across spans
+ ↓ test/intervals.test.ts > QLever bounded public interval provider > discovers boundaries used only by optional projection fields
+ ↓ test/outcomes.test.ts > QLever unknown operation recovery > keeps absence unresolved and resolves a delayed submission by durable identity
+ ↓ test/query.test.ts > QLever canonical joins and aggregation > executes the unchanged seven-field projection and main workload17 AST through compact leaves
+ ↓ test/query.test.ts > QLever canonical joins and aggregation > uses the same compact typed channels for pending assertions and retractions
+ ↓ test/query.test.ts > QLever canonical joins and aggregation > keeps optional scalar families, null filters and mixed-family keyset order coherent
+ ↓ test/query.test.ts > QLever canonical joins and aggregation > completes bounded binary rules in server relations and preserves alternate support
+ ↓ test/query.test.ts > QLever canonical joins and aggregation > preserves repeated rule endpoints as equality constraints through public queries
+ ↓ test/query.test.ts > QLever canonical joins and aggregation > preserves value/ref joins, typed refs, constant projection keys, grouping and AVG
+ ↓ test/query.test.ts > shared Triplex Datalog on QLever > executes selective joins, conjunction negation, OR, sums and keyset pages natively
+ ↓ test/query.test.ts > shared Triplex Datalog on QLever > preserves full-range comparisons/extrema and exact SUM with bounded native chunk accumulation
+
+ Test Files  7 passed | 3 skipped (10)
+      Tests  25 passed | 21 skipped (46)
+   Start at  09:39:27
+   Duration  2.85s (import 90%, transform 6%, tests 2%, worker 1%)
+
+    Isolate  10 workers spawned · ~72ms startup each (spawn + environment, per file)
+             at least ~644ms faster with isolate: false — reuses workers across files instead of one per file
+

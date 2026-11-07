@@ -1,0 +1,16 @@
+{
+  "purpose": "Pinned shallow clones of reference source used as inspiration by the triplex-db-2 native lanes. Contents are gitignored; re-clone at these SHAs to reproduce.",
+  "clonedAt": "2026-11-07",
+  "repos": {
+    "xtdb": {"url": "https://github.com/xtdb/xtdb.git", "ref": "v2.2.0", "sha": "c6c19623d90c658c15400fb46dc056f3735ed57b", "why": "pinned engine image ghcr.io/xtdb/xtdb:2.2.0; XTQL/SQL semantics, FOR PORTION OF VALID_TIME, system-time, tests"},
+    "qlever": {"url": "https://github.com/ad-freiburg/qlever.git", "ref": "v0.6.0", "sha": "6c5861a6526d7d7ae77735d09339ee0825f0c001", "why": "pinned engine image adfreiburg/qlever:0.6.0; SPARQL eval, vocabulary/collation, update/delta triples"},
+    "qlever-control": {"url": "https://github.com/ad-freiburg/qlever-control.git", "sha": "84bdd27435bd93f2dc70269c30eefbb8d36d916e", "why": "official index/server configuration knobs"},
+    "rdf-tests": {"url": "https://github.com/w3c/rdf-tests.git", "sha": "202a74eb81f47bcad13bbafdd37eba69c361c1c2", "why": "W3C SPARQL 1.1 conformance suite as independent semantic oracle"},
+    "oxigraph": {"url": "https://github.com/oxigraph/oxigraph.git", "sha": "6fd4584114ddc4e8168af68df2b6ed530ab9bb12", "why": "reference SPARQL evaluator semantics (ORDER BY, STR, NOT EXISTS)"},
+    "sparqljs": {"url": "https://github.com/RubenVerborgh/SPARQL.js.git", "sha": "91cbd01ba0d4f9d031000c33c2fc4f36974f80c8", "why": "TS SPARQL parser/generator for a typed builder/validator"},
+    "ldkit": {"url": "https://github.com/karelklima/ldkit.git", "sha": "09fc8012866c29f4f55cb43cfc4f885afe2b02a4", "why": "TypeScript RDF ORM: schema->SPARQL entity mapping"},
+    "drizzle-orm": {"url": "https://github.com/drizzle-team/drizzle-orm.git", "sha": "eab8bedbb65d5429c54e612ddbd88aa23091d398", "why": "TS ORM ergonomics: typed tables + raw sql escape hatch"},
+    "xtdb-driver-examples": {"url": "https://github.com/xtdb/driver-examples.git", "sha": "e8c4c3f4e0895fd36406599fc3fa6fcc7c776652", "why": "XTDB 2 pgwire usage from Node"},
+    "datascript": {"url": "https://github.com/tonsky/datascript.git", "sha": "34915cf673c02cbc64779fe56e0288d70fea63f8", "why": "entity/pull API over triples"}
+  }
+}

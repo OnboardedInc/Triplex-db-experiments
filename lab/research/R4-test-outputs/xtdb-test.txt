@@ -1,0 +1,19 @@
+
+> @triplex-build/triplex-xtdb@0.1.0 test /Users/sam/projects/triplex-db-2/packages/xtdb
+> vitest run --testTimeout=120000 --hookTimeout=120000 --maxWorkers=1 --no-file-parallelism
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/packages/xtdb
+
+
+ Test Files  7 passed | 8 skipped (15)
+      Tests  20 passed | 84 skipped (104)
+   Start at  09:38:00
+   Duration  3.17s (import 79%, transform 18%, tests 2%, worker 1%)
+
+    Isolate  15 workers spawned · ~55ms startup each (spawn + environment, per file)
+             at least ~772ms faster with isolate: false — reuses workers across files instead of one per file
+
