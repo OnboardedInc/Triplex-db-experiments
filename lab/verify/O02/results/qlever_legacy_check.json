@@ -1,0 +1,147 @@
+{
+ "disagreeOrError": 20,
+ "unexplained": 0,
+ "oracleMatchesLegacyOutcome": 19,
+ "rows": [
+  {
+   "vector": "G1-I64-01",
+   "item": "converter-error",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": false,
+   "note": "converter cannot render Triples.get of an assertion the lane never created: KeyError('MAX')"
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q2",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q3",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q4",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q5",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q6",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q7",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "cmd:C1",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:min-exact:ok",
+   "legacy": "Q33i (not yet compiled)",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:min-exact:bad",
+   "legacy": "Q33i (not yet compiled)",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:min-exact",
+   "legacy": "Q33i (not yet compiled)",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G5-SUM-01",
+   "item": "Q",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G5-SUM-02",
+   "item": "Q",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G5-SUM-04",
+   "item": "Q",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G5-SUM-05",
+   "item": "Q",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G5-SUM-06",
+   "item": "Q",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G5-SUM-08",
+   "item": "Q",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "G5-SUM-11",
+   "item": "Q-case2",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "Q8F-02",
+   "item": "Q1",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  },
+  {
+   "vector": "Q8F-02",
+   "item": "cmd:C1",
+   "legacy": "0.3.3 LEGACY_LANE_OUTCOMES",
+   "oracleMatchesLegacyOutcome": true,
+   "note": null
+  }
+ ]
+}

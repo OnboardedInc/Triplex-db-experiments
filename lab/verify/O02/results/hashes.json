@@ -1,0 +1,353 @@
+{
+ "oracleVersion": "0.2.0",
+ "commit": "03519ae5208790f669b5011b22af8a5658dab83c",
+ "files": [
+  {
+   "path": "lab/oracles/replay/RULES.md",
+   "sha256": "802bf92b0a44fcb1988ca9f33f54417242bee4bae517436ee4d0b1dbf146ae62",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/SCHEMA.md",
+   "sha256": "51a2801dbccd947b7938dbf52286d8a805f0e1fad8c064e865261e03af6c167e",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/__init__.py",
+   "sha256": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/__main__.py",
+   "sha256": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/cli.py",
+   "sha256": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/constraints.py",
+   "sha256": "e93fcba3ca36be607b05f522dd779869ced816e2834f629130ecdd2408527571",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/entities.py",
+   "sha256": "e1a9cabe316acaae7a84aaec41289600d6fc9217ff6a18372ab73d5115ae7dc8",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/errors.py",
+   "sha256": "315cb92ac1d886ae208f0c2c98d8f28f307dcd443d4bdae9810e6918bda36fcb",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/exact.py",
+   "sha256": "12ab8f5e94106ebfd5f46af664c441bab28538dcc2feb3354d2c73e37914ef45",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/examples/entity-mini.case.json",
+   "sha256": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/examples/entity-mini.expected.json",
+   "sha256": "896782584fec0823ec7510fa6f8312144bd3a8052e1771cbd7a8bf676e36cb37",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/replay.py",
+   "sha256": "5c80dba491f99ee7984571cd3f8549acc548d789bfd329175f29d0f62ae4758d",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/run.py",
+   "sha256": "76ad66f9b93e181dcc5b85b80d89c98b6dd89c4e05cdbc276b6a492547ca37cb",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/scale.py",
+   "sha256": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/selfcheck.py",
+   "sha256": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+   "sha256": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json",
+   "sha256": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/__init__.py",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/helpers.py",
+   "sha256": "b334a38527256ebb6fa6c34c7d4e9dd82d335ae6bcd9eb839778fd654fac8183",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_contract_section4.py",
+   "sha256": "6b8836f030ff820d38769d5615ec21de80a247be8270422cd2d9234459f286f9",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_entities.py",
+   "sha256": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_exact.py",
+   "sha256": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_replay.py",
+   "sha256": "5986a804dcd8bef4ad562efc9ad9fea3b0e14d4049d7d5c044b4583d3938982f",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_rulings.py",
+   "sha256": "3d27a883302ccf0ed293590b9589089b1fff9d9c6c8b28589cb194a6b5eb3de0",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+   "sha256": "6afcddbfa91b8ea593f524f885390b01f425c907aa103415f026ba5d1f5a432e",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_values.py",
+   "sha256": "5c6eb0627884758aa6ddd992a83fe4ae8dafbcd6825f69d146132444796896ef",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_views.py",
+   "sha256": "16748b4a839d449421ba4625634485dc06dd9fba1333f3585c8e363773c86e46",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null
+  },
+  {
+   "path": "lab/oracles/replay/values.py",
+   "sha256": "3b770e78318f26288adf3a48bc36ceff221d681f3cb6de55b135b620f5da31a0",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  },
+  {
+   "path": "lab/oracles/replay/views.py",
+   "sha256": "5c9118df0cf2648b54c408d111fea584bdaabc1423565e23cbfffc2754fe6da2",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true
+  }
+ ],
+ "filesNotAt03519ae": [],
+ "allSameOnVerifyO02": true,
+ "selfReportedAllMatch": true,
+ "selfReportedCount": 13,
+ "goldenFilesPinned": [
+  {
+   "path": "lab/acceptance/golden/c5-duplicates-conflicts.json",
+   "pinned": "8472fd3131aa8cb55359d607bd9eb9af98c18cb3375dfe48e236a3733e40c87f",
+   "sha256": "8472fd3131aa8cb55359d607bd9eb9af98c18cb3375dfe48e236a3733e40c87f",
+   "match": true
+  },
+  {
+   "path": "lab/acceptance/golden/c6-journal.json",
+   "pinned": "f3bc068743ddc4926d97aa6a5fc3df1633ecc66e31259a9a1554023bee930439",
+   "sha256": "f3bc068743ddc4926d97aa6a5fc3df1633ecc66e31259a9a1554023bee930439",
+   "match": true
+  },
+  {
+   "path": "lab/acceptance/golden/g1-int64.json",
+   "pinned": "b44917652ea97eea6de53c1e32870a3f60bdafa4df403a97f4f7671d085247ff",
+   "sha256": "b44917652ea97eea6de53c1e32870a3f60bdafa4df403a97f4f7671d085247ff",
+   "match": true
+  },
+  {
+   "path": "lab/acceptance/golden/g10-cursor.json",
+   "pinned": "43baef315805a34dfdda207e8b7b5821f6932f33f2f12850536086db84ba60e5",
+   "sha256": "43baef315805a34dfdda207e8b7b5821f6932f33f2f12850536086db84ba60e5",
+   "match": true
+  },
+  {
+   "path": "lab/acceptance/golden/g5-sum-overflow.json",
+   "pinned": "0346c55216c85f36bb843062ad405268d0ad3432d28a1e66556a4007b6a60b1c",
+   "sha256": "0346c55216c85f36bb843062ad405268d0ad3432d28a1e66556a4007b6a60b1c",
+   "match": true
+  },
+  {
+   "path": "lab/acceptance/golden/g9-half-open.json",
+   "pinned": "35c64ae17756c8e9baf2e2fd233e28203bd449048aecfa67da29c57f073db91f",
+   "sha256": "35c64ae17756c8e9baf2e2fd233e28203bd449048aecfa67da29c57f073db91f",
+   "match": true
+  },
+  {
+   "path": "lab/acceptance/golden/g9-history-cuts.json",
+   "pinned": "4338a42e408cd5bc1c731f24eafaa6e90819b34595b53fbfe6a751b46a3f054d",
+   "sha256": "4338a42e408cd5bc1c731f24eafaa6e90819b34595b53fbfe6a751b46a3f054d",
+   "match": true
+  },
+  {
+   "path": "lab/acceptance/golden/g9-tiny-v4-retirement.json",
+   "pinned": "4f48e41d8b87273cded968fc869be3c36b596e1976c76c779a17db2eae9f30fa",
+   "sha256": "4f48e41d8b87273cded968fc869be3c36b596e1976c76c779a17db2eae9f30fa",
+   "match": true
+  },
+  {
+   "path": "lab/acceptance/golden/q8f-card-many.json",
+   "pinned": "2d8988494b529f6d165f27b37a569b72ca7c2b003aa7adfe8dfcea1cd03ede70",
+   "sha256": "2d8988494b529f6d165f27b37a569b72ca7c2b003aa7adfe8dfcea1cd03ede70",
+   "match": true
+  }
+ ],
+ "goldenAllMatch": true,
+ "verifierTools": [
+  {
+   "path": "lab/verify/O02/convert_and_run.py",
+   "sha256": "4aca518361e559dcf0e09c094bf7a74981b417210ae39c9043f59a3110d6aac1"
+  },
+  {
+   "path": "lab/verify/O02/convert_and_run_o01.py",
+   "sha256": "9e8288628bcb1e36968165563ad96a48b8196bd21b2a6c317c51a3bb1db50ebe"
+  },
+  {
+   "path": "lab/verify/O02/probe_section4.py",
+   "sha256": "f1e337230c15b2b4b89a7d0bfc83d9f499c7595707a7d3033d839df692af3152"
+  },
+  {
+   "path": "lab/verify/O02/tools/compare_results.py",
+   "sha256": "413f11805cdfafa386f019ad0b7e3b90a08338f4088c4b2e222e9cad499d9e1b"
+  },
+  {
+   "path": "lab/verify/O02/tools/convert_and_run.o01-original.py",
+   "sha256": "9e8288628bcb1e36968165563ad96a48b8196bd21b2a6c317c51a3bb1db50ebe"
+  },
+  {
+   "path": "lab/verify/O02/tools/convert_and_run.o02-patched.author.py",
+   "sha256": "4aca518361e559dcf0e09c094bf7a74981b417210ae39c9043f59a3110d6aac1"
+  },
+  {
+   "path": "lab/verify/O02/tools/f1_feasibility.py",
+   "sha256": "adfddde60579a4b4f190de18779e51e5f6635f49a3573e66e4ddd4846fbde253"
+  },
+  {
+   "path": "lab/verify/O02/tools/hash_table.py",
+   "sha256": "6f905cfdf2c6c1873c04a3c6123c670129eafc0b28422e7cbaa18721acbcefab"
+  },
+  {
+   "path": "lab/verify/O02/tools/judge_changed.py",
+   "sha256": "b13ec881dfb4eeb6808c39018cf37f4c95989622f11b31d7fb5a9e4aa93a743d"
+  },
+  {
+   "path": "lab/verify/O02/tools/negative_control.o01.py",
+   "sha256": "a3c3659628c5506d4014624de827953df9f4a6ba658ca4177b8dfd9ccac84c73"
+  },
+  {
+   "path": "lab/verify/O02/tools/patch_converter.author.py",
+   "sha256": "01c1e6cb0f83f8f5288ede7ff330740849c0b453bfcc1964e3ddb615a2a8a76d"
+  },
+  {
+   "path": "lab/verify/O02/tools/plant_errors.py",
+   "sha256": "44c20875d40153e917fe556d8c4c85b36c163ff2289980d8889708ee66462703"
+  },
+  {
+   "path": "lab/verify/O02/tools/probe_delta_033.py",
+   "sha256": "0ff7eb4cb9e022958b95463b5b3626011beb4b61160873ba029d6a49b78ca406"
+  },
+  {
+   "path": "lab/verify/O02/tools/probe_section4.o01.py",
+   "sha256": "f1e337230c15b2b4b89a7d0bfc83d9f499c7595707a7d3033d839df692af3152"
+  },
+  {
+   "path": "lab/verify/O02/tools/qlever_legacy_check.py",
+   "sha256": "9217d5d08ee941e4dfd8121b299c16addb119d988c20fdf41bc874569c2e2e15"
+  },
+  {
+   "path": "lab/verify/O02/tools/scan_golden_delta.py",
+   "sha256": "79783f3c007bb98245645f1e81bf4dc73a970312c0ebbb20dae176999d089e5c"
+  },
+  {
+   "path": "lab/verify/O02/tools/transitions.py",
+   "sha256": "06e938c1afa3da2199285d5691ad319aab127fe1003b43943188dd07c1c0bcdd"
+  }
+ ],
+ "authorEvidence": [
+  {
+   "path": "/Users/sam/Claude/Projects/triplex-db-2/EXP-O02-oracle-conformance/converter-rerun/convert_and_run.o02-patched.py",
+   "sha256": "4aca518361e559dcf0e09c094bf7a74981b417210ae39c9043f59a3110d6aac1"
+  },
+  {
+   "path": "/Users/sam/Claude/Projects/triplex-db-2/EXP-O02-oracle-conformance/converter-rerun/negative_control.json",
+   "sha256": "e09a5c5e47d6980e9b4a0d668cb49afad960984907980bd6aa28710108316cdb"
+  },
+  {
+   "path": "/Users/sam/Claude/Projects/triplex-db-2/EXP-O02-oracle-conformance/converter-rerun/patch_converter.py",
+   "sha256": "01c1e6cb0f83f8f5288ede7ff330740849c0b453bfcc1964e3ddb615a2a8a76d"
+  },
+  {
+   "path": "/Users/sam/Claude/Projects/triplex-db-2/EXP-O02-oracle-conformance/converter-rerun/results.after-unpatched.json",
+   "sha256": "0d038f22af9c31373bf083b0e11d5e9a1bbea3df878e513b80f30df3f5aa6b6d"
+  },
+  {
+   "path": "/Users/sam/Claude/Projects/triplex-db-2/EXP-O02-oracle-conformance/converter-rerun/results.before.json",
+   "sha256": "6dbb6dd06e3892fc14b7a72647ba523b558ad2aa78f3f4c6af615b9ded897617"
+  },
+  {
+   "path": "/Users/sam/Claude/Projects/triplex-db-2/EXP-O02-oracle-conformance/converter-rerun/results.patched.core.json",
+   "sha256": "2fc65e85150b5289936413f3244407992e11e2add68a1f34a380d3fcd5e9df33"
+  },
+  {
+   "path": "/Users/sam/Claude/Projects/triplex-db-2/EXP-O02-oracle-conformance/converter-rerun/results.patched.qlever.json",
+   "sha256": "4d13c7279ef81e258043e387e0807b019c1f7b7dbac9f012ea5c1d4de69d8c14"
+  }
+ ],
+ "contractOraclePins": {
+  "O-REPLAY": [],
+  "oraclesEntry": {
+   "status": "TO-BUILD",
+   "files": [
+    "lab/acceptance/oracle/replay.py"
+   ],
+   "comparator": "per case (CMP-SET-ROWS, CMP-BAG-ROWS, CMP-EXACT-VALUE, CMP-ERROR, CMP-PAGES)",
+   "spec": "ACCEPTANCE 6.1",
+   "independence": "Python stdlib only; imports no production visibility, constraint, projection, hydration or codec code"
+  }
+ }
+}

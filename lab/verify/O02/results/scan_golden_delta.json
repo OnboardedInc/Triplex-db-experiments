@@ -1,0 +1,65 @@
+{
+ "decimal-value": {
+  "count": 0,
+  "where": []
+ },
+ "json-value": {
+  "count": 0,
+  "where": []
+ },
+ "json-negzero": {
+  "count": 0,
+  "where": []
+ },
+ "datetime-value": {
+  "count": 16,
+  "where": [
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.commands[2].ops[6].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.commands[2].ops[15].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.commands[2].ops[24].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.commands[2].ops[33].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.commands[2].ops[42].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.commands[2].ops[51].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.commands[2].ops[60].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.commands[2].ops[69].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.assertions[30].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.assertions[39].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.assertions[48].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.assertions[57].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.assertions[66].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.assertions[75].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.assertions[84].value",
+   "g9-tiny-v4-retirement.json:$.fixtures.tiny-v4.assertions[93].value"
+  ]
+ },
+ "datetime-negzero": {
+  "count": 0,
+  "where": []
+ },
+ "receipts": {
+  "count": 0,
+  "where": []
+ },
+ "erase-op": {
+  "count": 0,
+  "where": []
+ },
+ "negative-basis": {
+  "count": 0,
+  "where": []
+ },
+ "transactions-limit": {
+  "count": 1,
+  "where": [
+   "c6-journal.json:$.vectors[0].queries[3].call"
+  ]
+ },
+ "decimal-arith-call": {
+  "count": 0,
+  "where": []
+ },
+ "string-range-predicate": {
+  "count": 0,
+  "where": []
+ }
+}
