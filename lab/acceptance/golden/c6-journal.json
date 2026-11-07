@@ -1,0 +1,184 @@
+{
+ "format": "triplex-db-2/golden-vectors/1",
+ "file": "c6-journal.json",
+ "status": "DRAFT-UNREVIEWED (EXP-G01)",
+ "derivation": "Hand-derived from PLAN v1.1 C6, ACCEPTANCE 4.2 item 8 and G7.receipt.journal-complete, docs/operational-primitives.md, docs/host-integration.md, Triples.ts public types and testkit O-TESTKIT cases. No Triplex, KV, engine or oracle was run. Conventions: README.md.",
+ "changeComparison": "Each change is compared on the documented fields listed in the vector only. Other optional TransactionChange fields (entityType, validTo when not written, recordedAt on assertions, validFrom/validTo on retractions) are not compared until AMB-05 is ruled.",
+ "vectors": [
+  {
+   "id": "C6-01",
+   "title": "Journal: envelope fields, changes[] in write order, feed paging, entity timeline newest first, command receipt and duplicate command",
+   "contracts": ["G7.receipt.journal-complete", "G7.write.command-idempotency", "R.repo.mutation-controls"],
+   "planContracts": ["C6"], "killsMutants": ["M-JOURNAL-ORDER", "M-CLAIM-IGNORED"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "receiptScope": "engine", "scope": "fresh",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "actor:1", "commandId": "c6-01:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "j:1", "attribute": ":j/a", "value": {"type": "string", "value": "one"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "j:1", "attribute": ":j/b", "value": {"type": "string", "value": "two"}, "validFrom": 0}],
+     "expect": {"outcome": "committed", "instant": 100}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "actor:2", "commandId": "c6-01:C2", "correlationId": "corr:2", "causationId": "cause:2", "configSnapshot": "cfg:v1"}, "ops": [
+      {"op": "assert", "label": "A3", "entityId": "j:2", "attribute": ":j/a", "value": {"type": "string", "value": "three"}, "validFrom": 5, "validTo": 50},
+      {"op": "retract", "id": "$id:A2"},
+      {"op": "assert", "label": "A4", "entityId": "j:1", "attribute": ":j/a", "value": {"type": "string", "value": "four"}, "validFrom": 0},
+      {"op": "retract", "id": "$id:A1"}],
+     "expect": {"outcome": "committed", "instant": 200, "retracted": 2}},
+    {"id": "C3", "instant": 300, "meta": {"actor": "actor:3", "commandId": "c6-01:C2"}, "ops": [
+      {"op": "assert", "label": "A5", "entityId": "j:3", "attribute": ":j/a", "value": {"type": "string", "value": "dup"}, "validFrom": 0}],
+     "expect": {"outcome": "rejected", "error": {"_tag": "CommandAlreadyCommittedError", "commandId": "c6-01:C2", "transactionId": "$tx:C2"}, "positionAfter": "$pos:C2"},
+     "citations": ["DOCS-OPS-ENVELOPE", "TK-JOURNAL", "ERRORS-CAC"]}
+   ],
+   "records": {
+    "C1": {"txId": "$tx:C1", "position": "$pos:C1", "instant": 100, "actor": "actor:1", "commandId": "c6-01:C1",
+           "changes": [
+            {"op": "assert", "tripleId": "$id:A1", "entityId": "j:1", "attribute": ":j/a", "value": {"type": "string", "value": "one"}, "validFrom": 0, "assertionTxId": "$tx:C1"},
+            {"op": "assert", "tripleId": "$id:A2", "entityId": "j:1", "attribute": ":j/b", "value": {"type": "string", "value": "two"}, "validFrom": 0, "assertionTxId": "$tx:C1"}]},
+    "C2": {"txId": "$tx:C2", "position": "$pos:C2", "instant": 200, "actor": "actor:2", "commandId": "c6-01:C2", "correlationId": "corr:2", "causationId": "cause:2", "configSnapshot": "cfg:v1",
+           "changes": [
+            {"op": "assert", "tripleId": "$id:A3", "entityId": "j:2", "attribute": ":j/a", "value": {"type": "string", "value": "three"}, "validFrom": 5, "validTo": 50, "assertionTxId": "$tx:C2"},
+            {"op": "retract", "tripleId": "$id:A2", "entityId": "j:1", "attribute": ":j/b", "value": {"type": "string", "value": "two"}, "recordedAt": 100, "retractedAt": 200, "assertionTxId": "$tx:C1", "retractionTxId": "$tx:C2"},
+            {"op": "assert", "tripleId": "$id:A4", "entityId": "j:1", "attribute": ":j/a", "value": {"type": "string", "value": "four"}, "validFrom": 0, "assertionTxId": "$tx:C2"},
+            {"op": "retract", "tripleId": "$id:A1", "entityId": "j:1", "attribute": ":j/a", "value": {"type": "string", "value": "one"}, "recordedAt": 100, "retractedAt": 200, "assertionTxId": "$tx:C1", "retractionTxId": "$tx:C2"}]}
+   },
+   "recordCitations": {
+    "envelope": ["TRIPLES-TS-RECORD", "DOCS-OPS-ENVELOPE", "TK-JOURNAL", "TK-ENTITY-HISTORY"],
+    "changeOrder": ["ACC-4.2.8", "C6", "ACC-4.3 M-JOURNAL-ORDER"],
+    "assertChangeFields": ["TRIPLES-TS-CHANGE", "TK-JOURNAL (assertion keeps typed value, validFrom, assertionTxId)", "DOCS-HOST-JOURNAL"],
+    "retractChangeFields": ["TRIPLES-TS-CHANGE", "TK-JOURNAL (retraction keeps old typed value, recordedAt of the original assertion, retractedAt = commit instant, retractionTxId)", "DOCS-HOST-JOURNAL (original assertion transaction)"]
+   },
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.transaction($tx:C2)", "compare": "envelope exact on listed fields; changes ordered, documented fields only", "expected": "@records.C2", "ambiguity": "AMB-05",
+     "note": "Write order is A3 assert, A2 retract, A4 assert, A1 retract. Canonical orders (asserts by id then retracts, or retracts first) both differ, which is what M-JOURNAL-ORDER injects."},
+    {"id": "Q2", "surface": "EP-TRIPLES", "call": "Triples.transaction($tx:C1)", "compare": "as Q1", "expected": "@records.C1", "ambiguity": "AMB-05"},
+    {"id": "Q3", "surface": "EP-TRIPLES", "call": "Triples.transactions({ after: 0, limit: 1 })", "compare": "as Q1 per record", "expected": {"transactions": ["@records.C1"], "next": "$pos:C1"}, "citations": ["TRIPLES-TS-FEED", "DOCS-OPS-FEED", "TK-JOURNAL"]},
+    {"id": "Q4", "surface": "EP-TRIPLES", "call": "Triples.transactions({ after: $pos:C1, limit: 1000 })", "compare": "as Q1 per record", "expected": {"transactions": ["@records.C2"], "next": "$pos:C2"}, "citations": ["TRIPLES-TS-FEED", "DOCS-OPS-FEED"],
+     "note": "the rejected C3 publishes no position and no record (DOCS-OPS-FEED: failed transactions publish neither facts nor a position)"},
+    {"id": "Q5", "surface": "EP-TRIPLES", "call": "Triples.transactions({ after: $pos:C2 })", "compare": "exact", "expected": {"transactions": [], "next": "absent"}, "citations": ["TRIPLES-TS-FEED"],
+     "note": "next is the position of the final returned transaction; with none returned it is absent"},
+    {"id": "Q6", "surface": "EP-TRIPLES", "call": "Triples.transactionsForEntity('j:1', { limit: 1 })", "compare": "records as Q1",
+     "expected": {"transactions": ["@records.C2"], "snapshotPosition": "$pos:C2", "nextBeforePosition": "$pos:C2"}, "citations": ["TRIPLES-TS-ENTITYPAGE", "DOCS-OPS-ENVELOPE", "TK-ENTITY-HISTORY"]},
+    {"id": "Q7", "surface": "EP-TRIPLES", "call": "Triples.transactionsForEntity('j:1', { limit: 1, snapshotPosition: $pos:C2, beforePosition: $pos:C2 })", "compare": "records as Q1",
+     "expected": {"transactions": ["@records.C1"], "snapshotPosition": "$pos:C2", "nextBeforePosition": "absent"}, "citations": ["TRIPLES-TS-ENTITYPAGE", "TK-ENTITY-HISTORY"],
+     "note": "C2 changed j:1 twice and is listed once (deduplicated)"},
+    {"id": "Q8", "surface": "EP-TRIPLES", "call": "Triples.transactionsForEntity('j:2')", "compare": "records as Q1", "expected": {"transactions": ["@records.C2"], "snapshotPosition": "$pos:C2", "nextBeforePosition": "absent"}, "citations": ["TRIPLES-TS-ENTITYPAGE"]},
+    {"id": "Q9", "surface": "EP-TRIPLES", "call": "Triples.transactionByCommand('c6-01:C2')", "compare": "as Q1", "expected": "@records.C2", "citations": ["DOCS-OPS-ENVELOPE", "TK-JOURNAL"]},
+    {"id": "Q10", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 'j:3' })", "compare": "exact", "expected": [], "citations": ["TK-JOURNAL (a duplicate command must commit no writes)"]},
+    {"id": "Q11", "surface": "EP-TRIPLES", "call": "Triples.queryAll({ find: ['?e'], where: [[$tx:C2, ':_tx/changed-entity', '?e']] })", "compare": "results as set", "expected": {"results": [{"?e": "j:1"}, {"?e": "j:2"}]},
+     "citations": ["DOCS-OPS-ENVELOPE (one :_tx/changed-entity reference per changed application entity)", "C6", "DOCS-DATALOG-VALUES (refs project as strings)"]},
+    {"id": "Q12", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: $tx:C2, attribute: ':_tx/change' })", "compare": "count", "expected": {"count": 4}, "citations": ["DOCS-OPS-ENVELOPE (one :_tx/change JSON fact for every asserted or retracted application fact)", "C6"]},
+    {"id": "Q13", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: $tx:C2, attribute: ':_tx/changed-entity' })", "compare": "count", "expected": {"count": 2}, "citations": ["DOCS-OPS-ENVELOPE", "C6"]}
+   ]
+  },
+  {
+   "id": "C6-02",
+   "title": "Negative zero: exact on the fact surface; journal change value undecided",
+   "contracts": ["G1.types.eight-type-roundtrip", "G7.receipt.journal-complete"],
+   "planContracts": ["C6"], "killsMutants": ["M-NEGZERO"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c6-02:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "z:1", "attribute": ":z/n", "value": {"type": "number", "value": -0.0, "bits": "8000000000000000"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.get($id:A1).value", "compare": "exact; bits authoritative", "expected": {"type": "number", "value": -0.0, "bits": "8000000000000000"},
+     "citations": ["ACC-G1-TYPES", "ACC-6.1", "ACC-4.3 M-NEGZERO"]},
+    {"id": "Q2", "surface": "EP-TRIPLES", "call": "Triples.transaction($tx:C1).changes[0].value", "expected": "AMBIGUOUS", "ambiguity": "AMB-04",
+     "readings": [
+      {"id": "A-legacy-journal-bytes", "expected": {"type": "number", "value": 0.0, "bits": "0000000000000000"}, "sources": ["C6 ('keep their outputs, order and -0 behavior')", "REVIEW-R2-2.6 item 3 (legacy journal stores JSON.stringify(change), which turns -0 into 0)"]},
+      {"id": "B-exact-value-domain", "expected": {"type": "number", "value": -0.0, "bits": "8000000000000000"}, "sources": ["ACC-G1-TYPES (bit-exact on every surface)", "ACC-4.3 M-NEGZERO ('-0.0 normalized to +0.0 on any path')"]}]}
+   ]
+  },
+  {
+   "id": "C6-03",
+   "title": "Assert then retract-pattern in one transaction: does the pattern see the staged assertion?",
+   "contracts": ["G7.receipt.journal-complete", "G7.write.atomic"],
+   "planContracts": ["C6"], "killsMutants": ["M-JOURNAL-ORDER"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c6-03:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "p:1", "attribute": ":p/a", "value": {"type": "string", "value": "temp"}, "validFrom": 0},
+      {"op": "retract-pattern", "pattern": {"entityId": "p:1", "attribute": ":p/a"}}],
+     "expect": "AMBIGUOUS", "ambiguity": "AMB-06"}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "receipt, Triples.match({ entityId: 'p:1' }), Triples.history('p:1') and Triples.transaction($tx:C1).changes", "expected": "AMBIGUOUS", "ambiguity": "AMB-06",
+     "readings": [
+      {"id": "A-pattern-sees-staged-rows", "expected": {"receipt": {"retracted": 1}, "match": [], "history": [{"id": "$id:A1", "txId": "$tx:C1", "retractedAt": 100, "retractTxId": "$tx:C1"}],
+        "changes": [{"op": "assert", "tripleId": "$id:A1"}, {"op": "retract", "tripleId": "$id:A1", "retractedAt": 100, "assertionTxId": "$tx:C1", "retractionTxId": "$tx:C1"}]},
+       "sources": ["REVIEW-R2-2.6 item 2 (row has tx_id = retract_tx_id = T; both changes, assert first)", "Constraint.ts project() applies operations in order over staged facts", "ACC-4.2.8 (write order)"]},
+      {"id": "B-pattern-sees-pre-state-only", "expected": {"receipt": {"retracted": 0}, "match": ["$id:A1"], "changes": [{"op": "assert", "tripleId": "$id:A1"}]},
+       "sources": ["no public document states that retract-pattern sees same-transaction assertions"]}]}
+   ]
+  },
+  {
+   "id": "C6-04",
+   "title": "retract-pattern with several matches: membership decided, change order not",
+   "contracts": ["G7.receipt.journal-complete"],
+   "planContracts": ["C6"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c6-04:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "q:1", "attribute": ":q/a", "value": {"type": "string", "value": "x"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "q:1", "attribute": ":q/a", "value": {"type": "string", "value": "y"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "c6-04:C2"}, "ops": [{"op": "retract-pattern", "pattern": {"entityId": "q:1"}}], "expect": {"outcome": "committed", "retracted": 2}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.transaction($tx:C2).changes", "compare": "as a SET of {op, tripleId}; order AMBIGUOUS (AMB-07)",
+     "expected": [{"op": "retract", "tripleId": "$id:A1"}, {"op": "retract", "tripleId": "$id:A2"}], "citations": ["DOCS-OPS-ENVELOPE", "TRIPLES-TS-CHANGE"], "ambiguity": "AMB-07"},
+    {"id": "Q2", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 'q:1' })", "compare": "exact", "expected": [], "citations": ["TRIPLES-TS"]}
+   ]
+  },
+  {
+   "id": "C6-05",
+   "title": "Reserved namespaces and the journal reject ordinary writes atomically",
+   "contracts": ["G7.receipt.journal-complete", "G7.write.atomic"],
+   "planContracts": ["C6"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "receiptScope": "engine", "scope": "fresh",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c6-05:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "r:1", "attribute": ":name", "value": {"type": "string", "value": "journalled"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "call": "Triples.retract(<id of the ':_tx/instant' fact of entity $tx:C1>)",
+     "expect": {"outcome": "rejected", "error": {"messageIncludes": "reserved Triplex system namespace"}, "positionAfter": "$pos:C1"}, "citations": ["TK-JOURNAL-RETRACT"]},
+    {"id": "C3", "instant": 300, "call": "Triples.retractByPattern({ entityType: '_Transaction' })",
+     "expect": {"outcome": "rejected", "error": {"messageIncludes": "reserved Triplex system namespace"}, "positionAfter": "$pos:C1"}, "citations": ["TK-JOURNAL-RETRACT", "REVIEW-R2-2.4"]},
+    {"id": "C4", "instant": 400, "meta": {"actor": "golden", "commandId": "c6-05:C4"}, "ops": [
+      {"op": "assert", "label": "A2", "entityId": "r:2", "attribute": ":name", "value": {"type": "string", "value": "must roll back"}, "validFrom": 0},
+      {"op": "assert", "label": "A3", "entityId": "_triplex/application/forbidden", "attribute": ":name", "value": {"type": "string", "value": "reserved"}, "validFrom": 0}],
+     "expect": {"outcome": "rejected", "error": {"messageIncludes": "reserved Triplex system namespace"}, "positionAfter": "$pos:C1", "transactionByCommand": null}, "citations": ["TK-RESERVED"]}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: $tx:C1 }) count, before C2 and after C4", "compare": "equal counts", "expected": {"countUnchanged": true}, "citations": ["TK-JOURNAL-RETRACT"]},
+    {"id": "Q2", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 'r:2' })", "compare": "exact", "expected": [], "citations": ["TK-RESERVED"]},
+    {"id": "Q3", "surface": "EP-TRIPLES", "call": "Triples.currentPosition()", "compare": "exact", "expected": "$pos:C1", "citations": ["DOCS-OPS-FEED"],
+     "note": "assumes no internal maintenance write in the fresh scope; currentPosition includes maintenance writes (Triples.ts)"}
+   ],
+   "errorTagNote": "Testkit pins only the message substring. The typed tag is left to O-ERR (AMB-14)."
+  },
+  {
+   "id": "C6-06",
+   "title": "A Required violation leaves no position, receipt, journal record or fact",
+   "contracts": ["G7.write.atomic", "G7.receipt.journal-complete", "G1.schema.required"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "receiptScope": "engine", "scope": "fresh",
+   "rules": {"R-REQ-NAME": {"_tag": "Required", "v": 1, "entityType": "Req", "attribute": ":req/name"}},
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c6-06:C1", "enforce": {"constraints": ["@R-REQ-NAME"]}}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "req:1", "entityType": "Req", "attribute": ":req/name", "value": {"type": "string", "value": "n"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "req:1", "entityType": "Req", "attribute": ":req/other", "value": {"type": "string", "value": "o"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "c6-06:C2", "enforce": {"constraints": ["@R-REQ-NAME"]}}, "ops": [{"op": "retract", "id": "$id:A1"}],
+     "expect": {"outcome": "rejected",
+                "error": {"_tag": "ConstraintViolationError", "violations": [{"constraintKey": "Req::req/name:required", "code": "required", "subject": "req:1", "entityType": "Req", "attribute": ":req/name", "path": "$[\":req/name\"]", "actual": 0, "validAt": 0}]},
+                "compare": "violations as a set; message ignored", "positionAfter": "$pos:C1", "transactionByCommand": null},
+     "citations": ["CONSTRAINT-193", "CONSTRAINT-NEWLY", "TINY-V4-CONTRACT (Required rejection preserves position and leaves no receipt)", "V4-REVIEW (publicRequiredRejection)"],
+     "note": "req:1 stays a typed subject through A2, so removing its only name is a new Required violation at the represented boundary 0"}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.transactions({ after: $pos:C1 })", "compare": "exact", "expected": {"transactions": [], "next": "absent"}, "citations": ["DOCS-OPS-FEED"]},
+    {"id": "Q2", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 'req:1' }, { validAt: 10 })", "compare": "multiset-by-id (ids only)", "expected": ["$id:A1", "$id:A2"], "citations": ["G7-ATOMIC"]},
+    {"id": "Q3", "surface": "EP-TRIPLES", "call": "Triples.transactionByCommand('c6-06:C2')", "compare": "exact", "expected": null, "citations": ["TINY-V4-CONTRACT"]}
+   ]
+  }
+ ]
+}

@@ -1,5 +1,11 @@
 # Current five-path goal ledger
 
+> **triplex-db-2 scope note (2026-11-07):** in this checkout, the ten goals' "Required outcome" definitions below remain the
+> backbone of scope. Everything else here is superseded homebase history: the status and evidence columns, the five-path
+> framing (DuckDB and the Datalog paths belong to another team), the target scale and the 256/512/1024 load acceptance as
+> performance targets. Performance targets and requirements now come only from [`lab/SCOPE.md`](../lab/SCOPE.md),
+> [`lab/NORTH-STAR.md`](../lab/NORTH-STAR.md) and [`lab/TARGETS.md`](../lab/TARGETS.md).
+
 Status: all common outcomes OPEN; no five-path integrated or scale acceptance.
 Historical DuckDB2/4/5 closures apply only to the archived bounded native grammar.
 They are regression evidence, not closures for the expanded SDK/native surfaces.

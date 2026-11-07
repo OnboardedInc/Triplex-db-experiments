@@ -17,11 +17,11 @@
 | # | Question | Verdict | Confidence |
 |---|----------|---------|-----------|
 | 1 | Idempotent re-apply after partial failure | Yes. Re-sending the identical update converges all six permutations in every case I produced (INSERT, DELETE, after restart, after rebuild). A restart clears single-operation junk, a `rebuild-index` bakes it into the new index permanently per permutation until the update is re-sent. A non-200 reply can also mean "fully committed and durable". | High |
-| 2 | Rebuild under load | Online. Queries and updates are served and accepted throughout, 92 of 92 acknowledged updates survived, none rejected. Rebuild of 99M triples took 28 s idle and 51 s under load on 3 CPUs; peak RSS added 0.45 to 0.6 GB. Update latency roughly triples during the rebuild and page-cache-cold queries stay slow after the swap. | High for 99M, Low for the extrapolation to 820M |
-| 3 | Group commit curve | Fixed cost per request is 2 ms at empty delta and grows about 0.2 ms per 1,000 delta triples (115 ms at 500k, 203 ms at 1M on L). Marginal cost is 0.025 to 0.03 ms per triple. The largest batch tested (50k triples) maximizes triples per second at every delta of 100k or more (about 29k to 38k triples/s); 10k triples reach about 50 percent of that at 1M delta. | High |
-| 4 | Watermark read pattern | Reading P from a meta triple in the same SPARQL query is one snapshot (no torn reads in thousands of probes). Cost versus the cost of the filter: see section 4. | see §4 |
-| 5 | Durability | see §5 | see §5 |
-| 6 | Server knobs | see §6 | see §6 |
+| 2 | Rebuild under load | Online. Queries and updates are served and accepted throughout, 92 of 92 acknowledged updates survived, none rejected. Rebuild of 99M triples took 28 s idle and 51 s under load on 3 CPUs; peak RSS added 0.45 to 0.6 GB. Update latency rises about 2.6x during the rebuild and page-cache-cold queries stay slow after the swap. | High for 99M, Low for the extrapolation to 820M |
+| 3 | Group commit curve | Fixed cost per request is 2 ms at empty delta and grows about 0.2 ms per 1,000 delta triples (115 ms at 500k, 203 ms at 1M on L). Marginal cost is 0.025 to 0.03 ms per triple. The largest batch tested (50k triples) maximizes triples per second at every delta of 100k or more (about 29k to 38k triples/s); 10k triples reach about 40 percent of that at 1M delta. | High |
+| 4 | Watermark read pattern | One SPARQL request is one snapshot (4,076 reads, 0 torn); two HTTP requests are two snapshots (5.9 percent of unfiltered pairs saw data above the watermark). The `rp <= P` filter with P from a meta triple costs 0.94x to 1.08x for entity, attribute and as-of reads and 2.6x (+10 ms per million rows) for a count over every assertion. | High (1M assertions), Medium (extrapolation) |
+| 5 | Durability | No fsync on the persistence path (syscall trace: write, close, rename). 10 of 10 SIGKILL runs lost no acknowledged update. A zero-length or truncated `idx.update-triples` stops the server from starting; a flipped byte is accepted silently. Power loss not probed. | High (path), Medium (kill), Low (power loss) |
+| 6 | Server knobs | `-j 4` (never 1), `-m 3G -c 512M -e 128M`, `query-planning-budget=1`, rebuild at 750k to 1M delta triples, writer backpressure at 2M. Delta costs 0.75 to 1.3 GB per million triples and is not covered by `-m`. | High (delta, `-m`), Low (820M budget) |
 
 ---
 
@@ -53,7 +53,7 @@ Setup for S1 to S6: base S, update `INSERT { GRAPH <urn:probe:g> { ?a <jA> ?a . 
 
 | Scenario | State right after the failed request (plus one trivial successful update to publish) | Action | State afterwards |
 |----------|----------------------------------------------|--------|------------------|
-| Timeout grid, 1.5 to 2.6 s | 429 for every T below 2.6 s. Six outcomes seen: none, PSO+POS, PSO+POS+SPO+SOP, five of six (OSP missing), all six. HTTP 200 at T=2.6 s. Outcomes are not monotonic in T because phase timings jitter by about 20 percent. | none | none |
+| Timeout grid, 1.5 to 2.6 s | 429 for every T below 2.6 s. Outcomes seen across the grid: nothing, PSO+POS only, PSO+POS+SPO+SOP (OPS was not yet checked in the first grid), five of six (OSP missing), all six. HTTP 200 at T=2.6 s. Outcomes are not monotonic in T because phase timings jitter by about 20 percent. | none | none |
 | **S1** re-send | 429, PSO, OPS, POS, SPO, SOP present, OSP absent | identical update, no timeout | 200 in 5.1 s, all six complete (PSO 1,000,000; OPS 2,000,000; samples 30/30) |
 | **S2** restart | 429, PSO+POS present only; `idx.update-triples` is 372 bytes | restart | all six empty (junk not persisted). Re-send: all six complete. Second restart: all six complete (the re-send was persisted) |
 | **S3** rebuild | 429, PSO+POS present only | `rebuild-index` (2.2 s) | new index has PSO+POS only (junk baked in). Re-send: all six complete. Second rebuild and restart: all six complete |
@@ -71,6 +71,64 @@ R2 already showed that a failed second operation in a multi-operation request le
 - **Gate `rebuild-index` on "last update returned 200 and no position is pending".** A rebuild takes the published snapshot, so a rebuild that starts while an unreconciled partial state is published bakes the partial permutations in (S3). Re-sending afterwards still heals, so this is a hygiene rule rather than a correctness hole, as long as every failed request is eventually re-sent.
 - **Ghosts from a request that is never re-sent stay visible** in some permutations until a restart (and forever after a rebuild). The watermark filter hides history-graph ghosts with `recorded_position` above the watermark. It does not hide ghosts in an unversioned projection graph (section 7, failure case 3).
 - **Timeouts do not bound update time.** An INSERT DATA with new terms ignored a limit 20 percent below its runtime. Set the HTTP client timeout, not the QLever `timeout`, as the bound, and expect the server to keep working after the client gave up (S5).
+
+---
+
+## 2. Rebuild under load
+
+### 2.1 Verdict
+
+1. **Queries are served during a rebuild only if `-j` is at least 2.** `rebuildIndex` runs on the query thread pool, whose size is `-j` (`src/engine/Server.cpp:63, 1679-1683 @ 6c5861a`). With `-j 1` (the default) the rebuild holds the only query thread: during a 7.6 s rebuild on S, 13 point queries and 1 top-k query completed, and one query waited 7.5 s. With `-j 4` queries ran throughout.
+2. **Updates are accepted, queued and applied.** No update was rejected (0 non-200 in 92 acknowledged updates on L and 184 on S) and every acknowledged receipt was present afterwards. Updates run on the separate single update thread and keep progressing during the build. The swap itself runs on the update thread and applies the diff between the snapshot taken at the start and the current snapshot (`Qlever.cpp:783-815`, `Server.cpp:1690-1715`), so updates wait only for the swap.
+3. **Duration.** Idle on 3 CPUs: S (9.2M triples, 1M delta) 3.0 s, M (50.3M) 19.6 s, L (99.4M) 28.2 s. Under load (4 query clients and 1 update client in closed loops) L took 51.3 s, 1.8x the idle time. S under load with `-j 1` took 7.6 s, 2.5x.
+4. **Memory.** Peak RSS during the rebuild rose by 0.45 to 0.6 GB over the pre-rebuild RSS at all three sizes (S +0.47, M +0.44, L +0.60 GB), so it does not grow visibly with 9M to 99M triples. Peak under load on L was 1,968 MB HWM including the delta and the query work. Disk: the new index is written next to the old one, so the peak is 2x the index (1,908 MB to 3,832 MB on L), and the default `original-and-most-recent` retention keeps up to 3x after the second rebuild.
+5. **CPU.** The rebuild saturates the CPU cap: 2.98 cores in use during the rebuild versus 2.64 cores for the client load alone (container cap 3 CPUs; VM-wide busy 78 percent).
+6. **After the swap the index files are new, so the page cache is cold.** On L in a 2.5 GiB container the 20 s after the swap showed point-query p50 176 ms (baseline 45 ms) and top-k p50 1.4 s (baseline 8.5 ms). The small S index recovered at once (p50 19 ms). The cold penalty comes from the new files, not from QLever, and its size on the target VM depends on how much of the ~17 to 20 GB index the 12 GiB can cache.
+
+Confidence: High for 1 to 5 at 99M triples (measured); Medium for 6 (the 2.5 GiB cap exaggerates it); Low for any extrapolation to 820M triples.
+
+### 2.2 Evidence
+
+Method: `scripts/p2_rebuild.py`. Base index plus a 1M-triple delta (saved persisted file, restart), `cmd=rebuild-index` with no token (`--no-access-check`), server cwd inside the index directory. Load mode: 4 reader threads (85 percent entity-history point lookups, 15 percent attribute top-10 scans, closed loop) and 1 writer thread (sequential 1,000-triple INSERT DATA with one receipt triple, closed loop), 20 s baseline, the rebuild, 20 s after. Resource sampler `scripts/mon.py` every 0.5 s. Raw: `out/p2_*.txt`, `p2_*_requests.csv`, `p2_*_mon.tsv`.
+
+**Rebuild duration and memory (3 CPUs, delta 1M, J=4 except where noted):**
+
+| Base | Triples at rebuild | Idle wall | Loaded wall | HWM idle | Phases (idle log) |
+|------|-------------------|-----------|-------------|----------|-------------------|
+| S | 9.22M | 3.0 s | 7.6 s (J=1, queries stalled) | 1,215 MB (749 before) | vocabulary 0.4 s, statistics 0.3 s, permutations 2.3 s |
+| M | 50.27M | 19.6 s | not run | 1,640 MB (1,199 before) | vocabulary 1.8 s, statistics 1.5 s, permutations 16.1 s |
+| L | 99.45M | 28.2 s | 51.3 s | 1,351 MB (751 before); 1,968 MB loaded | vocabulary 3.3 s (19.0M words), statistics 3.4 s, permutations 21.4 s (590.7M triple-writes, 27.6M per second) |
+
+The R2 rebuild of the reified layout (11.9M triples, 100k delta, 2 CPUs) took 4.8 s [R2 §1.7], consistent with 2.5 to 3.5M triples per second.
+
+**Latency during a rebuild on L (J=4, 4 readers, 1 writer):**
+
+| Operation | Phase | Count | Rate | p50 | p95 | p99 | max |
+|-----------|-------|-------|------|-----|-----|-----|-----|
+| point lookup | baseline (20 s) | 1,026 | 50.9/s | 44.8 ms | 130 ms | 245 ms | 480 ms |
+| point lookup | during (51 s) | 1,654 | 32.2/s | 75.5 ms | 196 ms | 267 ms | 504 ms |
+| point lookup | after (20 s) | 182 | 7.7/s | 176 ms | 560 ms | 807 ms | 838 ms |
+| top-10 scan | baseline | 207 | 10.3/s | 8.5 ms | 389 ms | 929 ms | 1,230 ms |
+| top-10 scan | during | 284 | 5.5/s | 12.7 ms | 1,125 ms | 1,607 ms | 1,842 ms |
+| top-10 scan | after | 35 | 1.5/s | 1,377 ms | 1,807 ms | 2,005 ms | 2,005 ms |
+| update (1,000 triples) | baseline | 24 | 1.2/s | 682 ms | 1,923 ms | 2,191 ms | 2,191 ms |
+| update (1,000 triples) | during | 28 | 0.5/s | 1,755 ms | 3,397 ms | 4,091 ms | 4,091 ms |
+| update (1,000 triples) | after | 40 | 1.7/s | 455 ms | 1,098 ms | 1,122 ms | 1,122 ms |
+
+All rows had 0 non-200 replies. Update latency in the baseline is high because 4 readers and the writer share 3 CPUs at 1M delta. Receipt check on L: 92 acknowledged, 92 receipts visible, 0 acknowledged-but-missing; total triples after 99,539,701 against 99,540,060 expected from 92 batches of 999 triples plus 92 receipts. The shortfall of 359 triples (0.4 percent) is duplicate triples inside the generator's output, which set semantics collapse (S showed 71 of 184k); a request still in flight when the clients stopped would add up to 1,000, not remove any. The receipt check, not the triple count, is the correctness evidence.
+
+**J=1 stall (S, load, J=1):** point lookups during the 7.6 s rebuild: 13 completed, p50 42 ms for the ones that ran before the build thread took over, max 7.46 s; top-k: 1 completed in 7.46 s. After the swap the backlog drained at 144 point lookups per second with p50 19 ms. Updates continued (4 during, p50 1.8 s).
+
+**Source on structure.** The rebuild reads the published snapshot at the start (`Qlever.cpp:754-766`), builds the vocabulary (`IndexRebuilder.cpp:480-490`), recomputes statistics, writes the eight permutation files on a private `net::thread_pool` sized `2 x maxConcurrentPairs` (`IndexRebuilder.cpp:568`, default all four pairs, so 8 threads), then swaps on the update thread (`Server.cpp:1690-1715`). The knob `rebuild-max-concurrent-permutation-pairs` (`src/global/RuntimeParameters.h:95 @ 6c5861a`) is documented in the source as the main lever against interference; I did not measure it. A second rebuild request while one runs gets HTTP 429 "Another rebuild is currently in progress!" (`Server.cpp:567-579, 1733`).
+
+**Extrapolation to the target index [E].** 2.8 to 3.5M triples per second idle (S 3.1M, M 2.6M, L 3.5M) gives 820M triples in about 4 to 5 minutes idle and about 7 to 9 minutes under load (x1.8), if the rate holds. It will not hold if the 17 GB index no longer fits the page cache during the scan; treat 10 to 20 minutes as the planning range. The published figure is under 1 minute for 500M triples on 16 cores with NVMe [W] https://docs.qlever.dev/rebuild-index/. Peak extra RSS looks size-independent (0.45 to 0.6 GB) but the vocabulary term grows with distinct words (19M words on L), so measure it on the real index before setting limits.
+
+### 2.3 Design implication
+
+- **Set `-j` to at least 3 on the VM** so the rebuild uses one slot and queries keep two or more.
+- **Expect rebuild windows of 2x slower updates and about 35 percent lower query throughput on 3 CPUs.** Updates still succeed. The reconciler and the group committer do not need a pause protocol for the rebuild; they need a client timeout longer than the worst update during a rebuild (4.1 s measured at 99M triples; budget 30 s for 820M).
+- **Budget disk for 2x the index during a rebuild and set `--rebuild-keep-previous-index-dirs none` (or `most-recent-only`).** The default keeps the original index and the most recent previous one, which is 3x.
+- **Schedule rebuilds off peak and warm the new files.** After each swap, read the hot permutation files once (`cat idx.index.pos > /dev/null` style) in the background, or accept a cold period of tens of seconds to minutes.
 
 ---
 
@@ -130,3 +188,210 @@ Method: `scripts/p3_group_commit.py`. For each delta size D the delta was built 
 - **Upstream will remove the delta term.** PR #3607 (snapshot creation proportional to the update, merged 2026-10-06) and PR #3267 (metadata update, open) report Wikidata updates at 500k delta dropping from about 700 ms to about 60 ms [W]. Neither is in 0.6.0.
 
 ---
+
+## 4. Watermark read pattern
+
+### 4.1 Verdict
+
+1. **One SPARQL request is one snapshot.** A query that reads the watermark triple and the data in the same request never saw a torn state: 4,076 reads against a writer that moved the watermark and inserted the matching data in one update request each 20 ms, 0 mismatches. The source agrees: the query execution context takes the current located-triples snapshot once when it is constructed (`src/engine/QueryExecutionContext.h:260-261 @ 6c5861a`) and every index scan of the request uses it.
+2. **Two HTTP requests are two snapshots.** Reading the watermark in request one and counting unfiltered data in request two saw data above the watermark in 152 of 2,577 pairs (5.9 percent). The same two-step pattern with `rp <= P` in the second request never mismatched in 1,168 pairs, because the watermark is monotone and the data is published before it.
+3. **The filter is cheap for the reads Triplex runs.** On S (8.2M triples, 1M assertions, P at the median position, caches cleared before every run, 5 runs, median):
+
+| Query shape | no filter | `FILTER(?rp <= 100000)` constant | P from a meta triple | P from `MAX` over meta triples |
+|-------------|-----------|---------------------------------|----------------------|--------------------------------|
+| Count every assertion in the history graph (1M rows) | 6.3 ms | 8.6 ms (x1.37) | 16.7 ms (x2.65) | 16.5 ms (x2.63) |
+| Entity history, 100 random entities, per query | 6.52 ms (p95 9.6) | 6.42 ms (x0.98) | 6.74 ms (x1.03) | 7.02 ms (x1.08) |
+| Attribute scan, top 20 by value | 18.9 ms | 17.8 ms (x0.94) | 18.2 ms (x0.97) | 18.2 ms (x0.97) |
+| Latest `rp` per entity for one attribute (16.5k groups unfiltered) | 17.9 ms | 18.1 ms (x1.01) | 19.0 ms (x1.07) | 19.0 ms (x1.07) |
+
+4. **Why the full-scan count doubles.** The planner does not push `?rp <= ?P` into the index scan. For a meta-triple filter it builds a Cartesian product of the 1-row meta scan with the 1M-row assertion scan and filters afterwards (plan in `out/p4_S.txt`), about +10 ms per million assertion rows. A constant filter is also applied after the scan (`Filter` over `IndexScan POS`), at +2 ms. The overhead is linear in the rows that reach the filter, so a full assertion scan at 100M assertions costs about +1 s on top of its own time, while selective reads (entity, attribute, top-k) see no measurable change.
+
+Confidence: High for the consistency result and the cost on 1M assertions; Medium for the extrapolation to 100M assertions (linear in rows, not measured at that size).
+
+### 4.2 Design implication
+
+- **Put the watermark read and the data read in one SPARQL query** (`GRAPH <meta> { <wm> <pos> ?P }` joined with the data pattern, with the `FILTER` at the group level outside the `GRAPH` block, see the next point) so a reader never needs a read transaction.
+- **Place `FILTER(?rp <= ?P)` outside the `GRAPH <history> { ... }` block.** Inside the block, `?P` (bound outside) is unbound and the filter drops every row. My first run returned 0 rows for the meta-triple variants for exactly this reason (the same scoping family as the EXISTS and OPTIONAL issues in R2 §3 and #2509).
+- **Use `MAX` over insert-only meta triples if the watermark is published by insert.** It costs the same as a single triple (16.5 ms versus 16.7 ms) and removes the DELETE from the publish step, which keeps the publish a small idempotent INSERT DATA.
+- **A reader that makes two requests must apply the filter in the second request.** An unfiltered second request saw uncommitted positions in 6 percent of the pairs against a writer committing about 15 to 20 updates per second.
+
+---
+
+## 5. Durability of the persisted delta
+
+### 5.1 Verdict
+
+1. **No fsync anywhere on the persistence path.** A syscall trace of two consecutive updates showed `openat(idx.update-triples.tmp, O_WRONLY|O_CREAT|O_TRUNC)`, about 4.3 MB written through `write`, `close`, then `renameat(tmp, final)`, and nothing else: no `fsync`, `fdatasync`, `sync_file_range`, `syncfs`, `msync`, and no directory sync. The server binary imports a libc `fsync` symbol, but it is not called on this path.
+2. **Process crash (SIGKILL): no acknowledged update lost.** 10 runs of `docker kill` at a random moment (0.5 to 3 s) into a stream of acknowledged 1,000-triple updates on a 1M-triple delta (43 MB persisted file): 0 acknowledged receipts missing after restart, 0 holes in the receipt sequence, 10 of 10 clean restarts. In 2 of 10 runs one request that the client never saw acknowledged was present after the restart (committed, reply lost).
+3. **Crash during the temp-file write.** No kill landed inside the 20 to 180 ms write window (0 of 10 runs left a `.tmp`), so I did not observe that case directly. The mechanism makes it safe: the writer truncates and rewrites `idx.update-triples.tmp` each time, the start-up reads only `idx.update-triples`, and a 15-byte stale `.tmp` present at start was ignored and then replaced by the next update (probe).
+4. **A torn or empty persisted file prevents start-up; a flipped byte does not.** Truncated to half, truncated by 8 bytes, zero-length: the server did not start (`Tried to read from a File but too few bytes were returned`). Garbage header: `Assertion magicByteBuffer == magicBytes failed`. One flipped byte in the middle was accepted silently and the triple count was unchanged. There is no checksum.
+5. **Power loss and OS crash were not probed.** I did not kill the shared VM. The file is process-crash safe through the atomic rename and not power-loss safe by construction. On ext4 the `auto_da_alloc` heuristic flushes the data of a file that replaces another through rename, which makes a zero-length result unlikely, but QLever does not rely on it and neither should we.
+6. **A full disk ends the process.** `File::close` calls `exit(1)` if `fclose` fails (`src/util/File.h:134-146 @ 6c5861a`); the temp file is written at `DeltaTriples.cpp:648-670`. [S] Not probed.
+
+Confidence: High for 1 (source grep, binary scan and syscall trace agree), Medium for 2 (10 runs, kill never landed in the write window), High for 4, Low for 5.
+
+### 5.2 Evidence
+
+- **Source.** `rg -n 'fsync|fdatasync|sync_file_range|O_SYNC|O_DSYNC' src/` returns nothing. `FileWriteSerializer` wraps a stdio `File` (`src/util/Serializer/FileSerializer.h:23-45 @ 6c5861a`), `serializeIds(path, ...)` opens it and lets it close at scope end (`src/util/Serializer/TripleSerializer.h:172-182`), `writeToDisk` renames over the old file (`DeltaTriples.cpp:648-670`). [S]
+- **Trace** (`scripts/strace_lite.py`, a 90-line ptrace tracer for aarch64 because the image has no strace; `out/p5_trace.txt`):
+
+```
+ 17.702 openat(idx.update-triples.tmp, flags=0x241) = 23
+ 19.216 close(idx.update-triples.tmp) wrote 4352710 bytes via write()
+ 19.217 renameat(idx.update-triples.tmp -> idx.update-triples) = 0
+ 35.682 openat(idx.update-triples.tmp, flags=0x241) = 19
+ 37.586 close(idx.update-triples.tmp) wrote 4396079 bytes via write()
+ 37.589 renameat(idx.update-triples.tmp -> idx.update-triples) = 0
+```
+
+  The tracer watched syscalls 82 (fsync), 83 (fdatasync), 84 (sync_file_range), 267 (syncfs), 227 (msync) on all 23 threads; none fired. The writes are slow under tracing (1.5 to 1.9 s for 4.3 MB), so the order is reliable and the timing is not.
+- **Kill test** (`scripts/p5_kill.py`, raw `out/p5_kill.txt`, `out/p5_acks_run*.log`): restore the 1M-triple delta, start the server, stream sequential 1,000-triple INSERT DATA with one receipt triple each, append each acknowledged index to a host-side file with `fsync`, `docker kill` at a uniform random 0.5 to 3.0 s, `docker start`, restart the server, read the receipts. Summary line: `runs=10 tmp_leftover=0 lost_acked_runs=0 holes_runs=0 failed_start=0 unacked_present_runs=2`.
+- **Corrupt-file test** (`scripts/p5_misc.py corrupt`, `out/p5_corrupt.txt`): the good file started in 9.0 s (replay of 1M triples); the four damaged files exited at start-up; the flipped-byte file started and showed the same triple count.
+
+### 5.3 Design implication
+
+- **The ledger of record must live outside QLever and must be fsync-durable.** Acknowledge commits to clients from the ledger. A published watermark that disappears after a power loss is repaired by the reconciler (section 7), because every position above the surviving watermark is replayed from the ledger.
+- **Treat `idx.update-triples` as a cache that can vanish or become unreadable.** Recovery for an unreadable file: stop the server, delete `idx.update-triples`, start, read the watermark, replay the positions above the last rebuild checkpoint from the ledger.
+- **Keep the previous index directory until the new index has served traffic** (it is the fallback if a swap is interrupted; `Qlever.cpp:783-815` notes that a failed move leaves a layout that needs manual repair).
+- **Make the reconciler idempotent across duplicate `unacked_present` cases.** A request whose reply was lost may or may not have committed; the retry is harmless (section 1).
+
+---
+
+## 6. Server knobs for the 6-CPU, 12 GiB VM
+
+### 6.1 Verdict
+
+| Flag or setting | Recommended | Basis |
+|-----------------|-------------|-------|
+| `-j` (query threads) | **4** (never 1) | A rebuild occupies one of the `-j` threads for its whole duration; with `-j 1` queries stalled for the entire rebuild (section 2). `-j 4` kept 3 free threads. |
+| `-m` | **3G** (2G if the page cache matters more) | Bounds result tables and the result cache only. Probed: with `-m 200M` a 1M-triple delta ran at 753 MB RSS, and a query needing 51 MB more failed cleanly with HTTP 500 `Tried to allocate 51.2 MB, but only 40 MB were available` while the server stayed up. |
+| `-c` / `-e` | `-c 512M -e 128M` | The defaults are 30 GB and 5 GB (`RuntimeParameters.h:54-56 @ 6c5861a`), which would let the cache claim all of `-m`. The cache is emptied by every update (`Server.cpp:1307`), so a large cache pays off only between commits. |
+| `-s` (default query timeout) | **10s** | A query holds its own snapshot of the delta (a deep copy, `DeltaTriples.cpp:483-492`), so long queries multiply delta memory, see 6.3. |
+| `--persist-updates` | on | Needed for the reconciler to find the watermark after a restart. |
+| `--no-patterns` | on | R2 §6.2. |
+| `--set-runtime-parameter query-planning-budget=1` | on | R2 §3.3 (planner memory is outside `-m` in 0.6.0). |
+| `--rebuild-index-strategy` | `manual`, driven by the application at 750k to 1M delta triples; backstop `automatic:100000:2000000:0.01` | The effective threshold is `clamp(0.01 x index_triples, 100000, 2000000)` (`src/engine/RebuildIndexStrategy.h:25-45 @ 6c5861a`), which is the 2M `max` for a 1B-triple index and 100k for a 10M-triple one. The delta size is free: every update response carries `delta-triples.after.total`. |
+| `--rebuild-keep-previous-index-dirs` | `most-recent-only` (or `none` if disk is tight) | Default keeps 3x the index on disk after the second rebuild. |
+| `rebuild-max-concurrent-permutation-pairs` | 2 (untested; start at 0 = all pairs and measure) | The source names it the main lever against rebuild interference (`RuntimeParameters.h:88-95`). The rebuild used 2.98 of 3 cores with the default. |
+| `--no-metrics-log --no-resource-usage-log` | on | Both logs grow without bound next to the index (R2 §6.3). |
+| Delta ceiling | writer backpressure at **2M** delta triples | Request fixed cost 0.2 to 0.4 s, RSS about 2.6 GB, replay 10 to 18 s. QLever has no limit of its own. |
+
+### 6.2 Evidence: memory per delta triple
+
+| Delta triples | RSS after building with 25k-triple requests (S / L) | HWM (S / L) | RSS after a restart replays the same persisted file |
+|--------------|-----------------------------------------------------|-------------|-----------------------------------------------------|
+| 100k | 375 / 379 MB | 418 / 391 MB | 112 MB (L, 0.5 s) |
+| 500k | 945 / 925 MB | 1,015 / 981 MB | not measured |
+| 1M | 1,234 / 1,324 MB | 1,421 / 1,471 MB | 753 MB (S, 5.5 to 9.1 s), 754 MB (L, 4.5 s) |
+
+(Baseline RSS without delta: 112 to 126 MB on L.) So plan **1.3 GB per million delta triples** while the process has been taking updates, **0.75 GB** right after a restart, and expect up to +0.15 GB of transient above RSS during a 50k-triple request. These triples bring about 0.2 new vocabulary words each (new assertion and tx IRIs, new string literals); triples that reuse existing terms are cheaper (R2: 0.4 KB). Replay takes 4.5 to 9 µs per triple. The persisted file is about 43 bytes per triple (43.3 MB at 1M). Raw: `out/p3_*.log`, `out/p6_replay.txt`, `out/p5_trace_run.txt`.
+
+### 6.3 What `-m` does not cover, and the memory budget
+
+- **Not covered by `-m`:** the delta (0.75 to 1.3 GB per million triples); one extra deep copy of the delta per distinct snapshot that a running query still holds (each update publishes a new snapshot; `-j 4` long queries can pin 4 older ones, which is 4x the delta in the worst case; **not measured**); the planner (R2 §3.3); the rebuild (+0.45 to 0.6 GB, vocabulary and writer buffers, measured at 9M to 99M triples); stdio and thread-stack memory; and the page cache.
+- **Budget for 12 GiB [E]:** OS and tooling 0.7 GB; QLever baseline 0.4 GB (112 to 126 MB measured at 99M triples, larger vocabulary at 820M); delta at the 1M trigger 1.3 GB, at the 2M ceiling 2.6 GB; snapshot transient 0.3 GB; rebuild extra 0.6 to 1.5 GB (measured 0.6 GB at 99M); `-m 3G`. Worst case without long queries: about 8 GB, which leaves about 4 GB of page cache for a 17 to 20 GB index. With `-m 2G -c 256M` the page cache grows to about 5 GB.
+- **Index size per triple measured:** 19.9 B (L), 20.5 B (M), 22.3 B (S), so 820M triples is about 16.5 to 18 GB, and a rebuild needs the same again in free disk.
+
+Confidence: High for the delta memory and the `-m` behavior, Low for the budget at 820M (nothing larger than 99M triples was built).
+
+---
+
+## 7. Recommended write protocol
+
+QLever 0.6.0 supports every step of the roll-forward design with three adjustments: the watermark publish must be a separate request after the data request returned 200; the rebuild needs `-j` of at least 2; and the durable record of positions must be outside QLever.
+
+### 7.1 Steps
+
+1. **Sequencer and ledger (outside QLever).** Each Triplex transaction gets a strictly increasing position P and is written to the durable ledger first (fsync-durable). The client is acknowledged from the ledger. QLever holds a derived copy.
+2. **Group commit.** The committer collects transactions into one request of 10k to 50k triples (about 250 to 1,000+ transactions of 5 facts, 8 triples per fact in the PC layout), flushing at 50k triples or after a linger of 200 to 500 ms, whichever comes first. One operation per request.
+3. **Apply.** One `INSERT DATA` carrying the history triples of the positions in the group (and the projection triples, see failure case 3) in named graphs. HTTP client timeout 30 s or more; do not rely on the QLever `timeout` parameter. On HTTP 200 go to step 4. On anything else (429, 5xx, connection error, client timeout), **re-send the identical body until it returns 200**. Do not read back to decide (section 1).
+4. **Publish.** After the 200, one `INSERT DATA { GRAPH <urn:triplex:meta> { <urn:triplex:wm> <urn:triplex:pos> "P_last" } }`. Insert-only, retried until 200. Never put the watermark triple in the same request as the data: on a partial failure a permutation could hold the watermark without the data.
+5. **Read.** One SPARQL query per read, with `{ SELECT (MAX(?p) AS ?P) WHERE { GRAPH <urn:triplex:meta> { <urn:triplex:wm> <urn:triplex:pos> ?p } } }` joined to the data and `FILTER(?rp <= ?P)` placed outside the `GRAPH <history>` block. Section 4: one snapshot, +0 to 8 percent for selective reads, +2.6x for a full count.
+6. **Reconciler (on start and every minute).** Read W = MAX watermark from QLever and L = last committed position in the ledger. For each group of positions in (W, L] regenerate the triples from the ledger and run steps 3 and 4 again. This also covers a lost `idx.update-triples` (power loss): delete the file, start, replay everything above the last rebuild checkpoint C.
+7. **Rebuild.** When the delta reaches 750k to 1M triples (read `delta-triples.after.total` from the update responses) and the last update returned 200: record C = current MAX watermark, call `cmd=rebuild-index`, keep committing during it, and on success keep C as the new checkpoint (all positions at or below C are in the new index). Warm the new files in the background after the swap. Delete `previous.*` directories beyond the retention policy. One rebuild at a time (a second request gets 429).
+8. **Backpressure.** If the delta passes 2M triples (a rebuild is slow or failed), the committer holds new groups and the API returns 503 on write; the ledger keeps accepting only if its own queue is bounded.
+
+### 7.2 Expected numbers on the 6-CPU, 12 GiB VM
+
+Measured on 3 CPUs at 99M triples; the target index is 820M to 1B triples and the VM has 6 CPUs, so read these as the shape and the order of magnitude, not as promises.
+
+| Quantity | Value | Basis |
+|----------|-------|-------|
+| Request time for a 10k-triple group | 0.23 s at delta 0, 0.6 to 0.8 s at 500k to 1M | §3 |
+| Request time for a 50k-triple group | 1.1 to 1.9 s at any delta | §3 |
+| Request path peak throughput | 29k to 38k triples/s (3.6k to 4.8k facts/s) with 50k groups at 100k to 1M delta; 12k triples/s with 10k groups at 1M delta | §3 |
+| Publish request | 20 ms at 100k delta, 80 to 200 ms at 500k to 1M | §3, b=1 |
+| Commit latency seen by a client (ledger ack aside) | linger + 0.3 to 1.9 s apply + 0.1 to 0.2 s publish; about 2x during a rebuild | §2, §3 |
+| Rebuild time | 28 s idle, 51 s loaded at 99M triples; **4 to 5 min idle and 7 to 9 min loaded at 820M [E]**, plan for 10 to 20 min | §2 |
+| **Sustained write rate** | **about 1,000 triples/s (125 facts/s, 25 transactions/s)**; the ceiling is set by the rebuild, not the request path: with a 1M trigger, a 2M ceiling and a loaded rebuild of 8 min, the delta fills 1M triples in 480 s at 2.1k triples/s (260 facts/s, 52 tx/s) with a 100 percent rebuild duty cycle; 1k triples/s gives a 17 min cycle with a 48 percent duty cycle. If the rebuild takes 20 min the ceiling is 830 triples/s. | §2, §3 [E] |
+| Read latency while a rebuild runs | point p50 45 to 76 ms (+68 percent), p95 130 to 196 ms, throughput -37 percent, attribute top-k p95 x3, on 3 CPUs at 99M triples | §2 |
+| Read latency right after the swap | 4x higher p50 for tens of seconds with a cold page cache (2.5 GiB cap); recovery time on the real VM depends on the cached share of the index | §2 |
+| Read cost of the watermark filter | 0.94x to 1.08x for selective reads, 2.6x for a count over every assertion (+10 ms per million assertions) | §4 |
+
+### 7.3 Burst behavior
+
+A bulk import of 500k triples goes through as 10 requests of 50k triples in about 17 to 20 s (29k triples/s), which moves the delta by 500k. Anything beyond about 1.5M triples in one burst should be built into a new index offline (a build of 99M triples took 190 s with `num-triples-per-batch` 1M and `--stxxl-memory 1G`, peak RSS 1.7 GB).
+
+---
+
+## 8. Failure cases the protocol does not cover
+
+1. **Loss of the ledger.** Everything here assumes the ledger can regenerate the triples of any position above the checkpoint. If it cannot, a power loss that drops `idx.update-triples` loses committed data.
+2. **A stuck rebuild.** An update that constructs a term already in the base vocabulary (`BIND(IRI(CONCAT(...)))`, `STR`, `MD5` and similar inside an INSERT or DELETE WHERE) makes every later `rebuild-index` return HTTP 400 `Assertion lower == upper failed` (`IndexRebuilder.cpp:136`) in 0.6.0. I reproduced it: a literal `INSERT DATA` of an existing term rebuilt in 1.8 s, a `BIND(IRI(...))` insert made the rebuild fail at once, and the server kept serving. Upstream issue #3172, fixed by #3175 on 2026-08-16, three days after the 0.6.0 tag [W]. The delta then grows without bound until the 2M ceiling. Rule: only `INSERT DATA` and `DELETE DATA` with literal terms.
+3. **The projection graph has no position.** The watermark filters history-graph assertions only. A reader of the current-value graph sees changes before the watermark moves, and sees partial permutations during a failed request until the retry returns 200 (seconds). Either accept this for the projection, apply the projection triples in the same request as the history triples, or give projection triples a position and filter them too.
+4. **Replace semantics in the projection.** `DELETE old / INSERT new` pairs are only safe to re-apply in position order from the watermark. Two writers, or a replay that skips a position, resurrect old values. Keep one sequencer.
+5. **Power loss and silent corruption.** After a power loss the persisted file is either the previous version or unreadable; if it is the previous version, the watermark and the data regress together, and the reconciler replays. A flipped bit inside the file is accepted without a checksum (5.1, item 4) and would go unnoticed; compare periodically a checksum of the ledger against counts in QLever.
+6. **Long queries and snapshot memory** (6.3): not measured; a few 30 s queries during steady commits can hold several snapshot copies of a 1M-triple delta.
+7. **Swap failure.** If the move of the old index fails halfway, the on-disk layout needs manual repair before the next restart (`Qlever.cpp:783-815` comment). A completed rebuild that never resumed its coroutine was observed upstream in a rare case, and #3727 (merged 2026-10-19) fixes a related destruction-order crash [W]. Both are in 0.6.0's lifetime.
+8. **A cache race at the swap.** A query still running on the old index during the swap can write its result into the cleared cache, and that entry can be served for the new index with ids from the old vocabulary once the snapshot counter catches up. Fixed by #3806 (merged 2026-10-23), not in 0.6.0 [W]. Rare, silent, and the mitigation is to clear the cache after each rebuild (`cmd=clear-cache-complete`).
+9. **Disk exhaustion.** The rebuild needs the index size again as free disk and `File::close` calls `exit(1)` if a write cannot complete. Alert at 45 percent disk use for a 17 to 20 GB index on a small disk.
+10. **Request retry overlap.** A client that times out and re-sends while the first attempt still runs (S5: the server does not cancel) queues the second behind it on the single update thread. Both apply; the cost doubles. Back off the retry to at least the observed worst case (4.1 s at 99M triples with a loaded rebuild).
+
+---
+
+## 9. Upstream issues and PRs checked (unauthenticated GitHub API, 2026-11-07)
+
+v0.6.0 was published 2026-08-13. A pre-release `latest-master` exists (2026-09-13).
+
+| Number | State | What | In 0.6.0? | Why it matters |
+|--------|-------|------|-----------|----------------|
+| #3172 | closed 2026-08-16 | `rebuild-index` assertion `lower == upper` when an update constructs a term that is already in the base vocabulary | **No (reproduced here)** | Failure case 2 |
+| #3175 | merged 2026-08-16 | Normalize update ids before adding them to the delta (fixes #3172, heals a persisted file at start) | No | Upgrade target |
+| #2806 | open | Same assertion with a persisted `update-triples` file, older image | n/a | A rebuild failure that also moved the old index aside through the `qlever` CLI; our flow calls the HTTP endpoint, not the CLI |
+| #3087 | closed 2026-07-16 | Missing consolidation and stale local-vocab entries in `addFromSnapshotDiff` | Yes | The swap diff path was fixed before the tag |
+| #3806 | merged 2026-10-23 | Stale cache entries after `clear-delta-triples` or a rebuild | No | Failure case 8 |
+| #3607 | merged 2026-10-06 | Snapshot creation proportional to the update instead of the delta (200 to 350 ms per update at 1M delta on Wikidata) | No | Would cut the fixed cost in §3 |
+| #3267, #3663, #3612 | open | Metadata update proportional to the touched blocks (700 ms to 60 ms per update at 500k delta) | No | Same |
+| #3151 | open | Auxiliary on-disk index for large delta sets (RAM about 350 B per triple today) | No | Would lift the 2M ceiling |
+| #3875 | merged 2026-11-04 | `rebuild-index-max-num-threads`; DBLP 526M triples rebuild 90 to 97 s with 24 clients, query rate -60 percent | No | Rebuild interference is a known cost |
+| #3899, #3888 | open | Dedicated thread pool for the rebuild; on a busy Wikidata server a rebuild took 2 to 3 h instead of 45 min | No | Rebuild time under load can be 3x to 4x |
+| #3727 | merged 2026-10-19 | Destroy the rebuild thread pool before its exception collector | No | Failure case 7 |
+| #2424 | open | `vector::_M_default_append` while reading `.update-triples` at start (probably after a crash) | n/a | Matches the unreadable-file result in §5 |
+| #2481, #2338, #3593 | open | OOM on a large SPARQL UPDATE; crash on consecutive large DELETE WHERE; allocation errors | n/a | Keep requests at 50k triples |
+| #2737 | merged 2026-03-28 | `cmd=vacuum-delta-triples` removes redundant located triples | Yes | Not tested; could shrink a delta without a rebuild |
+| #3891 | open | Reject queries that wait longer than a limit for a free query thread | No | Relevant to `-j` sizing |
+
+---
+
+## 10. Open questions
+
+1. **Rebuild at 820M to 1B triples.** Time, peak RSS, disk and cold-cache recovery were measured only up to 99M triples and 3 CPUs. This is the largest uncertainty in the sustained write rate (§7.2).
+2. **`rebuild-max-concurrent-permutation-pairs` and `-j` on 6 CPUs.** I measured only the default (all pairs) on a 3-CPU cap.
+3. **Snapshot memory with long queries during steady commits.** Source says one deep copy per held snapshot; not measured.
+4. **Partial window of INSERT DATA with new IRIs.** 12 timed trials never hit the 130 ms window, so the INSERT DATA path rests on the identical code path plus the INSERT-WHERE probes.
+5. **Power-loss behavior** of `idx.update-triples` on the production filesystem.
+6. **`cmd=vacuum-delta-triples`** as a delta shrinker between rebuilds (it exists in 0.6.0).
+7. **Re-run §3 on a post-0.6.0 master image** once #3607 and #3267 are in a release; the fixed cost of a request should drop from about 200 ms to about 20 ms at 1M delta.
+8. **Pre-existing noise.** A second probe container ran on the same VM; latency figures carry roughly plus or minus 30 percent noise. The capacity cap changed from 5 GiB to 2560 MiB halfway through: Q3 and Q1 ran under 5 GiB, Q2 (rebuild), Q4, Q5 and the issue reproduction under 2560 MiB. Nothing approached the cap except the page cache; no measurement needed more.
+
+---
+
+## Appendix: artifacts
+
+All under `/Users/sam/Claude/Projects/triplex-db-2/R8-qlever-write-probes/`.
+
+- `scripts/genlib.py`, `gen_base.py`: deterministic PC-layout fact generator and base-chunk writer. `build_index.sh`: index build with timing. `qlib.py`: HTTP client, per-permutation presence checks. `srv.sh`, `mon.py`: server control and resource sampler.
+- `scripts/p1_grid.py`, `p1_scenarios.py`, `p1c_insertdata.py`: Q1 (S1 to S6b, Q1c). `p2_rebuild.py`: Q2. `p3_group_commit.py`, `p3_analyze.py`: Q3. `p4_watermark.py`: Q4. `strace_lite.py`, `p5_misc.py`, `p5_kill.py`: Q5. `p7_issue3172.py`: the #3172 reproduction.
+- `out/`: `p1_*`, `p2_*` (text, request CSVs, monitor TSVs), `p3_{S,L}.csv` with summaries, `p4_S.txt`, `p5_trace.txt`, `p5_corrupt.txt`, `p5_kill.txt` with per-run ack logs, `p6_replay.txt`, `p7_issue3172.txt`, `build-times.txt`.
+- `logs/`: GitHub API responses (`gh_*.json`), docs text, index build logs.
+- The probe container and its volume were removed; the generated `gen/` chunks were deleted. No repository source was touched; no personal data was placed in any web request.

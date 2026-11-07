@@ -1,5 +1,8 @@
 # EXP-F04 falsifier: duplicate supports and card-one duplicates, both engines
 
+**North star:** correctness floor for P4 (current values must count supports exactly) and C5.
+**Scope:** goals and targets come only from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; inherited homebase files are for code facts only.
+
 ## Commander's intent
 Establish how each engine and Triplex itself behave when two live assertions carry the same entity, attribute and
 value (and when card-one has two different overlapping values), so the projection planner's support counting and

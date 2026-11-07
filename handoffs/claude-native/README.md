@@ -1,5 +1,10 @@
 # Independent native-path handoff for Claude Code
 
+> **triplex-db-2 scope note (2026-11-07):** goals, scope and performance targets for this checkout are defined only in
+> [`lab/SCOPE.md`](../../lab/SCOPE.md), [`lab/NORTH-STAR.md`](../../lab/NORTH-STAR.md) and [`lab/TARGETS.md`](../../lab/TARGETS.md). Where this
+> file states goals, targets, scale, load profiles, lanes, queues, resource grants or devloop procedure, it is superseded
+> history from the homebase. Read it only for facts about code and evidence.
+
 User-directed scope, 2026-11-07: Claude takes **XTDB Native (XTQL primary,
 SQL alternative)** and **QLever Native (SPARQL)** as a separate independent
 effort. Codex retains all three Triplex **Datalog** lanes, their foundations,

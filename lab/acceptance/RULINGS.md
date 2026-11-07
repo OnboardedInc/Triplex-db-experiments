@@ -33,3 +33,25 @@ and stays revisable by Sam; a revision creates a new contract version.
 - Q11 reversed (#4).
 - Precedence: these rulings are compiled into build_contract.py; the generated obligations.json is the only authority an
   evaluator reads. A consistency check in the generator verifies each ruling is reflected (#1).
+
+## Rulings on contract 0.2.0 questions (2026-11-07)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q13 XTDB exact int64 SUM recipe | The primary mapped recipe is the split-sum: sum the 32-bit halves and recombine with overflow-checked arithmetic, which R12 verified in both languages (exact totals on 4 boundary cases, typed overflow on the 3 true overflows). `SUM(CAST(x AS DECIMAL(38,0)))` is a candidate only if EXP-X02 proves it exact on 2.2.0, since KL-X7 records a DECIMAL aggregate failing on this engine. | lab/research/R12-xtql-cookbook.md; KL-X7 |
+| Q14a card-many family order | Accepted as proposed: boolean < integer < number < datetime < string < ref < json < blob, then by value inside a family (codepoint order for strings). Core defines no cross-family order, so the contract fixes one. | no core order function exists |
+| Q14b -0.0 and +0.0 | One value for identity, grouping and set membership, matching core: `packages/core/src/content/CanonicalJson.ts:77` normalizes -0 to 0 so they share a hash. When several supports differ only in representation, the projected and returned representation is the one from the support with the lowest recorded position (deterministic); the oracle applies the same rule. Single-assertion reads still return the stored representation exactly. | core canonical identity; R01 open question 1 |
+| Q14c binary64 SUM | Expected answer is the correctly rounded exact total on the repository and supported-fragment surfaces. Where an engine's native SUM differs, that raw cell is a KNOWN-LIMIT with a mapped recipe (exact accumulation in the native helper). Low priority against the north star: money and counts use int64 or decimal. | exactness floor; lab/NORTH-STAR.md |
+| Q14d ordered comparison int64 vs number | Typed preflight error, consistent with Q8d. | Q8d |
+| Q15 error tags and reasons | Accepted as drafted for 0.2.0; the independent verifier of the contract checks each tag against the public error types in packages/core/src/errors and Error.ts before 1.0.0. | change control |
+
+## Superseded by Sam's re-scope (2026-11-07; lab/SCOPE.md, lab/NORTH-STAR.md, lab/TARGETS.md)
+- **Q2 (fixed load bar), Q4 (sparse load), Q11 (per-language load runs):** superseded. Load and performance are now measured as
+  P1 to P5 on the fixed writer trace (TARGETS.md sections 1 and 2) plus the 20 golden scenarios (section 6). The principle of Q11
+  survives: read priorities (P1, P4, P5) are measured separately per surface (XTQL, SQL, SPARQL).
+- **"Exact int64 and decimal" as a requirement:** replaced by Sam's corrected numeric rule (no silent precision loss; source
+  lab/research/SAM-pasted-numbers-2026-11-07.md): exact storage and round trip for every value kind in use; order-preserving
+  comparison for range-rule attributes; hard error, never silent conversion; integer range ≥ 2^53; arithmetic over many rows only
+  where a projection needs it. Consequences: full signed 64-bit range is not required (int64 values beyond 2^53 may be rejected
+  with a typed error where an engine cannot hold them); Q8a and Q13 (exact engine-side int64 sums, split-sum recipe) apply only to
+  projections that need engine-side sums; per-subject arithmetic runs in the TypeScript kernel; Q1's raw exceptions for QLever
+  integers beyond 2^59 become "reject at write" instead of KNOWN-LIMIT rows.

@@ -1,5 +1,8 @@
 # EXP-F02 falsifier: exactness of every Triplex value type on every wire path, both engines
 
+**North star:** correctness floor for P1 and P4: Sam's corrected numeric rule (no silent precision loss: exact round trip, order-preserving range comparison, hard error never silent conversion, integers >= 2^53). Test against that rule; full signed 64-bit range is not required.
+**Scope:** goals and targets come only from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; inherited homebase files are for code facts only.
+
 ## Commander's intent
 Fill the capability matrix's value-type rows with measured evidence, so every later design decision about native
 column types, typed literals and parameter binding rests on facts instead of documentation. The output tells the

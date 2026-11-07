@@ -1,5 +1,10 @@
 # Five-path execution plan
 
+> **triplex-db-2 scope note (2026-11-07):** goals, scope and performance targets for this checkout are defined only in
+> [`lab/SCOPE.md`](../../lab/SCOPE.md), [`lab/NORTH-STAR.md`](../../lab/NORTH-STAR.md) and [`lab/TARGETS.md`](../../lab/TARGETS.md). Where this
+> file states goals, targets, scale, load profiles, lanes, queues, resource grants or devloop procedure, it is superseded
+> history from the homebase. Read it only for facts about code and evidence.
+
 This plan supersedes the archived two-backend,12GiB, globally serialized plan.
 It preserves that plan and its evidence as historical material. Work is local
 and all implementation, integration and verification is delegated to max-effort

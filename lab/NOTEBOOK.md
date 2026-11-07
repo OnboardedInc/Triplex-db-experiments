@@ -205,3 +205,225 @@ Result: PROGRESSED (knowledge). Nothing promoted; no lane gate has run.
   allowed trivial history; goal 8 could pass with zero reuse; typed errors could replace required cursor continuation; C8 frontier
   control conflicted with the hybrid-language rule.
 - Decision: accept all 16; EXP-A01's author revises to 0.2.0.
+
+## R7 XTDB indexing and ingest (Sonnet xhigh) — PROGRESSED (knowledge), H-X-ID revised
+Report lab/research/R7-xtdb-indexing-ingest.md; probes ~/Claude/Projects/triplex-db-2/R7-xtdb-index-probes (3 CPU / 5 GiB, ≤3M rows).
+- Bloom pruning DOES work after compaction: string equality 25 ms (3 of 4096 pages) vs ~0.9-1.0 s on uncompacted L0 files.
+  R1's "no pruning" was an L0 artifact. Consequence: equality on non-_id projection columns is acceptable for compacted data;
+  freshly written (L0) data is scanned, so equality cost grows with recent write volume. Once, after a restart, queries kept
+  planning over L0 until a second restart (cause not isolated; watch for it).
+- UUID `_id` is the raw 16-byte IID (not hashed); string/keyword/int `_id`s are hashed. Prefix-sharing UUIDs: `_id IN` of 1000 in
+  5.5 ms vs 330 ms for hashed keys; numeric/time min/max pruning works only when `_id` order correlates with the column (rank in
+  the high bits). `_id` ranges are never pruned; `CAST(... AS UUID)` in a predicate scans; pass typed uuid params.
+- Index shapes: unique-value table with `_id` = value key + ASSERT: 11 ms vs 1.2 s for the same check on a non-_id column.
+  Postings: array doc 5 ms at 3000 postings; a 1M-id array doc reads in 536 ms but each update costs 542 ms and 14 MB (no
+  server-side append), so popular values need paged postings (1k-10k ids per page, head doc holds the first page; read 1M in
+  395-457 ms, append 28-49 ms). Removal needs the stored page number (otherwise a 1.2-2.3 s scan).
+- Range/order: bucket docs (width 1000) 3 ms for a 1k range, 50 ms for 100k, 2.4 ms for ORDER BY ... LIMIT 100, 33 ms to move an
+  entity; plain scan of the projection table 0.85-3.5 s (range) and 1.8-2.0 s (ordered page).
+- Ingest: parameterised INSERT via `postgres` 5-9k rows/s (20-23k with 2-4 connections); COPY arrow-stream through a raw-wire
+  client 73-171k rows/s on one connection, 247k on two; COPY transit-json 51-146k. COPY works inside BEGIN READ WRITE with ASSERT and
+  METADATA; a failed ASSERT aborts the COPY. Distinct-text literal VALUES statements exhaust the heap; params and COPY do not.
+- History by `_id` 2-13 ms with 10 versions; table-wide COUNT(*) over 500k ids x 10 versions 4.8 s (reads all versions).
+- Disk: about 6x live data before GC; with `blocksToKeep: 2` and `garbageLifetime: PT1S` buffers fell 37.7 → 13.1 GB within 10 s of a
+  block boundary; L0 files and the Local log are never collected (steady state about 2.4x live). R7's probes filled the VM disk to
+  95% before GC ran: disk admission must forecast pre-GC peaks at about 6x live, not 2.4x.
+- Correctness hazard: upstream XTDB #6151, join pushdown under LIMIT/aggregate can return wrong rows.
+### Orchestrator decisions from R7
+- H-X-ID revised to "`_id`-first plus compaction-aware blooms": projection tables keep `_id` = the Triplex entity id STRING (raw
+  queries stay sensible: `WHERE _id = 'worker:maria'`); include/batch fetches pay ~0.33 s per 1000 hashed ids, acceptable at page
+  sizes of 100. The ledger (internal, never raw-facing) moves to entity-clustered UUID `_id`s (high bits = hash(scope, entity), low
+  bits = per-entity sequence) so per-entity history and batch reads cluster; to be measured against the current ledger.
+- Index tables are opt-in per attribute in the projection spec: unique attributes get a unique-value table (also the uniqueness
+  check); refs get paged reverse-posting tables; attributes declared range/ordered get bucket tables; everything else relies on
+  compacted bloom pruning. Paged postings store each entity's page number so removal is a point update.
+- Bulk ingest uses a raw-wire COPY (arrow-stream preferred, transit-json fallback) client inside BEGIN READ WRITE with ASSERT and
+  METADATA; ordinary commits keep parameterised statements with identical text (never distinct literal VALUES).
+- XTDB config for every slot: `blocksToKeep: 2`, short `garbageLifetime`; disk forecasts use 6x live data before GC.
+- Native helpers and the capability matrix must route around #6151 (no join pushdown under LIMIT/aggregate without proof).
+
+## R13 log of record (Sonnet xhigh) — PROGRESSED (knowledge); PLAN v1.2
+Report lab/research/R13-log-of-record.md; scripts and raw outputs ~/Claude/Projects/triplex-db-2/R13-log-durability
+(wal.mjs with CRC32C framing and scanner, durable-log.mjs group-commit writer, gen-switch-sim.mjs crash-state model).
+- Decisive: on macOS, Node 22 `fs.fsync` is `F_FULLFSYNC` (libuv 1.51; 2.9 ms measured); `O_DSYNC` is 0.02 ms and NOT durable.
+  Inside the colima VM, Lima hard-codes cached disk mode with `Fsync` synchronization, which Apple documents as not flushing the
+  drive cache: guest fsync 0.13-1.2 ms is below the 2.9 ms floor of a real flush. A VM-resident log cannot claim power-loss
+  durability. virtiofs is no stronger. So the QLever broker and its log live on the macOS host.
+- Framing tested at every truncation point (72,204) and single-bit flips; pure quad deltas make replay idempotent (agrees with R8).
+- QLever 0.6.0 has NO N-Quads export (corrects R2 §7.1); checkpoints fold the log instead. Generation switch model-checked
+  (520 states, 0 violations, 5/5 broken variants caught).
+- Fencing: QLever's token only authenticates and is printed at INFO in the server log; flock is not coherent between host and VM
+  on virtiofs (tested). Three layers: host kernel lock, EPOCH_BEGIN frame, (epoch, position) guard inside every update.
+- Group commit on the host: 33k commits/s at 256 clients, p99 23 ms; fsync is a few percent of a QLever update (0.2-1.7 s), so the
+  QLever update, not the log, bounds lane-Q write throughput.
+- Applied to PLAN v1.2 C2/C3 one to one, plus five F05 falsifiers. Durability statement recorded in C2.
+
+## R12 XTQL cookbook (Sonnet xhigh) — PROGRESSED (major): 23/23 operations, 71/71 tasks in XTQL
+Report lab/research/R12-xtql-cookbook.md (957 lines); every statement, parameter list and row set in
+~/Claude/Projects/triplex-db-2/R12-xtql-cookbook/raw/.
+- All 71 tasks answer with XTQL statements whose rows equal both the packet's expected rows and the SQL library's rows; 142/142 with
+  a fresh pool ("reopen" here = new pool, not engine restart). The unmodified SQL library scores 71/71 on the reconstructed fixtures
+  (fixture-loader check). Operators now exercised: unify/join, aggregate, exists?, q, cast, unnest, limit, count-distinct, row-count,
+  greatest, least.
+- The packet fixtures are weak discriminators: a mutation run left 2 of 3 well-formed mutants alive (the `revoke` clause in 12, step
+  order in 17); 38 hand-built controls (workloads 05, 08, 09, 12, 17, 18, 20 with a 6-hop cyclic graph) kill all four mutants tried.
+  Lesson: native qualification needs discriminating controls beyond the 142 packet, with independent expected answers.
+- Hard gaps: (1) recursion has no pure-XTQL form; depth-D unrolling plus a second XTQL fixpoint-check call is read-only and passes
+  all 14 recursive tasks, but statement size grows with D^2 (D=8: 56 KB, 191 parameters, 0.6-1.7 s on 21 rows), so it is not the
+  scalable answer (wait for R10); (2) `union-all` fails at planning (`No implementation of method: :plan-query ... UnionAll`), the
+  logical operator exists, the repair looks small (engine-repair candidate; no operation needs it today); (3) `sum` over BIGINT wraps
+  in BOTH languages (three values of 2^62 give -4611686018427387904); the 32-bit-halves recombination workaround makes XTQL raise
+  `data exception - overflow error` on the 3 true-overflow cases and match the other 4 exactly, while SQL wrapped on 3 of 7.
+  Smaller: `(cast x :i64)` needs `#xt/type :i64`; literals/params in a join bind spec fail; `(aggregate {:k constant})` fails.
+- Fixed cut: `NativeReadOptions.basis.recordedPosition` already pins a task-wide cut (a writer between calls was invisible to the
+  pinned call); snapshot tokens and `BEGIN READ ONLY WITH (...)` work but `NativeQueries.run` never passes them.
+- int64: parameters bind as BigInt (oid 20) and compare exactly at 2^63-1; results arrive as strings and hydrate through contracts.
+- R6's open XTQL questions answered: `with` overrides a bound column (the retirement mask works in XTQL), `INSERT ... SELECT` from
+  XTQL plans, text-to-BIGINT cast works.
+### Orchestrator rulings
+- Language accounting counts EVERY substep, including basis acquisition. The XTQL path must acquire its source cut in XTQL
+  (`tx_meta` read in XTQL); the SQL path keeps its SQL cut read. Only then can a task count as XTQL-only.
+- SUM over BIGINT: both languages must stop wrapping (Q8a: exact total, typed overflow only when the final total is outside int64).
+  The SQL path's silent wrap is a lane-X SQL correctness defect, not just an XTQL concern.
+- Recursion: R12's unrolled XTQL is accepted only as an interim pure-XTQL, read-only implementation with an explicit max depth and
+  a typed error when the fixpoint check fails (never a truncated closure). The scalable design waits for R10 (EXP-X03).
+
+## R8 QLever write lifecycle (Sonnet xhigh) — PROGRESSED (knowledge); confirms H-Q-LOG, sets lane-Q write ceiling
+Report lab/research/R8-qlever-write-lifecycle.md; probes ~/Claude/Projects/triplex-db-2/R8-qlever-write-probes. Indexes of 8M, 49M,
+98.6M triples in projection+compact layout, 3 CPUs.
+- Idempotent re-apply: re-sending the identical update converged all six permutations in every case (insert, delete, after restart,
+  after rebuild). Restart clears a single failed op's junk; `rebuild-index` bakes partial permutations in until the update is
+  re-sent. HTTP 429 can mean the update fully committed and is durable; a client disconnect does not cancel an update. Rule:
+  reconcile by re-sending until 200; never treat 429 or a read-back as proof of anything.
+- Rebuild under load: served queries and updates; 92/92 acknowledged updates survived. 99M triples rebuilt in 28 s idle, 51 s loaded;
+  point-read p50 45 → 76 ms, throughput -37%, update p50 x2.6, cold page cache after the swap x4 p50. With `-j 1` queries stall for
+  the whole rebuild: always `-j` ≥ 2 (recommended 4). Extrapolated 820M triples: 4-5 min idle, 7-9 min loaded (low confidence).
+- Group commit: fixed cost per request 2 ms at empty delta, 115 ms at 500k, 203 ms at 1M; marginal 0.025-0.03 ms per triple; 50k-triple
+  batches best at every delta ≥ 100k (29-38k triples/s). R2's 0.9 s fixed cost was 4-5x too high.
+- Snapshots: one SPARQL request is one snapshot (4,076 reads, 0 torn); two requests are two snapshots (5.9% of pairs saw data above the
+  watermark). So marker and data must be read in the same request (C1/C4 already require this). Put FILTER outside the GRAPH block.
+  Watermark filter costs 0.94-1.08x for selective reads, 2.6x for a count over every assertion.
+- Durability: QLever writes the delta with write, close, rename and NO fsync; 10/10 SIGKILL runs lost nothing (page cache); a zero-length
+  or truncated `idx.update-triples` prevents start-up; a flipped byte is accepted silently. Confirms the log of record (C2) outside QLever.
+- Knobs: `-j 4 -m 3G -c 512M -e 128M -s 10s`, `query-planning-budget=1`, rebuild at 750k-1M delta, writer backpressure at 2M. Delta
+  memory 1.3 GB per million triples while updating (0.75 GB after restart), NOT counted by `-m` (verified).
+- Sustained write rate ≈ 1,000 triples/s ≈ 125 facts/s ≈ 25 tx/s on 3 CPUs, bounded by rebuild capacity. Against the Q2 load bar
+  (25.6 commands/s at 256 clients) the QLever lane is at the edge before any optimization: fewer triples per fact, larger groups, 6 CPUs
+  and faster rebuild scheduling are the levers. The bar stays; this is now the lane-Q performance bottleneck to experiment on.
+- Bug: upstream #3172 reproduces on 0.6.0: a BIND/IRI()-constructed term in an update makes every later `rebuild-index` fail (HTTP 400).
+  Rule: update templates use only literal terms and variables bound from plain patterns. New F05 falsifier: C2.3's guarded
+  DELETE/INSERT WHERE followed by `rebuild-index` must still succeed.
+
+## EXP-000 loop harness (Opus high) — PROGRESSED; on main (through baf4edf)
+- `lab/bin/engine.mjs` (slots, atomic pool ledger, cleanup-proven release), `gate.mjs` (G0/G1/G2, bound receipts, preimages under
+  runs/objects, PASS_SUBSET for subsets, runKind default diagnostic), `heavy.mjs`, `scorecard.mjs` (main-committed receipts only),
+  `status.mjs` (first validity checker), 15 harness unit tests; homebase coupling replaced; two pure-test breakages fixed.
+- First fresh receipts: G0 PASS xtdb (911) and qlever (916); G2 xtdb FULL PASS 142/142 (`G2-xtdb-20261107T185821Z-210ae9`), language
+  tally counting answer queries only: xtql 22, sql 116, hybrid 4 (counting every substep: xtql 0, because every call acquires its cut
+  in SQL; EXP-X02 fixes this per the ruling in the R12 entry).
+- Failures kept: G1 xtdb full FAIL although all 88 executions passed (a concurrent gate rebuilt the shared dist mid-run; harness now
+  enforces one gate per worktree); G1 qlever 0/88 (dev QLever OOM-killed at its 2.5 GiB cap on the first case; EXP-002 applies R8's
+  flags and the planner profile); G2 qlever wrote no receipt (harness bug, fixed).
+- Not yet enforceable: V7 (no oracle ACCEPTED, no pinned file hashes), V9 (raw results hashed after the runner's own asserts), V13/V16
+  (status.mjs only); mutation runs record but do not apply patches. "Reopen" for the 44 means a second fresh runtime opening.
+- Side effect found and reverted: the orchestrator's early `pnpm config set store-dir --location project` had rewritten
+  pnpm-workspace.yaml (comments lost, absolute storeDir added); restored from git. Agents keep passing --store-dir explicitly.
+
+## EXP-001 XTDB baseline (Opus high) — PROGRESSED, all PASS (A0 controls)
+- G0 PASS (911, 130 expected skips) `G0-xtdb-20261107T190435Z-3bbfe6`; G1 FULL PASS 88/88 `G1-xtdb-20261107T190528Z-50077c`; G2 FULL
+  PASS 142/142 `G2-xtdb-20261107T190622Z-f59e9c`; native-entry 13/13 and verify-xtdb-entry 6/6 (lab/runs/ENTRY/*exp001*).
+- Homebase reproduced: 28 XTQL and 164 SQL answer traces. Language table (71 tasks): answer queries 11 XTQL / 58 SQL / 2 hybrid;
+  strict (every substep) 0 / 58 / 13 (192 SQL source-cut substeps, 598 SQL reachability substeps).
+- Timings: G0 32 s, G1 47 s (XTDB 1.5 GiB), G2 29 s. Cheap enough for every candidate to rerun full G1+G2.
+- Surprises: a task's language can depend on data (19/label-not-known makes 0 XTQL calls when its loop is empty); G2 claims
+  PKT.full142 for xtdb-xtql although only 11 tasks are XTQL: the harness must filter obligation claims per language.
+## O01 replay oracle built (branch exp/O01-replay-oracle 03d86f3): self-checks O-HAM 18/18, O-CFG8 20/20, O-EVT 23/23, units 91/91;
+   corrections applied (clock model, nested positions, outcome authority, signed zero, AVG, constraints). Needs independent review
+   and rulings listed in its RULES.md. Two homebase review fixtures are absent from this checkout.
+## G01 golden vectors: 49 vectors, 17 ambiguities (AMB-01 most important: tiny-v4 checks expect null retirement on ordinary
+   match vs the raw-lifetime contract). Not yet reviewed or committed.
+## SCOPE CHANGE from Sam (2026-11-07): new north star (lab/NORTH-STAR.md, five ranked priorities); pasted suggestions saved verbatim
+   (lab/research/SAM-pasted-targets-2026-11-07.md). Sam: do not rule out QLever; build both to the fullest and work around
+   impossibilities; keep the ten-goal plan but re-tune performance targets and requirements. Orchestrator restated its
+   understanding to Sam and is waiting for confirmation before rewriting PLAN/TARGETS/contract targets.
+
+## R10 read-only recursion (Sonnet xhigh) — PROGRESSED (knowledge); C8 design chosen
+Report lab/research/R10-read-only-recursion.md; probes ~/Claude/Projects/triplex-db-2/R10-recursion-probes (1 CPU, synthetic graphs).
+- Design: shared TS `frontierClosure` (semi-naive, one read per round, frontier as ONE structured parameter, expanded-set cycle guard,
+  budgets with typed errors: rounds 64, visited 100k, edges 1M, task 30 s). Lane Q Tier 1 = one property-path read over the current
+  graph for C1-eligible bases (bound start; `BIND UNION p+` for zero length; never `p*` with a constant start; never both ends unbound);
+  Tier 2 = frontier over the ledger. Lane X Tier 1 = frontier over entity-keyed `_id` tables with native `FOR VALID_TIME AS OF`;
+  Tier 2 = frontier over the raw ledger (small scopes only; at scale needs a write-path edge index). Supports counted on the extracted
+  subgraph (simple paths, as the oracle).
+- Evidence: all 17 recursive fixture cases (workloads 11, 13, 14, 15, 20) pass both ways; today's closure is all-pairs (a 111k-node tree
+  breaks the 100k-pair limit; each XTDB scratch round 205-410 ms). Property path 4-15 ms to reach 11k, ~130 ms to 111k, but needs IRI refs
+  and cannot filter edges by time; QLever returns no row for `p*` from a constant absent from the graph (differs from W3C).
+- QLever ledger ids must be IRIs: VALUES of literals costs ~0.25 ms planning per literal (frontier to 8.6k: 3.2 s literal vs 0.28 s IRI).
+  Affects EXP-Q01 compact ledger. QLever `PathSearch` over a ledger edge subquery gives exact reach and simple-path counts in one read
+  (71,074 paths in 1.66 s) but needs a cycle guard: rival, not default.
+- XTDB ledger frontier = a column scan per round (235-330 ms at 333k rows, linear); entity-keyed tables 3-7 ms for frontier 10, ~100 ms
+  for 1,000. XTQL `rel` join 17-120 ms per round (scans); `_id` OR-chain fails to compile at ~100 scalar params.
+- NEW XTDB 2.2.0 WRONG-RESULT BUG: `col = ANY($1) AND <other predicate>` silently returns zero or wrong rows; use
+  `IN (SELECT x FROM UNNEST($1) AS u(x))`. Forwarded to EXP-X02 and R14.
+### Orchestrator decisions on R10's questions
+1. QLever Tier 1 (property paths) ships after the frontier loop passes G2, as an optimization that must match the frontier results
+   differentially; the frontier loop is the exact default.
+2. IRI entity ids and refs in the QLever compact ledger: yes (10x frontier cost difference; matches the R3/R01 naming).
+3. XTDB Tier 2 at scale: a write-path edge index (forward and reverse ref tables, paged per R7); an early-refusal scan budget is the
+   interim guard.
+4. C8 covers every read API: the Datalog `rules` path and `makeXtdbMaintainedQueries` must stop writing scratch state from read calls.
+
+## R14 XTDB 2.2.0 correctness hazards (Sonnet xhigh) — PROGRESSED (knowledge)
+Report lab/research/R14-xtdb-correctness-hazards.md (22 hazards). Top five, all reproduced on our dev engine:
+1. SUM over BIGINT wraps silently (workloads 06, 07, 08 sum BIGINT directly); guard `CAST(.. AS DECIMAL(32,0))` is exact and free.
+2. Correlated NOT EXISTS / EXISTS / IN / NOT IN drop or null rows when an inner predicate is unknown (#6313, fix unreleased); hit by
+   workloads 09, 12, 13, `Reachability.ts:196` and the constraint ref check; guard `(p) IS TRUE`, no measured cost.
+3. Mark join with > 100,000 build rows answers false for every row (#6345, unreleased); hits projected or OR-ed IN/EXISTS, i.e. our
+   Datalog `or` and the constraint check; guard: raise XTDB_JOIN_SPILL_THRESHOLD or rewrite as UNION. Matters at year-one scale.
+4. Join pushdown under LIMIT or a window (#6151); TemporalQueries.ts span/island window CTEs unverified.
+5. `col = ANY(x) AND p` misparses (`Sql.g4:753-756`); no builder uses ANY but R7 recommended it (R7 lines 134, 144, 234 are wrong advice).
+- Next tier: NULL-key outer joins (#6339), INTERSECT/EXCEPT miss NULLs (#6340), DISTINCT/GROUP BY over lists with NULL (#6341);
+  our fixtures have no NULL cases that would catch them.
+- Answers R7's open question: after a restart a node plans over L0 until the next transaction (#6174); results stay correct.
+- The Datalog compiler inlines position/valid-time bounds as literals (`compiler.ts:230-234`); each distinct literal adds JVM classes
+  (#5928), a likely contributor to earlier memory exhaustion. Prefer parameters.
+- No exposure: PATCH, UPDATE, FOR PORTION OF, FOR SYSTEM_TIME, default valid time. 19 empty r14_* tables remain in the dev catalog
+  (no DROP TABLE in 2.2.0).
+
+## R15 presence, deletion, cascade (Sonnet xhigh) — PROGRESSED (knowledge)
+Report lab/research/R15-presence-deletion-cascade.md. Options A (retraction only) ⊂ B (valid-time deletion on derived presence)
+⊂ C (explicit opt-in presence carrier plus B). Recommendation C, staged (B planner first, carrier second).
+- Findings: reference enforcement loads every live row of the source and target types on each enforced command: this cannot sit on
+  the P2 commit path at 10m entities without a touch-set check (now a P2 work item). REST DELETE/PUT may raise
+  TransactionConflictError for an entity with a live but expired fact (EntityState compares all live rows; observed set is
+  valid-time filtered): needs a test. No transact operation ends valid time; clipping needs new assertion ids.
+- Provisional orchestrator ruling (flagged to Sam as product decisions): Option C staged; "delete" ends valid time from now while
+  REST DELETE keeps its recorded-retraction contract; undeclared reference action defaults to restrict; cascade is any-parent on
+  card-one references only; explicit presence opt-in per EntityType (+1 fact per entity). PII erasure (crypto-shredding) is IN scope
+  as a requirement (Sam's paste), unlike R15's "deferred" stance.
+
+## SCOPE v2 (Sam, 2026-11-07) — documents rewritten
+- North star = Sam's five ranked priorities (lab/NORTH-STAR.md). Scope = lab/SCOPE.md (Sam confirmed the restatement). Measurements,
+  requirements and 20 real-world golden scenarios = lab/TARGETS.md. PLAN v2 and SCORECARD v2 rewritten around them.
+- Numeric requirement corrected by Sam: "no silent precision loss", not native int64 (lab/research/SAM-pasted-numbers-2026-11-07.md).
+- Anti-leak: repo-root CLAUDE.md points every agent at lab/SCOPE.md; superseded banners added to AGENTS.md, wiki/goals.md,
+  wiki/status.md, handoffs/claude-native/README.md and START-HERE.md, qualification/devloop/PLAN.md, qualification/PLAN.md;
+  RULINGS Q2/Q4/Q11 and the int64 rulings marked superseded. All future briefs carry North star and Scope lines.
+
+## GEN-2 dispatch 2026-11-07 (scope v2)
+EXP-N01 (NS benchmark driver), EXP-W01 (20 golden scenarios), EXP-A01 retarget to contract 0.3.0, EXP-R01 fixes F1-F8 under the
+corrected numeric rule, V-O01 oracle acceptance with the G01 cross-check, R16 and R17 north-star fit research per engine. EXP-X02 and
+EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) sum finding).
+
+## Hourly learnings pass (cron ae766d26) after the gen-2 dispatch
+- North star reread. No experiment finished since the gen-2 dispatch entry; notebook current.
+- Contention ahead: pool 9/11 GiB (dev XTDB 3, dev QLever 2.5, xtdb-s2 3.5 held by R16), so EXP-N01 (the fitness function, priority
+  order 1) could not get an exclusive slot. R16 time-boxed to ~30 minutes on s2; R17 falls back to dev QLever. Rule reinforced:
+  measurement work for the fitness function outranks research probes for slots.
+- New research: R18 engine-independent prior art for P1/P3/P4/P5 (pinned-version serving, current vs history split, change feed to
+  dependency index, read-your-own-write with derived layers, sweep scheduling, bounded subgraph pulls), ending in ranked falsifiable
+  experiment proposals.
+
+## EXP-R01 fixes F1-F8 (commit 4e073a8) — PROGRESSED; re-verification requested
+- Exactness now follows the corrected numeric rule: DoubleRoundTrip, numeric classes, InexactValueError, inexactPolicy in the spec id,
+  CalendarDate, Finite, XTDB valid-time grid fixed. core 826 tests. Decimal value kind deferred to EXP-R02 (needs a TypeExpr primitive).

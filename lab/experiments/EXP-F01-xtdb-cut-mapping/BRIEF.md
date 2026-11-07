@@ -1,5 +1,8 @@
 # EXP-F01 falsifier: can XTDB's own system time serve exact Triplex recorded cuts? (lane X)
 
+**North star:** P1 (reads pinned to an exact point in time) through native system-time reads on XTDB.
+**Scope:** goals and targets come only from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; inherited homebase files are for code facts only.
+
 ## Commander's intent
 Decide, with evidence, whether the XTDB projection can answer Triplex reads at a recorded cut by using
 `FOR SYSTEM_TIME AS OF S`, where S is the system time XTDB itself assigned to the physical transaction that

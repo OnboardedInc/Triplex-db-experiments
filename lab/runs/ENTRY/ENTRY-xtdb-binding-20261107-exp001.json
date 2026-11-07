@@ -1,0 +1,43 @@
+{
+  "format": "tx2-entry-binding/1",
+  "experiment": "EXP-001",
+  "runKind": "control",
+  "note": "Entry checks run directly (no gate.mjs wrapper exists for them) against the dev slot right after G2 f59e9c, same build.",
+  "git": {
+    "head": "3deb09e2adbbb8b20757328ea943df5b79830f85",
+    "branch": "exp/001-xtdb-baseline",
+    "statusShort": "?? lab/runs/ENTRY/\n?? lab/runs/G0/G0-xtdb-20261107T190435Z-3bbfe6.json\n?? lab/runs/G1/G1-xtdb-20261107T190528Z-50077c.json\n?? lab/runs/G2/G2-xtdb-20261107T190622Z-f59e9c.json"
+  },
+  "node": "v22.23.2",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "engine": {
+    "container": "tx2-xtdb-dev",
+    "containerId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+    "startedAt": "2026-11-07T18:54:24.517543727Z",
+    "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac"
+  },
+  "scripts": {
+    "packages/xtdb/experiments/native-entry.ts": "ade743681636055b7e5e18fcb105f8da59b579e8de61b65452596b05027872a4",
+    "packages/qlever/experiments/verify-xtdb-entry.ts": "4c1ab37b826424eb7d2d13e1e4f020ad428e1da7d68cdf51249994333912891e"
+  },
+  "reports": [
+    {
+      "path": "lab/runs/ENTRY/ENTRY-xtdb-native-20261107-exp001.json",
+      "sha256": "5d5dbcd6466ee15cb19e804b43e4358a40936cec58311c96948293a821629512",
+      "status": "PASS_PUBLIC_NATIVE_SMALL",
+      "checks": 13,
+      "passed": 13,
+      "changedFiles": []
+    },
+    {
+      "path": "lab/runs/ENTRY/ENTRY-xtdb-independent-20261107-exp001.json",
+      "sha256": "7c39fe1835a4ea82e391d6d32b240716427b59bc524a82504bc1bf5be13972f5",
+      "status": "PASS_FOCUSED_ONLY",
+      "checks": 6,
+      "passed": 6,
+      "changedFiles": null
+    }
+  ],
+  "createdAt": "2026-11-07T19:08:55.065Z"
+}
