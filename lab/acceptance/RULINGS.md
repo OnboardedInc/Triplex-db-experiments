@@ -136,3 +136,13 @@ in `proposed_rulings.json`.
 | Q31i W0 coverage and review | TARGETS 6.1 items 6 and 7: frozen coverage floors (R2 changes ≥ 20% of in-scope subjects' outputs, every rule fires for ≥ 5% of subjects, Zipf location fanout over 2,000 locations at 100k, ≥ 1% of evaluations yield three or more work items); domain-dependent comparisons blocked until V-D01 independently reviews W0 and its hashes are pinned. | round 2 findings 6, 18 |
 | Q31j legacy int64 vectors | The contract compiles explicit lane-specific outcomes for G1-I64-01 and every other legacy vector that commits signed-64 extremes: XTDB commits them; QLever's qualified routes reject values beyond ±2^59 with a typed error before mutation. The original vectors stay unchanged as audit evidence. | round 2 finding 20; Sam's numeric rule |
 | Q31k positive evaluator fixtures | The evaluator catalog adds valid positive fixtures (complete receipts that must close), so an evaluator that always returns OPEN fails. | round 2 finding 14 |
+
+## Rulings on contract 0.3.3 questions (2026-11-07; Q32)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q32a Q30 | Compile Q30 (wire exactness) into 0.3.3 now, before Codex round 3. | change control |
+| Q32b legacy vectors on QLever | Accepted: a vector that puts all its values in one command becomes a rejection test on QLever; in-range boundary coverage comes from the integer-edge and range-out case sets. Follow-up: QLever in-range companion vectors, authored by an independent golden author (not EXP-O02), queued as EXP-G02. | Q31j |
+| Q32c invalid-command share | 0.1% of trace commands are deliberately invalid (values no engine may hold), marked in the trace. | Q31a |
+| Q32d queue bound | Accepted: queue depth in seconds = queued commands / steady offered rate; drain time runs until the queue is back within the 2 s bound. | Q31a |
+| Q32e position gate scope (narrows the proposal) | The four position falsifiers gate a composition only when its positions are non-dense. A composition whose positions are dense (today's scope-counter adapters, the A0 controls) satisfies `G7.position.coordinates` with the existing nested-cut cases, so A0 baselines are not blocked. EXP-P2X runs the four falsifiers first for its non-dense candidate. | Q31c (the falsifiers exist for non-dense positions) |
+| Q32f W0 pin | Accepted: null until V-D01 reviews W0; pinning needs a contract version bump. | Q31i |
