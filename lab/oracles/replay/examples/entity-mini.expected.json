@@ -1,0 +1,1064 @@
+{
+ "format": "triplex-db-2/o-replay-expected/1",
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.2.0",
+  "sourceSha256": {
+   "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "errors.py": "315cb92ac1d886ae208f0c2c98d8f28f307dcd443d4bdae9810e6918bda36fcb",
+   "values.py": "3b770e78318f26288adf3a48bc36ceff221d681f3cb6de55b135b620f5da31a0",
+   "exact.py": "12ab8f5e94106ebfd5f46af664c441bab28538dcc2feb3354d2c73e37914ef45",
+   "replay.py": "5c80dba491f99ee7984571cd3f8549acc548d789bfd329175f29d0f62ae4758d",
+   "constraints.py": "e93fcba3ca36be607b05f522dd779869ced816e2834f629130ecdd2408527571",
+   "views.py": "5c9118df0cf2648b54c408d111fea584bdaabc1423565e23cbfffc2754fe6da2",
+   "entities.py": "e1a9cabe316acaae7a84aaec41289600d6fc9217ff6a18372ab73d5115ae7dc8",
+   "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "run.py": "76ad66f9b93e181dcc5b85b80d89c98b6dd89c4e05cdbc276b6a492547ca37cb",
+   "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+  }
+ },
+ "caseId": "example/entity-mini",
+ "caseSha256": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+ "lane": {
+  "name": "core",
+  "integerRange": [
+   "-9223372036854775808",
+   "9223372036854775807"
+  ]
+ },
+ "verdict": "PASS",
+ "divergedAtCommand": null,
+ "receiptConsistency": {
+  "status": "PASS",
+  "violations": []
+ },
+ "commandOutcomes": [
+  {
+   "command": 0,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": {
+    "outcome": "committed"
+   },
+   "verdict": "PASS"
+  },
+  {
+   "command": 1,
+   "expected": {
+    "outcome": "rejected",
+    "error": "E-CONSTRAINT",
+    "errorTag": "ConstraintViolationError",
+    "reason": "unique",
+    "phase": "commit",
+    "reasonAlternatives": [
+     "unique"
+    ],
+    "message": "new or worsened constraint violation",
+    "codes": [
+     "unique"
+    ],
+    "violations": [
+     {
+      "code": "unique",
+      "entityType": "Person",
+      "attribute": ":person/name",
+      "validAt": 0,
+      "actual": 2,
+      "subject": "person:ann",
+      "claimants": [
+       "person:ann",
+       "person:bob"
+      ],
+      "valueIdentity": "string:Ann"
+     }
+    ]
+   },
+   "observed": {
+    "outcome": "rejected",
+    "errorTag": "ConstraintViolationError"
+   },
+   "verdict": "PASS"
+  },
+  {
+   "command": 2,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": {
+    "outcome": "committed"
+   },
+   "verdict": "PASS"
+  },
+  {
+   "command": 3,
+   "expected": {
+    "outcome": "rejected",
+    "error": "E-COMMAND-COMMITTED",
+    "errorTag": "CommandAlreadyCommittedError",
+    "reason": "command-already-committed",
+    "phase": "commit",
+    "message": "command id already committed",
+    "commandId": "create-1",
+    "transactionId": "tx-A"
+   },
+   "observed": {
+    "outcome": "rejected",
+    "errorTag": "CommandAlreadyCommittedError"
+   },
+   "verdict": "PASS"
+  }
+ ],
+ "state": [
+  {
+   "scope": "s1",
+   "lastPosition": 5,
+   "assertions": [
+    {
+     "id": "i1",
+     "entityId": "org:acme",
+     "attribute": ":org/name",
+     "value": {
+      "type": "string",
+      "value": "Acme"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 1000.25,
+     "recordedPosition": 4,
+     "createdBy": null,
+     "entityType": "Org",
+     "schemaVersion": 1,
+     "txId": "tx-A",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "i2",
+     "entityId": "person:ann",
+     "attribute": ":person/name",
+     "value": {
+      "type": "string",
+      "value": "Ann"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 1000.25,
+     "recordedPosition": 4,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": 1,
+     "txId": "tx-A",
+     "retractedAt": 1001.25,
+     "retractedPosition": 5,
+     "retractTxId": "tx-B"
+    },
+    {
+     "id": "i3",
+     "entityId": "person:ann",
+     "attribute": ":person/score",
+     "value": {
+      "type": "number",
+      "value": -0,
+      "bits": "0x8000000000000000"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 1000.25,
+     "recordedPosition": 4,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": 1,
+     "txId": "tx-A",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "i4",
+     "entityId": "person:ann",
+     "attribute": ":person/big",
+     "value": {
+      "type": "integer",
+      "value": "9223372036854775807"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 1000.25,
+     "recordedPosition": 4,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": 1,
+     "txId": "tx-A",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "i5",
+     "entityId": "person:ann",
+     "attribute": ":person/tag",
+     "value": {
+      "type": "string",
+      "value": "z"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 1000.25,
+     "recordedPosition": 4,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": 1,
+     "txId": "tx-A",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "i6",
+     "entityId": "person:ann",
+     "attribute": ":person/tag",
+     "value": {
+      "type": "string",
+      "value": "\u00e9"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 1000.25,
+     "recordedPosition": 4,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": 1,
+     "txId": "tx-A",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "i7",
+     "entityId": "person:ann",
+     "attribute": ":person/org",
+     "value": {
+      "type": "ref",
+      "value": "org:acme"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 1000.25,
+     "recordedPosition": 4,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": 1,
+     "txId": "tx-A",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "i8",
+     "entityId": "person:ann",
+     "attribute": ":person/name",
+     "value": {
+      "type": "string",
+      "value": "Anne"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 1001.25,
+     "recordedPosition": 5,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": 1,
+     "txId": "tx-B",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    }
+   ],
+   "transactions": [
+    {
+     "txId": "tx-A",
+     "position": 4,
+     "instant": 1000.25,
+     "actor": "agent:a",
+     "commandId": "create-1",
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "i1",
+       "entityId": "org:acme",
+       "attribute": ":org/name",
+       "entityType": "Org",
+       "value": {
+        "type": "string",
+        "value": "Acme"
+       },
+       "validFrom": 0,
+       "recordedAt": 1000.25,
+       "assertionTxId": "tx-A"
+      },
+      {
+       "op": "assert",
+       "tripleId": "i2",
+       "entityId": "person:ann",
+       "attribute": ":person/name",
+       "entityType": "Person",
+       "value": {
+        "type": "string",
+        "value": "Ann"
+       },
+       "validFrom": 0,
+       "recordedAt": 1000.25,
+       "assertionTxId": "tx-A"
+      },
+      {
+       "op": "assert",
+       "tripleId": "i3",
+       "entityId": "person:ann",
+       "attribute": ":person/score",
+       "entityType": "Person",
+       "value": {
+        "type": "number",
+        "value": -0,
+        "bits": "0x8000000000000000"
+       },
+       "validFrom": 0,
+       "recordedAt": 1000.25,
+       "assertionTxId": "tx-A"
+      },
+      {
+       "op": "assert",
+       "tripleId": "i4",
+       "entityId": "person:ann",
+       "attribute": ":person/big",
+       "entityType": "Person",
+       "value": {
+        "type": "integer",
+        "value": "9223372036854775807"
+       },
+       "validFrom": 0,
+       "recordedAt": 1000.25,
+       "assertionTxId": "tx-A"
+      },
+      {
+       "op": "assert",
+       "tripleId": "i5",
+       "entityId": "person:ann",
+       "attribute": ":person/tag",
+       "entityType": "Person",
+       "value": {
+        "type": "string",
+        "value": "z"
+       },
+       "validFrom": 0,
+       "recordedAt": 1000.25,
+       "assertionTxId": "tx-A"
+      },
+      {
+       "op": "assert",
+       "tripleId": "i6",
+       "entityId": "person:ann",
+       "attribute": ":person/tag",
+       "entityType": "Person",
+       "value": {
+        "type": "string",
+        "value": "\u00e9"
+       },
+       "validFrom": 0,
+       "recordedAt": 1000.25,
+       "assertionTxId": "tx-A"
+      },
+      {
+       "op": "assert",
+       "tripleId": "i7",
+       "entityId": "person:ann",
+       "attribute": ":person/org",
+       "entityType": "Person",
+       "value": {
+        "type": "ref",
+        "value": "org:acme"
+       },
+       "validFrom": 0,
+       "recordedAt": 1000.25,
+       "assertionTxId": "tx-A"
+      }
+     ],
+     "changedEntities": [
+      "org:acme",
+      "person:ann"
+     ]
+    },
+    {
+     "txId": "tx-B",
+     "position": 5,
+     "instant": 1001.25,
+     "actor": "agent:a",
+     "commandId": "rename",
+     "changes": [
+      {
+       "op": "retract",
+       "tripleId": "i2",
+       "entityId": "person:ann",
+       "attribute": ":person/name",
+       "entityType": "Person",
+       "value": {
+        "type": "string",
+        "value": "Ann"
+       },
+       "validFrom": 0,
+       "recordedAt": 1000.25,
+       "assertionTxId": "tx-A",
+       "retractedAt": 1001.25,
+       "retractionTxId": "tx-B"
+      },
+      {
+       "op": "assert",
+       "tripleId": "i8",
+       "entityId": "person:ann",
+       "attribute": ":person/name",
+       "entityType": "Person",
+       "value": {
+        "type": "string",
+        "value": "Anne"
+       },
+       "validFrom": 0,
+       "recordedAt": 1001.25,
+       "assertionTxId": "tx-B"
+      }
+     ],
+     "changedEntities": [
+      "person:ann"
+     ]
+    }
+   ]
+  }
+ ],
+ "queries": [
+  {
+   "id": "ann-now",
+   "kind": "get",
+   "result": {
+    "entityId": "person:ann",
+    "entityType": "Person",
+    "properties": {
+     "big": {
+      "value": {
+       "type": "integer",
+       "value": "9223372036854775807"
+      },
+      "supports": [
+       "i4"
+      ]
+     },
+     "name": {
+      "value": {
+       "type": "string",
+       "value": "Anne"
+      },
+      "supports": [
+       "i8"
+      ]
+     },
+     "org": {
+      "value": {
+       "type": "ref",
+       "value": "org:acme"
+      },
+      "supports": [
+       "i7"
+      ]
+     },
+     "score": {
+      "value": {
+       "type": "number",
+       "value": -0,
+       "bits": "0x8000000000000000"
+      },
+      "supports": [
+       "i3"
+      ]
+     },
+     "tags": {
+      "values": [
+       {
+        "value": {
+         "type": "string",
+         "value": "z"
+        },
+        "supports": [
+         "i5"
+        ]
+       },
+       {
+        "value": {
+         "type": "string",
+         "value": "\u00e9"
+        },
+        "supports": [
+         "i6"
+        ]
+       }
+      ]
+     }
+    },
+    "includes": {
+     "org": {
+      "entityId": "org:acme",
+      "entityType": "Org",
+      "properties": {
+       "name": {
+        "value": {
+         "type": "string",
+         "value": "Acme"
+        },
+        "supports": [
+         "i1"
+        ]
+       }
+      },
+      "missingRequired": [],
+      "undeclaredAttributes": []
+     }
+    },
+    "missingRequired": [],
+    "undeclaredAttributes": []
+   }
+  },
+  {
+   "id": "ann-before-rename",
+   "kind": "get",
+   "result": {
+    "entityId": "person:ann",
+    "entityType": "Person",
+    "properties": {
+     "big": {
+      "value": {
+       "type": "integer",
+       "value": "9223372036854775807"
+      },
+      "supports": [
+       "i4"
+      ]
+     },
+     "name": {
+      "value": {
+       "type": "string",
+       "value": "Ann"
+      },
+      "supports": [
+       "i2"
+      ]
+     },
+     "org": {
+      "value": {
+       "type": "ref",
+       "value": "org:acme"
+      },
+      "supports": [
+       "i7"
+      ]
+     },
+     "score": {
+      "value": {
+       "type": "number",
+       "value": -0,
+       "bits": "0x8000000000000000"
+      },
+      "supports": [
+       "i3"
+      ]
+     },
+     "tags": {
+      "values": [
+       {
+        "value": {
+         "type": "string",
+         "value": "z"
+        },
+        "supports": [
+         "i5"
+        ]
+       },
+       {
+        "value": {
+         "type": "string",
+         "value": "\u00e9"
+        },
+        "supports": [
+         "i6"
+        ]
+       }
+      ]
+     }
+    },
+    "missingRequired": [],
+    "undeclaredAttributes": []
+   }
+  },
+  {
+   "id": "ann-history",
+   "kind": "history",
+   "result": {
+    "cut": {
+     "scope": "s1",
+     "position": 4,
+     "recordedAt": null,
+     "validAt": null
+    },
+    "entityId": "person:ann",
+    "rawLifetime": [
+     {
+      "id": "i2",
+      "entityId": "person:ann",
+      "attribute": ":person/name",
+      "value": {
+       "type": "string",
+       "value": "Ann"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": 1001.25,
+      "retractedPosition": 5,
+      "retractTxId": "tx-B"
+     },
+     {
+      "id": "i3",
+      "entityId": "person:ann",
+      "attribute": ":person/score",
+      "value": {
+       "type": "number",
+       "value": -0,
+       "bits": "0x8000000000000000"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i4",
+      "entityId": "person:ann",
+      "attribute": ":person/big",
+      "value": {
+       "type": "integer",
+       "value": "9223372036854775807"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i5",
+      "entityId": "person:ann",
+      "attribute": ":person/tag",
+      "value": {
+       "type": "string",
+       "value": "z"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i6",
+      "entityId": "person:ann",
+      "attribute": ":person/tag",
+      "value": {
+       "type": "string",
+       "value": "\u00e9"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i7",
+      "entityId": "person:ann",
+      "attribute": ":person/org",
+      "value": {
+       "type": "ref",
+       "value": "org:acme"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ],
+    "asOfSnapshot": [
+     {
+      "id": "i2",
+      "entityId": "person:ann",
+      "attribute": ":person/name",
+      "value": {
+       "type": "string",
+       "value": "Ann"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i3",
+      "entityId": "person:ann",
+      "attribute": ":person/score",
+      "value": {
+       "type": "number",
+       "value": -0,
+       "bits": "0x8000000000000000"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i4",
+      "entityId": "person:ann",
+      "attribute": ":person/big",
+      "value": {
+       "type": "integer",
+       "value": "9223372036854775807"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i5",
+      "entityId": "person:ann",
+      "attribute": ":person/tag",
+      "value": {
+       "type": "string",
+       "value": "z"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i6",
+      "entityId": "person:ann",
+      "attribute": ":person/tag",
+      "value": {
+       "type": "string",
+       "value": "\u00e9"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "i7",
+      "entityId": "person:ann",
+      "attribute": ":person/org",
+      "value": {
+       "type": "ref",
+       "value": "org:acme"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 1000.25,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": 1,
+      "txId": "tx-A",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "journal",
+   "kind": "transactions",
+   "result": {
+    "transactions": [
+     {
+      "txId": "tx-A",
+      "position": 4,
+      "instant": 1000.25,
+      "actor": "agent:a",
+      "commandId": "create-1",
+      "changes": [
+       {
+        "op": "assert",
+        "tripleId": "i1",
+        "entityId": "org:acme",
+        "attribute": ":org/name",
+        "entityType": "Org",
+        "value": {
+         "type": "string",
+         "value": "Acme"
+        },
+        "validFrom": 0,
+        "recordedAt": 1000.25,
+        "assertionTxId": "tx-A"
+       },
+       {
+        "op": "assert",
+        "tripleId": "i2",
+        "entityId": "person:ann",
+        "attribute": ":person/name",
+        "entityType": "Person",
+        "value": {
+         "type": "string",
+         "value": "Ann"
+        },
+        "validFrom": 0,
+        "recordedAt": 1000.25,
+        "assertionTxId": "tx-A"
+       },
+       {
+        "op": "assert",
+        "tripleId": "i3",
+        "entityId": "person:ann",
+        "attribute": ":person/score",
+        "entityType": "Person",
+        "value": {
+         "type": "number",
+         "value": -0,
+         "bits": "0x8000000000000000"
+        },
+        "validFrom": 0,
+        "recordedAt": 1000.25,
+        "assertionTxId": "tx-A"
+       },
+       {
+        "op": "assert",
+        "tripleId": "i4",
+        "entityId": "person:ann",
+        "attribute": ":person/big",
+        "entityType": "Person",
+        "value": {
+         "type": "integer",
+         "value": "9223372036854775807"
+        },
+        "validFrom": 0,
+        "recordedAt": 1000.25,
+        "assertionTxId": "tx-A"
+       },
+       {
+        "op": "assert",
+        "tripleId": "i5",
+        "entityId": "person:ann",
+        "attribute": ":person/tag",
+        "entityType": "Person",
+        "value": {
+         "type": "string",
+         "value": "z"
+        },
+        "validFrom": 0,
+        "recordedAt": 1000.25,
+        "assertionTxId": "tx-A"
+       },
+       {
+        "op": "assert",
+        "tripleId": "i6",
+        "entityId": "person:ann",
+        "attribute": ":person/tag",
+        "entityType": "Person",
+        "value": {
+         "type": "string",
+         "value": "\u00e9"
+        },
+        "validFrom": 0,
+        "recordedAt": 1000.25,
+        "assertionTxId": "tx-A"
+       },
+       {
+        "op": "assert",
+        "tripleId": "i7",
+        "entityId": "person:ann",
+        "attribute": ":person/org",
+        "entityType": "Person",
+        "value": {
+         "type": "ref",
+         "value": "org:acme"
+        },
+        "validFrom": 0,
+        "recordedAt": 1000.25,
+        "assertionTxId": "tx-A"
+       }
+      ],
+      "changedEntities": [
+       "org:acme",
+       "person:ann"
+      ]
+     },
+     {
+      "txId": "tx-B",
+      "position": 5,
+      "instant": 1001.25,
+      "actor": "agent:a",
+      "commandId": "rename",
+      "changes": [
+       {
+        "op": "retract",
+        "tripleId": "i2",
+        "entityId": "person:ann",
+        "attribute": ":person/name",
+        "entityType": "Person",
+        "value": {
+         "type": "string",
+         "value": "Ann"
+        },
+        "validFrom": 0,
+        "recordedAt": 1000.25,
+        "assertionTxId": "tx-A",
+        "retractedAt": 1001.25,
+        "retractionTxId": "tx-B"
+       },
+       {
+        "op": "assert",
+        "tripleId": "i8",
+        "entityId": "person:ann",
+        "attribute": ":person/name",
+        "entityType": "Person",
+        "value": {
+         "type": "string",
+         "value": "Anne"
+        },
+        "validFrom": 0,
+        "recordedAt": 1001.25,
+        "assertionTxId": "tx-B"
+       }
+      ],
+      "changedEntities": [
+       "person:ann"
+      ]
+     }
+    ],
+    "next": 5
+   }
+  },
+  {
+   "id": "max-plus-one",
+   "kind": "expr",
+   "error": {
+    "error": "E-INTEGER-OVERFLOW",
+    "_tag": "QueryError",
+    "reason": "integer-overflow",
+    "phase": "execution",
+    "message": "result outside the core integer range [-2^63, 2^63-1]",
+    "result": "9223372036854775808"
+   }
+  }
+ ],
+ "rulesInEffect": {
+  "attributeSyntax": "any",
+  "createdByDefault": "null",
+  "datetimeRange": null,
+  "emptyIntervalRejected": true,
+  "journalChangeOrder": "operation-order",
+  "reservedNamespaces": null,
+  "retractNonLive": "transaction-conflict",
+  "retractPatternEmptyRejected": true,
+  "retractPatternSeesStaged": true,
+  "typeMembership": "valid-at-instant",
+  "validFromDefault": "transaction-instant"
+ },
+ "reservedNamespaces": {
+  "attributePrefixes": [
+   ":triplex/",
+   ":_tx/"
+  ],
+  "entityIdPrefixes": [
+   "_triplex/"
+  ],
+  "entityTypePrefixes": [
+   "triplex."
+  ],
+  "entityTypes": [
+   "_Transaction"
+  ]
+ }
+}
