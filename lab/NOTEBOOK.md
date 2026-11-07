@@ -824,3 +824,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - 22:50Z: EXP-F02b: zero silent value changes on both engines (38 before, 0 after over 1,762 records). The fresh QLever resident ran the
   ledger section in 21 s against 919 s on the old one, which confirms the growing persisted delta was the dev resident's problem. Next:
   G1 qlever with the f1 profile, then an independent verifier (V-F02b) before merge; G1 xtdb in a quiet window.
+
+## 2026-11-08 ~23:00Z: EXP-N01 merged (driver built, no A0 numbers); exclusive slots are the bottleneck
+- **The pool cannot hold both dev residents plus the follower experiment plus an A0 run.** xtdb-dev 3.0 + qlever-dev 3.5 leave 4.5 GiB
+  for exclusive work; X05 needs a 3.5 GiB writer plus a follower, and N01's A0 needs a 3.5 GiB slot. So exclusive slots run one at a
+  time, in north-star order: EXP-P2X (s1, now) -> EXP-X05 (s2 plus a follower capped at about 1 GiB) -> EXP-N01 A0 on XTDB (zero-readers
+  run, then the ladder with --baseline) -> V-X02's XTQL rerun. QLever exclusive work (EXP-P2Q measurement, A0 QLever, EXP-Q07) needs
+  one of the dev residents paused or the XTDB queue drained.
+- **Seeding learning:** transact-based seeding cannot reach the 10k rung on QLever's current adapter (about 30 facts/s); A0 seeding goes
+  through a bulk path (QLever index build from a log file; XTDB batched inserts), and the measured window starts after seeding.
+- **Contention learning:** XTDB commits in one runtime collide on the scope-wide position CAS under the driver's concurrency, the same root
+  cause EXP-P2X attacks; until P2X lands, A0 uses `public-queued`.
