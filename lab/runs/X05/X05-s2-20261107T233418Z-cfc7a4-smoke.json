@@ -1,0 +1,1317 @@
+{
+  "format": "tx2-x05-receipt/1",
+  "experiment": "EXP-X05",
+  "runId": "X05-s2-20261107T233418Z-cfc7a4-smoke",
+  "runKind": "smoke",
+  "startedAt": "2026-11-07T23:34:18.638Z",
+  "params": {
+    "slot": "s2",
+    "smoke": true,
+    "subjects": 2000,
+    "active": 200,
+    "rate": 20,
+    "levelS": 8,
+    "levels": [
+      4,
+      64
+    ],
+    "cap": 16,
+    "threads": 4,
+    "writerConns": 8,
+    "singleMaxConns": 28,
+    "splitShare": 0.1,
+    "lagEveryMs": 500,
+    "e5S": 8,
+    "burstS": 8,
+    "burstX": 5,
+    "burstConns": 12,
+    "recoverS": 6,
+    "warmS": 3,
+    "connRss": 256,
+    "phases": [
+      "e5",
+      "conn",
+      "burst"
+    ],
+    "seed": "x05-v1",
+    "drainMaxMs": 180000
+  },
+  "tables": {
+    "ent": "x58bf36b_ent",
+    "claim": "x58bf36b_claim",
+    "ledger": "x58bf36b_ledger",
+    "feed": "x58bf36b_feed"
+  },
+  "northStar": "P1 (TARGETS 1.1 P1): writer commit latency with readers on a read-only follower versus the zero-reader run on the same trace segment; zero stale reads.",
+  "semantics": "TARGETS 1.1 P1 items 1, 2, 4, 5 (item 3 by a forced block cut at +1 s in every window); R19 E1, E4, E5, E9.",
+  "git": {
+    "head": "3785c8655e716b7c19f05a4ca5417abf5674feab",
+    "headTree": "706952dc3779d1d322657a6120e8b451eff439b1",
+    "branch": "exp/X05-xtdb-read-follower",
+    "dirty": true,
+    "stashCommit": "0b08aea3937a7217782d77dad1bda92490b87726",
+    "stashTree": "653131b83aaa8200372a8415c2dce507abcb67cc",
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs",
+      "lab/experiments/EXP-X05-xtdb-read-follower/reader-worker.mjs",
+      "lab/experiments/EXP-X05-xtdb-read-follower/run.sh",
+      "lab/runs/X05/"
+    ],
+    "sourceTreeId": "135dd7eed3245765c7358b3f2bb5f4f0b98fe9ee60779a83b4694eb0ca195d3e"
+  },
+  "driver": {
+    "lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs": "7ae53cd28cc241885c55b5500e7e47f21453357dce180051776ca960621d4d62",
+    "lab/experiments/EXP-X05-xtdb-read-follower/reader-worker.mjs": "1d357fe327b866fe8e75ef1ed6a7355873040f49e5c4051aadfa209f7b45702d",
+    "lab/experiments/EXP-X05-xtdb-read-follower/common.mjs": "a409b8fcfec202e14f23e2dfdcb266d4ab4244158bc8c8faa278ef51649c4e70"
+  },
+  "harness": {
+    "lab/bin/engine.mjs": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+    "lab/bin/lib.mjs": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f"
+  },
+  "slotsJsonSha256": "9c9e1562a747ab93fcba91ffef5899cbe80f9cf14d6e65955c5c0e9479022d9b",
+  "client": {
+    "postgresJs": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/index.js",
+    "postgresJsIndexSha256": "d8fea1a5311c47e65004646bc81f57305ac64d48f99004a5b3ca27bcfc6babf8",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "load": [
+        14.69873046875,
+        12.6083984375,
+        11.63623046875
+      ]
+    }
+  },
+  "reasons": [],
+  "enginesAtStart": {
+    "writer": {
+      "container": "tx2-xtdb-s2",
+      "containerId": "8a1f80bee143470ddc2b508c45f1cde4ad303c921c8566e03ec3520b2b35d86a",
+      "startedAt": "2026-11-07T22:56:51.718470534Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0,
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "pinnedImageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSha256Label": "a95a454df5bbf091f88993e4cc842c78b42225b83b59e6f2aea40288fc57f1d6",
+      "effectiveConfigSha256": "a95a454df5bbf091f88993e4cc842c78b42225b83b59e6f2aea40288fc57f1d6",
+      "effectiveConfig": {
+        "lane": "xtdb",
+        "slot": "s2",
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+        "env": {
+          "JDK_JAVA_OPTIONS": "-Xmx2g -XX:MaxDirectMemorySize=1g"
+        },
+        "memBytes": 3758096384,
+        "cpus": 2,
+        "cpusetCpus": "0,1",
+        "publish": "127.0.0.1:5472:5432",
+        "volume": "tx2-xtdb-s2-data:/var/lib/xtdb",
+        "cmd": [
+          "-f",
+          "/etc/xtdb/config.yaml"
+        ],
+        "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+      },
+      "configFileSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "cpusetCpus": "0,1",
+      "mounts": [
+        {
+          "source": "tx2-xtdb-s2-data",
+          "destination": "/var/lib/xtdb",
+          "rw": true
+        },
+        {
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-s2/config.yaml",
+          "destination": "/etc/xtdb/config.yaml",
+          "rw": false
+        }
+      ],
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5472/xtdb",
+      "holder": "EXP-X05-xtdb-read-follower"
+    },
+    "follower": {
+      "container": "tx2-xtdb-s2-ro",
+      "containerId": "acf1dcc3d67c70e77acdf6d8b4e33bcf93b3b4f900246f9317223282f51874fe",
+      "startedAt": "2026-11-07T22:57:02.441327053Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0,
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "pinnedImageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSha256Label": "b39175ed0d1c54e2bd5d08a884e730e1e8bf53fac903a15a374a64aae67dd4d6",
+      "effectiveConfigSha256": "b39175ed0d1c54e2bd5d08a884e730e1e8bf53fac903a15a374a64aae67dd4d6",
+      "effectiveConfig": {
+        "lane": "xtdb",
+        "slot": "s2",
+        "role": "follower",
+        "follows": "tx2-xtdb-s2",
+        "profile": "small",
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "configSource": "lab/config/xtdb-follower-small-config.yaml",
+        "configYamlSha256": "8e10ceb3be347bcc6160ad3c1409d4a16e848670682c2e903418e35048ab5994",
+        "env": {
+          "JDK_JAVA_OPTIONS": "-Xmx512m -XX:MaxDirectMemorySize=256m"
+        },
+        "memBytes": 1073741824,
+        "cpus": 2,
+        "cpusetCpus": "2,3",
+        "publish": "127.0.0.1:5482:5432",
+        "volume": "tx2-xtdb-s2-data:/var/lib/xtdb:ro",
+        "cmd": [
+          "-f",
+          "/etc/xtdb/config.yaml"
+        ],
+        "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+      },
+      "configFileSha256": "8e10ceb3be347bcc6160ad3c1409d4a16e848670682c2e903418e35048ab5994",
+      "memCapBytes": 1073741824,
+      "nanoCpus": 2000000000,
+      "cpusetCpus": "2,3",
+      "mounts": [
+        {
+          "source": "tx2-xtdb-s2-data",
+          "destination": "/var/lib/xtdb",
+          "rw": false
+        },
+        {
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-s2-ro/config.yaml",
+          "destination": "/etc/xtdb/config.yaml",
+          "rw": false
+        }
+      ],
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5482/xtdb",
+      "holder": "EXP-X05-xtdb-read-follower"
+    },
+    "volume": "tx2-xtdb-s2-data",
+    "slotOwner": {
+      "format": "tx2-slot-owner/1",
+      "lane": "xtdb",
+      "slot": "s2",
+      "mode": "exclusive",
+      "container": "tx2-xtdb-s2",
+      "volume": "tx2-xtdb-s2-data",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5472/xtdb",
+      "port": 5472,
+      "holder": "EXP-X05-xtdb-read-follower",
+      "experiment": "EXP-X05",
+      "pid": 37199,
+      "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a5b9cf52579902ee0",
+      "createdAt": "2026-11-07T22:56:51.306Z"
+    }
+  },
+  "tokenCheck": {
+    "systemTimeText": "2026-11-07 23:34:19.303057+00:00",
+    "awaitToken": "Cg4KBHh0ZGISBgoE0pT1CQ==",
+    "minted": "ChYKBHh0ZGISDgoMCPvqvtcGEOiQwZAB",
+    "mintedDecoded": {
+      "xtdb": [
+        "1794094459303057"
+      ]
+    },
+    "built": "ChYKBHh0ZGISDgoMCPvqvtcGEOiQwZAB",
+    "equal": true
+  },
+  "seed": {
+    "rid": -1,
+    "t": "1794094460642589",
+    "snapshotToken": "ChYKBHh0ZGISDgoMCPzqvtcGEMjCtLIC",
+    "awaitToken": "Cg4KBHh0ZGISBgoE6qeSCg==",
+    "clock": "2026-11-07T23:34:20.642589Z",
+    "ms": 1303,
+    "subjects": 2000
+  },
+  "followerCatchUp": {
+    "ms": 130,
+    "rows": 2000
+  },
+  "trace": {
+    "digest": "345a47372af218442bf7092b645eb26d1a9c493438b831a9267b6b93822bc6a6",
+    "commands": 157,
+    "rate": 20,
+    "seconds": 8
+  },
+  "e5": {
+    "a": {
+      "reads": 112,
+      "skipped": 61,
+      "errors": {},
+      "exact": 112,
+      "stale": 0,
+      "ahead": 0,
+      "issueMs": {
+        "n": 112,
+        "p50": 6.56,
+        "p90": 21.42,
+        "p99": 298.46,
+        "max": 299.64,
+        "mean": 17.5
+      },
+      "ms": {
+        "n": 112,
+        "p50": 83.36,
+        "p90": 259.82,
+        "p99": 553.69,
+        "max": 565.77,
+        "mean": 127.15
+      },
+      "within5ms": {
+        "reads": 41,
+        "fail0B000": 0,
+        "stale": 0
+      }
+    },
+    "b": {
+      "reads": 116,
+      "skipped": 57,
+      "errors": {},
+      "exact": 116,
+      "stale": 0,
+      "ahead": 0,
+      "issueMs": {
+        "n": 116,
+        "p50": 6.89,
+        "p90": 22.34,
+        "p99": 298.48,
+        "max": 299.65,
+        "mean": 17.47
+      },
+      "ms": {
+        "n": 116,
+        "p50": 71.28,
+        "p90": 204.93,
+        "p99": 428.5,
+        "max": 541.86,
+        "mean": 107.78
+      },
+      "within5ms": {
+        "reads": 42,
+        "fail0B000": 0,
+        "stale": 0
+      }
+    },
+    "c": {
+      "reads": 124,
+      "skipped": 49,
+      "errors": {},
+      "exact": 123,
+      "stale": 0,
+      "ahead": 1,
+      "issueMs": {
+        "n": 124,
+        "p50": 0.01,
+        "p90": 0.02,
+        "p99": 0.11,
+        "max": 0.24,
+        "mean": 0.01
+      },
+      "ms": {
+        "n": 124,
+        "p50": 63.94,
+        "p90": 243.9,
+        "p99": 394.66,
+        "max": 469.23,
+        "mean": 97.65
+      },
+      "within5ms": {
+        "reads": 124,
+        "fail0B000": 0,
+        "stale": 0
+      }
+    }
+  },
+  "connRss": {
+    "connections": 256,
+    "opened": 256,
+    "failures": {},
+    "openMs": 1341,
+    "rssBeforeMiB": 367,
+    "rssWithConnsMiB": 371,
+    "rssAfterCloseMiB": 371,
+    "perConnectionMiB": 0.02
+  },
+  "burstBacklogDrain": {
+    "ms": 0,
+    "leftQueued": 0,
+    "leftInflight": 0
+  },
+  "burst": {
+    "trace": {
+      "digest": "51fa733937550fd5a5c9a48a0acafa99eb95ea391072a5f09d08d533fabf1538",
+      "commands": 831,
+      "rate": 100,
+      "payloadNote": "50 facts, ledger values padded 400-1200 bytes each: about 20-60 KB per transaction"
+    }
+  },
+  "watermarksAtEnd": {
+    "writer": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 67915716,
+        "systemTime": "2026-11-07 23:35:52.462757+00:00"
+      }
+    ],
+    "follower": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 57131837,
+        "systemTime": "2026-11-07 23:35:27.219594+00:00"
+      }
+    ]
+  },
+  "metrics": {
+    "start": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "block_upload_timer_seconds_count{node_id=\"2c02dfbf\"} 10",
+        "block_upload_timer_seconds_sum{node_id=\"2c02dfbf\"} 1.128322791",
+        "block_upload_timer_seconds_max{node_id=\"2c02dfbf\"} 0.166297315",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "compactor_job_timer_seconds_count{node_id=\"2c02dfbf\"} 56",
+        "compactor_job_timer_seconds_sum{node_id=\"2c02dfbf\"} 6.88965516",
+        "compactor_job_timer_seconds_max{node_id=\"2c02dfbf\"} 0.653962866",
+        "compactor_jobs_available{node_id=\"2c02dfbf\"} 0.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"2c02dfbf\"} 2.2020096E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"2c02dfbf\"} 3.40262912E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"2c02dfbf\"} 1.4680064E7",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.02359296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.02359296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.02359296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.02359296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.02359296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.02359296",
+        "node_tx_await_seconds_count{node_id=\"2c02dfbf\"} 2066",
+        "node_tx_await_seconds_sum{node_id=\"2c02dfbf\"} 232.237882885",
+        "node_tx_await_seconds_max{node_id=\"2c02dfbf\"} 0.719052008",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.042991616",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.042991616",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.042991616",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.042991616",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.042991616",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.042991616",
+        "node_tx_execute_seconds_count{node_id=\"2c02dfbf\"} 2066",
+        "node_tx_execute_seconds_sum{node_id=\"2c02dfbf\"} 251.096259718",
+        "node_tx_execute_seconds_max{node_id=\"2c02dfbf\"} 0.731777973",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2c02dfbf\"} 2.127153E7",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 2.127153E7",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 2.127153E7",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"2c02dfbf\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"2c02dfbf\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"2c02dfbf\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.004448256",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0047104",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0047104",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0047104",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0047104",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0047104",
+        "tx_op_timer_seconds_count{node_id=\"2c02dfbf\"} 12344"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"e9490b27\"} 7296912.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"e9490b27\"} 1189184.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"e9490b27\"} 5.6522464E7",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"e9490b27\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"e9490b27\"} 2.127153E7",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"e9490b27\"} 2.127153E7",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"e9490b27\"} 2.127153E7",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"e9490b27\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"e9490b27\"} 10",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"e9490b27\"} 1.470137381",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"e9490b27\"} 0.172067359",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"e9490b27\"} 10",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"e9490b27\"} 6.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"e9490b27\"} 1.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\"} 10",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\"} 0.009815598",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0"
+      ]
+    },
+    "beforeBurst": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "block_upload_timer_seconds_count{node_id=\"2c02dfbf\"} 11",
+        "block_upload_timer_seconds_sum{node_id=\"2c02dfbf\"} 1.308022725",
+        "block_upload_timer_seconds_max{node_id=\"2c02dfbf\"} 0.179699934",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.087556096",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.095944704",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 1.1403264",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 1.1403264",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 1.1403264",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 1.1403264",
+        "compactor_job_timer_seconds_count{node_id=\"2c02dfbf\"} 65",
+        "compactor_job_timer_seconds_sum{node_id=\"2c02dfbf\"} 8.393568274",
+        "compactor_job_timer_seconds_max{node_id=\"2c02dfbf\"} 1.097229085",
+        "compactor_jobs_available{node_id=\"2c02dfbf\"} 0.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"2c02dfbf\"} 1.00663296E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"2c02dfbf\"} 3.55991552E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"2c02dfbf\"} 8912896.0",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.3014656",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.351797248",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.486014976",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.502792192",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.603455488",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.704118784",
+        "node_tx_await_seconds_count{node_id=\"2c02dfbf\"} 2239",
+        "node_tx_await_seconds_sum{node_id=\"2c02dfbf\"} 269.385816036",
+        "node_tx_await_seconds_max{node_id=\"2c02dfbf\"} 0.719052008",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.318242816",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.368574464",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.486014976",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.536346624",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.603455488",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.704118784",
+        "node_tx_execute_seconds_count{node_id=\"2c02dfbf\"} 2239",
+        "node_tx_execute_seconds_sum{node_id=\"2c02dfbf\"} 290.503156923",
+        "node_tx_execute_seconds_max{node_id=\"2c02dfbf\"} 0.731777973",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2c02dfbf\"} 2.2897062E7",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 2.2897062E7",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 2.2897062E7",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"2c02dfbf\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"2c02dfbf\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"2c02dfbf\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.00891264",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.012582656",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.024116992",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.035651328",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.050331392",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.130023168",
+        "tx_op_timer_seconds_count{node_id=\"2c02dfbf\"} 13382"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"e9490b27\"} 2.1146416E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"e9490b27\"} 1436536.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"e9490b27\"} 6.3605944E7",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"e9490b27\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"e9490b27\"} 2.2897062E7",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"e9490b27\"} 2.2897062E7",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"e9490b27\"} 2.2897062E7",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"e9490b27\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"e9490b27\"} 11",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"e9490b27\"} 1.664205697",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"e9490b27\"} 0.194068316",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"e9490b27\"} 11",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"e9490b27\"} 7.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"e9490b27\"} 1.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\"} 11",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\"} 0.009993783",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0"
+      ]
+    },
+    "afterBurst": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "block_upload_timer_seconds_count{node_id=\"2c02dfbf\"} 12",
+        "block_upload_timer_seconds_sum{node_id=\"2c02dfbf\"} 1.573865658",
+        "block_upload_timer_seconds_max{node_id=\"2c02dfbf\"} 0.265842933",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.266338304",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.266338304",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.266338304",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.266338304",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.266338304",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.266338304",
+        "compactor_job_timer_seconds_count{node_id=\"2c02dfbf\"} 70",
+        "compactor_job_timer_seconds_sum{node_id=\"2c02dfbf\"} 9.100653789",
+        "compactor_job_timer_seconds_max{node_id=\"2c02dfbf\"} 1.097229085",
+        "compactor_jobs_available{node_id=\"2c02dfbf\"} 0.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"2c02dfbf\"} 2.3068672E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"2c02dfbf\"} 3.62999488E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"2c02dfbf\"} 3880384.0",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.385874944",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.469761024",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.57042432",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.838859776",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 1.040186368",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 1.342176256",
+        "node_tx_await_seconds_count{node_id=\"2c02dfbf\"} 3070",
+        "node_tx_await_seconds_sum{node_id=\"2c02dfbf\"} 496.868074843",
+        "node_tx_await_seconds_max{node_id=\"2c02dfbf\"} 1.322328552",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.435683328",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.502792192",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.63700992",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.938999808",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 1.1403264",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 1.47587072",
+        "node_tx_execute_seconds_count{node_id=\"2c02dfbf\"} 3070",
+        "node_tx_execute_seconds_sum{node_id=\"2c02dfbf\"} 542.967115312",
+        "node_tx_execute_seconds_max{node_id=\"2c02dfbf\"} 1.470190891",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2c02dfbf\"} 6.6695569E7",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 6.6695569E7",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 6.6695569E7",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"2c02dfbf\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"2c02dfbf\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"2c02dfbf\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.008126208",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.01153408",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.02201984",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.033554176",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.044039936",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.117440256",
+        "tx_op_timer_seconds_count{node_id=\"2c02dfbf\"} 18368"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"e9490b27\"} 5788912.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"e9490b27\"} 914720.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"e9490b27\"} 6.0024056E7",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"e9490b27\"} 9563732.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"e9490b27\"} 5.7131837E7",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"e9490b27\"} 5.7131837E7",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"e9490b27\"} 6.6695569E7",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"e9490b27\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"e9490b27\"} 12",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"e9490b27\"} 1.990690831",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"e9490b27\"} 0.326485134",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"e9490b27\"} 12",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"e9490b27\"} 9.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"e9490b27\"} 2.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\"} 12",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\"} 0.010946753",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0"
+      ]
+    }
+  },
+  "logs": {
+    "writer": {
+      "lines": 1,
+      "badLines": 0,
+      "sample": [],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "follower": {
+      "lines": 23577,
+      "badLines": 4616,
+      "sample": [
+        "23:35:27 | ERROR xtdb.api.log.Watchers | ingestion stopping",
+        "java.lang.IllegalStateException: Invalid offset in log file: 3366545200833953792",
+        "23:35:28 | ERROR xtdb.pgwire | Uncaught exception processing message",
+        "xtdb.api.error.Fault: Ingestion stopped (msgId: null): Invalid offset in log file: 3366545200833953792",
+        "\tat xtdb.error$fault.invokeStatic(error.clj:70)",
+        "\tat xtdb.error$fault.invoke(error.clj:62)",
+        "\tat xtdb.error$eval1035$fn__1036.invoke(error.clj:188)",
+        "\tat xtdb.error$eval962$fn__963$G__953__970.invoke(error.clj:14)",
+        "Caused by: xtdb.api.log.IngestionStoppedException: Ingestion stopped (msgId: null): Invalid offset in log file: 3366545200833953792",
+        "\tat xtdb.api.log.Watchers.notifyError(Watchers.kt:106)",
+        "Caused by: java.lang.IllegalStateException: Invalid offset in log file: 3366545200833953792",
+        "23:35:28 | ERROR xtdb.pgwire | Uncaught exception processing message",
+        "xtdb.api.error.Fault: Ingestion stopped (msgId: null): Invalid offset in log file: 3366545200833953792",
+        "\tat xtdb.error$fault.invokeStatic(error.clj:70)",
+        "\tat xtdb.error$fault.invoke(error.clj:62)"
+      ],
+      "sha256": "0c61c5c043f58ac0de32ad972d87a03b9664882be230c1349789d3db5ae43a17"
+    }
+  },
+  "enginesAtEnd": {
+    "writer": {
+      "containerId": "8a1f80bee143470ddc2b508c45f1cde4ad303c921c8566e03ec3520b2b35d86a",
+      "startedAt": "2026-11-07T22:56:51.718470534Z",
+      "running": true,
+      "health": "healthy"
+    },
+    "follower": {
+      "containerId": "acf1dcc3d67c70e77acdf6d8b4e33bcf93b3b4f900246f9317223282f51874fe",
+      "startedAt": "2026-11-07T22:57:02.441327053Z",
+      "running": true,
+      "health": "unhealthy",
+      "oomKilled": false,
+      "exitCode": 0
+    }
+  },
+  "windows": [
+    {
+      "name": "E5",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "e5",
+      "seconds": 8,
+      "traceDigest": "81f9df62b2e35fadf41a5aabd5a776e6da8591f53f352ec7066b077d206e2e50",
+      "start": 1794094462269.3828,
+      "end": 1794094470269.3828,
+      "offerOverrunMs": 1,
+      "blockCut": {
+        "at": 1794094463284.4634,
+        "ms": 457,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 15,
+          "p50": 92.22,
+          "p90": 316.93,
+          "p99": 487.11,
+          "max": 487.11,
+          "mean": 140.72
+        },
+        "writer": {
+          "n": 15,
+          "p50": 47.57,
+          "p90": 199.03,
+          "p99": 393.04,
+          "max": 393.04,
+          "mean": 93.13
+        },
+        "excess": {
+          "n": 15,
+          "p50": 29.22,
+          "p90": 169.47,
+          "p99": 288.08,
+          "max": 288.08,
+          "mean": 47.59
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 3,
+          "cpuMean": 132,
+          "cpuMax": 159,
+          "memPeakMiB": 935
+        },
+        "follower": {
+          "samples": 3,
+          "cpuMean": 61,
+          "cpuMax": 66,
+          "memPeakMiB": 366
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.53,
+        "p99": 8.94,
+        "max": 43.55
+      },
+      "writer": {
+        "offered": 173,
+        "scheduled": 173,
+        "committed": 173,
+        "errors": {},
+        "maxQueue": 31,
+        "drain": {
+          "ms": 2294,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 173,
+          "p50": 757.44,
+          "p90": 2624.21,
+          "p99": 3370.33,
+          "max": 3643.71,
+          "mean": 1066.19
+        },
+        "svc": {
+          "n": 173,
+          "p50": 332.53,
+          "p90": 579.43,
+          "p99": 760.01,
+          "max": 827.38,
+          "mean": 342.45
+        },
+        "byBand": {
+          "5-10": {
+            "n": 94,
+            "lat": 3643.71,
+            "svcP50": 311.12
+          },
+          "11-25": {
+            "n": 58,
+            "lat": 3127.8,
+            "svcP50": 340.58
+          },
+          "26-50": {
+            "n": 21,
+            "lat": 3359.49,
+            "svcP50": 350.31
+          }
+        },
+        "waitsOver2s": 34
+      }
+    },
+    {
+      "name": "BURST",
+      "mode": "follower",
+      "readers": 16,
+      "kind": "burst",
+      "seconds": 8,
+      "traceDigest": "51fa733937550fd5a5c9a48a0acafa99eb95ea391072a5f09d08d533fabf1538",
+      "start": 1794094495739.16,
+      "end": 1794094503739.16,
+      "offerOverrunMs": 4,
+      "blockCut": {
+        "at": 1794094499738.049,
+        "ms": 132,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 16,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          }
+        ],
+        "connectMs": 103,
+        "pulls": 171,
+        "pullsPerS": 21.38,
+        "goodputPullsPerS": 21.38,
+        "queriesPerS": 97.38,
+        "pull": {
+          "n": 171,
+          "p50": 259.66,
+          "p90": 656.54,
+          "p99": 1259.32,
+          "max": 1335.4,
+          "mean": 352.97
+        },
+        "capWait": {
+          "n": 171,
+          "p50": 0.02,
+          "p90": 0.15,
+          "p99": 0.54,
+          "max": 0.74,
+          "mean": 0.06
+        },
+        "errors": {},
+        "checkedRows": 7619,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 19,
+          "acked": 11,
+          "straddled": 11,
+          "repeatable": 19,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.02,
+          0.02,
+          0.02,
+          0.02
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 50,
+          "p50": 63.26,
+          "p90": 135.83,
+          "p99": 702.18,
+          "max": 702.18,
+          "mean": 84.11
+        },
+        "writer": {
+          "n": 73,
+          "p50": 48.36,
+          "p90": 115.27,
+          "p99": 233.08,
+          "max": 233.08,
+          "mean": 64.57
+        },
+        "excess": {
+          "n": 50,
+          "p50": -7.36,
+          "p90": 68.27,
+          "p99": 675.79,
+          "max": 675.79,
+          "mean": 5.85
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 14,
+          "cpuMean": 133,
+          "cpuMax": 191,
+          "memPeakMiB": 1067
+        },
+        "follower": {
+          "samples": 14,
+          "cpuMean": 32,
+          "cpuMax": 123,
+          "memPeakMiB": 425
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.51,
+        "p99": 8.66,
+        "max": 40.67
+      },
+      "writer": {
+        "offered": 831,
+        "scheduled": 831,
+        "committed": 831,
+        "errors": {},
+        "maxQueue": 661,
+        "drain": {
+          "ms": 21181,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 831,
+          "p50": 14194.44,
+          "p90": 33300.93,
+          "p99": 35919.15,
+          "max": 36433.19,
+          "mean": 16218.87
+        },
+        "svc": {
+          "n": 831,
+          "p50": 454.05,
+          "p90": 772.97,
+          "p99": 1853.96,
+          "max": 1932.97,
+          "mean": 470.39
+        },
+        "byBand": {
+          "5-10": {
+            "n": 0
+          },
+          "11-25": {
+            "n": 0
+          },
+          "26-50": {
+            "n": 831,
+            "lat": 35919.15,
+            "svcP50": 454.05
+          }
+        },
+        "waitsOver2s": 769
+      }
+    },
+    {
+      "name": "RECOVER",
+      "mode": "follower",
+      "readers": 4,
+      "kind": "recover",
+      "seconds": 6,
+      "traceDigest": "f4e1e1afa44eac7eeffff552ae5b69237e5ce01e04119ff44362e467e18fa38f",
+      "start": 1794094544551.0947,
+      "end": 1794094550551.0947,
+      "offerOverrunMs": 1,
+      "blockCut": {
+        "at": 1794094545551.9568,
+        "ms": 100,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 4,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          }
+        ],
+        "connectMs": 35,
+        "pulls": 0,
+        "pullsPerS": 0,
+        "goodputPullsPerS": 0,
+        "queriesPerS": 0,
+        "pull": {
+          "n": 0
+        },
+        "capWait": {
+          "n": 0
+        },
+        "errors": {
+          "XX000": 479
+        },
+        "checkedRows": 0,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 0,
+          "acked": 0,
+          "straddled": 0,
+          "repeatable": 0,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.05,
+          0.05,
+          0.04,
+          0.05
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 0
+        },
+        "writer": {
+          "n": 11,
+          "p50": 54.02,
+          "p90": 126.1,
+          "p99": 155.08,
+          "max": 155.08,
+          "mean": 65.36
+        },
+        "excess": {
+          "n": 0
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 2,
+          "cpuMean": 127,
+          "cpuMax": 131,
+          "memPeakMiB": 1035
+        },
+        "follower": {
+          "samples": 2,
+          "cpuMean": 45,
+          "cpuMax": 58,
+          "memPeakMiB": 425
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.54,
+        "p99": 7.18,
+        "max": 19.43
+      },
+      "writer": {
+        "offered": 123,
+        "scheduled": 123,
+        "committed": 123,
+        "errors": {},
+        "maxQueue": 20,
+        "drain": {
+          "ms": 1857,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 123,
+          "p50": 691,
+          "p90": 2382.84,
+          "p99": 3227.95,
+          "max": 3228.57,
+          "mean": 918.74
+        },
+        "svc": {
+          "n": 123,
+          "p50": 327.99,
+          "p90": 902.7,
+          "p99": 1291.73,
+          "max": 1308.8,
+          "mean": 428.78
+        },
+        "byBand": {
+          "5-10": {
+            "n": 73,
+            "lat": 3227.95,
+            "svcP50": 327.99
+          },
+          "11-25": {
+            "n": 34,
+            "lat": 3228.57,
+            "svcP50": 319.74
+          },
+          "26-50": {
+            "n": 16,
+            "lat": 2414.49,
+            "svcP50": 507.67
+          }
+        },
+        "waitsOver2s": 19
+      }
+    }
+  ],
+  "summaryTables": {
+    "baseline": {
+      "lat": {
+        "n": 0
+      },
+      "svc": {
+        "n": 0
+      }
+    },
+    "rows": [],
+    "markdown": "Baseline (pooled ): commit from schedule p50 undefined p99 undefined; service p50 undefined p99 undefined ms\n\n|  |\n|  |\n\n- E5: commits 173/173, errors {}, lat p50/p99 757.44/3370.33, svc p50/p99 332.53/760.01; lag follower p50/p99 92.22/487.11 (n 15, errors 0); reads -; block cut true 457 ms\n- BURST: commits 831/831, errors {}, lat p50/p99 14194.44/35919.15, svc p50/p99 454.05/1853.96; lag follower p50/p99 63.26/702.18 (n 50, errors 22); reads 21.38/s p99 1259.32 viol 0 errors {}; block cut true 132 ms\n- RECOVER: commits 123/123, errors {}, lat p50/p99 691/3227.95, svc p50/p99 327.99/1291.73; lag follower p50/p99 undefined/undefined (n 0, errors 11); reads 0/s p99 undefined viol 0 errors {\"XX000\":479}; block cut true 100 ms\n"
+  },
+  "finishedAt": "2026-11-07T23:35:55.784Z"
+}

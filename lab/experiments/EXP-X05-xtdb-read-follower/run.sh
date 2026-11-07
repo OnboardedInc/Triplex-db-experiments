@@ -12,6 +12,8 @@ cd "$WT" || exit 1
 export TX2_CONFIG_DIR="$WT" TX2_HOLDER=EXP-X05-xtdb-read-follower
 mkdir -p runs/X05
 profile=small; need=4.5
+# An array, because zsh does not word-split ${profile:+--follower-profile $profile} into two arguments.
+fargs=(--follower-profile $profile)
 while true; do
   out=$(node lab/bin/engine.mjs status 2>&1)
   used=$(print -r -- "$out" | sed -n 's/^pool: \([0-9.]*\) GiB of.*/\1/p')
@@ -19,7 +21,7 @@ while true; do
   echo "$(date -u +%H:%M:%S) used=${used:-?} s2=${s2:-?} need=${need}"
   if [[ -n "$used" ]] && (( 11 - used >= need )) && [[ "$s2" == "-" ]]; then
     if node lab/bin/engine.mjs up --lane xtdb --slot s2 --fresh --cpuset-cpus 0,1 --exp EXP-X05 >/dev/null; then
-      if node lab/bin/engine.mjs up --lane xtdb --slot s2 --follower --cpuset-cpus 2,3 ${profile:+--follower-profile $profile} --exp EXP-X05 >/dev/null; then break; fi
+      if node lab/bin/engine.mjs up --lane xtdb --slot s2 --follower --cpuset-cpus 2,3 "${fargs[@]}" --exp EXP-X05 >/dev/null; then break; fi
       echo "follower refused; releasing the writer and waiting again"
       node lab/bin/engine.mjs down --lane xtdb --slot s2 --remove-volume
     fi

@@ -41,19 +41,25 @@ const P = {
   smoke,
   subjects: Number(options.subjects ?? (smoke ? 2000 : N_DEFAULT)),
   active: Number(options.active ?? (smoke ? 200 : 2000)),
-  rate: Number(options.rate ?? 40),
+  // 20/s on 8 writer connections, not R19 E1's 40/s on 4: in the first smoke on this host (load 13 on 12 cores, dev residents
+  // at 205% and 97% CPU in the VM) one round trip cost about 10 ms, service was 120-155 ms with no readers, and 40/s
+  // saturated the writer (queue 157, p50 from schedule 1.6-4.2 s). A saturated baseline makes the 1.25x bar meaningless.
+  rate: Number(options.rate ?? 20),
   levelS: Number(options['level-s'] ?? (smoke ? 8 : 60)),
   levels: String(options.levels ?? (smoke ? '4,64' : '4,16,64,256')).split(',').map(Number),
   cap: Number(options.cap ?? 16),
   threads: Number(options.threads ?? 4),
-  writerConns: 4,
-  singleMaxConns: 32,
+  writerConns: Number(options["writer-conns"] ?? 8),
+  singleMaxConns: 28, // the writer node keeps numThreads 42: 8 writers + 1 lag probe + 28 readers + 1 spare
   splitShare: 0.1,
   lagEveryMs: 500,
   e5S: Number(options['e5-s'] ?? (smoke ? 8 : 120)),
   burstS: Number(options['burst-s'] ?? (smoke ? 8 : 60)),
   burstX: Number(options['burst-x'] ?? 5),
-  burstConns: 8,
+  // large: 50 facts, 20-60 KB per transaction (R19 E1); small: the normal 5-50 fact mix at the same rate, to tell
+  // whether a follower failure needs records spanning several pages or only a high append rate.
+  burstKind: options['burst-kind'] ?? 'large',
+  burstConns: 12, // more large records in flight for the half-written-record check (R19 1.1); no single-node readers then
   recoverS: Number(options['recover-s'] ?? (smoke ? 6 : 30)),
   warmS: Number(options['warm-s'] ?? (smoke ? 3 : 15)),
   connRss: Number(options['conn-rss'] ?? 256),
@@ -202,6 +208,10 @@ for (const w of workers) w.on('message', m => {
   const resolve = workerWaiters.get(`${m.type}|${m.worker}`);
   if (resolve) { workerWaiters.delete(`${m.type}|${m.worker}`); resolve(m); }
 });
+for (const [w, worker] of workers.entries()) for (const event of ['error', 'exit']) worker.on(event, detail => {
+  log(`worker ${w} ${event}: ${String(detail?.stack ?? detail)}`);
+  for (const type of ['ready', 'result']) { const resolve = workerWaiters.get(`${type}|${w}`); if (resolve) { workerWaiters.delete(`${type}|${w}`); resolve({ type: 'error', worker: w, message: `${event} ${detail}` }); } }
+});
 const waitWorker = (type, w) => new Promise(resolve => workerWaiters.set(`${type}|${w}`, resolve));
 await Promise.all(workers.map((_, w) => waitWorker('booted', w)));
 const broadcast = r => { for (const w of workers) w.postMessage({ type: 'receipt', r }); };
@@ -339,10 +349,35 @@ writer.onReceipt.push(r => {
 const sampler = new Sampler();
 const loopDelay = monitorEventLoopDelay({ resolution: 5 });
 const results = [];
+const incidents = [];
+
+/**
+ * The smoke burst showed R19 1.1's half-written-record hazard across containers: the follower read a garbage
+ * offset footer from a record the writer was still writing ("Invalid offset in log file"), and its failed
+ * ingestion state is absorbing. After every window, scan the follower log since the window start; on that
+ * signature record an incident and replace the follower (restart-follower.sh), so a failure under normal
+ * commits is counted instead of silently voiding the windows after it.
+ */
+async function followerIncident(win, start) {
+  const res = await dockerAsync(['logs', '--since', new Date(start - 2000).toISOString(), folInfo.container], 60_000);
+  const lines = (res.stdout + res.stderr).split('\n');
+  const stop = lines.findIndex(l => /ingestion stopping/.test(l));
+  if (stop < 0) return null;
+  const incident = { win, at: lines[stop].slice(0, 8), cause: lines.slice(stop + 1).find(l => /Exception|corrupt|offset/i.test(l))?.slice(0, 300) ?? null };
+  log(`follower ingestion stopped in ${win} at ${incident.at}: ${incident.cause}; replacing it`);
+  fs.writeFileSync(path.join(rawDir, `follower-incident-${win}.log`), lines.join('\n'));
+  const env = { ...process.env, TX2_CONFIG_DIR: process.env.TX2_CONFIG_DIR ?? REPO, TX2_HOLDER: process.env.TX2_HOLDER ?? 'EXP-X05-xtdb-read-follower' };
+  const restart = await new Promise(resolve => execFile('zsh', [path.join(HERE, 'restart-follower.sh')], { env, timeout: 600_000 },
+    (error, stdout, stderr) => resolve({ ok: !error, out: String(stdout).trim().split('\n').at(-1), err: String(stderr).trim().slice(-400) })));
+  try { incident.recovery = JSON.parse(restart.out); } catch { incident.recovery = restart; }
+  incidents.push(incident);
+  log(`follower replaced: ${JSON.stringify(incident.recovery)}`);
+  return incident;
+}
 
 function assign(readers, mode) {
   // Logical readers spread over the workers; the follower gets one connection per reader (numThreads 300),
-  // the single node at most 32 (its numThreads is the default 42 and the writer needs its own); the in-flight
+  // the single node at most 28 (its numThreads is the default 42 and the writer needs its own); the in-flight
   // cap is the same in both modes, so the engine sees the same concurrency and only idle connections differ.
   return workers.map((_, w) => {
     const r = Math.floor(readers / P.threads) + (w < readers % P.threads ? 1 : 0);
@@ -373,7 +408,13 @@ async function runWindow({ name, mode = 'zero', readers = 0, trace, seconds, cut
   }
   await sleep(Math.max(0, end - absNow()));
   const offerEnd = absNow();
-  const finished = await resultsP;
+  // Watchdog: a window whose readers have not reported 90 s after its end is a client fault, not a result.
+  let finished = await Promise.race([resultsP, sleep(Math.max(0, end - absNow()) + 90_000).then(() => null)]);
+  if (!finished) {
+    const missing = plan.filter(a => workerWaiters.has(`result|${a.w}`)).map(a => a.w);
+    const states = await Promise.all(missing.map(w => { const p = waitWorker('status', w); workers[w].postMessage({ type: 'status' }); return Promise.race([p, sleep(5000).then(() => ({ worker: w, state: 'no reply' }))]); }));
+    throw new Error(`window ${name}: workers ${missing.join(',')} did not report 90 s after the end; states ${JSON.stringify(states.map(s => s.state ?? s))}`);
+  }
   if (finished.some(m => m.type === 'error')) throw new Error(`window ${name}: a reader worker crashed: ${finished.find(m => m.type === 'error').message}`);
   const readerResults = finished.map(m => m.result);
   const drain = await writer.drain(P.drainMaxMs);
@@ -383,6 +424,7 @@ async function runWindow({ name, mode = 'zero', readers = 0, trace, seconds, cut
   const blockCut = await cut;
   const res = summarizeWindow({ name, mode, readers, kind, trace, seconds, start, end, offerEnd, drain, blockCut, readerResults, connectMs: ready.length ? Math.max(...readerResults.map(r => r.connectMs)) : null });
   results.push(res);
+  res.followerIncident = await followerIncident(name, start);
   save(`window-${name}.json`, res);
   log(`${name}: commits ${res.writer.committed}/${res.writer.offered} lat p50 ${res.writer.lat.p50} p99 ${res.writer.lat.p99} svc p50 ${res.writer.svc.p50} p99 ${res.writer.svc.p99}`
     + (readers ? ` | pulls/s ${res.reads.pullsPerS} p99 ${res.reads.pull.p99} viol ${res.reads.violations} err ${JSON.stringify(res.reads.errors)}` : '')
@@ -651,7 +693,7 @@ if (P.phases.includes('conn')) {
 }
 
 if (P.phases.includes('burst')) {
-  const burstSeg = traceSegment({ seed: `${P.seed}|burst`, rate: P.rate * P.burstX, seconds: P.burstS, subjects: P.subjects, active: P.active, burst: true });
+  const burstSeg = traceSegment({ seed: `${P.seed}|burst`, rate: P.rate * P.burstX, seconds: P.burstS, subjects: P.subjects, active: P.active, burst: P.burstKind === 'large' });
   writer.ensure(P.burstConns);
   metricsAt.beforeBurst = { writer: await metrics(writerInfo.container, 'metrics-writer-before-burst.txt'), follower: await metrics(folInfo.container, 'metrics-follower-before-burst.txt') };
   await runWindow({ name: 'BURST', mode: 'follower', readers: 16, trace: burstSeg, seconds: P.burstS, cutAtMs: Math.min(20_000, P.burstS * 500), kind: 'burst' });
@@ -660,7 +702,7 @@ if (P.phases.includes('burst')) {
   receipt.burstBacklogDrain = await writer.drain(600_000);
   const recSeg = traceSegment({ seed: `${P.seed}|recover`, rate: P.rate, seconds: P.recoverS, subjects: P.subjects, active: P.active });
   await runWindow({ name: 'RECOVER', mode: 'follower', readers: 4, trace: recSeg, seconds: P.recoverS, kind: 'recover' });
-  receipt.burst = { trace: { digest: traceDigest(burstSeg), commands: burstSeg.length, rate: P.rate * P.burstX, payloadNote: '50 facts, ledger values padded 400-1200 bytes each: about 20-60 KB per transaction' } };
+  receipt.burst = { trace: { digest: traceDigest(burstSeg), commands: burstSeg.length, rate: P.rate * P.burstX, kind: P.burstKind, payloadNote: P.burstKind === 'large' ? '50 facts, ledger values padded 400-1200 bytes each: about 20-60 KB per transaction' : 'normal 5-50 fact mix, about 1-6 KB per transaction' } };
 }
 
 receipt.watermarksAtEnd = await watermarks();
@@ -671,6 +713,7 @@ receipt.enginesAtEnd = { writer: { containerId: engEnd.writer.containerId, start
   follower: { containerId: engEnd.follower.containerId, startedAt: engEnd.follower.startedAt, running: engEnd.follower.running, health: engEnd.follower.health, oomKilled: engEnd.follower.oomKilled, exitCode: engEnd.follower.exitCode } };
 for (const side of ['writer', 'follower'])
   if (engEnd[side].containerId !== engStart[side].containerId || engEnd[side].startedAt !== engStart[side].startedAt) receipt.reasons.push(`${engStart[side].container} restarted or was replaced during the run`);
+receipt.followerIncidents = incidents;
 receipt.windows = results.map(({ writer: w, ...rest }) => ({ ...rest, writer: (({ lateRaw, ...k }) => k)(w) }));
 receipt.summaryTables = buildTables(results);
 receipt.finishedAt = new Date().toISOString();

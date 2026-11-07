@@ -25,6 +25,7 @@ const hot = [];               // receipts acknowledged in the last 60 s
 const waiters = new Map();    // `${win}|${seq}` -> resolve(receipt)
 let level = null;
 let goResolve = null;
+let loopsLeft = 0;
 
 class Semaphore {
   constructor(n) { this.n = n; this.q = []; }
@@ -33,11 +34,17 @@ class Semaphore {
 }
 
 const QUERY_TIMEOUT_MS = 30_000;
+const inflight = new Map(); // query id -> { text, since }, reported to the main thread's watchdog
+let queryIds = 0;
 async function q(conn, text, params) {
   const query = params ? conn.unsafe(text, params) : conn.unsafe(text);
+  // A query that loses the race to the timeout may still reject later; catch it so it cannot crash the worker.
+  query.catch(() => {});
+  const id = queryIds++;
+  inflight.set(id, { text: text.slice(0, 60), since: absNow() });
   let timer;
   const timeout = new Promise((_, reject) => { timer = setTimeout(() => { query.cancel?.(); reject(Object.assign(new Error('client timeout'), { code: 'TIMEOUT' })); }, QUERY_TIMEOUT_MS); });
-  try { return await Promise.race([query, timeout]); } finally { clearTimeout(timer); }
+  try { return await Promise.race([query, timeout]); } finally { clearTimeout(timer); inflight.delete(id); }
 }
 
 /** One pull rooted at `root`; returns the (idx, pos) pairs it saw plus shape faults. */
@@ -67,7 +74,7 @@ async function pull(conn, root, basis, hops = HOPS) {
     }
     await q(conn, 'COMMIT');
   } catch (error) {
-    try { await conn.unsafe('ROLLBACK'); } catch {}
+    try { await q(conn, 'ROLLBACK'); } catch {}
     throw error;
   }
   return { seen, faults, queries };
@@ -158,12 +165,13 @@ async function runLevel(L) {
       }
     }
   };
-  await Promise.all(Array.from({ length: L.readers }, (_, r) => readerLoop(r)));
+  loopsLeft = L.readers;
+  await Promise.all(Array.from({ length: L.readers }, (_, r) => readerLoop(r).finally(() => { loopsLeft--; })));
   out.elu = performance.eventLoopUtilization(elu0).utilization;
   await Promise.all(conns.map(c => c.end({ timeout: 5 }).catch(() => {})));
   level = null;
   out.pairs = Int32Array.from(out.pairs);
-  parentPort.postMessage({ type: 'result', result: out }, [out.pairs.buffer]);
+  parentPort.postMessage({ type: 'result', worker, result: out }, [out.pairs.buffer]);
 }
 
 parentPort.on('message', message => {
@@ -176,6 +184,13 @@ parentPort.on('message', message => {
     goResolve?.({ start: message.start, end: message.end });
   } else if (message.type === 'level') {
     runLevel(message.level).catch(error => parentPort.postMessage({ type: 'error', worker, message: String(error.stack ?? error) }));
+  } else if (message.type === 'status') {
+    const now = absNow();
+    parentPort.postMessage({ type: 'status', worker, state: { level: level?.name ?? null, loopsLeft, inflight: [...inflight.values()].map(v => ({ text: v.text, ageMs: Math.round(now - v.since) })) } });
   } else if (message.type === 'exit') process.exit(0);
 });
+// An async failure outside a reader's try (a postgres.js connection error event, say) must reach the main
+// thread as a message, or the window waits for a result that never comes.
+for (const event of ['unhandledRejection', 'uncaughtException'])
+  process.on(event, error => parentPort.postMessage({ type: 'error', worker, message: `${event}: ${String(error?.stack ?? error)}` }));
 parentPort.postMessage({ type: 'booted', worker });
