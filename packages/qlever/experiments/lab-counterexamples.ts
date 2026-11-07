@@ -120,6 +120,7 @@ type Case = {
   column: string;
   build: (ctx: any) => string;
   needsData: boolean;
+  project?: (value: string) => string;
 };
 const labelRow = struct({ entity: TypeExpr.text, label: Label.type });
 const revisionRow = struct({ revision: TypeExpr.text });
@@ -177,6 +178,8 @@ const cases: Case[] = [
     row: struct({ s: TypeExpr.text }),
     column: "s",
     needsData: false,
+    // [EXP-002] First run G4-qlever-20261107T191201Z-ad15e2 compared full IRIs with suffixes.
+    project: (value) => value.replace(/^urn:triplex:s:/, ""),
     build: () =>
       `SELECT (STR(?iri) AS ?s) WHERE { VALUES ?iri { ${iris.map((name) => `<urn:triplex:s:${name}>`).join(" ")} } } ORDER BY STR(?iri)`,
   },
@@ -284,7 +287,9 @@ const runMode = async (mode: "current" | "reopen") => {
           { basis: { validAt: 1 }, maxRows: 100, timeoutMs: 20_000, includeRaw: true },
         ),
       );
-      const actual = (result.rows as Record<string, any>[]).map((row) => String(row[entry.column]));
+      const actual = (result.rows as Record<string, any>[]).map((row) =>
+        (entry.project ?? String)(String(row[entry.column])),
+      );
       const left = entry.compare === "set" ? [...actual].sort() : actual;
       const right = entry.compare === "set" ? [...entry.expected].sort() : entry.expected;
       execution.actual = actual;
