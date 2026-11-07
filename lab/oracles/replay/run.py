@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.3.1"   # EXP-O03: ACCEPTANCE 0.3.5 (section 4 plus the decimal, wire and position tables), RULINGS Q43
+ORACLE_VERSION = "0.4.1"   # EXP-O04: erasure (Q24, Q31f, TARGETS 7, held Q49) and DR-JSON-CONVERT; ACCEPTANCE 0.3.6
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -527,6 +527,9 @@ class Run:
             if kind not in QUERIES:
                 raise V.OracleInputError(f"unknown query kind {kind!r}")
             entry = [("id", qid), ("kind", kind)]
+            # R-ERA-6: `readStart` is the last position published when the read started; erasures
+            # published after it are in flight for this read (ER-INFLIGHT-READ)
+            R.READ["start"] = self.read_start(query)
             try:
                 result = QUERIES[kind](self, query)
                 entry.append(("result", result))
@@ -537,8 +540,28 @@ class Run:
                 entry.append(("error", error.to_output()))
             except V.InvalidValue as error:
                 entry.append(("error", X.TypedError(error.error_id, str(error)).to_output()))
+            finally:
+                R.READ["start"] = None
             out.append(V.OrderedOut(entry))
         return out
+
+    def read_start(self, query):
+        """R-ERA-6: `readStart` = a position (ordinal), {"afterCommand": k} or {"coordinate": c};
+        absent = the read started after the whole command stream published."""
+        raw = query.get("readStart")
+        if raw is None:
+            return None
+        scope = (query.get("cut") or {}).get("scope") or self.engine.default_scope
+        if isinstance(raw, V.Obj) and "afterCommand" in raw:
+            index = int(raw["afterCommand"])
+            if index not in self.command_positions:
+                raise V.OracleInputError(f"readStart names command {index}, which the oracle does not commit")
+            return self.command_positions[index]
+        if isinstance(raw, V.Obj) and "coordinate" in raw:
+            return self.ordinal_at(scope, raw["coordinate"])
+        if isinstance(raw, V.Lex) and re.fullmatch(r"(0|[1-9][0-9]*)", raw):
+            return int(raw)
+        raise V.OracleInputError(f"bad readStart {raw!r}")
 
 
 def evaluate_case(case, case_sha256=None, lane=None):
