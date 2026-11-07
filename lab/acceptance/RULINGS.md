@@ -194,3 +194,11 @@ W0 is a synthetic test world, not a Triplex or Onboarded product feature, so the
 | Q36g fanout (corrects TARGETS 6.1 item 6 and Q31i) | Location fanout is a seeded Zipf with s = 0.5 over 2,000 locations at the 100k rung, so the largest location holds about 1,100 workers and the mean stays 50. s = 1.0 put about 12,100 workers (12% of the population) at one location, which contradicts the stated intent ("hundreds of workers") and would make GS.06b a single extreme case. | orchestrator error in TARGETS; D01a open question 7 |
 | Q36h other rungs | Other rungs keep N / 50 locations with the same s; only the 100k numbers are frozen floors. | D01a open question 8 |
 | Q36a-clarified outbox rule | The W0 author's resolution is accepted: the version hashes (release, inputs, payload), and the outbox publishes (id, version) only when that id was never published or when the payload differs from the latest published payload for that id; a new version caused only by a new release hash is recorded, not published (SPEC 8.4, self-review row 37). | Q36a's two clauses conflicted, since the release hash changes on every activation |
+
+## Rulings on contract 0.3.4 questions (2026-11-08; Q37)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q37a allowlist scope | Accepted: the A0 density allowlist hashes five blocks per adapter, including `withTransaction` (nested-position adoption happens there); any refactor of these blocks makes the adapter non-dense until its falsifiers pass. | Q34a |
+| Q37b blocked while pins are null | Accepted: every obligation O-REPLAY would close fails closed until the oracle is accepted after EXP-O03 and its pin is set; A0 measurements may run and produce diagnostics, never closures. | Q34d |
+| Q37c O-TDK1 home | Done by the orchestrator: R20's reference encoder copied unchanged to `lab/oracles/decimal/tdk1_reference.py` (sha256 923f7577...ef3120), vectors from `gen_vectors.py` (seed 20261108, byte-reproducible) in `tdk1-vectors.json` (2,017 rows, sha256 29a4fc95...a9e5). Pin these in the contract's O-TDK1 entry and the V5 vector pin. | R20 |
+| Q37d E-DECIMAL-FRACTION | Accepted as one error covering excess fraction digits at write and decimal-to-integer conversion with a nonzero fraction. | Q22, Q35e |
