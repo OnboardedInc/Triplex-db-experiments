@@ -414,3 +414,12 @@ Report lab/research/R15-presence-deletion-cascade.md. Options A (retraction only
 EXP-N01 (NS benchmark driver), EXP-W01 (20 golden scenarios), EXP-A01 retarget to contract 0.3.0, EXP-R01 fixes F1-F8 under the
 corrected numeric rule, V-O01 oracle acceptance with the G01 cross-check, R16 and R17 north-star fit research per engine. EXP-X02 and
 EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) sum finding).
+
+## Hourly learnings pass (cron ae766d26) after the gen-2 dispatch
+- North star reread. No experiment finished since the gen-2 dispatch entry; notebook current.
+- Contention ahead: pool 9/11 GiB (dev XTDB 3, dev QLever 2.5, xtdb-s2 3.5 held by R16), so EXP-N01 (the fitness function, priority
+  order 1) could not get an exclusive slot. R16 time-boxed to ~30 minutes on s2; R17 falls back to dev QLever. Rule reinforced:
+  measurement work for the fitness function outranks research probes for slots.
+- New research: R18 engine-independent prior art for P1/P3/P4/P5 (pinned-version serving, current vs history split, change feed to
+  dependency index, read-your-own-write with derived layers, sweep scheduling, bounded subgraph pulls), ending in ranked falsifiable
+  experiment proposals.
