@@ -179,3 +179,17 @@ Round 3: 11 CLOSED, 2 PARTIAL (R2-15, R2-16), 5 new (14 to 18). All accepted.
 | Q35c versioned channel | The stored key channel is named `decimal_order_v1`; a future encoding gets a new channel name and a migration. | R20 open question 3 |
 | Q35d use constraints | TDK1 keys are never concatenated and never used for prefix queries (positive keys are not self-delimiting: `p0212` is a prefix of `p02125`); only whole-key equality and ordered comparison. | R20 open question 5 |
 | Q35e errors and limits | Error names stay Q29d's (E-DECIMAL-OVERFLOW for a value beyond the declared or 38-digit precision, E-DECIMAL-FRACTION for excess fraction digits, E-DECIMAL-NARROWING, E-DECIMAL-BARE-DIVIDE); no E-DECIMAL-UNREPRESENTABLE. Maximum precision stays 38 (TDK1 has headroom to 99 integer digits). `-0.00` is refused (Q33b). No native XTDB DECIMAL lane: one verification path. If the kernel uses decimal.js or big.js, rounding tests must cover their signed zero. | R20; Q22, Q29d, Q33b |
+
+## Rulings on the W0 open questions (2026-11-07; Q36; lab/world/W0/SPEC.md section 15 on exp/D01-world-definition 5a12dad)
+W0 is a synthetic test world, not a Triplex or Onboarded product feature, so these are orchestrator rulings with no product flag.
+
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q36a work item identity | A work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; a separate content version hashes (release hash, input positions, payload). The outbox delivery key is (id, version). An activation that leaves a work item's payload unchanged publishes nothing (early cutoff, R18 X5); one that changes it publishes a new version of the same id. Republishing every open work item under new ids on each activation would flood the outbox during P5 and turn identical work into new deliveries. | P5 (no harm to live traffic); P3/GS.19 (no duplicate visible effects) |
+| Q36b time model | Midnight UTC due times with no holidays stay for W0; a known simplification, documented in SPEC. | W0 is synthetic |
+| Q36c E-Verify per status | Kept; status history is not modeled in W0. | scope of W0 |
+| Q36d later decision wins | Kept. Store-level CAS (GS.07) already turns concurrent stale decisions into typed conflicts; a later decision that commits after seeing the earlier one is an intentional override. | GS.07 |
+| Q36e dependencies without valid-time ranges | Kept for W0 v1: static read sets over-approximate, never miss. The expected affected set is defined as the subjects whose read set contains a changed fact, which is deterministic for both implementations. | P3 item 3 |
+| Q36f erased SSN | Kept: an erased SSN produces its own task and blocks E-Verify submission (TARGETS 7 marker semantics). | Q24 |
+| Q36g fanout (corrects TARGETS 6.1 item 6 and Q31i) | Location fanout is a seeded Zipf with s = 0.5 over 2,000 locations at the 100k rung, so the largest location holds about 1,100 workers and the mean stays 50. s = 1.0 put about 12,100 workers (12% of the population) at one location, which contradicts the stated intent ("hundreds of workers") and would make GS.06b a single extreme case. | orchestrator error in TARGETS; D01a open question 7 |
+| Q36h other rungs | Other rungs keep N / 50 locations with the same s; only the 100k numbers are frozen floors. | D01a open question 8 |

@@ -254,8 +254,8 @@ for Onboarded's real world definition; it is not a product feature of Triplex.
 5. Every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not).
 6. **Workload coverage is frozen before any comparison and reviewed independently (Codex round 2, finding 18),** so a sweep of mostly
    no-op evaluations cannot pass P5. Provisional floors: R2 changes the outputs of at least 20% of in-scope subjects; every rule fires
-   for at least 5% of subjects; work-location fanout follows a seeded Zipf (s = 1.0) over 2,000 locations at the 100k rung, so the
-   largest location holds hundreds of workers; at least 1% of evaluations each produce three or more work items.
+   for at least 5% of subjects; work-location fanout follows a seeded Zipf (s = 0.5, RULINGS Q36g) over 2,000 locations at the 100k rung,
+   so the largest location holds about 1,100 workers; at least 1% of evaluations each produce three or more work items.
 7. **Domain-dependent comparisons are blocked** until W0's SPEC.md, releases and golden cases have passed an independent review
    (V-D01) and their hashes are pinned in the contract.
 
