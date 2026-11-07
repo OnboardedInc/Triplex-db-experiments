@@ -175,3 +175,66 @@ test('contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; s
   assert.deepEqual(contractClaims({ gate: 'G2', lane: 'xtdb', scope: 'subset:6/142', contractFile: file }).obligations, []);
   assert.match(contractClaims({ gate: 'G1', lane: 'xtdb', scope: 'full', contractFile: path.join(temp, 'none.json') }).reasons[0], /missing/);
 });
+
+// ---------------------------------------------------------------- EXP-X05 second-writer guard and followers
+
+const writerYaml = fs.readFileSync(new URL('../../../xtdb-config.yaml', import.meta.url), 'utf8');
+const followerYaml = fs.readFileSync(new URL('../../config/xtdb-follower-config.yaml', import.meta.url), 'utf8');
+const guard = (configText, mountedBy, container = 'tx2-xtdb-s2-ro') => lib.volumeGuard({ volume: 'tx2-xtdb-s2-data', container, configText, mountedBy });
+
+test('second-writer guard refuses a second container on a slot volume unless its config is read-only', () => {
+  // The writer's own config is read-write: a second copy of it is the R19 1.1 silent-corruption case.
+  const second = guard(writerYaml, ['tx2-xtdb-s2']);
+  assert.equal(second.ok, false);
+  assert.match(second.reason, /second read-write container on tx2-xtdb-s2-data \(already mounted by tx2-xtdb-s2\)/);
+  assert.match(second.reason, /readOnlyDatabases: true/);
+  // A stopped container still counts: it can be started again outside the harness.
+  assert.equal(guard(writerYaml, ['tx2-xtdb-s2', 'tx2-old-stopped']).others.length, 2);
+  // The repo follower config passes.
+  assert.deepEqual(guard(followerYaml, ['tx2-xtdb-s2']), { ok: true, others: ['tx2-xtdb-s2'], readOnly: true });
+  // The first container on a volume, or a restart of the same container, is not a second writer.
+  assert.equal(guard(writerYaml, []).ok, true);
+  assert.equal(guard(writerYaml, ['tx2-xtdb-s2'], 'tx2-xtdb-s2').ok, true);
+  // A writer started while a follower already mounts the volume is refused too (it is the second container).
+  assert.equal(guard(writerYaml, ['tx2-xtdb-s2-ro'], 'tx2-xtdb-s2').ok, false);
+});
+
+test('second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true', () => {
+  const variants = {
+    commented: `# readOnlyDatabases: true\n${writerYaml}`,
+    nested: writerYaml.replace('server:\n', 'server:\n  readOnlyDatabases: true\n'),
+    quoted: `readOnlyDatabases: "true"\n${writerYaml}`,
+    capitalised: `readOnlyDatabases: True\n${writerYaml}`,
+    false: `readOnlyDatabases: false\n${writerYaml}`,
+    duplicate: `readOnlyDatabases: true\nreadOnlyDatabases: false\n${writerYaml}`,
+    unparsable: `readOnlyDatabases: true\n   badly: indented\n${writerYaml}`,
+    flowMapping: '{readOnlyDatabases: true}\n',
+    empty: '',
+  };
+  for (const [name, text] of Object.entries(variants)) {
+    assert.equal(lib.xtdbConfigReadOnly(text), false, name);
+    assert.equal(guard(text, ['tx2-xtdb-s2']).ok, false, name);
+  }
+  assert.equal(lib.xtdbConfigReadOnly('readOnlyDatabases: true   # trailing comment\n'), true);
+});
+
+test("follower config must be read-only and read the writer's own log and storage paths", () => {
+  assert.deepEqual(lib.checkFollowerConfig(writerYaml, followerYaml), { ok: true, reasons: [] });
+  const moved = lib.checkFollowerConfig(writerYaml, followerYaml.replace('/var/lib/xtdb/log', '/var/lib/xtdb/log2'));
+  assert.equal(moved.ok, false);
+  assert.match(moved.reasons[0], /log is !Local \/var\/lib\/xtdb\/log2 on the follower but !Local \/var\/lib\/xtdb\/log on the writer/);
+  assert.match(lib.checkFollowerConfig(writerYaml, followerYaml.replace('readOnlyDatabases: true\n', '')).reasons[0], /does not set top-level readOnlyDatabases/);
+  assert.match(lib.checkFollowerConfig(writerYaml, followerYaml.replace('storage: !Local', 'storage: !InMemory')).reasons[0], /storage/);
+  assert.match(lib.checkFollowerConfig(writerYaml, followerYaml.replace('port: 8080', 'port: 8081')).reasons[0], /healthz/);
+  assert.match(lib.checkFollowerConfig(followerYaml, followerYaml).reasons.join(' '), /writer config is read-only/);
+});
+
+test('cpusets parse against the VM and unpinned containers overlap everything', () => {
+  assert.deepEqual(lib.parseCpuset('0,1', 6), [0, 1]);
+  assert.deepEqual(lib.parseCpuset('2-3', 6), [2, 3]);
+  assert.throws(() => lib.parseCpuset('5-6', 6), /outside/);
+  assert.throws(() => lib.parseCpuset('a', 6), /bad cpuset/);
+  assert.deepEqual(lib.cpusetOverlap('0,1', '2-3', 6), []);
+  assert.deepEqual(lib.cpusetOverlap('0,1', '1-2', 6), [1]);
+  assert.deepEqual(lib.cpusetOverlap('0,1', null, 6), [0, 1]);
+});
