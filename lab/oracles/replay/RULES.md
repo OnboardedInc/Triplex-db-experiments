@@ -1,4 +1,4 @@
-# O-REPLAY rules (0.3.1, conforms to ACCEPTANCE 0.3.5 and RULINGS through Q36, plus pending Q43)
+# O-REPLAY rules (0.3.2, conforms to ACCEPTANCE 0.3.6 and RULINGS through Q45)
 
 Every semantic rule the oracle applies, with where it comes from. Status:
 
@@ -13,7 +13,7 @@ Every semantic rule the oracle applies, with where it comes from. Status:
 - **DERIVED**: follows from a sourced rule; the derivation is written here.
 - **RULING-NEEDED**: `ORCHESTRATOR-RULING-NEEDED`. Sources are silent; the oracle uses the stated default.
   Rules added in 0.2.0 that are still open are marked **NEW**; rules added or changed in 0.3.0 (EXP-O03) are
-  marked **O03**.
+  marked **O03**, and in 0.3.2 / 0.4.0 (EXP-O04) **O04**.
 - **NOT-MODELED**: the oracle refuses (a typed `X-NOT-MODELED` answer, or a malformed-case exit 2 whose message
   starts `X-NOT-MODELED`) instead of answering. Never a confident answer it cannot derive.
 
@@ -56,6 +56,7 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-DEC-14 | The error id of R-DEC-7 is E-DECIMAL-AVG (DatalogValidationError / decimal-avg-requires-divide, preflight). | SOURCED: Q43b; ACC 0.3.5 errorTable |
 | R-DEC-15 | Scale evolution is NOT-MODELED: a case whose `attributeDeclarations` and schema releases declare one decimal attribute with different (precision, scale) (DS-WIDEN, DS-WIDEN-MIGRATE, DS-NARROW) is refused with exit 2 and an `X-NOT-MODELED` message. The oracle therefore never produces E-DECIMAL-NARROWING. | decimalScaleEvolution (ACC 0.3.5, Q35b) is not modeled yet |
 | R-DEC-16 | E-DECIMAL-UNREPRESENTABLE is gone: ACC 0.3.5 compiled Q35e. A decimal beyond its declared or 38-digit precision, including number-to-decimal overflow, is E-DECIMAL-OVERFLOW; excess fraction digits are E-DECIMAL-FRACTION. E-DECIMAL-OVERFLOW has two phases: preflight for a written value, execution for a computed result. The 0.1 receipt category `decimal-unrepresentable` is no longer mapped. | SOURCED: ACC 0.3.5 errorTable, decimalRules.reject; Q35e; Q43a (resolves 0.3.0's pending conflict) |
+| R-DEC-18 | DR-JSON-CONVERT: `toDecimal(json, p, s)` validates the JSON value, never rounding: a JSON number becomes decimal(p, s) (excess fraction digits E-DECIMAL-FRACTION, more than p - s integer digits E-DECIMAL-OVERFLOW); a boolean, null, array, object or non-decimal string is E-INVALID-VALUE; without (p, s) the case is malformed. A JSON number has two decimal readings (as written, its shortest rendering per Q33a; or its exact binary expansion): the oracle answers when both agree (json 1.5 at (2, 1) is 1.5; json 1.55 at scale 1 is E-DECIMAL-FRACTION) and is X-NOT-MODELED when they differ (json 0.1 at scale 1), for a JSON string holding decimal text, and for a rounding argument. | SOURCED: ACC decimalRouting DR-JSON-CONVERT (Q38d); V-O03 F2. Which reading: **O04 RULING-NEEDED** |
 | R-DEC-17 | TDK1 order keys (Q35a) are NOT-MODELED here: query kinds `orderKey`, `decimalKey` and `tdk1Key` are refused (exit 2, `X-NOT-MODELED`). O-REPLAY answers values, never key bytes; O-TDK1 (`lab/oracles/decimal/`) is the key oracle. | ACC 0.3.5 tdk1, oraclePins O-TDK1 |
 | R-LANE-1 | Each lane's accepted integer range: core and xtdb [-2^63, 2^63-1]; qlever [-2^59, 2^59-1]; `laneIntegerRanges` may override, but every lane contains [-(2^53-1), 2^53-1] and stays inside the core type. A written integer outside the lane's range fails the whole command with E-VALUE-OUT-OF-RANGE before any mutation. The lane is the case's `lane` or `cli.py --lane`. | SOURCED: ACC 4.0 LANE_INTEGER_RANGE; NUMERIC; Q1 (re-scoped) |
 | R-LANE-2 | A retract-pattern value outside the lane's range is E-VALUE-OUT-OF-RANGE too. | SOURCED: Q33c |
@@ -199,6 +200,7 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | decimalOps | DO-ADD, DO-MUL, DO-SUM, DO-CMP; DO-DIV, DO-BARE-DIV, DO-ROUND | R-DEC-4; R-DEC-5 |
 | decimalConversions | DC-I2D, DC-D2I, DC-D2N, DC-N2D, DC-T2D, DC-IMPLICIT | R-DEC-6, R-DEC-3, R-NUM-6 |
 | decimalScaleEvolution | DS-WIDEN, DS-WIDEN-MIGRATE, DS-NARROW | R-DEC-15 (NOT-MODELED) |
+| decimalRouting | DR-REPO-ORDER, DR-NATIVE-ORDER, DR-RAW-ORDER, DR-DERIVED, DR-AGGREGATE (the oracle pins the exact value order and exact results every channel must reproduce; keys are O-TDK1's); DR-KEY-ARITHMETIC; DR-JSON-OPAQUE; DR-JSON-CONVERT | R-ORD-1, R-DEC-4, R-ENT-6; R-NUM-7; R-CMP-3, R-AGG-5; R-DEC-18 |
 | wireRules | WR-JSON; WR-INSTANT | R-VAL-11; R-VAL-10 |
 | wireRules | WR-X-ENCODINGS, WR-Q-SHADOW, WR-INTEGER-RANGE | engine encodings; the oracle pins the exact values they must reproduce (R-VAL-1, R-LANE-1) |
 | temporalRules | TM-HALF-OPEN; TM-EMPTY-REJECTED | R-CUT-2; R-CMD-4 |

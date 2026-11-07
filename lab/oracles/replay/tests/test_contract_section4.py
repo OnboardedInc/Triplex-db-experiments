@@ -12,6 +12,7 @@ answer (right column).
 """
 
 import json
+import re
 import struct
 import unittest
 from pathlib import Path
@@ -197,15 +198,18 @@ class Coverage(unittest.TestCase):
               "decimalScaleEvolution": "DecimalScaleEvolution", "wireRules": "WireRules",
               "temporalRules": "TemporalRules", "readShapeRules": "ReadShapeRules", "journalRules": "JournalRules",
               # contract 0.3.5 (EXP-O03 alignment)
-              "q33Rules": "Q33Rules"}
+              "q33Rules": "Q33Rules",
+              # decimalRouting (V-O03 F2: its absence let DR-JSON-CONVERT drift unnoticed)
+              "decimalRouting": "DecimalRouting"}
 
     def test_every_section4_row_has_a_named_test(self):
         classes = {cls.__name__: cls for cls in (NumericOps, Conversions, Comparisons, Aggregates, Constraints, Errors,
                                                  DecimalOps, DecimalConversions, DecimalScaleEvolution, WireRules,
-                                                 TemporalRules, ReadShapeRules, JournalRules, Q33Rules)}
+                                                 TemporalRules, ReadShapeRules, JournalRules, Q33Rules,
+                                                 DecimalRouting)}
         for table, cls in self.TABLES.items():
             for row in CONTRACT[table]:
-                name = "test_" + row["id"].replace("-", "_").replace(".", "_")
+                name = "test_" + re.sub(r"[^A-Za-z0-9]", "_", row["id"])
                 self.assertTrue(hasattr(classes[cls], name), f"{table} {row['id']} has no {cls}.{name}")
         for row in CONTRACT["valueKinds"]:
             self.assertTrue(hasattr(ValueKinds, "test_kind_" + row["kind"]), row["kind"])
@@ -885,6 +889,93 @@ class DecimalConversions(unittest.TestCase):
         for op in ("eq", "lt"):
             with self.assertRaises(V.MixedFamily):
                 V.predicate(op, dec("1"), I(1))               # CMP-DECIMAL-CROSS: every comparison
+
+
+def jsonv(x):
+    return {"type": "json", "value": x}
+
+
+PAY_SCHEMA = [{"version": 1, "entityTypes": {"Pay": {"attributes": {
+    "rate": {"attribute": ":pay/rate", "type": "decimal", "precision": 9, "scale": 6, "cardinality": "one"}}}}}]
+PAY_RATES = ("16.5", "16.499999", "-0.5", "-0.55", "12.25")
+
+
+def pay_case(queries):
+    ops = [assert_op(f"r{k}", f"w{k}", ":pay/rate", decimal_value(v), entity_type="Pay") for k, v in enumerate(PAY_RATES)]
+    return evaluate(case([{"clock": 1, "operations": ops}], queries, schemas=PAY_SCHEMA))
+
+
+class DecimalRouting(unittest.TestCase):
+    """decimalRouting (Q38d). The key channel (decimal_order_v1, TDK1) is the lanes' and
+    O-TDK1's; the oracle pins the exact value order and the exact results every route must
+    reproduce, and the value-side rules (key arithmetic, JSON opacity, JSON conversion)."""
+
+    def test_DR_REPO_ORDER(self):
+        rep = pay_case([{"id": "asc", "kind": "find", "entityType": "Pay", "cut": {"validAt": 1},
+                         "orderBy": [{"prop": "rate", "direction": "asc"}]},
+                        {"id": "gte", "kind": "find", "entityType": "Pay", "cut": {"validAt": 1},
+                         "where": [{"prop": "rate", "op": "gte", "value": decimal_value("16.50")}]}])
+        self.assertEqual(result(rep, "asc")["pages"][0]["ids"], ["w3", "w2", "w4", "w1", "w0"])   # exact, not lexical
+        self.assertEqual(result(rep, "gte")["pages"][0]["ids"], ["w0"])
+
+    def test_DR_NATIVE_ORDER(self):
+        rep = evaluate(case([], [{"id": "o", "kind": "sortValues", "values": [decimal_value(v) for v in PAY_RATES]}]))
+        self.assertEqual([v["value"] for v in result(rep, "o")], ["-0.55", "-0.5", "12.25", "16.499999", "16.5"])
+
+    def test_DR_RAW_ORDER(self):
+        rep = pay_case([{"id": "lt", "kind": "find", "entityType": "Pay", "cut": {"validAt": 1},
+                         "where": [{"prop": "rate", "op": "lt", "value": decimal_value("12.25")}],
+                         "orderBy": [{"prop": "rate", "direction": "desc"}]}])
+        self.assertEqual(result(rep, "lt")["pages"][0]["ids"], ["w2", "w3"])        # -0.5 then -0.55
+
+    def test_DR_DERIVED(self):
+        rep = evaluate(case([], [{"id": "c", "kind": "compare", "left": ["mul", decimal_value("1.25"), decimal_value("13.2")],
+                                  "right": decimal_value("16.5")}]))
+        c = result(rep, "c")
+        self.assertEqual((c["eq"], c["lt"], c["gt"]), (True, False, False))         # 16.500 = 16.5, computed exactly
+
+    def test_DR_AGGREGATE(self):
+        rep = pay_case([{"id": "a", "kind": "aggregate", "cut": {"validAt": 1}, "match": {"attributes": {"r": ":pay/rate"}},
+                         "aggregates": [{"op": "sum", "var": "r", "as": "sum"}, {"op": "min", "var": "r", "as": "lo"},
+                                        {"op": "max", "var": "r", "as": "hi"}]}])
+        row = result(rep, "a")["rows"][0]
+        self.assertEqual((row["sum"]["value"], row["lo"]["value"], row["hi"]["value"]),
+                         ("44.199999", "-0.550000", "16.500000"))
+
+    def test_DR_KEY_ARITHMETIC(self):
+        node = result(evaluate(case([], [{"id": "q", "kind": "expr", "expr": ["add", s("p0212"), s("p011")]}])), "q")
+        self.assertEqual(node["error"], "E-MIXED-FAMILY")
+
+    def test_DR_JSON_OPAQUE(self):
+        rep = evaluate(case([{"clock": 1, "operations": [assert_op("a", "e1", ":x/j", jsonv(1.5)),
+                                                         assert_op("b", "e2", ":x/j", jsonv(2.5))]}],
+                            [{"id": "c", "kind": "compare", "left": jsonv(1.5), "right": decimal_value("1.5")},
+                             {"id": "sum", "kind": "aggregate", "cut": {"validAt": 1}, "match": {"attributes": {"v": ":x/j"}},
+                              "aggregates": [{"op": "sum", "var": "v", "as": "x"}]}]))
+        c = result(rep, "c")
+        self.assertEqual((c["eq"], c["lt"]["error"]), (False, "E-MIXED-FAMILY"))
+        self.assertEqual(result(rep, "sum")["error"], "E-MIXED-FAMILY")
+
+    def test_DR_JSON_CONVERT(self):
+        """V-O03 F2: the contract's three answers, plus R-DEC-18's refusals where the two
+        readings of a JSON number disagree."""
+        def conv(value, *params):
+            return q_expr(["toDecimal", jsonv(value)] + list(params))
+        self.assertEqual(dec_out(conv(1.5, 2, 1)), ("1.5", 1, 2))
+        self.assertEqual(dec_out(conv(12, 4, 2)), ("12.00", 2, 4))
+        node = conv(1.55, 2, 1)
+        self.assertEqual((node["error"],) + err_fields(node), ("E-DECIMAL-FRACTION", "InvalidTripleError", "decimal-fraction"))
+        node = conv("abc", 2, 1)
+        self.assertEqual((node["error"],) + err_fields(node), ("E-INVALID-VALUE", "InvalidTripleError", "invalid-value"))
+        for other in (True, None, [1.5], {"a": 1.5}):
+            self.assertEqual(conv(other, 2, 1)["error"], "E-INVALID-VALUE", other)
+        self.assertEqual(conv(1234.5, 4, 1)["error"], "E-DECIMAL-OVERFLOW")
+        self.assertEqual(conv(0.1, 2, 1)["error"], "X-NOT-MODELED")        # 0.1 as written, inexact as binary64
+        self.assertEqual(conv(0.1, 2, 0)["error"], "E-DECIMAL-FRACTION")   # both readings agree
+        self.assertEqual(conv("1.50", 3, 2)["error"], "X-NOT-MODELED")     # decimal text inside a JSON string
+        self.assertEqual(conv(1.5, 2, 1, "half-even")["error"], "X-NOT-MODELED")
+        with self.assertRaises(V.OracleInputError):
+            conv(1.5)
 
 
 class DecimalScaleEvolution(unittest.TestCase):

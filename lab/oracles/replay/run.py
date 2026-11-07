@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.3.1"   # EXP-O03: ACCEPTANCE 0.3.5 (section 4 plus the decimal, wire and position tables), RULINGS Q43
+ORACLE_VERSION = "0.3.2"   # EXP-O04 F2: DR-JSON-CONVERT (V-O03 F2); ACCEPTANCE 0.3.6
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 

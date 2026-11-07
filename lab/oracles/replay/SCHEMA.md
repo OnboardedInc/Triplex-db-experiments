@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.3.1)
+# O-REPLAY case and output schema (v1; oracle 0.3.2)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -186,7 +186,7 @@ Every query has `id`, `kind`, and usually a `cut`:
 | `valueSupports` | `cut`, `pattern` | per (entity, attribute, value identity): count and assertion ids |
 | `reachability` | `cut`, `attribute`, `from`, optional `to` | closure; supportCount, paths with edge assertion ids |
 | `aggregate` | `cut`, `match.attributes {var: attribute}`, `match.entityType`, `where`, `groupBy`, `aggregates [{op, var, as, convert?}]`, `varTypes`, `emptyAs` | rows; `convert: "toNumber"` before AVG (AMB-11; `integerAvg: "convert"` is the 0.1 alias) |
-| `expr` | `expr: ["add", v, ["mul", v, v]]`: add sub mul div rem neg abs cast-int64 to-number (toNumber) to-int64 (toInt64, toInteger) to-decimal (toDecimal); `["divide", a, b, scale, "half-even"]`, `["round", x, scale, "half-up"]`, `["toDecimal", x, p, s]` and `["toDecimal", number, p, s, "down"]` take bare JSON integers and rounding strings as parameters | typed value or typed error |
+| `expr` | `expr: ["add", v, ["mul", v, v]]`: add sub mul div rem neg abs cast-int64 to-number (toNumber) to-int64 (toInt64, toInteger) to-decimal (toDecimal); `["divide", a, b, scale, "half-even"]`, `["round", x, scale, "half-up"]`, `["toDecimal", x, p, s]` (x an integer, decimal or json value, DR-JSON-CONVERT) and `["toDecimal", number, p, s, "down"]` take bare JSON integers and rounding strings as parameters | typed value or typed error |
 | `compare` | `left` (value or expression), `right` (value, expression or untyped constant), `compare` mode | eq/ne/lt/gt each a boolean or the pinned error, identity, same group |
 | `sortValues` | `values` | distinct values in ACC 4.5 order (first given representation survives) |
 | `analyticCounts` | `n`, `width` (1 or 10) | configured-entity population counts |
@@ -208,7 +208,7 @@ exactly (erasure, decimal scale evolution, TDK1 keys) exits 2 with a message sta
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.3.1", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.3.2", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",
