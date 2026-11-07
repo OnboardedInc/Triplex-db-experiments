@@ -37,3 +37,12 @@ These move into RULINGS.md when the contract version that compiles them is built
 | --- | --- | --- |
 | Q53a readings A01-A10 | Accepted as written in lab/experiments/EXP-D01c-o-domain/REPORT.md. They change no golden case and no fingerprint value. | W0-1.1.1 outputs unchanged |
 | Q53b fold into W0 | W0-1.1.2 adds them to SPEC.md as clarifications and adds one golden case per reading (A10 is already exercised by the population), so the TypeScript kernel (EXP-D01b) and O-DOMAIN are held to the same reading. Every existing case and the fingerprint must stay byte-identical; V-D01c checks that. Until W0-1.1.2 lands, the W0 pin covers W0-1.1.1 with these readings recorded. | Q31i (two independent implementers) |
+
+## Q54: EXP-A01 contract 0.3.7 questions
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q54a third blocked obligation | Keep G7.migration.valid-writes-never-rejected blocked by the CS-MIGRATION:* reach: a valid-write migration case can redeclare a decimal attribute. Narrow the reach once the CS-MIGRATION manifest tags its decimal-redeclaring cases, or once O-REPLAY models R-DEC-15. | Q47c |
+| Q54b no reach for two selections | Confirmed: CS-REQ:no-silent-precision-loss and CS-TYPES8:decimal get no reach, because neither redeclares a scale. | Q47c |
+| Q54c 0.3.8 content | 0.3.8 compiles Q50 to Q54; Q52e replaces the 0.3.7 ERASURE inFlight text (per commit, not per value). | Q47d |
+| Q54d control production | Confirmed: tree and composition come from A0_REGISTRY; the control receipt is a fresh harness run at the claim's commit; the registry commit is the A0 code commit. EXP-E01 does the same. | Q47b, Q46b |
+| Q54e record schemas | build-manifest/1, verifier-record/1 and case-result/1 are adopted as written in 0.3.7; EXP-E01 conforms and proposes any change for 0.3.8. | Q47a |

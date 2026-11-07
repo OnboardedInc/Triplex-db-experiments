@@ -932,3 +932,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
   readings O-DOMAIN had to choose (A01-A10) touch no case or fingerprint value, which also says the golden cases do not pin validation order
   or payload escaping: Q53b adds one case per reading in W0-1.1.2.
 - Dispatched V-D01c (mutation-based review: can the cases fail O-DOMAIN?). Running: 10 of 10.
+
+## 2026-11-07 23:40Z: contract 0.3.7 committed; Codex round 7; EXP-D01b dispatched
+- Contract 0.3.7 (ca42e06): Q46-Q49 compiled, 153 obligations (two new erasure obligations), evidence schemas (build-manifest/1,
+  verifier-record/1, case-result/1) opened and re-judged at admission, workload identity required on both arms, A0 taken only from the
+  registry (null, so every comparison is DIAGNOSTIC), indirect refusals followed through reachedThrough, pending rulings listed with no
+  authority. 136/136 deliberate regressions caught; --verify byte-identical. Pin scope now 121 uses, 103 may close, 18 blocked (three
+  migration/widening obligations newly blocked by the decimal-redeclaration reach).
+- Q50-Q54 are rows in RULINGS-PENDING.md; 0.3.8 compiles them (Q52e narrows in-flight erasure reads to per commit).
+- Learning: making pending rulings legal rows (Q47d) removed the recurring "--verify broke because I recorded a ruling" failure; rulings
+  can now be recorded the moment they are made, and the contract proves they carry no authority.
+- Dispatched EXP-D01b (TypeScript W0 kernel, independent of O-DOMAIN) and told E01 to adopt 0.3.7's schemas. Codex round 7 running.
