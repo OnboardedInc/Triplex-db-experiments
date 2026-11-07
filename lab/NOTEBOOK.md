@@ -809,3 +809,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   100,000 while 4,291 change); Q44b makes R3 a jurisdiction-scoped release so P5 exercises subject selection through the reverse index.
   Learning: a JSON round trip in a case generator normalized `1.65e3` to `1650.0`, so the exponent test tested nothing; validate.py now
   asserts raw token text. W0-1.1.1 in progress; a delta check then the pin.
+
+## 2026-11-08 ~22:40Z: MILESTONE: O-REPLAY accepted and merged (scoped pin)
+- After O01 (built), V-O01 (FIX-FIRST), O02 (conformance), V-O02 (FIX-FIRST), O03 (deltas and alignment), V-O03 ACCEPTED O-REPLAY 0.3.1
+  at 8cc2c26: 300/300 tests, 0 differences against the previous version's answers on all 87 golden runs per lane, 22/22 planted errors
+  and 8/8 mutants caught, and a fresh 119-probe check of contract 0.3.5 written by the verifier (116 match; the 3 wrong answers are one
+  rule, DR-JSON-CONVERT, now excluded from the pin). It may close 106 of the 119 obligations that use it; 11 erasure obligations stay
+  blocked through its X-NOT-MODELED refusal until EXP-O04 models erasure.
+- Learning: two independent authors (G01 vectors, O01 oracle) plus an independent verifier converged in three rounds; each round's
+  verifier probe was written from the contract, not from the oracle, which is what found DR-JSON-CONVERT after the author reported zero
+  wrong answers on its own probe set. A coverage test only guards the tables it lists (`decimalRouting` was missing).
+- Next: contract 0.3.6 pins the oracle (A01); W01 regenerates scenario expectations from the pinned oracle; EXP-O04 (F2 plus erasure
+  modeling) queued for the oracle author; claims still also need EXP-E01's evaluator.
