@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-"""Single source of truth for the triplex-db-2 acceptance contract (version 0.2.0).
+"""Single source of truth for the triplex-db-2 acceptance contract (version 0.3.0).
 
 Run:  python3 -I lab/acceptance/build_contract.py
 It validates the whole contract (references, statement and profile consistency, thresholds, selectors,
-traceability, raw exceptions, fragment coverage, validity dependencies, one check per ruling, banned obsolete
-text) and, only when everything validates, writes:
+traceability, raw exceptions, fragment coverage, validity dependencies, one check per ruling, banned superseded
+targets and obsolete text) and, only when everything validates, writes:
 
   lab/acceptance/obligations.json      the only authority an evaluator reads
+  lab/acceptance/load-contract.json    the fixed writer trace, the P1 reader ladder and the P5 sweep
+  lab/acceptance/budgets.json          frozen-before-candidates budgets with cumulative A0 comparison
   lab/acceptance/capability-matrix.md  generated from the matrix data below
-  lab/acceptance/ACCEPTANCE.md         generated human rendering (explanatory only; obligations.json wins)
+  lab/acceptance/ACCEPTANCE.md         generated human rendering (obligations.json wins on any difference)
 
-Inputs read (and hashed into the transitive contract hash): lab/acceptance/RULINGS.md, the held S/L
-obligations (held/s-l-obligations-0.1.0.json), the unchanged load-contract.json, and the files of existing case
-sets and oracles. During the orchestrator hold of 2026-11-07 load-contract.json and budgets.json are not written. Stdlib only; imports nothing from the repository.
+Authority for goals and targets: lab/SCOPE.md, lab/NORTH-STAR.md, lab/TARGETS.md (Sam, 2026-11-07), and the
+rulings in lab/acceptance/RULINGS.md. Inputs are hashed into the transitive contract hash. Stdlib only.
 """
 import hashlib
 import json
@@ -22,8 +23,8 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.2.0"
-STATUS = "CANDIDATE-1.0.0: compiled rulings of RULINGS.md and PLAN v1.1 C1-C8; freezes as 1.0.0 after orchestrator acceptance and adversarial review"
+VERSION = "0.3.0"
+STATUS = "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review"
 DATE = "2026-11-07"
 
 LANES = ["xtdb-xtql", "xtdb-sql", "qlever-sparql"]
@@ -34,19 +35,20 @@ ENGINE_OF = {"xtdb-xtql": "xtdb", "xtdb-sql": "xtdb", "qlever-sparql": "qlever"}
 LANG_OF = {"xtdb-xtql": "xtql", "xtdb-sql": "sql", "qlever-sparql": "sparql"}
 
 SECTIONS = [
-    ("G1", "Goal 1. Eight exact value types, schemas, cardinality, uniqueness, references"),
+    ("G1", "Goal 1. Exact value kinds, schemas, cardinality, uniqueness, references"),
     ("G2", "Goal 2. Expressions, arithmetic boundaries, specified error semantics"),
     ("G3", "Goal 3. Useful plans, costing, preconstruction admission, recursion"),
     ("G4", "Goal 4. Completed absence and negation at coherent cuts"),
-    ("G5", "Goal 5. Full-support aggregates, typed groups, empties, exact overflow"),
+    ("G5", "Goal 5. Full-support aggregates, typed groups, empties, no silent overflow"),
     ("G6", "Goal 6. Cancellation, deadlines, resource ownership, cleanup"),
     ("G7", "Goal 7. Atomic writes, receipts, migration and evolution, recovery"),
     ("G8", "Goal 8. Bounded reuse, transactional publication, maintained supports"),
     ("G9", "Goal 9. Bitemporal intervals, presence, corrections, lineage, deletion, cascades"),
     ("G10", "Goal 10. Public TypeScript and schema integration, scope, cursors, lifecycle, capabilities, consumers"),
     ("R", "R. Entity API (the ORM) and raw queries make sense"),
-    ("S", "S. Scale: 10m distinct entities, 100m active representative facts"),
-    ("L", "L. Load: 256 logical clients, 512 and 1024 stress"),
+    ("NS", "NS. North star: Sam's five priorities P1 to P5 on the fixed writer trace"),
+    ("GS", "GS. The 20 real-world golden scenarios"),
+    ("S", "S. Year-one measurement population, rungs and budgets"),
 ]
 
 
@@ -61,22 +63,25 @@ def sha_text(t):
     return hashlib.sha256(t.encode()).hexdigest()
 
 
+SCOPE_SOURCES = ["lab/SCOPE.md", "lab/NORTH-STAR.md", "lab/TARGETS.md", "lab/research/SAM-pasted-numbers-2026-11-07.md", "lab/acceptance/RULINGS.md"]
+
 # ============================================================================ rulings (compiled)
-# Each ruling is compiled into the data below; RULING_CHECKS (end of file) verifies each one is reflected.
-# status HELD: not compiled in 0.2.0 (orchestrator hold 2026-11-07, performance targets being re-tuned).
+# Each ruling is compiled into the data below; ruling_checks() verifies each one is reflected.
 RULINGS = [
+    {"id": "RESCOPE", "topic": "Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md)",
+     "ruling": "The ten goals stay on both lanes. Performance is measured as Sam's five priorities P1 to P5 on the fixed writer trace, with provisional bars that calibration may tighten and only Sam may loosen; the 20 golden scenarios are part of done; Sam's must-haves are requirements per engine (native or documented workaround with its own passing tests), never knockout gates; year-one size (10m entities, 100m active facts, retained history) is the measurement size, not a target in itself.",
+     "compiledInto": ["NS.*", "GS.*", "REQ.*", "S.*", "load-contract.json", "budgets.json", "THRESHOLDS (NS-*)"]},
+    {"id": "NUMERIC", "topic": "no silent precision loss (Sam's corrected numeric rule)",
+     "ruling": "Exact storage and round trip for every value kind in use; order-preserving comparison for any attribute used in a range rule; a hard error, never silent conversion, for any value the engine cannot hold; integer range of at least 2^53; arithmetic over many rows only where a projection needs it. Arithmetic runs in the TypeScript kernel per subject; money is a scaled integer or an order-preserving decimal string; never floats for business values. The full signed 64-bit range is not required.",
+     "compiledInto": ["VALUE_KINDS", "G1.types.*", "G1.types.decimal", "G1.types.out-of-range-rejected", "G2.arith.*", "G5.agg.*", "MATRIX_ROWS", "REQ.no-silent-precision-loss"]},
     {"id": "Q1", "topic": "unrestricted raw exactness",
-     "ruling": "Not required for done. Required: (a) repository and every supported native fragment exact over the full Triplex value domain; (b) the raw dataset exact on its documented exact channels; (c) raw natively typed shapes outside exact ranges are per-cell KNOWN-LIMIT exceptions, each with an exact mapped recipe, the obligation that qualifies it, and the original raw failure kept as a diagnostic with its unchanged expected answer. Supported fragments have a fixed minimum coverage set.",
+     "ruling": "Not required for done. Required: (a) repository and every supported native fragment exact over the value domain each lane accepts; (b) the raw dataset exact on its documented exact channels; (c) raw natively typed shapes outside exact ranges are per-cell KNOWN-LIMIT exceptions, each with an exact mapped recipe, the obligation that qualifies it, and the original raw failure kept as a diagnostic with its unchanged expected answer. QLever integers beyond +/-2^59 are rejected at write instead of being an exception. Supported fragments have a fixed minimum coverage set.",
      "compiledInto": ["MATRIX_ROWS", "RAW_EXCEPTIONS", "DIAGNOSTICS", "FRAGMENT_COVERAGE", "R.raw.mapped-recipes", "R.raw.parity", "R.raw.capability-matrix", "G10.capabilities.truthful"]},
-    {"id": "Q2", "status": "HELD", "topic": "load bar",
-     "ruling": "Fixed minimum: 256 logical clients on the 10m representative dataset, open-loop 1 request per client per second (90% reads by mix, 10% writes = 25.6 commands/s); goodput >= 0.99; explicit rejections <= 0.01; fairness >= 0.9; read p99 <= 1 s (point/entity/repository) and <= 5 s (analytic); write visibility p99 <= 2 s; every write visible inside 30 s. Stress 512 and 1024: zero correctness violations, rejections counted, goodput retention >= 0.9 of the 256-level goodput, recovery to the 256-level bar within 60 s. Calibration may tighten or report failure, never loosen; an unattainable bound is recorded and Sam is asked before lowering.",
-     "compiledInto": ["THRESHOLDS (L-*)", "load-contract.json", "L.*"]},
+    {"id": "Q2", "status": "SUPERSEDED", "topic": "generic load bar", "ruling": "Superseded by RESCOPE: performance is measured as NS.P1 to NS.P5 and the GS scenarios.", "compiledInto": []},
     {"id": "Q3", "topic": "host post-processing",
      "ruling": "Kept as a declared step that reads no data, counted inside the task's measured call.",
      "compiledInto": ["LANGUAGE_RULES", "PKT.full142"]},
-    {"id": "Q4", "status": "HELD", "topic": "sparse profile load",
-     "ruling": "Load acceptance on the representative profile; the sparse profile gets its scale rungs plus a 256-client smoke run (no stress).",
-     "compiledInto": ["L.smoke.sparse-256", "load-contract.json levels.smoke-sparse-256"]},
+    {"id": "Q4", "status": "SUPERSEDED", "topic": "sparse profile load", "ruling": "Superseded by RESCOPE.", "compiledInto": []},
     {"id": "Q5", "topic": "guide-only raw authoring",
      "ruling": "A fresh agent given only the raw-query guide and the engine's public docs authors the raw query set; answers must match the repository at the same basis.",
      "compiledInto": ["R.raw.guide-only-authoring", "CR-PROVENANCE"]},
@@ -86,16 +91,16 @@ RULINGS = [
     {"id": "Q7", "topic": "CLI",
      "ruling": "Not required for done. The packaged SDK consumer is required.",
      "compiledInto": ["G10.pkg.clean-consumer-slice", "ENTRYPOINTS (no CLI entrypoint)"]},
-    {"id": "Q8a", "topic": "int64 sum overflow",
-     "ruling": "Exact total; typed integer-overflow only when the final result is outside int64; intermediate partial sums never wrap.",
-     "compiledInto": ["AGGREGATE_RULES", "CS-NUMERIC"]},
-    {"id": "Q8b", "topic": "AVG over int64",
+    {"id": "Q8a", "topic": "engine-side integer sums",
+     "ruling": "Where a projection needs an engine-side sum: exact total; typed integer-overflow only when the final result is outside the integer range; intermediate partial sums never wrap. Per-subject sums run in the kernel.",
+     "compiledInto": ["AGGREGATE_RULES", "G5.agg.projection-sums", "CS-NUMERIC"]},
+    {"id": "Q8b", "topic": "AVG over integers",
      "ruling": "Typed preflight error unless the query converts explicitly; with explicit conversion to binary64, binary64 of the exact sum divided by the count, rounded once.",
      "compiledInto": ["AGGREGATE_RULES", "ERROR_TABLE"]},
     {"id": "Q8c", "topic": "division by zero",
      "ruling": "Typed error; no NaN or Infinity results.",
      "compiledInto": ["NUMERIC_OPS", "ERROR_TABLE"]},
-    {"id": "Q8d", "topic": "int64 vs binary64",
+    {"id": "Q8d", "topic": "integer vs binary64",
      "ruling": "Follow core comparison semantics; where core is silent, different type families are not equal and do not share a group.",
      "compiledInto": ["COMPARISON_RULES"]},
     {"id": "Q8e", "topic": "equal-valued card-one duplicates",
@@ -108,14 +113,20 @@ RULINGS = [
      "ruling": "Policy draft EXP-P01, provisional orchestrator ruling, flagged to Sam; the three G9 obligations stay policy-pending until then.",
      "compiledInto": ["G9.presence.explicit", "G9.deletion.entity", "G9.cascade.restrict-detach-cascade"]},
     {"id": "Q10", "topic": "verifier coverage",
-     "ruling": "The verifier covers every claimed obligation; at scale it independently re-evaluates retained answer bytes, fault outcomes and coverage for every load level and rung, plus at least one spot rerun per profile.",
+     "ruling": "The verifier covers every claimed obligation; at the year-one population and under the north-star workload it independently re-evaluates retained answer bytes, fault outcomes and coverage for every ladder level, scenario and rung, plus at least one spot rerun per profile unit.",
      "compiledInto": ["VERIFIER_MODES", "VALIDITY VV"]},
-    {"id": "Q11", "status": "HELD", "topic": "per-language load",
-     "ruling": "Separate XTQL and SQL load acceptance runs, each offering the full Q2 workload in its own language; a mixed-language run is a diagnostic profile that closes nothing.",
-     "compiledInto": ["load-contract.json lanes", "DIAGNOSTICS D-LOAD-XTDB-MIXED"]},
+    {"id": "Q11", "status": "SUPERSEDED", "topic": "per-language measurement", "ruling": "Superseded by RESCOPE; its principle survives: read priorities P1, P4 and P5 are measured separately per surface (XTQL, SQL, SPARQL).", "compiledInto": ["NS.P1", "NS.P4", "NS.P5"]},
     {"id": "Q12", "topic": "conflict semantics",
      "ruling": "Aligned with PLAN C5: repository and fragments fail with ConflictingValuesError; the raw convenience shape is documented as non-equivalent; the canonical conflict-aware relation is values(attribute).",
      "compiledInto": ["G4.neg.conflict-semantics"]},
+    {"id": "Q13", "topic": "XTDB engine-side integer SUM recipe",
+     "ruling": "Where a projection needs an engine-side sum on XTDB, the primary recipe is the split-sum (32-bit halves recombined with overflow-checked arithmetic, verified in R12); SUM(CAST(x AS DECIMAL(38,0))) only if proven exact on 2.2.0 (KL-X7).",
+     "compiledInto": ["G5.agg.projection-sums", "DIAGNOSTICS D-X-SUM"]},
+    {"id": "Q14a", "topic": "card-many family order", "ruling": "boolean < integer < number < datetime < string < ref < json < blob, then by value inside a family.", "compiledInto": ["CARD_MANY_ORDER"]},
+    {"id": "Q14b", "topic": "-0.0 and +0.0", "ruling": "One value for identity, grouping and set membership (core CanonicalJson normalizes -0); when supports differ only in representation, the returned representation is the one from the support with the lowest recorded position; single-assertion reads return the stored representation.", "compiledInto": ["COMPARISON_RULES CMP-NEGZERO"]},
+    {"id": "Q14c", "topic": "binary64 SUM", "ruling": "Correctly rounded exact total on repository and supported-fragment surfaces where offered; a differing native SUM is a raw KNOWN-LIMIT with a mapped recipe.", "compiledInto": ["AGGREGATE_RULES AG-SUM-F"]},
+    {"id": "Q14d", "topic": "ordered comparison integer vs number", "ruling": "Typed preflight error.", "compiledInto": ["COMPARISON_RULES CMP-INT-FLOAT"]},
+    {"id": "Q15", "topic": "error tags and reasons", "ruling": "Accepted as drafted; the contract verifier checks each tag against packages/core/src/errors and Error.ts before 1.0.0.", "compiledInto": ["ERROR_TABLE"]},
 ]
 
 # ============================================================================ language accounting
@@ -154,58 +165,59 @@ FRONTIER_RULES = {
 }
 
 # ============================================================================ frozen semantic tables
-# These tables are the expected-answer authority. Source references justify them; a later change in production
+# These tables are the expected-answer authority. Integer arithmetic runs in the TypeScript kernel per subject (NUMERIC);
+# any engine surface that offers an operation must give the same answer or a typed error, never a wrapped value. Source references justify them; a later change in production
 # behavior never changes an expected answer automatically: it needs a new contract version.
 NUMERIC_OPS = [
-    {"id": "N-I-ADD", "op": "int64 + int64, int64 - int64, int64 * int64", "rule": "exact; a result outside [-2^63, 2^63-1] fails with E-INTEGER-OVERFLOW at execution", "source": "packages/core/src/datalog/compiler.ts:572 (DECIMAL(32,0) then range check)",
+    {"id": "N-I-ADD", "op": "integer + integer, integer - integer, integer * integer (kernel; any surface that offers it)", "rule": "exact; a result outside the core integer type range [-2^63, 2^63-1] fails with E-INTEGER-OVERFLOW; a result the target lane cannot store fails at write with E-VALUE-OUT-OF-RANGE", "source": "packages/core/src/datalog/compiler.ts:572 (DECIMAL(32,0) then range check)",
      "examples": [["2^62 + 2^62", "E-INTEGER-OVERFLOW"], ["(2^63-1) + 1", "E-INTEGER-OVERFLOW"], ["-2^63 - 1", "E-INTEGER-OVERFLOW"], ["2^32 * 2^31", "E-INTEGER-OVERFLOW"], ["3037000499 * 3037000499", "9223372030926249001"], ["3037000500 * 3037000500", "E-INTEGER-OVERFLOW"], ["(2^59-1) + 1", "576460752303423488"]]},
-    {"id": "N-I-DIV", "op": "int64 / int64", "rule": "quotient truncated toward zero; divisor 0 fails with E-DIVISION-BY-ZERO; -2^63 / -1 fails with E-INTEGER-OVERFLOW", "source": "compiler.ts:561-570 (truncated quotient); RULINGS Q8c",
+    {"id": "N-I-DIV", "op": "integer / integer", "rule": "quotient truncated toward zero; divisor 0 fails with E-DIVISION-BY-ZERO; -2^63 / -1 fails with E-INTEGER-OVERFLOW", "source": "compiler.ts:561-570 (truncated quotient); RULINGS Q8c",
      "examples": [["7 / 2", "3"], ["-7 / 2", "-3"], ["7 / 0", "E-DIVISION-BY-ZERO"], ["-2^63 / -1", "E-INTEGER-OVERFLOW"]]},
-    {"id": "N-I-REM", "op": "int64 % int64", "rule": "a - trunc(a/b)*b (sign of the dividend); divisor 0 fails with E-DIVISION-BY-ZERO", "source": "compiler.ts:563-566",
+    {"id": "N-I-REM", "op": "integer % integer", "rule": "a - trunc(a/b)*b (sign of the dividend); divisor 0 fails with E-DIVISION-BY-ZERO", "source": "compiler.ts:563-566",
      "examples": [["7 % 3", "1"], ["-7 % 3", "-1"], ["7 % -3", "1"], ["1 % 0", "E-DIVISION-BY-ZERO"]]},
-    {"id": "N-I-NEG", "op": "unary minus, ABS on int64", "rule": "exact; -(-2^63) and ABS(-2^63) fail with E-INTEGER-OVERFLOW", "source": "int64 range",
+    {"id": "N-I-NEG", "op": "unary minus, ABS on integer", "rule": "exact; -(-2^63) and ABS(-2^63) fail with E-INTEGER-OVERFLOW", "source": "integer range",
      "examples": [["-(-2^63)", "E-INTEGER-OVERFLOW"], ["ABS(-2^63)", "E-INTEGER-OVERFLOW"], ["ABS(-5)", "5"]]},
-    {"id": "N-MIXED", "op": "arithmetic mixing int64 and number", "rule": "preflight E-MIXED-FAMILY unless the query converts one operand explicitly", "source": "compiler.ts:556-560 ('Mixed exact integer and number arithmetic requires an explicit cast')",
-     "examples": [["int64 1 + number 1.5", "E-MIXED-FAMILY"], ["toNumber(int64 1) + number 1.5", "2.5"]]},
+    {"id": "N-MIXED", "op": "arithmetic mixing integer and number", "rule": "preflight E-MIXED-FAMILY unless the query converts one operand explicitly", "source": "compiler.ts:556-560 ('Mixed exact integer and number arithmetic requires an explicit cast')",
+     "examples": [["integer 1 + number 1.5", "E-MIXED-FAMILY"], ["toNumber(integer 1) + number 1.5", "2.5"]]},
     {"id": "N-F-ARITH", "op": "number + - * / (binary64)", "rule": "IEEE 754 binary64, round to nearest, ties to even, one rounding per operation; a finite result is returned bit-exact; an infinite result fails with E-NUMBER-OVERFLOW; divisor zero (+0.0 or -0.0) fails with E-DIVISION-BY-ZERO; NaN is never produced or stored", "source": "IEEE 754; RULINGS Q8c (finite domain)",
      "examples": [["0.1 + 0.2", "0.30000000000000004"], ["1.7976931348623157e308 * 2", "E-NUMBER-OVERFLOW"], ["1.0 / 0.0", "E-DIVISION-BY-ZERO"], ["1.0 / -0.0", "E-DIVISION-BY-ZERO"]]},
     {"id": "N-F-NEGZERO", "op": "signed zero", "rule": "IEEE sign rules", "source": "IEEE 754 6.3; acceptance review r1 finding 8",
      "examples": [["-0.0 + 0.0", "+0.0"], ["-0.0 + -0.0", "-0.0"], ["0.0 - 0.0", "+0.0"], ["-0.0 - 0.0", "-0.0"], ["-0.0 * -1.0", "+0.0"], ["-0.0 * 1.0", "-0.0"], ["0.0 * -1.0", "-0.0"], ["-(0.0)", "-0.0"], ["-(-0.0)", "+0.0"], ["stored -0.0 read back", "-0.0 (sign preserved)"]]},
 ]
 CONVERSION_RULES = [
-    {"id": "CV-I2F", "rule": "toNumber(int64): round to nearest binary64, ties to even, once", "examples": [["toNumber(2^53+1)", "9007199254740992.0"], ["toNumber(2^63-1)", "9223372036854775808.0"]]},
-    {"id": "CV-F2I", "rule": "toInt64(number): only explicit; the value must be integral and inside int64, else E-INVALID-CONVERSION; -0.0 converts to 0", "examples": [["toInt64(3.0)", "3"], ["toInt64(3.5)", "E-INVALID-CONVERSION"], ["toInt64(9223372036854775808.0)", "E-INVALID-CONVERSION"]]},
-    {"id": "CV-T2I", "rule": "CAST text to int64: canonical decimal only (optional leading '-', no '+', no leading zeros except '0', no '-0'), inside int64, else E-INVALID-CONVERSION or E-INTEGER-OVERFLOW", "examples": [["'9223372036854775808'", "E-INTEGER-OVERFLOW"], ["'-9223372036854775808'", "-9223372036854775808"], ["'01'", "E-INVALID-CONVERSION"], ["'+1'", "E-INVALID-CONVERSION"]]},
+    {"id": "CV-I2F", "rule": "toNumber(integer): round to nearest binary64, ties to even, once", "examples": [["toNumber(2^53+1)", "9007199254740992.0"], ["toNumber(2^63-1)", "9223372036854775808.0"]]},
+    {"id": "CV-F2I", "rule": "toInteger(number): only explicit; the value must be integral and inside integer, else E-INVALID-CONVERSION; -0.0 converts to 0", "examples": [["toInteger(3.0)", "3"], ["toInteger(3.5)", "E-INVALID-CONVERSION"], ["toInteger(9223372036854775808.0)", "E-INVALID-CONVERSION"]]},
+    {"id": "CV-T2I", "rule": "CAST text to integer: canonical decimal only (optional leading '-', no '+', no leading zeros except '0', no '-0'), inside integer, else E-INVALID-CONVERSION or E-INTEGER-OVERFLOW", "examples": [["'9223372036854775808'", "E-INTEGER-OVERFLOW"], ["'-9223372036854775808'", "-9223372036854775808"], ["'01'", "E-INVALID-CONVERSION"], ["'+1'", "E-INVALID-CONVERSION"]]},
     {"id": "CV-NONE", "rule": "no implicit conversion between families anywhere (filters, joins, group keys, aggregates)", "examples": []},
 ]
 COMPARISON_RULES = [
-    {"id": "CMP-SAME", "rule": "same family: exact comparison (int64 as integers, binary64 by IEEE value, text by Unicode codepoint sequence, datetime by instant, boolean false < true, ref by id codepoints)", "source": "exact typing"},
+    {"id": "CMP-SAME", "rule": "same family: exact comparison (integer as integers, binary64 by IEEE value, text by Unicode codepoint sequence, datetime by instant, boolean false < true, ref by id codepoints)", "source": "exact typing"},
     {"id": "CMP-NUMERIC-CONST", "rule": "an untyped numeric constant compares by numeric value with number and datetime values (number 7 and datetime 7 both equal 7); text '7' is not equal", "source": "testkit 'datalog equality predicates compare numeric values as numbers' (packages/testkit/src/index.ts:721)"},
-    {"id": "CMP-INT-FLOAT", "rule": "int64 versus number: equality is false and they never share a group; an ordered comparison across them is preflight E-MIXED-FAMILY unless converted explicitly", "source": "RULINGS Q8d (core silent for stored int64 versus number)"},
+    {"id": "CMP-INT-FLOAT", "rule": "integer versus number: equality is false and they never share a group; an ordered comparison across them is preflight E-MIXED-FAMILY unless converted explicitly", "source": "RULINGS Q8d (core silent for stored integer versus number)"},
     {"id": "CMP-IDENTITY", "rule": "entity ids and ref identities compare only with text or ref constants; a numeric or boolean constant is never equal and != is true", "source": "testkit 'datalog equality keeps identity bindings string-typed'"},
     {"id": "CMP-UNTYPED-STRING", "rule": "an untyped string constant matches string and ref values; a typed ref constant matches only ref values", "source": "testkit 'datalog untyped strings match string and ref values while typed refs stay exact'"},
-    {"id": "CMP-BOOL-INT", "rule": "boolean true and int64 1 are distinct values and distinct groups", "source": "packet oracle identity() (event_oracles.py: bool true vs i64 one)"},
-    {"id": "CMP-NEGZERO", "rule": "-0.0 = +0.0 is true for comparison and they share one group; the stored value keeps its sign; the group's reported value is the value of its lowest assertion id", "source": "IEEE 754 equality; frozen by this contract"},
+    {"id": "CMP-BOOL-INT", "rule": "boolean true and integer 1 are distinct values and distinct groups", "source": "packet oracle identity() (event_oracles.py: bool true vs i64 one)"},
+    {"id": "CMP-NEGZERO", "rule": "-0.0 and +0.0 are one value for identity, grouping and set membership; when supports differ only in representation, the returned representation is the one from the support with the lowest recorded position; a single-assertion read returns the stored representation", "source": "RULINGS Q14b; packages/core/src/content/CanonicalJson.ts:77"},
 ]
 AGGREGATE_RULES = [
-    {"id": "AG-SUM-I", "rule": "SUM over int64: exact total over the solution rows (bag of distinct bindings); E-INTEGER-OVERFLOW only when the final total is outside int64", "source": "RULINGS Q8a; compiler.ts SUM over DECIMAL(32,0)",
+    {"id": "AG-SUM-I", "rule": "SUM over integers, where a surface or projection offers it: exact total over the solution rows (bag of distinct bindings); E-INTEGER-OVERFLOW only when the final total is outside the integer range; partial sums never wrap. Engine-side sums are required only for projections that declare them (G5.agg.projection-sums); per-subject sums run in the kernel", "source": "RULINGS Q8a, NUMERIC; compiler.ts SUM over DECIMAL(32,0)",
      "examples": [["[2^62, 2^62]", "E-INTEGER-OVERFLOW"], ["[2^62, 2^62, -2^62]", "4611686018427387904"], ["[2^58, 2^58, 2^58]", "864691128455135232"]]},
-    {"id": "AG-SUM-F", "rule": "SUM over number: the correctly rounded value of the exact sum (one rounding), independent of evaluation order", "source": "frozen by this contract (order independence)",
+    {"id": "AG-SUM-F", "rule": "SUM over number, where offered: the correctly rounded value of the exact sum (one rounding), independent of evaluation order", "source": "RULINGS Q14c",
      "examples": [["[1e16, 1.0, -1e16]", "1.0"]]},
-    {"id": "AG-AVG-I", "rule": "AVG over int64 without explicit conversion: preflight E-INTEGER-AVG", "source": "RULINGS Q8b; compiler.ts:1397-1401"},
-    {"id": "AG-AVG-CONV", "rule": "AVG(toNumber(int64)) and AVG(number): binary64 of the exact sum divided by the count, rounded once", "source": "RULINGS Q8b"},
+    {"id": "AG-AVG-I", "rule": "AVG over integers without explicit conversion: preflight E-INTEGER-AVG", "source": "RULINGS Q8b; compiler.ts:1397-1401"},
+    {"id": "AG-AVG-CONV", "rule": "AVG(toNumber(integer)) and AVG(number): binary64 of the exact sum divided by the count, rounded once", "source": "RULINGS Q8b"},
     {"id": "AG-COUNT", "rule": "COUNT over a variable counts distinct flattened values of that variable (core), so two entities with value 10 count 1 while SUM counts 20", "source": "testkit 'datalog aggregates preserve duplicate rows and define empty and distinct results'"},
     {"id": "AG-EMPTY-UNGROUPED", "rule": "ungrouped aggregate over no rows returns one row: COUNT 0; SUM, AVG, MIN, MAX null", "source": "same testkit case"},
     {"id": "AG-EMPTY-GROUPED", "rule": "grouped aggregate over no rows returns no rows; an empty group never appears", "source": "wiki/problems/native-correlation.md (grouped empty SUM produces no row)"},
-    {"id": "AG-MINMAX-TIES", "rule": "MIN/MAX return the extreme value; a witness query keeps every tied entity", "source": "wiki/problems/native-correlation.md (tied int64-max winners)"},
+    {"id": "AG-MINMAX-TIES", "rule": "MIN/MAX return the extreme value; a witness query keeps every tied entity", "source": "wiki/problems/native-correlation.md (tied integer-max winners)"},
     {"id": "AG-PACKET-COALESCE", "rule": "packet tasks that state COALESCE(sum, 0) return 0 for an empty input; this is task-specific and recorded in the task recipe", "source": "packet workload 06 empty-currency"},
 ]
 CARD_MANY_ORDER = {
     "source": "RULINGS Q8f",
     "rule": "set semantics: equal values collapse to one element; elements ordered first by type family, then by value",
-    "familyOrder": ["boolean", "integer", "number", "datetime", "string", "ref", "json", "blob"],
-    "valueOrder": {"boolean": "false < true", "integer": "numeric", "number": "numeric IEEE (-0.0 and +0.0 collapse, CMP-NEGZERO)", "datetime": "instant", "string": "Unicode codepoint sequence", "ref": "codepoint sequence of the target id", "json": "codepoint sequence of the canonical JSON text", "blob": "codepoint sequence of the content id"},
-    "note": "Family order is frozen by this contract (the ruling leaves it open).",
+    "familyOrder": ["boolean", "integer", "number", "decimal", "datetime", "string", "ref", "json", "blob"],
+    "valueOrder": {"boolean": "false < true", "integer": "numeric", "number": "numeric IEEE (-0.0 and +0.0 collapse, CMP-NEGZERO)", "decimal": "exact numeric value (1.50 and 1.5 are one value)", "datetime": "instant", "string": "Unicode codepoint sequence", "ref": "codepoint sequence of the target id", "json": "codepoint sequence of the canonical JSON text", "blob": "codepoint sequence of the content id"},
+    "note": "Family order per RULINGS Q14a; decimal sorts with integer and number by numeric value only inside its own family (decimal is ordered after number).",
 }
 CONSTRAINT_RULES = [
     {"id": "CN-NEW-OR-WORSENED", "rule": "with enforcement on, a command is rejected only when its post-state creates a new violation or worsens an existing one at some represented valid-time boundary; a pre-existing violation does not block an unrelated command and stays readable", "source": "packages/core/src/Constraint.ts:376 (newlyViolated)"},
@@ -213,11 +225,31 @@ CONSTRAINT_RULES = [
     {"id": "CN-PREEXISTING-CONFLICT", "rule": "a card-one conflict that predates the enforcing write stays a conflict (C5.2) and reads per C5.3", "source": "PLAN C5.2"},
 ]
 
+INTEGER_MIN_RANGE = 2 ** 53 - 1  # NUMERIC: every lane must accept every integer in [-(2^53-1), 2^53-1]
+LANE_INTEGER_RANGE = {
+    "xtdb": {"declared": "[-2^63, 2^63-1] (BIGINT)", "rule": "values inside are stored exactly; the lane may accept the whole core integer range"},
+    "qlever": {"declared": "[-2^59, 2^59-1] (60-bit native integers; lexical channel exact)", "rule": "values outside are rejected at write with E-VALUE-OUT-OF-RANGE before any engine mutation (TARGETS section 3)"},
+}
+VALUE_KINDS = [
+    {"kind": "string", "rule": "exact codepoint sequence; ill-formed UTF-16 rejected with E-INVALID-VALUE"},
+    {"kind": "integer", "rule": "exact; every lane accepts at least [-(2^53-1), 2^53-1]; each lane declares its accepted range (LANE_INTEGER_RANGE); a value outside the lane's range fails the write with E-VALUE-OUT-OF-RANGE and leaves no residue; never wrapped, widened or rounded"},
+    {"kind": "number", "rule": "binary64 for approximate, deterministic values only (for example a risk score), never business values; stored and read bit-exact; NaN and infinities rejected"},
+    {"kind": "decimal", "rule": "NEW value kind for money and business decimals: a scaled integer (declared scale) or an order-preserving decimal string; exact storage and round trip; order-preserving encoding for range rules; a value with more fractional digits than the declared scale or outside the declared magnitude fails with E-DECIMAL-UNREPRESENTABLE, never rounded; arithmetic in the TypeScript kernel (exact decimal or BigInt)"},
+    {"kind": "boolean", "rule": "exact"},
+    {"kind": "datetime", "rule": "exact epoch-millisecond instant including fractional milliseconds; values needing nanoseconds use ISO strings (NUMERIC table)"},
+    {"kind": "ref", "rule": "exact target id"},
+    {"kind": "json", "rule": "exact text with key order kept; canonical form for identity"},
+    {"kind": "blob", "rule": "exact descriptor (mimeType, size, filename)"},
+]
+RANGE_RULE = "Every attribute used in a range rule (for example 'pay rate at or above 16.50', 'hours over 40') has an order-preserving comparison on every surface that serves the rule: native exact types inside their exact range, or a documented order-preserving channel."
+
 # ============================================================================ errors
 # Every expected error is pinned here. 'existing' tags exist in the source tree today; 'new' tags are named by
 # PLAN v1.1 or by this contract and must be implemented with exactly this tag and reason.
 ERROR_TABLE = [
     {"id": "E-INTEGER-OVERFLOW", "tag": "QueryError", "reason": "integer-overflow", "phase": "execution", "status": "existing reason string (compiler.ts:572), tag frozen here"},
+    {"id": "E-VALUE-OUT-OF-RANGE", "tag": "InvalidTripleError", "reason": "value-out-of-range", "phase": "preflight", "status": "new reason (NUMERIC): the value is valid Triplex but outside the lane's declared exact range; rejected before any engine mutation"},
+    {"id": "E-DECIMAL-UNREPRESENTABLE", "tag": "InvalidTripleError", "reason": "decimal-unrepresentable", "phase": "preflight", "status": "new reason (decimal value kind)"},
     {"id": "E-NUMBER-OVERFLOW", "tag": "QueryError", "reason": "number-overflow", "phase": "execution", "status": "new"},
     {"id": "E-DIVISION-BY-ZERO", "tag": "QueryError", "reason": "division-by-zero", "phase": "execution", "status": "new (RULINGS Q8c)"},
     {"id": "E-INVALID-CONVERSION", "tag": "QueryError", "reason": "invalid-conversion", "phase": "execution", "status": "new"},
@@ -318,27 +350,62 @@ CURSOR_TRANSITIONS = {
 }
 
 # ============================================================================ thresholds (single registry)
-# kind: load | perf | observe | scale | witness | count. 'value' is fixed; calibration may only tighten it
-# (direction given by 'bound') or report it unattainable. 'derived' marks values this contract chose because no
-# ruling states them; they are listed in ACCEPTANCE section 1 so a reviewer can change them in one place.
+# NS-* bars are TARGETS.md section 1 provisional bars, verbatim. 'derived' marks values this contract fixed because the
+# targets give none; they are listed in ACCEPTANCE section 1 for review. Calibration may tighten any value; loosening
+# one needs Sam (TARGETS threshold policy).
+def th(kind, value, unit, bound, source):
+    return {"kind": kind, "value": value, "unit": unit, "bound": bound, "source": source}
+
+
+T1 = "lab/TARGETS.md section 1"
 THRESHOLDS = {
-    # ---- non-load. Performance values are HELD (orchestrator hold 2026-11-07); 'was' records the 0.1.0 value.
-    "T-DRAIN-MS": {"kind": "observe", "value": "HELD", "was": "CALIBRATE", "unit": "ms from cancel request to the engine no longer listing the statement", "bound": "max", "source": "0.1.0 G6.cancel.observed-drain drainBoundMs"},
-    "T-DEADLINE-GRACE-MS": {"kind": "observe", "value": "HELD", "was": "CALIBRATE", "unit": "ms past timeoutMs for the typed timeout to reach the caller", "bound": "max", "source": "0.1.0 G6.deadline.enforced deadlineGraceMs"},
-    "T-PLANNER-MEM-BYTES": {"kind": "observe", "value": "HELD", "was": "CALIBRATE", "unit": "bytes of engine memory during a refused query", "bound": "max", "source": "0.1.0 G3.admission.preconstruction plannerMemoryBytes"},
-    "T-AVAIL-WINDOW-MS": {"kind": "observe", "value": "HELD", "was": "CALIBRATE", "unit": "ms until writes and reads succeed after a resource failure", "bound": "max", "source": "0.1.0 G6.resource.memory-failure-contained availabilityWindowMs"},
-    "T-CONN-RELEASE-MS": {"kind": "observe", "value": "HELD", "was": None, "unit": "ms after close for the engine-side connection count to return to baseline", "bound": "max", "source": "new in 0.2.0; value supplied by the follow-up"},
-    "T-SCALE-P99-REPO-MS": {"kind": "perf", "value": "HELD", "was": "CALIBRATE", "unit": "ms p99, point/entity/repository classes at the rung", "bound": "max", "source": "0.1.0 G3.plan.access-path-at-scale p99LatencyMsPerClass"},
-    "T-SCALE-P99-ANALYTIC-MS": {"kind": "perf", "value": "HELD", "was": "CALIBRATE", "unit": "ms p99, recursion topologies at the rung", "bound": "max", "source": "0.1.0 G3.recursion.scalable p99LatencyMsPerTopology"},
-    "T-LAT-RATIO-10M-1M": {"kind": "perf", "value": "HELD", "was": "CALIBRATE", "unit": "latency at 10m divided by latency at 1m, key-bounded classes", "bound": "max", "source": "0.1.0 G3.plan.access-path-at-scale latencyRatio10mOver1m"},
-    "T-DEEP-PAGE-RATIO": {"kind": "perf", "value": "HELD", "was": "CALIBRATE", "unit": "cost of page 10,000 divided by page 1", "bound": "max", "source": "0.1.0 G10.cursor.stable deepPageCostRatio"},
-    "T-FAULT-REPS": {"kind": "count", "value": 3, "was": 3, "unit": "injections per fault point", "bound": "min", "source": "0.1.0 repetitionsPerFaultPoint (structural, not a performance target)"},
-    "T-REUSE-AVOIDED": {"kind": "witness", "value": "HELD", "was": None, "unit": "engine work units of a reused read divided by the first read at the same key", "bound": "max", "source": "new in 0.2.0 (positive reuse witness); value supplied by the follow-up"},
-    "T-INCR-WORK": {"kind": "witness", "value": "HELD", "was": None, "unit": "engine work for a one-entity change divided by full recomputation work", "bound": "max", "source": "new in 0.2.0 (incremental maintenance witness); value supplied by the follow-up"},
+    # ---- P1 (per surface)
+    "NS-P1-VIOLATIONS-MAX": th("ns", 0, "correctness violations at every reader level", "max", T1 + " P1"),
+    "NS-P1-GOODPUT-256-VS-64": th("ns", 1.0, "correctness-qualified read goodput at 256 readers divided by goodput at 64 readers", "min", T1 + " P1 (goodput does not fall from the 64-reader level)"),
+    "NS-P1-READ-P99-256-MS": th("ns", 100, "ms read p99 at 256 readers", "max", T1 + " P1"),
+    "NS-P1-WRITER-P99-RATIO-256": th("ns", 1.25, "writer commit p99 at 256 readers divided by its zero-reader baseline in the same run", "max", T1 + " P1"),
+    "NS-P1-WRITER-WAIT-MAX-MS": th("ns", 2000, "ms, no command waits longer (every ladder level)", "max", T1 + " P1"),
+    "NS-P1-GOODPUT-1024-VS-256": th("ns", 0.9, "read goodput at 1,024 readers divided by the 256 level", "min", T1 + " P1"),
+    "NS-P1-WRITER-P99-RATIO-1024": th("ns", 2.0, "writer commit p99 at 1,024 readers divided by the zero-reader baseline", "max", T1 + " P1"),
+    "NS-P1-RECOVERY-MS": th("ns", 60000, "ms after stress until an evaluation window meets every 256-level P1 bar", "max", T1 + " P1"),
+    # ---- P2 (per engine)
+    "NS-P2-COMMIT-P50-MS": th("ns", 10, "ms commit p50, 10-fact command, 256 readers running", "max", T1 + " P2"),
+    "NS-P2-COMMIT-P99-MS": th("ns", 50, "ms commit p99, 10-fact command, 256 readers running", "max", T1 + " P2"),
+    "NS-P2-RYOW-FRACTION": th("ns", 1.0, "fraction of pulls at the returned tx that see the commit with no extra wait", "min", T1 + " P2"),
+    "NS-P2-DUP-RECEIPT-FRACTION": th("ns", 1.0, "fraction of duplicates and lost-ACK retries that return the original receipt", "min", T1 + " P2"),
+    # ---- P3 (per engine)
+    "NS-P3-GAPS-MAX": th("ns", 0, "feed gaps per run", "max", T1 + " P3"),
+    "NS-P3-ORDER-VIOLATIONS-MAX": th("ns", 0, "per-subject order violations per run", "max", T1 + " P3"),
+    "NS-P3-LAG-P99-MS": th("ns", 250, "ms commit to affected subjects known, p99, 256 readers running", "max", T1 + " P3"),
+    # ---- P4 (per surface)
+    "NS-P4-PULL-P50-MS": th("ns", 5, "ms single-client subject pull p50 at the current basis", "max", T1 + " P4"),
+    "NS-P4-PULL-P99-MS": th("ns", 25, "ms single-client subject pull p99", "max", T1 + " P4"),
+    "NS-P4-PULLS-PER-CORE": th("ns", 1100, "pulls/s per engine core", "min", T1 + " P4"),
+    "NS-P4-HISTORY-FLATNESS": th("ns", 1.1, "current-pull p50 latency and bytes read at history depth 10 divided by depth 1", "max", "derived from " + T1 + " P4 ('stay flat'; no number given)"),
+    # ---- P5 (per surface)
+    "NS-P5-SWEEP-S": th("ns", 100, "s wall time to sweep 100k subjects at one pinned basis", "max", T1 + " P5"),
+    "NS-P5-LIVE-READ-P99-RATIO": th("ns", 1.5, "live read p99 during the sweep divided by no-sweep", "max", T1 + " P5"),
+    "NS-P5-WRITER-P99-RATIO": th("ns", 1.5, "writer commit p99 during the sweep divided by no-sweep", "max", T1 + " P5"),
+    # ---- secondary (TARGETS section 1)
+    "NS-SEC-BULK-READ-P99-RATIO": th("ns", 1.5, "live read p99 during a 1M-fact bulk import divided by without", "max", T1 + " secondary measurements"),
+    # ---- non-NS, derived from the NS bars
+    "T-DRAIN-MS": th("observe", 2000, "ms from cancel request to the engine no longer listing the statement", "max", "derived from NS-P1-WRITER-WAIT-MAX-MS"),
+    "T-DEADLINE-GRACE-MS": th("observe", 100, "ms past timeoutMs for the typed timeout to reach the caller", "max", "derived from NS-P1-READ-P99-256-MS"),
+    "T-PLANNER-MEM-BYTES": th("observe", 3758096384, "bytes of engine memory during a refused query (slot cap 3.5 GiB)", "max", "lab/PLAN.md section 8 heavy slot cap"),
+    "T-AVAIL-WINDOW-MS": th("observe", 60000, "ms until writes and reads succeed after a resource failure", "max", "derived from NS-P1-RECOVERY-MS"),
+    "T-CONN-RELEASE-MS": th("observe", 5000, "ms after close for the engine-side connection count to return to baseline", "max", "derived"),
+    "T-RECURSION-P99-MS": th("perf", 1000, "ms p99, single client, recursion topologies at the rung", "max", "derived (no recursion bar in TARGETS)"),
+    "T-LAT-RATIO-10M-1M": th("perf", 1.1, "p50 latency at 10m divided by 1m, key-bounded classes", "max", "derived from NS-P4-HISTORY-FLATNESS"),
+    "T-DEEP-PAGE-RATIO": th("perf", 2.0, "p50 cost of page 10,000 divided by page 1", "max", "derived (keyset continuation, GS.18 stable cursors)"),
+    "T-REUSE-AVOIDED": th("witness", 0.5, "engine work units of a reused read divided by the first read at the same key", "max", "derived (positive reuse witness)"),
+    "T-INCR-WORK": th("witness", 0.01, "engine work for a one-entity change divided by full recomputation, at the 1m rung", "max", "derived (incremental maintenance witness)"),
+    "T-FAULT-REPS": th("count", 3, "injections per fault point", "min", "derived"),
+    "T-SAMPLES-PER-FAMILY": th("count", 1000, "deterministic samples per query family per rung", "min", "derived (review r1 finding 10: scale samples need a minimum)"),
+    "T-SAMPLES-PER-STRATUM": th("count", 50, "samples per population stratum per family where it applies", "min", "derived"),
+    "T-RUNS": th("count", 3, "independent runs per measurement", "min", "qualification/benchmark-contract.json independentRuns"),
 }
-HOLD_RULE = "A threshold whose value is HELD cannot be evaluated; every obligation that names it stays OPEN until a later contract version sets the value (orchestrator hold 2026-11-07, lab/NORTH-STAR.md)."
-CALIBRATION_RULE = "Calibration may only tighten a threshold (a smaller max, a larger min) or record it UNATTAINABLE with the measurement. It never loosens a value. If a value is unattainable on this VM for every candidate, the orchestrator records the measurement and asks Sam before any lower value is used (RULINGS Q2); the obligation stays OPEN until then."
-THRESHOLD_RULE_FOR_KIND = {"load": "CR-LOAD", "perf": "CR-PERF", "observe": "CR-OBSERVE", "scale": "CR-SCALE", "count": None, "witness": "CR-WITNESS"}
+CALIBRATION_RULE = "Calibration may only tighten a threshold (a smaller max, a larger min) or record it UNATTAINABLE with the measurement. Loosening any value needs Sam (TARGETS threshold policy); until he rules, the obligation stays OPEN."
+THRESHOLD_RULE_FOR_KIND = {"ns": ("CR-NS", "CR-GS"), "perf": ("CR-PERF",), "observe": ("CR-OBSERVE",), "count": (), "witness": ("CR-WITNESS",)}
 
 # ============================================================================ oracles
 ORACLES = {
@@ -366,6 +433,8 @@ ORACLES = {
                "spec": "ACCEPTANCE 6.4 (route and access-path verdicts)", "independence": "expected route computed from the C1 conditions by O-REPLAY's eligibility model, not by the system"},
     "O-SPEC": {"status": "TO-AUTHOR", "files": ["lab/acceptance/cases/type-witnesses/"], "comparator": "CMP-DIAGNOSTICS",
                "spec": "ACCEPTANCE 6.5", "independence": "tsc on packed public declarations only"},
+    "O-HAND": {"status": "TO-AUTHOR", "files": ["lab/acceptance/cases/hand-derivations/"], "comparator": "declared per case",
+               "spec": "a frozen hand derivation: the expected answer worked out by hand from the scenario's seeded generator spec, independently reviewed and hash-pinned before any run", "independence": "never derived from a system under test"},
     "O-TESTKIT": {"status": "EXISTS", "files": ["packages/testkit/src/index.ts"], "comparator": "testkit checks",
                   "spec": "authored expectations inside the 44 shared cases", "independence": "literal expectations; KV is a regression participant only"},
     "O-KV": {"status": "EXISTS", "files": ["packages/core/src/kv/"], "comparator": "differential only",
@@ -375,7 +444,7 @@ COMPARATORS = {
     "CMP-SET-ROWS": "sorted unique canonical rows equal (packet runner semantics: runner.ts:900-912)",
     "CMP-BAG-ROWS": "multisets of canonical rows equal",
     "CMP-ORDERED-ROWS": "sequences of canonical rows equal, order included",
-    "CMP-EXACT-VALUE": "typed values equal: int64 as integers, binary64 bit patterns (sign of zero included), text codepoints, datetime instants, json canonical text plus original key order where the case says so",
+    "CMP-EXACT-VALUE": "typed values equal: integers exactly, decimals by exact value and declared scale, binary64 bit patterns (sign of zero included), text codepoints, datetime instants, json canonical text plus original key order where the case says so",
     "CMP-ERROR": ERROR_COMPARISON,
     "CMP-PAGES": "the page sequence equals the expected sequence: same rows per page, no duplicate or skipped row, same returned basis on every page",
     "CMP-DIAGNOSTICS": "the set of {file, line, column, code} diagnostics equals the expected set exactly",
@@ -384,8 +453,11 @@ COMPARATORS = {
 # ============================================================================ entrypoints and profiles
 ENTRYPOINTS = {
     "EP-TRIPLES": "Public Triples service (packages/core/src/store/Triples.ts) over the lane Runtime (`.layer({scope, capabilities})`).",
-    "EP-REPO": "Entity repository Repository<Model>: at(basis), get, getMany, find({where, include, limit, cursor}), timeline (public core entity subpath; the receipt records the exported symbol and module).",
-    "EP-WRITER": "Writer -> WritePlan -> commit(plans, {actor, commandId}).",
+    "EP-REPO": "Entity repository Repository<Model>: at(basis), get, getMany, find({where, include, limit, cursor}), timeline (public core entity subpath; the receipt records the exported symbol and module). Its subject pull is the P4 read shape.",
+    "EP-WRITER": "Writer -> WritePlan -> commit(plans, {actor, commandId}); one command is about one subject.",
+    "EP-KERNEL": "The TypeScript kernel that evaluates rule comparisons and per-subject arithmetic over values read from the store (exact BigInt and decimal arithmetic); the receipt records the exported function.",
+    "EP-FEED": "The ordered, resumable change feed: entries carry tx, entity, attribute and the valid-time range affected; consumers resume from a checkpoint.",
+    "EP-BULK": "The separate, throttled bulk-import lane.",
     "EP-NATIVE": "The lane's native surface with helper fragments: xtdb-xtql `select`, xtdb-sql `selectSql`, qlever-sparql native SPARQL.",
     "EP-RAW-HATCH": "The qualified raw escape hatch through Triplex (native.xtql``, native.sql``, native.sparql`` with declared contract), text using only names published in the raw-query guide.",
     "EP-RAW-WIRE": "Direct engine protocol with no Triplex code (pgwire; SPARQL 1.1 Protocol), against the documented raw dataset; bare inspection, unqualified during QLever MAINTAINING (C4.5).",
@@ -401,58 +473,49 @@ PROFILES = {
     "P-TINY-CONC": "P-TINY plus controlled concurrent actors (a writer between calls, 16-way races).",
     "P-HEAVY": "Exclusive slot, at least 1m entities or a declared synthetic long-running query.",
     "P-FAULT": "Exclusive slot with fault injection at declared transitions, restart and recovery.",
-    "P-RUNG-1M": "The 1m-entity scale rung (population definition HELD with section S).",
-    "P-RUNGS": "Every scale rung in order: 10k, 100k, 1m, 10m (population definition HELD with section S).",
-    "P-SCALE-10M": "The 10m-entity target dataset of S.dataset.target-population (definition HELD with section S).",
-    "P-LOAD": "load-contract.json levels on the representative 10m dataset (and the sparse smoke level on the sparse dataset).",
+    "P-RUNG-1M": "The 1m-subject rung of SCALE_POPULATION.",
+    "P-RUNGS": "Every rung of SCALE_POPULATION in order: 10k, 100k, 1m, 10m subjects.",
+    "P-YEAR-ONE": "The year-one measurement population of SCALE_POPULATION at the 10m rung (10m entities, 100m active facts, retained history). It is the size the priorities are measured at, not a target in itself.",
+    "P-NS": "load-contract.json (fixed writer trace, P1 reader ladder, P2 to P4 probes, P5 sweep) on P-YEAR-ONE, one identified profile and composition.",
 }
 
-# ============================================================================ scale population (frozen)
-SCALE_POPULATION = {  # HELD DRAFT: not binding until the north-star follow-up
-    "status": "HELD DRAFT (not binding): prepared before the orchestrator hold of 2026-11-07; the follow-up decides the population",
-    "source": "PLAN v1.1 section 1 items 2-3; qualification/benchmark-contract.json (historicalDepths 1/3/10, topologies, queryFamilies); qualification/capacity/configured-entities-v1/CONTRACT.md; acceptance review r1 finding 13",
+# ============================================================================ year-one measurement population
+SCALE_POPULATION = {
+    "source": "lab/TARGETS.md section 2 (year-one scale; rungs 10k, 100k, 1m, 10m) and section 1 P4 (history depths 1, 3, 10); qualification/benchmark-contract.json (topologies, query families); acceptance review r1 finding 13",
+    "role": "measurement size for P1 to P5 and the golden scenarios; not a target in itself (lab/SCOPE.md section 2 item 2)",
     "rungs": [10000, 100000, 1000000, 10000000],
     "scaling": "every count and stratum scales proportionally with the rung; hub in-degree is 1% of the rung's entities; shares are identical at every rung",
-    "singleScope": True,
-    "writtenThrough": "public writes (EP-WRITER or EP-TRIPLES), every command ACKed with a receipt, no unresolved outcome",
-    "profiles": {
-        "representative-10": {"activeDomainFactsPerEntity": 10,
-                              "facts": "one each of: label (string), score (number), amount (number), exact int64 beyond 2^53, boolean flag, ref (group), category (string, skewed), instant (datetime), date (datetime), legacy integer (int64 inside 2^31)",
-                              "atTarget": {"entities": 10000000, "activeDomainFacts": 100000000}},
-        "sparse-1": {"activeDomainFactsPerEntity": 1, "facts": "one label (string)", "atTarget": {"entities": 10000000, "activeDomainFacts": 10000000}},
-    },
+    "writtenThrough": "public writes (EP-WRITER, or EP-BULK for the initial load), every command ACKed with a receipt, no unresolved outcome",
+    "atYearOne": {"entities": 10000000, "activeDomainFacts": 100000000, "retainedFactsMin": 150000000, "retainedFactsNote": "TARGETS section 2: retained history 150M to 500M facts per year; the history strata below give about 162M retained facts"},
+    "factsPerEntity": "10 active domain facts: label (string), risk score (number, approximate), pay rate (decimal, scale 2), hours (integer), headcount (integer), flag (boolean), group (ref), category (string, skewed), start date (datetime), status changed at (datetime)",
+    "tenants": [{"id": "TN-LARGE", "rule": "one tenant with 1m entities"}, {"id": "TN-SMALL", "rule": "1,000 tenants with 1k entities each"}, {"id": "TN-REST", "rule": "the remaining entities in one default tenant"}],
     "historyStrata": [
         {"id": "H1", "share": 0.50, "rule": "depth 1: no correction"},
-        {"id": "H3", "share": 0.35, "rule": "depth 3: two corrections on each of two attributes (sparse: on its one attribute)"},
-        {"id": "H10", "share": 0.15, "rule": "depth 10: nine corrections on one attribute"},
+        {"id": "H3", "share": 0.35, "rule": "depth 3: two corrections on each of five attributes"},
+        {"id": "H10", "share": 0.15, "rule": "depth 10: nine corrections on each of two attributes"},
     ],
     "otherEvents": [
-        {"id": "EV-PRESENCE", "rule": "1 entity per 1,000 toggles presence true -> false -> true (configured-entities convention)"},
-        {"id": "EV-VALID-FUTURE", "rule": "5% of entities hold a fact whose validTo falls inside the load window"},
+        {"id": "EV-PRESENCE", "rule": "1 entity per 1,000 toggles presence true -> false -> true"},
+        {"id": "EV-RETRO", "rule": "1% of commands are valid-time corrections 30 days back (TARGETS section 2)"},
+        {"id": "EV-VALID-FUTURE", "rule": "5% of entities hold a fact whose validTo falls inside the measurement window"},
         {"id": "EV-VALID-PAST", "rule": "5% of entities hold a fact already closed by valid time"},
         {"id": "EV-SAME-R", "rule": "1 command per 10,000 shares its recorded instant with the next command"},
-        {"id": "EV-DECREASING-R", "rule": "1 command per 10,000 is written by a second runtime whose clock is behind (recorded instant lower than the previous position's)"},
+        {"id": "EV-DECREASING-R", "rule": "1 command per 10,000 is written by a second runtime whose clock is behind"},
         {"id": "EV-NESTED", "rule": "1 command per 10,000 is a nested transaction holding two positions"},
+        {"id": "EV-UNHOLDABLE", "rule": "write attempts of values a lane cannot hold (integers beyond its declared range, decimals beyond scale) appear in the stream and must fail typed"},
     ],
-    "topology": {
-        "appliesTo": "representative-10 (through the ref attribute and the group entities)",
-        "strata": [
-            {"id": "TP-CHAIN", "rule": "1,000 chains of depth 50 (at 10m; proportional below)"},
-            {"id": "TP-TREE", "rule": "1,000 trees, fanout 4, depth 6"},
-            {"id": "TP-DIAMOND", "rule": "10,000 diamonds"},
-            {"id": "TP-CYCLE", "rule": "1,000 cycles of length 3 to 20"},
-            {"id": "TP-FANOUT", "rule": "10 hubs, each with incoming refs from 1% of entities"},
-            {"id": "TP-SKEW", "rule": "category attribute Zipf s = 1.1 over 1,000 values; boolean flag about 50% true"},
-        ],
-    },
-    "resultCardinality": [
-        {"id": "RC-S", "rule": "selective parameters: exactly 1 row"},
-        {"id": "RC-M", "rule": "medium: 100 to 1,000 rows"},
-        {"id": "RC-L", "rule": "large: at least 100,000 rows (or the family's documented row limit, with E-ROW-LIMIT expected beyond it)"},
+    "topology": [
+        {"id": "TP-CHAIN", "rule": "1,000 chains of depth 50 (at 10m; proportional below)"},
+        {"id": "TP-TREE", "rule": "1,000 trees, fanout 4, depth 6"},
+        {"id": "TP-DIAMOND", "rule": "10,000 diamonds"},
+        {"id": "TP-CYCLE", "rule": "1,000 cycles of length 3 to 20"},
+        {"id": "TP-FANOUT", "rule": "10 hubs, each with incoming refs from 1% of entities"},
+        {"id": "TP-SKEW", "rule": "category Zipf s = 1.1 over 1,000 values; flag about 50% true"},
+        {"id": "TP-PULL", "rule": "every subject's pull subgraph spans 3 to 6 hops and 50 to 2,000 facts (TARGETS P4)"},
     ],
-    "separateCounts": ["configured entities", "domain facts", "structural facts", "assertion versions and retirements", "config facts", "journal, claim and receipt metadata", "maintenance relations", "engine rows or triples by physical role", "edges", "presence events", "corrections"],
-    "correctness": "S.correctness.query-families runs per rung (10k, 100k, 1m, 10m) and per profile, at least T-SAMPLES-PER-FAMILY samples per family with at least T-SAMPLES-PER-STRATUM in every applicable stratum (history, topology, result cardinality), plus complete-count queries for every population; deterministic sample selection with a recorded seed from the generator spec, never from query answers.",
-    "coResidence": "Running the 71-task packet beside the target dataset is diagnostic D-PKT-CORESIDENT only; target-scale query shapes are qualified against the actual target population by S.correctness.query-families.",
+    "resultCardinality": [{"id": "RC-S", "rule": "exactly 1 row"}, {"id": "RC-M", "rule": "100 to 1,000 rows"}, {"id": "RC-L", "rule": "at least 100,000 rows or the documented row limit (E-ROW-LIMIT beyond)"}],
+    "separateCounts": ["entities per tenant", "domain facts", "structural facts", "assertion versions and retirements", "config facts", "journal, claim, receipt and feed metadata", "maintenance relations", "engine rows or triples by physical role", "edges", "presence events", "corrections"],
+    "correctness": "S.correctness.query-families runs per rung, at least T-SAMPLES-PER-FAMILY samples per family with at least T-SAMPLES-PER-STRATUM in every applicable stratum (history, topology, tenant, result cardinality), plus complete-count queries for every population; deterministic sample selection from the generator seed, never from query answers.",
 }
 
 # ============================================================================ capability matrix (data)
@@ -484,44 +547,46 @@ KNOWN_LIMITS = {
 }
 
 
-def row(n, op, typ, exact, raw_req, frag_cov, required_by, cells=None, note=None):
+def row(n, op, typ, exact, raw_req, frag_cov, required_by, cells=None, note=None, if_offered=False):
     return {"n": n, "op": op, "type": typ, "exactness": exact, "rawRequired": raw_req, "fragmentCoverage": frag_cov,
-            "requiredBy": required_by, "cells": cells or {}, "note": note}
+            "requiredBy": required_by, "cells": cells or {}, "note": note, "ifOffered": if_offered}
 
 
+REJECT_Q = ("NA", "QLever rejects integers beyond +/-2^59 at write (E-VALUE-OUT-OF-RANGE, G1.types.out-of-range-rejected), so no such value is stored")
 # cell override: ("KL", [ids], note) | ("NA", reason) | ("NOTE", note)
 MATRIX_ROWS = [
     row(1, "= filter", "text", "exact", True, True, ["R.raw.parity", "R.repo.entity-suite"]),
-    row(2, "= filter", "int64 |v| <= 2^53", "exact", True, True, ["R.raw.parity", "G1.types.eight-type-roundtrip"]),
-    row(3, "= filter", "int64 2^53 < |v| <= 2^59", "exact", True, True, ["R.raw.parity", "G1.types.storage-widening-safe"],
-        {"x_raw": ("NOTE", "documented columns are monomorphic (one declared type), so the union-column rounding of R1 Q3 cannot arise"), "s_raw": ("NOTE", "same")}),
-    row(4, "= filter", "int64 2^59 < |v| < 2^63", "exact", True, True, ["R.raw.parity", "G1.types.eight-type-roundtrip"], {"q_raw": ("KL", ["KL-Q1"], "")}),
-    row(5, "= filter", "binary64", "exact", True, True, ["R.raw.parity", "G2.arith.binary64"], {"q_raw": ("KL", ["KL-Q3"], "")}),
-    row(6, "= across families", "int64 vs binary64", "spec (CMP-INT-FLOAT)", True, True, ["G2.expr.cross-family-comparison"], {"q_raw": ("KL", ["KL-Q4"], "")}),
+    row(2, "= filter", "integer |v| <= 2^53-1", "exact", True, True, ["R.raw.parity", "G1.types.value-kinds-roundtrip"]),
+    row(3, "= filter", "integer 2^53 <= |v| < 2^59", "exact where the lane accepts the value", True, True, ["R.raw.parity", "G1.types.storage-widening-safe"],
+        {"x_raw": ("NOTE", "documented columns are monomorphic, so the union-column rounding of R1 Q3 cannot arise"), "s_raw": ("NOTE", "same")}),
+    row(4, "= filter", "integer 2^59 <= |v| < 2^63", "exact where the lane accepts the value; otherwise rejected at write", True, True, ["R.raw.parity", "G1.types.out-of-range-rejected"],
+        {"q_raw": REJECT_Q, "q_frag": REJECT_Q, "repo_q": REJECT_Q}),
+    row(5, "= filter", "number (binary64, approximate values)", "exact", True, True, ["R.raw.parity", "G2.arith.binary64"], {"q_raw": ("KL", ["KL-Q3"], "")}),
+    row(6, "= across families", "integer vs number", "spec (CMP-INT-FLOAT)", True, True, ["G2.expr.cross-family-comparison"], {"q_raw": ("KL", ["KL-Q4"], "")}),
     row(7, "= filter", "boolean, ref", "exact", True, True, ["R.raw.parity"]),
-    row(8, "= filter", "datetime", "exact", True, True, ["R.raw.parity", "G1.types.eight-type-roundtrip"],
+    row(8, "= filter", "datetime", "exact", True, True, ["R.raw.parity", "G1.types.value-kinds-roundtrip"],
         {"x_raw": ("KL", ["KL-X6"], "raw-wire with the node postgres driver only"), "s_raw": ("KL", ["KL-X6"], "raw-wire with the node postgres driver only"), "q_raw": ("KL", ["KL-Q5"], "")}),
-    row(9, "range < <= > >=", "text", "exact (codepoint)", True, True, ["G2.strings.codepoint-supported", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q7"], ""), "q_frag": ("NOTE", "order-key fragment (R5, proven under the pinned image, not wired)")}),
-    row(10, "range", "int64 all bands", "exact", True, True, ["R.raw.parity", "S.correctness.query-families"], {"q_raw": ("KL", ["KL-Q1"], "beyond +/-2^59")}),
-    row(11, "range", "binary64", "exact", True, True, ["R.raw.parity"], {"q_raw": ("KL", ["KL-Q3"], "")}),
+    row(9, "range < <= > >=", "text", "exact (codepoint)", True, True, ["G2.strings.codepoint-supported", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q7"], ""), "q_frag": ("NOTE", "order-key fragment (R5, proven under the pinned image)")}),
+    row(10, "range", "integer within the lane's accepted range", "exact (order-preserving, RANGE_RULE)", True, True, ["R.raw.parity", "REQ.no-silent-precision-loss"]),
+    row(11, "range", "number", "exact", True, True, ["R.raw.parity"], {"q_raw": ("KL", ["KL-Q3"], "")}),
     row(12, "range", "datetime", "exact", True, True, ["G9.temporal.half-open-intervals", "R.raw.parity"],
         {"x_raw": ("KL", ["KL-X6"], "raw-wire only"), "s_raw": ("KL", ["KL-X6"], "raw-wire only"), "q_raw": ("KL", ["KL-Q5"], "")}),
     row(13, "ORDER BY", "text", "exact (codepoint)", True, True, ["G2.strings.codepoint-supported", "G10.cursor.stable", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q7"], "")}),
-    row(14, "ORDER BY", "int64 and binary64", "exact", True, True, ["R.raw.parity", "G10.cursor.stable"], {"q_raw": ("KL", ["KL-Q1", "KL-Q3"], "beyond the exact ranges")}),
+    row(14, "ORDER BY", "integer (accepted range) and number", "exact", True, True, ["R.raw.parity", "G10.cursor.stable"], {"q_raw": ("KL", ["KL-Q3"], "numbers beyond 49 mantissa bits")}),
     row(15, "ORDER BY", "datetime", "exact (instant order)", True, True, ["R.raw.parity"],
         {"x_raw": ("KL", ["KL-X6"], "raw-wire only"), "s_raw": ("KL", ["KL-X6"], "raw-wire only"), "q_raw": ("KL", ["KL-Q5"], "")}),
-    row(16, "ORDER BY with a total key", "any", "spec (deterministic with a total key)", True, True, ["G10.cursor.stable", "R.raw.parity"], note="raw recipes always add a total tie-break key; without one, order is unspecified in every engine"),
+    row(16, "ORDER BY with a total key", "any", "spec (deterministic with a total key)", True, True, ["G10.cursor.stable", "R.raw.parity"], note="raw recipes always add a total tie-break key"),
     row(17, "LIMIT/OFFSET page at a fixed cut", "any", "exact", True, True, ["G10.cursor.stable", "R.raw.parity"]),
     row(18, "keyset cursor page", "any", "exact, cost bounded", True, True, ["G10.cursor.stable", "G10.cursor.deep-page-cost"]),
-    row(19, "+ - *", "int64", "exact-or-error (N-I-ADD)", True, True, ["G2.arith.int64-overflow", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q2"], ""), "x_raw": ("NOTE", "source: overflow-checked addExact; must be exact-or-error"), "s_raw": ("NOTE", "same")}),
-    row(20, "/ and %", "int64, binary64", "spec (N-I-DIV, N-I-REM, N-F-ARITH)", True, True, ["G2.arith.binary64", "G2.arith.int64-overflow", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q14"], "")}),
-    row(21, "unary minus, ABS", "int64", "exact-or-error (N-I-NEG)", True, True, ["G2.arith.int64-overflow", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q2"], "")}),
-    row(22, "CAST text to int64", "int64", "exact-or-error (CV-T2I)", True, True, ["G2.arith.int64-overflow", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q1"], "")}),
-    row(23, "SUM", "int64", "exact-or-error (AG-SUM-I)", True, True, ["G5.agg.exact-overflow", "PKT.full142", "R.raw.parity"],
-        {"x_raw": ("KL", ["KL-X1"], ""), "s_raw": ("KL", ["KL-X1"], ""), "q_raw": ("KL", ["KL-Q15"], ""), "x_frag": ("NOTE", "fragment must not use raw SUM over BIGINT"), "s_frag": ("NOTE", "same")}),
-    row(24, "SUM, AVG", "binary64", "exact (AG-SUM-F, AG-AVG-CONV)", True, True, ["G2.arith.binary64", "G5.agg.full-support", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q3"], "")}),
+    row(19, "+ - * (engine side)", "integer", "exact-or-error if offered (N-I-ADD); per-subject arithmetic runs in the kernel", False, False, ["G2.arith.integer-exact"], {"q_raw": ("KL", ["KL-Q2"], "documented in the guide")}, if_offered=True),
+    row(20, "/ and % (engine side)", "integer, number", "spec if offered (N-I-DIV, N-I-REM, N-F-ARITH)", False, False, ["G2.arith.integer-exact", "G2.arith.binary64"], {"q_raw": ("KL", ["KL-Q14"], "documented in the guide")}, if_offered=True),
+    row(21, "unary minus, ABS (engine side)", "integer", "exact-or-error if offered (N-I-NEG)", False, False, ["G2.arith.integer-exact"], {"q_raw": ("KL", ["KL-Q2"], "documented in the guide")}, if_offered=True),
+    row(22, "CAST text to integer (engine side)", "integer", "exact-or-error if offered (CV-T2I)", False, False, ["G2.arith.integer-exact"], if_offered=True),
+    row(23, "SUM over many rows (engine side)", "integer", "exact-or-error where a projection needs it (AG-SUM-I, RULINGS Q8a, Q13)", False, False, ["G5.agg.projection-sums"],
+        {"x_raw": ("KL", ["KL-X1"], "documented; projections use the split-sum recipe"), "s_raw": ("KL", ["KL-X1"], "same"), "q_raw": ("KL", ["KL-Q15"], "documented"), "x_frag": ("NOTE", "a fragment that offers SUM must not use raw SUM over BIGINT"), "s_frag": ("NOTE", "same")}, if_offered=True),
+    row(24, "SUM, AVG (engine side)", "number", "exact if offered (AG-SUM-F, AG-AVG-CONV)", False, False, ["G5.agg.full-support"], {"q_raw": ("KL", ["KL-Q3"], "documented")}, if_offered=True),
     row(25, "COUNT", "any", "spec (AG-COUNT)", True, True, ["G5.agg.full-support", "R.raw.parity"]),
-    row(26, "MIN, MAX", "int64, text", "exact", True, True, ["G5.agg.shape-controls", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q1", "KL-Q7"], "")}),
+    row(26, "MIN, MAX", "integer (accepted range), text", "exact", True, True, ["G5.agg.shape-controls", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q7"], "text")}),
     row(27, "GROUP BY, HAVING", "typed keys", "spec (CMP-*)", True, True, ["G5.agg.typed-groups", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q4"], "numeric keys across families")}),
     row(28, "aggregate over empty input", "grouped and ungrouped", "spec (AG-EMPTY-*)", True, True, ["G5.agg.shape-controls", "R.raw.parity"]),
     row(29, "correlated EXISTS / NOT EXISTS", "any", "spec (O-SHAPE)", True, True, ["G4.neg.correlated-not-exists", "G4.neg.correlated-not-exists-raw", "R.raw.parity"], {"q_raw": ("KL", ["KL-Q8"], "correlation only through an inner FILTER"), "q_frag": ("NOTE", "re-binding helper (R5 C1), verified, not wired")}),
@@ -531,24 +596,27 @@ MATRIX_ROWS = [
     row(33, "UNION / union-all", "any", "spec", False, False, [], {"x_raw": ("KL", ["KL-X3"], ""), "x_frag": ("NA", "not in the coverage set; no obligation needs it")}),
     row(34, "window functions", "any", "spec", False, False, [], {"x_raw": ("NA", "XTQL has no window operator"), "x_frag": ("NA", "XTQL has no window operator"), "s_raw": ("KL", ["KL-X2"], "")}),
     row(35, "recursion / transitive closure (C8 frontier)", "ref", "exact, bounded, read-only", False, True, ["G3.recursion.scalable", "G3.recursion.read-only-frontier", "PKT.full142"], {"x_raw": ("KL", ["KL-X4"], ""), "s_raw": ("KL", ["KL-X4"], "")}),
-    row(36, "interval union over valid time", "binary64 endpoints", "exact", False, True, ["PKT.full142", "S.correctness.query-families"]),
+    row(36, "interval union over valid time", "number endpoints", "exact", False, True, ["PKT.full142", "S.correctness.query-families"]),
     row(37, "engine-native system-time clause as a Triplex basis", "basis", "exact Triplex basis", False, False, [], {"x_raw": ("KL", ["KL-X8"], ""), "s_raw": ("KL", ["KL-X8"], ""), "x_frag": ("NA", "fragments express bases through row 38"), "s_frag": ("NA", "same"), "q_raw": ("NA", "no engine system time"), "q_frag": ("NA", "same")}),
     row(38, "as-of basis recipe (P, R, V)", "basis", "exact", True, True, ["R.raw.parity", "G8.publish.basis-honesty"]),
-    row(39, "json value read", "json", "exact (key order kept)", True, True, ["G1.types.eight-type-roundtrip", "R.raw.parity"]),
-    row(40, "blob descriptor read", "blob", "exact", True, True, ["G1.types.eight-type-roundtrip", "R.raw.parity"]),
+    row(39, "json value read", "json", "exact (key order kept)", True, True, ["G1.types.value-kinds-roundtrip", "R.raw.parity"]),
+    row(40, "blob descriptor read", "blob", "exact", True, True, ["G1.types.value-kinds-roundtrip", "R.raw.parity"]),
     row(41, "raw write of a typed literal", "all", "n/a", False, False, [], {c: ("NA", "raw writes are not a supported surface: writes go through Triplex (C3 credentials, C7 ownership)") for c in ["x_raw", "s_raw", "q_raw", "x_frag", "s_frag", "q_frag"]}),
     row(42, "language-tagged text compare", "text", "n/a", False, False, [], {c: ("NA", "Triplex text values carry no language tag") for c in COLS}),
     row(43, "domain-pattern query over the default dataset", "any", "exact (only the owning scope's current domain data, C7.2)", True, True, ["G10.scope.ownership-refusal", "R.raw.parity"]),
     row(44, "unrestricted triple-pattern inspection (?s ?p ?o)", "any", "documented (also sees ledger and meta)", False, False, [], {"q_raw": ("KL", ["KL-Q12"], "documented in C7.2"), "x_frag": ("NA", "inspection is raw only"), "s_frag": ("NA", "inspection is raw only"), "q_frag": ("NA", "inspection is raw only")}),
-    row(45, "bound native parameter", "binary64 -0.0 and int64 extremes", "exact", False, True, ["G1.types.native-parameters"]),
+    row(45, "bound native parameter", "number -0.0 and integer edges of the lane's range", "exact", False, True, ["G1.types.native-parameters"]),
     row(46, "cancellation and timeout of a running query", "any", "observed drain (OBS-CANCEL)", False, True, ["G6.cancel.observed-drain", "G6.deadline.enforced"], {"q_frag": ("KL", ["KL-Q16"], "requires admission or repair: the qualified surface must still drain within T-DRAIN-MS")}),
     row(47, "values(attribute) conflict-aware relation", "all", "exact (C5.5)", False, True, ["G4.neg.conflict-semantics"]),
+    row(48, "= filter", "decimal", "exact", True, True, ["G1.types.decimal", "R.raw.parity"], note="documented order-preserving decimal channel on every lane"),
+    row(49, "range and ORDER BY", "decimal", "exact (order-preserving encoding)", True, True, ["G1.types.decimal", "REQ.no-silent-precision-loss", "R.raw.parity"]),
+    row(50, "decimal arithmetic", "decimal", "exact in the kernel; engine side only if offered", False, False, ["G1.types.decimal"], if_offered=True),
 ]
 
 RAW_PARITY_CLASSES = {
-    "RP-POINT": [1, 2, 3, 4, 5, 7, 8, 39, 40], "RP-RANGE": [9, 10, 11, 12], "RP-ORDER-PAGE": [13, 14, 15, 16, 17],
-    "RP-ARITH": [19, 20, 21, 22], "RP-CROSS-FAMILY": [6], "RP-JOIN": [32], "RP-ANTIJOIN": [29, 31],
-    "RP-AGGREGATE": [23, 24, 25, 26, 27, 28], "RP-BASIS": [38], "RP-DATASET": [43],
+    "RP-POINT": [1, 2, 3, 4, 5, 7, 8, 39, 40, 48], "RP-RANGE": [9, 10, 11, 12, 49], "RP-ORDER-PAGE": [13, 14, 15, 16, 17],
+    "RP-CROSS-FAMILY": [6], "RP-JOIN": [32], "RP-ANTIJOIN": [29, 31],
+    "RP-AGGREGATE": [25, 26, 27, 28], "RP-BASIS": [38], "RP-DATASET": [43],
     "RP-HISTORY": [38], "RP-INTERVAL": [12, 38], "RP-JOURNAL": [1, 38],
 }
 
@@ -565,41 +633,28 @@ def rx(lane, rown, domain, recipe, diag, surface="raw-hatch and raw-wire", keep=
         "stillRequiredOnRaw": keep or "every value outside the exempt domain"})
 
 
-RECIPE_INT = "compare and filter on the documented exact lexical int64 channel (canonical decimal text) for equality, and on the documented integer order-key channel for ranges and ordering"
-rx("qlever-sparql", 4, "int64 values with 2^59 < |v| < 2^63", RECIPE_INT + "; native xsd:integer only inside +/-2^59", "D-Q-INT60", keep="int64 inside +/-2^59 through native xsd:integer")
-rx("qlever-sparql", 5, "binary64 values that need more than 49 mantissa bits", "equality on the documented exact lexical binary64 channel (shortest round-trip text)", "D-Q-DBL49", keep="binary64 values exact in 49 mantissa bits")
-rx("qlever-sparql", 6, "int64 versus binary64 comparisons", "compare on (documented type-family channel, lexical channel) pairs; different families never equal (CMP-INT-FLOAT)", "D-Q-XFAM", keep="same-family comparisons")
+rx("qlever-sparql", 5, "number values that need more than 49 mantissa bits", "equality on the documented exact lexical number channel (shortest round-trip text)", "D-Q-DBL49", keep="numbers exact in 49 mantissa bits")
+rx("qlever-sparql", 6, "integer versus number comparisons", "compare on (documented type-family channel, lexical channel) pairs; different families never equal (CMP-INT-FLOAT)", "D-Q-XFAM", keep="same-family comparisons")
 rx("qlever-sparql", 8, "datetimes with a fractional millisecond", "equality on the documented exact epoch-millisecond lexical channel", "D-Q-DT", keep="whole-millisecond UTC datetimes through xsd:dateTime")
 rx("qlever-sparql", 9, "all text ranges", "range on the documented text order-key channel (6 hex digits per codepoint, R5 E-S1), bounds encoded with the same function", "D-Q-STR", keep="none: every raw text range uses the key")
-rx("qlever-sparql", 10, "int64 ranges reaching beyond +/-2^59", "range on the documented integer order-key channel", "D-Q-INT60", keep="ranges inside +/-2^59")
-rx("qlever-sparql", 11, "binary64 ranges over values beyond 49 mantissa bits", "range on the documented binary64 order-key channel", "D-Q-DBL49", keep="ranges over values exact in 49 bits")
+rx("qlever-sparql", 11, "number ranges over values beyond 49 mantissa bits", "range on the documented number order-key channel", "D-Q-DBL49", keep="ranges over values exact in 49 bits")
 rx("qlever-sparql", 12, "datetime ranges with fractional milliseconds", "range on the documented epoch-millisecond order-key channel", "D-Q-DT", keep="whole-millisecond ranges")
 rx("qlever-sparql", 13, "all text ordering", "ORDER BY the documented text order-key channel, then the entity order key", "D-Q-STR", keep="none: every raw text ordering uses the key")
-rx("qlever-sparql", 14, "numeric ordering over values outside the exact ranges", "ORDER BY the documented numeric order-key channel", "D-Q-INT60", keep="ordering inside the exact ranges")
+rx("qlever-sparql", 14, "ordering numbers beyond 49 mantissa bits", "ORDER BY the documented number order-key channel", "D-Q-DBL49", keep="integers inside the lane's range and numbers exact in 49 bits")
 rx("qlever-sparql", 15, "datetime ordering with fractional milliseconds", "ORDER BY the documented epoch-millisecond order-key channel", "D-Q-DT", keep="whole-millisecond ordering")
-rx("qlever-sparql", 19, "int64 + - * with an operand or result beyond +/-2^59", "the supported native fragment for int64 arithmetic (EP-NATIVE), qualified with N-I-ADD", "D-Q-INT60", keep="operands and results inside +/-2^59")
-rx("qlever-sparql", 20, "integer division, remainder, and any zero divisor", "the supported native fragment for division (EP-NATIVE), qualified with N-I-DIV, N-I-REM and E-DIVISION-BY-ZERO", "D-Q-DIV", keep="binary64 division with non-zero divisors and results exact in 49 bits")
-rx("qlever-sparql", 21, "unary minus and ABS beyond +/-2^59", "the supported native fragment (EP-NATIVE), qualified with N-I-NEG", "D-Q-INT60", keep="inside +/-2^59")
-rx("qlever-sparql", 22, "CAST of text outside +/-2^59", "compare the canonical lexical text instead of casting; or the supported native fragment, qualified with CV-T2I", "D-Q-INT60", keep="casts inside +/-2^59")
-rx("qlever-sparql", 23, "int64 sums whose exact total or any partial sum leaves +/-2^59", "the documented limb-sum recipe (sums over the documented high and low limb channels, combined by the documented formula, row count within the documented bound) or the supported native SUM fragment, qualified with AG-SUM-I", "D-Q-INT60", keep="sums whose every partial stays inside +/-2^59")
-rx("qlever-sparql", 24, "binary64 SUM and AVG", "the supported native SUM/AVG fragment (EP-NATIVE), qualified with AG-SUM-F and AG-AVG-CONV", "D-Q-DBL49", keep="none")
-rx("qlever-sparql", 26, "MIN/MAX over text, and over int64 beyond +/-2^59", "MIN/MAX over the documented order-key channel, mapped back through the lexical channel", "D-Q-STR", keep="int64 MIN/MAX inside +/-2^59")
-rx("qlever-sparql", 27, "group keys mixing int64 and binary64", "GROUP BY (documented type-family channel, lexical channel)", "D-Q-XFAM", keep="same-family group keys")
+rx("qlever-sparql", 26, "MIN/MAX over text", "MIN/MAX over the documented text order-key channel, mapped back through the lexical channel", "D-Q-STR", keep="integer MIN/MAX inside the lane's range")
+rx("qlever-sparql", 27, "group keys mixing integer and number", "GROUP BY (documented type-family channel, lexical channel)", "D-Q-XFAM", keep="same-family group keys")
 rx("qlever-sparql", 29, "NOT EXISTS / EXISTS whose correlated variable occurs only inside an inner FILTER or BIND", "the documented re-binding form (R5 C1: re-emit the correlated fact pattern inside the group, internal variables renamed) or MINUS with definitely bound shared variables (R5 C2)", "D-Q-CORR", keep="correlation through variables the inner group binds")
 for lane in X:
     for rn in (8, 12, 15):
         rx(lane, rn, "datetimes with fractional milliseconds read through the node postgres driver", "select CAST(col AS VARCHAR) (text keeps microseconds) or the documented epoch-millisecond numeric column", "D-X-TSWIRE", surface="raw-wire only", keep="the raw hatch (Triplex decodes timestamps as strings) and whole-millisecond values")
-    rx(lane, 23, "SUM over BIGINT (any input)",
-       "first choice SUM(CAST(x AS DECIMAL(38,0))) (RULINGS Q1); if R.raw.mapped-recipes rejects it (KL-X7 shows a DECIMAL aggregate failing), the documented limb-sum recipe: SUM(x / 2^32) and SUM(x % 2^32) as BIGINT, combined exactly by the documented formula, row count within the documented bound; in XTQL the equivalent aggregate expressions",
-       "D-X-SUM")
 
 DIAGNOSTICS = [
     {"id": "D-Q-STR", "lanes": Q, "what": "original raw text order and range counterexamples: tiny collation control `ORDER BY STR(?l) STR(?e)` and its two ranges; string-order-v1 native raw page; the R5 A3 IRI page-sample class", "oracle": ["O-STR", "O-COLL"], "expected": "unchanged codepoint answers"},
-    {"id": "D-Q-INT60", "lanes": Q, "what": "write 2^59, 2^63-1 and -2^63 as native xsd:integer and read, compare, order, add and sum them raw", "oracle": ["O-REPLAY"], "expected": "exact int64 values"},
-    {"id": "D-Q-DBL49", "lanes": Q, "what": "0.30000000000000004, 1.0000000000000002, 9007199254740993 as decimal through native literals", "oracle": ["O-REPLAY"], "expected": "bit-exact binary64"},
-    {"id": "D-Q-XFAM", "lanes": Q, "what": "9007199254740993 = 9007199254740992.0 and grouping of int64 1 with binary64 1.0", "oracle": ["O-REPLAY"], "expected": "false; distinct groups"},
+    {"id": "D-Q-INT60", "lanes": Q, "what": "write 2^59 and 2^63-1 as native xsd:integer through the raw wire and read them back (shows why the Triplex write path must reject these values)", "oracle": ["O-REPLAY"], "expected": "the exact values"},
+    {"id": "D-Q-DBL49", "lanes": Q, "what": "0.30000000000000004 and 1.0000000000000002 through native literals", "oracle": ["O-REPLAY"], "expected": "bit-exact binary64"},
+    {"id": "D-Q-XFAM", "lanes": Q, "what": "9007199254740993 = 9007199254740992.0 and grouping of integer 1 with number 1.0", "oracle": ["O-REPLAY"], "expected": "false; distinct groups"},
     {"id": "D-Q-DT", "lanes": Q, "what": "datetime 1700000000000.5 ms through native xsd:dateTime", "oracle": ["O-REPLAY"], "expected": "exact fractional instant"},
-    {"id": "D-Q-DIV", "lanes": Q, "what": "7/2 on integers and 1/0 raw", "oracle": ["O-REPLAY", "O-ERR"], "expected": "3; E-DIVISION-BY-ZERO"},
     {"id": "D-Q-CORR", "lanes": Q, "what": "original flat and nested correlated NOT EXISTS controls, unedited text", "oracle": ["O-SHAPE"], "expected": "only `two`"},
     {"id": "D-X-SUM", "lanes": X, "what": "raw SUM over BIGINT of [2^62, 2^62] and [2^62, 2^62, -2^62] in SQL and XTQL", "oracle": ["O-REPLAY", "O-ERR"], "expected": "E-INTEGER-OVERFLOW; 4611686018427387904"},
     {"id": "D-X-TSWIRE", "lanes": X, "what": "fractional-millisecond datetime read through the node postgres driver", "oracle": ["O-REPLAY"], "expected": "exact fractional instant"},
@@ -613,11 +668,14 @@ MUTANTS = {
     "M-HALF-OPEN": {"fault": "validTo treated as inclusive (or validFrom as exclusive) in the visibility filter", "reachProbe": "visibility.validInterval", "targets": ["CS-TEMPORAL:boundary", "CS-ENTITY:valid-boundary"]},
     "M-DROPPED-SUPPORT": {"fault": "retracting one of two supports removes the value or derived fact", "reachProbe": "support.retract", "targets": ["CS-SUPPORT:duplicate-support", "CS-SUPPORT-DAG:partial-retraction", "CS-CONFLICT:C5-EQ-DUP"]},
     "M-FUTURE-RETIREMENT": {"fault": "snapshot reads return retirements recorded after the cut", "reachProbe": "history.snapshotMask", "targets": ["CS-HAM9:snapshot", "CS-CFG8:retirement-metadata-target"]},
-    "M-INT64-ROUND": {"fault": "int64 passes through binary64", "reachProbe": "codec.int64", "targets": ["CS-TYPES8:int64-edges", "CS-NUMERIC:int64-scalar"]},
+    "M-INTEGER-ROUND": {"fault": "integers pass through binary64", "reachProbe": "codec.integer", "targets": ["CS-TYPES8:integer-edges", "CS-NUMERIC:integer-scalar"]},
+    "M-OUT-OF-RANGE-WRAP": {"fault": "an integer outside the lane's range is stored wrapped or rounded instead of rejected", "reachProbe": "write.integerRange", "targets": ["CS-RANGE-OUT:all"]},
+    "M-DECIMAL-ROUND": {"fault": "a decimal beyond its declared scale is rounded instead of rejected", "reachProbe": "codec.decimal", "targets": ["CS-DECIMAL:unrepresentable"]},
+    "M-FEED-GAP": {"fault": "one change-feed entry is dropped", "reachProbe": "feed.append", "targets": ["CS-REQ:change-feed", "CS-GS:GS-19"]},
     "M-ENTITY-TYPE-SWAP": {"fault": "two EntityType labels swapped in projection or hydration", "reachProbe": "projection.entityType", "targets": ["CS-ENTITY:typed-find"]},
     "M-STALE-PROJECTION": {"fault": "projection one publication behind while the basis reports the latest", "reachProbe": "projection.publication", "targets": ["CS-PUBLISH:coherence", "CS-ELIGIBILITY:C1-MAPPING-GEN"]},
     "M-CUT-OFF-BY-ONE": {"fault": "reads use P-1, or treat recordedAt <= R as < R", "reachProbe": "visibility.cut", "targets": ["CS-TEMPORAL:recorded", "CS-PKT-MULTICALL:writer-between-calls"]},
-    "M-NEGZERO": {"fault": "-0.0 normalized to +0.0", "reachProbe": "codec.number", "targets": ["CS-TYPES8:binary64-edges", "CS-PARAMS:negzero"]},
+    "M-NEGZERO": {"fault": "a single-assertion read returns +0.0 for a stored -0.0", "reachProbe": "codec.number", "targets": ["CS-TYPES8:number-edges", "CS-PARAMS:negzero"]},
     "M-ICU-ORDER": {"fault": "text order uses locale collation", "reachProbe": "order.text", "targets": ["CS-STR:supported"]},
     "M-SCOPE-LEAK": {"fault": "scope predicate or graph selection dropped on one read path", "reachProbe": "scope.filter", "targets": ["CS-SCOPE:C7-SHARED-COLLISION"]},
     "M-MASK-RAW": {"fault": "snapshot mask applied to the raw-lifetime contract", "reachProbe": "history.rawLifetime", "targets": ["CS-HAM9:raw-lifetime"]},
@@ -652,13 +710,15 @@ cs("CS-U44", "EXISTS", "packages/testkit/src/index.ts (triplesConformanceCases, 
 cs("CS-PKT71", "EXISTS", "qualification/workloads/temporal-workloads.json with recipes packages/qualification/src/native/xtdb-workloads.ts and packages/qualification/src/native/qlever-workloads.ts", ["all"])
 cs("CS-PKT-MULTICALL", "TO-AUTHOR", "the 16 multi-call packet tasks plus the writer-between-calls shape of packages/qualification/experiments/qlever-task-basis.ts", ["all", "writer-between-calls"])
 cs("CS-ENTRY", "EXISTS", "packages/xtdb/experiments/native-entry.ts and packages/qlever/experiments/native-entry.ts", ["all", "read-only", "safe-parameters"])
-cs("CS-TYPES8", "TO-AUTHOR", "ACCEPTANCE 7.1", ["all", "int64-edges", "binary64-edges"])
+cs("CS-TYPES8", "TO-AUTHOR", "ACCEPTANCE 7.1 (value kinds)", ["all", "integer-edges", "number-edges", "decimal"])
+cs("CS-DECIMAL", "TO-AUTHOR", "VALUE_KINDS decimal; TARGETS section 3 (money as scaled integers or order-preserving decimal strings)", ["all", "roundtrip", "range", "unrepresentable", "kernel-arithmetic"])
+cs("CS-RANGE-OUT", "TO-AUTHOR", "LANE_INTEGER_RANGE; NUMERIC; RULINGS superseded section (reject at write)", ["all"])
 cs("CS-TYPES8-NEG", "TO-AUTHOR", "ACCEPTANCE 7.1", ["all"])
 cs("CS-WIDEN", "TO-AUTHOR", "ACCEPTANCE 7.1", ["all"])
 cs("CS-PARAMS", "TO-AUTHOR", "wiki/problems/native-number-parameters.md", ["all", "negzero"])
 cs("CS-CONSTRAINTS", "TO-AUTHOR", "testkit graph-constraint cases; configured-eight Required; CONSTRAINT_RULES", ["required", "cardinality", "unique", "reference", "preexisting"])
 cs("CS-SCHEMA-RELEASE", "TO-AUTHOR", "configured-eight schema v1 -> v2", ["all"])
-cs("CS-NUMERIC", "TO-AUTHOR", "NUMERIC_OPS, CONVERSION_RULES, COMPARISON_RULES, AGGREGATE_RULES examples (every example is a case)", ["int64-scalar", "binary64", "conversion", "cross-family", "groups", "int64-aggregate"])
+cs("CS-NUMERIC", "TO-AUTHOR", "NUMERIC_OPS, CONVERSION_RULES, COMPARISON_RULES, AGGREGATE_RULES examples (every example is a case)", ["integer-scalar", "binary64", "conversion", "cross-family", "groups", "projection-sums", "range-rules"])
 cs("CS-ERRORS", "TO-AUTHOR", "one case per ERROR_TABLE entry reachable from a read surface", ["all"])
 cs("CS-STR", "EXISTS", "qualification/extensions/string-order-v1/oracle.json and qualification/native-controls/qlever-collation-tiny-v1/oracle.json", ["supported"])
 cs("CS-SHAPE", "TO-AUTHOR", "wiki/problems/native-correlation.md, R5 sections 3-5; ACCEPTANCE 6.2", ["negation", "negation-raw", "aggregate"])
@@ -697,8 +757,11 @@ cs("CS-ENTITY", "TO-AUTHOR", "ACCEPTANCE 7.4", ["all", "valid-boundary", "typed-
 cs("CS-RAW-RECIPES", "TO-AUTHOR", "ACCEPTANCE 7.5 and the raw-query guide", ["all"] + list(RAW_PARITY_CLASSES.keys()))
 cs("CS-RAW-MAPPED", "TO-AUTHOR", "RAW_EXCEPTIONS mapped recipes and DIAGNOSTICS", ["all", "diagnostics"], [e["qualifyingCase"] for e in RAW_EXCEPTIONS])
 cs("CS-FRAGMENT-EQUIV", "TO-AUTHOR", "R5 5.4 C1-C4; FRAGMENT_COVERAGE", ["all", "coverage"])
-cs("CS-SCALE-SAMPLE", "HELD", "used only by the held S obligations (0.1.0 definition)", ["counts", "per-rung", "families", "capacity", "metrics", "maintenance", "restart"])
-cs("CS-LOAD", "HELD", "lab/acceptance/load-contract.json (0.1.0-draft, unchanged during the hold)", ["calibration", "256", "512", "1024", "recovery"])
+cs("CS-SCALE-SAMPLE", "TO-AUTHOR", "SCALE_POPULATION", ["counts", "per-rung", "families", "capacity", "metrics", "maintenance", "restart", "strata"])
+cs("CS-BUDGET", "TO-AUTHOR", "budgets.json", ["all"])
+cs("CS-NS", "COMPILED", "load-contract.json (generated): fixed writer trace, P1 reader ladder, P2 to P4 probes, P5 sweep", ["calibration", "p1-ladder", "p1-stress", "p2", "p3", "p4", "p5", "secondary"])
+cs("CS-GS", "TO-AUTHOR", "GOLDEN_SCENARIOS (TARGETS section 6): one seeded deterministic generator per scenario", ["all"] + [f"GS-{i:02d}" for i in range(1, 21)], ["GS-NUM-RANGE-1650", "GS-NUM-HOURS-40", "GS-NUM-UNHOLDABLE"])
+cs("CS-REQ", "TO-AUTHOR", "REQUIREMENTS (TARGETS section 3): each requirement's own tests", ["all", "commit-idempotent", "snapshot-reads", "change-feed", "no-silent-precision-loss", "pii-erasure", "tenant-isolation", "outbox-atomic", "read-your-write", "sweep-pins-position", "retro-corrections"])
 
 # ============================================================================ obligations
 OBL = []
@@ -723,11 +786,21 @@ O("G1.found.unchanged44", ["G1"], "Unchanged44 on the lane foundation",
   "The unchanged 44-case shared conformance suite (CS-U44) passes against the lane engine's Triples foundation in current and reopened form: 44 named cases per mode, zero skipped.",
   scope="engine", cases=["CS-U44"], oracle=["O-TESTKIT"], ep=["EP-TRIPLES"], modes=CUR_REOPEN,
   sources=["wiki/goals.md:20-23", "lab/research/R4-codebase-harness-map.md 5.3"])
-O("G1.types.eight-type-roundtrip", ["G1"], "Eight value types round-trip exactly on every surface",
-  "Every case of CS-TYPES8 (one assertion per value family with the listed edge values) reads back bit-exact through Triples, the repository, the lane's native surface with a schema-derived contract, and the documented raw recipe, in current, reopen and engine-restart modes.",
+O("G1.types.value-kinds-roundtrip", ["G1"], "Every value kind in use round-trips exactly on every surface",
+  "Every case of CS-TYPES8 (one assertion per value kind of VALUE_KINDS with the listed edge values, integers inside the lane's declared range) reads back exactly through Triples, the repository, the lane's native surface with a schema-derived contract, and the documented raw recipe, in current, reopen and engine-restart modes.",
   cases=["CS-TYPES8"], oracle=["O-REPLAY"], ep=["EP-TRIPLES", "EP-REPO", "EP-NATIVE", "EP-RAW-HATCH"], modes=CRR,
-  closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), mutants=["M-INT64-ROUND", "M-NEGZERO"],
-  sources=["wiki/goals.md:9", "lab/research/R6-xtdb-gap-analysis.md goal 1", "lab/research/R2-qlever-capabilities.md 4.1"])
+  closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), mutants=["M-INTEGER-ROUND", "M-NEGZERO"],
+  sources=["lab/SCOPE.md section 2 item 4", "lab/research/SAM-pasted-numbers-2026-11-07.md section 5", "lab/research/R2-qlever-capabilities.md 4.1"])
+O("G1.types.out-of-range-rejected", ["G1", "G2"], "Values a lane cannot hold fail with a typed error, never silently",
+  "Every lane accepts every integer in [-(2^53-1), 2^53-1]; every CS-RANGE-OUT case (integers beyond the lane's declared LANE_INTEGER_RANGE, for QLever beyond +/-2^59) fails the write with E-VALUE-OUT-OF-RANGE before any engine mutation, with no residue on any access path, and is never wrapped, widened or rounded.",
+  scope="engine", cases=["CS-RANGE-OUT"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-WRITER", "EP-RAW-WIRE"], modes=CUR_REOPEN,
+  mutants=["M-OUT-OF-RANGE-WRAP"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), params={"diagnostics": ["D-Q-INT60"]},
+  sources=["lab/research/SAM-pasted-numbers-2026-11-07.md section 5", "lab/TARGETS.md section 3", "lab/acceptance/RULINGS.md superseded section"])
+O("G1.types.decimal", ["G1", "G2", "G5"], "Decimal value kind for money and business decimals",
+  "Every CS-DECIMAL case: decimals are stored as a scaled integer or an order-preserving decimal string and round-trip exactly on every surface; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value beyond the declared scale or magnitude fails with E-DECIMAL-UNREPRESENTABLE, never rounded; kernel arithmetic over decimals is exact.",
+  cases=["CS-DECIMAL"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-REPO", "EP-WRITER", "EP-KERNEL", "EP-NATIVE", "EP-RAW-HATCH"], modes=CRR,
+  mutants=["M-DECIMAL-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"),
+  sources=["lab/TARGETS.md section 3 (decimal value kind on the critical path for goal 1)", "lab/research/SAM-pasted-numbers-2026-11-07.md section 3"])
 O("G1.types.invalid-rejected", ["G1"], "Invalid values are rejected atomically",
   "Every case of CS-TYPES8-NEG is rejected with its pinned error (E-INVALID-VALUE or E-UNSUPPORTED-VALUE); the committed position is unchanged, no receipt or claim exists, and no partial row or triple is visible through any access path.",
   scope="engine", cases=["CS-TYPES8-NEG"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-WRITER"], modes=CUR_REOPEN,
@@ -735,10 +808,10 @@ O("G1.types.invalid-rejected", ["G1"], "Invalid values are rejected atomically",
 O("G1.types.storage-widening-safe", ["G1"], "Later writes never change an earlier exact read",
   "After the heterogeneous writes of CS-WIDEN, every earlier value still reads back bit-exact on every surface, current and reopen; documented raw columns stay monomorphic.",
   cases=["CS-WIDEN"], oracle=["O-REPLAY"], ep=["EP-TRIPLES", "EP-REPO", "EP-NATIVE", "EP-RAW-HATCH"], modes=CUR_REOPEN,
-  mutants=["M-INT64-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"),
+  mutants=["M-INTEGER-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"),
   sources=["lab/research/R1-xtdb-capabilities.md Q3", "lab/research/R2-qlever-capabilities.md 4.1", "lab/PLAN.md 3.2 item 4"])
 O("G1.types.native-parameters", ["G1"], "Native parameters keep exact values",
-  "Parameters of every value family bound into a native query in the lane language (including -0.0, int64 extremes, text with quote, $$ and ;) reach the engine with their exact value and type, current and reopen.",
+  "Parameters of every value family bound into a native query in the lane language (including -0.0, the edges of the lane's integer range, decimals, text with quote, $$ and ;) reach the engine with their exact value and type, current and reopen.",
   cases=["CS-PARAMS"], oracle=["O-REPLAY"], ep=["EP-NATIVE"], modes=CUR_REOPEN, mutants=["M-NEGZERO"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"),
   sources=["wiki/problems/native-number-parameters.md"])
 O("G1.schema.required", ["G1"], "Required is enforced on new or worsened violations",
@@ -770,11 +843,11 @@ O("PKT.full142", ["G2", "G3", "G4", "G5", "G9"], "Native packet: 142 named execu
   sources=["wiki/goals.md:20-23", "lab/reviews/plan-review-r1.codex.md finding 4", "RULINGS Q3", "lab/PLAN.md C8"])
 
 # ---------------- Goal 2
-O("G2.arith.int64-overflow", ["G2"], "int64 arithmetic follows the frozen table",
-  "On the repository and supported native fragments, every CS-NUMERIC int64 scalar and conversion case returns the NUMERIC_OPS or CONVERSION_RULES answer, including E-INTEGER-OVERFLOW, E-DIVISION-BY-ZERO and E-INVALID-CONVERSION; no result wraps.",
-  cases=["CS-NUMERIC:int64-scalar,conversion"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN,
-  mutants=["M-INT64-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"),
-  sources=["packages/core/src/datalog/compiler.ts:556-572", "lab/research/R6-xtdb-gap-analysis.md goal 2"])
+O("G2.arith.integer-exact", ["G2"], "Integer arithmetic is exact in the kernel and wherever offered",
+  "Every CS-NUMERIC integer-scalar, conversion and range-rules case returns the NUMERIC_OPS or CONVERSION_RULES answer in the TypeScript kernel, including E-INTEGER-OVERFLOW, E-DIVISION-BY-ZERO and E-INVALID-CONVERSION; any repository or fragment surface that offers the operation returns the same answer or a typed error; no result is ever wrapped.",
+  cases=["CS-NUMERIC:integer-scalar,conversion,range-rules"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-KERNEL", "EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN,
+  mutants=["M-INTEGER-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"),
+  sources=["lab/research/SAM-pasted-numbers-2026-11-07.md section 3 (arithmetic in the kernel)", "packages/core/src/datalog/compiler.ts:556-572"])
 O("G2.arith.binary64", ["G2"], "binary64 arithmetic follows IEEE and the frozen sign rules",
   "On the repository and supported native fragments, every CS-NUMERIC binary64 case returns the N-F-ARITH and N-F-NEGZERO answer bit-exact; division by zero fails with E-DIVISION-BY-ZERO and overflow with E-NUMBER-OVERFLOW.",
   cases=["CS-NUMERIC:binary64"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN,
@@ -798,22 +871,22 @@ O("G3.plan.explain", ["G3"], "Plans and routes are captured for every query",
   cases=["CS-QMIX"], oracle=["O-PLAN"], ep=["EP-EXPLAIN", "EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN,
   sources=["wiki/goals.md:11", "lab/PLAN.md C1"])
 O("G3.plan.access-path-at-scale", ["G3"], "Key-bounded access at 10m",
-  "At P-SCALE-10M the point, getMany, selective-filter and reverse-ref classes resolve through a key-bounded access path (OBS-PLAN-ACCESS), meet T-SCALE-P99-REPO-MS, and their p50 ratio between P-RUNG-1M and P-SCALE-10M stays within T-LAT-RATIO-10M-1M.",
+  "At P-YEAR-ONE the point, getMany, selective-filter and reverse-ref classes resolve through a key-bounded access path (OBS-PLAN-ACCESS), and their p50 ratio between P-RUNG-1M and P-YEAR-ONE stays within T-LAT-RATIO-10M-1M.",
   cases=["CS-QMIX:point,getMany,selective-filter,reverse-ref"], oracle=["O-REPLAY", "O-PLAN"], ep=["EP-REPO", "EP-NATIVE", "EP-EXPLAIN"],
-  profiles=["P-RUNG-1M", "P-SCALE-10M"], closure=("CR-SCALE", "CR-PERF"), thresholds=["T-SCALE-P99-REPO-MS", "T-LAT-RATIO-10M-1M"],
+  profiles=["P-RUNG-1M", "P-YEAR-ONE"], closure=("CR-SCALE", "CR-PERF"), thresholds=["T-LAT-RATIO-10M-1M"],
   sources=["lab/research/R1-xtdb-capabilities.md Q7", "lab/reviews/plan-review-r1.codex.md finding 11"], grounding="derived")
 O("G3.admission.preconstruction", ["G3"], "Expensive queries are refused before construction",
   "Every CS-ADMIT case fails with E-ADMISSION before the engine builds the expensive structure: zero scratch rows or graphs, engine memory within T-PLANNER-MEM-BYTES (OBS-RESOURCE), and the engine stays available.",
   cases=["CS-ADMIT"], oracle=["O-ERR", "O-OBS"], ep=["EP-REPO", "EP-NATIVE", "EP-ENGINE-OBS"], profiles=["P-HEAVY"],
   closure=("CR-PASS-ALL", "CR-OBSERVE"), thresholds=["T-PLANNER-MEM-BYTES"], sources=["wiki/goals.md:11", "lab/research/R2-qlever-capabilities.md 3.3"])
 O("G3.cost.budget-honored", ["G3"], "Admitted queries stay inside their declared budget",
-  "Every admitted CS-QMIX query at P-SCALE-10M records estimate and actual cost (OBS-PLAN-COST); none exceeds its declared budget; a query crossing its budget stops with E-ADMISSION or E-TIMEOUT rather than running to completion.",
-  cases=["CS-QMIX"], oracle=["O-PLAN", "O-ERR"], ep=["EP-REPO", "EP-NATIVE", "EP-EXPLAIN"], profiles=["P-SCALE-10M"], closure=("CR-PASS-ALL", "CR-OBSERVE"),
+  "Every admitted CS-QMIX query at P-YEAR-ONE records estimate and actual cost (OBS-PLAN-COST); none exceeds its declared budget; a query crossing its budget stops with E-ADMISSION or E-TIMEOUT rather than running to completion.",
+  cases=["CS-QMIX"], oracle=["O-PLAN", "O-ERR"], ep=["EP-REPO", "EP-NATIVE", "EP-EXPLAIN"], profiles=["P-YEAR-ONE"], closure=("CR-PASS-ALL", "CR-OBSERVE"),
   sources=["wiki/goals.md:11"], grounding="derived")
 O("G3.recursion.scalable", ["G3"], "Recursion is correct and bounded on every topology",
-  "Recursive reads over every benchmark-contract topology (chain, tree, diamond, cycle, high-fanout, skewed-hotset) return O-REPLAY answers in the lane language and meet T-SCALE-P99-ANALYTIC-MS at P-RUNG-1M and P-SCALE-10M.",
-  cases=["CS-RECURSION-TOPO"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], profiles=["P-RUNG-1M", "P-SCALE-10M"],
-  closure=("CR-PASS-ALL", "CR-PERF"), thresholds=["T-SCALE-P99-ANALYTIC-MS"], sources=["qualification/benchmark-contract.json topologies"])
+  "Recursive reads over every benchmark-contract topology (chain, tree, diamond, cycle, high-fanout, skewed-hotset) return O-REPLAY answers in the lane language and meet T-RECURSION-P99-MS at P-RUNG-1M and P-YEAR-ONE.",
+  cases=["CS-RECURSION-TOPO"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], profiles=["P-RUNG-1M", "P-YEAR-ONE"],
+  closure=("CR-PASS-ALL", "CR-PERF"), thresholds=["T-RECURSION-P99-MS"], sources=["qualification/benchmark-contract.json topologies"])
 O("G3.recursion.read-only-frontier", ["G3", "G6"], "Recursive native reads never mutate and obey frontier rules",
   "Every C8-* case in CS-RECURSION-TOPO: engine-side mutation count is zero during the read (OBS-NO-MUTATION); all rounds run at one fixed cut; bounds fail with E-RECURSION-LIMIT and no partial answer; host steps are only FRONTIER_RULES operations; host time is counted.",
   cases=["CS-RECURSION-TOPO:c8"], oracle=["O-REPLAY", "O-OBS", "O-ERR"], ep=["EP-NATIVE", "EP-ENGINE-OBS"], profiles=["P-TINY-CONC"],
@@ -850,10 +923,11 @@ O("G5.agg.full-support", ["G5"], "Aggregates follow the frozen support semantics
 O("G5.agg.typed-groups", ["G5"], "Group keys keep typed identity",
   "Every CS-NUMERIC groups case groups by the COMPARISON_RULES identities on the repository and supported native fragments.",
   cases=["CS-NUMERIC:groups"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN, sources=["testkit 'datalog having preserves typed group and aggregate equality'"])
-O("G5.agg.exact-overflow", ["G5"], "Aggregate overflow and AVG follow the frozen rules",
-  "Every CS-NUMERIC int64-aggregate case returns the AG-SUM-I, AG-AVG-I and AG-AVG-CONV answer: exact totals, E-INTEGER-OVERFLOW only for a final total outside int64, E-INTEGER-AVG for unconverted int64 AVG.",
-  cases=["CS-NUMERIC:int64-aggregate"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN,
-  mutants=["M-INT64-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), sources=["RULINGS Q8a", "RULINGS Q8b"])
+O("G5.agg.projection-sums", ["G5"], "Engine-side sums are exact where a projection needs them",
+  "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using the split-sum recipe on XTDB (RULINGS Q13) or another qualified recipe; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
+  cases=["CS-NUMERIC:projection-sums"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN,
+  mutants=["M-INTEGER-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), params={"diagnostics": ["D-X-SUM"]},
+  sources=["RULINGS Q8a", "RULINGS Q8b", "RULINGS Q13", "lab/research/SAM-pasted-numbers-2026-11-07.md section 5 (arithmetic over many rows only where a projection needs it)"])
 
 # ---------------- Goal 6
 O("G6.cancel.observed-drain", ["G6"], "Cancellation observed down to drained engine work",
@@ -1020,8 +1094,8 @@ O("G10.cursor.stable", ["G10"], "Cursors are complete and snapshot-stable",
   cases=["CS-CURSOR:stable"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE", "EP-TRIPLES"], profiles=["P-TINY-CONC"], modes=CUR_REOPEN,
   sources=["testkit cursor cases"])
 O("G10.cursor.deep-page-cost", ["G10"], "Deep pages stay cheap at 10m",
-  "At P-SCALE-10M page 10,000 costs at most T-DEEP-PAGE-RATIO of page 1.",
-  cases=["CS-CURSOR:deep-page"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], profiles=["P-SCALE-10M"], closure=("CR-PASS-ALL", "CR-PERF"),
+  "At P-YEAR-ONE page 10,000 costs at most T-DEEP-PAGE-RATIO of page 1.",
+  cases=["CS-CURSOR:deep-page"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], profiles=["P-YEAR-ONE"], closure=("CR-PASS-ALL", "CR-PERF"),
   thresholds=["T-DEEP-PAGE-RATIO"], sources=["lab/research/R6-xtdb-gap-analysis.md goal 10"], grounding="derived")
 O("G10.cursor.continuation-transitions", ["G10", "G9"], "Cursors and historical bases continue across transitions",
   "Every CURSOR_TRANSITIONS.mustContinue case continues with O-REPLAY's rows at the cursor's basis; errors occur only in the permittedErrors cases, each with its pinned error; CE-FENCED also continues after recovery.",
@@ -1367,7 +1441,7 @@ def ruling_checks():
 
 
 def verifier_mode(o):
-    return "re-evaluate-and-spot" if set(o["profiles"]) & {"P-SCALE-10M", "P-LOAD", "P-RUNGS"} else "rerun"
+    return "re-evaluate-and-spot" if set(o["profiles"]) & {"P-YEAR-ONE", "P-LOAD", "P-RUNGS"} else "rerun"
 
 
 def validate():
@@ -1446,9 +1520,9 @@ def validate():
         for m in re.findall(r"\bOBS-[A-Z0-9-]+[A-Z0-9]\b", st):
             if m not in OBS_PROTOCOLS and m not in PLAN_PROTOCOLS:
                 e.append(f"{oid}: unknown protocol {m}")
-        if re.search(r"\b10m\b|10,000,000", st) and not set(o["profiles"]) & {"P-SCALE-10M", "P-RUNGS", "P-LOAD"}:
+        if re.search(r"\b10m\b|10,000,000", st) and not set(o["profiles"]) & {"P-YEAR-ONE", "P-RUNGS", "P-LOAD"}:
             e.append(f"{oid}: statement is about 10m but profile is not")
-        if re.search(r"concurrent|race|between calls|writer committed", st) and not set(o["profiles"]) & {"P-TINY-CONC", "P-FAULT", "P-LOAD", "P-RUNGS", "P-SCALE-10M", "P-RUNG-1M"} and o["id"] != "G6.ownership.bounded-connections":
+        if re.search(r"concurrent|race|between calls|writer committed", st) and not set(o["profiles"]) & {"P-TINY-CONC", "P-FAULT", "P-LOAD", "P-RUNGS", "P-YEAR-ONE", "P-RUNG-1M"} and o["id"] != "G6.ownership.bounded-connections":
             e.append(f"{oid}: concurrency in statement but no concurrent profile")
         if "E-" in st and "O-ERR" not in o["oracles"] and "E-" not in "".join(o["sources"]):
             pass
@@ -1486,7 +1560,7 @@ def validate():
             s, tag = tgt.split(":")
             if s not in CS or (tag not in CS[s]["requiredTags"] and tag not in CS[s]["requiredCases"]):
                 e.append(f"mutant {m}: target {tgt} unresolvable")
-    for req in ("M-HALF-OPEN", "M-DROPPED-SUPPORT", "M-FUTURE-RETIREMENT", "M-INT64-ROUND", "M-ENTITY-TYPE-SWAP", "M-STALE-PROJECTION"):
+    for req in ("M-HALF-OPEN", "M-DROPPED-SUPPORT", "M-FUTURE-RETIREMENT", "M-INTEGER-ROUND", "M-ENTITY-TYPE-SWAP", "M-STALE-PROJECTION"):
         if req not in MUTANTS:
             e.append(f"required mutant {req} missing")
     # thresholds referenced
@@ -1770,7 +1844,7 @@ def render_acceptance(doc, cells, counts):
         "**Position accounting.** Positions are derived by the oracle from the committed order: one position per Triplex transact, nested transacts inside one outer transaction take consecutive positions in callback order and share one engine commit; the oracle checks every receipt position against its own and fails the run on a mismatch.",
         "**Outcomes.** The oracle derives each command's expected outcome from intent, order, preconditions, enforcement (CN-NEW-OR-WORSENED) and durable-decision evidence (COMMIT_OUTCOMES), then compares the receipts' outcomes afterwards. A receipt never decides which command is valid or committed.",
         "**Outputs.** Complete assertion metadata; raw-lifetime and as-of snapshot history; entity models (card-one value or E-CONFLICTING-VALUES per C5; card-many per CARD_MANY_ORDER; absent optional as a missing property; includes at the same basis; timelines); transaction records with ordered changes and the logical journal facts (C6); cursor page sequences; support counts; C1 eligibility routes (for O-PLAN); arithmetic, comparison and aggregate results per section 4; analytic scale counts per population stratum (population definition HELD with section S).",
-        "**Independence.** Python stdlib only; imports no repository code; its own int64, IEEE binary64 (via struct) and codepoint ordering; no casefolding.",
+        "**Independence.** Python stdlib only; imports no repository code; its own exact integers and decimals, IEEE binary64 (via struct) and codepoint ordering; no casefolding.",
         "**Self-checks before ACCEPTED.** Reproduce O-HAM finite-nine, O-CFG8 tiny-v4 and the O-EVT cut semantics where domains overlap; unit tests for every table row of section 4.",
     ]:
         A(f"- {s}")
@@ -1790,16 +1864,17 @@ def render_acceptance(doc, cells, counts):
     A("\n### 7.1 Value types (CS-TYPES8, CS-TYPES8-NEG, CS-WIDEN)\n")
     A(md_table(["Family", "Edge values"], [
         ["string", "\"\", ASCII mixed case A E c z, NFC U+00E9 and NFD e U+0301 as distinct values, U+E000, U+10000, U+1F600, quote, backslash, CR, LF, a 64 KiB text"],
-        ["integer (int64)", "0, 1, -1, 2^53-1, 2^53+1, 2^59-1, 2^59, -2^59, -2^59-1, 2^63-1, -2^63"],
-        ["number (binary64)", "+0.0, -0.0, 0.1, 0.30000000000000004, 1.0000000000000002, 2^53 as a double, 5e-324, 2.2250738585072014e-308, 1.7976931348623157e308, -1.5, 3.0 (stays a number)"],
+        ["integer", "0, 1, -1, 2^53-1, -(2^53-1) on every lane; 2^53+1, 2^59-1, -2^59 where the lane accepts them; values beyond the lane's range belong to CS-RANGE-OUT"],
+        ["decimal", "0.00, 16.50, 16.49, 1e11 cents as a scaled integer, a negative value, an order-preserving string encoding round trip (CS-DECIMAL covers scale overflow)"],
+        ["number (binary64, approximate values only)", "+0.0, -0.0, 0.1, 0.30000000000000004, 1.0000000000000002, 2^53 as a double, 5e-324, 2.2250738585072014e-308, 1.7976931348623157e308, -1.5, 3.0 (stays a number)"],
         ["boolean", "true, false"],
         ["datetime", "0, a negative instant, 1700000000000.5 (fractional millisecond), the earliest and latest instant Triplex accepts"],
         ["ref", "same type, another type, an entity created in the same command"],
         ["json", "{\"b\":1,\"a\":2} (key order kept), nested arrays and objects, non-ASCII text, 1e300"],
         ["blob", "descriptor with and without filename, size 0, a size above 2^32"],
     ]))
-    A("\nCS-TYPES8-NEG (each rejected atomically): lone surrogate, NaN, +Infinity, -Infinity, non-canonical int64 text (\"01\", \"+1\", \"1.0\", \"-0\"), integer outside int64, invalid datetime, unparseable json, blob descriptor with a negative size.\n")
-    A("CS-WIDEN: int64 9007199254740993 first, then in the same attribute or physical column a whole-number float, a text value through an untyped attribute, and for QLever an invalid typed literal through the raw wire; re-read the first value everywhere.\n")
+    A("\nCS-TYPES8-NEG (each rejected atomically): lone surrogate, NaN, +Infinity, -Infinity, non-canonical int64 text (\"01\", \"+1\", \"1.0\", \"-0\"), integer outside the core integer type, invalid datetime, unparseable json, blob descriptor with a negative size.\n")
+    A("CS-WIDEN: integer 9007199254740993 first (lanes that accept it), then in the same attribute or physical column a whole-number float, a text value through an untyped attribute, and for QLever an invalid typed literal through the raw wire; re-read the first value everywhere.\n")
     A("### 7.2 Numbers (CS-NUMERIC) and errors (CS-ERRORS)\n")
     A("Every example in sections 4.1 to 4.4 is a CS-NUMERIC case with that expected answer. CS-ERRORS has one case per ERROR_TABLE entry reachable from a read surface.\n")
     A("### 7.3 Fault points (CS-FAULT)\n")
