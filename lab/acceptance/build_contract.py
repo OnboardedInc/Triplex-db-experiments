@@ -532,7 +532,7 @@ KNOWN_LIMITS = {
     "KL-X6": ("postgres 3.4.9 driver", "TIMESTAMP WITH TIME ZONE decoded to millisecond Date; TIMESTAMP without zone parsed in the local zone", "lab/research/R1-xtdb-capabilities.md Q3 (probed)"),
     "KL-X7": ("XTDB 2.2.0", "a DECIMAL aggregate failed: MAX(CAST(v AS DECIMAL(32,0))) raised No method in multimethod 'set-value-code' :decimal", "packages/xtdb/experiments/query/integer-extrema-1793974552733.json (probe in checkout)"),
     "KL-X8": ("current XTDB layout", "Triplex R is not engine system time; FOR SYSTEM_TIME answers Triplex bases only at physical commit boundaries", "lab/research/R6-xtdb-gap-analysis.md 3.4; R1 Q1"),
-    "KL-Q1": ("QLever 0.6.0", "integers are 60-bit; int64 values outside +/-2^59 wrap silently", "lab/research/R2-qlever-capabilities.md 4.1 (probed)"),
+    "KL-Q1": ("QLever 0.6.0", "integers are 60-bit; integer values outside +/-2^59 wrap silently unless the writer rejects them first", "lab/research/R2-qlever-capabilities.md 4.1 (probed)"),
     "KL-Q2": ("QLever 0.6.0", "integer + and * wrap in 60 bits without an overflow check", "R2 4.1 arithmetic (probed)"),
     "KL-Q3": ("QLever 0.6.0", "decimal and double stored with a 49-bit mantissa, exported with 13 significant digits", "R2 4.1 (probed)"),
     "KL-Q4": ("QLever 0.6.0", "comparison across numeric types converts to double", "R2 4.1 (probed)"),
@@ -1203,12 +1203,13 @@ GS_RULES = [
     "Unless a scenario says otherwise it runs on P-YEAR-ONE with the fixed writer trace running and 256 concurrent pinned readers (P-NS).",
     "A scenario fails on any wrong answer, any lost or duplicated commit, any feed gap or order violation, or any missed bar; its receipt records the correctness verdicts and the P1 to P5 measurements together.",
     "All 20 run on every composition being compared, and the final acceptance reruns all 20 fresh.",
-    "Numbers inside the scenarios: pay rates, hours and money use scaled integers or order-preserving decimal strings; the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650, GS-NUM-HOURS-40) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE or E-DECIMAL-UNREPRESENTABLE (GS-NUM-UNHOLDABLE).",
+    "Numbers inside the scenarios: pay rates, hours and money use scaled integers or order-preserving decimal strings; the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650 and GS-NUM-HOURS-40, selected by GS.18's dashboard filters) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE or E-DECIMAL-UNREPRESENTABLE (GS-NUM-UNHOLDABLE, selected by GS.02).",
 ]
+GS_NAMED_CASES = {2: ["GS-NUM-UNHOLDABLE"], 18: ["GS-NUM-RANGE-1650", "GS-NUM-HOURS-40"]}
 for n, title, story, checks, prios, bars in GOLDEN_SCENARIOS:
     O(f"GS.{n:02d}", ["GS"], f"{title} ({', '.join(prios)})",
       f"Story and load: {story}. Checked beyond exact answers: {checks}. Bars: {', '.join(bars)}. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
-      cases=[f"CS-GS:GS-{n:02d}"] + (["CS-GS:all"] if n == 1 else []), oracle=["O-REPLAY", "O-HAND", "O-OBS", "O-ERR"],
+      cases=[f"CS-GS:GS-{n:02d}"] + (["CS-GS:all"] if n == 1 else []) + ([f"CS-GS:{c}" for c in GS_NAMED_CASES.get(n, [])]), oracle=["O-REPLAY", "O-HAND", "O-OBS", "O-ERR"],
       ep=["EP-REPO", "EP-WRITER", "EP-NATIVE", "EP-FEED", "EP-ENGINE-OBS"] + (["EP-BULK"] if n == 13 else []),
       profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-GS",), thresholds=bars + ["T-RUNS"],
       sources=["lab/TARGETS.md section 6"], params={"priorities": prios, "seededGenerator": True})
@@ -1345,7 +1346,7 @@ EVIDENCE_KINDS = {
     "verifier-record": "{verifiesReceiptIds [], mode, recomputedVerdictsObject, spotRerunReceiptIds [], mismatches []}",
     "budget-record": "{rung, component: cost, a0ControlReceiptId}",
 }
-SELECTOR_SEMANTICS = "An obligation's cases are a list of {set, select}. select is a list of tags; 'all' selects every case of the set. The evaluator resolves the selection against the set's pinned manifest (lab/acceptance/cases/<set>.json, sha256 pinned in the contract version): the selected cases are those carrying any listed tag. The resolution must be non-empty, every listed tag must be in the set's requiredTags, and every requiredCases id must exist in the manifest. A set whose manifest is not pinned in the contract version cannot close any obligation. Declared executions = selected cases x modes (x 1 per receipt scope key)."
+SELECTOR_SEMANTICS = "An obligation's cases are a list of {set, select}. select is a list of tags or named required case ids; 'all' selects every case of the set. The evaluator resolves the selection against the set's pinned manifest (lab/acceptance/cases/<set>.json, sha256 pinned in the contract version): the selected cases are those carrying any listed tag, plus any named case listed by id. The resolution must be non-empty, every listed entry must be in the set's requiredTags or requiredCases, and every requiredCases id must exist in the manifest. A set whose manifest is not pinned in the contract version cannot close any obligation. Declared executions = selected cases x modes (x 1 per receipt scope key)."
 VALIDITY = {
     "VC": {"for": "calibration evidence", "dependsOn": [], "rules": [
         "VC1 runKind = calibration; create-only; its timestamp precedes every acceptance receipt that cites it",
@@ -1692,7 +1693,7 @@ def validate():
                 e.append(f"{oid}: case set {c['set']}")
                 continue
             for tag in c["select"]:
-                if tag != "all" and tag not in CS[c["set"]]["requiredTags"]:
+                if tag != "all" and tag not in CS[c["set"]]["requiredTags"] and tag not in CS[c["set"]]["requiredCases"]:
                     e.append(f"{oid}: selector tag {tag} not in {c['set']} requiredTags")
         for r in o["closure"]["rules"]:
             if r not in CLOSURE_RULES:
@@ -1766,7 +1767,7 @@ def validate():
         for rc in s["requiredCases"]:
             if cid in ("CS-CURSOR", "CS-RAW-MAPPED"):
                 continue
-            if not any(t["case"] == rc for t in TRACE) and not rc.startswith("X-"):
+            if not any(t["case"] == rc for t in TRACE) and not rc.startswith("X-") and not any(c["set"] == cid and rc in c["select"] for o in OBL for c in o["cases"]):
                 e.append(f"{cid}: required case {rc} not traced")
     # mutants
     for m, d in MUTANTS.items():
@@ -1930,7 +1931,7 @@ CHANGELOG_020 = [
     ("7", "O-REPLAY clock model and outcome authority", "Spec rewritten (6.1): no monotonic-clock assumption, decreasing-clock histories, R independent of P, nested position accounting, outcomes derived from command intent and durable-decision evidence, receipts compared afterwards."),
     ("8", "Wrong or unspecified expected answers", "Frozen tables (section 4): numeric operations with correct signed-zero rules, conversions, comparisons, aggregates (Q8a, Q8b preflight AVG), card-many order, constraint enforcement new-or-worsened only, every error pinned."),
     ("9", "Oracle specs did not cover their claims", "Separate normative protocols: O-OBS (OBS-*), O-PLAN (route, access path, cost), O-SHAPE (bag/set, grouping, unbound handling), O-SPEC (exact types, no accidental any, pinned diagnostics), O-ERR compiled from ERROR_TABLE."),
-    ("10", "Machine contract mostly prose; contradictions", "Typed receipt and evidence schemas, selector semantics, threshold registry with closure-rule dependencies, structured closure rules that recompute from retained evidence; G10.cursor.stable split (deep-page cost at 10m is its own obligation), G7.write.atomic selects CS-WRITE and CS-FAULT, every threshold tied to its rule (values HELD where they are performance targets); scale sample counts HELD with finding 3."),
+    ("10", "Machine contract mostly prose; contradictions", "Typed receipt and evidence schemas, selector semantics, threshold registry with closure-rule dependencies, structured closure rules that recompute from retained evidence; G10.cursor.stable split (deep-page cost at 10m is its own obligation), G7.write.atomic selects CS-WRITE and CS-FAULT, every threshold tied to its rule; in 0.3.0 the performance values come from TARGETS and the scale sample counts are T-SAMPLES-PER-FAMILY and T-SAMPLES-PER-STRATUM."),
     ("11", "Auxiliary evidence had no validity path", "Validity classes VC, VA, VM, VV with an acyclic dependency check; calibration closes through CR-CALIBRATION; MUTANT_RULE requires reach and an identified semantic assertion failure."),
     ("12", "Carry-forward reopened the final-acceptance loophole", "APPLICABILITY restores PLAN 1.7: all bound identities, explicit applicability record, final acceptance entirely fresh including the year-one population and every NS and GS run; verifier mode per obligation."),
     ("13", "Population counts could pass with trivial history", "Year-one population with frozen history strata 1/3/10, topology, skew, tenants and result cardinalities; correctness per rung (0.3.0)."),
@@ -2057,7 +2058,7 @@ def render_acceptance(doc, cells, counts):
         ["B12", "subsets and shrunk fixtures", "pinned manifests, VA8"],
         ["B13", "receipt collage across profiles", "done predicate, APPLICABILITY.finalAcceptance"],
         ["B14", "scale inflation (tiny scopes, wrapper triples, trivial history)", "held S obligations (0.1.0 counting rules); draft population in heldDrafts"],
-        ["B15", "load accounting tricks", "load-contract invariants and metric definitions, CR-LOAD"],
+        ["B15", "load accounting tricks", "load-contract invariants (fixed writer trace, open-loop schedule, metric definitions), CR-NS and CR-GS"],
         ["B16", "policy by omission", "policy-pending cannot close"],
         ["B17", "engine swap", "VA4"],
         ["B18", "mutating the oracle side or counting crashes as kills", "VM1, VM4"],
@@ -2076,7 +2077,7 @@ def render_acceptance(doc, cells, counts):
         "**R independent of P.** A cut is (scope, P, optional R, V). Recorded visibility is `recordedPosition <= P` and, when R is bound, `recordedAt <= R`, evaluated independently: an assertion with a later position but an earlier instant is invisible at P below its position, and an assertion at a lower position with an instant above R is invisible at R.",
         "**Position accounting.** Positions are derived by the oracle from the committed order: one position per Triplex transact, nested transacts inside one outer transaction take consecutive positions in callback order and share one engine commit; the oracle checks every receipt position against its own and fails the run on a mismatch.",
         "**Outcomes.** The oracle derives each command's expected outcome from intent, order, preconditions, enforcement (CN-NEW-OR-WORSENED) and durable-decision evidence (COMMIT_OUTCOMES), then compares the receipts' outcomes afterwards. A receipt never decides which command is valid or committed.",
-        "**Outputs.** Complete assertion metadata; raw-lifetime and as-of snapshot history; entity models (card-one value or E-CONFLICTING-VALUES per C5; card-many per CARD_MANY_ORDER; absent optional as a missing property; includes at the same basis; timelines); transaction records with ordered changes and the logical journal facts (C6); cursor page sequences; support counts; C1 eligibility routes (for O-PLAN); arithmetic, comparison and aggregate results per section 4; analytic scale counts per population stratum (population definition HELD with section S).",
+        "**Outputs.** Complete assertion metadata; raw-lifetime and as-of snapshot history; entity models (card-one value or E-CONFLICTING-VALUES per C5; card-many per CARD_MANY_ORDER; absent optional as a missing property; includes at the same basis; timelines); transaction records with ordered changes and the logical journal facts (C6); cursor page sequences; support counts; C1 eligibility routes (for O-PLAN); arithmetic, comparison and aggregate results per section 4; analytic scale counts per population stratum (SCALE_POPULATION, section S).",
         "**Independence.** Python stdlib only; imports no repository code; its own exact integers and decimals, IEEE binary64 (via struct) and codepoint ordering; no casefolding.",
         "**Self-checks before ACCEPTED.** Reproduce O-HAM finite-nine, O-CFG8 tiny-v4 and the O-EVT cut semantics where domains overlap; unit tests for every table row of section 4.",
     ]:
@@ -2106,7 +2107,7 @@ def render_acceptance(doc, cells, counts):
         ["json", "{\"b\":1,\"a\":2} (key order kept), nested arrays and objects, non-ASCII text, 1e300"],
         ["blob", "descriptor with and without filename, size 0, a size above 2^32"],
     ]))
-    A("\nCS-TYPES8-NEG (each rejected atomically): lone surrogate, NaN, +Infinity, -Infinity, non-canonical int64 text (\"01\", \"+1\", \"1.0\", \"-0\"), integer outside the core integer type, invalid datetime, unparseable json, blob descriptor with a negative size.\n")
+    A("\nCS-TYPES8-NEG (each rejected atomically): lone surrogate, NaN, +Infinity, -Infinity, non-canonical integer text (\"01\", \"+1\", \"1.0\", \"-0\"), integer outside the core integer type, invalid datetime, unparseable json, blob descriptor with a negative size.\n")
     A("CS-WIDEN: integer 9007199254740993 first (lanes that accept it), then in the same attribute or physical column a whole-number float, a text value through an untyped attribute, and for QLever an invalid typed literal through the raw wire; re-read the first value everywhere.\n")
     A("### 7.2 Numbers (CS-NUMERIC) and errors (CS-ERRORS)\n")
     A("Every example in sections 4.1 to 4.4 is a CS-NUMERIC case with that expected answer. CS-ERRORS has one case per ERROR_TABLE entry reachable from a read surface.\n")

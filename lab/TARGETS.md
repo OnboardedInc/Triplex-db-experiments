@@ -34,6 +34,7 @@ explain at the old basis still shows the old belief); explain and audit at a pas
 | Duplicates | 10% of system signals are re-sent with the same commandId; 1% of commands lose their ACK and are retried. |
 | Corrections | 1% of commands are retroactive valid-time corrections 30 days back. |
 | Reads per write | 10 to 100 (each write triggers a reconcile pull, dependency lookups, projection updates, UI refreshes). |
+| Read basis mix | 80% at the latest committed tx (named exactly), 15% at a tx within the last hour, 5% at a past basis up to 90 days back (RULINGS Q16). |
 | Conflicts | Optimistic compare-and-set on the subject's last position; serial per subject, parallel across subjects. |
 | Bulk lane | Separate, throttled; imports must not starve live reads. |
 | Scale | Year one: 10m entities with 100m active facts; retained history 150M to 500M facts per year. Rungs: 10k, 100k, 1m, 10m subjects. |

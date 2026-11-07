@@ -1,0 +1,61 @@
+{
+  "format": "triplex-db-2/budgets/2",
+  "version": "0.3.0",
+  "source": "lab/PLAN.md section 7.4 and section 1 item 5; lab/TARGETS.md section 1; acceptance review r1 finding 14",
+  "frozenBeforeCandidates": "Budgets are frozen in a create-only budget-freeze receipt (A0 control measurements at every rung, this file's sha256) before any candidate is evaluated against them. A hypothesis's predicted cost never sets its own allowance. Changing a budget creates a new profile version; loosening an NS bar needs Sam.",
+  "a0Control": "A0 = the ledger-only baseline profile (status-quo adapters, no projection), measured on the same slot configuration, writer trace and rung. Where A0 cannot complete a rung, only the absolute bars and caps apply there and the failure is recorded.",
+  "cumulative": "Every promotion and the final acceptance compare the integrated candidate with the frozen A0 control at the same rung, never with the previous promotion, so small regressions accumulate against one fixed reference.",
+  "components": [
+    "ledger",
+    "projection",
+    "index tables",
+    "journal",
+    "log of record",
+    "mutation broker",
+    "verification",
+    "scratch work",
+    "fallback (exact path) reads",
+    "maintenance",
+    "clients"
+  ],
+  "accounting": "Every metric is reported per component and in total; the log of record, the broker and verification count for QLever; fallback reads, maintenance, the change feed and clients count for both lanes.",
+  "absolute": "Every NS-* bar of obligations.json thresholds applies as an absolute budget at P-YEAR-ONE; resource caps: memory peak within the 11 GiB reservation pool, disk peak within the 50 GiB stop line of the 60 GiB VM (lab/PLAN.md section 8).",
+  "relativeToA0": [
+    {
+      "id": "B-WRITE-BYTES-PER-FACT",
+      "allowanceVsA0": 4.0,
+      "direction": "max",
+      "source": "derived: projection, indexes, journal and feed together"
+    },
+    {
+      "id": "B-INGEST-FACTS-PER-S",
+      "allowanceVsA0": 0.5,
+      "direction": "min",
+      "source": "derived"
+    },
+    {
+      "id": "B-CURRENT-PULL-P99",
+      "allowanceVsA0": 1.0,
+      "direction": "max",
+      "source": "derived: the current path must not be slower than ledger-only"
+    },
+    {
+      "id": "B-COMMIT-P99",
+      "allowanceVsA0": 1.25,
+      "direction": "max",
+      "source": "derived from NS-P1-WRITER-P99-RATIO-256"
+    },
+    {
+      "id": "B-MEMORY-PEAK",
+      "allowanceVsA0": 1.5,
+      "direction": "max",
+      "source": "derived"
+    },
+    {
+      "id": "B-DISK-PEAK",
+      "allowanceVsA0": 2.0,
+      "direction": "max",
+      "source": "derived"
+    }
+  ]
+}

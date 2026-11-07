@@ -1,182 +1,385 @@
 {
-  "format": "triplex-db-2/load-contract/0",
-  "version": "0.1.0-draft",
-  "status": "DRAFT-UNCALIBRATED: no numeric threshold is frozen; every CALIBRATE value is set by the calibration procedure below and frozen in a create-only calibration receipt before any acceptance run",
-  "obligations": ["L.calibration.frozen", "L.accept.256", "L.stress.512", "L.stress.1024", "L.recovery.after-stress"],
-  "derivedFrom": [
-    "wiki/goals.md:34-46 (256 logical clients, then 512/1024 stress with frozen overload policy and steady writes; 10m entities / 100m active facts)",
-    "lab/reviews/plan-review-r1.codex.md finding 2",
-    "lab/reviews/plan-review-r1.response.md decision 2",
-    "qualification/benchmark-contract.json (calibration rule, sampling rules, measurements, query families)",
-    "qualification/load-waves/five-surface-point-rate16-v1/plan.json (existing frozen numeric contract: 256 clients, 16 reads/s, 30 s window and deadlines, 6 writers, 10-entity corrections)",
-    "packages/qualification/load/README.md (open-loop, scheduled-offer latency, expired requests never enter the backend, goodput counts only in-window completions)",
-    "wiki/problems/load-liveness.md (ACK versus visibility, separate pools, timed populations)"
+  "format": "triplex-db-2/load-contract/2",
+  "version": "0.3.0",
+  "generatedBy": "lab/acceptance/build_contract.py",
+  "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
+  "obligations": [
+    "NS.P1",
+    "NS.P2",
+    "NS.P3",
+    "NS.P4",
+    "NS.P5",
+    "NS.SEC.bulk-lane",
+    "NS.SEC.retro-and-audit",
+    "NS.calibration",
+    "GS.01",
+    "GS.02",
+    "GS.03",
+    "GS.04",
+    "GS.05",
+    "GS.06",
+    "GS.07",
+    "GS.08",
+    "GS.09",
+    "GS.10",
+    "GS.11",
+    "GS.12",
+    "GS.13",
+    "GS.14",
+    "GS.15",
+    "GS.16",
+    "GS.17",
+    "GS.18",
+    "GS.19",
+    "GS.20"
   ],
-  "markerConvention": {
-    "CALIBRATE": "value set by the calibration procedure; the field next to it gives a hard floor or ceiling that calibration may only tighten",
-    "hardFloor / hardCeiling": "taken from an existing frozen contract in this repository; a calibrated value below a floor or above a ceiling is invalid",
-    "proposedFloor / proposedCeiling": "not grounded in an existing frozen contract; proposed by EXP-A01 and needing an orchestrator ruling before freeze (listed in REPORT.md open questions)",
-    "frozenAtCalibration": "a workload definition (not a threshold) proposed here and frozen unchanged at calibration"
-  },
-
-  "lanes": {
-    "runs": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"],
-    "rule": "Each lane is a separate acceptance run. Repository classes are identical across lanes; native classes are authored in the lane's language only. A run whose native trace contains another language fails."
-  },
-
-  "dataset": {
-    "requirement": "S.dataset.target-population must be CLOSED for the engine before calibration starts",
-    "profile": "representative-10",
-    "distinctApplicationEntities": 10000000,
-    "activeRepresentativeDomainFacts": 100000000,
-    "singleScope": true,
-    "loadedThroughPublicWrites": true,
-    "retainedHistory": "the history produced by S.dataset.target-population is retained; no compaction that drops history before the run",
-    "identity": "fixture content hash plus seed receipts of the scale run; recorded in every load receipt",
-    "sparseProfileLoad": "not required by this draft; open question Q4"
-  },
-
-  "clients": {
-    "logicalClientLevels": {"acceptance": 256, "stress": [512, 1024]},
-    "definitions": {
-      "logicalClient": "an independent arrival stream with its own client id recorded on every raw event; the unit of fairness",
-      "connection": "a physical socket to the engine; counted per pool on the client side and observed on the engine side",
-      "dispatchSlot": "a host-side permit to run one request; requests wait for a slot after admission",
-      "inFlightEngineWork": "statements or queries the engine reports as executing (XTDB metrics, QLever cmd=dump-active-queries), sampled at least once per second"
+  "population": "SCALE_POPULATION year-one (obligations.json scalePopulation), on one identified profile and composition",
+  "writerTrace": {
+    "source": "lab/TARGETS.md section 2 (fixed workload, from Sam's paste)",
+    "commandShape": {
+      "factsPerCommand": [
+        {
+          "range": [
+            5,
+            10
+          ],
+          "share": 0.6
+        },
+        {
+          "range": [
+            11,
+            25
+          ],
+          "share": 0.3
+        },
+        {
+          "range": [
+            26,
+            50
+          ],
+          "share": 0.1
+        }
+      ],
+      "subjectsPerCommand": 1,
+      "documents": "a blob reference for document commands"
     },
-    "connectionsMax": {"value": "CALIBRATE", "rule": "declared per pool before the run; observed engine-side connections must never exceed the declared total"},
-    "dispatchSlots": {"value": "CALIBRATE", "hardFloor": 16, "floorSource": "five-surface-point-rate16-v1 dispatchSlots"},
-    "rule": "1024 logical clients does not require 1024 connections. It requires 1024 distinct client ids that each offer requests on their own schedule and each make progress (fairness invariant)."
-  },
-
-  "arrival": {
-    "model": "open-loop",
-    "process": "per logical client an independent Poisson stream with a recorded seed; aggregate offered rate = readOfferRatePerSecond; offers scheduled on one monotonic clock",
-    "latencyOrigin": "the scheduled offer time, not dispatch; queue wait, service time and drain are recorded separately",
-    "expiredBeforeDispatch": "a read whose deadline expires before dispatch never reaches the engine and is counted as rejected(deadline)",
-    "applicationRetries": false,
-    "readOfferRatePerSecond": {"value": "CALIBRATE", "hardFloor": 16, "floorSource": "five-surface-point-rate16-v1 readOffersPerSecond"}
-  },
-
-  "windows": {
-    "warmupMs": {"value": "CALIBRATE", "rule": "excluded from goodput; its raw events are retained"},
-    "measurementMs": {"value": "CALIBRATE", "hardFloor": 30000, "floorSource": "five-surface-point-rate16-v1 measurementMilliseconds", "rule": "also long enough that every read class reaches minimumObservationsPerClass"},
-    "minimumObservationsPerClass": {"value": 10000, "source": "qualification/benchmark-contract.json qualifiedPercentileMinimumObservationsPerPopulation"},
-    "drainMs": {"value": "CALIBRATE", "rule": "completions during drain count for latency distribution only, never for goodput"}
-  },
-
-  "queryMix": {
-    "frozenAtCalibration": true,
-    "rule": "shares of the aggregate read offer rate; parameters drawn deterministically from the dataset with a recorded seed; each class is its own latency population",
-    "classes": [
-      {"class": "repo.get.current", "surface": "repository", "family": "point", "share": 0.20},
-      {"class": "repo.get.historical", "surface": "repository", "family": "historical", "share": 0.08, "basis": "past recorded time and past valid instant from the cut catalog"},
-      {"class": "repo.getMany", "surface": "repository", "family": "point", "share": 0.07, "batch": 20},
-      {"class": "repo.find.equality", "surface": "repository", "family": "selective-filter", "share": 0.10},
-      {"class": "repo.find.range-page", "surface": "repository", "family": "pagination", "share": 0.08, "rule": "range plus order plus cursor continuation of a page issued earlier in the window"},
-      {"class": "repo.find.include-ref", "surface": "repository", "family": "join", "share": 0.07},
-      {"class": "repo.reverse-ref", "surface": "repository", "family": "join", "share": 0.05},
-      {"class": "repo.timeline", "surface": "repository", "family": "historical", "share": 0.05},
-      {"class": "native.join", "surface": "native-lane-language", "family": "join", "share": 0.05},
-      {"class": "native.anti-join", "surface": "native-lane-language", "family": "anti-join", "share": 0.05},
-      {"class": "native.aggregate", "surface": "native-lane-language", "family": "aggregate", "share": 0.05, "rule": "grouped aggregate over a bounded parameterized subset"},
-      {"class": "native.interval", "surface": "native-lane-language", "family": "interval", "share": 0.04},
-      {"class": "native.recursion", "surface": "native-lane-language", "family": "recursion", "share": 0.03, "rule": "bounded depth on a topology subset from CS-RECURSION-TOPO"},
-      {"class": "native.deep-page", "surface": "native-lane-language", "family": "pagination", "share": 0.03},
-      {"class": "native.historical", "surface": "native-lane-language", "family": "historical", "share": 0.05}
+    "writers": [
+      {
+        "kind": "people",
+        "share": 0.4,
+        "what": "evidence, decisions"
+      },
+      {
+        "kind": "systems",
+        "share": 0.3,
+        "what": "signals, often duplicated"
+      },
+      {
+        "kind": "agents",
+        "share": 0.1,
+        "what": "proposals"
+      },
+      {
+        "kind": "runtime",
+        "share": 0.2,
+        "what": "action outcomes"
+      }
     ],
-    "shareSum": 1.0
+    "rate": {
+      "steadyFactsPerSecond": 15,
+      "burst": {
+        "factsPerSecond": 750,
+        "durationS": 60,
+        "everyS": 600
+      }
+    },
+    "duplicates": {
+      "systemSignalsResentShare": 0.1,
+      "sameCommandId": true
+    },
+    "lostAck": {
+      "commandsShare": 0.01,
+      "retried": true
+    },
+    "corrections": {
+      "commandsShare": 0.01,
+      "validTimeBackDays": 30
+    },
+    "readsPerWrite": {
+      "range": [
+        10,
+        100
+      ],
+      "what": "each command triggers a reconcile pull at the returned tx, dependency lookups, projection updates and UI refreshes"
+    },
+    "conflicts": "optimistic compare-and-set on the subject's last position; serial per subject, parallel across subjects",
+    "bulkLane": "separate and throttled; used only by the bulk measurements",
+    "seeded": "a recorded seed fixes the whole trace; the same seed gives the same bytes"
   },
-
-  "writers": {
-    "writerClients": {"value": "CALIBRATE", "hardFloor": 1, "rule": "independent writer streams, each with its own client id and visibility probes"},
-    "aggregateWriterCommandsPerSecond": {"value": "CALIBRATE", "hardFloor": 0.2, "floorSource": "five-surface-point-rate16-v1 writerCommandsPerSecond (6 commands at 0, 5, 10, 15, 20, 25 s; the '6/6 writers' of earlier reviews are these 6 commands)"},
-    "commandWidth": {"value": "CALIBRATE", "hardFloor": "10 entities per command", "floorSource": "five-surface-point-rate16-v1 writerCommand"},
-    "mix": {
-      "frozenAtCalibration": true,
-      "classes": [
-        {"class": "create", "share": 0.30, "rule": "new entities with 10 representative facts each"},
-        {"class": "correction", "share": 0.40, "rule": "atomic retract and replace of one attribute on each entity of the command (existing correction shape)"},
-        {"class": "card-many-change", "share": 0.10},
-        {"class": "valid-boundary", "share": 0.10, "rule": "facts whose validTo falls inside the measurement window, so boundaries cross during the run"},
-        {"class": "delete-current", "share": 0.05, "rule": "retract an entity's current facts (existing delete contract) until a presence/deletion policy is frozen"},
-        {"class": "unique-change", "share": 0.05}
+  "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
+  "measurements": {
+    "P1": {
+      "readers": "closed-loop, zero think time, each reader a distinct client id",
+      "levels": [
+        0,
+        1,
+        4,
+        16,
+        64,
+        256
+      ],
+      "stress": 1024,
+      "zeroReaderBaseline": "level 0 = writer trace alone, same run",
+      "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 50% the current basis, 25% a basis within the last hour, 25% a basis up to 30 days back",
+      "record": [
+        "correctness-qualified read goodput per level",
+        "read p50, p99 per level",
+        "writer commit latency p50, p99, max and throughput per level"
+      ],
+      "bars": [
+        "NS-P1-VIOLATIONS-MAX",
+        "NS-P1-GOODPUT-256-VS-64",
+        "NS-P1-READ-P99-256-MS",
+        "NS-P1-WRITER-P99-RATIO-256",
+        "NS-P1-WRITER-WAIT-MAX-MS",
+        "NS-P1-GOODPUT-1024-VS-256",
+        "NS-P1-WRITER-P99-RATIO-1024",
+        "NS-P1-RECOVERY-MS"
+      ],
+      "recovery": "after the 1,024 window, readers return to 256; 30 s evaluation windows sliding by 5 s; recovery time = end of the first window meeting every 256-level bar; must be within NS-P1-RECOVERY-MS"
+    },
+    "P2": {
+      "probe": "one command of 10 facts about one subject (also 5 and 50, reported) issued at 1 per second on top of the writer trace, with 256 P1 readers running",
+      "ryow": "the probe's next pull at the returned tx",
+      "idempotency": "the trace's duplicates and lost ACKs",
+      "bars": [
+        "NS-P2-COMMIT-P50-MS",
+        "NS-P2-COMMIT-P99-MS",
+        "NS-P2-RYOW-FRACTION",
+        "NS-P2-DUP-RECEIPT-FRACTION"
       ]
     },
-    "separateClientRoot": "writers use their own runtime and pool; visibility is probed by an independent reader runtime"
+    "P3": {
+      "consumer": "one feed consumer computing affected subjects; one restart from checkpoint per run",
+      "lag": "commit ACK to affected subjects known",
+      "bars": [
+        "NS-P3-GAPS-MAX",
+        "NS-P3-ORDER-VIOLATIONS-MAX",
+        "NS-P3-LAG-P99-MS"
+      ]
+    },
+    "P4": {
+      "probe": "single client, subject pulls at the current basis over subjects in TP-PULL (3 to 6 hops, 50 to 2,000 facts)",
+      "throughput": "closed-loop pulls with the engine pinned to a recorded core count; pulls/s divided by cores",
+      "history": "repeat on subjects in history strata H1, H3, H10; compare p50 latency and bytes read",
+      "bars": [
+        "NS-P4-PULL-P50-MS",
+        "NS-P4-PULL-P99-MS",
+        "NS-P4-PULLS-PER-CORE",
+        "NS-P4-HISTORY-FLATNESS"
+      ]
+    },
+    "P5": {
+      "sweep": "100k subjects pulled at one pinned basis",
+      "concurrent": "the writer trace and 64 live readers",
+      "noSweepBaseline": "same run, same 64 readers and writer trace, before the sweep",
+      "bars": [
+        "NS-P5-SWEEP-S",
+        "NS-P5-LIVE-READ-P99-RATIO",
+        "NS-P5-WRITER-P99-RATIO",
+        "NS-P1-WRITER-WAIT-MAX-MS"
+      ]
+    },
+    "secondary": {
+      "bulk": "a 1M-fact import through the bulk lane with 64 live readers; bar NS-SEC-BULK-READ-P99-RATIO",
+      "retroactive": "1,000 corrections 30 days back; feed valid-time range and explain at the old basis checked",
+      "audit": "explain at a past basis, repeated three times; bit-for-bit identical"
+    }
   },
-
-  "overloadPolicy": {
-    "frozenAtCalibration": true,
-    "admission": "bounded pending queue of pendingLimit; when full, a new read is rejected immediately with a typed overload error and counted as rejected(overload)",
-    "pendingLimit": {"value": "CALIBRATE", "hardCeiling": 4096, "ceilingSource": "five-surface-point-rate16-v1 pendingLimit"},
-    "deadlines": "a read past its deadline before dispatch is rejected(deadline) without engine work; an admitted read receives only its remaining budget and is cancelled at the deadline (counted as timeout)",
-    "writes": "writes are never silently dropped: each offered command is admitted or rejected with a typed error; the writer floor must hold under overload",
-    "noUnboundedQueue": "outstanding work never exceeds pendingLimit plus dispatchSlots plus writer in-flight"
+  "windows": {
+    "warmupS": 120,
+    "perLadderLevelS": 600,
+    "note": "derived: 600 s covers one full burst cycle of the writer trace (60 s at 750 facts/s every 600 s)"
   },
-
-  "invariants": {
-    "rule": "zero tolerance; one violation fails the run at every level, including stress",
-    "list": [
-      "I1 every completed read's answer equals O-REPLAY at the basis the read returned; the returned basis is the basis used",
-      "I2 every returned basis for a latest-basis read is at or after every position ACKed to the same client before the read was offered",
-      "I3 every offered write command is ACKed within ackDeadlineMs and visible to the independent reader within visibilityDeadlineMs; zero unresolved outcomes at the end of drain",
-      "I4 every logical client has at least one correct in-deadline completion in the window (no starvation)",
-      "I5 every rejection carries a typed reason (overload, deadline, admission) and is counted",
-      "I6 engine-side connections never exceed connectionsMax",
-      "I7 at least one maintenance operation of the lane overlaps the measurement window (compaction, index rebuild, projection or boundary maintenance, cache rebuild); every maintenance kind the lane has overlaps at least one of the three runs, and the kind with the largest declared cost overlaps every run",
-      "I8 no engine restart, crash or out-of-memory event during the window",
-      "I9 receipt validity V1-V16 of lab/acceptance/ACCEPTANCE.md"
-    ]
+  "runs": 3,
+  "invariants": [
+    "every read names its basis and its answer is compared with O-REPLAY at that basis; a wrong answer scores zero",
+    "every command gets one receipt; duplicates and lost ACKs return the original receipt (COMMIT_OUTCOMES)",
+    "success receipts only after publication",
+    "no engine restart, crash or OOM inside a measurement window unless the scenario injects it",
+    "receipt validity VA"
+  ],
+  "bars": {
+    "NS-P1-VIOLATIONS-MAX": {
+      "kind": "ns",
+      "value": 0,
+      "unit": "correctness violations at every reader level",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P1"
+    },
+    "NS-P1-GOODPUT-256-VS-64": {
+      "kind": "ns",
+      "value": 1.0,
+      "unit": "correctness-qualified read goodput at 256 readers divided by goodput at 64 readers",
+      "bound": "min",
+      "source": "lab/TARGETS.md section 1 P1 (goodput does not fall from the 64-reader level)"
+    },
+    "NS-P1-READ-P99-256-MS": {
+      "kind": "ns",
+      "value": 100,
+      "unit": "ms read p99 at 256 readers",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P1"
+    },
+    "NS-P1-WRITER-P99-RATIO-256": {
+      "kind": "ns",
+      "value": 1.25,
+      "unit": "writer commit p99 at 256 readers divided by its zero-reader baseline in the same run",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P1"
+    },
+    "NS-P1-WRITER-WAIT-MAX-MS": {
+      "kind": "ns",
+      "value": 2000,
+      "unit": "ms, no command waits longer (every ladder level)",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P1"
+    },
+    "NS-P1-GOODPUT-1024-VS-256": {
+      "kind": "ns",
+      "value": 0.9,
+      "unit": "read goodput at 1,024 readers divided by the 256 level",
+      "bound": "min",
+      "source": "lab/TARGETS.md section 1 P1"
+    },
+    "NS-P1-WRITER-P99-RATIO-1024": {
+      "kind": "ns",
+      "value": 2.0,
+      "unit": "writer commit p99 at 1,024 readers divided by the zero-reader baseline",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P1"
+    },
+    "NS-P1-RECOVERY-MS": {
+      "kind": "ns",
+      "value": 60000,
+      "unit": "ms after stress until an evaluation window meets every 256-level P1 bar",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P1"
+    },
+    "NS-P2-COMMIT-P50-MS": {
+      "kind": "ns",
+      "value": 10,
+      "unit": "ms commit p50, 10-fact command, 256 readers running",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P2"
+    },
+    "NS-P2-COMMIT-P99-MS": {
+      "kind": "ns",
+      "value": 50,
+      "unit": "ms commit p99, 10-fact command, 256 readers running",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P2"
+    },
+    "NS-P2-RYOW-FRACTION": {
+      "kind": "ns",
+      "value": 1.0,
+      "unit": "fraction of pulls at the returned tx that see the commit with no extra wait",
+      "bound": "min",
+      "source": "lab/TARGETS.md section 1 P2"
+    },
+    "NS-P2-DUP-RECEIPT-FRACTION": {
+      "kind": "ns",
+      "value": 1.0,
+      "unit": "fraction of duplicates and lost-ACK retries that return the original receipt",
+      "bound": "min",
+      "source": "lab/TARGETS.md section 1 P2"
+    },
+    "NS-P3-GAPS-MAX": {
+      "kind": "ns",
+      "value": 0,
+      "unit": "feed gaps per run",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P3"
+    },
+    "NS-P3-ORDER-VIOLATIONS-MAX": {
+      "kind": "ns",
+      "value": 0,
+      "unit": "per-subject order violations per run",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P3"
+    },
+    "NS-P3-LAG-P99-MS": {
+      "kind": "ns",
+      "value": 250,
+      "unit": "ms commit to affected subjects known, p99, 256 readers running",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P3"
+    },
+    "NS-P4-PULL-P50-MS": {
+      "kind": "ns",
+      "value": 5,
+      "unit": "ms single-client subject pull p50 at the current basis",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P4"
+    },
+    "NS-P4-PULL-P99-MS": {
+      "kind": "ns",
+      "value": 25,
+      "unit": "ms single-client subject pull p99",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P4"
+    },
+    "NS-P4-PULLS-PER-CORE": {
+      "kind": "ns",
+      "value": 1100,
+      "unit": "pulls/s per engine core",
+      "bound": "min",
+      "source": "lab/TARGETS.md section 1 P4"
+    },
+    "NS-P4-HISTORY-FLATNESS": {
+      "kind": "ns",
+      "value": 1.1,
+      "unit": "current-pull p50 latency and bytes read at history depth 10 divided by depth 1",
+      "bound": "max",
+      "source": "derived from lab/TARGETS.md section 1 P4 ('stay flat'; no number given)"
+    },
+    "NS-P5-SWEEP-S": {
+      "kind": "ns",
+      "value": 100,
+      "unit": "s wall time to sweep 100k subjects at one pinned basis",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P5"
+    },
+    "NS-P5-LIVE-READ-P99-RATIO": {
+      "kind": "ns",
+      "value": 1.5,
+      "unit": "live read p99 during the sweep divided by no-sweep",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P5"
+    },
+    "NS-P5-WRITER-P99-RATIO": {
+      "kind": "ns",
+      "value": 1.5,
+      "unit": "writer commit p99 during the sweep divided by no-sweep",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 P5"
+    },
+    "NS-SEC-BULK-READ-P99-RATIO": {
+      "kind": "ns",
+      "value": 1.5,
+      "unit": "live read p99 during a 1M-fact bulk import divided by without",
+      "bound": "max",
+      "source": "lab/TARGETS.md section 1 secondary measurements"
+    }
   },
-
-  "thresholds": {
-    "readDeadlineMsPerClass": {"value": "CALIBRATE", "hardCeiling": 30000, "ceilingSource": "five-surface-point-rate16-v1 scheduledReadDeadlineMilliseconds"},
-    "correctnessQualifiedGoodputFractionPerClass": {"value": "CALIBRATE", "proposedFloor": 0.99, "definition": "reads offered in the window that completed correct within their deadline before the window ended, divided by reads offered in the window"},
-    "rejectionFractionAt256": {"value": "CALIBRATE", "proposedCeiling": 0.01},
-    "p99LatencyMsPerClass": {"value": "CALIBRATE", "hardCeiling": "readDeadlineMsPerClass", "rule": "computed over all offered reads of the class including timeouts at their deadline; never success-only"},
-    "ackDeadlineMs": {"value": "CALIBRATE", "hardCeiling": 30000, "ceilingSource": "rate16 control: writers visible inside 30 s"},
-    "visibilityDeadlineMs": {"value": "CALIBRATE", "hardCeiling": 30000, "ceilingSource": "rate16 control: writers visible inside 30 s"},
-    "freshnessBoundMs": {"value": "CALIBRATE", "hardCeiling": "visibilityDeadlineMs", "definition": "for latest-basis reads, the age of the returned basis relative to the newest ACKed position at the read's offer time, in milliseconds and in positions"},
-    "fairnessFloor": {"value": "CALIBRATE", "proposedFloor": 0.9, "definition": "minimum over logical clients of (client's correct in-deadline completions / client's offered reads), divided by the run's overall goodput fraction"},
-    "stressGoodputRetention": {"value": "CALIBRATE", "proposedFloor": 0.9, "definition": "absolute correct in-deadline read goodput per second at 512 and 1024, divided by the same at 256 in the calibration control"},
-    "recoveryWindowMs": {"value": "CALIBRATE", "definition": "time from the end of a 1024 window to the start of a 256 window that passes all L.accept.256 thresholds"},
-    "postStressBaselineBand": {"value": "CALIBRATE", "definition": "allowed relative difference of engine RSS and connection count after recovery versus the pre-stress baseline"}
-  },
-
-  "metrics": {
-    "perClass": ["attempted (offered)", "admitted", "rejected by reason (overload, deadline, admission)", "completed in window", "completed in drain", "timeouts", "errors by typed reason", "wrong answers", "correctness-qualified goodput per second", "latency p50, p90, p95, p99, max from scheduled offer", "queue wait and service time separately"],
-    "perRun": ["outstanding requests at window end", "logical clients with zero progress", "per-client goodput distribution", "write offers, ACKs, ACK latency distribution, visibility latency distribution, unresolved outcomes", "projection freshness distribution (ms and positions)", "fallback-route rate where the design has one", "connections per pool and engine-side", "in-flight engine work samples", "maintenance events with start and end", "engine and client RSS, CPU, disk and spill peaks", "co-running containers"],
-    "rawEvents": "every offer, admission, dispatch, completion, rejection, ACK and visibility probe as a raw event with client id, class, scheduled time, monotonic timestamps, returned basis, result hash and native trace; retained and hashed before evaluation"
-  },
-
-  "levels": {
-    "256": {"obligation": "L.accept.256", "runs": 3, "rule": "all invariants and all thresholds in each of 3 independent runs per lane"},
-    "512": {"obligation": "L.stress.512", "runs": 3, "rule": "all invariants; rejections allowed but typed and counted; stressGoodputRetention met; writer floor met (I3)"},
-    "1024": {"obligation": "L.stress.1024", "runs": 3, "rule": "as 512"},
-    "recovery": {"obligation": "L.recovery.after-stress", "runs": 3, "rule": "after each 1024 window, a 256 window starting within recoveryWindowMs passes all 256 thresholds; outstanding zero; RSS and connections within postStressBaselineBand"}
-  },
-
-  "runIndependence": {
-    "rule": "three independent runs: fresh client processes, fresh measurement scopes for writes where the design allows, alternating lane order across runs, same frozen dataset; co-runners recorded; runs on an exclusive slot",
-    "source": "qualification/benchmark-contract.json measurements.independentRuns and controls"
-  },
-
   "calibration": {
-    "obligation": "L.calibration.frozen",
-    "neverAcceptance": true,
-    "createOnly": true,
+    "obligation": "NS.calibration",
+    "rule": "Calibration may only tighten a threshold (a smaller max, a larger min) or record it UNATTAINABLE with the measurement. Loosening any value needs Sam (TARGETS threshold policy); until he rules, the obligation stays OPEN.",
     "procedure": [
-      "C1 Preconditions: S.dataset.target-population CLOSED for the engine; this file's sha256 recorded; resource envelope and slot declared; the control build is the integrated main candidate at calibration time, identified by V2 and V3.",
-      "C2 Fix the workload: freeze queryMix, writer mix and overloadPolicy exactly as written here (or as amended in a reviewed contract version before calibration starts).",
-      "C3 Rate ladder: at 256 logical clients with the hard-floor writer settings, run the mix at offered read rates 16, 32, 64, 128, 256 reads/s and upward in doublings until a step fails any invariant I1-I8 in any of 3 runs; record every step, failures included.",
-      "C4 Writer ladder: at the highest read step that passed, raise writerClients and aggregateWriterCommandsPerSecond in doublings from the hard floors until a step fails I3 or I1 in any of 3 runs.",
-      "C5 Choose the acceptance point: the highest read rate and writer setting at which all 3 runs pass all invariants. If no step passes at the hard floors, freeze the hard floors anyway; L stays OPEN and the failure is retained.",
-      "C6 Freeze thresholds from the control at the acceptance point: readDeadlineMsPerClass, p99LatencyMsPerClass, ackDeadlineMs, visibilityDeadlineMs and freshnessBoundMs = the worst of the 3 runs rounded up to the next 10% step, never above the hard ceilings; correctnessQualifiedGoodputFractionPerClass, fairnessFloor and stressGoodputRetention = the worst of 3 runs, never below the ruled floors; rejectionFractionAt256 = the worst of 3 runs, never above the ruled ceiling.",
-      "C7 Stress probe: run 512 and 1024 once each at the frozen settings to confirm the overload policy is implementable; these runs are calibration, not acceptance, and their numbers set only recoveryWindowMs and postStressBaselineBand (worst observed, rounded up to the next 10% step).",
-      "C8 Write the create-only calibration receipt: this file's sha256, every frozen value, the control build identity, every ladder step's raw-event hash, and the reason for each chosen value. From then on a value can only be tightened by a later calibration on a newer control; it can never be loosened.",
-      "C9 A new scale, a changed mix, changed semantics or a changed engine image creates a new named profile with a fresh calibration; the original profile and its failures remain the acceptance profile unless a reviewed contract version supersedes it."
-    ],
-    "openRuling": "C6 freezes the control's own worst performance as the bar. That stops regressions and stops lowered thresholds, but it means the 256 bar is whatever the control first achieves above the hard floors. Whether a fixed minimum rate above 16 reads/s is required for the done condition is open question Q2."
+      "C1 preconditions: S.population.year-one closed (VA) on the control profile; this file's sha256 recorded",
+      "C2 run every measurement once per lane on the control profile with the fixed writer trace",
+      "C3 for each NS bar, record the measured value; keep the bar, tighten it, or mark UNATTAINABLE with the measurement (loosening needs Sam)",
+      "C4 write the create-only calibration record (VC); acceptance runs cite it"
+    ]
   }
 }
