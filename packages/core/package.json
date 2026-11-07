@@ -67,6 +67,11 @@
       "import": "./dist/operational/index.js",
       "default": "./dist/operational/index.js"
     },
+    "./entity": {
+      "types": "./dist/entity/index.d.ts",
+      "import": "./dist/entity/index.js",
+      "default": "./dist/entity/index.js"
+    },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js",
