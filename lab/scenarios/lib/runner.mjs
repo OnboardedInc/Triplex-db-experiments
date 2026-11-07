@@ -240,7 +240,7 @@ export async function checkedRead(ctx, sid, { V = BT.NOW, kind = 'live', R = Dat
   const got = await pullDigest(ctx, sid, { recordedAt: R, validAt: V });
   if (!got.ok && (ctx.restarting || ctx.epoch !== epoch)) { ctx.interruptedReads = (ctx.interruptedReads ?? 0) + 1; return null; }
   const ok = got.ok && want !== null && got.digest === want;
-  ctx.reads.push({ kind, ms: got.ms, ok, at: performance.now() });
+  ctx.reads.push({ kind, ms: got.ms, ok, error: !got.ok, at: performance.now() });
   if (!ok && ctx.readFailures.length < 10) ctx.readFailures.push({ sid, R, V, kind, expected: want, observed: got.digest ?? null, error: got.error ?? null, rows: got.rows?.slice(0, 40) });
   return { ok, ms: got.ms, digest: got.digest };
 }
@@ -393,7 +393,8 @@ async function commonChecks(ctx) {
   check('feed-per-subject-order', orderViolations === 0, { subjectsOutOfOrder: orderViolations });
   // Reads: every sampled read matched its golden state.
   const bad = ctx.reads.filter(r => !r.ok).length;
-  check('reads-correct', bad === 0 && ctx.reads.length > 0, { reads: ctx.reads.length, wrong: bad, first: ctx.readFailures.slice(0, 3) });
+  const readErrors = ctx.reads.filter(r => r.error).length;
+  check('reads-correct', bad === 0 && ctx.reads.length > 0, { reads: ctx.reads.length, failed: bad, wrongAnswers: bad - readErrors, readErrors, first: ctx.readFailures.slice(0, 3) });
   // Final state of each golden subject equals the golden after its last commit.
   let finalBad = 0; const firstFinal = [];
   for (const [sid, r] of Object.entries(ctx.finals)) {
@@ -512,7 +513,7 @@ export function metrics(ctx) {
     accounting: Object.fromEntries(['trace', 'scenario'].map(k => { const list = done.filter(a => (k === 'trace') === a.trace); const offered = ctx.gen.stream.commands.filter(c => c.tags?.phase !== 'setup' && (k === 'trace') === !!c.tags?.trace).length;
       return [k, { offered, committed: list.filter(a => a.status === 'committed').length, rejectedTyped: list.filter(a => a.status === 'rejected').length, unaccounted: offered - list.filter(a => a.status === 'committed' || a.status === 'rejected').length }]; })),
     writer: { maxWaitMs: round(Math.max(0, ...done.map(a => a.doneAt - a.scheduledAt))), committed: done.filter(a => a.status === 'committed').length, rejected: done.filter(a => a.status === 'rejected').length },
-    read: { ...quantiles(liveReads.map(r => r.ms)), correct: ok, wrong: liveReads.length - ok, goodputPerSec: round(ok / Math.max(0.001, ctx.liveMs / 1000)) },
+    read: { ...quantiles(liveReads.map(r => r.ms)), correct: ok, wrong: liveReads.length - ok, errors: liveReads.filter(r => r.error).length, goodputPerSec: round(ok / Math.max(0.001, ctx.liveMs / 1000)) },
     feed: { lag: quantiles(lags), records: ctx.feedSeen.length, errors: ctx.feedErrors.length },
     liveMs: Math.round(ctx.liveMs), clientCpuFraction: ctx.extra.clientCpuFraction, extra: ctx.extra,
   };

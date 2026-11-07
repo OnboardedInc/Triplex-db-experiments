@@ -47,7 +47,7 @@ export async function during(ctx) {
     const sid = ctx.gen.digestSubjects[k];
     const subject = await pullDigest(ctx, sid, { recordedAt: Rpre, validAt: BT.NOW });
     const again = await pullDigest(ctx, ACCOUNT, { recordedAt: Rpre, validAt: BT.NOW });
-    return { first: first.digest, again: again.digest, subjectOk: subject.digest === expectedDigest(ctx, sid, Rpre, BT.NOW) };
+    return { first: first.digest, again: again.digest, subjectOk: subject.digest === expectedDigest(ctx, sid, Rpre, BT.NOW), errors: [first, subject, again].filter(x => !x.ok).length };
   });
   while (!ctx.ex.byIndex.get(activation.index)?.doneAt) await sleep(20);
   const act = ctx.ex.byIndex.get(activation.index);
@@ -57,7 +57,7 @@ export async function during(ctx) {
   const oldRelease = expectedDigest(ctx, ACCOUNT, Rpre, BT.NOW);
   const r = await Promise.all(reconciles);
   ctx.check('inflight-reconciles-finish-on-old-release', r.every(x => x.first === oldRelease && x.again === oldRelease && x.subjectOk) && oldRelease !== expectedDigest(ctx, ACCOUNT, Ract, BT.NOW),
-    { reconciles: r.length, onOld: r.filter(x => x.first === oldRelease && x.again === oldRelease).length });
+    { reconciles: r.length, onOld: r.filter(x => x.first === oldRelease && x.again === oldRelease).length, readErrors: r.reduce((s, x) => s + x.errors, 0) });
 
   // The sweep at R_act.
   // R2's scope at this rung: the first sweepWorld world subjects plus the scenario subjects and the account.
