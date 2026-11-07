@@ -1,0 +1,61 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "contention-A0-20261107T211635Z-9b4ad8",
+  "kind": "contention-A0",
+  "writtenAt": "2026-11-07T21:16:35.037Z",
+  "mode": "contention",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T21:10:53.313Z",
+  "identity": {
+    "gitHead": "e74dbf7668ddbc148f56ff05f4005aa5c41917b7",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "e3b1fc9f91bc2a9fc1c8c3c80416595ae436b5e6d09d004e82d8431b8ee9bb1f",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        15.81,
+        12.92,
+        12.86
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    16.26,
+    15.66,
+    14.27
+  ],
+  "arm": "A0",
+  "scope": "p2x-contention-A0-c19a458d-2306-415a-8c6d-5a1be123682e",
+  "writers": 16,
+  "per": 40,
+  "facts": 10,
+  "distinctSubjects": 16,
+  "outcomes": {
+    "committed": 367,
+    "conflict": 273
+  },
+  "crossSubjectCasConflicts": 4620,
+  "counts": {
+    "submits": 4988,
+    "casConflicts": 4620,
+    "commandConflicts": 0,
+    "otherRejections": 0,
+    "transportErrors": 0
+  },
+  "latencyMs": {
+    "n": 367,
+    "p50": 2455,
+    "p90": 9803.5,
+    "p99": 18137.5,
+    "max": 19931.1,
+    "mean": 4059.9
+  },
+  "commitsPerS": 1.1,
+  "elapsedS": 341.1,
+  "rawPath": null,
+  "rawSha256": null
+}

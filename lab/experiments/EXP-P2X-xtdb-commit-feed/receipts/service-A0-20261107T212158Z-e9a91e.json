@@ -1,0 +1,90 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "service-A0-20261107T212158Z-e9a91e",
+  "kind": "service-A0",
+  "writtenAt": "2026-11-07T21:21:58.503Z",
+  "mode": "service",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T21:21:06.054Z",
+  "identity": {
+    "gitHead": "e74dbf7668ddbc148f56ff05f4005aa5c41917b7",
+    "dirty": true,
+    "diffSha256": "297ab148a7782a0e262e258b24abddc58382d5a6b62135dfd57eb9cfc9236f76",
+    "distSha256": "e3b1fc9f91bc2a9fc1c8c3c80416595ae436b5e6d09d004e82d8431b8ee9bb1f",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        12.97,
+        14.23,
+        14.01
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    15.22,
+    14.66,
+    14.18
+  ],
+  "arm": "A0",
+  "scope": "p2x-service-A0-e8727032-46fb-46ea-a225-ed530a1e8778",
+  "n": 150,
+  "facts": 10,
+  "serviceMs": {
+    "n": 135,
+    "p50": 316.7,
+    "p90": 570.8,
+    "p99": 906.3,
+    "max": 960.1,
+    "mean": 354.6
+  },
+  "warmupDropped": 15,
+  "commitsPerS": 2.9,
+  "counts": {
+    "submits": 151,
+    "casConflicts": 0,
+    "commandConflicts": 0,
+    "otherRejections": 0,
+    "transportErrors": 0
+  },
+  "timings": {
+    "submitMs": {
+      "n": 151,
+      "p50": 260.2,
+      "p90": 471.3,
+      "p99": 799,
+      "max": 805,
+      "mean": 296.4
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 150,
+        "p50": 10.7,
+        "p90": 23,
+        "p99": 81.5,
+        "max": 722.7,
+        "mean": 18.2
+      },
+      "claim": {
+        "n": 150,
+        "p50": 11.2,
+        "p90": 24,
+        "p99": 60.4,
+        "max": 135.7,
+        "mean": 14.2
+      },
+      "receipt": {
+        "n": 150,
+        "p50": 12.1,
+        "p90": 27.8,
+        "p99": 59,
+        "max": 121.2,
+        "mean": 15.6
+      }
+    }
+  },
+  "rawPath": null,
+  "rawSha256": null
+}

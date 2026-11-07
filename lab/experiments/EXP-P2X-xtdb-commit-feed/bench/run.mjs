@@ -9,7 +9,7 @@
 import { randomUUID } from 'node:crypto';
 import postgres from '../../../../packages/xtdb/node_modules/postgres/src/index.js';
 import { Effect } from 'effect';
-import { ARMS, armRuntime, commandOps, core, identity, now, percentiles, round, runtimeApi, summary, writeReceipt, xtdb } from './lib.mjs';
+import { ARMS, armRuntime, commandOps, core, identity, now, percentiles, round, runtimeApi, summary, timingSummary, writeReceipt, xtdb } from './lib.mjs';
 import { GENERATOR_SHA256, PARAMS, generateTrace, inBurst, traceDigest } from './trace.mjs';
 
 const args = process.argv.slice(2);
@@ -37,15 +37,17 @@ const candidateConsumer = async ({ scope, consumer, published, pollMs = 10 }) =>
   const feed = xtdb.makeXtdbCommitFeed(client, scope);
   let cursor = await feed.tip();
   let expected = null;
-  const stats = { polls: 0, blockedPolls: 0, writes: 0, aborted: 0, missingPublication: 0, pollMs: [], writeMs: [] };
+  const stats = { polls: 0, blockedPolls: 0, tornPolls: 0, writes: 0, aborted: 0, missingPublication: 0, pollMs: [], writeMs: [] };
   const lags = [], processed = [];
-  let stopping = false;
+  let stopping = false, tornRun = 0;
   const loop = (async () => {
     for (;;) {
       const t0 = now();
       const page = await feed.poll(cursor, { limit: 500 });
       stats.polls++; stats.pollMs.push(now() - t0);
       if (page.blocked) stats.blockedPolls++;
+      if (page.torn) { stats.tornPolls++; if (++tornRun > 500) throw new Error('source log stayed undecodable for 500 polls'); await sleep(pollMs); continue; }
+      tornRun = 0;
       if (page.resolutions.length > 0) {
         const w0 = now();
         await xtdb.recordFeedProgress(client, scope, consumer, page, expected);
@@ -145,7 +147,7 @@ const service = async () => {
     lat.push(now() - s);
   }
   const elapsed = now() - t0;
-  const result = { arm, scope, n, facts, serviceMs: summary(lat.slice(Math.min(20, n / 10))), warmupDropped: Math.min(20, n / 10), commitsPerS: round(n / (elapsed / 1000)), counts: rt.counts };
+  const result = { arm, scope, n, facts, serviceMs: summary(lat.slice(Math.min(20, n / 10))), warmupDropped: Math.min(20, n / 10), commitsPerS: round(n / (elapsed / 1000)), counts: rt.counts, timings: timingSummary(rt.timings) };
   await rt.close();
   return result;
 };
@@ -169,7 +171,7 @@ const contention = async () => {
   const result = {
     arm, scope, writers, per, facts, distinctSubjects: writers, outcomes: tally(outcomes),
     crossSubjectCasConflicts: rt.counts.casConflicts, counts: rt.counts,
-    latencyMs: summary(lat), commitsPerS: round(lat.length / (elapsed / 1000)), elapsedS: round(elapsed / 1000),
+    latencyMs: summary(lat), commitsPerS: round(lat.length / (elapsed / 1000)), elapsedS: round(elapsed / 1000), timings: timingSummary(rt.timings),
   };
   await rt.close();
   return result;
@@ -241,6 +243,7 @@ const trace = async () => {
     burst: { offerToAckMs: summary(latency(committedOriginals.filter((r) => r.burst))), committedInBurstWindow: committedOriginals.filter((r) => r.acked >= burstStart && r.acked < burstEnd).length },
     throughput: { committedPerS: round(committedOriginals.length / windowS, 2), drainAfterWindowS: round((drained - startAt) / 1000 - windowS, 1) },
     conflicts: { casConflicts: rt.counts.casConflicts, commandConflicts: rt.counts.commandConflicts, submits: rt.counts.submits },
+    timings: timingSummary(rt.timings),
     feed: { lagMs: summary(consumed.lags), ...audit, polls: consumed.stats.polls, writes: consumed.stats.writes, abortedListed: consumed.stats.aborted ?? 0, blockedPolls: consumed.stats.blockedPolls ?? 0, missingPublication: consumed.stats.missingPublication, pollMs: summary(consumed.stats.pollMs), writeMs: summary(consumed.stats.writeMs) },
     raw: { records, lags: consumed.lags },
   };
@@ -262,14 +265,25 @@ const preload = async () => {
   let next = 0;
   const t0 = now();
   let lastReport = t0;
+  // --batch N puts N Triplex transacts in one engine transaction (consecutive ordinals, RULINGS Q31c).
+  // Why: the serial indexer on the loaded lab host sustains about 10 engine transactions/s, so 100k
+  // single-command transactions would take about 3 h; batching keeps every commit real (claims,
+  // journal, heads, feed) while dividing the engine transaction count by N. Replay-safe: the batch is
+  // pure re-execution and every command carries its own commandId.
+  const batch = Number(opt('batch', 1));
   await Promise.all(Array.from({ length: concurrency }, async () => {
     while (next < events.length) {
-      const event = events[next++];
+      const group = events.slice(next, next + batch).map((event, i) => ({ event, n: next + i + 1 }));
+      next += group.length;
       const s = now();
+      const one = (g) => rt.triples.transact(commandOps({ ...g.event, seq: `${g.event.seq}-${g.n}` }, Date.now()), { commandId: `pre:${scope}:${g.n}` });
       try {
-        const result = await transact(rt, commandOps({ ...event, seq: `${event.seq}-${next}` }, Date.now()), { commandId: `pre:${scope}:${next}` });
-        committed.push([result.position, `subj:${event.subject}`]); lat.push(now() - s); outcomes.push('committed');
-      } catch (error) { outcomes.push(outcomeOf(error)); }
+        const results = batch === 1
+          ? [await rt.run(one(group[0]))]
+          : await rt.run(rt.adapter.withTransaction(Effect.forEach(group, one), { replaySafe: true }));
+        results.forEach((result, i) => committed.push([result.position, `subj:${group[i].event.subject}`]));
+        lat.push(now() - s); outcomes.push(...group.map(() => 'committed'));
+      } catch (error) { outcomes.push(...group.map(() => outcomeOf(error))); }
       if (now() - lastReport > 30_000) { lastReport = now(); process.stderr.write(`[preload] ${committed.length}/${commits} ${round(committed.length / ((now() - t0) / 1000))}/s\n`); }
     }
   }));
@@ -277,8 +291,8 @@ const preload = async () => {
   const consumed = await feed.stop();
   const audit = await auditFeed({ scope, consumer, committed, processed: consumed.processed });
   const result = {
-    arm, scope, commits, subjects, concurrency, seed, generatorSha256: GENERATOR_SHA256, outcomes: tally(outcomes),
-    commitsPerS: round(committed.length / (elapsed / 1000), 1), elapsedS: round(elapsed / 1000), latencyMs: summary(lat), counts: rt.counts,
+    arm, scope, commits, subjects, concurrency, batch, seed, generatorSha256: GENERATOR_SHA256, outcomes: tally(outcomes),
+    commitsPerS: round(committed.length / (elapsed / 1000), 1), elapsedS: round(elapsed / 1000), latencyMs: summary(lat), counts: rt.counts, timings: timingSummary(rt.timings),
     feed: { lagMs: summary(consumed.lags), ...audit, polls: consumed.stats.polls, writes: consumed.stats.writes, abortedListed: consumed.stats.aborted ?? 0, blockedPolls: consumed.stats.blockedPolls ?? 0, missingPublication: consumed.stats.missingPublication, pollMs: summary(consumed.stats.pollMs), writeMs: summary(consumed.stats.writeMs) },
     raw: { lags: consumed.lags },
   };

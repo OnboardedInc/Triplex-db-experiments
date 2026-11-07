@@ -82,7 +82,7 @@ const POSITION_OFFSET_LIMIT = Math.floor((Number.MAX_SAFE_INTEGER + 1) / POSITIO
 /** The packed Triplex position of one ordinal in a transaction stamped `stampUs`. */
 export const stampedPosition = (stampUs: number, ordinal: number): number =>
   (stampUs - POSITION_BASE_US) * POSITION_ORDINALS + ordinal;
-const positionSql = (ordinal: number) =>
+const positionSql = (ordinal: string) =>
   `((${COMMIT_STAMP_SQL} - ${POSITION_BASE_US}) * ${POSITION_ORDINALS} + ${ordinal})`;
 /** A cell the engine fills with its position (or the raw stamp) inside the transaction. */
 class Stamp {
@@ -91,26 +91,50 @@ class Stamp {
     readonly form: "position" | "raw" | "number-identity",
   ) {}
 }
+/**
+ * INSERT whose Stamp cells the engine fills in. The stamp is computed once per column in a SELECT
+ * projection over a parameters-only VALUES source; each row passes its ordinal as a parameter (NULL
+ * for rows that carry their own value). Why not an expression per VALUES cell: XTDB 2.2.0 compiles a
+ * separate projection for every non-literal, non-parameter VALUES cell and memoizes it under a key
+ * holding the statement's whole parameter-type map (`operator/table.clj:106-113 @ c6c1962`). A batched
+ * preload of 200-row stamped inserts exhausted the 2 GiB heap and stopped ingestion that way.
+ * Probe p8-insert-select shows this form keeps real values, stamps ordinals and propagates NULL.
+ */
 const stampedInsert = (
   table: string,
   columns: readonly string[],
   values: readonly (readonly unknown[])[],
 ): XtdbStatement => {
-  const params: unknown[] = [];
-  const cell = (value: unknown) => {
-    if (value instanceof Stamp) {
-      if (value.form === "raw") return COMMIT_STAMP_SQL;
-      // The journal's position fact also stores its value as canonical JSON (value_identity);
-      // this spelling equals canonicalJson({type: "number", value}) (probe p2-sql-details).
-      if (value.form === "number-identity")
-        return `'{"type":"number","value":' || CAST(${positionSql(value.ordinal)} AS VARCHAR) || '}'`;
-      return positionSql(value.ordinal);
-    }
-    params.push(value);
-    return "?";
-  };
+  const forms = columns.map((_column, j) => {
+    const cells = values.map((row) => row[j]).filter((cell): cell is Stamp => cell instanceof Stamp);
+    if (new Set(cells.map((cell) => cell.form)).size > 1)
+      throw new TypeError(`Column ${columns[j]} mixes stamp forms`);
+    return cells[0]?.form;
+  });
+  const sourceColumns = columns.flatMap((_column, j) =>
+    forms[j] === undefined ? [`c${j}`] : [`c${j}`, `o${j}`],
+  );
+  const projection = columns.map((_column, j) => {
+    const form = forms[j];
+    if (form === undefined) return `v.c${j}`;
+    const ordinal = `v.o${j}`;
+    // Each form is NULL when the row's ordinal is NULL, so COALESCE keeps the row's own value.
+    const stamp =
+      form === "raw"
+        ? `(${COMMIT_STAMP_SQL} + ${ordinal} * 0)`
+        : form === "number-identity"
+          ? // canonicalJson({type: "number", value}) spelling (probe p2-sql-details)
+            `'{"type":"number","value":' || CAST(${positionSql(ordinal)} AS VARCHAR) || '}'`
+          : positionSql(ordinal);
+    return `COALESCE(v.c${j}, ${stamp})`;
+  });
+  const params = values.flatMap((row) =>
+    row.flatMap((cell, j) =>
+      forms[j] === undefined ? [cell] : cell instanceof Stamp ? [null, cell.ordinal] : [cell, null],
+    ),
+  );
   return {
-    sql: `INSERT INTO ${table} (_valid_from, ${columns.join(", ")}) VALUES ${values.map((row) => `(TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', ${row.map(cell).join(", ")})`).join(", ")}`,
+    sql: `INSERT INTO ${table} (_valid_from, ${columns.join(", ")}) SELECT TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', ${projection.join(", ")} FROM (VALUES ${values.map(() => `(${sourceColumns.map(() => "?").join(", ")})`).join(", ")}) AS v (${sourceColumns.join(", ")})`,
     params,
   };
 };

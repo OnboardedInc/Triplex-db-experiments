@@ -83,6 +83,8 @@ export interface XtdbFeedPage {
   readonly skipped: number;
   /** True when the page stopped at a transaction that is appended but not yet resolved. */
   readonly blocked: boolean;
+  /** True when the log read hit a record that could not be decoded yet (see `poll`). */
+  readonly torn?: boolean;
 }
 
 export interface XtdbCommitFeed {
@@ -90,7 +92,12 @@ export interface XtdbCommitFeed {
   readonly tip: () => Promise<XtdbFeedCursor>;
   readonly poll: (
     cursor: XtdbFeedCursor,
-    options?: { readonly limit?: number; readonly exact?: boolean },
+    options?: {
+      readonly limit?: number;
+      readonly exact?: boolean;
+      /** Log bytes read per poll before the fallback read (default 8 MiB). */
+      readonly windowBytes?: number;
+    },
   ) => Promise<XtdbFeedPage>;
 }
 
@@ -123,12 +130,35 @@ export const makeXtdbCommitFeed = (
   poll: async (cursor, options = {}) => {
     const limit = options.limit ?? 1_000;
     const epoch = Math.floor(cursor.msgId / EPOCH_SPAN);
-    const records = (
-      await client.query(
+    const epochEnd = epoch * EPOCH_SPAN + WINDOW_END;
+    // Bound each read by log bytes: the log table decodes records in batches of up to 1,024 and
+    // builds each record's message text whatever the LIMIT, so a backlog of large records would land
+    // on the engine heap at once. Offsets are byte positions, so the window is a byte budget.
+    const windowEnd = Math.min(epochEnd, cursor.msgId + (options.windowBytes ?? 8 * 2 ** 20));
+    const read = (upper: number) =>
+      client.query(
         "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
-        [cursor.msgId, epoch * EPOCH_SPAN + WINDOW_END, limit + 1],
-      )
-    )
+        [cursor.msgId, upper, limit + 1],
+      );
+    let raw: Record<string, unknown>[];
+    try {
+      raw = await read(windowEnd);
+      // Nothing new in the window: either the tip, or one record longer than the window. A read to
+      // the epoch end tells them apart, so a large record can never stall the feed.
+      if (windowEnd < epochEnd && raw.every((row) => cursor.processed && Number(row["msg_id"]) === cursor.msgId))
+        raw = await read(epochEnd);
+    } catch (error) {
+      // EXP-P2X preload (8 concurrent writers, 0.1-1.3 MB records): the log table raised "Protocol
+      // message contained an invalid tag (zero)" once, and every record decoded on its own afterwards
+      // (probe p7-log-decode). It reads the local log in batches up to its end, so a window that
+      // reaches a record still being appended can decode a torn record. Treat that as "not yet
+      // readable": the watermark does not move, so nothing is skipped; `torn` lets the caller
+      // surface a decode error that persists.
+      if (/invalid tag|record separator|truncated|protocol message/i.test(String((error as Error)?.message)))
+        return { resolutions: [], watermark: cursor, skipped: 0, blocked: true, torn: true };
+      throw error;
+    }
+    const records = raw
       .map((row) => ({ msgId: integer(row["msg_id"], "msg id"), type: String(row["msg_type"]) }))
       .sort((left, right) => left.msgId - right.msgId)
       .filter((record) => !(cursor.processed && record.msgId === cursor.msgId));

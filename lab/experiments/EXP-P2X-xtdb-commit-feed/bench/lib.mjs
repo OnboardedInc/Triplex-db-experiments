@@ -36,15 +36,24 @@ export const now = () => performance.now();
 export const countingClient = (inner) => {
   const counts = { submits: 0, casConflicts: 0, commandConflicts: 0, otherRejections: 0, transportErrors: 0 };
   const published = new Map();
+  // Where commit time goes: submit (BEGIN..COMMIT SYNC, i.e. statement round trips plus waiting for
+  // the serial indexer) versus each kind of read on the commit path.
+  const timings = { submitMs: [], readMs: {} };
+  const readKind = (sql) => (/FROM tx_meta/.test(sql) ? 'sourceCut' : /FROM tx_claims/.test(sql) ? 'claim' : /FROM tx_attempts/.test(sql) ? 'receipt' : /FROM tx_assertions/.test(sql) ? 'assertions' : 'other');
   const client = {
-    query: (...args) => inner.query(...args),
+    query: async (...args) => {
+      const t0 = now();
+      try { return await inner.query(...args); } finally { (timings.readMs[readKind(args[0])] ??= []).push(now() - t0); }
+    },
     close: () => inner.close(),
     submit: async (statements, options) => {
       counts.submits++;
       const attempts = statements.find((s) => s.sql.startsWith('INSERT INTO tx_attempts'));
+      const t0 = now();
       try {
         const result = options === undefined ? await inner.submit(statements) : await inner.submit(statements, options);
         const t = now();
+        timings.submitMs.push(t - t0);
         const op = options?.metadata?.op ?? attempts?.params?.[2];
         if (op !== undefined) published.set(op, t);
         // A0 attempts rows carry (id, scope, op, attempt, position); the position is pre-assigned.
@@ -60,7 +69,7 @@ export const countingClient = (inner) => {
       }
     },
   };
-  return { client, counts, published };
+  return { client, counts, published, timings };
 };
 
 /** A Triplex runtime for one arm and scope over a counting client. */
@@ -80,7 +89,7 @@ export const armRuntime = async (url, arm, scope, { maxConnections = 20 } = {}) 
   const managed = ManagedRuntime.make(layer);
   const triples = await managed.runPromise(Effect.gen(function* () { return yield* core.Triples; }));
   return {
-    arm, scope, adapter, triples, counts: counting.counts, published: counting.published, client: counting.client, base,
+    arm, scope, adapter, triples, counts: counting.counts, published: counting.published, timings: counting.timings, client: counting.client, base,
     run: (effect) => managed.runPromise(effect),
     close: async () => { await managed.dispose(); await base.close(); },
   };
@@ -138,3 +147,9 @@ export const writeReceipt = (kind, body) => {
 };
 
 export const runEffect = Effect.runPromise;
+
+/** Percentile summary of the commit-path timings recorded by countingClient. */
+export const timingSummary = (timings) => ({
+  submitMs: summary(timings.submitMs),
+  readMs: Object.fromEntries(Object.entries(timings.readMs).map(([kind, values]) => [kind, summary(values)])),
+});

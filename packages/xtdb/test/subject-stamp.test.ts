@@ -118,6 +118,17 @@ describe("subject-stamp feed watermark (deterministic log script)", () => {
     expect(second.blocked).toBe(false);
   });
 
+  it("never stalls behind a record longer than the byte window", async () => {
+    const far = 100 + 9 * 2 ** 20;
+    const txs = new Map([
+      [100, { committed: true, stamp: base + 1, meta: meta("a", ["s1"]) }],
+      [far, { committed: true, stamp: base + 2, meta: meta("b", ["s2"]) }],
+    ]);
+    const feed = makeXtdbCommitFeed(scriptedClient([{ msgId: 100 }, { msgId: far }], txs), scope);
+    const page = await feed.poll({ msgId: 100, processed: true }, { windowBytes: 2 ** 20 });
+    expect(page.resolutions.map((r) => r.msgId)).toEqual([far]);
+  });
+
   it("[F2][F4] lists an aborted offset and resumes from a checkpoint sitting at it", async () => {
     const txs = new Map([
       [100, { committed: true, stamp: base + 1, meta: meta("a", ["s1"]) }],
