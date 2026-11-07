@@ -12,7 +12,7 @@
       "subject": "pl:a",
       "facts": [
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
-        {"e": "pl:a", "a": "payRateCents", "v": 1650.0, "tx": 2}
+        {"e": "pl:a", "a": "payRateCents", "v": 1.65e3, "tx": 2}
       ]
     }
   },

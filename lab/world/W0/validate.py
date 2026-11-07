@@ -1,8 +1,10 @@
 """Shape validator for lab/world/W0 (stdlib only; run with `python3 -I validate.py`).
 
-It checks JSON shape, value types, canonical ordering, release hashes, work item id and version hashes, payload keys and the
-output-assembly consistency rules of SPEC.md section 8 (overdue flags, due obligations, trace order, ballast never in
-dependencies, publish deliveries copied from their work items and appended to pending).
+It checks JSON shape, value types, canonical ordering, release hashes and scopes, work item id and version hashes, payload
+keys and the output-assembly consistency rules of SPEC.md section 8 (overdue flags, due obligations, trace order, ballast never
+in dependencies, publish deliveries copied from their work items and appended to pending). Every delivery, item state and
+projection entry anywhere in the cases must name a work item some case's record carries: its id is recomputed from (key, kind,
+rule, subject) and its (id, version) must match a record. Every numeric-error case must hold its raw token text unchanged.
 It holds no rule logic: it never decides which tasks, obligations, work items, flags or deliveries a world produces.
 """
 import datetime
@@ -15,6 +17,23 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 MAX = 9007199254740991
 ERRORS = []
+RECORDS = {}       # (work item id, version) -> the work item with its subject, from every evaluation output and record
+DELIVERIES = []    # (where, delivery) from every publish and receive case, checked against RECORDS at the end
+ITEM_REFS = []     # (where, id, subject or None, payload) of item states and projection entries
+
+# The raw token text of every numeric-error case (SPEC 2, 4.4; RULINGS Q44a G1). A JSON round trip would normalize 1.65e3 to
+# 1650.0 or 1650, so the validator reads the token as written in the file.
+NUMERIC_ERROR_TOKENS = {
+    "C37": ("fact.v", "weeklyMinutes", "10081"),
+    "C38": ("fact.v", "payRateCents", "1650.0"),
+    "C39": ("fact.v", "payRateCents", "9007199254740992"),
+    "C45": ("fact.tx", None, "3.0"),
+    "C68": ("fact.v", "payRateCents", "1.65e3"),
+    "C69": ("fact.v", "payRateCents", "-1"),
+    "C70": ("fact.v", "payRateCents", '"1650"'),
+    "C71": ("basis.tx", None, "10.0"),
+    "C72": ("activation.tx", None, "9.0"),
+}
 
 
 class FloatToken(str):
@@ -63,6 +82,32 @@ def has_float(x):
 
 def is_int(x):
     return isinstance(x, int) and not isinstance(x, bool) and not isinstance(x, FloatToken)
+
+
+def token_text(x):
+    """The JSON token as written: FloatToken keeps its source text; an integer token has exactly one spelling."""
+    if isinstance(x, FloatToken):
+        return str(x)
+    return json.dumps(x)
+
+
+def check_numeric_tokens(w, cid, inp, raw):
+    if cid not in NUMERIC_ERROR_TOKENS:
+        if has_float(inp):
+            err(w, "an error case with a float token must be listed in NUMERIC_ERROR_TOKENS")
+        return
+    where, attr, want = NUMERIC_ERROR_TOKENS[cid]
+    facts = inp.get("world", {}).get("facts", []) if isinstance(inp.get("world"), dict) else []
+    if where == "fact.v":
+        found = [token_text(f["v"]) for f in facts if isinstance(f, dict) and f.get("a") == attr]
+    elif where == "fact.tx":
+        found = [token_text(f["tx"]) for f in facts if isinstance(f, dict) and "tx" in f]
+    elif where == "basis.tx":
+        found = [token_text(inp.get("basis", {}).get("tx"))]
+    else:
+        found = [token_text(a.get("tx")) for a in inp.get("activations", []) if isinstance(a, dict)]
+    if want not in found or want not in raw:
+        err(w, f"numeric-error token must be written exactly as {want} ({where} {attr or ''}); found {found}")
 
 
 def valid_date(s):
@@ -185,8 +230,17 @@ def check_releases():
         if [e["id"] for e in r["rules"]] != RULES:
             err(w, "rule ids or order differ from schema.ruleOrder")
         for e in r["rules"]:
-            if set(e) != {"id", "params"} or set(e["params"]) != set(SCHEMA["releaseParams"].get(e["id"], {})):
+            pkeys = set(SCHEMA["releaseParams"].get(e["id"], {}))
+            if set(e) - {"scope"} != {"id", "params"} or set(e["params"]) != pkeys:
                 err(w, f"bad entry for {e.get('id')}")
+            if "scope" in e:
+                sc = e["scope"]
+                js = sc.get("jurisdictions") if isinstance(sc, dict) else None
+                if set(sc) != set(SCHEMA["releaseScope"]["keys"]) or not isinstance(js, list) or not js \
+                        or not sorted_unique(js) or any(kind_of(j) != "jurisdiction" for j in js) \
+                        or set(sc["params"]) != pkeys:
+                    err(w, f"bad scope on {e['id']}: jurisdictions must be ascending distinct jurisdiction ids and params "
+                           "must have the rule's param keys")
         h = "sha256:" + sha(r)
         if index.get(name) != h:
             err("releases/index.json", f"{name} hash should be {h}")
@@ -207,7 +261,26 @@ def check_work_item(where, wi, subject, rhash):
     want_v = "wv:" + sha({"inputs": wi["inputs"], "payload": wi["payload"], "release": rhash})
     if wi["version"] != want_v:
         err(where, f"work item {wi['kind']} key {wi['key']!r} version should be {want_v}")
+    RECORDS[(wi["id"], wi["version"])] = dict(wi, subject=subject)
     return True
+
+
+def delivery_id(d):
+    return "wi:" + sha({"key": d["key"], "kind": d["kind"], "rule": d["rule"], "subject": d["subject"]})
+
+
+def check_references():
+    """Every delivery, item state and projection entry names a work item that some case's record carries."""
+    for where, d in DELIVERIES:
+        if d["id"] != delivery_id(d):
+            err(where, f"delivery {d['kind']} seq {d['seq']} id should be {delivery_id(d)}")
+        src = RECORDS.get((d["id"], d["version"]))
+        if src is None or any(src[k] != d[k] for k in ("key", "kind", "payload", "rule", "subject")):
+            err(where, f"delivery {d['kind']} seq {d['seq']} version {d['version']} matches no record's work item")
+    for where, wid, subject, payload in ITEM_REFS:
+        if not any(i == wid and (subject is None or src["subject"] == subject) and canon(src["payload"]) == canon(payload)
+                   for (i, _), src in RECORDS.items()):
+            err(where, f"item {wid} with payload {payload} matches no record's work item")
 
 
 def check_output(where, out, world, basis, release, txs):
@@ -311,16 +384,20 @@ def check_publish(where, inp, exp, by_hash):
         if not sorted_unique([i["id"] for i in st["items"]]) or not sorted_unique([x["subject"] for x in st["subjects"]]):
             err(where, f"{st_name} items or subjects not in ascending order")
         for i in st["items"]:
-            if set(i) != {"id", "payload", "retired", "seq", "subject"} or not is_int(i["seq"]) or i["seq"] < 1:
+            if set(i) != {"id", "payload", "retired", "seq", "subject"} or not is_int(i["seq"]) or i["seq"] < 1 \
+                    or not isinstance(i["retired"], bool):
                 err(where, f"{st_name} bad item state {i}")
+                continue
+            ITEM_REFS.append((f"{where} {st_name}", i["id"], i["subject"], i["payload"]))
         for x in st["subjects"]:
             if set(x) != {"basis", "subject"}:
                 err(where, f"{st_name} bad subject state {x}")
     dkeys = {"id", "key", "kind", "payload", "rule", "seq", "subject", "version"}
-    for d in exp["deliveries"] + inp["state"]["pending"]:
+    for d in exp["deliveries"] + inp["state"]["pending"] + exp["state"].get("pending", []):
         if set(d) != dkeys or not is_int(d["seq"]) or d["seq"] < 1:
             err(where, f"bad delivery {d}")
             continue
+        DELIVERIES.append((where, d))
     for d in exp["deliveries"]:
         src = published.get((d.get("id"), d.get("version")))
         if src is None or any(src[k] != d[k] for k in ("key", "kind", "payload", "rule", "subject")):
@@ -340,16 +417,29 @@ def check_receive(where, inp, exp):
             continue
         if not sorted_unique([e["id"] for e in st["effects"]]) or not sorted_unique([p["id"] for p in st["projection"]]):
             err(where, f"{st_name} effects or projection not in ascending id order")
+        waiting = []
         for e in st["effects"]:
             if set(e) != {"done", "id", "waiting"} or not is_int(e["done"]) or e["done"] < 0 \
-                    or not sorted_unique([x["seq"] for x in e["waiting"]]) or any(x["seq"] <= e["done"] + 1 for x in e["waiting"]):
+                    or not sorted_unique([x["seq"] for x in e["waiting"]]) or any(x["seq"] <= e["done"] + 1 for x in e["waiting"]) \
+                    or any(x.get("id") != e["id"] for x in e["waiting"]):
                 err(where, f"{st_name} bad effect state {e}")
+                continue
+            waiting += e["waiting"]
         for p in st["projection"]:
-            if set(p) != {"id", "payload", "seq"}:
+            if set(p) != {"id", "payload", "seq"} or not is_int(p["seq"]) or p["seq"] < 1:
                 err(where, f"{st_name} bad projection entry {p}")
+                continue
+            ITEM_REFS.append((f"{where} {st_name}", p["id"], None, p["payload"]))
+        for dl in waiting:
+            if set(dl) != dkeys or not is_int(dl["seq"]):
+                err(where, f"{st_name} bad waiting delivery {dl}")
+                continue
+            DELIVERIES.append((where, dl))
     for dl in inp["deliveries"] + exp["applied"]["effects"] + exp["applied"]["projection"]:
         if set(dl) != dkeys or not is_int(dl["seq"]) or dl["seq"] < 1:
             err(where, f"bad delivery {dl}")
+            continue
+        DELIVERIES.append((where, dl))
 
 
 def emitted_rules(out):
@@ -366,6 +456,8 @@ def check_case(path, releases, by_hash, cases):
         c = load(path, allow_duplicates=True)
         if c.get("expected") != {"error": "W0.E_SHAPE"}:
             return err(os.path.basename(path), "duplicate keys are allowed only in an E_SHAPE case's input")
+    with open(path, encoding="utf-8") as fh:
+        raw = fh.read()
     w = os.path.basename(path)
     need = {"id", "slug", "title", "op", "checks", "notes", "input", "expected"}
     if not need <= set(c) or not set(c) <= need | {"identicalTo"}:
@@ -382,6 +474,9 @@ def check_case(path, releases, by_hash, cases):
             err(w, f"unknown error code {exp['error']}")
         if c["checks"]:
             err(w, "error cases carry no rule checks")
+        if op not in ("evaluate", "reconcile", "affected", "publish", "receive"):
+            err(w, f"unknown op {op}")
+        check_numeric_tokens(w, c["id"], inp, raw)
         return
     if op == "publish":
         if c["checks"]:
@@ -437,6 +532,10 @@ def main():
     files = sorted(f for f in os.listdir(os.path.join(HERE, "cases")) if f.endswith(".json"))
     for f in files:
         check_case(os.path.join(HERE, "cases", f), releases, by_hash, cases)
+    check_references()
+    for cid in NUMERIC_ERROR_TOKENS:
+        if cid not in cases:
+            err("NUMERIC_ERROR_TOKENS", f"{cid} is listed but missing")
     for c in cases.values():
         other = c.get("identicalTo")
         if other and (other not in cases or canon(cases[other]["expected"]) != canon(c["expected"])):

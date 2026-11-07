@@ -741,3 +741,71 @@ Where each priority stands, from evidence so far (research probes and baselines;
   to 2% of population outputs. Q40e adds a case for each.
 - **Learning: recurring notices need a retirement record** (Q40h), or a second FNC notice is never delivered.
 - **Learning: a release that touches every subject cannot test blast-radius selection.** Q40i adds R3 (one rule, narrow read set).
+- 02:10Z: contract 0.3.5 committed (15a07b6): 149 obligations, 74 planted regressions caught, `--verify` byte-identical; 124 obligations
+  fail closed on null oracle pins (O-REPLAY, O-TDK1) until those oracles are accepted. The Q38c check worked the first time it mattered:
+  Q40 landed in RULINGS.md mid-compile and the generator refused until it was listed as recorded-not-compiled. Rulings the contract has
+  not compiled yet now live in lab/acceptance/RULINGS-PENDING.md (Q41). R21 (engine-upgrade survey) and Codex round 5 started.
+
+## 2026-11-08 ~02:30Z: Codex round 5: 6 closed, 2 partial, 3 new (converging: 14, 13, 7, 6, 5 open)
+- **Learning: a structural receipt check is a bypass waiting for the pins.** Codex fabricated a receipt with all eight position case names,
+  all-zero object hashes and a different binary; the reference `receipt_valid` accepted it, and with simulated accepted oracle pins the claim
+  qualified. Today's null pins make it DIAGNOSTIC, so nothing was wrongly claimed, but this must be closed before any oracle is pinned:
+  EXP-E01 builds a lab evaluator that opens objects, binds binaries to source through a manifest, checks freshness and requires the claim's
+  own measurement receipts and a matched control (Q42a).
+- **Learning: sender ordering is not receiver ordering.** Unique (id, seq) deliveries arriving reversed (seq 2, then a delayed seq 1) leave
+  a deduplicating receiver on the older payload. Q42b: receivers never regress a projection and process every-transition effects in order
+  with gap recovery; W0 gains a `receive` operation so the expected receiver state is oracle-computed.
+- **Learning: every piece of outbox state is one atomic unit** (basis guard, retirement, sequence, latest payload, outbox records), or a
+  crash between them reopens the stale-publication window (Q42c).
+- 02:45Z: EXP-O03 landed: O-REPLAY 0.3.0 gives 0 confident wrong answers on V-O02's 0.3.3 probe (11 before), refuses only erasure,
+  268/268 tests, converter results unchanged item by item. Learning: an oracle racing a moving contract needs a final alignment pass to
+  the contract version it will be pinned against; 0.3.4 renamed two decimal error ids after O03 started. Alignment to 0.3.5 (Q43) runs
+  now; then the independent re-check (resume the V-O02 verifier), then the pin.
+- 02:55Z goal check-in: N01, W01, P2X, P2Q, C8, D01a and O03 are all writing files (progressing); F02b waits on its own G1 run.
+  **Incident:** the shared QLever dev resident was OOM-killed at its 2.5 GiB cap at 20:57Z (during a 2.4 s update after a 145-tuple
+  VALUES query) and stayed down about 47 minutes because no agent owns restarting a shared resident. The orchestrator restarted it
+  (holder EXP-000). Learning: shared residents need an owner who watches them; I check them at every check-in. Several agents loading
+  one 2.5 GiB QLever at once is the likely cause; measurements belong on exclusive slots.
+  **Stall:** EXP-X05 had stopped with no background work, waiting for 5.1 GiB of pool while 2.0 GiB is free; told it to finish
+  engine-free work, wait in a background loop, and fall back to a provisional smaller run after 90 minutes.
+
+## 2026-11-08 ~03:10Z: R21 engine-upgrade survey: stay pinned on both engines
+- **QLever:** no release after 0.6.0 (404 commits on master). #3607 (part 2 of 4 of the update-cost umbrella) is merged; parts 3/4 are
+  unused or open, so the quoted "700 ms to 60 ms at 500k delta" exists in no merged state. Even fully merged, update p50 at 500k delta
+  stays near 25-60 ms, above P2's bars, so EXP-P2Q's ACK-at-host-log design stays. Two cheap levers on 0.6.0 today: `--persist-updates`
+  off (the host log already replays; persisting rewrites the whole delta per update, about 45 of 129 ms at 500k) and
+  `--rebuild-keep-previous-index-dirs none` (no pre-erasure `previous.*` copies). Unchanged on master: whole-cache clear per update, no
+  TCP_NODELAY, vocabulary never drops words on rebuild, 60-bit integers. Master cannot load 0.6.0 indexes without `qlever-upgrade-index`.
+- **XTDB:** no release after 2.2.0; 2.2.1 milestone closed (fixes #6345 mark join, #6174 slow plans after restart, #6358 erased rows
+  leaking through system-time windows). Still open: #6313, #6151, the token issues; no change stream (#2454); no per-database auth or
+  encryption; the idle heartbeat, read-only log reader, LocalLog and numThreads are byte-identical to 2.2.0, so R16/R19 hazards stand.
+- **Decisions:** stay pinned on both; QLever side-by-side E1 (0.6.0 vs #3607 vs master, persistence on/off) queued as EXP-Q07 when an
+  exclusive QLever slot frees; XTDB re-qualification on 2.2.1 the day it is tagged (a rehearsal on nightly-20261106 can run earlier).
+  P2's p50 bar stays at 10 ms (only Sam can loosen a bar). Filing the DECIMAL-cast and `= ANY` findings upstream would publish lab
+  findings, so that is Sam's call, flagged in STATE.
+- 03:20Z: O-REPLAY 0.3.1 (8cc2c26) aligned to contract 0.3.5: 300/300 tests, 0 wrong answers on the probe, converter results unchanged,
+  and a new reverse check fails if the oracle keeps an error id the contract dropped. The V-O02 verifier is re-checking it (V-O03) with
+  the probe extended to 0.3.5's rules; on ACCEPT the oracle merges and its hashes are pinned in contract 0.3.6, which unblocks the
+  obligations it can close (claims still also need EXP-E01's evaluator).
+- 03:35Z: W0-1.1.0 built (50d92ef): 82 cases; R3 is the narrow release (4.3% of subjects change, all through OT); worlds now average
+  about 447 facts over 3-6 hops (a 100k sweep reads about 44.7M facts, up from 1.6M), so P5 tests something close to Onboarded's real pull
+  size. Floor 4 (3+ work items) is thinner (about 1.65% expected) and the re-review measures it on the real population. V-D01 re-review
+  running; then the pin and the two independent implementations (TS kernel, O-DOMAIN).
+
+## 2026-11-08 ~22:10Z: EXP-F02b (XTDB proven); infrastructure pressure
+- **F02b result:** XTDB falsifier 0 silent changes (from 25 silent plus 3 spec gaps); the journal keeps number -0 by writing `-0` as JSON
+  text, which JSON.parse reads back exactly, so canonical identity and the journal's shape stay unchanged. QLever rerun owed.
+- **Infrastructure learning: the shared dev residents are the bottleneck and the measurement noise.** The QLever dev resident was
+  OOM-killed three times (20:47Z, 20:56Z, 22:02Z): its persisted delta grew under every agent's writes and reloaded on each restart, so a
+  plain restart died again 17 minutes later. Fixed by raising it to 3.5 GiB (-m 2000M) and recreating it fresh (5c684bd). The XTDB dev
+  resident runs at 200% CPU under scenario load, so a G1 that took 11 s took 482 s and timed out. The host itself is saturated: 36 GiB with
+  about 14 GiB compressed and load average 12-13 on 12 cores (Sam's default colima VM also runs), so the triplex2 VM cannot grow.
+- **Policy until pressure drops:** no new agent dispatches beyond replacing finished ones on light, engine-free work; heavy local commands
+  go through lab/bin/heavy.mjs (4 tokens); gate reruns one at a time; latency measurements are judged only relatively (same slot, same
+  window), never against absolute bars. The dev QLever resident needs a periodic fresh restart or rebuild while agents share it.
+- 22:25Z: W0-1.1.0 re-review: the reviewer's independent evaluator matches all 82 cases and the floors hold on 44.5M facts; only small
+  fixes remain (two case-file defects, two unpinned receive dedup rules, the fingerprint recipe, SPEC contradictions). Learning: static
+  read sets cannot narrow a release by subject, only by rule (R3's OT pair is in every placement's dependencies, so the index reaches all
+  100,000 while 4,291 change); Q44b makes R3 a jurisdiction-scoped release so P5 exercises subject selection through the reverse index.
+  Learning: a JSON round trip in a case generator normalized `1.65e3` to `1650.0`, so the exponent test tested nothing; validate.py now
+  asserts raw token text. W0-1.1.1 in progress; a delta check then the pin.

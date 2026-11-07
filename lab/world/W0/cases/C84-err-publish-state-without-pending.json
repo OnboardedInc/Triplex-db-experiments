@@ -1,0 +1,29 @@
+{
+  "id": "C84",
+  "slug": "err-publish-state-without-pending",
+  "title": "A publish state without its pending key: W0.E_SHAPE",
+  "op": "publish",
+  "checks": [],
+  "notes": [
+    "The state is {items, subjects}, the outbox state without pending. A publish state has exactly the keys items, pending and subjects (4.4 step 1), so the input is W0.E_SHAPE.",
+    "A missing pending is never read as an empty one: pending holds unacknowledged deliveries, and dropping it would lose them."
+  ],
+  "input": {
+    "evaluations": [
+      {
+        "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+          {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:edc2adc27d37abaf16d093e47ef08bc2235081f482c6c9164fe06a8dd1c92900"}
+        ]
+      }
+    ],
+    "state": {
+      "items": [],
+      "subjects": []
+    }
+  },
+  "expected": {"error": "W0.E_SHAPE"}
+}

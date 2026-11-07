@@ -1,4 +1,4 @@
-# W0: the frozen world definition (spec version W0-1.1.0, 2026-11-08)
+# W0: the frozen world definition (spec version W0-1.1.1, 2026-11-08)
 
 W0 is a small synthetic world definition. It stands in for Onboarded's real world definition in every Triplex test: the P5
 release sweep, the P3 dependency rules and the domain expectations of the 20 golden scenarios (`lab/TARGETS.md` sections 1.1,
@@ -6,9 +6,10 @@ release sweep, the P3 dependency rules and the domain expectations of the 20 gol
 stdlib-only Python oracle O-DOMAIN, and they must produce byte-identical outputs for every input. When they disagree, either one
 of them has a bug or this file is ambiguous, and the ambiguity gets a named entry in section 14.
 
-**Frozen once pinned.** W0-1.1.0 replaces W0-1.0.0 after the independent review V-D01 (`lab/verify/D01/VERIFY.md`, RULINGS Q40);
-neither was pinned, so the world keeps its name. After the pin nothing changes in place: a change of meaning makes a new world
-(`W1`) with its own releases and cases.
+**Frozen once pinned.** W0-1.1.0 replaced W0-1.0.0 after the independent review V-D01 (`lab/verify/D01/VERIFY.md`, RULINGS Q40),
+and W0-1.1.1 replaces W0-1.1.0 after its re-review (RULINGS Q44: small fixes, and R3 becomes a release scoped to listed
+jurisdictions). None was pinned, so the world keeps its name. After the pin nothing changes in place: a change of meaning makes a
+new world (`W1`) with its own releases and cases.
 
 ## 0. Contents
 
@@ -26,7 +27,7 @@ neither was pinned, so the world keeps its name. After the pin nothing changes i
 12. Workload coverage: the seeded sweep population and its frozen floors
 13. Invariants
 14. Self-review: where two implementers could still differ, and the resolution chosen
-15. Open questions
+15. Decided questions
 
 ## 1. Operations and files
 
@@ -52,9 +53,9 @@ active. An activated sweep (GS.10, P5) is `reconcile` after the activation fact 
 | --- | --- |
 | `SPEC.md` | this file, the only normative text |
 | `schema.json` | the attribute table of section 3 and the release parameter table of section 5, as data |
-| `releases/R1.json`, `releases/R2.json`, `releases/R3.json` | the three releases |
+| `releases/R1.json`, `releases/R2.json`, `releases/R3.json` | the three releases (R3 carries a scope, 5.1) |
 | `releases/index.json` | release name to content hash |
-| `cases/*.json` | the 82 golden cases (section 11) |
+| `cases/*.json` | the 87 golden cases (section 11) |
 | `validate.py` | a stdlib-only shape validator (`python3 -I validate.py`); it holds no rule logic |
 | `README.md` | how to use the folder |
 
@@ -198,18 +199,30 @@ For a many-cardinality attribute, `S.documents` is the set of its values.
 **An invalid input yields `{"error": "<code>"}` and nothing else.** Checks run in the order below and the first failure wins.
 
 1. **`W0.E_SHAPE`:** the input is not a JSON object with exactly the keys of 4.3, or any of these kinds is wrong:
-   - objects with exactly the listed keys: the input, `basis`, `world`, each fact, each activation, and for `publish` each
-     evaluation record, work item, item state, subject state and delivery (8.4, 8.8), and for `receive` each effect state and
-     projection entry (8.9);
-   - arrays: `facts`, `activations`, `worlds`, `writes`, `evaluations`, `workItems`, `items`, `pending`, `subjects`, `deliveries`,
-     `effects`, `projection`, `waiting`; each write is a two-element array of strings;
+   - objects with exactly the listed keys: the input, `basis`, `world`, each fact, each activation;
+   - arrays: `facts`, `activations`, `worlds`, `writes`; each write is a two-element array of strings;
    - strings: `basis.validTime`, `world.subject`, a fact's `e` and `a`, an activation's `from` and `release`, the `release` name;
    - JSON integer tokens (section 2, so `3.0` and `1e1` fail): `basis.tx`, a fact's `tx`, an activation's `tx`;
    - a fact's `v` may be any JSON kind here; its type is checked in step 3.
+
+   **`publish` and `receive` (RULINGS Q44a).** Every object has exactly the keys that 8.8 and 8.9 list, with these kinds:
+   - `publish`: `evaluations` is an array of evaluation records. A record's `basis` is an object `{tx, validTime}` with an integer
+     token and a string; its `release` and `subject` are strings; its `workItems` is an array of work items. A work item's `id`,
+     `key`, `kind`, `rule` and `version` are strings, `inputs` is an array of integer tokens and `payload` is an object. `state`
+     has the arrays `items`, `pending` and `subjects`. An item state's `id` and `subject` are strings, `payload` is an object,
+     `retired` is a boolean and `seq` is an integer token of at least 1. A subject state's `basis` is as a record's and its
+     `subject` is a string. A delivery's `id`, `key`, `kind`, `rule`, `subject` and `version` are strings, `payload` is an object
+     and `seq` is an integer token of at least 1.
+   - `receive`: `deliveries` is an array of deliveries, each as in `publish`. `state` has the arrays `effects` and `projection`.
+     An effect state's `done` is an integer token of at least 0, its `id` a string and its `waiting` an array of deliveries. A
+     projection entry's `id` is a string, `payload` an object and `seq` an integer token of at least 1.
+   - These two operations run no step after step 1. They trust that their records came from `evaluate`, `reconcile` and
+     `publish`, so a value of the right kind is not checked further: a `validTime` is not parsed, a hash is not recomputed and an
+     id is not matched against its work item. Case C84 gives a state without `pending`, case C85 a delivery with `seq` 0.
+
    Also `W0.E_SHAPE`: an object with a duplicate key anywhere in the input, including inside a fact's `v` (case C66); a `release`
-   name other than `R1`, `R2` or `R3`; two worlds in `affected` with the same subject (case C67). `publish` and `receive` check
-   shapes only: they trust that their records came from `evaluate`, `reconcile` and `publish`. A string that has the right kind but a bad form (an instant that is not an instant, an unknown entity id) is
-   left to the later steps.
+   name other than `R1`, `R2` or `R3`; two worlds in `affected` with the same subject (case C67). A string that has the right kind
+   but a bad form (an instant that is not an instant, an unknown entity id) is left to the later steps.
 2. **`W0.E_BASIS`:** `basis.validTime` is not a valid instant, or `basis.tx` is outside its range.
 3. **For each world in array order** (one world for `evaluate` and `reconcile`):
    1. `W0.E_UNKNOWN` if `subject` is not a placement id.
@@ -233,10 +246,17 @@ For a many-cardinality attribute, `S.documents` is the set of its values.
 ```
 {"name": <"R1", "R2" or "R3">, "rules": [<rule entry> x 11], "world": "W0"}
 rule entry = {"id": <rule id>, "params": <object>}
+           | {"id": <rule id>, "params": <object>, "scope": {"jurisdictions": [<jurisdiction id>, ...], "params": <object>}}
 ```
 
 **The eleven rule entries appear in this fixed order:** `LIFE`, `I9S1`, `I9S2`, `EVSUB`, `EVSTAT`, `BGC`, `DOCEXP`, `MINWAGE`, `OT`,
 `PAYCHG`, `PROP`. The order is the evaluation and trace order (section 8). One rule is one requirement.
+
+**A scoped rule entry (RULINGS Q44b).** An entry with a `scope` applies `scope.params` to the subjects in its scope and its own
+`params` to every other subject. A subject is in the scope when `jur(S)` (6.3), the jurisdiction its location references, is one of
+`scope.jurisdictions`. The test compares ids only: the jurisdiction's own facts play no part. `scope.jurisdictions` is a non-empty
+array of distinct jurisdiction ids in ascending order, and `scope.params` has the same keys and types as `params`. Reading
+`S.location` and `L.jurisdiction` for the test adds them to the rule's read set (6.3). In W0 only R3's `OT` entry is scoped.
 
 | Rule | Params | R1 | R2 | R3 |
 | --- | --- | --- | --- | --- |
@@ -248,27 +268,34 @@ rule entry = {"id": <rule id>, "params": <object>}
 | `BGC` | none | `{}` | `{}` | `{}` |
 | `DOCEXP` | `leadDays`: object from document type to integer 0 to 365; the keys are the tracked types | `{"leadDays": {"ead": 0, "visa": 0}}` | `{"leadDays": {"ead": 90, "visa": 0}}` (changed) | as R2 |
 | `MINWAGE` | `floorSources`: non-empty array of distinct strings from `jurisdiction.stateMinWageCents` and `location.localMinWageCents`, ascending | `{"floorSources": ["jurisdiction.stateMinWageCents"]}` | `{"floorSources": ["jurisdiction.stateMinWageCents", "location.localMinWageCents"]}` (changed) | as R2 |
-| `OT` | `thresholdMinutes` minutes | `{"thresholdMinutes": 2400}` | same | `{"thresholdMinutes": 2700}` (changed from R2) |
+| `OT` | `thresholdMinutes` minutes | `{"thresholdMinutes": 2400}` | same | params `{"thresholdMinutes": 2400}` with scope `{"jurisdictions": ["jur:j010", "jur:j020", ..., "jur:j100"], "params": {"thresholdMinutes": 2700}}` (changed from R2) |
 | `PAYCHG` | `thresholdCents` cents | `{"thresholdCents": 500}` | same | same |
 | `PROP` | none | `{}` | `{}` | `{}` |
 
 **R2 changes exactly three requirements of R1:** the Section 2 due window (`I9S2`), the minimum-wage rule's floor sources
 (`MINWAGE`, which changes its read set), and the expiry handling of one document type (`DOCEXP`, `ead` only).
 
-**R3 changes exactly one requirement of R2 (RULINGS Q40i):** `OT`'s threshold rises from 2,400 to 2,700 minutes. `OT` reads one
-attribute, `S.weeklyMinutes`, so R3 is the narrow release: a sweep that re-runs only the rules in the diff touches one rule per
-subject and changes the outputs of about 4% of subjects (section 12.4).
+**R3 changes exactly one requirement of R2, for listed jurisdictions only (RULINGS Q40i, Q44b).** `OT`'s threshold rises from
+2,400 to 2,700 minutes for placements whose location's jurisdiction is one of the ten ids `jur:j010`, `jur:j020`, ..., `jur:j100`
+(every tenth jurisdiction of the 100k population, 12.3); every other placement keeps 2,400. R3 is the narrow release, narrowed by
+subject: the sweep finds the subjects R3 reaches through the reverse two-hop dependency index (jurisdiction, then its locations,
+then their placements; section 10 item 7), not by re-running `OT` for everyone. At the 100k rung it reaches about 9.6% of
+subjects and changes about 0.41% (12.4 item 4). The listed ids are those of the 100k rung; 12.3 says what they name at other rungs.
 
 ### 5.2 Content hash
 
 `hash(release) = "sha256:" + lowercase hex of SHA-256 over the UTF-8 bytes of canonicalJson(release)` (section 9). The hashes
 are in `releases/index.json`, and `validate.py` recomputes them. A release is immutable: changing a byte makes a different release.
+A scope is part of its rule entry, so it is part of the hash: listing one more jurisdiction makes a different release.
 
 ### 5.3 Release diff
 
 `diff(A, B)` is the list of rule ids, in release order, whose rule entries have different canonical JSON in A and in B.
-`diff(R1, R2) = ["I9S2", "DOCEXP", "MINWAGE"]`, `diff(R2, R3) = ["OT"]` and `diff(R1, R3) = ["I9S2", "DOCEXP", "MINWAGE", "OT"]`. This is the definition tier of R18 section 3.1 item 3: a sweep may skip a
-`(subject, rule)` pair whose rule is not in the diff and whose inputs did not change.
+`diff(R1, R2) = ["I9S2", "DOCEXP", "MINWAGE"]`, `diff(R2, R3) = ["OT"]` and `diff(R1, R3) = ["I9S2", "DOCEXP", "MINWAGE", "OT"]`.
+A scope counts as part of the entry, so R2's and R3's `OT` entries differ. This is the definition tier of R18 section 3.1 item 3: a
+sweep may skip a `(subject, rule)` pair whose rule is not in the diff and whose inputs did not change. A sweep from A to B may also
+skip every subject outside the scope of every entry in `diff(A, B)` when each of those entries is scoped and its own `params` equal
+A's params for that rule, because such a subject gets A's params under B. R2 to R3 meets this: R3's `OT` params equal R2's.
 
 ### 5.4 Activation
 
@@ -333,6 +360,11 @@ For subject S, with `D` ranging over `S.decisions`:
 The pairs are instantiated from the reference values even when the referenced entity has no facts in the world, and whether or
 not the pair's own fact is present, because a later write to that pair can change the output. Every pair is listed regardless of the order
 in which a rule tests its conditions, so short-circuit evaluation never changes a read set.
+
+**`jur(S)`** is the value of the fact `(L, jurisdiction)` where L is the value of `S.location`, or `⊥` when `S.location = ⊥` or the
+world has no `(L, jurisdiction)` fact. **A scoped rule entry (5.1)** adds `S.location` and `L.jurisdiction` to the rule's read set,
+and the `S.location` and `(L, jurisdiction)` facts, when present, to the input facts of each of its trace entries, whether or not the
+subject is in the scope: the test reads them either way.
 
 **Inputs are positions.** Each trace entry has `inputs`: the distinct `tx` values of its input facts, ascending. Each rule states
 its input facts. Input facts are always a subset of the facts whose pair is in the read set.
@@ -464,13 +496,19 @@ At `B` the open task turns overdue and the work item appears; this is the midnig
 
 ### 7.9 `OT`: overtime
 
-- **Read set:** `S.weeklyMinutes`. **Input facts:** that fact.
+- **Read set:** `S.weeklyMinutes`; under R3's scoped entry also `S.location` and `L.jurisdiction` (6.3).
+- **Input facts:** the `S.weeklyMinutes` fact; under R3 also the `S.location` and `(L, jurisdiction)` facts when present.
+- **Threshold:** `thresholdMinutes` from the entry's `params`, or from `scope.params` when `jur(S)` is listed in the entry's scope.
+  R1, R2, and R3 outside its scope: 2,400 minutes, which is 40 hours. R3 inside its scope: 2,700 minutes.
 
 | Row | Condition | Outputs |
 | --- | --- | --- |
 | 1 | `S.weeklyMinutes = ⊥` | none |
-| 2 | `S.weeklyMinutes > thresholdMinutes` (R1 and R2: more than 2,400 minutes, which is 40 hours) | flag `overtime` |
+| 2 | `S.weeklyMinutes > threshold` | flag `overtime` |
 | 3 | otherwise | none |
+
+Cases: C54 and C55 inside R3's scope, C86 outside it. The read set adds no dependency under R3, because `MINWAGE` reads
+`S.location` and `L.jurisdiction` in every release.
 
 ### 7.10 `PAYCHG`: a pay change over $5 an hour needs approval
 
@@ -612,20 +650,28 @@ state is `{"items": [], "pending": [], "subjects": []}`. In every state `items` 
 
 **Processing.** Evaluation records are applied one at a time, in array order:
 
-1. **Basis order (Q40d).** Let A be the subject's stored basis. When A exists and the record's basis is older (its `tx` is less
-   than A's, or equal with a `validTime` earlier than A's), the record is skipped: no delivery and no state change (case C77).
-   Otherwise the record's basis becomes the subject's stored basis. An equal basis is not older, so re-applying a record is
-   allowed and publishes nothing new (case C75).
+1. **Basis order (Q40d).** The subject is the record's `subject`. Let A be the subject's stored basis. When A exists and the
+   record's basis is older (its `tx` is less than A's, or equal with a `validTime` earlier than A's), the record is skipped: no
+   delivery and no state change (case C77). Otherwise the record's basis becomes the subject's stored basis. An equal basis is not
+   older, so a re-applied record goes through steps 2 and 3 and publishes nothing new (case C75).
 2. **Publication (Q38f, Q40c).** For each work item W of the record, in `id` order, with I the item state of `W.id`:
    - no I: publish W with `seq` 1;
    - I is retired: publish W with `seq` = I.seq + 1, even when the payload equals I's (Q40h, case C78);
    - `canonicalJson(W.payload)` differs from `canonicalJson(I.payload)`: publish W with `seq` = I.seq + 1;
    - otherwise: nothing.
 
-   Publishing appends the delivery `{id, key, kind, payload, rule, seq, subject, version}` (taken from W, with the new `seq`) to
-   this call's `deliveries` and to `state.pending`, and sets I to `{id, payload, retired: false, seq, subject}`.
+   Publishing appends the delivery `{id, key, kind, payload, rule, seq, subject, version}` to this call's `deliveries` and to
+   `state.pending`: `id`, `key`, `kind`, `payload`, `rule` and `version` come from W, `subject` from the record (RULINGS Q44c), and
+   `seq` is the new sequence. It sets I to `{id, payload, retired: false, seq, subject}`.
 3. **Retirement (Q40h).** Every item state of this subject that is not retired and whose id is not among the record's work items
    becomes retired; its `seq` and `payload` stay.
+
+**Only live reconciles are published (RULINGS Q44c).** The records passed to `publish` are live reconciles: `reconcile` outputs
+read at the store's position at that moment, with "now" as the valid time. They may arrive late or out of order; the basis guard
+handles that (C77). A preview (GS.11: `evaluate` with a release that is not active) and an audit evaluation at a past valid time
+are never passed to `publish`: the basis guard orders by `tx` first, so an audit read at a newer `tx` but an older valid time
+would pass the guard and publish past payloads. With only live reconciles, one basis gives one record (one basis resolves one
+release), which is why applying and skipping an equal-basis record cannot be told apart.
 
 **What the outputs mean.**
 
@@ -668,7 +714,12 @@ receiver keeps two views of each id:
 Deliveries are taken in array order; for each, the projection step runs, then the effects step. `applied.projection` lists the
 deliveries the projection applied and `applied.effects` the deliveries the effects processed, each in the order it happened. A
 receiver persists its state atomically with its own effects, or its recipient is idempotent by `(id, seq)`; a restart carries the
-state across unchanged (case C81).
+state across unchanged (case C81). Case C83 pins both duplicate rules at once: arrivals 1, 1, 3, 3, 2 apply the projection for
+seq 1 and 3 and process the effects for 1, 2 and 3, each once.
+
+**Receivers exist from the first publication (RULINGS Q44d).** A receiver starts from the empty state before the first delivery
+of any id, or is seeded with a state snapshot that matches the deliveries already acknowledged. A receiver that starts empty after
+acknowledged deliveries were removed from `pending` would wait forever for seq 1, because nothing re-sends an acknowledged delivery.
 
 ## 9. Canonical JSON
 
@@ -709,6 +760,13 @@ order.
    `(L, localMinWageCents)` only from R2 on.
 6. **No valid-time filtering.** A correction to a past valid-time range still marks the subject; whether its current output changed
    is left to the re-run (RULINGS Q36e).
+7. **The subjects a scoped release reaches (RULINGS Q44b).** The subjects R3 can change against R2 are those in its `OT` scope:
+   `affected(R3, worlds, [[J, "stateMinWageCents"] for each listed J])` (case C87). A subject is in the scope exactly when its
+   dependencies hold `(J, stateMinWageCents)` for a listed J, because every release's `MINWAGE` reads `J.stateMinWageCents` through
+   `L.jurisdiction`, so a store finds the reached subjects through its reverse two-hop index (J, then the locations that reference
+   it, then the placements at those locations). A subject outside the scope gets R2's `OT` params under R3, so its domain
+   projection (12.1) cannot change. A write that moves a subject into or out of the scope writes `(S, location)` or
+   `(L, jurisdiction)`, pairs the moved subjects already depend on, so item 2 still holds.
 
 ## 11. Golden cases
 
@@ -729,7 +787,7 @@ order.
 derivation. A positive check means the rule emits at least one task, obligation, work item or flag in that case; a negative check
 means it emits none. The expected outputs were derived by hand from this file, not by a program.
 
-### 11.2 The 82 cases
+### 11.2 The 87 cases
 
 | Id | Op, release | What it pins down |
 | --- | --- | --- |
@@ -786,8 +844,8 @@ means it emits none. The expected outputs were derived by hand from this file, n
 | C51 | evaluate R2 | the basis exactly at the `ead`'s R2 window start: the task opens |
 | C52 | evaluate R1 | runtime outcome `accepted`: no new submission |
 | C53 | evaluate R1 | runtime outcome `rejected`: `everify.submit-rejected` |
-| C54 | evaluate R3 | 2,700 weekly minutes under R3: no overtime |
-| C55 | evaluate R3 | 2,701 weekly minutes under R3: overtime |
+| C54 | evaluate R3 | inside R3's scope (`jur:j010`), 2,700 weekly minutes: no overtime; `OT` inputs include the location facts |
+| C55 | evaluate R3 | inside R3's scope, 2,701 weekly minutes: overtime |
 | C56 | evaluate R1 | C01's world plus ballast chains: identical bytes to C01 |
 | C57 | affected R1 | a ballast write affects nobody |
 | C58 | affected R1 | a jurisdiction floor write reaches placements at two locations (two hops) |
@@ -815,6 +873,11 @@ means it emits none. The expected outputs were derived by hand from this file, n
 | C80 | receive | a gap: effects stop at seq 1 while seq 3 waits |
 | C81 | receive | restart mid-sequence: the missing seq 2 releases seq 3; a duplicate seq 1 is ignored |
 | C82 | publish | an unchanged evaluation at a newer basis advances the guard, so a later older-basis record publishes nothing |
+| C83 | receive | arrivals 1, 1, 3, 3, 2 from an empty receiver: projection applies 1 and 3, effects process 1, 2, 3 once each |
+| C84 | publish | a state without `pending`: `W0.E_SHAPE` |
+| C85 | receive | a delivery with `seq` 0: `W0.E_SHAPE` |
+| C86 | evaluate R3 | outside R3's scope (`jur:ny`), 2,700 weekly minutes: still overtime under R3 |
+| C87 | affected R3 | the subjects R3 reaches: placements at two locations of a listed jurisdiction, not the unlisted or unlocated ones |
 
 ### 11.3 Scenario map
 
@@ -827,7 +890,8 @@ means it emits none. The expected outputs were derived by hand from this file, n
 | GS.07 two reviewers, one I-9 | `final` in 6.2 (C17, C18) |
 | GS.09 start dates move | `LIFE` and every start-based due time (C03, C04) |
 | GS.10 and GS.11 activation and preview | `reconcile` against `evaluate` (C20, C31, C32, C61); `publish` of the activated sweep (C73, C76, C77, C82) |
-| GS.19b outbox and receiver | `publish` and `receive` (C73 to C82) |
+| P5 narrow release | R3's scope: the reached subjects (C87), inside and outside the scope (C54, C55, C86) |
+| GS.19b outbox and receiver | `publish` and `receive` (C73 to C85) |
 | GS.16 PII erasure | erased markers (C07) |
 | GS.17 agent proposals churn | `PROP` and proposal isolation (C14 to C16) |
 | GS.18 overdue I-9 dashboards | task `overdue` (C06) |
@@ -843,7 +907,8 @@ from the golden cases; no evaluator is part of W0.
 
 ### 12.1 Terms
 
-1. **In-scope subjects** are every placement of the generated population. R1, R2 and R3 have no scope rule.
+1. **In-scope subjects** (the TARGETS 6.1 item 6 term) are every placement of the generated population. This is not R3's release
+   scope (5.1), which this section calls **the subjects R3 reaches**: the placements whose location's jurisdiction R3 lists.
 2. **A rule fires for a subject** (under one release, at one basis) when it emits at least one task, obligation (including the
    `due` obligations of its own tasks), work item or flag.
 3. **The domain projection of an output** is its `tasks`, `obligations` and `flags` arrays plus the set of `(rule, kind, key, payload)`
@@ -851,30 +916,38 @@ from the golden cases; no evaluator is part of W0.
    with the release by construction. It keeps the payload, because a changed payload is a newly published sequence (8.8).
 4. **A release changes subject s** when the domain projections of `evaluate(world_s, A, B)` and `evaluate(world_s, A', B)` differ,
    at the same basis B.
+5. **Affected and changed are counted separately for R3 (RULINGS Q44b).** The affected subjects are the subjects R3 reaches
+   (section 10 item 7): the sweep re-runs `OT` for each of them. The changed subjects are the affected subjects R3 changes. Every
+   changed subject is affected; an affected subject whose weekly minutes are not 2,401 to 2,700 is re-run and does not change.
 
 ### 12.2 The four floors and the expected values at the 100k rung
 
-| # | Floor (TARGETS 6.1 item 6) | Expected under W0-1.1.0 | Measured by V-D01 on W0-1.0.0 | Argument |
+| # | Floor (TARGETS 6.1 item 6) | Expected under W0-1.1.1 | Measured by V-D01 on W0-1.1.0 | Argument |
 | --- | --- | --- | --- | --- |
 | 1 | R2 changes at least 20% of in-scope subjects | 62.3% (I9S2 46.1%, DOCEXP 22.5%, MINWAGE 9.8%) | 62.293% | 12.4 item 1 |
 | 2 | every rule fires for at least 5% of subjects, under R1, R2 and R3 | lowest is `MINWAGE` under R1 at 7.9% | 7.810% | 12.4 item 2 |
 | 3 | work-location fanout is a seeded Zipf with s = 0.5 over 2,000 locations (Q36g) | largest location about 1,125 placements, mean 49.5 | largest 1,100, mean 49.54 | 12.5 |
-| 4 | at least 1% of evaluations produce three or more work items | 1.65% under R1, 2.52% under R2 | 1.890% and 2.928% | 12.4 item 3 |
+| 4 | at least 1% of evaluations produce three or more work items | 1.65% under R1, 2.52% under R2 and R3 | 1.567% under R1, 2.459% under R2 and R3 | 12.4 item 3 |
 
-1. **Floors 1 to 3 are unchanged from W0-1.0.0** by the 1.1.0 changes: the jurisdiction hop keeps every placement's state floor
-   (12.3), ballast is read by no rule, and R1 and R2 keep their meaning.
-2. **Floor 4 falls** from 1.97% and 2.98% expected under 1.0.0, because a placement whose E-Verify submission the runtime reports
-   as accepted no longer gets an `everify.submit-case` work item. V-D01 measured about 4% below expectation on 1.0.0, so the
-   measured 1.1.0 values should be near 1.6% and 2.4%, still above the 1% bar.
-3. **The narrow release R3** is not a floor: against R2 it changes about 4.3% of subjects, all through `OT` (12.4 item 4).
+1. **W0-1.1.1 changes no floor's measured value except `OT` under R3.** Floors 1, 3 and 4 do not involve R3's `OT` (it emits no
+   work item), and the generator and R1 and R2 are unchanged, so V-D01's W0-1.1.0 measurements stand. Floor 2's lowest rule is
+   `MINWAGE` under R1; scoping R3 raises `OT`'s R3 share from 12.8% to 16.6% (12.4).
+2. **Floor 4 is the closest to its bar:** measured on W0-1.1.0 at 1.567% under R1 and 2.459% under R2 and R3, 0.57 points above the
+   1% bar under R1. It fell from W0-1.0.0's 1.890% and 2.928% because a placement whose E-Verify submission the runtime reports as
+   accepted no longer gets an `everify.submit-case` work item. The measured values sit 5.0% and 2.4% below the expected 1.65% and
+   2.52%.
+3. **The narrow release R3** is not a floor. Against R2 it reaches about 9,556 subjects (9.6%) and changes about 406 (0.41%), all
+   through `OT` (12.1 item 5, 12.4 item 4). Unscoped, as in W0-1.1.0, it reached all 100,000 and changed 4,291 (V-D01).
 
 The expected values are means over the seeded draws. At N = 100,000 the standard error of each share is under 0.2 percentage points.
 **The check that counts is the measured one** (12.7): the floors are judged on the actual population.
 
 ### 12.3 The population generator (parameters only)
 
-**Sizes.** The 100k rung is the frozen reference: N = 100,000 placements, L = 2,000 locations and K = 100 jurisdictions. Other
-rungs keep L = N / 50 and K = L / 20 (RULINGS Q36h) and every other parameter; every formula below uses L and K.
+**Sizes.** The 100k rung is the frozen reference: N = 100,000 placements, L = 2,000 locations and K = 100 jurisdictions. Every
+rung uses L = N / 50 (RULINGS Q36h) and K = 4 x ceil(L / 80) (RULINGS Q44a), which keeps K a multiple of 4 and near L / 20: K is
+12 at the 10k rung, 100 at 100k, 1,000 at 1m and 10,000 at 10m. Every other parameter is the same at every rung, and every formula
+below uses L and K.
 
 **Seed and draws.** The seed is the string `W0-pop-1`. For a field name f, a subject index i and a modulus M, `draw(f, i, M)` is
 the first 8 bytes of SHA-256 over the ASCII bytes of `W0-pop-1/` + f + `/` + decimal(i), read as a big-endian unsigned integer,
@@ -888,16 +961,19 @@ modulo M. Every random choice uses its own field name, listed in the table below
   and `isqrt(m)` is the largest integer n with n x n <= m; both are exact with Python integers or JavaScript BigInt.
 
 **Ids.** Placement i (0-based) is `pl:s` + i as 8 decimal digits. Location rank r is `loc:l` + r zero-padded to the number of digits
-of L (`loc:l0001` is the largest at the 100k rung). Jurisdiction q is `jur:j` + q zero-padded to the number of digits of K
-(`jur:j001` to `jur:j100`). A placement's only document is `<S>/doc:1`; its decision records are `<S>/dec:i1` and `<S>/dec:i2`
+of L (`loc:l0001` is the largest at the 100k rung). Jurisdiction q is `jur:j` + q zero-padded to the number of digits of K, and to
+at least 3 digits (`jur:j001` to `jur:j100` at the 100k rung, `jur:j001` to `jur:j012` at 10k). R3's scope therefore names
+`jur:j010` to `jur:j100` at the 100k rung (10 of 100 jurisdictions) and `jur:j010` alone at 10k (1 of 12); at the 1m and 10m rungs
+the ids have 4 and 5 digits, so R3 reaches no subject there. The P5 sweep runs at the 100k rung. A placement's only document is `<S>/doc:1`; its decision records are `<S>/dec:i1` and `<S>/dec:i2`
 (target `i9.section2`), `<S>/dec:b1` (target `bgc.adjudication`) and `<S>/dec:p1` (target `pay.change`); its answers are
 `<S>/ans:1` to `<S>/ans:n`.
 
 **Jurisdictions and locations (RULINGS Q40b).** Jurisdiction q has `stateMinWageCents` 1200, 1500, 1650 or 1800 when q mod 4 is 0,
 1, 2 or 3. Location rank r has `jurisdiction` = jurisdiction ((r - 1) mod K) + 1, and `localMinWageCents` 1850 exactly when
-r mod 4 = 2. Because K is a multiple of 4, a location's jurisdiction q satisfies q mod 4 = r mod 4, so every location keeps the state
-floor W0-1.0.0 put on the location itself, and every local-floor location has state floor 1650. Each jurisdiction serves L / K = 20
-locations.
+r mod 4 = 2. Because K is a multiple of 4 at every rung, a location's jurisdiction q satisfies q mod 4 = r mod 4, so every location
+keeps the state floor W0-1.0.0 put on the location itself, and every local-floor location has state floor 1650. At the 100k rung
+each jurisdiction serves L / K = 20 locations; where K does not divide L (the 10k rung), the first L mod K jurisdictions serve one
+location more than the rest.
 
 **Basis and valid time.** `validTime = 2026-11-04T12:00:00.000000Z` (the basis date 2026-11-04 is a Wednesday); `tx` is the position
 of the last population command. Every population fact is valid from `2000-01-01T00:00:00.000000Z` with no end, except the scheduled
@@ -972,7 +1048,7 @@ All choices are independent, so each frequency is a product of the weights above
 | `BGC` | absent (20%), or `consider` (10%) with none, reject or proposal only (60%) | 26.0% | 26.0% | 26.0% |
 | `DOCEXP` | a tracked document (`ead` or `visa`, 45%) not reverified (90%) | 40.5% | 40.5% | 40.5% |
 | `MINWAGE` | pay absent (1%), location absent (0.99%), d = -1 (0.9801 x 6%); from R2 on also a local-floor location (25.1%) with d from 0 to 199 (34%) | 7.9% | 16.2% | 16.2% |
-| `OT` | weekly minutes above the threshold: 2,401 to 3,600 under R1 and R2; 2,701 to 3,600 under R3 | 17.0% | 17.0% | 12.8% |
+| `OT` | weekly minutes above the threshold: 2,401 to 3,600 under R1, R2 and outside R3's scope; 2,701 to 3,600 inside R3's scope (9.6% of subjects) | 17.0% | 17.0% | 16.6% |
 | `PAYCHG` | pay present (99%), abs(c) > 500 (14%), and no fresh approve (70%: none, stale approve, reject, proposal) | 9.7% | 9.7% | 9.7% |
 | `PROP` | a pending proposal: Section 2 (6% + 2%), background check (10% x 10%), pay change (0.99 x 14% x 5%) | 9.6% | 9.6% | 9.6% |
 
@@ -995,9 +1071,17 @@ All choices are independent, so each frequency is a product of the weights above
    - Pay change approval, `PAYCHG` row 5: 0.99 x 14% x 65% = 9.0%.
    - Expired document, `DOCEXP` row 6: 45% x 90% x 14.7% = 6.0%.
    - P(at least three of five): **1.65% under R1** and **2.52% under R2**. Up to five work items occur in one evaluation (case C42).
-4. **R3 against R2 (the narrow release).** Only `OT` differs: placements with weekly minutes 2,401 to 2,700 lose the overtime flag,
-   17% x 300 / 1,200 = **4.3%** of subjects. Every other subject's domain projection is unchanged, so a sweep that re-runs only the
-   rules in `diff(R2, R3) = ["OT"]` does one rule of eleven per subject and publishes nothing for about 96% of subjects.
+4. **R3 against R2 (the narrow release, RULINGS Q44b).** The affected and changed subjects are stated separately (12.1 item 5).
+   - **Affected: about 9,556 subjects (9.56%).** A placement is reached when it has a location (99%) whose jurisdiction is listed.
+     The listed jurisdictions `jur:j010` to `jur:j100` serve the 200 locations r with r mod 10 = 0, which carry 9.653% of the
+     Zipf weight T (computed from the integer weights of 12.3), so 99,000 x 0.09653 = 9,556. Per jurisdiction: 12.5.
+   - **Changed: about 406 subjects (0.41%).** Inside the scope only `OT` can differ, and it differs for weekly minutes 2,401 to
+     2,700, which lose the overtime flag: 17% x 300 / 1,200 = 4.25% of the reached subjects, 9,556 x 0.0425 = 406. The minutes
+     draw is independent of the location draws.
+   - **Not reached: about 90,444 subjects.** Outside the scope R3's `OT` params equal R2's, so their domain projections cannot
+     change; the sweep skips them (5.3) and publishes nothing for them.
+   - `OT` fires under R3 for 17% - 0.41% = **16.6%** of subjects (the table above). Under unscoped R3 (W0-1.1.0) every subject was
+     reached and 4,291 changed (V-D01).
 
 ### 12.5 Location and jurisdiction fanout and the GS.06b affected-subject counts
 
@@ -1025,38 +1109,77 @@ placement at those locations, under every release (two hops):
 | `jur:j100` | ranks 100, 200, ..., 2,000 | 855 |
 | mean over the 100 jurisdictions | 20 each | 990 |
 
+**R3's scope** reaches the placements of the ten listed jurisdictions (section 10 item 7):
+
+| Listed jurisdiction | Expected placements reached | Listed jurisdiction | Expected placements reached |
+| --- | --- | --- | --- |
+| `jur:j010` | 1,174 | `jur:j060` | 916 |
+| `jur:j020` | 1,059 | `jur:j070` | 898 |
+| `jur:j030` | 1,003 | `jur:j080` | 882 |
+| `jur:j040` | 966 | `jur:j090` | 867 |
+| `jur:j050` | 938 | `jur:j100` | 855 |
+| all ten | **9,556** (the rows, each rounded, sum to 9,558) | changed among them (4.25%) | **406** |
+
 1. **The affected set is exactly the placements reached** (section 10): through `(L, localMinWageCents)` and `(L, jurisdiction)` for
-   a location write, and through `(J, stateMinWageCents)` for a jurisdiction write. Cases C34 to C36 and C58 to C60 pin this down.
+   a location write, and through `(J, stateMinWageCents)` for a jurisdiction write. Cases C34 to C36 and C58 to C60 pin this down,
+   and C87 pins the R3 scope's reach.
 2. **The local-floor ranks hold 25.1% of the mass:** with the integer weights of 12.3, the ranks with r mod 4 = 0, 1, 2 and 3 carry
    24.6%, 25.5%, 25.1% and 24.8% of T.
 
 ### 12.6 Expected world sizes per bucket (RULINGS Q40a)
 
 A world's size is its fact count at B: F + 3n, between T - 2 and T, where T is uniform in the bucket and F (the W0 facts) averages
-about 17 (from 6 to about 35). The rounding to a multiple of 3 costs 1 fact on average.
+about 17 (from 6 to about 35; V-D01 measured at most 32). The rounding to a multiple of 3 costs 1 fact on average.
 
-| Bucket (P4 weight) | Target T | Expected world size | Expected answers n | Hop depth |
-| --- | --- | --- | --- | --- |
-| 50 to 200 facts (50%) | uniform 50 to 200 | 124 | 36 | 3 (40%), 4 (35%) or 6 (25%) in every bucket |
-| 201 to 800 facts (35%) | uniform 201 to 800 | 499.5 | 161 | same |
-| 801 to 2,000 facts (15%) | uniform 801 to 2,000 | 1,399.5 | 461 | same |
-| all placements | | 446.8 | 143 | 4.1 on average |
+**A world can fall up to 2 facts below its bucket (RULINGS Q44a).** The bucket bounds the target T, not the world: with T at a
+bucket's lower bound the world holds T - 2 to T facts, so a world drawn into the 50-to-200 bucket can hold 48 or 49 facts, and one
+drawn into the 201-to-800 bucket 199 or 200. A driver that reports per-bucket latency assigns each world to the bucket it was drawn
+into (its `size` draw), never by its fact count.
 
-A 100k sweep therefore reads about 44.7 million facts (V-D01 F1 asked for 25 to 50 million; W0-1.0.0 read 1.6 million).
+| Bucket (P4 weight) | Target T | Expected world size | Measured by V-D01 on W0-1.1.0 | Expected answers n | Hop depth |
+| --- | --- | --- | --- | --- | --- |
+| 50 to 200 facts (50%) | uniform 50 to 200 | 124 | 124.0 (50.10% of worlds) | 36 | 3 (40%), 4 (35%) or 6 (25%) in every bucket |
+| 201 to 800 facts (35%) | uniform 201 to 800 | 499.5 | 499.6 (34.89%) | 161 | same |
+| 801 to 2,000 facts (15%) | uniform 801 to 2,000 | 1,399.5 | 1,392.1 (15.01%) | 461 | same |
+| all placements | | 446.8 | 445.4 | 143 | 4.1 on average (measured 4.10) |
+
+A 100k sweep therefore reads about 44.7 million facts (measured 44,537,987; V-D01 F1 asked for 25 to 50 million; W0-1.0.0 read
+1.6 million).
 
 ### 12.7 How the floors are checked
 
 1. **Measured, not assumed.** Whoever generates the population (the P5 driver, O-DOMAIN, or an independent reviewer) evaluates every
-   placement under R1, R2 and R3 at B and reports the four measured floors, the R3 change share and the per-bucket sizes, with the
-   seed `W0-pop-1` and the spec version W0-1.1.0, which together fix the generator. A measured value below its bar fails closed.
-2. **Fingerprint (RULINGS Q40g).** The population fingerprint (basis.tx, fact count, worlds digest, R1, R2 and R3 output digests) is
-   pinned only after the O-DOMAIN author's independent generator reproduces the reviewer's.
+   placement under R1, R2 and R3 at B and reports the four measured floors, R3's affected and changed counts and the per-bucket
+   sizes, with the seed `W0-pop-1` and the spec version W0-1.1.1, which together fix the generator. A measured value below its bar
+   fails closed.
+2. **Fingerprint (RULINGS Q40g, Q44a).** The population fingerprint is six values: `basis.tx`, the fact count, the worlds digest and
+   the R1, R2 and R3 output digests. It is pinned only after the O-DOMAIN author's independent generator reproduces the reviewer's.
+   Every implementation computes it with this recipe, which is V-D01's:
+   - **The basis** is `B = {"tx": <the last reference position of 12.3>, "validTime": "2026-11-04T12:00:00.000000Z"}`. The
+     scheduled raise takes a position, so it counts toward `basis.tx`, but it is in no world at B.
+   - **`world_i`**, for placement i (0-based, `S_i` = `pl:s` + i as 8 digits), is `{"facts": [...], "subject": S_i}`. Its facts are:
+     for every one-cardinality pair `(e, a)` the placement's commands assert, the fact of the last assertion in plan order, with that
+     command's position as `tx`; every `documents` and `decisions` fact; when the placement has a location of rank r, the facts
+     `(loc, jurisdiction, jur, K + r)`, `(loc, localMinWageCents, 1850, K + r)` when r mod 4 = 2, and `(jur, stateMinWageCents,
+     floor, q)`; and its ballast facts. The scheduled raise is not among them. The `facts` array is sorted ascending by the
+     canonical JSON of each fact, compared as bytes.
+   - **`F_i`** is the number of `world_i`'s facts that are not ballast: the world at B without its answers, and without the
+     scheduled raise, which is not in the world. It gives n = floor((T - F_i) / 3) in 12.3.
+   - **The fact count** is the sum over i of the number of facts in `world_i`.
+   - **The worlds digest** is `"sha256:"` + lowercase hex of SHA-256 over `canonicalJson([world_0, world_1, ..., world_(N-1)])`,
+     the worlds in placement order. Streamed, that is the bytes `[`, then `canonicalJson(world_0)`, then `,` and
+     `canonicalJson(world_i)` for i = 1 to N - 1, then `]`.
+   - **The output digest of release R** is the same construction over `canonicalJson(evaluate(world_i, R, B))` for i = 0 to N - 1,
+     once each for R1, R2 and R3.
+   V-D01's W0-1.1.0 candidates for `basis.tx`, the worlds digest and the R1 and R2 digests carry over to W0-1.1.1 unchanged, because
+   the generator, R1 and R2 did not change; the R3 digest changes with R3's scope and is recomputed.
 3. **Golden-case witnesses** for each mechanism:
    - floor 1: C03 against C26 (`I9S2`), C19 against C20 (`DOCEXP`, and the `MINWAGE` notice payload), C25 (`MINWAGE` under R2);
    - floor 2: every rule's positive cases in section 11.2 (`validate.py` requires one positive and one negative per rule);
    - floor 3: C34 to C36 and C58 to C60 for the affected sets at one and two hops;
    - floor 4: C42, one evaluation with five work items;
-   - ballast and size: C56 and C57; R3: C54 and C55; runtime outcome: C52 and C53.
+   - ballast and size: C56 and C57; runtime outcome: C52 and C53;
+   - R3: C54 and C55 inside the scope, C86 outside it, C87 for the subjects it reaches.
 
 ## 13. Invariants
 
@@ -1068,11 +1191,13 @@ Implementations and test harnesses can check these on any input, not only the go
    overdue, a flag ends, a task opens).
 3. **Proposal isolation.** Removing every proposal record (and its `decisions` fact) from a world changes only the `PROP` trace
    entries and tasks and the `dependencies` list.
-4. **Erasure.** Replacing the SSN with an erased marker changes only `EVSUB` (row 5 or 4 becomes row 3); `I9S1` treats the marker
-   as present. No output ever contains a PII value.
+4. **Erasure.** Replacing the SSN with an erased marker changes only `EVSUB`'s row and outputs: row 4 (bad format), 5 (accepted),
+   6 (rejected) or 7 (submit) becomes row 3 (erased), and row 1 (a case exists) stays row 1. `I9S1` treats the marker as present.
+   No output ever contains a PII value.
 5. **Release isolation.** Evaluating under R1 and under R2 can differ only in `release`, work item versions, `dependencies` and the
    outputs (payloads included) and trace entries of `I9S2`, `DOCEXP` and `MINWAGE`; R2 and R3 only in `release`, work item versions
-   and `OT`'s outputs and trace entry. Work item ids never differ.
+   and `OT`'s outputs and trace entry, and for a subject outside R3's scope only in `release`, work item versions and `OT`'s trace
+   inputs. Work item ids never differ.
 6. **Ballast neutrality.** Removing every ballast fact from a world changes no output (C56 against C01).
 7. **Publication.** Per id, delivered sequences are 1, 2, 3 and so on with no gap and no repeat; a skipped record (older basis)
    changes nothing; the stored basis guard never moves backwards.
@@ -1082,7 +1207,7 @@ Implementations and test harnesses can check these on any input, not only the go
 
 | # | Place | Risk | Resolution |
 | --- | --- | --- | --- |
-| 1 | `1650.0` in a JSON world, `3.0` as a `tx` | `JSON.parse` returns 1650 or 3 and hides the fraction | Integer tokens are checked at the token level for every integer field (section 2, 4.4 step 1); the TypeScript kernel's fixture reader must see number tokens (for example the `JSON.parse` reviver's `context.source` where the runtime has it, or a small scanner). Cases C38 and C45. |
+| 1 | `1650.0` in a JSON world, `3.0` as a `tx` | `JSON.parse` returns 1650 or 3 and hides the fraction | Integer tokens are checked at the token level for every integer field (section 2, 4.4 step 1); the TypeScript kernel's fixture reader must see number tokens (for example the `JSON.parse` reviver's `context.source` where the runtime has it, or a small scanner). Cases C38, C45, C68, C71 and C72. |
 | 2 | Integers above 2^53 - 1 | JavaScript rounds them on parse | Any such token is `W0.E_VALUE`; in JavaScript it parses to at least 2^53, so `Number.isSafeInteger` detects it. Case C39. |
 | 3 | Instant comparison | converting to `Date` drops microseconds; time zones | Instants compare as strings and are never converted (section 2). |
 | 4 | Weekday and date arithmetic | local-time `Date` methods shift the day | Proleptic Gregorian arithmetic on dates only; JavaScript must use `Date.UTC` and `getUTCDay`. |
@@ -1121,18 +1246,24 @@ Implementations and test harnesses can check these on any input, not only the go
 | 37 | Publication after an activation | the version changes with the release hash, so every work item looks new | The outbox compares canonical payload bytes, never versions; an unchanged payload publishes nothing; the delivery key is `(id, seq)` (8.8, RULINGS Q38f, Q40c). |
 | 38 | Ballast and other unknown attributes | filter silently, or reject | Ballast is in the schema and read by no rule; any other attribute is `W0.E_UNKNOWN` (C63, Q40a). |
 | 39 | The two-hop floor when a reference is missing | instantiate `J` pairs anyway | `J.x` yields no pair without `(L, jurisdiction)`; `(L, jurisdiction)` itself is always read when L exists (6.3, C24, C48). |
-| 40 | `publish` with an equal basis | skip, or apply | Apply: equal is not older; unchanged payloads then publish nothing (C75). |
+| 40 | `publish` with an equal basis | skip, or apply | Apply: equal is not older (8.8 step 1). For consistent records, where one basis gives one record because only live reconciles are published (Q44c), applying and skipping give the same deliveries and state, so no case can tell them apart; C75 shows a re-applied record publishing nothing. |
 | 41 | Retired id reappearing with the same payload | compare payloads, so publish nothing | Always publish the next `seq` (C78, Q40h). |
 | 42 | The basis guard on records that publish nothing | advance only when publishing | Advance on every applied record (C82, Q42c). |
-| 43 | Receiver order, gaps and duplicates | regress the projection, or apply past a gap | Projection keeps the highest `seq`; effects process in order and wait at a gap; `(id, seq)` duplicates are ignored (8.9, C79 to C81). |
+| 43 | Receiver order, gaps and duplicates | regress the projection, re-apply an equal `seq`, queue a waiting `seq` twice, or apply past a gap | Projection applies only a higher `seq`; effects process in order and wait at a gap; `(id, seq)` duplicates are ignored, whether already processed or already waiting (8.9, C79 to C81, C83). |
 | 44 | `receive` processing order within one delivery | effects first, or projection first | Projection step, then effects step, per delivery in array order (8.9). |
+| 45 | A scoped rule entry | apply the scoped params to every subject; test the scope on the jurisdiction's facts; leave the location facts out of the inputs | `scope.params` apply exactly when `jur(S)` is listed, by id; everyone else gets the entry's `params`; the scope test adds `S.location` and `L.jurisdiction` to the read set and their facts to the inputs, inside the scope or not (5.1, 6.3, 7.9; C54, C55, C86). |
+| 46 | Which subjects R3 reaches | re-run everyone because `OT`'s pair is in every placement's dependencies | The reached subjects are `affected(R3, worlds, [[J, "stateMinWageCents"] for each listed J])`, found through the reverse two-hop index (section 10 item 7, C87); affected and changed counts are separate (12.1 item 5). |
+| 47 | Raw numeric tokens in case files | a JSON round trip rewrites `1.65e3` as `1650.0` and the case stops testing the exponent | Case files are written by hand; `validate.py` asserts the raw token text of every numeric-error case (C37 to C39, C45, C68 to C72). |
+| 48 | Which evaluations reach `publish`, and when a receiver starts | a preview or a past-valid-time audit passes the tx-first guard and publishes past payloads; a late receiver waits forever for seq 1 | Only live reconciles are published (8.8, Q44c); receivers exist from the first publication or are seeded with a snapshot (8.9, Q44d). |
+| 49 | `publish` and `receive` shape errors | default a missing `pending` to empty; treat `seq` 0 as a duplicate | Both are `W0.E_SHAPE` (4.4 step 1; C84, C85). |
 
-## 15. Decided questions (RULINGS Q36, Q38f, Q40, Q42b and Q42c)
+## 15. Decided questions (RULINGS Q36, Q38f, Q40, Q42b, Q42c and Q44)
 
 Every open question of the first draft has a ruling. None remains open.
 
 1. **Work item identity (Q36a).** The id covers `(subject, rule, kind, key)` only; a separate version covers the release hash, the
-   input positions and the payload; the delivery key is `(id, version)`; an unchanged payload publishes nothing. Implemented in 8.4.
+   input positions and the payload; an unchanged payload publishes nothing. Implemented in 8.4. Q36a also made `(id, version)` the
+   delivery key; Q38f replaced that with `(id, seq)` (item 9).
 2. **Time model (Q36b).** Due times at midnight UTC with no holidays stay. This is a known simplification of a synthetic world; real
    deadlines run in the work location's time zone and skip federal holidays.
 3. **E-Verify per status (Q36c).** Kept. W0 does not model status history, so it cannot flag an illegal transition.
@@ -1144,7 +1275,8 @@ Every open question of the first draft has a ruling. None remains open.
 7. **Fanout (Q36g).** A seeded Zipf with s = 0.5 over 2,000 locations at the 100k rung, so the largest location holds about 1,125
    placements and the mean stays at 49.5 (section 12). This corrects TARGETS 6.1 item 6 and RULINGS Q31i, whose s = 1.0 put about
    12,100 placements at one location.
-8. **Other rungs (Q36h).** They keep N / 50 locations and the same s. Only the 100k numbers are frozen floors.
+8. **Other rungs (Q36h).** They keep N / 50 locations and the same s, with K = 4 x ceil(L / 80) jurisdictions (Q44a). Only the
+   100k numbers are frozen floors.
 9. **Outbox transitions (Q38f, Q40c).** The version is content identity only; each id has a durable publication sequence; the
    delivery key is `(id, seq)`; `publish` is the fifth operation (8.8).
 10. **Ballast (Q40a).** Rule-neutral answer chains bring generated worlds to P4's sizes and hop depths (section 3, 12.6).
@@ -1155,8 +1287,18 @@ Every open question of the first draft has a ruling. None remains open.
 15. **Generator (Q40g).** Every draw field is named (12.3). The population fingerprint is pinned only after the O-DOMAIN author's
     independent generator reproduces V-D01's.
 16. **Retirement (Q40h).** A retired id that reappears publishes the next sequence (8.8).
-17. **Narrow release and runtime outcome (Q40i).** R3 changes only `OT`; `everifySubmitResult` is the runtime's outcome fact; a few
-    population facts are valid only from a later date (12.3).
+17. **Narrow release and runtime outcome (Q40i).** R3 changes only `OT` (scoped by subject since Q44b, item 21);
+    `everifySubmitResult` is the runtime's outcome fact; a few population facts are valid only from a later date (12.3).
 18. **Receiver (Q42b, RULINGS-PENDING).** `receive` is the sixth operation (8.9).
 19. **One atomic unit (Q42c, RULINGS-PENDING).** The per-subject outbox state is one unit and the guard advances on every applied
     record (8.8).
+20. **Re-review fixes (Q44a).** C68 holds the raw token `1.65e3` and `validate.py` asserts every numeric-error token; C76 carries the
+    real work item id and `validate.py` recomputes every delivery id and matches every version to a record; C83 pins both receiver
+    duplicate rules; 12.7 states the fingerprint recipe; K = 4 x ceil(L / 80); 12.6 states that a world can fall up to 2 facts
+    below its bucket; 4.4 lists the `publish` and `receive` shape rules, with C84 and C85.
+21. **R3 narrows by subject (Q44b, amends Q40i).** R3's `OT` entry is scoped to ten listed jurisdictions, the scope is part of the
+    content hash, the reached subjects come through the reverse two-hop index, and section 12 states affected and changed counts
+    separately (5.1, 10 item 7, 12.4 item 4; C54, C55, C86, C87).
+22. **Only live reconciles are published (Q44c).** A delivery's subject comes from the record; previews and past-valid-time audits
+    never reach `publish` (8.8).
+23. **Receivers from the start (Q44d).** Receivers exist from the first publication or are seeded with a state snapshot (8.9).

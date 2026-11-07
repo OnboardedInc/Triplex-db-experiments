@@ -1,6 +1,6 @@
 {
   "world": "W0",
-  "specVersion": "W0-1.1.0",
+  "specVersion": "W0-1.1.1",
   "types": {
     "date": {"json": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "yearMin": 2000, "yearMax": 2099, "note": "real proleptic Gregorian date"},
     "instant": {"json": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{6}Z$", "yearMin": 2000, "yearMax": 2099, "note": "UTC, microseconds, hour 00-23, minute 00-59, second 00-59"},
@@ -85,6 +85,7 @@
     "PAYCHG": {"thresholdCents": {"json": "integer", "min": 0, "max": 9007199254740991}},
     "PROP": {}
   },
+  "releaseScope": {"keys": ["jurisdictions", "params"], "jurisdictions": "non-empty array of distinct jurisdiction ids, ascending", "params": "the same keys as the rule's params", "readsAdded": ["S.location", "L.jurisdiction"], "note": "optional on a rule entry; SPEC 5.1; only R3's OT entry has one"},
   "errorCodes": ["W0.E_SHAPE", "W0.E_BASIS", "W0.E_UNKNOWN", "W0.E_VALUE", "W0.E_CARDINALITY", "W0.E_NO_RELEASE"],
   "flagNames": {"start-unknown": "LIFE", "pre-start": "LIFE", "i9-section2-waived": "I9S2", "everify-authorized": "EVSTAT", "overtime": "OT"},
   "obligationKinds": ["start", "doc.window", "due"],
