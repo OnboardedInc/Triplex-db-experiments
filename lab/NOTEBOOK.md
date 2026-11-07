@@ -427,3 +427,12 @@ EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) 
 ## EXP-R01 fixes F1-F8 (commit 4e073a8) — PROGRESSED; re-verification requested
 - Exactness now follows the corrected numeric rule: DoubleRoundTrip, numeric classes, InexactValueError, inexactPolicy in the spec id,
   CalendarDate, Finite, XTDB valid-time grid fixed. core 826 tests. Decimal value kind deferred to EXP-R02 (needs a TypeExpr primitive).
+
+## EXP-R01 PROMOTED to main (merge db249d8), first promotion of the loop
+- Verifier round 2 PROMOTE: all gates rerun (typecheck 31/31, core 826, http 12, testkit 46, lint 0, 18/18 negative type tests); the new
+  double rule matched an independent model of QLever (truncate 4 low bits, exact %.13g) on 200,016 doubles with 0 mismatches.
+- Post-merge G0 on main: PASS 1004/1004, 130 expected skips (`G0-xtdb-20261107T193849Z-307c45`).
+- Follow-ups carried to EXP-R02 / EXP-F02: (1) `approximateNumbers: "reject"` does not reach floats inside JSON (List/Struct) values,
+  and CanonicalJson turns -0 into 0 inside JSON; (2) XTDB card-many DOUBLE still marks -0 exact although list parameters travel as JSON
+  (`JSON.stringify(-0)` is "0"): add NoNegativeZero for lists unless EXP-F02 proves the round trip; (3) the rdfBase overlap check is
+  slightly over-broad (refuses `urn:triplex:scopes:`).

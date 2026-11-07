@@ -1144,15 +1144,127 @@ O("R.native.fragment-equivalence", ["R", "G4"], "Fragments state, enforce and co
   "Each supported native helper states its equivalence conditions; outside them it fails with E-UNSUPPORTED-SHAPE naming the condition; cases inside them agree with O-REPLAY; the lane's fragments cover every FRAGMENT_COVERAGE row.",
   cases=["CS-FRAGMENT-EQUIV"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-NATIVE"], modes=CUR_REOPEN, sources=["lab/research/R5-qlever-semantic-blockers.md 5.4", "RULINGS Q1"])
 
-# ---------------- S and L: HELD
-# Orchestrator hold (2026-11-07): Sam is re-tuning performance targets (lab/NORTH-STAR.md). The S and L
-# obligations, plus G8.support.maintenance-cost (which counts toward S), are carried verbatim from contract
-# 0.1.0-draft in held/s-l-obligations-0.1.0.json and are not edited until the follow-up arrives.
-HELD_FILE = "lab/acceptance/held/s-l-obligations-0.1.0.json"
-HELD_FILE_SHA256 = "03978e120ed7b739bfe93fc2def2ad58ed47e992a383fc812eeabfdf129979b2"
-LOAD_CONTRACT_SHA256_0_1 = "a909d9057c63e572ddeea53b81f78c28bf1287d5b834563cdce181a813cad708"
-HELD = json.loads((REPO / HELD_FILE).read_text())["obligations"]
-HELD_IDS = {o["id"] for o in HELD}
+# ---------------- NS: Sam's five priorities (TARGETS section 1), on the fixed writer trace (section 2)
+NS_LADDER = ["NS-P1-VIOLATIONS-MAX", "NS-P1-GOODPUT-256-VS-64", "NS-P1-READ-P99-256-MS", "NS-P1-WRITER-P99-RATIO-256", "NS-P1-WRITER-WAIT-MAX-MS", "NS-P1-GOODPUT-1024-VS-256", "NS-P1-WRITER-P99-RATIO-1024", "NS-P1-RECOVERY-MS"]
+NS_COMMON = dict(oracle=["O-REPLAY", "O-OBS"], profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-NS",), sources=["lab/NORTH-STAR.md", "lab/TARGETS.md sections 1 and 2"])
+O("NS.P1", ["NS"], "P1: many concurrent pinned reads that never block writers (per surface)",
+  "With the fixed writer trace running, closed-loop readers at 1, 4, 16, 64 and 256 (and 1,024 stress) each name their basis (valid time and record time or tx), in the lane's language; per level the receipt records correctness-qualified read goodput and p99 and writer commit latency and throughput; every NS-P1-* bar holds: zero violations, goodput at 256 not below 64, read p99 within NS-P1-READ-P99-256-MS, writer commit p99 within NS-P1-WRITER-P99-RATIO-256 of its zero-reader baseline, no command waits beyond NS-P1-WRITER-WAIT-MAX-MS, and at 1,024 goodput within NS-P1-GOODPUT-1024-VS-256, writer p99 within NS-P1-WRITER-P99-RATIO-1024, back to the 256-level bar within NS-P1-RECOVERY-MS.",
+  cases=["CS-NS:p1-ladder,p1-stress"], ep=["EP-REPO", "EP-NATIVE", "EP-WRITER", "EP-ENGINE-OBS"], thresholds=NS_LADDER + ["T-RUNS"], **NS_COMMON)
+O("NS.P2", ["NS"], "P2: small, atomic, idempotent per-subject commits with low latency",
+  "Commit latency of one 10-fact command about one subject (also 5 and 50, reported) with P1's 256 readers running stays within NS-P2-COMMIT-P50-MS and NS-P2-COMMIT-P99-MS; the pull at the returned tx sees the commit every time with no extra wait (NS-P2-RYOW-FRACTION); duplicates and lost ACKs return the original receipt every time (NS-P2-DUP-RECEIPT-FRACTION).",
+  scope="engine", cases=["CS-NS:p2"], ep=["EP-WRITER", "EP-REPO", "EP-RESOLVE"], thresholds=["NS-P2-COMMIT-P50-MS", "NS-P2-COMMIT-P99-MS", "NS-P2-RYOW-FRACTION", "NS-P2-DUP-RECEIPT-FRACTION", "T-RUNS"], **NS_COMMON)
+O("NS.P3", ["NS"], "P3: an ordered, resumable change feed",
+  "Feed entries carry tx, entity, attribute and the valid-time range affected; over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); resume from a checkpoint replays exactly; lag from commit to affected subjects known stays within NS-P3-LAG-P99-MS with P1's 256 readers running.",
+  scope="engine", cases=["CS-NS:p3"], ep=["EP-FEED", "EP-WRITER", "EP-ENGINE-OBS"], thresholds=["NS-P3-GAPS-MAX", "NS-P3-ORDER-VIOLATIONS-MAX", "NS-P3-LAG-P99-MS", "T-RUNS"], **NS_COMMON)
+O("NS.P4", ["NS"], "P4: a fast path to current values, separate from history (per surface)",
+  "A subject pull (one subject's world at the current basis, a bounded subgraph of 3 to 6 hops and 50 to 2,000 facts) in the lane's language meets NS-P4-PULL-P50-MS and NS-P4-PULL-P99-MS single-client, sustains NS-P4-PULLS-PER-CORE per engine core, and its latency and bytes read stay within NS-P4-HISTORY-FLATNESS as retained history grows (depths 1, 3, 10); the receipt records whether current reads touch history.",
+  cases=["CS-NS:p4"], ep=["EP-REPO", "EP-NATIVE", "EP-ENGINE-OBS"], thresholds=["NS-P4-PULL-P50-MS", "NS-P4-PULL-P99-MS", "NS-P4-PULLS-PER-CORE", "NS-P4-HISTORY-FLATNESS", "T-RUNS"], **NS_COMMON)
+O("NS.P5", ["NS"], "P5: release activation re-evaluates 100k subjects without hurting live traffic (per surface)",
+  "Sweeping 100k subjects (each pulled at one pinned basis, in the lane's language) while the writer trace and 64 live readers run finishes within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; the long snapshot never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS) or unrelated compaction (OBS-MAINTENANCE shows it completing).",
+  cases=["CS-NS:p5"], ep=["EP-REPO", "EP-NATIVE", "EP-WRITER", "EP-ENGINE-OBS"], thresholds=["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS", "T-RUNS"], **NS_COMMON)
+O("NS.SEC.bulk-lane", ["NS"], "Secondary: the bulk lane does not hurt live reads",
+  "A 1M-fact import through EP-BULK keeps live read p99 within NS-SEC-BULK-READ-P99-RATIO of its value without the import; per-batch receipts exist; the measurement is reported every run.",
+  cases=["CS-NS:secondary"], ep=["EP-BULK", "EP-REPO", "EP-NATIVE", "EP-ENGINE-OBS"], thresholds=["NS-SEC-BULK-READ-P99-RATIO", "T-RUNS"], **NS_COMMON)
+O("NS.SEC.retro-and-audit", ["NS", "G9"], "Secondary: retroactive corrections and audit at a past basis",
+  "A 'wrong since October' correction makes the feed report its valid-time range while explain at the old basis still shows the old belief; explain and audit at a past point in time reproduce bit for bit across repeats; both are reported every run with their latencies.",
+  cases=["CS-NS:secondary"], oracle=["O-REPLAY"], ep=["EP-FEED", "EP-REPO", "EP-NATIVE"], profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-PASS-ALL", "CR-METRICS"),
+  sources=["lab/TARGETS.md section 1 secondary measurements"])
+O("NS.calibration", ["NS"], "The NS bars are calibrated before acceptance, never loosened without Sam",
+  "A create-only calibration record (VC) for the lane binds the load-contract hash, the control profile and every NS-* bar (kept, tightened, or UNATTAINABLE with its measurement) before any NS or GS acceptance run.",
+  cases=["CS-NS:calibration"], oracle=["O-OBS"], ep=["EP-REPO", "EP-NATIVE", "EP-WRITER"], profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-CALIBRATION",),
+  sources=["lab/TARGETS.md threshold policy"])
+
+# ---------------- GS: the 20 golden scenarios (TARGETS section 6)
+GOLDEN_SCENARIOS = [
+    (1, "Monday onboarding rush", "a day's 1,300 placements compressed into business hours with a 10x burst at 9am; workers and recruiters submit forms; every commit triggers a reconcile pull", "P1 and P2 bars hold through the burst; no writer waits over 2 s", ["P1", "P2"], ["NS-P1-VIOLATIONS-MAX", "NS-P1-READ-P99-256-MS", "NS-P1-WRITER-P99-RATIO-256", "NS-P1-WRITER-WAIT-MAX-MS", "NS-P2-COMMIT-P50-MS", "NS-P2-COMMIT-P99-MS"]),
+    (2, "Form submit, person waiting", "a worker submits I-9 Section 1 (10 facts); the reconcile pull runs immediately at the returned tx", "the next task is visible on the first pull, every time; commit p99 within NS-P2-COMMIT-P99-MS under scenario 1's load", ["P2", "P4"], ["NS-P2-COMMIT-P99-MS", "NS-P2-RYOW-FRACTION"]),
+    (3, "Webhook storm after an outage", "1,000 duplicate E-Verify status signals across 100 subjects in 10 s, out of order", "exactly-once receipts; no read sees a half-applied command; per-subject order kept", ["P2", "P3"], ["NS-P2-DUP-RECEIPT-FRACTION", "NS-P3-ORDER-VIOLATIONS-MAX"]),
+    (4, "Lost acknowledgements and a restart", "1% of commits lose their ACK and are retried; mid-run the engine (or QLever broker) is killed and restarted", "every retry returns the original receipt; no acknowledged commit is lost; readers resume at their pinned bases", ["P2", "P1"], ["NS-P2-DUP-RECEIPT-FRACTION", "NS-P1-VIOLATIONS-MAX"]),
+    (5, "Background-check results burst", "a vendor posts results for 5,000 subjects in 5 minutes while the UI reads", "live read p99 holds; the feed reports every changed subject within the lag bar", ["P1", "P3"], ["NS-P1-READ-P99-256-MS", "NS-P3-LAG-P99-MS"]),
+    (6, "One recruiter decision, 50 workers", "a single decision fans out as 50 per-subject commands driven by persisted messages", "each subject commits once, in order; no cross-subject transaction; all 50 visible to their next pulls", ["P2", "P3"], ["NS-P3-ORDER-VIOLATIONS-MAX", "NS-P2-RYOW-FRACTION"]),
+    (7, "Two reviewers, one I-9", "two reviewers approve and waive the same subject at the same moment, 500 times across subjects", "compare-and-set lets exactly one win per race; the loser gets E-TX-CONFLICT, never a silent overwrite", ["P2"], ["NS-P1-VIOLATIONS-MAX"]),
+    (8, "Address wrong since October", "valid-time corrections 30 days back on 1,000 subjects during live traffic", "the feed reports the valid-time range; derived state is re-run; explain at the old basis still shows the old belief", ["P3", "P1"], ["NS-P3-GAPS-MAX", "NS-P1-VIOLATIONS-MAX"]),
+    (9, "Start dates move", "2,000 placement start dates shift forward and back, moving obligations", "next-boundary times recompute; reads at bases on both sides of a boundary are exact", ["P1", "P3"], ["NS-P1-VIOLATIONS-MAX", "NS-P3-LAG-P99-MS"]),
+    (10, "Release activation", "a new release changes 3 requirements; activation is a fact; the sweep re-reconciles 100k subjects at one pinned basis with live traffic", "P5 bars hold; in-flight reconciles finish on the old release", ["P5", "P1"], ["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO"]),
+    (11, "Plan impact preview", "'who gains work' for a candidate release over 100k subjects, without applying it, during live traffic", "identical answer to the post-activation sweep; never blocks writers", ["P5", "P1"], ["NS-P1-WRITER-WAIT-MAX-MS", "NS-P5-LIVE-READ-P99-RATIO"]),
+    (12, "Audit: what did we know on March 3", "explain reads at a past basis for 1,000 subjects, repeated three times while writes continue", "bit-for-bit identical answers across repeats and across lanes; as-of pull p99 reported", ["P1"], ["NS-P1-VIOLATIONS-MAX"]),
+    (13, "HRIS backfill", "a 1M-fact import through the bulk lane while live traffic runs", "live read p99 within NS-SEC-BULK-READ-P99-RATIO; per-batch receipts; the bulk lane never starves live commits", ["P2", "P1"], ["NS-SEC-BULK-READ-P99-RATIO", "NS-P2-COMMIT-P99-MS"]),
+    (14, "Account factory", "a new tenant is provisioned with 10k entities and its first release while other tenants are live", "the new tenant is invisible to others at the storage layer; others' p99 holds", ["P1", "P2"], ["NS-P1-READ-P99-256-MS", "NS-P2-COMMIT-P99-MS"]),
+    (15, "Tenant mix", "one large tenant (1m entities) and 1,000 small tenants (1k each) under the same live load", "storage-layer isolation; per-tenant pull and commit bars hold for large and small tenants", ["P1", "P4"], ["NS-P4-PULL-P99-MS", "NS-P2-COMMIT-P99-MS"]),
+    (16, "PII erasure request", "erase PII for 10k subjects (crypto-shredding or real deletion) during live traffic", "values are unrecoverable from every layer; history keeps its shape; explain still works", ["P1", "P3"], ["NS-P1-READ-P99-256-MS", "NS-P3-GAPS-MAX"]),
+    (17, "Agent proposals churn", "agents write drafts and proposals at 5x the human rate, most discarded", "proposals never leak into decisions; pulls at a basis see exactly what was committed", ["P2", "P4"], ["NS-P4-PULL-P99-MS", "NS-P1-VIOLATIONS-MAX"]),
+    (18, "Recruiter dashboards", "'placements in this branch with an overdue I-9' lists with filters, sort and paging at 256 concurrent readers", "answers come from maintained projections, match the oracle, and keep stable cursors while writes continue", ["P1", "P4"], ["NS-P1-READ-P99-256-MS", "NS-P1-VIOLATIONS-MAX"]),
+    (19, "Feed consumer crash", "the dependency-index consumer crashes mid-stream and resumes from its checkpoint", "no gap, no duplicate processing, per-subject order kept; catch-up lag measured", ["P3"], ["NS-P3-GAPS-MAX", "NS-P3-ORDER-VIOLATIONS-MAX"]),
+    (20, "Midnight expiry wave", "20,000 documents expire at midnight (valid-time boundaries) while morning traffic starts", "every affected subject is re-run at the boundary; reads before and after midnight are exact; live p99 holds", ["P3", "P5", "P1"], ["NS-P3-LAG-P99-MS", "NS-P1-READ-P99-256-MS"]),
+]
+GS_RULES = [
+    "A seeded, deterministic generator produces the command stream and the reads; the same seed gives the same bytes.",
+    "Expected answers come from O-REPLAY or a frozen hand derivation (O-HAND), never from a system under test.",
+    "Unless a scenario says otherwise it runs on P-YEAR-ONE with the fixed writer trace running and 256 concurrent pinned readers (P-NS).",
+    "A scenario fails on any wrong answer, any lost or duplicated commit, any feed gap or order violation, or any missed bar; its receipt records the correctness verdicts and the P1 to P5 measurements together.",
+    "All 20 run on every composition being compared, and the final acceptance reruns all 20 fresh.",
+    "Numbers inside the scenarios: pay rates, hours and money use scaled integers or order-preserving decimal strings; the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650, GS-NUM-HOURS-40) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE or E-DECIMAL-UNREPRESENTABLE (GS-NUM-UNHOLDABLE).",
+]
+for n, title, story, checks, prios, bars in GOLDEN_SCENARIOS:
+    O(f"GS.{n:02d}", ["GS"], f"{title} ({', '.join(prios)})",
+      f"Story and load: {story}. Checked beyond exact answers: {checks}. Bars: {', '.join(bars)}. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
+      cases=[f"CS-GS:GS-{n:02d}"] + (["CS-GS:all"] if n == 1 else []), oracle=["O-REPLAY", "O-HAND", "O-OBS", "O-ERR"],
+      ep=["EP-REPO", "EP-WRITER", "EP-NATIVE", "EP-FEED", "EP-ENGINE-OBS"] + (["EP-BULK"] if n == 13 else []),
+      profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-GS",), thresholds=bars + ["T-RUNS"],
+      sources=["lab/TARGETS.md section 6"], params={"priorities": prios, "seededGenerator": True})
+
+# ---------------- REQ: Sam's must-haves (TARGETS section 3), requirements per engine, never knockout gates
+REQUIREMENTS = [
+    ("commit-idempotent", ["G7"], "engine", "Per-subject atomic, idempotent commit with lost-ACK resolution", "XTDB: native transactions, ASSERT for CAS, claims table", "QLever: log of record plus broker (PLAN C2, C3)"),
+    ("snapshot-reads", ["G9", "G4"], "lane", "Snapshot reads at a named point in time (valid and record time), no locks, reproducible", "XTDB: native valid and system time; snapshot tokens; H-X-CUT", "QLever: one request is one snapshot; publication marker; ledger for past bases"),
+    ("change-feed", ["G7", "G8"], "engine", "Ordered change feed with entity, attribute and valid-time range affected", "XTDB: Triplex journal from ledger rows", "QLever: the log of record is the feed"),
+    ("no-silent-precision-loss", ["G1", "G2", "G5"], "engine", "No silent precision loss: exact storage and round trip for every value kind in use, order-preserving comparison for range-rule attributes, a hard error never silent conversion, integer range of at least 2^53, arithmetic over many rows only where a projection needs it", "XTDB: BIGINT, DECIMAL and VARCHAR store exactly; kernel arithmetic; split-sum only where a projection sums", "QLever: lexical channels and fixed-width hex order keys; 60-bit integers cover 2^53; reject beyond +/-2^59 at write; kernel arithmetic"),
+    ("pii-erasure", ["G9"], "engine", "Real erasure or crypto-shredding of PII", "XTDB: ERASE or crypto-shredding (R15)", "QLever: index rebuild after delete, or crypto-shredding"),
+    ("tenant-isolation", ["G10"], "engine", "Tenant isolation at the storage layer", "XTDB: per-tenant storage (database or node)", "QLever: per-tenant index"),
+    ("outbox-atomic", ["G7"], "engine", "Atomic path to the outbox and work items", "XTDB: tables in the same transaction", "QLever: records in the same log frame"),
+    ("read-your-write", ["G7", "G9"], "engine", "Read-your-own-write immediately after commit", "XTDB: same transaction for ledger and current index", "QLever: publication before ACK (C2.4)"),
+    ("sweep-pins-position", ["G6", "G9"], "lane", "Long sweeps pin a log position, not a long database transaction", "XTDB: snapshot token or system-time basis", "QLever: position in the log; one request per page"),
+    ("retro-corrections", ["G8", "G9"], "engine", "Cheap retroactive corrections that invalidate derived state", "XTDB: valid-time DML in the current index", "QLever: ledger plus current-graph maintenance"),
+]
+for rid, goals, scope, title, xs, qs in REQUIREMENTS:
+    O(f"REQ.{rid}", goals, f"Requirement: {title}",
+      f"{title}. Each engine declares a route for this requirement, NATIVE or WORKAROUND (with its design id and a plain statement of what the engine cannot do natively); the requirement's own CS-REQ tests pass on that route. An open requirement never removes an engine from comparison. Starting points: {xs}; {qs}.",
+      scope=scope, cases=[f"CS-REQ:{rid}"], oracle=["O-REPLAY", "O-OBS", "O-ERR"], ep=["EP-WRITER", "EP-REPO", "EP-NATIVE", "EP-FEED", "EP-ENGINE-OBS"],
+      profiles=["P-TINY-CONC"], closure=("CR-REQUIREMENT",),
+      mutants=(["M-FEED-GAP"] if rid == "change-feed" else ["M-OUT-OF-RANGE-WRAP", "M-DECIMAL-ROUND"] if rid == "no-silent-precision-loss" else []),
+      sources=["lab/TARGETS.md section 3", "lab/SCOPE.md section 2 item 3"])
+for o in OBL:
+    if o["id"].startswith("REQ.") and o["mutationControls"]:
+        o["closure"]["rules"].append("CR-MUTANT-KILL")
+
+# ---------------- S: year-one measurement population, rungs and budgets
+O("S.population.year-one", ["S"], "The year-one measurement population exists and is counted",
+  "At P-YEAR-ONE one deployment holds the SCALE_POPULATION year-one population (10m entities, 100m active domain facts, at least 150M retained facts, tenants and strata as specified) written through public writes; every stratum and separate count matches independent count queries (OBS-SCALE-COUNT) and O-REPLAY analytic counts. This is the size the priorities are measured at, not a target in itself.",
+  scope="engine", cases=["CS-SCALE-SAMPLE:counts,strata"], oracle=["O-REPLAY", "O-OBS"], ep=["EP-WRITER", "EP-BULK", "EP-TRIPLES", "EP-NATIVE"], profiles=["P-YEAR-ONE"],
+  closure=("CR-SCALE",), sources=["lab/TARGETS.md section 2", "lab/SCOPE.md section 2 item 2"])
+O("S.rungs.ladder", ["S"], "Each rung passes before the next opens",
+  "Rungs 10k, 100k, 1m and 10m subjects are admitted in order; each passes S.correctness.query-families at its own rung before the next is admitted.",
+  cases=["CS-SCALE-SAMPLE:per-rung"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], profiles=["P-RUNGS"], closure=("CR-SCALE",), sources=["lab/TARGETS.md section 2"])
+O("S.correctness.query-families", ["S"], "Query families correct at every rung",
+  "At every rung of P-RUNGS the query families (point, selective filter, join, anti-join, recursion, aggregate, historical, interval, pagination, subject pull) run on at least T-SAMPLES-PER-FAMILY samples with at least T-SAMPLES-PER-STRATUM in every applicable stratum plus complete-count queries, on the repository and in the lane language, all equal to O-REPLAY.",
+  cases=["CS-SCALE-SAMPLE:families"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], profiles=["P-RUNGS"], closure=("CR-SCALE",),
+  thresholds=["T-SAMPLES-PER-FAMILY", "T-SAMPLES-PER-STRATUM"], params={"perRung": True}, sources=["SCALE_POPULATION", "lab/reviews/acceptance-review-r1.codex.md finding 13"])
+O("S.capacity.admitted", ["S"], "Runs fit the admitted envelope",
+  "Every rung is admitted with a peak forecast (rebuild overlap, delta growth, pre-GC growth, WAL, log, checkpoints, backups, replay, host clients); observed peaks stay within it (OBS-RESOURCE); an over-budget rung is BLOCKED_CAPACITY and stays open.",
+  scope="engine", cases=["CS-SCALE-SAMPLE:capacity"], oracle=["O-OBS"], ep=["EP-ENGINE-OBS"], profiles=["P-RUNGS"], closure=("CR-SCALE",), sources=["qualification/benchmark-contract.json capacityRule", "lab/PLAN.md section 8"])
+O("S.metrics.reported", ["S"], "Size and cost metrics are measured and reported separately",
+  "At every rung: bytes per entity and fact, write amplification per component (BUDGET_COMPONENTS), history separately, ingest rate, rebuild or compaction time, restart time, peak RSS per owner, peak disk.",
+  cases=["CS-SCALE-SAMPLE:metrics"], oracle=["O-OBS"], ep=["EP-ENGINE-OBS", "EP-REPO", "EP-NATIVE"], profiles=["P-RUNGS"], closure=("CR-METRICS",), sources=["lab/PLAN.md section 1 item 5"])
+O("S.maintenance.correct-during", ["S", "G8"], "Maintenance at year one keeps reads correct",
+  "Compaction, index rebuild and projection maintenance at P-YEAR-ONE complete; reads during and after equal O-REPLAY.",
+  scope="engine", cases=["CS-SCALE-SAMPLE:maintenance"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE", "EP-ENGINE-OBS"], profiles=["P-YEAR-ONE"], closure=("CR-SCALE",), sources=["qualification/benchmark-contract.json separatePhases"])
+O("S.restart.at-scale", ["S", "G7"], "Restart at year one",
+  "An engine restart at P-YEAR-ONE becomes available within the recorded time and every sampled old cut re-reads identically.",
+  scope="engine", cases=["CS-SCALE-SAMPLE:restart"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], profiles=["P-YEAR-ONE"], closure=("CR-SCALE", "CR-METRICS"), sources=["qualification/benchmark-contract.json separatePhases"])
+O("S.budgets.cumulative", ["S", "G8"], "The integrated candidate stays inside frozen budgets",
+  "At every rung the integrated candidate's complete-path cost (BUDGET_COMPONENTS, including log, broker and verification) and its NS measurements stay inside budgets.json, which is frozen before candidates, compared cumulatively against the frozen A0 control at the same rung.",
+  cases=["CS-BUDGET"], oracle=["O-OBS"], ep=["EP-ENGINE-OBS", "EP-REPO", "EP-WRITER"], profiles=["P-RUNGS"], closure=("CR-BUDGET",),
+  sources=["lab/PLAN.md section 7.4", "lab/PLAN.md section 1 item 5", "lab/reviews/acceptance-review-r1.codex.md finding 14"])
 
 # ============================================================================ C1-C8 traceability
 TRACE = []
@@ -1223,7 +1335,8 @@ EVIDENCE_KINDS = {
     "observation": "{protocol: OBS-*, subjectIds {requestId, connectionId, queryId}, samplesObject, eventsObject, coverage {from, to, maxGapMs}}",
     "fault-witness": "{faultPointId, injectedAt, transitionEvents [{transition, t, durableEvidenceObject}], lastWitnessedTransition, callerOutcome, retries [{t, response}], postRecoveryCaseResults []}",
     "plan-record": "{queryId, route, eligibilityInputs, enginePlanObject, accessPathClass, estimate, actual {rows, ms, bytes}}",
-    "load-run": "{level, lane, rawEventsObject, windows [{from, to}], maintenanceEvents [], connectionSamplesObject}",
+    "ns-run": "{measurement: P1|P2|P3|P4|P5|secondary|GS-nn, lane or engine, composition, ladderLevel, rawEventsObject (every read with its named basis and result hash, every command with offer, ACK, receipt and visibility, every feed entry), windows [{from, to}], baselines {zeroReader, noSweep, noBulk}, maintenanceEvents [], connectionSamplesObject, engineCores}",
+    "requirement-route": "{requirement, engine, route: NATIVE|WORKAROUND, designId, cannotNatively (plain statement), testCaseResults []}",
     "scale-dataset": "{rung, profile, generatorSpecSha256, seed, populationCounts {stratum: count}, countQueryCaseResults []}",
     "static-witness": "{witnessFile, expectedDiagnostics [], observedDiagnostics [{file, line, column, code}], anyScanObject}",
     "provenance-manifest": "{authorId, inputs [{path, sha256}], outputs [{caseId, sha256}]}",
@@ -1239,7 +1352,7 @@ VALIDITY = {
         "VC2 binds the control profile identity and the load-contract or threshold registry hash",
         "VC3 every value is the registry value or tighter, or UNATTAINABLE with its retained measurement",
         "VC4 every ladder step's raw objects are retained",
-        "VC5 preconditions that are acceptance obligations (for load: S.dataset.target-population for the engine) are evaluated by the VA rules on the control profile; they never depend on VC records"]},
+        "VC5 preconditions that are acceptance obligations (for the NS calibration: S.population.year-one for the engine) are evaluated by the VA rules on the control profile; they never depend on VC records"]},
     "VA": {"for": "primary acceptance evidence", "dependsOn": ["VC"], "rules": [
         "VA1 produced by lab/bin in this repository, append-only, every evidence object present under runs/objects with matching sha256",
         "VA2 profile identity complete and equal to the candidate profile",
@@ -1267,7 +1380,7 @@ VALIDITY = {
 }
 VERIFIER_MODES = {
     "rerun": "The verifier reruns the obligation's full selection on the same profile and recomputes every verdict from retained objects.",
-    "re-evaluate-and-spot": "The verifier independently re-evaluates every retained answer byte, fault outcome and coverage record for every load level, rung and run, and performs at least one spot rerun per profile unit (one per lane and load level; one per lane, rung and population profile).",
+    "re-evaluate-and-spot": "The verifier independently re-evaluates every retained answer byte, fault outcome and coverage record for every ladder level, scenario, rung and run, and performs at least one spot rerun per profile unit (one per lane and NS measurement; one per lane and golden scenario; one per lane and rung).",
 }
 CLOSURE_RULES = {
     "CR-PASS-ALL": {"evidence": ["case-result"], "validity": ["VA"], "recompute": "each case verdict = comparator(oracle expected, retained raw result bytes)", "holds": "every resolved case passes in every declared mode"},
@@ -1279,12 +1392,14 @@ CLOSURE_RULES = {
     "CR-SCALE": {"evidence": ["scale-dataset", "case-result", "observation"], "validity": ["VA"], "recompute": "population counts versus O-REPLAY analytic counts; sample verdicts by comparator; capacity verdict by OBS-RESOURCE", "holds": "counts equal, every sample passes, run admitted and within envelope"},
     "CR-PERF": {"evidence": ["case-result", "observation", "plan-record"], "validity": ["VA", "VC"], "recompute": "latency and ratio statistics from retained timings", "holds": "every named threshold met in each of 3 independent runs"},
     "CR-METRICS": {"evidence": ["observation"], "validity": ["VA"], "recompute": "metric values from retained samples", "holds": "every listed metric present and measured"},
-    "CR-LOAD": {"evidence": ["load-run"], "validity": ["VA", "VC"], "recompute": "every invariant and bound of the named load level from retained raw events", "holds": "all invariants and bounds met in each required run"},
+    "CR-NS": {"evidence": ["ns-run"], "validity": ["VA", "VC"], "recompute": "every named NS bar from retained raw events: goodput counts only reads whose answer equals O-REPLAY at the read's named basis; latencies from offer; ratios against the same run's baselines; per-core throughput from the recorded engine core count", "holds": "every named bar met in each of T-RUNS independent runs, on the fixed writer trace of load-contract.json"},
+    "CR-GS": {"evidence": ["ns-run", "case-result", "fault-witness"], "validity": ["VA", "VC"], "recompute": "scenario correctness verdicts from retained answers against O-REPLAY or O-HAND, commit and feed integrity from retained receipts and feed entries, and every named bar from retained raw events", "holds": "zero wrong answers, zero lost or duplicated commits, zero feed gaps or order violations, every named bar met, in each of T-RUNS runs, on every compared composition"},
+    "CR-REQUIREMENT": {"evidence": ["requirement-route", "case-result"], "validity": ["VA"], "recompute": "each test verdict from retained results; the route record checked for a plain statement when WORKAROUND", "holds": "the engine declares NATIVE or a documented WORKAROUND and every test of the requirement passes on that route; an OPEN requirement never excludes the engine from comparison"},
     "CR-CALIBRATION": {"evidence": ["calibration-record"], "validity": ["VC"], "recompute": "VC3 check of each value against the registry", "holds": "a VC-valid record exists for every L-* threshold of the lane"},
     "CR-MATRIX": {"evidence": ["case-result"], "validity": ["VA"], "recompute": "matrix cells from obligations.json capabilityMatrix and the cited receipts", "holds": "every required cell EXACT with a receipt; every raw-required KNOWN-LIMIT cell has its exception record and guide entry"},
     "CR-PROVENANCE": {"evidence": ["provenance-manifest"], "validity": ["VA"], "recompute": "manifest inputs compared with the guide and docs hashes", "holds": "inputs are only the raw-query guide and engine public docs; the author is a fresh agent"},
     "CR-WITNESS": {"evidence": ["observation", "case-result"], "validity": ["VA"], "recompute": "OBS-WORK work-unit ratios from retained engine-side counters", "holds": "every named witness threshold met and answers equal the no-reuse or fresh-recompute run"},
-    "CR-BUDGET": {"evidence": ["budget-record", "observation"], "validity": ["VA"], "recompute": "complete-path cost from retained measurements against budgets.json (HELD)", "holds": "within hard caps and A0-relative allowances at every rung; not evaluable during the hold"},
+    "CR-BUDGET": {"evidence": ["budget-record", "observation"], "validity": ["VA"], "recompute": "complete-path cost and NS measurements from retained evidence against budgets.json", "holds": "within the absolute bars and caps and within the A0-relative allowances at every rung, compared cumulatively against the frozen A0 control"},
 }
 APPLICABILITY = {
     "source": "lab/PLAN.md section 1 item 7; acceptance review r1 finding 12",
@@ -1298,11 +1413,9 @@ STATUS_ALGORITHM = [
     "    key = L if O.receiptScope == 'lane' else engineOfLane[L]",
     "    A = acceptance receipts for (O.id, key) on T that pass VA (using VC records they cite)",
     "    closed(O, L, T) = O.grounding != 'policy-pending' and every case set of O is pinned",
-    "                      and no threshold of O is HELD",
     "                      and A non-empty and every rule in O.closure.rules holds by its recompute",
     "                      and VV-valid verifier coverage exists per VERIFIER_MODES[verifierMode(O)]",
     "  closed(section, L, T) = all closed(O, L, T) for O with section in O.goals",
-    "  sections S and L: closed only when their HELD obligations are replaced by a later contract version",
     "done(T) = closed for every section and lane, with every receipt fresh on T (APPLICABILITY.finalAcceptance)",
 ]
 
@@ -1348,7 +1461,71 @@ SPEC_RULES = [
 
 # ============================================================================ budgets
 BUDGET_COMPONENTS = ["ledger", "projection", "index tables", "journal", "log of record", "mutation broker", "verification", "scratch work", "fallback (exact path) reads", "maintenance", "clients"]
-# Budget allowances, budgets.json, the load contract and the scale population are HELD (orchestrator hold 2026-11-07).
+BUDGETS = {
+    "format": "triplex-db-2/budgets/2", "version": VERSION,
+    "source": "lab/PLAN.md section 7.4 and section 1 item 5; lab/TARGETS.md section 1; acceptance review r1 finding 14",
+    "frozenBeforeCandidates": "Budgets are frozen in a create-only budget-freeze receipt (A0 control measurements at every rung, this file's sha256) before any candidate is evaluated against them. A hypothesis's predicted cost never sets its own allowance. Changing a budget creates a new profile version; loosening an NS bar needs Sam.",
+    "a0Control": "A0 = the ledger-only baseline profile (status-quo adapters, no projection), measured on the same slot configuration, writer trace and rung. Where A0 cannot complete a rung, only the absolute bars and caps apply there and the failure is recorded.",
+    "cumulative": "Every promotion and the final acceptance compare the integrated candidate with the frozen A0 control at the same rung, never with the previous promotion, so small regressions accumulate against one fixed reference.",
+    "components": BUDGET_COMPONENTS,
+    "accounting": "Every metric is reported per component and in total; the log of record, the broker and verification count for QLever; fallback reads, maintenance, the change feed and clients count for both lanes.",
+    "absolute": "Every NS-* bar of obligations.json thresholds applies as an absolute budget at P-YEAR-ONE; resource caps: memory peak within the 11 GiB reservation pool, disk peak within the 50 GiB stop line of the 60 GiB VM (lab/PLAN.md section 8).",
+    "relativeToA0": [
+        {"id": "B-WRITE-BYTES-PER-FACT", "allowanceVsA0": 4.0, "direction": "max", "source": "derived: projection, indexes, journal and feed together"},
+        {"id": "B-INGEST-FACTS-PER-S", "allowanceVsA0": 0.5, "direction": "min", "source": "derived"},
+        {"id": "B-CURRENT-PULL-P99", "allowanceVsA0": 1.0, "direction": "max", "source": "derived: the current path must not be slower than ledger-only"},
+        {"id": "B-COMMIT-P99", "allowanceVsA0": 1.25, "direction": "max", "source": "derived from NS-P1-WRITER-P99-RATIO-256"},
+        {"id": "B-MEMORY-PEAK", "allowanceVsA0": 1.5, "direction": "max", "source": "derived"},
+        {"id": "B-DISK-PEAK", "allowanceVsA0": 2.0, "direction": "max", "source": "derived"},
+    ],
+}
+
+WRITER_TRACE = {
+    "source": "lab/TARGETS.md section 2 (fixed workload, from Sam's paste)",
+    "commandShape": {"factsPerCommand": [{"range": [5, 10], "share": 0.60}, {"range": [11, 25], "share": 0.30}, {"range": [26, 50], "share": 0.10}], "subjectsPerCommand": 1, "documents": "a blob reference for document commands"},
+    "writers": [{"kind": "people", "share": 0.40, "what": "evidence, decisions"}, {"kind": "systems", "share": 0.30, "what": "signals, often duplicated"}, {"kind": "agents", "share": 0.10, "what": "proposals"}, {"kind": "runtime", "share": 0.20, "what": "action outcomes"}],
+    "rate": {"steadyFactsPerSecond": 15, "burst": {"factsPerSecond": 750, "durationS": 60, "everyS": 600}},
+    "duplicates": {"systemSignalsResentShare": 0.10, "sameCommandId": True},
+    "lostAck": {"commandsShare": 0.01, "retried": True},
+    "corrections": {"commandsShare": 0.01, "validTimeBackDays": 30},
+    "readsPerWrite": {"range": [10, 100], "what": "each command triggers a reconcile pull at the returned tx, dependency lookups, projection updates and UI refreshes"},
+    "conflicts": "optimistic compare-and-set on the subject's last position; serial per subject, parallel across subjects",
+    "bulkLane": "separate and throttled; used only by the bulk measurements",
+    "seeded": "a recorded seed fixes the whole trace; the same seed gives the same bytes",
+}
+
+
+def build_load_contract():
+    T = THRESHOLDS
+    doc = {
+        "format": "triplex-db-2/load-contract/2", "version": VERSION, "generatedBy": "lab/acceptance/build_contract.py",
+        "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
+        "obligations": [o["id"] for o in OBL if o["id"].startswith(("NS.", "GS."))],
+        "population": "SCALE_POPULATION year-one (obligations.json scalePopulation), on one identified profile and composition",
+        "writerTrace": WRITER_TRACE,
+        "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
+        "measurements": {
+            "P1": {"readers": "closed-loop, zero think time, each reader a distinct client id", "levels": [0, 1, 4, 16, 64, 256], "stress": 1024, "zeroReaderBaseline": "level 0 = writer trace alone, same run",
+                   "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 50% the current basis, 25% a basis within the last hour, 25% a basis up to 30 days back",
+                   "record": ["correctness-qualified read goodput per level", "read p50, p99 per level", "writer commit latency p50, p99, max and throughput per level"],
+                   "bars": [k for k in NS_LADDER], "recovery": "after the 1,024 window, readers return to 256; 30 s evaluation windows sliding by 5 s; recovery time = end of the first window meeting every 256-level bar; must be within NS-P1-RECOVERY-MS"},
+            "P2": {"probe": "one command of 10 facts about one subject (also 5 and 50, reported) issued at 1 per second on top of the writer trace, with 256 P1 readers running", "ryow": "the probe's next pull at the returned tx", "idempotency": "the trace's duplicates and lost ACKs", "bars": ["NS-P2-COMMIT-P50-MS", "NS-P2-COMMIT-P99-MS", "NS-P2-RYOW-FRACTION", "NS-P2-DUP-RECEIPT-FRACTION"]},
+            "P3": {"consumer": "one feed consumer computing affected subjects; one restart from checkpoint per run", "lag": "commit ACK to affected subjects known", "bars": ["NS-P3-GAPS-MAX", "NS-P3-ORDER-VIOLATIONS-MAX", "NS-P3-LAG-P99-MS"]},
+            "P4": {"probe": "single client, subject pulls at the current basis over subjects in TP-PULL (3 to 6 hops, 50 to 2,000 facts)", "throughput": "closed-loop pulls with the engine pinned to a recorded core count; pulls/s divided by cores", "history": "repeat on subjects in history strata H1, H3, H10; compare p50 latency and bytes read", "bars": ["NS-P4-PULL-P50-MS", "NS-P4-PULL-P99-MS", "NS-P4-PULLS-PER-CORE", "NS-P4-HISTORY-FLATNESS"]},
+            "P5": {"sweep": "100k subjects pulled at one pinned basis", "concurrent": "the writer trace and 64 live readers", "noSweepBaseline": "same run, same 64 readers and writer trace, before the sweep", "bars": ["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS"]},
+            "secondary": {"bulk": "a 1M-fact import through the bulk lane with 64 live readers; bar NS-SEC-BULK-READ-P99-RATIO", "retroactive": "1,000 corrections 30 days back; feed valid-time range and explain at the old basis checked", "audit": "explain at a past basis, repeated three times; bit-for-bit identical"},
+        },
+        "windows": {"warmupS": 120, "perLadderLevelS": 600, "note": "derived: 600 s covers one full burst cycle of the writer trace (60 s at 750 facts/s every 600 s)"},
+        "runs": T["T-RUNS"]["value"],
+        "invariants": ["every read names its basis and its answer is compared with O-REPLAY at that basis; a wrong answer scores zero", "every command gets one receipt; duplicates and lost ACKs return the original receipt (COMMIT_OUTCOMES)", "success receipts only after publication", "no engine restart, crash or OOM inside a measurement window unless the scenario injects it", "receipt validity VA"],
+        "bars": {k: v for k, v in T.items() if v["kind"] == "ns"},
+        "calibration": {"obligation": "NS.calibration", "rule": CALIBRATION_RULE, "procedure": [
+            "C1 preconditions: S.population.year-one closed (VA) on the control profile; this file's sha256 recorded",
+            "C2 run every measurement once per lane on the control profile with the fixed writer trace",
+            "C3 for each NS bar, record the measured value; keep the bar, tighten it, or mark UNATTAINABLE with the measurement (loosening needs Sam)",
+            "C4 write the create-only calibration record (VC); acceptance runs cite it"]},
+    }
+    return doc
 
 
 # ============================================================================ checks
@@ -1356,18 +1533,69 @@ BANNED_TEXT = [
     (r"open question", "obsolete open-question language"),
     (r"REPORT\.md", "references to REPORT.md questions"),
     (r"EP-CLI", "CLI entrypoint (RULINGS Q7)"),
-    (r"CLI inspects", "CLI requirement (RULINGS Q7)"),
     (r"non-decreasing", "false clock model (review finding 7)"),
     (r"preserved through \+ 0\.0", "wrong signed-zero rule (review finding 8)"),
-    (r"proposedFloor|proposedCeiling", "unsourced proposed floors (RULINGS Q2 adopted them)"),
-    (r"hardFloor\"?: 16\b", "rate16 floor (RULINGS Q2)"),
-    (r"\u2014", "em-dash"),
+    (r"—", "em-dash"),
+    # superseded targets (RESCOPE; the generator fails if any reappears)
+    (r"256 requests", "superseded generic load bar"),
+    (r"25\.6", "superseded command rate"),
+    (r"230\.4", "superseded read rate"),
+    (r"frozen overload policy", "superseded stress profile"),
+    (r"\b512\b", "superseded 512-client stress level"),
+    (r"L\.accept|L\.stress|L\.smoke|L\.recovery|L\.calibration|accept-256|stress-1024", "superseded load obligations"),
+    (r"(?i)exact int64|exact signed 64|full signed 64-bit range is required|int64 beyond 2\^53 is required", "superseded exact int64 requirement"),
+    (r"(?i)scale target|performance target of 10m|10m-entity / 100m-fact", "10m/100m as a performance target"),
+    (r"HELD", "hold markers (the hold ended with the re-scope)"),
 ]
 
 
 def ruling_checks():
     e = []
     obl = {o["id"]: o for o in OBL}
+    for r in RULINGS:
+        if r.get("status") not in (None, "SUPERSEDED"):
+            e.append(f"{r['id']}: unknown status")
+    # RESCOPE
+    for sid in ("NS", "GS", "S"):
+        if sid not in dict(SECTIONS):
+            e.append(f"RESCOPE: section {sid} missing")
+    if "L" in dict(SECTIONS):
+        e.append("RESCOPE: the old load section must be gone")
+    for pid in ("NS.P1", "NS.P2", "NS.P3", "NS.P4", "NS.P5"):
+        if pid not in obl:
+            e.append(f"RESCOPE: {pid} missing")
+    for pid in ("NS.P1", "NS.P4", "NS.P5"):
+        if pid in obl and (obl[pid]["lanes"] != LANES or obl[pid]["receiptScope"] != "lane"):
+            e.append(f"RESCOPE: {pid} must be measured per surface")
+    if sorted(o["id"] for o in OBL if o["id"].startswith("GS.")) != [f"GS.{i:02d}" for i in range(1, 21)]:
+        e.append("RESCOPE: exactly GS.01 to GS.20 required")
+    for o in OBL:
+        if o["id"].startswith("GS.") and not ({"O-REPLAY", "O-HAND"} & set(o["oracles"])):
+            e.append(f"RESCOPE: {o['id']} needs O-REPLAY or O-HAND")
+    if len([o for o in OBL if o["id"].startswith("REQ.")]) != 10 or any("never removes an engine" not in o["statement"] for o in OBL if o["id"].startswith("REQ.")):
+        e.append("RESCOPE: ten requirements, never knockout")
+    want = {"NS-P1-READ-P99-256-MS": 100, "NS-P1-WRITER-P99-RATIO-256": 1.25, "NS-P1-WRITER-WAIT-MAX-MS": 2000, "NS-P1-GOODPUT-1024-VS-256": 0.9, "NS-P1-WRITER-P99-RATIO-1024": 2.0, "NS-P1-RECOVERY-MS": 60000,
+            "NS-P2-COMMIT-P50-MS": 10, "NS-P2-COMMIT-P99-MS": 50, "NS-P3-LAG-P99-MS": 250, "NS-P4-PULL-P50-MS": 5, "NS-P4-PULL-P99-MS": 25, "NS-P4-PULLS-PER-CORE": 1100,
+            "NS-P5-SWEEP-S": 100, "NS-P5-LIVE-READ-P99-RATIO": 1.5, "NS-P5-WRITER-P99-RATIO": 1.5, "NS-SEC-BULK-READ-P99-RATIO": 1.5}
+    for k, v in want.items():
+        if THRESHOLDS.get(k, {}).get("value") != v:
+            e.append(f"RESCOPE: {k} must be the TARGETS bar {v}")
+    if WRITER_TRACE["rate"] != {"steadyFactsPerSecond": 15, "burst": {"factsPerSecond": 750, "durationS": 60, "everyS": 600}}:
+        e.append("RESCOPE: writer trace rate")
+    if SCALE_POPULATION["rungs"] != [10000, 100000, 1000000, 10000000] or SCALE_POPULATION["atYearOne"]["entities"] != 10000000 or SCALE_POPULATION["atYearOne"]["activeDomainFacts"] != 100000000:
+        e.append("RESCOPE: year-one population")
+    if "never loosen" not in CALIBRATION_RULE and "Loosening any value needs Sam" not in CALIBRATION_RULE:
+        e.append("RESCOPE: calibration rule")
+    # NUMERIC
+    if INTEGER_MIN_RANGE < 2 ** 53 - 1:
+        e.append("NUMERIC: integer range below 2^53")
+    for k in ("G1.types.out-of-range-rejected", "G1.types.decimal", "G2.arith.integer-exact", "G5.agg.projection-sums", "REQ.no-silent-precision-loss"):
+        if k not in obl:
+            e.append(f"NUMERIC: {k} missing")
+    if "decimal" not in [v["kind"] for v in VALUE_KINDS]:
+        e.append("NUMERIC: decimal value kind")
+    if any(RAW_PARITY_CLASSES.get("RP-ARITH", [])) or any(r["n"] in (19, 20, 21, 22, 23, 24, 50) and (r["rawRequired"] or r["fragmentCoverage"]) for r in MATRIX_ROWS):
+        e.append("NUMERIC: engine-side arithmetic must not be required (kernel arithmetic; projections only)")
     # Q1
     raw_req_kl = {(r["n"], c) for r in MATRIX_ROWS for c, v in r["cells"].items() if COL_SURFACE[c] == "raw" and v[0] == "KL" and r["rawRequired"]}
     lanecol = {"xtdb-xtql": "x_raw", "xtdb-sql": "s_raw", "qlever-sparql": "q_raw"}
@@ -1377,71 +1605,59 @@ def ruling_checks():
     for x in RAW_EXCEPTIONS:
         if not (x["mappedRecipe"] and x["qualifiedBy"] in obl and x["diagnostic"] in {d["id"] for d in DIAGNOSTICS}):
             e.append(f"Q1: exception {x['id']} incomplete")
-        if x["lane"] in X and x["row"] in (19, 21, 22):
-            e.append(f"Q1: XTDB arithmetic must not be exempted ({x['id']})")
+        if x["row"] in (4, 10, 22) and x["lane"] == "qlever-sparql":
+            e.append(f"Q1: QLever integers beyond 2^59 are rejected at write, not exempted ({x['id']})")
     for r in MATRIX_ROWS:
         if r["fragmentCoverage"]:
             for c in ("x_frag", "s_frag", "q_frag"):
-                if r["cells"].get(c, ("",))[0] == "NA":
+                v = r["cells"].get(c, ("",))
+                if v[0] == "NA" and v is not REJECT_Q:
                     e.append(f"Q1: coverage row {r['n']} has N/A fragment cell {c}")
-    if "G4.neg.correlated-not-exists-raw" in obl and "qlever-sparql" in obl["G4.neg.correlated-not-exists-raw"]["lanes"]:
+    if "qlever-sparql" in obl["G4.neg.correlated-not-exists-raw"]["lanes"]:
         e.append("Q1: QLever raw correlated negation must be an exception, not an obligation")
-    # Q2, Q4, Q11: HELD. load-contract.json and the S/L obligations stay byte-identical to 0.1.0.
-    for q in ("Q2", "Q4", "Q11"):
-        if next(r for r in RULINGS if r["id"] == q).get("status") != "HELD":
-            e.append(f"{q}: must be HELD during the hold")
-    if sha_file("lab/acceptance/load-contract.json") != LOAD_CONTRACT_SHA256_0_1:
-        e.append("HOLD: load-contract.json changed")
-    if sha_file(HELD_FILE) != HELD_FILE_SHA256:
-        e.append("HOLD: held S/L obligations changed")
-    if any(set(o["goals"]) & {"S", "L"} for o in OBL):
-        e.append("HOLD: an active obligation counts toward S or L")
-    if any(isinstance(v["value"], (int, float)) for k, v in THRESHOLDS.items() if v["kind"] in ("perf", "observe", "witness")):
-        e.append("HOLD: a performance threshold has a value")
     # Q3
     if not any(h["id"] == "HS-NORMALIZE" and "reads no data" in h["rule"] and "counted inside" in h["rule"] for h in LANGUAGE_RULES["permittedHostSteps"]):
         e.append("Q3: host step rule")
-    # Q5
     if obl["R.raw.guide-only-authoring"]["grounding"] != "grounded" or "fresh agent" not in obl["R.raw.guide-only-authoring"]["statement"]:
         e.append("Q5")
-    # Q6
     if obl["G9.lineage.supporting-assertions"]["grounding"] != "grounded" or "assertion ids and transactions" not in obl["G9.lineage.supporting-assertions"]["statement"]:
         e.append("Q6")
-    # Q7
     if "EP-CLI" in ENTRYPOINTS or any("CLI" in o["statement"] for o in OBL):
         e.append("Q7: CLI must not be required")
-    # Q8
-    if not any(a["id"] == "AG-SUM-I" and "final total" in a["rule"] for a in AGGREGATE_RULES):
+    if not any(a["id"] == "AG-SUM-I" and "final total" in a["rule"] and "projection" in a["rule"] for a in AGGREGATE_RULES):
         e.append("Q8a")
     if not any(a["id"] == "AG-AVG-I" and "preflight" in a["rule"] for a in AGGREGATE_RULES):
         e.append("Q8b")
     if not any(n["id"] == "N-F-ARITH" and "E-DIVISION-BY-ZERO" in n["rule"] for n in NUMERIC_OPS):
         e.append("Q8c")
-    if not any(c["id"] == "CMP-INT-FLOAT" and "never share a group" in c["rule"] for c in COMPARISON_RULES):
-        e.append("Q8d")
+    if not any(c["id"] == "CMP-INT-FLOAT" and "never share a group" in c["rule"] and "E-MIXED-FAMILY" in c["rule"] for c in COMPARISON_RULES):
+        e.append("Q8d/Q14d")
     if "Equal-valued duplicates are not conflicts" not in obl["G4.neg.conflict-semantics"]["statement"] or "C5-EQ-DUP" not in CS["CS-CONFLICT"]["requiredCases"]:
         e.append("Q8e")
-    if "duplicates" not in CARD_MANY_ORDER["rule"] and "collapse" not in CARD_MANY_ORDER["rule"]:
-        e.append("Q8f")
+    if CARD_MANY_ORDER["familyOrder"][:3] != ["boolean", "integer", "number"] or CARD_MANY_ORDER["familyOrder"][-4:] != ["string", "ref", "json", "blob"]:
+        e.append("Q8f/Q14a")
     nz = dict(next(n for n in NUMERIC_OPS if n["id"] == "N-F-NEGZERO")["examples"])
     if nz.get("-0.0 + 0.0") != "+0.0" or nz.get("-0.0 * -1.0") != "+0.0":
-        e.append("Q8: signed zero examples (review finding 8)")
-    # Q9
+        e.append("signed zero examples (review finding 8)")
+    if not any(c["id"] == "CMP-NEGZERO" and "lowest recorded position" in c["rule"] for c in COMPARISON_RULES):
+        e.append("Q14b")
+    if not any(a["id"] == "AG-SUM-F" and "correctly rounded" in a["rule"] for a in AGGREGATE_RULES):
+        e.append("Q14c")
     for oid in ("G9.presence.explicit", "G9.deletion.entity", "G9.cascade.restrict-detach-cascade"):
         if obl[oid]["grounding"] != "policy-pending":
             e.append(f"Q9: {oid}")
-    # Q10
-    if "every load level, rung and run" not in VERIFIER_MODES["re-evaluate-and-spot"] or "per profile unit" not in VERIFIER_MODES["re-evaluate-and-spot"]:
+    if "every ladder level, scenario, rung and run" not in VERIFIER_MODES["re-evaluate-and-spot"] or "per profile unit" not in VERIFIER_MODES["re-evaluate-and-spot"]:
         e.append("Q10")
-    # Q12
     st = obl["G4.neg.conflict-semantics"]["statement"]
     if not ("E-CONFLICTING-VALUES" in st and "values(attribute)" in st and "never certifies" in st):
         e.append("Q12")
+    if "split-sum" not in obl["G5.agg.projection-sums"]["statement"]:
+        e.append("Q13")
     return e
 
 
 def verifier_mode(o):
-    return "re-evaluate-and-spot" if set(o["profiles"]) & {"P-YEAR-ONE", "P-LOAD", "P-RUNGS"} else "rerun"
+    return "re-evaluate-and-spot" if set(o["profiles"]) & {"P-YEAR-ONE", "P-NS", "P-RUNGS"} else "rerun"
 
 
 def validate():
@@ -1491,8 +1707,8 @@ def validate():
                 e.append(f"{oid}: threshold {t}")
                 continue
             need = THRESHOLD_RULE_FOR_KIND[THRESHOLDS[t]["kind"]]
-            if need and need not in o["closure"]["rules"]:
-                e.append(f"{oid}: threshold {t} ({THRESHOLDS[t]['kind']}) needs {need}")
+            if need and not set(need) & set(o["closure"]["rules"]):
+                e.append(f"{oid}: threshold {t} ({THRESHOLDS[t]['kind']}) needs one of {need}")
         if "CR-PERF" in o["closure"]["rules"] and not any(THRESHOLDS.get(t, {}).get("kind") == "perf" for t in o["thresholds"]):
             e.append(f"{oid}: CR-PERF without a perf threshold")
         if "CR-WITNESS" in o["closure"]["rules"] and not any(THRESHOLDS.get(t, {}).get("kind") == "witness" for t in o["thresholds"]):
@@ -1520,9 +1736,9 @@ def validate():
         for m in re.findall(r"\bOBS-[A-Z0-9-]+[A-Z0-9]\b", st):
             if m not in OBS_PROTOCOLS and m not in PLAN_PROTOCOLS:
                 e.append(f"{oid}: unknown protocol {m}")
-        if re.search(r"\b10m\b|10,000,000", st) and not set(o["profiles"]) & {"P-YEAR-ONE", "P-RUNGS", "P-LOAD"}:
+        if re.search(r"\b10m\b|10,000,000", st) and not set(o["profiles"]) & {"P-YEAR-ONE", "P-RUNGS", "P-NS"}:
             e.append(f"{oid}: statement is about 10m but profile is not")
-        if re.search(r"concurrent|race|between calls|writer committed", st) and not set(o["profiles"]) & {"P-TINY-CONC", "P-FAULT", "P-LOAD", "P-RUNGS", "P-YEAR-ONE", "P-RUNG-1M"} and o["id"] != "G6.ownership.bounded-connections":
+        if re.search(r"concurrent|race|between calls|writer committed", st) and not set(o["profiles"]) & {"P-TINY-CONC", "P-FAULT", "P-NS", "P-RUNGS", "P-YEAR-ONE", "P-RUNG-1M"} and o["id"] != "G6.ownership.bounded-connections":
             e.append(f"{oid}: concurrency in statement but no concurrent profile")
         if "E-" in st and "O-ERR" not in o["oracles"] and "E-" not in "".join(o["sources"]):
             pass
@@ -1534,7 +1750,7 @@ def validate():
     # coverage of sections per lane
     for g, _ in SECTIONS:
         for lane in LANES:
-            if not any(g in o["goals"] and lane in o["lanes"] for o in OBL + HELD):
+            if not any(g in o["goals"] and lane in o["lanes"] for o in OBL):
                 e.append(f"section {g} has nothing for {lane}")
     # traceability
     for c in ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8"]:
@@ -1569,9 +1785,9 @@ def validate():
         if t not in used:
             e.append(f"threshold {t} unused")
         if d["value"] in (None, "CALIBRATE"):
-            e.append(f"threshold {t} has no value (use a number or HELD)")
-        if d["value"] == "HELD" and d["kind"] == "count":
-            e.append(f"threshold {t}: structural counts are not held")
+            e.append(f"threshold {t} has no value")
+        if not isinstance(d["value"], (int, float)):
+            e.append(f"threshold {t}: value must be a number")
     # matrix
     for r in MATRIX_ROWS:
         for c, v in r["cells"].items():
@@ -1582,7 +1798,7 @@ def validate():
                     if k not in KNOWN_LIMITS:
                         e.append(f"matrix row {r['n']}: unknown {k}")
         for ob in r["requiredBy"]:
-            if ob not in obl and ob not in HELD_IDS:
+            if ob not in obl:
                 e.append(f"matrix row {r['n']}: requiredBy {ob} unknown")
     # validity DAG
     seen, stack = set(), set()
@@ -1704,23 +1920,32 @@ def md_table(headers, rows):
     return "\n".join(out)
 
 
-CHANGELOG = [
+CHANGELOG_020 = [
     ("1", "Rulings and obligations disagreed (CLI, equal duplicates)", "Every ruling compiled into build_contract.py with a generator check per ruling (section 3); obligations.json is the only authority; the CLI entrypoint removed; G4.neg.conflict-semantics follows C5 (equal duplicates are one value); banned-text check removes obsolete wording."),
     ("2", "Q1 exempted whole rows", "Per-cell RAW_EXCEPTIONS (28 cells) each with mapped recipe, guide entry, qualifying obligation R.raw.mapped-recipes and case, and diagnostic; XTDB scalar arithmetic stays required; fixed fragment coverage set."),
-    ("3", "Load JSON allowed the rate16 outcome", "HELD. Orchestrator hold 2026-11-07: load-contract.json, the S and L obligations, the Q2 load bar and every performance threshold stay unchanged until the north-star follow-up (lab/NORTH-STAR.md). The generator verifies load-contract.json is byte-identical to 0.1.0."),
-    ("4", "Q11 halved per-language demand", "HELD with finding 3."),
+    ("3", "Load JSON allowed a self-calibrated bar", "Superseded in 0.3.0 by the NS measurements: fixed TARGETS bars, calibration tightens only, loosening needs Sam."),
+    ("4", "Q11 halved per-language demand", "P1, P4 and P5 are measured separately per surface (0.3.0)."),
     ("5", "Recovery could lose a committed unACKed command", "COMMIT_OUTCOMES binds expected outcomes to witnessed transitions; QT2-LOGGED groups must publish; retries before publication return CommitPending or Repairing; success only after publication (G7.commit.protocol-transitions, mutant M-EARLY-ACK)."),
     ("6", "C1-C7 lacked discriminating cases", "C1-C8 traceability table (section 9) with named cases mapped to new obligations G8.eligibility.c1-routing, G7.commit.protocol-transitions, G7.broker.fence-and-epochs, G8.maintenance.bounded-boundaries, G7.journal.logical-contract, G10.scope.ownership-refusal, G10.scope.shared-collision, G3.recursion.read-only-frontier."),
     ("7", "O-REPLAY clock model and outcome authority", "Spec rewritten (6.1): no monotonic-clock assumption, decreasing-clock histories, R independent of P, nested position accounting, outcomes derived from command intent and durable-decision evidence, receipts compared afterwards."),
     ("8", "Wrong or unspecified expected answers", "Frozen tables (section 4): numeric operations with correct signed-zero rules, conversions, comparisons, aggregates (Q8a, Q8b preflight AVG), card-many order, constraint enforcement new-or-worsened only, every error pinned."),
     ("9", "Oracle specs did not cover their claims", "Separate normative protocols: O-OBS (OBS-*), O-PLAN (route, access path, cost), O-SHAPE (bag/set, grouping, unbound handling), O-SPEC (exact types, no accidental any, pinned diagnostics), O-ERR compiled from ERROR_TABLE."),
     ("10", "Machine contract mostly prose; contradictions", "Typed receipt and evidence schemas, selector semantics, threshold registry with closure-rule dependencies, structured closure rules that recompute from retained evidence; G10.cursor.stable split (deep-page cost at 10m is its own obligation), G7.write.atomic selects CS-WRITE and CS-FAULT, every threshold tied to its rule (values HELD where they are performance targets); scale sample counts HELD with finding 3."),
-    ("11", "Auxiliary evidence had no validity path", "Validity classes VC, VA, VM, VV with an acyclic dependency check; L.calibration.frozen closes through CR-CALIBRATION; MUTANT_RULE requires reach and an identified semantic assertion failure."),
-    ("12", "Carry-forward reopened the final-acceptance loophole", "APPLICABILITY restores PLAN 1.7: all bound identities, explicit applicability record, final acceptance entirely fresh including scale and load; verifier mode per obligation."),
-    ("13", "Population counts could pass with trivial history", "HELD with finding 3 (S obligations unchanged). A non-binding draft population (history strata 1/3/10, topology and skew, same-R, decreasing-R and nested events, result-cardinality strata) is kept as heldDrafts.scalePopulation for the follow-up."),
-    ("14", "Goal 8 could be green without reuse; no budgets", "Structural part done: G8.reuse.positive-witness and G8.support.incremental-witness with OBS-WORK witnesses (threshold values HELD). budgets.json and its allowances are HELD with finding 3."),
+    ("11", "Auxiliary evidence had no validity path", "Validity classes VC, VA, VM, VV with an acyclic dependency check; calibration closes through CR-CALIBRATION; MUTANT_RULE requires reach and an identified semantic assertion failure."),
+    ("12", "Carry-forward reopened the final-acceptance loophole", "APPLICABILITY restores PLAN 1.7: all bound identities, explicit applicability record, final acceptance entirely fresh including the year-one population and every NS and GS run; verifier mode per obligation."),
+    ("13", "Population counts could pass with trivial history", "Year-one population with frozen history strata 1/3/10, topology, skew, tenants and result cardinalities; correctness per rung (0.3.0)."),
+    ("14", "Goal 8 could be green without reuse; no budgets", "Positive reuse and incremental-maintenance witnesses with OBS-WORK thresholds; budgets.json frozen before candidates with cumulative A0 comparison (0.3.0)."),
     ("15", "Typed errors could replace historical functionality", "CURSOR_TRANSITIONS enumerates twelve transitions that must continue and five narrow permitted errors (G10.cursor.continuation-transitions)."),
     ("16", "C8 recursion counted as hybrid", "FRONTIER_RULES define permitted host frontier control (HS-FRONTIER), fixed cut, bounds, cost and no mutation; such tasks count as pure."),
+]
+
+
+CHANGELOG_030 = [
+    ("Re-scope", "Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md)", "The old generic load and stress section, its obligations, the old load contract and the hold are removed. New sections NS (P1 to P5, measured on the fixed writer trace; P1, P4, P5 per surface) and GS (GS.01 to GS.20); ten REQ obligations mapped to their goals with native-or-workaround closure; S is now the year-one measurement population, rungs and budgets."),
+    ("Thresholds", "Provisional bars", "Every NS-* threshold is the TARGETS section 1 bar; non-NS thresholds are fixed values derived from those bars (marked derived); calibration tightens only, loosening needs Sam."),
+    ("Numbers", "No silent precision loss", "VALUE_KINDS with a new decimal kind; LANE_INTEGER_RANGE (at least 2^53 on every lane; QLever rejects beyond +/-2^59 at write); G1.types.out-of-range-rejected and G1.types.decimal; G2.arith.integer-exact (kernel); G5.agg.projection-sums (engine-side sums only where a projection needs them, split-sum on XTDB); engine-side arithmetic rows are no longer required; QLever integer raw exceptions removed (reject at write)."),
+    ("Rulings", "Q13 to Q15 and superseded rulings", "Compiled: Q13 split-sum recipe, Q14a family order, Q14b signed-zero representation by lowest recorded position, Q14c correctly rounded binary64 SUM, Q14d preflight error, Q15 error tags; Q2, Q4, Q11 marked superseded."),
+    ("Artifacts", "Generated outputs", "load-contract.json (writer trace, P1 ladder, P2 to P4 probes, P5 sweep, secondary) and budgets.json are generated again; the generator fails if a superseded target string reappears."),
 ]
 
 
@@ -1732,14 +1957,17 @@ def render_acceptance(doc, cells, counts):
     A("**Generated by `python3 -I lab/acceptance/build_contract.py`. Do not edit this file.** `obligations.json` is the only authority an evaluator reads; this file renders it for people. Where any text here and `obligations.json` differ, `obligations.json` wins.\n")
     A(f"Transitive contract hash: `{doc['transitiveContractSha256']}`.\n")
     A("## 0. Change log\n")
-    A("### 0.2.0 (this version): response to `lab/reviews/acceptance-review-r1.codex.md` and `lab/acceptance/RULINGS.md`\n")
-    A(md_table(["Review finding", "Problem", "Change"], CHANGELOG))
+    A("### 0.3.0 (this version): retargeted to Sam's re-scope\n")
+    A(md_table(["Area", "What", "Change"], CHANGELOG_030))
+    A("\n### 0.2.0: response to `lab/reviews/acceptance-review-r1.codex.md`\n")
+    A(md_table(["Review finding", "Problem", "Change"], CHANGELOG_020))
     A("\n### 0.1.0-draft\n\nFirst draft (88 obligations). Superseded.\n")
     A("## 1. How to read this contract\n")
     A("- **One obligation is one binary fact.** It has an id, a statement, lanes, case selections, oracles, entrypoints, profiles, a closure (rules, modes, thresholds), mutation controls, the PLAN contracts it traces, sources, a grounding label and a verifier mode.")
     A("- **Every status is OPEN.** No acceptance receipt exists for any obligation.")
-    A("- **Hold (orchestrator, 2026-11-07).** Sam is re-tuning performance targets (`lab/NORTH-STAR.md`). Until the follow-up: `load-contract.json` is byte-identical to 0.1.0; every S and L obligation and `G8.support.maintenance-cost` are carried verbatim from 0.1.0 (`heldObligations`); rulings Q2, Q4 and Q11 are not compiled; every performance threshold has value HELD; `budgets.json` is not written; the scale population is a non-binding draft. " + HOLD_RULE)
-    A("- **Artifacts.** `obligations.json` (authority, generated), `capability-matrix.md` (generated), this file (generated), `load-contract.json` (0.1.0, held), `held/s-l-obligations-0.1.0.json` (held input).\n")
+    A("- **Authority for goals and targets.** `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md` and `lab/research/SAM-pasted-numbers-2026-11-07.md` (Sam, 2026-11-07), compiled with `RULINGS.md` into `obligations.json`. Correctness is the floor on every priority: a fast wrong answer scores zero.")
+    A("- **Values this contract chose.** Thresholds whose source says `derived`, the reader read mix and window lengths in `load-contract.json`, and the A0 allowances in `budgets.json` are values no source states; they are fixed so evaluation is mechanical, and changing one is a contract version.")
+    A("- **Artifacts.** `obligations.json` (authority), `load-contract.json`, `budgets.json`, `capability-matrix.md`, this file. All generated.\n")
     A("## 2. Done predicate (PLAN v1.1 section 1)\n")
     A("```")
     A("done(T) = for one identified integrated profile T per surface")
@@ -1763,9 +1991,14 @@ def render_acceptance(doc, cells, counts):
     A("")
     A("## 3. Compiled rulings\n")
     A("Each ruling of `RULINGS.md` is compiled into the named data and checked by the generator (`ruling_checks`). The build fails if any check fails.\n")
-    A(md_table(["Ruling", "Topic", "Compiled ruling", "Compiled into", "Check"], [[r["id"], r["topic"], ("HELD, not compiled in 0.2.0: " if r.get("status") == "HELD" else "") + r["ruling"], ", ".join(r["compiledInto"]) if r.get("status") != "HELD" else "held (orchestrator hold 2026-11-07)", r.get("status", "PASS")] for r in RULINGS]))
+    A(md_table(["Ruling", "Topic", "Compiled ruling", "Compiled into", "Check"], [[r["id"], r["topic"], r["ruling"], ", ".join(r["compiledInto"]) or "-", r.get("status", "PASS")] for r in RULINGS]))
     A("\n## 4. Frozen semantic tables (expected-answer authority)\n")
     A("A later change in production behavior never changes an expected answer automatically; it needs a contract version.\n")
+    A("### 4.0 Value kinds and the numeric rule (NUMERIC)\n")
+    A(md_table(["Kind", "Rule"], [[v["kind"], v["rule"]] for v in VALUE_KINDS]))
+    A("")
+    A(md_table(["Engine", "Declared integer range", "Rule"], [[k, v["declared"], v["rule"]] for k, v in LANE_INTEGER_RANGE.items()]))
+    A(f"\nEvery lane accepts at least [-(2^53-1), 2^53-1]. {RANGE_RULE}\n")
     A("### 4.1 Numeric operations\n")
     A(md_table(["Id", "Operation", "Rule", "Examples", "Source"], [[n["id"], n["op"], n["rule"], "; ".join(f"{a} = {b}" for a, b in n["examples"]), n["source"]] for n in NUMERIC_OPS]))
     A("\n### 4.2 Conversions\n")
@@ -1788,7 +2021,7 @@ def render_acceptance(doc, cells, counts):
     A(md_table(["Kind", "Fields"], list(EVIDENCE_KINDS.items())))
     A("\n### 5.3 Selector semantics\n\n" + SELECTOR_SEMANTICS + "\n")
     A("### 5.4 Threshold registry\n")
-    A(HOLD_RULE + " " + CALIBRATION_RULE + "\n")
+    A(CALIBRATION_RULE + "\n")
     A(md_table(["Id", "Kind", "Value", "Bound", "Unit", "Source", "Closure rule"], [[k, v["kind"], v["value"], v["bound"], v["unit"], v["source"], THRESHOLD_RULE_FOR_KIND[v["kind"]] or "count (checked inside the rule that uses it)"] for k, v in THRESHOLDS.items()]))
     A("\n### 5.5 Validity classes\n")
     for k, v in VALIDITY.items():
@@ -1902,8 +2135,31 @@ def render_acceptance(doc, cells, counts):
     A(md_table(["Must continue", "Transition"], [[t["id"], t["transition"]] for t in CURSOR_TRANSITIONS["mustContinue"]]))
     A("")
     A(md_table(["Permitted error case", "Error", "Reason", "Only when"], [[x["id"], x["error"], x["reason"], x["when"]] for x in CURSOR_TRANSITIONS["permittedErrors"]]))
-    A("\n## 8. Scale population and budgets (HELD)\n")
-    A("Held until the north-star follow-up. A non-binding draft prepared before the hold is kept in `obligations.json` `heldDrafts.scalePopulation` (history strata 1/3/10 from the benchmark contract, topology and skew strata, same-R, decreasing-R and nested-transaction events, result-cardinality strata). Budget components for complete-path accounting are frozen as structure: " + ", ".join(BUDGET_COMPONENTS) + "; the budget values and `budgets.json` are held.\n")
+    A("\n## 8. North-star workload, golden scenarios, year-one population and budgets\n")
+    A("### 8.1 Fixed writer trace (TARGETS section 2)\n")
+    W = WRITER_TRACE
+    A(md_table(["Item", "Value"], [
+        ["Command shape", "; ".join(f"{c['range'][0]} to {c['range'][1]} facts: {c['share']}" for c in W["commandShape"]["factsPerCommand"]) + "; one subject per command; blob reference for documents"],
+        ["Writers", "; ".join(f"{w['kind']} {w['share']} ({w['what']})" for w in W["writers"])],
+        ["Rate", f"steady {W['rate']['steadyFactsPerSecond']} facts/s; bursts {W['rate']['burst']['factsPerSecond']} facts/s for {W['rate']['burst']['durationS']} s every {W['rate']['burst']['everyS']} s"],
+        ["Duplicates", f"{W['duplicates']['systemSignalsResentShare']} of system signals re-sent with the same commandId"],
+        ["Lost ACKs", f"{W['lostAck']['commandsShare']} of commands, retried"],
+        ["Corrections", f"{W['corrections']['commandsShare']} of commands, valid time {W['corrections']['validTimeBackDays']} days back"],
+        ["Reads per write", f"{W['readsPerWrite']['range'][0]} to {W['readsPerWrite']['range'][1]}: {W['readsPerWrite']['what']}"],
+        ["Conflicts", W["conflicts"]], ["Bulk lane", W["bulkLane"]], ["Seed", W["seeded"]]]))
+    A("\nThe P1 reader ladder, the P2 to P4 probes, the P5 sweep and the secondary measurements are in `load-contract.json`.\n")
+    A("### 8.2 Golden scenario rules (TARGETS section 6)\n")
+    for r in GS_RULES:
+        A(f"- {r}")
+    A("\n### 8.3 Year-one measurement population\n")
+    P = SCALE_POPULATION
+    A(f"Role: {P['role']}. Source: {P['source']}. Rungs: {', '.join(map(str, P['rungs']))}; {P['scaling']}. At year one: {json.dumps(P['atYearOne'])}. Facts per entity: {P['factsPerEntity']}. Written through {P['writtenThrough']}.\n")
+    A(md_table(["Stratum", "Rule"], [[t["id"], t["rule"]] for t in P["tenants"]] + [[h["id"], f"{h['share']}: {h['rule']}"] for h in P["historyStrata"]] + [[x["id"], x["rule"]] for x in P["otherEvents"]] + [[x["id"], x["rule"]] for x in P["topology"]] + [[x["id"], x["rule"]] for x in P["resultCardinality"]]))
+    A(f"\nCounted separately: {', '.join(P['separateCounts'])}.\n\nCorrectness: {P['correctness']}\n")
+    A("### 8.4 Budgets\n")
+    A(f"{BUDGETS['frozenBeforeCandidates']} {BUDGETS['a0Control']} {BUDGETS['cumulative']} {BUDGETS['absolute']}\n")
+    A(md_table(["Budget", "Allowance vs A0", "Direction", "Source"], [[b_["id"], b_["allowanceVsA0"], b_["direction"], b_["source"]] for b_ in BUDGETS["relativeToA0"]]))
+    A("\nComponents counted: " + ", ".join(BUDGET_COMPONENTS) + ".\n")
     A("## 9. PLAN C1-C8 traceability\n")
     A("Each named case must exist in its case set's manifest and stays required even when broader end-state checks pass.\n")
     A(md_table(["Contract", "Case", "Case set", "Observation", "Closing obligation"], [[t["contract"], t["case"], t["set"], t["observation"], t["obligation"]] for t in TRACE]))
@@ -1937,12 +2193,6 @@ def render_acceptance(doc, cells, counts):
             if o["notes"]:
                 A(f"- Notes: {o['notes']}")
             A("- Status: OPEN.\n")
-        held = [o for o in HELD if g in o["goals"]]
-        if held:
-            A("**HELD (verbatim from 0.1.0-draft, not edited during the hold; cannot close until replaced):**\n")
-            for o in held:
-                A(f"- `{o['id']}`: {o['title']}. {o['statement']}")
-            A("")
         if cross:
             A("Also counted here: " + ", ".join(f"`{o['id']}`" for o in cross) + ".\n")
     A("## 11. Counts\n")
@@ -1962,10 +2212,9 @@ def counts_table():
     rows = []
     for g, _ in SECTIONS:
         os_ = [o for o in OBL if g in o["goals"]]
-        hs = [o for o in HELD if g in o["goals"]]
-        rows.append([g] + [sum(1 for o in os_ if l in o["lanes"]) for l in LANES] + [sum(1 for o in os_ if o["grounding"] == "policy-pending"), sum(1 for o in os_ if o["grounding"] == "derived"), sum(1 for o in os_ if any(THRESHOLDS[t]["value"] == "HELD" for t in o["thresholds"])), len(hs)])
-    rows.append(["distinct"] + [sum(1 for o in OBL if l in o["lanes"]) for l in LANES] + [sum(1 for o in OBL if o["grounding"] == "policy-pending"), sum(1 for o in OBL if o["grounding"] == "derived"), sum(1 for o in OBL if any(THRESHOLDS[t]["value"] == "HELD" for t in o["thresholds"])), len(HELD)])
-    return md_table(["Section", "xtdb-xtql (active)", "xtdb-sql (active)", "qlever-sparql (active)", "policy-pending", "derived", "active with HELD thresholds", "held from 0.1.0 (all lanes)"], rows)
+        rows.append([g] + [sum(1 for o in os_ if l in o["lanes"]) for l in LANES] + [sum(1 for o in os_ if o["receiptScope"] == "engine"), sum(1 for o in os_ if o["grounding"] == "policy-pending"), sum(1 for o in os_ if o["grounding"] == "derived")])
+    rows.append(["distinct"] + [sum(1 for o in OBL if l in o["lanes"]) for l in LANES] + [sum(1 for o in OBL if o["receiptScope"] == "engine"), sum(1 for o in OBL if o["grounding"] == "policy-pending"), sum(1 for o in OBL if o["grounding"] == "derived")])
+    return md_table(["Section", "xtdb-xtql", "xtdb-sql", "qlever-sparql", "engine-scoped", "policy-pending", "derived"], rows)
 
 
 def main():
@@ -1975,30 +2224,30 @@ def main():
         o["definitionSha256"] = obligation_hash(o)
         o["status"] = {l: "OPEN" for l in o["lanes"]}
         o["needsNewOracle"] = [x for x in o["oracles"] if ORACLES[x]["status"] not in ("EXISTS", "COMPILED")]
-        o["heldThresholds"] = [t for t in o["thresholds"] if THRESHOLDS[t]["value"] == "HELD"]
     cells = matrix_cells()
     matrix_text = render_matrix(cells)
+    load_text = json.dumps(build_load_contract(), indent=2, ensure_ascii=False) + "\n"
+    budgets_text = json.dumps(BUDGETS, indent=2, ensure_ascii=False) + "\n"
     pinned = {k: v["pinnedSourceFiles"] for k, v in CS.items() if v["pinnedSourceFiles"]}
     oracle_files = {k: [{"path": f, "sha256": sha_file(f)} for f in v["files"] if v["status"] == "EXISTS" and not f.endswith("/")] for k, v in ORACLES.items()}
     doc = {
-        "format": "triplex-db-2/acceptance-obligations/2", "version": VERSION, "status": STATUS, "date": DATE,
-        "authority": "This file is the only authority an evaluator reads. RULINGS.md is compiled into it by build_contract.py; ACCEPTANCE.md and capability-matrix.md are renderings.",
-        "hold": {"by": "orchestrator, 2026-11-07", "reason": "Sam is re-tuning performance targets and requirements (lab/NORTH-STAR.md)",
-                 "held": ["lab/acceptance/load-contract.json (unchanged, sha256 " + LOAD_CONTRACT_SHA256_0_1 + ")", "every S and L obligation and G8.support.maintenance-cost (verbatim 0.1.0, heldObligations)", "rulings Q2, Q4, Q11", "every performance threshold (value HELD)", "budgets.json", "the scale population (heldDrafts.scalePopulation, not binding)"],
-                 "rule": HOLD_RULE},
+        "format": "triplex-db-2/acceptance-obligations/3", "version": VERSION, "status": STATUS, "date": DATE,
+        "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
         "generatedBy": "lab/acceptance/build_contract.py",
-        "inputs": {"RULINGS.md": sha_file("lab/acceptance/RULINGS.md"), "build_contract.py": sha_file("lab/acceptance/build_contract.py"), HELD_FILE: sha_file(HELD_FILE), "load-contract.json": sha_file("lab/acceptance/load-contract.json")},
-        "artifacts": {"capability-matrix.md": sha_text(matrix_text)},
+        "inputs": {f: sha_file(f) for f in SCOPE_SOURCES + ["lab/acceptance/build_contract.py"]},
+        "artifacts": {"load-contract.json": sha_text(load_text), "budgets.json": sha_text(budgets_text), "capability-matrix.md": sha_text(matrix_text)},
         "lanes": LANES, "engineOfLane": ENGINE_OF, "languageOfLane": LANG_OF,
         "sections": [{"id": g, "title": t} for g, t in SECTIONS],
         "rulings": RULINGS, "languageRules": LANGUAGE_RULES, "frontierRules": FRONTIER_RULES,
+        "valueKinds": VALUE_KINDS, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,
-        "thresholds": THRESHOLDS, "holdRule": HOLD_RULE, "calibrationRule": CALIBRATION_RULE, "thresholdRuleForKind": THRESHOLD_RULE_FOR_KIND,
+        "thresholds": THRESHOLDS, "calibrationRule": CALIBRATION_RULE, "thresholdRuleForKind": THRESHOLD_RULE_FOR_KIND,
+        "writerTrace": WRITER_TRACE, "goldenScenarioRules": GS_RULES, "requirements": [{"id": f"REQ.{r[0]}", "goals": r[1], "title": r[3], "xtdbStart": r[4], "qleverStart": r[5]} for r in REQUIREMENTS],
         "oracles": ORACLES, "oracleFilesPinned": oracle_files, "comparators": COMPARATORS,
-        "entrypoints": ENTRYPOINTS, "profiles": PROFILES,
-        "capabilityMatrix": cells, "knownLimits": {k: {"engine": a, "behavior": b, "evidence": c} for k, (a, b, c) in KNOWN_LIMITS.items()},
+        "entrypoints": ENTRYPOINTS, "profiles": PROFILES, "scalePopulation": SCALE_POPULATION,
+        "capabilityMatrix": cells, "knownLimits": {k: {"engine": a_, "behavior": b_, "evidence": c_} for k, (a_, b_, c_) in KNOWN_LIMITS.items()},
         "rawParityClasses": RAW_PARITY_CLASSES, "rawExceptions": RAW_EXCEPTIONS, "diagnostics": DIAGNOSTICS, "diagnosticRule": DIAGNOSTIC_RULE, "fragmentCoverage": FRAGMENT_COVERAGE,
         "mutationControls": MUTANTS, "mutantRule": MUTANT_RULE, "caseSets": CS, "caseSourcesPinned": pinned,
         "traceability": TRACE,
@@ -2006,29 +2255,28 @@ def main():
         "validity": VALIDITY, "closureRules": CLOSURE_RULES, "verifierModes": VERIFIER_MODES, "applicability": APPLICABILITY, "statusAlgorithm": STATUS_ALGORITHM,
         "obsProtocols": OBS_PROTOCOLS, "planProtocols": PLAN_PROTOCOLS, "shapeSpec": SHAPE_SPEC, "specRules": SPEC_RULES,
         "budgetComponents": BUDGET_COMPONENTS,
-        "heldDrafts": {"scalePopulation": SCALE_POPULATION},
+        "budgetsRef": {"path": "lab/acceptance/budgets.json", "sha256": sha_text(budgets_text)},
+        "loadContractRef": {"path": "lab/acceptance/load-contract.json", "sha256": sha_text(load_text)},
         "obligations": OBL,
-        "heldObligations": HELD,
     }
     doc["transitiveContractSha256"] = sha_text(json.dumps(doc, sort_keys=True, ensure_ascii=False))
     counts = counts_table()
     acc_text = render_acceptance(doc, cells, counts)
-    obl_active = json.dumps({k: v for k, v in doc.items() if k not in ("heldObligations",)}, indent=2, ensure_ascii=False)
     obl_text = json.dumps(doc, indent=2, ensure_ascii=False) + "\n"
-    for name, text in [("obligations.json (active part)", obl_active), ("capability-matrix.md", matrix_text), ("ACCEPTANCE.md", acc_text)]:
+    for name, text in [("obligations.json", obl_text), ("load-contract.json", load_text), ("budgets.json", budgets_text), ("capability-matrix.md", matrix_text), ("ACCEPTANCE.md", acc_text)]:
         for pat, why in BANNED_TEXT:
-            if re.search(pat, text, flags=re.I if pat == "open question" else 0):
-                errs.append(f"{name}: banned text '{pat}' ({why})")
+            m = re.search(pat, text, flags=re.I if pat == "open question" else 0)
+            if m:
+                errs.append(f"{name}: banned text '{m.group(0)}' ({why}) near: {text[max(0, m.start() - 60):m.end() + 40]!r}")
     if errs:
         print("CONTRACT INVALID:")
         print("\n".join(sorted(set(errs))))
         sys.exit(1)
-    (HERE / "obligations.json").write_text(obl_text)
-    (HERE / "capability-matrix.md").write_text(matrix_text)
-    (HERE / "ACCEPTANCE.md").write_text(acc_text)
+    for name, text in [("obligations.json", obl_text), ("load-contract.json", load_text), ("budgets.json", budgets_text), ("capability-matrix.md", matrix_text), ("ACCEPTANCE.md", acc_text)]:
+        (HERE / name).write_text(text)
     print(counts)
-    print(f"active obligations: {len(OBL)}; held obligations: {len(HELD)}; raw exceptions: {len(RAW_EXCEPTIONS)}; traced cases: {len(TRACE)}; mutants: {len(MUTANTS)}; thresholds: {len(THRESHOLDS)} ({sum(1 for v in THRESHOLDS.values() if v['value'] == 'HELD')} HELD)")
-    print("rulings compiled: " + ", ".join(r["id"] for r in RULINGS if r.get("status") != "HELD") + "; held: " + ", ".join(r["id"] for r in RULINGS if r.get("status") == "HELD"))
+    print(f"obligations: {len(OBL)}; raw exceptions: {len(RAW_EXCEPTIONS)}; traced cases: {len(TRACE)}; mutants: {len(MUTANTS)}; thresholds: {len(THRESHOLDS)} ({sum(1 for v in THRESHOLDS.values() if v['source'].startswith('derived'))} derived)")
+    print("rulings compiled: " + ", ".join(r["id"] for r in RULINGS if r.get("status") != "SUPERSEDED") + "; superseded: " + ", ".join(r["id"] for r in RULINGS if r.get("status") == "SUPERSEDED"))
     print("transitive hash:", doc["transitiveContractSha256"])
 
 
