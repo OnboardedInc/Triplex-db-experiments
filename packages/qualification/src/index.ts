@@ -9,6 +9,13 @@ import type {
   RuntimeDefinition,
   QueryContext,
 } from "@triplex-build/triplex/runtime";
+export {
+  classifyXtdbStatement,
+  startQleverWriteCounter,
+  startXtdbWriteCounter,
+  type EngineWriteCounter,
+  type EngineWriteCounts,
+} from "./engine-write-counter.js";
 interface NativeTaskLibrary {
   readonly supports: (workloadId: string, operation: string) => boolean;
   readonly evaluate: (
