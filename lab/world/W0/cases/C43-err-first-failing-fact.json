@@ -1,0 +1,24 @@
+{
+  "id": "C43",
+  "slug": "err-first-failing-fact",
+  "title": "Two violations: the first failing fact decides the error",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "Fact 0 has tx 99 > basis.tx 10 (a basis violation). Fact 1 has the impossible instant 2026-13-01 (a value violation).",
+    "Section 4.4 step 3.2 checks fact by fact, each fact fully before the next, so fact 0 fails first: W0.E_BASIS.",
+    "One pass per check (every value first, then every tx) would give W0.E_VALUE; that reading is wrong."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 99},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-13-01T00:00:00.000000Z", "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_BASIS"}
+}

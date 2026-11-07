@@ -1,0 +1,75 @@
+{
+  "id": "C13",
+  "slug": "bgc-reject-r1",
+  "title": "Background check consider, a person rejects: adverse action",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "BGC", "polarity": "positive"}, {"rule": "I9S2", "polarity": "negative"}, {"rule": "PROP", "polarity": "negative"}
+  ],
+  "notes": [
+    "dec:2 (bgc.adjudication, reject, person) at tx 8 is a counting decision with pos 8; final(bgc.adjudication, 0) = dec:2.",
+    "BGC row 4: task bgc.adverse-action (due null) and work item notify.pre-adverse-action; inputs bgcStatus tx 4 and countingFacts tx 8.",
+    "I9S2 inputs stay [2, 6]: only counting facts for i9.section2 feed it. PROP row 0 inputs [6, 8]: every read-set fact."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "consider", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:2", "tx": 8},
+        {"e": "pl:a/dec:2", "a": "target", "v": "bgc.adjudication", "tx": 8},
+        {"e": "pl:a/dec:2", "a": "verdict", "v": "reject", "tx": 8},
+        {"e": "pl:a/dec:2", "a": "author", "v": "person", "tx": 8}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["loc:nyc", "stateMinWageCents"],
+      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"],
+      ["pl:a/dec:2", "author"], ["pl:a/dec:2", "target"], ["pl:a/dec:2", "verdict"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": null, "id": "pl:a#bgc.adverse-action", "kind": "bgc.adverse-action", "overdue": false, "rule": "BGC"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4, 8], "key": "", "row": 4, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6, 8], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:30a2ed1718be7124e91abc377a684ee4ba35afbb56763a55ecc7eac54a6446e8", "inputs": [4, 8], "key": "", "kind": "notify.pre-adverse-action", "payload": {}, "rule": "BGC", "version": "wv:2876085c9eea578eb511799624e3a46cdeb31aeb758a87de411b933ff854697f"}
+    ]
+  }
+}

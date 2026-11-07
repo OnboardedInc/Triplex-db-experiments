@@ -1,0 +1,85 @@
+{
+  "world": "W0",
+  "specVersion": "W0-1.0.0",
+  "types": {
+    "date": {"json": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "yearMin": 2000, "yearMax": 2099, "note": "real proleptic Gregorian date"},
+    "instant": {"json": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{6}Z$", "yearMin": 2000, "yearMax": 2099, "note": "UTC, microseconds, hour 00-23, minute 00-59, second 00-59"},
+    "cents": {"json": "integer", "min": 0, "max": 9007199254740991},
+    "minutes": {"json": "integer", "min": 0, "max": 10080},
+    "boolean": {"json": "boolean"},
+    "text": {"json": "string", "minLength": 1, "maxLength": 64, "charMin": 32, "charMax": 126},
+    "enum": {"json": "string"},
+    "ref": {"json": "string"},
+    "erased": {"json": "object", "keys": ["erasedAt"], "erasedAt": "instant", "allowedOn": "pii attributes only"}
+  },
+  "entityKinds": {
+    "placement": {
+      "idPattern": "^pl:[a-z0-9-]{1,32}$",
+      "attributes": {
+        "startDate": {"type": "date", "cardinality": "one", "pii": false},
+        "section1AttestedAt": {"type": "instant", "cardinality": "one", "pii": false},
+        "ssn": {"type": "text", "cardinality": "one", "pii": true},
+        "everifyStatus": {"type": "enum", "values": ["pending", "tnc", "authorized", "fnc"], "cardinality": "one", "pii": false},
+        "everifyStatusAt": {"type": "instant", "cardinality": "one", "pii": false},
+        "bgcStatus": {"type": "enum", "values": ["pending", "clear", "consider"], "cardinality": "one", "pii": false},
+        "payRateCents": {"type": "cents", "cardinality": "one", "pii": false},
+        "baselinePayRateCents": {"type": "cents", "cardinality": "one", "pii": false},
+        "weeklyMinutes": {"type": "minutes", "cardinality": "one", "pii": false},
+        "location": {"type": "ref", "refKind": "location", "cardinality": "one", "pii": false},
+        "documents": {"type": "ref", "refKind": "document", "owned": true, "cardinality": "many", "pii": false},
+        "decisions": {"type": "ref", "refKind": "decision", "owned": true, "cardinality": "many", "pii": false}
+      }
+    },
+    "document": {
+      "idPattern": "^pl:[a-z0-9-]{1,32}/doc:[a-z0-9-]{1,32}$",
+      "attributes": {
+        "docType": {"type": "enum", "values": ["passport", "ead", "visa"], "cardinality": "one", "pii": false},
+        "expiresOn": {"type": "date", "cardinality": "one", "pii": false},
+        "reverified": {"type": "boolean", "cardinality": "one", "pii": false}
+      }
+    },
+    "decision": {
+      "idPattern": "^pl:[a-z0-9-]{1,32}/dec:[a-z0-9-]{1,32}$",
+      "attributes": {
+        "target": {"type": "enum", "values": ["i9.section2", "bgc.adjudication", "pay.change"], "cardinality": "one", "pii": false},
+        "verdict": {"type": "enum", "values": ["approve", "waive", "reject"], "cardinality": "one", "pii": false},
+        "author": {"type": "enum", "values": ["person", "system", "agent"], "cardinality": "one", "pii": false}
+      }
+    },
+    "location": {
+      "idPattern": "^loc:[a-z0-9-]{1,32}$",
+      "attributes": {
+        "stateMinWageCents": {"type": "cents", "cardinality": "one", "pii": false},
+        "localMinWageCents": {"type": "cents", "cardinality": "one", "pii": false}
+      }
+    }
+  },
+  "ruleOrder": ["LIFE", "I9S1", "I9S2", "EVSUB", "EVSTAT", "BGC", "DOCEXP", "MINWAGE", "OT", "PAYCHG", "PROP"],
+  "releaseParams": {
+    "LIFE": {},
+    "I9S1": {},
+    "I9S2": {"businessDays": {"json": "integer", "min": 1, "max": 10}},
+    "EVSUB": {"businessDays": {"json": "integer", "min": 1, "max": 10}},
+    "EVSTAT": {"tncBusinessDays": {"json": "integer", "min": 1, "max": 20}},
+    "BGC": {},
+    "DOCEXP": {"leadDays": {"json": "object", "keysFrom": "document.docType", "valueMin": 0, "valueMax": 365}},
+    "MINWAGE": {"floorAttributes": {"json": "array", "itemsFrom": "location cents attributes", "minItems": 1, "sortedUnique": true}},
+    "OT": {"thresholdMinutes": {"json": "integer", "min": 0, "max": 10080}},
+    "PAYCHG": {"thresholdCents": {"json": "integer", "min": 0, "max": 9007199254740991}},
+    "PROP": {}
+  },
+  "errorCodes": ["W0.E_SHAPE", "W0.E_BASIS", "W0.E_UNKNOWN", "W0.E_VALUE", "W0.E_CARDINALITY", "W0.E_NO_RELEASE"],
+  "flagNames": {"start-unknown": "LIFE", "pre-start": "LIFE", "i9-section2-waived": "I9S2", "everify-authorized": "EVSTAT", "overtime": "OT"},
+  "obligationKinds": ["start", "doc.window", "due"],
+  "keyedRules": ["DOCEXP", "PROP"],
+  "workItemPayloadKeys": {
+    "everify.submit-case": ["startDate"],
+    "notify.everify-tnc": ["dueAt"],
+    "notify.everify-fnc": [],
+    "bgc.order": [],
+    "notify.pre-adverse-action": [],
+    "notify.document-expired": ["docType", "expiresOn"],
+    "notify.pay-below-minimum": ["floorCents", "payRateCents"],
+    "notify.pay-change-approval": ["baselinePayRateCents", "payRateCents"]
+  }
+}
