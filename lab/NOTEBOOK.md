@@ -803,3 +803,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Policy until pressure drops:** no new agent dispatches beyond replacing finished ones on light, engine-free work; heavy local commands
   go through lab/bin/heavy.mjs (4 tokens); gate reruns one at a time; latency measurements are judged only relatively (same slot, same
   window), never against absolute bars. The dev QLever resident needs a periodic fresh restart or rebuild while agents share it.
+- 22:25Z: W0-1.1.0 re-review: the reviewer's independent evaluator matches all 82 cases and the floors hold on 44.5M facts; only small
+  fixes remain (two case-file defects, two unpinned receive dedup rules, the fingerprint recipe, SPEC contradictions). Learning: static
+  read sets cannot narrow a release by subject, only by rule (R3's OT pair is in every placement's dependencies, so the index reaches all
+  100,000 while 4,291 change); Q44b makes R3 a jurisdiction-scoped release so P5 exercises subject selection through the reverse index.
+  Learning: a JSON round trip in a case generator normalized `1.65e3` to `1650.0`, so the exponent test tested nothing; validate.py now
+  asserts raw token text. W0-1.1.1 in progress; a delta check then the pin.
