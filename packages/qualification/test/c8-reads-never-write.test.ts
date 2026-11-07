@@ -200,8 +200,18 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")("C8 on XTDB: reads neve
         `(-> (unify (join ${ctx.relation("dep")} [{:source s} {:target t}]) (where (= s ${ctx.bind(input.from)}))) (aggregate t) (return {:target t}))`,
       );
       expect((xtql.rows as any[]).map((row) => row.target).sort()).toEqual(["c8:W", "c8:Y", "c8:Z"]);
-      // R10 3.2: rounds (frontier, rows) = (1,2), (2,2), (1,1); every step is a read.
-      const rounds = (sql.trace.steps ?? []).filter((step) => step.phase === "frontier-round");
+      // Default single-read: one edge read, the loop in memory.
+      expect((sql.trace.steps ?? []).filter((step) => step.phase === "frontier-edges")).toHaveLength(1);
+      // Per-round strategy, also read-only. R10 3.2: rounds (frontier, rows) = (1,2), (2,2), (1,1).
+      const perRound = yield* native.selectSqlWithReachability(
+        closureContract,
+        { from: "c8:X" },
+        edges,
+        (ctx, input: any) => `SELECT DISTINCT target FROM ${ctx.relation("dep")} c WHERE source = ${ctx.bind(input.from)}`,
+        { strategy: "rounds" },
+      );
+      expect((perRound.rows as any[]).map((row) => row.target).sort()).toEqual(["c8:W", "c8:Y", "c8:Z"]);
+      const rounds = (perRound.trace.steps ?? []).filter((step) => step.phase === "frontier-round");
       expect(rounds).toHaveLength(3);
       return rounds.map((step) => step.elapsedMs);
     });
@@ -230,7 +240,6 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")("C8 on XTDB: reads neve
 
       // Load run: concurrent recursive readers through the proxy, a writer on the direct runtime.
       const baseline = await Effect.runPromise(writer(LOAD_MS, "alone").pipe(Effect.provide(direct), Effect.scoped));
-      counter.reset();
       let readsDone = 0;
       const stop = Date.now() + LOAD_MS;
       const reader = Effect.gen(function* () {
@@ -244,10 +253,12 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")("C8 on XTDB: reads neve
         Effect.all(
           [
             writer(LOAD_MS, "loaded").pipe(Effect.provide(direct), Effect.scoped),
-            Effect.all(Array.from({ length: READERS }, () => reader), { concurrency: "unbounded" }).pipe(
-              Effect.provide(proxied),
-              Effect.scoped,
-            ),
+            // The read runtime's startup migration (layer build) is not a read call: count from
+            // inside the built layer, as for the first read window.
+            Effect.gen(function* () {
+              counter.reset();
+              yield* Effect.all(Array.from({ length: READERS }, () => reader), { concurrency: "unbounded" });
+            }).pipe(Effect.provide(proxied), Effect.scoped),
           ],
           { concurrency: "unbounded" },
         ),
@@ -290,6 +301,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
     const native = makeQleverNativeQueries(readClient, scope);
     const dep = { key: ":c8/dep", type: TypeExpr.ref("C8Node") };
     const nativeReads = Effect.gen(function* () {
+      for (const relationStrategy of ["single-read", "rounds"] as const) {
       const result = yield* native.selectWithRelations(
         {
           name: "c8/closure",
@@ -306,11 +318,14 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
         ],
         (ctx, input: any) =>
           `SELECT DISTINCT ?target WHERE { ${ctx.relation("dep", "?source", "?target")} FILTER(?source = ${ctx.literal(input.from)}) }`,
+        { relationStrategy },
       );
       expect((result.rows as any[]).map((row) => row.target).sort()).toEqual(["c8:W", "c8:Y", "c8:Z"]);
       const rounds = (result.trace.steps ?? []).filter((step) => step.phase === "frontier-round");
-      expect(rounds).toHaveLength(3);
-      return rounds.map((step) => step.elapsedMs);
+      expect(rounds).toHaveLength(relationStrategy === "rounds" ? 3 : 0);
+      if (relationStrategy === "rounds") return rounds.map((step) => step.elapsedMs);
+      }
+      return [];
     });
     try {
       await Effect.runPromise(Effect.gen(function* () { yield* facts(yield* Triples); }).pipe(Effect.provide(direct), Effect.scoped));
@@ -325,7 +340,6 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
       expectNoWrites(counter);
 
       const baseline = await Effect.runPromise(writer(LOAD_MS, "alone").pipe(Effect.provide(direct), Effect.scoped));
-      counter.reset();
       let readsDone = 0;
       const stop = Date.now() + LOAD_MS;
       const reader = Effect.gen(function* () {
@@ -339,10 +353,12 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
         Effect.all(
           [
             writer(LOAD_MS, "loaded").pipe(Effect.provide(direct), Effect.scoped),
-            Effect.all(Array.from({ length: READERS }, () => reader), { concurrency: "unbounded" }).pipe(
-              Effect.provide(proxied),
-              Effect.scoped,
-            ),
+            // The read runtime's startup migration (layer build) is not a read call: count from
+            // inside the built layer, as for the first read window.
+            Effect.gen(function* () {
+              counter.reset();
+              yield* Effect.all(Array.from({ length: READERS }, () => reader), { concurrency: "unbounded" });
+            }).pipe(Effect.provide(proxied), Effect.scoped),
           ],
           { concurrency: "unbounded" },
         ),
