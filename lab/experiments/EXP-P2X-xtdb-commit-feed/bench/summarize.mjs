@@ -28,6 +28,7 @@ for (const r of receipts.filter((x) => x.mode === 'trace')) {
       ...(r.censoredOfferToAckLowerBoundMs ? [row(['all incl. pending-at-cap (lower bound)', p(r.censoredOfferToAckLowerBoundMs), '', r.censoredOfferToAckLowerBoundMs.n])] : [])]);
   out.push(`\naccounting ${JSON.stringify(r.accounting)}; ackLoss ${JSON.stringify(r.ackLoss)}; resend receipts match ${JSON.stringify(r.resendReceipts)}; throughput ${JSON.stringify(r.throughput)}; conflicts ${JSON.stringify(r.conflicts)}`);
   const f = r.feed;
+  if (f.lagSteadyMs) out.push(`feed lag steady ${p(f.lagSteadyMs)} ms (n ${f.lagSteadyMs.n}); burst+60s ${p(f.lagBurstMs)} ms (n ${f.lagBurstMs.n}, max ${f.lagBurstMs.max})`);
   out.push(`feed: lag ${p(f.lagMs)} ms (n ${f.lagMs.n}, max ${f.lagMs.max}); gaps ${f.gaps}; extras ${f.extras}; order violations ${f.orderViolations}; visible duplicates ${f.visibleDuplicates}; replayed ${f.replayedEffects}; effects ${f.durableEffects}/${f.committedEffects}; polls ${f.polls}; writes ${f.writes}; aborted listed ${f.abortedListed}; blocked polls ${f.blockedPolls}; missing publication ${f.missingPublication}; poll ${p(f.pollMs)}; write ${p(f.writeMs)}`);
 }
 for (const r of receipts.filter((x) => x.mode === 'preload')) {

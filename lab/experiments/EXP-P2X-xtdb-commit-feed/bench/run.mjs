@@ -38,7 +38,7 @@ const candidateConsumer = async ({ scope, consumer, published, pollMs = 10 }) =>
   let cursor = await feed.tip();
   let expected = null;
   const stats = { polls: 0, blockedPolls: 0, tornPolls: 0, writes: 0, aborted: 0, missingPublication: 0, pollMs: [], writeMs: [] };
-  const lags = [], processed = [];
+  const lags = [], lagAt = [], processed = [];
   let stopping = false, tornRun = 0;
   const loop = (async () => {
     for (;;) {
@@ -57,7 +57,7 @@ const candidateConsumer = async ({ scope, consumer, published, pollMs = 10 }) =>
         for (const r of page.resolutions) {
           if (r.status === 'aborted') { stats.aborted++; continue; }
           const pub = published.get(r.operationId);
-          if (pub === undefined) stats.missingPublication++; else lags.push(t - pub);
+          if (pub === undefined) stats.missingPublication++; else { lags.push(t - pub); lagAt.push(pub); }
           for (const tr of r.transacts) for (const subject of tr.subjects) processed.push([tr.position, subject]);
         }
       }
@@ -67,7 +67,7 @@ const candidateConsumer = async ({ scope, consumer, published, pollMs = 10 }) =>
     }
   })();
   return {
-    stop: async () => { stopping = true; await loop; await client.close(); return { lags, processed, stats, checkpoint: expected }; },
+    stop: async () => { stopping = true; await loop; await client.close(); return { lags, lagAt, processed, stats, checkpoint: expected }; },
   };
 };
 
@@ -78,7 +78,7 @@ const a0Consumer = async ({ scope, consumer, published, pollMs = 10 }) => {
   let after = await reader.run(reader.triples.currentPosition());
   let expected = null;
   const stats = { polls: 0, writes: 0, missingPublication: 0, pollMs: [], writeMs: [] };
-  const lags = [], processed = [];
+  const lags = [], lagAt = [], processed = [];
   let stopping = false;
   const loop = (async () => {
     for (;;) {
@@ -100,7 +100,7 @@ const a0Consumer = async ({ scope, consumer, published, pollMs = 10 }) => {
         expected = next; after = next.msgId;
         for (const r of records) {
           const pub = published.get(`pos:${r.position}`);
-          if (pub === undefined) stats.missingPublication++; else lags.push(t - pub);
+          if (pub === undefined) stats.missingPublication++; else { lags.push(t - pub); lagAt.push(pub); }
         }
         for (const e of effects) processed.push([e.position, e.subject]);
       }
@@ -109,7 +109,7 @@ const a0Consumer = async ({ scope, consumer, published, pollMs = 10 }) => {
     }
   })();
   return {
-    stop: async () => { stopping = true; await loop; await reader.close(); await client.close(); return { lags, processed, stats, checkpoint: expected }; },
+    stop: async () => { stopping = true; await loop; await reader.close(); await client.close(); return { lags, lagAt, processed, stats, checkpoint: expected }; },
   };
 };
 
@@ -261,7 +261,12 @@ const trace = async () => {
     censoredOfferToAckLowerBoundMs: summary(latency(originalsOnly.filter((r) => r.outcome === 'committed' || r.censored))),
     conflicts: { casConflicts: rt.counts.casConflicts, commandConflicts: rt.counts.commandConflicts, submits: rt.counts.submits },
     timings: timingSummary(rt.timings),
-    feed: { lagMs: summary(consumed.lags), ...audit, polls: consumed.stats.polls, writes: consumed.stats.writes, abortedListed: consumed.stats.aborted ?? 0, blockedPolls: consumed.stats.blockedPolls ?? 0, missingPublication: consumed.stats.missingPublication, pollMs: summary(consumed.stats.pollMs), writeMs: summary(consumed.stats.writeMs) },
+    feed: {
+      lagMs: summary(consumed.lags),
+      // Split by publication instant: steady load versus the burst and the 60 s after it.
+      lagSteadyMs: summary(consumed.lags.filter((_l, i) => consumed.lagAt[i] < burstStart || consumed.lagAt[i] >= burstEnd + 60_000)),
+      lagBurstMs: summary(consumed.lags.filter((_l, i) => consumed.lagAt[i] >= burstStart && consumed.lagAt[i] < burstEnd + 60_000)),
+      ...audit, polls: consumed.stats.polls, writes: consumed.stats.writes, abortedListed: consumed.stats.aborted ?? 0, blockedPolls: consumed.stats.blockedPolls ?? 0, missingPublication: consumed.stats.missingPublication, pollMs: summary(consumed.stats.pollMs), writeMs: summary(consumed.stats.writeMs) },
     raw: { records, lags: consumed.lags },
   };
   return result;
