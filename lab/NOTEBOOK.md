@@ -835,3 +835,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
   through a bulk path (QLever index build from a log file; XTDB batched inserts), and the measured window starts after seeding.
 - **Contention learning:** XTDB commits in one runtime collide on the scope-wide position CAS under the driver's concurrency, the same root
   cause EXP-P2X attacks; until P2X lands, A0 uses `public-queued`.
+- 23:15Z: contract 0.3.6 committed (2c3bac6): Q40-Q45 compiled, nothing recorded-not-compiled, O-REPLAY BUILT-ACCEPTED at 8cc2c26 with a
+  per-oracle exclusion list; the generator's own pin-scope computation matches V-O03 exactly (119 uses, 106 closable, 13 blocked) and now
+  fails if they diverge; 151 obligations; 101/101 applicable regressions caught. Claim admission (Q42a) now has fixtures for all-zero
+  hashes, stale binaries, stale receipts, too few fault repetitions, missing measurement or control, a control from another window, unknown
+  ids, an empty store, null pins, excluded and refused obligations. Codex round 6 started; EXP-O04 (F2 plus erasure) started.
