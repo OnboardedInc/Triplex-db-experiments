@@ -465,7 +465,7 @@ async function run() {
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
-    else if (spec.sweep) entry.sweep = await runSweep(idx, spec.maxS ?? 1800);
+    else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.seconds) await sleep(spec.seconds * 1000);
     entry.end = now();
     entry.traceEndS = (entry.end - traceStart) / 1000;
