@@ -49,3 +49,11 @@ OOM-killed three times during the runs); both G1 receipts FAIL for infrastructur
 - The HTTP layer parses JSON bodies before the guard (precision lost there is undetectable): follow-up for EXP-R02 (parse with ExactJson).
 - sqlite, postgres, duckdb adapters still lose -0 in JSON: not qualified lanes, out of scope.
 - The KV runtime's own journal encoding is unchecked: follow-up.
+
+## QLever follow-up (cad7f3f, on the fresh 3.5 GiB resident)
+- Falsifier after the fix: QLever 0 silent changes (instant 3 silent to 0 with 7 typed; json 6 to 0; number 4 to 0); combined with XTDB,
+  38 silent changes before and 0 after across 1,762 records. The 27 remaining rejections are all typed: 23 intended native date/instant
+  ReadErrors (16 XTDB, 7 QLever) and 4 XTDB deadline timeouts from the overloaded resident. Run times on the fresh resident: QLever ledger
+  21 s (919 s on the old resident), QLever paths 16 s.
+- G1 qlever `G1-qlever-20261107T220838Z-86451c` (default profile, planner 1): 84/88, the same 4 failures as main's default-profile receipt
+  (two datalog aggregation cases needing a server result key); the f1-profile regression check is running.

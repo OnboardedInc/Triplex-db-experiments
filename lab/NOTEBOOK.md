@@ -821,3 +821,6 @@ Where each priority stands, from evidence so far (research probes and baselines;
   wrong answers on its own probe set. A coverage test only guards the tables it lists (`decimalRouting` was missing).
 - Next: contract 0.3.6 pins the oracle (A01); W01 regenerates scenario expectations from the pinned oracle; EXP-O04 (F2 plus erasure
   modeling) queued for the oracle author; claims still also need EXP-E01's evaluator.
+- 22:50Z: EXP-F02b: zero silent value changes on both engines (38 before, 0 after over 1,762 records). The fresh QLever resident ran the
+  ledger section in 21 s against 919 s on the old one, which confirms the growing persisted delta was the dev resident's problem. Next:
+  G1 qlever with the f1 profile, then an independent verifier (V-F02b) before merge; G1 xtdb in a quiet window.
