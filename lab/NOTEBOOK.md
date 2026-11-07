@@ -984,3 +984,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
   overlay-merge pitfalls). R23 feeds the EXP-P2B brief and the Q55c question for Sam. A bytes-per-commit code audit becomes EXP-J01's first
   phase instead of a separate research.
 - **Running (10):** W01, X05, C8 (background run), E01, V-P2Q, V-D01c, D01b, V-O04c, R22, R23.
+
+## 2026-11-07 23:31Z: MILESTONE: O-REPLAY 0.4.1 accepted (erasure modeled); pin moves in contract 0.3.8
+- V-O04c: 85/85 probes match, 15/15 planted wrong rulings caught. The 11 erasure obligations can close on the oracle side once 0.3.8 pins it.
+- Learning: the oracle pin and the oracle files must move in one commit; merging the oracle first breaks --verify (Q45a), so 0.3.8 is
+  built on its own branch that merges the oracle, compiles Q50-Q56 and moves the pin together.

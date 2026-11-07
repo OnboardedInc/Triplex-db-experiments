@@ -97,3 +97,15 @@ here). Merged to main as 4591715.
   hashes.q49.txt); table in lab/verify/O02/v-o04b/results/hashes.a9c1327.json on verify/O02 (bfc129a). Independence holds (stdlib only, no
   subprocess, socket or urllib; no new packages/ references).
 - Next: V-O04c converts the seven DERIVED-NOTE rows to checked rows under Q56 and returns the final pin verdict.
+
+## V-O04c: ACCEPT for pinning O-REPLAY 0.4.1 at a9c1327 unchanged (saved by the orchestrator, 2026-11-07 23:31Z)
+- verify/O02 fa6c236 (probe_q49.py and its two result files only); oracle tree byte-identical to a9c1327, so the V-O04b hash table holds.
+- probe_q49: 85 probes, 85 MATCH, 0 WRONG-ANSWER, 0 DERIVED-NOTE (74 already checked, 7 converted under Q56a-g, 4 new controls: Q56c without
+  the erase reads "SAME" with supports [e1, e2]; Q56e an entity with no ssn is rejected E-CONSTRAINT required and shows missingRequired
+  [ssn]; Q56f an erase by a known id commits and names x1 only). Self-test 15/15 planted wrong expectations caught (each Q56 plant is the
+  obvious alternative ruling).
+- Q56e row rebuilt: the oracle ignores violations that predate the enforced command, so the enforced command now brings p1 under the
+  constraint. Q56d: one marker group per attribute means "by assertion id" has nothing to order; supports list in insertion order;
+  different erasure instants refuse (Q52c). Q56h holds: all probe values synthetic.
+- Merge note: merging the oracle alone breaks  (Q45a pinned O-REPLAY files differ from the tree: RULES.md, SCHEMA.md,
+  constraints.py), so the merge and the pin move land together in contract 0.3.8 on branch contract/0.3.8.
