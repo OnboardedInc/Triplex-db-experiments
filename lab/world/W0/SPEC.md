@@ -36,7 +36,7 @@ of them has a bug or this file is ambiguous, and the ambiguity gets a named entr
 | `evaluate` | `evaluate(world, release, basis)` | the subject's outputs (section 8) or an error |
 | `resolveRelease` | `resolveRelease(activations, validTime)` | the hash of the release in force at that valid time, or an error |
 | `reconcile` | `evaluate(world, resolveRelease(activations, basis.validTime), basis)` | the same output shape as `evaluate` |
-| `affected` | `affected(release, worlds, writes)` | the sorted list of subjects whose dependencies meet the writes (section 10) |
+| `affected` | `affected(release, worlds, writes)` | `{"affected": [<subject>, ...]}`: the subjects whose dependencies meet the writes, ascending (section 10) |
 
 **Preview and activation use the same function.** A preview (GS.11, plan impact) is `evaluate` with a release that is not
 active. An activated sweep (GS.10, P5) is `reconcile` after the activation fact exists. At one basis both give the same bytes
@@ -50,7 +50,7 @@ active. An activated sweep (GS.10, P5) is `reconcile` after the activation fact 
 | `schema.json` | the attribute table of section 3 and the release parameter table of section 5, as data |
 | `releases/R1.json`, `releases/R2.json` | the two releases |
 | `releases/index.json` | release name to content hash |
-| `cases/*.json` | the 42 golden cases (section 11) |
+| `cases/*.json` | the 45 golden cases (section 11) |
 | `validate.py` | a stdlib-only shape validator (`python3 -I validate.py`); it holds no rule logic |
 | `README.md` | how to use the folder |
 
@@ -152,7 +152,8 @@ fact  = {"e": <entity id>, "a": <attribute>, "v": <value>, "tx": <integer 1 to 9
 3. **Allowed entities:** the subject, entities it owns (id starts with `<subject>/`), and locations. A document or decision id
    always starts with its owner's id, so a world for `pl:a` cannot carry `pl:b/doc:1`.
 4. **Reachable entities** are the subject, the documents and decisions named by the subject's `documents` and `decisions` facts,
-   and the location named by its `location` fact. Facts of allowed but unreachable entities are valid and are ignored.
+   and the location named by its `location` fact. Every fact is validated (4.4), reachable or not; reachability only decides
+   which facts the rules read. A valid fact of an allowed but unreachable entity is read by no rule (case C44).
 5. **Fact order in the array carries no meaning.** Outputs never depend on it, except which error is reported first (4.4).
 6. **An erased value keeps its fact.** After a PII erasure the fact stays with its `e`, `a` and `tx`; only `v` becomes
    `{"erasedAt": ...}`. Per `lab/TARGETS.md` section 7 a store returns the marker at every basis once the erasure has published,
@@ -173,15 +174,23 @@ For a many-cardinality attribute, `S.documents` is the set of its values.
 
 **An invalid input yields `{"error": "<code>"}` and nothing else.** Checks run in the order below and the first failure wins.
 
-1. **`W0.E_SHAPE`:** the input object, `basis`, `world`, each fact, each activation and each write do not have exactly the keys and
-   JSON kinds given in 4.1 to 4.3 (object, array, string; `tx` must be a JSON integer token); `release` is not `R1` or `R2`; two
-   worlds in `affected` share a subject.
+1. **`W0.E_SHAPE`:** the input is not a JSON object with exactly the keys of 4.3, or any of these kinds is wrong:
+   - objects with exactly the listed keys: the input, `basis`, `world`, each fact, each activation;
+   - arrays: `facts`, `activations`, `worlds`, `writes`; each write is a two-element array of strings;
+   - strings: `basis.validTime`, `world.subject`, a fact's `e` and `a`, an activation's `from` and `release`, the `release` name;
+   - JSON integer tokens (section 2, so `3.0` and `1e1` fail): `basis.tx`, a fact's `tx`, an activation's `tx`;
+   - a fact's `v` may be any JSON kind here; its type is checked in step 3.
+   Also `W0.E_SHAPE`: an object with a duplicate key, a `release` name other than `R1` or `R2`, two worlds in `affected` with the
+   same subject. A string that has the right kind but a bad form (an instant that is not an instant, an unknown entity id) is
+   left to the later steps.
 2. **`W0.E_BASIS`:** `basis.validTime` is not a valid instant, or `basis.tx` is outside its range.
 3. **For each world in array order** (one world for `evaluate` and `reconcile`):
    1. `W0.E_UNKNOWN` if `subject` is not a placement id.
-   2. For each fact in array order: `W0.E_UNKNOWN` if `e` is not an allowed entity (4.2 item 3) or `a` is not an attribute of
-      that kind; `W0.E_VALUE` if `v` is not a valid value of the attribute's type (section 2), including a ref of the wrong kind or
-      owner and an erased marker on a non-PII attribute; `W0.E_BASIS` if `tx` is less than 1 or greater than `basis.tx`.
+   2. For each fact in array order, reachable or not, these three checks in this order, and the first failing fact decides:
+      `W0.E_UNKNOWN` if `e` is not an allowed entity (4.2 item 3) or `a` is not an attribute of that kind; `W0.E_VALUE` if `v` is
+      not a valid value of the attribute's type (section 2), including a ref of the wrong kind or owner and an erased marker on a
+      non-PII attribute; `W0.E_BASIS` if `tx` is less than 1 or greater than `basis.tx`. So a world whose first fact has a bad
+      `tx` and whose second fact has a bad date gives `W0.E_BASIS` (case C43).
    3. `W0.E_CARDINALITY` if two facts share `(e, a)` for a one-cardinality attribute, or share `(e, a, v)` for a many-cardinality
       attribute.
 4. **For `reconcile`, each activation in array order:** `W0.E_VALUE` if `release` does not match `^sha256:[0-9a-f]{64}$` or `from` is
@@ -289,7 +298,7 @@ For subject S, with `D` ranging over `S.decisions`:
 - `L.x` is `(L, x)` where L is the value of `S.location`; it yields no pair when `S.location = ⊥`.
 
 The pairs are instantiated from the reference values even when the referenced entity has no facts in the world, and whether or
-not the value is present, because a later write to that pair can change the output. Every pair is listed regardless of the order
+not the pair's own fact is present, because a later write to that pair can change the output. Every pair is listed regardless of the order
 in which a rule tests its conditions, so short-circuit evaluation never changes a read set.
 
 **Inputs are positions.** Each trace entry has `inputs`: the distinct `tx` values of its input facts, ascending. Each rule states
@@ -539,11 +548,14 @@ bytes are equal.
 6. Literals: `true`, `false`, `null`.
 
 Python produces it with `json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=True)`. JavaScript produces it with
-`JSON.stringify` over a copy whose object keys were inserted in sorted order, recursively.
+`JSON.stringify` over a copy whose object keys were inserted in sorted order, recursively. That recipe relies on a W0 fact: no
+object key in any W0 output or preimage is an array index such as `"7"`, which JavaScript would order first whatever the insertion
+order.
 
 ## 10. Affected subjects (P3, GS.06b)
 
-`affected(release, worlds, writes)` returns, ascending, every subject s among `worlds` whose `dependencies` under `release`
+`affected(release, worlds, writes)` returns the object `{"affected": [<subject>, ...]}`, listing ascending every subject s among
+`worlds` whose `dependencies` under `release`
 (computed from its own world as in 8.7) contain at least one pair of `writes`.
 
 1. **This is the expected affected-subject set** of `lab/TARGETS.md` 1.1 P3 item 3 for one transaction, with `worlds` at the basis
@@ -577,7 +589,7 @@ Python produces it with `json.dumps(x, sort_keys=True, separators=(",", ":"), en
 derivation. A positive check means the rule emits at least one task, obligation, work item or flag in that case; a negative check
 means it emits none. The expected outputs were derived by hand from this file, not by a program.
 
-### 11.2 The 42 cases
+### 11.2 The 45 cases
 
 | Id | Op, release | What it pins down |
 | --- | --- | --- |
@@ -623,6 +635,9 @@ means it emits none. The expected outputs were derived by hand from this file, n
 | C40 | evaluate R1 | two `startDate` facts: `W0.E_CARDINALITY` |
 | C41 | evaluate R1 | a fact committed after the basis: `W0.E_BASIS` |
 | C42 | evaluate R1 | one evaluation with five work items (E-Verify submission, background-check order, expired document, pay below the floor, pay change needing approval) |
+| C43 | evaluate R1 | two violations: the first fact's `tx` is after the basis, the second fact's date is invalid; the first failing fact decides: `W0.E_BASIS` |
+| C44 | evaluate R1 | the only violation is an invalid date on an unreachable document: every fact is validated, `W0.E_VALUE` |
+| C45 | evaluate R1 | a fact's `tx` written as `3.0`: `W0.E_SHAPE` |
 
 ### 11.3 Scenario map
 
@@ -671,37 +686,41 @@ far inside every margin. **The check that counts is the measured one** (12.6): t
 
 ### 12.3 The population generator (parameters only)
 
-**Sizes.** The 100k rung is the frozen reference: N = 100,000 placements and 2,000 locations. Other rungs keep N / 50 locations
-(200 at 10k, 20,000 at 1m, 200,000 at 10m) and every other parameter.
+**Sizes.** The 100k rung is the frozen reference: N = 100,000 placements and L = 2,000 locations. Other rungs keep L = N / 50
+(200 at 10k, 20,000 at 1m, 200,000 at 10m) and every other parameter; every formula below uses L.
 
 **Seed and draws.** The seed is the string `W0-pop-1`. For a field name f, a subject index i and a modulus M,
 `draw(f, i, M)` is the first 8 bytes of SHA-256 over the ASCII bytes of `W0-pop-1/` + f + `/` + decimal(i), read as a big-endian
-unsigned integer, modulo M. Every random choice below uses its own field name, so all choices are independent.
+unsigned integer, modulo M. Every random choice below uses its own field name, so all choices are independent. A weighted
+choice uses the field name in the table's first column (or the one named in the row, such as `pay.d`); the uniform integer inside
+the chosen option uses that name + `.u` (`start.u`, `ev.u`, `pay.d.u`, `chg.u`, `wm.u`, `doc.exp.u`).
 
 - **Weighted choice** over weights in basis points (summing to 10,000): `x = draw(f, i, 10000)`; pick the first option whose running
   total of weights exceeds x.
 - **Uniform integer** in `[a, b]`: `a + draw(f, i, b - a + 1)`.
-- **Zipf rank** over 2,000 locations: weights `w_r = floor(10^12 / r)` for r = 1 to 2,000, total T; `x = draw("loc.rank", i, T)`;
+- **Zipf rank** over L locations: weights `w_r = floor(10^12 / r)` for r = 1 to L, total T; `x = draw("loc.rank", i, T)`;
   the rank is the first r whose running total of weights exceeds x. Integer arithmetic only.
 
-**Ids.** Placement i (0-based) is `pl:s` + i as 8 decimal digits (`pl:s00000000`). Location rank r is `loc:l` + r as 4 decimal digits
-(`loc:l0001` is the largest). The only document of a placement is `<S>/doc:1`. Decision records are `<S>/dec:i1` and `<S>/dec:i2`
-(Section 2), `<S>/dec:b1` (background check) and `<S>/dec:p1` (pay change).
+**Ids.** Placement i (0-based) is `pl:s` + i as 8 decimal digits (`pl:s00000000`). Location rank r is `loc:l` + r zero-padded to
+the number of digits of L (4 at the 100k rung, so `loc:l0001` is the largest). The only document of a placement is `<S>/doc:1`.
+Decision records are `<S>/dec:i1` and `<S>/dec:i2` (target `i9.section2`), `<S>/dec:b1` (target `bgc.adjudication`) and
+`<S>/dec:p1` (target `pay.change`).
 
 **Locations.** Location rank r has `stateMinWageCents` 1200, 1500, 1650 or 1800 when r mod 4 is 0, 1, 2 or 3. It has
 `localMinWageCents` 1850 exactly when r mod 4 = 2. That subset of ranks holds 25.0% of the Zipf mass (computed in 12.5).
 
-**Basis.** `validTime = 2026-11-04T12:00:00.000000Z` (the basis date is 2026-11-04, a Wednesday); `tx` is the position of the last
-population command.
+**Basis and valid time.** `validTime = 2026-11-04T12:00:00.000000Z` (the basis date is 2026-11-04, a Wednesday); `tx` is the
+position of the last population command. Every population fact is valid from `2000-01-01T00:00:00.000000Z` with no end, so the
+world at B holds the latest asserted value of each attribute.
 
 **Per-placement choices.**
 
 | Field | Options (weights in basis points) | Facts written |
 | --- | --- | --- |
-| `start` | absent 200; pre-start 1800 (k uniform 1 to 14, field `start.k`); in the Section 2 window 2000 (k uniform -4 to 0); settled 6000 (k uniform -365 to -5) | `startDate = addDays(2026-11-04, k)` |
+| `start` | absent 200; pre-start 1800 (k uniform 1 to 14); in the Section 2 window 2000 (k uniform -4 to 0); settled 6000 (k uniform -365 to -5) | `startDate = addDays(2026-11-04, k)` |
 | `s1` | present 8500; absent 1500 | `section1AttestedAt = 2026-11-01T15:00:00.000000Z` |
 | `ssn` | absent 1000; valid 8730; dashed 180; erased 90 | valid: the 9 digits of 100000000 + i; dashed: the same digits as `DDD-DD-DDDD`; erased: `{"erasedAt": "2026-11-01T00:00:00.000000Z"}` |
-| `ev` | absent 3000; `pending` 4000; `tnc` 500; `authorized` 2200; `fnc` 300 | `everifyStatus`; with it `everifyStatusAt = startOf(addDays(2026-11-04, -u))`, u uniform 0 to 20 (field `ev.u`) |
+| `ev` | absent 3000; `pending` 4000; `tnc` 500; `authorized` 2200; `fnc` 300 | `everifyStatus`; with it `everifyStatusAt = startOf(addDays(2026-11-04, -u))`, u uniform 0 to 20 |
 | `bgc` | absent 2000; `pending` 2000; `clear` 5000; `consider` 1000 | `bgcStatus` |
 | `bgcdec`, only when `consider` | none 4000; person approve 4000; person reject 1000; agent proposal (verdict approve) 1000 | record `dec:b1` |
 | `i9dec` | none 3400; person approve 4800; person waive 300; person reject 400; agent proposal only (verdict approve) 600; person approve then person reject 300; person approve then agent proposal (verdict reject) 200 | records `dec:i1`, then `dec:i2` for the two-record options |
@@ -714,17 +733,24 @@ population command.
 | `doc.exp`, `ead` and `visa` only | missing 200; expired 1470 (e uniform -30 to -1); inside 90 days 2450 (e uniform 0 to 89); later 5880 (e uniform 90 to 730) | `expiresOn = addDays(2026-11-04, e)`; a passport gets e uniform 365 to 3650 |
 | `doc.rev`, `ead` and `visa` only | true 1000; absent 9000 | `reverified = true` |
 
-**Command plan.** Each command is one transaction. The background trace interleaves placements; within one placement the commands
-keep this order, which fixes every commit-order relation the rules use:
+**Command plan.** Each command is one transaction. Within one placement the commands keep this order, which fixes every
+commit-order relation the rules use. A command with no facts is skipped and takes no position.
 
-1. Every location's facts, before any placement command.
+1. Location: one command per location with its facts, before any placement command.
 2. Hire: `startDate`, `location`, `baselinePayRateCents`, `payRateCents` equal to the baseline, `weeklyMinutes` (those present).
 3. Section 1: `section1AttestedAt`, `ssn`.
-4. Background check: `bgcStatus`. Then E-Verify: `everifyStatus`, `everifyStatusAt`. Then documents: `documents` and the document's facts.
-5. Each decision record in its own command, asserting the subject's `decisions` fact and the record's three facts together:
+4. Background check: `bgcStatus`.
+5. E-Verify: `everifyStatus`, `everifyStatusAt`.
+6. Documents: `documents` and the document's facts.
+7. Decision records, each in its own command that asserts the subject's `decisions` fact and the record's three facts together:
    the Section 2 records in option order, then `dec:b1`, then a pay-change record drawn "before the change".
-6. When c ≠ 0, the pay change: `payRateCents` re-asserted at its final value.
-7. A pay-change record drawn "after the change".
+8. When c ≠ 0, the pay change: `payRateCents` re-asserted at its final value.
+9. A pay-change record drawn "after the change".
+
+**Reference positions.** In the reference population positions are dense from 1: location rank r's command has position r, then
+placement 0's commands in plan order, then placement 1's, and so on; `basis.tx` is the last position. A driver may interleave
+placements differently (the background trace does). Domain projections (12.1) do not change, but `inputs`, work item ids and
+`basis.tx` match byte for byte only under the reference positions.
 
 ### 12.4 Expected rule frequencies (the argument for floors 1, 2 and 4)
 
@@ -753,7 +779,8 @@ All choices are independent, so each frequency is a product of the weights above
      local floor. Share 8.3%.
    - Union: 1 - (1 - 0.461) x (1 - 0.225) x (1 - 0.083) = **61.7%**.
 2. **Floor 2, every rule fires for at least 5%.** The table above: the lowest is `MINWAGE` under R1 at 7.9%.
-3. **Floor 4, three or more work items in at least 1% of evaluations.** Five independent work item sources exist, at most one each:
+3. **Floor 4, three or more work items in at least 1% of evaluations.** Five work item sources exist, at most one each, independent
+   except that the pay-below-floor and pay-change sources both need a pay rate (taking that into account gives 1.97% and 2.98%):
    - E-Verify, `EVSUB` row 5 or `EVSTAT` rows 2 and 4: 30% x 87.3% + 8% = 34.2%.
    - Background check, `BGC` rows 1 and 4: 20% + 10% x 10% = 21.0%.
    - Pay below the floor, `MINWAGE` row 5: 5.9% under R1, 14.2% under R2.
@@ -786,7 +813,8 @@ placements number 99,000 in expectation, so location r holds about 12,105 / r of
 ### 12.6 How the floors are checked
 
 1. **Measured, not assumed.** Whoever generates the population (the P5 driver, O-DOMAIN, or V-D01 independently) evaluates every
-   placement under R1 and R2 at B and reports the four measured values with the generator's seed and parameter hash. A measured
+   placement under R1 and R2 at B and reports the four measured values with the seed `W0-pop-1` and the spec version W0-1.0.0,
+   which together fix the generator. A measured
    value below its bar fails closed and blocks the domain-dependent comparison it gates.
 2. **Golden-case witnesses** for each mechanism:
    - floor 1: C03 against C26 (`I9S2`), C19 against C20 (`DOCEXP`), C25 (`MINWAGE` under R2, with C01 and C02 as the quiet controls);
@@ -814,7 +842,7 @@ Implementations and test harnesses can check these on any input, not only the go
 
 | # | Place | Risk | Resolution |
 | --- | --- | --- | --- |
-| 1 | `1650.0` in a JSON world | `JSON.parse` returns 1650 and hides the float | Integer tokens are checked at the token level (section 2); the TypeScript kernel's fixture reader must see number tokens (for example the `JSON.parse` reviver's `context.source` where the runtime has it, or a small scanner). Case C38. |
+| 1 | `1650.0` in a JSON world, `3.0` as a `tx` | `JSON.parse` returns 1650 or 3 and hides the fraction | Integer tokens are checked at the token level for every integer field (section 2, 4.4 step 1); the TypeScript kernel's fixture reader must see number tokens (for example the `JSON.parse` reviver's `context.source` where the runtime has it, or a small scanner). Cases C38 and C45. |
 | 2 | Integers above 2^53 - 1 | JavaScript rounds them on parse | Any such token is `W0.E_VALUE`; in JavaScript it parses to at least 2^53, so `Number.isSafeInteger` detects it. Case C39. |
 | 3 | Instant comparison | converting to `Date` drops microseconds; time zones | Instants compare as strings and are never converted (section 2). |
 | 4 | Weekday and date arithmetic | local-time `Date` methods shift the day | Proleptic Gregorian arithmetic on dates only; JavaScript must use `Date.UTC` and `getUTCDay`. |
@@ -837,16 +865,19 @@ Implementations and test harnesses can check these on any input, not only the go
 | 21 | Pay change direction | raise only | Absolute difference, strictly greater than the threshold (C29, C30). |
 | 22 | Expiry window arithmetic | off by one day | `W = startOf(addDays(expiresOn, 1 - lead))`; with lead 0, `W = B` (C19, C20). |
 | 23 | Activation ties | arbitrary pick | Greatest `from`, then `tx`, then release string (5.4). |
-| 24 | Error precedence | different first error | Fixed check order in 4.4; every error case has exactly one violation. |
+| 24 | Error precedence | per-fact order against one pass per check; which JSON kind failures are `E_SHAPE` | 4.4 lists every key's JSON kind for step 1; in step 3 the first failing fact decides, and within a fact the order is unknown, value, basis (C43). |
 | 25 | Key and string ordering | UTF-16 against code points | All W0 strings are printable ASCII, where the orders agree. |
 | 26 | Work item id preimage | key set, number forms | Exactly six keys in canonical JSON (8.4); the validator recomputes every golden id. |
 | 27 | `(epoch, position)` cursors | two integers against one | The adapter passes one order-preserving integer (4.1). |
 | 28 | Erasure and old bases | expecting pre-erasure outputs | Reproduction holds modulo erasure (4.2 item 6). |
-| 29 | Unreachable entities in a world | error or ignore | Allowed kinds are valid and ignored when unreachable; other placements' entities are `W0.E_UNKNOWN`. |
+| 29 | Unreachable entities in a world | validate or skip | Every fact is validated; reachability only decides what the rules read (C44, C24); other placements' entities are `W0.E_UNKNOWN`. |
 | 30 | Empty `expected` arrays | omit the key | Every key of 8.1 is always present; empty arrays are written `[]`. |
 | 31 | Position integers | two order-preserving mappings give different `inputs` and work item ids | Both implementations use the oracle's dense ordinal (4.1). |
-| 32 | Population draws | different hash input, modulo handling or Zipf rounding gives a different population | `draw` is defined to the byte in 12.3; the modulo bias is part of the definition; Zipf weights are `floor(10^12 / r)`. |
+| 32 | Population draws | different hash input, field names, modulo handling or Zipf rounding gives a different population | `draw` is defined to the byte in 12.3; uniform sub-draws use the option field + `.u`; the modulo bias is part of the definition; Zipf weights are `floor(10^12 / r)`. |
 | 33 | "Fires" and "R2 changes" | counting trace entries, ids or dependencies as changes | Defined on the domain projection in 12.1. |
+| 34 | Duplicate keys in a JSON object | parsers keep the last value; a scanner may reject | `W0.E_SHAPE` (4.4 step 1). |
+| 35 | Population positions and valid times | different interleaves give different `inputs` and ids; a store could hide facts valid only later | Reference positions and valid-from 2000-01-01 are fixed in 12.3; other interleaves compare on domain projections only. |
+| 36 | `affected` output shape | a bare list against an object | `{"affected": [...]}` (section 10). |
 
 ## 15. Open questions
 

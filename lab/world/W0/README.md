@@ -11,7 +11,7 @@ the domain expectations of the golden scenarios. `SPEC.md` is the only normative
 | `schema.json` | the attribute and release-parameter tables of `SPEC.md` sections 3 and 5, as data |
 | `releases/R1.json`, `releases/R2.json` | the two releases; R2 changes `I9S2`, `DOCEXP` and `MINWAGE` |
 | `releases/index.json` | `R1 = sha256:fc4b2c1b...0a2b`, `R2 = sha256:4fe8c3fa...7f98` (full hashes in the file) |
-| `cases/` | 42 hand-derived golden cases (`SPEC.md` section 11.2 lists them) |
+| `cases/` | 45 hand-derived golden cases (`SPEC.md` section 11.2 lists them) |
 | `validate.py` | stdlib-only shape validator; it holds no rule logic |
 
 ## How to check the folder
