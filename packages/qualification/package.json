@@ -13,8 +13,9 @@
   "scripts": {
     "build": "tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run && node --test ../../qualification/compare.test.mjs",
-    "test:comparison": "node --test ../../qualification/compare.test.mjs"
+    "test": "vitest run && node --test ../../qualification/compare.test.mjs load/dispatch.test.ts load/model.test.ts",
+    "test:comparison": "node --test ../../qualification/compare.test.mjs",
+    "test:node": "node --test ../../qualification/compare.test.mjs load/dispatch.test.ts load/model.test.ts"
   },
   "dependencies": {
     "@triplex-build/triplex": "workspace:^",
