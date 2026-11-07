@@ -907,3 +907,19 @@ Where each priority stands, from evidence so far (research probes and baselines;
   real time of this entry is 2026-11-07 22:55Z. Their order is correct; git commit timestamps are the authoritative times. The same
   estimated dates appear in a few REPORT.md headers (saved by the orchestrator) and in STATE's infrastructure policy line.
 - From now on every header takes its time from `date -u`.
+
+## 2026-11-07 23:05Z: EXP-P2X and EXP-O04 (Q49) landed; the host log wins the feed on both lanes
+- **EXP-P2X (XTDB, subject-stamp commit path):** cross-subject conflicts 0 against A0's 3,376-3,657 CAS rejections; service time 6.5-7.8x
+  lower at ~20k commits (A0 grows with history because its asserts scan `scope_key`). Feed exact (0 gaps, order violations, duplicates
+  across 5k preload, three traces, 400 crash injections) but lag p99 2.9 s steady, because the consumer's durable write waits in the same
+  serial indexer as the writers. The burst overloads both arms on a 2-CPU node; the hot subject (20% of commands) turns optimistic CAS into
+  a retry storm that a per-subject queue removes (CAS rejections 4,982 -> 0, committed 569 -> 2,987).
+- **Learning: put the change feed and the ACK on a host log for both lanes.** P2Q's broker gave QLever feed lag p99 12.8-24.5 ms and an ACK
+  that ignores the engine; XTDB's own feed cannot beat its indexer queue. Q51b: EXP-P2B puts XTDB behind the same broker, with
+  subject-stamp as the XTDB-native comparison arm.
+- **Learning: both lanes write far too much per command.** XTDB A0 27.6 KB of source log per 10-fact commit (candidate 95.4 KB); QLever A0
+  about 750 triples per 10-fact command. One cross-lane experiment (EXP-J01) owns bytes per commit (Q51d); the 100k rung waits on it.
+- **Learning: per-subject queues belong in the runtime, not the driver** (Q51a), with a bound and a typed `Overloaded`.
+- **EXP-O04 Q49:** O-REPLAY 0.4.1 (a9c1327) models erasure as an ordinary journal transaction; 342/342 tests; conformance unchanged item by
+  item on both lanes; all 11 erasure obligations closable on the oracle side. Residual RULING-NEEDED items ruled as Q52 (held).
+- Dispatched: V-P2Q (new verifier) and the V-O04 re-check (resumed verifier). Running: 10 of 10.

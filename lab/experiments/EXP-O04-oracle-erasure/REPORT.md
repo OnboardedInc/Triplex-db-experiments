@@ -17,3 +17,25 @@
   G10.cursor.stable, NS.SEC.retro-and-audit, G8.composition.watermark-routing, REQ.pii-erasure, GS.16); G7.journal.logical-contract,
   G9.erasure.reproduction-modulo and R.repo.mutation-controls wait on Q49a.
 - Evidence: /Users/sam/Claude/Projects/triplex-db-2/EXP-O04-oracle-erasure/.
+
+## Q49 implemented: O-REPLAY 0.4.1 (a9c1327d4e1d6756696db6844e17008671d4a193; saved 2026-11-07 23:05Z)
+- F2 commit unchanged (f4b59b4). Q49a: an erasure commit is an ordinary journal transaction (position, txId, `transactions()`,
+  `:_tx/changed-entity` and `:_tx/change` facts) whose changes carry identities only (`{"op":"erase", entityId, attribute, assertionIds}`);
+  earlier changes are re-rendered with the marker; whole journal = no-erasure control journal with markers; no plaintext anywhere.
+  Q49b idempotent erase and empty erase commit. Q49c match/snapshot/supports/retract-pattern/find/aggregate `where` never match an erased
+  value; `exists` sees it, `missing` does not; SUM/AVG/MIN/MAX skip it; ORDER BY puts it after readable values in both directions by
+  assertion id; one marker group per attribute (a readable value plus the group conflicts in a cardinality-one model); Unique ignores it;
+  erased references are not followed. Q49d in-flight reads accept old value or marker. Q49e JSON number to decimal from the as-written text;
+  decimal text in a JSON string is E-INVALID-VALUE; R-DEC-18 refusal removed.
+- Results: 342/342 tests (against 0.3.6 obligations.json); coverage complete incl. 17 CS-ERASURE cases and q43Rules; self-check 61/61;
+  converter core 317 AGREE, 19 AGREE-RULED, 2 VECTOR-BUG, 3 NOT-MODELED and qlever 298/18/19 DISAGREE (expected Q33i)/1 CONVERTER-ERROR/2/3,
+  both 0 differences from EXP-O02 item by item; negative control 8/8; probe_delta_033 20/20; probe_035 118 MATCH + 1 stale probe (expects
+  the old erasure refusal; the probe's "ST erasure answered" self-test no longer checks anything). Cosmetic: E-DECIMAL-OVERFLOW phases
+  stored as a tuple against the contract's "preflight or execution" text.
+- All 11 erasure obligations can close on the oracle side (G7.journal.logical-contract, G9.erasure.reproduction-modulo and
+  R.repo.mutation-controls newly), provided the authored CS-ERASURE cases avoid the residual refusals.
+- Residual X-NOT-MODELED (RULING-NEEDED in RULES.md; ruled Q52): COUNT over 2+ erased assertions; ORDER BY over erased plus missing; erasedAt of
+  a marker group erased at different instants; ReferenceTarget over an erased reference; computed answers over in-flight values;
+  toDecimal(json, p, s, rounding); the `erasure` spelling, erase mixed with other ops, preconditions on erase.
+- Per-file sha256 of lab/oracles/replay at a9c1327: in the hand-back and in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04-oracle-erasure/hashes.q49.txt
+  (replay.py 585524ba...0d, entities.py 2af069de...71, values.py 67a42954...82, views.py df8dba0b...6b, RULES.md 949ad875...7c).
