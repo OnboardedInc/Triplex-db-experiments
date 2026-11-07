@@ -1,0 +1,71 @@
+{
+ "format": "triplex-db-2/golden-vectors/1",
+ "file": "g9-half-open.json",
+ "status": "DRAFT-UNREVIEWED (EXP-G01)",
+ "derivation": "Hand-derived from ACCEPTANCE 4.2 item 5 and G9.temporal.half-open-intervals, the handoff README, Constraint.ts visibleAt and testkit O-TESTKIT. Neighbouring binary64 values are math.nextafter results. No Triplex, KV, engine or oracle was run. Conventions: README.md.",
+ "vectors": [
+  {
+   "id": "G9-HO-01",
+   "title": "Half-open [validFrom, validTo) at fractional boundaries, open-ended validTo, and the smallest subnormal width",
+   "contracts": ["G9.temporal.half-open-intervals", "R.repo.mutation-controls"],
+   "killsMutants": ["M-HALF-OPEN"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "g9ho01:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "iv:1", "attribute": ":iv/x", "value": {"type": "string", "value": "bounded"}, "validFrom": 10.125, "validTo": 30.5},
+      {"op": "assert", "label": "A2", "entityId": "iv:2", "attribute": ":iv/x", "value": {"type": "string", "value": "open"}, "validFrom": 10.125},
+      {"op": "assert", "label": "A3", "entityId": "iv:3", "attribute": ":iv/x", "value": {"type": "string", "value": "tiny"}, "validFrom": 0, "validTo": 5e-324}],
+     "expect": {"outcome": "committed"}}
+   ],
+   "queryTemplate": {"surfaces": [
+     {"surface": "EP-TRIPLES", "call": "Triples.match({ attribute: ':iv/x' }, { validAt: V })"},
+     {"surface": "EP-TRIPLES", "call": "Triples.queryAll({ find: ['?e'], where: [['?e', ':iv/x', '?x']] }, { basis: { validAt: V } }) -> ids of ?e mapped to assertions"},
+     {"surface": "EP-NATIVE", "call": "native facts relation with attribute ':iv/x' at { P: $pos:C1, validAt: V }"}],
+     "compare": "set of assertion labels"},
+   "queries": [
+    {"id": "V0", "basis": {"validAt": 0}, "expected": ["A3"], "citations": ["ACC-4.2.5", "CONSTRAINT-VISIBLE"]},
+    {"id": "V5e-324", "basis": {"validAt": 5e-324}, "expected": [], "citations": ["ACC-4.2.5"], "note": "validTo is exclusive even at the smallest positive binary64"},
+    {"id": "V10.124999999999998", "basis": {"validAt": 10.124999999999998}, "expected": [], "citations": ["ACC-4.2.5", "G9-HALF-OPEN"]},
+    {"id": "V10.125", "basis": {"validAt": 10.125}, "expected": ["A1", "A2"], "citations": ["ACC-4.2.5", "G9-HALF-OPEN"], "note": "validFrom inclusive"},
+    {"id": "V20.25", "basis": {"validAt": 20.25}, "expected": ["A1", "A2"], "citations": ["ACC-4.2.5"]},
+    {"id": "V30.499999999999996", "basis": {"validAt": 30.499999999999996}, "expected": ["A1", "A2"], "citations": ["ACC-4.2.5", "G9-HALF-OPEN"]},
+    {"id": "V30.5", "basis": {"validAt": 30.5}, "expected": ["A2"], "citations": ["ACC-4.2.5", "G9-HALF-OPEN", "V4-WORKER-CHECK (exclusive-valid-end)"], "note": "validTo exclusive"},
+    {"id": "V1e15", "basis": {"validAt": 1e15}, "expected": ["A2"], "citations": ["ACC-4.2.5", "HANDOFF-46 (null meaning open-ended)"]}
+   ]
+  },
+  {
+   "id": "G9-HO-02",
+   "title": "Omitted validFrom defaults to the commit instant; omitted validTo is open-ended",
+   "contracts": ["G9.temporal.half-open-intervals"],
+   "killsMutants": ["M-HALF-OPEN"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh",
+   "commands": [
+    {"id": "C1", "instant": 1000, "meta": {"actor": "golden", "commandId": "g9ho02:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "iv:4", "attribute": ":iv/y", "value": {"type": "string", "value": "default"}}],
+     "expect": {"outcome": "committed", "instant": 1000}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.get($id:A1)", "compare": "fields validFrom, validTo, recordedAt", "expected": {"validFrom": 1000, "validTo": null, "recordedAt": 1000}, "citations": ["TK-JOURNAL (assertion.validFrom === committed.instant)", "TRIPLE-TS"]},
+    {"id": "Q2", "surface": "EP-TRIPLES", "call": "Triples.match({ attribute: ':iv/y' }, { validAt: 999.9999999999999 })", "compare": "exact", "expected": [], "citations": ["ACC-4.2.5"]},
+    {"id": "Q3", "surface": "EP-TRIPLES", "call": "Triples.match({ attribute: ':iv/y' }, { validAt: 1000 })", "compare": "ids", "expected": ["$id:A1"], "citations": ["ACC-4.2.5"]}
+   ]
+  },
+  {
+   "id": "G9-HO-03",
+   "title": "Empty interval validFrom == validTo",
+   "contracts": ["G9.temporal.half-open-intervals", "G1.types.invalid-rejected"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "g9ho03:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "iv:5", "attribute": ":iv/z", "value": {"type": "string", "value": "empty"}, "validFrom": 10, "validTo": 10}],
+     "expect": "AMBIGUOUS", "ambiguity": "AMB-12"}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "outcome of C1, then Triples.match({ attribute: ':iv/z' }, { validAt: 10 })", "expected": "AMBIGUOUS", "ambiguity": "AMB-12",
+     "readings": [
+      {"id": "A-accept-never-visible", "expected": {"C1": "committed", "matchAtAnyV": []}, "sources": ["ACC-4.2.5 (half-open; [10,10) contains no instant)"]},
+      {"id": "B-reject-invalid-interval", "expected": {"C1": "rejected with a typed WriteError", "positionUnchanged": true}, "sources": ["no public document; CS-TYPES8-NEG does not list intervals"]}]}
+   ]
+  }
+ ]
+}

@@ -18,6 +18,13 @@ them or records exactly where and why it does not.
 - Also run the 13 entry checks in packages/xtdb/experiments/native-entry.ts (or the equivalent `verify-xtdb-entry.ts`)
   after EXP-000 made their endpoints configurable.
 
+## Facts from the harness (EXP-000 REPORT.md)
+- G2 xtdb already passed 142/142 once (`lab/runs/G2/G2-xtdb-20261107T185821Z-210ae9.json`); rerun it as a control with a recorded reason.
+- The first full G1 xtdb FAILED only because a concurrent gate rebuilt shared dist output; the harness now enforces one gate per
+  worktree. Rerun G1 full and confirm.
+- XTQL purity is being fixed separately by EXP-X02 (XTQL path will acquire its cut in XTQL). Do not change native query code here.
+- Also measure and record, as `--run-kind control`, the time and peak memory of each gate, so later experiments have A0 controls.
+
 ## Gates
 `node lab/bin/gate.mjs G0 --lane xtdb`, `G1 --lane xtdb`, `G2 --lane xtdb` receipts on main's harness, plus the entry
 checks. Each FAIL is triaged in the report as harness defect (fixed, rerun), real regression versus homebase evidence,

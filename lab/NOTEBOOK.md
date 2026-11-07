@@ -313,3 +313,18 @@ Report lab/research/R8-qlever-write-lifecycle.md; probes ~/Claude/Projects/tripl
 - Bug: upstream #3172 reproduces on 0.6.0: a BIND/IRI()-constructed term in an update makes every later `rebuild-index` fail (HTTP 400).
   Rule: update templates use only literal terms and variables bound from plain patterns. New F05 falsifier: C2.3's guarded
   DELETE/INSERT WHERE followed by `rebuild-index` must still succeed.
+
+## EXP-000 loop harness (Opus high) — PROGRESSED; on main (through baf4edf)
+- `lab/bin/engine.mjs` (slots, atomic pool ledger, cleanup-proven release), `gate.mjs` (G0/G1/G2, bound receipts, preimages under
+  runs/objects, PASS_SUBSET for subsets, runKind default diagnostic), `heavy.mjs`, `scorecard.mjs` (main-committed receipts only),
+  `status.mjs` (first validity checker), 15 harness unit tests; homebase coupling replaced; two pure-test breakages fixed.
+- First fresh receipts: G0 PASS xtdb (911) and qlever (916); G2 xtdb FULL PASS 142/142 (`G2-xtdb-20261107T185821Z-210ae9`), language
+  tally counting answer queries only: xtql 22, sql 116, hybrid 4 (counting every substep: xtql 0, because every call acquires its cut
+  in SQL; EXP-X02 fixes this per the ruling in the R12 entry).
+- Failures kept: G1 xtdb full FAIL although all 88 executions passed (a concurrent gate rebuilt the shared dist mid-run; harness now
+  enforces one gate per worktree); G1 qlever 0/88 (dev QLever OOM-killed at its 2.5 GiB cap on the first case; EXP-002 applies R8's
+  flags and the planner profile); G2 qlever wrote no receipt (harness bug, fixed).
+- Not yet enforceable: V7 (no oracle ACCEPTED, no pinned file hashes), V9 (raw results hashed after the runner's own asserts), V13/V16
+  (status.mjs only); mutation runs record but do not apply patches. "Reopen" for the 44 means a second fresh runtime opening.
+- Side effect found and reverted: the orchestrator's early `pnpm config set store-dir --location project` had rewritten
+  pnpm-workspace.yaml (comments lost, absolute storeDir added); restored from git. Agents keep passing --store-dir explicitly.

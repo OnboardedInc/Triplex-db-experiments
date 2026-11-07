@@ -17,6 +17,15 @@ homebase passes (unchanged44 on the explicit bounded-plan profile, native142 at 
 - Note every place where the current adapter's native recursion writes scratch graphs (packages/qlever/src/native/
   BasisRelations.ts); PLAN v1 contract C8 will remove those, so count how many tasks use them.
 
+## Facts from the harness and research
+- The first full G1 qlever run scored 0/88: the dev QLever was OOM-killed at its 2.5 GiB cap on the first case
+  (`lab/runs/G1/G1-qlever-20261107T185736Z-ea0be5.json`). G2 qlever wrote no receipt (harness bug, fixed).
+- Apply R8's engine settings (lab/research/R8-qlever-write-lifecycle.md section on knobs): `-j 4 -m 3G -c 512M -e 128M -s 10s`,
+  `query-planning-budget=1`, and find the homebase's F1 planner profile (wiki/problems/qlever-planner-memory.md). You may raise the dev
+  QLever memory cap in lab/config/slots.json (for example to 4 GiB) if a measurement shows it is needed; record the measurement. Keep the
+  XTDB dev reservation intact and the pool at or below 11 GiB.
+- Delta memory is outside `-m` (1.3 GB per million triples while updating), so watch container RSS, not only QLever's own accounting.
+
 ## Gates
 G0, G1, G2 and a G4 baseline for `--lane qlever`. Triage each FAIL as harness defect, real regression versus homebase
 evidence, or engine limit.

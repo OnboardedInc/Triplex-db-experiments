@@ -1,0 +1,85 @@
+{
+ "format": "triplex-db-2/golden-vectors/1",
+ "file": "g1-int64.json",
+ "status": "DRAFT-UNREVIEWED (EXP-G01)",
+ "derivation": "Hand-derived from Value.ts (Int64Decimal: canonical decimal text inside [-2^63, 2^63-1]), config/Attribute.ts (int64 handle model value is IntegerValue), ACCEPTANCE 6.1 and 6.2, RULINGS Q1 and Q8d/Q8f. No Triplex, KV, engine or oracle was run. Conventions: README.md.",
+ "constants": {
+  "2^63-1": "9223372036854775807", "-2^63": "-9223372036854775808", "-(2^63-1)": "-9223372036854775807",
+  "2^59": "576460752303423488", "2^59-1": "576460752303423487", "-2^59": "-576460752303423488", "-2^59-1": "-576460752303423489",
+  "2^53": "9007199254740992", "2^53+1": "9007199254740993"
+ },
+ "sharedSchema": {"id": "S-NUM", "note": "prepend a ConfigStore release command C0 for EP-REPO queries",
+  "entityTypes": [{"key": "Num", "attributes": [
+    {"key": ":n/v", "name": "v", "type": "int64", "cardinality": "one", "required": false},
+    {"key": ":n/f", "name": "f", "type": "number", "cardinality": "one", "required": false}]}]},
+ "vectors": [
+  {
+   "id": "G1-I64-01",
+   "title": "int64 boundary values round-trip exactly and equality never crosses 2^53 or the number family",
+   "contracts": ["G1.types.eight-type-roundtrip", "G1.types.storage-widening-safe", "R.repo.entity-suite", "R.repo.mutation-controls"],
+   "rulings": ["Q1", "Q8d"], "killsMutants": ["M-INT64-ROUND"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-NUM",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "g1i64-01:C1"}, "ops": [
+      {"op": "assert", "label": "MAX", "entityId": "n:max", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "9223372036854775807"}, "validFrom": 0},
+      {"op": "assert", "label": "MIN", "entityId": "n:min", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "-9223372036854775808"}, "validFrom": 0},
+      {"op": "assert", "label": "NMAX", "entityId": "n:negmax", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "-9223372036854775807"}, "validFrom": 0},
+      {"op": "assert", "label": "P59", "entityId": "n:p59", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "576460752303423488"}, "validFrom": 0},
+      {"op": "assert", "label": "P59M1", "entityId": "n:p59m1", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "576460752303423487"}, "validFrom": 0},
+      {"op": "assert", "label": "M59", "entityId": "n:m59", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "-576460752303423488"}, "validFrom": 0},
+      {"op": "assert", "label": "M59M1", "entityId": "n:m59m1", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "-576460752303423489"}, "validFrom": 0},
+      {"op": "assert", "label": "P53", "entityId": "n:p53", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "9007199254740992"}, "validFrom": 0},
+      {"op": "assert", "label": "P53P1", "entityId": "n:p53p1", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "9007199254740993"}, "validFrom": 0},
+      {"op": "assert", "label": "ZERO", "entityId": "n:zero", "entityType": "Num", "attribute": ":n/v", "value": {"type": "integer", "value": "0"}, "validFrom": 0},
+      {"op": "assert", "label": "F53", "entityId": "n:f53", "entityType": "Num", "attribute": ":n/f", "value": {"type": "number", "value": 9007199254740992.0, "bits": "4340000000000000"}, "validFrom": 0}],
+     "expect": {"outcome": "committed", "assertedCount": 11}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.get($id:<label>).value for every label", "compare": "exact (decimal text, no Number conversion)",
+     "expected": {"MAX": {"type": "integer", "value": "9223372036854775807"}, "MIN": {"type": "integer", "value": "-9223372036854775808"}, "NMAX": {"type": "integer", "value": "-9223372036854775807"},
+                  "P59": {"type": "integer", "value": "576460752303423488"}, "P59M1": {"type": "integer", "value": "576460752303423487"}, "M59": {"type": "integer", "value": "-576460752303423488"},
+                  "M59M1": {"type": "integer", "value": "-576460752303423489"}, "P53": {"type": "integer", "value": "9007199254740992"}, "P53P1": {"type": "integer", "value": "9007199254740993"},
+                  "ZERO": {"type": "integer", "value": "0"}, "F53": {"type": "number", "value": 9007199254740992.0, "bits": "4340000000000000"}},
+     "citations": ["VALUE-TS", "ACC-G1-TYPES", "ACC-6.1"]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Num>.at({ validAt: 10 }).get(id) for n:max, n:min, n:p53p1, n:f53", "compare": "exact",
+     "expected": {"n:max": {"$id": "n:max", "v": {"type": "integer", "value": "9223372036854775807"}}, "n:min": {"$id": "n:min", "v": {"type": "integer", "value": "-9223372036854775808"}},
+                  "n:p53p1": {"$id": "n:p53p1", "v": {"type": "integer", "value": "9007199254740993"}}, "n:f53": {"$id": "n:f53", "f": 9007199254740992}},
+     "citations": ["ATTR-INT64", "R3-SKETCH-DOC"]},
+    {"id": "Q3", "surface": "EP-TRIPLES", "call": "Triples.match({ attribute: ':n/v', value: { type: 'integer', value: '9007199254740993' } })", "compare": "ids", "expected": ["$id:P53P1"], "citations": ["VALUE-TS", "ACC-6.2 (cross-family)"]},
+    {"id": "Q4", "surface": "EP-TRIPLES", "call": "Triples.match({ attribute: ':n/v', value: { type: 'integer', value: '9007199254740992' } })", "compare": "ids", "expected": ["$id:P53"], "citations": ["VALUE-TS", "Q8d"],
+     "note": "the binary64 9007199254740992.0 on :n/f is another attribute and another family; it is not an int64 match"},
+    {"id": "Q5", "surface": "EP-REPO", "call": "Repository<Num>.at({ validAt: 10 }).find({ where: { v: { type: 'integer', value: '576460752303423488' } } })", "compare": "items ids", "expected": ["n:p59"], "citations": ["ATTR-INT64", "R3-SKETCH-FIND"],
+     "note": "QLever plain literals are exact only inside +/-2^59 (R2 4.1, capability matrix); 2^59 itself is outside, so the repository must use an exact channel"},
+    {"id": "Q6", "surface": "EP-REPO", "call": "Repository<Num>.at({ validAt: 10 }).find({ where: { v: { exists: true } }, orderBy: 'v' })", "compare": "ordered ids",
+     "expected": ["n:min", "n:negmax", "n:m59m1", "n:m59", "n:zero", "n:p53", "n:p53p1", "n:p59m1", "n:p59", "n:max"], "citations": ["Q8f (numeric order for numbers)", "ACC-4.2.11", "DOCS-DATALOG-ORDER"],
+     "note": "ascending numeric order; decimal-text order or a binary64 key would both fail. Default direction assumed ascending (R3 sketch orderBy has no direction)."},
+    {"id": "Q7", "surface": "EP-REPO", "call": "Repository<Num>.at({ validAt: 10 }).find({ where: { v: { gt: <2^59-1> } } })", "expected": "AMBIGUOUS", "ambiguity": "AMB-16",
+     "readings": [
+      {"id": "A-range-on-int64-supported", "expected": ["n:p59", "n:max"], "sources": ["ACC-6.4 (find with range predicates on every family)"]},
+      {"id": "B-not-offered", "expected": "type error: R3 Predicate offers gt/gte/lt/lte only when the model value is a JS number; int64 model values are IntegerValue objects", "sources": ["R3-SKETCH-PREDICATE", "ATTR-INT64"]}]}
+   ]
+  },
+  {
+   "id": "G1-I64-02",
+   "title": "Invalid int64 inputs are rejected atomically",
+   "contracts": ["G1.types.invalid-rejected", "G7.write.atomic"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "receiptScope": "engine", "scope": "fresh",
+   "commandTemplate": {"ops": [
+     {"op": "assert", "label": "OK", "entityId": "n:ok-<case>", "attribute": ":n/v", "value": {"type": "integer", "value": "1"}, "validFrom": 0},
+     {"op": "assert", "label": "BAD", "entityId": "n:bad-<case>", "attribute": ":n/v", "value": {"type": "integer", "value": "<text>"}, "validFrom": 0}],
+     "expect": {"outcome": "rejected", "error": {"_tag": "UNSPECIFIED (O-ERR TO-AUTHOR, AMB-14)", "kind": "invalid int64 value"}, "positionUnchanged": true, "transactionByCommand": null,
+                "postState": "Triples.match({ entityId: 'n:ok-<case>' }) == [] and Triples.match({ entityId: 'n:bad-<case>' }) == []"},
+     "note": "each case is its own command with its own commandId, run in sequence"},
+   "cases": [
+    {"case": "above-max", "text": "9223372036854775808", "citations": ["VALUE-TS (range check)", "ACC-6.1 CS-TYPES8-NEG", "ACC-6.2 (CAST of 9223372036854775808 overflows)"]},
+    {"case": "below-min", "text": "-9223372036854775809", "citations": ["VALUE-TS", "ACC-6.1"]},
+    {"case": "leading-zero", "text": "01", "citations": ["VALUE-TS (canonical regex ^(?:0|-[1-9]\\d*|[1-9]\\d*)$)", "ACC-6.1"]},
+    {"case": "plus-sign", "text": "+1", "citations": ["VALUE-TS", "ACC-6.1"]},
+    {"case": "decimal-point", "text": "1.0", "citations": ["VALUE-TS", "ACC-6.1"]},
+    {"case": "negative-zero-text", "text": "-0", "citations": ["VALUE-TS (the regex admits 0 but not -0)"]},
+    {"case": "empty", "text": "", "citations": ["VALUE-TS"]}
+   ],
+   "contrastCase": {"case": "min-exact", "text": "-9223372036854775808", "expect": {"outcome": "committed"}, "citations": ["VALUE-TS", "ACC-6.2 (CAST of -9223372036854775808 is exact)"]}
+  }
+ ]
+}
