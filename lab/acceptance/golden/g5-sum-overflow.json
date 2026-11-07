@@ -57,6 +57,18 @@
     {"inputs": ["4611686018427387904", "4611686018427387904"], "exactQuotient": "4611686018427387904", "expected": {"value": 4.611686018427388e18, "bits": "43d0000000000000"},
      "note": "the exact total 2^63 is outside int64 but the final result is a binary64 in range, so no integer-overflow (Q8a applies to the final result)"},
     {"inputs": ["1", "2"], "exactQuotient": "3/2", "expected": {"value": 1.5, "bits": "3ff8000000000000"}}],
-   "citations": ["Q8b", "Q8a"]}
+   "citations": ["Q8b", "Q8a"]},
+  {"id": "G5-SUM-12", "title": "Equal values on two entities: SUM keeps both rows, COUNT counts distinct values", "contracts": ["G5.agg.full-support"], "killsMutants": ["M-IDENTITY-COLLAPSE"],
+   "fixture": "C1 asserts ':conf/amount' number 10 on entity agg:a and number 10 on entity agg:b (testkit shape)",
+   "query": "Triples.queryAll({ find: ['?sum', '?count'], where: [['?entity', ':conf/amount', '?amount']], aggregate: [['sum', '?amount', '?sum'], ['count', '?amount', '?count']] })",
+   "expected": {"results": [{"?sum": 20, "?count": 1}]},
+   "citations": ["TK-AGG (sum must preserve equal input rows; count uses distinct flattened input values)", "DOCS-DATALOG-AGG"]},
+  {"id": "G5-SUM-13", "title": "Equal-valued duplicate assertions on ONE entity: does SUM count supports or bindings?", "contracts": ["G5.agg.full-support"], "planContracts": ["C5.1"], "killsMutants": ["M-IDENTITY-COLLAPSE", "M-DROPPED-SUPPORT"],
+   "fixture": "C1 asserts ':conf/amount' number 10 twice on entity agg:c (two assertions, distinct ids, one value with two supports)",
+   "query": "Triples.queryAll({ find: ['?sum', '?count'], where: [['?entity', ':conf/amount', '?amount']], aggregate: [['sum', '?amount', '?sum'], ['count', '?amount', '?count']] })",
+   "expected": "AMBIGUOUS", "ambiguity": "AMB-09",
+   "readings": [
+    {"id": "A-supports", "expected": {"results": [{"?sum": 20, "?count": 1}]}, "sources": ["ACC-G5-SUPPORT ('Aggregates count supports, not deduplicated values'; case 'equal values on two assertions')", "C5.1 (several supports)"]},
+    {"id": "B-binding-set", "expected": {"results": [{"?sum": 10, "?count": 1}]}, "sources": ["DOCS-DATALOG-AGG (aggregates retain duplicate input rows; the two assertions bind the identical row {?entity: agg:c, ?amount: 10})", "C5.1 (one value)"]}]}
  ]
 }

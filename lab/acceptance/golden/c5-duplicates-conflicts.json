@@ -17,7 +17,7 @@
    "title": "Equal duplicates in one command: one value with two supports, two distinct assertion identities",
    "contracts": ["G4.neg.conflict-not-false-absence", "G5.agg.full-support", "R.repo.entity-suite", "R.repo.mutation-controls"],
    "planContracts": ["C5.1", "C5.5"], "rulings": ["Q8e"],
-   "killsMutants": ["M-IDENTITY-COLLAPSE", "M-CONFLICT-PICK"],
+   "killsMutants": ["M-IDENTITY-COLLAPSE"],
    "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM", "enforcement": "off",
    "commands": [
     {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-01:C1"}, "ops": [
@@ -102,7 +102,7 @@
      "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:3", "attribute": ":item/color"}]}, "citations": ["C5.3"]},
     {"id": "Q7", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).count({ name: 'three' })", "compare": "exact", "expected": 1,
      "citations": ["C5.3"], "note": "the query references only name; C5.3: attributes the query does not reference do not affect it."},
-    {"id": "Q8", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).find({ where: { name: 'three' } })", "expected": "AMBIGUOUS", "ambiguity": "AMB-19",
+    {"id": "Q8", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).find({ where: { name: 'three' } })", "expected": "AMBIGUOUS", "ambiguity": "AMB-17",
      "readings": [
       {"id": "A-document-references-all-attributes", "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:3", "attribute": ":item/color"}]}, "sources": ["C5.3 (get fails because the document decodes every attribute)"]},
       {"id": "B-filter-only-reference", "expected": "no defined document shape: color has no single value and null is banned (R01 D5)", "sources": ["C5.3 (attributes the query does not reference do not affect it)"]}]},

@@ -328,3 +328,21 @@ Report lab/research/R8-qlever-write-lifecycle.md; probes ~/Claude/Projects/tripl
   (status.mjs only); mutation runs record but do not apply patches. "Reopen" for the 44 means a second fresh runtime opening.
 - Side effect found and reverted: the orchestrator's early `pnpm config set store-dir --location project` had rewritten
   pnpm-workspace.yaml (comments lost, absolute storeDir added); restored from git. Agents keep passing --store-dir explicitly.
+
+## EXP-001 XTDB baseline (Opus high) — PROGRESSED, all PASS (A0 controls)
+- G0 PASS (911, 130 expected skips) `G0-xtdb-20261107T190435Z-3bbfe6`; G1 FULL PASS 88/88 `G1-xtdb-20261107T190528Z-50077c`; G2 FULL
+  PASS 142/142 `G2-xtdb-20261107T190622Z-f59e9c`; native-entry 13/13 and verify-xtdb-entry 6/6 (lab/runs/ENTRY/*exp001*).
+- Homebase reproduced: 28 XTQL and 164 SQL answer traces. Language table (71 tasks): answer queries 11 XTQL / 58 SQL / 2 hybrid;
+  strict (every substep) 0 / 58 / 13 (192 SQL source-cut substeps, 598 SQL reachability substeps).
+- Timings: G0 32 s, G1 47 s (XTDB 1.5 GiB), G2 29 s. Cheap enough for every candidate to rerun full G1+G2.
+- Surprises: a task's language can depend on data (19/label-not-known makes 0 XTQL calls when its loop is empty); G2 claims
+  PKT.full142 for xtdb-xtql although only 11 tasks are XTQL: the harness must filter obligation claims per language.
+## O01 replay oracle built (branch exp/O01-replay-oracle 03d86f3): self-checks O-HAM 18/18, O-CFG8 20/20, O-EVT 23/23, units 91/91;
+   corrections applied (clock model, nested positions, outcome authority, signed zero, AVG, constraints). Needs independent review
+   and rulings listed in its RULES.md. Two homebase review fixtures are absent from this checkout.
+## G01 golden vectors: 49 vectors, 17 ambiguities (AMB-01 most important: tiny-v4 checks expect null retirement on ordinary
+   match vs the raw-lifetime contract). Not yet reviewed or committed.
+## SCOPE CHANGE from Sam (2026-11-07): new north star (lab/NORTH-STAR.md, five ranked priorities); pasted suggestions saved verbatim
+   (lab/research/SAM-pasted-targets-2026-11-07.md). Sam: do not rule out QLever; build both to the fullest and work around
+   impossibilities; keep the ten-goal plan but re-tune performance targets and requirements. Orchestrator restated its
+   understanding to Sam and is waiting for confirmation before rewriting PLAN/TARGETS/contract targets.
