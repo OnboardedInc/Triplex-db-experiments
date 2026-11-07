@@ -74,7 +74,7 @@ class Visibility(unittest.TestCase):
         q = [{"id": "neg", "kind": "match", "cut": {"validAt": -1}},
              {"id": "far", "kind": "match", "cut": {"position": 5, "validAt": 0}}]
         rep = evaluate(case(cmds, q))
-        self.assertEqual(result(rep, "neg")["error"], "X-INVALID-BASIS")
+        self.assertEqual(result(rep, "neg")["error"], "E-INVALID-VALUE")    # R-CUT-3, ruled by Q33h
         self.assertEqual(result(rep, "far")["error"], "E-UNAVAILABLE-CUT")
         self.assertEqual((result(rep, "far")["_tag"], result(rep, "far")["reason"]), ("ReadError", "unavailable-cut"))
 
@@ -91,8 +91,13 @@ class Pages(unittest.TestCase):
         self.assertEqual([p["hasMore"] for p in pages], [True, True, False])
 
     def test_transaction_limit_bounds(self):
-        rep = evaluate(case([], [{"id": "bad", "kind": "transactions", "limit": 1001}]))
-        self.assertEqual(result(rep, "bad")["_tag"], "ReadError")
+        """R-JNL-7 (Q33g): an invalid transactions limit is PaginationCursorError / malformed."""
+        rep = evaluate(case([], [{"id": "bad", "kind": "transactions", "limit": 1001},
+                                 {"id": "zero", "kind": "transactions", "limit": 0},
+                                 {"id": "frac", "kind": "transactions", "limit": 1.5}]))
+        for qid in ("bad", "zero", "frac"):
+            self.assertEqual((result(rep, qid)["_tag"], result(rep, qid)["reason"]),
+                             ("PaginationCursorError", "malformed"), qid)
 
 
 class Supports(unittest.TestCase):
