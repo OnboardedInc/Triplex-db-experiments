@@ -158,7 +158,9 @@ class Executor {
     // Outcome unknown: a lost ACK by fault (runtime restart), or a transient infrastructure WriteError (a
     // deadline, "Cannot acquire XTDB source cut") after which the command may or may not have committed.
     // Resolve by commandId; re-send with the same commandId only if it never committed (claims make it safe).
-    const transient = x => x.status === 'rejected' && x.category === 'write-error' && /cannot acquire|deadline|timeout|timed out|econn|connection|outcome/i.test(x.message ?? '');
+    // A ReadError inside transact (seen on XTDB under load: "XTDB read failed") also leaves the outcome open.
+    const transient = x => (x.status === 'rejected' && x.category === 'write-error' && /cannot acquire|deadline|timeout|timed out|econn|connection|outcome/i.test(x.message ?? ''))
+      || (x.status === 'error' && x.tag === 'ReadError');
     if (r.status === 'unknown' || (r.status !== 'committed' && faulted()) || transient(r)) {
       a.unknown = { tag: r.tag, message: r.message ?? null };
       a.transientRetries = 0;
