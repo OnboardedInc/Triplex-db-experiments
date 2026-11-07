@@ -449,3 +449,20 @@ EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) 
   idempotency under the 10% duplicate trace; AMB-04 and AMB-12 follow Sam's "hard error, never silent conversion".
 - Contract 0.3.1 (Q16-Q20 compiled) committed 9c01194; EXP-O02 dispatched to make the oracle conform (no packages/ reads; the brief
   states the four implementation facts it needs).
+
+## 2026-11-07 ~21:10Z: Codex plan-v2 review NOT READY; all 14 findings accepted (675db6b)
+- **Learning: naming a basis proves nothing about pinning.** If readers and writers touch disjoint subjects, a reader that silently
+  reads latest state passes every check. The fix is to make the workload discriminate: a shared hot set, split subgraph reads with a
+  forced commit between steps, and a requested basis recorded by the driver, not echoed by the engine (TARGETS 1.1 P1).
+- **Learning: a closed-loop commit probe hides queueing.** P2 is now open loop from the scheduled offer to the published ACK on the
+  trace's own commands, per size band, with every offered command accounted for.
+- **Learning: a sweep that only fetches is not release activation.** P5 now needs W0 evaluation, exact coverage, outbox publication and
+  post-capture mutations; this created EXP-D01 (W0 kernel plus the independent O-DOMAIN oracle), which GS also needs because O-REPLAY
+  models database state, not domain rules.
+- **Learning: erasure and bit-for-bit history conflict unless the boundary is defined.** Ruled Q24: reads after the erasure publishes
+  see a typed ErasedValue marker at every basis; reproduction holds modulo erasure (provisional, flagged for Sam).
+- **Process fix:** PLAN 6.1 said "lowest-ranked unmet priority", which reverses Sam's order; now "highest-priority unmet". Generation 2
+  reordered: freeze semantics, tiny commit/feed/fault controls on both sources, A0, W0, layer swaps one at a time, then the broad suite.
+- **Composition identity** is per layer (source, current, history, analytics) with watermark routing and ACK after the current index
+  reaches the commit (Q28); bundled "all read layers move together" comparisons could not tell layers apart.
+- Next: A01 compiles 0.3.2; N01 and W01 got the new semantics; Codex round 2 on 0.3.2 when it lands; EXP-D01 when a slot frees.

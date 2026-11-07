@@ -35,16 +35,18 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-X02 XTQL parity (opus, exp/X02-xtql-parity) | read priorities on XTDB, floor | branch; waiting on own live-check rerun |
 | EXP-002 QLever baseline (opus, exp/002-qlever-baseline) | A0 control | receipts |
 | EXP-F02 wire exactness (opus) | numeric rule floor | branch |
-| EXP-A01 contract (opus, main, idle after 0.3.1) | contract | resume for 0.3.2 |
+| EXP-A01 contract 0.3.2 (opus, main, no commit) | Q21-Q28 + TARGETS v2 into the contract | lab/acceptance/ |
 | R16 XTDB north-star fit (sonnet) | P1-P5 per layer | lab/research/R16-xtdb-northstar-fit.md |
 | R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
 | R18 read-path, feed, sweep prior art (sonnet) | P1, P3, P4, P5 | lab/research/R18-*.md |
-Codex shell b0losx599: review of PLAN v2 + TARGETS + contract 0.3.0 -> lab/reviews/plan-v2-review.codex.md.
-Next when a slot frees (north-star order): EXP-N02 (A0 controls, re-freeze budgets) once N01 lands; X04/Q05 current index (P4);
-P2X/P2Q commit path (P2); CF01 change feed (P3); S5 sweep (P5).
+Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 on contract 0.3.2 when A01 lands it.
+Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
+lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 
 ## Pending decisions for Sam (flagged, provisional rulings in force)
 - R15 presence/deletion/cascade: Option C staged; delete = end valid time; default restrict; cascade any-parent card-one.
 - Q21 AMB-09: two equal-valued assertions on one entity are one value, so a duplicated pay fact never doubles a total (SUM 10, not 20).
 - Q21 AMB-17: `find` fails with ConflictingValuesError when a returned document has a conflicted attribute (a projection omitting it succeeds).
 - Q21 AMB-04: a -0.0 assertion keeps bit-exact -0.0 in the journal; the numeric rule overrides C6's old byte-identity promise.
+- Q24 erasure: after the erasure commit publishes, reads at every basis (even before it) show a typed ErasedValue marker, not the value.
+- GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
