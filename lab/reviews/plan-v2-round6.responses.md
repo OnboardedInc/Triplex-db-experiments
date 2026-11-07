@@ -65,3 +65,9 @@ Q47 are held here (no contract authority) until contract 0.3.7 compiles them and
 | Q52e computed answers over in-flight values | An erasure commit is atomic for readers: a read that started before it published sees either all of that commit's values as they were or all as markers, never a mix; the oracle accepts exactly those two whole answers. This narrows Q49d from per value to per commit. | Q49d |
 | Q52f toDecimal(json, p, s, rounding) | The named mode (half-even, half-up or down, Q22) applies to the JSON number's as-written decimal reading (Q49e); without a rounding argument, excess digits are E-DECIMAL-FRACTION. | Q22, Q49e |
 | Q52g erase command shape | The op is spelled `erase`; `erasure` is a typed invalid-command error. An erase is its own command: mixing it with other ops, or giving it preconditions, is a typed invalid-command error. | Q49a |
+
+## Q53 (held here, no authority): W0 SPEC-AMBIGUITY readings from EXP-D01c
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q53a readings A01-A10 | Accepted as written in lab/experiments/EXP-D01c-o-domain/REPORT.md. They change no golden case and no fingerprint value. | W0-1.1.1 outputs unchanged |
+| Q53b fold into W0 | W0-1.1.2 adds them to SPEC.md as clarifications and adds one golden case per reading (A10 is already exercised by the population), so the TypeScript kernel (EXP-D01b) and O-DOMAIN are held to the same reading. Every existing case and the fingerprint must stay byte-identical; V-D01c checks that. Until W0-1.1.2 lands, the W0 pin covers W0-1.1.1 with these readings recorded. | Q31i (two independent implementers) |

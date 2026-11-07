@@ -923,3 +923,12 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **EXP-O04 Q49:** O-REPLAY 0.4.1 (a9c1327) models erasure as an ordinary journal transaction; 342/342 tests; conformance unchanged item by
   item on both lanes; all 11 erasure obligations closable on the oracle side. Residual RULING-NEEDED items ruled as Q52 (held).
 - Dispatched: V-P2Q (new verifier) and the V-O04 re-check (resumed verifier). Running: 10 of 10.
+
+## 2026-11-07 23:20Z: MILESTONE: O-DOMAIN reproduced W0-1.1.1 exactly on its first run
+- An independent implementation written from SPEC.md alone matched 87/87 golden cases and all six 100k fingerprint values (basis.tx
+  4,338,757; 44,537,987 facts; worlds, R1, R2, R3 hashes), and its measured floors equal V-D01's scratch evaluator to the last digit. That
+  is three implementations (author, V-D01's scratch evaluator, O-DOMAIN) agreeing on 44.5M facts. 99.5 s and 23 MiB streamed.
+- Learning: the three-round W0 review paid for itself here; the SPEC is precise enough that a cold reader reproduced every byte. The 10
+  readings O-DOMAIN had to choose (A01-A10) touch no case or fingerprint value, which also says the golden cases do not pin validation order
+  or payload escaping: Q53b adds one case per reading in W0-1.1.2.
+- Dispatched V-D01c (mutation-based review: can the cases fail O-DOMAIN?). Running: 10 of 10.
