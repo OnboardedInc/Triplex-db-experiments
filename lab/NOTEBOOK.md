@@ -791,3 +791,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   about 447 facts over 3-6 hops (a 100k sweep reads about 44.7M facts, up from 1.6M), so P5 tests something close to Onboarded's real pull
   size. Floor 4 (3+ work items) is thinner (about 1.65% expected) and the re-review measures it on the real population. V-D01 re-review
   running; then the pin and the two independent implementations (TS kernel, O-DOMAIN).
+
+## 2026-11-08 ~22:10Z: EXP-F02b (XTDB proven); infrastructure pressure
+- **F02b result:** XTDB falsifier 0 silent changes (from 25 silent plus 3 spec gaps); the journal keeps number -0 by writing `-0` as JSON
+  text, which JSON.parse reads back exactly, so canonical identity and the journal's shape stay unchanged. QLever rerun owed.
+- **Infrastructure learning: the shared dev residents are the bottleneck and the measurement noise.** The QLever dev resident was
+  OOM-killed three times (20:47Z, 20:56Z, 22:02Z): its persisted delta grew under every agent's writes and reloaded on each restart, so a
+  plain restart died again 17 minutes later. Fixed by raising it to 3.5 GiB (-m 2000M) and recreating it fresh (5c684bd). The XTDB dev
+  resident runs at 200% CPU under scenario load, so a G1 that took 11 s took 482 s and timed out. The host itself is saturated: 36 GiB with
+  about 14 GiB compressed and load average 12-13 on 12 cores (Sam's default colima VM also runs), so the triplex2 VM cannot grow.
+- **Policy until pressure drops:** no new agent dispatches beyond replacing finished ones on light, engine-free work; heavy local commands
+  go through lab/bin/heavy.mjs (4 tokens); gate reruns one at a time; latency measurements are judged only relatively (same slot, same
+  window), never against absolute bars. The dev QLever resident needs a periodic fresh restart or rebuild while agents share it.
