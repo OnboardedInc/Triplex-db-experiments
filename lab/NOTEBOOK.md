@@ -526,3 +526,21 @@ EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) 
   pool (R18) and grow the delta; C8's read-only frontier loop is a P1 and P2 fix on QLever, not only a correctness item.
 - G4 counterexamples confirmed on QLever (identical current and reopen): ICU string order where codepoint order is expected, and
   decorrelated correlated NOT EXISTS; EXP-Q03 (order keys, EXISTS re-binding) is the fix track.
+
+## 2026-11-07 ~22:30Z: Codex round 2 on plan v2.1 and contract 0.3.2: 7 closed, 7 partial, 6 new, NOT READY
+- **Learning: a fix described in prose is not a fix until the generated contract enforces it.** Codex checked the compiled
+  obligations, not TARGETS, and found loopholes the prose hid: P2 could pass by rejecting most commands with typed errors (Q31a now
+  requires every oracle-valid command to publish, with a bounded queue); the forced P1 mutations would have made faster readers
+  generate more writes, so candidates would no longer see the same trace (Q31b: split reads straddle existing trace commands).
+- **Learning: "ACK only after the current index catches up" turns an index outage into a commit outage.** Q31e reverses Q28: the source
+  ACKs after its own publication and read-your-own-write is kept by routing the pull to an eligible reader. This keeps P2 alive through
+  GS.04b and makes the current index a fast path, not a correctness dependency.
+- **Learning: a watermark proves reachability, not reconstructability.** A current-only index past basis B cannot answer at B unless B
+  lies inside the validity interval of every attribute read (Q31d); erasure adds a second frontier independent of the requested basis
+  (Q31f), or an old-basis read could return an erased value from a lagging index.
+- **Learning: non-dense positions need coordinates, not just "use the log offset".** One engine transaction can hold several Triplex
+  transacts, so positions are (stream, epoch, offset, ordinal) with a fully resolved prefix as the watermark (Q31c); four falsifiers
+  (nested cuts, abort gap, crash between append and resolution, resume at an abort gap) gate any comparative claim. Sent to EXP-P2X.
+- **Learning: the orchestrator can author W0, but coverage must be frozen and reviewed independently** (Q31i), or 100k no-op
+  evaluations satisfy P5. Floors sent to EXP-D01a; V-D01 reviews before W0's hashes are pinned.
+- Contract 0.3.3 (Q29, Q31) is with A01. Codex round 3 after 0.3.3 compiles.
