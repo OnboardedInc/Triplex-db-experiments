@@ -12,9 +12,10 @@
 // objects with oracleExit 2 / X-NOT-MODELED labelled PASS, a control with neither trace nor window (None == None) and an
 // indirect oracle refusal through CS-MIGRATION (round 6 findings 1, 5, 6). This evaluator opens the whole object graph:
 //   - every object exists in runs/objects, hashes to its name, matches its record schema and is bound to its run;
-//   - every receipt's run binding (bindingOf: id, kind, profile, obligation, composition, commit, start, endpoint,
-//     admission, producer, identity) is repeated in every object the run wrote, so a receipt edited after the run (a
-//     relabelled composition, profile or run kind) no longer matches its own evidence (red-team findings 1, 3);
+//   - every receipt's run binding (bindingOf: id, kind, profile, obligation, contract, composition, commit, start, endpoint,
+//     admission, producer, identity) is repeated in every object the run wrote, and a run ledger object fixes the evidence
+//     list, counts and end time, so a receipt edited after the run (a relabelled composition, profile, contract or run
+//     kind; a deleted FAIL attempt or ns-run; zeroed counts) no longer matches its own evidence (red-team passes 1 and 2);
 //   - executed modules are retained objects bound to the home commit's tree through a build/import manifest (Q47a);
 //   - selections are resolved through pinned case manifests and every case verdict is recomputed from the retained oracle
 //     run, expected answer and raw result; any refusal rejects the claim (Q45b, Q47a, Q47c);
@@ -23,10 +24,11 @@
 //   - every receipt has independent verifier evidence (the 0.3.6 reference requires a verifier object on every receipt).
 //
 // Threat model, stated so nobody over-reads a QUALIFIED: this defeats stale, partial, placeholder, relabelled and
-// misassembled evidence. It does not defeat someone who writes a complete, self-consistent forged object graph into
-// runs/objects (every object rebound, a build manifest lying about which inputs produced which outputs); independent
-// verifiers and reruns are for that. Comparators are recomputed on the canonical JSON forms the harness retains; the
-// closure-rule evaluators (CR-*) own the typed comparison and every threshold.
+// misassembled evidence, and any edit of a receipt or claim after its run. The binding is computable from receipt fields,
+// so writing new objects into runs/objects with a correct binding (a forged ledger, a forged case result, a build manifest
+// lying about which inputs produced which outputs) is deliberate forgery and is not defeated here; independent verifier
+// reruns are for that. Comparators are recomputed on the canonical JSON forms the harness retains (exact values as typed
+// strings); the closure-rule evaluators (CR-*) own the typed comparison and every threshold.
 //
 // Rejected: reading pins, receipts or the contract from the working tree (an uncommitted edit could qualify a claim);
 // accepting the first valid receipt among invalid ones (every receipt a claim carries is evidence it depends on; this also
@@ -49,6 +51,7 @@ export const FORMATS = {
   verifierRecord: 'triplex-db-2/verifier-record/1',
   recomputedVerdicts: 'triplex-db-2/recomputed-verdicts/1',
   a0Registry: 'triplex-db-2/a0-registry/1',
+  runLedger: 'triplex-db-2/run-ledger/1',
 };
 export const PATHS = { contract: 'lab/acceptance/obligations.json', loadContract: 'lab/acceptance/load-contract.json', slots: 'lab/config/slots.json', lockfile: 'pnpm-lock.yaml' };
 export const PREREQ = { position: 'G7.position.coordinates', identity: 'G10.composition.identity-bound', w0: 'W0.coverage-floors' };
@@ -69,42 +72,66 @@ export const canonText = v => JSON.stringify(canon(v));
 const same = (a, b) => canonText(a) === canonText(b);
 /** Hash of a file listing: sha256 over "<sha256>  <path>\n" lines in the given order (the gate.mjs hashDist convention). */
 export const listingHash = rows => sha256(rows.map(([p, h]) => `${h}  ${p}\n`).join(''));
-/** A path that is safe to hand to git: relative, no traversal, no control characters, no pathspec magic. */
-const safePath = p => typeof p === 'string' && p.length > 0 && !p.startsWith('/') && !p.startsWith(':') && !p.startsWith('-') && !/[\u0000-\u001f\u007f]/.test(p) && !p.split('/').includes('..');
+/**
+ * A path that is safe to hand to git and means one file: relative, no traversal, no empty or "." segments (red-team v2:
+ * node_modules/./@x and node_modules//@x named a first-party package under another spelling), no control characters, no
+ * pathspec magic.
+ */
+const safePath = p => typeof p === 'string' && p.length > 0 && !p.startsWith(':') && !p.startsWith('-') && !/[\u0000-\u001f\u007f\\]/.test(p) && p.split('/').every(s => s !== '' && s !== '.' && s !== '..');
+/** Agent ids compare case- and space-insensitively (red-team v2: "Agent-Candidate-Author" passed as independent). */
+const agentKey = a => typeof a === 'string' ? a.trim().toLowerCase() : null;
 
 /**
- * The run binding (red-team finding 1). The harness computes it when the run starts and writes it into every object the run
- * produces (case results, oracle runs are referenced from them, fault witnesses, ns-runs, verifier records and the build
- * manifest). Every inline receipt field that decides a role or an eligibility is in it; values only known at the end
- * (timing.end, counts) are not, and are cross-checked against the evidence instead.
+ * The run binding (red-team findings 1, 3 and v2 finding 4). The harness computes it when the run starts and writes it into
+ * every object the run produces (case results, oracle runs, fault witnesses, ns-runs, verifier records, the build manifest
+ * and the run ledger). Every inline receipt field that decides a role or an eligibility is in it; the values only known at
+ * the end (timing.end, counts, the evidence list) are fixed by the run ledger object instead.
  */
 export function bindingOf(r) {
   const pid = own(r, 'profileIdentity') ?? {};
   return sha256(canonText({
     receiptId: own(r, 'receiptId'), runKind: own(r, 'runKind'), profile: own(r, 'profile'), obligations: own(r, 'obligations'),
-    composition: own(r, 'composition'), git: own(r, 'git'), start: own(own(r, 'timing'), 'start'), endpoint: own(r, 'endpoint'),
-    admission: own(r, 'admission'), producer: own(r, 'producer'),
+    contract: own(r, 'contract'), composition: own(r, 'composition'), git: own(r, 'git'), start: own(own(r, 'timing'), 'start'),
+    endpoint: own(r, 'endpoint'), admission: own(r, 'admission'), producer: own(r, 'producer'),
     identity: { sourceTreeSha256: own(pid, 'sourceTreeSha256'), lockfileSha256: own(pid, 'lockfileSha256'), node: own(pid, 'node'), pnpm: own(pid, 'pnpm') },
   }));
 }
 
 /**
- * Recompute a case verdict from the retained expected answer and observed result (Q47a), both in the comparator's canonical
- * JSON form. Returns PASS, FAIL or UNCOMPARABLE (an unknown comparator or bytes that are not the expected shape).
+ * Parse a retained answer that must be in canonical JSON (Q47a; red-team v2 finding 5): valid UTF-8, the exact bytes of its
+ * own key-sorted, whitespace-free serialisation, only safe integers as numbers, at most 64 levels deep. Why: JSON.parse loses
+ * information (2^53 + 1, 1e400, 12.30 versus 12.3, duplicate keys, invalid UTF-8), so two different answers could compare
+ * equal after parsing. Exact values (decimals, doubles, big integers) are therefore typed strings in the canonical form.
+ * Returns { ok, value } or { ok: false }.
+ */
+export function canonicalAnswer(bytes) {
+  let text, value;
+  try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); value = JSON.parse(text); } catch { return { ok: false }; }
+  const fits = (v, depth) => depth <= 64 && (v === null || typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isSafeInteger(v) && !Object.is(v, -0))
+    || (Array.isArray(v) && v.every(x => fits(x, depth + 1))) || (isObj(v) && Object.values(v).every(x => fits(x, depth + 1))));
+  if (!fits(value, 0) || canonText(value) !== text) return { ok: false };
+  return { ok: true, value };
+}
+
+/**
+ * Recompute a case verdict from the retained expected answer and observed result (Q47a), both in canonical JSON (above).
+ * Returns PASS, FAIL or UNCOMPARABLE (an unknown comparator, a non-canonical answer or the wrong shape).
  */
 export function recompute(comparator, expectedBytes, observedBytes) {
-  let e, o;
-  try { e = JSON.parse(expectedBytes.toString('utf8')); o = JSON.parse(observedBytes.toString('utf8')); } catch { return 'UNCOMPARABLE'; }
+  const pe = canonicalAnswer(expectedBytes), po = canonicalAnswer(observedBytes);
+  if (!pe.ok || !po.ok) return 'UNCOMPARABLE';
+  const e = pe.value, o = po.value;
   const rows = x => Array.isArray(x) ? x.map(canonText) : null;
   const verdict = ok => ok ? 'PASS' : 'FAIL';
   switch (comparator) {
-    case 'CMP-EXACT-VALUE': return verdict(canonText(e) === canonText(o));
-    case 'CMP-ORDERED-ROWS': case 'CMP-PAGES': { const a = rows(e), b = rows(o); return a && b ? verdict(a.join('\n') === b.join('\n') && a.length === b.length) : 'UNCOMPARABLE'; }
+    case 'CMP-EXACT-VALUE': return verdict(expectedBytes.equals(observedBytes));
+    case 'CMP-ORDERED-ROWS': case 'CMP-PAGES': { const a = rows(e), b = rows(o); return a && b ? verdict(same(a, b)) : 'UNCOMPARABLE'; }
     case 'CMP-BAG-ROWS': { const a = rows(e), b = rows(o); return a && b ? verdict(same(a.sort(), b.sort())) : 'UNCOMPARABLE'; }
     case 'CMP-SET-ROWS': case 'CMP-DIAGNOSTICS': { const a = rows(e), b = rows(o); return a && b ? verdict(same([...new Set(a)].sort(), [...new Set(b)].sort())) : 'UNCOMPARABLE'; }
     case 'CMP-ERROR': {
-      if (!isObj(e) || !isObj(o) || !str(e._tag)) return 'UNCOMPARABLE';
-      const reasons = Array.isArray(e.reasons) ? e.reasons : [e.reason];
+      // The expected answer names a nonempty reason or reason list; [undefined].includes(undefined) never matches (red-team v2).
+      const reasons = Array.isArray(e?.reasons) ? e.reasons : [e?.reason];
+      if (!isObj(e) || !isObj(o) || !str(e._tag) || !reasons.length || !reasons.every(str)) return 'UNCOMPARABLE';
       return verdict(o._tag === e._tag && reasons.includes(o.reason) && o.cause != null && (o.rows === undefined || (Array.isArray(o.rows) && o.rows.length === 0)));
     }
     default: return 'UNCOMPARABLE';
@@ -131,15 +158,17 @@ export function gitSource(repo) {
       return bytes;
     },
     /** Tracked files (blobs) under the given roots at the commit, sorted; null when a root is unsafe or git fails. */
-    list(commit, roots) {
-      if (!Array.isArray(roots) || !roots.length || !roots.every(safePath)) return null;
+    list(commit, roots) { const e = this.entries(commit, roots); return e && e.map(x => x.path); },
+    /** As list, with each blob's mode (120000 is a symlink, whose bytes are the link text, not the file a build reads). */
+    entries(commit, roots) {
+      if (roots !== null && (!Array.isArray(roots) || !roots.length || !roots.every(safePath))) return null;
       const key = COMMIT.test(commit) ? `list:${commit}:${JSON.stringify(roots)}` : null;
       if (key && cache.has(key)) return cache.get(key);
       let result;
       try {
-        const out = run(['ls-tree', '-r', '-z', commit, '--', ...roots]).toString('utf8');
-        result = out.split('\0').filter(Boolean).map(line => { const tab = line.indexOf('\t'); return { type: line.slice(0, tab).split(' ')[1], path: line.slice(tab + 1) }; })
-          .filter(e => e.type === 'blob').map(e => e.path).sort();
+        const out = run(['ls-tree', '-r', '-z', commit, ...(roots ? ['--', ...roots] : [])]).toString('utf8');
+        result = out.split('\0').filter(Boolean).map(line => { const tab = line.indexOf('\t'); const [mode, type] = line.slice(0, tab).split(' '); return { mode, type, path: line.slice(tab + 1) }; })
+          .filter(e => e.type === 'blob').map(({ mode, path: p }) => ({ mode, path: p })).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
       } catch { result = null; }
       if (key) cache.set(key, result);
       return result;
@@ -458,7 +487,7 @@ function evaluate(claim, env, why) {
       // VV2: the same profile and composition; VV1: a different agent from every author of the code under test.
       if (v.r.profile !== x.r.profile) why('VERIFIER-PROFILE', `verifier ran ${v.r.profile}, ${x.r.receiptId} ran ${x.r.profile} (VV2)`, v.r.receiptId);
       const authors = own(x.r.producer, 'authorsOfCodeUnderTest'), agent = own(v.r.producer, 'agentId');
-      if (!str(agent) || !Array.isArray(authors) || authors.includes(agent) || own(x.r.producer, 'agentId') === agent) why('VERIFIER-NOT-INDEPENDENT', `verifier agent ${agent} authored or produced ${x.r.receiptId}, or authorship is unrecorded (VV1)`, v.r.receiptId);
+      if (!str(agent) || !Array.isArray(authors) || authors.map(agentKey).includes(agentKey(agent)) || agentKey(own(x.r.producer, 'agentId')) === agentKey(agent)) why('VERIFIER-NOT-INDEPENDENT', `verifier agent ${agent} authored or produced ${x.r.receiptId}, or authorship is unrecorded (VV1)`, v.r.receiptId);
       // VV4: the verifier recomputed every case verdict of the verified run, and agrees with the recomputation here.
       const theirs = new Map(v.verdicts.filter(e => e.receiptId === x.r.receiptId).map(e => [`${e.caseSet}\u0000${e.caseId}\u0000${e.mode}`, e.verdict]));
       for (const [k, verdict] of x.cases) if (theirs.get(k) !== verdict) why('VERIFIER-DISAGREES', `verifier recomputed ${x.r.receiptId} ${k.replaceAll('\u0000', '/')} as ${theirs.get(k) ?? 'nothing'}, the evaluator ${verdict} (VV4)`, v.r.receiptId);
@@ -480,7 +509,8 @@ function evaluate(claim, env, why) {
     if (!str(own(prod, 'agentId'))) bad('RECEIPT-PRODUCER', 'producer.agentId is missing');
     if (role !== 'verifier' && !strList(own(prod, 'authorsOfCodeUnderTest'))) bad('RECEIPT-PRODUCER', 'producer.authorsOfCodeUnderTest must list the authors of the code under test (VV1 needs it)');
     // B7: run kinds that never count.
-    const kinds = role === 'verifier' ? ['verifier'] : role === 'prereq' || promo ? ['acceptance'] : ['acceptance', 'candidate', 'control'];
+    // Run kind follows the role (red-team v2 finding 8): a candidate run never stands in as the control, nor the reverse.
+    const kinds = role === 'verifier' ? ['verifier'] : role === 'prereq' || promo ? ['acceptance'] : role === 'measurement' ? ['acceptance', 'candidate'] : ['acceptance', 'control'];
     if (!kinds.includes(r.runKind)) bad('RECEIPT-RUN-KIND', `runKind ${r.runKind} cannot support a ${claim.kind} claim as ${role} (allowed: ${kinds.join(', ')}; B7)`);
     // Profiles (red-team finding 3): exactly one of the obligation's declared profiles; a screening profile only for the
     // measurement and control of a comparative claim (VA16, ACCEPTANCE 5.7). Verifiers inherit the verified profile (VV2).
@@ -506,7 +536,12 @@ function evaluate(claim, env, why) {
     // VA5: the endpoint contacted is the one expected, never a homebase port. VA10: admitted, not BLOCKED_CAPACITY.
     const forbidden = slots?.forbiddenPorts ?? [15442, 17019];
     if (!isObj(r.endpoint) || !strList(r.endpoint.contacted) || !same(r.endpoint.contacted, r.endpoint.expected)) bad('RECEIPT-ENDPOINT', 'endpoint.contacted must be a nonempty list equal to endpoint.expected (VA5)');
-    else if (forbidden.some(p => r.endpoint.contacted.some(u => new RegExp(`:${p}(\\D|$)`).test(u)))) bad('RECEIPT-ENDPOINT', `contacted a forbidden port ${forbidden.join(' or ')} (VA5)`);
+    else {
+      // Ports are read as the URL parser reads them (red-team v2: ":015442" is port 15442).
+      const port = u => { try { const x = new URL(u); return Number(x.port || (x.protocol === 'https:' ? 443 : 80)); } catch { return null; } };
+      const ports = r.endpoint.contacted.map(port);
+      if (ports.some(p => p == null || forbidden.includes(p))) bad('RECEIPT-ENDPOINT', `contacted a forbidden port ${forbidden.join(' or ')} or an unparseable endpoint (VA5)`);
+    }
     if (!isObj(r.admission) || !str(r.admission.reservationId) || r.admission.status !== 'ADMITTED') bad('RECEIPT-ADMISSION', 'admission must record a reservation with status ADMITTED (VA10)');
 
     verifyManifest(entry, pid, bad);
@@ -514,6 +549,14 @@ function evaluate(claim, env, why) {
     // Every evidence object: exists, hashes to its name, is the declared record, and carries this run's binding.
     const evidence = Array.isArray(r.evidence) ? r.evidence : [];
     if (!evidence.length) bad('EVIDENCE-MISSING', 'receipt carries no evidence');
+    // The run ledger (red-team v2 findings 2 and 3): written when the run ends, it lists every evidence object the run wrote,
+    // its counts and its end time. Why: without it a FAIL attempt, an unmatched ns-run or a nonzero skip count could be
+    // deleted from the receipt and the rest would still verify (rerun-until-green inside one run, B11).
+    const ledger = objects.record(own(r, 'ledgerSha256'));
+    const evKey = list => (Array.isArray(list) ? list : []).map(e => `${own(e, 'kind')} ${own(e, 'objectSha256')}`).sort();
+    if (!ledger.ok || ledger.value.format !== FORMATS.runLedger || ledger.value.binding !== entry.binding) bad('LEDGER', `run ledger ${own(r, 'ledgerSha256')} is not a ${FORMATS.runLedger} record of this run`);
+    else if (!same(evKey(ledger.value.evidence), evKey(evidence)) || !same(ledger.value.counts, own(r, 'counts')) || ledger.value.end !== own(own(r, 'timing'), 'end'))
+      bad('LEDGER-MISMATCH', 'the receipt\'s evidence, counts or end time differ from what the run recorded in its ledger (evidence removed, added or edited after the run)');
     const record = (h0, format, what) => {
       const o = objects.record(h0);
       if (!o.ok) { bad('OBJECT', `${what}: ${o.why} (VA1)`); return null; }
@@ -564,9 +607,20 @@ function evaluate(claim, env, why) {
         if (v) checkVerifierRecord(entry, v, bad, blob);
       } else blob(e.objectSha256, `${e.kind} evidence`);
     }
-    if (role === 'verifier') { if (!entry.record) bad('VERIFIER-RECORD-SCHEMA', 'verifier receipt carries no valid verifier-record object (Q47a)'); return; }
-    // VA8 and Q42a "modes required by the obligation": every resolved case PASSes in every declared mode.
     const modes = obligation.closure?.modes ?? [];
+    if (role === 'verifier') {
+      if (!entry.record) return bad('VERIFIER-RECORD-SCHEMA', 'verifier receipt carries no valid verifier-record object (Q47a)');
+      // VV3 (red-team v2 finding 7): the verifier shows its own work. In rerun mode its own retained case results cover the full
+      // selection in every mode; in re-evaluate-and-spot mode at least one selected case is rerun in every mode. Those results are
+      // judged here exactly like a measurement's (oracle run, expected answer, raw result).
+      const full = [...selected.values()].every(c => modes.every(m => entry.cases.get(`${c.set}\u0000${c.id}\u0000${m}`) === 'PASS'));
+      const spot = [...selected.values()].some(c => modes.every(m => entry.cases.get(`${c.set}\u0000${c.id}\u0000${m}`) === 'PASS'));
+      if (entry.record.mode === 'rerun' ? !full : !spot) bad('VERIFIER-NO-RERUN', `verifier in ${entry.record.mode} mode carries no ${entry.record.mode === 'rerun' ? 'full rerun' : 'spot rerun'} of ${obligation.id} with recomputed PASS verdicts (VV3)`);
+      const ids = new Set(receipts.filter(isObj).map(x => x.receiptId));
+      if (entry.record.spotRerunReceiptIds.some(s => s !== r.receiptId && !ids.has(s))) bad('VERIFIER-RECORD-SCHEMA', 'spotRerunReceiptIds name receipts this claim does not carry (VV3)');
+      return;
+    }
+    // VA8 and Q42a "modes required by the obligation": every resolved case PASSes in every declared mode.
     if (!modes.length) bad('CASES-MISSING', `${obligation.id} declares no mode (CX-ZERO-MODES)`);
     const missing = [...selected.values()].flatMap(c => modes.filter(m => entry.cases.get(`${c.set}\u0000${c.id}\u0000${m}`) !== 'PASS').map(m => `${c.set}/${c.id}/${m}`));
     if (missing.length) bad('CASES-MISSING', `${obligation.id} lacks a recomputed PASS for ${missing.length} resolved case x mode pair(s): ${missing.slice(0, 6).join(', ')}${missing.length > 6 ? ', ...' : ''} (VA8, Q47c)`);
@@ -597,7 +651,8 @@ function evaluate(claim, env, why) {
     if (!isObj(frozen)) return bad('TRACE-NOT-FROZEN', `${PATHS.loadContract} pins no frozen trace (writerTrace.generator.frozen {path, sha256, seed, offerScheduleSha256}); VA15 cannot hold`);
     if (t.generatorPath !== frozen.path || t.generatorSourceSha256 !== frozen.sha256 || t.seed !== frozen.seed || t.offerScheduleSha256 !== frozen.offerScheduleSha256)
       return bad('TRACE-NOT-FROZEN', `trace ${t.generatorPath}@${t.generatorSourceSha256}/seed ${t.seed} is not the frozen trace (VA15, CX-NS-UNFROZEN-TRACE)`);
-    entry.nsRuns.push({ run: v, key: canonText({ g: t.generatorSourceSha256, seed: t.seed, schedule: t.offerScheduleSha256, windows: windows.map(w => [w.from, w.to, w.burstPhase]), slot: [slot.name, slot.host] }) });
+    // The match key includes the profile (red-team v2 finding 6: a P-SCREEN measurement matched a P-NS control).
+    entry.nsRuns.push({ run: v, key: canonText({ g: t.generatorSourceSha256, seed: t.seed, schedule: t.offerScheduleSha256, windows: windows.map(w => [w.from, w.to, w.burstPhase]), slot: [slot.name, slot.host], profile: entry.r.profile }) });
   }
 
   // Q47a: a verifier record must be the verifier-record schema (5.2), not any object that hashes (Codex: {"notAVerifierRecord":true}).
@@ -630,9 +685,11 @@ function evaluate(claim, env, why) {
     if (!strList(m.entrypoints) || !modules.length || !modules.every(x => isObj(x) && safePath(x.path) && sha(x.sha256) && str(x.origin))) return bad('MANIFEST', 'manifest must list entry points and executed modules {path, sha256, origin}');
     if (m.binarySha256 !== listingHash(modules.map(x => [x.path, x.sha256])) || pid.executedBinarySha256 !== m.binarySha256) bad('MANIFEST-BINARY', 'executedBinarySha256 must equal the manifest\'s binarySha256, the listing hash of its executed modules');
     for (const ep of m.entrypoints) if (!modules.some(x => x.path === ep)) bad('MANIFEST', `entry point ${ep} is not among the executed modules`);
-    // Workspace package names at the home commit: a first-party package can never be an external dependency.
-    const pkgFiles = (git.list(h.commit, ['packages']) ?? []).filter(p => /^packages\/[^/]+\/package\.json$/.test(p));
-    const names = pkgFiles.map(p => { try { return JSON.parse(git.blob(h.commit, p)?.toString('utf8') ?? '{}').name; } catch { return null; } }).filter(str);
+    // First-party package names at the home commit: every tracked package.json outside node_modules, wherever the workspace
+    // puts it (red-team v2: test/* and examples/* packages were missed when only packages/* was read).
+    const pkgFiles = (git.list(h.commit, null) ?? []).filter(p => /(^|\/)package\.json$/.test(p) && !p.split('/').includes('node_modules'));
+    const names = pkgFiles.map(p => { try { return JSON.parse(git.blob(h.commit, p)?.toString('utf8') ?? '{}').name; } catch { return null; } }).filter(str).map(n => n.toLowerCase());
+    const lockText = git.blob(h.commit, PATHS.lockfile)?.toString('utf8') ?? '';
     const buildInputs = builds.flatMap(b => Array.isArray(b.inputs) ? b.inputs.filter(isObj).map(x => x.path) : []);
     const hashes = git.blobHashes(h.commit, [...modules.filter(x => x.origin === 'tree').map(x => x.path), ...buildInputs, PATHS.lockfile]);
     for (const x of modules) {
@@ -644,10 +701,17 @@ function evaluate(claim, env, why) {
         const b = builds.find(y => y.id === x.build);
         if (!b || !(Array.isArray(b.outputs) ? b.outputs : []).some(y => isObj(y) && y.path === x.path && y.sha256 === x.sha256)) bad('MODULE-NOT-BUILT', `executed ${x.path} is not an output of build ${x.build} in this manifest`);
       } else if (x.origin === 'dependency') {
-        // Third-party code is bound only through the lockfile; a workspace package under node_modules is a stale-build hole.
+        // Third-party code is bound only through the lockfile: the package the path names (after its last node_modules) must be
+        // listed in the home commit's lockfile and must not be a first-party package under any spelling (case-insensitive,
+        // pnpm's .pnpm/<name+scope>@version form included). Why: a stale first-party build under node_modules, or an
+        // unlisted "dependency", would otherwise run unbound (red-team v2 finding 1).
         const seg = x.path.split('/');
-        const firstParty = names.some(n => seg.some((s, i) => s === 'node_modules' && seg.slice(i + 1, i + 1 + n.split('/').length).join('/') === n)) || seg.some(s => names.some(n => s.startsWith(`${n.replace('/', '+')}@`)));
-        if (seg[0] !== 'node_modules' || firstParty || m.lockfileSha256 !== hashes.get(PATHS.lockfile)) bad('DEPENDENCY-UNBOUND', `${x.path} is not a third-party module bound by ${h.commit}'s lockfile`);
+        const at = seg.lastIndexOf('node_modules');
+        const pkgName = at >= 0 && seg[at + 1] ? (seg[at + 1].startsWith('@') ? `${seg[at + 1]}/${seg[at + 2] ?? ''}` : seg[at + 1]) : '';
+        const lower = seg.map(s => s.toLowerCase());
+        const firstParty = names.includes(pkgName.toLowerCase()) || lower.some(s => names.some(n => s.startsWith(`${n.replace('/', '+')}@`) || s === n.replace('/', '+')));
+        const listed = str(pkgName) && new RegExp(`^\\s+'?${pkgName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}@`, 'm').test(lockText);
+        if (seg[0] !== 'node_modules' || firstParty || !listed || m.lockfileSha256 !== hashes.get(PATHS.lockfile)) bad('DEPENDENCY-UNBOUND', `${x.path} is not a third-party package listed in ${h.commit}'s lockfile`);
       } else bad('MODULE-ORIGIN', `${x.path} has origin ${JSON.stringify(x.origin)}; allowed: tree, build, dependency`);
     }
     for (const b of builds) {
@@ -656,7 +720,10 @@ function evaluate(claim, env, why) {
       const pkg = b.package;
       const inputs = Array.isArray(b.inputs) ? b.inputs : [];
       if (!safePath(pkg) || !pkgFiles.includes(`${pkg}/package.json`) || !same(b.sourceRoots, [pkg])) { bad('BUILD-ROOTS', `build ${b.id} must compile a whole workspace package: sourceRoots [package], package a directory with package.json at ${h.commit}`); continue; }
-      const listed = git.list(h.commit, [pkg]) ?? [];
+      const entries = git.entries(h.commit, [pkg]) ?? [];
+      const listed = entries.map(e => e.path);
+      // Lab-only: a tracked symlink hashes as its link text, not as the file the build reads.
+      for (const e of entries) if (e.mode === '120000') bad('BUILD-INPUT-SYMLINK', `build ${b.id} input ${e.path} is a symlink; its target is not bound`);
       const paths = inputs.map(x => own(x, 'path'));
       const missing = listed.filter(p => !paths.includes(p)), extra = paths.filter(p => !listed.includes(p));
       if (missing.length || extra.length) bad('BUILD-INPUTS-INCOMPLETE', `build ${b.id} inputs differ from the tracked files under ${pkg}: missing ${missing.join(', ') || 'none'}; extra ${extra.join(', ') || 'none'}`);

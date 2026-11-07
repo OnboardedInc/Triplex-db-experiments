@@ -24,7 +24,7 @@ import re
 FORMATS = {"claim": "triplex-db-2/claim/1", "receipt": "triplex-db-2/receipt/2", "manifest": "triplex-db-2/build-manifest/1",
            "case-manifest": "triplex-db-2/case-manifest/1", "case-result": "triplex-db-2/case-result/1", "oracle-run": "triplex-db-2/oracle-run/1",
            "fault-witness": "triplex-db-2/fault-witness/1", "ns-run": "triplex-db-2/ns-run/1", "verifier-record": "triplex-db-2/verifier-record/1",
-           "recomputed-verdicts": "triplex-db-2/recomputed-verdicts/1", "a0-registry": "triplex-db-2/a0-registry/1"}
+           "recomputed-verdicts": "triplex-db-2/recomputed-verdicts/1", "a0-registry": "triplex-db-2/a0-registry/1", "run-ledger": "triplex-db-2/run-ledger/1"}
 PREREQ = ("G7.position.coordinates", "G10.composition.identity-bound", "W0.coverage-floors")
 FIELDS = ("engine", "imageDigest", "configSha256", "slot")
 ACCEPTED = ("EXISTS", "COMPILED", "ACCEPTED", "BUILT-ACCEPTED")
@@ -50,7 +50,12 @@ def _text(v):
 
 
 def _safe(p):
-    return isinstance(p, str) and p and not p.startswith(("/", ":", "-")) and not re.search(r"[\x00-\x1f\x7f]", p) and ".." not in p.split("/")
+    """One file, one spelling: relative, no empty, "." or ".." segments, no control characters, no pathspec magic."""
+    return isinstance(p, str) and p and not p.startswith((":", "-")) and not re.search(r"[\x00-\x1f\x7f\\]", p) and all(s not in ("", ".", "..") for s in p.split("/"))
+
+
+def _agent(a):
+    return a.strip().lower() if isinstance(a, str) else None
 
 
 def _listing(rows):
@@ -73,32 +78,59 @@ def binding_of(r):
     pid = pid if isinstance(pid, dict) else {}
     ident = {k: pid[k] for k in ("sourceTreeSha256", "lockfileSha256", "node", "pnpm") if k in pid}
     b = {"receiptId": get(r, "receiptId"), "runKind": get(r, "runKind"), "profile": get(r, "profile"), "obligations": get(r, "obligations"),
-         "composition": get(r, "composition"), "git": get(r, "git"), "start": get(get(r, "timing"), "start"), "endpoint": get(r, "endpoint"),
+         "contract": get(r, "contract"), "composition": get(r, "composition"), "git": get(r, "git"), "start": get(get(r, "timing"), "start"), "endpoint": get(r, "endpoint"),
          "admission": get(r, "admission"), "producer": get(r, "producer"), "identity": ident}
     return _sha(_text({k: v for k, v in b.items() if v is not _MISSING}).encode())
 
 
+def canonical_answer(b):
+    """Canonical JSON only (as claim.mjs canonicalAnswer): strict UTF-8, the bytes of its own key-sorted serialisation, safe
+    integers as the only numbers, at most 64 levels. Returns (ok, value)."""
+    def no(_):
+        raise ValueError("number or constant not allowed")
+
+    def pairs(kv):
+        if len({k for k, _ in kv}) != len(kv):
+            raise ValueError("duplicate key")
+        return dict(kv)
+    try:
+        text = b.decode("utf-8")
+        v = json.loads(text, parse_float=no, parse_constant=no, object_pairs_hook=pairs)
+    except (ValueError, UnicodeDecodeError, RecursionError):
+        return False, None
+
+    def fits(x, d):
+        if d > 64:
+            return False
+        if x is None or isinstance(x, (str, bool)):
+            return True
+        if isinstance(x, int):
+            return abs(x) <= 2 ** 53 - 1
+        if isinstance(x, list):
+            return all(fits(y, d + 1) for y in x)
+        return isinstance(x, dict) and all(fits(y, d + 1) for y in x.values())
+    return (fits(v, 0) and _text(v) == text), v
+
+
 def recompute(comparator, expected, observed):
     """Q47a: the verdict from the retained expected answer and observed result (canonical JSON forms)."""
-    def bad(_):
-        raise ValueError("non-JSON constant")
-    try:
-        e, o = json.loads(expected, parse_constant=bad), json.loads(observed, parse_constant=bad)
-    except ValueError:
+    ok_e, e = canonical_answer(expected)
+    ok_o, o = canonical_answer(observed)
+    if not ok_e or not ok_o:
         return "UNCOMPARABLE"
     rows = lambda x: [_text(y) for y in x] if isinstance(x, list) else None
     v = lambda ok: "PASS" if ok else "FAIL"
     if comparator == "CMP-EXACT-VALUE":
-        return v(_text(e) == _text(o))
+        return v(expected == observed)
     if comparator in ("CMP-ORDERED-ROWS", "CMP-PAGES", "CMP-BAG-ROWS", "CMP-SET-ROWS", "CMP-DIAGNOSTICS"):
         a, b = rows(e), rows(o)
         if a is None or b is None:
             return "UNCOMPARABLE"
         return v(a == b if comparator in ("CMP-ORDERED-ROWS", "CMP-PAGES") else sorted(a) == sorted(b) if comparator == "CMP-BAG-ROWS" else sorted(set(a)) == sorted(set(b)))
     if comparator == "CMP-ERROR":
-        if not isinstance(e, dict) or not isinstance(o, dict) or not _str(e.get("_tag")):
+        reasons = e.get("reasons") if isinstance(e, dict) and isinstance(e.get("reasons"), list) else [e.get("reason") if isinstance(e, dict) else None]
+        if not isinstance(e, dict) or not isinstance(o, dict) or not _str(e.get("_tag")) or not reasons or not all(_str(x) for x in reasons):
             return "UNCOMPARABLE"
-        reasons = e["reasons"] if isinstance(e.get("reasons"), list) else [e.get("reason")]
         return v(o.get("_tag") == e["_tag"] and o.get("reason") in reasons and o.get("cause") is not None and ("rows" not in o or o["rows"] == []))
     return "UNCOMPARABLE"
 
@@ -281,7 +313,7 @@ def _admit(claim, contract, load_contract, ctx):
             bad.append("contract or definition")
         if not _str(prod.get("tool")) or not prod["tool"].startswith("lab/bin/") or not _str(prod.get("agentId")) or (role != "verifier" and not (isinstance(prod.get("authorsOfCodeUnderTest"), list) and prod["authorsOfCodeUnderTest"] and all(_str(a) for a in prod["authorsOfCodeUnderTest"]))):
             bad.append("producer")
-        kinds = ("verifier",) if role == "verifier" else ("acceptance",) if role == "prereq" or promo else ("acceptance", "candidate", "control")
+        kinds = ("verifier",) if role == "verifier" else ("acceptance",) if role == "prereq" or promo else ("acceptance", "candidate") if role == "measurement" else ("acceptance", "control")
         if r.get("runKind") not in kinds:
             bad.append("run kind")
         screening = r.get("profile") in contract.get("screeningProfiles", [])
@@ -302,8 +334,9 @@ def _admit(claim, contract, load_contract, ctx):
             bad.append("manifest")
         else:
             hf = h["files"]
-            pkgs = [p for p in hf if re.fullmatch(r"packages/[^/]+/package\.json", p)]
-            names = [n for n in (json.loads(hf[p]).get("name") for p in pkgs) if _str(n)]
+            pkgs = [p for p in hf if re.search(r"(^|/)package\.json$", p) and "node_modules" not in p.split("/")]
+            names = [n.lower() for n in (json.loads(hf[p]).get("name") for p in pkgs) if _str(n)]
+            lock = hf.get("pnpm-lock.yaml", b"").decode("utf-8", "replace")
             builds = [b for b in m.get("builds") or [] if isinstance(b, dict)]
             for y in mods:
                 if obj(y["sha256"]) is None:
@@ -314,9 +347,13 @@ def _admit(claim, contract, load_contract, ctx):
                     bad.append("module stale")
                 elif o_ == "build" and not any(b.get("id") == y.get("build") and any(isinstance(z, dict) and z.get("path") == y["path"] and z.get("sha256") == y["sha256"] for z in b.get("outputs") or []) for b in builds):
                     bad.append("module not built")
-                elif o_ == "dependency" and (seg[0] != "node_modules" or m.get("lockfileSha256") != (_sha(hf["pnpm-lock.yaml"]) if "pnpm-lock.yaml" in hf else None)
-                                            or any(any(s == "node_modules" and "/".join(seg[i + 1:i + 1 + len(n.split("/"))]) == n for i, s in enumerate(seg)) or any(s.startswith(n.replace("/", "+") + "@") for s in seg) for n in names)):
-                    bad.append("dependency")
+                elif o_ == "dependency":
+                    at = len(seg) - 1 - seg[::-1].index("node_modules") if "node_modules" in seg else -1
+                    name = (seg[at + 1] + "/" + (seg[at + 2] if at + 2 < len(seg) else "") if seg[at + 1].startswith("@") else seg[at + 1]) if 0 <= at < len(seg) - 1 else ""
+                    first = name.lower() in names or any(s.lower().startswith(n.replace("/", "+") + "@") or s.lower() == n.replace("/", "+") for s in seg for n in names)
+                    listed = bool(name) and re.search(r"^\s+'?" + re.escape(name) + "@", lock, re.M) is not None
+                    if seg[0] != "node_modules" or first or not listed or m.get("lockfileSha256") != (_sha(hf["pnpm-lock.yaml"]) if "pnpm-lock.yaml" in hf else None):
+                        bad.append("dependency")
                 elif o_ not in ("tree", "build", "dependency"):
                     bad.append("module origin")
             for b in builds:
@@ -328,6 +365,11 @@ def _admit(claim, contract, load_contract, ctx):
                 if sorted(z.get("path") for z in inputs) != listed or any(_sha(hf[z["path"]]) != z.get("sha256") for z in inputs) \
                         or any(not isinstance(z, dict) or not _safe(z.get("path")) or not z["path"].startswith(pkg + "/dist/") for z in b.get("outputs") or []):
                     bad.append("build inputs or outputs")
+        # the run ledger: the evidence list, counts and end time as the run recorded them
+        led = record(r.get("ledgerSha256"), FORMATS["run-ledger"], x["binding"])
+        ekey = lambda lst: sorted(f"{e.get('kind')} {e.get('objectSha256')}" for e in (lst if isinstance(lst, list) else []) if isinstance(e, dict))
+        if not led or ekey(led.get("evidence")) != ekey(r.get("evidence")) or led.get("counts") != r.get("counts") or led.get("end") != (r.get("timing") or {}).get("end"):
+            bad.append("run ledger")
         # evidence records
         sel = selection.get(o["id"], {})
         faults = {}
@@ -390,7 +432,7 @@ def _admit(claim, contract, load_contract, ctx):
                         or (t["generatorPath"], t["generatorSourceSha256"], t["seed"], t["offerScheduleSha256"]) != (frozen.get("path"), frozen.get("sha256"), frozen.get("seed"), frozen.get("offerScheduleSha256")):
                     bad.append("trace not the frozen one (VA15)")
                 else:
-                    x["ns"].append(_text({"g": t["generatorSourceSha256"], "seed": t["seed"], "schedule": t["offerScheduleSha256"], "windows": [[w["from"], w["to"], w["burstPhase"]] for w in wins], "slot": [slot["name"], slot["host"]]}))
+                    x["ns"].append(_text({"g": t["generatorSourceSha256"], "seed": t["seed"], "schedule": t["offerScheduleSha256"], "windows": [[w["from"], w["to"], w["burstPhase"]] for w in wins], "slot": [slot["name"], slot["host"]], "profile": r.get("profile")}))
             elif k == "verifier-record":
                 okv = isinstance(v.get("verifies"), list) and v["verifies"] and all(isinstance(z, dict) and _str(z.get("receiptId")) and _is_sha(z.get("binding")) for z in v["verifies"])
                 rv = record(v.get("recomputedVerdictsObject"), FORMATS["recomputed-verdicts"], x["binding"])
@@ -400,11 +442,16 @@ def _admit(claim, contract, load_contract, ctx):
                     bad.append("verifier record schema (Q47a)")
                 else:
                     x["rec"], x["verdicts"] = v, rv["verdicts"]
+        modes = o["closure"]["modes"]
         if role == "verifier":
+            ids_ = {y.get("receiptId") for y in claim.get("receipts") or [] if isinstance(y, dict)}
             if not x["rec"]:
                 bad.append("no verifier record")
+            elif not sel or not (all if x["rec"]["mode"] == "rerun" else any)(all(x["cases"].get(key + (md,)) == "PASS" for md in modes) for key in sel):
+                bad.append("verifier shows no rerun (VV3)")
+            elif any(s_ != r["receiptId"] and s_ not in ids_ for s_ in x["rec"]["spotRerunReceiptIds"]):
+                bad.append("spot rerun receipts not carried")
         else:
-            modes = o["closure"]["modes"]
             if not modes or any(x["cases"].get(key + (md,)) != "PASS" for key in sel for md in modes):
                 bad.append("cases x modes (VA8, Q47c)")
             if "CR-FAULT" in o["closure"]["rules"]:
@@ -442,7 +489,7 @@ def _admit(claim, contract, load_contract, ctx):
         for v in cover:
             authors, agent = (x["r"].get("producer") or {}).get("authorsOfCodeUnderTest"), (v["r"].get("producer") or {}).get("agentId")
             theirs = {(z["caseSet"], z["caseId"], z["mode"]): z["verdict"] for z in v["verdicts"] if z["receiptId"] == x["r"]["receiptId"]}
-            if v["r"].get("profile") != x["r"].get("profile") or not _str(agent) or not isinstance(authors, list) or agent in authors or agent == (x["r"].get("producer") or {}).get("agentId") \
+            if v["r"].get("profile") != x["r"].get("profile") or not _str(agent) or not isinstance(authors, list) or _agent(agent) in [_agent(a) for a in authors] or _agent(agent) == _agent((x["r"].get("producer") or {}).get("agentId")) \
                     or any(theirs.get(k) != verdict for k, verdict in x["cases"].items()):
                 why.append(f"{v['r']['receiptId']} is not an independent, agreeing verifier of {x['r']['receiptId']}")
     return ("DIAGNOSTIC" if why else "QUALIFIED"), why

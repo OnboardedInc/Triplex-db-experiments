@@ -36,7 +36,8 @@ const SRC = {
   'lab/bin/ns.mjs': '// north-star driver (fixture)\n',
   'lab/bin/verify.mjs': '// verifier (fixture)\n',
   'lab/bench/trace.mjs': '// frozen writer-trace generator (fixture)\n',
-  'pnpm-lock.yaml': "lockfileVersion: '9.0'\n",
+  'pnpm-lock.yaml': "lockfileVersion: '9.0'\npackages:\n  effect@3.10.0:\n    resolution: {integrity: sha512-fixture}\n",
+  'test/helper/package.json': '{ "name": "@fixture/helper", "version": "0.0.0" }\n',
   'lab/oracles/replay/replay.py': '# O-REPLAY (fixture)\n',
   'lab/oracles/obs/obs.py': '# O-OBS (fixture)\n',
   'lab/oracles/domain/domain.py': '# O-DOMAIN (fixture)\n',
@@ -156,7 +157,7 @@ function run(S, o) {
   const modes = o.modes ?? ob.closure.modes;
   const r = {
     format: FORMATS.receipt, receiptId: id, runKind: o.runKind ?? 'acceptance', profile: o.profile ?? ob.profiles[0],
-    contract: { version: REAL_CONTRACT.version, transitiveSha256: REAL_CONTRACT.transitiveContractSha256 },
+    contract: o.contract ?? { version: REAL_CONTRACT.version, transitiveSha256: REAL_CONTRACT.transitiveContractSha256 },
     obligations: [{ id: ob.id, definitionSha256: ob.definitionSha256 }],
     composition: structuredClone(o.composition), git: { commit: at.commit, tree: at.tree },
     profileIdentity: { sourceTreeSha256: (o.label ?? at).label, lockfileSha256: h(at.files['pnpm-lock.yaml']), node: 'v22.23.2', pnpm: '10.0.0' },
@@ -168,19 +169,24 @@ function run(S, o) {
   const evidence = [];
   const resolved = ob.cases.flatMap(sel => { const m = caseManifest(sel.set); return m.cases.filter(c => sel.select.some(t => t === 'all' || t === c.id || c.tags.includes(t))).map(c => ({ set: sel.set, ...c })); })
     .filter((c, i, all) => all.findIndex(x => x.set === c.set && x.id === c.id) === i);
-  if (!verifier) for (const c of resolved) {
+  // A verifier shows its own work (VV3): a full rerun in rerun mode, one spot case in re-evaluate-and-spot mode.
+  const toRun = !verifier ? resolved : o.noRerun ? [] : ob.verifierMode === 'rerun' ? resolved : resolved.slice(0, 1);
+  for (const c of toRun) {
     if ((o.omitCases ?? []).includes(c.id)) continue;
     S.put(`case ${c.set}/${c.id}`);
-    for (const mode of modes) {
+    const attempts = (o.failFirst ?? []).includes(c.id) ? [true, false] : [false];
+    for (const mode of modes) for (const failed of attempts) {
       const refused = (o.refuse ?? []).includes(c.id);
-      const expected = S.put(answer(c.comparator, c.id));
-      const observed = (o.wrong ?? {})[c.id] ? S.put(JSON.stringify({ t: 'text', v: `wrong ${c.id}` })) : expected;
-      const verdict = (o.wrong ?? {})[c.id] ?? 'PASS';
+      const raw = (o.answers ?? {})[c.id];
+      const bytes = x => Buffer.isBuffer(x) ? x : Buffer.from(x);
+      const expected = S.put(raw ? bytes(raw[0]) : answer(c.comparator, c.id));
+      const observed = raw ? S.put(bytes(raw[1])) : (o.wrong ?? {})[c.id] || failed ? S.put(JSON.stringify({ t: 'text', v: `wrong ${c.id}` })) : expected;
+      const verdict = failed ? 'FAIL' : (o.wrong ?? {})[c.id] ?? 'PASS';
       const oracleRun = S.put({ format: FORMATS.oracleRun, binding, oracleId: ob.oracles[0], caseSet: c.set, caseId: c.id, caseSha256: c.contentSha256, exit: refused ? 2 : 0, refusal: refused ? 'X-NOT-MODELED' : null, expectedObject: expected });
       const obj = S.put({ format: FORMATS.caseResult, binding, caseSet: c.set, caseId: c.id, caseSha256: c.contentSha256, mode, verdict, comparator: c.comparator, rawResultObject: observed, oracleRunObject: oracleRun });
       evidence.push({ kind: 'case-result', caseSet: c.set, caseId: c.id, mode, verdict, objectSha256: obj });
     }
-    if (c.faultPoint) {
+    if (c.faultPoint && !verifier) {
       const n = o.faultReps ?? 3;
       const injections = Array.from({ length: n }, (_, i) => ({ t: i, durableEvidenceObject: S.put(`durable ${id} ${o.repeatInjection ? 0 : i}`) }));
       evidence.push({ kind: 'fault-witness', objectSha256: S.put({ format: FORMATS.faultWitness, binding, caseSet: c.set, caseId: c.id, injections }) });
@@ -191,10 +197,11 @@ function run(S, o) {
     const trace = o.ns.noWorkload ? undefined : { generatorPath: 'lab/bench/trace.mjs', generatorSourceSha256: h(SRC['lab/bench/trace.mjs']), seed, offerScheduleSha256: S.put(`schedule ${seed}`) };
     const windows = o.ns.noWorkload ? undefined : o.ns.windows ?? [{ from: 120, to: 720, burstPhase: 'steady-and-burst' }];
     evidence.push({ kind: 'ns-run', objectSha256: S.put({ format: FORMATS.nsRun, binding, measurement: o.ns.measurement, slot: { name: o.composition.source.slot, host: 'colima-triplex2' }, ...(trace ? { trace } : {}), ...(windows ? { windows } : {}), rawEventsObject: S.put(`events ${id}`) }) });
+    if (o.ns.secondWindow) evidence.push({ kind: 'ns-run', objectSha256: S.put({ format: FORMATS.nsRun, binding, measurement: o.ns.measurement, slot: { name: o.composition.source.slot, host: 'colima-triplex2' }, trace, windows: [o.ns.secondWindow], rawEventsObject: S.put(`events ${id} 2`) }) });
   }
   if (verifier) {
     const verdicts = o.verifies.flatMap(v => v.evidence.filter(e => e.kind === 'case-result').map(e => ({ receiptId: v.receiptId, caseSet: e.caseSet, caseId: e.caseId, mode: e.mode, verdict: 'PASS' })));
-    const record = o.notAVerifierRecord ? { notAVerifierRecord: true } : { format: FORMATS.verifierRecord, binding, verifies: o.verifies.map(v => ({ receiptId: v.receiptId, binding: bindingOf(v) })), mode: ob.verifierMode, mismatches: [], spotRerunReceiptIds: [`spot-${id}`],
+    const record = o.notAVerifierRecord ? { notAVerifierRecord: true } : { format: FORMATS.verifierRecord, binding, verifies: o.verifies.map(v => ({ receiptId: v.receiptId, binding: bindingOf(v) })), mode: ob.verifierMode, mismatches: [], spotRerunReceiptIds: o.spotIds ?? [id],
       recomputedVerdictsObject: S.put({ format: FORMATS.recomputedVerdicts, binding, verdicts }) };
     evidence.push({ kind: 'verifier-record', objectSha256: S.put(record) });
   }
@@ -212,8 +219,10 @@ function run(S, o) {
   r.profileIdentity.buildManifestSha256 = S.put({ format: FORMATS.manifest, binding, commit: at.commit, tree: at.tree, sourceTreeSha256: (o.label ?? at).label, entrypoints: [entry], modules, builds: [build], lockfileSha256: h(at.files['pnpm-lock.yaml']), binarySha256 });
   r.profileIdentity.executedBinarySha256 = binarySha256;
   const cases = evidence.filter(e => e.kind === 'case-result').length;
-  r.counts = { declared: verifier ? 1 : resolved.length * ob.closure.modes.length, executed: verifier ? 1 : cases, skipped: o.skipped ?? 0, unsupported: 0, notImplemented: 0, unexpectedErrors: 0 };
+  r.counts = { declared: verifier ? cases : resolved.length * ob.closure.modes.length, executed: cases, skipped: o.skipped ?? 0, unsupported: 0, notImplemented: 0, unexpectedErrors: o.unexpectedErrors ?? 0 };
   r.evidence = evidence;
+  // The run ledger, written when the run ends: every evidence object, the counts and the end time.
+  r.ledgerSha256 = S.put({ format: FORMATS.runLedger, binding, evidence: evidence.map(e => ({ kind: e.kind, objectSha256: e.objectSha256 })), counts: r.counts, end: r.timing.end });
   if (o.edit) o.edit(r);
   return r;
 }
@@ -346,7 +355,33 @@ export function buildFixtures(root) {
   add('RT-NARROW-ROOTS', 'red-team (narrowed roots hypothesis)', 'DIAGNOSTIC', 'the build declares only package.json as its source root, hiding a stale alloc.ts', 'pinned', complete('RT-NARROW-ROOTS', { tweak: { 'pos-cand': { builtFrom: repos.pinned.C1, narrowRoots: true } } }));
   add('RT-REPEATED-INJECTION', 'red-team (fault witness hypothesis)', 'DIAGNOSTIC', 'three injections that retain the same durable evidence object', 'pinned', complete('RT-REPEATED-INJECTION', { tweak: { 'pos-cand': { repeatInjection: true } } }));
 
+  // -- red-team, second pass (the binding, ledger, canonical answers, matched profiles, verifier work, dependencies)
+  const staleAlloc = `compiled ${SRC['packages/xtdb/src/alloc.ts']}`;
+  const dep = (key, p) => ({ tweak: { 'pos-cand': { extraModules: [{ path: p, bytes: staleAlloc, origin: 'dependency' }] } } });
+  add('RT2-DEP-DOT-SEGMENT', 'red-team v2 finding 1', 'DIAGNOSTIC', 'stale first-party build as node_modules/./@fixture/xtdb/dist/alloc.js', 'pinned', complete('RT2-DEP-DOT-SEGMENT', dep('pos-cand', 'node_modules/./@fixture/xtdb/dist/alloc.js')));
+  add('RT2-DEP-UPPERCASE', 'red-team v2 finding 1', 'DIAGNOSTIC', 'stale first-party build as node_modules/@FIXTURE/xtdb/dist/alloc.js', 'pinned', complete('RT2-DEP-UPPERCASE', dep('pos-cand', 'node_modules/@FIXTURE/xtdb/dist/alloc.js')));
+  add('RT2-DEP-UNLISTED', 'red-team v2 finding 1', 'DIAGNOSTIC', 'stale code as node_modules/xtdb-alloc-v1, a package the lockfile does not list', 'pinned', complete('RT2-DEP-UNLISTED', dep('pos-cand', 'node_modules/xtdb-alloc-v1/index.js')));
+  add('RT2-DEP-OTHER-WORKSPACE', 'red-team v2 finding 1', 'DIAGNOSTIC', 'first-party test/helper (@fixture/helper) executed from node_modules', 'pinned', complete('RT2-DEP-OTHER-WORKSPACE', dep('pos-cand', 'node_modules/@fixture/helper/dist/index.js')));
+  add('RT2-DROP-FAIL-ATTEMPT', 'red-team v2 finding 2 (B11)', 'DIAGNOSTIC', 'the run recorded a FAIL attempt of NS-P2-PROGRESS before its PASS; the FAIL entry is deleted from the receipt', 'pinned',
+    complete('RT2-DROP-FAIL-ATTEMPT', { tweak: { meas: { failFirst: ['NS-P2-PROGRESS'], edit: r => { const i = r.evidence.findIndex(e => e.caseId === 'NS-P2-PROGRESS' && e.verdict === 'FAIL'); r.evidence.splice(i, 1); r.counts.executed--; } } } }));
+  add('RT2-DROP-NSRUN', 'red-team v2 finding 2', 'DIAGNOSTIC', 'the run recorded a second ns-run with no matched control; it is deleted from the receipt', 'pinned',
+    complete('RT2-DROP-NSRUN', { tweak: { meas: { ns: { measurement: 'P2', secondWindow: { from: 720, to: 1320, burstPhase: 'steady-and-burst' } }, edit: r => { r.evidence.splice(r.evidence.findLastIndex(e => e.kind === 'ns-run'), 1); } } } }));
+  add('RT2-COUNTS-EDITED', 'red-team v2 finding 3', 'DIAGNOSTIC', 'the run reported 2 unexpected errors; counts edited to 0 afterwards', 'pinned', complete('RT2-COUNTS-EDITED', { tweak: { meas: { unexpectedErrors: 2, edit: r => { r.counts.unexpectedErrors = 0; } } } }));
+  add('RT2-CONTRACT-RELABEL', 'red-team v2 finding 4', 'DIAGNOSTIC', 'the measurement ran under contract 0.3.5; its receipt is relabelled 0.3.6', 'pinned',
+    complete('RT2-CONTRACT-RELABEL', { tweak: { meas: { contract: { version: '0.3.5', transitiveSha256: 'a'.repeat(64) }, edit: r => { r.contract = { version: REAL_CONTRACT.version, transitiveSha256: REAL_CONTRACT.transitiveContractSha256 }; } } } }));
+  const lossy = (fx, e, o) => complete(fx, { tweak: { meas: { answers: { 'NS-P2-PROGRESS': [e, o] } } } });
+  add('RT2-LOSSY-BIGINT', 'red-team v2 finding 5', 'DIAGNOSTIC', 'expected {"v":9007199254740993}, observed {"v":9007199254740992}, labelled PASS', 'pinned', lossy('RT2-LOSSY-BIGINT', '{"v":9007199254740993}', '{"v":9007199254740992}'));
+  add('RT2-LOSSY-SCALE', 'red-team v2 finding 5', 'DIAGNOSTIC', 'expected {"v":12.30}, observed {"v":12.3}, labelled PASS', 'pinned', lossy('RT2-LOSSY-SCALE', '{"v":12.30}', '{"v":12.3}'));
+  add('RT2-LOSSY-DUPKEY', 'red-team v2 finding 5', 'DIAGNOSTIC', 'expected {"v":"WRONG","v":"ok"}, observed {"v":"ok"}, labelled PASS', 'pinned', lossy('RT2-LOSSY-DUPKEY', '{"v":"WRONG","v":"ok"}', '{"v":"ok"}'));
+  add('RT2-INVALID-UTF8', 'red-team v2 finding 5', 'DIAGNOSTIC', 'expected and observed are different invalid UTF-8 bytes that decode alike, labelled PASS', 'pinned', lossy('RT2-INVALID-UTF8', Buffer.from([...Buffer.from('{"v":"'), 0xff, ...Buffer.from('"}')]), Buffer.from([...Buffer.from('{"v":"'), 0xfe, ...Buffer.from('"}')])));
+  add('RT2-CONTROL-OTHER-PROFILE', 'red-team v2 finding 6', 'DIAGNOSTIC', 'P-SCREEN measurement matched against a P-NS control', 'pinned', complete('RT2-CONTROL-OTHER-PROFILE', { tweak: { ctrl: { profile: 'P-NS' } } }));
+  add('RT2-RUNKIND-SWAP', 'red-team v2 finding 8', 'DIAGNOSTIC', 'measurement run kind control, control run kind candidate', 'pinned', complete('RT2-RUNKIND-SWAP', { tweak: { meas: { runKind: 'control' }, ctrl: { runKind: 'candidate' } } }));
+  add('RT2-VERIFIER-AGENT-CASE', 'red-team v2 finding 9', 'DIAGNOSTIC', 'the verifier is "Agent-Candidate-Author", the author in other case', 'pinned', complete('RT2-VERIFIER-AGENT-CASE', { tweak: { 'v-meas': { agentId: 'Agent-Candidate-Author' } } }));
+  add('RT2-VERIFIER-NO-RERUN', 'red-team v2 finding 7 (VV3)', 'DIAGNOSTIC', 'the position verifier (rerun mode) carries a record but no rerun evidence', 'pinned', complete('RT2-VERIFIER-NO-RERUN', { tweak: { 'v-pos-cand': { noRerun: true } } }));
+  add('RT2-SPOT-UNNAMED', 'red-team v2 finding 7', 'DIAGNOSTIC', 'the measurement verifier names a spot-rerun receipt the claim does not carry', 'pinned', complete('RT2-SPOT-UNNAMED', { tweak: { 'v-meas': { spotIds: ['spot-elsewhere'] } } }));
+
   // -- lab-only VA checks (Q41d: the lab adds full receipt validity; the structural reference does not model these)
+  add('RT2-PORT-LEADING-ZERO', 'red-team v2 finding 10 (VA5)', 'DIAGNOSTIC', 'the candidate position run contacted http://127.0.0.1:015442', 'pinned', complete('RT2-PORT-LEADING-ZERO', { tweak: { 'pos-cand': { endpoint: 'http://127.0.0.1:015442' } } }), lab);
   add('LAB-BRANCH-PINS-OWN-ORACLE', 'VA6 (contract from the authority ref)', 'DIAGNOSTIC', 'claim at a branch commit whose obligations.json pins O-REPLAY; main has it null', 'null', complete('LAB-BRANCH-PINS-OWN-ORACLE', { variant: 'null', at: repos.null.ROGUE }), lab);
   add('LAB-ORACLE-FILE-DRIFT', 'VA6 (oracle files equal the pin)', 'DIAGNOSTIC', 'O-OBS file edited after its pin; contract unchanged', 'pinned', complete('LAB-ORACLE-FILE-DRIFT', { at: repos.pinned.DRIFT }), lab);
   { const c = composition('xtdb', 'qlever'); c.current.imageDigest = 'sha256:' + 'e'.repeat(64);

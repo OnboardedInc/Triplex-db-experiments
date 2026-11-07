@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { sha256 } from '../lib.mjs';
-import { admitClaim, gitSource, objectStore, recompute } from '../claim.mjs';
+import { admitClaim, canonText, gitSource, objectStore, recompute } from '../claim.mjs';
 import { buildFixtures, evaluateLab, evaluateReference } from './claim-fixtures.mjs';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-claim-test-'));
@@ -37,6 +37,11 @@ const CAUSE = {
   'RT-SWAP-ROLES': 'OBJECT-NOT-THIS-RUN', 'RT-RELABEL-PROFILE': 'OBJECT-NOT-THIS-RUN', 'RT-RELABEL-START': 'OBJECT-NOT-THIS-RUN', 'RT-SLOT-ARRAY': 'COMPOSITION-UNBOUND',
   'RT-PROFILE-TRAILING-SPACE': 'RECEIPT-PROFILE', 'RT-PROFILE-UNDECLARED': 'RECEIPT-PROFILE', 'RT-AUTHORS-MISSING': ['RECEIPT-PRODUCER', 'VERIFIER-NOT-INDEPENDENT'],
   'RT-DEPENDENCY-WORKSPACE': 'DEPENDENCY-UNBOUND', 'RT-NARROW-ROOTS': 'BUILD-ROOTS', 'RT-REPEATED-INJECTION': 'FAULT-WITNESS',
+  'RT2-DEP-DOT-SEGMENT': 'MANIFEST', 'RT2-DEP-UPPERCASE': 'DEPENDENCY-UNBOUND', 'RT2-DEP-UNLISTED': 'DEPENDENCY-UNBOUND', 'RT2-DEP-OTHER-WORKSPACE': 'DEPENDENCY-UNBOUND',
+  'RT2-DROP-FAIL-ATTEMPT': 'LEDGER-MISMATCH', 'RT2-DROP-NSRUN': 'LEDGER-MISMATCH', 'RT2-COUNTS-EDITED': 'LEDGER-MISMATCH', 'RT2-CONTRACT-RELABEL': 'OBJECT-NOT-THIS-RUN',
+  'RT2-LOSSY-BIGINT': 'VERDICT-MISMATCH', 'RT2-LOSSY-SCALE': 'VERDICT-MISMATCH', 'RT2-LOSSY-DUPKEY': 'VERDICT-MISMATCH', 'RT2-INVALID-UTF8': 'VERDICT-MISMATCH',
+  'RT2-CONTROL-OTHER-PROFILE': 'CONTROL-UNMATCHED', 'RT2-RUNKIND-SWAP': 'RECEIPT-RUN-KIND', 'RT2-VERIFIER-AGENT-CASE': 'VERIFIER-NOT-INDEPENDENT',
+  'RT2-VERIFIER-NO-RERUN': 'VERIFIER-NO-RERUN', 'RT2-SPOT-UNNAMED': 'VERIFIER-RECORD-SCHEMA', 'RT2-PORT-LEADING-ZERO': 'RECEIPT-ENDPOINT',
   'LAB-BRANCH-PINS-OWN-ORACLE': 'CONTRACT-NOT-AUTHORITY', 'LAB-ORACLE-FILE-DRIFT': 'ORACLE-FILES', 'LAB-IMAGE-NOT-PINNED': 'IMAGE-NOT-PINNED',
   'LAB-FORBIDDEN-ENDPOINT': 'RECEIPT-ENDPOINT', 'LAB-ADMISSION-BLOCKED': 'RECEIPT-ADMISSION', 'LAB-SKIPPED-CASE': 'RECEIPT-COUNTS',
 };
@@ -125,8 +130,9 @@ test('red-team finding 5: malformed inputs are DIAGNOSTIC, never an exception', 
 });
 
 test('recompute: comparators judge the retained bytes, unknown comparators never pass', () => {
-  const b = v => Buffer.from(JSON.stringify(v));
-  assert.equal(recompute('CMP-EXACT-VALUE', b({ t: 'decimal', v: '1.50' }), b({ v: '1.50', t: 'decimal' })), 'PASS');
+  const b = v => Buffer.from(canonText(v));
+  assert.equal(recompute('CMP-EXACT-VALUE', b({ v: '1.50', t: 'decimal' }), b({ t: 'decimal', v: '1.50' })), 'PASS');
+  assert.equal(recompute('CMP-EXACT-VALUE', Buffer.from('{"v":"1.50","t":"decimal"}'), b({ t: 'decimal', v: '1.50' })), 'UNCOMPARABLE');
   assert.equal(recompute('CMP-EXACT-VALUE', b({ t: 'decimal', v: '1.50' }), b({ t: 'decimal', v: '1.5' })), 'FAIL');
   assert.equal(recompute('CMP-SET-ROWS', b([[1], [2], [2]]), b([[2], [1]])), 'PASS');
   assert.equal(recompute('CMP-BAG-ROWS', b([[1], [2], [2]]), b([[2], [1]])), 'FAIL');
@@ -135,6 +141,13 @@ test('recompute: comparators judge the retained bytes, unknown comparators never
   assert.equal(recompute('CMP-ERROR', b({ _tag: 'InvalidTripleError', reason: 'invalid-value' }), b({ _tag: 'InvalidTripleError', reason: 'invalid-value' })), 'FAIL');
   assert.equal(recompute('CMP-NEW', b(1), b(1)), 'UNCOMPARABLE');
   assert.equal(recompute('CMP-EXACT-VALUE', Buffer.from('X-NOT-MODELED'), b(1)), 'UNCOMPARABLE');
+  // Canonical answers only (red-team v2 finding 5): lossy parses, floats, -0, whitespace, unsorted keys and deep nesting never pass.
+  for (const bad of ['{"v":9007199254740993}', '{"v":1e400}', '{"v":12.30}', '{"v":0.5}', '{"v":-0}', '{"v":"a","v":"a"}', '{ "v":1}', '{"b":1,"a":2}', '['.repeat(70) + ']'.repeat(70)])
+    assert.equal(recompute('CMP-EXACT-VALUE', Buffer.from(bad), Buffer.from(bad)), 'UNCOMPARABLE', bad);
+  assert.equal(recompute('CMP-EXACT-VALUE', Buffer.from([0x22, 0xff, 0x22]), Buffer.from([0x22, 0xff, 0x22])), 'UNCOMPARABLE');
+  assert.equal(recompute('CMP-EXACT-VALUE', Buffer.from('['.repeat(50000) + ']'.repeat(50000)), b(1)), 'UNCOMPARABLE');
+  // CMP-ERROR needs a named reason: an expected error with none never matches.
+  assert.equal(recompute('CMP-ERROR', b({ _tag: 'E' }), b({ _tag: 'E', cause: {} })), 'UNCOMPARABLE');
 });
 
 test('gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, tabs, missing paths, directories and pathspec magic', () => {
@@ -153,5 +166,10 @@ test('gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, ta
   assert.deepEqual(Object.fromEntries(hashes), { 'd/a.bin': sha256(a), 'missing file.txt': null, d: null, 'b with space.txt': sha256(b), '../escape': null, 'x\u0000y': null, ':(exclude)d': null });
   assert.deepEqual(gitSource(dir).list(head, ['d']), ['d/a.bin', 'd/c\tt.txt']);
   assert.equal(gitSource(dir).list(head, [':(exclude)d']), null);
+  for (const p of ['./d/a.bin', 'd//a.bin', 'd/./a.bin', '/d/a.bin', 'd/a.bin/']) assert.equal(gitSource(dir).blobHashes(head, [p]).get(p), null, p);
+  // Symlinks are reported with their mode, so a build input that is a link can be refused.
+  fs.symlinkSync('a.bin', path.join(dir, 'd/link'));
+  git(['add', '-A']); git(['commit', '-q', '-m', 'link']);
+  assert.deepEqual(gitSource(dir).entries(git(['rev-parse', 'HEAD']), ['d']).find(e => e.path === 'd/link'), { mode: '120000', path: 'd/link' });
   fs.rmSync(dir, { recursive: true, force: true });
 });
