@@ -1,0 +1,114 @@
+{
+  "format": "p2q-receipt/1",
+  "id": "P2Q-service-C-20261107T215336Z-6e81c6",
+  "kind": "service-C",
+  "writtenAt": "2026-11-07T21:53:36.194Z",
+  "mode": "service",
+  "slot": "dev",
+  "startedAt": "2026-11-07T21:52:40.053Z",
+  "identity": {
+    "gitHead": "2b73620cec828380812edf86639cd3b1ba52e66c",
+    "dirty": true,
+    "diffSha256": "474d9191d58c4ccb06c2969d450b72d3c076805902e81e935fb7cd89c5a9138b",
+    "distSha256": "317ca1ecfdd5a17db3d6743fdc3314ccd8c0a07f2d2e74982409293db168d925",
+    "engineImage": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "endpoint": "http://127.0.0.1:7070",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        13.23,
+        13.14,
+        12.26
+      ],
+      "freeBytes": 14528212992
+    }
+  },
+  "hostLoadAfter": [
+    12.07,
+    12.8,
+    12.19
+  ],
+  "arm": "C",
+  "armLabel": "candidate: host log + broker, ACK at durable frame, overlay RYOW, async guarded publication",
+  "scope": "p2q-service-C-19992832-c1eb-48cc-b95c-a21d2fd6c95b",
+  "label": "dev-delta-2.27M",
+  "n": 30,
+  "facts": 10,
+  "band": "5-10",
+  "warmupDropped": 3,
+  "ackMs": {
+    "n": 27,
+    "p50": 4.5,
+    "p90": 8.1,
+    "p99": 9.4,
+    "max": 9.4,
+    "mean": 5.1
+  },
+  "ryowReadMs": {
+    "n": 27,
+    "p50": 571.7,
+    "p90": 1586.4,
+    "p99": 2039.3,
+    "max": 2039.3,
+    "mean": 727.7
+  },
+  "ryow": {
+    "trials": 30,
+    "hits": 30,
+    "routes": {
+      "overlay": 30
+    }
+  },
+  "delta": {
+    "publishedDeltaFirst": 2286416,
+    "publishedDeltaLast": 2306038
+  },
+  "publication": {
+    "updates": 4,
+    "membersPerUpdate": {
+      "n": 4,
+      "p50": 5,
+      "p90": 13,
+      "p99": 13,
+      "max": 13,
+      "mean": 7.5
+    },
+    "updateMs": {
+      "n": 4,
+      "p50": 7091.4,
+      "p90": 9817.7,
+      "p99": 9817.7,
+      "max": 9817.7,
+      "mean": 7895.1
+    },
+    "resends": 0,
+    "applyErrors": 0,
+    "drained": {
+      "ok": true,
+      "ms": 9886.5,
+      "replicaMismatches": 0,
+      "lastRoute": "replica"
+    },
+    "broker": {
+      "epoch": 1,
+      "headPosition": 31744,
+      "durableLsn": 31,
+      "replicaPosition": 32767,
+      "unpublishedFrames": 0,
+      "overlayFrames": 0,
+      "frames": 30,
+      "commits": 30,
+      "conflicts": 0,
+      "replays": 0,
+      "applyErrors": 0,
+      "rebuilds": 0,
+      "abortedLsns": [],
+      "fsyncCalibrationMs": 3.044708000000014,
+      "recovery": "created",
+      "lastDeltaTotal": 2306038
+    }
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2Q-qlever-log-broker/P2Q-service-C-20261107T215336Z-6e81c6.raw.json",
+  "rawSha256": "07349b7914bc0c58303bb550a1121d2b364d5bced6fcceef4cc03bfd1d63df22"
+}

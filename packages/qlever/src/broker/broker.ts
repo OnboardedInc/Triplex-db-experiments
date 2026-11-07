@@ -87,6 +87,7 @@ export type BrokerEvent =
   | { readonly type: "apply-error"; readonly error: string; readonly at: number }
   | { readonly type: "rebuild-start"; readonly deltaTotal: number; readonly at: number }
   | { readonly type: "rebuild-end"; readonly ms: number; readonly ok: boolean; readonly error?: string; readonly at: number }
+  | { readonly type: "replica-regressed"; readonly from: number; readonly to: number; readonly at: number }
   | { readonly type: "fenced"; readonly detail: string; readonly at: number };
 
 export interface HostBrokerOptions {
@@ -161,6 +162,7 @@ export interface BrokerStats {
   readonly recovery: string;
   readonly applyErrors: number;
   readonly rebuilds: number;
+  readonly replicaRegressions: number;
   readonly lastDeltaTotal: number | undefined;
 }
 
@@ -190,7 +192,7 @@ export class HostBroker {
   private readonly queue: Pending[] = [];
   private deciding = false;
   private failed: Error | undefined;
-  private counters = { frames: 0, commits: 0, conflicts: 0, replays: 0, applyErrors: 0, rebuilds: 0 };
+  private counters = { frames: 0, commits: 0, conflicts: 0, replays: 0, applyErrors: 0, rebuilds: 0, replicaRegressions: 0 };
   private lastDeltaTotal: number | undefined;
 
   private constructor(
@@ -622,18 +624,57 @@ export class HostBroker {
     });
   }
 
+  /**
+   * The next publication batch after `afterLsn`: from the overlay while it still holds every frame after
+   * that LSN, otherwise from the log on disk (after a replica regression the overlay may have evicted
+   * frames the replica no longer has).
+   */
+  private nextBatch(afterLsn: number, maxApply: number): { readonly lsn: number; readonly members: readonly FrameMember[] }[] {
+    const batch: { lsn: number; members: readonly FrameMember[] }[] = [];
+    let commands = 0;
+    const take = (lsn: number, members: readonly FrameMember[]) => {
+      if (batch.length > 0 && commands + members.length > maxApply) return false;
+      batch.push({ lsn, members });
+      commands += members.length;
+      return true;
+    };
+    if (this.evictedThroughLsn <= afterLsn) {
+      for (const frame of this.overlayFrames) if (frame.lsn > afterLsn && !take(frame.lsn, frame.members)) break;
+      return batch;
+    }
+    const first = this.index.findIndex((entry) => entry.lsn > afterLsn);
+    if (first === -1) return batch;
+    const previous = first === 0 ? undefined : this.index[first - 1]!;
+    const start = this.index[first]!;
+    const { frames } = readFramesFrom(
+      this.log.segmentPath,
+      previous
+        ? { offset: start.offset, seed: previous.crc, nextLsn: previous.lsn + 1 }
+        : { offset: start.offset, seed: this.seedOfFirst(), nextLsn: start.lsn },
+      this.durableLsn,
+      32 * 1024 * 1024,
+    );
+    for (const frame of frames)
+      if (frame.kind === FrameKind.COMMIT_GROUP && !take(frame.lsn, decodeCommitGroup(frame.payload).members)) break;
+    return batch;
+  }
+
+  private async replicaMarkerWithRetry(): Promise<ReplicaMarker> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.readReplicaMarker();
+      } catch (error) {
+        if (this.stopping) throw error;
+        await sleep(Math.min(1_000, 25 * 2 ** Math.min(attempt, 6)));
+      }
+    }
+  }
+
   private async applyLoop(): Promise<void> {
     const replica = this.options.replica!;
     const maxApply = this.options.maxApplyCommands ?? 64;
     while (!this.stopping) {
-      const batch: OverlayFrame[] = [];
-      let commands = 0;
-      for (const frame of this.overlayFrames) {
-        if (frame.lsn <= this.publishedLsn) continue;
-        if (batch.length > 0 && commands + frame.members.length > maxApply) break;
-        batch.push(frame);
-        commands += frame.members.length;
-      }
+      const batch = this.nextBatch(this.publishedLsn, maxApply);
       if (batch.length === 0) {
         await new Promise<void>((resolve) => {
           this.wakeApplier = resolve;
@@ -668,17 +709,40 @@ export class HostBroker {
       if ((delta.inserted === 0 && delta.deleted === 0) || delta.inserted === undefined || resends > 0) {
         // Zero change counts: either this update already applied (a re-send after a lost response) or the
         // guard failed because another epoch owns the replica. The marker decides (R13 6.5 step 8).
-        const marker = await this.readReplicaMarker();
+        const marker = await this.replicaMarkerWithRetry();
         if (!(marker.position === to.position && marker.epoch === to.epoch)) {
-          this.options.onEvent?.({ type: "fenced", detail: `marker ${JSON.stringify(marker)} expected ${JSON.stringify(to)}`, at: performance.now() });
-          this.fail(new BrokerFailed(`Replica guard failed at ${JSON.stringify(from)}; another writer owns the replica`));
-          return;
+          if (marker.epoch > this.log.epoch || lsnOf(marker.position) > this.durableLsn) {
+            // Another broker epoch owns the replica, or the replica is ahead of this log: fail-stop
+            // (R13 5.1, 6.5 step 5).
+            this.options.onEvent?.({ type: "fenced", detail: `marker ${JSON.stringify(marker)} expected ${JSON.stringify(to)}`, at: performance.now() });
+            this.fail(new BrokerFailed(`Replica guard failed at ${JSON.stringify(from)}; another writer owns the replica`));
+            return;
+          }
+          // The replica went backwards: it restarted without its persisted delta (`--persist-updates` off,
+          // R21 1.3) or lost its last writeback. The host log is the truth, so take the epoch again and
+          // replay from the replica's own marker; frames are pure quad deltas, so replay is idempotent
+          // (R13 6.2). Readers meanwhile see the lower marker and route to the overlay or the log.
+          try {
+            await replica.update(buildFence(this.options.scopeKey, marker, this.log.epoch), {
+              timeoutMs: this.options.applyTimeoutMs ?? 120_000,
+            });
+          } catch {
+            continue;
+          }
+          const fenced = await this.replicaMarkerWithRetry();
+          if (fenced.epoch !== this.log.epoch) continue; // lost a race; the next pass re-reads the marker
+          this.counters.replicaRegressions++;
+          this.options.onEvent?.({ type: "replica-regressed", from: this.replicaMarker.position, to: fenced.position, at: performance.now() });
+          this.replicaMarker = fenced;
+          this.publishedLsn = lsnOf(fenced.position);
+          continue;
         }
       }
       const at = performance.now();
       this.replicaMarker = to;
       this.publishedLsn = batch[batch.length - 1]!.lsn;
-      for (const frame of batch) frame.publishedAt = at;
+      for (const frame of this.overlayFrames)
+        if (frame.lsn <= this.publishedLsn && frame.publishedAt === undefined) frame.publishedAt = at;
       if (delta.total !== undefined) this.lastDeltaTotal = delta.total;
       this.options.onEvent?.({
         type: "published",

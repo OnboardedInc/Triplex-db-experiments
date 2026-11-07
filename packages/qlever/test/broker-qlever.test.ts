@@ -81,6 +81,41 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("EXP-P2Q broker with 
     }
   }, 120_000);
 
+  it("recovers when the replica's marker goes backwards (a restart without persisted updates)", async () => {
+    const dir = path.join(ROOT, randomUUID());
+    dirs.push(dir);
+    const scope = `p2q-it:${randomUUID()}`;
+    const rt = await open(dir, scope, { retainPublishedMs: 0 });
+    try {
+      const first = [];
+      for (let i = 0; i < 4; i++) first.push(await rt.run(rt.triples.transact(ops(`subj:back${i}`, 3, `b${i}`))));
+      expect(await rt.broker.drain(60_000)).toBe(true);
+      // Simulate the replica losing its delta since position 0: rewind the marker of this test graph only.
+      const marker = (await rt.client.query(markerQuery(scope)))[0]!;
+      const rewind = buildPublication(
+        scope,
+        { position: Number(marker["brokerPosition"]!.value), epoch: Number(marker["brokerEpoch"]!.value) },
+        { position: 0, epoch: 0 },
+        [],
+      );
+      await rt.client.update(rewind.sparql);
+      // The overlay has evicted the published frames (retainPublishedMs 0), so the replay must come from the log.
+      const next = await rt.run(rt.triples.transact(ops("subj:back0", 3, "after")));
+      expect(await rt.broker.drain(60_000)).toBe(true);
+      expect(rt.events.some((e) => e.type === "replica-regressed")).toBe(true);
+      expect(rt.broker.stats().replicaRegressions).toBe(1);
+      for (let i = 0; i < 4; i++) {
+        const rows = await rt.run(rt.adapter.getByEntity(`subj:back${i}`, at(next.position)));
+        expect(rows).toHaveLength(i === 0 ? 6 : 3);
+      }
+      const after = (await rt.client.query(markerQuery(scope)))[0]!;
+      expect(Number(after["brokerEpoch"]!.value)).toBe(rt.broker.epoch);
+    } finally {
+      await rt.dispose();
+      await rt.broker.close();
+    }
+  }, 120_000);
+
   it("replays unpublished frames after a crash, fences the old epoch, and a re-sent update is a no-op", async () => {
     const dir = path.join(ROOT, randomUUID());
     dirs.push(dir);

@@ -351,6 +351,95 @@ const rebuild = async () => {
   return result;
 };
 
+// ------------------------------------------------------------------ replay (replica kill -9 and catch-up from the host log)
+
+/**
+ * Coordinator request (R21 1.3): with `--persist-updates` off the replica loses its delta on a crash and the
+ * broker replays the host log from the replica's marker. Grow the replica's delta with broker commits, keep a
+ * paced writer and readers running, kill -9 the slot's container (DOCKER_HOST explicit, own slot only),
+ * restart it through lab/bin/engine.mjs, and time the catch-up; then check that every committed position is
+ * present on the replica (0 missing) and that ACKs and reads continued through the outage.
+ */
+const replay = async () => {
+  requireUrl();
+  if (slot === 'dev') throw new Error('replay kills the QLever container; run it only on an exclusive slot');
+  const { execFileSync } = await import('node:child_process');
+  const { REPO } = await import('./lib.mjs');
+  const target = Number(opt('delta', 500000)), facts = Number(opt('facts', 10)), cps = Number(opt('cps', 1.5));
+  const readersN = Number(opt('readers', 2)), subjects = Number(opt('subjects', 2000));
+  const scope = `p2q-replay-C-${randomUUID()}`;
+  const recorder = brokerRecorder(), reads = routeRecorder();
+  const rt = await armRuntime(url, 'C', scope, { onEvent: recorder.onEvent, onRead: reads.onRead });
+  const t0 = now();
+  const committed = [];
+  let seq = 0;
+  const commit = async (tag) => {
+    const subject = Math.floor(Math.random() * subjects), s = seq++;
+    const started = now();
+    const result = await transact(rt, commandOps({ subject, facts, seq: `${tag}${s}`, correction: false }, Date.now()), { commandId: `rp:${scope}:${s}` });
+    committed.push({ position: result.position, subject, at: now() - t0, ackMs: now() - started, phase: tag });
+    return result;
+  };
+  // Phase 1: grow the delta to the target with broker commits (16 closed-loop writers, group commit).
+  const published = () => recorder.events.filter((e) => e.type === 'published');
+  while ((published().at(-1)?.deltaTotal ?? 0) < target) {
+    await Promise.all(Array.from({ length: 16 }, () => commit('fill')));
+    if (committed.length % 320 === 0) await rt.broker.drain(600_000);
+  }
+  await rt.broker.drain(600_000);
+  const deltaAtKill = published().at(-1)?.deltaTotal ?? null;
+  // Phase 2: paced writer and readers, then kill -9 and restart.
+  let stop = false;
+  const writer = (async () => { let next = now(); while (!stop) { next += (-Math.log(1 - Math.random()) / cps) * 1000; const w = next - now(); if (w > 1) await sleep(w); if (!stop) await commit('live'); } })();
+  const pulls = [];
+  const readerLoops = Array.from({ length: readersN }, async () => {
+    while (!stop) {
+      const w = committed[Math.floor(Math.random() * committed.length)];
+      const before = reads.routes.length, s = now();
+      try {
+        const rows = await pullAt(rt, w.subject, rt.broker.head());
+        pulls.push({ at: s - t0, ms: now() - s, route: reads.routes.slice(before).map((r) => r.route).join(','), ok: rows.length > 0 });
+      } catch (error) { pulls.push({ at: s - t0, ms: now() - s, route: 'error', ok: false, error: String(error).slice(0, 120) }); }
+    }
+  });
+  await sleep(5_000);
+  const env = { ...process.env, DOCKER_HOST: 'unix:///Users/sam/.colima/triplex2/docker.sock' };
+  const container = `tx2-qlever-${slot}`;
+  const tKill = now();
+  execFileSync('docker', ['kill', '--signal', 'KILL', container], { env, stdio: 'pipe' });
+  const headAtKill = rt.broker.head();
+  execFileSync('node', [path.join(REPO, 'lab/bin/engine.mjs'), 'up', '--lane', 'qlever', '--slot', slot, '--holder', 'EXP-P2Q', '--exp', 'EXP-P2Q'], { env, stdio: 'pipe' });
+  const tReady = now();
+  const headAtReady = rt.broker.head();
+  const caught = await rt.broker.waitPublished(headAtReady, 600_000);
+  const tCaught = now();
+  await sleep(5_000);
+  stop = true;
+  await writer; await Promise.all(readerLoops);
+  await rt.broker.drain(600_000);
+  // Every committed position present on the replica (one request, one snapshot).
+  const graph = `<urn:triplex:scope:${Buffer.from(scope).toString('base64url')}>`;
+  const present = new Set((await rt.client.query(`SELECT DISTINCT ?p WHERE { GRAPH ${graph} { ?s <urn:triplex:field:recorded_position> ?p } }`, { timeoutMs: 120_000 })).map((b) => Number(b.p.value)));
+  const missing = committed.filter((c) => !present.has(c.position)).length;
+  const regress = recorder.events.find((e) => e.type === 'replica-regressed');
+  const replayed = published().filter((e) => regress && e.at >= regress.at && e.at <= tCaught);
+  const during = (x) => x >= tKill - t0 && x <= tCaught - t0;
+  const result = {
+    arm: 'C', scope, slot, target, deltaAtKill, facts, cps, commandsCommitted: committed.length,
+    killToReadyMs: round(tReady - tKill), readyToCaughtUpMs: round(tCaught - tReady), killToCaughtUpMs: round(tCaught - tKill), caughtUp: caught,
+    regression: regress ? { fromPosition: regress.from, toPosition: regress.to, detectedAfterReadyMs: round(regress.at - tReady) } : null,
+    replay: { updates: replayed.length, insertedTriples: replayed.reduce((a, e) => a + (e.inserted ?? 0), 0), updateMs: summary(replayed.map((e) => e.ms)) },
+    missingPositions: missing, presentPositions: present.size, headAtKill, headAtReady,
+    ackMsDuringOutage: summary(committed.filter((c) => c.phase === 'live' && during(c.at)).map((c) => c.ackMs)),
+    ackMsLiveOutsideOutage: summary(committed.filter((c) => c.phase === 'live' && !during(c.at)).map((c) => c.ackMs)),
+    readsDuringOutage: { n: pulls.filter((p) => during(p.at)).length, routes: tally(pulls.filter((p) => during(p.at)).map((p) => p.route)), ms: summary(pulls.filter((p) => during(p.at)).map((p) => p.ms)), failed: pulls.filter((p) => during(p.at) && !p.ok).length },
+    applyErrors: recorder.events.filter((e) => e.type === 'apply-error').length, broker: rt.broker.stats(),
+    raw: { committed, pulls, events: recorder.events },
+  };
+  await rt.close();
+  return result;
+};
+
 // ------------------------------------------------------------------ crash (feed consumer, TARGETS 1.1 P3 items 5 and 6)
 
 const crash = async () => {
@@ -446,7 +535,7 @@ const ackpath = async () => {
 
 // ------------------------------------------------------------------ main
 
-const modes = { probe, service, trace, fill, rebuild, crash, ackpath };
+const modes = { probe, service, trace, fill, rebuild, replay, crash, ackpath };
 if (!modes[mode]) throw new Error(`mode must be one of ${Object.keys(modes).join(', ')}`);
 const started = new Date().toISOString();
 const id0 = identity(url);

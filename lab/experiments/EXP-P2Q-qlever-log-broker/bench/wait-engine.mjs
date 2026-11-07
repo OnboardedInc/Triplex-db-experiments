@@ -18,7 +18,7 @@ for (;;) {
   } catch (error) { out = String(error.stdout ?? ''); }
   const dev = out.split('\n').find((l) => l.startsWith('qlever-dev')) ?? '';
   const reserved = Number(/pool: ([0-9.]+) GiB/.exec(out)?.[1] ?? NaN);
-  if (/running\/healthy/.test(dev)) { console.log(`DEV-UP ${dev.replace(/\s+/g, ' ')}`); process.exit(0); }
+  if (!process.argv.includes('--pool-only') && /running\/healthy/.test(dev)) { console.log(`DEV-UP ${dev.replace(/\s+/g, ' ')}`); process.exit(0); }
   if (reserved + 3.5 <= 11) { console.log(`POOL-FREE reserved=${reserved}`); process.exit(0); }
   if (Date.now() - t0 > maxMs) { console.log(`TIMEOUT reserved=${reserved} dev=${dev.replace(/\s+/g, ' ')}`); process.exit(0); }
   await new Promise((r) => setTimeout(r, 15_000));

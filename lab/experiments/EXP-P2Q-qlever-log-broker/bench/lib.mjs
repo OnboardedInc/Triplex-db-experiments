@@ -115,8 +115,12 @@ export const identity = (url) => {
   for (const pkg of ['packages/qlever/dist', 'packages/core/dist'])
     for (const file of fs.readdirSync(path.join(REPO, pkg), { recursive: true }).filter((f) => String(f).endsWith('.js')).sort())
       dist.update(String(file)).update(fs.readFileSync(path.join(REPO, pkg, String(file))));
+  // Which engine start script the slot runs: the repo's (default) or the EXP-P2Q "np" arm via TX2_CONFIG_DIR.
+  const configDir = process.env.TX2_CONFIG_DIR ? path.resolve(process.env.TX2_CONFIG_DIR) : '/Users/sam/projects/triplex-db-2';
+  const startScript = fs.readFileSync(path.join(configDir, 'qlever-start.sh'));
   return {
     gitHead: head, dirty: status.length > 0, diffSha256: createHash('sha256').update(diff).digest('hex'),
+    engineConfig: { dir: configDir, arm: process.env.TX2_CONFIG_DIR ? 'np (no --persist-updates, keep-previous none)' : 'default (repo qlever-start.sh)', startScriptSha256: createHash('sha256').update(startScript).digest('hex'), persistUpdates: /--persist-updates/.test(String(startScript)) },
     distSha256: dist.digest('hex'), engineImage: slots.lanes.qlever.image, endpoint: url ?? null, node: process.version,
     host: { cpus: os.cpus().length, loadavg: os.loadavg().map((x) => round(x, 2)), freeBytes: (() => { const s = fs.statfsSync(REPO); return s.bavail * s.bsize; })() },
   };
