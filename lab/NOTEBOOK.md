@@ -436,3 +436,16 @@ EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) 
   and CanonicalJson turns -0 into 0 inside JSON; (2) XTDB card-many DOUBLE still marks -0 exact although list parameters travel as JSON
   (`JSON.stringify(-0)` is "0"): add NoNegativeZero for lists unless EXP-F02 proves the round trip; (3) the rdfBase overlap check is
   slightly over-broad (refuses `urn:triplex:scopes:`).
+
+## 2026-11-07 ~20:45Z: V-O01 FIX-FIRST, contract 0.3.1, Q21 rulings
+- **Learning: an oracle built against an earlier contract draft drifts silently.** O-REPLAY was built on 0.1.0-draft; 0.2.0 added the
+  section 4 tables and Q13-Q15, and the oracle broke six of them (family order, -0/+0 identity, mixed-family comparison, strict integer
+  text, missing rem/toNumber/toInt64, error tags). Rule for the loop: every contract version bump re-runs the oracle's section 4 probe
+  before the oracle can close anything; the oracle's file hashes are pinned in the contract once accepted.
+- **Learning: the 13 vector/oracle disagreements were all oracle bugs** (assertionTxId missing, reserved namespaces, entityPage limit).
+  The independent-two-author design worked: the G01 author and the O01 author made different mistakes, and the comparator caught all 8
+  planted errors. Keep the two independent.
+- **Ruling Q21 (all 17 AMB items).** The product-shaping ones tie to the north star: AMB-09 (duplicates are one value; SUM 10) is P2
+  idempotency under the 10% duplicate trace; AMB-04 and AMB-12 follow Sam's "hard error, never silent conversion".
+- Contract 0.3.1 (Q16-Q20 compiled) committed 9c01194; EXP-O02 dispatched to make the oracle conform (no packages/ reads; the brief
+  states the four implementation facts it needs).
