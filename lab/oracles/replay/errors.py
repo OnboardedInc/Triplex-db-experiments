@@ -3,7 +3,7 @@
 Every expected error the oracle reports carries the contract id, `_tag`, `reason` and
 `phase` from this table, so a harness compares observed errors by (`_tag`, `reason`)
 exactly as ACCEPTANCE 4.7 / errorComparison says. The rows are transcribed from
-lab/acceptance/ACCEPTANCE.md 0.3.1 section 4.7 (no Triplex source was read); the unit
+lab/acceptance/ACCEPTANCE.md section 4.7 (0.3.1, plus the six 0.3.3 rows; no Triplex source was read); the unit
 test tests/test_contract_section4.py checks this table row by row against
 lab/acceptance/obligations.json#errorTable, so a contract change that the oracle has
 not absorbed fails the tests instead of silently drifting.
@@ -11,9 +11,9 @@ not absorbed fails the tests instead of silently drifting.
 Multi-reason rows (E-CURSOR, E-CONSTRAINT) list their alternatives; the oracle names the
 one it expects (or the permitted set) per case, as 4.7 says ("the case names which").
 
-Errors the contract does not list (for example an out-of-range `transactions` limit)
-are emitted with a non-table id starting `X-` and an explicit RULING-NEEDED note, never
-with an invented reason (RULES.md R-ERR-2).
+Errors the contract does not list (for example a cycle on a reachability path) are
+emitted with a non-table id starting `X-` and an explicit RULING-NEEDED note, never with
+an invented reason (RULES.md R-ERR-2).
 """
 
 from __future__ import annotations
@@ -72,6 +72,11 @@ PRODUCED = {
     "E-DIVISION-BY-ZERO", "E-INVALID-CONVERSION", "E-MIXED-FAMILY", "E-INTEGER-AVG", "E-INVALID-QUERY",
     "E-UNAVAILABLE-CUT", "E-CONFLICTING-VALUES", "E-CURSOR", "E-COMMAND-COMMITTED", "E-TX-CONFLICT",
     "E-CONSTRAINT", "E-INVALID-VALUE", "E-RESERVED",
+    # EXP-O03 (contract 0.3.3): the wire guard (Q30a, Q30b, Q33a) and the decimal operations
+    # (Q22, Q33b). E-DECIMAL-NARROWING belongs to scale migrations (DS-NARROW), which the
+    # oracle refuses (X-NOT-MODELED), so it is not produced.
+    "E-INEXACT-JSON-NUMBER", "E-NEGATIVE-ZERO-INSTANT", "E-DECIMAL-OVERFLOW", "E-DECIMAL-BARE-DIVIDE",
+    "E-DECIMAL-FRACTION",
 }
 
 

@@ -55,6 +55,7 @@ class InvalidValue(Exception):
     rejected with E-INVALID-VALUE (InvalidTripleError / invalid-value)."""
 
     error_id = "E-INVALID-VALUE"
+    detail = None
 
     def __init__(self, family, reason):
         super().__init__(f"{family}: {reason}")
@@ -67,6 +68,25 @@ class DecimalUnrepresentable(InvalidValue):
     integer digits than precision - scale. Never rounded: E-DECIMAL-UNREPRESENTABLE."""
 
     error_id = "E-DECIMAL-UNREPRESENTABLE"
+
+
+class InexactJsonNumber(InvalidValue):
+    """RULINGS Q30a / ACC wireRules WR-JSON: a user JSON value containing -0, a non-finite
+    number, or a number that does not read back as written (Q33a), at any depth, is
+    rejected with E-INEXACT-JSON-NUMBER (InvalidTripleError / invalid-value, detail
+    inexact-json-number), never normalized. Q34c: JSON that Triplex generates (journal
+    changes) is not user JSON and never passes this guard."""
+
+    error_id = "E-INEXACT-JSON-NUMBER"
+    detail = "inexact-json-number"
+
+
+class NegativeZeroInstant(InvalidValue):
+    """RULINGS Q30b / wireRules WR-INSTANT: an instant given as -0 is rejected with
+    E-NEGATIVE-ZERO-INSTANT (detail no-negative-zero), never turned into 0."""
+
+    error_id = "E-NEGATIVE-ZERO-INSTANT"
+    detail = "no-negative-zero"
 
 
 class MixedFamily(Exception):
@@ -130,33 +150,35 @@ def is_negative_zero(value: float) -> bool:
 _JSON_NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\Z")
 
 
-def lexeme_to_f64(lexeme, what="number") -> float:
-    """Decimal-to-binary64 conversion that refuses silent precision loss (R-VAL-7).
+def reads_back(text, value) -> bool:
+    """RULINGS Q33a (refines Q30a and R-VAL-7): a JSON number is accepted only if it reads
+    back as written: its shortest round-trip binary64 rendering (ECMAScript
+    Number::toString) equals the given text in canonical form, that is, as the same exact
+    decimal value. `0.1` and `1.0` pass; `9007199254740993` (reads back ...992), `1e-400`
+    (reads back 0) and the 55-digit exact expansion of 0.1 (reads back `0.1`) fail."""
+    if value == 0.0:
+        return not re.search(r"[1-9]", text.split("e")[0].split("E")[0])
+    return Fraction(text) == Fraction(es_number_to_string(value))
 
-    CPython float() of text is correctly rounded. The brief's corrected numeric rule says a
-    JSON number that binary64 cannot hold is an input error, never rounded. A lexeme is
-    accepted when its decimal value equals the binary64 exactly, or equals the shortest
-    ECMAScript spelling of that binary64 (Number.prototype.toString), so the value reads
-    back as written: "0.1" and "0.30000000000000004" are accepted (ACC 4.1 N-F-ARITH uses
-    them as binary64 literals), "9007199254740993" (reads back ...992) and "1e-400" (reads
-    back 0) are case errors. Non-finite results are left to the caller, which reports the
-    value-domain rejection (R-VAL-4).
+
+def lexeme_to_f64(lexeme, what="number") -> float:
+    """Decimal-to-binary64 conversion that refuses silent precision loss (R-VAL-7, Q33a).
+
+    CPython float() of text is correctly rounded. A typed number, datetime, blob size or
+    coordinate lexeme that does not read back as written (`reads_back`) is a malformed case:
+    the system receives a JS number, so the case cannot express what it wrote. Inside a
+    json value the same test is the product's wire guard instead (Q30a, json_from_case).
+    Non-finite results are left to the caller, which reports the value-domain rejection
+    (R-VAL-4).
     """
     text = str(lexeme)
     if not _JSON_NUMBER.match(text):
         raise OracleInputError(f"not a JSON number lexeme: {text!r}")
     value = float(text)
-    if not math.isfinite(value):
-        return value
-    if value == 0.0:
-        exact = not re.search(r"[1-9]", text.split("e")[0].split("E")[0])
-    else:
-        written = Fraction(text)
-        exact = written == Fraction(value) or written == Fraction(es_number_to_string(value))
-    if not exact:
+    if math.isfinite(value) and not reads_back(text, value):
         raise OracleInputError(
-            f"{what}: JSON number {text} is not exactly a binary64 value and reads back as "
-            f"{es_number_to_string(value)} (R-VAL-7: give the exact lexeme or bits)")
+            f"{what}: JSON number {text} does not read back as written; it reads back as "
+            f"{es_number_to_string(value)} (R-VAL-7, Q33a: give the shortest lexeme or bits)")
     return value
 
 
@@ -299,10 +321,18 @@ def json_from_case(raw, path="json"):
     if raw is None or isinstance(raw, bool):
         return raw
     if isinstance(raw, Lex):
-        # R-VAL-7: a json number that JSON.parse would silently round is a case error
-        value = lexeme_to_f64(raw, f"json {path}")
+        # Q30a / WR-JSON, recursively inside lists and objects: -0, a non-finite number, or a
+        # number that does not read back as written (Q33a) is rejected, never normalized
+        text = str(raw)
+        if not _JSON_NUMBER.match(text):
+            raise OracleInputError(f"not a JSON number lexeme: {text!r}")
+        value = float(text)
         if not math.isfinite(value):
-            raise InvalidValue("json", f"{path}: number outside binary64 range")
+            raise InexactJsonNumber("json", f"{path}: non-finite number {text}")
+        if is_negative_zero(value):
+            raise InexactJsonNumber("json", f"{path}: -0")
+        if not reads_back(text, value):
+            raise InexactJsonNumber("json", f"{path}: {text} reads back as {es_number_to_string(value)}")
         return value
     if isinstance(raw, str):
         if has_lone_surrogate(raw):
@@ -434,19 +464,12 @@ class Value:
             return OrderedOut([("type", family), ("value", RawNumber(es_number_to_string(bits_f64(self.payload)))),
                                ("bits", "0x%016x" % self.payload)])
         if family == "decimal":
-            scale, precision = self.extra
-            out = [("type", "decimal"), ("value", decimal_text(self.payload, scale)),
-                   ("scale", natural_scale(self.payload) if scale is None else scale)]
-            if precision is not None:
-                out.append(("precision", precision))
-                # ACC 4.0 decimal storage: p <= 15 -> scaled integer value * 10^s (|scaled| < 10^15 < 2^53);
-                # p > 15 -> order-preserving decimal string (its byte spelling is not fixed by the contract)
-                if precision <= 15:
-                    out.append(("storage", OrderedOut([("kind", "scaled-integer"),
-                                                       ("scaled", str(int(self.payload * 10 ** scale)))])))
-                else:
-                    out.append(("storage", OrderedOut([("kind", "order-preserving-string")])))
-            return OrderedOut(out)
+            # canonical text at the (declared or result) scale, with the decimal type; no storage claim:
+            # the physical channel changed from Q18's scaled integer to Q35b's TDK1 key and is the
+            # lane's business, not an expected value (R-DEC-3)
+            scale, precision, _ = self.extra
+            return OrderedOut([("type", "decimal"), ("value", decimal_text(self.payload, scale)),
+                               ("scale", scale), ("precision", precision)])
         if family == "boolean":
             return OrderedOut([("type", "boolean"), ("value", self.payload)])
         if family == "json":
@@ -559,25 +582,37 @@ def _declaration(precision, scale, where):
     return p, s
 
 
+def integer_digits(value: Fraction) -> int:
+    """Digits of the integer part of |value| (0 for |value| < 1)."""
+    whole = abs(value.numerator) // value.denominator
+    return 0 if whole == 0 else len(str(whole))
+
+
+KERNEL_MAX_DIGITS = 38   # ACC decimalRules.kernelMaxDigits; RULINGS Q22, Q29d
+
+
 def declare_decimal(value: Value, precision, scale, where="decimal") -> Value:
-    """Bind a decimal to its attribute declaration (Q18). A value with more fractional
-    digits than s, or more integer digits than p - s, fails with
-    E-DECIMAL-UNREPRESENTABLE; it is never rounded or truncated. Fractional digits are
-    counted on the value, so trailing zeros carry no digit (1.500 is 1.5 and fits scale 2;
-    R-DEC-3, DERIVED from 'a value with more fractional digits than the scale')."""
+    """Bind a decimal to its attribute declaration (Q18, DC-T2D). A value with more
+    fractional digits than s, or more integer digits than p - s, fails with
+    E-DECIMAL-UNREPRESENTABLE (ACC 0.3.3 decimalRules.reject; Q35e's renaming is not yet
+    compiled); it is never rounded or truncated. Fractional digits are counted on the value,
+    so trailing zeros carry no digit (1.500 is 1.5, fits scale 2 and reads back "1.50";
+    R-DEC-3, ruled by Q33b)."""
     p, s = _declaration(precision, scale, where)
     frac = value.payload
     if natural_scale(frac) > s:
         raise DecimalUnrepresentable("decimal", f"{decimal_text(frac, None)} has more than {s} fractional digits")
-    whole = abs(frac.numerator) // frac.denominator
-    whole_digits = 0 if whole == 0 else len(str(whole))
-    if whole_digits > p - s:
+    if integer_digits(frac) > p - s:
         raise DecimalUnrepresentable(
             "decimal", f"{decimal_text(frac, None)} has more than {p - s} integer digits (precision {p}, scale {s})")
-    return Value("decimal", frac, (s, p))
+    return Value("decimal", frac, (s, p, True))
 
 
 def decimal(text, precision=None, scale=None) -> Value:
+    """A decimal from its wire text (R-DEC-1). Its type is the inline (precision, scale)
+    when given, else the text's own: scale = written fractional digits, precision =
+    max(1, integer digits + scale) (R-DEC-8, DERIVED); the attribute declaration, when one
+    exists, replaces it at write (replay.py)."""
     if not isinstance(text, str) or isinstance(text, Lex):
         raise InvalidValue("decimal", "decimals travel as decimal text")
     m = _DECIMAL_TEXT.match(text)
@@ -585,11 +620,10 @@ def decimal(text, precision=None, scale=None) -> Value:
         raise InvalidValue("decimal", f"non-canonical decimal text {text!r}")
     frac = Fraction(text)
     if m.group(1) and frac == 0:
-        # R-DEC-2 (RULING-NEEDED): decimal has no signed zero; '-0' / '-0.00' is refused like the
-        # integer text '-0' (CS-TYPES8-NEG, CV-T2I) instead of being normalized silently
+        # R-DEC-2 (ruled by Q33b, consistent with Q30b): '-0' / '-0.00' is refused, never normalized
         raise InvalidValue("decimal", f"negative zero text {text!r} is not canonical")
-    # an undeclared decimal keeps its written scale for output (identity is the exact value)
-    value = Value("decimal", frac, (len(m.group(3) or ""), None))
+    s = len(m.group(3) or "")
+    value = Value("decimal", frac, (s, max(1, integer_digits(frac) + s), False))
     if precision is not None or scale is not None:
         if precision is None or scale is None:
             raise OracleInputError("decimal: give both precision and scale, or neither")
@@ -597,10 +631,42 @@ def decimal(text, precision=None, scale=None) -> Value:
     return value
 
 
-def decimal_from_fraction(frac: Fraction, scale=None) -> Value:
-    """A computed decimal (kernel arithmetic, conversions): exact, with the result scale."""
-    natural_scale(frac)
-    return Value("decimal", frac, (scale, None))
+def decimal_result(frac: Fraction, scale: int, precision: int) -> Value:
+    """A computed decimal (Q22 kernel arithmetic, conversions) of type (precision, scale),
+    precision capped at the 38-digit kernel maximum. A result whose integer digits exceed
+    precision - scale is E-DECIMAL-OVERFLOW (raised by the caller, which owns the message);
+    here it is an assertion."""
+    p = min(precision, KERNEL_MAX_DIGITS)
+    if (frac * 10 ** scale).denominator != 1 or integer_digits(frac) > p - scale:
+        raise AssertionError("decimal result does not fit its type")
+    return Value("decimal", frac, (scale, p, False))
+
+
+ROUNDING_MODES = ("half-even", "half-up", "down")
+
+
+def round_fraction(value: Fraction, scale: int, mode: str) -> Fraction:
+    """Q22 rounding, the one place rounding happens and only when the caller names it:
+    half-even (ties to the even digit), half-up (ties away from zero) and down (toward
+    zero), as decimal.js / BigDecimal name them (R-DEC-9, DERIVED from the mode names)."""
+    if mode not in ROUNDING_MODES:
+        raise OracleInputError(f"rounding mode must be one of {ROUNDING_MODES}, got {mode!r}")
+    scaled = value * 10 ** scale
+    sign = -1 if scaled < 0 else 1
+    mag = abs(scaled)
+    q, r = divmod(mag.numerator, mag.denominator)
+    rem = Fraction(r, mag.denominator)
+    if mode == "down":
+        n = q
+    elif rem > Fraction(1, 2):
+        n = q + 1
+    elif rem < Fraction(1, 2):
+        n = q
+    elif mode == "half-up":
+        n = q + 1
+    else:
+        n = q + (q % 2)
+    return Fraction(sign * n, 10 ** scale)
 
 
 def _require_lex(raw, family):
@@ -671,6 +737,8 @@ def decode_value(raw, *, datetime_range=None) -> Value:
         value = lexeme_to_f64(_require_lex(payload, family), "datetime value")
         if not math.isfinite(value):
             raise InvalidValue(family, "non-finite")
+        if is_negative_zero(value):
+            raise NegativeZeroInstant(family, "an instant given as -0 (Q30b)")
         if datetime_range is not None:
             low, high = datetime_range
             if (low is not None and Fraction(value) < low) or (high is not None and Fraction(value) > high):
@@ -769,9 +837,10 @@ def relation(op, actual: Value, expected, mode="typed"):
         number and datetime values; against an integer it is a JS number, so CMP-INT-FLOAT
         applies; against decimal, CMP-DECIMAL-CROSS.
       CMP-UNTYPED-STRING: an untyped string matches string and ref values by codepoints.
-      Otherwise (R-CMP-3, CMP-IDENTITY, CMP-BOOL-INT): different families are never
-        equal, != is true, and ordered comparisons are false. `datalog` mode keeps the old
-        oracle switch that merges number and datetime for typed values.
+      Otherwise (CMP-IDENTITY, CMP-BOOL-INT; RULINGS Q33d for R-CMP-3): different families
+        are never equal and != is true; every ordered comparison across families is a
+        preflight E-MIXED-FAMILY error, never false. `datalog` mode keeps the 0.1 switch
+        that merges typed number and datetime.
     """
     if op == "in":
         return any(relation("eq", actual, item, mode) for item in expected)
@@ -782,6 +851,8 @@ def relation(op, actual: Value, expected, mode="typed"):
             if actual.family in ("string", "ref"):
                 c = _cmp(actual.payload, expected.payload)
                 return _truth(op, c)
+            if op in ORDERED_OPS:
+                raise MixedFamily(actual.family, "string", op)     # Q33d
             return op == "ne"
         expected = Value("number", f64_bits(expected.payload))
         if actual.family == "datetime":
@@ -798,6 +869,8 @@ def relation(op, actual: Value, expected, mode="typed"):
         return op == "ne"
     if mode == "datalog" and pair <= {"number", "datetime"}:
         return _truth(op, _cmp(actual.exact(), expected.exact()))
+    if op in ORDERED_OPS:
+        raise MixedFamily(fa, fb, op)     # Q33d: every ordered cross-family comparison
     return op == "ne"
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import re
 from pathlib import Path
 
 from . import entities as E
@@ -15,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.2.0"   # EXP-O02: conformance to ACCEPTANCE 0.3.1 section 4 and RULINGS Q1-Q21
+ORACLE_VERSION = "0.3.0"   # EXP-O03: ACCEPTANCE 0.3.3 (section 4 plus the 0.3.3 tables) and RULINGS through Q36
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -46,6 +47,66 @@ def _analytic(run, query):
 QUERIES["analyticCounts"] = _analytic
 
 
+def _order_keys_not_modeled(run, query):
+    """RULINGS Q35 (TDK1 order keys) is not compiled into the contract the oracle follows;
+    the oracle answers values, never key bytes, so a case that asks for keys is refused."""
+    raise V.OracleInputError("X-NOT-MODELED: TDK1 order keys (RULINGS Q35) are not modeled")
+
+
+for _kind in ("orderKey", "decimalKey", "tdk1Key"):
+    QUERIES[_kind] = _order_keys_not_modeled
+
+_INTEGER_LEXEME = re.compile(r"-?(0|[1-9][0-9]*)")
+_COORDINATE_FIELDS = ("stream", "epoch", "offset", "ordinal")
+
+
+def _coordinate_int(raw, what, minimum=None):
+    """An integer field of a position, written as a JSON integer lexeme (no fraction or
+    exponent: a position is not a measured number)."""
+    if isinstance(raw, bool) or not (isinstance(raw, int) or (isinstance(raw, str) and _INTEGER_LEXEME.fullmatch(raw))):
+        raise V.OracleInputError(f"position {what} must be an integer, got {raw!r}")
+    value = int(raw)
+    if minimum is not None and value < minimum:
+        raise V.OracleInputError(f"position {what} must be >= {minimum}, got {value}")
+    return value
+
+
+def coordinate_key(raw):
+    """RULINGS Q31c / ACC POSITION: a receipt position is either an integer (today's dense
+    scope counters) or a coordinate (stream, epoch, offset, ordinal) written as an object
+    with those four fields or a four-element list, ordered lexicographically. Streams may be
+    strings or integers (integers sort before strings; one scope normally uses one stream
+    naming). Returns ("int", n) or ("coord", stream key, epoch, offset, ordinal)."""
+    if isinstance(raw, (dict, list)):
+        if isinstance(raw, dict):
+            if set(raw) != set(_COORDINATE_FIELDS):
+                raise V.OracleInputError(f"position coordinate needs exactly the fields {_COORDINATE_FIELDS}")
+            parts = [raw[f] for f in _COORDINATE_FIELDS]
+        else:
+            if len(raw) != 4:
+                raise V.OracleInputError("position coordinate list needs four elements")
+            parts = list(raw)
+        stream = parts[0]
+        if isinstance(stream, V.Lex) or (isinstance(stream, int) and not isinstance(stream, bool)):
+            stream_key = (0, _coordinate_int(stream, "stream"))
+        elif isinstance(stream, str):
+            stream_key = (1, stream)
+        else:
+            raise V.OracleInputError(f"position stream must be a string or integer, got {stream!r}")
+        return ("coord", stream_key) + tuple(_coordinate_int(p, f, 0) for p, f in zip(parts[1:], _COORDINATE_FIELDS[1:]))
+    return ("int", _coordinate_int(raw, "integer"))
+
+
+def coordinate_output(raw):
+    """The position as the receipt wrote it, normalized: an integer, or an object with the
+    four coordinate fields in order."""
+    key = coordinate_key(raw)
+    if key[0] == "int":
+        return key[1]
+    stream = key[1][1]
+    return V.OrderedOut(zip(_COORDINATE_FIELDS, (stream,) + key[2:]))
+
+
 class Run:
     def __init__(self, case, lane=None):
         if case.get("format") != CASE_FORMAT:
@@ -74,6 +135,48 @@ class Run:
         self.violations = []
         self.diverged_at = None
         self.next_synth = {}
+        self.ordinals, self.coordinate_catalog = self._assign_ordinals()
+
+    # ------------------------------------------------------------------ positions (RULINGS Q31c)
+
+    def _assign_ordinals(self):
+        """Q31c / ACC position: a receipt position is an integer or a coordinate
+        (stream, epoch, offset, ordinal), totally ordered and not necessarily dense. The
+        oracle sorts committed positions per scope and uses its own ordinals for cuts:
+        integer positions are their own ordinals (gaps allowed); coordinates get dense
+        ordinals after `initialPositions` in coordinate order. Returns (command index ->
+        ordinal, scope -> sorted [(coordinate key, ordinal)])."""
+        by_scope = {}
+        for idx, rec in self.receipts.items():
+            outcome = rec.get("outcome") if rec.get("outcome") != "unknown" else rec.get("resolvedOutcome")
+            if outcome != "committed" or rec.get("position") is None or not 0 <= idx < len(self.commands):
+                continue
+            scope = self.commands[idx].get("scope") or self.engine.default_scope
+            by_scope.setdefault(scope, []).append((idx, coordinate_key(rec["position"])))
+        initial = self.case.get("initialPositions") or {}
+        ordinals, catalog = {}, {}
+        for scope, rows in by_scope.items():
+            if len({k[0] for _, k in rows}) > 1:
+                raise V.OracleInputError(f"scope {scope} mixes integer positions and coordinates")
+            if rows[0][1][0] == "int":
+                for idx, k in rows:
+                    ordinals[idx] = k[1]
+            else:
+                ordinal_of = {k: int(initial.get(scope, 0)) + 1 + i
+                              for i, k in enumerate(sorted({k for _, k in rows}))}
+                for idx, k in rows:
+                    ordinals[idx] = ordinal_of[k]
+            catalog[scope] = sorted((k, ordinals[idx]) for idx, k in rows)
+        return ordinals, catalog
+
+    def ordinal_at(self, scope, raw):
+        """The cut ordinal of a coordinate: the greatest committed ordinal at or below it (0
+        when every committed position is after it)."""
+        key = coordinate_key(raw)
+        rows = self.coordinate_catalog.get(scope, [])
+        if not rows or rows[0][0][0] != key[0]:
+            raise V.OracleInputError(f"a cut by coordinate needs scope {scope} receipts of the same position kind")
+        return max((o for k, o in rows if k <= key), default=0)
 
     # ------------------------------------------------------------------ identities
 
@@ -111,8 +214,8 @@ class Run:
                 ids = [f"unbound:{command['_index']}:{i}" if op.get("op") == "assert" else None
                        for i, op in enumerate(ops)]
                 self._diverge(command["_index"])
-            return {"txId": rec.get("txId"), "position": int(rec["position"]), "instant": instant,
-                    "assertionIds": ids, "fromReceipt": True}
+            return {"txId": rec.get("txId"), "position": self.ordinals[command["_index"]], "instant": instant,
+                    "assertionIds": ids, "fromReceipt": True, "coordinate": coordinate_output(rec["position"])}
         position = max(state.last_position, self.next_synth.get(state.name, 0)) + 1
         self.next_synth[state.name] = position
         ids = [(op.get("ref") or f"a:{command['_index']}:{i}") if op.get("op") == "assert" else None
@@ -179,7 +282,7 @@ class Run:
         recs = {m["_index"]: self._receipt(m["_index"]) for m in members}
         if self.receipt_mode:
             committed = sorted((m for m in members if (recs[m["_index"]] or {}).get("outcome") == "committed"),
-                               key=lambda m: int(recs[m["_index"]]["position"]))
+                               key=lambda m: self.ordinals[m["_index"]])
             others = [m for m in members if m not in committed]
         else:
             committed, others = list(members), []
@@ -294,9 +397,10 @@ class Run:
     # ------------------------------------------------------------------ receipt consistency
 
     def receipt_consistency(self):
-        """Spec item 2 as corrected by the orchestrator: positions dense and increasing
-        per scope, ids unique, rejected commands hold no position. Instants are NOT
-        required to be non-decreasing (runtimes supply their own clocks)."""
+        """Spec item 2 as corrected by the orchestrator and RULINGS Q31c: positions unique
+        and increasing in stream order per scope (not necessarily dense), ids unique,
+        rejected commands hold no position, no committed receipt on an aborted position.
+        Instants are NOT required to be non-decreasing (runtimes supply their own clocks)."""
         if not self.receipt_mode:
             return V.OrderedOut([("status", "NOT-APPLICABLE"), ("reason", "no receipts supplied")])
         problems = list(self.violations)
@@ -314,7 +418,7 @@ class Run:
                     if rec.get(field) is None:
                         problems.append({"rule": "R-RCP-1", "command": index, "problem": f"committed receipt lacks {field}"})
                 if rec.get("position") is not None:
-                    by_scope.setdefault(scope, []).append((index, int(rec["position"]), command))
+                    by_scope.setdefault(scope, []).append((index, self.ordinals[index], command))
                 if rec.get("txId") is not None:
                     if rec["txId"] in tx_ids:
                         problems.append({"rule": "R-RCP-3", "command": index, "problem": "txId reused",
@@ -349,12 +453,21 @@ class Run:
                 if any(x is not None for x in rec.get("assertionIds") or []):
                     problems.append({"rule": "R-RCP-2", "command": index, "problem": "rejected receipt holds assertion ids"})
         initial = self.case.get("initialPositions") or {}
+        aborted_raw = self.case.get("abortedPositions") or {}
+        scopes_out = []
         for scope, rows in by_scope.items():
+            # Q31c: positions are totally ordered coordinates, not necessarily dense. A reused
+            # position is a violation; density is reported for information only (POSITION
+            # "positions need not be dense"). Rows carry the oracle's ordinals.
+            integer = coordinate_key(self.receipts[rows[0][0]]["position"])[0] == "int"
             positions = sorted(p for _, p, _ in rows)
-            start = int(initial.get(scope, positions[0] - 1)) + 1
-            if positions != list(range(start, start + len(positions))):
-                problems.append({"rule": "R-RCP-1", "scope": scope,
-                                 "problem": "positions are not dense", "positions": positions, "expectedStart": start})
+            if len(set(positions)) != len(positions):
+                problems.append({"rule": "R-RCP-1", "scope": scope, "problem": "a position is reused",
+                                 "positions": [coordinate_output(self.receipts[i]["position"]) for i, _, _ in rows]})
+            dense = None
+            if integer:
+                start = int(initial.get(scope, positions[0] - 1)) + 1
+                dense = positions == list(range(start, start + len(positions)))
             last = None
             for index, position, command in rows:   # stream order; race members may reorder
                 if last is not None and position < last[1] and not (
@@ -362,18 +475,47 @@ class Run:
                     problems.append({"rule": "R-RCP-1", "command": index,
                                      "problem": "position decreases in stream order outside a race group"})
                 last = (index, position, command)
+            # R-RCP-5 / POSITION nested: the Triplex transacts of one engine transaction hold
+            # consecutive positions (integer positions: consecutive integers; coordinates: one
+            # (stream, epoch, offset) and consecutive ordinal components)
             groups = {}
-            for index, position, command in rows:
+            for index, _, command in rows:
                 if command.get("physicalGroup") is not None:
-                    groups.setdefault(command["physicalGroup"], []).append(position)
+                    groups.setdefault(command["physicalGroup"], []).append(
+                        (coordinate_key(self.receipts[index]["position"]), index))
             for group, members in groups.items():
                 members.sort()
-                if members != list(range(members[0], members[0] + len(members))):
+                keys = [k for k, _ in members]
+                if integer:
+                    ok = [k[1] for k in keys] == list(range(keys[0][1], keys[0][1] + len(keys)))
+                else:
+                    ok = len({k[1:4] for k in keys}) == 1 and \
+                        [k[4] for k in keys] == list(range(keys[0][4], keys[0][4] + len(keys)))
+                if not ok:
                     problems.append({"rule": "R-RCP-5", "physicalGroup": group,
                                      "problem": "positions of one physical transaction are not consecutive",
-                                     "positions": members})
-        return V.OrderedOut([("status", "FAIL" if problems else "PASS"),
-                             ("violations", [V.OrderedOut(p.items()) for p in problems])])
+                                     "positions": [coordinate_output(self.receipts[i]["position"])
+                                                   for _, i in members]})
+            # Q31c: aborted offsets are accounted (the feed's resolution stream lists each one);
+            # they take no ordinal, and a committed receipt may not sit on an aborted position
+            # (for coordinates: on an aborted (stream, epoch, offset))
+            aborted = [coordinate_key(a) for a in aborted_raw.get(scope, [])]
+            for index, _, _ in rows:
+                key = coordinate_key(self.receipts[index]["position"])
+                if any(key == a or (not integer and a[0] == "coord" and key[1:4] == a[1:4]) for a in aborted):
+                    problems.append({"rule": "R-RCP-1", "command": index,
+                                     "problem": "a committed receipt holds an aborted position"})
+            # informational only, and only where it says something (coordinates, a gap, or
+            # aborted positions), so dense integer receipts keep their 0.2.0 output shape
+            if not integer or not dense or aborted:
+                scopes_out.append(V.OrderedOut([
+                    ("scope", scope), ("coordinates", "integer" if integer else "tuple"), ("dense", dense),
+                    ("aborted", [coordinate_output(a) for a in aborted_raw.get(scope, [])])]))
+        out = [("status", "FAIL" if problems else "PASS"),
+               ("violations", [V.OrderedOut(p.items()) for p in problems])]
+        if scopes_out:
+            out.append(("positions", scopes_out))
+        return V.OrderedOut(out)
 
     # ------------------------------------------------------------------ queries
 

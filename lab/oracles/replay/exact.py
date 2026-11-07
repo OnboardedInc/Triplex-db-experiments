@@ -67,10 +67,10 @@ def check_f64(value: float) -> float:
 
 
 def _binary_family(op, a: V.Value, b: V.Value):
-    """N-MIXED / CV-NONE: no implicit conversion between families. integer with number,
-    and decimal with integer or number, are preflight E-MIXED-FAMILY unless the query
-    converts one operand explicitly. A non-numeric operand is also E-MIXED-FAMILY
-    (R-NUM-7, RULING-NEEDED: 4.7 has no other typed preflight reason for it)."""
+    """N-MIXED / CV-NONE / DC-IMPLICIT: no implicit conversion between families. integer
+    with number, and decimal with integer or number, are preflight E-MIXED-FAMILY unless
+    the query converts one operand explicitly. A non-numeric operand is also E-MIXED-FAMILY
+    (R-NUM-7, ruled by Q33e)."""
     if a.family != b.family or a.family not in ("integer", "number", "decimal"):
         raise TypedError("E-MIXED-FAMILY", f"{op} needs two operands of one numeric family "
                          "(convert explicitly with toNumber / toInteger / toDecimal)",
@@ -78,9 +78,27 @@ def _binary_family(op, a: V.Value, b: V.Value):
     return a.family
 
 
-def _decimal_scale(*values):
-    scales = [v.extra[0] if v.extra[0] is not None else V.natural_scale(v.payload) for v in values]
-    return scales
+def _dtype(v):
+    """(scale, precision) of a decimal value (R-DEC-8)."""
+    return v.extra[0], v.extra[1]
+
+
+def decimal_checked(frac, scale, precision, what):
+    """Q22 / DO-*: the result type's precision is capped at the 38-digit kernel maximum
+    (no target is declared inside an expression, R-DEC-10); a result whose integer digits
+    exceed precision - scale is E-DECIMAL-OVERFLOW, never rounded."""
+    p = min(precision, V.KERNEL_MAX_DIGITS)
+    if V.integer_digits(frac) > p - scale:
+        raise TypedError("E-DECIMAL-OVERFLOW", f"{what}: the result has more than {p - scale} integer digits "
+                         f"(precision {p}, scale {scale})", result=V.decimal_text(frac, scale))
+    return V.decimal_result(frac, scale, p)
+
+
+def _decimal_addsub(a, b, frac, what):
+    """DO-ADD: scale max(s1, s2); precision max(p1 - s1, p2 - s2) + scale + 1."""
+    (s1, p1), (s2, p2) = _dtype(a), _dtype(b)
+    s = max(s1, s2)
+    return decimal_checked(frac, s, max(p1 - s1, p2 - s2) + s + 1, what)
 
 
 def add(a, b):
@@ -88,8 +106,7 @@ def add(a, b):
     if family == "integer":
         return V.integer(check_int64(a.payload + b.payload))
     if family == "decimal":
-        # Q18 kernel arithmetic: exact; result scale max(sa, sb) (R-DEC-4, DERIVED)
-        return V.decimal_from_fraction(a.payload + b.payload, max(_decimal_scale(a, b)))
+        return _decimal_addsub(a, b, a.payload + b.payload, "add")
     return V.number(check_f64(a.as_float() + b.as_float()))
 
 
@@ -98,7 +115,7 @@ def sub(a, b):
     if family == "integer":
         return V.integer(check_int64(a.payload - b.payload))
     if family == "decimal":
-        return V.decimal_from_fraction(a.payload - b.payload, max(_decimal_scale(a, b)))
+        return _decimal_addsub(a, b, a.payload - b.payload, "sub")
     return V.number(check_f64(a.as_float() - b.as_float()))
 
 
@@ -107,8 +124,9 @@ def mul(a, b):
     if family == "integer":
         return V.integer(check_int64(a.payload * b.payload))
     if family == "decimal":
-        # exact; result scale sa + sb (R-DEC-4, DERIVED)
-        return V.decimal_from_fraction(a.payload * b.payload, sum(_decimal_scale(a, b)))
+        # DO-MUL: scale s1 + s2, precision p1 + p2
+        (s1, p1), (s2, p2) = _dtype(a), _dtype(b)
+        return decimal_checked(a.payload * b.payload, s1 + s2, p1 + p2, "mul")
     return V.number(check_f64(a.as_float() * b.as_float()))
 
 
@@ -120,39 +138,102 @@ def _trunc_div(n, d):
 def div(a, b):
     """N-I-DIV: integer quotient truncated toward zero; divisor 0 is E-DIVISION-BY-ZERO;
     -2^63 / -1 is E-INTEGER-OVERFLOW. N-F-ARITH: binary64 division by +0.0 or -0.0 is
-    E-DIVISION-BY-ZERO (Q8c: no NaN or Infinity results)."""
+    E-DIVISION-BY-ZERO (Q8c: no NaN or Infinity results). DO-BARE-DIV (Q22): a bare `/`
+    with a decimal operand is preflight E-DECIMAL-BARE-DIVIDE; use divide(a, b, scale,
+    rounding)."""
+    if "decimal" in (a.family, b.family):
+        raise TypedError("E-DECIMAL-BARE-DIVIDE", "bare / on decimals; use divide(a, b, scale, rounding)")
     family = _binary_family("div", a, b)
     if family == "integer":
         if b.payload == 0:
             raise TypedError("E-DIVISION-BY-ZERO", "integer division by zero")
         return V.integer(check_int64(_trunc_div(a.payload, b.payload)))
-    if family == "decimal":
-        raise V.OracleInputError("decimal division is not modeled: its result scale and rounding are not frozen "
-                                 "(R-DEC-5, ORCHESTRATOR-RULING-NEEDED)")
     if b.as_float() == 0.0:
         raise TypedError("E-DIVISION-BY-ZERO", "binary64 division by zero")
     return V.number(check_f64(a.as_float() / b.as_float()))
 
 
+def _param_int(raw, what, low=0, high=V.KERNEL_MAX_DIGITS):
+    """A scale / precision parameter: a bare JSON integer or a typed integer."""
+    if isinstance(raw, V.Value) and raw.family == "integer":
+        n = raw.payload
+    elif isinstance(raw, int) and not isinstance(raw, bool):   # direct kernel calls
+        n = raw
+    elif isinstance(raw, V.Lex) and str(raw).lstrip("-").isdigit():
+        n = int(str(raw))
+    else:
+        raise V.OracleInputError(f"{what} must be an integer, got {raw!r}")
+    if not low <= n <= high:
+        raise V.OracleInputError(f"{what} must be in {low}..{high}, got {n}")
+    return n
+
+
+def _param_mode(raw):
+    if isinstance(raw, V.Value) and raw.family == "string":
+        raw = raw.payload
+    if not isinstance(raw, str) or isinstance(raw, V.Lex):
+        raise V.OracleInputError(f"rounding must be a string, got {raw!r}")
+    if raw not in V.ROUNDING_MODES:
+        raise V.OracleInputError(f"rounding must be one of {V.ROUNDING_MODES}, got {raw!r}")
+    return raw
+
+
+def divide(a, b, scale, rounding):
+    """DO-DIV (Q22): divide(a, b, scale, rounding), rounding one of half-even, half-up,
+    down: the exact quotient rounded once at the named scale, the one place rounding
+    happens. b = 0 is E-DIVISION-BY-ZERO; a result beyond the precision (no declared target
+    inside an expression: 38 digits) is E-DECIMAL-OVERFLOW. `a` is a decimal; `b` is a
+    decimal or an integer, so Q33b's divide(SUM, COUNT, scale, rounding) is expressible
+    (R-DEC-7; integer operands are exact)."""
+    s, mode = _param_int(scale, "divide scale"), _param_mode(rounding)
+    if a.family != "decimal" or b.family not in ("decimal", "integer"):
+        raise TypedError("E-MIXED-FAMILY", "divide needs a decimal dividend and a decimal or integer divisor",
+                         left=a.family, right=b.family)
+    if b.exact() == 0:
+        raise TypedError("E-DIVISION-BY-ZERO", "decimal division by zero")
+    quotient = V.round_fraction(a.payload / b.exact(), s, mode)
+    return decimal_checked(quotient, s, V.KERNEL_MAX_DIGITS, "divide")
+
+
+def round_(x, scale, rounding):
+    """DO-ROUND (Q22): round(x, s, rounding) on a decimal: result scale s, precision
+    p - (s_x - s) when s < s_x; E-DECIMAL-OVERFLOW only when a carry exceeds that precision.
+    s = s_x returns x. s > s_x is refused (X-NOT-MODELED, R-DEC-11): DO-ROUND's "else p"
+    would leave fewer integer digits than x has, which the contract does not resolve."""
+    s, mode = _param_int(scale, "round scale"), _param_mode(rounding)
+    if x.family != "decimal":
+        raise TypedError("E-MIXED-FAMILY", "round needs a decimal operand", operand=x.family)
+    sx, px = _dtype(x)
+    if s == sx:
+        return x
+    if s > sx:
+        raise TypedError("X-NOT-MODELED", "round to a larger scale", ruling="R-DEC-11: DO-ROUND result "
+                         "precision for s > s_x is not resolved (ORCHESTRATOR-RULING-NEEDED)")
+    return decimal_checked(V.round_fraction(x.payload, s, mode), s, px - (sx - s), "round")
+
+
 def rem(a, b):
     """N-I-REM: a - trunc(a/b)*b (sign of the dividend); divisor 0 is E-DIVISION-BY-ZERO.
-    -2^63 % -1 = 0 (no overflow: the remainder is always inside the range)."""
-    family = _binary_family("rem", a, b)
-    if family != "integer":
-        raise V.OracleInputError(f"rem over {family} is not in ACC 4.1 (R-NUM-8, ORCHESTRATOR-RULING-NEEDED)")
+    -2^63 % -1 = 0 (no overflow). R-NUM-8 (ruled by Q33e): rem is integer-only; a binary64
+    or decimal operand is a preflight error (E-MIXED-FAMILY, the 4.7 preflight row for an
+    operand of the wrong family)."""
+    if a.family != "integer" or b.family != "integer":
+        raise TypedError("E-MIXED-FAMILY", "rem is defined for integers only (Q33e)", left=a.family,
+                         right=b.family)
     if b.payload == 0:
         raise TypedError("E-DIVISION-BY-ZERO", "integer remainder by zero")
     return V.integer(check_int64(a.payload - _trunc_div(a.payload, b.payload) * b.payload))
 
 
 def neg(a):
-    """N-I-NEG: -(-2^63) overflows. N-F-NEGZERO: -(0.0) = -0.0, -(-0.0) = +0.0."""
+    """N-I-NEG: -(-2^63) overflows. N-F-NEGZERO: -(0.0) = -0.0, -(-0.0) = +0.0. A decimal
+    keeps its type (decimal zero has no sign)."""
     if a.family == "integer":
         return V.integer(check_int64(-a.payload))
     if a.family == "number":
         return V.number(-a.as_float())
     if a.family == "decimal":
-        return V.decimal_from_fraction(-a.payload, a.extra[0])
+        return V.decimal_result(-a.payload, *_dtype(a))
     raise TypedError("E-MIXED-FAMILY", "neg needs a numeric operand", operand=a.family)
 
 
@@ -163,18 +244,18 @@ def abs_(a):
     if a.family == "number":
         return V.number(abs(a.as_float()))
     if a.family == "decimal":
-        return V.decimal_from_fraction(abs(a.payload), a.extra[0])
+        return V.decimal_result(abs(a.payload), *_dtype(a))
     raise TypedError("E-MIXED-FAMILY", "abs needs a numeric operand", operand=a.family)
 
 
-# --------------------------------------------------------------------------- conversions (ACC 4.2)
+# --------------------------------------------------------------------------- conversions (ACC 4.2, decimalConversions)
 
 
 def to_number(a):
     """CV-I2F (AMB-11's explicit conversion): toNumber(integer) rounds to the nearest
     binary64, ties to even, once (CPython int -> float is correctly rounded). toNumber of a
-    number is the number; of a decimal, the correctly rounded binary64 of its exact value
-    (DERIVED from CV-I2F). Other families: E-INVALID-CONVERSION."""
+    number is the number. DC-D2N: decimal to number only through toNumber, one correctly
+    rounded binary64. Other families: E-INVALID-CONVERSION."""
     if a.family == "number":
         return a
     if a.family in ("integer", "decimal"):
@@ -187,11 +268,19 @@ def to_number(a):
 
 def to_integer(a):
     """CV-F2I: toInteger(number) only explicitly; the value must be integral and inside
-    the core integer range, else E-INVALID-CONVERSION; -0.0 converts to 0. Integers pass
-    through; a decimal follows the same rule (DERIVED)."""
+    the core integer range, else E-INVALID-CONVERSION; -0.0 converts to 0. DC-D2I (Q22): a
+    decimal converts only when its fraction is zero, else E-DECIMAL-FRACTION (write
+    round(x, 0, rounding) first); a whole decimal outside the core range is
+    E-INTEGER-OVERFLOW (R-DEC-12, like CV-T2I's exact text). Integers pass through."""
     if a.family == "integer":
         return a
-    if a.family in ("number", "decimal"):
+    if a.family == "decimal":
+        x = a.payload
+        if x.denominator != 1:
+            raise TypedError("E-DECIMAL-FRACTION", "decimal to integer with a non-zero fraction; "
+                             "use round(x, 0, rounding) first", operand=V.decimal_text(x, a.extra[0]))
+        return V.integer(check_int64(x.numerator))
+    if a.family == "number":
         x = a.exact()
         if x.denominator != 1 or not V.INT64_MIN <= x.numerator <= V.INT64_MAX:
             raise TypedError("E-INVALID-CONVERSION", "toInteger needs an integral value inside [-2^63, 2^63-1]",
@@ -200,17 +289,41 @@ def to_integer(a):
     raise TypedError("E-INVALID-CONVERSION", f"toInteger of {a.family}", operand=a.family)
 
 
-def to_decimal(a):
-    """Explicit conversion into the decimal family (DEC-CONVERTED-COMPARE): an integer
-    or a decimal converts exactly; a binary64 converts to its exact binary expansion
-    (finite, so exact; R-DEC-6, DERIVED). Other families: E-INVALID-CONVERSION."""
-    if a.family == "decimal":
-        return a
-    if a.family == "integer":
-        return V.decimal_from_fraction(Fraction(a.payload), 0)
+def to_decimal(a, precision=None, scale=None, rounding=None):
+    """Conversions into the decimal family (decimalConversions):
+      DC-I2D: toDecimal(integer[, p, s]) is exact when the integer fits p - s digits, else
+        E-DECIMAL-UNREPRESENTABLE; without (p, s) its type is (digits, 0).
+      DC-N2D: toDecimal(number, p, s, rounding) only: the exact binary expansion (R-DEC-6,
+        Q33b) rounded once at scale s with the named mode; more than p - s integer digits
+        is E-DECIMAL-UNREPRESENTABLE (R-DEC-13: the conversion row's error, as DC-I2D).
+      a decimal with (p, s) is re-declared exactly (excess digits E-DECIMAL-UNREPRESENTABLE).
+    """
     if a.family == "number":
-        return V.decimal_from_fraction(a.exact())
-    raise TypedError("E-INVALID-CONVERSION", f"toDecimal of {a.family}", operand=a.family)
+        if precision is None or scale is None or rounding is None:
+            raise V.OracleInputError("DC-N2D: a number converts to decimal only through toDecimal(x, p, s, rounding)")
+        p, s = _param_int(precision, "toDecimal precision", 1), _param_int(scale, "toDecimal scale")
+        frac = V.round_fraction(a.exact(), s, _param_mode(rounding))
+        return _declared(V.Value("decimal", frac, (s, max(1, V.integer_digits(frac) + s), False)), p, s)
+    if rounding is not None:
+        raise V.OracleInputError("rounding applies to toDecimal(number, p, s, rounding) only")
+    if a.family == "integer":
+        value = V.Value("decimal", Fraction(a.payload), (0, max(1, V.integer_digits(Fraction(a.payload))), False))
+    elif a.family == "decimal":
+        value = a
+    else:
+        raise TypedError("E-INVALID-CONVERSION", f"toDecimal of {a.family}", operand=a.family)
+    if precision is None and scale is None:
+        return value
+    if precision is None or scale is None:
+        raise V.OracleInputError("toDecimal takes (x) or (x, p, s)")
+    return _declared(value, _param_int(precision, "toDecimal precision", 1), _param_int(scale, "toDecimal scale"))
+
+
+def _declared(value, p, s):
+    try:
+        return V.declare_decimal(value, p, s, "toDecimal")
+    except V.DecimalUnrepresentable as error:
+        raise TypedError("E-DECIMAL-UNREPRESENTABLE", str(error))
 
 
 def cast_integer(a):
@@ -227,26 +340,32 @@ def cast_integer(a):
     return V.integer(check_int64(int(text)))
 
 
-OPS = {"add": (add, 2), "sub": (sub, 2), "mul": (mul, 2), "div": (div, 2), "rem": (rem, 2),
-       "neg": (neg, 1), "abs": (abs_, 1),
-       "cast-int64": (cast_integer, 1), "cast-integer": (cast_integer, 1),
-       "to-number": (to_number, 1), "toNumber": (to_number, 1),
-       "to-int64": (to_integer, 1), "toInt64": (to_integer, 1), "to-integer": (to_integer, 1),
-       "toInteger": (to_integer, 1),
-       "to-decimal": (to_decimal, 1), "toDecimal": (to_decimal, 1)}
+# name: (function, allowed operand counts)
+OPS = {"add": (add, (2,)), "sub": (sub, (2,)), "mul": (mul, (2,)), "div": (div, (2,)), "rem": (rem, (2,)),
+       "neg": (neg, (1,)), "abs": (abs_, (1,)),
+       "divide": (divide, (4,)), "round": (round_, (3,)),
+       "cast-int64": (cast_integer, (1,)), "cast-integer": (cast_integer, (1,)),
+       "to-number": (to_number, (1,)), "toNumber": (to_number, (1,)),
+       "to-int64": (to_integer, (1,)), "toInt64": (to_integer, (1,)), "to-integer": (to_integer, (1,)),
+       "toInteger": (to_integer, (1,)),
+       "to-decimal": (to_decimal, (1, 3, 4)), "toDecimal": (to_decimal, (1, 3, 4))}
+# operand positions that are parameters (bare JSON integers / strings), not values
+PARAMS = {"divide": (2, 3), "round": (1, 2), "to-decimal": (1, 2, 3), "toDecimal": (1, 2, 3)}
 
 
 def evaluate(expr):
-    """Evaluate ["op", arg, ...] where args are Values or nested lists."""
+    """Evaluate ["op", arg, ...] where args are Values, nested lists, or (in parameter
+    positions) bare JSON integers and strings."""
     if isinstance(expr, V.Value):
         return expr
     if not isinstance(expr, list) or not expr or expr[0] not in OPS:
         raise V.OracleInputError(f"bad expression {expr!r}")
-    fn, arity = OPS[expr[0]]
-    if len(expr) != arity + 1:
-        raise V.OracleInputError(f"{expr[0]} takes {arity} operands")
-    return fn(*[evaluate(arg) for arg in expr[1:]])
-
+    fn, arities = OPS[expr[0]]
+    if len(expr) - 1 not in arities:
+        raise V.OracleInputError(f"{expr[0]} takes {' or '.join(map(str, arities))} operands")
+    params = PARAMS.get(expr[0], ())
+    args = [arg if i in params else evaluate(arg) for i, arg in enumerate(expr[1:])]
+    return fn(*args)
 
 # --------------------------------------------------------------------------- aggregates (ACC 4.4)
 
@@ -266,7 +385,9 @@ def agg_sum(items):
     when the final total is outside the integer range; partial sums never wrap.
     AG-SUM-F (Q14c): the correctly rounded value of the exact sum, one rounding,
     independent of order; an all-(-0.0) input sums to -0.0 (IEEE sign rule for an exact
-    zero sum of negative zeros, N-F-NEGZERO). Decimal sums are exact (Q18 kernel)."""
+    zero sum of negative zeros, N-F-NEGZERO). DO-SUM (Q22): a decimal sum is exact, scale =
+    the inputs' maximum scale, precision 38; E-DECIMAL-OVERFLOW when the exact total exceeds
+    38 digits."""
     if not items:
         return None
     families = _families(items)
@@ -285,8 +406,8 @@ def agg_sum(items):
         except OverflowError:
             raise TypedError("E-NUMBER-OVERFLOW", "binary64 sum is not finite")
     if family == "decimal":
-        return V.decimal_from_fraction(sum((item.payload for item in items), Fraction(0)),
-                                       max(_decimal_scale(*items)))
+        return decimal_checked(sum((item.payload for item in items), Fraction(0)),
+                               max(item.extra[0] for item in items), V.KERNEL_MAX_DIGITS, "sum")
     raise TypedError("E-MIXED-FAMILY", f"sum over the non-numeric family {family}", family=family)
 
 
@@ -294,12 +415,15 @@ def agg_avg(items, *, convert=None):
     """AG-AVG-I (Q8b): AVG over integers without explicit conversion is the preflight
     E-INTEGER-AVG (raised even for empty input). AG-AVG-CONV (AMB-11: the conversion is
     toNumber(?v)): binary64 of the exact sum divided by the count, rounded once. AVG over
-    number: the exact mean rounded once."""
+    number: the exact mean rounded once. R-DEC-7 (ruled by Q33b): AVG over decimals is a
+    preflight error unless written divide(SUM, COUNT, scale, rounding); AVG is a division
+    without a named scale and rounding, so the error is E-DECIMAL-BARE-DIVIDE (R-DEC-14).
+    AVG(toNumber(?v)) over decimals is AVG over numbers (DC-D2N)."""
     families = _families(items)
     if convert is None and "integer" in families:
         raise TypedError("E-INTEGER-AVG", "AVG over integers requires an explicit conversion (toNumber)")
     if convert is None and "decimal" in families:
-        raise V.OracleInputError("decimal AVG without conversion is not modeled (R-DEC-7, ORCHESTRATOR-RULING-NEEDED)")
+        raise TypedError("E-DECIMAL-BARE-DIVIDE", "AVG over decimals; write divide(SUM, COUNT, scale, rounding)")
     if convert not in (None, "toNumber"):
         raise V.OracleInputError(f"unknown AVG conversion {convert!r}")
     if not items:

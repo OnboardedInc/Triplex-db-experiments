@@ -56,7 +56,10 @@ def decimal_declarations(schemas, case_declarations):
 
     def put(attribute, decl, where):
         if attribute in out and out[attribute] != decl:
-            raise V.OracleInputError(f"{where}: decimal declaration of {attribute} disagrees with another release")
+            # DS-WIDEN / DS-WIDEN-MIGRATE / DS-NARROW (Q22, Q31g, Q35b): a redeclaration is a scale
+            # evolution or migration, which the oracle does not model yet; refuse the case
+            raise V.OracleInputError(f"X-NOT-MODELED: {where} redeclares decimal {attribute} "
+                                     "(scale evolution DS-WIDEN / DS-NARROW is not modeled)")
         out[attribute] = decl
     for attribute, raw in (case_declarations or {}).items():
         if raw.get("type", "decimal") != "decimal":
@@ -254,10 +257,12 @@ ORDERED_OPS = ("lt", "lte", "gt", "gte")
 
 
 def _preflight_find(props_def, where):
-    """E-MIXED-FAMILY is preflight: a predicate whose declared attribute family and typed
-    constant cannot be compared (CMP-INT-FLOAT ordered; CMP-DECIMAL-CROSS any op) fails
-    before evaluation, whatever the data (AMB-16 A: integer range predicates are offered,
-    so integer-vs-integer ranges are fine)."""
+    """E-MIXED-FAMILY is preflight: a predicate whose declared attribute family and
+    constant cannot be compared fails before evaluation, whatever the data: any ordered
+    comparison across families (Q33d; CMP-INT-FLOAT, Q14d) and any comparison between
+    decimal and integer or number (CMP-DECIMAL-CROSS). An untyped number compares with
+    number and datetime, an untyped string with string and ref (CMP-NUMERIC-CONST,
+    CMP-UNTYPED-STRING). AMB-16 A: integer range predicates are offered."""
     for c in where:
         if c["op"] in ("exists", "missing"):
             continue
@@ -265,12 +270,16 @@ def _preflight_find(props_def, where):
         raw = c["values"] if c["op"] == "in" else [c["value"]]
         for item in raw:
             constant = V.decode_constant(item)
-            cfam = constant.family if isinstance(constant, V.Value) else \
-                ("number" if constant.kind == "number" else "string")
-            pair = {family, cfam}
             op = c["op"]
+            if isinstance(constant, V.Value):
+                cfam, accepted = constant.family, {constant.family}
+            elif constant.kind == "number":
+                cfam, accepted = "number", {"number", "datetime"}
+            else:
+                cfam, accepted = "string", {"string", "ref"}
+            pair = {family, cfam}
             if ("decimal" in pair and pair & {"integer", "number"}) or \
-                    (pair == {"integer", "number"} and op in ORDERED_OPS):
+                    (op in ORDERED_OPS and family not in accepted):
                 raise X.mixed(V.MixedFamily(family, cfam, op))
 
 

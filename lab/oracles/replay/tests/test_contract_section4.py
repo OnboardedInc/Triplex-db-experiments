@@ -1,4 +1,6 @@
-"""ACCEPTANCE 0.3.1 section 4 (frozen semantic tables), one test per table row.
+"""ACCEPTANCE section 4 (frozen semantic tables, 0.3.1) and the 0.3.3 tables (decimalOps,
+decimalConversions, decimalScaleEvolution, wireRules, temporalRules, readShapeRules,
+journalRules, positionDenseCases), one test per table row.
 
 Each test is named after its contract row id (test_N_I_ADD for N-I-ADD). The coverage
 tests read lab/acceptance/obligations.json (the contract's only machine authority) and
@@ -9,13 +11,15 @@ answer (right column).
 """
 
 import json
+import struct
 import unittest
 from pathlib import Path
 
 from lab.oracles.replay import errors as ERR
 from lab.oracles.replay import exact as X
 from lab.oracles.replay import values as V
-from lab.oracles.replay.tests.helpers import assert_op, case, evaluate, i64, outcome, result, s
+from lab.oracles.replay.tests import test_rulings as T
+from lab.oracles.replay.tests.helpers import assert_op, case, committed_receipts, evaluate, i64, outcome, result, s
 
 ROOT = Path(__file__).resolve().parents[4]
 CONTRACT = json.loads((ROOT / "lab/acceptance/obligations.json").read_text())
@@ -186,10 +190,16 @@ def err_fields(node):
 
 class Coverage(unittest.TestCase):
     TABLES = {"numericOps": "NumericOps", "conversionRules": "Conversions", "comparisonRules": "Comparisons",
-              "aggregateRules": "Aggregates", "constraintRules": "Constraints", "errorTable": "Errors"}
+              "aggregateRules": "Aggregates", "constraintRules": "Constraints", "errorTable": "Errors",
+              # contract 0.3.3 tables (EXP-O03)
+              "decimalOps": "DecimalOps", "decimalConversions": "DecimalConversions",
+              "decimalScaleEvolution": "DecimalScaleEvolution", "wireRules": "WireRules",
+              "temporalRules": "TemporalRules", "readShapeRules": "ReadShapeRules", "journalRules": "JournalRules"}
 
     def test_every_section4_row_has_a_named_test(self):
-        classes = {cls.__name__: cls for cls in (NumericOps, Conversions, Comparisons, Aggregates, Constraints, Errors)}
+        classes = {cls.__name__: cls for cls in (NumericOps, Conversions, Comparisons, Aggregates, Constraints, Errors,
+                                                 DecimalOps, DecimalConversions, DecimalScaleEvolution, WireRules,
+                                                 TemporalRules, ReadShapeRules, JournalRules)}
         for table, cls in self.TABLES.items():
             for row in CONTRACT[table]:
                 name = "test_" + row["id"].replace("-", "_")
@@ -198,8 +208,11 @@ class Coverage(unittest.TestCase):
             self.assertTrue(hasattr(ValueKinds, "test_kind_" + row["kind"]), row["kind"])
         for engine in CONTRACT["laneIntegerRange"]:
             self.assertTrue(hasattr(LaneRanges, "test_lane_" + engine), engine)
-        for key in ("declaration", "storage", "reject", "family", "comparison", "arithmetic"):
-            self.assertTrue(hasattr(DecimalRules, "test_decimal_" + key), key)
+        for key in CONTRACT["decimalRules"]:
+            if key != "source":
+                self.assertTrue(hasattr(DecimalRules, "test_decimal_" + key), key)
+        for case_id in CONTRACT["positionDenseCases"]:
+            self.assertTrue(hasattr(Positions, "test_" + case_id.replace("-", "_")), case_id)
         self.assertTrue(hasattr(CardManyOrder, "test_card_many_order"))
 
     def test_every_contract_example_is_evaluated(self):
@@ -527,7 +540,7 @@ class ValueKinds(unittest.TestCase):
         decl = {":x/v": {"type": "decimal", "precision": 4, "scale": 2}}
         rep = self.write(decimal_value("16.5"), attributeDeclarations=decl)
         v = result(rep, "m")["raw"][0]["value"]
-        self.assertEqual((v["value"], v["scale"], v["storage"]), ("16.50", 2, {"kind": "scaled-integer", "scaled": "1650"}))
+        self.assertEqual(v, {"type": "decimal", "value": "16.50", "scale": 2, "precision": 4})
         rep = self.write(decimal_value("16.505"), attributeDeclarations=decl)
         self.assertEqual(err_fields(outcome(rep, 0)), ("InvalidTripleError", "decimal-unrepresentable"))
 
@@ -585,15 +598,17 @@ class DecimalRules(unittest.TestCase):
             self.run_writes([decimal_value("1.5")], {"precision": 2, "scale": 3})   # s <= p
 
     def test_decimal_storage(self):
-        """DEC-P15-SCALED and DEC-P16-STRING."""
+        """DEC-P15-SCALED and DEC-P16-STRING read back exactly on both sides of p = 15. The
+        oracle makes no storage claim: Q35b (one TDK1 representation) amends the compiled
+        storage row, so the physical form is not an expected answer."""
         small = self.run_writes([decimal_value("1000000000.00")], {"precision": 15, "scale": 2},
                                 [{"id": "m", "kind": "match", "cut": {"validAt": 1}}])
         v = result(small, "m")["raw"][0]["value"]
-        self.assertEqual(v["storage"], {"kind": "scaled-integer", "scaled": "100000000000"})   # 1e11 cents
+        self.assertEqual(v, {"type": "decimal", "value": "1000000000.00", "scale": 2, "precision": 15})
         big = self.run_writes([decimal_value("-12345678901234567.89")], {"precision": 19, "scale": 2},
                               [{"id": "m", "kind": "match", "cut": {"validAt": 1}}])
         v = result(big, "m")["raw"][0]["value"]
-        self.assertEqual((v["value"], v["storage"]["kind"]), ("-12345678901234567.89", "order-preserving-string"))
+        self.assertEqual((v["value"], v["precision"], "storage" in v), ("-12345678901234567.89", 19, False))
 
     def test_decimal_reject(self):
         """DEC-SCALE-EXCESS and DEC-PRECISION-EXCESS: never rounded, no residue."""
@@ -642,6 +657,442 @@ class DecimalRules(unittest.TestCase):
         with self.assertRaises(X.TypedError):
             X.add(dec("1"), I(1))                                                        # E-MIXED-FAMILY
 
+    def test_decimal_inputCapture(self):
+        """The writer's input capture is an engine obligation (DEC-INPUT-CAPTURE); the oracle's
+        part is that its expected answer comes from the caller's typed input before any
+        rounding: 16.505 at scale 2 is rejected, never stored as 16.50 or 16.51."""
+        rep = self.run_writes([decimal_value("16.505")], {"precision": 4, "scale": 2}, [{"id": "all", "kind": "assertions"}])
+        self.assertEqual((outcome(rep, 0)["error"], result(rep, "all")["assertions"]), ("E-DECIMAL-UNREPRESENTABLE", []))
+
+    def test_decimal_kernelMaxDigits(self):
+        self.assertEqual(V.KERNEL_MAX_DIGITS, CONTRACT["decimalRules"]["kernelMaxDigits"])
+        with self.assertRaises(V.OracleInputError):
+            X.divide(dec("1"), dec("3"), CONTRACT["decimalRules"]["kernelMaxDigits"] + 1, "down")
+
+
+# --------------------------------------------------------------------------- contract 0.3.3 tables (EXP-O03)
+
+
+def kernel(thunk):
+    """('ok', output as plain JSON) or ('error', error id) for a direct kernel call."""
+    kind, got = run_example(thunk)
+    return (kind, json.loads(V.dumps(got.to_output()))) if kind == "ok" else (kind, got)
+
+
+def bits(x):
+    """binary64 bits by struct, independent of the oracle's own encoder."""
+    return "0x%016x" % struct.unpack("<Q", struct.pack("<d", x))[0]
+
+
+def dec_out(node):
+    """(value text, scale, precision) of a decimal output."""
+    return node["value"], node["scale"], node["precision"]
+
+
+def q_expr(expr):
+    """One expression through the case text path: its output or its error node."""
+    return result(evaluate(case([], [{"id": "q", "kind": "expr", "expr": expr}])), "q")
+
+
+def nines(n):
+    return "9" * n
+
+
+class DecimalOps(unittest.TestCase):
+    """decimalOps (RULINGS Q22, Q33b): each row's result scale and precision, rounding only
+    where the caller names it, and E-DECIMAL-OVERFLOW instead of rounding or widening. No
+    target is declared inside an expression, so "the target's declared precision" is the
+    38-digit kernel maximum (R-DEC-10)."""
+
+    def test_DO_ADD(self):
+        a, b = dec("1.25", 4, 2), dec("10.5", 3, 1)            # p - s = 2 for both
+        self.assertEqual(dec_out(kernel(lambda: X.add(a, b))[1]), ("11.75", 2, 5))     # max(2, 2) + 2 + 1
+        self.assertEqual(dec_out(kernel(lambda: X.sub(b, a))[1]), ("9.25", 2, 5))
+        big, one = dec(nines(38), 38, 0), dec("1", 1, 0)
+        self.assertEqual(kernel(lambda: X.add(big, one)), ("error", "E-DECIMAL-OVERFLOW"))   # 10^38: 39 digits
+        self.assertEqual(kernel(lambda: X.sub(dec("-" + nines(38), 38, 0), one)), ("error", "E-DECIMAL-OVERFLOW"))
+        self.assertEqual(dec_out(kernel(lambda: X.sub(big, one))[1]), (nines(37) + "8", 0, 38))
+        self.assertEqual(dec_out(q_expr(["add", decimal_value("0.10"), decimal_value("0.20")])), ("0.30", 2, 3))
+
+    def test_DO_MUL(self):
+        self.assertEqual(dec_out(kernel(lambda: X.mul(dec("1.5", 2, 1), dec("2.25", 3, 2)))[1]), ("3.375", 3, 5))
+        self.assertEqual(dec_out(kernel(lambda: X.mul(dec(nines(19)), dec(nines(19))))[1]),
+                         (str((10 ** 19 - 1) ** 2), 0, 38))                          # 38 digits: fits
+        e20, e19 = dec("1" + "0" * 20), dec("1" + "0" * 19)
+        self.assertEqual(kernel(lambda: X.mul(e20, e19)), ("error", "E-DECIMAL-OVERFLOW"))   # 10^39: 40 digits
+
+    def test_DO_DIV(self):
+        one, three, eight = dec("1", 1, 0), dec("3", 1, 0), dec("8", 1, 0)
+        cases = [(one, "half-even", "0.12"), (one, "half-up", "0.13"), (one, "down", "0.12"),
+                 (three, "half-even", "0.38"), (three, "half-up", "0.38"), (three, "down", "0.37"),
+                 (dec("-1", 1, 0), "half-even", "-0.12"), (dec("-1", 1, 0), "half-up", "-0.13"),
+                 (dec("-1", 1, 0), "down", "-0.12")]
+        for a, mode, want in cases:
+            self.assertEqual(dec_out(kernel(lambda: X.divide(a, eight, 2, mode))[1]), (want, 2, 38), (mode, want))
+        self.assertEqual(dec_out(kernel(lambda: X.divide(dec("10.00"), I(4), 1, "half-even"))[1]), ("2.5", 1, 38))
+        self.assertEqual(kernel(lambda: X.divide(one, dec("0.00"), 2, "down")), ("error", "E-DIVISION-BY-ZERO"))
+        self.assertEqual(kernel(lambda: X.divide(dec("1" + "0" * 37, 38, 0), dec("0.1", 1, 1), 0, "down")),
+                         ("error", "E-DECIMAL-OVERFLOW"))
+        with self.assertRaises(V.OracleInputError):
+            X.divide(one, eight, 2, "ceiling")                       # only the three named modes
+        node = q_expr(["divide", decimal_value("1"), decimal_value("3"), 2, "half-up"])
+        self.assertEqual(dec_out(node), ("0.33", 2, 38))
+        # R-DEC-7 (Q33b): AVG over decimal is written divide(SUM, COUNT, scale, rounding)
+        # (distinct values: AG-COUNT counts distinct values of the variable)
+        items = [dec("1.00"), dec("2.00"), dec("4.00")]
+        avg = X.divide(X.agg_sum(items), X.agg_count(items), 2, "half-even")
+        self.assertEqual(dec_out(json.loads(V.dumps(avg.to_output()))), ("2.33", 2, 38))
+
+    def test_DO_BARE_DIV(self):
+        self.assertEqual(kernel(lambda: X.div(dec("1"), dec("2"))), ("error", "E-DECIMAL-BARE-DIVIDE"))
+        self.assertEqual(kernel(lambda: X.div(dec("1"), I(2))), ("error", "E-DECIMAL-BARE-DIVIDE"))
+        node = q_expr(["div", decimal_value("1"), decimal_value("2")])
+        self.assertEqual((node["error"],) + err_fields(node),
+                         ("E-DECIMAL-BARE-DIVIDE", "DatalogValidationError", "decimal-divide-requires-scale"))
+
+    def test_DO_ROUND(self):
+        x = dec("2.345", 5, 3)
+        for mode, want in (("half-even", "2.34"), ("half-up", "2.35"), ("down", "2.34")):
+            self.assertEqual(dec_out(kernel(lambda: X.round_(x, 2, mode))[1]), (want, 2, 4), mode)   # 5 - (3 - 2)
+        self.assertEqual(dec_out(kernel(lambda: X.round_(dec("-2.345", 5, 3), 2, "half-up"))[1]), ("-2.35", 2, 4))
+        self.assertEqual(dec_out(kernel(lambda: X.round_(dec("2.5", 2, 1), 0, "half-even"))[1]), ("2", 0, 1))
+        # a carry beyond the precision: 9.99 (3, 2) at scale 1 is 10.0, which needs 2 integer digits of 1
+        self.assertEqual(kernel(lambda: X.round_(dec("9.99", 3, 2), 1, "half-up")), ("error", "E-DECIMAL-OVERFLOW"))
+        self.assertEqual(dec_out(kernel(lambda: X.round_(dec("9.99", 3, 2), 1, "down"))[1]), ("9.9", 1, 2))
+        self.assertIs(X.round_(x, 3, "down"), x)                                       # s = s_x: x itself
+        self.assertEqual(kernel(lambda: X.round_(x, 4, "down")), ("error", "X-NOT-MODELED"))   # R-DEC-11
+
+    def test_DO_CMP(self):
+        self.assertTrue(V.predicate("eq", dec("1.50"), dec("1.5")))
+        self.assertTrue(V.predicate("lt", dec("1.49"), dec("1.5")))
+        self.assertTrue(V.predicate("gt", dec("-1.49"), dec("-1.5")))
+        rep = evaluate(case([], [{"id": "c", "kind": "compare", "left": decimal_value("1.50"),
+                                  "right": decimal_value("1.5")}]))
+        c = result(rep, "c")
+        self.assertEqual((c["eq"], c["lt"], c["gt"]), (True, False, False))
+
+    def test_DO_SUM(self):
+        self.assertEqual(dec_out(kernel(lambda: X.agg_sum([dec("0.1", 2, 1), dec("0.25", 3, 2)]))[1]),
+                         ("0.35", 2, 38))                                              # max scale, precision 38
+        big = dec(nines(38), 38, 0)
+        self.assertEqual(kernel(lambda: X.agg_sum([big, big])), ("error", "E-DECIMAL-OVERFLOW"))
+        self.assertEqual(dec_out(kernel(lambda: X.agg_sum([big, big, dec("-" + nines(38), 38, 0)]))[1]),
+                         (nines(38), 0, 38))                                           # exact total fits
+
+
+class DecimalConversions(unittest.TestCase):
+    """decimalConversions (RULINGS Q22, Q33b)."""
+
+    def test_DC_I2D(self):
+        self.assertEqual(dec_out(kernel(lambda: X.to_decimal(I(123), 5, 2))[1]), ("123.00", 2, 5))
+        self.assertEqual(kernel(lambda: X.to_decimal(I(1234), 5, 2)), ("error", "E-DECIMAL-UNREPRESENTABLE"))
+        self.assertEqual(dec_out(kernel(lambda: X.to_decimal(I(-7)))[1]), ("-7", 0, 1))
+
+    def test_DC_D2I(self):
+        self.assertEqual(kernel(lambda: X.to_integer(dec("1.50"))), ("error", "E-DECIMAL-FRACTION"))
+        self.assertEqual(kernel(lambda: X.to_integer(dec("2.00"))), ("ok", {"type": "integer", "value": "2"}))
+        self.assertEqual(kernel(lambda: X.to_integer(X.round_(dec("1.50"), 0, "half-even"))),
+                         ("ok", {"type": "integer", "value": "2"}))
+        self.assertEqual(kernel(lambda: X.to_integer(X.round_(dec("2.50"), 0, "half-even"))),
+                         ("ok", {"type": "integer", "value": "2"}))
+        node = q_expr(["toInteger", decimal_value("1.50")])
+        self.assertEqual((node["error"],) + err_fields(node),
+                         ("E-DECIMAL-FRACTION", "DatalogValidationError", "decimal-fraction-not-zero"))
+
+    def test_DC_D2N(self):
+        self.assertEqual(kernel(lambda: X.to_number(dec("0.1")))[1]["bits"], "0x3fb999999999999a")
+        # one correctly rounded binary64, ties to even: 2^53 + 1 -> 2^53
+        self.assertEqual(kernel(lambda: X.to_number(dec(str(2 ** 53 + 1))))[1]["bits"], "0x4340000000000000")
+
+    def test_DC_N2D(self):
+        self.assertEqual(dec_out(kernel(lambda: X.to_decimal(N(0.1), 5, 2, "half-even"))[1]), ("0.10", 2, 5))
+        # R-DEC-6: from the exact binary expansion; 2.675 is 2.67499999999999982236431605997495353221893310546875
+        for mode in ("half-even", "half-up"):
+            self.assertEqual(dec_out(kernel(lambda: X.to_decimal(N(2.675), 5, 2, mode))[1]), ("2.67", 2, 5), mode)
+        self.assertEqual(dec_out(kernel(lambda: X.to_decimal(N(0.125), 5, 2, "half-even"))[1]), ("0.12", 2, 5))
+        self.assertEqual(dec_out(kernel(lambda: X.to_decimal(N(0.125), 5, 2, "half-up"))[1]), ("0.13", 2, 5))
+        self.assertEqual(kernel(lambda: X.to_decimal(N(1e20), 5, 2, "down")), ("error", "E-DECIMAL-UNREPRESENTABLE"))
+        with self.assertRaises(V.OracleInputError):
+            X.to_decimal(N(0.1))                              # only toDecimal(x, p, s, rounding)
+
+    def test_DC_T2D(self):
+        decl = {"attributeDeclarations": {":pay/rate": {"type": "decimal", "precision": 4, "scale": 2}}}
+        texts = ["16.505", "100.00", "16.500", "1e2", "+1.5", ".5"]
+        rep = evaluate(case([{"clock": 1, "operations": [assert_op(f"a{k}", f"e{k}", ":pay/rate", decimal_value(t))]}
+                             for k, t in enumerate(texts)], [{"id": "all", "kind": "assertions"}], **decl))
+        self.assertEqual([outcome(rep, k).get("error") for k in range(len(texts))],
+                         ["E-DECIMAL-UNREPRESENTABLE", "E-DECIMAL-UNREPRESENTABLE", None,
+                          "E-INVALID-VALUE", "E-INVALID-VALUE", "E-INVALID-VALUE"])
+        self.assertEqual([a["value"]["value"] for a in result(rep, "all")["assertions"]], ["16.50"])   # R-DEC-3
+
+    def test_DC_IMPLICIT(self):
+        self.assertEqual(kernel(lambda: X.add(dec("1"), I(1))), ("error", "E-MIXED-FAMILY"))
+        self.assertEqual(kernel(lambda: X.mul(dec("1"), N(1.0))), ("error", "E-MIXED-FAMILY"))
+        for op in ("eq", "lt"):
+            with self.assertRaises(V.MixedFamily):
+                V.predicate(op, dec("1"), I(1))               # CMP-DECIMAL-CROSS: every comparison
+
+
+class DecimalScaleEvolution(unittest.TestCase):
+    """decimalScaleEvolution (Q22, Q31g, Q35b): a schema release that redeclares a decimal
+    attribute is a widening or a migration, which the oracle does not model yet. It refuses
+    the case (X-NOT-MODELED) instead of answering under either declaration."""
+
+    def evolve(self, first, second):
+        def release(version, p, s_):
+            return {"version": version, "entityTypes": {"W": {"attributes": {
+                "rate": {"attribute": ":pay/rate", "type": "decimal", "precision": p, "scale": s_}}}}}
+        with self.assertRaises(V.OracleInputError) as ctx:
+            evaluate(case([], schemas=[release(1, *first), release(2, *second)]))
+        self.assertIn("X-NOT-MODELED", str(ctx.exception))
+
+    def test_DS_WIDEN(self):
+        self.evolve((6, 2), (7, 3))           # integer digits stay 4
+
+    def test_DS_WIDEN_MIGRATE(self):
+        self.evolve((6, 2), (6, 3))           # integer digits would shrink
+
+    def test_DS_NARROW(self):
+        self.evolve((6, 2), (5, 1))
+
+
+def json_write(raw_json_text):
+    """One json-valued assert whose value text is spliced in verbatim (keeps lexemes such as
+    1e400, and duplicate keys, that Python's json module would not emit)."""
+    c = case([{"clock": 1, "operations": [assert_op("a", "e", ":x/j", {"type": "json", "value": "__RAW__"})]}],
+             [{"id": "all", "kind": "assertions"}])
+    return evaluate(None, raw_text=json.dumps(c).replace('"__RAW__"', raw_json_text))
+
+
+class WireRules(unittest.TestCase):
+    """wireRules (RULINGS Q30, Q33a, Q34c). WR-JSON and WR-INSTANT are write-route guards the
+    oracle models. WR-X-ENCODINGS, WR-Q-SHADOW and WR-INTEGER-RANGE fix engine encodings; the
+    oracle's part is the exact values those encodings must reproduce."""
+
+    def test_WR_JSON(self):
+        cases = {"WIRE-JSON-NEGZERO": "-0", "WIRE-JSON-NONFINITE": "1e400", "WIRE-JSON-INEXACT": "9007199254740993",
+                 "WIRE-JSON-NESTED-LIST": "[1, [2, -0.0]]", "WIRE-JSON-NESTED-STRUCT": '{"a": {"b": -0}}',
+                 # the guard runs before CanonicalJson: the last-wins key rule would drop the -0
+                 "WIRE-JSON-BEFORE-CANONICAL": '{"a": -0, "a": 1}'}
+        for name, raw in cases.items():
+            rep = json_write(raw)
+            o = outcome(rep, 0)
+            self.assertEqual((o["error"], o["errorTag"], o["reason"], o.get("detail")),
+                             ("E-INEXACT-JSON-NUMBER", "InvalidTripleError", "invalid-value", "inexact-json-number"),
+                             name)
+            self.assertEqual(result(rep, "all")["assertions"], [], name)                # no residue
+        rep = json_write('{"b": [0.1, 1e300, 0], "a": 1.50}')
+        self.assertEqual(outcome(rep, 0)["outcome"], "committed")
+        self.assertEqual(result(rep, "all")["assertions"][0]["value"]["canonical"], '{"a":1.5,"b":[0.1,1e+300,0]}')
+
+    def test_WR_INSTANT(self):
+        rep = evaluate(case([{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("x"), valid_from=NZ)]},
+                             {"clock": 2, "operations": [assert_op("b", "e", ":x/d", {"type": "datetime", "value": NZ})]},
+                             {"clock": 3, "operations": [assert_op("c", "e", ":x/s", s("y"), valid_from=0)]}]))
+        for k in (0, 1):
+            o = outcome(rep, k)
+            self.assertEqual((o["error"], o["errorTag"], o["reason"], o.get("detail")),
+                             ("E-NEGATIVE-ZERO-INSTANT", "InvalidTripleError", "invalid-value", "no-negative-zero"))
+        self.assertEqual(outcome(rep, 2)["outcome"], "committed")
+
+    def test_WR_X_ENCODINGS(self):
+        ops = [assert_op(f"d{k}", "e", ":x/d", num(x)) for k, x in enumerate((0.1, 1e300, NZ))] + \
+              [assert_op(f"i{k}", "e", ":x/i", i64(x)) for k, x in enumerate((2 ** 53 - 1, -(2 ** 53 - 1)))] + \
+              [assert_op("t", "e", ":x/t", {"type": "datetime", "value": 1700000000000.5})]
+        rep = evaluate(case([{"clock": 1, "operations": ops}], [{"id": "all", "kind": "assertions"}], lane="xtdb"))
+        got = {a["id"]: a["value"] for a in result(rep, "all")["assertions"]}
+        self.assertEqual([got[f"d{k}"]["bits"] for k in range(3)], [bits(0.1), bits(1e300), bits(NZ)])
+        self.assertEqual([got[f"i{k}"]["value"] for k in range(2)], [str(2 ** 53 - 1), str(-(2 ** 53 - 1))])
+        self.assertEqual(got["t"]["bits"], bits(1700000000000.5))
+
+    def test_WR_Q_SHADOW(self):
+        ops = [assert_op("z", "e", ":x/n", num(NZ)), assert_op("t", "e", ":x/n", num(0.30000000000000004)),
+               assert_op("m", "e", ":x/i", i64(2 ** 59 - 1))]
+        rep = evaluate(case([{"clock": 1, "operations": ops},
+                             {"clock": 2, "operations": [assert_op("o", "e", ":x/i", i64(2 ** 59))]}],
+                            [{"id": "all", "kind": "assertions"}], lane="qlever"))
+        values = [a["value"] for a in result(rep, "all")["assertions"]]
+        # the lexical channel is authoritative: -0 and a value whose %.13g shadow is inexact read back exactly
+        self.assertEqual([v.get("bits") for v in values[:2]], ["0x8000000000000000", "0x3fd3333333333334"])
+        self.assertEqual(values[2]["value"], str(2 ** 59 - 1))
+        self.assertEqual(outcome(rep, 1)["error"], "E-VALUE-OUT-OF-RANGE")
+
+    def test_WR_INTEGER_RANGE(self):
+        for lane in ("xtdb", "qlever"):
+            ops = [assert_op(f"a{k}", "e", ":x/i", i64(x)) for k, x in enumerate((2 ** 53 - 1, -(2 ** 53 - 1)))]
+            rep = evaluate(case([{"clock": 1, "operations": ops}], lane=lane))
+            self.assertEqual(outcome(rep, 0)["outcome"], "committed", lane)
+
+
+class TemporalRules(unittest.TestCase):
+    """temporalRules (handoff README 46-48, Q21 AMB-12)."""
+
+    def test_TM_HALF_OPEN(self):
+        cmds = [{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("x"), valid_from=10, valid_to=20),
+                                            assert_op("b", "f", ":x/s", s("y"), valid_from=10)]}]
+        q = [{"id": f"v{t}", "kind": "match", "cut": {"validAt": t}, "pattern": {"attribute": ":x/s"}}
+             for t in (9.5, 10, 19.5, 20, 1e15)]
+        rep = evaluate(case(cmds, q))
+        self.assertEqual([result(rep, f"v{t}")["count"] for t in (9.5, 10, 19.5, 20, 1e15)], [0, 2, 2, 1, 1])
+
+    def test_TM_EMPTY_REJECTED(self):
+        T.Q21.test_AMB_12(self)
+
+
+class ReadShapeRules(unittest.TestCase):
+    """readShapeRules restate Q21 AMB rulings; each row runs the AMB test that encodes it."""
+
+    def test_RS_RAW_LIFETIME(self):
+        T.Q21.test_AMB_01(self)
+
+    def test_RS_RETIREMENT_CONTENT(self):
+        T.Q21.test_AMB_02(self)
+
+    def test_RS_TIMELINE(self):
+        T.Q21.test_AMB_03(self)
+
+    def test_RS_FIND_RANGE(self):
+        T.Q21.test_AMB_16(self)
+
+    def test_RS_FIND_CONFLICT(self):
+        T.Q21.test_AMB_17(self)
+
+    def test_RS_ENTITY_ORDER(self):
+        T.Q21.test_AMB_15(self)
+
+
+class JournalRules(unittest.TestCase):
+    """journalRules (Q21 AMB-04 to 07) and the Q34c pairing of the JSON guard with the
+    journal."""
+
+    def test_JN_NEGZERO(self):
+        T.Q21.test_AMB_04(self)
+        # Q34c paired test: user JSON with -0 is rejected; a number -0 commits, journals and
+        # reads back bit-exact, and its generated :_tx/change JSON never meets the user guard
+        self.assertEqual(outcome(json_write("-0"), 0)["error"], "E-INEXACT-JSON-NUMBER")
+        cmds = [{"clock": 1, "operations": [assert_op("z", "z:1", ":z/n", nbits("0x8000000000000000"))]}]
+        q = [{"id": "m", "kind": "match", "cut": {"validAt": 1}, "pattern": {"attribute": ":z/n"}},
+             {"id": "chg", "kind": "match", "cut": {"validAt": 1e15},
+              "pattern": {"entityId": "tx:0", "attribute": ":_tx/change"}},
+             {"id": "tx", "kind": "transaction", "txId": "tx:0"}]
+        rep = evaluate(case(cmds, q))
+        self.assertEqual(outcome(rep, 0)["outcome"], "committed")
+        self.assertEqual(result(rep, "m")["raw"][0]["value"]["bits"], "0x8000000000000000")
+        self.assertEqual(result(rep, "chg")["count"], 1)
+        self.assertEqual(result(rep, "tx")["changes"][0]["value"]["bits"], "0x8000000000000000")
+
+    def test_JN_FIELDS(self):
+        T.Q21.test_AMB_05(self)
+
+    def test_JN_STAGED(self):
+        T.Q21.test_AMB_06(self)
+
+    def test_JN_ORDER(self):
+        T.Q21.test_AMB_07(self)
+
+
+def coord(offset, ordinal=0, epoch=1, stream="log"):
+    return {"stream": stream, "epoch": epoch, "offset": offset, "ordinal": ordinal}
+
+
+class Positions(unittest.TestCase):
+    """ACC POSITION and positionDenseCases (RULINGS Q31c, Q32e): receipt positions are
+    totally ordered coordinates, not necessarily dense; the oracle sorts them and assigns its
+    own dense ordinals for cuts; aborted offsets are accounted and take no ordinal."""
+
+    def run_positions(self, positions, cuts=(), groups=None, aborted=None):
+        cmds = [{"clock": k + 1, "operations": [assert_op(f"r{k}", f"e{k}", ":p/v", i64(k))]}
+                for k in range(len(positions))]
+        for k, group in enumerate(groups or []):
+            cmds[k]["physicalGroup"] = group
+        queries = [{"id": "cat", "kind": "cutCatalog"}] + [
+            {"id": f"cut{k}", "kind": "match", "cut": {"position": p, "validAt": 1}, "pattern": {"attribute": ":p/v"}}
+            for k, p in enumerate(cuts)]
+        extra = {} if aborted is None else {"abortedPositions": {"s": aborted}}
+        c = case(cmds, queries, **extra)
+        c["receipts"] = committed_receipts(c)
+        for rec, position in zip(c["receipts"], positions):
+            rec["position"] = position
+        rep = evaluate(c)
+        return rep, [result(rep, f"cut{k}")["count"] for k in range(len(cuts))]
+
+    def test_PO_LEXICOGRAPHIC_ORDER(self):
+        positions = [coord(5), coord(12), coord(1, epoch=2)]
+        rep, counts = self.run_positions(positions, cuts=[{"coordinate": coord(12)}, {"coordinate": coord(11, 7)},
+                                                          {"coordinate": coord(0, epoch=2)}, "latest"])
+        self.assertEqual(counts, [2, 1, 2, 3])          # offset 12 > 5 as numbers; epoch 2 after every epoch 1
+        self.assertEqual([(r["position"], r["coordinate"]) for r in result(rep, "cat")],
+                         list(zip([1, 2, 3], positions)))
+        rc = rep["receiptConsistency"]
+        self.assertEqual((rc["status"], rc["positions"]),
+                         ("PASS", [{"scope": "s", "coordinates": "tuple", "dense": None, "aborted": []}]))
+        listed, _ = self.run_positions([["log", 1, 5, 0], ["log", 1, 12, 0]])        # list form is the same
+        self.assertEqual([r["coordinate"] for r in result(listed, "cat")], [coord(5), coord(12)])
+        backwards, _ = self.run_positions([coord(12), coord(5)])                      # not a race group
+        self.assertEqual(backwards["receiptConsistency"]["status"], "FAIL")
+        with self.assertRaises(V.OracleInputError):
+            self.run_positions([1, coord(5)])                                         # one scope, one kind
+        with self.assertRaises(V.OracleInputError):
+            self.run_positions([1, 2], cuts=[{"coordinate": coord(5)}])              # cut kind = receipt kind
+
+    def test_PO_ORACLE_DENSE_ORDINALS(self):
+        rep, counts = self.run_positions([coord(10), coord(30)], aborted=[coord(20)],
+                                         cuts=[{"coordinate": coord(10)}, {"coordinate": coord(20)},
+                                               {"coordinate": coord(30)}])
+        self.assertEqual(counts, [1, 1, 2])             # FX-ABORT-GAP: a cut in the gap equals the cut before it
+        self.assertEqual([r["position"] for r in result(rep, "cat")], [1, 2])
+        rc = rep["receiptConsistency"]
+        self.assertEqual((rc["status"], rc["positions"][0]["aborted"]), ("PASS", [coord(20)]))
+        bad, _ = self.run_positions([coord(10), coord(20)], aborted=[coord(20)])     # committed on an aborted offset
+        self.assertEqual(bad["receiptConsistency"]["status"], "FAIL")
+        gaps, counts = self.run_positions([1, 3], cuts=[2, 3])                        # integer gaps are allowed
+        self.assertEqual((gaps["receiptConsistency"]["status"], counts), ("PASS", [1, 2]))
+        reused, _ = self.run_positions([coord(10), coord(10)])
+        self.assertEqual(reused["receiptConsistency"]["status"], "FAIL")
+
+    def test_PO_NESTED_CUTS_DENSE(self):
+        nested = [coord(7, 0), coord(7, 1), coord(7, 2)]
+        rep, counts = self.run_positions(nested, groups=["g"] * 3, cuts=[{"coordinate": c} for c in nested])
+        self.assertEqual((rep["receiptConsistency"]["status"], counts), ("PASS", [1, 2, 3]))   # FX-NESTED-CUTS
+        dense, counts = self.run_positions([1, 2, 3], groups=["g"] * 3, cuts=[1, 2, 3])
+        self.assertEqual((dense["receiptConsistency"]["status"], counts), ("PASS", [1, 2, 3]))
+        self.assertNotIn("positions", dense["receiptConsistency"])                  # dense integers: 0.2.0 shape
+        for broken in ([coord(7, 0), coord(7, 2)], [coord(7, 0), coord(8, 1)]):
+            rep, _ = self.run_positions(broken, groups=["g", "g"])
+            self.assertEqual([v["rule"] for v in rep["receiptConsistency"]["violations"]], ["R-RCP-5"], broken)
+
+
+class Rulings033(unittest.TestCase):
+    """Rulings compiled into 0.3.3 that have no table row of their own."""
+
+    def test_Q33d_ordered_cross_family_is_mixed_family(self):
+        rep = evaluate(case([], [{"id": "c", "kind": "compare", "left": s("a"), "right": i64(1)}]))
+        c = result(rep, "c")
+        self.assertEqual((c["eq"], c["lt"]["error"], c["gt"]["error"]), (False, "E-MIXED-FAMILY", "E-MIXED-FAMILY"))
+
+    def test_Q33e_rem_is_integer_only_and_sum_needs_numbers(self):
+        self.assertEqual(kernel(lambda: X.rem(N(7.0), N(2.0))), ("error", "E-MIXED-FAMILY"))
+        self.assertEqual(kernel(lambda: X.rem(I(7), N(2.0))), ("error", "E-MIXED-FAMILY"))
+        self.assertEqual(kernel(lambda: X.agg_sum([V.string("a")])), ("error", "E-MIXED-FAMILY"))   # R-AGG-5
+
+    def test_Q33h_invalid_basis(self):
+        q = [{"id": "p", "kind": "match", "cut": {"position": -1, "validAt": 1}},
+             {"id": "r", "kind": "match", "cut": {"recordedAt": -1, "validAt": 1}},
+             {"id": "z", "kind": "match", "cut": {"validAt": NZ}}]
+        rep = evaluate(case([], q))
+        self.assertEqual([result(rep, k)["error"] for k in "prz"], ["E-INVALID-VALUE", "E-INVALID-VALUE", "X-NOT-MODELED"])
+
+    def test_Q24_Q31f_erasure_is_refused(self):
+        with self.assertRaises(V.OracleInputError) as ctx:
+            evaluate(case([{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("x"))]},
+                           {"clock": 2, "operations": [{"op": "erase", "target": "a"}]}]))
+        self.assertIn("X-NOT-MODELED", str(ctx.exception))
+
+    def test_Q35_order_keys_are_refused(self):
+        with self.assertRaises(V.OracleInputError) as ctx:
+            evaluate(case([], [{"id": "k", "kind": "orderKey", "value": decimal_value("1.50")}]))
+        self.assertIn("X-NOT-MODELED", str(ctx.exception))
+
 
 # --------------------------------------------------------------------------- 4.7
 
@@ -686,6 +1137,16 @@ def _scenarios():
             "operations": [assert_op("a", "p1", ":p/age", i64(1), entity_type="P")]}])),
         "E-INVALID-VALUE": ("c", case([{"clock": 1, "operations": [assert_op("a", "e", ":v", i64("01"))]}])),
         "E-RESERVED": ("c", case([{"clock": 1, "operations": [assert_op("a", "_triplex/x", ":v", s("x"))]}])),
+        # contract 0.3.3 rows (EXP-O03)
+        "E-INEXACT-JSON-NUMBER": ("c", case([{"clock": 1, "operations": [
+            assert_op("a", "e", ":v", {"type": "json", "value": {"a": [1, NZ]}})]}])),
+        "E-NEGATIVE-ZERO-INSTANT": ("c", case([{"clock": 1, "operations": [
+            assert_op("a", "e", ":v", s("x"), valid_from=NZ)]}])),
+        "E-DECIMAL-OVERFLOW": ("q", case([], [{"id": "q", "kind": "expr", "expr": [
+            "mul", decimal_value("1" + "0" * 20), decimal_value("1" + "0" * 20)]}])),
+        "E-DECIMAL-BARE-DIVIDE": ("q", case([], [{"id": "q", "kind": "expr", "expr": [
+            "div", decimal_value("1"), decimal_value("2")]}])),
+        "E-DECIMAL-FRACTION": ("q", case([], [{"id": "q", "kind": "expr", "expr": ["toInteger", decimal_value("1.50")]}])),
     }
 
 

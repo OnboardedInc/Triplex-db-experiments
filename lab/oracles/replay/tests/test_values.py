@@ -99,18 +99,28 @@ class JsonAndBlob(unittest.TestCase):
 
     def test_json_numbers_are_binary64(self):
         self.assertEqual(val('{"type":"json","value":1e300}').payload, "1e+300")
-        self.assertEqual(val('{"type":"json","value":-0}').payload, "0")
         with self.assertRaises(V.InvalidValue):
             val('{"type":"json","value":1e400}')
 
-    def test_R_VAL_7_inexact_json_number_is_a_case_error(self):
-        """R-VAL-7 (brief: a JSON number that is not exactly binary64 is an input error):
-        JSON.parse would silently read 9007199254740993 as ...992."""
-        with self.assertRaises(V.OracleInputError):
+    def test_Q30a_json_negative_zero_is_rejected_not_normalized(self):
+        """Q30a / WR-JSON: -0 inside user JSON, at any depth, is E-INEXACT-JSON-NUMBER."""
+        for text in ('-0', '-0.0', '[1,-0]', '{"a":{"b":[-0e5]}}'):
+            with self.assertRaises(V.InexactJsonNumber) as ctx:
+                val('{"type":"json","value":%s}' % text)
+            self.assertEqual((ctx.exception.error_id, ctx.exception.detail),
+                             ("E-INEXACT-JSON-NUMBER", "inexact-json-number"))
+        self.assertEqual(val('{"type":"json","value":0}').payload, "0")
+
+    def test_R_VAL_7_inexact_json_number_is_rejected(self):
+        """R-VAL-7a (Q33a, refining Q30a): a user JSON number is accepted only if it reads
+        back as written; JSON.parse would silently read 9007199254740993 as ...992. Since
+        0.3.3 this is a value rejection (E-INEXACT-JSON-NUMBER), not a case error."""
+        with self.assertRaises(V.InexactJsonNumber):
             val('{"type":"json","value":9007199254740993}')
-        with self.assertRaises(V.OracleInputError):
+        with self.assertRaises(V.InexactJsonNumber):
             val('{"type":"json","value":{"a":[1e-400]}}')
         self.assertEqual(val('{"type":"json","value":0.1}').payload, "0.1")   # reads back as written
+        self.assertEqual(val('{"type":"json","value":1.50}').payload, "1.5")  # canonical form of the text
 
     def test_R_VAL_7_applies_to_numbers_and_coordinates(self):
         with self.assertRaises(V.OracleInputError):
@@ -164,13 +174,11 @@ class Comparison(unittest.TestCase):
             a, b = val(left), val(right)
             self.assertFalse(V.predicate("eq", a, b))
             self.assertTrue(V.predicate("ne", a, b))
-            if {a.family, b.family} == {"integer", "number"}:
-                # Q14d / CMP-INT-FLOAT: an ordered comparison is preflight E-MIXED-FAMILY, not false
+            # Q14d / CMP-INT-FLOAT, and Q33d for every other pair: an ordered comparison across
+            # families is preflight E-MIXED-FAMILY, not false
+            for op in ("lt", "gt"):
                 with self.assertRaises(V.MixedFamily):
-                    V.predicate("lt", a, b)
-            else:
-                self.assertFalse(V.predicate("lt", a, b))
-                self.assertFalse(V.predicate("gt", a, b))
+                    V.predicate(op, a, b)
 
     def test_numeric_predicate_equality_of_signed_zero(self):
         self.assertTrue(V.predicate("eq", val('{"type":"number","value":-0.0}'), val('{"type":"number","value":0}')))

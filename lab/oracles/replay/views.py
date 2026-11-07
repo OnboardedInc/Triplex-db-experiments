@@ -42,6 +42,11 @@ def resolve_cut(run, raw, *, need_valid=True):
             raise X.TypedError("X-NO-POSITION", f"command {index} has no expected position (it is not committed)",
                                ruling="case references the position of a command the oracle rejects")
         P = run.command_positions[index]
+    elif isinstance(position, V.Obj) and "coordinate" in position:
+        # RULINGS Q31c: a cut named by a (stream, epoch, offset, ordinal) coordinate resolves to
+        # the oracle's dense ordinal of the greatest committed position at or below it, so a
+        # cut inside an abort gap equals the cut just before the gap (FX-ABORT-GAP)
+        P = run.ordinal_at(scope, position["coordinate"])
     elif isinstance(position, V.Lex):
         P = int(position)
     else:
@@ -51,23 +56,28 @@ def resolve_cut(run, raw, *, need_valid=True):
         raise X.TypedError("E-UNAVAILABLE-CUT", f"position {P} is beyond the latest committed position "
                            f"{state.last_position}")
     if P < 0:
-        raise X.TypedError("X-INVALID-BASIS", f"position {P} is negative", tag="ReadError",
-                           ruling="R-CUT-3: invalid basis has no ACC 4.7 row (ORCHESTRATOR-RULING-NEEDED)")
+        # R-CUT-3 (ruled by Q33h): an invalid basis is E-INVALID-VALUE
+        raise X.TypedError("E-INVALID-VALUE", f"position {P} is negative")
     R = R_raw = None
+    numbers = {}
     if raw.get("recordedAt") is not None:
-        n = V.Num.parse(raw["recordedAt"], "recordedAt")
+        n = numbers["recordedAt"] = V.Num.parse(raw["recordedAt"], "recordedAt")
         R, R_raw = n.frac, V.RawNumber(n.lexeme())
     Vf = V_raw = None
     if raw.get("validAt") is not None:
-        n = V.Num.parse(raw["validAt"], "validAt")
+        n = numbers["validAt"] = V.Num.parse(raw["validAt"], "validAt")
         Vf, V_raw = n.frac, V.RawNumber(n.lexeme())
     elif need_valid:
         raise V.OracleInputError("cut needs validAt (the oracle has no clock)")
     if raw.get("publicBasis", True):
-        for name, value in (("recordedAt", R), ("validAt", Vf)):
-            if value is not None and value < 0:
-                raise X.TypedError("X-INVALID-BASIS", f"{name} must be a non-negative instant", tag="ReadError",
-                                   ruling="R-CUT-3: invalid basis has no ACC 4.7 row (ORCHESTRATOR-RULING-NEEDED)")
+        for name, n in numbers.items():
+            if n.frac < 0:
+                raise X.TypedError("E-INVALID-VALUE", f"{name} must be a non-negative instant")   # Q33h
+            if n.bits == V.NEG_ZERO_BITS:
+                # Q30b names instants given as -0 at write routes; whether a read basis of -0 is
+                # E-NEGATIVE-ZERO-INSTANT or the instant 0 is not ruled, so refuse (R-CUT-4)
+                raise X.TypedError("X-NOT-MODELED", f"{name} given as -0",
+                                   ruling="R-CUT-4: a -0 read basis is not ruled (Q30b covers writes)")
     return Cut(scope, P, R, Vf, R_raw, V_raw)
 
 
@@ -252,14 +262,16 @@ def _journal(run, scope):
 
 
 def _limit(raw, default=100, maximum=1000):
-    """R-JNL-3: limit 1..maximum. An invalid limit is a ReadError (operational-primitives:
-    'Invalid limits and positions fail with ReadError'); ACC 4.7 pins no reason for it."""
+    """R-JNL-3: limit 1..maximum (default 100, maximum 1000)."""
     if raw is None:
         return default
-    value = int(raw)
-    if value < 1 or value > maximum:
-        raise X.TypedError("X-READ-LIMIT", f"limit must be 1..{maximum}", tag="ReadError",
-                           ruling="R-JNL-7: invalid limit has no ACC 4.7 reason (ORCHESTRATOR-RULING-NEEDED)")
+    try:
+        value = int(str(raw)) if not isinstance(raw, bool) else None
+    except ValueError:
+        value = None
+    if value is None or value < 1 or value > maximum:
+        # R-JNL-7 (ruled by Q33g): an invalid limit is PaginationCursorError / malformed, as entityPage
+        raise X.TypedError("E-CURSOR", f"limit must be 1..{maximum}", reason="malformed")
     return value
 
 
@@ -312,9 +324,16 @@ def q_transactions_for_entity(run, query):
 
 def q_cut_catalog(run, query):
     scope = query.get("scope") or run.engine.default_scope
-    return [V.OrderedOut([("position", r.position), ("instant", _num(r.instant)), ("txId", r.txId),
-                          ("command", r.command), ("internal", r.internal), ("physicalGroup", r.group)])
-            for r in run.engine.scope(scope).records]
+
+    def row(r):
+        fields = [("position", r.position), ("instant", _num(r.instant)), ("txId", r.txId),
+                  ("command", r.command), ("internal", r.internal), ("physicalGroup", r.group)]
+        # RULINGS Q31c: `position` is the oracle's dense ordinal; a receipt coordinate is shown
+        # beside it so a harness can map its own coordinates onto the oracle's cuts
+        if isinstance(getattr(r, "coordinate", None), V.OrderedOut):
+            fields.append(("coordinate", r.coordinate))
+        return V.OrderedOut(fields)
+    return [row(r) for r in run.engine.scope(scope).records]
 
 
 # --------------------------------------------------------------------------- entity pages (core) and cursors
@@ -573,18 +592,18 @@ def q_aggregate(run, query):
     _preflight_where(where, var_types)
     aggs = query["aggregates"]
     legacy_convert = "toNumber" if query.get("integerAvg") == "convert" else None
-    # preflight (AG-AVG-I, Q8b): integer AVG without conversion is refused before evaluation
-    for agg in aggs:
-        if agg["op"] == "avg" and (agg.get("convert") or legacy_convert) is None and \
-                var_types.get(agg["var"]) == "integer":
-            raise X.TypedError("E-INTEGER-AVG", "AVG over integers requires an explicit conversion (toNumber)")
+    # preflight (AG-AVG-I, Q8b; R-DEC-7, Q33b): AVG over integers or decimals without conversion is
+    # refused before evaluation, from varTypes, or else from the matched rows before any filter (the
+    # closest data-driven stand-in for core's type-level preflight, R-AGG-4)
     rows = _rows(run, cut, query["match"])
-    # without varTypes the variable's family is read from the matched rows before any filter, the
-    # closest data-driven stand-in for core's type-level preflight (R-AGG-4)
     for agg in aggs:
-        convert = agg.get("convert") or legacy_convert
-        if agg["op"] == "avg" and convert is None and any(r[agg["var"]].family == "integer" for r in rows):
+        if agg["op"] != "avg" or (agg.get("convert") or legacy_convert) is not None:
+            continue
+        families = {var_types.get(agg["var"])} | {r[agg["var"]].family for r in rows}
+        if "integer" in families:
             raise X.TypedError("E-INTEGER-AVG", "AVG over integers requires an explicit conversion (toNumber)")
+        if "decimal" in families:
+            raise X.TypedError("E-DECIMAL-BARE-DIVIDE", "AVG over decimals; write divide(SUM, COUNT, scale, rounding)")
     try:
         for cond in where:
             if cond["op"] in ("exists", "missing"):
@@ -617,8 +636,12 @@ def q_aggregate(run, query):
 
 
 def _decode_expr(node):
+    """Typed values decode; bare JSON integers and strings pass through as operator
+    parameters (scale, precision, rounding of divide / round / toDecimal)."""
     if isinstance(node, list):
         return [node[0]] + [_decode_expr(x) for x in node[1:]]
+    if isinstance(node, str):
+        return node
     return V.decode_value(node)
 
 
