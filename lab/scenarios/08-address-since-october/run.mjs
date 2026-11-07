@@ -29,11 +29,14 @@ export async function check(ctx) {
     const prior = [...(ctx.ex.ledger.get(c.subject) ?? [])].filter(e => e.position < a.receipt.position).at(-1);
     const before = prior ? g.after[prior.index] : g.base;
     const after = g.after[c.index];
-    const at = async (R, V) => (await pullDigest(ctx, c.subject, { recordedAt: R, validAt: V })).digest;
+    const pull = (R, V) => pullDigest(ctx, c.subject, { recordedAt: R, validAt: V });
+    const address = r => r.rows?.find(row => row[1] === ':worker/addressLine')?.[2] ?? null;
     // Explain at the old basis still shows the old belief; at the new basis, the fix from October on.
-    const okOld = (await at(a.receipt.instant - 1, BT.OCT15)) === before[BT.OCT15];
-    const okNew = (await at(a.receipt.instant, BT.OCT15)) === after[BT.OCT15];
-    const okSep = (await at(a.receipt.instant, SEP15)) === after[SEP15] && after[SEP15] === before[SEP15];
+    const okOld = (await pull(a.receipt.instant - 1, BT.OCT15)).digest === before[BT.OCT15];
+    const okNew = (await pull(a.receipt.instant, BT.OCT15)).digest === after[BT.OCT15];
+    // Before October the address is unchanged in value (its assertion is now bounded, so the row differs).
+    const sepAfter = await pull(a.receipt.instant, SEP15), sepBefore = await pull(a.receipt.instant - 1, SEP15);
+    const okSep = sepAfter.digest === after[SEP15] && sepBefore.digest === before[SEP15] && address(sepAfter) !== null && address(sepAfter) === address(sepBefore);
     oldBelief += okOld; newBelief += okNew; bounded += okSep;
     // The feed reports the valid-time range affected: an open assert from OCT1 on the worker entity.
     const rec = feedAt.get(a.receipt.position);

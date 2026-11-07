@@ -78,7 +78,7 @@ export async function ensureWorld(comp, { rung, seed, size, log }) {
       const r = await comp.transact(b.operations, { actor: 'bulk:hris', commandId: worldBatchId(rung, seed, b.k) });
       if (r.status === 'committed' || r.category === 'command-already-committed') break;
       // Outcome unknown or a transient WriteError: resolve by commandId, then re-send (claims make it safe).
-      if ((r.status === 'unknown' || r.category === 'write-error') && attempt < 10) { unknown++; await new Promise(res => setTimeout(res, 2000)); if (await has(b.k)) break; continue; }
+      if ((r.status === 'unknown' || r.category === 'write-error') && attempt < 30) { unknown++; await new Promise(res => setTimeout(res, Math.min(30_000, 2000 * (attempt + 1)))); if (await has(b.k)) break; continue; }
       throw new Error(`world batch ${b.k} failed: ${JSON.stringify(r).slice(0, 500)}`);
     }
     lat.push(performance.now() - s);
