@@ -1,8 +1,9 @@
-# triplex-db-2 dev-loop plan (v1-pre, before adversarial review)
+# triplex-db-2 dev-loop plan (v1-rc, between review rounds)
 
-Status: v1-pre, 2026-11-07. Folds in research wave R1 to R6 (`lab/research/`). Follow-up research R7
-(XTDB indexing and ingest), R8 (QLever write lifecycle) and R9 (core plumbing) is running. The
-changelog at the bottom records what changed between versions and why.
+Status: v1-rc, 2026-11-07. Folds in research wave R1 to R6 (`lab/research/`) and the accepted
+decisions from Codex review round 1 (`lab/reviews/plan-review-r1.response.md`). Review round 2 and
+follow-up research R7 (XTDB indexing and ingest), R8 (QLever write lifecycle) and R9 (core
+plumbing) are running. The changelog at the bottom records what changed between versions and why.
 
 ## 1. Mission and done condition
 
@@ -267,9 +268,23 @@ output under `runs/` (ignored by git, kept on disk).
 | G6 | scale rung (10k, 100k, 1m, 10m) | yes, scale window |
 | G7 | load: 64, 256, then 512 and 1024 clients with steady writes | yes, scale window |
 
-**Receipt fields:** gate, lane, git SHA and dirty flag, engine image digest, engine config hash,
-fixture id and seed, start and end time, pass and fail counts, first failures (kept, never
-overwritten), timings, and resource observations (peak container memory and CPU, volume bytes).
+**Receipts bind what actually executed** (review r1 finding 4). Each receipt records the source tree
+hash including uncommitted changes, the lockfile hash, Node and pnpm versions, hashes of the built
+`dist` files the gate imported (the gate builds first), gate script and oracle file hashes,
+schema and projection-spec ids, fixture content hashes, raw-result hashes, the endpoint actually
+contacted (it must equal the slot's), engine image digest and config hash, start and end time,
+pass, fail and skip counts, first failures (kept, never overwritten), timings, co-running
+containers, and peak container memory, CPU and volume bytes.
+
+**Gates fail closed.** A gate fails on any skip, zero executed cases, a missing identity or a wrong
+endpoint. Lane X claims need 142 named executions per language with every read substep's language
+recorded; a hybrid task counts for neither language until it is pure. A change to a gate script or
+an oracle needs a verifier review recorded in the commit.
+
+**The goal-to-gate matrix is `lab/acceptance/`** (EXP-A01): every obligation in the ten goals, the
+ORM and raw-query requirement, scale and load has named cases, an independent oracle, a public
+entrypoint, a profile and a binary closure rule over receipts. Gates G0 to G7 are the runners; the
+acceptance files decide whether a goal is closed.
 
 ### 5.5 Notebook and code comments
 
@@ -301,8 +316,10 @@ reasoning in a fixed form:
 | Resource | Envelope | Rule |
 | --- | --- | --- |
 | Docker VM | colima profile `triplex2`: 6 CPU, 12 GiB, 60 GiB disk | always `DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock`; after any colima command run `docker context use colima` |
-| Resident dev engines | `tx2-xtdb-dev` (about 3 GiB), `tx2-qlever-dev` (about 2 GiB) | correctness work shares them through disjoint database scopes |
-| Heavy slots | 3 slots, about 3.5 GiB each, own ports and named volumes | performance, destructive and crash tests |
+| Reservation pool | 11 GiB of the VM's 12 GiB, shared by residents, slots and research probes | admission sums the memory caps of every running `tx2-*` container; residents count once |
+| Resident dev engines | `tx2-xtdb-dev` (3 GiB), `tx2-qlever-dev` (2.5 GiB), inside the pool | correctness work shares them through disjoint database scopes |
+| Heavy slots | `s1` to `s3`, 3.5 GiB caps each, admitted only while the pool has room | performance, destructive and crash tests; a scale window stops the residents |
+| Peak forecast | admission forecasts peak memory and disk per run: QLever rebuild overlap (`previous.*`), delta growth during rebuild, XTDB pre-GC growth (about 5.5x seen), replay peaks, host clients | runs that do not fit are refused or queued (backpressure) |
 | Scale window | one at a time; stops other slots | rungs 1m and 10m, load tests |
 | Disk | VM 60 GiB hard; stop new heavy runs at 50 GiB used; repo plus references under 5 GB | measured per receipt |
 | Agents | at most 10 concurrent; at most 4 concurrent heavy local test or typecheck runs | `lab/bin/heavy` lock |
@@ -310,19 +327,23 @@ reasoning in a fixed form:
 The VM can grow (Sam's Mac has 36 GiB RAM and about 93 GB free disk) when a rung measures the need;
 the change and its justification go in the notebook. Sam's default Docker VM is never touched.
 
-## 8. First generation (gen-1)
+## 8. First generation (gen-1), reordered after review round 1
 
-| Id | Lane, track | Experiment | Depends on |
+Falsifiers and contracts come before abstractions (review r1 finding 16).
+
+| Step | Id | Experiment | Depends on |
 | --- | --- | --- | --- |
-| EXP-000 | shared | loop harness: `lab/bin` engine up/down, slots, gate runner, receipts, scorecard; runner admission replaced; qualification test breakage fixed | none |
-| EXP-001 | X1 | baseline: G0, G1, G2 on our XTDB with XTQL and SQL tallies; first scale probe at 10k | EXP-000 |
-| EXP-002 | Q1 | baseline: G0, G1, G2 on our QLever; first scale probe at 10k | EXP-000 |
-| EXP-003 | shared | repository types and descriptors in a core subpath; projection spec compiler with collision checks | none |
-| EXP-004 | X2 | task-wide fixed cut via snapshot tokens, and XTQL parity wave A (non-recursive tasks) | EXP-001 |
-| EXP-005 | X3 | H-X-CUT proof, then table-per-type projection writer X3a with rival X3b | EXP-001, EXP-003 |
-| EXP-006 | Q2 | text order keys and correlated EXISTS helpers, against the original counterexamples | EXP-002 |
-| EXP-007 | Q3 | compact ledger and current graph, with the roll-forward protocol | EXP-002, EXP-003, R8 |
-| EXP-008 | shared | KV-oracle entity suite (G3) and fixture generator | EXP-003 |
+| 1 | EXP-A01 | acceptance contract: goal-to-gate matrix, load contract, capability matrix skeleton | none |
+| 2 | EXP-000 | loop harness: `lab/bin` engines, slots, pool admission, fail-closed bound receipts, scorecard; homebase coupling replaced | none |
+| 2 | EXP-001, EXP-002 | fresh baselines: unchanged44 and native142 on our XTDB (XTQL and SQL tallies) and QLever | EXP-000 |
+| 3 | EXP-F01 to F05 | tiny falsifiers in parallel: XTDB nested positions and H-X-CUT edges; eight-type wire round trips on both engines; historical retirement metadata; duplicate supports; QLever fault injection between permutations, persistence and publication | EXP-000 |
+| 4 | EXP-O01 | independent Python event-replay oracle plus mutation controls | EXP-A01 |
+| 5 | EXP-Q01, EXP-Q02 | QLever compact-ledger round-trip compatibility; QLever write and publication protocol (H-Q-LOG) | EXP-F05, R8 |
+| 6 | EXP-V01, EXP-V02 | one packaged vertical slice per lane: write, repository read, authored native read, history, receipt, cursor, reopen | steps 3 to 5 |
+| 7 | later | XTQL parity, scale ladder, load | step 6 |
+
+The QLever semantic fixes (text order keys, correlated EXISTS helpers) are small and already
+proven on a probe, so they run as soon as the QLever baseline exists.
 
 ## 9. Risks the review should attack
 
@@ -351,3 +372,9 @@ reads `lab/STATE.md`, `lab/SCORECARD.md` and the notebook tail before acting.
   added the `_id`-first XTDB design with index tables, H-X-CUT, card-one conflict policy, the QLever
   compact ledger, current graph, roll-forward write protocol, and the two proven QLever semantic
   fixes; XTQL parity scoped at 57 tasks; harness breakages listed; decisions D1 to D5 taken.
+- v1-rc, 2026-11-07: Codex review round 1 (`lab/reviews/plan-review-r1.codex.md`, 16 findings,
+  decisions in `lab/reviews/plan-review-r1.response.md`). Receipts now bind executed builds and fail
+  closed; the acceptance contract moved into `lab/acceptance/`; the resource pool counts residents
+  once and forecasts peaks; gen-1 reordered around falsifiers. Sections 3.2 to 3.3 (H-X-CUT, QLever
+  write and publication, scope, conflicts, compact ledger) are superseded by the response file's
+  section B until round 2 settles them in v1.

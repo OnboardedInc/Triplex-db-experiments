@@ -1,0 +1,1160 @@
+OpenAI Codex v0.160.0
+--------
+workdir: /Users/sam/projects/triplex-db-2
+model: gpt-6.1-sol
+provider: openai
+approval: on-request
+sandbox: danger-full-access
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 01a1b72e-26d6-77a1-ac09-6ab8c3b10d43
+--------
+user
+Round 2. The orchestrator's reply to your round-1 findings is in lab/reviews/plan-review-r1.response.md. Read it fully. Stay adversarial and read-only.
+Answer section D of that file: (1) for each of B1 to B5, the strongest objection and whether it is critical, with evidence from the repo, the research reports in lab/research/, or the pinned engine sources under references/qlever (v0.6.0) and references/xtdb (v2.2.0); (2) any round-1 finding whose decision in section A does not actually resolve it; (3) anything still missing from the done condition. Also respond to the pushbacks in section C.
+Output: numbered findings with Severity, the disputed text, why, and the concrete change. End with a short list of the changes that must land in PLAN v1 before implementation starts, and say explicitly whether you consider the plan ready to execute once those land.
+
+codex
+I’ll read the response in full, then check B1–B5 and the section C pushbacks against the contracts and pinned sources. I’ll distinguish decisions that resolve a finding from promises that still need an executable rule.
+exec
+/bin/zsh -lc 'nl -ba lab/reviews/plan-review-r1.response.md' in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+     1	# Orchestrator response to Codex plan review, round 1
+     2	
+     3	Verdict on the round: 13 findings accepted as stated, 3 accepted with a narrower or different remedy.
+     4	Below, each finding gets a decision and the concrete change. Section B proposes four new designs that
+     5	came out of your findings; attack those hardest in round 2.
+     6	
+     7	## A. Decisions per finding
+     8	
+     9	| # | Decision | Change to the plan |
+    10	| --- | --- | --- |
+    11	| 1 goal-to-gate | Accept | New versioned `lab/ACCEPTANCE.md`: every obligation in the ten goals plus the ORM/raw requirement gets named cases, expected answers or errors, required public entrypoint, scale and concurrency profile, and a machine-checkable closure rule. Missing, skipped or unsupported cases keep the goal OPEN. Written and reviewed before implementation experiments start. |
+    12	| 2 load | Accept | A frozen load contract in `ACCEPTANCE.md`: open-loop arrival model, query mix, writer floor (rate and per-writer visibility deadline), fairness floor per client, overload policy with counted rejections; metrics are attempted, admitted, rejected, completed, outstanding, correctness-qualified read goodput, write visibility latency, projection freshness. Logical clients are distinguished from connections and in-flight engine work. Load acceptance runs on the 10m-entity dataset with maintenance (rebuild/compaction) overlapping, then recovery after stress. Calibration runs come first and are not acceptance. Starting point: the homebase `qualification/benchmark-contract.json`, re-derived for our VM. |
+    13	| 3 selection | Accept, kept light | Hard semantic invariants never regress (binary). Performance uses matched comparisons (same slot config, fixture, co-runner set, three runs, conservative separation beyond observed spread) and per-metric regression budgets declared in the hypothesis before the run (a projection may declare "+100% write bytes" as its expected cost). Scheduling rules: every OPEN goal has an experiment within three generations; a goal with no progress for two generations escalates (new research, engine repair track, or a design change); at most two unintegrated branches per lane; promotion requires verification of the integrated `main` candidate, not just the branch. |
+    14	| 4 receipts | Accept | Receipts bind: source tree hash including uncommitted changes (`git stash create` tree or diff hash), lockfile hash, Node/pnpm versions, hashes of the built `dist` files actually imported (the gate builds first and records them), gate script and oracle file hashes, schema/projection-spec ids, raw-result hashes, fixture content hashes, the endpoint actually contacted (must equal the slot's). Fail closed on skips, missing identities, or wrong endpoints. Lane X claims require 142 named executions per language, with every read substep's language recorded; a hybrid task counts for neither language until pure. Any change to `lab/bin` gates or oracles needs a verifier review recorded in the commit. |
+    15	| 5 oracle | Accept | An independent event-replay oracle in Python (same approach as `qualification/workloads/event_oracles.py`), importing no Triplex code, computing complete assertion metadata, both history contracts, values, receipts and expected failures. KV stays as a regression participant. Mutation controls are part of G3: wrong interval boundary, dropped support, leaked future retirement metadata, rounded int64, swapped entity type; each must make the suite fail. |
+    16	| 6 H-X-CUT | Accept the counterexample | Narrowed to physical commit boundaries: a basis whose position is the last position of its XTDB transaction can use `FOR SYSTEM_TIME AS OF` that transaction's `_system_from`; a basis inside a nested multi-position transaction routes to the exact ledger path. Test order: nested positions, same-recordedAt commits, corrections, abort before and after, restart, reopen. Timestamps are decoded as strings end to end so microseconds survive the driver. |
+    17	| 7 QLever recovery | Accept | See B1: the ledger of record moves out of QLever into a durable log; QLever becomes a rebuildable queryable index with a fenced single writer and an explicit intent/outcome state machine. |
+    18	| 8 publication | Accept | See B2: one SPARQL update operation per commit group carries ledger, projection and publication-marker changes, and a repository read uses the projection only when its basis equals the current publication. |
+    19	| 9 RDF topology | Accept | Raw-query dataset and scope contract defined first (B3). Current graph and per-assertion graphs (H-Q3b) are compared under that same contract, with two-scope identical-entity-id collision tests and measured named-graph cost. Same contract for XTDB tables. |
+    20	| 10 compact ledger | Accept | A field-by-field encode/decode specification covering every public assertion, history, transaction and receipt field (per-assertion `createdBy`, `entityType`, retraction tx/position, schema version, full causal envelope, typed value domain) comes before any storage claim. Sparse encoding is allowed only where the spec shows a lossless default (for example `createdBy` omitted when it equals the transaction actor). Storage numbers are recomputed after compatibility passes. The native journal waits for R9 and a core capability decision. |
+    21	| 11 `_id`-first | Accept | `_id`-first stays a hypothesis. R7 was extended to test skewed values, ~1M-posting documents versus paged postings, high-degree reverse references, bucketed range layouts, ordered pages, historical reads of rewritten posting documents, and raw predicates that ignore the index tables. |
+    22	| 12 schema evolution | Accept | Release-aware physical mapping: each projection spec version is bound to a config release; backfill is resumable and published behind a generation switch; old cursors and bases before the switch route to the ledger. Valid writes are never rejected for the projection's sake: untyped facts and values that violate the declared column type stay ledger-only, and the entity is marked partial so repository reads route to the ledger. |
+    23	| 13 card-one conflicts | Accept, remedy below | Semantics in B4. |
+    24	| 14 helper limits | Accept | An operator-by-type capability matrix (repository queries, supported native fragments, unrestricted raw escape hatch) per engine, with exactness stated per cell. Raw counterexamples stay visible as documented engine behavior. Functionality a goal requires outside a helper's equivalence conditions needs another implementation or engine repair; rejecting the shape does not close the goal. |
+    25	| 15 resources | Accept | Residents count once inside the same 11 GiB reservation pool as slots (dev engines are slots). Admission forecasts peak memory and disk per run, including QLever rebuild overlap (`previous.*`), delta growth during rebuild, XTDB pre-GC growth (R1 saw about 5.5x), replay peaks and host-side clients. Backpressure refuses or queues runs that do not fit. Scale rungs run one engine at a time, and any VM change needs its own capacity qualification. |
+    26	| 16 gen-1 order | Accept, with one note | New order in B5. Note: the entity suite needs an interface to call, so a minimal repository type skeleton exists early, but expected answers come only from the independent oracle, and the skeleton follows the frozen acceptance contract rather than shaping it. |
+    27	
+    28	## B. New designs that came out of your findings (attack these)
+    29	
+    30	### B1. QLever lane: log of record plus QLever as a rebuildable index (hypothesis H-Q-LOG)
+    31	
+    32	Your finding 7 shows QLever cannot be trusted as the only copy: a timed-out single operation can leave
+    33	permutations inconsistent, and a later successful update publishes that state. So:
+    34	
+    35	1. **Log of record.** The QLever adapter's single writer appends each commit group's canonical encoded
+    36	   operation (the exact N-Triples/SPARQL bytes plus positions, command ids and preconditions already
+    37	   checked) to an append-only, fsync'd segment log on a Docker volume before any QLever mutation.
+    38	2. **State machine per commit group:** `LOGGED` (fsync done) → `APPLIED` (QLever 200) → `VERIFIED`
+    39	   (read-back through at least two different access patterns, e.g. by subject and by predicate-object) →
+    40	   `PUBLISHED` (publication marker visible, see B2) → ACK to the caller. Any uncertainty (timeout, 4xx/5xx,
+    41	   connection loss, verify mismatch) → `FENCED`: the writer stops accepting commits and starts no rebuild,
+    42	   restarts QLever, verifies the affected range through multiple access paths, and if any doubt remains
+    43	   rebuilds the index from the log (full `qlever-index` from segment files, or `rebuild-index` once proven
+    44	   safe after partial mutations). Then it resumes from the first unpublished commit group.
+    45	3. **Preconditions.** CAS and command-claim uniqueness are checked by the single writer against the
+    46	   published state inside its critical section (the writer is the only mutator, so check-then-apply is safe),
+    47	   instead of inside QLever's `DELETE/INSERT WHERE` guards.
+    48	4. **Bulk load and compaction** come for free: a fresh index is built from the log segments; online
+    49	   `rebuild-index` bounds the delta between full builds.
+    50	5. **What this costs:** a second durable copy (the log) and an fsync per commit group; group commit
+    51	   amortizes both.
+    52	
+    53	Question for you: does this still count as a QLever-native lane under the handoff (native SPARQL reads,
+    54	Triplex writes and receipts preserved), or does moving the system of record outside QLever violate
+    55	something? What failure does it still not cover?
+    56	
+    57	### B2. QLever publication contract: one operation per commit group
+    58	
+    59	Each commit group is one SPARQL update operation (`DELETE {...} INSERT {...} WHERE {...}`) that carries
+    60	the ledger insertions, the current-graph deletions and insertions, and the publication marker
+    61	(`<urn:triplex:meta> tx:published (P, validInstant, nextBoundary)`). On the success path QLever publishes
+    62	one snapshot per operation, so one query sees all of a commit group or none of it, including the marker.
+    63	Repository reads include the marker in the same query and use the current graph only when the requested
+    64	basis is "latest" or equals the marker's P, and the requested valid instant lies in
+    65	`[validInstant, nextBoundary)`; every other basis (old cursors, past positions, valid instants past a
+    66	boundary that maintenance has not applied yet) takes the exact ledger path, and the fallback rate is
+    67	reported. Boundary maintenance is itself a commit group that advances `validInstant`/`nextBoundary`.
+    68	Raw queries read the latest publication; their documented staleness is bounded by maintenance lag.
+    69	Failure paths are B1's.
+    70	
+    71	Question: is "one query sees one snapshot" true for QLever 0.6.0 (R8 is probing this now), and what breaks
+    72	if the projection deletions in the same operation are large (a boundary that expires a million facts)?
+    73	
+    74	### B3. Raw-query dataset and scope contract
+    75	
+    76	- Production contract: one Triplex database scope per QLever server and per XTDB node. Raw queries then
+    77	  run against the default dataset (QLever union graph, XTDB tables by plain name) and see only the
+    78	  projection's domain triples and rows; ledger triples use a disjoint field namespace and ledger tables
+    79	  are `tx_*`.
+    80	- Shared engines (tests, multi-tenant dev): every raw query must select its scope explicitly (`FROM <current
+    81	  graph of scope S>` in SPARQL; scope-prefixed table names in XTDB). Collision tests use identical entity ids
+    82	  in two scopes on one engine and must show no cross-scope leakage through the repository or helpers.
+    83	
+    84	Question: is one-scope-per-engine an acceptable production contract given Triplex's `DatabaseScope` model,
+    85	or does it contradict a public guarantee you can point to?
+    86	
+    87	### B4. Card-one conflict semantics (finding 13)
+    88	
+    89	- With enforcement on (the documented Triplex mode), card-one conflicts cannot be written; the projection
+    90	  is exact.
+    91	- With enforcement off, the scalar column holds NULL, `_triplex_conflicts` lists the attribute, and a
+    92	  lossless value relation per engine holds every live value with its supports (XTDB: a `triplex_values`-style
+    93	  table keyed for entity access; QLever: values stay in the ledger nodes plus a conflict marker triple in the
+    94	  current graph).
+    95	- The repository raises a typed conflict error on read; repository filters, joins, aggregates and negation
+    96	  treat a conflicted attribute as "unknown" and route the query through the lossless relation instead of the
+    97	  scalar column; native helpers offer conflict-aware fragments.
+    98	- Raw queries over the scalar column are documented as "absent or conflicting". This is a documented limit
+    99	  of the convenience shape, not a claim of equivalence.
+   100	- Supports are counted from the ledger, so retracting one of two identical assertions keeps the plain triple.
+   101	  Tests: equal and unequal duplicates, overlapping intervals, partial repair, retirement of the last support.
+   102	
+   103	Question: is this acceptable, or is there a representation that avoids false absence for raw users without
+   104	breaking the one-type-per-column rule?
+   105	
+   106	### B5. Generation 1, reordered
+   107	
+   108	1. **Contracts:** `ACCEPTANCE.md` (goal-to-gate matrix, load contract, capability matrix skeleton), receipt
+   109	   binding, resource admission. Reviewed by you before step 3 starts.
+   110	2. **Harness and baselines:** `lab/bin` with fail-closed receipts; fresh unchanged44 and native142 on both
+   111	   engines.
+   112	3. **Tiny falsifiers, in parallel:** XTDB nested positions and H-X-CUT edges; eight-type wire round trips on
+   113	   both engines (int64 beyond 2^53 and 2^59, -0, fractional ms, timezones, invalid literals); historical
+   114	   retirement metadata; duplicate supports; QLever fault injection between permutations, persistence and
+   115	   publication.
+   116	4. **Independent oracle:** the Python event-replay oracle and mutation controls.
+   117	5. **Separately:** compact-ledger round-trip compatibility (QLever) and the B1/B2 write/publication protocol.
+   118	6. **One packaged vertical slice per lane:** write, repository read, authored native read, history, receipt,
+   119	   cursor, reopen.
+   120	7. **Then:** XTQL parity, scale ladder, load.
+   121	
+   122	## C. Where I push back
+   123	
+   124	1. **Process weight.** Your remedies could turn into the homebase controller again. I will implement them as
+   125	   one acceptance file, a receipt binder and a compare script with budgets, not as a scheduler or queue.
+   126	   Tell me if any of your critical findings cannot be met that way.
+   127	2. **Finding 16's premise.** A repository skeleton early is not the same as letting production design write
+   128	   the tests; the oracle is independent and the contract is frozen first.
+   129	3. **Finding 6's scope.** Nested multi-position XTDB transactions look rare in application paths; routing
+   130	   their interior cuts to the exact ledger path keeps correctness without a second logical representation in
+   131	   the projection. If you think interior cuts are common or required to be fast, cite where.
+   132	
+   133	## D. What I want from round 2
+   134	
+   135	1. For each of B1 to B5: the strongest objection, and whether it is critical.
+   136	2. Whether any round-1 finding is not actually resolved by the decision in section A.
+   137	3. Anything still missing from the done condition.
+
+exec
+/bin/zsh -lc "nl -ba packages/core/src/runtime/DatabaseScope.ts; nl -ba packages/qlever/src/Runtime.ts | sed -n '1,190p'; nl -ba packages/xtdb/src/Runtime.ts | sed -n '1,180p'" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+     1	import { Schema } from "effect";
+     2	
+     3	const ScopeSchema = Schema.String.pipe(Schema.brand("DatabaseScope"));
+     4	
+     5	/** Opaque cursor identity. Construct through `make` or `test`, never from request input. */
+     6	export type DatabaseScope = typeof ScopeSchema.Type;
+     7	
+     8	export interface DatabaseIdentity {
+     9	  readonly env: string;
+    10	  readonly tenant: string;
+    11	  readonly database: string;
+    12	  readonly generation: number;
+    13	}
+    14	
+    15	const nonempty = (value: string, field: string) => {
+    16	  if (typeof value !== "string" || value.trim().length === 0) {
+    17	    throw new TypeError(`DatabaseScope.${field} must be a nonempty string`);
+    18	  }
+    19	};
+    20	
+    21	const make = ({ env, tenant, database, generation }: DatabaseIdentity): DatabaseScope => {
+    22	  nonempty(env, "env");
+    23	  nonempty(tenant, "tenant");
+    24	  nonempty(database, "database");
+    25	  if (!Number.isSafeInteger(generation) || generation < 0) {
+    26	    throw new TypeError("DatabaseScope.generation must be a nonnegative safe integer");
+    27	  }
+    28	  // A versioned tuple avoids delimiter collisions and object property-order ambiguity.
+    29	  return Schema.decodeSync(ScopeSchema)(
+    30	    JSON.stringify(["triplex-scope-v1", env, tenant, database, generation]),
+    31	  );
+    32	};
+    33	
+    34	export const DatabaseScope = {
+    35	  make,
+    36	  /** Repeatable identity for an isolated test fixture; not globally unique. */
+    37	  test: (name: string): DatabaseScope =>
+    38	    make({ env: "test", tenant: "test", database: name, generation: 0 }),
+    39	} as const;
+    40	
+    41	/** Validate JavaScript callers too; a TypeScript cast must not restore a default scope. */
+    42	export const validateDatabaseScope = (scope: DatabaseScope): void => {
+    43	  let value: unknown;
+    44	  try {
+    45	    value = JSON.parse(scope);
+    46	  } catch {
+    47	    throw new TypeError("Invalid DatabaseScope");
+    48	  }
+    49	  if (
+    50	    !Array.isArray(value) ||
+    51	    value.length !== 5 ||
+    52	    value[0] !== "triplex-scope-v1" ||
+    53	    typeof value[1] !== "string" ||
+    54	    typeof value[2] !== "string" ||
+    55	    typeof value[3] !== "string" ||
+    56	    typeof value[4] !== "number" ||
+    57	    make({ env: value[1], tenant: value[2], database: value[3], generation: value[4] }) !== scope
+    58	  ) {
+    59	    throw new TypeError("Invalid DatabaseScope");
+    60	  }
+    61	};
+nl: packages/qlever/src/Runtime.ts: No such file or directory
+nl: packages/xtdb/src/Runtime.ts: No such file or directory
+
+exec
+/bin/zsh -lc "rg --files lab/research lab/reviews lab | rg 'R[789]|ACCEPTANCE|PLAN|STATE|SCORECARD'" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+lab/PLAN.md
+lab/STATE.md
+lab/SCORECARD.md
+
+exec
+/bin/zsh -lc "rg -n 'lease|fenc|fsync|segment|single.writer|outcome|precondition' experiments/qlever-managed-writer/DESIGN.md experiments/qlever-managed-writer/README.md packages/qlever/README.md" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+packages/qlever/README.md:121:lease after each start; `--check` rejects a stale process receipt or changed native
+packages/qlever/README.md:132:operation, but that alone does not repair failure atomicity. A globally fenced,
+experiments/qlever-managed-writer/README.md:18:Every intent and resolution is append-only, hash chained and fsynced. The broker
+experiments/qlever-managed-writer/README.md:32:current data mounts, unpinned images, unfenced updates, mismatched loopback ports
+experiments/qlever-managed-writer/README.md:52:coordinator journal. The last still needs qualified retained segmentation and
+experiments/qlever-managed-writer/README.md:64:three-case harness, its concrete resource and token fences, and the exact
+experiments/qlever-managed-writer/DESIGN.md:22:`NativeWorker` provides fence verification, bounded MODIFY submission, complete
+experiments/qlever-managed-writer/DESIGN.md:24:fsync, and restart/reload with a new epoch. The eventual owned container must
+experiments/qlever-managed-writer/DESIGN.md:36:3. Verify native ownership/token fencing, basename and port. Append the bounded recovery intent and
+experiments/qlever-managed-writer/DESIGN.md:37:   fsync the journal before network submission. Fsync the directory when
+experiments/qlever-managed-writer/DESIGN.md:45:   sync, start or verify the reloaded state remains outcome unknown and closed.
+experiments/qlever-managed-writer/DESIGN.md:49:7. On ordinary success, verify complete native proof, fsync the native snapshot
+experiments/qlever-managed-writer/DESIGN.md:50:   and its directory, then append/fsync the committed resolution before ACK.
+experiments/qlever-managed-writer/DESIGN.md:63:writeback, after atomic rename before ACK, and after broker intent/commit fsync.
+experiments/qlever-managed-writer/DESIGN.md:67:overlap. Include refusal to stop, snapshot fsync failure, torn journal, marker
+experiments/qlever-managed-writer/DESIGN.md:70:After the isolated query-layout wave releases its containers, run native trials
+experiments/qlever-managed-writer/DESIGN.md:71:only on another copied owned QLever dataset, with token fencing and unchanged
+
+exec
+/bin/zsh -lc "rg -n 'getLocatedTriplesSharedState|locatedTriplesSnapshot|LocatedTriples.*State|deltaTriplesSnapshot|deltaTriples.*snapshot|getDeltaTriples' references/qlever/src/engine references/qlever/src/index references/qlever/src/libqlever" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+references/qlever/src/libqlever/Qlever.cpp:766:          .getCurrentLocatedTriplesSharedStateWithVocab();
+references/qlever/src/libqlever/Qlever.cpp:790:      index.deltaTriplesManager().getCurrentLocatedTriplesSharedState();
+references/qlever/src/index/Index.cpp:265:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/Index.cpp:273:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/IndexRebuilder.h:68:    const LocatedTriplesSharedState& locatedTriplesSharedState,
+references/qlever/src/engine/Server.cpp:73:                          .getCurrentLocatedTriplesSharedState()
+references/qlever/src/engine/Server.cpp:1236:    const Index& index, const LocatedTriplesState& locatedTriples,
+references/qlever/src/engine/Server.cpp:1360:                  deltaTriples.getLocatedTriplesSharedStateReference());
+references/qlever/src/engine/Server.cpp:1391:                    *deltaTriples.getLocatedTriplesSharedStateReference(),
+references/qlever/src/index/Index.h:32:struct LocatedTriplesState;
+references/qlever/src/index/Index.h:230:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/Index.h:240:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/IndexRebuilderImpl.h:53:    const LocatedTriplesSharedState& locatedTriplesSharedState,
+references/qlever/src/index/IndexRebuilderImpl.h:76:    const LocatedTriplesSharedState& locatedTriplesSharedState,
+references/qlever/src/index/DeltaTriples.h:41:struct LocatedTriplesState {
+references/qlever/src/index/DeltaTriples.h:72:// A shared pointer to a `LocatedTriplesState`, but as an explicit class, such
+references/qlever/src/index/DeltaTriples.h:74:// `LocatedTriplesState` can change in some cases.
+references/qlever/src/index/DeltaTriples.h:75:using LocatedTriplesSharedState = std::shared_ptr<const LocatedTriplesState>;
+references/qlever/src/index/DeltaTriples.h:116:  std::shared_ptr<LocatedTriplesState> locatedTriples_ =
+references/qlever/src/index/DeltaTriples.h:117:      std::make_shared<LocatedTriplesState>(LocatedTriplesState{
+references/qlever/src/index/DeltaTriples.h:283:  LocatedTriplesSharedState getLocatedTriplesSharedStateCopy() const;
+references/qlever/src/index/DeltaTriples.h:289:  LocatedTriplesSharedState getLocatedTriplesSharedStateReference() const;
+references/qlever/src/index/DeltaTriples.h:322:      const LocatedTriplesState& oldState, const LocatedTriplesState& newState,
+references/qlever/src/index/DeltaTriples.h:382:  // The difference between two `LocatedTriplesState` snapshots, split into
+references/qlever/src/index/DeltaTriples.h:403:      const LocatedTriplesState& oldState, const LocatedTriplesState& newState);
+references/qlever/src/index/DeltaTriples.h:421:  ad_utility::Synchronized<LocatedTriplesSharedState, std::shared_mutex>
+references/qlever/src/index/DeltaTriples.h:422:      currentLocatedTriplesSharedState_;
+references/qlever/src/index/DeltaTriples.h:459:  LocatedTriplesSharedState getCurrentLocatedTriplesSharedState() const;
+references/qlever/src/index/DeltaTriples.h:463:  // vocab. As long as the returned `LocatedTriplesSharedState` is alive, the
+references/qlever/src/index/DeltaTriples.h:467:  std::tuple<LocatedTriplesSharedState, std::vector<LocalVocabIndex>,
+references/qlever/src/index/DeltaTriples.h:470:  getCurrentLocatedTriplesSharedStateWithVocab() const;
+references/qlever/src/libqlever/Qlever.h:711:      std::tuple<LocatedTriplesSharedState, indexRebuilder::IndexRebuildMapping,
+references/qlever/src/index/DeltaTriples.cpp:34:LocatedTriplesState::getLocatedTriplesForPermutation(
+references/qlever/src/index/DeltaTriples.cpp:44:LocatedTriplesState::getLocatedTriplesForPermutation<true>(
+references/qlever/src/index/DeltaTriples.cpp:47:LocatedTriplesState::getLocatedTriplesForPermutation<false>(
+references/qlever/src/index/DeltaTriples.cpp:52:LocatedTriplesPerBlock& LocatedTriplesState::getLocatedTriplesForPermutation(
+references/qlever/src/index/DeltaTriples.cpp:60:LocatedTriplesState::getLocatedTriplesForPermutation<true>(
+references/qlever/src/index/DeltaTriples.cpp:63:LocatedTriplesState::getLocatedTriplesForPermutation<false>(
+references/qlever/src/index/DeltaTriples.cpp:69:LocatedTriplesState::getLocatedTriples() {
+references/qlever/src/index/DeltaTriples.cpp:77:LocatedTriplesState::getLocatedTriples() const {
+references/qlever/src/index/DeltaTriples.cpp:483:LocatedTriplesSharedState DeltaTriples::getLocatedTriplesSharedStateCopy()
+references/qlever/src/index/DeltaTriples.cpp:485:  // Create a copy of the `LocatedTriplesState` for use as a constant
+references/qlever/src/index/DeltaTriples.cpp:487:  return LocatedTriplesSharedState{std::make_shared<LocatedTriplesState>(
+references/qlever/src/index/DeltaTriples.cpp:494:LocatedTriplesSharedState DeltaTriples::getLocatedTriplesSharedStateReference()
+references/qlever/src/index/DeltaTriples.cpp:496:  // Creating a `shared_ptr<const LocatedTriplesState>` from a
+references/qlever/src/index/DeltaTriples.cpp:497:  // `shared_ptr<LocatedTriplesState>` is cheap.
+references/qlever/src/index/DeltaTriples.cpp:498:  return LocatedTriplesSharedState{locatedTriples_};
+references/qlever/src/index/DeltaTriples.cpp:511:      currentLocatedTriplesSharedState_{
+references/qlever/src/index/DeltaTriples.cpp:512:          deltaTriples_.wlock()->getLocatedTriplesSharedStateCopy()} {}
+references/qlever/src/index/DeltaTriples.cpp:529:      auto newSnapshot = deltaTriples.getLocatedTriplesSharedStateCopy();
+references/qlever/src/index/DeltaTriples.cpp:530:      currentLocatedTriplesSharedState_.withWriteLock(
+references/qlever/src/index/DeltaTriples.cpp:587:LocatedTriplesSharedState
+references/qlever/src/index/DeltaTriples.cpp:588:DeltaTriplesManager::getCurrentLocatedTriplesSharedState() const {
+references/qlever/src/index/DeltaTriples.cpp:589:  return *currentLocatedTriplesSharedState_.rlock();
+references/qlever/src/index/DeltaTriples.cpp:594:    LocatedTriplesSharedState, std::vector<LocalVocabIndex>,
+references/qlever/src/index/DeltaTriples.cpp:597:DeltaTriplesManager::getCurrentLocatedTriplesSharedStateWithVocab() const {
+references/qlever/src/index/DeltaTriples.cpp:600:    return std::make_tuple(*currentLocatedTriplesSharedState_.rlock(),
+references/qlever/src/index/DeltaTriples.cpp:758:    const LocatedTriplesState& oldState, const LocatedTriplesState& newState,
+references/qlever/src/index/DeltaTriples.cpp:763:  auto difference = computeLocatedTriplesDiff(oldState, newState);
+references/qlever/src/index/DeltaTriples.cpp:865:    const LocatedTriplesState& oldState, const LocatedTriplesState& newState) {
+references/qlever/src/index/Permutation.h:33:struct LocatedTriplesState;
+references/qlever/src/index/Permutation.h:114:               const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.h:122:      const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.h:127:      const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.h:157:      const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.h:182:      const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.h:189:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/Permutation.h:192:      Id col0Id, const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/Permutation.h:200:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/Permutation.h:207:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/Permutation.h:214:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/Permutation.h:249:  // `LocatedTriplesState`, instead they must use their own
+references/qlever/src/index/Permutation.h:250:  // `LocatedTriplesState` provided by the `MaterializedView` object.
+references/qlever/src/index/Permutation.h:252:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/Permutation.h:257:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/Permutation.h:290:      const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/IndexImpl.h:584:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/IndexImpl.h:593:      const LocatedTriplesState& locatedTriplesState) const;
+references/qlever/src/index/IndexImpl.h:1000:      const LocatedTriplesSharedState& locatedTriplesSharedState,
+references/qlever/src/index/Permutation.cpp:35:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/Permutation.cpp:92:                          const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.cpp:99:                       getLocatedTriplesForPermutation(locatedTriplesState),
+references/qlever/src/index/Permutation.cpp:106:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/Permutation.cpp:108:      scanSpecAndBlocks, getLocatedTriplesForPermutation(locatedTriplesState));
+references/qlever/src/index/Permutation.cpp:114:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/Permutation.cpp:116:      scanSpecAndBlocks, getLocatedTriplesForPermutation(locatedTriplesState));
+references/qlever/src/index/Permutation.cpp:122:    const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.cpp:129:      cancellationHandle, getLocatedTriplesForPermutation(locatedTriplesState),
+references/qlever/src/index/Permutation.cpp:136:    const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.cpp:141:      cancellationHandle, getLocatedTriplesForPermutation(locatedTriplesState),
+references/qlever/src/index/Permutation.cpp:196:    Id col0Id, const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/Permutation.cpp:205:      col0Id, getLocatedTriplesForPermutation(locatedTriplesState));
+references/qlever/src/index/Permutation.cpp:211:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/Permutation.cpp:213:      scanSpecAndBlocks, getLocatedTriplesForPermutation(locatedTriplesState));
+references/qlever/src/index/Permutation.cpp:227:    const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.cpp:241:    const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.cpp:251:      getLocatedTriplesForPermutation(locatedTriplesState), limitOffset);
+references/qlever/src/index/Permutation.cpp:259:    const LocatedTriplesState& locatedTriplesState,
+references/qlever/src/index/Permutation.cpp:275:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/Permutation.cpp:285:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/Permutation.cpp:286:  BlockMetadataSpan blocks(getLocatedTriplesForPermutation(locatedTriplesState)
+references/qlever/src/index/IndexRebuilder.cpp:273:    const LocatedTriplesSharedState& locatedTriplesSharedState,
+references/qlever/src/index/IndexRebuilder.cpp:391:    const LocatedTriplesSharedState& locatedTriplesSharedState,
+references/qlever/src/index/IndexRebuilder.cpp:449:    const LocatedTriplesSharedState& locatedTriplesSharedState,
+references/qlever/src/index/IndexImpl.cpp:1908:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/IndexImpl.cpp:1934:    const LocatedTriplesState& locatedTriplesState) const {
+references/qlever/src/index/IndexImpl.cpp:2192:    const LocatedTriplesSharedState& locatedTriplesSharedState, size_t& counter,
+references/qlever/src/index/IndexImpl.cpp:2225:    const LocatedTriplesSharedState& locatedTriplesSharedState,
+references/qlever/src/engine/Server.h:216:      const Index& index, const LocatedTriplesState& locatedTriples,
+references/qlever/src/engine/QueryExecutionContext.h:80:  size_t locatedTriplesSnapshotIndex_;
+references/qlever/src/engine/QueryExecutionContext.h:83:                                              locatedTriplesSnapshotIndex_)
+references/qlever/src/engine/QueryExecutionContext.h:87:    return H::combine(std::move(h), key.key_, key.locatedTriplesSnapshotIndex_);
+references/qlever/src/engine/QueryExecutionContext.h:124:  const LocatedTriplesState& locatedTriplesState() const {
+references/qlever/src/engine/QueryExecutionContext.h:129:  LocatedTriplesSharedState locatedTriplesSharedState() const {
+references/qlever/src/engine/QueryExecutionContext.h:133:  // Set the `LocatedTriplesSharesdState` for evaluating queries. The new
+references/qlever/src/engine/QueryExecutionContext.h:143:      LocatedTriplesSharedState locatedTriplesSharedState) {
+references/qlever/src/engine/QueryExecutionContext.h:260:  LocatedTriplesSharedState locatedTriplesSharedState_{
+references/qlever/src/engine/QueryExecutionContext.h:261:      _index->deltaTriplesManager().getCurrentLocatedTriplesSharedState()};
+references/qlever/src/engine/IndexScan.h:27:  LocatedTriplesSharedState locatedTriplesSharedState_;
+references/qlever/src/engine/IndexScan.h:53:            LocatedTriplesSharedState locatedTriplesSharedState,
+references/qlever/src/engine/IndexScan.h:71:            LocatedTriplesSharedState locatedTriplesSharedState,
+references/qlever/src/engine/IndexScan.h:200:  const LocatedTriplesState& locatedTriplesState() const override;
+references/qlever/src/engine/IndexScan.cpp:39:                     LocatedTriplesSharedState locatedTriplesSharedState,
+references/qlever/src/engine/IndexScan.cpp:92:                     LocatedTriplesSharedState locatedTriplesSharedState,
+references/qlever/src/engine/IndexScan.cpp:348:const LocatedTriplesState& IndexScan::locatedTriplesState() const {
+references/qlever/src/engine/Operation.h:165:  virtual const LocatedTriplesState& locatedTriplesState() const {
+references/qlever/src/engine/MaterializedViews.cpp:362:      locatedTriplesState_{makeEmptyLocatedTriplesState()} {
+references/qlever/src/engine/MaterializedViews.cpp:726:LocatedTriplesSharedState MaterializedView::locatedTriplesState() const {
+references/qlever/src/engine/MaterializedViews.cpp:731:std::shared_ptr<LocatedTriplesState>
+references/qlever/src/engine/MaterializedViews.cpp:732:MaterializedView::makeEmptyLocatedTriplesState() const {
+references/qlever/src/engine/MaterializedViews.cpp:739:  return std::make_shared<LocatedTriplesState>(
+references/qlever/src/engine/MaterializedViews.cpp:740:      LocatedTriplesState{emptyLocatedTriples, emptyInternalLocatedTriples,
+references/qlever/src/engine/MaterializedViews.cpp:758:      qec, permutation_, LocatedTriplesSharedState{locatedTriplesState_},
+references/qlever/src/engine/MaterializedViews.cpp:795:      qec, permutation_, LocatedTriplesSharedState{locatedTriplesState_},
+references/qlever/src/engine/MaterializedViews.h:172:  std::shared_ptr<LocatedTriplesState> locatedTriplesState_;
+references/qlever/src/engine/MaterializedViews.h:183:  // Helper to create an empty `LocatedTriplesState` for `IndexScan`s as
+references/qlever/src/engine/MaterializedViews.h:185:  std::shared_ptr<LocatedTriplesState> makeEmptyLocatedTriplesState() const;
+references/qlever/src/engine/MaterializedViews.h:229:  LocatedTriplesSharedState locatedTriplesState() const;
+
+exec
+/bin/zsh -lc "nl -ba references/qlever/src/index/DeltaTriples.cpp | sed -n '514,608p;640,681p'; nl -ba references/qlever/src/engine/ExecuteUpdate.cpp | sed -n '1,105p'" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+   514	// _____________________________________________________________________________
+   515	template <typename ReturnType>
+   516	ReturnType DeltaTriplesManager::modify(
+   517	    const std::function<ReturnType(DeltaTriples&)>& function,
+   518	    bool writeToDiskAfterRequest, bool updateMetadataAfterRequest,
+   519	    ad_utility::timer::TimeTracer& tracer) {
+   520	  // While holding the lock for the underlying `DeltaTriples`, perform the
+   521	  // actual `function` (typically some combination of insert and delete
+   522	  // operations) and (while still holding the lock) update the
+   523	  // `currentLocatedTriplesSnapshot_`.
+   524	  tracer.beginTrace("acquiringDeltaTriplesWriteLock");
+   525	  return deltaTriples_.withWriteLock([this, &function, writeToDiskAfterRequest,
+   526	                                      updateMetadataAfterRequest,
+   527	                                      &tracer](DeltaTriples& deltaTriples) {
+   528	    auto updateSnapshot = [this, &deltaTriples] {
+   529	      auto newSnapshot = deltaTriples.getLocatedTriplesSharedStateCopy();
+   530	      currentLocatedTriplesSharedState_.withWriteLock(
+   531	          [&newSnapshot](auto& currentSnapshot) {
+   532	            currentSnapshot = std::move(newSnapshot);
+   533	          });
+   534	    };
+   535	    auto writeAndUpdateSnapshot = [&updateSnapshot, &deltaTriples, &tracer,
+   536	                                   writeToDiskAfterRequest]() {
+   537	      if (writeToDiskAfterRequest) {
+   538	        tracer.beginTrace("diskWriteback");
+   539	        deltaTriples.writeToDisk();
+   540	        tracer.endTrace("diskWriteback");
+   541	      }
+   542	      tracer.beginTrace("snapshotCreation");
+   543	      updateSnapshot();
+   544	      tracer.endTrace("snapshotCreation");
+   545	    };
+   546	    auto updateMetadata = [&tracer, &deltaTriples,
+   547	                           updateMetadataAfterRequest]() {
+   548	      if (updateMetadataAfterRequest) {
+   549	        tracer.beginTrace("metadataUpdateForSnapshot");
+   550	        deltaTriples.updateAugmentedMetadata();
+   551	        tracer.endTrace("metadataUpdateForSnapshot");
+   552	      }
+   553	    };
+   554	
+   555	    tracer.endTrace("acquiringDeltaTriplesWriteLock");
+   556	    if constexpr (std::is_void_v<ReturnType>) {
+   557	      tracer.beginTrace("operations");
+   558	      function(deltaTriples);
+   559	      tracer.endTrace("operations");
+   560	      updateMetadata();
+   561	      writeAndUpdateSnapshot();
+   562	    } else {
+   563	      tracer.beginTrace("operations");
+   564	      ReturnType returnValue = function(deltaTriples);
+   565	      tracer.endTrace("operations");
+   566	      updateMetadata();
+   567	      writeAndUpdateSnapshot();
+   568	      return returnValue;
+   569	    }
+   570	  });
+   571	}
+   572	// Explicit instantiations
+   573	#define INSTANTIATE_MODIFY(T)                             \
+   574	  template T DeltaTriplesManager::modify<T>(              \
+   575	      const std::function<T(DeltaTriples&)>&, bool, bool, \
+   576	      ad_utility::timer::TimeTracer&)
+   577	INSTANTIATE_MODIFY(void);
+   578	INSTANTIATE_MODIFY(UpdateMetadata);
+   579	INSTANTIATE_MODIFY(DeltaTriplesCount);
+   580	INSTANTIATE_MODIFY(nlohmann::json);
+   581	#undef INSTANTIATE_MODIFY
+   582	
+   583	// _____________________________________________________________________________
+   584	void DeltaTriplesManager::clear() { modify<void>(&DeltaTriples::clear); }
+   585	
+   586	// _____________________________________________________________________________
+   587	LocatedTriplesSharedState
+   588	DeltaTriplesManager::getCurrentLocatedTriplesSharedState() const {
+   589	  return *currentLocatedTriplesSharedState_.rlock();
+   590	}
+   591	
+   592	// _____________________________________________________________________________
+   593	std::tuple<
+   594	    LocatedTriplesSharedState, std::vector<LocalVocabIndex>,
+   595	    std::vector<
+   596	        ad_utility::BlankNodeManager::LocalBlankNodeManager::OwnedBlocksEntry>>
+   597	DeltaTriplesManager::getCurrentLocatedTriplesSharedStateWithVocab() const {
+   598	  return deltaTriples_.withReadLock([this](const DeltaTriples& deltaTriples) {
+   599	    auto [indices, ownedBlocks] = deltaTriples.copyLocalVocab();
+   600	    return std::make_tuple(*currentLocatedTriplesSharedState_.rlock(),
+   601	                           std::move(indices), std::move(ownedBlocks));
+   602	  });
+   603	}
+   604	
+   605	// _____________________________________________________________________________
+   606	void DeltaTriples::setOriginalMetadata(
+   607	    Permutation::Enum permutation,
+   608	    std::shared_ptr<const std::vector<CompressedBlockMetadata>> metadata,
+   640	  auto update = [](auto& lt) {
+   641	    ql::ranges::for_each(lt, &LocatedTriplesPerBlock::updateAugmentedMetadata);
+   642	  };
+   643	  update(locatedTriples_->getLocatedTriples<false>());
+   644	  update(locatedTriples_->getLocatedTriples<true>());
+   645	}
+   646	
+   647	// _____________________________________________________________________________
+   648	void DeltaTriples::writeToDisk() const {
+   649	  if (!filenameForPersisting_.has_value()) {
+   650	    return;
+   651	  }
+   652	  // TODO<RobinTF> Currently this only writes non-internal delta triples to
+   653	  // disk. The internal triples will be regenerated when importing the rest
+   654	  // again. In the future we might to also want to explicitly store the
+   655	  // internal triples.
+   656	  auto toRange = [](const TriplesSets<false>::TriplesSet& map) {
+   657	    return map |
+   658	           ql::views::transform(
+   659	               [](const IdTriple<0>& triple) -> const std::array<Id, 4>& {
+   660	                 return triple.ids();
+   661	               }) |
+   662	           ql::views::join;
+   663	  };
+   664	  ql::filesystem::path tempPath = filenameForPersisting_.value();
+   665	  tempPath += ".tmp";
+   666	  ad_utility::serializeIds(
+   667	      tempPath, localVocab_,
+   668	      std::array{toRange(triplesSetsNormal_.triplesDeleted_),
+   669	                 toRange(triplesSetsNormal_.triplesInserted_)});
+   670	  ql::filesystem::rename(tempPath, filenameForPersisting_.value());
+   671	}
+   672	
+   673	// _____________________________________________________________________________
+   674	void DeltaTriples::readFromDisk() {
+   675	  if (!filenameForPersisting_.has_value()) {
+   676	    return;
+   677	  }
+   678	  AD_CONTRACT_CHECK(localVocab_.empty());
+   679	  auto [vocab, idRanges] = ad_utility::deserializeIds(
+   680	      filenameForPersisting_.value(), index_.getLocalVocabContext());
+   681	  if (idRanges.empty()) {
+     1	//  Copyright 2024, University of Freiburg,
+     2	//                  Chair of Algorithms and Data Structures.
+     3	//  Author: Julian Mundhahs <mundhahj@tf.uni-freiburg.de>
+     4	
+     5	#include "engine/ExecuteUpdate.h"
+     6	
+     7	#include "engine/ExportQueryExecutionTrees.h"
+     8	#include "engine/UpdateMetadata.h"
+     9	#include "index/IndexImpl.h"
+    10	#include "index/TripleComponentConversions.h"
+    11	
+    12	// _____________________________________________________________________________
+    13	UpdateMetadata ExecuteUpdate::executeUpdate(
+    14	    const Index& index, const ParsedQuery& query, const QueryExecutionTree& qet,
+    15	    DeltaTriples& deltaTriples, const CancellationHandle& cancellationHandle,
+    16	    ad_utility::timer::TimeTracer& tracer) {
+    17	  UpdateMetadata metadata{};
+    18	  // Fully materialize the result for now. This makes it easier to execute the
+    19	  // update. We have to keep the local vocab alive until the triples are
+    20	  // inserted using `deleteTriples`/`insertTriples` to keep LocalVocabIds valid.
+    21	  tracer.beginTrace("evaluateWhere");
+    22	  auto result = qet.getResult(false);
+    23	  tracer.endTrace("evaluateWhere");
+    24	  auto [toInsert, toDelete] =
+    25	      computeGraphUpdateQuads(index, query, *result, qet.getVariableColumns(),
+    26	                              cancellationHandle, metadata, tracer);
+    27	
+    28	  // "The deletion of the triples happens before the insertion." (SPARQL 1.1
+    29	  // Update 3.1.3)
+    30	  tracer.beginTrace("deleteTriples");
+    31	  if (!toDelete.idTriples_.empty()) {
+    32	    deltaTriples.deleteTriples<DeltaTriples::Consolidate::No>(
+    33	        cancellationHandle, std::move(toDelete.idTriples_), tracer);
+    34	  }
+    35	  tracer.endTrace("deleteTriples");
+    36	  tracer.beginTrace("insertTriples");
+    37	  if (!toInsert.idTriples_.empty()) {
+    38	    deltaTriples.insertTriples<DeltaTriples::Consolidate::No>(
+    39	        cancellationHandle, std::move(toInsert.idTriples_), tracer);
+    40	  }
+    41	  tracer.endTrace("insertTriples");
+    42	  tracer.beginTrace("consolidateSortedDeltaTriples");
+    43	  deltaTriples.consolidateAll();
+    44	  tracer.endTrace("consolidateSortedDeltaTriples");
+    45	  return metadata;
+    46	}
+    47	
+    48	// _____________________________________________________________________________
+    49	//
+    50	// TODO: This code currently makes multiple copies of each `TripleComponent`.
+    51	// This does not seem to impact performance significantly because the lookups
+    52	// on disk are the bottleneck (we looked at the flamegraph for a whole update
+    53	// operation). Still, it would be cleaner to avoid these copies.
+    54	std::pair<std::vector<ExecuteUpdate::TransformedTriple>, LocalVocab>
+    55	ExecuteUpdate::transformTriplesTemplate(
+    56	    const IndexImpl& index, const VariableToColumnMap& variableColumns,
+    57	    const std::vector<SparqlTripleSimpleWithGraph>& triples) {
+    58	  const auto& encodedIriManager = index.encodedIriManager();
+    59	  // We collect all `TripleComponent`s from `triples` in a hash set.
+    60	  ad_utility::HashSet<TripleComponent> lookupItems;
+    61	
+    62	  // Add given `TripleComponent` to `lookupItems` if it needs a vocab lookup.
+    63	  //
+    64	  // NOTE: This make a copy of each `TripleComponent' (for the hash set).
+    65	  auto addTCToLookup = [&lookupItems,
+    66	                        &encodedIriManager](const TripleComponent& tc) {
+    67	    // IRIs encoded in the `Id` do not need a vocab lookup.
+    68	    if (tc.isIri() &&
+    69	        encodedIriManager.encode(tc.getIri().toStringRepresentation())
+    70	            .has_value()) {
+    71	      return;
+    72	    }
+    73	    if (tc.isLiteral() || tc.isIri()) {
+    74	      lookupItems.insert(tc);
+    75	    }
+    76	  };
+    77	
+    78	  // Add given `Graph` to `lookupItems` if it is an IRI. We ignore the default
+    79	  // graph (`std::monostate`) here because we explicitly add it below.
+    80	  //
+    81	  // NOTE: This make a copy of each graph IRI (for the hash set).
+    82	  auto addGraphToLookup =
+    83	      [&addTCToLookup](const SparqlTripleSimpleWithGraph::Graph& g) {
+    84	        if (const auto* iri = std::get_if<TripleComponent::Iri>(&g)) {
+    85	          addTCToLookup(TripleComponent(*iri));
+    86	        }
+    87	      };
+    88	
+    89	  // Collect all relevant `TripleComponent`s. Then add default graph once (even
+    90	  // if no lookup is needed).
+    91	  for (const auto& triple : triples) {
+    92	    addTCToLookup(triple.s_);
+    93	    addTCToLookup(triple.p_);
+    94	    addTCToLookup(triple.o_);
+    95	    addGraphToLookup(triple.g_);
+    96	  }
+    97	  lookupItems.insert(TripleComponent(
+    98	      ad_utility::triple_component::Iri::fromIriref(DEFAULT_GRAPH_IRI)));
+    99	
+   100	  // Sort the `TripleComponent`s.
+   101	  std::vector lookupVec(std::move_iterator(lookupItems.begin()),
+   102	                        std::move_iterator(lookupItems.end()));
+   103	  ql::ranges::sort(lookupVec, index.getVocab().getCaseComparator(),
+   104	                   [](const TripleComponent& tc) {
+   105	                     AD_CORRECTNESS_CHECK(tc.isLiteral() || tc.isIri());
+
+exec
+/bin/zsh -lc "nl -ba references/qlever/src/engine/QueryExecutionContext.h | sed -n '115,154p;250,268p'; nl -ba references/qlever/src/engine/IndexScan.cpp | sed -n '25,108p'; nl -ba references/qlever/src/engine/Server.cpp | sed -n '40,95p;1300,1408p'" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+   115	          [](std::string) { /* No-op by default for testing */ },
+   116	      bool pinSubtrees = false, bool pinResult = false,
+   117	      DisableCaching = DisableCaching::FromRuntimeParameter,
+   118	      bool disableMaterializedViewRewriting = false);
+   119	
+   120	  QueryResultCache& getQueryTreeCache() { return *_subtreeCache; }
+   121	
+   122	  [[nodiscard]] const Index& getIndex() const { return *_index; }
+   123	
+   124	  const LocatedTriplesState& locatedTriplesState() const {
+   125	    AD_CORRECTNESS_CHECK(locatedTriplesSharedState_ != nullptr);
+   126	    return *locatedTriplesSharedState_;
+   127	  }
+   128	
+   129	  LocatedTriplesSharedState locatedTriplesSharedState() const {
+   130	    return locatedTriplesSharedState_;
+   131	  }
+   132	
+   133	  // Set the `LocatedTriplesSharesdState` for evaluating queries. The new
+   134	  // state will be used for evaluating queries after this call.
+   135	  //
+   136	  // NOTE: This is a dangerous function. It may only be called if no query with
+   137	  // the context is currently running.
+   138	  //
+   139	  // This function is only needed for chained updates, which have to see the
+   140	  // effect of previous updates but use the same execution context. Chained
+   141	  // updates are processed strictly sequentially, so this use case works.
+   142	  void setLocatedTriplesForEvaluation(
+   143	      LocatedTriplesSharedState locatedTriplesSharedState) {
+   144	    locatedTriplesSharedState_ = std::move(locatedTriplesSharedState);
+   145	  }
+   146	
+   147	  void clearCacheUnpinnedOnly() { getQueryTreeCache().clearUnpinnedOnly(); }
+   148	
+   149	  [[nodiscard]] const SortPerformanceEstimator& getSortPerformanceEstimator()
+   150	      const {
+   151	    return _sortPerformanceEstimator;
+   152	  }
+   153	
+   154	  [[nodiscard]] double getCostFactor(const std::string& key) const {
+   250	  static std::chrono::milliseconds websocketUpdateInterval();
+   251	
+   252	  // Shared pointer to the `Index` to ensure that it stays alive as long as
+   253	  // this context is alive.
+   254	  std::shared_ptr<const Index> _index;
+   255	
+   256	  // When the `QueryExecutionContext` is constructed, get a stable read-only
+   257	  // snapshot of the current (located) delta triples. These can then be used
+   258	  // by the respective query without interfering with further incoming
+   259	  // update operations.
+   260	  LocatedTriplesSharedState locatedTriplesSharedState_{
+   261	      _index->deltaTriplesManager().getCurrentLocatedTriplesSharedState()};
+   262	  QueryResultCache* const _subtreeCache;
+   263	  // allocators are copied but hold shared state
+   264	  ad_utility::AllocatorWithLimit<Id> _allocator;
+   265	  QueryPlanningCostFactors _costFactors;
+   266	  SortPerformanceEstimator _sortPerformanceEstimator;
+   267	  std::function<void(std::string)> updateCallback_;
+   268	
+    25	using LazyScanMetadata = CompressedRelationReader::LazyScanMetadata;
+    26	
+    27	// Return the number of `Variables` given the `TripleComponent` values for
+    28	// `subject_`, `predicate` and `object`.
+    29	static size_t getNumberOfVariables(const TripleComponent& subject,
+    30	                                   const TripleComponent& predicate,
+    31	                                   const TripleComponent& object) {
+    32	  return static_cast<size_t>(subject.isVariable()) +
+    33	         static_cast<size_t>(predicate.isVariable()) +
+    34	         static_cast<size_t>(object.isVariable());
+    35	}
+    36	
+    37	// _____________________________________________________________________________
+    38	IndexScan::IndexScan(QueryExecutionContext* qec, PermutationPtr permutation,
+    39	                     LocatedTriplesSharedState locatedTriplesSharedState,
+    40	                     const SparqlTripleSimple& triple, Graphs graphsToFilter,
+    41	                     std::optional<ScanSpecAndBlocks> scanSpecAndBlocks,
+    42	                     VarsToKeep varsToKeep)
+    43	    : Operation(qec),
+    44	      permutation_(std::move(permutation)),
+    45	      locatedTriplesSharedState_(std::move(locatedTriplesSharedState)),
+    46	      subject_(triple.s_),
+    47	      predicate_(triple.p_),
+    48	      object_(triple.o_),
+    49	      graphsToFilter_{std::move(graphsToFilter)},
+    50	      scanSpecAndBlocks_{
+    51	          std::move(scanSpecAndBlocks).value_or(getScanSpecAndBlocks())},
+    52	      scanSpecAndBlocksIsPrefiltered_{scanSpecAndBlocks.has_value()},
+    53	      numVariables_(getNumberOfVariables(subject_, predicate_, object_)),
+    54	      varsToKeep_(std::move(varsToKeep)) {
+    55	  AD_CONTRACT_CHECK(permutation_ != nullptr);
+    56	  AD_CONTRACT_CHECK(locatedTriplesSharedState_ != nullptr);
+    57	
+    58	  // We previously had `nullptr`s here in unit tests. This is no longer
+    59	  // necessary nor allowed.
+    60	  AD_CONTRACT_CHECK(qec != nullptr);
+    61	  for (auto& [idx, variable] : triple.additionalScanColumns_) {
+    62	    additionalColumns_.push_back(idx);
+    63	    additionalVariables_.push_back(variable);
+    64	  }
+    65	  std::tie(sizeEstimateIsExact_, sizeEstimate_) = computeSizeEstimate();
+    66	
+    67	  // Check the following invariant: All the variables must be at the end of the
+    68	  // permuted triple. For example in the PSO permutation, either only the O, or
+    69	  // the S and O, or all three of P, S, O, or none of them can be variables, all
+    70	  // other combinations are not supported.
+    71	  auto permutedTriple = getPermutedTriple();
+    72	  for (size_t i = 0; i < 3 - numVariables_; ++i) {
+    73	    AD_CONTRACT_CHECK(!permutedTriple.at(i)->isVariable());
+    74	  }
+    75	  for (size_t i = 3 - numVariables_; i < permutedTriple.size(); ++i) {
+    76	    AD_CONTRACT_CHECK(permutedTriple.at(i)->isVariable());
+    77	  }
+    78	}
+    79	
+    80	// _____________________________________________________________________________
+    81	IndexScan::IndexScan(QueryExecutionContext* qec,
+    82	                     Permutation::Enum permutationType,
+    83	                     const SparqlTripleSimple& triple, Graphs graphsToFilter,
+    84	                     std::optional<ScanSpecAndBlocks> scanSpecAndBlocks)
+    85	    : IndexScan(qec,
+    86	                qec->getIndex().getImpl().getPermutationPtr(permutationType),
+    87	                qec->locatedTriplesSharedState(), triple,
+    88	                std::move(graphsToFilter), std::move(scanSpecAndBlocks)) {}
+    89	
+    90	// _____________________________________________________________________________
+    91	IndexScan::IndexScan(QueryExecutionContext* qec, PermutationPtr permutation,
+    92	                     LocatedTriplesSharedState locatedTriplesSharedState,
+    93	                     const TripleComponent& s, const TripleComponent& p,
+    94	                     const TripleComponent& o,
+    95	                     std::vector<ColumnIndex> additionalColumns,
+    96	                     std::vector<Variable> additionalVariables,
+    97	                     Graphs graphsToFilter, ScanSpecAndBlocks scanSpecAndBlocks,
+    98	                     bool scanSpecAndBlocksIsPrefiltered, VarsToKeep varsToKeep,
+    99	                     bool sizeEstimateIsExact, size_t sizeEstimate)
+   100	    : Operation(qec),
+   101	      permutation_(std::move(permutation)),
+   102	      locatedTriplesSharedState_(std::move(locatedTriplesSharedState)),
+   103	      subject_(s),
+   104	      predicate_(p),
+   105	      object_(o),
+   106	      graphsToFilter_(std::move(graphsToFilter)),
+   107	      scanSpecAndBlocks_(std::move(scanSpecAndBlocks)),
+   108	      scanSpecAndBlocksIsPrefiltered_(scanSpecAndBlocksIsPrefiltered),
+    40	#include "util/TypeTraits.h"
+    41	#include "util/http/HttpServer.h"
+    42	#include "util/http/HttpUtils.h"
+    43	#include "util/http/websocket/MessageSender.h"
+    44	
+    45	using namespace std::string_literals;
+    46	using namespace ad_utility::url_parser::sparqlOperation;
+    47	using namespace ad_utility::metrics;
+    48	
+    49	template <typename T>
+    50	using Awaitable = Server::Awaitable<T>;
+    51	using ad_utility::MediaType;
+    52	
+    53	// __________________________________________________________________________
+    54	Server::Server(
+    55	    unsigned short port, size_t numThreads, std::string accessToken,
+    56	    const qlever::EngineConfig& config, bool noAccessCheck,
+    57	    std::shared_ptr<ad_utility::metrics::MetricsReader> metricsReader)
+    58	    : qlever_(config),
+    59	      numThreads_(numThreads),
+    60	      port_(port),
+    61	      accessToken_(std::move(accessToken)),
+    62	      noAccessCheck_(noAccessCheck),
+    63	      queryThreadPool_{numThreads},
+    64	      rebuildIndexStrategy_(config.rebuildIndexStrategy_),
+    65	      keepPreviousIndexDirs_(config.keepPreviousIndexDirs_),
+    66	      metricsReader_(std::move(metricsReader)) {
+    67	  AD_LOG_INFO << "Initializing server ..." << std::endl;
+    68	
+    69	  metrics_ = std::make_unique<ServerMetrics>(
+    70	      [this]() {
+    71	        auto counts = indexAndViewsSnapshot()
+    72	                          ->index_.deltaTriplesManager()
+    73	                          .getCurrentLocatedTriplesSharedState()
+    74	                          ->counts_;
+    75	        AD_CORRECTNESS_CHECK(counts.has_value());
+    76	        auto [ins, del] = counts.value();
+    77	        return ins + del;
+    78	      },
+    79	      [this]() -> int64_t { return allocator().amountMemoryLeft().getBytes(); },
+    80	      [this]() -> int64_t {
+    81	        return (cache().nonPinnedSize() + cache().pinnedSize()).getBytes();
+    82	      },
+    83	      [this]() -> int64_t { return cache().getMaxSize().getBytes(); },
+    84	      [this]() -> int64_t {
+    85	        return static_cast<int64_t>(rebuildInProgress_.load());
+    86	      },
+    87	      config.memoryLimit_);
+    88	  metrics_->registerCallbacks();
+    89	
+    90	  if (noAccessCheck_) {
+    91	    AD_LOG_INFO << "No access token required for restricted API calls"
+    92	                << std::endl;
+    93	  } else {
+    94	    AD_LOG_INFO << "Access token for restricted API calls is \"" << accessToken_
+    95	                << "\"" << std::endl;
+  1300	  updateMetadata.countBefore_ = countBefore;
+  1301	  updateMetadata.countAfter_ = deltaTriples.getCounts();
+  1302	
+  1303	  tracer.beginTrace("clearCache");
+  1304	  // Clear the cache, because all cache entries have been invalidated by
+  1305	  // the update anyway (The index of the located triples snapshot is
+  1306	  // part of the cache key).
+  1307	  cache().clearAll();
+  1308	  namedResultCache().clear();
+  1309	  tracer.endTrace("clearCache");
+  1310	
+  1311	  return updateMetadata;
+  1312	}
+  1313	
+  1314	// ____________________________________________________________________________
+  1315	CPP_template_def(typename RequestT, typename ResponseT)(
+  1316	    requires ad_utility::httpUtils::HttpRequest<RequestT>)
+  1317	    Awaitable<void> Server::processUpdate(
+  1318	        MakeQueryExecutionContext makeQec, std::vector<ParsedQuery>&& updates,
+  1319	        const ad_utility::Timer& requestTimer, SharedTimeTracer outerTracer,
+  1320	        ad_utility::SharedCancellationHandle cancellationHandle,
+  1321	        const RequestT& request, ResponseT&& send, TimeLimit timeLimit,
+  1322	        std::optional<PlannedQuery>& plannedUpdate) {
+  1323	  outerTracer->beginTrace("waitingForUpdateThread");
+  1324	  ad_utility::metrics::ActiveCounterGuard updateGuard{
+  1325	      *metrics_->runningSparqlOperations_, "update"};
+  1326	  AD_CORRECTNESS_CHECK(ql::ranges::all_of(
+  1327	      updates, [](const ParsedQuery& p) { return p.hasUpdateClause(); }));
+  1328	
+  1329	  auto responseMiddlewares =
+  1330	      ad_utility::RvalueView(
+  1331	          updates | ql::views::transform(&ParsedQuery::responseMiddleware_) |
+  1332	          ql::views::filter(ad_utility::hasValue) |
+  1333	          ql::views::transform(ad_utility::value)) |
+  1334	      ::ranges::to<std::vector>();
+  1335	
+  1336	  std::vector<UpdateMetadata> metadatas;
+  1337	
+  1338	  // If multiple updates are part of a single request, those have to run
+  1339	  // atomically. This is ensured, because the updates below are run on the
+  1340	  // `updateThreadPool_`, which only has a single thread.
+  1341	  static_assert(UPDATE_THREAD_POOL_SIZE == 1);
+  1342	  auto coroutine = computeInNewThread(
+  1343	      updateThreadPool_,
+  1344	      [this, &makeQec, &requestTimer, &cancellationHandle, &updates, &timeLimit,
+  1345	       &plannedUpdate, outerTracer, &metadatas]() {
+  1346	        outerTracer->endTrace("waitingForUpdateThread");
+  1347	        // Snapshot and build the context on the update thread (see
+  1348	        // `clear-delta-triples`), so the update sees and modifies the currently
+  1349	        // active index. The resulting `plannedUpdate` keeps the context alive
+  1350	        // past this lambda via `PlannedQuery`'s shared ownership.
+  1351	        auto indexAndViews = indexAndViewsSnapshot();
+  1352	        auto& index = indexAndViews->index_;
+  1353	        auto qecPtr = makeQec(indexAndViews);
+  1354	        auto& qec = *qecPtr;
+  1355	        return index.deltaTriplesManager().modify<json>(
+  1356	            [this, &index, &cancellationHandle, &plannedUpdate, &updates,
+  1357	             &requestTimer, &timeLimit, &qec,
+  1358	             &metadatas](DeltaTriples& deltaTriples) {
+  1359	              qec.setLocatedTriplesForEvaluation(
+  1360	                  deltaTriples.getLocatedTriplesSharedStateReference());
+  1361	              json results = json::array();
+  1362	              for (auto&& [i, update] : ranges::views::enumerate(updates)) {
+  1363	                auto tracer = ad_utility::timer::TimeTracer("update");
+  1364	                // The augmented metadata is invalidated by any update. It is
+  1365	                // only updated automatically at the end of modify. Updates with
+  1366	                // non-empty graph patterns need the augmented metadata. Update
+  1367	                // the augmented metadata before executing those updates.
+  1368	                tracer.beginTrace("updateMetadata");
+  1369	                if (i != 0 &&
+  1370	                    !update._rootGraphPattern._graphPatterns.empty()) {
+  1371	                  deltaTriples.updateAugmentedMetadata();
+  1372	                }
+  1373	                tracer.endTrace("updateMetadata");
+  1374	                tracer.beginTrace("planning");
+  1375	                plannedUpdate =
+  1376	                    planQuery(std::move(update), qec, cancellationHandle,
+  1377	                              timeLimit, requestTimer);
+  1378	                tracer.endTrace("planning");
+  1379	                tracer.beginTrace("execution");
+  1380	                // Update the delta triples.
+  1381	                // Use `this` explicitly to silence false-positive
+  1382	                // errors on captured `this` being unused.
+  1383	                auto updateMetadata = this->processUpdateImpl(
+  1384	                    index, plannedUpdate.value(), cancellationHandle,
+  1385	                    deltaTriples, tracer);
+  1386	                tracer.endTrace("execution");
+  1387	
+  1388	                tracer.endTrace("update");
+  1389	                results.push_back(createResponseMetadataForUpdate(
+  1390	                    index,
+  1391	                    *deltaTriples.getLocatedTriplesSharedStateReference(),
+  1392	                    *plannedUpdate, plannedUpdate->queryExecutionTree(),
+  1393	                    updateMetadata, tracer));
+  1394	                metadatas.push_back(std::move(updateMetadata));
+  1395	
+  1396	                AD_LOG_INFO << "Done processing update, total time was "
+  1397	                            << requestTimer.msecs().count() << " ms"
+  1398	                            << std::endl;
+  1399	                AD_LOG_DEBUG << "Runtime Info:\n"
+  1400	                             << plannedUpdate->queryExecutionTree()
+  1401	                                    .getRootOperation()
+  1402	                                    ->runtimeInfo()
+  1403	                                    .toString()
+  1404	                             << std::endl;
+  1405	              }
+  1406	              return results;
+  1407	            },
+  1408	            true, true, *outerTracer);
+
+exec
+/bin/zsh -lc "nl -ba lab/PLAN.md | sed -n '7,35p;254,272p'; rg -n 'partial|recordedAt|basis' lab/research/R3-orm-prior-art.md | tail -18" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+     7	## 1. Mission and done condition
+     8	
+     9	**Mission.** Build an efficient triple store where Triplex is the TypeScript interface, used almost
+    10	like an ORM, over two engines whose native query languages we maintain:
+    11	
+    12	| Lane | Engine (pinned) | Native language | Named alternative |
+    13	| --- | --- | --- | --- |
+    14	| X | XTDB 2.2.0, image digest `a6a42650...` | XTQL (primary) | XTDB SQL |
+    15	| Q | QLever 0.6.0, image digest `37d5ede1...` | SPARQL | none |
+    16	
+    17	**Raw queries must make sense.** A developer who knows only XTQL, SQL or SPARQL, and has never read
+    18	Triplex source, can query the stored data and get answers that match what the Triplex entity API
+    19	returns at the same basis.
+    20	
+    21	**Done condition.** The goal is complete when both lanes reach the scope, scale and ambition in the
+    22	handoff context (`handoffs/claude-native/README.md`, `wiki/goals.md`):
+    23	
+    24	1. All ten goals in `wiki/goals.md` pass for `xtdb-native` (XTQL and SQL counted separately) and
+    25	   for `qlever-native`, with fresh evidence from this checkout's own engines.
+    26	2. Scale target is 10m distinct application entities with 100m representative active domain facts,
+    27	   in sparse and representative profiles, with history and write amplification reported separately.
+    28	3. Load acceptance uses 256 logical clients with steady writes, then 512 and 1024 client stress under
+    29	   a frozen overload policy.
+    30	4. The Triplex entity API (the "ORM") and the raw native escape hatch both pass the entity suite on
+    31	   both lanes.
+    32	
+    33	An engine limit is not completion. When an engine blocks a goal, the loop opens the engine-repair
+    34	track for that engine; we hold the pinned source of both engines in `references/`.
+    35	
+   254	### 5.4 Gates and receipts
+   255	
+   256	Every gate writes a JSON receipt to `lab/runs/<gate>/<run-id>.json` (small, committed) and keeps raw
+   257	output under `runs/` (ignored by git, kept on disk).
+   258	
+   259	| Gate | What it proves | Needs engine |
+   260	| --- | --- | --- |
+   261	| G0 | typecheck and pure unit tests for core, xtdb, qlever, qualification | no |
+   262	| G1 | unchanged44 shared conformance, current and reopen | yes |
+   263	| G2 | native142 (71 tasks, current and reopen); lane X tallies XTQL and SQL separately | yes |
+   264	| G3 | entity suite: repository and raw queries against the KV oracle; projection equals its ledger function | yes |
+   265	| G4 | semantic counterexamples with original expected answers | yes |
+   266	| G5 | write semantics: duplicate command, CAS conflict, unknown outcome, crash and reopen | yes |
+   267	| G6 | scale rung (10k, 100k, 1m, 10m) | yes, scale window |
+   268	| G7 | load: 64, 256, then 512 and 1024 clients with steady writes | yes, scale window |
+   269	
+   270	**Receipt fields:** gate, lane, git SHA and dirty flag, engine image digest, engine config hash,
+   271	fixture id and seed, start and end time, pass and fail counts, first failures (kept, never
+   272	overwritten), timings, and resource observations (peak container memory and CPU, volume bytes).
+351:| `facts()` (exists) | One row per assertion visible at the basis, with the Layer 1 columns minus `scope_key`. | Anything about assertion identity or intervals. |
+352:| `entity(Person)` (new) | One row per entity that has a `Person` assertion visible at the basis. Columns: `_id` plus one column per attribute the type uses. | Reading and filtering whole entities. |
+513:`visible("?a")` expands to the existing basis filter block that `NativeContext.visible()` already writes (recorded position cut, valid interval, retraction), applied to the assertion node in the scope graph [repo NativeContext.ts:76-90]. A SPARQL reader sees plain triples in graphs and an obvious filter. The trace shows the expanded text.
+515:`CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?a { ?s ?p ?o } visible(?a) }` exports a plain RDF dataset at any basis. That export is the interoperability path and is exact.
+643:// 3. Reads: a repository is a view with a closed basis
+645:  readonly recordedAt?: number;
+663:  readonly cursor?: string;  // opaque; binds scope, basis and commit position
+668:  readonly basis: Basis;
+673:  readonly recordedAt: number; readonly retractedAt?: number; readonly txId?: string;
+677:  readonly at: (basis: TemporalBasis) => Repository<M, All>; // closed view; cannot drift to "now"
+737:export interface NativeResult<R> { readonly rows: ReadonlyArray<R>; readonly basis: Basis & { readonly scope: string }; readonly trace: NativeQueryTrace }
+761:// Reads. One closed basis serves the page and every include.
+762:const asOf = people.at({ recordedAt: decisionReceipt.instant, validAt: Date.parse("2026-02-15") });
+769:page.basis.recordedPosition;           // reuse for the next page and for raw queries
+796:| `include` | One `Triples.entities` call per include level, over the distinct ref ids of the parent page, same basis | XTDB: `NEST_ONE`/`NEST_MANY`. QLever: a CONSTRUCT per page decoded client-side (LDkit style) with UNION branches to avoid row multiplication |
+798:| `at(basis)` | Resolve once, hold `recordedPosition` | same |
+821:| 6 | **Temporal leakage into raw queries.** A plain `SELECT` on `tx_assertions` returns every assertion, retracted ones included, for all tenants. A bare SPARQL pattern reads every graph. A published head graph can be stale. | Anyone who bypasses fragments. | Fragments are the documented path. Optionally refuse text that names Layer 1 identifiers (`tx_assertions`, `urn:triplex:field:`) unless it comes through `raw()`. Every result carries its resolved basis. |
+830:| 15 | **Row budgets.** `maxRows` caps native reads. Include fan-out can exceed it. | Large includes through native paths. | Per-include limits (`{ limit }`) and the existing "no partial answer" failure. |
+
+exec
+/bin/zsh -lc "rg --files packages/qlever/src packages/xtdb/src | rg -i 'runtime|index|capabilit'; nl -ba experiments/qlever-managed-writer/DESIGN.md; nl -ba packages/qlever/README.md | sed -n '102,155p'" in /Users/sam/projects/triplex-db-2
+ succeeded in 0ms:
+packages/xtdb/src/index.ts
+packages/qlever/src/index.ts
+     1	# Experimental managed writer checkpoint
+     2	
+     3	Private feasibility work. No backend or service is wired to this design. Goal 7
+     4	remains open; direct native HTTP writes remain failure-atomicity incompatible.
+     5	
+     6	## Boundaries and contracts
+     7	
+     8	Triplex prepares one native SPARQL MODIFY containing its operation marker,
+     9	assertions, claims, journal and metadata. A globally owned broker admits every
+    10	native modification, including recursive scratch, rebuild and maintenance.
+    11	QLever owns all facts and persisted snapshots. The broker's append-only intent
+    12	journal records operation lifecycle, not a replacement fact database.
+    13	
+    14	`PreparedModify` ephemerally carries operation ID, attempt ID, immutable logical
+    15	payload digest, one trusted adapter-generated MODIFY, and separate native marker,
+    16	footprint and complete-proof queries. `RecoveryIntent` retains only identities,
+    17	digests, expected count and bounded selectors. The request also has a native-attempt digest. Reusing one attempt
+    18	with different bytes is an identity error. An explicit new attempt is allowed
+    19	only after a previous attempt was proved not committed in a closed/reloaded
+    20	epoch; the logical digest must match.
+    21	
+    22	`NativeWorker` provides fence verification, bounded MODIFY submission, complete
+    23	marker/fact verification, process termination with closed-epoch proof, snapshot
+    24	fsync, and restart/reload with a new epoch. The eventual owned container must
+    25	require a broker-only access token and omit `--no-access-check`; client
+    26	applications cannot receive the native update token. Every modifying route must
+    27	use this broker. A process-local queue or per-scope lock cannot establish this.
+    28	
+    29	## Data flow and failure states
+    30	
+    31	1. Acquire `fcntl.flock(LOCK_EX)` on a persistent global lock file. Never unlink
+    32	   the lock file: different inode locks would break cross-process ownership.
+    33	2. Read and validate the complete append-only journal. Torn, corrupt or
+    34	   contradictory records hold the broker closed. Resolve any prior unfinished
+    35	   operation before admitting another modification.
+    36	3. Verify native ownership/token fencing, basename and port. Append the bounded recovery intent and
+    37	   fsync the journal before network submission. Fsync the directory when
+    38	   creating journal/lock files. Enforce bounded intent/journal sizes.
+    39	4. Submit the single MODIFY. On any error, cancellation or uncertain response,
+    40	   quarantine all writes while still holding the global lock. Do not inspect a
+    41	   marker in the potentially poisoned mutable worker as proof of completion.
+    42	5. Terminate the owned worker and verify its epoch is closed. Fsync the native
+    43	   `.update-triples` file and containing directory, then restart from that file.
+    44	   Never issue a following modification before this reload. Failure to stop,
+    45	   sync, start or verify the reloaded state remains outcome unknown and closed.
+    46	6. Resolve the complete marker and payload proof in the reloaded snapshot.
+    47	   Present-and-complete means committed. Absent means not committed only with
+    48	   this closed-epoch/reload proof. Partial or inconsistent state remains closed.
+    49	7. On ordinary success, verify complete native proof, fsync the native snapshot
+    50	   and its directory, then append/fsync the committed resolution before ACK.
+    51	   A lost ACK can be resolved from the durable intent identity. Preserve all
+    52	   journal records, snapshots, temporary files and native datasets.
+    53	
+    54	Queries may continue to read an old published QLever snapshot during normal
+    55	modification. Quarantine/restart can make reads unavailable. The broker must not
+    56	advertise zero downtime, distributed ownership, physical power-loss durability
+    57	or transactional integration until those behaviors are separately demonstrated.
+    58	
+    59	## Model and fault-test packet to implement
+    60	
+    61	Use a file-backed model worker with distinct mutable, published and durable
+    62	states. Model native failures before apply, after partial mutation, before
+    63	writeback, after atomic rename before ACK, and after broker intent/commit fsync.
+    64	Use actual child-process death (`os._exit`) to show a second broker recovers an
+    65	unfinished intent before a next modification. Exercise two independent broker
+    66	processes against the same kernel lock and prove their apply intervals never
+    67	overlap. Include refusal to stop, snapshot fsync failure, torn journal, marker
+    68	without complete payload, changed logical digest and direct-token bypass.
+    69	
+    70	After the isolated query-layout wave releases its containers, run native trials
+    71	only on another copied owned QLever dataset, with token fencing and unchanged
+    72	aggregate resource/disk admission. Native cancellation during mutation,
+    73	unwritable snapshot publication and process death after rename before ACK are
+    74	separate experiments. Verify whole marker/facts/claims/journal state, prior
+    75	acknowledged state and post-reload source cuts. No model result qualifies these
+    76	native fault cases or the full Triplex runtime integration.
+   102	a bounded interval API over the same Datalog AST. QLever discovers relevant
+   103	valid-time boundaries under one committed source cut, including nested negation,
+   104	dynamic attributes and optional projection fields. It evaluates each elementary
+   105	span through the normal query executor, then coalesces bounded final answers.
+   106	This baseline costs a source-cut query, a boundary query and one point query per
+   107	span, plus any numeric-domain probes. `maxSpans`, `maxSpanAnswerRows`, `maxRows`
+   108	and one overall deadline reject oversized work without returning partial answers.
+   109	Recursive interval answers are explicitly unsupported. Server-resident span
+   110	execution and larger-scale interval costs are still open gates.
+   111	
+   112	The new `compact-v3` qualification profile uses QLever 0.6.0, commit `6c5861a`,
+   113	with the pinned ARM64-capable image, 4 GiB container memory and four CPUs. Its
+   114	native allocation is 512 MB, with four query threads, a 64 MB cache, 32 MB maximum
+   115	cache entry and planning budget 100. These limits do not include every server
+   116	allocation. The original 4 GiB profile with 2 GB allocation and sixteen threads,
+   117	and both 2 GiB experimental nodes, remain stopped and retained. Passing the new
+   118	profile does not pass the earlier failed gates. Port 7019 binds localhost. The
+   119	development `--no-access-check` configuration is not a production authentication
+   120	setup. Run `scripts/qlever-compact-v3-ready.py --configure` under the qualification
+   121	lease after each start; `--check` rejects a stale process receipt or changed native
+   122	budget. The runtime does not change global server settings automatically.
+   123	
+   124	`--persist-updates` writes the complete native delta snapshot to a temporary
+   125	file and renames it before publishing the next reader snapshot. This creates
+   126	write and transient disk costs proportional to all retained delta triples.
+   127	Pinned-source review found unpublished delta mutation before persistence without
+   128	exception rollback on that path. This implies a risk that a later modification
+   129	publishes changes from a failed operation; single-modify failure atomicity remains
+   130	unqualified. A live native counterexample showed a failed
+   131	multi-operation request retaining its first INSERT. The adapter uses one modify
+   132	operation, but that alone does not repair failure atomicity. A globally fenced,
+   133	fail-closed managed writer is a future candidate, not an implemented guarantee.
+   134	Power-loss durability remains unqualified. Successful concurrent conditional
+   135	updates, cancellation during WHERE evaluation, clean restart and recovery after
+   136	a read-triggered OOM are narrower observations than crash-safe writes.
+   137	
+   138	The common acceptance ledger and evidence live in [qualification](../../qualification/).
+   139	The competing implementations retain the same full ten-goal target and entity,
+   140	fact, history, graph, presence and command scale dimensions. Passing the small
+   141	storage fixtures does not pass upstream conformance, the workload packet, large
+   142	scale, recovery or the complete ten-goal system.
+   143	
+   144	## Schema-aware native SPARQL
+   145	
+   146	`makeQleverNativeQueries(client, scope).select(contract, parameters, build, options)`
+   147	is a separate application-facing query surface. The builder authors SPARQL;
+   148	it does not produce or compile Datalog. Existing Triplex schema attribute
+   149	handles select the typed assertion payload and its committed temporal guards:
+   150	
+   151	```ts
+   152	const Balance = Attribute.int64(":account/balance");
+   153	const Account = EntityType.make("Account", {
+   154	  attributes: { balance: Attribute.use(Balance) },
+   155	});
+

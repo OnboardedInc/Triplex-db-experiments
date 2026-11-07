@@ -12,25 +12,27 @@ Updated: 2026-11-07 (gen-0, planning)
 - Agent models: research = Sonnet xhigh; coding = Opus high (commander's-intent briefs); adversarial review = Codex gpt-6.1-sol xhigh.
 
 ## Phase
-- [x] read context  - [x] PLAN v0  - [ ] research folded in  - [ ] Codex adversarial review  - [ ] PLAN v1
-- [ ] build loop (EXP-000)  - [ ] gen-1 dispatch
+- [x] read context  - [x] PLAN v0  - [x] research R1-R6 folded in (PLAN v1-pre, commit 8499483)
+- [ ] Codex adversarial review round 1 running -> lab/reviews/plan-review-r1.codex.md (+ .log has session id)
+- [ ] Codex round 2 (resume same session)  - [ ] PLAN v1  - [ ] build loop (EXP-000 brief ready)  - [ ] gen-1 dispatch
+- Hourly cron ae766d26 (:07): update learnings in NOTEBOOK, launch Sonnet research if learnings raise questions.
 
 ## Running agents
 | Agent | Purpose | Output |
 | --- | --- | --- |
-| R1 | XTDB 2.2 capabilities | lab/research/R1-xtdb-capabilities.md |
-| R2 | QLever 0.6 capabilities | lab/research/R2-qlever-capabilities.md |
-| R3 | ORM over triple stores prior art | lab/research/R3-orm-prior-art.md |
-| R4 | codebase + harness map, pure tests | lab/research/R4-codebase-harness-map.md |
-| R5 | QLever semantic blockers root cause | lab/research/R5-qlever-semantic-blockers.md |
-| R6 | XTDB lane gap analysis | lab/research/R6-xtdb-gap-analysis.md |
+| R7 (sonnet xhigh) | XTDB page pruning, _id/IID, index-table shapes, ingest tuning; probe tx2-probe-r7:5467 (5g) | lab/research/R7-xtdb-indexing-ingest.md |
+| R8 (sonnet xhigh) | QLever idempotent reapply, rebuild under load, group commit curve; probe tx2-probe-r8:7068 (5g) | lab/research/R8-qlever-write-lifecycle.md |
+| R9 (sonnet xhigh) | core write/journal/schema/read plumbing for projection + repository | lab/research/R9-core-plumbing.md |
+| Codex r1 (gpt-6.1-sol xhigh) | adversarial plan review | lab/reviews/plan-review-r1.codex.md |
+| R1-R6 | DONE | lab/research/R1..R6 |
 
 ## Engine slots
 | Slot | Holder | Ports |
 | --- | --- | --- |
-| probe | R1 may use tx2-probe-r1:5461; R2 tx2-probe-r2:7061; R5 tx2-probe-r5:7062 | |
+| probe | R7 tx2-probe-r7:5467 (5g), R8 tx2-probe-r8:7068 (5g) running now; VM 12 GiB so dev engines wait | |
+| planned | dev: XTDB 5470, QLever 7070; s1..s3: XTDB 5471-5473, QLever 7071-7073 | lab/config/slots.json (EXP-000) |
 
 ## Next actions
-1. Fold R1-R6 into PLAN v1-pre.
-2. Codex conversational adversarial review (2-3 rounds), save transcript to lab/reviews/.
-3. Dispatch EXP-000 harness.
+1. On Codex r1: write lab/reviews/plan-review-r1.response.md (accept/rebut each finding), resume Codex session for round 2.
+2. PLAN v1 from review; then dispatch EXP-000 (brief: lab/experiments/EXP-000-loop-harness/BRIEF.md), Opus high, on main.
+3. On R9: finalize EXP-003 (repository + projection spec compiler) brief; on R7/R8: finalize EXP-005/EXP-007 briefs.
