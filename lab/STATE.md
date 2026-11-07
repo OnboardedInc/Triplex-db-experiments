@@ -25,8 +25,19 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs | cherry-pick task-languages.mjs to main |
 | G01 golden vectors (main, committed draft) | 49 vectors, 17 AMB | rule on AMB-01..17 during oracle cross-check |
 
-## Running agents
-(see the latest dispatch table in the notebook; update on every dispatch/completion)
+## Running agents (9 of 10)
+| Agent | Priority | Output |
+| --- | --- | --- |
+| EXP-N01 north-star benchmark driver (opus, exp/N01-northstar-bench) | P1-P5 measurement (NS gate) | lab/bench/, receipts |
+| EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
+| EXP-A01 contract 0.3.0 retarget (opus, main, no commit) | contract for P1-P5, GS, numeric rule | lab/acceptance/ |
+| EXP-R01 fixes F1-F8 (opus, exp/R01-entity-core) | correctness floor, ORM | branch |
+| V-O01 oracle acceptance + G01 cross-check (opus, verify/O01) | correctness floor | final message |
+| EXP-X02 XTQL parity (opus, exp/X02-xtql-parity) | read priorities on XTDB, floor | branch |
+| EXP-002 QLever baseline (opus, exp/002-qlever-baseline) | A0 control | receipts |
+| R16 XTDB north-star fit (sonnet) | P1-P5 per layer | lab/research/R16-xtdb-northstar-fit.md |
+| R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
+Next when a slot frees: Codex review of PLAN v2 + TARGETS + contract 0.3.0.
 
 ## Pending decisions for Sam (flagged, provisional rulings in force)
 - R15 presence/deletion/cascade: Option C staged; delete = end valid time; default restrict; cascade any-parent card-one.

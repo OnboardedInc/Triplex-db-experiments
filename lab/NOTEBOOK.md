@@ -409,3 +409,8 @@ Report lab/research/R15-presence-deletion-cascade.md. Options A (retraction only
 - Anti-leak: repo-root CLAUDE.md points every agent at lab/SCOPE.md; superseded banners added to AGENTS.md, wiki/goals.md,
   wiki/status.md, handoffs/claude-native/README.md and START-HERE.md, qualification/devloop/PLAN.md, qualification/PLAN.md;
   RULINGS Q2/Q4/Q11 and the int64 rulings marked superseded. All future briefs carry North star and Scope lines.
+
+## GEN-2 dispatch 2026-11-07 (scope v2)
+EXP-N01 (NS benchmark driver), EXP-W01 (20 golden scenarios), EXP-A01 retarget to contract 0.3.0, EXP-R01 fixes F1-F8 under the
+corrected numeric rule, V-O01 oracle acceptance with the G01 cross-check, R16 and R17 north-star fit research per engine. EXP-X02 and
+EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) sum finding).
