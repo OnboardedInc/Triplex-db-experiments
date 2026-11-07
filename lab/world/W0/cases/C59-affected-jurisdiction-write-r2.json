@@ -1,0 +1,53 @@
+{
+  "id": "C59",
+  "slug": "affected-jurisdiction-write-r2",
+  "title": "The same jur:ny write under R2: the depth-two pair is read by both releases, so the set is unchanged",
+  "op": "affected",
+  "checks": [],
+  "notes": [
+    "R2 adds L.localMinWageCents (depth one) but keeps J.stateMinWageCents (depth two), so the affected set equals C58's: [pl:a, pl:b].",
+    "Against C35 and C36: the R1/R2 split is at depth one (the local floor), not at depth two."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R2",
+    "worlds": [
+      {
+        "subject": "pl:a",
+        "facts": [
+          {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+          {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+          {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+          {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+          {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
+        ]
+      },
+      {
+        "subject": "pl:b",
+        "facts": [
+          {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+          {"e": "loc:buf", "a": "jurisdiction", "v": "jur:ny", "tx": 3},
+          {"e": "pl:b", "a": "startDate", "v": "2026-11-09", "tx": 4},
+          {"e": "pl:b", "a": "payRateCents", "v": 1700, "tx": 4},
+          {"e": "pl:b", "a": "location", "v": "loc:buf", "tx": 4}
+        ]
+      },
+      {
+        "subject": "pl:c",
+        "facts": [
+          {"e": "loc:sfo", "a": "jurisdiction", "v": "jur:ca", "tx": 5},
+          {"e": "jur:ca", "a": "stateMinWageCents", "v": 1800, "tx": 5},
+          {"e": "pl:c", "a": "payRateCents", "v": 1800, "tx": 6},
+          {"e": "pl:c", "a": "location", "v": "loc:sfo", "tx": 6}
+        ]
+      },
+      {"subject": "pl:d", "facts": [{"e": "pl:d", "a": "startDate", "v": "2026-11-02", "tx": 7}, {"e": "pl:d", "a": "payRateCents", "v": 1650, "tx": 7}]}
+    ],
+    "writes": [
+      ["jur:ny", "stateMinWageCents"]
+    ]
+  },
+  "expected": {
+    "affected": ["pl:a", "pl:b"]
+  }
+}

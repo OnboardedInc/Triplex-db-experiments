@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-07",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
@@ -10,16 +10,17 @@
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "ee2cd0add5c0d2313f466d51624b8631dc560041abf54c53e99edfb70f01026d",
-    "lab/acceptance/RULINGS-PENDING.md": "83e0307a637551d705fa9e0d09bc187c8ef8abda87e4962f419797ab9706d19a",
+    "lab/acceptance/RULINGS.md": "b0dd0b99121e0fe2ea90866152549ff4fb21eeb13d195ee9a00fd8a977692769",
+    "lab/acceptance/RULINGS-PENDING.md": "2a8c787df7c862726937b9e797a7621fec5a5ac2b302816394c546e0b6fec43e",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
-    "lab/acceptance/build_contract.py": "cdca65fca6cf921ad3711c1d6b662622f11d7dd6e6dd32a889f13479172dc851"
+    "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
+    "lab/acceptance/build_contract.py": "2fc62fe3484da3731b3e8be6a310386eefa31f35ae0c5987e01e8cefe183ebb6"
   },
   "artifacts": {
-    "load-contract.json": "a7870192dd5472ef4b1d3b4c1b694b3d26e2eb9a67925ba9eba0a995ec3e3dac",
-    "budgets.json": "64323194f4648c7e2342d766d865bd33120c1484023cf70a02f4f1a5754a3d11",
-    "capability-matrix.md": "9d37723f63e506b3b4e8d2d732780089e8c2def82506793ec6091e79d567e305"
+    "load-contract.json": "75fcc41163f94cb35cdfb7e4d0db255e046b51e8a68b8e842007a9313ad59c68",
+    "budgets.json": "3594ef9b46069df45f5f23b8852d4c0b0c9f628ce67f86e1a8fadd6722382a52",
+    "capability-matrix.md": "63ca8ca02f7b8488e5c45619220dc7f5243ac993213f5fdf1fd56db491dc5065"
   },
   "lanes": [
     "xtdb-xtql",
@@ -808,6 +809,76 @@
         "DO-ROUND",
         "CX-REFUSAL-AS-AUTHORING"
       ]
+    },
+    {
+      "id": "Q46",
+      "topic": "Contract 0.3.6 questions (Q46a to Q46d)",
+      "ruling": "Q46a Q42c's crash cases cover all 10 pairs of the five transitions. Q46b once EXP-N01/N02 measures A0 at the budget re-freeze, the A0 commit and tree are pinned in the contract and the evaluator takes the control's identity from there, never from the claim. Q46c the W0 pin's file list is adjusted when W0-1.1.1 merges. Q46d when EXP-O04 lands and is re-verified, a new O-REPLAY pin is compiled and the excludes and refusals shrink, with the pin-scope expected differences updated.",
+      "compiledInto": [
+        "ATOMIC_UNIT_CASES",
+        "A0_REGISTRY",
+        "W0_PIN files",
+        "ORACLE_PINS O-REPLAY nextPin"
+      ]
+    },
+    {
+      "id": "Q47",
+      "topic": "Codex plan-v2 round 6 (Q47a to Q47d)",
+      "ruling": "Q47a admission validates the complete object graph and every record's schema: executed modules and the binary are retained objects hashing to the manifest, verifier records match their schema, and every case verdict is recomputed from the retained raw result (an oracle exit 2 or X-NOT-MODELED never PASS). Q47b measurement and control carry nonempty, validated workload identity (trace generator hash, seed, offer schedule hash, window, slot), a missing field never matching a missing field; the A0 control's identity comes from the frozen A0 registry, never the claim. Q47c admission re-judges every selected case and rejects any retained refusal; the generator propagates unsupported-rule dependencies through indirect selections, so CS-MIGRATION and CS-WIDEN obligations are blocked while decimal redeclaration is refused. Q47d RULINGS-PENDING.md may hold ruling rows with no authority; they are listed and hashed, never compiled, and never invalidate generation.",
+      "compiledInto": [
+        "EVIDENCE_SCHEMAS",
+        "open_record",
+        "case_verdict",
+        "evidence_ok",
+        "WORKLOAD_IDENTITY",
+        "workload_ok",
+        "A0_REGISTRY",
+        "admit_claim",
+        "refused_by",
+        "ORACLE_REFUSALS scale-evolution reachedThrough",
+        "oracle_scope",
+        "PIN_SCOPE_EXPECTED_DIFF",
+        "CX-R6-UNOPENED-MEANING",
+        "CX-R6-UNMATCHED-CONTROL",
+        "CX-R6-INDIRECT-REFUSAL",
+        "pending_ruling_ids",
+        "pendingRulings",
+        "CLAIM_ADMISSION"
+      ]
+    },
+    {
+      "id": "Q48",
+      "topic": "W0 accepted; V-D01 delta-check notes (Q48a to Q48c)",
+      "ruling": "Q48a W0-1.1.1 at ada2e90 is ACCEPTED (V-D01 delta check); the contract pins its 95 file hashes and pins the fingerprint once O-DOMAIN's independent generator reproduces it (Q40g). Q48b the scoped-release P5 measurement runs at the 100k rung, and a scoped sweep's P5 receipt binds the reached-subject list and its hash instead of every placement. Q48c W0-1.1.2 adds an R3 case with a listed jurisdiction that has no facts, the skip-rule wording, and the measured R3 counts (9,497 reached, 418 changed); none changes an output, a case result, a floor or the fingerprint.",
+      "compiledInto": [
+        "W0_FILES",
+        "W0_PIN",
+        "W0_FINGERPRINT_CANDIDATE",
+        "GATE-W0",
+        "WORLD_W0 version",
+        "WORLD_W0 nextEdit",
+        "NS.P5",
+        "NS-P5-SCOPED-RELEASE-REACHED",
+        "load-contract P5 scopedRelease"
+      ]
+    },
+    {
+      "id": "Q49",
+      "topic": "EXP-O04 erasure and decimal questions (Q49a to Q49e)",
+      "ruling": "Q49a an erasure commit is an ordinary data-journal transaction with identity-only changes, also written to the separate erasure ledger; earlier :_tx/change facts for erased values show the marker, so ER-JOURNAL-MODULO compares markers on both sides. Q49b the first erasure sets erasedAt, re-erasure changes nothing, an erase matching nothing commits an empty change list. Q49c (provisional, under the Q24 flag for Sam) erased values match no value predicate, value aggregates skip them while COUNT counts them, ORDER BY places them last by assertion id, grouping keys them by the marker, Unique ignores them, an erased reference include returns the marker. Q49d in-flight reads may return the old value or the marker. Q49e a JSON number converts to decimal from its as-written reading (toDecimal(json 0.1, 2, 1) = 0.1); decimal text inside a JSON string is E-INVALID-VALUE unless converted explicitly.",
+      "compiledInto": [
+        "ERASURE journalCommit, idempotence, queries, inFlight",
+        "CS-ERASURE",
+        "G9.erasure.commit-semantics",
+        "G9.erasure.query-semantics",
+        "G9.erasure.visibility-boundary",
+        "G9.erasure.reproduction-modulo",
+        "G7.journal.logical-contract",
+        "DR-JSON-CONVERT",
+        "DR-JSON-STRING-TEXT",
+        "R-DEC-6",
+        "G1.decimal.channel-routing"
+      ]
     }
   ],
   "languageRules": {
@@ -1368,7 +1439,7 @@
   },
   "erasure": {
     "status": "PROVISIONAL product ruling (RULINGS Q24), flagged for Sam: explain at a pre-erasure basis shows the marker, not the value",
-    "boundary": "the boundary is the erasure commit's publication; a read that started before it may return the old value; every read that starts after it, at any basis including bases before the erasure, returns ErasedValue {erasedAt} in place of the value",
+    "boundary": "the boundary is the erasure commit's publication; a read that started before it may return, for each erased value, the old value or the marker (RULINGS Q49d); every read that starts after it, at any basis including bases before the erasure, returns ErasedValue {erasedAt} in place of the value",
     "shape": "assertion identities and valid and record intervals keep their shape",
     "reproduction": "every reproduction contract holds modulo erasure: the C6 whole-journal comparison, raw and native query results, SDK results, cursor stability, bit-for-bit explain and GS.12; both sides of a comparison replace erased values with their markers before comparing (RULINGS Q31f)",
     "frontier": "an index or cache may serve any basis only after it has applied every erasure published so far, independently of the requested basis; an old-basis read never passes on the strength of its basis alone (RULINGS Q31f)",
@@ -1376,6 +1447,10 @@
     "keyEvidence": "for crypto-shredding, the lane's inventory shows that every surviving copy of a protected value, and of anything derived from it, is encrypted only under the destroyed key; deleting some key is not evidence",
     "derivedChannels": "a PII attribute's order key and lexical channel are inside the encrypted envelope (range rules on PII then run in the kernel after decryption), or the attribute is not eligible for range rules",
     "restore": "the erasure ledger is kept apart from the data and replayed after any restore or rebuild",
+    "journalCommit": "an erasure commit is an ordinary data-journal transaction: it has a position, a txId, a record in transactions() and its own :_tx/ facts, and its changes list only identities (entity, attribute, assertion ids), never values; it is also written to the erasure ledger kept apart from the data, which restore and rebuild replay; earlier transactions' :_tx/change facts for erased values show the ErasedValue marker, so ER-JOURNAL-MODULO compares markers on both sides (RULINGS Q49a)",
+    "idempotence": "the first erasure of an identity sets erasedAt; erasing it again changes nothing; an erase that matches nothing still commits, as a journal record with an empty change list (RULINGS Q49b)",
+    "queries": "provisional, under the Q24 flag for Sam: an erased value is present with no readable value; it matches no value predicate (equality, inequality, range, pattern), so a filter never selects or rejects a subject by it; SUM, AVG, MIN and MAX skip it while COUNT of assertions counts it; ORDER BY places erased markers last in a deterministic order by assertion id; grouping puts all erased values of an attribute in one group keyed by the marker; Unique ignores erased values; an erased reference cannot be followed (an include returns the marker) (RULINGS Q49c)",
+    "inFlight": "for a read that started before the erasure published, each erased value may be the old value or the marker (RULINGS Q49d)",
     "tests": [
       "ER-PINNED-READER",
       "ER-REBUILD",
@@ -1432,7 +1507,8 @@
     "witnesses": "every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not)",
     "workItemIdentity": "a work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; its content version hashes (release hash, input positions, payload) and is not the delivery identity; each id carries a durable publication sequence that increments whenever the payload to publish differs from the latest published payload for that id, and the outbox delivery key is (id, publication sequence); an activation that leaves the payload equal to the latest published one publishes nothing (early cutoff); duplicate-effect checks count by delivery key (RULINGS Q36a, Q38f)",
     "affectedSet": "the expected affected set of a transaction is the subjects whose static read set contains a changed fact; static read sets over-approximate and never miss (RULINGS Q36e)",
-    "version": "W0-1.1.x (W0-1.1.1 in progress on exp/D01-world-definition, not merged); the W0 pin stays null until the W0 delta check and O-DOMAIN's fingerprint reproduction (RULINGS Q40, Q44)",
+    "version": "W0-1.1.1, ACCEPTED at ada2e90 by V-D01's delta check and merged (e7c1346); its 95 file hashes are pinned (W0_PIN); the fingerprint pin waits for O-DOMAIN's reproduction (RULINGS Q40, Q44, Q48a)",
+    "nextEdit": "W0-1.1.2 adds an R3 case with a listed jurisdiction that has no facts, adds \"and A's entry for that rule is unscoped\" to the SPEC 5.3 skip rule, and records measured R3 counts (9,497 reached, 418 changed) beside the expected ones; it changes no output, case result, floor or the fingerprint, and re-pinning its hashes needs a contract version bump (RULINGS Q48c)",
     "ballast": "rule-neutral ballast (owned answer entities <S>/ans:k with field and value text no rule reads, and a reference chain deep enough for 3 to 6 hops) sizes each world from P4's frozen buckets (50% 50-200 facts, 35% 201-800, 15% 801-2,000; a world may fall up to 2 facts below its bucket); trace commands use W0 and ballast attributes only, other attributes stay E_UNKNOWN; a ballast write affects nobody (RULINGS Q40a, Q44a)",
     "twoHopFloor": "the wage floor is S.location -> L.jurisdiction -> J.stateMinWageCents (R2's local floor stays on L), so the dependency index follows two references; cases: a jurisdiction wage write, re-pointing (L, jurisdiction), and the R1/R2 split at that depth (RULINGS Q40b)",
     "positionOrdinal": "positions in W0 are the 1-based dense ordinal of committed Triplex transacts in the tenant's source-of-truth stream, in coordinate order, supplied identically to the kernel and to O-DOMAIN (RULINGS Q40f)",
@@ -1847,6 +1923,34 @@
       ],
       "receipts": "comparative NS receipts on a non-dense source while G7.position.coordinates is open",
       "why": "GATE-POSITION"
+    },
+    {
+      "id": "CX-R6-UNOPENED-MEANING",
+      "defeats": [
+        "CR-NS",
+        "CR-GS",
+        "CR-PASS-ALL"
+      ],
+      "receipts": "a claim with every object hash correct but no retained binary or module bytes, a verifier object {\"notAVerifierRecord\": true}, and case objects with oracleExit 2 and X-NOT-MODELED labelled PASS",
+      "why": "RULINGS Q47a: schemas validated, binary and modules retained, verdicts recomputed (lab/reviews/plan-v2-round6.codex.md finding 1)"
+    },
+    {
+      "id": "CX-R6-UNMATCHED-CONTROL",
+      "defeats": [
+        "CR-NS",
+        "CR-GS"
+      ],
+      "receipts": "a claim whose measurement and control receipts have no trace and no window, and whose control identity the claimant chose",
+      "why": "RULINGS Q47b: validated workload identity on both sides; the control comes from A0_REGISTRY (finding 5)"
+    },
+    {
+      "id": "CX-R6-INDIRECT-REFUSAL",
+      "defeats": [
+        "CR-PASS-ALL",
+        "CR-NS"
+      ],
+      "receipts": "a G7.migration.schema-evolution claim whose CS-MIGRATION case redeclares a decimal attribute from (5,2) to (6,3), retained with oracle exit 2 and X-NOT-MODELED and labelled PASS",
+      "why": "RULINGS Q47c: refusals propagate through indirect selections and every retained case is re-judged (finding 6)"
     }
   ],
   "evaluatorPositiveFixtures": [
@@ -1989,6 +2093,68 @@
       "why": "today's scope-counter allocator; runs the four falsifiers like every other composition (RULINGS Q38a)"
     }
   },
+  "a0Registry": {
+    "rule": "when EXP-N01/N02 measures A0 at the budget re-freeze, the A0 commit, source tree and composition are frozen here in a contract version bump; the evaluator takes a comparison's control identity from the entry for the claim's source engine, never from the claim, so a candidate-selected control cannot qualify a comparison; while an entry is null every comparison against it is a diagnostic (RULINGS Q46b, Q47b)",
+    "entryShape": {
+      "commit": "the A0 code commit (40 hex digits)",
+      "sourceTreeSha256": "the A0 source tree hash",
+      "composition": "the four assignments, each with engine, imageDigest, configSha256 and slot",
+      "measuredBy": "the EXP-N01/N02 receipt that froze it"
+    },
+    "byEngine": {
+      "xtdb": "A0-XTDB",
+      "qlever": "A0-QLEVER"
+    },
+    "entries": {
+      "A0-XTDB": null,
+      "A0-QLEVER": null
+    }
+  },
+  "workloadIdentity": {
+    "fields": {
+      "generatorSourceSha256": "hex64",
+      "seed": "int",
+      "offerScheduleSha256": "hex64",
+      "window": "window",
+      "slot": "str"
+    },
+    "rule": "every measurement and control receipt carries workload {generatorSourceSha256 (trace generator hash), seed, offerScheduleSha256, window [from, to] with 0 <= from < to, slot (the source assignment's slot)}, every field present, typed and nonempty; a control matches a measurement only when the two workload identities are equal field by field; a missing field never matches a missing field (RULINGS Q47b)"
+  },
+  "evidenceSchemas": {
+    "build-manifest/1": {
+      "fields": {
+        "schema": "str",
+        "sourceTreeSha256": "str",
+        "binarySha256": "hex64",
+        "modules": "list"
+      },
+      "rule": "binds the source tree to the executed binary; the binary and every executed or imported module ({path, sha256}, at least one) are retained objects whose bytes hash to the listed values"
+    },
+    "verifier-record/1": {
+      "fields": {
+        "schema": "str",
+        "obligation": "str",
+        "definitionSha256": "hex64",
+        "verifier": "str",
+        "verdict": "str"
+      },
+      "rule": "names the receipt's obligation and definition hash, a nonempty verifier and the verdict ACCEPT"
+    },
+    "case-result/1": {
+      "fields": {
+        "schema": "str",
+        "obligation": "str",
+        "case": "str",
+        "selection": "str",
+        "oracle": "str",
+        "oracleExit": "int",
+        "oracleCode": "str-or-null",
+        "expectedSha256": "hex64",
+        "observedSha256": "hex64"
+      },
+      "rule": "the retained raw oracle run and observation for one case and the selection it covers; PASS only when oracleExit is 0, oracleCode is null, the expected and observed objects are both retained and equal; an oracle exit 2 or X-NOT-MODELED is a refusal and never PASS (RULINGS Q45b, Q47a)"
+    }
+  },
   "outsideBlockMutationFixture": {
     "source": "xtdb",
     "file": "packages/xtdb/src/XtdbStorageAdapter.ts",
@@ -2015,11 +2181,44 @@
     "PO-ABORTED-LISTED"
   ],
   "claimAdmission": {
-    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator derives every prerequisite from validated, source-bound receipt evidence, never from supplied case names or Booleans: a VA-valid G7.position.coordinates receipt for the claim's own source tree and composition covering all of POSITION_REQUIRED_CASES; composition identity bound on every receipt (four assignments with image digest, configuration hash and slot); where any claimed obligation uses O-DOMAIN, the W0 pin and a W0.coverage-floors receipt; and a non-null, accepted ORACLE_PINS entry for every oracle the claim depends on, including the oracles of its prerequisite obligations, with the claimed obligation outside that pin's excludes and the oracle's refusals. Evidence is opened, never trusted by shape (RULINGS Q42a): every referenced object exists in the content-addressed store and hashes to its recorded value; the executed binary is bound to the claimed source tree through a build/import manifest object; receipts are fresh (produced at the claim's commit, after the last change to any file in their dependency closure); modes, fault repetitions and verifier evidence are present; the claimed obligation's own measurement receipts exist with a matched control (A0 on the same slot, trace, seed and window); unknown obligation ids are rejected, never dropped. lab/bin implements this (EXP-E01) with these functions as the reference model and adds the full VA rules (RULINGS Q41d). A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
+    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator derives every prerequisite from validated, source-bound receipt evidence, never from supplied case names or Booleans: a VA-valid G7.position.coordinates receipt for the claim's own source tree and composition covering all of POSITION_REQUIRED_CASES; composition identity bound on every receipt (four assignments with image digest, configuration hash and slot); where any claimed obligation uses O-DOMAIN, the W0 pin and a W0.coverage-floors receipt; and a non-null, accepted ORACLE_PINS entry for every oracle the claim depends on, including the oracles of its prerequisite obligations, with the claimed obligation outside that pin's excludes and the oracle's refusals. Evidence is opened, never trusted by shape (RULINGS Q42a, Q47a): every referenced object exists in the content-addressed store and hashes to its recorded value, and every record matches its schema in EVIDENCE_SCHEMAS; the executed binary is bound to the claimed source tree through a build/import manifest object, and the binary and every executed or imported module it lists are retained objects whose bytes hash to the manifest; verifier records match the verifier-record schema; every case verdict is recomputed from its retained raw result, so an oracle exit 2 or X-NOT-MODELED never counts as PASS, and the claim is rejected if any case the obligation selects, directly or through a broader case set, has a retained refusal (RULINGS Q47c); receipts are fresh (produced at the claim's commit, after the last change to any file in their dependency closure); modes, fault repetitions and verifier evidence are present; the claimed obligation's own measurement receipts exist with a matched control whose identity (commit, source tree, composition) comes from the frozen A0_REGISTRY entry for the claim's source engine, never from the claim, and whose nonempty, validated workload identity (WORKLOAD_IDENTITY: trace generator hash, seed, offer schedule hash, window, slot) equals the measurement's, a missing field never matching a missing field (RULINGS Q46b, Q47b); while the A0 registry entry is null every comparison is a diagnostic; unknown obligation ids are rejected, never dropped. lab/bin implements this (EXP-E01) with these functions as the reference model and adds the full VA rules (RULINGS Q41d). A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
     "verdicts": [
       "QUALIFIED",
       "DIAGNOSTIC"
     ]
+  },
+  "pendingRulings": {
+    "file": "lab/acceptance/RULINGS-PENDING.md",
+    "sha256": "2a8c787df7c862726937b9e797a7621fec5a5ac2b302816394c546e0b6fec43e",
+    "ids": [
+      "Q50a",
+      "Q50b",
+      "Q50c",
+      "Q50d",
+      "Q50e",
+      "Q51a",
+      "Q51b",
+      "Q51c",
+      "Q51d",
+      "Q51e",
+      "Q51f",
+      "Q52a",
+      "Q52b",
+      "Q52c",
+      "Q52d",
+      "Q52e",
+      "Q52f",
+      "Q52g",
+      "Q53a",
+      "Q53b",
+      "Q54a",
+      "Q54b",
+      "Q54c",
+      "Q54d",
+      "Q54e"
+    ],
+    "authority": "none",
+    "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
   },
   "oraclePins": {
     "O-TDK1": {
@@ -2075,6 +2274,7 @@
         "G1.decimal.channel-routing": "V-O03 F2: DR-JSON-CONVERT answered wrong; excluded until EXP-O04 fixes it and an independent re-check moves the pin (RULINGS Q45a, Q45e)"
       },
       "ruledAgainst": "contract 0.3.5 + Q43",
+      "nextPin": "EXP-O04 (oracle 0.3.2 f4b59b4 fixes F2; oracle 0.4.0 9fdc3b4 models erasure) is not yet merged or independently re-verified, so this pin stays at 8cc2c26; once it is, a new pin is compiled and the excludes and refusals shrink in that version, with PIN_SCOPE_EXPECTED_DIFF updated (RULINGS Q45e, Q46d)",
       "rule": "accepted with a scoped pin; obligations in excludes, and cases the oracle refuses (ORACLE_REFUSALS), fail closed; moving the pin needs an independent re-check and a contract version bump (RULINGS Q45a, Q45e)"
     }
   },
@@ -2124,6 +2324,21 @@
             "DEC-SCALE-NARROW"
           ]
         ],
+        "reachedThrough": [
+          [
+            "CS-DECIMAL",
+            "scale-evolution"
+          ],
+          [
+            "CS-MIGRATION",
+            "*"
+          ],
+          [
+            "CS-WIDEN",
+            "*"
+          ]
+        ],
+        "reachedWhy": "any CS-MIGRATION or CS-WIDEN case may redeclare a decimal attribute's precision or scale (for example (5,2) to (6,3)), which the pinned oracle refuses with X-NOT-MODELED; every obligation selecting those sets, through any tag, is blocked (lab/reviews/plan-v2-round6.codex.md finding 6; RULINGS Q47c)",
         "until": "the oracle models decimal redeclaration (R-DEC-15)"
       }
     }
@@ -2264,6 +2479,8 @@
         "G8.composition.watermark-routing",
         "G7.composition.ack-and-routed-ryow",
         "G7.position.coordinates",
+        "G9.erasure.commit-semantics",
+        "G9.erasure.query-semantics",
         "G9.erasure.reproduction-modulo",
         "S.population.year-one",
         "S.rungs.ladder",
@@ -2279,7 +2496,6 @@
         "G1.wire.qlever-shadow",
         "G7.outbox.publication-sequence",
         "G1.types.invalid-rejected",
-        "G1.types.storage-widening-safe",
         "G1.types.native-parameters",
         "G1.schema.required",
         "G1.schema.cardinality",
@@ -2306,8 +2522,6 @@
         "G7.receipt.journal-complete",
         "G7.commit.protocol-transitions",
         "G7.recovery.backup-restore",
-        "G7.migration.schema-evolution",
-        "G7.migration.valid-writes-never-rejected",
         "G8.eligibility.c1-routing",
         "G8.publish.coherent",
         "G8.publish.basis-honesty",
@@ -2386,8 +2600,17 @@
         "G1.decimal.channel-routing": [
           "excluded"
         ],
+        "G1.types.storage-widening-safe": [
+          "scale-evolution"
+        ],
         "G7.journal.logical-contract": [
           "erasure"
+        ],
+        "G7.migration.schema-evolution": [
+          "scale-evolution"
+        ],
+        "G7.migration.valid-writes-never-rejected": [
+          "scale-evolution"
         ],
         "G10.cursor.stable": [
           "erasure"
@@ -2417,6 +2640,12 @@
         "G8.composition.watermark-routing": [
           "erasure"
         ],
+        "G9.erasure.commit-semantics": [
+          "erasure"
+        ],
+        "G9.erasure.query-semantics": [
+          "erasure"
+        ],
         "G9.erasure.reproduction-modulo": [
           "erasure"
         ]
@@ -2424,9 +2653,18 @@
     }
   },
   "pinScopeExpectedDiff": {
-    "onlyGeneratorBlocked": [],
+    "onlyGeneratorBlocked": [
+      "G1.types.storage-widening-safe",
+      "G7.migration.schema-evolution",
+      "G7.migration.valid-writes-never-rejected",
+      "G9.erasure.commit-semantics",
+      "G9.erasure.query-semantics"
+    ],
     "onlyVerifierBlocked": [],
-    "onlyGeneratorUses": [],
+    "onlyGeneratorUses": [
+      "G9.erasure.commit-semantics",
+      "G9.erasure.query-semantics"
+    ],
     "onlyVerifierUses": []
   },
   "q43Rules": [
@@ -2574,8 +2812,13 @@
     },
     {
       "id": "DR-JSON-CONVERT",
-      "rule": "an explicit conversion of a JSON value to a typed decimal (toDecimal with declared precision and scale) validates it (E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW or E-INVALID-VALUE) and encodes the TDK1 key",
+      "rule": "an explicit conversion of a JSON number to a typed decimal (toDecimal with declared precision and scale) starts from the number's as-written reading (the read-back-as-written text of RULINGS Q33a), never its exact binary64 expansion, so toDecimal(json 0.1, 2, 1) = 0.1; it validates the result (E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW or E-INVALID-VALUE) and encodes the TDK1 key (RULINGS Q49e)",
       "case": "DR-JSON-CONVERT"
+    },
+    {
+      "id": "DR-JSON-STRING-TEXT",
+      "rule": "decimal text inside a JSON string is E-INVALID-VALUE where a decimal is required, unless the query converts the string explicitly (RULINGS Q49e)",
+      "case": "DR-JSON-STRING-TEXT"
     }
   ],
   "rulingsCoverage": {
@@ -2732,7 +2975,23 @@
       "Q45b",
       "Q45c",
       "Q45d",
-      "Q45e"
+      "Q45e",
+      "Q46a",
+      "Q46b",
+      "Q46c",
+      "Q46d",
+      "Q47a",
+      "Q47b",
+      "Q47c",
+      "Q47d",
+      "Q48a",
+      "Q48b",
+      "Q48c",
+      "Q49a",
+      "Q49b",
+      "Q49c",
+      "Q49d",
+      "Q49e"
     ],
     "recordedNotCompiled": []
   },
@@ -2933,7 +3192,7 @@
     },
     {
       "id": "R-DEC-6",
-      "rule": "toDecimal(number) starts from the exact binary expansion, then applies the caller's scale and rounding",
+      "rule": "toDecimal(number) starts from the exact binary expansion, then applies the caller's scale and rounding; a JSON number instead starts from its as-written reading (DR-JSON-CONVERT, RULINGS Q49e)",
       "error": "-",
       "case": "DEC-TODECIMAL-EXACT-EXPANSION",
       "ruling": "Q33b"
@@ -3080,7 +3339,7 @@
       "appliesTo": "NS.* and GS.* obligations and every comparative or promotion claim (CLAIM_ADMISSION)"
     },
     "GATE-W0": {
-      "rule": "no domain-dependent obligation closes until V-D01 has independently reviewed W0 (SPEC.md, releases, golden cases) and every W0_PIN hash is pinned in this contract (RULINGS Q31i); a null pin fails closed",
+      "rule": "no domain-dependent obligation closes until V-D01 has independently reviewed W0 (SPEC.md, releases, golden cases), every W0_PIN hash is pinned in this contract (RULINGS Q31i, Q48a) and O-DOMAIN has reproduced the population fingerprint (RULINGS Q40g); a null field fails closed",
       "requires": [
         "W0_PIN complete",
         "W0.coverage-floors"
@@ -3159,20 +3418,124 @@
     }
   ],
   "w0Pin": {
-    "rule": "null until V-D01 reviews W0; pinning the hashes needs a contract version bump (RULINGS Q31i, Q32f)",
+    "rule": "pinned at a contract version bump only (RULINGS Q31i, Q32f); W0-1.1.1 ACCEPTED at ada2e90 with its 95 file hashes (RULINGS Q48a); the population fingerprint is pinned only once O-DOMAIN's independent generator reproduces W0_FINGERPRINT_CANDIDATE with SPEC 12.7's recipe (RULINGS Q40g); a null field fails closed",
     "reviewedBy": "V-D01",
-    "reviewReceipt": null,
+    "reviewReceipt": "V-D01 delta check of W0-1.1.1 (lab/verify/D01/VERIFY.md; bee0b25; merged e7c1346)",
+    "version": "W0-1.1.1",
+    "commit": "ada2e90337b7ab210dc302df01c81896fe546bcf",
+    "hashTable": "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS",
     "files": {
-      "lab/world/W0/SPEC.md": null,
-      "lab/world/W0/releases/R1.json": null,
-      "lab/world/W0/releases/R2.json": null,
-      "lab/world/W0/releases/R3.json": null,
-      "lab/world/W0/schema.json": null,
-      "lab/world/W0/cases/": null
+      "lab/world/W0/README.md": "891af156079bac5fc3dab7614a6070f76580f0d97d9f8e400d41417c81b93052",
+      "lab/world/W0/SPEC.md": "c93fcbd1f5ef145a0b1ab468482fb74ac6357bc318bc00ce948cd9bfac5d00a0",
+      "lab/world/W0/cases/C01-base-r1.json": "3ccb749c222ee47848f3904629fa9a8c07f668f20fb664c7dcde1cc12867e8ee",
+      "lab/world/W0/cases/C02-base-r2.json": "c5350dc56365feec4eba7bb4c5df2d5f92849a900d414e287a7a0f9e68f00117",
+      "lab/world/W0/cases/C03-new-hire-pre-start-r1.json": "22bb577dbdc60eb04d4214d15f2d9cdea0f3dc187accc40a5f8f317a0c7a2e60",
+      "lab/world/W0/cases/C04-start-date-moved-r1.json": "37b706ba926295eca770a62032afe25ae0fe7ab3359cc073d28c84c46fa9c97d",
+      "lab/world/W0/cases/C05-start-unknown-r1.json": "24f0f50af9d9be9b7208b5768b6c24df555249f482152a51ce0607c783c30e88",
+      "lab/world/W0/cases/C06-i9s1-due-exact-boundary-r1.json": "feb873bb99b59412c3a2bdf983bf4859c9858cf01638a4a21802d459a5a21236",
+      "lab/world/W0/cases/C07-ssn-erased-r1.json": "d63a60eaf4fb69af25d4de49bec6d9343ab54ed97e449f21ef3fc2d5a9a085ec",
+      "lab/world/W0/cases/C08-ssn-bad-format-r1.json": "7c2b281829c42ebdc947d15a19eb89ae1d2845fc378b38c6cfcdb6ed3fa495c6",
+      "lab/world/W0/cases/C09-everify-submit-r1.json": "f50e25678a6e313131541dd087a74cad379cfada036f2202b8c337c069bff4ad",
+      "lab/world/W0/cases/C10-everify-tnc-r1.json": "dbc03fc0dc77a04fdfb699156f2a7fdb0328f15b7f6b85df2df8d77b6061d373",
+      "lab/world/W0/cases/C11-flags-authorized-overtime-r1.json": "b28d2d6146b43e978d7a67235a727831ef6d44c81733f7a05474b6246cc0e10e",
+      "lab/world/W0/cases/C12-everify-fnc-bgc-consider-r1.json": "8417a6e9b89ab9d6fa17e257e7bc077d21d1386c3b3a719102c35d73a106abc1",
+      "lab/world/W0/cases/C13-bgc-reject-r1.json": "9cd764476b44bfdfe177a1f05d8d2c5cedf9860a2b0dcbe103a2cf9665f83fb2",
+      "lab/world/W0/cases/C14-proposal-only-r1.json": "981a5add96447160474160c5fdbcc6c4f97444f9392f9a5412b99e7f50492a5d",
+      "lab/world/W0/cases/C15-proposal-then-decision-r1.json": "61206e550163dd8cbd6a6e7df589bddb8112fb3ffb383f0c93cdc6d58fd90ae0",
+      "lab/world/W0/cases/C16-agent-decision-record-r1.json": "9c08447c19f28f9d2640d8f038d578bd7719157ee0e24932828a092ca24a09b3",
+      "lab/world/W0/cases/C17-decisions-last-wins-r1.json": "2c9eade2d25af6283513bd622d3206254a8cbae0d89161c52f0417599882cec1",
+      "lab/world/W0/cases/C18-decisions-same-tx-tie-r1.json": "1767beb767651d9c219e0e1ccea1f819b914e9b7ad69148b18dffe1df7bcbd5f",
+      "lab/world/W0/cases/C19-docs-before-expiry-r1.json": "919f8937a6ae4d806db1c4ca485ff6e0b63a6c8ed08512abe1a7d58b8d9136bc",
+      "lab/world/W0/cases/C20-docs-before-expiry-r2.json": "3858027be2fe9c079e92ec38f5b79ba11a7257e7983393f2d8ea1acf4b90296e",
+      "lab/world/W0/cases/C21-docs-ead-at-expiry-r1.json": "423def4d67694b977cf2977b35db8b781c2f220c8c30a277577bd630403c2c85",
+      "lab/world/W0/cases/C22-docs-other-rows-r1.json": "25dc757a6bd255a0052ab44bcba1c0473de0fd9be118496cbc47b18d87549821",
+      "lab/world/W0/cases/C23-minwage-below-after-raise-r1.json": "b96a18f379d505cf286d53684c174424e0575e606125f49f72b28dd5f370e0a9",
+      "lab/world/W0/cases/C24-minwage-floor-unknown-r1.json": "a5d02f108ef1e96591a9e13f7ae7cf43d960bf589837fc021d77f77228adda91",
+      "lab/world/W0/cases/C25-minwage-local-floor-r2.json": "1319f9456cefb164415cc167daa04f2b2d19b4657eb327de47a7bbca25502ea6",
+      "lab/world/W0/cases/C26-section2-window-r2.json": "cee564a9ce38ad17daeb5a9e6c720577313771f143a20f37bbf9d4d3cf2f62a1",
+      "lab/world/W0/cases/C27-numeric-max-values-r1.json": "4683dbaeb070028aee184e38feb02afae8abc8cacc4b2d5a9c951dba68dcb6af",
+      "lab/world/W0/cases/C28-paychg-501-stale-approval-r1.json": "3790f271331212501b34b3763047d2fa68d7947d6b235459443ac277e046fee7",
+      "lab/world/W0/cases/C29-paychg-500-r1.json": "1fa81a661be4f468076ba5af3b306793dce568a6389a0c28a0d95236535e37af",
+      "lab/world/W0/cases/C30-paychg-approval-same-tx-r1.json": "5329dac407e3caa80b2b8abe55b185903bd9e8e63cdb400170f7599fb2f00ec5",
+      "lab/world/W0/cases/C31-reconcile-after-activation.json": "bb087a95afac4b7a4bd7a5c40883517b021f397aeaf4e2466bd6d07218596951",
+      "lab/world/W0/cases/C32-reconcile-before-activation.json": "ef23082d88efbd218d9c81b7d871de731b675f73e567b1a52753df28c140c478",
+      "lab/world/W0/cases/C33-reconcile-no-release.json": "ae26c941d67b0caf2ae99c43bd396c1e6bce09be3a4913b6283f86a0f9b03da5",
+      "lab/world/W0/cases/C34-affected-state-wage-r1.json": "b4687a0e75cdeb263e5c4e9460900b335a92a07ba69c01fa57064121d9455b89",
+      "lab/world/W0/cases/C35-affected-local-wage-r1.json": "bf96c2e2a3e8d516b20081b92e0911b7f8ec73d0ff3da5684dd743026763e371",
+      "lab/world/W0/cases/C36-affected-local-wage-r2.json": "6df8be1450ba75d08b1c936d25606bd54f55ade3a3cbf17b4e590a65e12e8a17",
+      "lab/world/W0/cases/C37-err-minutes-10081.json": "4d1838c75f24766da351ccdee515cd64625ca8c023762cbe7c3efbf369d3afd8",
+      "lab/world/W0/cases/C38-err-cents-integral-float.json": "19076dfd0a0145927c47868cd13fd9628591d7a7560e33f73bc6c479de38fba3",
+      "lab/world/W0/cases/C39-err-cents-2pow53.json": "4bc13ca5a15cfddde2ac733d0e4bde8db81996f78254bc12053f4118eab73271",
+      "lab/world/W0/cases/C40-err-cardinality.json": "0d36d9ab3346bd333a64747e629afbddac1b5b709e4e74e9a94da474469df34b",
+      "lab/world/W0/cases/C41-err-fact-after-basis.json": "19fcfde7b898fe945ad754303c68c555b355e3ab72a2efb70bafa43f311b9a57",
+      "lab/world/W0/cases/C42-five-work-items-r1.json": "6483f46c44fd42188279b8f0c8e6f5b23fb197067646e2e12f0ed53e9c4a59ef",
+      "lab/world/W0/cases/C43-err-first-failing-fact.json": "28b8c34e68e2e6b22b35589a8bc5d81596459bfa99a525fdaee70a46e58ff955",
+      "lab/world/W0/cases/C44-err-unreachable-fact-validated.json": "44c5954cfc9992d70b9a86d0838e7122ac8331ed155bfc9762488a860f986d76",
+      "lab/world/W0/cases/C45-err-tx-float-token.json": "138f32476814c5400c329768ce60f54c1b0549bc625b618d6a5dcb23aeb0358b",
+      "lab/world/W0/cases/C46-prop-older-and-equal-decisions-r1.json": "fe72db73ab4e07d59eefc8c9f32a362fc0e233390d850b09fa3d82e1ace02372",
+      "lab/world/W0/cases/C47-paychg-reject-after-change-r1.json": "6418b607f6102d86d0f0dabf04b66a4f3ad29d36bf93b4f779d469f0e9aa5d44",
+      "lab/world/W0/cases/C48-minwage-no-location-r1.json": "8b8af098733e671ab1e165f10d76ea984487cf222573970011421c17fc423eee",
+      "lab/world/W0/cases/C49-evstat-tnc-without-status-at-r1.json": "35c836b391aab2fe7237e810a4f1d7d1de910ba6d778bea2bd882e9842bf463a",
+      "lab/world/W0/cases/C50-evsub-submit-without-start-r1.json": "2e8713f05aff95c6d6519ec1384b98f2c0a1a3eafa50ca85deac7d4c7df93d58",
+      "lab/world/W0/cases/C51-docs-ead-at-window-r2.json": "93bf45f9b9e49211b7534f01ae0f4f112366782ba9e1fc4ab46e4b7be7ebdac6",
+      "lab/world/W0/cases/C52-evsub-result-accepted-r1.json": "f289904288b1abe5d8437e17c71605362efa7bb9928098fbfbf4173da68db5fb",
+      "lab/world/W0/cases/C53-evsub-result-rejected-r1.json": "03a4740aaecdbbbf802dfafe50554e2e52fc099bf3fb4ee607db66bc21c01902",
+      "lab/world/W0/cases/C54-ot-r3-at-threshold.json": "194c65730a60cb8f446466b08a0b9f732f50af74069727fffa31c46b9290eae2",
+      "lab/world/W0/cases/C55-ot-r3-above-threshold.json": "2ede0132eae69126683ad44d81605a22442de68fbc78b2afeaf9b450d4140176",
+      "lab/world/W0/cases/C56-ballast-world-r1.json": "3d196002f1d1080d7d9abd8e78c78ab33a94d3d4a7c67ec339baf994bd3c4228",
+      "lab/world/W0/cases/C57-affected-ballast-write-r1.json": "9d873cc434df2345b4e35cdd144a1231ad2fd6038c1f1a4cee4a09a7faed280b",
+      "lab/world/W0/cases/C58-affected-jurisdiction-write-r1.json": "fb82eedb87ed2da85e810be9cc16aad24f6c8ca3be7154f8bcf59a745a19425f",
+      "lab/world/W0/cases/C59-affected-jurisdiction-write-r2.json": "6b15e68e3a079dad147e527f5127c17766b36aa576d213c735b1b6d483eadc89",
+      "lab/world/W0/cases/C60-affected-location-repoint-r1.json": "16d71dc2f403dc904fd3274cc72e3ffb26fc24ea0adefcdd3018636fd3c2aeba",
+      "lab/world/W0/cases/C61-reconcile-equal-from-tie.json": "fdb193c360b8483ab826652f9b6ff480c851d531ea359f7c7d4033a80c7b85ca",
+      "lab/world/W0/cases/C62-err-unknown-other-placement-entity.json": "606531670e91d931ef50a65c8685da6f96e0f2cd4f51ed6fcb67223603721fa9",
+      "lab/world/W0/cases/C63-err-unknown-attribute.json": "79bf45ba1f80aef85f1ee3ecd4f538068427b54c30d8a32e07b67da99953dbeb",
+      "lab/world/W0/cases/C64-err-erased-non-pii.json": "b918cc794ef7a9a5bfd6e3d952a1b977ad48a53aa7dc34a2477f19b6aa65e6f3",
+      "lab/world/W0/cases/C65-err-activation-bad-hash.json": "a3be66c261085e67543dc22914b0ba0955b2b1ad0274d8086525c684e2294bee",
+      "lab/world/W0/cases/C66-err-duplicate-key-in-v.json": "6ef9ac78cf95bcfc5569213f382abce18ab064eea87ff6efd53e4e7aa9f58904",
+      "lab/world/W0/cases/C67-err-affected-duplicate-subjects.json": "72e044b49b5c668a688592ce21eae681ea97895c4a0ced42e212f9bbbf49ddd8",
+      "lab/world/W0/cases/C68-err-cents-exponent.json": "8dcb739eb4870d2a4d9739624ecf7ed7f5e14968a5b642283327efb5238b581b",
+      "lab/world/W0/cases/C69-err-cents-negative.json": "ea7a721fb328945ce0f438aa2c5283d8a3d319806c40fe6cff014b4b7e0d00b5",
+      "lab/world/W0/cases/C70-err-cents-string.json": "a5c5daec312400da7e3e1bd2c8937f16a5c8e3d219c437c64f7bc2cf54304f05",
+      "lab/world/W0/cases/C71-err-basis-tx-float.json": "e4eb699ba206b26c051607bf8a4c022ba2a737634080c3f75a282ce5588b1bcd",
+      "lab/world/W0/cases/C72-err-activation-tx-float.json": "728d2e4b83b05ba2bd1c47369a9b927e692306e08bc900d8e8a089291b0e8497",
+      "lab/world/W0/cases/C73-publish-rollback-r1-r2-r1.json": "1a95b75d69f5cab67da986e722c500a25d6e73adc09e27bac769c869c1dba9d1",
+      "lab/world/W0/cases/C74-publish-correction-revert.json": "a374d0e4f745fcd996327c5cfb8dc094afde10cecf27231e1d8c9789a003523e",
+      "lab/world/W0/cases/C75-publish-crash-before-delivery.json": "124d3420cfbcd6250658648f84175d0143bcbe8dc76ab222e0b6fa7bfda52f0c",
+      "lab/world/W0/cases/C76-publish-unchanged-activation-recovery.json": "385c72184dc9fcaa4a999ac0250723777967169354b703fa499a8ee9a2ec85fe",
+      "lab/world/W0/cases/C77-publish-older-basis-skipped.json": "209624aee8c34fc8210658d65b41d24135ed8312c0db291943e94172eaf8e195",
+      "lab/world/W0/cases/C78-publish-retirement-reappear.json": "7ecabfb5399b605803097db180a4e66ef64f9f56394e0afb55f37576780cb5dd",
+      "lab/world/W0/cases/C79-receive-reversed-arrival.json": "074a40b0142ddfa279834c168425a87649bac3efd33ba067ba058585779dc078",
+      "lab/world/W0/cases/C80-receive-gap.json": "c8c6d9d844440d794b19dcb4b62ae90d66e0ab024de87d54c4f41fb89c7997dd",
+      "lab/world/W0/cases/C81-receive-restart-mid-sequence.json": "03e62d3d28469348ffc31d88e123191f7407e44624533919365b2d3294f59cd1",
+      "lab/world/W0/cases/C82-publish-guard-advances-on-unchanged.json": "a9f7550c44b79499ca6b80d69decf9a34bc25a2ece075d573fe97e8ea6553377",
+      "lab/world/W0/cases/C83-receive-duplicates-and-gap.json": "6898782d51e376bfb083d1e8f84627e24d7e773ea945ccaabe20a7fa2d4ae2a6",
+      "lab/world/W0/cases/C84-err-publish-state-without-pending.json": "a4067364cab65000435c4ac82f5d245930bc8c07d16a4271899a9ecd88b62507",
+      "lab/world/W0/cases/C85-err-receive-seq-zero.json": "b6e6df8dfdb169fc4940d70641b60236d5f0ab95227e34ce2507552be92b2af7",
+      "lab/world/W0/cases/C86-ot-r3-outside-scope.json": "e37c0c1781f873d8230308f10cb4b30cf847b43b07605b78ca1d730649381ef9",
+      "lab/world/W0/cases/C87-affected-r3-scope-reach.json": "78aeafcc5b6018ddaa948b174b76db9988e773c319d3148761f903a5ec10ccec",
+      "lab/world/W0/releases/R1.json": "c8c6de6df5068396eef8648a9c984376b56bbeddbd4af88677b5212239f210b7",
+      "lab/world/W0/releases/R2.json": "be914f7a9ed8e7799c0fd445fc5564e0a61361c1f58d14263f68e7f95c83a051",
+      "lab/world/W0/releases/R3.json": "8f7962e89c1150b6b56bff180e67042ad82c18491f011c406d7ca417d08264fd",
+      "lab/world/W0/releases/index.json": "f5e3f8c16a8dd2c64f0de27762368febd2e08aa5b3f5a622a2a57e9b61dc0dfc",
+      "lab/world/W0/schema.json": "9fe277a11ced24a88703bb36e05397c15f30b7d4b0346f37f1599801b966da09",
+      "lab/world/W0/validate.py": "b4e87db8d4bea3177c5528e8e11ce17d3ac6a0139b98d824cdbafef0c7ac20d8"
     },
-    "deltaCheck": null,
+    "deltaCheck": "ACCEPT (V-D01, 2026-11-08: 87 cases byte-identical; floors unchanged)",
     "oDomainFingerprint": null,
-    "requires": "V-D01's delta check of W0-1.1.x and O-DOMAIN's independent reproduction of the population fingerprint (RULINGS Q40g, Q44a); every field null fails closed"
+    "fingerprintCandidate": {
+      "source": "V-D01 delta check of W0-1.1.1 (lab/verify/D01/VERIFY.md, final fingerprint)",
+      "rung": "100k",
+      "basisTx": 4338757,
+      "facts": 44537987,
+      "worldsSha256": "fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760",
+      "releasesSha256": {
+        "R1": "c1b2d410244121d64b476c2f99c32830ea1b1f536928c9d12b0e886132351a79",
+        "R2": "551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562",
+        "R3": "a595092272c16343b0dfe9c9db57fbcdd7556fbf8be40afbaed014710fceee2f"
+      }
+    },
+    "requires": "O-DOMAIN's independent reproduction of the population fingerprint (RULINGS Q40g, Q44a, Q48a); until then oDomainFingerprint is a required null input and every domain-dependent claim fails closed"
   },
   "legacyLaneOutcomes": {
     "G1-I64-01": {
@@ -8867,7 +9230,8 @@
         "DR-AGGREGATE",
         "DR-KEY-ARITHMETIC",
         "DR-JSON-OPAQUE",
-        "DR-JSON-CONVERT"
+        "DR-JSON-CONVERT",
+        "DR-JSON-STRING-TEXT"
       ],
       "manifest": "lab/acceptance/cases/CS-DECIMAL-ROUTING.json",
       "manifestSha256": null,
@@ -9693,7 +10057,8 @@
         "NS-P4-MATCHED-HISTORY",
         "NS-P5-COVERAGE",
         "NS-P5-POST-CAPTURE-MUTATION",
-        "NS-P5-THROTTLED-COMPACTION"
+        "NS-P5-THROTTLED-COMPACTION",
+        "NS-P5-SCOPED-RELEASE-REACHED"
       ],
       "manifest": "lab/acceptance/cases/CS-NS.json",
       "manifestSha256": null,
@@ -9784,7 +10149,7 @@
     },
     "CS-ERASURE": {
       "status": "TO-AUTHOR",
-      "source": "ERASURE (TARGETS section 7, RULINGS Q24)",
+      "source": "ERASURE (TARGETS section 7, RULINGS Q24, Q49)",
       "requiredTags": [
         "all",
         "boundary",
@@ -9792,7 +10157,9 @@
         "reproduction",
         "inventory",
         "derived-channels",
-        "restore"
+        "restore",
+        "commit",
+        "queries"
       ],
       "requiredCases": [
         "ER-INFLIGHT-READ",
@@ -9811,7 +10178,18 @@
         "ER-JOURNAL-MODULO",
         "ER-RAW-NATIVE-MODULO",
         "ER-SDK-MODULO",
-        "ER-KEY-EXCLUSIVE"
+        "ER-KEY-EXCLUSIVE",
+        "ER-COMMIT-JOURNAL-IDENTITY-ONLY",
+        "ER-COMMIT-LEDGER",
+        "ER-EARLIER-CHANGE-MARKER",
+        "ER-IDEMPOTENT-REERASE",
+        "ER-EMPTY-ERASURE-RECORD",
+        "ER-PREDICATE-NO-MATCH",
+        "ER-AGGREGATE-SKIP-COUNT",
+        "ER-ORDER-MARKERS-LAST",
+        "ER-GROUP-ONE-MARKER",
+        "ER-UNIQUE-IGNORES",
+        "ER-REFERENCE-MARKER"
       ],
       "manifest": "lab/acceptance/cases/CS-ERASURE.json",
       "manifestSha256": null,
@@ -9950,6 +10328,9 @@
         "CX-UNKNOWN-OBLIGATION",
         "CX-REFUSAL-AS-AUTHORING",
         "CX-POSITION-GATE",
+        "CX-R6-UNOPENED-MEANING",
+        "CX-R6-UNMATCHED-CONTROL",
+        "CX-R6-INDIRECT-REFUSAL",
         "PX-PASS-ALL",
         "PX-COUNTEREXAMPLE",
         "PX-MUTANT-KILL",
@@ -11118,11 +11499,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "64323194f4648c7e2342d766d865bd33120c1484023cf70a02f4f1a5754a3d11"
+    "sha256": "3594ef9b46069df45f5f23b8852d4c0b0c9f628ce67f86e1a8fadd6722382a52"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "a7870192dd5472ef4b1d3b4c1b694b3d26e2eb9a67925ba9eba0a995ec3e3dac"
+    "sha256": "75fcc41163f94cb35cdfb7e4d0db255e046b51e8a68b8e842007a9313ad59c68"
   },
   "obligations": [
     {
@@ -12126,7 +12507,7 @@
         "G5"
       ],
       "title": "Every decimal comparison routes through the decimal_order_v1 key",
-      "statement": "Per DECIMAL_ROUTING (RULINGS Q38d), on the repository, the native surface in the lane language and the raw recipes: ordering and ranges on decimals use the decimal_order_v1 key (DR-REPO-ORDER, DR-NATIVE-ORDER, DR-RAW-ORDER), including derived expressions (DR-DERIVED) and aggregate results (DR-AGGREGATE: SUM decodes, computes exactly and encodes a result used for ordering); arithmetic on key strings is preflight E-MIXED-FAMILY (DR-KEY-ARITHMETIC); JSON is opaque unless explicitly converted (DR-JSON-OPAQUE), and the conversion validates and encodes (DR-JSON-CONVERT).",
+      "statement": "Per DECIMAL_ROUTING (RULINGS Q38d), on the repository, the native surface in the lane language and the raw recipes: ordering and ranges on decimals use the decimal_order_v1 key (DR-REPO-ORDER, DR-NATIVE-ORDER, DR-RAW-ORDER), including derived expressions (DR-DERIVED) and aggregate results (DR-AGGREGATE: SUM decodes, computes exactly and encodes a result used for ordering); arithmetic on key strings is preflight E-MIXED-FAMILY (DR-KEY-ARITHMETIC); JSON is opaque unless explicitly converted (DR-JSON-OPAQUE), and the conversion reads a JSON number as written, never its binary64 expansion (toDecimal(json 0.1, 2, 1) = 0.1), then validates and encodes (DR-JSON-CONVERT, RULINGS Q49e); decimal text inside a JSON string is E-INVALID-VALUE unless the query converts the string explicitly (DR-JSON-STRING-TEXT).",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -12150,7 +12531,8 @@
             "DR-AGGREGATE",
             "DR-KEY-ARITHMETIC",
             "DR-JSON-OPAQUE",
-            "DR-JSON-CONVERT"
+            "DR-JSON-CONVERT",
+            "DR-JSON-STRING-TEXT"
           ]
         }
       ],
@@ -12196,7 +12578,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "8660557a9118820e32720db7b471febb16eead13e1d005e72092ae8957e1d140",
+      "definitionSha256": "fbc1557d49328b8403002da47ed0dc10019b1d4b93351891cf182838282e44e9",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15144,7 +15526,7 @@
         "G7"
       ],
       "title": "The logical journal stays queryable (C6)",
-      "statement": "Every C6-* case: direct match and Datalog queries over :_tx/change and :_tx/changed-entity, transactions(), transactionsForEntity and transactionByCommand return O-REPLAY's outputs per JOURNAL_RULES: creation order (JN-ORDER), staged facts visible to later operations of the same command (JN-STAGED), bit-exact -0.0 change values (JN-NEGZERO, RULINGS Q21 AMB-04, provisional, flagged for Sam) and the documented and testkit-pinned fields (JN-FIELDS); whole-journal byte identity of a physically slimmed journal is checked against a separate T0-capture baseline (C6-SLIM-BYTE-IDENTICAL), modulo erasure: both sides replace erased values with their markers first (ER-JOURNAL-MODULO, RULINGS Q31f).",
+      "statement": "Every C6-* case: direct match and Datalog queries over :_tx/change and :_tx/changed-entity, transactions(), transactionsForEntity and transactionByCommand return O-REPLAY's outputs per JOURNAL_RULES: creation order (JN-ORDER), staged facts visible to later operations of the same command (JN-STAGED), bit-exact -0.0 change values (JN-NEGZERO, RULINGS Q21 AMB-04, provisional, flagged for Sam) and the documented and testkit-pinned fields (JN-FIELDS); whole-journal byte identity of a physically slimmed journal is checked against a separate T0-capture baseline (C6-SLIM-BYTE-IDENTICAL), modulo erasure: an erasure commit is an ordinary journal transaction whose changes list only identities (ER-COMMIT-JOURNAL-IDENTITY-ONLY) and earlier transactions' :_tx/change facts for erased values show the ErasedValue marker (ER-EARLIER-CHANGE-MARKER), so both sides of the whole-journal comparison carry markers (ER-JOURNAL-MODULO, RULINGS Q31f, Q49a).",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -15161,7 +15543,9 @@
         {
           "set": "CS-ERASURE",
           "select": [
-            "ER-JOURNAL-MODULO"
+            "ER-JOURNAL-MODULO",
+            "ER-COMMIT-JOURNAL-IDENTITY-ONLY",
+            "ER-EARLIER-CHANGE-MARKER"
           ]
         },
         {
@@ -15220,7 +15604,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "54fbbfe7db66e1e56dd28c8cfe7fbf952598f78d2376dbcd41bb7010e24a9494",
+      "definitionSha256": "f8bab7d0c33bf28eef746f2d450187e045e705f90468f1fe237aa836d900ca89",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18602,7 +18986,7 @@
         "NS"
       ],
       "title": "P5: release activation re-evaluates 100k subjects without hurting live traffic (per surface)",
-      "statement": "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); results are published as work items through EP-OUTBOX under the delivery key (id, publication sequence) with early cutoff, so an activation that leaves a payload equal to the latest published one publishes nothing and a return to an earlier payload publishes a new sequence (RULINGS Q36a, Q38f), and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
+      "statement": "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); a scoped release (W0 R3) is measured at the 100k rung, where its scope is not vacuous, and its receipt binds the reached-subject list and that list's hash instead of every placement (9,497 reached at 100k in V-D01's measurement; NS-P5-SCOPED-RELEASE-REACHED, RULINGS Q48b); results are published as work items through EP-OUTBOX under the delivery key (id, publication sequence) with early cutoff, so an activation that leaves a payload equal to the latest published one publishes nothing and a return to an earlier payload publishes a new sequence (RULINGS Q36a, Q38f), and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -18621,7 +19005,8 @@
           "select": [
             "NS-P5-COVERAGE",
             "NS-P5-POST-CAPTURE-MUTATION",
-            "NS-P5-THROTTLED-COMPACTION"
+            "NS-P5-THROTTLED-COMPACTION",
+            "NS-P5-SCOPED-RELEASE-REACHED"
           ]
         }
       ],
@@ -18673,7 +19058,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "011b6fa7c953460f8d6bd5d1ccd0f461eec2b2fec1ad783f45409075e355511e",
+      "definitionSha256": "4a123a84584233cbf3f35b454537b98c824caaaca7e85f039e16f992866ad7cc",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -21526,7 +21911,7 @@
         "G9"
       ],
       "title": "Erasure is a visibility boundary at the erasure commit's publication",
-      "statement": "Every CS-ERASURE boundary, marker and reproduction case per ERASURE: a read that started before the erasure published may return the old value (ER-INFLIGHT-READ); every read that starts after it, at any basis including bases before the erasure, returns ErasedValue {erasedAt} in place of the value (ER-AFTER-PUBLICATION-ALL-BASES), with assertion identities and valid and record intervals unchanged (ER-SHAPE-KEPT); a reader already pinned when the erasure lands follows the same rule (ER-PINNED-READER); an index or cache serves any basis only after applying every published erasure, independently of the basis (ER-FRONTIER-OLD-BASIS), and erasure invalidates every old-basis cache entry holding the value (ER-CACHE-INVALIDATION); expected post-erasure answers come independently from O-REPLAY (ER-ORACLE-POST).",
+      "statement": "Every CS-ERASURE boundary, marker and reproduction case per ERASURE: a read that started before the erasure published may return, for each erased value, the old value or the marker (ER-INFLIGHT-READ, RULINGS Q49d); every read that starts after it, at any basis including bases before the erasure, returns ErasedValue {erasedAt} in place of the value (ER-AFTER-PUBLICATION-ALL-BASES), with assertion identities and valid and record intervals unchanged (ER-SHAPE-KEPT); a reader already pinned when the erasure lands follows the same rule (ER-PINNED-READER); an index or cache serves any basis only after applying every published erasure, independently of the basis (ER-FRONTIER-OLD-BASIS), and erasure invalidates every old-basis cache entry holding the value (ER-CACHE-INVALIDATION); expected post-erasure answers come independently from O-REPLAY (ER-ORACLE-POST).",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -21596,7 +21981,7 @@
       "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "aa291929846e8cb361c57766a17b08209ed5e90f2dcce530c3b62763f063dfcb",
+      "definitionSha256": "f56d6ba5c0b7f4fab11718377ef53654ee8f44edbf5f88dbcc682815cf7e1a06",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -22118,6 +22503,169 @@
       ]
     },
     {
+      "id": "G9.erasure.commit-semantics",
+      "goals": [
+        "G9",
+        "G7"
+      ],
+      "title": "An erasure commit is an ordinary, idempotent journal transaction",
+      "statement": "Per ERASURE journalCommit and idempotence (RULINGS Q49a, Q49b): an erasure commit has a position, a txId, a record in transactions() and its own :_tx/ facts, and its changes list only identities (entity, attribute, assertion ids), never values (ER-COMMIT-JOURNAL-IDENTITY-ONLY); it is also written to the erasure ledger kept apart from the data, which restore and rebuild replay (ER-COMMIT-LEDGER); earlier transactions' :_tx/change facts for erased values show the ErasedValue marker (ER-EARLIER-CHANGE-MARKER); the first erasure of an identity sets erasedAt and erasing it again changes nothing (ER-IDEMPOTENT-REERASE); an erase that matches nothing still commits a journal record with an empty change list (ER-EMPTY-ERASURE-RECORD).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": [
+        {
+          "set": "CS-ERASURE",
+          "select": [
+            "commit"
+          ]
+        },
+        {
+          "set": "CS-ERASURE",
+          "select": [
+            "ER-COMMIT-JOURNAL-IDENTITY-ONLY",
+            "ER-COMMIT-LEDGER",
+            "ER-EARLIER-CHANGE-MARKER",
+            "ER-IDEMPOTENT-REERASE",
+            "ER-EMPTY-ERASURE-RECORD"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-WRITER",
+        "EP-TRIPLES",
+        "EP-REPLAY"
+      ],
+      "profiles": [
+        "P-TINY"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "modes": [
+          "current",
+          "reopen",
+          "engine-restart"
+        ],
+        "params": {
+          "provisional": true,
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
+        }
+      },
+      "thresholds": [],
+      "mutationControls": [],
+      "contracts": [],
+      "sources": [
+        "lab/TARGETS.md section 7 items 1 and 5",
+        "RULINGS Q24",
+        "RULINGS Q49a, Q49b"
+      ],
+      "grounding": "grounded",
+      "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
+      "layer": "history",
+      "verifierMode": "rerun",
+      "definitionSha256": "f1a27c3689e298fc1298146afcf249ec529ece4629c6b3d6a51e7c37ac045d4c",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-REPLAY"
+      ]
+    },
+    {
+      "id": "G9.erasure.query-semantics",
+      "goals": [
+        "G9",
+        "G5"
+      ],
+      "title": "Erased values give deterministic query answers",
+      "statement": "Per ERASURE queries (RULINGS Q49c, provisional under the Q24 flag for Sam), on the repository, the native surface in the lane language and the raw recipes: an erased value is present with no readable value; it matches no value predicate (equality, inequality, range, pattern), so a filter never selects or rejects a subject by it (ER-PREDICATE-NO-MATCH); SUM, AVG, MIN and MAX skip it while COUNT of assertions counts it (ER-AGGREGATE-SKIP-COUNT); ORDER BY places erased markers last, in a deterministic order by assertion id (ER-ORDER-MARKERS-LAST); grouping puts all erased values of an attribute in one group keyed by the marker (ER-GROUP-ONE-MARKER); Unique ignores erased values (ER-UNIQUE-IGNORES); an erased reference cannot be followed and an include returns the marker (ER-REFERENCE-MARKER).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": [
+        {
+          "set": "CS-ERASURE",
+          "select": [
+            "queries"
+          ]
+        },
+        {
+          "set": "CS-ERASURE",
+          "select": [
+            "ER-PREDICATE-NO-MATCH",
+            "ER-AGGREGATE-SKIP-COUNT",
+            "ER-ORDER-MARKERS-LAST",
+            "ER-GROUP-ONE-MARKER",
+            "ER-UNIQUE-IGNORES",
+            "ER-REFERENCE-MARKER"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-WRITER",
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profiles": [
+        "P-TINY"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "modes": [
+          "current",
+          "reopen"
+        ],
+        "params": {
+          "provisional": true,
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
+        }
+      },
+      "thresholds": [],
+      "mutationControls": [],
+      "contracts": [],
+      "sources": [
+        "lab/TARGETS.md section 7",
+        "RULINGS Q24",
+        "RULINGS Q49c"
+      ],
+      "grounding": "grounded",
+      "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
+      "layer": null,
+      "verifierMode": "rerun",
+      "definitionSha256": "3a6e09fef7895ed78011d2b0a7f30a15d3687aa8a0830714b1c1c3b212878db5",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-REPLAY"
+      ]
+    },
+    {
       "id": "G9.erasure.reproduction-modulo",
       "goals": [
         "G9",
@@ -22125,7 +22673,7 @@
         "R"
       ],
       "title": "Every reproduction contract holds modulo erasure",
-      "statement": "Per ERASURE reproduction (RULINGS Q31f): the C6 whole-journal comparison (ER-JOURNAL-MODULO), raw and native query results (ER-RAW-NATIVE-MODULO), SDK results (ER-SDK-MODULO), cursors (ER-CURSOR-MODULO) and explain (ER-EXPLAIN-MODULO) compare equal after both sides replace erased values with their ErasedValue markers, and only then.",
+      "statement": "Per ERASURE reproduction (RULINGS Q31f): the C6 whole-journal comparison, where the erasure commit's identity-only changes and the markers in earlier :_tx/change facts appear on both sides (ER-JOURNAL-MODULO, RULINGS Q49a), raw and native query results (ER-RAW-NATIVE-MODULO), SDK results (ER-SDK-MODULO), cursors (ER-CURSOR-MODULO) and explain (ER-EXPLAIN-MODULO) compare equal after both sides replace erased values with their ErasedValue markers, and only then.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -22190,7 +22738,7 @@
       "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "71f63e700f5050986e3aa99f4c47aa3677f7140aa9a5acc531129ffb9ca279f5",
+      "definitionSha256": "1d5ec64170290c09ae22832a77b2506c3be84118a4567750d57265b28fcd4534",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -22333,6 +22881,9 @@
             "CX-UNKNOWN-OBLIGATION",
             "CX-REFUSAL-AS-AUTHORING",
             "CX-POSITION-GATE",
+            "CX-R6-UNOPENED-MEANING",
+            "CX-R6-UNMATCHED-CONTROL",
+            "CX-R6-INDIRECT-REFUSAL",
             "PX-PASS-ALL",
             "PX-COUNTEREXAMPLE",
             "PX-MUTANT-KILL",
@@ -22384,7 +22935,7 @@
       "notes": null,
       "layer": "current",
       "verifierMode": "rerun",
-      "definitionSha256": "40a9592578a387690743d900c60b0e2dfb189e3c3208b0d6dc0cfa41ea5a4677",
+      "definitionSha256": "136b00ef7b94f2816b957a28c90219331248c68f9c3843263b5cdeaea0d5fcc7",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -22922,5 +23473,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "bb11ea0efcaf94c0b906c54a344af538cbfaf6f192e415109369364902f5368a"
+  "transitiveContractSha256": "d6a4c7cccf53c99e053d261e2a4c20a141223698f5e0103cbf522808fc54bba6"
 }

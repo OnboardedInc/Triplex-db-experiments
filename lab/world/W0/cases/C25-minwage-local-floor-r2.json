@@ -1,0 +1,86 @@
+{
+  "id": "C25",
+  "slug": "minwage-local-floor-r2",
+  "title": "A local floor of 1700 above the state floor of 1650 applies under R2",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "MINWAGE", "polarity": "positive"}
+  ],
+  "notes": [
+    "R2 floorSources are jurisdiction.stateMinWageCents and location.localMinWageCents; floor = max(local 1700, jur:ny 1650) = 1700 > pay 1650: row 5.",
+    "Task pay.below-minimum due 2026-11-02T00 (overdue); work item notify.pay-below-minimum; inputs [1, 2, 9].",
+    "Under R1 the same world gives MINWAGE row 4 with inputs [1, 2]: R1 never reads the local floor (see C35)."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R2",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7},
+        {"e": "loc:nyc", "a": "localMinWageCents", "v": 1700, "tx": 9}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["loc:nyc", "localMinWageCents"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:7d2f4008e55f43458ae1288cb65a4cf92f3f04a40a1c6eeafb3fc754435807a9",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.below-minimum", "kind": "pay.below-minimum", "overdue": true, "rule": "MINWAGE"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2, 9], "key": "", "row": 5, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2, 9], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1650}, "rule": "MINWAGE", "version": "wv:c1496a124f2e759809b0bf7f1c850f28f62e5f3e51037f8048969c6e45636186"}
+    ]
+  }
+}

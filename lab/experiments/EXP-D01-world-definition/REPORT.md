@@ -47,3 +47,14 @@
   accepted E-Verify submission now yields no work item; R3 changes 4.3% of subjects (all through OT); GS.06b jurisdiction write affects
   1,953 placements for the largest jurisdiction, mean 990.
 - The 37 new cases C46-C82 are not yet independently re-derived; V-D01 re-review in progress.
+
+## W0-1.1.1 (commit ada2e90), after the re-review and Q44
+- 87 cases validate; the validator's new rules (raw-token assertion, delivery id and version recomputation) caught all five planted
+  defects in a scratch copy. R1 and R2 unchanged; R3 sha256:f345d9fe...312e is scoped (OT threshold 2,700 only for jur:j010, j020, ...,
+  j100; the scope is inside the rule entry and in the content hash; diff(R2, R3) = OT).
+- Cases changed: C54/C55 (in scope), C68 (raw `1.65e3`), C76 (real id). Added: C83 (receive 1,1,3,3,2), C84/C85 (publish and receive shape
+  errors), C86 (out-of-scope placement keeps the 2,400 threshold), C87 (affected through the reverse two-hop index).
+- Scoped R3 at 100k (argument values): affected 9,556 (9.56%), changed 406 (0.41%; unscoped R3 changed 4,291), not reached about 90,444,
+  which a sweep may skip under SPEC 5.3's new rule.
+- Author decisions for the delta check: the scope test adds S.location and L.jurisdiction to OT's reads (R3 output digest changes);
+  jurisdiction ids padded to at least 3 digits; the SPEC 5.3 sweep skip rule.

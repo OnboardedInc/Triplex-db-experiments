@@ -1,0 +1,80 @@
+{
+  "id": "C05",
+  "slug": "start-unknown-r1",
+  "title": "No start date and no pay rate: start-unknown, null due times, no obligations",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "LIFE", "polarity": "positive"},
+    {"rule": "I9S1", "polarity": "positive"},
+    {"rule": "I9S2", "polarity": "positive"},
+    {"rule": "EVSUB", "polarity": "positive"},
+    {"rule": "BGC", "polarity": "positive"},
+    {"rule": "MINWAGE", "polarity": "positive"},
+    {"rule": "PAYCHG", "polarity": "negative"}
+  ],
+  "notes": [
+    "LIFE row 1: start-unknown. Every start-based due time is null, so no task has a due obligation.",
+    "MINWAGE row 1: payRateCents absent; task pay.rate-missing due null; inputs are the location fact (tx 2) and the floor (tx 1).",
+    "PAYCHG row 1: no pay rate. BGC row 1: same bgc.order id and version as C03 (same subject, rule, kind and key; same release, inputs [] and payload {})."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"]
+    ],
+    "flags": [
+      {"name": "start-unknown", "rule": "LIFE"}
+    ],
+    "obligations": [],
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": null, "id": "pl:a#everify.collect-ssn", "kind": "everify.collect-ssn", "overdue": false, "rule": "EVSUB"},
+      {"dueAt": null, "id": "pl:a#i9.section1", "kind": "i9.section1", "overdue": false, "rule": "I9S1"},
+      {"dueAt": null, "id": "pl:a#i9.section2", "kind": "i9.section2", "overdue": false, "rule": "I9S2"},
+      {"dueAt": null, "id": "pl:a#pay.rate-missing", "kind": "pay.rate-missing", "overdue": false, "rule": "MINWAGE"}
+    ],
+    "trace": [
+      {"inputs": [], "key": "", "row": 1, "rule": "LIFE"},
+      {"inputs": [], "key": "", "row": 2, "rule": "I9S1"},
+      {"inputs": [], "key": "", "row": 4, "rule": "I9S2"},
+      {"inputs": [], "key": "", "row": 2, "rule": "EVSUB"},
+      {"inputs": [], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 1, "rule": "MINWAGE"},
+      {"inputs": [], "key": "", "row": 1, "rule": "OT"},
+      {"inputs": [], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:edc2adc27d37abaf16d093e47ef08bc2235081f482c6c9164fe06a8dd1c92900"}
+    ]
+  }
+}

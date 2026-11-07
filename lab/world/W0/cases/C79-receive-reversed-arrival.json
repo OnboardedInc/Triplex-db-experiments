@@ -1,0 +1,41 @@
+{
+  "id": "C79",
+  "slug": "receive-reversed-arrival",
+  "title": "Reversed arrival: seq 2 then seq 1; the projection ends on seq 2's payload",
+  "op": "receive",
+  "checks": [],
+  "notes": [
+    "Deliveries of C73's pay notice arrive as seq 2 (floor 1700) then seq 1 (floor 1650) (RULINGS Q42b).",
+    "Projection: seq 2 is applied (higher than nothing); seq 1 is lower than 2 and ignored, so the projection never regresses to 1650.",
+    "Effects: seq 2 waits for seq 1; seq 1 is processed, then the waiting seq 2. Effects see 1, 2 in order."
+  ],
+  "input": {
+    "deliveries": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}
+    ],
+    "state": {
+      "effects": [],
+      "projection": []
+    }
+  },
+  "expected": {
+    "applied": {
+      "effects": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"}
+      ],
+      "projection": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"}
+      ]
+    },
+    "state": {
+      "effects": [
+        {"done": 2, "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "waiting": []}
+      ],
+      "projection": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1700, "payRateCents": 1600}, "seq": 2}
+      ]
+    }
+  }
+}

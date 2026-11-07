@@ -1,0 +1,64 @@
+{
+  "id": "C74",
+  "slug": "publish-correction-revert",
+  "title": "A pay correction and its revert: sequences 1, 2 and 3",
+  "op": "publish",
+  "checks": [],
+  "notes": [
+    "Under R1: pay 1600 (tx 20), a correction to 1620 asserted at tx 21, and its revert to 1600 at tx 22.",
+    "Each payload differs from the latest published one, so each publishes: seq 1 (1600), seq 2 (1620), seq 3 (1600). The revert is delivered."
+  ],
+  "input": {
+    "evaluations": [
+      {
+        "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}
+        ]
+      },
+      {
+        "basis": {"tx": 21, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2, 21], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1620}, "rule": "MINWAGE", "version": "wv:8c940d05319ecef7c58589e1e5df5bc278d58f7c8c71cfb1d1c3226439bcd783"}
+        ]
+      },
+      {
+        "basis": {"tx": 22, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2, 22], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:b8916c0e376d10c109eb05490fe02efd9e5b31ce05e5cd8682a998e53e267ff6"}
+        ]
+      }
+    ],
+    "state": {
+      "items": [],
+      "pending": [],
+      "subjects": []
+    }
+  },
+  "expected": {
+    "deliveries": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1620}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:8c940d05319ecef7c58589e1e5df5bc278d58f7c8c71cfb1d1c3226439bcd783"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:b8916c0e376d10c109eb05490fe02efd9e5b31ce05e5cd8682a998e53e267ff6"}
+    ],
+    "state": {
+      "items": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1650, "payRateCents": 1600}, "retired": false, "seq": 3, "subject": "pl:a"}
+      ],
+      "pending": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1620}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:8c940d05319ecef7c58589e1e5df5bc278d58f7c8c71cfb1d1c3226439bcd783"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:b8916c0e376d10c109eb05490fe02efd9e5b31ce05e5cd8682a998e53e267ff6"}
+      ],
+      "subjects": [
+        {"basis": {"tx": 22, "validTime": "2026-11-04T12:00:00.000000Z"}, "subject": "pl:a"}
+      ]
+    }
+  }
+}

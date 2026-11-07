@@ -1,0 +1,20 @@
+{
+  "id": "C67",
+  "slug": "err-affected-duplicate-subjects",
+  "title": "Two worlds for one subject in affected",
+  "op": "affected",
+  "checks": [],
+  "notes": ["Both worlds have subject pl:a: W0.E_SHAPE (4.4 step 1)."],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "worlds": [
+      {"subject": "pl:a", "facts": [{"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2}]},
+      {"subject": "pl:a", "facts": []}
+    ],
+    "writes": [
+      ["pl:a", "startDate"]
+    ]
+  },
+  "expected": {"error": "W0.E_SHAPE"}
+}

@@ -1,0 +1,90 @@
+{
+  "id": "C21",
+  "slug": "docs-ead-at-expiry-r1",
+  "title": "The basis exactly at the ead expiry boundary (midnight after 2027-01-15): overdue task and expiry work item",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "DOCEXP", "polarity": "positive"}
+  ],
+  "notes": [
+    "v = 2027-01-16T00:00:00.000000Z = B = W (R1 lead 0). Rows 4 and 5 need v < W and v < B, both false: row 6.",
+    "Task doc.reverify#pl:a/doc:1 due B is overdue (v >= dueAt), so no due obligation; work item notify.document-expired keyed by the document, inputs [8].",
+    "This is one subject of the GS.20 midnight wave."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2027-01-16T00:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7},
+        {"e": "pl:a", "a": "documents", "v": "pl:a/doc:1", "tx": 8},
+        {"e": "pl:a/doc:1", "a": "docType", "v": "ead", "tx": 8},
+        {"e": "pl:a/doc:1", "a": "expiresOn", "v": "2027-01-15", "tx": 8}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2027-01-16T00:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"],
+      ["pl:a/doc:1", "docType"],
+      ["pl:a/doc:1", "expiresOn"],
+      ["pl:a/doc:1", "reverified"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": true, "rule": "DOCEXP"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [8], "key": "pl:a/doc:1", "row": 6, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:6b2c7cb84e491e7effc9383bef991f44ed8ca3fea8d25f5ea60ac56e31cd5fa7", "inputs": [8], "key": "pl:a/doc:1", "kind": "notify.document-expired", "payload": {"docType": "ead", "expiresOn": "2027-01-15"}, "rule": "DOCEXP", "version": "wv:951d357d26c91fc7aea125acffa70609d4105f316391e221a2a488d128facef9"}
+    ]
+  }
+}

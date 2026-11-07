@@ -1,0 +1,94 @@
+{
+  "id": "C15",
+  "slug": "proposal-then-decision-r1",
+  "title": "C14 followed by a person's approval at tx 9: background check and proposal review both quiet",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "BGC", "polarity": "negative"},
+    {"rule": "PROP", "polarity": "negative"}
+  ],
+  "notes": [
+    "dec:3 (bgc.adjudication, approve, person) at tx 9 counts; final(bgc.adjudication, 0) = dec:3. BGC row 3, inputs [4, 9].",
+    "PROP item bgc.adjudication: p = 8 (dec:2); dec:3 has pos 9 >= 8, so row 1; inputs proposalFacts [8] and countingFacts [9]."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "consider", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:2", "tx": 8},
+        {"e": "pl:a/dec:2", "a": "target", "v": "bgc.adjudication", "tx": 8},
+        {"e": "pl:a/dec:2", "a": "verdict", "v": "approve", "tx": 8},
+        {"e": "pl:a/dec:2", "a": "author", "v": "agent", "tx": 8},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:3", "tx": 9},
+        {"e": "pl:a/dec:3", "a": "target", "v": "bgc.adjudication", "tx": 9},
+        {"e": "pl:a/dec:3", "a": "verdict", "v": "approve", "tx": 9},
+        {"e": "pl:a/dec:3", "a": "author", "v": "person", "tx": 9}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"],
+      ["pl:a/dec:2", "author"],
+      ["pl:a/dec:2", "target"],
+      ["pl:a/dec:2", "verdict"],
+      ["pl:a/dec:3", "author"],
+      ["pl:a/dec:3", "target"],
+      ["pl:a/dec:3", "verdict"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "tasks": [],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4, 9], "key": "", "row": 3, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [8, 9], "key": "bgc.adjudication", "row": 1, "rule": "PROP"}
+    ],
+    "workItems": []
+  }
+}

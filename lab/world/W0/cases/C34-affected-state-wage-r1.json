@@ -1,0 +1,53 @@
+{
+  "id": "C34",
+  "slug": "affected-state-wage-r1",
+  "title": "GS.06b: a state minimum-wage write at jur:ny affects the placements at its location and no others",
+  "op": "affected",
+  "checks": [],
+  "notes": [
+    "pl:a and pl:b reference loc:nyc, whose jurisdiction is jur:ny, so both have [jur:ny, stateMinWageCents] in their R1 dependencies (MINWAGE read set, two hops).",
+    "pl:c references loc:sfo (jurisdiction jur:ca); pl:d has no location. Neither has the written pair. Expected: [pl:a, pl:b]."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "worlds": [
+      {
+        "subject": "pl:a",
+        "facts": [
+          {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+          {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+          {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+          {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+          {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
+        ]
+      },
+      {
+        "subject": "pl:b",
+        "facts": [
+          {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+          {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+          {"e": "pl:b", "a": "startDate", "v": "2026-11-09", "tx": 3},
+          {"e": "pl:b", "a": "payRateCents", "v": 1700, "tx": 3},
+          {"e": "pl:b", "a": "location", "v": "loc:nyc", "tx": 3}
+        ]
+      },
+      {
+        "subject": "pl:c",
+        "facts": [
+          {"e": "loc:sfo", "a": "jurisdiction", "v": "jur:ca", "tx": 4},
+          {"e": "jur:ca", "a": "stateMinWageCents", "v": 1800, "tx": 4},
+          {"e": "pl:c", "a": "payRateCents", "v": 1800, "tx": 5},
+          {"e": "pl:c", "a": "location", "v": "loc:sfo", "tx": 5}
+        ]
+      },
+      {"subject": "pl:d", "facts": [{"e": "pl:d", "a": "startDate", "v": "2026-11-02", "tx": 6}, {"e": "pl:d", "a": "payRateCents", "v": 1650, "tx": 6}]}
+    ],
+    "writes": [
+      ["jur:ny", "stateMinWageCents"]
+    ]
+  },
+  "expected": {
+    "affected": ["pl:a", "pl:b"]
+  }
+}

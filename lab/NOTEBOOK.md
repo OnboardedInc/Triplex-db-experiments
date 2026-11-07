@@ -868,3 +868,78 @@ Where each priority stands, from evidence so far (research probes and baselines;
   and rejecting windows with host interference (steal time, load average, memory pressure), and prior art (for example the "Producing
   wrong data without doing anything obviously wrong" line of work, Google's benchmarking practice, JMH and hyperfine methodology). It
   feeds EXP-N01's A0 and every A0-versus-candidate verdict (P2X, P2Q, X05).
+- 23:55Z: W0-1.1.1 (ada2e90): scoped R3 reaches 9.56% of subjects through the reverse two-hop dependency index and changes 0.41% of them,
+  so P5 can now test the difference between "re-run what the index reaches" and "re-run everything"; a sweep may skip the other ~90%.
+  V-D01 delta check running (resumed); on ACCEPT: merge W0, pin it, then two independent implementers (TS kernel, O-DOMAIN) reproduce the
+  fingerprint.
+
+## 2026-11-09 ~00:10Z: MILESTONE: W0-1.1.1 accepted and merged
+- Three review rounds (FIX-FIRST on 1.0.0: worlds too small, outbox order undefined; FIX-FIRST on 1.1.0: two case defects, unpinned
+  receive dedup, fingerprint recipe; ACCEPT on 1.1.1). The reviewer's own evaluator, written from SPEC alone, matches all 87 cases byte for
+  byte; floors hold on 44.5M generated facts; scoped R3 reaches 9,497 subjects and changes 418, with 0 changed-but-not-reached.
+- Learning: misreading mutants and validator mutations were the cheapest review tools: each round's survivors became the next round's
+  cases, and the validator now checks raw tokens and recomputes delivery ids and versions.
+- EXP-D01c (O-DOMAIN, independent Python from SPEC only) started; the W0 pin closes when it reproduces the fingerprint. The TypeScript
+  kernel (EXP-D01b) follows at the next free slot, written by a different agent and checked against O-DOMAIN.
+- 00:30Z: EXP-O04: F2 fixed (probe_035 119/119) and erasure modeled (8 of 11 erasure obligations closable on the oracle side; answers on the
+  49 vectors unchanged). Ruled Q49: an erasure commit is an ordinary journal transaction that lists identities, never values (so the
+  whole-journal comparison works modulo erasure), plus a separate ledger for restore replay; erased values match no value predicate and
+  sort last (provisional under the Q24 erasure flag for Sam); JSON numbers convert to decimal as written. The author implements Q49, then
+  the V-O03 verifier re-checks before the pin moves.
+- 00:40Z: EXP-F02b closed out: 0 silent value changes on both engines; G1 qlever f1 84/88 with timeouts only (478 s against 62 s on main's
+  passing run). Learning: with 10 agents on a saturated host there is no quiet window by chance, so gate reruns (F02b G1 xtdb and G1 qlever
+  f1, X02's XTQL candidate G2) wait for a scheduled gate window: the orchestrator pauses new dispatches when several agents finish and runs
+  the owed gates one at a time through heavy.mjs.
+
+## 2026-11-07 22:50Z (real clock): EXP-P2Q: QLever's ACK no longer depends on its delta (the biggest P2 move so far)
+- Same resident, same windows: candidate ACK 4-8 ms p50 against A0's 0.96-7.4 s; on the open-loop trace A0 acknowledged 2 of 114
+  commands within the 30 s client timeout while the candidate committed 114/114 at 6.7 ms p50. Offline, with the 50x burst: 4.7 / 25.0 ms
+  p50/p99 over 3,414 commands. Inside the P2 bars in every run, judged relatively per Q47b until controlled runs exist.
+- Learning: making the host log the source of truth and QLever a replica turns QLever's worst property (update cost growing with the
+  delta) into a replication lag, which the overlay and routing absorb; the feed comes for free from the log (0 gaps, 0 duplicates, keyed
+  effects survive 100 crashes while the unkeyed control shows 129 duplicates).
+- Learning: A0 writes about 750 triples per 10-fact command, 8x R17's 94; the journal encoding inflates QLever's delta on every lane.
+- New design direction (Q50a): a broker-side current-entity index, both as the unreachable-replica fallback and as a P4 current layer on
+  the host; EXP-Q05 measures it.
+
+## 2026-11-07 22:55Z (real clock, `date -u`): clock correction for this notebook
+- The entry headers from "2026-11-07 ~20:45Z" through "2026-11-09 ~00:10Z" carry estimated times that ran ahead of the real clock; the
+  real time of this entry is 2026-11-07 22:55Z. Their order is correct; git commit timestamps are the authoritative times. The same
+  estimated dates appear in a few REPORT.md headers (saved by the orchestrator) and in STATE's infrastructure policy line.
+- From now on every header takes its time from `date -u`.
+
+## 2026-11-07 23:05Z: EXP-P2X and EXP-O04 (Q49) landed; the host log wins the feed on both lanes
+- **EXP-P2X (XTDB, subject-stamp commit path):** cross-subject conflicts 0 against A0's 3,376-3,657 CAS rejections; service time 6.5-7.8x
+  lower at ~20k commits (A0 grows with history because its asserts scan `scope_key`). Feed exact (0 gaps, order violations, duplicates
+  across 5k preload, three traces, 400 crash injections) but lag p99 2.9 s steady, because the consumer's durable write waits in the same
+  serial indexer as the writers. The burst overloads both arms on a 2-CPU node; the hot subject (20% of commands) turns optimistic CAS into
+  a retry storm that a per-subject queue removes (CAS rejections 4,982 -> 0, committed 569 -> 2,987).
+- **Learning: put the change feed and the ACK on a host log for both lanes.** P2Q's broker gave QLever feed lag p99 12.8-24.5 ms and an ACK
+  that ignores the engine; XTDB's own feed cannot beat its indexer queue. Q51b: EXP-P2B puts XTDB behind the same broker, with
+  subject-stamp as the XTDB-native comparison arm.
+- **Learning: both lanes write far too much per command.** XTDB A0 27.6 KB of source log per 10-fact commit (candidate 95.4 KB); QLever A0
+  about 750 triples per 10-fact command. One cross-lane experiment (EXP-J01) owns bytes per commit (Q51d); the 100k rung waits on it.
+- **Learning: per-subject queues belong in the runtime, not the driver** (Q51a), with a bound and a typed `Overloaded`.
+- **EXP-O04 Q49:** O-REPLAY 0.4.1 (a9c1327) models erasure as an ordinary journal transaction; 342/342 tests; conformance unchanged item by
+  item on both lanes; all 11 erasure obligations closable on the oracle side. Residual RULING-NEEDED items ruled as Q52 (held).
+- Dispatched: V-P2Q (new verifier) and the V-O04 re-check (resumed verifier). Running: 10 of 10.
+
+## 2026-11-07 23:20Z: MILESTONE: O-DOMAIN reproduced W0-1.1.1 exactly on its first run
+- An independent implementation written from SPEC.md alone matched 87/87 golden cases and all six 100k fingerprint values (basis.tx
+  4,338,757; 44,537,987 facts; worlds, R1, R2, R3 hashes), and its measured floors equal V-D01's scratch evaluator to the last digit. That
+  is three implementations (author, V-D01's scratch evaluator, O-DOMAIN) agreeing on 44.5M facts. 99.5 s and 23 MiB streamed.
+- Learning: the three-round W0 review paid for itself here; the SPEC is precise enough that a cold reader reproduced every byte. The 10
+  readings O-DOMAIN had to choose (A01-A10) touch no case or fingerprint value, which also says the golden cases do not pin validation order
+  or payload escaping: Q53b adds one case per reading in W0-1.1.2.
+- Dispatched V-D01c (mutation-based review: can the cases fail O-DOMAIN?). Running: 10 of 10.
+
+## 2026-11-07 23:40Z: contract 0.3.7 committed; Codex round 7; EXP-D01b dispatched
+- Contract 0.3.7 (ca42e06): Q46-Q49 compiled, 153 obligations (two new erasure obligations), evidence schemas (build-manifest/1,
+  verifier-record/1, case-result/1) opened and re-judged at admission, workload identity required on both arms, A0 taken only from the
+  registry (null, so every comparison is DIAGNOSTIC), indirect refusals followed through reachedThrough, pending rulings listed with no
+  authority. 136/136 deliberate regressions caught; --verify byte-identical. Pin scope now 121 uses, 103 may close, 18 blocked (three
+  migration/widening obligations newly blocked by the decimal-redeclaration reach).
+- Q50-Q54 are rows in RULINGS-PENDING.md; 0.3.8 compiles them (Q52e narrows in-flight erasure reads to per commit).
+- Learning: making pending rulings legal rows (Q47d) removed the recurring "--verify broke because I recorded a ruling" failure; rulings
+  can now be recorded the moment they are made, and the contract proves they carry no authority.
+- Dispatched EXP-D01b (TypeScript W0 kernel, independent of O-DOMAIN) and told E01 to adopt 0.3.7's schemas. Codex round 7 running.

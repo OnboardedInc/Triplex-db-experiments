@@ -1,6 +1,6 @@
 # Orchestrator state (read this first after any context compaction)
 
-Updated: 2026-11-07 ~20:50Z, generation 2 running (scope v2).
+Updated: 2026-11-07 22:55Z (from `date -u`; earlier notebook headers ran ahead of the real clock, see NOTEBOOK), generation 2 running (scope v2).
 
 ## Read first, every time
 1. lab/SCOPE.md (authoritative scope, Sam confirmed) 2. lab/NORTH-STAR.md (five priorities, fixed) 3. lab/TARGETS.md (measurements,
@@ -22,11 +22,17 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | exp/R01-entity-core | MERGED db249d8 (verified PROMOTE) | follow-ups go to EXP-R02 / EXP-F02 |
 | O-REPLAY 0.3.1 (8cc2c26) | ACCEPTED (V-O03), MERGED 4591715; pinned in contract 0.3.6 (2c3bac6): 106 of 119 closable | EXP-O04 (F2 + erasure) running |
+| W0-1.1.1 (ada2e90) | ACCEPTED (V-D01 delta check), MERGED e7c1346; 95 hashes verified | pin after O-DOMAIN reproduces the fingerprint |
+| exp/P2Q-qlever-log-broker (d7c6086) | PROGRESSED: candidate ACK 4-8 ms p50 vs A0 0.96-7.4 s on the same resident; feed and falsifiers pass | V-P2Q, controlled runs (Q50e), hardening (Q50d) |
+| exp/P2X-xtdb-commit-feed (fb6681a) | PROGRESSED: 0 cross-subject conflicts (A0 thousands), service 6-8x lower at ~20k history; feed exact but lag p99 2.9 s (bar 250 ms); G1 PASS on and off | V-P2X later; EXP-P2B (XTDB behind the broker, Q51b) is the next XTDB P2/P3 move |
+| exp/O04-oracle-erasure (a9c1327) | O-REPLAY 0.4.1: Q49 implemented, all 11 erasure obligations closable on the oracle side; residuals ruled Q52 | V-O04 re-check, then pin; Q52 as 0.4.2 with a delta check |
+| exp/D01c-o-domain (276a280) | O-DOMAIN reproduced W0-1.1.1 exactly: 87/87 cases, 6/6 fingerprint values, floors equal to V-D01 to the last digit | V-D01c, then pin W0 and O-DOMAIN; W0-1.1.2 folds Q53 readings |
 | exp/002-qlever-baseline | MERGED 85aba57 (G0/G1/G2 PASS, G4 FAIL as expected) | QLever dev resident recreated from main config (holder EXP-000) |
 | exp/F02-wire-exactness | MERGED 7247c82 (lab only; partly falsified) | fixes in EXP-F02b |
 | exp/X02-xtql-parity (bf1ad4d) | PROGRESSED: G0/G1 PASS, G2 SQL 142/142, XTQL diagnostic 142/142, XTQL candidate timeouts under load | V-X02, then promote; EXP-C8 builds on it |
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
+| contract 0.3.7 (main ca42e06) | Q46-Q49 compiled; 153 obligations; W0-1.1.1 pinned ACCEPTED; O-DOMAIN fingerprint null; Q50-Q54 pending rows (no authority) | Codex round 7 running (shell by6r5z04f); 0.3.8 compiles Q50-Q54 |
 | contract 0.3.3 (main 89376e1) | Q29-Q32 compiled; 142 obligations, 50 thresholds; W0 pin null until V-D01 | Codex round 3 |
 
 ## Running agents (10 of 10, plus Codex shell b0losx599)
@@ -34,23 +40,26 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | EXP-N01 driver MERGED; waiting for an exclusive XTDB slot for A0 (opus) | P1-P5 measurement (NS gate) | A0 receipts |
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
-| EXP-O04 oracle F2 + erasure modeling (opus, O02/O03 author, exp/O04-oracle-erasure) | correctness floor (unblocks 11 erasure obligations) | lab/oracles/replay |
+| V-O04 re-check of O-REPLAY 0.4.1 (opus, resumed verifier a24def81f188f0df6) | correctness floor (11 erasure obligations) | verdict, then pin |
 | EXP-E01 claim evaluator (opus, exp/E01-claim-evaluator) | floor for every claim | lab/bin/claim.mjs |
-| EXP-F02b G1 qlever f1 run (opus, exp/F02b-wire-exactness-fixes cad7f3f) | numeric rule floor | 0 silent changes both engines; then V-F02b; G1 xtdb in a quiet window |
+| EXP-D01b TypeScript W0 kernel (opus, exp/D01b-w0-kernel) | P5, P3 deps, GS domain answers | packages/w0, cases + fingerprint + per-subject cost |
 | EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |
-| EXP-P2Q QLever log of record + broker (opus, exp/P2Q-qlever-log-broker) | P2, P3 | packages/qlever/src/broker |
 | EXP-C8 reads never write (opus, exp/C8-read-only-frontier) | P1, C8 floor | both lanes |
-| EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
-| EXP-D01a W0-1.1.1 small fixes + scoped R3 (opus, exp/D01-world-definition) | P5, P3 deps, GS domain expectations | then V-D01 delta check, pin, two independent implementers |
-Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. NEXT FREE SLOTS, in order: (000) A01 contract 0.3.7 (engine-free); (0000) R22 noise-robust benchmarking research (Sonnet xhigh, engine-free); then (Q46 + Q47 from lab/reviews/plan-v2-round6.responses.md); (00) V-F02b independent verification of exp/F02b-wire-exactness-fixes (after its f1 G1 run); (1) V-X02 (verify exp/X02-xtql-parity bf1ad4d; XTQL candidate rerun on an exclusive slot); (2) EXP-Q07 QLever version side-by-side (R21 E1) when an exclusive QLever slot frees; (3) XTDB 2.2.1 re-qualification when tagged.
+| V-P2Q verification (opus, verify/P2Q) | P2, P3 | verdict on merging the broker composition |
+| V-D01c review of O-DOMAIN (opus, verify/D01c) | P5, P3 deps, GS domain expectations | verdict -> W0 and O-DOMAIN pins |
+Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. NEXT FREE SLOTS, in order: (000a) EXP-O04b Q52 as O-REPLAY 0.4.2 (O04 author ac43e34, resume); (000a2) EXP-P2B XTDB behind the host log and broker (Q51b, Q51c; after V-P2Q's verdict); (000a3) EXP-J01 bytes per commit on both lanes (Q51d); (000a4) W0-1.1.2 (Q53b: readings A01-A10 as SPEC clarifications plus golden cases; W0 author); (0000) R22 noise-robust benchmarking research (Sonnet xhigh, engine-free); then (Q46 + Q47 from lab/reviews/plan-v2-round6.responses.md); (00) V-F02b independent verification of exp/F02b-wire-exactness-fixes (after its f1 G1 run); (1) V-X02 (verify exp/X02-xtql-parity bf1ad4d; XTQL candidate rerun on an exclusive slot); (2) EXP-Q07 QLever version side-by-side (R21 E1) when an exclusive QLever slot frees; (3) XTDB 2.2.1 re-qualification when tagged.
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 
 ## Exclusive slot queue (pool: xtdb-dev 3.0 + qlever-dev 3.5 leave 4.5 GiB)
-XTDB: EXP-P2X (s1, now) -> EXP-X05 (s2 + follower capped about 1 GiB) -> EXP-N01 A0 XTDB (zero-readers, then ladder) -> V-X02 XTQL rerun.
-QLever: EXP-P2Q measurement -> A0 QLever (bulk-seeded) -> EXP-Q07 version side-by-side (needs a dev resident paused or the XTDB queue drained).
+XTDB: EXP-P2X done (s1 released) -> EXP-X05 (s2 + follower capped about 1 GiB) -> EXP-N01 A0 XTDB (zero-readers, then ladder) -> V-X02 XTQL rerun.
+QLever: EXP-P2Q controlled run list (Q50e) -> A0 QLever (bulk-seeded) -> EXP-Q07 version side-by-side (needs a dev resident paused or the XTDB queue drained).
 
-## Infrastructure policy (2026-11-08 22:10Z)
+## Gate window (owed reruns, run one at a time through heavy.mjs when several agents finish)
+- F02b: G1 xtdb and G1 qlever f1 at c443381 (both last failed by timeouts only).
+- X02: XTQL candidate G2 on an exclusive XTDB slot.
+
+## Infrastructure policy (set about 20:00Z on 2026-11-07; the old header's date was an estimate)
 Host saturated (36 GiB, about 14 GiB compressed, load 12-13 on 12 cores; Sam's default colima VM shares it), so the triplex2 VM cannot
 grow. QLever dev resident raised to 3.5 GiB and recreated fresh after three OOM kills (pool now 10.0 of 11 GiB). Until pressure drops: no new
 engine-heavy dispatches; heavy commands via lab/bin/heavy.mjs; gate reruns one at a time; latency judged only relatively. Check both dev
@@ -61,6 +70,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Q21 AMB-09: two equal-valued assertions on one entity are one value, so a duplicated pay fact never doubles a total (SUM 10, not 20).
 - Q21 AMB-17: `find` fails with ConflictingValuesError when a returned document has a conflicted attribute (a projection omitting it succeeds).
 - Q21 AMB-04: a -0.0 assertion keeps bit-exact -0.0 in the journal; the numeric rule overrides C6's old byte-identity promise.
+- Q49c erased values in queries: match no value predicate, skipped by SUM/AVG/MIN/MAX, sorted last, one group per attribute (provisional).
 - Q24 erasure: after the erasure commit publishes, reads at every basis (even before it) show a typed ErasedValue marker, not the value.
 - R19 tenancy: do pooled cell databases with per-tenant envelope encryption count as storage-layer isolation for the 1,000 small tenants
   (provisional yes; large tenants siloed)? And how many small tenants are active in 15 minutes (provisional 10%)?
