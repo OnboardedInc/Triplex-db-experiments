@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-07",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
@@ -8,15 +8,15 @@
   "inputs": {
     "lab/SCOPE.md": "5a408004332474dc8ff7699ad5c89ef7ca03b96728a959ea9cc8ceb7a4ff7c03",
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
-    "lab/TARGETS.md": "0f6e4ed233d950d46cfcef5a8dd93479ce3665e9920fb80b30174958b853bb4a",
+    "lab/TARGETS.md": "e1ac5f6f60e5de05b72b8c5abfead02e2642d8aae289362c0db5ded80dd3d8f3",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "76abed238508f5f93bcde668c24773a90a33d34281c7d9808ebb052e802c1dfb",
-    "lab/acceptance/build_contract.py": "3a4dc5210fc0906ef6d5a94d1a680d001b235dbc16e6d39d9f33c3af7d922ee8"
+    "lab/acceptance/RULINGS.md": "890b7740f5bba9d2b02312f203627cf5264c847d90b2c0718d0d059d27984053",
+    "lab/acceptance/build_contract.py": "aaa5ea661ba35d0855f024b2d84025e0a21d9e05f24d2e10d943fb25a9eed5f6"
   },
   "artifacts": {
-    "load-contract.json": "3f2bbaa15c6c06ff6dcf8fbcc124f70b3837d4b9b9ebadda09f165c969d404d7",
-    "budgets.json": "cd5730c61e493cfc23e904e778c609ab4ecf4f9b6983c01efc50a17a27ffab7f",
-    "capability-matrix.md": "81498e5d82d1f79f6fca08e14993b8cc1811f3b3b38931472d9ae00df9fe107b"
+    "load-contract.json": "e0739a56a49ea93a181a984728df10c14f6674214aefa7ebd17f1bbe30df79d6",
+    "budgets.json": "c7ac1100d8f35f31a3b4e257c9e9ddbab2b824c24a6fd6c31ccda6c691b75483",
+    "capability-matrix.md": "269f2fda6d5634b322791135211948e342c6cfba115a49351787b9f8e918d9a1"
   },
   "lanes": [
     "xtdb-xtql",
@@ -156,7 +156,7 @@
       "id": "Q4",
       "status": "SUPERSEDED",
       "topic": "sparse profile load",
-      "ruling": "Superseded by RESCOPE.",
+      "ruling": "Superseded by RESCOPE and Q17.",
       "compiledInto": []
     },
     {
@@ -188,7 +188,7 @@
     {
       "id": "Q8a",
       "topic": "engine-side integer sums",
-      "ruling": "Where a projection needs an engine-side sum: exact total; typed integer-overflow only when the final result is outside the integer range; intermediate partial sums never wrap. Per-subject sums run in the kernel.",
+      "ruling": "Worded per Q20. Where a projection needs an engine-side sum: exact total; typed integer-overflow only when the final result is outside the engine's exact integer range; intermediate partial sums never wrap. Per-subject sums run in the kernel (BigInt).",
       "compiledInto": [
         "AGGREGATE_RULES",
         "G5.agg.projection-sums",
@@ -198,7 +198,7 @@
     {
       "id": "Q8b",
       "topic": "AVG over integers",
-      "ruling": "Typed preflight error unless the query converts explicitly; with explicit conversion to binary64, binary64 of the exact sum divided by the count, rounded once.",
+      "ruling": "Worded per Q20. AVG over integers is a typed preflight error unless the query converts explicitly; with explicit conversion to binary64, binary64 of the exact sum divided by the count, rounded once.",
       "compiledInto": [
         "AGGREGATE_RULES",
         "ERROR_TABLE"
@@ -279,7 +279,7 @@
     {
       "id": "Q13",
       "topic": "XTDB engine-side integer SUM recipe",
-      "ruling": "Where a projection needs an engine-side sum on XTDB, the primary recipe is the split-sum (32-bit halves recombined with overflow-checked arithmetic, verified in R12); SUM(CAST(x AS DECIMAL(38,0))) only if proven exact on 2.2.0 (KL-X7).",
+      "ruling": "Refined by Q19. Where a projection needs an engine-side sum on XTDB, the recipe is SUM(CAST(x AS DECIMAL(32,0))) (R14 measured it exact and free on 2.2.0) once EXP-X02 confirms it; the split-sum (32-bit halves recombined with overflow-checked arithmetic, verified in R12) is the fallback. Whichever recipe is used must pass the same G5.agg.projection-sums cases.",
       "compiledInto": [
         "G5.agg.projection-sums",
         "DIAGNOSTICS D-X-SUM"
@@ -288,7 +288,7 @@
     {
       "id": "Q14a",
       "topic": "card-many family order",
-      "ruling": "boolean < integer < number < datetime < string < ref < json < blob, then by value inside a family.",
+      "ruling": "boolean < integer < number < decimal < datetime < string < ref < json < blob, then by value inside a family (decimal placed by Q18).",
       "compiledInto": [
         "CARD_MANY_ORDER"
       ]
@@ -323,6 +323,59 @@
       "ruling": "Accepted as drafted; the contract verifier checks each tag against packages/core/src/errors and Error.ts before 1.0.0.",
       "compiledInto": [
         "ERROR_TABLE"
+      ]
+    },
+    {
+      "id": "Q16",
+      "topic": "derived thresholds, read basis mix, run timing, budgets",
+      "ruling": "History flatness 1.1 stands. Reader basis mix: 80% at the latest committed tx (named exactly), 15% at a tx within the last hour, 5% at a past basis up to 90 days back (TARGETS section 2). Acceptance runs use 120 s warmup and 600 s per ladder level; a screening profile (30 s warmup, 120 s per level) is allowed for candidate comparison and can never close an obligation. Budget allowances (write bytes 4.0x, ingest 0.5x, memory 1.5x, disk 2.0x of the A0 control at the same rung) are provisional and are re-frozen after EXP-N02 measures the A0 controls, before any candidate is compared.",
+      "compiledInto": [
+        "THRESHOLDS NS-P4-HISTORY-FLATNESS",
+        "load-contract.json basisMix and windows",
+        "PROFILES P-SCREEN",
+        "budgets.json"
+      ]
+    },
+    {
+      "id": "Q17",
+      "topic": "sparse profile",
+      "ruling": "Dropped; scenario GS.15 (one large tenant and 1,000 small ones) covers population skew.",
+      "compiledInto": [
+        "GS.15",
+        "SCALE_POPULATION"
+      ]
+    },
+    {
+      "id": "Q18",
+      "topic": "decimal value kind",
+      "ruling": "A decimal attribute declares precision and scale. Stored as a scaled integer when precision <= 15 (the scaled value stays within 2^53), otherwise as an order-preserving decimal string. A value with more fractional digits than the scale, or outside the precision, is rejected with a typed error, never rounded. Decimal is its own family, ordered between number and datetime; comparison between decimal and integer or number is a typed preflight error unless the query converts explicitly; arithmetic runs in the TypeScript kernel with exact decimal arithmetic.",
+      "compiledInto": [
+        "VALUE_KINDS decimal",
+        "DECIMAL_RULES",
+        "CARD_MANY_ORDER",
+        "COMPARISON_RULES CMP-DECIMAL-CROSS",
+        "G1.types.decimal",
+        "CS-DECIMAL"
+      ]
+    },
+    {
+      "id": "Q19",
+      "topic": "engine-side exact sums",
+      "ruling": "Needed only where a projection sums many rows. EXP-X02 confirms the XTDB recipe (R14 measured SUM(CAST(x AS DECIMAL(32,0))) exact and free on 2.2.0; the split-sum is the fallback); EXP-F02 cross-checks.",
+      "compiledInto": [
+        "G5.agg.projection-sums",
+        "Q13",
+        "DIAGNOSTICS D-X-SUM"
+      ]
+    },
+    {
+      "id": "Q20",
+      "topic": "Q8a and Q8b wording",
+      "ruling": "Q8a and Q8b read integer, not int64: exact totals with a typed error only when the final result is outside the engine's exact range; engine-side sums only where a projection needs them; per-subject sums run in the kernel (BigInt); AVG over integers keeps Q8b's preflight rule.",
+      "compiledInto": [
+        "Q8a",
+        "Q8b",
+        "AGGREGATE_RULES"
       ]
     }
   ],
@@ -379,7 +432,7 @@
     },
     {
       "kind": "decimal",
-      "rule": "NEW value kind for money and business decimals: a scaled integer (declared scale) or an order-preserving decimal string; exact storage and round trip; order-preserving encoding for range rules; a value with more fractional digits than the declared scale or outside the declared magnitude fails with E-DECIMAL-UNREPRESENTABLE, never rounded; arithmetic in the TypeScript kernel (exact decimal or BigInt)"
+      "rule": "value kind for money and business decimals (RULINGS Q18, DECIMAL_RULES): the attribute declares precision and scale; stored as a scaled integer when precision <= 15, otherwise as an order-preserving decimal string; exact storage and round trip; order-preserving encoding for range rules; a value with more fractional digits than the scale, or outside the precision, fails with E-DECIMAL-UNREPRESENTABLE, never rounded; its own family; arithmetic in the TypeScript kernel with exact decimal arithmetic"
     },
     {
       "kind": "boolean",
@@ -401,6 +454,27 @@
       "kind": "blob",
       "rule": "exact descriptor (mimeType, size, filename)"
     }
+  ],
+  "decimalRules": {
+    "source": "RULINGS Q18",
+    "declaration": "every decimal attribute declares precision p (total significant digits) and scale s (fractional digits), 0 <= s <= p",
+    "storage": [
+      {
+        "when": "p <= 15",
+        "as": "scaled integer value * 10^s (|scaled| < 10^15 < 2^53)"
+      },
+      {
+        "when": "p > 15",
+        "as": "order-preserving decimal string (fixed-width, sign-aware encoding whose bytewise order equals numeric order)"
+      }
+    ],
+    "reject": "a value with more than s fractional digits, or with more than p - s integer digits, fails the write with E-DECIMAL-UNREPRESENTABLE and leaves no residue; never rounded or truncated",
+    "family": "decimal is its own family, ordered between number and datetime (CARD_MANY_ORDER); 1.50 and 1.5 are one value",
+    "comparison": "CMP-DECIMAL-CROSS: comparison with integer or number is preflight E-MIXED-FAMILY unless the query converts explicitly",
+    "arithmetic": "TypeScript kernel, exact decimal arithmetic; engine-side decimal arithmetic only where a projection needs it (RULINGS Q19)"
+  },
+  "screeningProfiles": [
+    "P-SCREEN"
   ],
   "integerMinRange": 9007199254740991,
   "laneIntegerRange": {
@@ -686,6 +760,11 @@
       "source": "RULINGS Q8d (core silent for stored integer versus number)"
     },
     {
+      "id": "CMP-DECIMAL-CROSS",
+      "rule": "decimal versus integer or number: equality is false and they never share a group; any comparison across them is preflight E-MIXED-FAMILY unless the query converts explicitly",
+      "source": "RULINGS Q18"
+    },
+    {
       "id": "CMP-IDENTITY",
       "rule": "entity ids and ref identities compare only with text or ref constants; a numeric or boolean constant is never equal and != is true",
       "source": "testkit 'datalog equality keeps identity bindings string-typed'"
@@ -798,7 +877,7 @@
       "json": "codepoint sequence of the canonical JSON text",
       "blob": "codepoint sequence of the content id"
     },
-    "note": "Family order per RULINGS Q14a; decimal sorts with integer and number by numeric value only inside its own family (decimal is ordered after number)."
+    "note": "Family order per RULINGS Q14a and Q18: decimal is its own family between number and datetime; inside it, values sort by exact numeric value."
   },
   "constraintRules": [
     {
@@ -1944,7 +2023,8 @@
     "P-RUNG-1M": "The 1m-subject rung of SCALE_POPULATION.",
     "P-RUNGS": "Every rung of SCALE_POPULATION in order: 10k, 100k, 1m, 10m subjects.",
     "P-YEAR-ONE": "The year-one measurement population of SCALE_POPULATION at the 10m rung (10m entities, 100m active facts, retained history). It is the size the priorities are measured at, not a target in itself.",
-    "P-NS": "load-contract.json (fixed writer trace, P1 reader ladder, P2 to P4 probes, P5 sweep) on P-YEAR-ONE, one identified profile and composition."
+    "P-NS": "load-contract.json (fixed writer trace, P1 reader ladder, P2 to P4 probes, P5 sweep) on P-YEAR-ONE, one identified profile and composition, with the acceptance windows (120 s warmup, 600 s per ladder level).",
+    "P-SCREEN": "Screening run of P-NS with 30 s warmup and 120 s per ladder level, for candidate comparison only (RULINGS Q16). A P-SCREEN receipt can never close an obligation, never feeds calibration, and never carries forward."
   },
   "scalePopulation": {
     "source": "lab/TARGETS.md section 2 (year-one scale; rungs 10k, 100k, 1m, 10m) and section 1 P4 (history depths 1, 3, 10); qualification/benchmark-contract.json (topologies, query families); acceptance review r1 finding 13",
@@ -5365,15 +5445,23 @@
     },
     "CS-DECIMAL": {
       "status": "TO-AUTHOR",
-      "source": "VALUE_KINDS decimal; TARGETS section 3 (money as scaled integers or order-preserving decimal strings)",
+      "source": "VALUE_KINDS decimal; DECIMAL_RULES (RULINGS Q18); TARGETS section 3",
       "requiredTags": [
         "all",
         "roundtrip",
         "range",
         "unrepresentable",
-        "kernel-arithmetic"
+        "kernel-arithmetic",
+        "cross-family"
       ],
-      "requiredCases": [],
+      "requiredCases": [
+        "DEC-P15-SCALED",
+        "DEC-P16-STRING",
+        "DEC-SCALE-EXCESS",
+        "DEC-PRECISION-EXCESS",
+        "DEC-CROSS-FAMILY-PREFLIGHT",
+        "DEC-CONVERTED-COMPARE"
+      ],
       "manifest": "lab/acceptance/cases/CS-DECIMAL.json",
       "manifestSha256": null,
       "pinnedSourceFiles": [],
@@ -7065,6 +7153,7 @@
       "acceptance-rule version (contract transitive hash and obligation definition hash)"
     ],
     "carryForward": "A receipt carries forward to a later profile only when every bound identity is unchanged, checked by an explicit applicability record (AP) that recomputes each identity on the later profile. Carry-forward serves intermediate tracking only.",
+    "screening": "A receipt made on a screening profile (SCREENING_PROFILES, RULINGS Q16) is evidence for candidate comparison only: it never passes VA, never closes an obligation, never feeds calibration and never carries forward.",
     "finalAcceptance": "The final acceptance of the selected integrated profile is entirely fresh: every obligation, including scale rungs and load levels, runs on that profile; nothing carries into it."
   },
   "statusAlgorithm": [
@@ -7243,11 +7332,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "cd5730c61e493cfc23e904e778c609ab4ecf4f9b6983c01efc50a17a27ffab7f"
+    "sha256": "c7ac1100d8f35f31a3b4e257c9e9ddbab2b824c24a6fd6c31ccda6c691b75483"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "3f2bbaa15c6c06ff6dcf8fbcc124f70b3837d4b9b9ebadda09f165c969d404d7"
+    "sha256": "e0739a56a49ea93a181a984728df10c14f6674214aefa7ebd17f1bbe30df79d6"
   },
   "obligations": [
     {
@@ -7457,7 +7546,7 @@
         "G5"
       ],
       "title": "Decimal value kind for money and business decimals",
-      "statement": "Every CS-DECIMAL case: decimals are stored as a scaled integer or an order-preserving decimal string and round-trip exactly on every surface; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value beyond the declared scale or magnitude fails with E-DECIMAL-UNREPRESENTABLE, never rounded; kernel arithmetic over decimals is exact.",
+      "statement": "Every CS-DECIMAL case, per DECIMAL_RULES (RULINGS Q18): each decimal attribute declares precision and scale; precision <= 15 is stored as a scaled integer (DEC-P15-SCALED), larger precision as an order-preserving decimal string (DEC-P16-STRING); both round-trip exactly on every surface; comparison with integer or number is preflight E-MIXED-FAMILY (DEC-CROSS-FAMILY-PREFLIGHT) and exact after explicit conversion (DEC-CONVERTED-COMPARE); range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value with more fractional digits than the scale (DEC-SCALE-EXCESS) or outside the precision (DEC-PRECISION-EXCESS) fails with E-DECIMAL-UNREPRESENTABLE, never rounded; kernel arithmetic over decimals is exact.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -7469,6 +7558,17 @@
           "set": "CS-DECIMAL",
           "select": [
             "all"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL",
+          "select": [
+            "DEC-P15-SCALED",
+            "DEC-P16-STRING",
+            "DEC-SCALE-EXCESS",
+            "DEC-PRECISION-EXCESS",
+            "DEC-CROSS-FAMILY-PREFLIGHT",
+            "DEC-CONVERTED-COMPARE"
           ]
         }
       ],
@@ -7505,13 +7605,14 @@
       ],
       "contracts": [],
       "sources": [
+        "RULINGS Q18",
         "lab/TARGETS.md section 3 (decimal value kind on the critical path for goal 1)",
         "lab/research/SAM-pasted-numbers-2026-11-07.md section 3"
       ],
       "grounding": "grounded",
       "notes": null,
       "verifierMode": "rerun",
-      "definitionSha256": "ddab028cfbc181f69e35e4c36f3cd35c6eb3f1727319a1fb7bfefaad1e5ca816",
+      "definitionSha256": "9382e071a6c65f1098556911053c10ff05ba3e8e755459051590bc90ac72facc",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -9245,7 +9346,7 @@
         "G5"
       ],
       "title": "Engine-side sums are exact where a projection needs them",
-      "statement": "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using the split-sum recipe on XTDB (RULINGS Q13) or another qualified recipe; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
+      "statement": "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using on XTDB SUM(CAST(x AS DECIMAL(32,0))) once EXP-X02 confirms it, else the split-sum fallback (RULINGS Q13, Q19), with EXP-F02 cross-checking the chosen recipe; whichever recipe is used passes these same cases; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -9295,12 +9396,14 @@
         "RULINGS Q8a",
         "RULINGS Q8b",
         "RULINGS Q13",
+        "RULINGS Q19",
+        "RULINGS Q20",
         "lab/research/SAM-pasted-numbers-2026-11-07.md section 5 (arithmetic over many rows only where a projection needs it)"
       ],
       "grounding": "grounded",
       "notes": null,
       "verifierMode": "rerun",
-      "definitionSha256": "72dad77c307fe71040ea3c21af48b445cf0061c50ab6ec8b71a91775a9bb3df8",
+      "definitionSha256": "03cecbcbda30444b41e06e1e255b7ff008276c9010a542b22ce709524d0f5134",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15908,5 +16011,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "a97f40968aaa2097a7a35ceed25c7ba6d48d2fdb54e0132be662a6abc0b8245e"
+  "transitiveContractSha256": "80e60385be0f102a996818d8e1f8eed888afa7415ba2cfc55c58ac394a56e042"
 }

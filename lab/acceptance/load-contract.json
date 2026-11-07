@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/2",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -130,7 +130,7 @@
       ],
       "stress": 1024,
       "zeroReaderBaseline": "level 0 = writer trace alone, same run",
-      "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 50% the current basis, 25% a basis within the last hour, 25% a basis up to 30 days back",
+      "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 80% at the latest committed tx (named exactly), 15% at a tx within the last hour, 5% at a past basis up to 90 days back (RULINGS Q16, TARGETS section 2)",
       "record": [
         "correctness-qualified read goodput per level",
         "read p50, p99 per level",
@@ -197,10 +197,32 @@
     }
   },
   "windows": {
-    "warmupS": 120,
-    "perLadderLevelS": 600,
-    "note": "derived: 600 s covers one full burst cycle of the writer trace (60 s at 750 facts/s every 600 s)"
+    "acceptance": {
+      "warmupS": 120,
+      "perLadderLevelS": 600,
+      "note": "RULINGS Q16; 600 s covers one full burst cycle of the writer trace (60 s at 750 facts/s every 600 s)"
+    },
+    "screening": {
+      "profile": "P-SCREEN",
+      "warmupS": 30,
+      "perLadderLevelS": 120,
+      "note": "RULINGS Q16; candidate comparison only; a screening receipt never closes an obligation"
+    }
   },
+  "basisMix": [
+    {
+      "share": 0.8,
+      "basis": "latest committed tx, named exactly"
+    },
+    {
+      "share": 0.15,
+      "basis": "a tx within the last hour"
+    },
+    {
+      "share": 0.05,
+      "basis": "a past basis up to 90 days back"
+    }
+  ],
   "runs": 3,
   "invariants": [
     "every read names its basis and its answer is compared with O-REPLAY at that basis; a wrong answer scores zero",

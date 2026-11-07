@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 STATUS = "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review"
 DATE = "2026-11-07"
 
@@ -81,7 +81,7 @@ RULINGS = [
     {"id": "Q3", "topic": "host post-processing",
      "ruling": "Kept as a declared step that reads no data, counted inside the task's measured call.",
      "compiledInto": ["LANGUAGE_RULES", "PKT.full142"]},
-    {"id": "Q4", "status": "SUPERSEDED", "topic": "sparse profile load", "ruling": "Superseded by RESCOPE.", "compiledInto": []},
+    {"id": "Q4", "status": "SUPERSEDED", "topic": "sparse profile load", "ruling": "Superseded by RESCOPE and Q17.", "compiledInto": []},
     {"id": "Q5", "topic": "guide-only raw authoring",
      "ruling": "A fresh agent given only the raw-query guide and the engine's public docs authors the raw query set; answers must match the repository at the same basis.",
      "compiledInto": ["R.raw.guide-only-authoring", "CR-PROVENANCE"]},
@@ -92,10 +92,10 @@ RULINGS = [
      "ruling": "Not required for done. The packaged SDK consumer is required.",
      "compiledInto": ["G10.pkg.clean-consumer-slice", "ENTRYPOINTS (no CLI entrypoint)"]},
     {"id": "Q8a", "topic": "engine-side integer sums",
-     "ruling": "Where a projection needs an engine-side sum: exact total; typed integer-overflow only when the final result is outside the integer range; intermediate partial sums never wrap. Per-subject sums run in the kernel.",
+     "ruling": "Worded per Q20. Where a projection needs an engine-side sum: exact total; typed integer-overflow only when the final result is outside the engine's exact integer range; intermediate partial sums never wrap. Per-subject sums run in the kernel (BigInt).",
      "compiledInto": ["AGGREGATE_RULES", "G5.agg.projection-sums", "CS-NUMERIC"]},
     {"id": "Q8b", "topic": "AVG over integers",
-     "ruling": "Typed preflight error unless the query converts explicitly; with explicit conversion to binary64, binary64 of the exact sum divided by the count, rounded once.",
+     "ruling": "Worded per Q20. AVG over integers is a typed preflight error unless the query converts explicitly; with explicit conversion to binary64, binary64 of the exact sum divided by the count, rounded once.",
      "compiledInto": ["AGGREGATE_RULES", "ERROR_TABLE"]},
     {"id": "Q8c", "topic": "division by zero",
      "ruling": "Typed error; no NaN or Infinity results.",
@@ -120,13 +120,24 @@ RULINGS = [
      "ruling": "Aligned with PLAN C5: repository and fragments fail with ConflictingValuesError; the raw convenience shape is documented as non-equivalent; the canonical conflict-aware relation is values(attribute).",
      "compiledInto": ["G4.neg.conflict-semantics"]},
     {"id": "Q13", "topic": "XTDB engine-side integer SUM recipe",
-     "ruling": "Where a projection needs an engine-side sum on XTDB, the primary recipe is the split-sum (32-bit halves recombined with overflow-checked arithmetic, verified in R12); SUM(CAST(x AS DECIMAL(38,0))) only if proven exact on 2.2.0 (KL-X7).",
+     "ruling": "Refined by Q19. Where a projection needs an engine-side sum on XTDB, the recipe is SUM(CAST(x AS DECIMAL(32,0))) (R14 measured it exact and free on 2.2.0) once EXP-X02 confirms it; the split-sum (32-bit halves recombined with overflow-checked arithmetic, verified in R12) is the fallback. Whichever recipe is used must pass the same G5.agg.projection-sums cases.",
      "compiledInto": ["G5.agg.projection-sums", "DIAGNOSTICS D-X-SUM"]},
-    {"id": "Q14a", "topic": "card-many family order", "ruling": "boolean < integer < number < datetime < string < ref < json < blob, then by value inside a family.", "compiledInto": ["CARD_MANY_ORDER"]},
+    {"id": "Q14a", "topic": "card-many family order", "ruling": "boolean < integer < number < decimal < datetime < string < ref < json < blob, then by value inside a family (decimal placed by Q18).", "compiledInto": ["CARD_MANY_ORDER"]},
     {"id": "Q14b", "topic": "-0.0 and +0.0", "ruling": "One value for identity, grouping and set membership (core CanonicalJson normalizes -0); when supports differ only in representation, the returned representation is the one from the support with the lowest recorded position; single-assertion reads return the stored representation.", "compiledInto": ["COMPARISON_RULES CMP-NEGZERO"]},
     {"id": "Q14c", "topic": "binary64 SUM", "ruling": "Correctly rounded exact total on repository and supported-fragment surfaces where offered; a differing native SUM is a raw KNOWN-LIMIT with a mapped recipe.", "compiledInto": ["AGGREGATE_RULES AG-SUM-F"]},
     {"id": "Q14d", "topic": "ordered comparison integer vs number", "ruling": "Typed preflight error.", "compiledInto": ["COMPARISON_RULES CMP-INT-FLOAT"]},
     {"id": "Q15", "topic": "error tags and reasons", "ruling": "Accepted as drafted; the contract verifier checks each tag against packages/core/src/errors and Error.ts before 1.0.0.", "compiledInto": ["ERROR_TABLE"]},
+    {"id": "Q16", "topic": "derived thresholds, read basis mix, run timing, budgets",
+     "ruling": "History flatness 1.1 stands. Reader basis mix: 80% at the latest committed tx (named exactly), 15% at a tx within the last hour, 5% at a past basis up to 90 days back (TARGETS section 2). Acceptance runs use 120 s warmup and 600 s per ladder level; a screening profile (30 s warmup, 120 s per level) is allowed for candidate comparison and can never close an obligation. Budget allowances (write bytes 4.0x, ingest 0.5x, memory 1.5x, disk 2.0x of the A0 control at the same rung) are provisional and are re-frozen after EXP-N02 measures the A0 controls, before any candidate is compared.",
+     "compiledInto": ["THRESHOLDS NS-P4-HISTORY-FLATNESS", "load-contract.json basisMix and windows", "PROFILES P-SCREEN", "budgets.json"]},
+    {"id": "Q17", "topic": "sparse profile", "ruling": "Dropped; scenario GS.15 (one large tenant and 1,000 small ones) covers population skew.", "compiledInto": ["GS.15", "SCALE_POPULATION"]},
+    {"id": "Q18", "topic": "decimal value kind",
+     "ruling": "A decimal attribute declares precision and scale. Stored as a scaled integer when precision <= 15 (the scaled value stays within 2^53), otherwise as an order-preserving decimal string. A value with more fractional digits than the scale, or outside the precision, is rejected with a typed error, never rounded. Decimal is its own family, ordered between number and datetime; comparison between decimal and integer or number is a typed preflight error unless the query converts explicitly; arithmetic runs in the TypeScript kernel with exact decimal arithmetic.",
+     "compiledInto": ["VALUE_KINDS decimal", "DECIMAL_RULES", "CARD_MANY_ORDER", "COMPARISON_RULES CMP-DECIMAL-CROSS", "G1.types.decimal", "CS-DECIMAL"]},
+    {"id": "Q19", "topic": "engine-side exact sums",
+     "ruling": "Needed only where a projection sums many rows. EXP-X02 confirms the XTDB recipe (R14 measured SUM(CAST(x AS DECIMAL(32,0))) exact and free on 2.2.0; the split-sum is the fallback); EXP-F02 cross-checks.",
+     "compiledInto": ["G5.agg.projection-sums", "Q13", "DIAGNOSTICS D-X-SUM"]},
+    {"id": "Q20", "topic": "Q8a and Q8b wording", "ruling": "Q8a and Q8b read integer, not int64: exact totals with a typed error only when the final result is outside the engine's exact range; engine-side sums only where a projection needs them; per-subject sums run in the kernel (BigInt); AVG over integers keeps Q8b's preflight rule.", "compiledInto": ["Q8a", "Q8b", "AGGREGATE_RULES"]},
 ]
 
 # ============================================================================ language accounting
@@ -194,6 +205,7 @@ COMPARISON_RULES = [
     {"id": "CMP-SAME", "rule": "same family: exact comparison (integer as integers, binary64 by IEEE value, text by Unicode codepoint sequence, datetime by instant, boolean false < true, ref by id codepoints)", "source": "exact typing"},
     {"id": "CMP-NUMERIC-CONST", "rule": "an untyped numeric constant compares by numeric value with number and datetime values (number 7 and datetime 7 both equal 7); text '7' is not equal", "source": "testkit 'datalog equality predicates compare numeric values as numbers' (packages/testkit/src/index.ts:721)"},
     {"id": "CMP-INT-FLOAT", "rule": "integer versus number: equality is false and they never share a group; an ordered comparison across them is preflight E-MIXED-FAMILY unless converted explicitly", "source": "RULINGS Q8d (core silent for stored integer versus number)"},
+    {"id": "CMP-DECIMAL-CROSS", "rule": "decimal versus integer or number: equality is false and they never share a group; any comparison across them is preflight E-MIXED-FAMILY unless the query converts explicitly", "source": "RULINGS Q18"},
     {"id": "CMP-IDENTITY", "rule": "entity ids and ref identities compare only with text or ref constants; a numeric or boolean constant is never equal and != is true", "source": "testkit 'datalog equality keeps identity bindings string-typed'"},
     {"id": "CMP-UNTYPED-STRING", "rule": "an untyped string constant matches string and ref values; a typed ref constant matches only ref values", "source": "testkit 'datalog untyped strings match string and ref values while typed refs stay exact'"},
     {"id": "CMP-BOOL-INT", "rule": "boolean true and integer 1 are distinct values and distinct groups", "source": "packet oracle identity() (event_oracles.py: bool true vs i64 one)"},
@@ -217,13 +229,23 @@ CARD_MANY_ORDER = {
     "rule": "set semantics: equal values collapse to one element; elements ordered first by type family, then by value",
     "familyOrder": ["boolean", "integer", "number", "decimal", "datetime", "string", "ref", "json", "blob"],
     "valueOrder": {"boolean": "false < true", "integer": "numeric", "number": "numeric IEEE (-0.0 and +0.0 collapse, CMP-NEGZERO)", "decimal": "exact numeric value (1.50 and 1.5 are one value)", "datetime": "instant", "string": "Unicode codepoint sequence", "ref": "codepoint sequence of the target id", "json": "codepoint sequence of the canonical JSON text", "blob": "codepoint sequence of the content id"},
-    "note": "Family order per RULINGS Q14a; decimal sorts with integer and number by numeric value only inside its own family (decimal is ordered after number).",
+    "note": "Family order per RULINGS Q14a and Q18: decimal is its own family between number and datetime; inside it, values sort by exact numeric value.",
 }
 CONSTRAINT_RULES = [
     {"id": "CN-NEW-OR-WORSENED", "rule": "with enforcement on, a command is rejected only when its post-state creates a new violation or worsens an existing one at some represented valid-time boundary; a pre-existing violation does not block an unrelated command and stays readable", "source": "packages/core/src/Constraint.ts:376 (newlyViolated)"},
     {"id": "CN-CARD-COUNT", "rule": "write-time cardinality counts live assertions, including equal-valued duplicates (unchanged)", "source": "Constraint.ts:193; PLAN C5.1"},
     {"id": "CN-PREEXISTING-CONFLICT", "rule": "a card-one conflict that predates the enforcing write stays a conflict (C5.2) and reads per C5.3", "source": "PLAN C5.2"},
 ]
+
+DECIMAL_RULES = {
+    "source": "RULINGS Q18",
+    "declaration": "every decimal attribute declares precision p (total significant digits) and scale s (fractional digits), 0 <= s <= p",
+    "storage": [{"when": "p <= 15", "as": "scaled integer value * 10^s (|scaled| < 10^15 < 2^53)"}, {"when": "p > 15", "as": "order-preserving decimal string (fixed-width, sign-aware encoding whose bytewise order equals numeric order)"}],
+    "reject": "a value with more than s fractional digits, or with more than p - s integer digits, fails the write with E-DECIMAL-UNREPRESENTABLE and leaves no residue; never rounded or truncated",
+    "family": "decimal is its own family, ordered between number and datetime (CARD_MANY_ORDER); 1.50 and 1.5 are one value",
+    "comparison": "CMP-DECIMAL-CROSS: comparison with integer or number is preflight E-MIXED-FAMILY unless the query converts explicitly",
+    "arithmetic": "TypeScript kernel, exact decimal arithmetic; engine-side decimal arithmetic only where a projection needs it (RULINGS Q19)",
+}
 
 INTEGER_MIN_RANGE = 2 ** 53 - 1  # NUMERIC: every lane must accept every integer in [-(2^53-1), 2^53-1]
 LANE_INTEGER_RANGE = {
@@ -234,7 +256,7 @@ VALUE_KINDS = [
     {"kind": "string", "rule": "exact codepoint sequence; ill-formed UTF-16 rejected with E-INVALID-VALUE"},
     {"kind": "integer", "rule": "exact; every lane accepts at least [-(2^53-1), 2^53-1]; each lane declares its accepted range (LANE_INTEGER_RANGE); a value outside the lane's range fails the write with E-VALUE-OUT-OF-RANGE and leaves no residue; never wrapped, widened or rounded"},
     {"kind": "number", "rule": "binary64 for approximate, deterministic values only (for example a risk score), never business values; stored and read bit-exact; NaN and infinities rejected"},
-    {"kind": "decimal", "rule": "NEW value kind for money and business decimals: a scaled integer (declared scale) or an order-preserving decimal string; exact storage and round trip; order-preserving encoding for range rules; a value with more fractional digits than the declared scale or outside the declared magnitude fails with E-DECIMAL-UNREPRESENTABLE, never rounded; arithmetic in the TypeScript kernel (exact decimal or BigInt)"},
+    {"kind": "decimal", "rule": "value kind for money and business decimals (RULINGS Q18, DECIMAL_RULES): the attribute declares precision and scale; stored as a scaled integer when precision <= 15, otherwise as an order-preserving decimal string; exact storage and round trip; order-preserving encoding for range rules; a value with more fractional digits than the scale, or outside the precision, fails with E-DECIMAL-UNREPRESENTABLE, never rounded; its own family; arithmetic in the TypeScript kernel with exact decimal arithmetic"},
     {"kind": "boolean", "rule": "exact"},
     {"kind": "datetime", "rule": "exact epoch-millisecond instant including fractional milliseconds; values needing nanoseconds use ISO strings (NUMERIC table)"},
     {"kind": "ref", "rule": "exact target id"},
@@ -476,8 +498,10 @@ PROFILES = {
     "P-RUNG-1M": "The 1m-subject rung of SCALE_POPULATION.",
     "P-RUNGS": "Every rung of SCALE_POPULATION in order: 10k, 100k, 1m, 10m subjects.",
     "P-YEAR-ONE": "The year-one measurement population of SCALE_POPULATION at the 10m rung (10m entities, 100m active facts, retained history). It is the size the priorities are measured at, not a target in itself.",
-    "P-NS": "load-contract.json (fixed writer trace, P1 reader ladder, P2 to P4 probes, P5 sweep) on P-YEAR-ONE, one identified profile and composition.",
+    "P-NS": "load-contract.json (fixed writer trace, P1 reader ladder, P2 to P4 probes, P5 sweep) on P-YEAR-ONE, one identified profile and composition, with the acceptance windows (120 s warmup, 600 s per ladder level).",
+    "P-SCREEN": "Screening run of P-NS with 30 s warmup and 120 s per ladder level, for candidate comparison only (RULINGS Q16). A P-SCREEN receipt can never close an obligation, never feeds calibration, and never carries forward.",
 }
+SCREENING_PROFILES = ["P-SCREEN"]
 
 # ============================================================================ year-one measurement population
 SCALE_POPULATION = {
@@ -711,7 +735,7 @@ cs("CS-PKT71", "EXISTS", "qualification/workloads/temporal-workloads.json with r
 cs("CS-PKT-MULTICALL", "TO-AUTHOR", "the 16 multi-call packet tasks plus the writer-between-calls shape of packages/qualification/experiments/qlever-task-basis.ts", ["all", "writer-between-calls"])
 cs("CS-ENTRY", "EXISTS", "packages/xtdb/experiments/native-entry.ts and packages/qlever/experiments/native-entry.ts", ["all", "read-only", "safe-parameters"])
 cs("CS-TYPES8", "TO-AUTHOR", "ACCEPTANCE 7.1 (value kinds)", ["all", "integer-edges", "number-edges", "decimal"])
-cs("CS-DECIMAL", "TO-AUTHOR", "VALUE_KINDS decimal; TARGETS section 3 (money as scaled integers or order-preserving decimal strings)", ["all", "roundtrip", "range", "unrepresentable", "kernel-arithmetic"])
+cs("CS-DECIMAL", "TO-AUTHOR", "VALUE_KINDS decimal; DECIMAL_RULES (RULINGS Q18); TARGETS section 3", ["all", "roundtrip", "range", "unrepresentable", "kernel-arithmetic", "cross-family"], ["DEC-P15-SCALED", "DEC-P16-STRING", "DEC-SCALE-EXCESS", "DEC-PRECISION-EXCESS", "DEC-CROSS-FAMILY-PREFLIGHT", "DEC-CONVERTED-COMPARE"])
 cs("CS-RANGE-OUT", "TO-AUTHOR", "LANE_INTEGER_RANGE; NUMERIC; RULINGS superseded section (reject at write)", ["all"])
 cs("CS-TYPES8-NEG", "TO-AUTHOR", "ACCEPTANCE 7.1", ["all"])
 cs("CS-WIDEN", "TO-AUTHOR", "ACCEPTANCE 7.1", ["all"])
@@ -797,10 +821,10 @@ O("G1.types.out-of-range-rejected", ["G1", "G2"], "Values a lane cannot hold fai
   mutants=["M-OUT-OF-RANGE-WRAP"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), params={"diagnostics": ["D-Q-INT60"]},
   sources=["lab/research/SAM-pasted-numbers-2026-11-07.md section 5", "lab/TARGETS.md section 3", "lab/acceptance/RULINGS.md superseded section"])
 O("G1.types.decimal", ["G1", "G2", "G5"], "Decimal value kind for money and business decimals",
-  "Every CS-DECIMAL case: decimals are stored as a scaled integer or an order-preserving decimal string and round-trip exactly on every surface; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value beyond the declared scale or magnitude fails with E-DECIMAL-UNREPRESENTABLE, never rounded; kernel arithmetic over decimals is exact.",
-  cases=["CS-DECIMAL"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-REPO", "EP-WRITER", "EP-KERNEL", "EP-NATIVE", "EP-RAW-HATCH"], modes=CRR,
+  "Every CS-DECIMAL case, per DECIMAL_RULES (RULINGS Q18): each decimal attribute declares precision and scale; precision <= 15 is stored as a scaled integer (DEC-P15-SCALED), larger precision as an order-preserving decimal string (DEC-P16-STRING); both round-trip exactly on every surface; comparison with integer or number is preflight E-MIXED-FAMILY (DEC-CROSS-FAMILY-PREFLIGHT) and exact after explicit conversion (DEC-CONVERTED-COMPARE); range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value with more fractional digits than the scale (DEC-SCALE-EXCESS) or outside the precision (DEC-PRECISION-EXCESS) fails with E-DECIMAL-UNREPRESENTABLE, never rounded; kernel arithmetic over decimals is exact.",
+  cases=["CS-DECIMAL", "CS-DECIMAL:DEC-P15-SCALED,DEC-P16-STRING,DEC-SCALE-EXCESS,DEC-PRECISION-EXCESS,DEC-CROSS-FAMILY-PREFLIGHT,DEC-CONVERTED-COMPARE"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-REPO", "EP-WRITER", "EP-KERNEL", "EP-NATIVE", "EP-RAW-HATCH"], modes=CRR,
   mutants=["M-DECIMAL-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"),
-  sources=["lab/TARGETS.md section 3 (decimal value kind on the critical path for goal 1)", "lab/research/SAM-pasted-numbers-2026-11-07.md section 3"])
+  sources=["RULINGS Q18", "lab/TARGETS.md section 3 (decimal value kind on the critical path for goal 1)", "lab/research/SAM-pasted-numbers-2026-11-07.md section 3"])
 O("G1.types.invalid-rejected", ["G1"], "Invalid values are rejected atomically",
   "Every case of CS-TYPES8-NEG is rejected with its pinned error (E-INVALID-VALUE or E-UNSUPPORTED-VALUE); the committed position is unchanged, no receipt or claim exists, and no partial row or triple is visible through any access path.",
   scope="engine", cases=["CS-TYPES8-NEG"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-WRITER"], modes=CUR_REOPEN,
@@ -924,10 +948,10 @@ O("G5.agg.typed-groups", ["G5"], "Group keys keep typed identity",
   "Every CS-NUMERIC groups case groups by the COMPARISON_RULES identities on the repository and supported native fragments.",
   cases=["CS-NUMERIC:groups"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN, sources=["testkit 'datalog having preserves typed group and aggregate equality'"])
 O("G5.agg.projection-sums", ["G5"], "Engine-side sums are exact where a projection needs them",
-  "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using the split-sum recipe on XTDB (RULINGS Q13) or another qualified recipe; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
+  "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using on XTDB SUM(CAST(x AS DECIMAL(32,0))) once EXP-X02 confirms it, else the split-sum fallback (RULINGS Q13, Q19), with EXP-F02 cross-checking the chosen recipe; whichever recipe is used passes these same cases; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
   cases=["CS-NUMERIC:projection-sums"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN,
   mutants=["M-INTEGER-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), params={"diagnostics": ["D-X-SUM"]},
-  sources=["RULINGS Q8a", "RULINGS Q8b", "RULINGS Q13", "lab/research/SAM-pasted-numbers-2026-11-07.md section 5 (arithmetic over many rows only where a projection needs it)"])
+  sources=["RULINGS Q8a", "RULINGS Q8b", "RULINGS Q13", "RULINGS Q19", "RULINGS Q20", "lab/research/SAM-pasted-numbers-2026-11-07.md section 5 (arithmetic over many rows only where a projection needs it)"])
 
 # ---------------- Goal 6
 O("G6.cancel.observed-drain", ["G6"], "Cancellation observed down to drained engine work",
@@ -1406,6 +1430,7 @@ APPLICABILITY = {
     "source": "lab/PLAN.md section 1 item 7; acceptance review r1 finding 12",
     "boundIdentities": ["imported source files", "imported dist files", "engine image digest", "engine configuration", "resource caps", "fixture contents", "enabled capabilities", "gate script versions", "oracle file versions", "case manifests", "acceptance-rule version (contract transitive hash and obligation definition hash)"],
     "carryForward": "A receipt carries forward to a later profile only when every bound identity is unchanged, checked by an explicit applicability record (AP) that recomputes each identity on the later profile. Carry-forward serves intermediate tracking only.",
+    "screening": "A receipt made on a screening profile (SCREENING_PROFILES, RULINGS Q16) is evidence for candidate comparison only: it never passes VA, never closes an obligation, never feeds calibration and never carries forward.",
     "finalAcceptance": "The final acceptance of the selected integrated profile is entirely fresh: every obligation, including scale rungs and load levels, runs on that profile; nothing carries into it.",
 }
 STATUS_ALGORITHM = [
@@ -1465,19 +1490,20 @@ BUDGET_COMPONENTS = ["ledger", "projection", "index tables", "journal", "log of 
 BUDGETS = {
     "format": "triplex-db-2/budgets/2", "version": VERSION,
     "source": "lab/PLAN.md section 7.4 and section 1 item 5; lab/TARGETS.md section 1; acceptance review r1 finding 14",
-    "frozenBeforeCandidates": "Budgets are frozen in a create-only budget-freeze receipt (A0 control measurements at every rung, this file's sha256) before any candidate is evaluated against them. A hypothesis's predicted cost never sets its own allowance. Changing a budget creates a new profile version; loosening an NS bar needs Sam.",
+    "status": "PROVISIONAL (RULINGS Q16): the allowances below stand until EXP-N02 measures the A0 controls; they are then re-frozen, before any candidate is compared.",
+    "frozenBeforeCandidates": "Budgets are re-frozen after EXP-N02 measures the A0 controls, in a create-only budget-freeze receipt (A0 control measurements at every rung, this file's sha256), before any candidate is evaluated against them. No candidate comparison may cite a budget that has not been re-frozen. A hypothesis's predicted cost never sets its own allowance. Changing a budget creates a new profile version; loosening an NS bar needs Sam.",
     "a0Control": "A0 = the ledger-only baseline profile (status-quo adapters, no projection), measured on the same slot configuration, writer trace and rung. Where A0 cannot complete a rung, only the absolute bars and caps apply there and the failure is recorded.",
     "cumulative": "Every promotion and the final acceptance compare the integrated candidate with the frozen A0 control at the same rung, never with the previous promotion, so small regressions accumulate against one fixed reference.",
     "components": BUDGET_COMPONENTS,
     "accounting": "Every metric is reported per component and in total; the log of record, the broker and verification count for QLever; fallback reads, maintenance, the change feed and clients count for both lanes.",
     "absolute": "Every NS-* bar of obligations.json thresholds applies as an absolute budget at P-YEAR-ONE; resource caps: memory peak within the 11 GiB reservation pool, disk peak within the 50 GiB stop line of the 60 GiB VM (lab/PLAN.md section 8).",
     "relativeToA0": [
-        {"id": "B-WRITE-BYTES-PER-FACT", "allowanceVsA0": 4.0, "direction": "max", "source": "derived: projection, indexes, journal and feed together"},
-        {"id": "B-INGEST-FACTS-PER-S", "allowanceVsA0": 0.5, "direction": "min", "source": "derived"},
+        {"id": "B-WRITE-BYTES-PER-FACT", "allowanceVsA0": 4.0, "direction": "max", "source": "provisional (RULINGS Q16): projection, indexes, journal and feed together"},
+        {"id": "B-INGEST-FACTS-PER-S", "allowanceVsA0": 0.5, "direction": "min", "source": "provisional (RULINGS Q16)"},
         {"id": "B-CURRENT-PULL-P99", "allowanceVsA0": 1.0, "direction": "max", "source": "derived: the current path must not be slower than ledger-only"},
         {"id": "B-COMMIT-P99", "allowanceVsA0": 1.25, "direction": "max", "source": "derived from NS-P1-WRITER-P99-RATIO-256"},
-        {"id": "B-MEMORY-PEAK", "allowanceVsA0": 1.5, "direction": "max", "source": "derived"},
-        {"id": "B-DISK-PEAK", "allowanceVsA0": 2.0, "direction": "max", "source": "derived"},
+        {"id": "B-MEMORY-PEAK", "allowanceVsA0": 1.5, "direction": "max", "source": "provisional (RULINGS Q16)"},
+        {"id": "B-DISK-PEAK", "allowanceVsA0": 2.0, "direction": "max", "source": "provisional (RULINGS Q16)"},
     ],
 }
 
@@ -1507,7 +1533,7 @@ def build_load_contract():
         "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
         "measurements": {
             "P1": {"readers": "closed-loop, zero think time, each reader a distinct client id", "levels": [0, 1, 4, 16, 64, 256], "stress": 1024, "zeroReaderBaseline": "level 0 = writer trace alone, same run",
-                   "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 50% the current basis, 25% a basis within the last hour, 25% a basis up to 30 days back",
+                   "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 80% at the latest committed tx (named exactly), 15% at a tx within the last hour, 5% at a past basis up to 90 days back (RULINGS Q16, TARGETS section 2)",
                    "record": ["correctness-qualified read goodput per level", "read p50, p99 per level", "writer commit latency p50, p99, max and throughput per level"],
                    "bars": [k for k in NS_LADDER], "recovery": "after the 1,024 window, readers return to 256; 30 s evaluation windows sliding by 5 s; recovery time = end of the first window meeting every 256-level bar; must be within NS-P1-RECOVERY-MS"},
             "P2": {"probe": "one command of 10 facts about one subject (also 5 and 50, reported) issued at 1 per second on top of the writer trace, with 256 P1 readers running", "ryow": "the probe's next pull at the returned tx", "idempotency": "the trace's duplicates and lost ACKs", "bars": ["NS-P2-COMMIT-P50-MS", "NS-P2-COMMIT-P99-MS", "NS-P2-RYOW-FRACTION", "NS-P2-DUP-RECEIPT-FRACTION"]},
@@ -1516,7 +1542,8 @@ def build_load_contract():
             "P5": {"sweep": "100k subjects pulled at one pinned basis", "concurrent": "the writer trace and 64 live readers", "noSweepBaseline": "same run, same 64 readers and writer trace, before the sweep", "bars": ["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS"]},
             "secondary": {"bulk": "a 1M-fact import through the bulk lane with 64 live readers; bar NS-SEC-BULK-READ-P99-RATIO", "retroactive": "1,000 corrections 30 days back; feed valid-time range and explain at the old basis checked", "audit": "explain at a past basis, repeated three times; bit-for-bit identical"},
         },
-        "windows": {"warmupS": 120, "perLadderLevelS": 600, "note": "derived: 600 s covers one full burst cycle of the writer trace (60 s at 750 facts/s every 600 s)"},
+        "windows": {"acceptance": {"warmupS": 120, "perLadderLevelS": 600, "note": "RULINGS Q16; 600 s covers one full burst cycle of the writer trace (60 s at 750 facts/s every 600 s)"}, "screening": {"profile": "P-SCREEN", "warmupS": 30, "perLadderLevelS": 120, "note": "RULINGS Q16; candidate comparison only; a screening receipt never closes an obligation"}},
+        "basisMix": [{"share": 0.80, "basis": "latest committed tx, named exactly"}, {"share": 0.15, "basis": "a tx within the last hour"}, {"share": 0.05, "basis": "a past basis up to 90 days back"}],
         "runs": T["T-RUNS"]["value"],
         "invariants": ["every read names its basis and its answer is compared with O-REPLAY at that basis; a wrong answer scores zero", "every command gets one receipt; duplicates and lost ACKs return the original receipt (COMMIT_OUTCOMES)", "success receipts only after publication", "no engine restart, crash or OOM inside a measurement window unless the scenario injects it", "receipt validity VA"],
         "bars": {k: v for k, v in T.items() if v["kind"] == "ns"},
@@ -1654,6 +1681,46 @@ def ruling_checks():
         e.append("Q12")
     if "split-sum" not in obl["G5.agg.projection-sums"]["statement"]:
         e.append("Q13")
+    # Q16
+    if THRESHOLDS["NS-P4-HISTORY-FLATNESS"]["value"] != 1.1:
+        e.append("Q16: history flatness must be 1.1")
+    lc = build_load_contract()
+    mix = lc.get("basisMix", [])
+    if [m["share"] for m in mix] != [0.80, 0.15, 0.05] or "90 days" not in mix[2]["basis"]:
+        e.append("Q16: basis mix must be 80/15/5 with 90 days back")
+    w = lc["windows"]
+    if (w["acceptance"]["warmupS"], w["acceptance"]["perLadderLevelS"], w["screening"]["warmupS"], w["screening"]["perLadderLevelS"]) != (120, 600, 30, 120):
+        e.append("Q16: windows must be 120/600 acceptance and 30/120 screening")
+    for o in OBL:
+        if set(o["profiles"]) & set(SCREENING_PROFILES):
+            e.append(f"Q16: {o['id']} lists a screening profile; screening can never close an obligation")
+    if not BUDGETS.get("status", "").startswith("PROVISIONAL") or "EXP-N02" not in BUDGETS["frozenBeforeCandidates"]:
+        e.append("Q16: budgets must be provisional and re-frozen after EXP-N02")
+    # Q17
+    if "GS.15" not in obl or "1,000 small" not in obl["GS.15"]["statement"]:
+        e.append("Q17: GS.15 must cover tenant skew")
+    if any("sparse" in k.lower() for k in PROFILES):
+        e.append("Q17: no sparse profile")
+    # Q18
+    fo = CARD_MANY_ORDER["familyOrder"]
+    if fo.index("decimal") != fo.index("number") + 1 or fo.index("datetime") != fo.index("decimal") + 1:
+        e.append("Q18: decimal must sit between number and datetime")
+    if not any(c["id"] == "CMP-DECIMAL-CROSS" and "E-MIXED-FAMILY" in c["rule"] for c in COMPARISON_RULES):
+        e.append("Q18: CMP-DECIMAL-CROSS missing")
+    if "p <= 15" not in DECIMAL_RULES["storage"][0]["when"] or "never rounded" not in DECIMAL_RULES["reject"]:
+        e.append("Q18: decimal storage or reject rule wrong")
+    for rc in ("DEC-P15-SCALED", "DEC-P16-STRING", "DEC-SCALE-EXCESS", "DEC-PRECISION-EXCESS", "DEC-CROSS-FAMILY-PREFLIGHT"):
+        if rc not in CS["CS-DECIMAL"]["requiredCases"]:
+            e.append(f"Q18: CS-DECIMAL lacks {rc}")
+    # Q19
+    st = obl["G5.agg.projection-sums"]["statement"]
+    if not all(x in st for x in ("DECIMAL(32,0)", "EXP-X02", "split-sum", "EXP-F02")):
+        e.append("Q19: projection-sums statement must name the DECIMAL(32,0) recipe, EXP-X02, the split-sum fallback and EXP-F02")
+    # Q20
+    for rid in ("Q8a", "Q8b"):
+        r = next(r for r in RULINGS if r["id"] == rid)
+        if "int64" in r["ruling"] or "integer" not in r["ruling"].lower():
+            e.append(f"Q20: {rid} must read integer")
     return e
 
 
@@ -1941,6 +2008,13 @@ CHANGELOG_020 = [
 ]
 
 
+CHANGELOG_031 = [
+    ("Q16", "Derived thresholds, basis mix, timing, budgets", "History flatness 1.1 kept; reader basis mix now 80% latest committed tx, 15% within the last hour, 5% up to 90 days back (load-contract basisMix); acceptance windows 120 s + 600 s per level kept; new screening profile P-SCREEN (30 s + 120 s) that no obligation may list and whose receipts never close anything; budgets.json marked PROVISIONAL, re-frozen after EXP-N02 and before any candidate comparison."),
+    ("Q17", "Sparse profile", "Stays dropped; GS.15 covers skew; the generator fails if a sparse profile reappears."),
+    ("Q18", "Decimal", "DECIMAL_RULES: declared precision and scale; scaled integer when precision <= 15, else order-preserving decimal string; excess digits rejected with E-DECIMAL-UNREPRESENTABLE; own family between number and datetime; CMP-DECIMAL-CROSS preflight error unless converted; kernel arithmetic; six named CS-DECIMAL cases selected by G1.types.decimal."),
+    ("Q19", "Engine-side sums", "G5.agg.projection-sums: XTDB uses SUM(CAST(x AS DECIMAL(32,0))) once EXP-X02 confirms it, split-sum as fallback, EXP-F02 cross-checks; Q13 marked refined by Q19."),
+    ("Q20", "Q8a and Q8b wording", "Both read integer, not int64; per-subject sums in the kernel (BigInt)."),
+]
 CHANGELOG_030 = [
     ("Re-scope", "Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md)", "The old generic load and stress section, its obligations, the old load contract and the hold are removed. New sections NS (P1 to P5, measured on the fixed writer trace; P1, P4, P5 per surface) and GS (GS.01 to GS.20); ten REQ obligations mapped to their goals with native-or-workaround closure; S is now the year-one measurement population, rungs and budgets."),
     ("Thresholds", "Provisional bars", "Every NS-* threshold is the TARGETS section 1 bar; non-NS thresholds are fixed values derived from those bars (marked derived); calibration tightens only, loosening needs Sam."),
@@ -1958,7 +2032,9 @@ def render_acceptance(doc, cells, counts):
     A("**Generated by `python3 -I lab/acceptance/build_contract.py`. Do not edit this file.** `obligations.json` is the only authority an evaluator reads; this file renders it for people. Where any text here and `obligations.json` differ, `obligations.json` wins.\n")
     A(f"Transitive contract hash: `{doc['transitiveContractSha256']}`.\n")
     A("## 0. Change log\n")
-    A("### 0.3.0 (this version): retargeted to Sam's re-scope\n")
+    A("### 0.3.1 (this version): orchestrator rulings Q16 to Q20\n")
+    A(md_table(["Ruling", "What", "Change"], CHANGELOG_031))
+    A("\n### 0.3.0: retargeted to Sam's re-scope\n")
     A(md_table(["Area", "What", "Change"], CHANGELOG_030))
     A("\n### 0.2.0: response to `lab/reviews/acceptance-review-r1.codex.md`\n")
     A(md_table(["Review finding", "Problem", "Change"], CHANGELOG_020))
@@ -2000,6 +2076,7 @@ def render_acceptance(doc, cells, counts):
     A("")
     A(md_table(["Engine", "Declared integer range", "Rule"], [[k, v["declared"], v["rule"]] for k, v in LANE_INTEGER_RANGE.items()]))
     A(f"\nEvery lane accepts at least [-(2^53-1), 2^53-1]. {RANGE_RULE}\n")
+    A("**Decimal (RULINGS Q18).** " + " ".join(f"{k}: {v if isinstance(v, str) else '; '.join(x['when'] + ' -> ' + x['as'] for x in v)}." for k, v in DECIMAL_RULES.items() if k != "source") + "\n")
     A("### 4.1 Numeric operations\n")
     A(md_table(["Id", "Operation", "Rule", "Examples", "Source"], [[n["id"], n["op"], n["rule"], "; ".join(f"{a} = {b}" for a, b in n["examples"]), n["source"]] for n in NUMERIC_OPS]))
     A("\n### 4.2 Conversions\n")
@@ -2035,6 +2112,7 @@ def render_acceptance(doc, cells, counts):
     A("\n### 5.7 Applicability, carry-forward and fresh final acceptance\n")
     A("- Bound identities: " + "; ".join(APPLICABILITY["boundIdentities"]) + ".")
     A("- " + APPLICABILITY["carryForward"])
+    A("- " + APPLICABILITY["screening"] + "\n")
     A("- " + APPLICABILITY["finalAcceptance"] + "\n")
     A("### 5.8 Verifier coverage\n")
     A(md_table(["Mode", "Rule"], list(VERIFIER_MODES.items())))
@@ -2240,7 +2318,7 @@ def main():
         "lanes": LANES, "engineOfLane": ENGINE_OF, "languageOfLane": LANG_OF,
         "sections": [{"id": g, "title": t} for g, t in SECTIONS],
         "rulings": RULINGS, "languageRules": LANGUAGE_RULES, "frontierRules": FRONTIER_RULES,
-        "valueKinds": VALUE_KINDS, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
+        "valueKinds": VALUE_KINDS, "decimalRules": DECIMAL_RULES, "screeningProfiles": SCREENING_PROFILES, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,

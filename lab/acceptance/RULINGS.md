@@ -64,3 +64,31 @@ and stays revisable by Sam; a revision creates a new contract version.
 | Q18 decimal kind | A decimal attribute declares precision and scale. Values are stored as scaled integers (when precision ≤ 15 so the scaled value stays within 2^53) or as order-preserving decimal strings; a value with more fractional digits than the scale, or outside the precision, is rejected with a typed error, never rounded. Decimal is its own family, ordered between number and datetime in the card-many family order; comparison between decimal and integer or number is a typed preflight error unless the query converts explicitly; arithmetic runs in the TypeScript kernel with exact decimal arithmetic. | Sam's corrected numeric rule |
 | Q19 engine-side exact sums | Needed only where a projection sums many rows. EXP-X02 confirms the XTDB recipe (R14 measured `SUM(CAST(x AS DECIMAL(32,0)))` exact and free on 2.2.0; the split-sum is the fallback); EXP-F02 cross-checks. | corrected numeric rule item 5 |
 | Q20 Q8a/Q8b wording | Q8a and Q8b now read "integer" rather than "int64": exact totals with a typed error only when the final result is outside the engine's exact range, and engine-side sums only where a projection needs them; per-subject sums run in the kernel (BigInt). AVG over integers keeps Q8b's preflight rule. | corrected numeric rule |
+
+## Rulings on the G01 golden-vector ambiguities (2026-11-07; Q21, from V-O01 `proposed_rulings.json` at verify/O01 745547d)
+All 17 proposals from the independent verifier are accepted. Three of them touch product behavior and are provisional orchestrator
+rulings flagged for Sam in `lab/STATE.md` (AMB-04, AMB-09, AMB-17); the loop proceeds on them and changes course only if Sam overrules.
+
+| AMB | Ruling | Basis |
+| --- | --- | --- |
+| AMB-01 | A. Ordinary `Triples.match`, `entity` and `entityPage` keep the raw lifetime at an explicit R (no global mask). The five tiny-v4 checks and the original counterexample (with its original expected answer) close on repository as-of reads, `timeline` and native history. | G9.history.raw-lifetime-compat; G9.history.snapshot-metadata wording |
+| AMB-02 | Compare the logical content `{identity, value, recordedAt, knownRetirement: null or {retractedAt, retractTxId}}`. Native rows add `retractedPosition`. Physical field names are EXP-R01's; the oracle renames to `retractedAt` and `retractTxId`. | Triple.ts response names; R6 3.1 |
+| AMB-03 | `timeline` at a basis lists every assertion recorded at (P, R) with no V filter; the V-filtered view stays the native known-at-valid helper. | R3: timeline is the only way to see intervals |
+| AMB-04 | B (provisional, flagged). The journal change value of a `-0.0` assertion is bit-exact `-0.0`. C6's "byte-identical -0 behavior" promise is superseded by Sam's numeric rule, because turning -0 into 0 silently is silent conversion. | SAM-pasted-numbers (exact round trip, never silent conversion); M-NEGZERO |
+| AMB-05 | Compare documented fields plus the testkit-pinned ones (assert: value, validFrom, assertionTxId; retract: value, recordedAt, retractedAt, retractionTxId). Byte identity of the whole journal is a separate T0-capture baseline, a different oracle class. | packages/testkit/src/index.ts:1818-1831 |
+| AMB-06 | A. Operations apply in order over staged facts, so `retract-pattern` sees same-command assertions (both changes, assert first). Confirm with a T0 capture before 1.0.0. | plan review r2 2.6 item 2; Constraint.ts project order |
+| AMB-07 | Creation order (recordedPosition, then operation index), frozen for M-JOURNAL-ORDER; confirm with a T0 capture. | ACC 4.2 item 8 |
+| AMB-08 | Decided by Q14b: -0.0 and +0.0 are one value; the representative is the support with the lowest (recordedPosition, operation index). CMP-NEGZERO's "lowest assertion id" is amended to this, because assertion ids are generated per lane and would make the answer lane-dependent. | Q14b |
+| AMB-09 | B (provisional, flagged). Two equal-valued assertions on one entity are one value with two supports and one binding row: SUM is 10, COUNT is 1. G5.agg.full-support is reworded to "equal values on distinct entities". North-star reason: the fixed writer trace carries 10% duplicate commands and 1% lost ACKs (P2), and a retried or duplicated pay fact must never double a total. | PLAN C5.1; ACC 4.4 AG-SUM-I (bag of distinct bindings); TARGETS section 2 |
+| AMB-10 | Integer results project as `IntegerValue` with canonical decimal text, never a JS number. | no silent conversion above 2^53 |
+| AMB-11 | The explicit conversion before AVG is `toNumber(?v)` (ACC 4.2 CV-I2F, 4.4 AG-AVG-CONV). | contract 0.2.0 |
+| AMB-12 | B. `validTo <= validFrom` is rejected with E-INVALID-VALUE, because accepting an interval that can never be visible is a silent no-op. | numeric rule item 3 (hard error, never silent); ACC 4.7 |
+| AMB-13 | Compare `_tag` ConflictingValuesError, reason `conflicting-values`, and the set of `{entityId, attribute}`. | ACC 4.7; PLAN C5.3 |
+| AMB-14 | Decided by ACC 4.7: invalid integer text is InvalidTripleError / invalid-value; a reserved-namespace write is WriteError / reserved-namespace. | ACC 4.7 |
+| AMB-15 | Codepoint order; add a non-BMP `entityPage` vector (U+E000 against U+10000). | Q8f; Q14a |
+| AMB-16 | A. Range predicates on integer attributes are required in `Repository.find`. | ACC 6.4; numeric rule item 2 (order-preserving comparison for range-rule attributes) |
+| AMB-17 | A (provisional, flagged). `find` fails with ConflictingValuesError when a returned document contains a conflicted attribute; a projection that omits that attribute succeeds. | PLAN C5.3 (no three-valued unknown; the document decodes every attribute, as `get` does); R01 D5 (no null) |
+
+The oracle's 26 RULING-NEEDED defaults: R-VAL-3, R-ORD-2, R-CMP-3, R-NUM-5, R-NUM-6, R-CMD-6, R-CMD-9, R-JNL-1, R-ENT-6 and R-ENT-7 change
+in the oracle to match the rulings above and contract section 4 (EXP-O02); the rest keep the oracle default with the citations recorded
+in `proposed_rulings.json`.
