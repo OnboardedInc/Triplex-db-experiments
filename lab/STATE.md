@@ -35,7 +35,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | EXP-N01 driver MERGED; waiting for an exclusive XTDB slot for A0 (opus) | P1-P5 measurement (NS gate) | A0 receipts |
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
-| EXP-O04 oracle F2 + erasure modeling (opus, O02/O03 author, exp/O04-oracle-erasure) | correctness floor (unblocks 11 erasure obligations) | lab/oracles/replay |
+| EXP-O04 Q49 implementation (opus, O02/O03 author, exp/O04-oracle-erasure; F2 f4b59b4, erasure 9fdc3b4) | correctness floor (11 erasure obligations) | then V-O04 re-check, new pin |
 | EXP-E01 claim evaluator (opus, exp/E01-claim-evaluator) | floor for every claim | lab/bin/claim.mjs |
 | EXP-F02b G1 qlever f1 run (opus, exp/F02b-wire-exactness-fixes cad7f3f) | numeric rule floor | 0 silent changes both engines; then V-F02b; G1 xtdb in a quiet window |
 | EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |
@@ -62,6 +62,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Q21 AMB-09: two equal-valued assertions on one entity are one value, so a duplicated pay fact never doubles a total (SUM 10, not 20).
 - Q21 AMB-17: `find` fails with ConflictingValuesError when a returned document has a conflicted attribute (a projection omitting it succeeds).
 - Q21 AMB-04: a -0.0 assertion keeps bit-exact -0.0 in the journal; the numeric rule overrides C6's old byte-identity promise.
+- Q49c erased values in queries: match no value predicate, skipped by SUM/AVG/MIN/MAX, sorted last, one group per attribute (provisional).
 - Q24 erasure: after the erasure commit publishes, reads at every basis (even before it) show a typed ErasedValue marker, not the value.
 - R19 tenancy: do pooled cell databases with per-tenant envelope encryption count as storage-layer isolation for the 1,000 small tenants
   (provisional yes; large tenants siloed)? And how many small tenants are active in 15 minutes (provisional 10%)?

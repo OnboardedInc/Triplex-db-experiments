@@ -881,3 +881,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
   cases, and the validator now checks raw tokens and recomputes delivery ids and versions.
 - EXP-D01c (O-DOMAIN, independent Python from SPEC only) started; the W0 pin closes when it reproduces the fingerprint. The TypeScript
   kernel (EXP-D01b) follows at the next free slot, written by a different agent and checked against O-DOMAIN.
+- 00:30Z: EXP-O04: F2 fixed (probe_035 119/119) and erasure modeled (8 of 11 erasure obligations closable on the oracle side; answers on the
+  49 vectors unchanged). Ruled Q49: an erasure commit is an ordinary journal transaction that lists identities, never values (so the
+  whole-journal comparison works modulo erasure), plus a separate ledger for restore replay; erased values match no value predicate and
+  sort last (provisional under the Q24 erasure flag for Sam); JSON numbers convert to decimal as written. The author implements Q49, then
+  the V-O03 verifier re-checks before the pin moves.
