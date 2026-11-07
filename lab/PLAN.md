@@ -1,4 +1,4 @@
-# triplex-db-2 dev-loop plan (v1.1)
+# triplex-db-2 dev-loop plan (v1.2)
 
 Status: v1.1, 2026-11-07. Ready to execute as a gated experimental program (Codex round 3 verdict, conditional on
 the five v1.1 changes in the changelog). Folds in research R1 to R6 and R9 (`lab/research/`) and two rounds of
@@ -157,50 +157,76 @@ union of projection and exact branches is a later optimization that needs its ow
 
 ### C2. QLever durable commit protocol (H-Q-LOG)
 
-1. **Commit decision.** The broker appends a COMMIT record for a commit group to an append-only log and
-   fsyncs it. That fsync is the linearization point and the irrevocable decision: after it, recovery must
-   make the group visible; a committed command can never disappear.
+1. **Commit decision.** The broker runs on the macOS host (R13). It appends one frame per commit group to an
+   append-only, host-local APFS log and calls `fs.fsync`, which Node 22 maps to `F_FULLFSYNC` on macOS
+   (measured 2.9 ms), after verifying the volume type and calibrating latency at start. That fsync is the
+   linearization point and the irrevocable decision: after it, recovery must make the group visible; a
+   committed command can never disappear. Frames carry 36 bytes of framing with chained CRC32C; a torn tail
+   is truncated, and a valid frame after an invalid one is corruption that stops the broker. Frames hold pure
+   quad deltas, so replay from any earlier position is idempotent. The frame format version is part of the
+   profile identity. A log inside the VM is not allowed: Lima's cached disk mode does not flush the drive.
 2. **Group validation before the decision.** Members are validated in order against a staged state equal
    to the published state plus the earlier accepted members of the same group, including `EntityState`
    and `TripleLive` preconditions, command claims, and unresolved durable claims from the log. A member
    that fails is rejected alone. Nested savepoints and pending claims keep today's semantics.
-3. **Apply.** The broker applies the group as one SPARQL update operation carrying ledger insertions,
-   current-graph changes and the publication marker. The broker never cancels or times out its own
-   updates; it watches progress instead, because partial permutation states arise from cancellation.
+3. **Apply.** The broker applies the group as one guarded SPARQL update operation carrying ledger
+   insertions, current-graph changes and the publication marker. The WHERE clause requires the stored marker
+   `(epoch, position)` to equal the expected `(E, P-1)` and the update writes `(E, P)`; the broker checks the
+   response's change counts, because a failed guard returns HTTP 200 with zero changes. The broker never
+   cancels or times out its own updates; it watches progress instead, because partial permutation states
+   arise from cancellation.
 4. **Publication.** QLever's snapshot swap at the end of the operation is publication. Readers may see
    the group from that moment. The caller's ACK is sent after publication.
 5. **Verification is post-publication.** The broker checks the complete expected effects and required
    absences of the group. A failure means the published state is known-bad: the broker fences (C3).
 6. **Uncertainty.** Any non-success response, lost connection, process death or verification failure
-   fences the lane. Recovery restarts QLever, confirms the persisted delta matches a log prefix through
-   the complete expected effect sets, re-applies committed groups idempotently, or rebuilds from the
-   newest checkpoint plus log replay. Native reads return a typed "repairing" error while fenced.
+   fences the lane. Recovery first re-sends the identical frame's update until it succeeds (R8: re-sending
+   converges), then confirms the complete expected effect sets; if doubt remains it restarts QLever, clears
+   the delta and replays from the published position, or rebuilds from the newest checkpoint plus log replay.
+   Native reads return a typed "repairing" error while fenced.
 7. **Lost ACK.** Durably committed and published are different states. A retry with the same command id
    finds the durable claim in the log; it returns the original success receipt only after the broker has
    established that the group is published. Before that, it returns a typed `CommitPending` outcome (committed,
    not yet visible) or the lane's `Repairing` error, never an ordinary success. F05 includes the exact case
    "crash after COMMIT fsync, before apply, then retry".
 8. **Replay and checkpoints.** The log is not an RDF snapshot. Replay is deterministic over a versioned
-   record format; checkpoints are graph-preserving N-Quads exports with a manifest (log prefix, format
-   versions, hashes); a fresh index is built from a checkpoint plus the log suffix; segment retention keeps
-   everything after the newest verified checkpoint. Rebuild publication uses crash-safe generation selection
-   (a new index directory, switched only after its manifest verifies), because the pinned source warns that
-   a failure during directory moves can need repair.
+   frame format. Checkpoints are produced by folding the log into sorted, compressed N-Quads (QLever 0.6.0
+   has no N-Quads export and its TSV export loses datatypes, R13), with a manifest (log prefix, format
+   versions, producedBy, claims window, per-graph counts and hashes); a QLever-side export is an audit only.
+   A fresh index is built with `qlever-index -F nq` from a checkpoint plus the log suffix; segment retention
+   keeps everything after the newest verified checkpoint, and sealed segments and checkpoints are copied off
+   the machine. Rebuild publication uses crash-safe generation selection (temporary directory, manifest,
+   `COMMITTED` marker, rename, atomic `CURRENT`; a crash-state model found 0 violations in 520 states and
+   caught all 5 broken variants), plus a hardlink snapshot (`cp -al`) before any `rebuild-index`, because the
+   pinned source warns that a failure during directory moves can need repair.
 9. **Profile name.** The qualified profile is "QLever 0.6.0 + log of record". Its native reads, including
    every fallback, execute through declared SPARQL.
 
 Falsifiers that gate C2: F05 (fault injection between permutations, persistence, publication and
 verification), plus crash tests after every durable transition, competing preconditions in one group,
-duplicate commands within a group, failed children and lost ACKs.
+duplicate commands within a group, failed children and lost ACKs; and from R13: two guarded updates racing
+from different epochs; rebuild equivalence (apply N frames through UPDATE and separately `qlever-index` the
+same quads, then compare full dumps, since UPDATE wraps integers outside 60 bits and the index builder does
+not); the hardlink snapshot surviving a forced failure between the two index moves; the cost of the per-graph
+count and digest audit at 100m facts; kill-at-every-step runs of the generation switch on the real volume.
+
+**Durability statement (R13).** Survives broker, QLever and VM crashes, VM image loss, probably a macOS panic,
+and power loss to the extent the Apple SSD honors `F_FULLFSYNC` (untested). Does not survive SSD loss or deletion
+of the log directory unless sealed segments and checkpoints were copied off the machine.
 
 ### C3. QLever mutation broker and fence
 
 1. **One mutator.** Every route that modifies QLever goes through the broker: application commits,
    boundary maintenance, rebuild and checkpointing, administration. Native reads do not mutate (C8).
-2. **Credentials.** QLever runs with an update access token held only by the broker. No other process can
-   mutate the engine.
-3. **Epochs.** The broker holds a lease with an epoch number in the log. A new broker must close the
-   previous epoch (prove the old one is dead and its last group's outcome resolved) before it mutates.
+2. **Credentials.** QLever runs with `-a <token>` and without `--no-access-check`; the broker sends the token
+   only in the `Authorization` header. The token authenticates but does not fence: it is fixed at start and
+   printed in the QLever container log, so it is treated as visible to anyone who can read that log.
+3. **Epochs.** Fencing is three layers (R13): a host kernel lock (`lockf`/`flock`) held for the broker's
+   whole life; an `EPOCH_BEGIN(E+1)` frame fsynced after taking the lock, with recovery rejecting decreasing
+   epochs; and the marker guard inside every update (C2.3), so a late update from a stale broker changes
+   nothing. When the previous broker cannot be proved dead, the new broker restarts QLever with a new token.
+   A lock on a virtiofs-shared directory is never used to exclude a host process from a VM process: it is not
+   coherent across that boundary (tested).
 4. **Fence.** While fenced, no update and no rebuild starts until recovery has established a trustworthy
    state from complete expected effects. Two successful queries are not that proof.
 
@@ -472,3 +498,7 @@ decisions and the next actions. After any context compaction the orchestrator re
   is unchanged, and final acceptance is always fresh; (4) C2 retries return success only after publication, otherwise
   `CommitPending` or `Repairing`; (5) EXP-R01 is narrowed to the skeleton and spec compiler, and the planner,
   repository and writer behavior moved to EXP-R02 behind reviewed acceptance and golden vectors.
+- v1.2, 2026-11-07: R13 (log of record) refined C2 and C3 without changing their semantics: broker and log on the
+  macOS host with `F_FULLFSYNC`, framed pure-quad deltas, guarded updates with change-count checks, re-send as the
+  first repair, checkpoints folded from the log, generation switch with a hardlink snapshot, three-layer fencing,
+  the token treated as visible, and five added falsifiers. R7 revised H-X-ID (notebook).

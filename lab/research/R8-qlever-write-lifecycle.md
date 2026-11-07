@@ -74,6 +74,64 @@ R2 already showed that a failed second operation in a multi-operation request le
 
 ---
 
+## 2. Rebuild under load
+
+### 2.1 Verdict
+
+1. **Queries are served during a rebuild only if `-j` is at least 2.** `rebuildIndex` runs on the query thread pool, whose size is `-j` (`src/engine/Server.cpp:63, 1679-1683 @ 6c5861a`). With `-j 1` (the default) the rebuild holds the only query thread: during a 7.6 s rebuild on S, 13 point queries and 1 top-k query completed, and one query waited 7.5 s. With `-j 4` queries ran throughout.
+2. **Updates are accepted, queued and applied.** No update was rejected (0 non-200 in 92 acknowledged updates on L and 184 on S) and every acknowledged receipt was present afterwards. Updates run on the separate single update thread and keep progressing during the build. The swap itself runs on the update thread and applies the diff between the snapshot taken at the start and the current snapshot (`Qlever.cpp:783-815`, `Server.cpp:1690-1715`), so updates wait only for the swap.
+3. **Duration.** Idle on 3 CPUs: S (9.2M triples, 1M delta) 3.0 s, M (50.3M) 19.6 s, L (99.4M) 28.2 s. Under load (4 query clients and 1 update client in closed loops) L took 51.3 s, 1.8x the idle time. S under load with `-j 1` took 7.6 s, 2.5x.
+4. **Memory.** Peak RSS during the rebuild rose by 0.45 to 0.6 GB over the pre-rebuild RSS at all three sizes (S +0.47, M +0.44, L +0.60 GB), so it does not grow visibly with 9M to 99M triples. Peak under load on L was 1,968 MB HWM including the delta and the query work. Disk: the new index is written next to the old one, so the peak is 2x the index (1,908 MB to 3,832 MB on L), and the default `original-and-most-recent` retention keeps up to 3x after the second rebuild.
+5. **CPU.** The rebuild saturates the CPU cap: 2.98 cores in use during the rebuild versus 2.64 cores for the client load alone (container cap 3 CPUs; VM-wide busy 78 percent).
+6. **After the swap the index files are new, so the page cache is cold.** On L in a 2.5 GiB container the 20 s after the swap showed point-query p50 176 ms (baseline 45 ms) and top-k p50 1.4 s (baseline 8.5 ms). The small S index recovered at once (p50 19 ms). The cold penalty comes from the new files, not from QLever, and its size on the target VM depends on how much of the ~17 to 20 GB index the 12 GiB can cache.
+
+Confidence: High for 1 to 5 at 99M triples (measured); Medium for 6 (the 2.5 GiB cap exaggerates it); Low for any extrapolation to 820M triples.
+
+### 2.2 Evidence
+
+Method: `scripts/p2_rebuild.py`. Base index plus a 1M-triple delta (saved persisted file, restart), `cmd=rebuild-index` with no token (`--no-access-check`), server cwd inside the index directory. Load mode: 4 reader threads (85 percent entity-history point lookups, 15 percent attribute top-10 scans, closed loop) and 1 writer thread (sequential 1,000-triple INSERT DATA with one receipt triple, closed loop), 20 s baseline, the rebuild, 20 s after. Resource sampler `scripts/mon.py` every 0.5 s. Raw: `out/p2_*.txt`, `p2_*_requests.csv`, `p2_*_mon.tsv`.
+
+**Rebuild duration and memory (3 CPUs, delta 1M, J=4 except where noted):**
+
+| Base | Triples at rebuild | Idle wall | Loaded wall | HWM idle | Phases (idle log) |
+|------|-------------------|-----------|-------------|----------|-------------------|
+| S | 9.22M | 3.0 s | 7.6 s (J=1, queries stalled) | 1,215 MB (749 before) | vocabulary 0.4 s, statistics 0.3 s, permutations 2.3 s |
+| M | 50.27M | 19.6 s | not run | 1,640 MB (1,199 before) | vocabulary 1.8 s, statistics 1.5 s, permutations 16.1 s |
+| L | 99.45M | 28.2 s | 51.3 s | 1,351 MB (751 before); 1,968 MB loaded | vocabulary 3.3 s (19.0M words), statistics 3.4 s, permutations 21.4 s (590.7M triple-writes, 27.6M per second) |
+
+The R2 rebuild of the reified layout (11.9M triples, 100k delta, 2 CPUs) took 4.8 s [R2 §1.7], consistent with 2.5 to 3.5M triples per second.
+
+**Latency during a rebuild on L (J=4, 4 readers, 1 writer):**
+
+| Operation | Phase | Count | Rate | p50 | p95 | p99 | max |
+|-----------|-------|-------|------|-----|-----|-----|-----|
+| point lookup | baseline (20 s) | 1,026 | 50.9/s | 44.8 ms | 130 ms | 245 ms | 480 ms |
+| point lookup | during (51 s) | 1,654 | 32.2/s | 75.5 ms | 196 ms | 267 ms | 504 ms |
+| point lookup | after (20 s) | 182 | 7.7/s | 176 ms | 560 ms | 807 ms | 838 ms |
+| top-10 scan | baseline | 207 | 10.3/s | 8.5 ms | 389 ms | 929 ms | 1,230 ms |
+| top-10 scan | during | 284 | 5.5/s | 12.7 ms | 1,125 ms | 1,607 ms | 1,842 ms |
+| top-10 scan | after | 35 | 1.5/s | 1,377 ms | 1,807 ms | 2,005 ms | 2,005 ms |
+| update (1,000 triples) | baseline | 24 | 1.2/s | 682 ms | 1,923 ms | 2,191 ms | 2,191 ms |
+| update (1,000 triples) | during | 28 | 0.5/s | 1,755 ms | 3,397 ms | 4,091 ms | 4,091 ms |
+| update (1,000 triples) | after | 40 | 1.7/s | 455 ms | 1,098 ms | 1,122 ms | 1,122 ms |
+
+All rows had 0 non-200 replies. Update latency in the baseline is high because 4 readers and the writer share 3 CPUs at 1M delta. Receipt check on L: 92 acknowledged, 92 receipts visible, 0 acknowledged-but-missing; total triples after 99,539,701 against 99,540,060 expected from 92 batches of 999 triples plus 92 receipts. The shortfall of 359 triples (0.4 percent) is duplicate triples inside the generator's output, which set semantics collapse (S showed 71 of 184k); a request still in flight when the clients stopped would add up to 1,000, not remove any. The receipt check, not the triple count, is the correctness evidence.
+
+**J=1 stall (S, load, J=1):** point lookups during the 7.6 s rebuild: 13 completed, p50 42 ms for the ones that ran before the build thread took over, max 7.46 s; top-k: 1 completed in 7.46 s. After the swap the backlog drained at 144 point lookups per second with p50 19 ms. Updates continued (4 during, p50 1.8 s).
+
+**Source on structure.** The rebuild reads the published snapshot at the start (`Qlever.cpp:754-766`), builds the vocabulary (`IndexRebuilder.cpp:480-490`), recomputes statistics, writes the eight permutation files on a private `net::thread_pool` sized `2 x maxConcurrentPairs` (`IndexRebuilder.cpp:568`, default all four pairs, so 8 threads), then swaps on the update thread (`Server.cpp:1690-1715`). The knob `rebuild-max-concurrent-permutation-pairs` (`src/global/RuntimeParameters.h:95 @ 6c5861a`) is documented in the source as the main lever against interference; I did not measure it. A second rebuild request while one runs gets HTTP 429 "Another rebuild is currently in progress!" (`Server.cpp:567-579, 1733`).
+
+**Extrapolation to the target index [E].** 2.8 to 3.5M triples per second idle (S 3.1M, M 2.6M, L 3.5M) gives 820M triples in about 4 to 5 minutes idle and about 7 to 9 minutes under load (x1.8), if the rate holds. It will not hold if the 17 GB index no longer fits the page cache during the scan; treat 10 to 20 minutes as the planning range. The published figure is under 1 minute for 500M triples on 16 cores with NVMe [W] https://docs.qlever.dev/rebuild-index/. Peak extra RSS looks size-independent (0.45 to 0.6 GB) but the vocabulary term grows with distinct words (19M words on L), so measure it on the real index before setting limits.
+
+### 2.3 Design implication
+
+- **Set `-j` to at least 3 on the VM** so the rebuild uses one slot and queries keep two or more.
+- **Expect rebuild windows of 2x slower updates and about 35 percent lower query throughput on 3 CPUs.** Updates still succeed. The reconciler and the group committer do not need a pause protocol for the rebuild; they need a client timeout longer than the worst update during a rebuild (4.1 s measured at 99M triples; budget 30 s for 820M).
+- **Budget disk for 2x the index during a rebuild and set `--rebuild-keep-previous-index-dirs none` (or `most-recent-only`).** The default keeps the original index and the most recent previous one, which is 3x.
+- **Schedule rebuilds off peak and warm the new files.** After each swap, read the hot permutation files once (`cat idx.index.pos > /dev/null` style) in the background, or accept a cold period of tens of seconds to minutes.
+
+---
+
 ## 3. Group commit curve
 
 ### 3.1 Verdict
@@ -128,5 +186,33 @@ Method: `scripts/p3_group_commit.py`. For each delta size D the delta was built 
 - **Budget for commit latency of group wait plus 0.3 to 1.7 s of server time**, rising with the delta. A single-transaction request costs 190 to 290 ms at 1M delta for about 40 triples, so a one-transaction-per-request design caps at 3 to 5 transactions per second per replica at 1M delta, and at about 25 per second at delta 0.
 - **Keep the delta small.** Every 100k of delta adds about 20 ms to every request. Rebuilding at 250k instead of 1M cuts the fixed cost from 200 ms to about 50 ms (section 2 gives the rebuild cost).
 - **Upstream will remove the delta term.** PR #3607 (snapshot creation proportional to the update, merged 2026-10-06) and PR #3267 (metadata update, open) report Wikidata updates at 500k delta dropping from about 700 ms to about 60 ms [W]. Neither is in 0.6.0.
+
+---
+
+## 4. Watermark read pattern
+
+### 4.1 Verdict
+
+1. **One SPARQL request is one snapshot.** A query that reads the watermark triple and the data in the same request never saw a torn state: 4,076 reads against a writer that moved the watermark and inserted the matching data in one update request each 20 ms, 0 mismatches. The source agrees: the query execution context takes the current located-triples snapshot once when it is constructed (`src/engine/QueryExecutionContext.h:260-261 @ 6c5861a`) and every index scan of the request uses it.
+2. **Two HTTP requests are two snapshots.** Reading the watermark in request one and counting unfiltered data in request two saw data above the watermark in 152 of 2,577 pairs (5.9 percent). The same two-step pattern with `rp <= P` in the second request never mismatched in 1,168 pairs, because the watermark is monotone and the data is published before it.
+3. **The filter is cheap for the reads Triplex runs.** On S (8.2M triples, 1M assertions, P at the median position, caches cleared before every run, 5 runs, median):
+
+| Query shape | no filter | `FILTER(?rp <= 100000)` constant | P from a meta triple | P from `MAX` over meta triples |
+|-------------|-----------|---------------------------------|----------------------|--------------------------------|
+| Count every assertion in the history graph (1M rows) | 6.3 ms | 8.6 ms (x1.37) | 16.7 ms (x2.65) | 16.5 ms (x2.63) |
+| Entity history, 100 random entities, per query | 6.52 ms (p95 9.6) | 6.42 ms (x0.98) | 6.74 ms (x1.03) | 7.02 ms (x1.08) |
+| Attribute scan, top 20 by value | 18.9 ms | 17.8 ms (x0.94) | 18.2 ms (x0.97) | 18.2 ms (x0.97) |
+| Latest `rp` per entity for one attribute (16.5k groups unfiltered) | 17.9 ms | 18.1 ms (x1.01) | 19.0 ms (x1.07) | 19.0 ms (x1.07) |
+
+4. **Why the full-scan count doubles.** The planner does not push `?rp <= ?P` into the index scan. For a meta-triple filter it builds a Cartesian product of the 1-row meta scan with the 1M-row assertion scan and filters afterwards (plan in `out/p4_S.txt`), about +10 ms per million assertion rows. A constant filter is also applied after the scan (`Filter` over `IndexScan POS`), at +2 ms. The overhead is linear in the rows that reach the filter, so a full assertion scan at 100M assertions costs about +1 s on top of its own time, while selective reads (entity, attribute, top-k) see no measurable change.
+
+Confidence: High for the consistency result and the cost on 1M assertions; Medium for the extrapolation to 100M assertions (linear in rows, not measured at that size).
+
+### 4.2 Design implication
+
+- **Put the watermark read and the data read in one SPARQL query** (`GRAPH <meta> { <wm> <pos> ?P }` joined with the data pattern, with the `FILTER` at the group level outside the `GRAPH` block, see the next point) so a reader never needs a read transaction.
+- **Place `FILTER(?rp <= ?P)` outside the `GRAPH <history> { ... }` block.** Inside the block, `?P` (bound outside) is unbound and the filter drops every row. My first run returned 0 rows for the meta-triple variants for exactly this reason (the same scoping family as the EXISTS and OPTIONAL issues in R2 §3 and #2509).
+- **Use `MAX` over insert-only meta triples if the watermark is published by insert.** It costs the same as a single triple (16.5 ms versus 16.7 ms) and removes the DELETE from the publish step, which keeps the publish a small idempotent INSERT DATA.
+- **A reader that makes two requests must apply the filter in the second request.** An unfiltered second request saw uncommitted positions in 6 percent of the pairs against a writer committing about 15 to 20 updates per second.
 
 ---

@@ -205,3 +205,55 @@ Result: PROGRESSED (knowledge). Nothing promoted; no lane gate has run.
   allowed trivial history; goal 8 could pass with zero reuse; typed errors could replace required cursor continuation; C8 frontier
   control conflicted with the hybrid-language rule.
 - Decision: accept all 16; EXP-A01's author revises to 0.2.0.
+
+## R7 XTDB indexing and ingest (Sonnet xhigh) — PROGRESSED (knowledge), H-X-ID revised
+Report lab/research/R7-xtdb-indexing-ingest.md; probes ~/Claude/Projects/triplex-db-2/R7-xtdb-index-probes (3 CPU / 5 GiB, ≤3M rows).
+- Bloom pruning DOES work after compaction: string equality 25 ms (3 of 4096 pages) vs ~0.9-1.0 s on uncompacted L0 files.
+  R1's "no pruning" was an L0 artifact. Consequence: equality on non-_id projection columns is acceptable for compacted data;
+  freshly written (L0) data is scanned, so equality cost grows with recent write volume. Once, after a restart, queries kept
+  planning over L0 until a second restart (cause not isolated; watch for it).
+- UUID `_id` is the raw 16-byte IID (not hashed); string/keyword/int `_id`s are hashed. Prefix-sharing UUIDs: `_id IN` of 1000 in
+  5.5 ms vs 330 ms for hashed keys; numeric/time min/max pruning works only when `_id` order correlates with the column (rank in
+  the high bits). `_id` ranges are never pruned; `CAST(... AS UUID)` in a predicate scans; pass typed uuid params.
+- Index shapes: unique-value table with `_id` = value key + ASSERT: 11 ms vs 1.2 s for the same check on a non-_id column.
+  Postings: array doc 5 ms at 3000 postings; a 1M-id array doc reads in 536 ms but each update costs 542 ms and 14 MB (no
+  server-side append), so popular values need paged postings (1k-10k ids per page, head doc holds the first page; read 1M in
+  395-457 ms, append 28-49 ms). Removal needs the stored page number (otherwise a 1.2-2.3 s scan).
+- Range/order: bucket docs (width 1000) 3 ms for a 1k range, 50 ms for 100k, 2.4 ms for ORDER BY ... LIMIT 100, 33 ms to move an
+  entity; plain scan of the projection table 0.85-3.5 s (range) and 1.8-2.0 s (ordered page).
+- Ingest: parameterised INSERT via `postgres` 5-9k rows/s (20-23k with 2-4 connections); COPY arrow-stream through a raw-wire
+  client 73-171k rows/s on one connection, 247k on two; COPY transit-json 51-146k. COPY works inside BEGIN READ WRITE with ASSERT and
+  METADATA; a failed ASSERT aborts the COPY. Distinct-text literal VALUES statements exhaust the heap; params and COPY do not.
+- History by `_id` 2-13 ms with 10 versions; table-wide COUNT(*) over 500k ids x 10 versions 4.8 s (reads all versions).
+- Disk: about 6x live data before GC; with `blocksToKeep: 2` and `garbageLifetime: PT1S` buffers fell 37.7 → 13.1 GB within 10 s of a
+  block boundary; L0 files and the Local log are never collected (steady state about 2.4x live). R7's probes filled the VM disk to
+  95% before GC ran: disk admission must forecast pre-GC peaks at about 6x live, not 2.4x.
+- Correctness hazard: upstream XTDB #6151, join pushdown under LIMIT/aggregate can return wrong rows.
+### Orchestrator decisions from R7
+- H-X-ID revised to "`_id`-first plus compaction-aware blooms": projection tables keep `_id` = the Triplex entity id STRING (raw
+  queries stay sensible: `WHERE _id = 'worker:maria'`); include/batch fetches pay ~0.33 s per 1000 hashed ids, acceptable at page
+  sizes of 100. The ledger (internal, never raw-facing) moves to entity-clustered UUID `_id`s (high bits = hash(scope, entity), low
+  bits = per-entity sequence) so per-entity history and batch reads cluster; to be measured against the current ledger.
+- Index tables are opt-in per attribute in the projection spec: unique attributes get a unique-value table (also the uniqueness
+  check); refs get paged reverse-posting tables; attributes declared range/ordered get bucket tables; everything else relies on
+  compacted bloom pruning. Paged postings store each entity's page number so removal is a point update.
+- Bulk ingest uses a raw-wire COPY (arrow-stream preferred, transit-json fallback) client inside BEGIN READ WRITE with ASSERT and
+  METADATA; ordinary commits keep parameterised statements with identical text (never distinct literal VALUES).
+- XTDB config for every slot: `blocksToKeep: 2`, short `garbageLifetime`; disk forecasts use 6x live data before GC.
+- Native helpers and the capability matrix must route around #6151 (no join pushdown under LIMIT/aggregate without proof).
+
+## R13 log of record (Sonnet xhigh) — PROGRESSED (knowledge); PLAN v1.2
+Report lab/research/R13-log-of-record.md; scripts and raw outputs ~/Claude/Projects/triplex-db-2/R13-log-durability
+(wal.mjs with CRC32C framing and scanner, durable-log.mjs group-commit writer, gen-switch-sim.mjs crash-state model).
+- Decisive: on macOS, Node 22 `fs.fsync` is `F_FULLFSYNC` (libuv 1.51; 2.9 ms measured); `O_DSYNC` is 0.02 ms and NOT durable.
+  Inside the colima VM, Lima hard-codes cached disk mode with `Fsync` synchronization, which Apple documents as not flushing the
+  drive cache: guest fsync 0.13-1.2 ms is below the 2.9 ms floor of a real flush. A VM-resident log cannot claim power-loss
+  durability. virtiofs is no stronger. So the QLever broker and its log live on the macOS host.
+- Framing tested at every truncation point (72,204) and single-bit flips; pure quad deltas make replay idempotent (agrees with R8).
+- QLever 0.6.0 has NO N-Quads export (corrects R2 §7.1); checkpoints fold the log instead. Generation switch model-checked
+  (520 states, 0 violations, 5/5 broken variants caught).
+- Fencing: QLever's token only authenticates and is printed at INFO in the server log; flock is not coherent between host and VM
+  on virtiofs (tested). Three layers: host kernel lock, EPOCH_BEGIN frame, (epoch, position) guard inside every update.
+- Group commit on the host: 33k commits/s at 256 clients, p99 23 ms; fsync is a few percent of a QLever update (0.2-1.7 s), so the
+  QLever update, not the log, bounds lane-Q write throughput.
+- Applied to PLAN v1.2 C2/C3 one to one, plus five F05 falsifiers. Durability statement recorded in C2.

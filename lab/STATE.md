@@ -28,14 +28,13 @@ Updated: 2026-11-07 (gen-0, planning)
 | EXP-000 (opus high, on main) | loop harness lab/bin, slots, pool, bound receipts, dev engines | lab/experiments/EXP-000-loop-harness/REPORT.md |
 | EXP-O01 (opus high, worktree, exp/O01-replay-oracle) | O-REPLAY independent Python oracle | lab/oracles/replay (branch) |
 | EXP-G01 (opus high, main checkout, no commit) | hand-derived golden vectors | lab/acceptance/golden/ |
-| R7 (sonnet xhigh) | XTDB pruning/IID/index-table shapes (+skew/ranges/ordered pages, extended), ingest | lab/research/R7-xtdb-indexing-ingest.md |
 | R8 (sonnet xhigh) | QLever reapply/rebuild under load/group commit/durability | lab/research/R8-qlever-write-lifecycle.md |
 | V-R01 (opus high, worktree verify/R01) | independent verification of exp/R01-entity-core (DONE, author PASS) | lab/experiments/EXP-R01-entity-core/VERIFY.md |
 | EXP-A01 resumed (opus high) | contract 0.2.0 addressing Codex acceptance review (16 findings) | lab/acceptance/ |
 | R10 (sonnet xhigh) | read-only recursion (C8); probe tx2-probe-r10 7063/5465 max 1.5 GiB | lab/research/R10-read-only-recursion.md |
 | R12 (sonnet xhigh) | XTQL cookbook, 23 operations verified vs SQL; probe tx2-probe-r12 5464 max 1.5 GiB | lab/research/R12-xtql-cookbook.md |
-| R13 (sonnet xhigh) | log of record + fsync durability on colima/macOS | lab/research/R13-log-of-record.md |
-| DONE | R1-R6, R9 | lab/research/ |
+| R14 (sonnet xhigh) | XTDB 2.2 wrong-result hazard inventory + exposure | lab/research/R14-xtdb-correctness-hazards.md |
+| DONE | R1-R7, R9, R13 | lab/research/ |
 
 ## Briefs ready, not dispatched
 - EXP-F01 (needs exclusive xtdb slot), F02/F03/F04 (dev slots) - dispatch once EXP-000 has dev engines up.
