@@ -22,6 +22,7 @@
       "follower": {
         "configFile": "lab/config/xtdb-follower-config.yaml",
         "memBytes": 1879048192, "cpus": 2, "javaOpts": "-Xmx768m -XX:MaxDirectMemorySize=768m", "portOffset": 10, "volumeMode": "ro",
+        "profiles": { "small": { "memBytes": 1342177280, "javaOpts": "-Xmx512m -XX:MaxDirectMemorySize=512m", "note": "EXP-X05 provisional run when the pool cannot admit 1.75 GiB (orchestrator, 2026-11-07); the 384 MiB memory cache is a ceiling the 100k-subject data set does not reach" } },
         "note": "EXP-X05 read-only follower tx2-xtdb-<slot>-ro on the slot's volume, admitted against the pool like any reservation, held under the slot's lock. 1.75 GiB is R19 1.6/E9's smallest sane read node. volumeMode ro mounts the volume read-only at the kernel as a second barrier behind readOnlyDatabases. Port is the slot port + portOffset."
       }
     },

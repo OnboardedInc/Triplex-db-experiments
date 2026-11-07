@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // lab/bin/engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh]
 //   [--holder NAME] [--exp EXP-NNN] [--remove-volume] [--note TEXT] [--force] [--tail N]
-//   [--follower] [--cpuset-cpus LIST]
+//   [--follower [--follower-profile NAME]] [--cpuset-cpus LIST]
 //
 // [EXP-X05] --follower acts on the slot's read-only XTDB follower tx2-xtdb-<slot>-ro (R19 1.1, 1.7):
 // same image and named volume, lab/config/xtdb-follower-config.yaml (readOnlyDatabases: true), its own
@@ -36,11 +36,16 @@ export function followerInfo(config, info, opts = {}) {
   const conf = config.lanes.xtdb?.follower;
   if (info.lane !== 'xtdb' || !conf) fail('USAGE', 'followers exist only for the xtdb lane (slots.json lanes.xtdb.follower)');
   const port = info.port + conf.portOffset;
+  // --follower-profile NAME swaps memory cap and JVM options for a named smaller footprint (slots.json profiles).
+  const profileName = opts['follower-profile'] ?? null;
+  const profile = profileName ? conf.profiles?.[profileName] : {};
+  if (!profile) fail('USAGE', `unknown follower profile ${profileName}; slots.json has ${Object.keys(conf.profiles ?? {}).join(', ') || 'none'}`);
   if (config.forbiddenPorts.includes(port)) fail('CONFIG', `Port ${port} is forbidden`);
   for (const range of config.reservedPortRanges) if (port >= range.from && port <= range.to) fail('CONFIG', `Port ${port} belongs to ${range.owner}`);
   return {
     ...info, role: 'follower', writer: info.container, container: `${info.container}-ro`, port,
-    endpoint: info.laneConf.urlTemplate.replace('{port}', String(port)), memBytes: conf.memBytes, cpus: conf.cpus, javaOpts: conf.javaOpts,
+    endpoint: info.laneConf.urlTemplate.replace('{port}', String(port)), memBytes: profile.memBytes ?? conf.memBytes, cpus: conf.cpus,
+    javaOpts: profile.javaOpts ?? conf.javaOpts, profile: profileName,
     volumeMode: conf.volumeMode, configFile: path.join(CONFIG_DIR, conf.configFile), configSource: conf.configFile, diskForecastBytes: 0,
     cpusetCpus: opts['cpuset-cpus'] ? parseCpuset(opts['cpuset-cpus'], config.vm.cpus).join(',') : null,
   };
@@ -70,7 +75,7 @@ export function effectiveConfig(config, info) {
     const file = path.join(dir, 'config.yaml');
     fs.writeFileSync(file, yaml);
     const effective = {
-      lane: 'xtdb', slot: info.slot, role: 'follower', follows: info.writer, image: info.laneConf.image, configSource: info.configSource,
+      lane: 'xtdb', slot: info.slot, role: 'follower', follows: info.writer, ...(info.profile ? { profile: info.profile } : {}), image: info.laneConf.image, configSource: info.configSource,
       configYamlSha256: sha256(yaml), env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus, ...pin,
       publish: `127.0.0.1:${info.port}:5432`, volume: `${info.volume}:/var/lib/xtdb${info.volumeMode === 'ro' ? ':ro' : ''}`, cmd: ['-f', '/etc/xtdb/config.yaml'],
       health: 'wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive',
@@ -112,7 +117,7 @@ function runArgs(info, eff, holder) {
     'run', '-d', '--name', info.container, '--restart', 'no',
     '--label', `tx2.lane=${info.lane}`, '--label', `tx2.slot=${info.slot}`, '--label', `tx2.config-sha256=${eff.sha256}`,
     '--label', `tx2.holder=${holder}`, '--label', 'tx2.managed-by=lab/bin/engine.mjs',
-    ...(info.role === 'follower' ? ['--label', 'tx2.role=follower', '--label', `tx2.follows=${info.writer}`] : []),
+    ...(info.role === 'follower' ? ['--label', 'tx2.role=follower', '--label', `tx2.follows=${info.writer}`, '--label', `tx2.follower-profile=${info.profile ?? 'default'}`] : []),
     '--memory', String(info.memBytes), '--memory-swap', String(info.memBytes), '--cpus', String(info.cpus),
     ...(e.cpusetCpus ? ['--cpuset-cpus', e.cpusetCpus] : []),
     '-p', e.publish, '-v', e.volume,
@@ -410,7 +415,8 @@ async function status(config) {
     // [EXP-X05] A follower shows as its own row under its slot when its container exists.
     const f = lane === 'xtdb' && config.lanes.xtdb.follower ? all.find(item => item.name === `${info.container}-ro`) : null;
     if (f) {
-      const fol = followerInfo(config, info);
+      const profile = f.labels['tx2.follower-profile'];
+      const fol = followerInfo(config, info, profile && profile !== 'default' ? { 'follower-profile': profile } : {});
       const fready = f.running ? await probe(fol) : null;
       rows.push({
         slot: `${lane}-${slot}-ro`, port: fol.port, cap: `${fmtBytes(fol.memBytes)}/${fol.cpus}cpu`, state: `${f.status}${f.health ? '/' + f.health : ''}`,

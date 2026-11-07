@@ -250,6 +250,12 @@ test('follower: own container and port, the slot volume mounted read-only, the r
   const bad = structuredClone(config); bad.lanes.xtdb.follower.portOffset = -7; // 5472 - 7 = 5465, a research-probe port
   assert.throws(() => followerInfo(bad, s2), /research probes/);
   assert.throws(() => followerInfo(config, lib.slotInfo(config, 'qlever', 's2')), /only for the xtdb lane/);
+  const small = followerInfo(config, s2, { 'follower-profile': 'small' });
+  assert.equal(small.memBytes, 1.25 * GiB);
+  assert.match(small.javaOpts, /-Xmx512m/);
+  assert.equal(effectiveConfig(config, small).effective.profile, 'small');
+  assert.equal('profile' in eff.effective, false);
+  assert.throws(() => followerInfo(config, s2, { 'follower-profile': 'tiny' }), /unknown follower profile/);
 });
 
 test('cpusets parse against the VM and unpinned containers overlap everything', () => {

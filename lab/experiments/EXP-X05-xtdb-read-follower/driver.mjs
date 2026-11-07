@@ -66,7 +66,9 @@ const P = {
 
 const config = loadSlots();
 const writerInfo = slotInfo(config, 'xtdb', P.slot);
-const folInfo = followerInfo(config, writerInfo);
+// The follower's profile comes from the running container's label, so the receipt recomputes the config it runs.
+const folProfile = inspect(`${writerInfo.container}-ro`)?.Config.Labels?.['tx2.follower-profile'];
+const folInfo = followerInfo(config, writerInfo, folProfile && folProfile !== 'default' ? { 'follower-profile': folProfile } : {});
 const W_URL = writerInfo.endpoint, F_URL = folInfo.endpoint;
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
 const runId = `X05-${P.slot}-${stamp}-${randomBytes(3).toString('hex')}${smoke ? '-smoke' : ''}`;
