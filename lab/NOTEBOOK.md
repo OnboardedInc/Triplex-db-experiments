@@ -638,3 +638,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   key (id, version); unchanged payloads publish nothing.
 - Sequence from here: D01a revises per Q36; V-D01 independent review and hash pin; then a TypeScript kernel and the O-DOMAIN oracle
   written by two different agents from SPEC.md alone, and their disagreements count as spec bugs.
+
+## 2026-11-08 ~00:20Z: V-O02 FIX-FIRST (answers correct; patch hides nothing); EXP-O03 started
+- **Learning: re-judging without the converter is the check that clears a patched converter.** The verifier re-judged the 47 items
+  whose verdict the patch changed directly from oracle output, golden vectors and obligations.json (47/47), and planted 22 new errors in
+  the patched areas (22/22 caught; the original converter catches only 9/22). Keep `judge_changed.py` as the standard tool when a
+  converter changes.
+- **Learning: an oracle's own tests should read the current contract,** and they did: merged with 0.3.3 they failed 8 of 222 (missing
+  4.7 rows for the new decimal and wire errors). That is the drift alarm working. F1 fixes it in two files.
+- **Learning: confident wrong answers on rules no vector uses are still dangerous** (11 on 0.3.3 rules, for example -0 inside JSON
+  committing). They go to EXP-O03 as "implement exactly or refuse with X-NOT-MODELED", so dependent obligations fail closed.
+- W01's scenario expectations came from the non-conforming O-REPLAY 0.1; W01 switches to the O02 branch now and records oracle hashes
+  per expectation so the final regeneration after the pin is mechanical.
