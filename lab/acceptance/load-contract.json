@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.3",
+  "version": "0.3.5",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -249,7 +249,7 @@
     "P3": {
       "commitTime": "the source of truth's publication instant for the transaction, stamped by the source on the host monotonic clock the driver also reads",
       "cursor": "(epoch, position), a total order over transactions; per-subject order follows from it",
-      "expectedAffected": "subjects written directly (O-REPLAY) plus subjects affected through referenced entities under WORLD_W0's dependency rules (O-DOMAIN)",
+      "expectedAffected": "subjects written directly (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN; RULINGS Q36e)",
       "milestone": "the consumer durably records the affected-subject set and its checkpoint in one durable write; lag runs from commit time to that record",
       "delivery": "at-least-once from the last checkpoint; effects keyed by (consumer, position, subject), so replay is idempotent; visible duplicate effects must be zero (NS-P3-VISIBLE-DUP-EFFECTS-MAX); replay attempts allowed and counted separately",
       "crashPoints": [
@@ -318,7 +318,7 @@
     "P5": {
       "sweep": "evaluate release R against WORLD_W0 for every subject in R's scope (100k) at one shared basis; the receipt binds the basis and R's content hash",
       "coverage": "every in-scope subject evaluated exactly once; the receipt carries the hash of the subject list",
-      "publication": "results published as work items through the atomic outbox path (EP-OUTBOX); expected outputs from O-DOMAIN, independently",
+      "publication": "results published as work items through the atomic outbox path (EP-OUTBOX) under the delivery key (id, publication sequence) with early cutoff: a payload equal to the latest published one publishes nothing, a different one (including a return to an earlier payload) publishes the next sequence of the same id; publication state is persisted atomically with the outbox record (RULINGS Q36a, Q38f); expected outputs from O-DOMAIN, independently",
       "postCaptureMutations": "after the basis is captured the driver mutates selected subjects; their outputs must reflect the captured basis",
       "wallTime": "includes evaluation and publication",
       "throttledVariant": "about 10 minutes, overlapping a real compaction or index rebuild; keeps its basis and never blocks writers",

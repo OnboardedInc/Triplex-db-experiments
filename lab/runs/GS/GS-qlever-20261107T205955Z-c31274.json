@@ -1,0 +1,181 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "GS",
+  "lane": "qlever",
+  "slot": "dev",
+  "runId": "GS-qlever-20261107T205955Z-c31274",
+  "experiment": "EXP-W01",
+  "note": "W01 first 8 golden scenarios, rung smoke, shared dev slot (reduced profile: 2 readers)",
+  "previous": null,
+  "startedAt": "2026-11-07T20:59:55.057Z",
+  "endedAt": "2026-11-07T21:00:06.289Z",
+  "durationMs": 11232,
+  "scope": "unknown",
+  "runKind": "diagnostic",
+  "mutation": null,
+  "contractVersion": "0.2.0",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/2",
+    "version": "0.2.0",
+    "status": "CANDIDATE-1.0.0: compiled rulings of RULINGS.md and PLAN v1.1 C1-C8; freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "e40675437e7b6564dc368d022822f9c74cc32173e60211d34af9bd629dbedbf6"
+  },
+  "obligations": [],
+  "engineName": "qlever",
+  "git": {
+    "head": "b667662646389f3073d890eae9cfca1c48fcfcdc",
+    "headTree": "5e0f8d6824c9c8e310a55714ad937f8e1e759bd1",
+    "branch": "exp/W01-golden-scenarios",
+    "dirty": false,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [],
+    "sourceTreeId": "fe755f6f4d57e84e88f5e4fcc8c1b4ddc789aef0125a79e209ede97e9fd41ed7"
+  },
+  "lockfileSha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "e11254a78029117b1ec2116a89c174ec3ce2845ce02d94355f93195d7e4f6003",
+    "lab/bin/lib.mjs": "e43beef50a06d4c34012f5d288d47a387152db9e23a961f193b01e0eecf43f63",
+    "lab/bin/receipt.mjs": "b0d6a54bf38a7b6ae669c229edf619c6951c55745d78d8cdee3e4f67e04df85a",
+    "lab/bin/engine.mjs": "80df499ed39cdf08dd1807d012d7451b2ee27b0aa564554fd52c52d70ffe6c0b",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+  },
+  "build": {
+    "manifestSha256": "3450a2be01c15c44c39060c8a985e94ea289b1b1d1e60ef66943953c69f965d7",
+    "manifest": "runs/GS/GS-qlever-20261107T205955Z-c31274/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 379,
+        "bytes": 2397489,
+        "sha256": "75e2a1c990f13d0ca0b9556b955b6bb141c5210c0ec0c7cfa3ba049e35db6e4c"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "qlever": {
+        "files": 70,
+        "bytes": 409001,
+        "sha256": "c6cad514171b46de1e29193246780235c67bb361b8ffb9f029679fb8e64dc014"
+      },
+      "qualification": {
+        "files": 16,
+        "bytes": 212702,
+        "sha256": "19c1dd683a7e04a53b87902c6c2c2a304771a1000db8caff989778035de4da5c"
+      }
+    }
+  },
+  "engine": null,
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 611,
+      "cwd": ".",
+      "stdout": "runs/GS/GS-qlever-20261107T205955Z-c31274/pnpm-version.stdout.txt",
+      "stderr": "runs/GS/GS-qlever-20261107T205955Z-c31274/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-qlever --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 10330,
+      "cwd": ".",
+      "stdout": "runs/GS/GS-qlever-20261107T205955Z-c31274/build.stdout.txt",
+      "stderr": "runs/GS/GS-qlever-20261107T205955Z-c31274/build.stderr.txt"
+    }
+  ],
+  "firstFailures": [],
+  "rawDir": "runs/GS/GS-qlever-20261107T205955Z-c31274",
+  "reasons": [
+    "tx2-qlever-dev is not running",
+    "missing identity field counts",
+    "zero executed cases"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 289866,
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 36523,
+      "sha256": "e11254a78029117b1ec2116a89c174ec3ce2845ce02d94355f93195d7e4f6003"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 19348,
+      "sha256": "e43beef50a06d4c34012f5d288d47a387152db9e23a961f193b01e0eecf43f63"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 4938,
+      "sha256": "b0d6a54bf38a7b6ae669c229edf619c6951c55745d78d8cdee3e4f67e04df85a"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 17874,
+      "sha256": "80df499ed39cdf08dd1807d012d7451b2ee27b0aa564554fd52c52d70ffe6c0b"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 3434,
+      "sha256": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+    },
+    {
+      "path": "runs/GS/GS-qlever-20261107T205955Z-c31274/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 93496,
+      "sha256": "3450a2be01c15c44c39060c8a985e94ea289b1b1d1e60ef66943953c69f965d7"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 353629,
+      "sha256": "e40675437e7b6564dc368d022822f9c74cc32173e60211d34af9bd629dbedbf6"
+    }
+  ]
+}
