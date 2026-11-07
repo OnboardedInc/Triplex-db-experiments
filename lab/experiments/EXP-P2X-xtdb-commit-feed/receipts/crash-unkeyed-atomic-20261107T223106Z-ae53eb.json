@@ -1,0 +1,56 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "crash-unkeyed-atomic-20261107T223106Z-ae53eb",
+  "kind": "crash-unkeyed-atomic",
+  "writtenAt": "2026-11-07T22:31:06.940Z",
+  "mode": "crash",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T22:30:33.974Z",
+  "identity": {
+    "gitHead": "e6d165c1da1ab46d7d1776ad90acda02b45be602",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "37f4301f4861ac897de844d70f8a38cc37e415fb99fe6e3fdb9fdaa2d3db9852",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        17.82,
+        14.35,
+        13.73
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    15.63,
+    14.2,
+    13.69
+  ],
+  "variant": "unkeyed-atomic",
+  "keyed": false,
+  "atomic": true,
+  "scope": "p2x-crash-unkeyed-atomic-4e17d023-e04e-44ad-8c53-3af5cf0a175d",
+  "commits": 400,
+  "pageLimit": 3,
+  "injected": {
+    "before-effect": 34,
+    "after-effect-before-checkpoint": 33,
+    "after-checkpoint": 33
+  },
+  "injectedTotal": 100,
+  "restarts": 101,
+  "committedEffects": 400,
+  "durableEffects": 400,
+  "gaps": 0,
+  "extras": 0,
+  "visibleDuplicates": 0,
+  "replayedEffects": 102,
+  "orderViolations": 0,
+  "gapSample": [],
+  "extraSample": [],
+  "replayAttempts": 102,
+  "rawPath": null,
+  "rawSha256": null
+}

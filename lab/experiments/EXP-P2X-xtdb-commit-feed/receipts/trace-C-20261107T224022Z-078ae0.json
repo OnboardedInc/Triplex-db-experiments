@@ -1,0 +1,273 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "trace-C-20261107T224022Z-078ae0",
+  "kind": "trace-C",
+  "writtenAt": "2026-11-07T22:40:22.348Z",
+  "mode": "trace",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T22:32:20.513Z",
+  "identity": {
+    "gitHead": "e6d165c1da1ab46d7d1776ad90acda02b45be602",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "37f4301f4861ac897de844d70f8a38cc37e415fb99fe6e3fdb9fdaa2d3db9852",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        12.46,
+        13.56,
+        13.49
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    12.54,
+    16.15,
+    14.99
+  ],
+  "arm": "C",
+  "subjectQueue": true,
+  "scope": "p2x-trace-C-3bb4bc12-044f-46f7-b7d6-a7076fbc898d",
+  "seed": "p2x-a",
+  "subjects": 10000,
+  "windowS": 300,
+  "generatorSha256": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+  "traceSha256": "58b41e2300e0c143673b18571ed1f7b6f30399d45df7e59474ff28f507dc2fc1",
+  "offered": {
+    "events": 3664,
+    "originals": 3554,
+    "resends": 110,
+    "burstOriginals": 3312
+  },
+  "accounting": {
+    "committed": 2987,
+    "resend:duplicate": 92,
+    "unknown": 12,
+    "pending-at-cap": 555,
+    "resend:pending-at-cap": 18,
+    "unaccounted": 0
+  },
+  "ackLoss": {
+    "original-receipt": 34
+  },
+  "resendReceipts": {
+    "true": 92
+  },
+  "byBand": {
+    "5-10": {
+      "offerToAckMs": {
+        "n": 1779,
+        "p50": 175779.3,
+        "p90": 290884.9,
+        "p99": 334824.8,
+        "max": 340410.3,
+        "mean": 157469.3
+      },
+      "serviceMs": {
+        "n": 1779,
+        "p50": 2252.9,
+        "p90": 28068.2,
+        "p99": 47600.5,
+        "max": 58742.2,
+        "mean": 10081.2
+      }
+    },
+    "11-25": {
+      "offerToAckMs": {
+        "n": 895,
+        "p50": 167389.4,
+        "p90": 291128.1,
+        "p99": 335253.9,
+        "max": 340193.4,
+        "mean": 154769.5
+      },
+      "serviceMs": {
+        "n": 895,
+        "p50": 3718.3,
+        "p90": 28581.6,
+        "p99": 49925.1,
+        "max": 50259.6,
+        "mean": 10924.2
+      }
+    },
+    "26-50": {
+      "offerToAckMs": {
+        "n": 313,
+        "p50": 170521.4,
+        "p90": 291229.3,
+        "p99": 338924.8,
+        "max": 339905.2,
+        "mean": 156143.6
+      },
+      "serviceMs": {
+        "n": 313,
+        "p50": 3598.2,
+        "p90": 25765.2,
+        "p99": 47297.2,
+        "max": 47794.8,
+        "mean": 10421.3
+      }
+    }
+  },
+  "all": {
+    "offerToAckMs": {
+      "n": 2987,
+      "p50": 171785.6,
+      "p90": 291093.9,
+      "p99": 335710.6,
+      "max": 340410.3,
+      "mean": 156521.4
+    },
+    "serviceMs": {
+      "n": 2987,
+      "p50": 2563.9,
+      "p90": 28022.3,
+      "p99": 47645.2,
+      "max": 58742.2,
+      "mean": 10369.4
+    }
+  },
+  "steady": {
+    "offerToAckMs": {
+      "n": 204,
+      "p50": 293.5,
+      "p90": 195294.2,
+      "p99": 256003.2,
+      "max": 285023.2,
+      "mean": 47064.2
+    }
+  },
+  "burst": {
+    "offerToAckMs": {
+      "n": 2783,
+      "p50": 179896.4,
+      "p90": 294256.2,
+      "p99": 335915.3,
+      "max": 340410.3,
+      "mean": 164544.9
+    },
+    "committedInBurstWindow": 460
+  },
+  "throughput": {
+    "committedPerS": 9.96,
+    "drainAfterWindowS": 180,
+    "drainCapS": 180,
+    "pendingAtCap": 573
+  },
+  "censoredOfferToAckLowerBoundMs": {
+    "n": 3542,
+    "p50": 194376.2,
+    "p90": 315738.3,
+    "p99": 337759.5,
+    "max": 340509.7,
+    "mean": 180803.5
+  },
+  "conflicts": {
+    "casConflicts": 0,
+    "commandConflicts": 0,
+    "submits": 3002
+  },
+  "timings": {
+    "submitMs": {
+      "n": 3002,
+      "p50": 1976.5,
+      "p90": 10129.4,
+      "p99": 17939.9,
+      "max": 20297.3,
+      "mean": 3976.5
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 3127,
+        "p50": 101.6,
+        "p90": 7238,
+        "p99": 13660.6,
+        "max": 17243.9,
+        "mean": 2247.2
+      },
+      "claim": {
+        "n": 3127,
+        "p50": 86.9,
+        "p90": 7573.4,
+        "p99": 14785.7,
+        "max": 17441.1,
+        "mean": 2307.1
+      },
+      "receipt": {
+        "n": 3001,
+        "p50": 90,
+        "p90": 6599.4,
+        "p99": 12311.8,
+        "max": 15164.1,
+        "mean": 1930.9
+      }
+    }
+  },
+  "feed": {
+    "lagMs": {
+      "n": 3001,
+      "p50": 1449.7,
+      "p90": 4485.1,
+      "p99": 6712.3,
+      "max": 9729.3,
+      "mean": 1867.7
+    },
+    "lagSteadyMs": {
+      "n": 2188,
+      "p50": 829.4,
+      "p90": 3275.8,
+      "p99": 6319.4,
+      "max": 6684.2,
+      "mean": 1305.7
+    },
+    "lagBurstMs": {
+      "n": 813,
+      "p50": 3130.6,
+      "p90": 5630.4,
+      "p99": 9727,
+      "max": 9729.3,
+      "mean": 3380.2
+    },
+    "committedEffects": 2987,
+    "durableEffects": 3001,
+    "gaps": 0,
+    "extras": 14,
+    "visibleDuplicates": 0,
+    "replayedEffects": 0,
+    "orderViolations": 0,
+    "gapSample": [],
+    "extraSample": [
+      "1730033242157824|subj:1116",
+      "1730033241177320|subj:3751",
+      "1730033241323672|subj:4679",
+      "1730035373436800|subj:2396",
+      "1730033241183816|subj:911"
+    ],
+    "polls": 7395,
+    "writes": 420,
+    "abortedListed": 0,
+    "blockedPolls": 1950,
+    "missingPublication": 0,
+    "pollMs": {
+      "n": 7395,
+      "p50": 10.7,
+      "p90": 34.6,
+      "p99": 180.4,
+      "max": 872.1,
+      "mean": 20.2
+    },
+    "writeMs": {
+      "n": 420,
+      "p50": 61.9,
+      "p90": 2137.7,
+      "p99": 4949.5,
+      "max": 5476.1,
+      "mean": 605.9
+    }
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2X-xtdb-commit-feed/trace-C-20261107T224022Z-078ae0.raw.json",
+  "rawSha256": "5c7a9150898d15cca7084417ef4f7ef492d4c458da8df2e61312f5d634b0996b"
+}

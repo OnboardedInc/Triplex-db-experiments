@@ -100,10 +100,12 @@ same log, and writing for them would feed back on itself.
 3. **Engine crash between append and resolution.** This is covered by the deterministic falsifier and by a live run with a writer that
    dies after handing over its commit (sections F3 in the tests). An engine kill mid-resolution is not, because `lab/bin/engine.mjs`
    has no kill.
-4. **Log volume.** The slot volume grew about 250 KB per Triplex commit (log plus storage) on 2.2.0. Both arms send the same eight
-   statements, so this is the engine's encoding of parameterized statements in the source log, not the candidate. It decides what a
-   source-log tailer reads (about 3 MB/s at 15 commits/s) and what 100k commits cost on disk (about 25 GB), which is why this
-   experiment's history stopped short of 100k (REPORT). Worth a probe of statement shapes that shrink records (fewer, wider parameters).
+4. **Log volume: the candidate's records are 3.5 times A0's.** On a quiet engine one 10-fact commit costs 27,581 bytes of source log
+   for A0 and 95,364 for the candidate (probe `p10-record-bytes`; 8 statements each, 597 against 687 parameters). The likely cause is
+   the INSERT ... SELECT stamping form: every stamped column becomes two parameter columns, one of them NULL (sent untyped) in every
+   row. It is the price of the heap fix in section 6, and it decides what the tailer reads and what history costs on disk (the slot
+   grew about 250 KB per trace-sized candidate commit, so 100k commits would need about 25 GB, which is why history here stopped near
+   21k; REPORT). Next probes: one sign-encoded ordinal column per stamped column (no NULL partner), typed NULLs, fewer statements.
 5. **Costs not yet measured at scale:** `xt.txs` lookups and `METADATA` size at 1M+ transactions. The scope head's version chain read
    stayed flat to 8.7k versions (probe `p11-hot-head`: 6.5 ms against 4.7 to 5.5 ms). Both arms still scan by `scope_key` on the read
    path; that is P4 work.
