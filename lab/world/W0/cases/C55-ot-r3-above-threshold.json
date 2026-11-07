@@ -1,20 +1,22 @@
 {
   "id": "C55",
   "slug": "ot-r3-above-threshold",
-  "title": "Under R3, 2,701 weekly minutes is overtime",
+  "title": "Inside R3's scope, 2,701 weekly minutes is overtime",
   "op": "evaluate",
   "checks": [
     {"rule": "OT", "polarity": "positive"}
   ],
-  "notes": ["2701 > 2700: OT row 2, flag overtime, inputs [7]. Every other rule as in C54."],
+  "notes": [
+    "pl:a is inside R3's scope (jur:j010, as in C54). 2701 > 2700: OT row 2, flag overtime, inputs [1, 2, 7]. Every other rule as in C54."
+  ],
   "input": {
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
     "release": "R3",
     "world": {
       "subject": "pl:a",
       "facts": [
-        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
-        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:j010", "tx": 1},
+        {"e": "jur:j010", "a": "stateMinWageCents", "v": 1650, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
         {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
         {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
@@ -34,7 +36,7 @@
   "expected": {
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
     "dependencies": [
-      ["jur:ny", "stateMinWageCents"],
+      ["jur:j010", "stateMinWageCents"],
       ["loc:nyc", "jurisdiction"],
       ["loc:nyc", "localMinWageCents"],
       ["pl:a", "baselinePayRateCents"],
@@ -58,7 +60,7 @@
       {"name": "overtime", "rule": "OT"}
     ],
     "obligations": [],
-    "release": "sha256:de954f77ba18ec2799b483696efac3e400a3dd29c840d183b0609ab29497971f",
+    "release": "sha256:f345d9fe4291803259021ad30ff00afecc1f48af4d4b403860b3ace52315312e",
     "subject": "pl:a",
     "tasks": [],
     "trace": [
@@ -70,7 +72,7 @@
       {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
       {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
       {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
-      {"inputs": [7], "key": "", "row": 2, "rule": "OT"},
+      {"inputs": [1, 2, 7], "key": "", "row": 2, "rule": "OT"},
       {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
