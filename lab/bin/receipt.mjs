@@ -1,4 +1,39 @@
-// Pure receipt logic shared by gate.mjs and scorecard.mjs, unit-tested in lab/bin/test (EXP-000).
+// Pure receipt logic shared by gate.mjs, scorecard.mjs and status.mjs, unit-tested in lab/bin/test (EXP-000).
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+
+// ACCEPTANCE.md section 3 lists acceptance, calibration, diagnostic, mutation, verifier; the
+// orchestrator's EXP-000 addition lists calibration, candidate, control, verifier, mutation, smoke.
+// The union is accepted; only `acceptance` can close an obligation (V12).
+export const RUN_KINDS = ['acceptance', 'calibration', 'candidate', 'control', 'diagnostic', 'mutation', 'smoke', 'verifier'];
+
+/** Per-case language record: every native read substep in order, plus the answer-query set. */
+export function caseLanguages(trace) {
+  const queries = (trace ?? []).filter(item => item && item.operation === 'public-native-query');
+  const languages = [];
+  for (const q of queries) {
+    const steps = q.steps ?? [];
+    if (steps.length) for (const s of steps) languages.push(s.language ?? 'UNRECORDED');
+    else languages.push(q.language ?? 'UNRECORDED');
+  }
+  const k = classifyLanguages(trace);
+  return { languages, answerLanguages: k.answerLanguages, languageClass: { answer: k.answer, strict: k.strict } };
+}
+
+/** Obligations a gate run claims, with the contract's definition hashes (V14). */
+export const GATE_OBLIGATIONS = { G1: 'G1.found.unchanged44', G2: 'PKT.full142' };
+export function contractClaims({ gate, lane, scope, contractFile }) {
+  if (!fs.existsSync(contractFile)) return { contract: null, obligations: [], reasons: gate === 'G0' ? [] : ['acceptance contract lab/acceptance/obligations.json is missing'] };
+  const bytes = fs.readFileSync(contractFile);
+  const doc = JSON.parse(bytes);
+  const contract = { format: doc.format, version: doc.version, status: doc.status, sha256: createHash('sha256').update(bytes).digest('hex') };
+  const id = GATE_OBLIGATIONS[gate];
+  if (!id || scope !== 'full') return { contract, obligations: [], reasons: [] };
+  const o = doc.obligations.find(item => item.id === id);
+  if (!o) return { contract, obligations: [], reasons: [`obligation ${id} not in contract ${doc.version}`] };
+  const lanes = o.lanes.filter(l => doc.engineOfLane[l] === lane);
+  return { contract, obligations: [{ id, definitionSha256: o.definitionSha256, receiptScope: o.receiptScope, lanes }], reasons: [] };
+}
 
 /**
  * Per-execution query-language classification from native traces (unit-tested).
@@ -26,7 +61,7 @@ export function tallyLanguages(cases) {
 }
 
 const REQUIRED = {
-  common: ['git.head', 'git.headTree', 'git.branch', 'git.sourceTreeId', 'git.diffSha256', 'lockfileSha256', 'toolchain.node', 'toolchain.pnpm', 'build.manifestSha256', 'gateScripts', 'counts'],
+  common: ['contractVersion', 'runKind', 'git.head', 'git.headTree', 'git.branch', 'git.sourceTreeId', 'git.diffSha256', 'lockfileSha256', 'toolchain.node', 'toolchain.pnpm', 'build.manifestSha256', 'gateScripts', 'counts'],
   G0: ['packet.sha256'],
   G1: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint'],
   G2: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint', 'packet.sha256'],

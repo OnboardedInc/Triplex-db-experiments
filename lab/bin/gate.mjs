@@ -19,9 +19,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { effectiveConfig, probe } from './engine.mjs';
 import { acquireHeavy } from './heavy-lock.mjs';
-import { tallyLanguages, verdictOf } from './receipt.mjs';
+import { RUN_KINDS, caseLanguages, contractClaims, tallyLanguages, verdictOf } from './receipt.mjs';
 import {
-  REPO, defaultHolder, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
+  REPO, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
   readJson, readOwner, runLogged, sha256, sha256File, slotInfo, sourceIdentity, storeFile, storeObject, treeFiles, volumeBytes,
 } from './lib.mjs';
 
@@ -291,11 +291,13 @@ async function engineGate(run, config, entry) {
     TRIPLEX_QUERY_PATH: entry.queryPath,
   });
   result.queryPath = entry.queryPath;
+  result.diskBefore = vmDisk(config);
   const stop = startSampler();
   const step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs });
   result.containers = stop();
   result.coRunning = listTx2Containers().map(c => ({ name: c.name, memCapBytes: c.memBytes, nanoCpus: c.nanoCpus, health: c.health }));
   result.volumeBytes = volumeBytes(config, bound.info.volume);
+  result.diskAfter = vmDisk(config);
   if (step.timedOut) run.reason(`${entry.name} timed out after ${entry.timeoutMs / 1000}s`);
   // The bytes the run imported must still be the bytes we hashed.
   const after = hashDist(run, 'build-manifest-after.json');
@@ -336,6 +338,10 @@ async function gateG1(run, config) {
     byPhase: Object.fromEntries(['current', 'reopen'].map(phase => [phase, { pass: executions.filter(e => e.phase === phase && e.status === 'PASS').length, total: executions.filter(e => e.phase === phase).length }])),
   };
   result.timings = { suiteMs: report.suite?.elapsedMs ?? null, casesMs: executions.reduce((s, e) => s + e.elapsedMs, 0) };
+  // ACCEPTANCE section 3 per-case results. The 44 run the Triplex Datalog foundation runtime.
+  result.cases = executions.map(e => ({ caseId: e.name, mode: e.phase, status: e.status, oracleId: 'O-TESTKIT', scope: e.scope,
+    rawResultSha256: sha256(JSON.stringify(e)), languages: ['triplex-datalog'] }));
+  result.scopes = { suite: report.suite?.scope ?? null, fresh: true };
   return result;
 }
 
@@ -372,6 +378,9 @@ async function gateG2(run, config) {
   result.counts = { executed: cases.length, expected, pass, fail: cases.length - pass - unsupported, skip: unsupported + (expected - cases.length), statuses };
   result.languages = tallyLanguages(cases);
   result.languages.rule = 'answer: an execution counts for a language only if every native answer query it ran used that language; mixed = hybrid (counts for neither). strict additionally includes substeps (XTDB source-cut position lookup is always xtdb-sql).';
+  result.cases = cases.map(c => ({ caseId: c.logicalTaskId, mode: c.reopen ? 'reopen' : 'current', status: c.status, oracleId: 'O-EVT',
+    rawResultSha256: sha256(JSON.stringify(c.actualRows ?? null)), ...caseLanguages(c.queryTrace) }));
+  result.scopes = { workloads: (report.workloads ?? []).map(w => w.scope), fresh: true };
   result.timings = { workloads: (report.workloads ?? []).map(w => ({ id: w.id, status: w.status, ingestMs: w.groups?.reduce((s, g) => s + g.acknowledgedMs, 0) ?? null, queryMs: w.cases.reduce((s, c) => s + c.elapsedMsDiagnostic, 0) })) };
   return result;
 }
@@ -384,7 +393,15 @@ main(async () => {
   if (!['G0', 'G1', 'G2'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
     fail('USAGE', 'usage: gate.mjs G0|G1|G2 --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]');
   const config = loadSlots();
+  // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).
+  const runKind = options['run-kind'] ?? 'diagnostic';
+  if (!RUN_KINDS.includes(runKind)) fail('USAGE', `--run-kind must be one of ${RUN_KINDS.join('|')}`);
+  if (runKind === 'acceptance' && (options.cases || options.workloads)) fail('USAGE', 'an acceptance run cannot select a subset (B12)');
+  if (runKind === 'mutation' && (!options['mutation-id'] || !options['mutation-patch'])) fail('USAGE', 'a mutation run needs --mutation-id and --mutation-patch <file>');
   const run = new Run(gate, options.lane, options);
+  const mutation = runKind === 'mutation'
+    ? { id: options['mutation-id'], patch: run.store(path.resolve(options['mutation-patch']), 'mutation-patch') }
+    : null;
   process.stderr.write(`[lab] ${run.runId}: raw output ${run.rel(run.rawDir)}\n`);
   let result = {}, git = null, tools = null, lockfileSha256 = null, gateScripts = null;
   try {
@@ -398,10 +415,15 @@ main(async () => {
     run.reason(`harness error: ${error.message}`);
     run.failure({ harnessError: String(error.stack ?? error).slice(0, 3000) });
   }
+  const claims = contractClaims({ gate, lane: options.lane, scope: result.scope, contractFile: path.join(REPO, 'lab/acceptance/obligations.json') });
+  if (claims.contract) run.store(path.join(REPO, 'lab/acceptance/obligations.json'), 'acceptance-contract');
+  for (const reason of claims.reasons) run.reason(reason);
   const receipt = {
     format: 'tx2-gate-receipt/1', gate, lane: options.lane, slot: gate === 'G0' ? null : (options.slot ?? 'dev'), runId: run.runId,
     experiment: options.exp ?? null, note: options.note ?? null, previous: options.previous ?? null,
     startedAt: run.startedAt, endedAt: now(), durationMs: Date.now() - run.t0, scope: result.scope ?? 'unknown',
+    runKind, mutation, contractVersion: claims.contract?.version ?? null, contract: claims.contract, obligations: claims.obligations,
+    engineName: options.lane,
     git, lockfileSha256, toolchain: tools, gateScripts, ...result,
     steps: run.steps.map(({ tail, ...step }) => step), firstFailures: run.firstFailures,
     rawDir: run.rel(run.rawDir), reasons: run.reasons,

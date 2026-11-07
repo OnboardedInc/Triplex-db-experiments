@@ -138,7 +138,7 @@ test('language classification: pure XTQL, pure SQL, hybrid, strict substeps', ()
 });
 
 const base = () => ({
-  gate: 'G1', reasons: [], scope: 'full', counts: { executed: 88, skip: 0 }, lockfileSha256: 'l', gateScripts: {},
+  gate: 'G1', reasons: [], scope: 'full', contractVersion: '0.1.0-draft', runKind: 'diagnostic', counts: { executed: 88, skip: 0 }, lockfileSha256: 'l', gateScripts: {},
   git: { head: 'h', headTree: 't', branch: 'main', sourceTreeId: 's', diffSha256: 'd' }, toolchain: { node: 'v22', pnpm: '10' },
   build: { manifestSha256: 'm' }, engine: { imageId: 'i', configSha256: 'c', endpoint: 'e' }, contactedEndpoint: 'e',
 });
@@ -154,4 +154,24 @@ test('verdict fails closed on missing identity, zero executions, skips; subsets 
   assert.equal(verdictOf(subset).verdict, 'PASS_SUBSET');
   const reasoned = base(); reasoned.reasons = ['G1 contacted x, slot is y'];
   assert.equal(verdictOf(reasoned).verdict, 'FAIL');
+});
+
+test('caseLanguages lists every substep language in order', async () => {
+  const { caseLanguages } = await import('../receipt.mjs');
+  const record = caseLanguages([q('xtql', [{ language: 'xtdb-sql' }, { language: 'xtql' }]), { normalization: 'n' }, q('xtdb-sql')]);
+  assert.deepEqual(record.languages, ['xtdb-sql', 'xtql', 'xtdb-sql']);
+  assert.deepEqual(record.answerLanguages, ['xtdb-sql', 'xtql']);
+  assert.equal(record.languageClass.answer, 'hybrid');
+});
+
+test('contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing', async () => {
+  const { contractClaims } = await import('../receipt.mjs');
+  const file = path.join(temp, 'obligations.json');
+  fs.writeFileSync(file, JSON.stringify({ format: 'f', version: '0.1.0-draft', status: 'DRAFT', engineOfLane: { 'xtdb-xtql': 'xtdb', 'xtdb-sql': 'xtdb', 'qlever-sparql': 'qlever' },
+    obligations: [{ id: 'PKT.full142', definitionSha256: 'abc', receiptScope: 'lane', lanes: ['xtdb-xtql', 'xtdb-sql', 'qlever-sparql'] }] }));
+  const full = contractClaims({ gate: 'G2', lane: 'xtdb', scope: 'full', contractFile: file });
+  assert.deepEqual(full.obligations, [{ id: 'PKT.full142', definitionSha256: 'abc', receiptScope: 'lane', lanes: ['xtdb-xtql', 'xtdb-sql'] }]);
+  assert.equal(full.contract.version, '0.1.0-draft');
+  assert.deepEqual(contractClaims({ gate: 'G2', lane: 'xtdb', scope: 'subset:6/142', contractFile: file }).obligations, []);
+  assert.match(contractClaims({ gate: 'G1', lane: 'xtdb', scope: 'full', contractFile: path.join(temp, 'none.json') }).reasons[0], /missing/);
 });
