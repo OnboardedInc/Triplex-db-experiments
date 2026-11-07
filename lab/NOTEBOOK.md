@@ -589,3 +589,5 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Decisions for Sam (from R19), provisional rulings in force:** (1) pooled cells with per-tenant encryption count as storage-layer
   isolation for small tenants (R19 found no standard that accepts crypto isolation alone, so this is Sam's call); (2) assume 10% of small
   tenants (100) are active in any 15-minute window until Sam gives a number.
+- 23:10Z: contract 0.3.3 committed (89376e1; Q29-Q32 compiled, 142 obligations, 35 regression checks all caught). Codex round 3
+  started on it. R20 (order-preserving decimal encodings, both lanes, with a property test) dispatched from the research queue.

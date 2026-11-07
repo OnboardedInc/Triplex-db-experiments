@@ -26,7 +26,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | exp/F02-wire-exactness | MERGED 7247c82 (lab only; partly falsified) | fixes in EXP-F02b |
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
-| contract 0.3.2 (main 01fb285) | Q21-Q28 + TARGETS v2 compiled; 136 obligations, 42 thresholds; Q29 recorded, not yet compiled | compile Q29 with Codex round-2 findings (0.3.3) |
+| contract 0.3.3 (main 89376e1) | Q29-Q32 compiled; 142 obligations, 50 thresholds; W0 pin null until V-D01 | Codex round 3 |
 
 ## Running agents (10 of 10, plus Codex shell b0losx599)
 | Agent | Priority | Output |
@@ -37,12 +37,11 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-X02 XTQL parity (opus, exp/X02-xtql-parity) | read priorities on XTDB, floor | branch; waiting on own live-check rerun |
 | EXP-F02b wire exactness fixes (opus, exp/F02b-wire-exactness-fixes, dev residents) | numeric rule floor | branch |
 | EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |
-| EXP-A01 contract 0.3.3 (opus, main, no commit) | Q29 + Q31 into the contract | lab/acceptance/ |
+| R20 order-preserving decimal encodings (sonnet xhigh) | numeric floor (Q18 decimal kind) | lab/research/R20-*.md |
 | R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
 | EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
 | EXP-D01a W0 world-definition spec (opus, exp/D01-world-definition) | P5, P3 deps, GS domain expectations | lab/world/W0 |
-Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). A01 compiling 0.3.3; Codex round 3 after it.
-Research queue: R20 order-preserving decimal encodings (Sonnet xhigh) when a slot frees.
+Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 running (shell bz4ixclp7) -> lab/reviews/plan-v2-round3.codex.md.
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 
