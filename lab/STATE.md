@@ -55,7 +55,7 @@ Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control 
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 
 ## Exclusive slot queue (pool: xtdb-dev 3.0 + qlever-dev 3.5 leave 4.5 GiB)
-XTDB: EXP-P2X done (s1 released) -> EXP-X05 (s2 + follower capped about 1 GiB) -> EXP-N01 A0 XTDB (zero-readers, then ladder) -> V-X02 XTQL rerun.
+XTDB: EXP-P2X done (s1 released) -> EXP-X05 (holds s2 + follower now) -> EXP-N01 A0 XTDB (N01 completed; orchestrator dispatches when the wait-slot poller reports READY) (s2 + follower capped about 1 GiB) -> EXP-N01 A0 XTDB (zero-readers, then ladder) -> V-X02 XTQL rerun.
 QLever: EXP-P2Q controlled run list (Q50e) -> A0 QLever (bulk-seeded) -> EXP-Q07 version side-by-side (needs a dev resident paused or the XTDB queue drained).
 
 ## Gate window (owed reruns, run one at a time through heavy.mjs when several agents finish)

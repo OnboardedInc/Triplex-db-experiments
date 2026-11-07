@@ -1002,3 +1002,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
   R3's 9,497 reached subjects cost 1.49 s against 15.9 s for all 100k.
 - The brief's cost predictions were falsified (p50 85 µs against < 50 µs), which is the point of writing them down.
 - Five more SPEC readings (A11-A15) join W0-1.1.2 with A01-A10 (Q53b, Q57).
+
+## 2026-11-07 23:52Z: goal check-in: background work audit
+- Stopped 12 orphaned watcher loops: five from EXP-N01's NS runs (last log lines 20:21Z-21:07Z, no driver alive) and seven from EXP-W01's
+  earlier GS runs (logs last written 21:40Z and 22:09Z; W01 has since moved to newer runs and is on GS.10 now).
+- Progressing: W01 (GS.10 gate under heavy.mjs), V-D01c (mutation campaign, 34 min), V-P2Q (check 6 live A0 suite retry), X05 (follower
+  full-run windows), C8 (background run), E01 (Q55a), A01 (0.3.8 on contract/0.3.8), J01 (audit), R22 and R23 (research). N01's
+  wait-slot poller stays: it is read-only and starts N01's A0 queue position once X05 releases xtdb-s2; the orchestrator dispatches the
+  A0 run itself because N01 has completed.
+- Goal status: not complete. The contract is NOT READY for qualified comparisons (Codex round 7, Q55); A0 is not frozen on either lane;
+  P2/P3 have one strong candidate per lane (P2Q broker; P2X subject-stamp, P2B next), P5 has its kernel and cost, P1 and P4 wait on X05, C8
+  and the current-index work (Q05, Q50a).
