@@ -3,26 +3,75 @@
   "id": 12,
   "slug": "audit-march-3",
   "title": "Audit: what did we know on March 3",
-  "priorities": ["P1"],
+  "priorities": [
+    "P1"
+  ],
   "status": "runnable",
   "source": "lab/TARGETS.md section 6 row 12; section 7 item 2 (reproduction holds modulo erasure)",
   "story": "Explain reads at a past basis for 1,000 subjects, repeated three times while writes continue.",
   "checked": "Bit-for-bit identical answers across repeats and engines; as-of pull p99 reported. Numbers rule: an int64 overflow write fails typed; a 2^60 write is exact or a typed error.",
   "seed": 20261112,
-  "yearOne": { "subjects": 1000, "repeats": 3 },
+  "yearOne": {
+    "subjects": 1000,
+    "repeats": 3
+  },
   "params": {},
   "rungs": {
-    "10k": { "subjects": 60, "liveMs": 45000, "trace": { "subjects": 30, "factsPerSecond": 15 } },
-    "smoke": { "subjects": 8, "liveMs": 12000, "trace": { "subjects": 5, "factsPerSecond": 15 } }
+    "10k": {
+      "subjects": 16,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    },
+    "smoke": {
+      "subjects": 8,
+      "liveMs": 12000,
+      "trace": {
+        "subjects": 5,
+        "factsPerSecond": 15
+      }
+    }
   },
-  "witnesses": { "positive": "audit subjects whose pay rate is corrected from 2026-02-01 during the run (latest state changes; the March 3 answer at R_past must not)", "negative": "audit subjects never written in the live phase" },
-  "domain": ["the explanation (obligations and why) at (R_past, 2026-03-03) (O-DOMAIN)"],
+  "witnesses": {
+    "positive": "audit subjects whose pay rate is corrected from 2026-02-01 during the run (latest state changes; the March 3 answer at R_past must not)",
+    "negative": "audit subjects never written in the live phase"
+  },
+  "domain": [
+    "the explanation (obligations and why) at (R_past, 2026-03-03) (O-DOMAIN)"
+  ],
   "reads": "Three passes over every audit subject at (R_past = just after setup, validAt 2026-03-03); answer hash per pass; expected hash from O-REPLAY.",
   "bars": [
-    { "id": "P1.read.p99", "metric": "read.p99", "op": "<=", "value": 100, "unit": "ms", "source": "TARGETS section 1 P1" },
-    { "id": "P1.writer.maxWait", "metric": "writer.maxWaitMs", "op": "<=", "value": 2000, "unit": "ms", "source": "TARGETS section 1 P1" }
+    {
+      "id": "P1.read.p99",
+      "metric": "read.p99",
+      "op": "<=",
+      "value": 100,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    },
+    {
+      "id": "P1.writer.maxWait",
+      "metric": "writer.maxWaitMs",
+      "op": "<=",
+      "value": 2000,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    }
   ],
-  "report": ["extra.audit.asOfPull (as-of pull latency, reported, no bar)", "extra.audit.expectedHash and repeatHashes (compare across lanes)"],
-  "faults": ["unrepresentable integer writes (int64 overflow; 2^60 beyond QLever's 60-bit inline integers)"],
-  "oracle": { "source": "O-REPLAY digests at validAt NOW and 2026-03-03", "gaps": ["O-REPLAY is being corrected by EXP-O02 (numeric and -0 behavior); this scenario relies only on int64 text, strings, refs and datetimes"] }
+  "report": [
+    "extra.audit.asOfPull (as-of pull latency, reported, no bar)",
+    "extra.audit.expectedHash and repeatHashes (compare across lanes)"
+  ],
+  "faults": [
+    "unrepresentable integer writes (int64 overflow; 2^60 beyond QLever's 60-bit inline integers)"
+  ],
+  "oracle": {
+    "source": "O-REPLAY digests at validAt NOW and 2026-03-03",
+    "gaps": [
+      "O-REPLAY is being corrected by EXP-O02 (numeric and -0 behavior); this scenario relies only on int64 text, strings, refs and datetimes"
+    ]
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
 }

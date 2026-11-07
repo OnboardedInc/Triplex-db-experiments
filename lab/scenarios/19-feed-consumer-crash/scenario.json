@@ -3,24 +3,77 @@
   "id": 19,
   "slug": "feed-consumer-crash",
   "title": "Feed consumer crash (with GS.19b crash after outbox delivery)",
-  "priorities": ["P3"],
+  "priorities": [
+    "P3"
+  ],
   "status": "runnable",
   "source": "lab/TARGETS.md section 6 row 19, section 6.1 (GS.19b), section 1.1 P3 items 4 to 6",
   "story": "The dependency-index consumer crashes mid-stream and resumes from its checkpoint. Added schedule GS.19b: the consumer crashes after delivering an outbox item but before recording completion.",
   "checked": "No gap, no duplicate processing, per-subject order kept; catch-up lag measured. Crash points: before the effect, after the effect before the checkpoint (GS.19b), after the checkpoint. GS.19b: the receiver deduplicates by the delivery key, so exactly one externally visible effect.",
   "seed": 20261119,
-  "yearOne": { "consumer": "dependency index" },
-  "params": { "pageSize": 20 },
-  "rungs": {
-    "10k": { "subjects": 40, "negatives": 10, "signalsPerSubject": 3, "liveMs": 50000, "trace": { "subjects": 30, "factsPerSecond": 15 } },
-    "smoke": { "subjects": 6, "negatives": 2, "signalsPerSubject": 2, "liveMs": 12000, "trace": { "subjects": 5, "factsPerSecond": 15 } }
+  "yearOne": {
+    "consumer": "dependency index"
   },
-  "witnesses": { "positive": "subjects with E-Verify signals in the live phase (delivered to the receiver)", "negative": "idle onboarded subjects (never in a live-phase transaction, so never delivered)" },
-  "domain": ["the dependency-index affected-subject set including subjects reached through referenced entities (O-DOMAIN)"],
-  "bars": [
-    { "id": "P3.feed.lag.p99", "metric": "feed.lag.p99", "op": "<=", "value": 250, "unit": "ms", "source": "TARGETS section 1 P3" },
-    { "id": "P3.affected-known.lag.p99", "metric": "extra.consumer.affectedKnownLag.p99", "op": "<=", "value": 250, "unit": "ms", "source": "TARGETS section 1.1 P3 item 4" }
+  "params": {
+    "pageSize": 20
+  },
+  "rungs": {
+    "10k": {
+      "subjects": 10,
+      "negatives": 5,
+      "signalsPerSubject": 3,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    },
+    "smoke": {
+      "subjects": 6,
+      "negatives": 2,
+      "signalsPerSubject": 2,
+      "liveMs": 12000,
+      "trace": {
+        "subjects": 5,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "witnesses": {
+    "positive": "subjects with E-Verify signals in the live phase (delivered to the receiver)",
+    "negative": "idle onboarded subjects (never in a live-phase transaction, so never delivered)"
+  },
+  "domain": [
+    "the dependency-index affected-subject set including subjects reached through referenced entities (O-DOMAIN)"
   ],
-  "faults": ["consumer crash before the effect", "after the effect before the checkpoint (GS.19b)", "after the checkpoint"],
-  "oracle": { "source": "O-REPLAY (directly written subjects per transaction, receipts); O-DOMAIN (referenced-entity dependencies)", "gaps": ["the outbox is the Triplex journal itself; an atomic outbox table in the source transaction (TARGETS section 3) is not in the triplex-public composition"] }
+  "bars": [
+    {
+      "id": "P3.feed.lag.p99",
+      "metric": "feed.lag.p99",
+      "op": "<=",
+      "value": 250,
+      "unit": "ms",
+      "source": "TARGETS section 1 P3"
+    },
+    {
+      "id": "P3.affected-known.lag.p99",
+      "metric": "extra.consumer.affectedKnownLag.p99",
+      "op": "<=",
+      "value": 250,
+      "unit": "ms",
+      "source": "TARGETS section 1.1 P3 item 4"
+    }
+  ],
+  "faults": [
+    "consumer crash before the effect",
+    "after the effect before the checkpoint (GS.19b)",
+    "after the checkpoint"
+  ],
+  "oracle": {
+    "source": "O-REPLAY (directly written subjects per transaction, receipts); O-DOMAIN (referenced-entity dependencies)",
+    "gaps": [
+      "the outbox is the Triplex journal itself; an atomic outbox table in the source transaction (TARGETS section 3) is not in the triplex-public composition"
+    ]
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
 }

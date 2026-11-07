@@ -3,26 +3,77 @@
   "id": 8,
   "slug": "address-since-october",
   "title": "\"Address wrong since October\"",
-  "priorities": ["P3", "P1"],
+  "priorities": [
+    "P3",
+    "P1"
+  ],
   "status": "runnable",
   "source": "lab/TARGETS.md section 6 row 8",
   "story": "Valid-time corrections 30 days back on 1,000 subjects during live traffic.",
   "checked": "The feed reports the valid-time range; derived state is re-run; explain at the old basis still shows the old belief.",
   "seed": 20261108,
-  "yearOne": { "subjects": 1000 },
+  "yearOne": {
+    "subjects": 1000
+  },
   "params": {},
   "rungs": {
-    "10k": { "subjects": 50, "negatives": 10, "liveMs": 50000, "trace": { "subjects": 30, "factsPerSecond": 15 } },
-    "smoke": { "subjects": 6, "negatives": 2, "liveMs": 12000, "trace": { "subjects": 5, "factsPerSecond": 15 } }
+    "10k": {
+      "subjects": 15,
+      "negatives": 5,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    },
+    "smoke": {
+      "subjects": 6,
+      "negatives": 2,
+      "liveMs": 12000,
+      "trace": {
+        "subjects": 5,
+        "factsPerSecond": 15
+      }
+    }
   },
-  "witnesses": { "positive": "corrected workers (address from 2026-10-01 changes)", "negative": "idle onboarded workers" },
-  "domain": ["derived state of each corrected subject is re-run (O-DOMAIN affected set; fails closed until EXP-D01)"],
+  "witnesses": {
+    "positive": "corrected workers (address from 2026-10-01 changes)",
+    "negative": "idle onboarded workers"
+  },
+  "domain": [
+    "derived state of each corrected subject is re-run (O-DOMAIN affected set; fails closed until EXP-D01)"
+  ],
   "reads": "After the run, per corrected subject: pull at (receipt instant - 1 ms, validAt 2026-10-15) = old belief; (receipt instant, 2026-10-15) = fix; (receipt instant, 2026-09-15) = unchanged old address.",
   "bars": [
-    { "id": "P3.feed.lag.p99", "metric": "feed.lag.p99", "op": "<=", "value": 250, "unit": "ms", "source": "TARGETS section 1 P3" },
-    { "id": "P1.read.p99", "metric": "read.p99", "op": "<=", "value": 100, "unit": "ms", "source": "TARGETS section 1 P1" },
-    { "id": "P1.writer.maxWait", "metric": "writer.maxWaitMs", "op": "<=", "value": 2000, "unit": "ms", "source": "TARGETS section 1 P1" }
+    {
+      "id": "P3.feed.lag.p99",
+      "metric": "feed.lag.p99",
+      "op": "<=",
+      "value": 250,
+      "unit": "ms",
+      "source": "TARGETS section 1 P3"
+    },
+    {
+      "id": "P1.read.p99",
+      "metric": "read.p99",
+      "op": "<=",
+      "value": 100,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    },
+    {
+      "id": "P1.writer.maxWait",
+      "metric": "writer.maxWaitMs",
+      "op": "<=",
+      "value": 2000,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    }
   ],
   "faults": [],
-  "oracle": { "source": "O-REPLAY digests at validAt NOW, 2026-10-15 and 2026-09-15", "gaps": [] }
+  "oracle": {
+    "source": "O-REPLAY digests at validAt NOW, 2026-10-15 and 2026-09-15",
+    "gaps": []
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
 }

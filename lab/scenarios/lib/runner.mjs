@@ -145,19 +145,29 @@ class Executor {
     try { r = await comp.transact(this.physOps(cmd), this.physMeta(cmd)); }
     catch (error) { r = { status: 'error', tag: error?._tag ?? null, message: String(error?.message ?? error).slice(0, 800) }; }
     a.conflicts = r.conflicts ?? 0;
-    if (r.status === 'unknown' || (r.status !== 'committed' && faulted())) {
-      // Lost ACK by fault (runtime restart): resolve by commandId, then retry if it never committed.
+    // Outcome unknown: a lost ACK by fault (runtime restart), or a transient infrastructure WriteError (a
+    // deadline, "Cannot acquire XTDB source cut") after which the command may or may not have committed.
+    // Resolve by commandId; re-send with the same commandId only if it never committed (claims make it safe).
+    const transient = x => x.status === 'rejected' && x.category === 'write-error' && /cannot acquire|deadline|timeout|timed out|econn|connection|outcome/i.test(x.message ?? '');
+    if (r.status === 'unknown' || (r.status !== 'committed' && faulted()) || transient(r)) {
       a.unknown = { tag: r.tag, message: r.message ?? null };
+      a.transientRetries = 0;
+      const priorCommit = () => this.attempts.find(x => x !== a && x.status === 'committed' && this.ctx.gen.stream.commands[x.index].meta.commandId === cmd.meta.commandId);
       for (let tries = 0; tries < 50; tries++) {
         while (this.ctx.restarting) await sleep(50);
-        await sleep(100);
+        await sleep(100 * Math.min(10, tries + 1));
         const found = await comp.byCommand(this.ctx.physCommand(cmd.meta.commandId)).catch(e => ({ ok: false, error: e }));
-        if (found.ok && found.record) { r = { status: 'committed', receipt: { txId: found.record.txId, position: found.record.position, instant: found.record.instant, assertionIds: found.record.changes.filter(ch => ch.op === 'assert').map(ch => ch.tripleId) } }; a.resolvedBy = 'transactionByCommand'; break; }
+        if (found.ok && found.record) {
+          const prior = priorCommit();
+          // An earlier attempt of the same commandId owns this record: this attempt is the duplicate.
+          if (prior && prior.receipt.txId === found.record.txId) { r = { status: 'rejected', category: 'command-already-committed', tag: 'CommandAlreadyCommittedError', transactionId: found.record.txId, message: 'resolved by transactionByCommand: an earlier attempt committed' }; a.resolvedBy = 'transactionByCommand(duplicate)'; break; }
+          r = { status: 'committed', receipt: { txId: found.record.txId, position: found.record.position, instant: found.record.instant, assertionIds: found.record.changes.filter(ch => ch.op === 'assert').map(ch => ch.tripleId) } }; a.resolvedBy = 'transactionByCommand'; break;
+        }
         if (found.ok && !found.record) {
           try { r = await comp.transact(this.physOps(cmd), this.physMeta(cmd)); } catch (error) { r = { status: 'error', message: String(error) }; }
-          a.resolvedBy = 'retry';
-          if (r.category === 'command-already-committed') continue; // the first attempt did commit: resolve it by commandId
-          if (r.status === 'committed' || (r.status === 'rejected' && !this.ctx.restarting)) break;
+          a.resolvedBy = 'retry'; a.transientRetries++;
+          if (r.category === 'command-already-committed') { if (priorCommit()) break; continue; } // the earlier attempt did commit: resolve it by commandId
+          if (r.status === 'committed' || (r.status === 'rejected' && !this.ctx.restarting && !transient(r))) break;
         }
       }
     }
@@ -484,6 +494,8 @@ export function metrics(ctx) {
       all: lat(done), scenario: lat(done.filter(a => !a.trace)), trace: lat(done.filter(a => a.trace)),
       service: quantiles(done.map(a => a.doneAt - a.sentAt)),
       serializationRetries: done.reduce((s, a) => s + a.conflicts, 0),
+      outcomeUnknown: done.filter(a => a.unknown).length, transientRetries: done.reduce((s, a) => s + (a.transientRetries ?? 0), 0),
+      unknownCauses: [...new Set(done.filter(a => a.unknown).map(a => String(a.unknown.message).slice(0, 80)))].slice(0, 5),
       byTemplate: Object.fromEntries([...new Set(done.map(a => a.template))].map(t => [t, lat(done.filter(a => a.template === t))])),
     },
     // TARGETS 2.1 item 4: the scenario overlay and the background trace are accounted for separately.

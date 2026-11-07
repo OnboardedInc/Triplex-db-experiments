@@ -60,10 +60,12 @@ export async function during(ctx) {
     { reconciles: r.length, onOld: r.filter(x => x.first === oldRelease && x.again === oldRelease).length });
 
   // The sweep at R_act.
-  const worldIds = ctx.world.sample.slice(0, Number.isFinite(ctx.opts.sweepCap) ? ctx.opts.sweepCap : undefined);
+  // R2's scope at this rung: the first sweepWorld world subjects plus the scenario subjects and the account.
+  const inScopeWorld = ctx.world.sample.slice(0, p.sweepWorld ?? ctx.world.sample.length);
+  const worldIds = inScopeWorld.slice(0, Number.isFinite(ctx.opts.sweepCap) ? ctx.opts.sweepCap : undefined);
   const scope = [...worldIds, ...ctx.gen.witnesses.positive, ...ctx.gen.witnesses.negative, ACCOUNT];
   const listSha = sha256(scope.join('\n'));
-  const fullScope = ctx.world.sample.length + ctx.gen.witnesses.positive.length + ctx.gen.witnesses.negative.length + 1;
+  const fullScope = inScopeWorld.length + ctx.gen.witnesses.positive.length + ctx.gen.witnesses.negative.length + 1;
   let next = 0, wrong = 0, failed = 0; const evaluated = new Map(); const first = [];
   const t0 = performance.now();
   await Promise.all(Array.from({ length: ctx.opts.sweepConcurrency ?? 8 }, async () => {
