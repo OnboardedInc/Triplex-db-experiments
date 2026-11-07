@@ -628,3 +628,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
   available through the integer kind.
 - R20's property suite (0 failures; 5/5 mutant encoders caught) becomes the decimal kind's unit tests; its engine-side gates V3 to V7
   become contract obligations in 0.3.4.
+
+## 2026-11-08 ~00:05Z: W0 drafted (11 rules, 45 cases); Q36
+- **Learning: the coverage floors caught my own parameter error.** TARGETS said "Zipf s = 1.0 over 2,000 locations, so the largest
+  location holds hundreds of workers"; the W0 author computed that s = 1.0 puts about 12,100 workers (12% of 100k) at one location.
+  Q36g sets s = 0.5 (largest about 1,100, mean 50). Stating the intent next to the parameter is what made the mismatch visible.
+- **Learning: work item identity must not include the release hash,** or every activation republishes all open work under new ids and
+  floods the outbox in exactly the P5 window. Q36a: id over (subject, rule, kind, key); version over (release, inputs, payload); delivery
+  key (id, version); unchanged payloads publish nothing.
+- Sequence from here: D01a revises per Q36; V-D01 independent review and hash pin; then a TypeScript kernel and the O-DOMAIN oracle
+  written by two different agents from SPEC.md alone, and their disagreements count as spec bugs.

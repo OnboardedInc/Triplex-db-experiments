@@ -40,7 +40,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-A01 contract 0.3.4 (opus, main, no commit) | Q33 + Q34 + Q35 into the contract | lab/acceptance/ |
 | R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
 | EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
-| EXP-D01a W0 world-definition spec (opus, exp/D01-world-definition) | P5, P3 deps, GS domain expectations | lab/world/W0 |
+| EXP-D01a W0 spec, revising per Q36 (opus, exp/D01-world-definition 5a12dad) | P5, P3 deps, GS domain expectations | lab/world/W0; then V-D01 review, then two independent implementers (TS kernel, O-DOMAIN) |
 Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). A01 compiling 0.3.4 (Q33-Q35, regenerate twice byte-identical); then Codex round 4.
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
