@@ -208,7 +208,10 @@ duplicate commands within a group, failed children and lost ACKs; and from R13: 
 from different epochs; rebuild equivalence (apply N frames through UPDATE and separately `qlever-index` the
 same quads, then compare full dumps, since UPDATE wraps integers outside 60 bits and the index builder does
 not); the hardlink snapshot surviving a forced failure between the two index moves; the cost of the per-graph
-count and digest audit at 100m facts; kill-at-every-step runs of the generation switch on the real volume.
+count and digest audit at 100m facts; kill-at-every-step runs of the generation switch on the real volume;
+and from R8: a guarded update followed by `rebuild-index` must still succeed (upstream #3172 breaks rebuilds
+after BIND/IRI()-constructed update terms, so templates use only literal terms and pattern-bound variables),
+and a 429 or a disconnect is treated as "outcome unknown, re-send", never as failure.
 
 **Durability statement (R13).** Survives broker, QLever and VM crashes, VM image loss, probably a macOS panic,
 and power loss to the extent the Apple SSD honors `F_FULLFSYNC` (untested). Does not survive SSD loss or deletion
@@ -498,7 +501,9 @@ decisions and the next actions. After any context compaction the orchestrator re
   is unchanged, and final acceptance is always fresh; (4) C2 retries return success only after publication, otherwise
   `CommitPending` or `Repairing`; (5) EXP-R01 is narrowed to the skeleton and spec compiler, and the planner,
   repository and writer behavior moved to EXP-R02 behind reviewed acceptance and golden vectors.
-- v1.2, 2026-11-07: R13 (log of record) refined C2 and C3 without changing their semantics: broker and log on the
+- v1.2, 2026-11-07: R8 (QLever write lifecycle): engine flags `-j 4 -m 3G -c 512M -e 128M -s 10s`,
+  `query-planning-budget=1`, rebuild at 750k to 1M delta, backpressure at 2M, 50k-triple groups; sustained lane-Q write
+  capacity about 25 tx/s on 3 CPUs is the lane-Q bottleneck against the load bar. R13 (log of record) refined C2 and C3 without changing their semantics: broker and log on the
   macOS host with `F_FULLFSYNC`, framed pure-quad deltas, guarded updates with change-count checks, re-send as the
   first repair, checkpoints folded from the log, generation switch with a hardlink snapshot, three-layer fencing,
   the token treated as visible, and five added falsifiers. R7 revised H-X-ID (notebook).

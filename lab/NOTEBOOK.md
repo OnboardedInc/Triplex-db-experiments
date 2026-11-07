@@ -257,3 +257,59 @@ Report lab/research/R13-log-of-record.md; scripts and raw outputs ~/Claude/Proje
 - Group commit on the host: 33k commits/s at 256 clients, p99 23 ms; fsync is a few percent of a QLever update (0.2-1.7 s), so the
   QLever update, not the log, bounds lane-Q write throughput.
 - Applied to PLAN v1.2 C2/C3 one to one, plus five F05 falsifiers. Durability statement recorded in C2.
+
+## R12 XTQL cookbook (Sonnet xhigh) — PROGRESSED (major): 23/23 operations, 71/71 tasks in XTQL
+Report lab/research/R12-xtql-cookbook.md (957 lines); every statement, parameter list and row set in
+~/Claude/Projects/triplex-db-2/R12-xtql-cookbook/raw/.
+- All 71 tasks answer with XTQL statements whose rows equal both the packet's expected rows and the SQL library's rows; 142/142 with
+  a fresh pool ("reopen" here = new pool, not engine restart). The unmodified SQL library scores 71/71 on the reconstructed fixtures
+  (fixture-loader check). Operators now exercised: unify/join, aggregate, exists?, q, cast, unnest, limit, count-distinct, row-count,
+  greatest, least.
+- The packet fixtures are weak discriminators: a mutation run left 2 of 3 well-formed mutants alive (the `revoke` clause in 12, step
+  order in 17); 38 hand-built controls (workloads 05, 08, 09, 12, 17, 18, 20 with a 6-hop cyclic graph) kill all four mutants tried.
+  Lesson: native qualification needs discriminating controls beyond the 142 packet, with independent expected answers.
+- Hard gaps: (1) recursion has no pure-XTQL form; depth-D unrolling plus a second XTQL fixpoint-check call is read-only and passes
+  all 14 recursive tasks, but statement size grows with D^2 (D=8: 56 KB, 191 parameters, 0.6-1.7 s on 21 rows), so it is not the
+  scalable answer (wait for R10); (2) `union-all` fails at planning (`No implementation of method: :plan-query ... UnionAll`), the
+  logical operator exists, the repair looks small (engine-repair candidate; no operation needs it today); (3) `sum` over BIGINT wraps
+  in BOTH languages (three values of 2^62 give -4611686018427387904); the 32-bit-halves recombination workaround makes XTQL raise
+  `data exception - overflow error` on the 3 true-overflow cases and match the other 4 exactly, while SQL wrapped on 3 of 7.
+  Smaller: `(cast x :i64)` needs `#xt/type :i64`; literals/params in a join bind spec fail; `(aggregate {:k constant})` fails.
+- Fixed cut: `NativeReadOptions.basis.recordedPosition` already pins a task-wide cut (a writer between calls was invisible to the
+  pinned call); snapshot tokens and `BEGIN READ ONLY WITH (...)` work but `NativeQueries.run` never passes them.
+- int64: parameters bind as BigInt (oid 20) and compare exactly at 2^63-1; results arrive as strings and hydrate through contracts.
+- R6's open XTQL questions answered: `with` overrides a bound column (the retirement mask works in XTQL), `INSERT ... SELECT` from
+  XTQL plans, text-to-BIGINT cast works.
+### Orchestrator rulings
+- Language accounting counts EVERY substep, including basis acquisition. The XTQL path must acquire its source cut in XTQL
+  (`tx_meta` read in XTQL); the SQL path keeps its SQL cut read. Only then can a task count as XTQL-only.
+- SUM over BIGINT: both languages must stop wrapping (Q8a: exact total, typed overflow only when the final total is outside int64).
+  The SQL path's silent wrap is a lane-X SQL correctness defect, not just an XTQL concern.
+- Recursion: R12's unrolled XTQL is accepted only as an interim pure-XTQL, read-only implementation with an explicit max depth and
+  a typed error when the fixpoint check fails (never a truncated closure). The scalable design waits for R10 (EXP-X03).
+
+## R8 QLever write lifecycle (Sonnet xhigh) — PROGRESSED (knowledge); confirms H-Q-LOG, sets lane-Q write ceiling
+Report lab/research/R8-qlever-write-lifecycle.md; probes ~/Claude/Projects/triplex-db-2/R8-qlever-write-probes. Indexes of 8M, 49M,
+98.6M triples in projection+compact layout, 3 CPUs.
+- Idempotent re-apply: re-sending the identical update converged all six permutations in every case (insert, delete, after restart,
+  after rebuild). Restart clears a single failed op's junk; `rebuild-index` bakes partial permutations in until the update is
+  re-sent. HTTP 429 can mean the update fully committed and is durable; a client disconnect does not cancel an update. Rule:
+  reconcile by re-sending until 200; never treat 429 or a read-back as proof of anything.
+- Rebuild under load: served queries and updates; 92/92 acknowledged updates survived. 99M triples rebuilt in 28 s idle, 51 s loaded;
+  point-read p50 45 → 76 ms, throughput -37%, update p50 x2.6, cold page cache after the swap x4 p50. With `-j 1` queries stall for
+  the whole rebuild: always `-j` ≥ 2 (recommended 4). Extrapolated 820M triples: 4-5 min idle, 7-9 min loaded (low confidence).
+- Group commit: fixed cost per request 2 ms at empty delta, 115 ms at 500k, 203 ms at 1M; marginal 0.025-0.03 ms per triple; 50k-triple
+  batches best at every delta ≥ 100k (29-38k triples/s). R2's 0.9 s fixed cost was 4-5x too high.
+- Snapshots: one SPARQL request is one snapshot (4,076 reads, 0 torn); two requests are two snapshots (5.9% of pairs saw data above the
+  watermark). So marker and data must be read in the same request (C1/C4 already require this). Put FILTER outside the GRAPH block.
+  Watermark filter costs 0.94-1.08x for selective reads, 2.6x for a count over every assertion.
+- Durability: QLever writes the delta with write, close, rename and NO fsync; 10/10 SIGKILL runs lost nothing (page cache); a zero-length
+  or truncated `idx.update-triples` prevents start-up; a flipped byte is accepted silently. Confirms the log of record (C2) outside QLever.
+- Knobs: `-j 4 -m 3G -c 512M -e 128M -s 10s`, `query-planning-budget=1`, rebuild at 750k-1M delta, writer backpressure at 2M. Delta
+  memory 1.3 GB per million triples while updating (0.75 GB after restart), NOT counted by `-m` (verified).
+- Sustained write rate ≈ 1,000 triples/s ≈ 125 facts/s ≈ 25 tx/s on 3 CPUs, bounded by rebuild capacity. Against the Q2 load bar
+  (25.6 commands/s at 256 clients) the QLever lane is at the edge before any optimization: fewer triples per fact, larger groups, 6 CPUs
+  and faster rebuild scheduling are the levers. The bar stays; this is now the lane-Q performance bottleneck to experiment on.
+- Bug: upstream #3172 reproduces on 0.6.0: a BIND/IRI()-constructed term in an update makes every later `rebuild-index` fail (HTTP 400).
+  Rule: update templates use only literal terms and variables bound from plain patterns. New F05 falsifier: C2.3's guarded
+  DELETE/INSERT WHERE followed by `rebuild-index` must still succeed.
