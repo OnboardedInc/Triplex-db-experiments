@@ -24,7 +24,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | exp/O01-replay-oracle (03d86f3) | V-O01 FIX-FIRST (verify/O01 745547d; lab/verify/O01/VERIFY.md) | EXP-O02 fixes it; then re-verify -> ACCEPT -> merge |
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
-| contract 0.3.1 (main 9c01194) | Q16-Q20 compiled, validates (hash 80e60385...) | 0.3.2: Q21 + Codex plan-v2 findings |
+| contract 0.3.2 (main 01fb285) | Q21-Q28 + TARGETS v2 compiled; 136 obligations, 42 thresholds; Q29 recorded, not yet compiled | compile Q29 with Codex round-2 findings (0.3.3) |
 
 ## Running agents (10 of 10, plus Codex shell b0losx599)
 | Agent | Priority | Output |
@@ -35,11 +35,11 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-X02 XTQL parity (opus, exp/X02-xtql-parity) | read priorities on XTDB, floor | branch; waiting on own live-check rerun |
 | EXP-002 QLever baseline (opus, exp/002-qlever-baseline) | A0 control | receipts |
 | EXP-F02 wire exactness (opus) | numeric rule floor | branch |
-| EXP-A01 contract 0.3.2 (opus, main, no commit) | Q21-Q28 + TARGETS v2 into the contract | lab/acceptance/ |
+| R19 XTDB read nodes, commit floor, tenancy (sonnet xhigh) | P1, P2, tenant isolation | lab/research/R19-*.md |
 | R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
 | EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
 | EXP-D01a W0 world-definition spec (opus, exp/D01-world-definition) | P5, P3 deps, GS domain expectations | lab/world/W0 |
-Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 on contract 0.3.2 when A01 lands it.
+Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 running (shell b4bf0srls) -> lab/reviews/plan-v2-round2.codex.md.
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 

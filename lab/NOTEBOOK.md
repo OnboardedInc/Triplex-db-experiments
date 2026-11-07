@@ -497,3 +497,12 @@ EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) 
   silent and DECIMAL MIN/MAX fail; add to the XTDB hazard list.
 - **Decision for Sam (from R18), not assumed:** whether Datomic-style `noHistory` is acceptable for high-churn attributes (for example
   a signal's receive counter). Default stays "keep history for everything", because audit at a past point in time is a must-have.
+
+## 2026-11-07 ~21:45Z: contract 0.3.2 committed; Codex round 2 started; R19 dispatched
+- Contract 0.3.2 (01fb285): 136 obligations (new: three erasure, three composition, one evaluator counterexample), 42 thresholds,
+  29 mutants, 27 evaluator counterexamples. The generator caught all 14 planted regressions (GS.01 widened, decimal equality allowed,
+  EP-RAW-WIRE restored, p50 flatness, engineOfLane keys, empty calibration set, the old 256 requests/s bar, among others).
+- Q29 accepts the contract author's five proposals, including `single-execution` as the default mode for every obligation.
+- R19 (Sonnet xhigh) researches the three questions R16 left open on XTDB: what read nodes need (log and object store, per-node
+  indexing CPU, token travel, memory inside our 11 GiB pool), where the ~15 ms commit floor comes from and which knobs move it, and a
+  storage-isolated tenancy design for 1 large plus 1,000 small tenants on both engines.
