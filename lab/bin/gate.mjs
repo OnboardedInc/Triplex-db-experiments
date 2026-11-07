@@ -452,13 +452,56 @@ async function gateG2(run, config) {
   return result;
 }
 
+// ---------------------------------------------------------------- G4
+
+// [EXP-002] Why: G4 (PLAN 7.5) is "semantic counterexamples with original expected answers". The
+// A0 baseline records the raw QLever counterexamples as FAILs against their original oracles, plus
+// a control that must PASS so the FAILs are not vacuous. The gate verdict stays FAIL whenever any
+// execution misses its original oracle (a baseline FAIL is still a FAIL); `baselineAsExpected`
+// says separately whether every execution matched its declared A0 expectation.
+// Rejected: a "PASS when the expected failures happen" verdict (it would read as semantic success).
+async function gateG4(run, config) {
+  if (run.lane !== 'qlever') fail('USAGE', 'G4 is implemented for --lane qlever only (EXP-002)');
+  const output = run.raw('g4-report.json');
+  const entryFile = 'packages/qlever/experiments/lab-counterexamples.ts';
+  const { result, step, bound } = await engineGate(run, config, { name: 'lab-counterexamples', queryPath: `${run.lane}-native`, args: [entryFile, '--output', output], timeoutMs: 15 * 60_000 });
+  if (!bound) return result;
+  result.fixtures = fileHashes(run, [entryFile, 'packages/qlever/experiments/lab-endpoint.ts', 'qualification/native-controls/qlever-collation-tiny-v1/oracle.json',
+    'qualification/native-controls/qlever-collation-tiny-v1/fixture.nt', 'packages/qlever/experiments/native-query-shapes.ts', 'lab/research/R5-probe/probe1.py', 'lab/research/R5-probe/probe3.py'], 'oracle-fixture');
+  const report = readJson(output, null);
+  if (!report) { run.reason('no G4 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  run.store(output, 'raw-outcome');
+  result.contactedEndpoint = report.endpoint;
+  if (report.endpoint !== bound.info.endpoint) run.reason(`G4 contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);
+  if (report.status !== 'COMPLETE') { run.reason(`G4 entry status ${report.status}: ${String(report.error ?? '').slice(0, 300)}`); run.failure({ step: step.name, tail: step.tail, error: report.error }); }
+  const executions = report.executions ?? [];
+  const missed = executions.filter(e => e.status !== 'PASS');
+  for (const e of missed) run.failure({ case: e.caseId, mode: e.mode, status: e.status, expected: e.expected, actual: e.actual ?? null, error: e.error ?? null });
+  if (executions.length === 0) run.reason('zero executed cases');
+  const counterFails = missed.filter(e => e.kind === 'counterexample').length, controlFails = missed.filter(e => e.kind === 'control').length;
+  if (counterFails) run.reason(`${counterFails} counterexample executions miss their original oracle (the declared A0 baseline expectation is FAIL)`);
+  if (controlFails) run.reason(`${controlFails} control executions miss their oracle (controls must PASS; harness or engine defect)`);
+  const unexpected = executions.filter(e => !e.matchesBaseline);
+  result.scope = 'full';
+  result.counts = { executed: executions.length, pass: executions.length - missed.length, fail: missed.length, skip: 0,
+    counterexamples: executions.filter(e => e.kind === 'counterexample').length, controls: executions.filter(e => e.kind === 'control').length,
+    errors: executions.filter(e => e.status === 'ERROR').length };
+  result.baselineAsExpected = unexpected.length === 0;
+  result.unexpectedVersusBaseline = unexpected.map(e => ({ caseId: e.caseId, mode: e.mode, expectedBaseline: e.expectedBaseline, status: e.status }));
+  result.cases = executions.map(e => ({ caseId: e.caseId, mode: e.mode, status: e.status, kind: e.kind, expectedBaseline: e.expectedBaseline, oracleId: e.oracleId,
+    oracleSource: e.oracleSource, expected: e.expected, actual: e.actual ?? null, query: e.query ?? null, rawResultSha256: e.rawResultSha256 ?? null, ...caseLanguages([{ operation: 'public-native-query', ...(e.trace ?? {}) }]) }));
+  result.scopes = { scope: report.scope, fresh: true, write: report.write };
+  result.timings = { casesMs: executions.reduce((s, e) => s + e.elapsedMs, 0), writeMs: report.write?.elapsedMs ?? null };
+  return result;
+}
+
 // ---------------------------------------------------------------- receipt
 
 main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const gate = positional[0];
-  if (!['G0', 'G1', 'G2'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
-    fail('USAGE', 'usage: gate.mjs G0|G1|G2 --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]');
+  if (!['G0', 'G1', 'G2', 'G4'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
+    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4 --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).
   const runKind = options['run-kind'] ?? 'diagnostic';
@@ -480,7 +523,7 @@ main(async () => {
     lockfileSha256 = run.store(path.join(REPO, 'pnpm-lock.yaml'), 'lockfile').sha256;
     gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json']
       .map(file => [file, run.store(path.join(REPO, file), 'gate-script').sha256]));
-    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : await gateG2(run, config);
+    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : await gateG4(run, config);
   } catch (error) {
     run.reason(`harness error: ${error.message}`);
     run.failure({ harnessError: String(error.stack ?? error).slice(0, 3000) });
@@ -507,6 +550,7 @@ main(async () => {
   const c = receipt.counts ?? {};
   console.log(`${verdict} ${gate} ${options.lane}${receipt.slot ? '/' + receipt.slot : ''} scope=${receipt.scope} executed=${c.executed ?? 0} pass=${c.pass ?? 0} fail=${c.fail ?? 0} skip=${c.skip ?? 0}`);
   if (result.profile || result.planner) console.log(`profile: ${result.profile?.name ?? '-'}; planner budget: ${JSON.stringify(result.planner ?? null)}`);
+  if (result.baselineAsExpected !== undefined) console.log(`G4 baseline as expected (counterexamples FAIL, controls PASS): ${result.baselineAsExpected}`);
   if (result.languages) console.log(`languages (answer): ${JSON.stringify(result.languages.answer)}; strict: ${JSON.stringify(result.languages.strict)}`);
   for (const reason of reasons.slice(0, 10)) console.log(`  reason: ${reason}`);
   console.log(`receipt: ${run.rel(run.receiptPath)}`);
