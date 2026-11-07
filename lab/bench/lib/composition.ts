@@ -153,6 +153,8 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
 }
 
 export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise<CompositionHandle>> = {
+  /** In-process reference store (lib/memory.ts): diagnostic only, readers run in-thread. */
+  memory: async (lane, scope) => (await import("./memory.ts")).memoryComposition(lane, scope, Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1")),
   public: (lane, scope) => publicComposition(lane, scope, "public"),
   /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
   "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),

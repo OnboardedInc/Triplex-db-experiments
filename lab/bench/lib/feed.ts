@@ -24,6 +24,8 @@ export interface CommitInfo {
   readonly instant: number;
   readonly ackAt: number;
   readonly subject: number;
+  /** Every subject the command wrote directly (one for trace commands, several for bulk history growth). */
+  readonly subjects: readonly number[];
   readonly stamp: number;
   readonly correction: boolean;
   readonly correctionValidFrom: number | null;
@@ -167,7 +169,8 @@ export class FeedConsumer {
         }
         const info = this.commitOf(tx.position);
         if (info && !first) {
-          if (a.subjects.length !== 1 || a.subjects[0] !== info.subject) this.counts.affectedMismatches++;
+          const expected = [...info.subjects].sort((x, y) => x - y);
+          if (a.subjects.length !== expected.length || a.subjects.some((s, k) => s !== expected[k])) this.counts.affectedMismatches++;
           if (info.correction) {
             this.counts.corrections++;
             if ((tx.changes ?? []).some((c: any) => c.op === "assert" && c.attribute === ":worker/address" && c.validFrom === info.correctionValidFrom)) this.counts.correctionRangeReported++;

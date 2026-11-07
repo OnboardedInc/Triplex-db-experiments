@@ -209,7 +209,7 @@ test("feed consumer: durable checkpoints, three crash points, keyed effects neve
   const handle: any = { feedPage: async (after: number, limit: number) => { const page = txs.filter((x) => x.position > after).slice(0, Math.min(limit, 4)); return { transactions: page, next: page.at(-1)?.position }; }, close: async () => {} };
   const consumer = new FeedConsumer({
     dir, epoch: "e0", startAfter: 0, now: () => (t += 1),
-    commitOf: (p) => ({ instant: 0, ackAt: 0, subject: (p - 1) % 5, stamp: Math.floor((p - 1) / 5) + 1, correction: false, correctionValidFrom: null }),
+    commitOf: (p) => ({ instant: 0, ackAt: 0, subject: (p - 1) % 5, subjects: [(p - 1) % 5], stamp: Math.floor((p - 1) / 5) + 1, correction: false, correctionValidFrom: null }),
     open: async () => handle, log: () => {},
     crashes: [{ at: 5, point: "before-effect" }, { at: 15, point: "after-effect" }, { at: 30, point: "after-checkpoint" }],
   });

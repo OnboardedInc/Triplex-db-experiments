@@ -166,7 +166,7 @@ const records: ReadRecord[] = [];
 const oracleSamples: any[] = [];
 const workerElu: { worker: number; t: number; elu: number }[] = [];
 const acked: { instant: number; position: number; txId: string; at: number }[] = [];
-const ackOf = new Map<number, { at: number; instant: number; subject: number; seq: number; stream: string; correction: boolean; correctionValidFrom: number | null; stamp: number }>();
+const ackOf = new Map<number, { at: number; instant: number; subject: number; subjects?: number[]; seq: number; stream: string; correction: boolean; correctionValidFrom: number | null; stamp: number }>();
 const lastWriteAt = new Map<number, number>();
 const recordedCommands: RecordedCommand[] = [];
 const writes: any[] = [];
@@ -185,13 +185,22 @@ const ackWaiters = new Map<number, ((r: { position: number; ackAt: number }) => 
 const ackedBySeq = new Map<number, { position: number; ackAt: number }>();
 const queueSamples: { t: number; background: number; all: number }[] = [];
 const straddleRng = new Rng(seedOf(`straddle:${config.seed}`));
-/** A subject with a frozen-trace command offered and not yet acknowledged, and that command's seq; -1 when none. */
+let upcomingJobs: (horizonMs: number) => { key: number; ev: TraceEvent }[] = () => [];
+/** STRADDLE_HORIZON_MS: a split read only waits for a frozen-trace command already queued or due this soon. */
+const STRADDLE_HORIZON_MS = 250;
+/**
+ * A subject with a frozen-trace command that is queued, in flight, or due within STRADDLE_HORIZON_MS, and that
+ * command's seq; -1 when there is none (the reader then does an ordinary single pull). RULINGS Q31b.
+ */
 function straddleCandidate(): { subject: number; seq: number } {
-  if (!pendingBySubject.size) return { subject: -1, seq: -1 };
   const keys = [...pendingBySubject.keys()];
-  const subject = keys[straddleRng.int(keys.length)]!;
-  const list = pendingBySubject.get(subject)!;
-  return { subject, seq: list[list.length - 1]! };
+  const soon = upcomingJobs(STRADDLE_HORIZON_MS).filter((j) => j.ev.stream === "background" && !j.ev.resend);
+  const total = keys.length + soon.length;
+  if (!total) return { subject: -1, seq: -1 };
+  const k = straddleRng.int(total);
+  if (k < keys.length) { const list = pendingBySubject.get(keys[k]!)!; return { subject: keys[k]!, seq: list[list.length - 1]! }; }
+  const job = soon[k - keys.length]!;
+  return { subject: job.key, seq: job.ev.seq };
 }
 const overlayCount: Record<string, number> = {};
 let feed: FeedConsumer | null = null;
@@ -272,7 +281,7 @@ async function run() {
     }
   };
   const startWorker = async (w: number, cfg: any) => {
-    const worker = new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
+    const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
     const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && resolve()));
     await new Promise<void>((resolve, reject) => {
       worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
@@ -310,7 +319,7 @@ async function run() {
     const found = await writer.transactionByCommand(commandId);
     return found.ok && found.value ? receiptOfRecord(found.value) : null;
   };
-  const noteAck = (receipt: Receipt, subject: number, info: { seq: number; stream: string; correction: boolean; correctionValidFrom: number | null; stamp: number }) => {
+  const noteAck = (receipt: Receipt, subject: number, info: { seq: number; stream: string; correction: boolean; correctionValidFrom: number | null; stamp: number; subjects?: number[] }) => {
     const at = now();
     ackOf.set(receipt.position, { at, instant: receipt.instant, subject, ...info });
     acked.push({ instant: receipt.instant, position: receipt.position, txId: receipt.txId, at });
@@ -413,6 +422,7 @@ async function run() {
         offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out });
     },
   });
+  upcomingJobs = (horizonMs) => scheduler.upcoming(horizonMs);
   /** Overlay command (not background): offered now, joins the subject's serial queue, accounted by stream. */
   const overlay = (stream: string, subject: number, facts: number) =>
     new Promise<number>((resolve) => {
@@ -431,7 +441,7 @@ async function run() {
   const crashPlan: { at: number; point: CrashPoint }[] = (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
   feed = new FeedConsumer({
     dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
-    commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
+    commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
     open: () => openComposition(config.composition, lane, scopeName), log, crashes: crashPlan,
   });
   const feedTarget = setInterval(() => { feed!.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
@@ -505,7 +515,7 @@ async function run() {
     await Promise.race([late.pending, sleep(60_000)]);
     const receipt = await resolveByCommand(late.cmd.commandId);
     if (!receipt) { log(`history growth: ${late.cmd.commandId} never committed`); continue; }
-    const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1 });
+    const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: late.cmd.perSubject.map((x: any) => x.subject) });
     for (const s of late.cmd.perSubject) model.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
   }
   const finalPosition = await writer.currentPosition();
@@ -541,6 +551,7 @@ async function run() {
     let commands = 0, assertions = 0, failures = 0;
     const perCommand = Math.max(1, Math.floor(config.seedBatchFacts / 4));
     if (!historyList.length) return { targetDepth: depth, reachedDepth: 1, subjects: 0, commands, assertions, failures, wallS: 0 };
+    if (lateGrowth.length) return { targetDepth: depth, reachedDepth: Math.min(...historyList.map((i) => historyVersion.get(i) ?? 0)) + 1, subjects: historyList.length, commands, assertions, failures, wallS: 0, incomplete: true, skipped: `an earlier growth command (${lateGrowth[0]!.cmd.commandId}) is still pending; it is never re-sent` };
     for (let v = (historyVersion.get(historyList[0]!) ?? 0) + 1; v < depth && now() < deadline; v++) {
       for (let k = 0; k < historyList.length && now() < deadline; k += perCommand) {
         const group = historyList.slice(k, k + perCommand);
@@ -561,7 +572,7 @@ async function run() {
         }
         commands++;
         assertions += cmd.operations.filter((o) => o.op === "assert").length;
-        const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1 });
+        const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: group });
         for (const s of cmd.perSubject) {
           versionIds.set(s.subject, s.added.map((f) => receipt!.triples.find((t) => t.entityId === f.e && t.attribute === f.a)!.id));
           historyVersion.set(s.subject, v);
@@ -584,7 +595,9 @@ async function run() {
     const mutRng = new Rng(seedOf(`p5mut:${config.seed}`));
     const mutated = [...new Set(Array.from({ length: Math.min(config.p5Mutations, list.length) }, () => list[mutRng.int(list.length)]!))];
     const out: any = { subjects: list.length, coverageSha256: coverageHash(list), basis: { ...basis, position: coordinate(last.position), txId: last.txId }, release: { id: release.id, sha256: release.sha256 }, concurrency: config.sweepConcurrency, mutatedAfterCapture: mutated, evaluate: EVALUATE_SEAM, publish: PUBLISH_SEAM, throttledVariant: { status: "not-run", reason: "needs evaluate and an observable compaction or rebuild to overlap (seam)" } };
-    out.mutationPositions = await Promise.all(mutated.map((s) => overlay("p5-mutation", s, 6)));
+    // Offered after the capture and not awaited: the sweep starts at once; positions are filled in as ACKs arrive.
+    const mutationsDone = Promise.all(mutated.map((s) => overlay("p5-mutation", s, 6))).then((positions) => { out.mutationPositions = positions; });
+    void mutationsDone;
     const { worker: sweeper, stopped: sweeperStopped } = await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 });
     const done = new Promise<any>((resolve) => sweepDone.set(idx + SWEEP_PHASE_OFFSET, resolve));
     out.startedAt = now();
@@ -602,6 +615,16 @@ async function run() {
 
 // ---------------------------------------------------------------- helpers
 
+/** A reader on a MessageChannel in this thread, shaped like a Worker (postMessage, on, terminate). */
+async function inThreadReader(cfg: any) {
+  const { MessageChannel } = await import("node:worker_threads");
+  const { startReader } = await import("./reader-worker.ts");
+  const channel = new MessageChannel();
+  const side: any = channel.port1;
+  side.terminate = async () => { channel.port1.close(); channel.port2.close(); };
+  void startReader(channel.port2, cfg);
+  return side;
+}
 function chooseSamples(n: number, k: number): number[] {
   const out = new Set<number>();
   for (const i of [0, 8, 15]) if (i < n) out.add(i); // one subject per hop class

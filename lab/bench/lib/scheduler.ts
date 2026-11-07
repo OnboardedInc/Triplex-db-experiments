@@ -71,6 +71,13 @@ export class OpenLoopScheduler<J extends Job> {
   get notOffered(): number {
     return this.jobs.length - this.next;
   }
+  /** Jobs not yet offered whose scheduled time is within `horizonMs` of now, in order (at most `max`). */
+  upcoming(horizonMs: number, max = 64): J[] {
+    const limit = this.opts.now() + horizonMs;
+    const out: J[] = [];
+    for (let k = this.next; k < this.jobs.length && out.length < max && this.jobs[k]!.scheduledAt <= limit; k++) out.push(this.jobs[k]!);
+    return out;
+  }
   /** Offer an overlay job now (its scheduledAt is its own offer time); it joins its subject's serial queue. */
   inject(job: J): void {
     if (this.stopped) return;
