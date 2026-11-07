@@ -251,9 +251,12 @@ test('follower: own container and port, the slot volume mounted read-only, the r
   assert.throws(() => followerInfo(bad, s2), /research probes/);
   assert.throws(() => followerInfo(config, lib.slotInfo(config, 'qlever', 's2')), /only for the xtdb lane/);
   const small = followerInfo(config, s2, { 'follower-profile': 'small' });
-  assert.equal(small.memBytes, 1.25 * GiB);
-  assert.match(small.javaOpts, /-Xmx512m/);
-  assert.equal(effectiveConfig(config, small).effective.profile, 'small');
+  assert.equal(small.memBytes, 1 * GiB);
+  assert.match(small.javaOpts, /-Xmx512m -XX:MaxDirectMemorySize=256m/);
+  const smallEff = effectiveConfig(config, small);
+  assert.equal(smallEff.effective.profile, 'small');
+  assert.equal(smallEff.effective.configSource, 'lab/config/xtdb-follower-small-config.yaml');
+  assert.deepEqual(lib.checkFollowerConfig(writerYaml, fs.readFileSync(smallEff.files.config, 'utf8')), { ok: true, reasons: [] });
   assert.equal('profile' in eff.effective, false);
   assert.throws(() => followerInfo(config, s2, { 'follower-profile': 'tiny' }), /unknown follower profile/);
 });

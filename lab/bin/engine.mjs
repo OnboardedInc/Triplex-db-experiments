@@ -36,7 +36,7 @@ export function followerInfo(config, info, opts = {}) {
   const conf = config.lanes.xtdb?.follower;
   if (info.lane !== 'xtdb' || !conf) fail('USAGE', 'followers exist only for the xtdb lane (slots.json lanes.xtdb.follower)');
   const port = info.port + conf.portOffset;
-  // --follower-profile NAME swaps memory cap and JVM options for a named smaller footprint (slots.json profiles).
+  // --follower-profile NAME swaps memory cap, JVM options and config file for a named smaller footprint (slots.json profiles).
   const profileName = opts['follower-profile'] ?? null;
   const profile = profileName ? conf.profiles?.[profileName] : {};
   if (!profile) fail('USAGE', `unknown follower profile ${profileName}; slots.json has ${Object.keys(conf.profiles ?? {}).join(', ') || 'none'}`);
@@ -46,7 +46,7 @@ export function followerInfo(config, info, opts = {}) {
     ...info, role: 'follower', writer: info.container, container: `${info.container}-ro`, port,
     endpoint: info.laneConf.urlTemplate.replace('{port}', String(port)), memBytes: profile.memBytes ?? conf.memBytes, cpus: conf.cpus,
     javaOpts: profile.javaOpts ?? conf.javaOpts, profile: profileName,
-    volumeMode: conf.volumeMode, configFile: path.join(CONFIG_DIR, conf.configFile), configSource: conf.configFile, diskForecastBytes: 0,
+    volumeMode: conf.volumeMode, configFile: path.join(CONFIG_DIR, profile.configFile ?? conf.configFile), configSource: profile.configFile ?? conf.configFile, diskForecastBytes: 0,
     cpusetCpus: opts['cpuset-cpus'] ? parseCpuset(opts['cpuset-cpus'], config.vm.cpus).join(',') : null,
   };
 }

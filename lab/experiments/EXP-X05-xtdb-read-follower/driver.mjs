@@ -12,7 +12,7 @@
 // and E4/E9 (numThreads 300 at 256 connections, follower and per-connection RSS).
 //
 // Window plan (each window replays one frozen trace segment; TARGETS 1.1 P1 item 5, matched phase):
-//   Z0, F4, S4, F16, S16, Z1, F64, S64, F256, S256, Z2, then E5, CONN, BURST, RECOVER.
+//   Z0, F4, S4, F16, S16, Z1, F64, S64, Z2, E5, F256, S256, Z3, CONN, BURST, RECOVER.
 //   Z = zero readers; F = readers on the follower; S = the same readers on the writer (single node).
 //   Interleaving F and S at each level and repeating Z puts host-load drift into the comparison, not between it.
 //   After each window the writer drains its queue before the next one, so a slow window cannot leak into the next.
@@ -89,7 +89,7 @@ function containerIdentity(info, eff) {
   const c = inspect(info.container);
   if (!c) return { container: info.container, missing: true };
   return {
-    container: info.container, containerId: c.Id, startedAt: c.State.StartedAt, running: c.State.Running, health: c.State.Health?.Status ?? null,
+    container: info.container, containerId: c.Id, startedAt: c.State.StartedAt, running: c.State.Running, health: c.State.Health?.Status ?? null, oomKilled: c.State.OOMKilled, exitCode: c.State.ExitCode,
     imageId: c.Image, pinnedImageId: info.laneConf.imageId, configSha256Label: c.Config.Labels?.['tx2.config-sha256'] ?? null, effectiveConfigSha256: eff.sha256,
     effectiveConfig: eff.effective, configFileSha256: sha256File(eff.files.config), memCapBytes: c.HostConfig.Memory, nanoCpus: c.HostConfig.NanoCpus,
     cpusetCpus: c.HostConfig.CpusetCpus || null, mounts: c.Mounts.map(m => ({ source: m.Name ?? m.Source, destination: m.Destination, rw: m.RW })),
@@ -602,15 +602,18 @@ const seg = traceSegment({ seed: P.seed, rate: P.rate, seconds: P.levelS, subjec
 receipt.trace = { digest: traceDigest(seg), commands: seg.length, rate: P.rate, seconds: P.levelS };
 const metricsAt = { start: { writer: await metrics(writerInfo.container, 'metrics-writer-start.txt'), follower: await metrics(folInfo.container, 'metrics-follower-start.txt') } };
 
+// Levels above 64 run after E5: on the 1.0 GiB follower profile the 256-connection level is the likeliest to
+// exhaust memory, and a follower lost there must not take the E5 correctness data with it.
+const early = P.levels.filter(L => L <= 64), late = P.levels.filter(L => L > 64);
 if (P.phases.includes('ladder')) {
   const warmSeg = traceSegment({ seed: `${P.seed}|warm`, rate: P.rate, seconds: P.warmS, subjects: P.subjects, active: P.active });
   await runWindow({ name: 'warmF', mode: 'follower', readers: 8, trace: warmSeg, seconds: P.warmS, kind: 'warm' });
   await runWindow({ name: 'warmS', mode: 'single', readers: 8, trace: warmSeg, seconds: P.warmS, kind: 'warm' });
   await runWindow({ name: 'Z0', trace: seg, seconds: P.levelS });
-  for (const [i, L] of P.levels.entries()) {
+  for (const [i, L] of early.entries()) {
     await runWindow({ name: `F${L}`, mode: 'follower', readers: L, trace: seg, seconds: P.levelS });
     await runWindow({ name: `S${L}`, mode: 'single', readers: L, trace: seg, seconds: P.levelS });
-    if (i === Math.floor((P.levels.length - 1) / 2)) await runWindow({ name: 'Z1', trace: seg, seconds: P.levelS });
+    if (i === Math.floor((early.length - 1) / 2)) await runWindow({ name: 'Z1', trace: seg, seconds: P.levelS });
   }
   await runWindow({ name: 'Z2', trace: seg, seconds: P.levelS });
   receipt.watermarksAfterLadder = await watermarks();
@@ -630,6 +633,15 @@ if (P.phases.includes('e5')) {
   save('e5-rows.json', e5.rows);
   await e5.close();
   log(`E5: ${JSON.stringify(Object.fromEntries(Object.entries(receipt.e5).map(([m, s]) => [m, { reads: s.reads, exact: s.exact, stale: s.stale, ahead: s.ahead, errors: s.errors, within5: s.within5ms }])))}`);
+}
+
+if (P.phases.includes('ladder') && late.length) {
+  for (const L of late) {
+    await runWindow({ name: `F${L}`, mode: 'follower', readers: L, trace: seg, seconds: P.levelS });
+    await runWindow({ name: `S${L}`, mode: 'single', readers: L, trace: seg, seconds: P.levelS });
+  }
+  await runWindow({ name: 'Z3', trace: seg, seconds: P.levelS });
+  save('receipt-partial.json', receipt);
 }
 
 if (P.phases.includes('conn')) {
@@ -656,7 +668,7 @@ receipt.metrics = metricsAt;
 receipt.logs = { writer: await logScan(writerInfo.container, runStart), follower: await logScan(folInfo.container, runStart) };
 const engEnd = engines();
 receipt.enginesAtEnd = { writer: { containerId: engEnd.writer.containerId, startedAt: engEnd.writer.startedAt, running: engEnd.writer.running, health: engEnd.writer.health },
-  follower: { containerId: engEnd.follower.containerId, startedAt: engEnd.follower.startedAt, running: engEnd.follower.running, health: engEnd.follower.health } };
+  follower: { containerId: engEnd.follower.containerId, startedAt: engEnd.follower.startedAt, running: engEnd.follower.running, health: engEnd.follower.health, oomKilled: engEnd.follower.oomKilled, exitCode: engEnd.follower.exitCode } };
 for (const side of ['writer', 'follower'])
   if (engEnd[side].containerId !== engStart[side].containerId || engEnd[side].startedAt !== engStart[side].startedAt) receipt.reasons.push(`${engStart[side].container} restarted or was replaced during the run`);
 receipt.windows = results.map(({ writer: w, ...rest }) => ({ ...rest, writer: (({ lateRaw, ...k }) => k)(w) }));
