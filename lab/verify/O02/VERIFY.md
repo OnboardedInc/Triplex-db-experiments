@@ -107,5 +107,5 @@ here). Merged to main as 4591715.
 - Q56e row rebuilt: the oracle ignores violations that predate the enforced command, so the enforced command now brings p1 under the
   constraint. Q56d: one marker group per attribute means "by assertion id" has nothing to order; supports list in insertion order;
   different erasure instants refuse (Q52c). Q56h holds: all probe values synthetic.
-- Merge note: merging the oracle alone breaks  (Q45a pinned O-REPLAY files differ from the tree: RULES.md, SCHEMA.md,
+- Merge note: merging the oracle alone breaks `--verify` (Q45a pinned O-REPLAY files differ from the tree: RULES.md, SCHEMA.md,
   constraints.py), so the merge and the pin move land together in contract 0.3.8 on branch contract/0.3.8.
