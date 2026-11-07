@@ -1,0 +1,52 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "example/entity-mini",
+ "defaultScope": "s1",
+ "adapter": {"schemaVersion": 1},
+ "schemas": [
+  {"version": 1, "entityTypes": {
+   "Person": {"attributes": {
+    "name": {"attribute": ":person/name", "type": "string", "required": true, "unique": true},
+    "score": {"attribute": ":person/score", "type": "number"},
+    "big": {"attribute": ":person/big", "type": "integer"},
+    "tags": {"attribute": ":person/tag", "type": "string", "cardinality": "many"},
+    "org": {"attribute": ":person/org", "type": "ref", "target": "Org"}}},
+   "Org": {"attributes": {"name": {"attribute": ":org/name", "type": "string", "required": true}}}}}
+ ],
+ "enforcement": {"mode": "on", "fromSchema": 1},
+ "commands": [
+  {"clock": 1000.25, "meta": {"actor": "agent:a", "commandId": "create-1"}, "operations": [
+   {"op": "assert", "ref": "org-name", "entityId": "org:acme", "entityType": "Org", "attribute": ":org/name", "value": {"type": "string", "value": "Acme"}, "validFrom": 0},
+   {"op": "assert", "ref": "ann-name", "entityId": "person:ann", "entityType": "Person", "attribute": ":person/name", "value": {"type": "string", "value": "Ann"}, "validFrom": 0},
+   {"op": "assert", "ref": "ann-score", "entityId": "person:ann", "entityType": "Person", "attribute": ":person/score", "value": {"type": "number", "value": -0.0}, "validFrom": 0},
+   {"op": "assert", "ref": "ann-big", "entityId": "person:ann", "entityType": "Person", "attribute": ":person/big", "value": {"type": "integer", "value": "9223372036854775807"}, "validFrom": 0},
+   {"op": "assert", "ref": "ann-tag-z", "entityId": "person:ann", "entityType": "Person", "attribute": ":person/tag", "value": {"type": "string", "value": "z"}, "validFrom": 0},
+   {"op": "assert", "ref": "ann-tag-e", "entityId": "person:ann", "entityType": "Person", "attribute": ":person/tag", "value": {"type": "string", "value": "é"}, "validFrom": 0},
+   {"op": "assert", "ref": "ann-org", "entityId": "person:ann", "entityType": "Person", "attribute": ":person/org", "value": {"type": "ref", "value": "org:acme"}, "validFrom": 0}
+  ]},
+  {"clock": 1001.25, "meta": {"actor": "agent:a", "commandId": "dup-name"}, "operations": [
+   {"op": "assert", "ref": "bob-name", "entityId": "person:bob", "entityType": "Person", "attribute": ":person/name", "value": {"type": "string", "value": "Ann"}, "validFrom": 0}
+  ]},
+  {"clock": 1001.25, "meta": {"actor": "agent:a", "commandId": "rename", "preconditions": [{"_tag": "TripleLive", "target": "ann-name"}]}, "operations": [
+   {"op": "retract", "target": "ann-name"},
+   {"op": "assert", "ref": "ann-name-2", "entityId": "person:ann", "entityType": "Person", "attribute": ":person/name", "value": {"type": "string", "value": "Anne"}, "validFrom": 0}
+  ]},
+  {"clock": 1002.25, "meta": {"actor": "agent:a", "commandId": "create-1"}, "operations": [
+   {"op": "assert", "ref": "retry", "entityId": "person:cy", "entityType": "Person", "attribute": ":person/name", "value": {"type": "string", "value": "Cy"}, "validFrom": 0}
+  ]}
+ ],
+ "receipts": [
+  {"command": 0, "outcome": "committed", "txId": "tx-A", "position": 4, "instant": 1000.25, "assertionIds": ["i1", "i2", "i3", "i4", "i5", "i6", "i7"]},
+  {"command": 1, "outcome": "rejected", "error": {"_tag": "ConstraintViolationError", "codes": ["unique"]}},
+  {"command": 2, "outcome": "committed", "txId": "tx-B", "position": 5, "instant": 1001.25, "assertionIds": [null, "i8"]},
+  {"command": 3, "outcome": "rejected", "error": {"_tag": "CommandAlreadyCommittedError", "transactionId": "tx-A"}}
+ ],
+ "initialPositions": {"s1": 3},
+ "queries": [
+  {"id": "ann-now", "kind": "get", "entityType": "Person", "entityId": "person:ann", "include": ["org"], "cut": {"validAt": 5}},
+  {"id": "ann-before-rename", "kind": "get", "entityType": "Person", "entityId": "person:ann", "cut": {"recordedAt": 1000.25, "validAt": 5}},
+  {"id": "ann-history", "kind": "history", "entityId": "person:ann", "cut": {"position": 4}},
+  {"id": "journal", "kind": "transactions"},
+  {"id": "max-plus-one", "kind": "expr", "expr": ["add", {"type": "integer", "value": "9223372036854775807"}, {"type": "integer", "value": "1"}]}
+ ]
+}
