@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// lab/bin/gate.mjs <G0|G1|G2> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
+// lab/bin/gate.mjs <G0|G1|G2|G4> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
+//   [--profile default|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
 //
 // Writes an append-only receipt lab/runs/<gate>/<run-id>.json and raw output under
 // runs/<gate>/<run-id>/ (gitignored). Preimages go to the content-addressed store runs/objects/.
@@ -277,6 +278,65 @@ function packetIdentity() {
 
 // ---------------------------------------------------------------- G1 and G2
 
+// [EXP-002] Why: the homebase qualified unchanged44 only under its explicit F1 profile (persisted
+// source, eligible MINUS, paired retirement, bounded aggregate answers, planner threshold 1;
+// wiki/problems/qlever-planner-memory.md, qualification/qlever-live/planner-budget-wave1.json).
+// cleanEnv strips QLEVER_*_PLAN so no profile leaks in from the shell; a profile is now named on
+// the command line and recorded in the receipt. Rejected: reading the plan variables from the
+// caller's environment (an unrecorded shell export would change what an obligation means).
+const QLEVER_PROFILES = {
+  default: {},
+  f1: { QLEVER_AGGREGATE_ANSWER_PLAN: 'bounded', QLEVER_NEGATION_PLAN: 'minus', QLEVER_SOURCE_PLAN: 'persisted', QLEVER_RETIREMENT_PLAN: 'paired' },
+};
+
+/** QLever server settings over the admin GET API (the lab server runs with --no-access-check). */
+async function qleverSettings(endpoint, set) {
+  const target = new URL(endpoint);
+  if (set) for (const [key, value] of Object.entries(set)) target.searchParams.set(key, value);
+  else target.searchParams.set('cmd', 'get-settings');
+  const response = await fetch(target, { signal: AbortSignal.timeout(5000), redirect: 'error' });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`QLever settings HTTP ${response.status}: ${text.slice(0, 200)}`);
+  return set ? text : JSON.parse(text);
+}
+
+// [EXP-002] Why: query-planning-budget is one server-wide runtime parameter (source default 1500;
+// the homebase pinned 100 and qualified F at 1). A run that selects a budget sets it, verifies the
+// read-back, and restores the value it found, all recorded; every QLever run records the budget it
+// observed before and after. The setting chooses planner algorithms; it is not a memory ceiling.
+async function plannerBefore(run, result, bound) {
+  if (bound.info.lane !== 'qlever') return null;
+  const wanted = run.options['planner-budget'];
+  const planner = result.planner = { requested: wanted ?? null };
+  try {
+    const before = await qleverSettings(bound.info.endpoint);
+    run.storeBytes(Buffer.from(JSON.stringify(before, null, 2) + '\n'), 'engine-settings-before', 'qlever get-settings before');
+    planner.before = before['query-planning-budget'];
+    if (wanted === undefined) { planner.effective = planner.before; return null; }
+    if (!/^[0-9]+$/.test(String(wanted))) fail('USAGE', '--planner-budget must be a decimal integer');
+    await qleverSettings(bound.info.endpoint, { 'query-planning-budget': String(wanted) });
+    planner.selected = (await qleverSettings(bound.info.endpoint))['query-planning-budget'];
+    if (planner.selected !== String(wanted)) run.reason(`query-planning-budget read back ${planner.selected}, wanted ${wanted}`);
+    planner.effective = planner.selected;
+    return planner.before;
+  } catch (error) { run.reason(`planner setting failed before the run: ${error.message}`); return planner.before ?? null; }
+}
+async function plannerAfter(run, result, bound, restoreTo) {
+  if (bound.info.lane !== 'qlever' || !result.planner) return;
+  const planner = result.planner;
+  try {
+    if (restoreTo !== null && restoreTo !== undefined) {
+      await qleverSettings(bound.info.endpoint, { 'query-planning-budget': restoreTo });
+      planner.restoredTo = restoreTo;
+    }
+    const after = await qleverSettings(bound.info.endpoint);
+    run.storeBytes(Buffer.from(JSON.stringify(after, null, 2) + '\n'), 'engine-settings-after', 'qlever get-settings after');
+    planner.after = after['query-planning-budget'];
+    const expected = restoreTo ?? planner.before;
+    if (planner.after !== expected) run.reason(`query-planning-budget after the run is ${planner.after}, expected ${expected} (changed by a co-runner or restore failed)`);
+  } catch (error) { run.reason(`planner setting read or restore failed after the run: ${error.message}`); }
+}
+
 async function engineGate(run, config, entry) {
   const result = {};
   result.build = await build(run);
@@ -285,16 +345,23 @@ async function engineGate(run, config, entry) {
   if (!bound.engine) return { result, step: null, bound: null };
   const ready = await probe(bound.info);
   if (!ready.ok) run.reason(`${bound.info.container} not ready before the run: ${ready.why}`);
+  const profileName = run.options.profile ?? 'default';
+  const profile = bound.info.lane === 'qlever' ? QLEVER_PROFILES[profileName] : profileName === 'default' ? {} : undefined;
+  if (!profile) fail('USAGE', `unknown --profile ${profileName} for lane ${bound.info.lane}`);
+  result.profile = { name: profileName, env: profile };
   const env = cleanEnv({
     [bound.info.laneConf.envVar]: bound.info.endpoint,
     TRIPLEX_LAB_SLOT_OWNER: bound.info.ownerFile,
     TRIPLEX_QUERY_PATH: entry.queryPath,
+    ...profile,
   });
   result.queryPath = entry.queryPath;
   result.diskBefore = vmDisk(config);
+  const restoreTo = await plannerBefore(run, result, bound);
   const stop = startSampler();
-  const step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs });
-  result.containers = stop();
+  let step;
+  try { step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs }); }
+  finally { result.containers = stop(); await plannerAfter(run, result, bound, restoreTo); }
   result.coRunning = listTx2Containers().map(c => ({ name: c.name, memCapBytes: c.memBytes, nanoCpus: c.nanoCpus, health: c.health }));
   result.volumeBytes = volumeBytes(config, bound.info.volume);
   result.diskAfter = vmDisk(config);
@@ -439,6 +506,7 @@ main(async () => {
   fs.writeSync(fd, JSON.stringify(receipt, null, 2) + '\n'); fs.fsyncSync(fd); fs.closeSync(fd);
   const c = receipt.counts ?? {};
   console.log(`${verdict} ${gate} ${options.lane}${receipt.slot ? '/' + receipt.slot : ''} scope=${receipt.scope} executed=${c.executed ?? 0} pass=${c.pass ?? 0} fail=${c.fail ?? 0} skip=${c.skip ?? 0}`);
+  if (result.profile || result.planner) console.log(`profile: ${result.profile?.name ?? '-'}; planner budget: ${JSON.stringify(result.planner ?? null)}`);
   if (result.languages) console.log(`languages (answer): ${JSON.stringify(result.languages.answer)}; strict: ${JSON.stringify(result.languages.strict)}`);
   for (const reason of reasons.slice(0, 10)) console.log(`  reason: ${reason}`);
   console.log(`receipt: ${run.rel(run.receiptPath)}`);
