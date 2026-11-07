@@ -48,3 +48,6 @@ qualification/evidence/*.log
 
 # triplex-db-2 lab harness (EXP-000): live locks and the pool ledger are machine state.
 /lab/locks/
+
+# Agent worktrees created by the orchestrator harness
+/.claude/worktrees/

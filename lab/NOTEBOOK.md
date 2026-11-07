@@ -179,3 +179,29 @@ Result: PROGRESSED (knowledge). Nothing promoted; no lane gate has run.
   sum overflow follows core (`compiler.ts:572`: exact DECIMAL sum, error only on final out-of-range).
 - Next: Codex acceptance review (running), EXP-O01 oracle and EXP-G01 golden vectors dispatched in parallel as two
   independent derivations to cross-check each other.
+
+## Process note 2026-11-07 13:42: memory pool contention
+- Research probes tx2-probe-r7 and tx2-probe-r8 reserve 5 GiB caps each but use about 3.1 and 1.1 GiB. Because the pool
+  counts caps, the harness's dev engines (5.5 GiB) and R12's probe could not be admitted for roughly an hour.
+- Fix applied: asked R8 to recreate with a 2.5 GiB cap and R7 to wrap up within ~25 minutes.
+- Rule for future briefs: research probes request the smallest cap that fits their measurement (default 1.5 GiB), name the
+  measurement that needs more, and release within a stated time box. The harness reserves dev engines first; research
+  probes queue behind them.
+
+## EXP-R01 entity core skeleton (Opus high) — PROGRESSED, verification pending
+- Branch exp/R01-entity-core: `./entity` subpath with types for Repository/Writer/plan IR (stubs), a fully tested projection
+  spec compiler (names, one declared type per engine, exactness rules, collision rejection, content id), and the http codec
+  move (parity 4/4 against the original). core 733 → 799 tests; testkit 46 unchanged.
+- Learnings: a Struct cannot distinguish card-one List from card-many, so specs compile from attribute usages; http's default
+  collection naming would break multi-word types, so ConfigApi.compile was split with hooks; the public TemporalBasis cannot pin
+  a commit position, so EXP-R02 must decide how a repository proves one cut across a page and its includes (open question).
+- Unverified engine claim carried forward: XTDB DOUBLE preserving -0 (EXP-F02 decides).
+
+## Codex acceptance review r1 → NOT READY TO FREEZE (16 findings, 9 critical)
+- Valid catches: rulings not compiled into obligations (CLI and equal-duplicate conflict still required); load JSON still encodes
+  the rate16 floor; Q11 halved per-language load (reversed); recovery allowed losing an fsynced unACKed command; C1-C8 lacked
+  discriminating cases; O-REPLAY assumed non-decreasing instants (same clock bug as PLAN C1; O01 corrected mid-build); -0.0
+  arithmetic stated wrongly; core rejects integer AVG (Q8b revised); carry-forward weakened the fresh-final rule; scale counts
+  allowed trivial history; goal 8 could pass with zero reuse; typed errors could replace required cursor continuation; C8 frontier
+  control conflicted with the hybrid-language rule.
+- Decision: accept all 16; EXP-A01's author revises to 0.2.0.
