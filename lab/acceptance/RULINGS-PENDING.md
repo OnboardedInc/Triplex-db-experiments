@@ -40,3 +40,12 @@ Round 5: R4-1, 2, 3, 5, 6, 7 CLOSED; R4-4 and R4-8 PARTIAL; 3 new (9 to 11). All
 | Q44b narrowing by subject (G8, option a; amends Q40i) | R3 becomes a scoped release: it changes the OT threshold to 2,700 minutes only for placements whose location's jurisdiction is in a listed set (about 10% of jurisdictions), so the subjects R3 reaches are selected through the reverse two-hop dependency index, not by rule. Release scope is part of the release's content hash. Expected affected subjects and changed subjects are stated separately in SPEC 12. | Sam's paste: re-run the subjects the change affects; P5 |
 | Q44c publish only live reconciles (G10) | A delivery's subject comes from the evaluation record; only live reconciles at the current basis are published; previews (GS.11) and past-valid-time audit evaluations are never passed to publish, because the basis guard orders by tx first and would publish past payloads. | V-D01 G10 |
 | Q44d receivers from the start | Receivers exist from the first publication or are seeded with a state snapshot; a receiver that starts after acknowledged deliveries were pruned would wait forever for seq 1 (stated in SPEC 8.9). | V-D01 section 3 |
+
+## Q45: O-REPLAY pin and V-O03 findings (2026-11-08; to compile in 0.3.6)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q45a pin | O-REPLAY is ACCEPTED at 8cc2c26 (29 file hashes in lab/verify/O02/v-o03/hashes.8cc2c26.json), acceptance receipt V-O03, against contract 0.3.5 + Q43. The contract gains a per-oracle exclusion list; O-REPLAY's excludes G1.decimal.channel-routing until F2 is fixed and re-verified. | V-O03 ACCEPT |
+| Q45b refusal handling (N2) | An oracle exit 2 with X-NOT-MODELED means "not modeled": the obligation fails closed; it is never treated as a case-authoring error. Erasure cases spell the op `erase`; outbox steps are never encoded as O-REPLAY ops (O-DOMAIN owns them). | V-O03 N2 |
+| Q45c G1.types.decimal (N3) | Its three key-byte cases move to the G1.decimal.tdk1-* obligations (owned by O-TDK1); G1.types.decimal keeps the value cases. | V-O03 N3 |
+| Q45d DO-ROUND (N1) | Compile Q43f-detail: round to a larger scale has precision p + (s - s_x), capped at 38. | Q43f |
+| Q45e follow-up EXP-O04 | The oracle author fixes F2 (DR-JSON-CONVERT per contract; add `decimalRouting` to RULES.md's table list and Coverage.TABLES) and models erasure (Q24, Q31f) so the 11 erasure-dependent obligations can close; then an independent re-check before the pin moves. | V-O03 F2 |
