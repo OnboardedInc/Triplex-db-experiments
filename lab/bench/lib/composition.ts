@@ -46,12 +46,30 @@ export interface StoreFailure {
 }
 export type Outcome<A> = { readonly ok: true; readonly value: A } | StoreFailure;
 
+/** TARGETS 4.1: the four layer assignments of a composition. */
+export interface Assignments {
+  readonly source: { lane: Lane; role: string };
+  readonly current: { lane: Lane; role: string };
+  readonly history: { lane: Lane; role: string };
+  readonly analytics: { lane: Lane; role: string };
+  /** Replication edges between layers (feed consumer source hash, translation generation); none in one-engine compositions. */
+  readonly replicationEdges: readonly { from: string; to: string; consumerSourceSha256: string | null; generation: string | null }[];
+}
+
 export interface CompositionHandle {
   readonly name: string;
+  readonly assignments: Assignments;
+  /** Each read index's watermark (a source position); one-engine compositions read the source directly. */
+  watermarks(): Promise<Record<string, number>>;
   readonly backend: { name: string; url: string; queryPath: string };
   transact(operations: readonly any[], meta: Record<string, unknown>): Promise<Outcome<Receipt>>;
   transactionByCommand(commandId: string): Promise<Outcome<any | null>>;
-  pull(rootEntityId: string, basis: Basis): Promise<PullResult>;
+  /**
+   * Subject pull at one basis. With `between`, the pull is a split read (TARGETS 1.1 P1 item 2): after
+   * the first query the driver runs `between` (a commit to the same subject) and the remaining queries
+   * use the same basis.
+   */
+  pull(rootEntityId: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult>;
   sweepPull(rootEntityId: string, basis: Basis): Promise<PullResult>;
   feedPage(after: number, limit: number): Promise<{ transactions: readonly any[]; next?: number }>;
   currentPosition(): Promise<number>;
@@ -72,7 +90,7 @@ async function publicComposition(lane: Lane, scope: string): Promise<Composition
     const exit = await h.runExit(effect);
     return exit._tag === "Success" ? { ok: true, value: exit.value as A } : failureOf(exit);
   };
-  const pull = async (root: string, basis: Basis): Promise<PullResult> => {
+  const pull = async (root: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult> => {
     const seen = new Set<string>([root]);
     let frontier = [root];
     const triples: PulledTriple[] = [];
@@ -80,6 +98,7 @@ async function publicComposition(lane: Lane, scope: string): Promise<Composition
     while (frontier.length) {
       const bodies: any[][] = await h.run(T.entities(frontier.map(E), basis));
       roundTrips++;
+      if (roundTrips === 1 && between) await between();
       const next: string[] = [];
       for (const body of bodies)
         for (const t of body) {
@@ -93,8 +112,11 @@ async function publicComposition(lane: Lane, scope: string): Promise<Composition
     }
     return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1 };
   };
+  const one = { lane, role: "triplex public Triples service on one engine slot" };
   return {
     name: "public",
+    assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
+    watermarks: async () => ({ source: await h.run(T.currentPosition()) }),
     backend: h.backend,
     transact: (operations, meta) => outcome<Receipt>(T.transact(operations, meta)),
     transactionByCommand: (id) => outcome(T.transactionByCommand(id)),

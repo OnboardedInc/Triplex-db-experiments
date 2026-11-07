@@ -1,16 +1,15 @@
 /**
  * Seeding a rung through the public writer (the bulk lane; not measured as P2).
  *
- * Order: shared account worlds, then subjects in index order (version 0 of every own fact), then
- * history-panel rounds v = 1..9 (retract and re-assert the three VERSIONED facts of every panel
- * subject whose depth exceeds v). Commands hold at most `batchFacts` operations. Seeding stops
+ * Order: shared account worlds, then subjects in index order (every own fact). History depth is grown
+ * in place later, during the run, on the P4 matched sample (TARGETS 1.1 P4 item 2). Commands hold at most `batchFacts` operations. Seeding stops
  * early at `budgetMs`; the run then covers the subjects seeded so far and says so (rungAchieved).
  * Commands are applied one at a time: concurrent commits within one XTDB runtime conflict on the
  * scope position (observed 2026-11-07, `triplex-cas-conflict`), and seeding is not what is measured.
  */
 import type { CompositionHandle, Receipt } from "./composition.ts";
 import { seedOps } from "./commands.ts";
-import { VERSIONED, accountsFor, historyDepth, ownFacts, sharedFacts, versioned, ids, memberOf, type Fact } from "./world.ts";
+import { SEED_VALID_FROM, accountsFor, ownFacts, seedAddress, sharedFacts, versioned, ids, memberOf, type Fact } from "./world.ts";
 import type { SubjectState } from "./commands.ts";
 
 export interface RecordedCommand {
@@ -36,6 +35,7 @@ export interface SeedResult {
   lastInstant: number;
   positions: number[];
   state: Map<number, SubjectState>;
+  versionIds: Map<number, string[]>;
   recorded: RecordedCommand[];
 }
 
@@ -59,6 +59,8 @@ export async function seedRung(opts: {
   budgetMs: number;
   recordSubjects: Set<number>;
   recordAccounts: Set<number>;
+  /** Subjects whose versioned-fact ids are kept for in-place history growth (P4 matched sample). */
+  historySubjects: Set<number>;
   log: (line: string) => void;
 }): Promise<SeedResult> {
   const { comp } = opts;
@@ -114,11 +116,14 @@ export async function seedRung(opts: {
     const receipt = await commit(seedOps(batch), `s${members[0]}-${members.at(-1)}`, members.some((i) => opts.recordSubjects.has(i)));
     for (const i of members) {
       const stampId = idOf(receipt, ids.placement(i), ":placement/stamp");
-      const v = versioned(i, 0);
-      const vIds = v.map((f) => idOf(receipt, f.e, f.a)!);
-      if (!stampId || vIds.some((x) => !x)) throw new Error(`seed receipt lacks ids for subject ${i}`);
-      versionIds.set(i, vIds);
-      state.set(i, { stamp: 0, stampId, address: (v[1]!.v as any).value, addressId: vIds[1]! });
+      const addressId = idOf(receipt, ids.worker(i), ":worker/address");
+      if (!stampId || !addressId) throw new Error(`seed receipt lacks ids for subject ${i}`);
+      if (opts.historySubjects.has(i)) {
+        const vIds = versioned(i, 0).map((f) => idOf(receipt, f.e, f.a)!);
+        if (vIds.some((x) => !x)) throw new Error(`seed receipt lacks versioned ids for subject ${i}`);
+        versionIds.set(i, vIds);
+      }
+      state.set(i, { stamp: 0, stampId, stampValidFrom: SEED_VALID_FROM, address: seedAddress(i), addressId, addressValidFrom: SEED_VALID_FROM });
     }
     n = members.at(-1)! + 1;
     batch = [];
@@ -126,7 +131,7 @@ export async function seedRung(opts: {
   };
   let stoppedEarly = false;
   for (let i = 0; i < opts.subjects; i++) {
-    const facts = ownFacts(i, accounts, 0);
+    const facts = ownFacts(i, accounts);
     if (batch.length + facts.length > opts.batchFacts) {
       await flush();
       if (performance.now() - started > opts.budgetMs) { stoppedEarly = true; break; }
@@ -138,39 +143,13 @@ export async function seedRung(opts: {
   if (!stoppedEarly) await flush();
   const seeded = n;
   opts.log(`seed: ${seeded} subjects in ${((performance.now() - started) / 1000).toFixed(1)} s`);
-  // 3. history panels
-  for (let v = 1; v < 10; v++) {
-    let ops: any[] = [], pre: any[] = [], who: number[] = [];
-    const flushV = async () => {
-      if (!ops.length) return;
-      const receipt = await commit(ops, `v${v}.${who[0]}`, who.some((i) => opts.recordSubjects.has(i)), pre);
-      for (const i of who) {
-        const facts = versioned(i, v);
-        const vIds = facts.map((f) => idOf(receipt, f.e, f.a)!);
-        versionIds.set(i, vIds);
-        const st = state.get(i)!;
-        st.address = (facts[1]!.v as any).value;
-        st.addressId = vIds[1]!;
-      }
-      ops = []; pre = []; who = [];
-    };
-    for (let i = 0; i < seeded; i++) {
-      if (historyDepth(i) <= v) continue;
-      const old = versionIds.get(i)!;
-      for (const id of old) { ops.push({ op: "retract", id }); pre.push({ _tag: "TripleLive", id }); }
-      ops.push(...seedOps(versioned(i, v)));
-      who.push(i);
-      if (ops.length + 2 * VERSIONED.length > opts.batchFacts) await flushV();
-    }
-    await flushV();
-  }
   const wallMs = performance.now() - started;
   latencies.sort((x, y) => x - y);
   return {
     seededSubjects: seeded, complete: seeded === opts.subjects, commands, assertions, retractions, wallMs,
     factsPerS: assertions / (wallMs / 1000),
     commitMs: { p50: latencies[Math.floor(latencies.length / 2)] ?? 0, max: latencies.at(-1) ?? 0 },
-    failures, firstPosition: Math.min(...positions), lastPosition: Math.max(...positions), lastInstant, positions, state, recorded,
+    failures, firstPosition: Math.min(...positions), lastPosition: Math.max(...positions), lastInstant, positions, state, versionIds, recorded,
   };
 }
 

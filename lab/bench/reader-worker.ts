@@ -1,23 +1,31 @@
 /**
  * Reader worker thread: closed-loop subject pulls at a named basis, plus the P5 sweep.
  *
- * [EXP-N01] Why worker threads: the brief requires load generation not to be the bottleneck. Each
- * worker opens its own composition (its own connection pool) and reports event-loop utilization so
- * the driver can mark a level INVALID when a client thread saturates. Correctness is judged in the
- * main thread after the run, against the expected-state model; workers only observe.
+ * [EXP-N01] Why worker threads: load generation must not be the bottleneck. Each worker opens its own
+ * composition (its own connection pool) and reports event-loop utilization so the driver can mark a
+ * level INVALID when a client thread saturates. Correctness is judged in the main thread after the run
+ * against the expected-state model at the basis the driver requested; workers only observe.
  *
- * Messages in:  {type:'level', phase, readers} | {type:'basis', latest, recent[]} |
- *               {type:'sweep', phase, subjects[], basis, concurrency} | {type:'stop'}
+ * Basis (TARGETS section 2 read basis mix, RULINGS Q16): 80% at the latest acknowledged receipt (named
+ * by its txId, position and instant, taken from receipts the driver observed, never from an engine
+ * echo), 15% at a receipt from the last hour, 5% at the latest receipt with valid time up to 90 days back.
+ * Subjects (TARGETS 1.1 P1 item 1), mode "mixed": 60% from subjects acknowledged in the last 60 s (the
+ * hot set the main thread broadcasts), 40% uniform. Mode "weighted": the frozen P4 bucket x hop mix.
+ * Mode "sample": uniform over the matched history sample.
+ * Split reads (P1 item 2): `splitShare` of reads ask the main thread to commit to the same subject after
+ * the first query, then finish the pull at the same basis.
+ *
+ * Messages in:  {type:'level', phase, readers, mode} | {type:'basis', acked[], hot[]} |
+ *               {type:'forced', token, position} | {type:'sweep', phase, subjects[], basis, concurrency} | {type:'stop'}
  * Messages out: {type:'ready'} | {type:'reads', records[], samples[]} | {type:'elu', t, elu} |
- *               {type:'sweep-done', phase, wallMs} | {type:'error', message}
- * Read record: [phase, subject, R, V, startAbsMs, latencyMs, stamp, facts, digest, bytes, depth, roundTrips, errorTag]
+ *               {type:'force', token, subject} | {type:'sweep-done', phase, wallMs} | {type:'error', message}
  */
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import { openComposition, type Basis, type CompositionHandle } from "./lib/composition.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
-import { ids } from "./lib/world.ts";
-import { observe } from "./lib/observe.ts";
+import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from "./lib/world.ts";
+import { observe, type ReadRecord } from "./lib/observe.ts";
 
 const cfg = workerData as {
   lane: "xtdb" | "qlever";
@@ -26,52 +34,83 @@ const cfg = workerData as {
   seed: string;
   worker: number;
   subjects: number;
-  panels: { depth1: number; depth3: number; depth10: number };
+  accounts: number;
+  historySample: number[];
   sampleSubjects: number[];
   oracleRate: number;
-  asOfShare: number;
+  splitShare: number;
 };
 const port = parentPort!;
 const nowAbs = () => performance.timeOrigin + performance.now();
+const DAY = 86_400_000;
 
 let comp: CompositionHandle;
 let phase = -1;
-let mode: "mixed" | "panels" = "mixed";
-let panelTurn = 0;
+let mode = "mixed";
 let wanted = 0;
 let running = 0;
-let latest = 0;
-let recent: number[] = [];
-let records: any[] = [];
+let acked: { instant: number; position: number; txId: string; at: number }[] = [];
+let hot: number[] = [];
+let records: ReadRecord[] = [];
 let samples: any[] = [];
 let stopping = false;
-let loopSeq = 0;
+let tokenSeq = 0;
+const waiting = new Map<number, (position: number) => void>();
 
-function pickSubject(rng: Rng): number {
-  const panel = (r: number, n: number) => (n > 0 ? 30 * rng.int(n) + r : rng.int(cfg.subjects));
-  if (mode === "panels") {
-    const r = panelTurn++ % 3;
-    return panel(r, [cfg.panels.depth1, cfg.panels.depth3, cfg.panels.depth10][r]!);
+function pickSubject(rng: Rng): { subject: number; hotPick: boolean } {
+  if (mode === "sample" && cfg.historySample.length) return { subject: cfg.historySample[rng.int(cfg.historySample.length)]!, hotPick: false };
+  if (mode === "weighted") {
+    const u = rng.next();
+    const bucket: Bucket = u < BUCKETS.small.share ? "small" : u < BUCKETS.small.share + BUCKETS.medium.share ? "medium" : "large";
+    const w = rng.next();
+    const hop: Hop = w < HOP_SHARE[3] ? 3 : w < HOP_SHARE[3] + HOP_SHARE[4] ? 4 : 6;
+    const i = subjectInCell(cfg.subjects, cfg.accounts, bucket, hop, rng.next(), rng.next(), rng.next());
+    return { subject: i ?? rng.int(cfg.subjects), hotPick: false };
   }
-  const u = rng.next();
-  if (u < 0.1) return panel(0, cfg.panels.depth1);
-  if (u < 0.2) return panel(1, cfg.panels.depth3);
-  if (u < 0.3) return panel(2, cfg.panels.depth10);
-  return rng.int(cfg.subjects);
+  if (hot.length && rng.next() < 0.6) return { subject: hot[rng.int(hot.length)]!, hotPick: true };
+  return { subject: rng.int(cfg.subjects), hotPick: false };
 }
 
-async function readOnce(subject: number, basis: Basis, ph: number, keepRows: boolean, sweep = false) {
+/** Returns [basis, kind (0 latest, 1 last hour, 2 past valid time), receipt position, txId]. */
+function pickBasis(rng: Rng): [Basis, number, number, string] {
+  const latest = acked[acked.length - 1]!;
+  const u = rng.next();
+  const now = Math.floor(nowAbs());
+  if (u < 0.8 || acked.length < 2) return [{ recordedAt: latest.instant, validAt: now }, 0, latest.position, latest.txId];
+  if (u < 0.95) {
+    const hourAgo = nowAbs() - 3_600_000;
+    let lo = 0;
+    while (lo < acked.length - 1 && acked[lo]!.at < hourAgo) lo++;
+    const r = acked[lo + rng.int(acked.length - lo)]!;
+    return [{ recordedAt: r.instant, validAt: now }, 1, r.position, r.txId];
+  }
+  return [{ recordedAt: latest.instant, validAt: now - Math.floor(rng.next() * 90 * DAY) }, 2, latest.position, latest.txId];
+}
+
+async function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; split?: boolean; hotPick?: boolean }) {
   const start = nowAbs();
   const t0 = performance.now();
+  let split = 0, forcedPosition = -1;
+  const between = opts.split
+    ? async () => {
+        split = 1;
+        const token = ++tokenSeq;
+        const p = new Promise<number>((resolve) => waiting.set(token, resolve));
+        port.postMessage({ type: "force", token, subject });
+        forcedPosition = await Promise.race([p, new Promise<number>((r) => setTimeout(() => r(-1), 10_000))]);
+        waiting.delete(token);
+        if (forcedPosition >= 0) split = 2;
+      }
+    : undefined;
   try {
-    const pr = await (sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis));
+    const pr = await (opts.sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis, between));
     const latency = performance.now() - t0;
     const o = observe(pr);
-    records.push([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null]);
-    if (keepRows)
-      samples.push({ phase: ph, subject, basis, start, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo ?? null, t.id]) });
+    records.push([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0]);
+    if (opts.keepRows)
+      samples.push({ phase: ph, subject, basis, position, start, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo ?? null, t.id]) });
   } catch (error: any) {
-    records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error")]);
+    records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0]);
   }
 }
 
@@ -79,12 +118,12 @@ async function loop(id: number) {
   const rng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
   running++;
   try {
-    while (!stopping && id < wanted && latest > 0) {
+    while (!stopping && id < wanted && acked.length > 0) {
       const oracle = cfg.sampleSubjects.length > 0 && rng.next() < cfg.oracleRate;
-      const subject = oracle ? cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]! : pickSubject(rng);
-      const asOf = recent.length > 1 && rng.next() < cfg.asOfShare;
-      const recordedAt = asOf ? recent[rng.int(recent.length)]! : latest;
-      await readOnce(subject, { recordedAt, validAt: Math.floor(nowAbs()) }, phase, oracle);
+      const picked = oracle ? { subject: cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]!, hotPick: false } : pickSubject(rng);
+      const [basis, kind, position] = pickBasis(rng);
+      const split = mode === "mixed" && rng.next() < cfg.splitShare;
+      await readOnce(picked.subject, basis, kind, position, phase, { keepRows: oracle, split, hotPick: picked.hotPick });
     }
   } finally {
     running--;
@@ -119,9 +158,11 @@ port.on("message", async (msg: any) => {
     mode = msg.mode ?? "mixed";
     setLevel(msg.readers);
   } else if (msg.type === "basis") {
-    latest = msg.latest;
-    recent = msg.recent;
+    acked = msg.acked;
+    hot = msg.hot;
     if (wanted > loops.size) setLevel(wanted);
+  } else if (msg.type === "forced") {
+    waiting.get(msg.token)?.(msg.position);
   } else if (msg.type === "sweep") {
     const started = performance.now();
     let next = 0;
@@ -130,7 +171,7 @@ port.on("message", async (msg: any) => {
       Array.from({ length: msg.concurrency }, async () => {
         while (!stopping && next < list.length) {
           const subject = list[next++]!;
-          await readOnce(subject, msg.basis, msg.phase, false, true);
+          await readOnce(subject, msg.basis, 0, msg.position, msg.phase, { keepRows: false, sweep: true });
         }
       }),
     );
@@ -138,6 +179,7 @@ port.on("message", async (msg: any) => {
   } else if (msg.type === "stop") {
     stopping = true;
     wanted = 0;
+    for (const resolve of waiting.values()) resolve(-1);
     const deadline = Date.now() + 30_000;
     while (running > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
     clearInterval(flush);

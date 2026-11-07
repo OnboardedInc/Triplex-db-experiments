@@ -69,6 +69,11 @@ export class OpenLoopScheduler<J extends Job> {
   get notOffered(): number {
     return this.jobs.length - this.next;
   }
+  /** Offer an overlay job now (its scheduledAt is its own offer time); it joins its subject's serial queue. */
+  inject(job: J): void {
+    if (this.stopped) return;
+    this.offer(job);
+  }
   setUntil(t: number): void {
     (this.opts as { until?: number }).until = t;
   }
