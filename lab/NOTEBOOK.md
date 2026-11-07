@@ -943,3 +943,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - Learning: making pending rulings legal rows (Q47d) removed the recurring "--verify broke because I recorded a ruling" failure; rulings
   can now be recorded the moment they are made, and the contract proves they carry no authority.
 - Dispatched EXP-D01b (TypeScript W0 kernel, independent of O-DOMAIN) and told E01 to adopt 0.3.7's schemas. Codex round 7 running.
+
+## 2026-11-07 23:55Z: Codex round 7: NOT READY, 5 open (open count 14, 13, 7, 6, 5, 4, 5)
+- Closed: indirect refusals (R6-6), pending-ruling authority (R6-7); domain blocking confirmed (26 O-DOMAIN obligations stay DIAGNOSTIC).
+- Still partial: invented evidence (well-formed records with invented cases and self-consistent expected objects pass) and control
+  provenance (a manifest label makes a candidate binary the control). Learning: every round has found a new way to forge a document, so
+  Q55a stops accepting documents: a qualified verdict comes only from a run the evaluator executes itself (own build, cases from pinned
+  manifests, expected answers from the pinned oracle). Experiment receipts become diagnostic evidence.
+- New, from the broker composition: (5) the transition table ties ACK to the replica's marker, so it would reject a correct broker ACK;
+  (6) repository read-your-own-write says nothing about native queries; (7) P2Q's feed lag starts at the ACK, not at source publication.
+  Ruled Q55b-d. Q55c (native queries report their basis, honor a basis token, otherwise read the replica's position) is flagged for Sam.
+- The count went up by one because a new composition entered the evidence, which is the review doing its job, not a regression.
