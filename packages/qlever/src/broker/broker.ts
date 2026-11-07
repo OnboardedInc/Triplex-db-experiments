@@ -322,6 +322,9 @@ export class HostBroker {
       head: this.headPosition,
     };
     const accepted: { pending: Pending; member: FrameMember; positions: Map<number, number> }[] = [];
+    // Conflicts are answered only after this group is durable, so the retry reads a head that already
+    // includes the member it lost to (otherwise it would re-stage at the old head and conflict again).
+    const conflicts: { pending: Pending; decision: BrokerDecision }[] = [];
     let ordinal = 0;
     let taken = 0;
     while (taken < this.queue.length && accepted.length < maxGroup) {
@@ -350,13 +353,13 @@ export class HostBroker {
             ackAt: performance.now(),
             replayed: true,
           });
-        } else pending.resolve({ kind: "conflict", reason: "claim" });
+        } else conflicts.push({ pending, decision: { kind: "conflict", reason: "claim" } });
         continue;
       }
       const conflict = this.check(txn, staged);
       if (conflict) {
         this.counters.conflicts++;
-        pending.resolve(conflict);
+        conflicts.push({ pending, decision: conflict });
         continue;
       }
       let member: { member: FrameMember; positions: Map<number, number> };
@@ -375,7 +378,10 @@ export class HostBroker {
       accepted.push({ pending, ...member });
     }
     this.queue.splice(0, taken);
-    if (accepted.length === 0) return;
+    const answerConflicts = () => {
+      for (const entry of conflicts) entry.pending.resolve(entry.decision);
+    };
+    if (accepted.length === 0) return answerConflicts();
     const members = accepted.map((entry) => entry.member);
     const payload = encodeCommitGroup({ v: 1, stream: this.options.scopeKey, lsn, epoch, members });
     const t0 = performance.now();
@@ -385,6 +391,7 @@ export class HostBroker {
     } catch (cause) {
       this.fail(new BrokerFailed(`Broker log append failed; outcome of ${accepted.length} commands unknown: ${String(cause)}`));
       for (const entry of accepted) entry.pending.reject(this.failed);
+      for (const entry of conflicts) entry.pending.reject(this.failed);
       return;
     }
     const ackAt = performance.now();
@@ -400,6 +407,7 @@ export class HostBroker {
     this.options.onEvent?.({ type: "frame", lsn: frame.lsn, members: members.length, bytes: payload.length, appendMs: ackAt - t0, at: ackAt });
     for (const entry of accepted)
       entry.pending.resolve({ kind: "committed", lsn: frame.lsn, epoch, positions: entry.positions, ackAt, replayed: false });
+    answerConflicts();
     this.wakeApplier?.();
   }
 
@@ -656,7 +664,8 @@ export class HostBroker {
         }
       }
       const delta = deltaOf(response);
-      if (delta.inserted === 0 && delta.deleted === 0) {
+      // Unknown response shape or a re-send: never assume success without the marker.
+      if ((delta.inserted === 0 && delta.deleted === 0) || delta.inserted === undefined || resends > 0) {
         // Zero change counts: either this update already applied (a re-send after a lost response) or the
         // guard failed because another epoch owns the replica. The marker decides (R13 6.5 step 8).
         const marker = await this.readReplicaMarker();
