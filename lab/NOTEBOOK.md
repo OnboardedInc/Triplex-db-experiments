@@ -745,3 +745,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   fail closed on null oracle pins (O-REPLAY, O-TDK1) until those oracles are accepted. The Q38c check worked the first time it mattered:
   Q40 landed in RULINGS.md mid-compile and the generator refused until it was listed as recorded-not-compiled. Rulings the contract has
   not compiled yet now live in lab/acceptance/RULINGS-PENDING.md (Q41). R21 (engine-upgrade survey) and Codex round 5 started.
+
+## 2026-11-08 ~02:30Z: Codex round 5: 6 closed, 2 partial, 3 new (converging: 14, 13, 7, 6, 5 open)
+- **Learning: a structural receipt check is a bypass waiting for the pins.** Codex fabricated a receipt with all eight position case names,
+  all-zero object hashes and a different binary; the reference `receipt_valid` accepted it, and with simulated accepted oracle pins the claim
+  qualified. Today's null pins make it DIAGNOSTIC, so nothing was wrongly claimed, but this must be closed before any oracle is pinned:
+  EXP-E01 builds a lab evaluator that opens objects, binds binaries to source through a manifest, checks freshness and requires the claim's
+  own measurement receipts and a matched control (Q42a).
+- **Learning: sender ordering is not receiver ordering.** Unique (id, seq) deliveries arriving reversed (seq 2, then a delayed seq 1) leave
+  a deduplicating receiver on the older payload. Q42b: receivers never regress a projection and process every-transition effects in order
+  with gap recovery; W0 gains a `receive` operation so the expected receiver state is oracle-computed.
+- **Learning: every piece of outbox state is one atomic unit** (basis guard, retirement, sequence, latest payload, outbox records), or a
+  crash between them reopens the stale-publication window (Q42c).
