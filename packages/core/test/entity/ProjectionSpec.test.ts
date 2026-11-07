@@ -61,6 +61,7 @@ describe("ProjectionSpec.compile", () => {
       id: spec.id,
       layout: "triplex-projection/1",
       rdfBase: "urn:triplex:",
+      inexactPolicy: "ledger-only",
       coordinates: {
         xtdb: {
           validTime: [
@@ -88,12 +89,14 @@ describe("ProjectionSpec.compile", () => {
                 list: false,
                 type: "VARCHAR",
                 encoding: "native",
+                ordering: "order-key",
                 exactness: [{ _tag: "WellFormedUnicode" }],
               },
               rdf: {
                 predicate: "urn:triplex:attr:company:name",
                 object: { kind: "literal", datatype: `${XSD}string` },
                 encoding: "native",
+                ordering: "order-key",
                 exactness: [{ _tag: "WellFormedUnicode" }],
               },
             },

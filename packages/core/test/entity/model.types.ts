@@ -116,6 +116,16 @@ void people.find({ where: { name: { gt: "a" } } });
 // @ts-expect-error orderBy names an alias or $id
 void people.find({ orderBy: "nickname" });
 const where: Where<typeof Person> = { skills: "rust", employer: { exists: true } };
+// @ts-expect-error entity ids are opaque: no startsWith on ref attributes (VERIFY F7)
+void people.find({ where: { employer: { startsWith: "company:" } } });
+
+// A computed (widened) cardinality may be a scalar or an array at runtime (VERIFY F7).
+const Noted = EntityType.make("Noted", { attributes: { note: computedUse } });
+declare const noted: Doc<typeof Noted>;
+assertType<Equal<(typeof noted)["note"], string | ReadonlyArray<string> | undefined>>();
+// @ts-expect-error a widened cardinality is not typed as a plain scalar
+const noteScalar: string | undefined = noted.note;
+void noteScalar;
 void where;
 
 // ---------------------------------------------------------------------------

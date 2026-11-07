@@ -34,7 +34,15 @@ export type OutputOf<H> =
 export type InputOf<H> =
   H extends AttributeHandle<infer D, boolean, Attribute.Cardinality> ? Attribute.ValueOf<D> : never;
 
-type Many<H, V> = H extends { readonly cardinality: "many" } ? ReadonlyArray<V> : V;
+/**
+ * Literal `"many"` is an array, literal `"one"` a scalar; a widened cardinality (computed use
+ * options) may be either at runtime, so it is typed as both (VERIFY F7).
+ */
+type Many<H, V> = H extends { readonly cardinality: "many" }
+  ? ReadonlyArray<V>
+  : H extends { readonly cardinality: "one" }
+    ? V
+    : V | ReadonlyArray<V>;
 
 /** Present on every document: required card-one (literal `true`) and every card-many. */
 type AlwaysPresent<A> = {
@@ -89,7 +97,8 @@ export type Predicate<V> =
   | (V extends number
       ? { readonly gt?: V; readonly gte?: V; readonly lt?: V; readonly lte?: V }
       : never)
-  | (V extends string ? { readonly startsWith: string } : never);
+  // Entity ids are opaque: no prefix filters on refs (VERIFY F7).
+  | ([V] extends [EntityId] ? never : V extends string ? { readonly startsWith: string } : never);
 
 export type Where<M extends Model> = {
   readonly [P in keyof Handles<M>]?: Predicate<OutputOf<Handles<M>[P]>>;

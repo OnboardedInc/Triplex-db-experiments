@@ -31,6 +31,15 @@ describe("EXP-R01 stubs", () => {
     expect(() => Plan.partialSet({ specId: spec.id, entities: [] }, "xtdb")).toThrow(
       NotImplementedError,
     );
+    const ok = { complete: true } as const;
+    expect(() =>
+      Plan.rowSegments({
+        entityType: "Person",
+        intervals: [{ from: 0 }],
+        attributes: [],
+        coordinates: { xtdb: ok, rdf: ok },
+      }),
+    ).toThrow(NotImplementedError);
   });
 
   it("repository reads die with NotImplementedError", async () => {
