@@ -22,7 +22,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | exp/R01-entity-core | MERGED db249d8 (verified PROMOTE) | follow-ups go to EXP-R02 / EXP-F02 |
 | exp/O01-replay-oracle (03d86f3) | V-O01 FIX-FIRST (verify/O01 745547d; lab/verify/O01/VERIFY.md) | EXP-O02 fixes it; then re-verify -> ACCEPT -> merge |
-| exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs | cherry-pick task-languages.mjs to main |
+| exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
 | contract 0.3.1 (main 9c01194) | Q16-Q20 compiled, validates (hash 80e60385...) | 0.3.2: Q21 + Codex plan-v2 findings |
 
