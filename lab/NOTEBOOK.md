@@ -466,3 +466,81 @@ EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) 
 - **Composition identity** is per layer (source, current, history, analytics) with watermark routing and ACK after the current index
   reaches the commit (Q28); bundled "all read layers move together" comparisons could not tell layers apart.
 - Next: A01 compiles 0.3.2; N01 and W01 got the new semantics; Codex round 2 on 0.3.2 when it lands; EXP-D01 when a slot frees.
+
+## 2026-11-07 ~21:30Z: R16 (XTDB fit) and R18 (prior art) landed; EXP-P2X and EXP-D01a dispatched
+- **XTDB P1 learning: the read path and the indexer share one JVM's CPU.** At 4+ closed-loop readers on a 2-CPU node, commit service
+  time went from about 17 ms to 90-112 ms. Pinned reads stayed exact and nothing locked, so "never block writers" fails by CPU, not
+  by locks. Direction: readers on a follower node (or nodes) that tails the same log; the leader handles writes and the synchronous
+  current index. pgwire's `server.numThreads` (42) caps connections, so 256 readers need it raised, followers or a pooler. Note R18:
+  `AWAIT_TOKEN` is cleared by `DISCARD ALL`, so pooled clients must send it per read-only transaction.
+- **XTDB P2 learning: correct, but the floor is a commit round trip (about 15 ms single-row on a loaded host).** CAS adds about 5 ms.
+  Today's adapter also asserts `MAX(position)` over the scope's tx_meta on every commit, which serializes all commits in a scope
+  (R18 finding 5). EXP-P2X tests per-subject CAS with order and gap-freedom from XTDB's log (tx id plus a high-water mark).
+- **XTDB P3 learning: no supported change stream; build it in Triplex.** METADATA plus a feed row in the same tx, one tailer on
+  `xt.source_log_msgs` (2 ms empty poll, O(window)), checkpoint = msg_id. Never fan out by many pollers on `xt.txs` (32 pollers stalled
+  commits for seconds).
+- **XTDB P4 learning: single-subject current pulls already sit near the bar and stay flat with history, but multi-query pulls do not**
+  (4 queries for 40 entities cost 35-40 ms p50). R18's strongest design idea fits here: a per-subject world document keyed by `_id`
+  (XTDB indexes only `_id`) with a validity interval (stamped with the positions where its dependencies last changed), so one `_id`
+  read serves the current basis and recent as-of bases. Watch R18's source finding: a currently valid fact with a finite `valid_to`
+  (an expiry date) is filed as historical (OutWriter.kt:146), so expiry-heavy subjects could fall off the current path; an explicit
+  current table avoids that. These go into EXP-X04's brief.
+- **One dependency index, three jobs (R18).** A recorded read set per subject evaluation plus a reverse index drives the P3 re-run
+  trigger, world-document invalidation (P4, P1) and the P5 blast radius. W0's spec now lists read sets per rule so this index has an
+  exact expected answer (EXP-D01a).
+- **XTDB P5 learning: a snapshot token pins nothing** (GC is time-bounded at 24 h and ignores open snapshots), so long sweeps cost
+  writers and compaction nothing; 100k in about 91 s under live load is close to the 100 s bar, and published lane results
+  (ScyllaDB 2-3.5x OLTP p99 under analytics) say the 1.5x live bar likely needs AIMD-paced sweeps or a follower (R18 X4).
+- **Requirements on XTDB:** `ATTACH DATABASE` per tenant costs about 6 MiB RSS and 0.6 threads, so 1,000 small tenants do not fit one
+  node: tenancy needs a pooled design for small tenants (open, needs research). `ERASE` is logical (marker stays in the log files), so
+  crypto-shredding is the reliable erasure route (matches Q24). Numbers: BIGINT overflow raises, but SUM, ABS(min) and DOUBLE casts are
+  silent and DECIMAL MIN/MAX fail; add to the XTDB hazard list.
+- **Decision for Sam (from R18), not assumed:** whether Datomic-style `noHistory` is acceptable for high-churn attributes (for example
+  a signal's receive counter). Default stays "keep history for everything", because audit at a past point in time is a must-have.
+
+## 2026-11-07 ~21:45Z: contract 0.3.2 committed; Codex round 2 started; R19 dispatched
+- Contract 0.3.2 (01fb285): 136 obligations (new: three erasure, three composition, one evaluator counterexample), 42 thresholds,
+  29 mutants, 27 evaluator counterexamples. The generator caught all 14 planted regressions (GS.01 widened, decimal equality allowed,
+  EP-RAW-WIRE restored, p50 flatness, engineOfLane keys, empty calibration set, the old 256 requests/s bar, among others).
+- Q29 accepts the contract author's five proposals, including `single-execution` as the default mode for every obligation.
+- R19 (Sonnet xhigh) researches the three questions R16 left open on XTDB: what read nodes need (log and object store, per-node
+  indexing CPU, token travel, memory inside our 11 GiB pool), where the ~15 ms commit floor comes from and which knobs move it, and a
+  storage-isolated tenancy design for 1 large plus 1,000 small tenants on both engines.
+
+## 2026-11-07 ~22:05Z: EXP-F02 partly falsified; EXP-002 QLever baseline merged; EXP-F02b dispatched
+- **F02 learning: "exact" in the spec is only as good as the encoding actually used.** Five silent changes where ProjectionSpec claimed
+  exactness: JSON loses -0 everywhere (ledger included: `packValue` uses JSON.stringify and CanonicalJson normalizes -0); XTDB card-many
+  DOUBLE as one JSON parameter turns -0 into 0 (array-cast writes keep it); instant -0 becomes 0; XTDB TIMESTAMPTZ via driver defaults
+  turns year 0001 into 2001 and drops microseconds (text reads are exact); QLever `_native` shadows flagged exact but exported through
+  `%.13g` (`numericShadowIsExact` repeated the F1 bug). Ruled Q30: reject at qualified write routes, pin the proven encodings in
+  ProjectionSpec, fix the QLever predicate at the root. EXP-F02b fixes; the falsifier (lab/falsifiers/wire) is now on main as a
+  regression tool and should run on every promotion that touches codecs.
+- **EXP-002 learning: QLever's planner budget, not the memory cap, decided G1.** Default budget 1500 OOM-killed the engine at 2.5 GiB
+  during planning (0/88); budget 1 passed 88/88 with the f1 profile at a 347 MiB peak (native queries about 23% slower than budget 100).
+  The dev config now runs `-j 4 -c 512M -e 128M -s 10s`, planner budget 1, no unbounded logs.
+- **EXP-002 learning, P2 on QLever: update latency grows with the delta.** 7 ms median on a fresh engine, 494 ms and then 1.3 s as the
+  delta grew, max 59 s. A QLever source of truth or current index must bound the delta (online `rebuild-index` on a schedule or a delta
+  size trigger) and amortize the fixed per-update cost (group commit), or P2 fails by orders of magnitude. This is the core of EXP-P2Q.
+- **EXP-002 learning, C8 on QLever: reads still write.** 14 of 71 G2 tasks write scratch graphs through `BasisRelations` (about 62
+  updates per run) and `recursion.ts` writes on the Datalog path. Under P1 those writes compete with real commits on QLever's FIFO
+  pool (R18) and grow the delta; C8's read-only frontier loop is a P1 and P2 fix on QLever, not only a correctness item.
+- G4 counterexamples confirmed on QLever (identical current and reopen): ICU string order where codepoint order is expected, and
+  decorrelated correlated NOT EXISTS; EXP-Q03 (order keys, EXISTS re-binding) is the fix track.
+
+## 2026-11-07 ~22:30Z: Codex round 2 on plan v2.1 and contract 0.3.2: 7 closed, 7 partial, 6 new, NOT READY
+- **Learning: a fix described in prose is not a fix until the generated contract enforces it.** Codex checked the compiled
+  obligations, not TARGETS, and found loopholes the prose hid: P2 could pass by rejecting most commands with typed errors (Q31a now
+  requires every oracle-valid command to publish, with a bounded queue); the forced P1 mutations would have made faster readers
+  generate more writes, so candidates would no longer see the same trace (Q31b: split reads straddle existing trace commands).
+- **Learning: "ACK only after the current index catches up" turns an index outage into a commit outage.** Q31e reverses Q28: the source
+  ACKs after its own publication and read-your-own-write is kept by routing the pull to an eligible reader. This keeps P2 alive through
+  GS.04b and makes the current index a fast path, not a correctness dependency.
+- **Learning: a watermark proves reachability, not reconstructability.** A current-only index past basis B cannot answer at B unless B
+  lies inside the validity interval of every attribute read (Q31d); erasure adds a second frontier independent of the requested basis
+  (Q31f), or an old-basis read could return an erased value from a lagging index.
+- **Learning: non-dense positions need coordinates, not just "use the log offset".** One engine transaction can hold several Triplex
+  transacts, so positions are (stream, epoch, offset, ordinal) with a fully resolved prefix as the watermark (Q31c); four falsifiers
+  (nested cuts, abort gap, crash between append and resolution, resume at an abort gap) gate any comparative claim. Sent to EXP-P2X.
+- **Learning: the orchestrator can author W0, but coverage must be frozen and reviewed independently** (Q31i), or 100k no-op
+  evaluations satisfy P5. Floors sent to EXP-D01a; V-D01 reviews before W0's hashes are pinned.
+- Contract 0.3.3 (Q29, Q31) is with A01. Codex round 3 after 0.3.3 compiles.

@@ -1,0 +1,1388 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "G1",
+  "lane": "qlever",
+  "slot": "dev",
+  "runId": "G1-qlever-20261107T192004Z-32a4ff",
+  "experiment": "EXP-002",
+  "note": "EXP-002 G1 planner comparison: default plans, planner 1 (isolates the planner threshold), 2.5 GiB cap",
+  "previous": null,
+  "startedAt": "2026-11-07T19:20:04.665Z",
+  "endedAt": "2026-11-07T19:28:43.710Z",
+  "durationMs": 519045,
+  "scope": "full",
+  "runKind": "control",
+  "mutation": null,
+  "contractVersion": "0.1.0-draft",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/1",
+    "version": "0.1.0-draft",
+    "status": "DRAFT-UNREVIEWED: not frozen; freezes as 1.0.0 after orchestrator and adversarial review",
+    "sha256": "2a9c8611ac8f2a6ef5088382312a735d24a83640584c75f2e88ebcf7e6cc7780"
+  },
+  "obligations": [
+    {
+      "id": "G1.found.unchanged44",
+      "definitionSha256": "5dc65de53879dc4b7e0dd3481f01a33f7a556fa42eac07c741714eabb8448408",
+      "receiptScope": "engine",
+      "lanes": [
+        "qlever-sparql"
+      ]
+    }
+  ],
+  "engineName": "qlever",
+  "git": {
+    "head": "24d1e520d02be3c5ba0208680c6e86f60f88536b",
+    "headTree": "48831c7cb9c5550fc7cd3a9c06e0b428cb4ab240",
+    "branch": "exp/002-qlever-baseline",
+    "dirty": true,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/runs/G0/G0-qlever-20261107T190644Z-50f7a4.json",
+      "lab/runs/G1/G1-qlever-20261107T191405Z-e08600.json",
+      "lab/runs/G1/G1-qlever-20261107T191837Z-d56980.json",
+      "lab/runs/G4/"
+    ],
+    "sourceTreeId": "0164d1a9da4c01f9adcec3c37df3059e500fc1420e1ed6f945b2d57286f6d562"
+  },
+  "lockfileSha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "b6e5704ea421dba9dbd203649e5473ee93fc03ef7b0b2770efb3d7d30b69ae46",
+    "lab/bin/lib.mjs": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740",
+    "lab/bin/receipt.mjs": "b6511d1eab385fcf453fe628aa4dd5437e3b78c02a2eca84165dcaa246c5abad",
+    "lab/bin/engine.mjs": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+  },
+  "build": {
+    "manifestSha256": "dee00e56a2c10d2d9dec91472970b133bfe0a73f8fbee330d4d92421a5f09792",
+    "manifest": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 379,
+        "bytes": 2397489,
+        "sha256": "04ea353aa761a3facb178a626dd8e08ebd8125dc8a2c375672e1917dd77b7ad3"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "qlever": {
+        "files": 70,
+        "bytes": 409001,
+        "sha256": "c6cad514171b46de1e29193246780235c67bb361b8ffb9f029679fb8e64dc014"
+      },
+      "qualification": {
+        "files": 16,
+        "bytes": 212702,
+        "sha256": "19c1dd683a7e04a53b87902c6c2c2a304771a1000db8caff989778035de4da5c"
+      }
+    }
+  },
+  "engine": {
+    "container": "tx2-qlever-dev",
+    "containerId": "6999afc00d51c68582b7ab98a23946ac254646de2de397fe6555fb677a66c1fe",
+    "startedAt": "2026-11-07T19:19:55.229787332Z",
+    "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "repoDigests": [
+      "adfreiburg/qlever@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    ],
+    "configSha256": "fb4d079242ae5948f5d296341aead631804647e7856bc98b01f525936eb37070",
+    "effectiveConfig": {
+      "lane": "qlever",
+      "slot": "dev",
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "startScriptSha256": "597bdb07127f412232be1b73040cbe2202855b6e5dd5d03d83d06086919287ea",
+      "sourceStartScriptSha256": "16c50037e97004e1345b5060b65c5cb3c26d3b4a153cc377a65ccc5e7f304930",
+      "qleverMemory": "1500M",
+      "memBytes": 2684354560,
+      "cpus": 2,
+      "publish": "127.0.0.1:7070:7019",
+      "volume": "tx2-qlever-dev-data:/data",
+      "volumeInit": "marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)",
+      "entrypoint": [
+        "/bin/bash",
+        "/config/start.sh"
+      ],
+      "health": "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'"
+    },
+    "endpoint": "http://127.0.0.1:7070",
+    "port": 7070,
+    "memCapBytes": 2684354560,
+    "nanoCpus": 2000000000,
+    "ownerSha256": "3167ae10b424dff110fc636f9fd9094ac4fbe8a18cdcef7ff4f3a314a3045ffa",
+    "holder": "worktree:/Users/sam/projects/triplex-db-2"
+  },
+  "profile": {
+    "name": "default",
+    "env": {}
+  },
+  "queryPath": "qlever-datalog",
+  "diskBefore": {
+    "totalBytes": 63088406528,
+    "usedBytes": 6015008768,
+    "availableBytes": 53835501568
+  },
+  "planner": {
+    "requested": "1",
+    "before": "1",
+    "selected": "1",
+    "effective": "1",
+    "restoredTo": "1",
+    "after": "1"
+  },
+  "containers": {
+    "tx2-qlever-dev": {
+      "samples": 170,
+      "peakMemBytes": 592760013,
+      "peakCpuPercent": 162.11,
+      "memLimitBytes": 2684354560
+    },
+    "tx2-xtdb-dev": {
+      "samples": 170,
+      "peakMemBytes": 1926292832,
+      "peakCpuPercent": 204.88,
+      "memLimitBytes": 3221225472
+    },
+    "tx2-xtdb-s2": {
+      "samples": 20,
+      "peakMemBytes": 419744973,
+      "peakCpuPercent": 201.43,
+      "memLimitBytes": 3758096384
+    }
+  },
+  "coRunning": [
+    {
+      "name": "tx2-xtdb-s2",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-qlever-dev",
+      "memCapBytes": 2684354560,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-dev",
+      "memCapBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    }
+  ],
+  "volumeBytes": 25698304,
+  "diskAfter": {
+    "totalBytes": 63088406528,
+    "usedBytes": 6037569536,
+    "availableBytes": 53812940800
+  },
+  "fixtures": {
+    "packages/testkit/src/index.ts": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+    "packages/qualification/workloads/lab-conformance.ts": "fb0898e349fef7102663443fa240d9ae2995f6309fd2ab264c1c91ad9a05f397"
+  },
+  "contactedEndpoint": "http://127.0.0.1:7070",
+  "counts": {
+    "executed": 88,
+    "expected": 88,
+    "pass": 84,
+    "fail": 4,
+    "skip": 0,
+    "suite": "FAIL",
+    "byPhase": {
+      "current": {
+        "pass": 42,
+        "total": 44
+      },
+      "reopen": {
+        "pass": 42,
+        "total": 44
+      }
+    }
+  },
+  "timings": {
+    "suiteMs": 85367.00825,
+    "casesMs": 420166.3072089999
+  },
+  "cases": [
+    {
+      "caseId": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-fd846b28-d5bc-4875-84c9-dd8497572b3a\",0]",
+      "rawResultSha256": "decdcd16eb88668e476826076808dd482c1f02ffa5aba1df4179f7ef1322f34f",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-dbdfad2f-c89f-4e1b-b7c5-97a03003ddf4\",0]",
+      "rawResultSha256": "a752868552d122b30206110c53462f3e40b07ad0f1e998593f37d556dc96c064",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "historical cursor pages intersect recorded time and the commit snapshot",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-d96ab0e6-2d19-421b-8dfb-ecf285b0729f\",0]",
+      "rawResultSha256": "fb4b1fef6bd397431fd77c3bc0bed6c1c9702c9aa437f9f2b6067c1d74b725e5",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "recursive relations support cursor pagination and optional total counts",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-79332cde-16e3-4987-8898-8cd112c586e4\",0]",
+      "rawResultSha256": "929b1782a40cf11d1ef6070df1a1e9327945c32070d897fe1fe47bea73ec7ea9",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "assert then get and match return the fact",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-1375a8d9-75e1-47c3-b799-f0c9ff334fef\",0]",
+      "rawResultSha256": "b2f91ebf07b33ecaaa16242931adfb2e12fee51d9b1ec2413f818602d6c2613d",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "same-value facts in one batch keep distinct identities",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-efff5e43-08fd-476a-a4a6-d51d3df1e13a\",0]",
+      "rawResultSha256": "c8478076e3de522ade2d33a5db6c01f79fbc414367e6bdd9c12e01d41cf3b2d2",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog query finds asserted facts",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-e7e9a0f4-8887-440c-9bd7-d5618022af2b\",0]",
+      "rawResultSha256": "06e277bcd4f1364a4e44eec53c05bd06761cac969bbee98ec41ade62433ae1a6",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog projections preserve scalar types without guessing from text",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-ffdc48bb-bd00-4c6b-b29c-0ea056f38ea1\",0]",
+      "rawResultSha256": "b03c10b58ca54a93249937c5f3efb9ef4ba8a7283d13fcb95fc9bb7bcd3734f8",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-0f77cdf1-3108-4fc0-9403-734a8e48d938\",0]",
+      "rawResultSha256": "e42382d36ea6fbebb618b6befafa1d2bd2739010a72d094f82bdfb70ad8b3921",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog constant projections retain their scalar values through pagination",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-49f7a70b-0978-4720-bf1b-3c1e6e9ed3e5\",0]",
+      "rawResultSha256": "6a4e1367ed535f5ca6e768620c691cf75017d2aa6ac7164764f576992fad265d",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog pattern constants use flattened scalar identity in filters",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-cc6a8d3b-5885-45a5-b116-d4f1f95d828c\",0]",
+      "rawResultSha256": "822f95dc9bef75c1995a1af00d0ec0d0dfa8ab7a3bb096d6c9d038c85525f299",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog value joins compare every scalar family",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-aad4f9a9-698b-4492-bf68-30d40e273444\",0]",
+      "rawResultSha256": "b63e2315c0f8f20b36f6cdd7af60c0c098343e955e4886d54f0debc054839333",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog equality predicates compare numeric values as numbers",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-75ca64fa-1ae2-4a17-a924-6880ccde1917\",0]",
+      "rawResultSha256": "14fa3ac7c26b7c57905d95c9f2888fb1a4df5d9f1a3cb8b00efe3f533b48a36c",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog equality keeps identity bindings string-typed",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-88bf9f9e-c38f-4186-8c29-df1e30fbd677\",0]",
+      "rawResultSha256": "b828f736940f0cc0bf9dcc30cfe0f324784acd278d30632b312c881586da05b5",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "ordered Datalog predicates accept only numeric scalar families",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-e7ee3983-4e5f-4692-9d20-94398b487517\",0]",
+      "rawResultSha256": "a3bef3a6b55beec7af42127197cb8b74040f92281292fa30278f7f9aa9738f42",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog reverse lookup matches an explicitly typed ref constant",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-d20cae1b-abfd-42d0-95e4-1ab0ed28425f\",0]",
+      "rawResultSha256": "a52cf7b76c9b45158c8df93f5f3fa95632cf701a329f8e4f01de553f6544ef0b",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog joins a variable bound from a ref in value position",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-e82e1e23-6eb1-429a-a6b7-921346ef416f\",0]",
+      "rawResultSha256": "dfe28470fca495e33b3716c213b2606ce5b7c0f7f1a2206d618c981477570d74",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog supports multi-hop joins over ref edges",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-6973ff52-60db-4c82-bc93-f402337b6bfd\",0]",
+      "rawResultSha256": "3b955ccbb8e4e306e060149aa7a66028af0e7b3dde7e4b9848c28db2e5a32ed4",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog recursive rules compute the same transitive closure",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-40a43583-b50d-4a59-ab4d-78552ecd43f1\",0]",
+      "rawResultSha256": "ffaf3745b4ff40a87eea6ea78ddee20a6fba18d3efd9c9119b3e0a4a5be828f0",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog rule patterns unify repeated variables",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-5fb9f777-9f90-444a-a67b-926f3ddda288\",0]",
+      "rawResultSha256": "8e9aff2f8d90a46b227e1da2654a7c784ed5560448833d625382331dba7679e2",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog aggregations group, filter, and order consistently",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-a77a8c46-8d4e-4f6f-ae9f-60f417be1523\",0]",
+      "rawResultSha256": "4d0fd1ee9ddd1b91d69497582b39f0e3d0a199bbbcba68b704554e85e1238c82",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog having preserves typed group and aggregate equality",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-70d25b20-77ee-461b-86b0-22a07a2cf329\",0]",
+      "rawResultSha256": "04e7dec0bd8c71a51ec6b656751be84fb81f770e45441c4faec1d470f062c2c2",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-dcbe03f4-3f8c-45be-b439-8b558bed256c\",0]",
+      "rawResultSha256": "c5c3a1cfe90710c43a3fca345dbe8691734a6d058e8ef8417c5eb6303b7b07f4",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog conjunctions establish bindings independent of clause order",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-7add8ffd-af44-4469-9c38-552053d61a3d\",0]",
+      "rawResultSha256": "2de5460032f04ecbc2f68588b9ef89a0aa6b8e846ac0c08246a338fe65908401",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-c433c4b3-9bfd-4890-8242-f71276d73a21\",0]",
+      "rawResultSha256": "08452de7b93b03af1ba83f371fb4134c3d15a66a2731f45cb8908c10522e7cf7",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "wrapped filters preserve scalar types and SQL null semantics",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-ed54ab4d-322d-45e5-bd43-97fd24360f31\",0]",
+      "rawResultSha256": "19e13e1ad571cc4e74fdd55486f9d4379825b32d67806205c847b2522f0c4a94",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "Datalog ordering and pagination preserve mixed scalar order",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-b24a86e2-495e-4502-9d43-af84004b8d9d\",0]",
+      "rawResultSha256": "9ec82b365c93e23fb4bd509d22da7eea2479188a1d095422769d075baab6148e",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-bb5299df-d665-4f9c-b286-48a35d0de7b9\",0]",
+      "rawResultSha256": "deda5b2b4588fe08a9f3ad35124d9495a731d66c5fb5c989512773f675720934",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "transact records provenance datoms",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-0c5d9281-07ee-4579-8cc9-42214be4d2f2\",0]",
+      "rawResultSha256": "18a8607e4e312896ae5f4151fc6a587e7d37b99549f77abbee000b7f76073fee",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "conditional transactions are atomic and journal their changes",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-4e7a582f-57eb-4097-9ca4-5e3e085cde3f\",0]",
+      "rawResultSha256": "a1341294066d775d5013e15c3f6642a8ead30ee603a2d7980ecbbc7d2b6c6634",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "entity transaction history is indexed, complete, and snapshot-stable",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-ed531bec-df1c-48f5-80eb-5807e39133f9\",0]",
+      "rawResultSha256": "82cf8bc47b15c5a2daa68b5a77b6f98c8cfc5f2aefbaecfb3f8991a7774e3652",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "graph constraints reject invalid post-states across valid time",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-842c1139-9683-4366-81cd-43cbe985092f\",0]",
+      "rawResultSha256": "1b5b403d777fc7ca045d53e7e4c05dd9de4ae3dcafeb49c96e90ff5de3a0bac0",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "dependency state is attribute-scoped and schedules temporal edges",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-c98b498f-b230-472c-ac89-9a9e96bd55b2\",0]",
+      "rawResultSha256": "18d110e4250a99455a5b4abcc2102d416a7d3de1ac39c329c78cbfd7eb085cc1",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "derivation materialization uses indexed dependency freshness",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-92997fd1-cc95-4fe4-99c4-b18627c570c2\",0]",
+      "rawResultSha256": "ec41584806e6d8f832564003ff778687fa0536611705470d40315f376b0deaa7",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "graph constraints agree across storage backends",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-d36f2028-d387-46f0-9974-5088634be7bd\",0]",
+      "rawResultSha256": "7b05567e501bde175887b534cc986d13aa0c4cd8ac6ab2c20904843b8d1b4bf6",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "consumer checkpoints advance atomically and remain queryable",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-2b0ecae3-f207-401a-b854-1aa4f7696553\",0]",
+      "rawResultSha256": "a77e2654cf30b458e7ba677e4b407f1b9b7d618adb9ac4097c8b55508805c29f",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "retractByPattern respects entityType",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-dabbfc88-36c8-40a4-86c3-a539773a910c\",0]",
+      "rawResultSha256": "f2d559dd89cc34133080639352fe9829e56b0908829ba9b18e37369ff4b3ee2a",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "reserved Triplex namespaces reject ordinary writes atomically",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-ea76d4e4-57d3-4f22-95c9-2d3c73b7e0a3\",0]",
+      "rawResultSha256": "9603705e845b88044a41f712124dfd6c3d6b88831794be0a98a134939b2fbd53",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "transaction journals cannot be retracted through ordinary writes",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-7466cc6f-db93-423c-9b33-aad6158b0736\",0]",
+      "rawResultSha256": "39d40667c75b5108ff9c13851c5ccd46a5d4451dba36221b4caaa00fe9aafa16",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "direct and Datalog reads share one bitemporal basis",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-02c0f8fb-23a1-4ed7-b7b0-09f693647467\",0]",
+      "rawResultSha256": "68283756c520f611917c931f591569f28c57e51b81085b9274ce5bdd649da610",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "historical corrections preserve what was previously recorded",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-eb82db35-f430-4b47-821a-c6ab37f46af8\",0]",
+      "rawResultSha256": "d79f8f4599d48057155b74f08433fde154091383cf926a67858c5fcb93b2b3a6",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "batch entity reads preserve association, missing entries, and temporal basis",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-ed866365-7931-4893-be0b-a14cf07f4f7c\",0]",
+      "rawResultSha256": "0f621dcfe3be17ad3a6c2e730a11144b4ee29e516de12a774abeebc6836710c3",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "retract is coherent across write and datalog paths",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-013d1e7b-faae-493c-9b53-4fefc60b65ce\",0]",
+      "rawResultSha256": "8582c61e5a0a2e53ab17ff0fb8b4ffee41740e21bb02180338d0f5ba31bebbf4",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "paged queries use deterministic snapshot-stable cursors",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-4f737987-d38b-4cac-85d5-1c0a53d794bb\",0]",
+      "rawResultSha256": "0c2b74df5b4c4acbba5a17acc7401aae259e46800f75dd29ef38e848af0c8819",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-315049a8-ca9c-40d6-a12f-301a4dc3c7f7\",0]",
+      "rawResultSha256": "4c546f6a5b471e0dbd890a2c74d11bd34c721ecc79b273395c3ab57cbc57ac45",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-205ce90b-73e4-4352-9584-3ff80b28529e\",0]",
+      "rawResultSha256": "9c0ee2208b1d25e2e4e6396a0db71b7831bcc8052cfa23ce11757919577efe1a",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "historical cursor pages intersect recorded time and the commit snapshot",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-2758df5b-1e79-4bfa-a529-ee98cf297eb2\",0]",
+      "rawResultSha256": "da4b4c1dec8fc990b900b042a84cc69432a36cccfdce3a8c5d1f33232da692fa",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "recursive relations support cursor pagination and optional total counts",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-aa1fec33-d931-4d76-b8dd-04c7c458e123\",0]",
+      "rawResultSha256": "ebecb74b7e49d0b239bb62ce8aaafa9b2d07f8028cd5a08b44f54b7739b65fab",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "assert then get and match return the fact",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-25ea0eed-9ac7-45f3-8dfa-39893b5cd3e6\",0]",
+      "rawResultSha256": "edcc4c65ffc8e51bc7dd3c49b7b8716bc18d86ef058eaa1fdbe61b17da8981cd",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "same-value facts in one batch keep distinct identities",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-69b7a287-bea0-490a-b11f-2f40a37bb8a7\",0]",
+      "rawResultSha256": "aa0308a9bb07984ac01b9d34ceeab38728c6e5a41ef8cc376fd47e473a5eb380",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog query finds asserted facts",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-4d52554c-bee6-47b9-bfe2-e59dc161f93c\",0]",
+      "rawResultSha256": "ef5b6eb605ae35989a3559e3f97d043588af3dce434699ee5caf3f9923331cd4",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog projections preserve scalar types without guessing from text",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-e416efc4-510f-4355-a742-ded3cde1b357\",0]",
+      "rawResultSha256": "107c86fd85f86d98dc49fd6af3a246d04f69bfd45ffa6ac3cb25d815c534dc50",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-3f59e44b-9841-4198-93d9-728402f83d40\",0]",
+      "rawResultSha256": "45336589e362f6ef352ac092b87df47028b667e17a96657b94263583b2acca39",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog constant projections retain their scalar values through pagination",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-08b4008b-0e8c-407b-b6b7-f83dc298c299\",0]",
+      "rawResultSha256": "fefb6ad04dd156453adecaddf25b55f4ef2ae8b791e0795f10f59247aee3d48e",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog pattern constants use flattened scalar identity in filters",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-3b9d9114-1c6e-4c04-bdb5-e14cfd88168b\",0]",
+      "rawResultSha256": "f382d70658f359b74e06c81b05f240e8e303c3796e6fcf9d3f70a8c60164863b",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog value joins compare every scalar family",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-66015572-de84-4acb-b654-77b67f9f45dd\",0]",
+      "rawResultSha256": "4ece0d61319c04797285bf141495ab514b02d092e446c38e7d9950b7363e881a",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog equality predicates compare numeric values as numbers",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-9d01bd2b-7350-4db7-8b82-b49ac7e28b32\",0]",
+      "rawResultSha256": "cbe9bcb81e750b201d7843e2ccc2287a4593372af978204e786f8646ec70ab6d",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog equality keeps identity bindings string-typed",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-155f6f5c-7e4d-4aa8-9c7d-ddabe43977fa\",0]",
+      "rawResultSha256": "5ffee4ea32d0740699fe662b8473cf4cd90c0b60b4b10456e820e0b40b33d455",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "ordered Datalog predicates accept only numeric scalar families",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-5767385c-cf2a-43ed-8e85-ee9f0fcacc58\",0]",
+      "rawResultSha256": "708dfe2a355665a365f7c8aa3b4d0126841a533a7d1bf12d974d061e184595bf",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog reverse lookup matches an explicitly typed ref constant",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-a0285e28-8545-4097-bb1e-325e172f136d\",0]",
+      "rawResultSha256": "996e4ef9e5bddf38e40137253b3981a15567130c4fc711ec43b53a0ce8a82037",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog joins a variable bound from a ref in value position",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-0dac2a60-ac39-4d42-8c4b-2fe5afeb9e8c\",0]",
+      "rawResultSha256": "7af21d1155e34017a1730e0d13c607691a378d99e44be450f1865c3edcbdcc99",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog supports multi-hop joins over ref edges",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-4fbe6bfa-5704-470b-9589-370f47406a9a\",0]",
+      "rawResultSha256": "231d7f23a2223741f913404d14c25e56965837b0b07ddfe75987d25d2d06fcd7",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog recursive rules compute the same transitive closure",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-b65229f4-0ad8-42de-a646-8451bed30018\",0]",
+      "rawResultSha256": "d5c08d84c1ee03a486d0f9fa83582621b48372bf449ca6b29c062ec092fac31d",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog rule patterns unify repeated variables",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-fe28f99c-dda4-428e-b914-b0dbb3e500d5\",0]",
+      "rawResultSha256": "b9a9941253acc693dc2593f3c9b857199f5f3fe403b44abf9cdbd19dbf3f4dde",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog aggregations group, filter, and order consistently",
+      "mode": "reopen",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-99d0d81e-e21f-45fb-982d-986e59b7faaf\",0]",
+      "rawResultSha256": "9718f48c1b18d423bb66d9fe4883d96f4329c961f5308d5aae295c6f9bfb715a",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog having preserves typed group and aggregate equality",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-976a2716-e0bb-4464-830d-38181b24e529\",0]",
+      "rawResultSha256": "61a239a09adfdd45d51a850afe4f0bb67d76d332bf39e8a1edc26424fc67ae45",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "mode": "reopen",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-04b23413-f516-4f79-9f79-f695ef26534c\",0]",
+      "rawResultSha256": "edf179934154ef4734c9bd7167954ac7de37559326c0fd46ed5d3c7eb249d1bf",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog conjunctions establish bindings independent of clause order",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-3d8559ab-6074-4428-8557-6154ecdd75d6\",0]",
+      "rawResultSha256": "361a4b0aaa1a41ee546a7bc4be67d0b81330b5bc8a7f9d0239e4a1605cf17a20",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-14276e9d-30e9-45a9-a68d-9fa8d7c26ac4\",0]",
+      "rawResultSha256": "2ff47760c216537b45debb8246219baa131c66b06caeb5020f3ae02ec87a89bb",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "wrapped filters preserve scalar types and SQL null semantics",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-cad34c4f-88f7-4c1e-beb4-722e59983d3a\",0]",
+      "rawResultSha256": "5b1c104b74a6369ebeca848a0cb0455ce8031eaa1eeab9846b64fe620abac4ee",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "Datalog ordering and pagination preserve mixed scalar order",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-882d1d2a-637e-4036-80f7-ec4146efd9c4\",0]",
+      "rawResultSha256": "6f006839f323d3a6a9e3cfb31835afa7d74cec9f17368321bd40f19e5ad22689",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-b9332f12-5b60-4304-b95b-a253100ed85f\",0]",
+      "rawResultSha256": "d3d57bf97dd313e9ed6ac543662be496c4770ffede07fe6aa5a83ec49b0d150c",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "transact records provenance datoms",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-fb85553b-12a2-4ad5-840d-aa9181d41195\",0]",
+      "rawResultSha256": "c3f0ebe7750c96aaa79623a1293fe1e2bea358d19ae6b5cba7a26f7be288bfc5",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "conditional transactions are atomic and journal their changes",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-3d4456bd-56d0-42df-bd72-e7108cff905b\",0]",
+      "rawResultSha256": "7b4a864d05ea9d9cdc6a64e3e4ba44da554b2bb4189a8d57d7517c6297d36433",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "entity transaction history is indexed, complete, and snapshot-stable",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-ddd32d47-0225-4200-9a71-7fc586b2d146\",0]",
+      "rawResultSha256": "2d17c1e283b61c33567871edfa279201a395580fa581cab7a562422c3699eceb",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "graph constraints reject invalid post-states across valid time",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-f21d543c-2311-4e7f-8a07-039f6fd9861b\",0]",
+      "rawResultSha256": "6a59635849b512959bc2c8da7b26b1d118d7dd32582411a03e89812e8887caaf",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "dependency state is attribute-scoped and schedules temporal edges",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-09bf8118-d11f-49a6-a687-92adc3b68def\",0]",
+      "rawResultSha256": "66fb4d5be9cb674624689c66610bae5811a43a3eedffa3c9509fe6bfa28a312a",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "derivation materialization uses indexed dependency freshness",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-36826a2d-d8d3-40dd-b68d-e96763119e3f\",0]",
+      "rawResultSha256": "cf83eecc397edd0be6efcfc1919c82acfc22e5b86f5bd9e4b1d2a8e5a4bf34d8",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "graph constraints agree across storage backends",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-52948f11-c9ef-4a43-be0d-475b541da2d9\",0]",
+      "rawResultSha256": "da71d9864ad489fa8f0ad447e1bdd8650f76571e7f27d5fb76223a3ca118f12b",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "consumer checkpoints advance atomically and remain queryable",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-20c284c4-2321-4d43-9ed4-bbf25f2dc8a5\",0]",
+      "rawResultSha256": "7358a68d0b37816d59b0b052bd3ce831bfd8c64cf7f7ee032e9bb313b54c635d",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "retractByPattern respects entityType",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-8092819d-f111-4e21-9c7e-7d9f19c9640a\",0]",
+      "rawResultSha256": "f9bbea0feecb912daec96c97c7c7c28099622efcf8d07f178a75455002ac8b13",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "reserved Triplex namespaces reject ordinary writes atomically",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-6b349fc3-81ca-423e-a6bd-8c496a31d7c3\",0]",
+      "rawResultSha256": "1ca5dab9fa90827992460a66b472b9baef4a7a0239b3a8d3fbd99361a752eadd",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "transaction journals cannot be retracted through ordinary writes",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-d356f44a-82a9-4aa8-b8fa-d6241703f5de\",0]",
+      "rawResultSha256": "1979c04f240cd4c55899b4129645259f8590270b3443a2bff7ee01bbe04898cf",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "direct and Datalog reads share one bitemporal basis",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-d7538568-ad56-4f58-b2ca-c627c82a403b\",0]",
+      "rawResultSha256": "2e151df981dd4cc4fcadaf57cb2e16e94f529ca0ee7c832d6b92b05f880f29c1",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "historical corrections preserve what was previously recorded",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-b8e05772-bbfb-4825-89d9-7e73701de417\",0]",
+      "rawResultSha256": "242bc925798327be404a49ef2d034998fea66b38c4bd67491c6c7a5d73934c7e",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "batch entity reads preserve association, missing entries, and temporal basis",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-a378ecef-9a2c-4e17-b435-fb8cbe592964\",0]",
+      "rawResultSha256": "57f1db402326fac018fe46b78f57d47fc70fddfae486d16226c0bd952e9e49fe",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "retract is coherent across write and datalog paths",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-05b891ab-91a1-4463-b0e6-bba87ee02b34\",0]",
+      "rawResultSha256": "c921f2a02f1d69526bf9bc1a39790a624a050363666279e88cab11793fc5bea0",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "paged queries use deterministic snapshot-stable cursors",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-387685a0-a009-4f41-9528-00b443b6c64c\",0]",
+      "rawResultSha256": "46a64884b35f6715bd2349b12efcf65e917bf9fc71b3c1c54faf05edb48187f2",
+      "languages": [
+        "triplex-datalog"
+      ]
+    }
+  ],
+  "scopes": {
+    "suite": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-suite-f5b6473f-0273-4445-acb9-4a211507c5a0\",0]",
+    "fresh": true
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 624,
+      "cwd": ".",
+      "stdout": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/pnpm-version.stdout.txt",
+      "stderr": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-qlever --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 7031,
+      "cwd": ".",
+      "stdout": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/build.stdout.txt",
+      "stderr": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/build.stderr.txt"
+    },
+    {
+      "name": "lab-conformance",
+      "command": "node packages/qualification/workloads/lab-conformance.ts --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a3b06928fb6869c5b/runs/G1/G1-qlever-20261107T192004Z-32a4ff/g1-report.json",
+      "code": 1,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 506305,
+      "cwd": ".",
+      "stdout": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/lab-conformance.stdout.txt",
+      "stderr": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/lab-conformance.stderr.txt"
+    }
+  ],
+  "firstFailures": [
+    {
+      "case": "datalog aggregations group, filter, and order consistently",
+      "phase": "current",
+      "error": "Cause([Fail(DatalogValidationError: QLever compatibility: ordering exact integer SUM or decoded AVG requires a server result key)])"
+    },
+    {
+      "case": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "phase": "current",
+      "error": "Cause([Fail(DatalogValidationError: QLever compatibility: ordering exact integer SUM or decoded AVG requires a server result key)])"
+    },
+    {
+      "case": "datalog aggregations group, filter, and order consistently",
+      "phase": "reopen",
+      "error": "Cause([Fail(DatalogValidationError: QLever compatibility: ordering exact integer SUM or decoded AVG requires a server result key)])"
+    },
+    {
+      "case": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "phase": "reopen",
+      "error": "Cause([Fail(DatalogValidationError: QLever compatibility: ordering exact integer SUM or decoded AVG requires a server result key)])"
+    },
+    {
+      "case": "(complete suite)",
+      "error": "Cause([Fail(DatalogValidationError: QLever compatibility: ordering exact integer SUM or decoded AVG requires a server result key)])"
+    }
+  ],
+  "rawDir": "runs/G1/G1-qlever-20261107T192004Z-32a4ff",
+  "reasons": [
+    "complete unchanged suite failed",
+    "4 failed case executions"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 289866,
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 40515,
+      "sha256": "b6e5704ea421dba9dbd203649e5473ee93fc03ef7b0b2770efb3d7d30b69ae46"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 19956,
+      "sha256": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5027,
+      "sha256": "b6511d1eab385fcf453fe628aa4dd5437e3b78c02a2eca84165dcaa246c5abad"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 17892,
+      "sha256": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 3434,
+      "sha256": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+    },
+    {
+      "path": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 93496,
+      "sha256": "dee00e56a2c10d2d9dec91472970b133bfe0a73f8fbee330d4d92421a5f09792"
+    },
+    {
+      "path": "qlever-dev effective config",
+      "role": "engine-effective-config",
+      "bytes": 797,
+      "sha256": "925b9d29ed0ce329999827aed242ce4cf9b835f7a87a3c7bbef36e1e469b8263"
+    },
+    {
+      "path": "start.sh",
+      "role": "engine-config-file",
+      "bytes": 941,
+      "sha256": "597bdb07127f412232be1b73040cbe2202855b6e5dd5d03d83d06086919287ea"
+    },
+    {
+      "path": "qlever get-settings before",
+      "role": "engine-settings-before",
+      "bytes": 1809,
+      "sha256": "cfb30997cfb683c368eb063d9cf8c24cd3ad4d6a684e993b7ff0e7160d6f2059"
+    },
+    {
+      "path": "qlever get-settings after",
+      "role": "engine-settings-after",
+      "bytes": 1809,
+      "sha256": "cfb30997cfb683c368eb063d9cf8c24cd3ad4d6a684e993b7ff0e7160d6f2059"
+    },
+    {
+      "path": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/build-manifest-after.json",
+      "role": "build-manifest",
+      "bytes": 93496,
+      "sha256": "dee00e56a2c10d2d9dec91472970b133bfe0a73f8fbee330d4d92421a5f09792"
+    },
+    {
+      "path": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/lab-conformance.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 222,
+      "sha256": "4c72481d10e253b569ea741b79d774553abde75d186f72a1969969105b253e65"
+    },
+    {
+      "path": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/lab-conformance.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "packages/testkit/src/index.ts",
+      "role": "oracle-fixture",
+      "bytes": 102757,
+      "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+    },
+    {
+      "path": "packages/qualification/workloads/lab-conformance.ts",
+      "role": "oracle-fixture",
+      "bytes": 6349,
+      "sha256": "fb0898e349fef7102663443fa240d9ae2995f6309fd2ab264c1c91ad9a05f397"
+    },
+    {
+      "path": "runs/G1/G1-qlever-20261107T192004Z-32a4ff/g1-report.json",
+      "role": "raw-outcome",
+      "bytes": 31312,
+      "sha256": "8119848a059bd1173b14a4d4a3038cc54966a32638a64bd6adc117f68c96fed7"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 167182,
+      "sha256": "2a9c8611ac8f2a6ef5088382312a735d24a83640584c75f2e88ebcf7e6cc7780"
+    }
+  ]
+}

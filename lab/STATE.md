@@ -22,9 +22,11 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | exp/R01-entity-core | MERGED db249d8 (verified PROMOTE) | follow-ups go to EXP-R02 / EXP-F02 |
 | exp/O01-replay-oracle (03d86f3) | V-O01 FIX-FIRST (verify/O01 745547d; lab/verify/O01/VERIFY.md) | EXP-O02 fixes it; then re-verify -> ACCEPT -> merge |
+| exp/002-qlever-baseline | MERGED 85aba57 (G0/G1/G2 PASS, G4 FAIL as expected) | QLever dev resident recreated from main config (holder EXP-000) |
+| exp/F02-wire-exactness | MERGED 7247c82 (lab only; partly falsified) | fixes in EXP-F02b |
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
-| contract 0.3.1 (main 9c01194) | Q16-Q20 compiled, validates (hash 80e60385...) | 0.3.2: Q21 + Codex plan-v2 findings |
+| contract 0.3.2 (main 01fb285) | Q21-Q28 + TARGETS v2 compiled; 136 obligations, 42 thresholds; Q29 recorded, not yet compiled | compile Q29 with Codex round-2 findings (0.3.3) |
 
 ## Running agents (10 of 10, plus Codex shell b0losx599)
 | Agent | Priority | Output |
@@ -33,13 +35,13 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
 | EXP-O02 oracle conformance (opus, exp/O02-oracle-conformance) | correctness floor for GS and P2 | lab/oracles/replay |
 | EXP-X02 XTQL parity (opus, exp/X02-xtql-parity) | read priorities on XTDB, floor | branch; waiting on own live-check rerun |
-| EXP-002 QLever baseline (opus, exp/002-qlever-baseline) | A0 control | receipts |
-| EXP-F02 wire exactness (opus) | numeric rule floor | branch |
-| EXP-A01 contract 0.3.2 (opus, main, no commit) | Q21-Q28 + TARGETS v2 into the contract | lab/acceptance/ |
-| R16 XTDB north-star fit (sonnet) | P1-P5 per layer | lab/research/R16-xtdb-northstar-fit.md |
+| EXP-F02b wire exactness fixes (opus, exp/F02b-wire-exactness-fixes, dev residents) | numeric rule floor | branch |
+| R19 XTDB read nodes, commit floor, tenancy (sonnet xhigh) | P1, P2, tenant isolation | lab/research/R19-*.md |
+| EXP-A01 contract 0.3.3 (opus, main, no commit) | Q29 + Q31 into the contract | lab/acceptance/ |
 | R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
-| R18 read-path, feed, sweep prior art (sonnet) | P1, P3, P4, P5 | lab/research/R18-*.md |
-Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 on contract 0.3.2 when A01 lands it.
+| EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
+| EXP-D01a W0 world-definition spec (opus, exp/D01-world-definition) | P5, P3 deps, GS domain expectations | lab/world/W0 |
+Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). A01 compiling 0.3.3; Codex round 3 after it.
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 
@@ -49,4 +51,5 @@ lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 
 - Q21 AMB-17: `find` fails with ConflictingValuesError when a returned document has a conflicted attribute (a projection omitting it succeeds).
 - Q21 AMB-04: a -0.0 assertion keeps bit-exact -0.0 in the journal; the numeric rule overrides C6's old byte-identity promise.
 - Q24 erasure: after the erasure commit publishes, reads at every basis (even before it) show a typed ErasedValue marker, not the value.
+- R18: Datomic-style `noHistory` for high-churn attributes? Default kept: history for everything (audit is a must-have).
 - GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
