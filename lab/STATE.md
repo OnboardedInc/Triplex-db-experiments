@@ -22,18 +22,20 @@ Updated: 2026-11-07 (gen-0, planning)
 - [ ] A01 author revising to 0.2.0; then Codex re-check; then freeze 1.0.0  - [~] build loop: EXP-000 harness RUNNING on main; EXP-A01 acceptance contract RUNNING
 - Hourly cron ae766d26 (:07): update learnings in NOTEBOOK, launch Sonnet research if learnings raise questions.
 
-## Running agents
+## Running agents (10 max)
 | Agent | Purpose | Output |
 | --- | --- | --- |
-| EXP-000 (opus high, on main) | loop harness lab/bin, slots, pool, bound receipts, dev engines | lab/experiments/EXP-000-loop-harness/REPORT.md |
-| EXP-O01 (opus high, worktree, exp/O01-replay-oracle) | O-REPLAY independent Python oracle | lab/oracles/replay (branch) |
+| EXP-001 (opus high, worktree exp/001-xtdb-baseline) | XTDB A0 baseline: G1 full rerun, G2 control, entry checks | receipts copied to lab/runs |
+| EXP-002 (opus high, worktree exp/002-qlever-baseline) | QLever A0 baseline with R8 knobs; G1, G2, G4 counterexamples | receipts copied to lab/runs |
+| EXP-X02 (opus high, worktree exp/X02-xtql-parity) | XTQL parity from R12; XTQL cut acquisition; fixed cut; no int64 wrap; controls | lab/experiments/EXP-X02-xtql-parity/ |
+| EXP-O01 (opus high, worktree exp/O01-replay-oracle) | O-REPLAY oracle (corrected clock model) | lab/oracles/replay (branch) |
 | EXP-G01 (opus high, main checkout, no commit) | hand-derived golden vectors | lab/acceptance/golden/ |
-| V-R01 (opus high, worktree verify/R01) | independent verification of exp/R01-entity-core (DONE, author PASS) | lab/experiments/EXP-R01-entity-core/VERIFY.md |
-| EXP-A01 resumed (opus high) | contract 0.2.0 addressing Codex acceptance review (16 findings) | lab/acceptance/ |
-| R10 (sonnet xhigh) | read-only recursion (C8); probe tx2-probe-r10 7063/5465 max 1.5 GiB | lab/research/R10-read-only-recursion.md |
-| EXP-X02 (opus high, worktree exp/X02-xtql-parity) | port R12 XTQL formulations; XTQL cut acquisition; fixed cut; no int64 wrap; controls | lab/experiments/EXP-X02-xtql-parity/ |
-| R14 (sonnet xhigh) | XTDB 2.2 wrong-result hazard inventory + exposure | lab/research/R14-xtdb-correctness-hazards.md |
-| DONE | R1-R9, R12, R13 | lab/research/ |
+| EXP-A01 resumed (opus high) | acceptance contract 0.2.0 | lab/acceptance/ |
+| V-R01 (opus high, worktree verify/R01) | verify exp/R01-entity-core | lab/experiments/EXP-R01-entity-core/VERIFY.md |
+| R10 (sonnet xhigh) | read-only recursion (C8); probe tx2-probe-r10 | lab/research/R10-read-only-recursion.md |
+| R14 (sonnet xhigh) | XTDB wrong-result hazards | lab/research/R14-xtdb-correctness-hazards.md |
+| R15 (sonnet xhigh) | presence/deletion/cascade policy options | lab/research/R15-presence-deletion-cascade.md |
+| DONE | R1-R9, R12, R13; EXP-000 harness (stopped after report) | |
 
 ## Briefs ready, not dispatched
 - EXP-F01 (needs exclusive xtdb slot), F02/F03/F04 (dev slots) - dispatch once EXP-000 has dev engines up.
@@ -41,12 +43,11 @@ Updated: 2026-11-07 (gen-0, planning)
   EXP-Q03 QLever order keys + EXISTS helpers (after QLever baseline).
 
 ## Engine slots
-| Slot | Holder | Ports |
-| --- | --- | --- |
-| probe | R7 tx2-probe-r7:5467 (5g), R8 tx2-probe-r8:7068 (5g) running now; VM 12 GiB so dev engines wait | |
-| planned | dev: XTDB 5470, QLever 7070; s1..s3: XTDB 5471-5473, QLever 7071-7073 | lab/config/slots.json (EXP-000) |
+- dev engines up: tx2-xtdb-dev :5470 (3 GiB), tx2-qlever-dev :7070 (2.5 GiB; EXP-002 may raise). `node lab/bin/engine.mjs status`.
+- s1..s3 free (3.5 GiB each) subject to the 11 GiB pool.
 
 ## Next actions
-1. On Codex r1: write lab/reviews/plan-review-r1.response.md (accept/rebut each finding), resume Codex session for round 2.
-2. PLAN v1 from review; then dispatch EXP-000 (brief: lab/experiments/EXP-000-loop-harness/BRIEF.md), Opus high, on main.
-3. On R9: finalize EXP-003 (repository + projection spec compiler) brief; on R7/R8: finalize EXP-005/EXP-007 briefs.
+1. On V-R01: promote R01 to main if PROMOTE (merge exp/R01-entity-core), else route fixes.
+2. On A01 0.2.0: Codex re-check of the contract, then freeze 1.0.0; arrange an independent review of G01 vectors; cross-check O01 vs G01.
+3. On baselines: write EXP-F01/F02 dispatch (falsifiers), EXP-F05 brief (QLever fault matrix incl. R8/R13 items), EXP-Q03 (order keys + EXISTS helpers).
+4. On R10: EXP-X03/Q04 read-only recursion. On R14: guards into capability matrix and native helpers. On R15: provisional G9 policy ruling.
