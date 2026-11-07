@@ -11,7 +11,7 @@ import json
 from . import exact as X
 from . import replay as RP
 from . import values as V
-from .replay import _num, assertion_output, record_output
+from .replay import _num, assertion_output, read_value, record_output, refuse_erased
 
 
 # --------------------------------------------------------------------------- cuts
@@ -131,11 +131,34 @@ def journal_selection(run, scope, pattern):
                        "presence are not frozen (ORCHESTRATOR-RULING-NEEDED)")
 
 
+def erasure_tx_ids(run, scope):
+    return {r.txId for r in run.engine.scope(scope).records if getattr(r, "erasure", False)}
+
+
 def fact_source(run, cut, pattern):
     rows = scope_assertions(run, cut)
     if journal_selection(run, cut.scope, pattern) == "include":
+        # R-ERA-5: whether an erasure commit has :_tx/ facts is not ruled, so a journal read
+        # that could select facts of an erasure commit refuses (one naming another tx answers)
+        erasures = erasure_tx_ids(run, cut.scope)
+        if erasures and (pattern.get("entityId") is None or pattern["entityId"] in erasures):
+            raise X.TypedError("X-NOT-MODELED", "the pattern could select journal facts of an erasure commit",
+                               ruling=RP.ERASURE_RECORD_RULING)
         rows = rows + list(run.engine.scope(cut.scope).journal)
     return rows
+
+
+def _check_erasure(rows, candidates, pattern, what):
+    """R-ERA-4 / R-ERA-5: rows are returned with markers in place of erased values, but a
+    value pattern over an erased candidate, or a :_tx/change fact describing an erased
+    value, would need the value the system no longer holds: X-NOT-MODELED."""
+    if "value" in pattern:
+        refuse_erased(candidates, what + " with a value pattern")
+    refuse_erased([a for a in rows if a.journal], what)
+
+
+def _without_value(pattern):
+    return {k: v for k, v in pattern.items() if k != "value"}
 
 
 # --------------------------------------------------------------------------- triple reads
@@ -167,7 +190,9 @@ def q_match(run, query):
     timeline and native history helpers that use it."""
     cut = resolve_cut(run, query.get("cut"))
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
-    rows = [a for a in ordered(fact_source(run, cut, pattern)) if visible(a, cut) and _pattern_match(a, pattern)]
+    source = [a for a in ordered(fact_source(run, cut, pattern)) if visible(a, cut)]
+    rows = [a for a in source if _pattern_match(a, pattern)]
+    _check_erasure(rows, [a for a in source if _pattern_match(a, _without_value(pattern))], pattern, "match")
     return V.OrderedOut([("cut", cut.to_output()), ("count", len(rows)), ("contract", "raw-lifetime (AMB-01 A)"),
                          ("raw", [assertion_output(a) for a in rows]),
                          ("snapshot", [assertion_output(a, mask=(cut.P, cut.R)) for a in rows])])
@@ -179,6 +204,7 @@ def q_entity_triples(run, query):
     entity = query["entityId"]
     pattern = {"entityId": entity}
     rows = [a for a in ordered(fact_source(run, cut, pattern)) if a.entityId == entity and visible(a, cut)]
+    _check_erasure(rows, rows, pattern, "entityTriples")
     return V.OrderedOut([("cut", cut.to_output()), ("entityId", entity), ("contract", "raw-lifetime (AMB-01 A)"),
                          ("raw", [assertion_output(a) for a in rows]),
                          ("snapshot", [assertion_output(a, mask=(cut.P, cut.R)) for a in rows])])
@@ -223,6 +249,9 @@ def q_assertion_snapshot(run, query):
     if mode not in ("live-at-valid", "known-at-valid"):
         raise V.OracleInputError("mode must be live-at-valid or known-at-valid")
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
+    _check_erasure([], [a for a in scope_assertions(run, cut) if _pattern_match(a, _without_value(pattern))
+                        and known(a.recordedPosition, a.recordedAt, cut) and a.valid_at(cut.V)],
+                   pattern, "assertionSnapshot")
     out = []
     for a in ordered(scope_assertions(run, cut)):
         if not _pattern_match(a, pattern) or not known(a.recordedPosition, a.recordedAt, cut) or not a.valid_at(cut.V):
@@ -231,7 +260,7 @@ def q_assertion_snapshot(run, query):
         if mode == "live-at-valid" and retirement is not None:
             continue
         out.append(V.OrderedOut([
-            ("id", a.id), ("entityId", a.entityId), ("attribute", a.attribute), ("value", a.value.to_output()),
+            ("id", a.id), ("entityId", a.entityId), ("attribute", a.attribute), ("value", read_value(a).to_output()),
             ("entityType", a.entityType), ("validFrom", _num(a.validFrom)), ("validTo", _num(a.validTo)),
             ("createdBy", a.createdBy), ("schemaVersion", a.schemaVersion), ("recordedAt", _num(a.recordedAt)),
             ("txId", a.txId), ("knownRetirement", retirement)]))
@@ -249,7 +278,11 @@ def q_assertions(run, query):
 def q_journal_facts(run, query):
     """R-JNL-5: the modeled journal facts of a scope (or of one transaction)."""
     scope = query.get("scope") or run.engine.default_scope
+    erasures = erasure_tx_ids(run, scope)
+    if erasures and (query.get("txId") is None or query["txId"] in erasures):
+        raise X.TypedError("X-NOT-MODELED", "journal facts of an erasure commit", ruling=RP.ERASURE_RECORD_RULING)
     rows = [a for a in run.engine.scope(scope).journal if query.get("txId") is None or a.txId == query["txId"]]
+    refuse_erased(rows, "journalFacts")
     return V.OrderedOut([("scope", scope), ("facts", [assertion_output(a) for a in rows])])
 
 
@@ -310,9 +343,15 @@ def q_transactions_for_entity(run, query):
     snapshot = int(query["snapshotPosition"]) if query.get("snapshotPosition") is not None \
         else run.engine.scope(scope).last_position
     before = int(query["beforePosition"]) if query.get("beforePosition") is not None else None
-    rows = [r for r in _journal(run, scope) if not r.internal and r.position <= snapshot
-            and (before is None or r.position < before)
-            and any(a.entityId == entity for _, a in r.changes)]
+    in_range = [r for r in _journal(run, scope) if not r.internal and r.position <= snapshot
+                and (before is None or r.position < before)]
+    state = run.engine.scope(scope)
+    if any(getattr(r, "erasure", False) and any(state.assertions[i].entityId == entity for i in r.erased)
+           for r in in_range):
+        # R-ERA-5: whether the entity's transaction list shows the erasure commit is not ruled
+        raise X.TypedError("X-NOT-MODELED", f"transactionsForEntity({entity}) spans an erasure of its values",
+                           ruling=RP.ERASURE_RECORD_RULING)
+    rows = [r for r in in_range if any(a.entityId == entity for _, a in r.changes)]
     rows.sort(key=lambda r: -r.position)
     page = rows[:limit]
     out = [("transactions", [record_output(r) for r in page]), ("snapshotPosition", snapshot)]
@@ -331,6 +370,8 @@ def q_cut_catalog(run, query):
         # beside it so a harness can map its own coordinates onto the oracle's cuts
         if isinstance(getattr(r, "coordinate", None), V.OrderedOut):
             fields.append(("coordinate", r.coordinate))
+        if getattr(r, "erasure", False):
+            fields.append(("erasure", True))      # R-ERA-2: an erasure commit takes a position like any commit
         return V.OrderedOut(fields)
     return [row(r) for r in run.engine.scope(scope).records]
 
@@ -458,9 +499,12 @@ def q_value_supports(run, query):
     representation of the support with the lowest (recordedPosition, op index)."""
     cut = resolve_cut(run, query.get("cut"))
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
+    source = [a for a in fact_source(run, cut, pattern) if visible(a, cut)]
+    # R-ERA-4: supports group by value identity, which an erased value no longer has
+    refuse_erased([a for a in source if _pattern_match(a, _without_value(pattern))], "valueSupports")
     groups = {}
-    for a in ordered(fact_source(run, cut, pattern)):
-        if visible(a, cut) and _pattern_match(a, pattern):
+    for a in ordered(source):
+        if _pattern_match(a, pattern):
             groups.setdefault((a.entityId, a.attribute, a.value), []).append(a.id)
     keys = sorted(groups, key=lambda k: (k[0], k[1], k[2].order_key()))
     return V.OrderedOut([("cut", cut.to_output()), ("supports", [
@@ -476,6 +520,9 @@ def q_reachability(run, query):
     each path listed with the assertion ids of its edges."""
     cut = resolve_cut(run, query.get("cut"))
     attribute = query["attribute"]
+    # R-ERA-4: an erased edge value cannot be followed
+    refuse_erased([a for a in scope_assertions(run, cut) if a.attribute == attribute and visible(a, cut)],
+                  "reachability")
     edges = {}
     for a in ordered(scope_assertions(run, cut)):
         if a.attribute == attribute and visible(a, cut) and a.value.family in ("ref", "string"):
@@ -523,6 +570,9 @@ def _rows(run, cut, match):
     equal values on distinct entities are distinct rows. Value identity per R-VAL-3."""
     names = list(match["attributes"].keys())
     etype = match.get("entityType")
+    # R-ERA-4: aggregate rows bind distinct values, which an erased value no longer has
+    attrs = set(match["attributes"].values())
+    refuse_erased([a for a in scope_assertions(run, cut) if a.attribute in attrs and visible(a, cut)], "aggregate")
     by_entity = {}
     for a in ordered(scope_assertions(run, cut)):
         if visible(a, cut):

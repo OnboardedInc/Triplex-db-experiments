@@ -9,6 +9,13 @@ chose among the committed members. A receipt outcome that disagrees with the
 expected outcome is reported as a mismatch; it never changes the expected state.
 
 Every rejection carries its ACC 4.7 error id, tag and reason (R-CMD-9).
+
+Erasure (TARGETS 7, RULINGS Q24, Q31f; RULES.md R-ERA-*): an `erase` command commits like
+any command and marks the values it erases. Every read the oracle answers starts after
+every erasure in the case has published, so it returns `ErasedValue {erasedAt}` in place
+of an erased value at any basis, with identities and intervals unchanged; a read whose
+answer would depend on an erased value (a value predicate, grouping, ordering, a
+value-dependent constraint) is X-NOT-MODELED.
 """
 
 from __future__ import annotations
@@ -17,6 +24,7 @@ import re
 from fractions import Fraction
 
 from . import errors as ERR
+from . import exact as X
 from . import values as V
 
 DEFAULT_RULES = {
@@ -114,7 +122,8 @@ class Rejected(Exception):
 class Assertion:
     __slots__ = ("id", "sym", "scope", "entityId", "attribute", "value", "entityType", "createdBy",
                  "validFrom", "validTo", "recordedAt", "recordedPosition", "schemaVersion", "txId",
-                 "retractedAt", "retractedPosition", "retractTxId", "seq", "command", "journal")
+                 "retractedAt", "retractedPosition", "retractTxId", "seq", "command", "journal",
+                 "erasure", "about")   # erasure: ErasureMark or None; about: the change a :_tx/change fact describes
 
     def __init__(self, **fields):
         for key in self.__slots__:
@@ -131,6 +140,64 @@ def _num(n):
     return None if n is None else V.RawNumber(n.lexeme())
 
 
+# --------------------------------------------------------------------------- erasure (R-ERA-*)
+
+
+class ErasureMark:
+    """The first erasure commit that erased an assertion's value: its instant (the marker's
+    erasedAt), position and txId."""
+
+    def __init__(self, instant, position, tx_id):
+        self.instant, self.position, self.txId = instant, position, tx_id
+
+
+# The read being answered. TARGETS 7.1: the boundary is the erasure commit's publication.
+# `start` is None for a read that starts after every erasure of the case published (the
+# default: the oracle answers after the whole command stream); a query's `readStart` sets it to
+# the last position published when the read started (R-ERA-6, ER-INFLIGHT-READ).
+READ = {"start": None}
+
+ERASED_RULING = ("R-ERA-4: the contract defines the ErasedValue marker in place of a value, not how "
+                 "predicates, grouping, ordering or value-dependent constraints treat an erased value "
+                 "(ORCHESTRATOR-RULING-NEEDED)")
+
+
+class ErasedValue:
+    """What a read returns in place of an erased value (TARGETS 7.1, Q24): the marker
+    `{"_tag": "ErasedValue", "erasedAt": <the erasure commit's instant>}`. For a read that
+    started before the erasure published, the old value is also acceptable ("may return the
+    old value"), so the output lists both (R-ERA-6)."""
+
+    def __init__(self, assertion):
+        self.assertion = assertion
+        self.mark = assertion.erasure
+        self.in_flight = READ["start"] is not None and self.mark.position > READ["start"]
+
+    def marker(self):
+        return V.OrderedOut([("_tag", "ErasedValue"), ("erasedAt", _num(self.mark.instant))])
+
+    def to_output(self):
+        if not self.in_flight:
+            return self.marker()
+        return V.OrderedOut([("_tag", "InFlightErasure"), ("acceptable", [self.assertion.value.to_output(),
+                                                                          self.marker()]),
+                             ("rule", "ER-INFLIGHT-READ: the read started before the erasure published")])
+
+
+def read_value(a):
+    """The value a read returns for assertion `a` (R-ERA-1): its value, or ErasedValue."""
+    return a.value if a.erasure is None else ErasedValue(a)
+
+
+def refuse_erased(assertions, what):
+    """R-ERA-4: a read whose answer depends on the value of an erased assertion is
+    X-NOT-MODELED, never an answer computed from a value the system no longer holds."""
+    for a in assertions:
+        if a.erasure is not None or (a.about is not None and a.about.erasure is not None):
+            raise X.TypedError("X-NOT-MODELED", f"{what} depends on the erased value of {a.about.id if a.about else a.id}",
+                               ruling=ERASED_RULING)
+
+
 def assertion_output(a: Assertion, *, mask=None):
     """Complete metadata row (spec item 4). ``mask`` = (P, R) applies the as-of
     snapshot retirement mask (spec item 6); None = raw lifetime (AMB-01 A)."""
@@ -139,7 +206,7 @@ def assertion_output(a: Assertion, *, mask=None):
         P, R = mask
         retired = a.retractedPosition <= P and (R is None or a.retractedAt.frac <= R)
     out = V.OrderedOut([
-        ("id", a.id), ("entityId", a.entityId), ("attribute", a.attribute), ("value", a.value.to_output()),
+        ("id", a.id), ("entityId", a.entityId), ("attribute", a.attribute), ("value", read_value(a).to_output()),
         ("validFrom", _num(a.validFrom)), ("validTo", _num(a.validTo)),
         ("recordedAt", _num(a.recordedAt)), ("recordedPosition", a.recordedPosition),
         ("createdBy", a.createdBy), ("entityType", a.entityType), ("schemaVersion", a.schemaVersion),
@@ -188,6 +255,7 @@ class Plan:
         self.asserts = []    # (opIndex, dict of fields)
         self.retracts = []   # (opIndex, target, explicit); target = existing id or ("staged", assertOpIndex)
         self.changes = []    # ("assert", opIndex) / ("retract", target) in journal order
+        self.erasures = []   # assertion ids an erase command erases (R-ERA-2), in creation order
 
 
 def _str_field(raw, name, required=False):
@@ -345,6 +413,9 @@ class Engine:
         if not isinstance(operations, list):
             raise V.OracleInputError("command.operations must be a list")
         meta = command.get("meta") or {}
+        kinds = {op.get("op") for op in operations if isinstance(op, dict)}
+        if "erase" in kinds:
+            self._check_erase_command(command, kinds, meta)
         retracted = []          # targets retracted so far by this command, in order
         staged = []             # (opIndex, fields) of this command's asserts so far (AMB-06 A)
         for index, op in enumerate(operations):
@@ -365,6 +436,13 @@ class Engine:
                 plan.changes.append(("retract", target))
             elif kind == "retract-pattern":
                 pattern = self._decode_pattern(state, op.get("pattern") or V.Obj([]))
+                if "value" in pattern:
+                    # R-ERA-4: whether an erased value matches a value pattern is not ruled
+                    candidates = [a for a in state.live() if self._matches(_fields_of(a), {k: v for k, v in
+                                                                                           pattern.items() if k != "value"})]
+                    if any(a.erasure is not None for a in candidates):
+                        raise V.OracleInputError("X-NOT-MODELED: a retract-pattern with a value over an erased value "
+                                                 "(R-ERA-4)")
                 # AMB-06 A: operations apply in order over staged facts, so the pattern sees the
                 # pre-state's recorded-live assertions and this command's earlier asserts; AMB-07:
                 # matches expand in creation order (pre-state first, then staged in op order)
@@ -377,11 +455,14 @@ class Engine:
                         retracted.append(target)
                         plan.retracts.append((index, target, False))
                         plan.changes.append(("retract", target))
-            elif kind in ("erase", "erasure"):
-                # Q24 / Q31f erasure (TARGETS 7, ACC erasure): ErasedValue markers, the erasure
-                # frontier and reproduction modulo erasure are not modeled yet; refuse the case
-                # rather than give a confident wrong answer (X-NOT-MODELED)
-                raise V.OracleInputError("X-NOT-MODELED: erasure commands (RULINGS Q24, Q31f) are not modeled")
+            elif kind == "erase":
+                for target in self._plan_erase(state, op):
+                    if target not in plan.erasures:
+                        plan.erasures.append(target)
+            elif kind == "erasure":
+                # Q45b: erasure cases spell the op `erase`; the other spelling is refused, not guessed
+                raise V.OracleInputError("X-NOT-MODELED: op 'erasure' is not an O-REPLAY op; erasure cases spell "
+                                         "the op erase (RULINGS Q45b)")
             else:
                 raise Rejected("E-INVALID-VALUE", f"unknown op {kind!r}")
         # command claim (R-CMD-1)
@@ -429,6 +510,13 @@ class Engine:
         # constraint enforcement (R-CON-*)
         rules = self.rules_for(command)
         if rules:
+            # R-ERA-4: Unique and ReferenceTarget read values; over an erased value they are not ruled.
+            # Required and Cardinality read presence and counts only, which erasure keeps (R-ERA-1).
+            erased_attrs = {a.attribute for a in state.live() if a.erasure is not None}
+            if any(r.get("_tag") in ("Unique", "ReferenceTarget") and r.get("attribute") in erased_attrs
+                   for r in rules):
+                raise V.OracleInputError("X-NOT-MODELED: a Unique or ReferenceTarget rule over an erased value "
+                                         "(R-ERA-4)")
             from .constraints import newly_violated
             violations = newly_violated(self, state, plan, rules, instant)
             if violations:
@@ -437,6 +525,40 @@ class Engine:
                                reason=codes[0] if len(codes) == 1 else None, alternatives=codes,
                                codes=codes, violations=[V.OrderedOut(v.items()) for v in violations])
         return plan
+
+    @staticmethod
+    def _check_erase_command(command, kinds, meta):
+        """R-ERA-2: an erase command holds erase operations only, and no preconditions. Mixed
+        commands (whether a staged assert is erased, how the journal records the mix) and
+        preconditions on an erasure are not ruled, so they are refused (X-NOT-MODELED)."""
+        if kinds != {"erase"}:
+            raise V.OracleInputError("X-NOT-MODELED: a command mixing erase with other operations (R-ERA-2)")
+        if meta.get("preconditions"):
+            raise V.OracleInputError("X-NOT-MODELED: preconditions on an erase command (R-ERA-2)")
+
+    def _plan_erase(self, state, op):
+        """R-ERA-2: `{"op": "erase", "entityId": E, "attribute": A}` erases the value of every
+        assertion of E's attribute A recorded so far, live or retracted (history included);
+        `{"op": "erase", "entityId": E}` every application assertion of E; `{"op": "erase",
+        "target": ref}` / `{"op": "erase", "id": id}` one assertion. Reserved names are
+        E-RESERVED (R-CMD-6), journal facts and transaction entities included."""
+        unknown = set(op) - {"op", "entityId", "attribute", "target", "id"}
+        if unknown:
+            raise Rejected("E-INVALID-VALUE", f"unknown erase fields {sorted(unknown)}")
+        if "target" in op or "id" in op:
+            if "entityId" in op or "attribute" in op:
+                raise Rejected("E-INVALID-VALUE", "erase names either an assertion or an entity (and attribute)")
+            target = self._resolve_target(state, op)
+            existing = state.assertions[target]
+            self._check_reserved(existing.entityId, existing.attribute, existing.entityType)
+            return [target]
+        entity = _str_field(op, "entityId", required=True)
+        attribute = _str_field(op, "attribute")
+        self._check_reserved(entity, attribute)
+        if entity in state.tx_ids():
+            raise Rejected("E-RESERVED", f"entity {entity} is a transaction envelope (journal)")
+        return [a.id for a in sorted(state.assertions.values(), key=_creation)
+                if a.entityId == entity and (attribute is None or a.attribute == attribute)]
 
     def _plan_assert(self, op, meta, instant):
         entity_id = _str_field(op, "entityId", required=True)
@@ -509,6 +631,12 @@ class Engine:
         for _, target, _ in plan.retracts:
             a = target_of(target)
             a.retractedAt, a.retractedPosition, a.retractTxId = instant, position, tx_id
+        for target in plan.erasures:
+            # R-ERA-3: the first erasure of a value names the marker's erasedAt; identities,
+            # intervals and retirement fields keep their shape (TARGETS 7.1)
+            a = state.assertions[target]
+            if a.erasure is None:
+                a.erasure = ErasureMark(instant, position, tx_id)
         meta = command.get("meta") or {}
         if meta.get("commandId") is not None:
             state.claims[meta["commandId"]] = tx_id
@@ -519,11 +647,15 @@ class Engine:
             changes = [c for c in changes if c[0] == "assert"] + [c for c in changes if c[0] == "retract"]
         elif self.rules["journalChangeOrder"] == "retracts-then-asserts":
             changes = [c for c in changes if c[0] == "retract"] + [c for c in changes if c[0] == "assert"]
+        erasure = any(op.get("op") == "erase" for op in command.get("operations") or [])
         record = TxRecord(txId=tx_id, position=position, instant=instant, meta=meta, changes=changes,
                           scope=state.name, internal=False, command=command["_index"],
-                          group=command.get("physicalGroup"), coordinate=identity.get("coordinate"))
+                          group=command.get("physicalGroup"), coordinate=identity.get("coordinate"),
+                          erasure=erasure, erased=list(plan.erasures))
         self._append_record(state, record)
-        state.journal.extend(journal_facts(record))
+        if not erasure:
+            # R-ERA-5: the journal content of an erasure commit is not ruled; it gets no modeled facts
+            state.journal.extend(journal_facts(record))
         return record
 
     def apply_internal(self, state, command, identity):
@@ -577,8 +709,9 @@ def change_output(kind, a: Assertion, record):
     out = [("op", kind), ("tripleId", a.id), ("entityId", a.entityId), ("attribute", a.attribute)]
     if a.entityType is not None:
         out.append(("entityType", a.entityType))
-    # AMB-04 (B): the change value is bit-exact (-0.0 stays -0.0), never JSON-normalized
-    out.append(("value", a.value.to_output()))
+    # AMB-04 (B): the change value is bit-exact (-0.0 stays -0.0), never JSON-normalized; an erased
+    # value is its ErasedValue marker (Q31f: the journal compares modulo erasure, R-ERA-1)
+    out.append(("value", read_value(a).to_output()))
     out.append(("validFrom", _num(a.validFrom)))
     if a.validTo is not None:
         out.append(("validTo", _num(a.validTo)))
@@ -598,7 +731,15 @@ def changed_entities(record):
     return changed
 
 
+ERASURE_RECORD_RULING = ("R-ERA-5: whether an erasure commit appears in the journal (transactions(), "
+                         ":_tx/ facts) and with what content is not ruled; the erasure ledger is kept apart "
+                         "from the data (TARGETS 7.5) (ORCHESTRATOR-RULING-NEEDED)")
+
+
 def record_output(record):
+    if getattr(record, "erasure", False):
+        raise X.TypedError("X-NOT-MODELED", f"the journal record of erasure commit {record.txId}",
+                           ruling=ERASURE_RECORD_RULING)
     out = [("txId", record.txId), ("position", record.position), ("instant", _num(record.instant))]
     if record.internal:
         out.append(("internal", True))
@@ -647,6 +788,8 @@ def journal_facts(record):
                              value=V.ref(entity), **base))
     for k, (kind, a) in enumerate(record.changes):
         doc = V.JsonDoc(_json_node(change_output(kind, a, record)))
+        # `about` links the fact to the assertion it describes: once that value is erased, how the
+        # change's json content shows it is not ruled (R-ERA-5), so reads that select it refuse
         out.append(Assertion(id=f"journal:{tx}:change:{k}", attribute=":_tx/change",
-                             value=V.Value("json", doc.canonical, doc), **base))
+                             value=V.Value("json", doc.canonical, doc), about=a, **base))
     return out

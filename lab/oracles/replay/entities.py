@@ -16,7 +16,7 @@ import functools
 from . import exact as X
 from . import values as V
 from .views import Cut, known, known_retirement, ordered, resolve_cut, visible
-from .replay import _num
+from .replay import ERASED_RULING, ErasedValue, _num, read_value, refuse_erased
 
 VALUE_TYPES = {"string", "number", "integer", "decimal", "boolean", "datetime", "ref", "json", "blob"}
 
@@ -136,10 +136,19 @@ def build_model(run, cut, etype, entity_id, version):
     props = {}
     declared = {p["attribute"] for p in props_def.values()}
     for name, p in props_def.items():
+        mine = [a for a in facts if a.attribute == p["attribute"]]
+        if any(a.erasure is not None for a in mine):
+            # R-ERA-4: one visible support shows its marker; with several, value identity, conflict
+            # and card-many order would need the erased value, so the read refuses
+            if len(mine) > 1:
+                refuse_erased(mine, f"the {etype}.{name} model")
+            marker = ErasedValue(mine[0])
+            props[name] = ("many", [(marker, [mine[0].id])]) if p["cardinality"] == "many" else \
+                ("one", marker, [mine[0].id])
+            continue
         groups = {}
-        for a in facts:            # creation order: the first key of an identity class is Q14b's representative
-            if a.attribute == p["attribute"]:
-                groups.setdefault(a.value, []).append(a.id)
+        for a in mine:             # creation order: the first key of an identity class is Q14b's representative
+            groups.setdefault(a.value, []).append(a.id)
         if not groups:
             continue
         items = sorted(groups.items(), key=lambda kv: kv[0].order_key())
@@ -195,6 +204,8 @@ def _resolve_includes(run, cut, model, include, version, conflicts):
                 conflicts.append((model.entity_id, p["attribute"]))
                 continue
             targets = [current[1]] if current[0] == "one" else [v for v, _ in current[1]]
+            if any(isinstance(t, ErasedValue) for t in targets):
+                raise X.TypedError("X-NOT-MODELED", f"include {item} follows an erased reference", ruling=ERASED_RULING)
             resolved = []
             for t in targets:
                 m = build_model(run, cut, p["target"], t.payload, version)
@@ -206,6 +217,8 @@ def _resolve_includes(run, cut, model, include, version, conflicts):
             rev = item["reverse"]
             rtype, rprop = rev["type"], rev["prop"]
             rp = _types(run, version)[rtype][rprop]
+            refuse_erased([a for a in run.engine.scope(cut.scope).assertions.values()
+                           if visible(a, cut) and a.attribute == rp["attribute"]], f"reverse include {rtype}.{rprop}")
             ids = sorted({a.entityId for a in run.engine.scope(cut.scope).assertions.values()
                           if visible(a, cut) and a.attribute == rp["attribute"] and a.value.family == "ref"
                           and a.value.payload == model.entity_id})
@@ -308,6 +321,14 @@ def _select_and_order(run, query, count_only=False):
     conflicts = [c for m in models for c in m.conflicts(referenced)]
     if conflicts:
         raise Conflicts(conflicts)
+    # R-ERA-4: filtering or ordering on an erased value is not ruled (documents may still carry markers)
+    for m in models:
+        for name in referenced:
+            p = m.props.get(name)
+            values = [] if p is None else ([p[1]] if p[0] == "one" else [v for v, _ in p[1]])
+            if any(isinstance(v, ErasedValue) for v in values):
+                raise X.TypedError("X-NOT-MODELED", f"{etype}.{name} is filtered, ordered or included on an erased "
+                                   "value", ruling=ERASED_RULING)
 
     def present(m, name):
         p = m.props.get(name)
@@ -406,7 +427,7 @@ def q_timeline(run, query):
         attribute = props_def[query["prop"]]["attribute"]
     rows = [a for a in ordered(run.engine.scope(cut.scope).assertions.values())
             if a.entityId == entity and a.attribute == attribute and known(a.recordedPosition, a.recordedAt, cut)]
-    out = [V.OrderedOut([("identity", a.id), ("value", a.value.to_output()), ("recordedAt", _num(a.recordedAt)),
+    out = [V.OrderedOut([("identity", a.id), ("value", read_value(a).to_output()), ("recordedAt", _num(a.recordedAt)),
                          ("recordedPosition", a.recordedPosition), ("txId", a.txId),
                          ("validFrom", _num(a.validFrom)), ("validTo", _num(a.validTo)),
                          ("knownRetirement", known_retirement(a, cut))]) for a in rows]
@@ -420,6 +441,13 @@ def q_model_timeline(run, query):
     base = resolve_cut(run, query.get("cut"))
     version = int(query.get("schemaVersion", 1))
     entity, etype = query["entityId"], query["entityType"]
+    state = run.engine.scope(base.scope)
+    if any(getattr(r, "erasure", False) and r.position <= base.P
+           and any(state.assertions[i].entityId == entity for i in r.erased) for r in state.records):
+        # R-ERA-5: whether an erasure commit is a position that "changed the entity" is not ruled
+        raise X.TypedError("X-NOT-MODELED", f"modelTimeline({entity}) spans an erasure of its values",
+                           ruling="R-ERA-5: whether an erasure commit is a journaled change of the entity is not "
+                           "ruled (ORCHESTRATOR-RULING-NEEDED)")
     out = []
     for r in run.engine.scope(base.scope).records:
         if r.internal or r.position > base.P or not any(a.entityId == entity for _, a in r.changes):

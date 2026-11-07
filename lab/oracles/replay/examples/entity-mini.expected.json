@@ -2,7 +2,7 @@
  "format": "triplex-db-2/o-replay-expected/1",
  "oracle": {
   "id": "O-REPLAY",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "sourceSha256": {
    "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
    "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
@@ -10,12 +10,12 @@
    "errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
    "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
    "exact.py": "1a414606e904d787a89d93f404da23e89669c8a5f213fb00955af5c24e4906e4",
-   "replay.py": "f8e4980591fa6e4056f0945fbc8ac2864d51d47672858904cd352f76ae0c8caa",
+   "replay.py": "6c57706acc928aa1ec2cb38025feed9a8a1dfa6804e2be827871d6334f29b359",
    "constraints.py": "e93fcba3ca36be607b05f522dd779869ced816e2834f629130ecdd2408527571",
-   "views.py": "4d23472c85ac559f8d1bad7257fe219e7dc5fa7b0827c2595e7ff072d1816f28",
-   "entities.py": "7b423d235cdc39871bd885ea46d0c4d3280c8d2879f4926c6afeb78191b9e365",
+   "views.py": "51631b3cb556bebf3047c0b2a5e9cb463ee291b8df80325a8fa5a8eea3bc7e42",
+   "entities.py": "e90cb9928181cb4a3c604a21e8776a22ba6404358c3c2fe5cdd834f1c2b5a2e5",
    "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
-   "run.py": "5426b4fbc9b862832a34a5c659477109a3489334ffefda55960f62ad8a92a43d",
+   "run.py": "8e58e590354f9023a604206c7f6a6a039f4465c6fbd890083829aa73725464a3",
    "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
   }
  },

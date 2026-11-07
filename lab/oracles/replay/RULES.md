@@ -1,4 +1,4 @@
-# O-REPLAY rules (0.3.2, conforms to ACCEPTANCE 0.3.6 and RULINGS through Q45)
+# O-REPLAY rules (0.4.0, conforms to ACCEPTANCE 0.3.6 and RULINGS through Q45)
 
 Every semantic rule the oracle applies, with where it comes from. Status:
 
@@ -112,9 +112,9 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-CMD-10 | Race groups: committed members replay in receipt position order and must succeed; a rejected member must fail at some serialization point (`possibleCategories` lists the error ids). | DERIVED from OC-3 |
 | R-CMD-11 | Nested transactions: every allocated position is its own cut; a failing member is rejected alone; an abandoned outer transaction is `hostAbort` on every member. | SOURCED: OC-2; PLAN C2.2 |
 | R-CMD-12 | A retract-pattern whose `entityId` is a transaction entity of the scope targets journal facts and is E-RESERVED. | SOURCED: Q33f |
-| R-CMD-13 | Erasure commands (an `erase` / `erasure` operation: ErasedValue markers, the erasure frontier, reproduction modulo erasure) are NOT-MODELED: the case is refused with exit 2 and an `X-NOT-MODELED` message. | Q24, Q31f not modeled yet. **O03** |
+| R-CMD-13 | Erasure commands are modeled (R-ERA-*): the op is spelled `erase`; the spelling `erasure` is refused with exit 2 and an `X-NOT-MODELED` message (Q45b: erasure cases spell the op erase). | SOURCED: Q45b. **O04** (0.3.x refused every erasure) |
 | R-ERR-1 | An expected error matches a receipt when its `_tag` equals the pinned tag and its reason equals the pinned reason or one of the listed alternatives (`reasonAlternatives` for E-CONSTRAINT and E-CURSOR); a receipt may also name the error id or an 0.1 category. | SOURCED: ACC 4.7 errorComparison |
-| R-ERR-2 | Errors without a 4.7 row use `X-` ids with an explicit tag (or null) and the ruling that leaves them open: X-CYCLE (R-SUP-2), X-NO-POSITION (a cut names a command the oracle rejects), X-NOT-MODELED (R-JNL-6). X-READ-LIMIT and X-INVALID-BASIS are retired (Q33g, Q33h). | DERIVED (never invent a 4.7 reason) |
+| R-ERR-2 | Errors without a 4.7 row use `X-` ids with an explicit tag (or null) and the ruling that leaves them open: X-CYCLE (R-SUP-2), X-NO-POSITION (a cut names a command the oracle rejects), X-NOT-MODELED (R-JNL-6, R-ERA-4, R-ERA-5, R-DEC-18). X-READ-LIMIT and X-INVALID-BASIS are retired (Q33g, Q33h). | DERIVED (never invent a 4.7 reason) |
 
 ## Constraints (R-CON)
 
@@ -165,6 +165,17 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-JNL-6 | The other envelope facts (`:_tx/position`, `:_tx/instant`, `:_tx/actor`, `:_tx/command-id`, `:_tx/correlation-id`, `:_tx/causation-id`, `:_tx/config-snapshot`) are not modeled: a pattern that could select them returns X-NOT-MODELED instead of a partial answer. | SOURCED: Q33g (R-JNL-6) |
 | R-JNL-7 | An invalid `transactions` / `transactionsForEntity` limit (outside 1..1000, including 0) is E-CURSOR, PaginationCursorError / malformed, the same as `entityPage`. | SOURCED: Q33g (R-JNL-7). **O03** |
 
+## Erasure (R-ERA)
+
+| Id | Rule | Status, source |
+| --- | --- | --- |
+| R-ERA-1 | After an erasure commit publishes, every read at any basis, including bases before the erasure, returns `{"_tag": "ErasedValue", "erasedAt": <the erasure commit's instant>}` in place of each erased value: assertion rows (`match`, `entityTriples`, `history`, `assertionSnapshot`, `assertions`, `timeline`, `entityPage` bodies), journal changes (`transaction`, `transactionByCommand`, `transactions` pages without an erasure record) and entity models with one support. Identities, valid and record intervals and retirement fields keep their shape. Every read the oracle answers starts after the whole command stream published, so the frontier (every published erasure, independently of the basis) and cache invalidation need no other rule: an old-basis answer never shows the old value; rebuild and restore must reproduce these answers (the ledger erases the same assertions by identity; a value written later is not erased). | SOURCED: TARGETS 7.1, 7.2, 7.5, 7.7, 7.8; Q24; Q31f; ACC 8.8 ERASURE. **O04** |
+| R-ERA-2 | `{"op": "erase", "entityId": E, "attribute": A}` erases every assertion of E's attribute A recorded so far (live or retracted); `{"op": "erase", "entityId": E}` every application assertion of E; `{"op": "erase", "target": ref}` or `"id"` one assertion. Unknown fields or a missing entity are E-INVALID-VALUE, reserved names (including journal facts and transaction entities) E-RESERVED. An erase command holds only erase operations and no preconditions (otherwise X-NOT-MODELED, exit 2); it commits like any command, takes a position and a txId (`cutCatalog` marks it `erasure: true`) and its receipt aligns `null` assertion ids with its operations. | Op shape: the oracle's case format (Q45b spells it `erase`). That an erasure commit takes a data position: **O04 RULING-NEEDED** (TARGETS 7.5 keeps the ledger apart from the data) |
+| R-ERA-3 | The first erasure of a value names its `erasedAt`; erasing it again changes nothing. An erase that matches nothing still commits. Required and Cardinality enforcement is unaffected (presence and counts survive erasure). | DERIVED. **O04 RULING-NEEDED** (first versus latest erasedAt) |
+| R-ERA-4 | An answer that would depend on an erased value is X-NOT-MODELED: a value pattern over an erased candidate (`match`, `assertionSnapshot`, `retract-pattern`), `valueSupports`, `reachability` and `aggregate` over an erased value, a model attribute with an erased support among two or more, `find` / `count` filtering, ordering or including on an erased value, an include that follows an erased reference, and Unique or ReferenceTarget enforcement over an erased value (exit 2 for commands). The contract defines the marker, not how predicates, grouping or ordering treat it. | **O04 RULING-NEEDED** |
+| R-ERA-5 | The journal content of an erasure commit is not ruled (whether it appears in `transactions()`, its changes, its `:_tx/` facts), nor how a `:_tx/change` json fact shows an erased value. Reads that include either are X-NOT-MODELED: `transaction(s)` / `transactionByCommand` returning the erasure record, `transactionsForEntity` and `modelTimeline` spanning an erasure of the entity, journal-fact patterns that could select an erasure commit's facts or a change fact of an erased value, and `journalFacts`. The state summary lists an erasure commit's erased ids instead. | TARGETS 7.5 keeps the erasure ledger apart from the data. **O04 RULING-NEEDED** |
+| R-ERA-6 | A query's `readStart` (a position, `{"afterCommand": k}` or `{"coordinate": c}`) is the last position published when the read started. An erasure published after it is in flight for that read, which "may return the old value": each such value is `{"_tag": "InFlightErasure", "acceptable": [<old value>, <marker>], "rule": "ER-INFLIGHT-READ ..."}`, either form acceptable. Without `readStart` the read started after every erasure. | SOURCED: TARGETS 7.1 (ER-INFLIGHT-READ). Per-value alternatives: DERIVED, **O04 RULING-NEEDED** |
+
 ## Entities and repository (R-ENT, R-PAGE, R-SUP)
 
 | Id | Rule | Status, source |
@@ -209,6 +220,8 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | POSITION, positionDenseCases, positionRequiredCases | PO-LEXICOGRAPHIC-ORDER, PO-ORACLE-DENSE-ORDINALS, PO-NESTED-CUTS-DENSE, PO-ABORTED-LISTED; the oracle side of FX-NESTED-CUTS, FX-ABORT-GAP, FX-CRASH-APPEND-RESOLUTION (an `unknown` receipt resolved or not), FX-RESUME-AT-ABORT-GAP (`transactions(after)` from the gap's ordinal) | R-RCP-1, R-RCP-5, R-RCP-6, R-RCP-8, R-CUT-5, R-JNL-3 |
 | q33Rules | R-VAL-7a, R-DEC-0 to R-DEC-7, R-LANE-2, R-CMP-3, R-NUM-7, R-NUM-8, R-AGG-5, R-CMD-9, R-CMD-12, R-JNL-5 to R-JNL-7, R-CUT-3, R-PAGE-3, R-PAGE-4 | the rule of the same id |
 | comparisonRules (0.3.5) | CMP-CROSS-FAMILY-ORDERED | R-CMP-3 |
+| q43Rules (0.3.6) | R-DEC-13/16, R-DEC-14, R-DEC-8 to R-DEC-12, R-CUT-4 | the rule of the same id |
+| ERASURE, CS-ERASURE required cases | ER-INFLIGHT-READ, ER-AFTER-PUBLICATION-ALL-BASES, ER-SHAPE-KEPT, ER-PINNED-READER, ER-REBUILD, ER-RESTORE-PRE-BACKUP, ER-ORACLE-POST, ER-ORDER-KEY-CHANNEL, ER-LEXICAL-CHANNEL, ER-CURSOR-MODULO, ER-EXPLAIN-MODULO, ER-FRONTIER-OLD-BASIS, ER-CACHE-INVALIDATION, ER-JOURNAL-MODULO (erased change values; the erasure record itself is R-ERA-5), ER-RAW-NATIVE-MODULO, ER-SDK-MODULO, ER-KEY-EXCLUSIVE (the oracle's side: answers; scans and key evidence are O-OBS's) | R-ERA-1 to R-ERA-6 |
 
 `tests/test_contract_section4.py` has one test per row of every table above (and per decimalRules key) and fails
 when the contract gains a row without one, or when the oracle's error table keeps an id the contract dropped.
