@@ -23,6 +23,11 @@ export class NativeRecursionDepthError extends Data.TaggedError("NativeRecursion
   readonly maxDepth: number;
 }> {}
 
+export class NativeEngineHazardError extends Data.TaggedError("NativeEngineHazardError")<{
+  readonly code: "mark-join-build-limit";
+  readonly message: string;
+}> {}
+
 const MIN = -(2n ** 63n),
   MAX = 2n ** 63n - 1n;
 

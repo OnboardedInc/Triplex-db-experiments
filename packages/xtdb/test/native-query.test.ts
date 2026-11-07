@@ -41,8 +41,19 @@ describe("XTDB native read provider", () => {
       "SELECT 1; UPDATE tx_assertions SET value_string = 'changed'",
       "SELECT 1; SELECT 2",
       "SET AWAIT_TOKEN = 'other'",
+      // [EXP-X02] R14 H05: a quantified comparison over a non-subquery swallows `AND p`.
+      "SELECT 1 FROM t WHERE k = ANY($1) AND a = 'x'",
+      "SELECT 1 FROM t WHERE k = some ( $1 )",
+      "SELECT 1 FROM t WHERE k > ALL(ARRAY[1, 2])",
     ])
       expect(() => readOnlyNativeSql(query)).toThrow();
+    for (const query of [
+      "SELECT 1 FROM t WHERE k = ANY (SELECT x FROM UNNEST($1) AS u(x)) AND a = 'x'",
+      "SELECT 1 FROM t WHERE k IN (SELECT x FROM UNNEST($1) AS u(x)) AND a = 'x'",
+      "SELECT a FROM t UNION ALL SELECT b FROM u",
+      "SELECT 'any(' AS literal",
+    ])
+      expect(() => readOnlyNativeSql(query)).not.toThrow();
     expect(
       readOnlyNativeSql("SELECT $native$UPDATE ?; DELETE$native$ AS message; -- retained\n"),
     ).toBe("SELECT $native$UPDATE ?; DELETE$native$ AS message -- retained\n");

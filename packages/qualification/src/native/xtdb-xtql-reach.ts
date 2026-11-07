@@ -24,7 +24,7 @@
  */
 import { Effect } from "effect";
 import { TypeExpr } from "@triplex-build/triplex/config";
-import { NativeRecursionDepthError } from "./xtdb-native-errors.js";
+import { NativeEngineHazardError, NativeRecursionDepthError } from "./xtdb-native-errors.js";
 
 type RecordValue = Record<string, any>;
 export interface XtqlReachContext {
@@ -42,6 +42,8 @@ export type XtqlReachCall = (
 
 /** Explicit depth budget. R12 measured 56 KB and 191 parameters at D = 8 (section 5.3). */
 export const XTQL_REACH_MAX_DEPTH = 8;
+/** Mark-join build-side limit of XTDB 2.2.0 (upstream #6345, R14 H03). */
+export const XTQL_REACH_MAX_EDGES = 100_000;
 
 const row = (fields: Record<string, TypeExpr.TypeExpr>) =>
   TypeExpr.struct(
@@ -107,9 +109,34 @@ export const evaluateXtqlReachability = (input: {
     const { id, operation, p, a, call } = input;
     const maxDepth = input.maxDepth ?? XTQL_REACH_MAX_DEPTH;
     const flag = row({ incomplete: TypeExpr.boolean });
+    // [EXP-X02] Why: REACH ORs `exists?` subqueries, the shape XTDB 2.2.0 plans as a mark join,
+    // and a mark join whose build side passes 100,000 rows answers false for every row (upstream
+    // #6345, fixed on main, not released; R14 H03). The build side is bounded by the edge facts of
+    // the attribute, so count them first (one XTQL call per edge attribute) and refuse, typed,
+    // above the threshold instead of returning a silently short closure.
+    const guardEdges = (edge: string, values: RecordValue) =>
+      Effect.gen(function* () {
+        const rows = yield* call(
+          `reach-edge-count-${edge}`,
+          values,
+          row({ edges: TypeExpr.int64 }),
+          (c) =>
+            `(-> ${c.facts()} (where (= attribute ${c.attribute(a(edge))}) (= value_type "ref")) (aggregate {:edges (row-count)}))`,
+        );
+        const edges = BigInt(String((rows[0]?.["edges"] as { value?: unknown })?.value ?? rows[0]?.["edges"] ?? 0));
+        if (edges > BigInt(XTQL_REACH_MAX_EDGES))
+          return yield* Effect.fail(
+            new NativeEngineHazardError({
+              code: "mark-join-build-limit",
+              message: `XTQL reachability over ${edges} ${edge} edges exceeds ${XTQL_REACH_MAX_EDGES} (XTDB #6345); no answer returned`,
+            }),
+          );
+      });
     // The smallest D at which every listed closure is complete, by one XTQL call per closure and D.
     const settle = (checks: readonly { edge: string; source: string }[], values: RecordValue) =>
       Effect.gen(function* () {
+        for (const edge of new Set(checks.map((check) => check.edge)))
+          yield* guardEdges(edge, values);
         for (let depth = 1; depth <= maxDepth; depth++) {
           let complete = true;
           for (const { edge, source } of checks) {
@@ -188,6 +215,7 @@ export const evaluateXtqlReachability = (input: {
       const values = { environment: p.environment.value };
       const applications = (c: XtqlReachContext, i: RecordValue) =>
         `${view(c, a("environment"), "{:entity_id e}", `(= value_string ${c.bind(i["environment"])})`)} ${view(c, a("application"), "{:entity_id e} {:value_string app}")}`;
+      yield* guardEdges("_dependency", values);
       let depth = 0;
       for (let d = 1; d <= maxDepth && depth === 0; d++) {
         const rows = yield* call(`reach-complete-environment-${d}`, values, flag, (c, i) => {

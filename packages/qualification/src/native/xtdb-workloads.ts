@@ -13,6 +13,23 @@
  * Rejected: a SQL shell around XTQL (`INSERT ... SELECT * FROM (XTQL ...)`, hybrid and
  * mutating), window functions (no XTQL operator; workload 18 needs none), `union-all`
  * (cannot be planned in 2.2.0; no operation needs it).
+ *
+ * [EXP-X02] Engine wrong-result hazards (R14), and how every builder here avoids them:
+ * - H02 (#6313): a correlated SQL EXISTS / NOT EXISTS drops or nulls rows when an inner predicate
+ *   is unknown (e.g. value_string is NULL for a non-string fact). Every SQL subquery predicate is
+ *   written `(p) IS TRUE`, for the correlated conjuncts only (09, 12, 13, 18; 14's EXISTS is
+ *   uncorrelated). XTQL `exists?` with arguments returned the
+ *   correct rows on the same shape on the dev slot (EXP-X02 probe), and the live NULL controls in
+ *   workloads/xtdb-native-x02.ts check both languages.
+ * - H03 (#6345): a projected or OR-ed EXISTS over more than 100,000 build rows answers false. Only
+ *   the interim XTQL reachability ORs `exists?`; it refuses edge sets above that size
+ *   (xtdb-xtql-reach.ts). No other builder projects or ORs an EXISTS.
+ * - H04 (#6151): no builder joins over a LIMITed or windowed subquery; every LIMIT is the
+ *   statement's own outermost operator.
+ * - H05: no builder uses `= ANY(...)`; readOnlyNativeSql rejects ANY/SOME/ALL over a non-subquery.
+ * - H01: no builder sums BIGINT directly (xtdb-exact-sum.ts). `SUM(CAST(x AS DECIMAL(32,0)))` is
+ *   exact, but casting that DECIMAL back to BIGINT goes through a double in 2.2.0 (1e18 + 4 came
+ *   back as 1e18 and 2^63 as 2^63 - 1 in SQL and XTQL; EXP-X02 probe), so it is not used.
  */
 import { Effect } from "effect";
 import { integer } from "@triplex-build/triplex";
@@ -253,7 +270,7 @@ export const evaluateXtdbNativeWorkload = (
           edges.map(([name, field]) => ({
             name,
             edges: (ctx: Context) =>
-              `SELECT DISTINCT entity_id AS source, value_string AS target FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a(field))} AND value_type = 'ref'`,
+              `SELECT DISTINCT entity_id AS source, value_string AS target FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a(field))} AND value_type = 'ref' AND entity_id IS NOT NULL AND value_string IS NOT NULL`,
           })),
           (ctx, input) => build(ctx, input as RecordValue),
           {
@@ -471,7 +488,7 @@ export const evaluateXtdbNativeWorkload = (
           xtql: (c) =>
             `(-> (unify ${F(c, a("paid"), "{:entity_id p}", "(= value_boolean 1)")} ${F(c, a("subscription"), "{:entity_id p} {:value_string sv}")} (where (not (exists? [(fn [s] (unify ${F(c, a("subject"), "{:entity_id x}", "(= value_string s)")} ${F(c, a("entitled"), "{:entity_id x}", "(= value_boolean 1)")})) sv])))) (aggregate sv) (return {:subscription sv}))`,
           sql: (ctx) =>
-            `WITH f AS ${ctx.facts()} SELECT DISTINCT subscription.value_string AS subscription FROM f paid JOIN f subscription ON paid.entity_id = subscription.entity_id WHERE paid.attribute = ${ctx.attribute(a("paid"))} AND paid.value_boolean = 1 AND subscription.attribute = ${ctx.attribute(a("subscription"))} AND NOT EXISTS (SELECT 1 FROM f subject JOIN f entitled ON subject.entity_id = entitled.entity_id WHERE subject.attribute = ${ctx.attribute(a("subject"))} AND subject.value_string = subscription.value_string AND entitled.attribute = ${ctx.attribute(a("entitled"))} AND entitled.value_boolean = 1)`,
+            `WITH f AS ${ctx.facts()} SELECT DISTINCT subscription.value_string AS subscription FROM f paid JOIN f subscription ON paid.entity_id = subscription.entity_id WHERE paid.attribute = ${ctx.attribute(a("paid"))} AND paid.value_boolean = 1 AND subscription.attribute = ${ctx.attribute(a("subscription"))} AND NOT EXISTS (SELECT 1 FROM f subject JOIN f entitled ON subject.entity_id = entitled.entity_id WHERE subject.attribute = ${ctx.attribute(a("subject"))} AND (subject.value_string = subscription.value_string) IS TRUE AND entitled.attribute = ${ctx.attribute(a("entitled"))} AND entitled.value_boolean = 1)`,
         },
       );
       return rows.map((value) => [value["subscription"]]);
@@ -559,7 +576,7 @@ export const evaluateXtdbNativeWorkload = (
           row({ item: TypeExpr.text }),
           [["contains", "_contains"]],
           (ctx, input) =>
-            `WITH f AS ${ctx.facts()}, closure AS ${ctx.relation("contains")} SELECT DISTINCT c.target AS item FROM closure c WHERE c.source = ${ctx.bind(input["container"])} AND NOT EXISTS (SELECT 1 FROM f child WHERE child.entity_id = c.target AND child.attribute = ${ctx.attribute(a("_contains"))})`,
+            `WITH f AS ${ctx.facts()}, closure AS ${ctx.relation("contains")} SELECT DISTINCT c.target AS item FROM closure c WHERE c.source = ${ctx.bind(input["container"])} AND NOT EXISTS (SELECT 1 FROM f child WHERE (child.entity_id = c.target) IS TRUE AND child.attribute = ${ctx.attribute(a("_contains"))})`,
         );
         return rows.map((value) => [value["item"]]);
       }
@@ -608,7 +625,7 @@ export const evaluateXtdbNativeWorkload = (
           xtql: (c, i) =>
             `(-> (unify ${F(c, a("kind"), "{:entity_id e}", `(= value_string "support")`)} ${F(c, a("subject"), "{:entity_id e} {:value_string su}", `(= value_string ${c.bind(i["user"])})`)} ${F(c, a("target"), "{:entity_id e} {:value_string ta}", `(= value_string ${c.bind(i["resource"])})`)} ${F(c, a("principal"), "{:entity_id e} {:value_string pr}")} (where (not (exists? [(fn [su2 ta2] (unify ${F(c, a("kind"), "{:entity_id k}", `(= value_string "block")`)} ${F(c, a("subject"), "{:entity_id k}", "(= value_string su2)")} ${F(c, a("target"), "{:entity_id k}", "(= value_string ta2)")})) su ta])) (not (exists? [(fn [pr2 ta2] (unify ${F(c, a("kind"), "{:entity_id k}", `(= value_string "revoke")`)} ${F(c, a("subject"), "{:entity_id k}", "(= value_string pr2)")} ${F(c, a("target"), "{:entity_id k}", "(= value_string ta2)")})) pr ta])))) (return {:allowed true}) (aggregate allowed))`,
           sql: (ctx, input) =>
-            `WITH f AS ${ctx.facts()} SELECT DISTINCT TRUE AS allowed FROM f kind JOIN f subject ON kind.entity_id = subject.entity_id JOIN f target ON kind.entity_id = target.entity_id JOIN f principal ON kind.entity_id = principal.entity_id WHERE kind.attribute = ${ctx.attribute(a("kind"))} AND kind.value_string = 'support' AND subject.attribute = ${ctx.attribute(a("subject"))} AND subject.value_string = ${ctx.bind(input["user"])} AND target.attribute = ${ctx.attribute(a("target"))} AND target.value_string = ${ctx.bind(input["resource"])} AND principal.attribute = ${ctx.attribute(a("principal"))} AND NOT EXISTS (SELECT 1 FROM f k JOIN f s ON k.entity_id = s.entity_id JOIN f t ON k.entity_id = t.entity_id WHERE k.attribute = ${ctx.attribute(a("kind"))} AND k.value_string = 'block' AND s.attribute = ${ctx.attribute(a("subject"))} AND s.value_string = subject.value_string AND t.attribute = ${ctx.attribute(a("target"))} AND t.value_string = target.value_string) AND NOT EXISTS (SELECT 1 FROM f k JOIN f s ON k.entity_id = s.entity_id JOIN f t ON k.entity_id = t.entity_id WHERE k.attribute = ${ctx.attribute(a("kind"))} AND k.value_string = 'revoke' AND s.attribute = ${ctx.attribute(a("subject"))} AND s.value_string = principal.value_string AND t.attribute = ${ctx.attribute(a("target"))} AND t.value_string = target.value_string)`,
+            `WITH f AS ${ctx.facts()} SELECT DISTINCT TRUE AS allowed FROM f kind JOIN f subject ON kind.entity_id = subject.entity_id JOIN f target ON kind.entity_id = target.entity_id JOIN f principal ON kind.entity_id = principal.entity_id WHERE kind.attribute = ${ctx.attribute(a("kind"))} AND kind.value_string = 'support' AND subject.attribute = ${ctx.attribute(a("subject"))} AND subject.value_string = ${ctx.bind(input["user"])} AND target.attribute = ${ctx.attribute(a("target"))} AND target.value_string = ${ctx.bind(input["resource"])} AND principal.attribute = ${ctx.attribute(a("principal"))} AND NOT EXISTS (SELECT 1 FROM f k JOIN f s ON k.entity_id = s.entity_id JOIN f t ON k.entity_id = t.entity_id WHERE k.attribute = ${ctx.attribute(a("kind"))} AND k.value_string = 'block' AND s.attribute = ${ctx.attribute(a("subject"))} AND (s.value_string = subject.value_string) IS TRUE AND t.attribute = ${ctx.attribute(a("target"))} AND (t.value_string = target.value_string) IS TRUE) AND NOT EXISTS (SELECT 1 FROM f k JOIN f s ON k.entity_id = s.entity_id JOIN f t ON k.entity_id = t.entity_id WHERE k.attribute = ${ctx.attribute(a("kind"))} AND k.value_string = 'revoke' AND s.attribute = ${ctx.attribute(a("subject"))} AND (s.value_string = principal.value_string) IS TRUE AND t.attribute = ${ctx.attribute(a("target"))} AND (t.value_string = target.value_string) IS TRUE)`,
         },
       );
       return [[rows.length > 0]];
@@ -721,7 +738,7 @@ export const evaluateXtdbNativeWorkload = (
             // counts each covered elementary interval once, including duplicates.
             // Explicit binary64 endpoints also avoid the observed LongVector
             // union/join bug; Triplex valid-time coordinates are binary64 numbers.
-            `WITH source AS ${ctx.recordedFacts()}, clipped AS (SELECT DISTINCT CAST(GREATEST(valid_from, ${ctx.bind(input["from"])}) AS DOUBLE PRECISION) AS lo, CAST(LEAST(COALESCE(valid_to, ${ctx.bind(input["to"])}), ${ctx.bind(input["to"])}) AS DOUBLE PRECISION) AS hi FROM source WHERE attribute = ${ctx.attribute(a("machine"))} AND value_string = ${ctx.bind(input["machine"])} AND valid_from < ${ctx.bind(input["to"])} AND (valid_to IS NULL OR valid_to > ${ctx.bind(input["from"])})), points AS (SELECT lo AS boundary FROM clipped UNION SELECT hi AS boundary FROM clipped), segments AS (SELECT l.boundary AS lo, r.boundary AS hi FROM points l CROSS JOIN points r WHERE l.boundary < r.boundary AND NOT EXISTS (SELECT 1 FROM points middle WHERE middle.boundary > l.boundary AND middle.boundary < r.boundary)) SELECT COALESCE(SUM(hi - lo), 0) AS duration FROM segments s WHERE EXISTS (SELECT 1 FROM clipped c WHERE c.lo <= s.lo AND c.hi >= s.hi)`,
+            `WITH source AS ${ctx.recordedFacts()}, clipped AS (SELECT DISTINCT CAST(GREATEST(valid_from, ${ctx.bind(input["from"])}) AS DOUBLE PRECISION) AS lo, CAST(LEAST(COALESCE(valid_to, ${ctx.bind(input["to"])}), ${ctx.bind(input["to"])}) AS DOUBLE PRECISION) AS hi FROM source WHERE attribute = ${ctx.attribute(a("machine"))} AND value_string = ${ctx.bind(input["machine"])} AND valid_from < ${ctx.bind(input["to"])} AND (valid_to IS NULL OR valid_to > ${ctx.bind(input["from"])})), points AS (SELECT lo AS boundary FROM clipped UNION SELECT hi AS boundary FROM clipped), segments AS (SELECT l.boundary AS lo, r.boundary AS hi FROM points l CROSS JOIN points r WHERE l.boundary < r.boundary AND NOT EXISTS (SELECT 1 FROM points middle WHERE (middle.boundary > l.boundary AND middle.boundary < r.boundary) IS TRUE)) SELECT COALESCE(SUM(hi - lo), 0) AS duration FROM segments s WHERE EXISTS (SELECT 1 FROM clipped c WHERE (c.lo <= s.lo AND c.hi >= s.hi) IS TRUE)`,
         },
       );
       return [[rows[0]!["duration"]]];
