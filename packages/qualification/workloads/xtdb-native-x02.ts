@@ -159,6 +159,7 @@ const run = async (
     error: Exit.isSuccess(exit) ? null : String(exit.cause).slice(0, 400),
     languages: [...new Set([...queries.map((q) => q["language"]), ...substeps])],
     positions: queries.map((q) => q["basis"]?.recordedPosition),
+    elapsedMs: queries.map((q) => Math.round(Number(q["elapsedMs"] ?? 0))),
   };
 };
 const S = (value: string) => ({ value }),
