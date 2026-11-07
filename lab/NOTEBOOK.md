@@ -872,3 +872,12 @@ Where each priority stands, from evidence so far (research probes and baselines;
   so P5 can now test the difference between "re-run what the index reaches" and "re-run everything"; a sweep may skip the other ~90%.
   V-D01 delta check running (resumed); on ACCEPT: merge W0, pin it, then two independent implementers (TS kernel, O-DOMAIN) reproduce the
   fingerprint.
+
+## 2026-11-09 ~00:10Z: MILESTONE: W0-1.1.1 accepted and merged
+- Three review rounds (FIX-FIRST on 1.0.0: worlds too small, outbox order undefined; FIX-FIRST on 1.1.0: two case defects, unpinned
+  receive dedup, fingerprint recipe; ACCEPT on 1.1.1). The reviewer's own evaluator, written from SPEC alone, matches all 87 cases byte for
+  byte; floors hold on 44.5M generated facts; scoped R3 reaches 9,497 subjects and changes 418, with 0 changed-but-not-reached.
+- Learning: misreading mutants and validator mutations were the cheapest review tools: each round's survivors became the next round's
+  cases, and the validator now checks raw tokens and recomputes delivery ids and versions.
+- EXP-D01c (O-DOMAIN, independent Python from SPEC only) started; the W0 pin closes when it reproduces the fingerprint. The TypeScript
+  kernel (EXP-D01b) follows at the next free slot, written by a different agent and checked against O-DOMAIN.
