@@ -57,7 +57,7 @@ const output = path.resolve(opt("output") ?? "");
 if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--output must be under runs/");
 const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
-const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s"].filter((f) => opt(f) !== undefined);
+const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 const config = {
   lane,
   rung: devSubjects ? `dev:${rungSubjects}` : rung,
@@ -78,6 +78,7 @@ const config = {
   sweepMax: Number(opt("sweep-max", "100000")),
   maxReaders: opt("max-readers") ? Number(opt("max-readers")) : null,
   burstMultiplier: Number(opt("burst-multiplier", String(TRACE_DEFAULTS.burstMultiplier))),
+  rateScale: Number(opt("rate-scale", "1")),
   levelS: opt("level-s") ? Number(opt("level-s")) : null,
   oracleSampleSubjects: Number(opt("oracle-subjects", "12")),
   oracleRate: Number(opt("oracle-rate", "0.01")),
@@ -194,6 +195,7 @@ function straddleCandidate(): { subject: number; seq: number } {
 }
 const overlayCount: Record<string, number> = {};
 let feed: FeedConsumer | null = null;
+const lateGrowth: { cmd: any; v: number; pending: Promise<any> }[] = [];
 let coordinate: (position: number) => any = (position) => ({ stream: "unknown", epoch: 0, offset: position, ordinal: 0 });
 
 function main() {
@@ -211,6 +213,9 @@ async function run() {
   save();
   const writer = await openComposition(config.composition, lane, scopeName);
   const aux = await openComposition(config.composition, lane, scopeName);
+  // History growth (bulk, P4 item 2) writes through its own opening, so a writer admission queue full of
+  // trace commands cannot starve it; a command that outlives the phase is resolved at wind-down.
+  const growthComp = await openComposition(config.composition, lane, scopeName);
   report.composition = { name: writer.name, assignments: writer.assignments, backend: writer.backend, scopeKey: `composition:${writer.name}/source:${lane}/scope:${scopeName}` };
   coordinate = writer.coordinate;
   void engineSampler();
@@ -244,7 +249,7 @@ async function run() {
   void watermarkSampler(aux);
 
   // ---------------------------------------------------------------- trace (frozen generator, TARGETS 2.1)
-  const params: TraceParams = { ...TRACE_DEFAULTS, burstMultiplier: config.burstMultiplier };
+  const params: TraceParams = { ...TRACE_DEFAULTS, burstMultiplier: config.burstMultiplier, steadyFactsPerS: TRACE_DEFAULTS.steadyFactsPerS * config.rateScale };
   const traceDurationS = 7200;
   const events = generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   report.trace = { params, durationS: traceDurationS, digest: traceDigest(events), generated: traceStats(events), generatorSha256: report.generator.traceSha256, seed: config.seed };
@@ -495,12 +500,21 @@ async function run() {
   const firstCrash = feed.crashReport().find((c) => c.checkpoint !== null);
   const replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
   await replayHandle.close().catch(() => {});
+  // Growth commands that outlived their phase: wait for them, then fold any that committed into the model.
+  for (const late of lateGrowth) {
+    await Promise.race([late.pending, sleep(60_000)]);
+    const receipt = await resolveByCommand(late.cmd.commandId);
+    if (!receipt) { log(`history growth: ${late.cmd.commandId} never committed`); continue; }
+    const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1 });
+    for (const s of late.cmd.perSubject) model.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
+  }
   const finalPosition = await writer.currentPosition();
   samplersOn = false;
   clearInterval(eluTimer);
   const maintenance = await maintenanceEvents(traceStart);
   await writer.close().catch(() => {});
   await aux.close().catch(() => {});
+  await growthComp.close().catch(() => {});
   log(`wind down: writer pending ${scheduler.pending}, feed checkpoint ${feed.checkpoint}/${lastAcked}, final position ${finalPosition}`);
   fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify({ stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome })).join("\n") + "\n");
 
@@ -532,13 +546,19 @@ async function run() {
         const group = historyList.slice(k, k + perCommand);
         const cmd = buildHistoryGrowth({ runTag, label: `v${v}.${k}`, subjects: group, version: v, ids: versionIds });
         let receipt: Receipt | null = null;
+        let timedOut = false;
         for (let attempt = 1; attempt <= 6 && !receipt; attempt++) {
           if (now() > deadline) break;
-          const res = await writer.transact(cmd.operations, { commandId: cmd.commandId, actor: "p4-history", preconditions: cmd.preconditions });
+          const pending = growthComp.transact(cmd.operations, { commandId: cmd.commandId, actor: "p4-history", preconditions: cmd.preconditions });
+          const res = await Promise.race([pending, sleep(Math.max(1000, deadline - now())).then(() => null)]);
+          if (res === null) { timedOut = true; lateGrowth.push({ cmd, v, pending }); break; }
           receipt = res.ok ? res.value : await resolveByCommand(cmd.commandId);
           if (!receipt) { failures++; await sleep(50 * attempt); }
         }
-        if (!receipt) { log(`history growth: ${cmd.commandId} failed 6 times; stopping growth at version ${v - 1}`); return { targetDepth: depth, reachedDepth: Math.min(...historyList.map((i) => historyVersion.get(i) ?? 0)) + 1, subjects: historyList.length, commands, assertions, failures, wallS: (now() - started) / 1000, incomplete: true }; }
+        if (!receipt) {
+          log(`history growth: ${cmd.commandId} ${timedOut ? "still pending at the phase deadline" : "failed 6 times"}; growth stops at version ${v - 1}`);
+          return { targetDepth: depth, reachedDepth: Math.min(...historyList.map((i) => historyVersion.get(i) ?? 0)) + 1, subjects: historyList.length, commands, assertions, failures, wallS: (now() - started) / 1000, incomplete: true, pendingAtDeadline: timedOut ? cmd.commandId : null };
+        }
         commands++;
         assertions += cmd.operations.filter((o) => o.op === "assert").length;
         const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1 });
@@ -917,7 +937,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
 }
 /** TARGETS 1.1 P2 item 4 (RULINGS Q31a): progress and bounded outstanding work. */
 function p2Progress(background: any[], traceStart: number) {
-  const p = { ...TRACE_DEFAULTS, burstMultiplier: config.burstMultiplier };
+  const p = { ...TRACE_DEFAULTS, burstMultiplier: config.burstMultiplier, steadyFactsPerS: TRACE_DEFAULTS.steadyFactsPerS * config.rateScale };
   const steadyRate = p.steadyFactsPerS / (p.sizeClasses.reduce((s, c) => s + c.share * ((c.min + c.max) / 2), 0));
   const steadyBound = 2 * steadyRate;
   const traceS = (t: number) => (t - traceStart) / 1000;

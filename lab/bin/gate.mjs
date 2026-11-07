@@ -471,7 +471,7 @@ async function gateG2(run, config) {
 // its own pass/miss, and a missed bar is a fitness result, not a gate failure).
 // The independent oracle O-REPLAY is read from its branch at a recorded commit (not yet on main).
 // Rejected: a separate script outside gate.mjs (receipts must share identity binding with G0-G4).
-const NS_DEV_FLAGS = ['subjects', 'max-readers', 'burst-multiplier', 'level-s', 'history-sample', 'sweep-max', 'reader-threads', 'seed-budget-s', 'writer-max-inflight', 'sweep-concurrency', 'probe10-per-s'];
+const NS_DEV_FLAGS = ['subjects', 'rate-scale', 'max-readers', 'burst-multiplier', 'level-s', 'history-sample', 'sweep-max', 'reader-threads', 'seed-budget-s', 'writer-max-inflight', 'sweep-concurrency', 'probe10-per-s'];
 async function gateNS(run, config) {
   run.options.slot ??= 's1';
   const rung = run.options.rung ?? '10k';
