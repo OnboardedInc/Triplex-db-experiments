@@ -6,6 +6,7 @@ import {
   graphIri,
   integerOrderKey,
   literal,
+  nativeNumeric,
   numericOrderKey,
   numericShadowIsExact,
 } from "../rdf.js";
@@ -131,14 +132,15 @@ ${visible(subject, prefix, recordedOnly)}
     integerOrder: (value: string | bigint): string =>
       literal(integerOrderKey(integer(value).value)),
     numberOrder: (value: number): string => literal(numericOrderKey(value)),
+    // [EXP-F02b] RULINGS Q30d: one predicate decides exactness for shadows and parameters
+    // (`numericShadowIsExact`, which now refuses -0 and values `%.13g` would change), and one
+    // encoder renders them (`nativeNumeric`), so the two can no longer drift apart (F02 finding 5).
     nativeNumber: (value: number): string => {
-      if (Object.is(value, -0) || !numericShadowIsExact(value))
+      if (!numericShadowIsExact(value))
         throw new RangeError(
           "This parameter cannot be represented exactly by QLever native arithmetic; use lexical/order channels",
         );
-      return Number.isInteger(value) && value >= -(2 ** 59) && value < 2 ** 59
-        ? String(value)
-        : `${literal(String(value))}^^<http://www.w3.org/2001/XMLSchema#double>`;
+      return nativeNumeric(value);
     },
     fact: (
       entity: string | QleverNativeEntity,

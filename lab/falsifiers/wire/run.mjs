@@ -62,6 +62,10 @@ const outPath = resolve(
 const XTDB_URL = process.env.XTDB_URL ?? "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb";
 const QLEVER_URL = process.env.QLEVER_URL ?? "http://127.0.0.1:7070";
 const runId = `${new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}${randomUUID().slice(0, 6)}`;
+// [EXP-F02b] --tag names the experiment in every scope key, table and graph this run creates, so
+// runs on the shared dev residents are attributable (default "f02" keeps the EXP-F02 names).
+const tag = args.includes("--tag") ? args[args.indexOf("--tag") + 1] : "f02";
+if (!/^[a-z][a-z0-9]*$/.test(tag ?? "")) throw new Error(`--tag must match [a-z][a-z0-9]*, got ${tag}`);
 const XSD = "http://www.w3.org/2001/XMLSchema#";
 const RDF_JSON = "http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON";
 
@@ -152,6 +156,10 @@ const record = (entry) => {
   if (entry.outsideDomain && path !== "ledger") {
     // The Triplex codec refuses the value before any lane sees it; the lane result is informative.
     verdict = "n/a-outside-triplex-domain";
+  } else if (entry.wire !== undefined && !entry.wire.allowed) {
+    // [EXP-F02b] RULINGS Q30c: ProjectionSpec.checkXtdbWire refuses this encoding with a typed
+    // error, so no qualified projection can take this path; the measured outcome is informative.
+    verdict = "n/a-encoding-refused-by-spec";
   } else if (entry.outsideDomain && outcome === "rejected") {
     verdict = "ok";
   } else if (path === "ledger" || claim === undefined || claim.exact === null) {
@@ -167,6 +175,10 @@ const record = (entry) => {
     verdict = outcome === "exact" ? "spec-conservative" : "ok";
   }
   results.push({ ...entry, verdict });
+  if (entry.engine === "xtdb" && entry.wire?.allowed && !entry.outsideDomain) {
+    const key = `${entry.kind}/${entry.path.startsWith("projection-list") ? "many" : "one"}`;
+    wireCoverage.set(key, (wireCoverage.get(key) ?? 0) + 1);
+  }
 };
 
 const measure = (expected, actual, how) =>
@@ -199,7 +211,7 @@ const ledgerCases = () => {
 };
 
 const ledgerPath = async (engine, makeLayer) => {
-  const scope = DatabaseScope.test(`f02-wire:${engine}:${runId}`);
+  const scope = DatabaseScope.test(`${tag}-wire:${engine}:${runId}`);
   const cases = ledgerCases();
   const writes = new Map();
   // Write with one runtime ...
@@ -347,20 +359,21 @@ const xtdbScalar = (kind, value) => {
     case "text":
     case "enum":
     case "ref":
+      return { expr: "?", param: value, form: "text" };
     case "boolean":
-      return { expr: "?", param: value };
+      return { expr: "?", param: value, form: "boolean" };
     case "number":
-      return { expr: "CAST(? AS DOUBLE PRECISION)", param: value };
+      return { expr: "CAST(? AS DOUBLE PRECISION)", param: value, form: "number" };
     case "integer":
-      return { expr: "CAST(? AS BIGINT)", param: value };
+      return { expr: "CAST(? AS BIGINT)", param: value, form: "number" };
     case "int64":
-      return { expr: "CAST(? AS BIGINT)", param: BigInt(value) };
+      return { expr: "CAST(? AS BIGINT)", param: BigInt(value), form: "bigint" };
     case "date":
-      return { expr: "CAST(? AS DATE)", param: value };
+      return { expr: "CAST(? AS DATE)", param: value, form: "text" };
     case "instant":
-      return { expr: "CAST(? AS TIMESTAMP WITH TIME ZONE)", param: msToIso(value, "java") };
+      return { expr: "CAST(? AS TIMESTAMP WITH TIME ZONE)", param: msToIso(value, "java"), form: "iso-8601" };
     case "json":
-      return { expr: "?", param: CanonicalJson.encodeOrThrow(value) };
+      return { expr: "?", param: CanonicalJson.encodeOrThrow(value), form: "canonical-json" };
   }
 };
 
@@ -414,11 +427,30 @@ const xtdbDecodeText = (kind, text) => {
   }
 };
 
+/** Static description of the encoding xtdbScalar uses for a kind (value-independent). */
+const scalarForm = (kind) => {
+  const probe = { text: "", enum: "draft", ref: "a", boolean: true, number: 1, integer: 1, int64: "1", date: "1970-01-01", instant: 0, json: 1 }[kind];
+  const { expr, form } = xtdbScalar(kind, probe);
+  return { bind: expr, param: form };
+};
+
+/**
+ * [EXP-F02b] RULINGS Q30c: ask ProjectionSpec whether this XTDB wire encoding is the attribute's
+ * pinned one. `allowed: false` carries the typed refusal; such a path is not a qualified projection.
+ */
+const wireUse = async (kind, many, use) => {
+  const exit = await run(ProjectionSpec.checkXtdbWire(attrSpec(kind, many), use));
+  return Exit.isSuccess(exit)
+    ? { use, allowed: true }
+    : { use, allowed: false, error: failureOf(exit), reason: Cause.squash(exit.cause)?.reason ?? null };
+};
+const wireCoverage = new Map(); // `${kind}/${many}` -> number of measured pinned-path records
+
 const xtdbPaths = async () => {
   const client = xtdbPkg.makeXtdbClient(XTDB_URL);
-  const prefix = `f02w_${runId}`;
+  const prefix = `${tag}w_${runId}`;
   const table = (kind, suffix = "") => `${prefix}_${kind}${suffix}`;
-  const scope = DatabaseScope.test(`f02-wire:xtdb-native:${runId}`);
+  const scope = DatabaseScope.test(`${tag}-wire:xtdb-native:${runId}`);
   const native = xtdbPkg.makeXtdbNativeQueries(client, scope);
   const stored = new Map(); // kind -> [{ id, case, ok }]
 
@@ -430,13 +462,18 @@ const xtdbPaths = async () => {
         const id = `c${index}`;
         const claim = specVerdict("xtdb", kind, false, c.value);
         const base = { engine: "xtdb", kind, caseId: c.id, outsideDomain: Boolean(c.expectReject), input: render(c.value), spec: claim };
+        const scalarWire = {
+          driver: await wireUse(kind, false, { shape: "scalar", ...scalarForm(kind), read: "driver" }),
+          text: await wireUse(kind, false, { shape: "scalar", ...scalarForm(kind), read: "text" }),
+        };
+        const wireOf = (p) => scalarWire[p.endsWith("/driver") ? "driver" : "text"];
         let encoded;
         try {
           encoded = xtdbScalar(kind, c.value);
           await client.submit([{ sql: `INSERT INTO ${table(kind)} (_id, v) VALUES (?, ${encoded.expr})`, params: [id, encoded.param] }]);
         } catch (error) {
           for (const p of ["projection-scalar/driver", "projection-scalar/text"])
-            record({ ...base, path: p, outcome: "rejected", error: errorText(error) });
+            record({ ...base, path: p, wire: wireOf(p), outcome: "rejected", error: errorText(error) });
           rows.push({ id, c, ok: false });
           continue;
         }
@@ -447,17 +484,18 @@ const xtdbPaths = async () => {
           [text] = await client.query(`SELECT CAST(v AS VARCHAR) AS v FROM ${table(kind)} WHERE _id = ?`, [id]);
         } catch (error) {
           for (const p of ["projection-scalar/driver", "projection-scalar/text"])
-            record({ ...base, path: p, outcome: "rejected", error: `write accepted, read failed: ${errorText(error)}` });
+            record({ ...base, path: p, wire: wireOf(p), outcome: "rejected", error: `write accepted, read failed: ${errorText(error)}` });
           continue;
         }
         if (driver === undefined) {
-          record({ ...base, path: "projection-scalar/driver", outcome: "changed", how: "row lost" });
+          record({ ...base, path: "projection-scalar/driver", wire: scalarWire.driver, outcome: "changed", how: "row lost" });
           continue;
         }
         const driverValue = xtdbDecodeDriver(kind, driver.v);
         record({
           ...base,
           path: "projection-scalar/driver",
+          wire: scalarWire.driver,
           ...measure(c.value, driverValue),
           driverType: driver.v instanceof Date ? "Date" : typeof driver.v,
           rawDriver: render(driver.v),
@@ -468,7 +506,7 @@ const xtdbPaths = async () => {
         } catch (error) {
           textValue = `<unparsed ${text.v}: ${errorText(error)}>`;
         }
-        record({ ...base, path: "projection-scalar/text", ...measure(c.value, textValue), rawText: render(text.v) });
+        record({ ...base, path: "projection-scalar/text", wire: scalarWire.text, ...measure(c.value, textValue), rawText: render(text.v) });
       }
       stored.set(kind, rows);
     }
@@ -522,6 +560,14 @@ const xtdbPaths = async () => {
             .map((v) => specVerdict("xtdb", kind, true, v))
             .reduce((acc, v) => (acc.exact && !v.exact ? v : acc), { exact: true, rule: null });
           const base = { engine: "xtdb", kind, caseId: lc.caseId, outsideDomain: Boolean(lc.outsideDomain), input: render(lc.values), spec: claim };
+          const listUse =
+            variant === "json-param"
+              ? { shape: "json-parameter", bind: "?", param: "json" }
+              : { shape: "array", ...scalarForm(kind) };
+          const listWire = {
+            driver: await wireUse(kind, true, { ...listUse, read: "driver" }),
+            "unnest-text": await wireUse(kind, true, { ...listUse, read: "text" }),
+          };
           try {
             if (variant === "json-param") {
               const param = lc.values.map((v) => (kind === "int64" ? BigInt(v) : v));
@@ -535,7 +581,7 @@ const xtdbPaths = async () => {
             }
           } catch (error) {
             for (const r of ["driver", "unnest-text"])
-              record({ ...base, path: `projection-list/${variant}/${r}`, outcome: "rejected", error: errorText(error) });
+              record({ ...base, path: `projection-list/${variant}/${r}`, wire: listWire[r], outcome: "rejected", error: errorText(error) });
             continue;
           }
           try {
@@ -544,11 +590,12 @@ const xtdbPaths = async () => {
             record({
               ...base,
               path: `projection-list/${variant}/driver`,
+              wire: listWire.driver,
               ...measure(lc.values, driverList),
               rawDriver: render(driver?.v),
             });
           } catch (error) {
-            record({ ...base, path: `projection-list/${variant}/driver`, outcome: "rejected", error: `write accepted, read failed: ${errorText(error)}` });
+            record({ ...base, path: `projection-list/${variant}/driver`, wire: listWire.driver, outcome: "rejected", error: `write accepted, read failed: ${errorText(error)}` });
           }
           let unnested;
           try {
@@ -557,7 +604,7 @@ const xtdbPaths = async () => {
               [lc.id],
             );
           } catch (error) {
-            record({ ...base, path: `projection-list/${variant}/unnest-text`, outcome: "rejected", error: `write accepted, read failed: ${errorText(error)}` });
+            record({ ...base, path: `projection-list/${variant}/unnest-text`, wire: listWire["unnest-text"], outcome: "rejected", error: `write accepted, read failed: ${errorText(error)}` });
             continue;
           }
           let decoded;
@@ -569,12 +616,29 @@ const xtdbPaths = async () => {
           record({
             ...base,
             path: `projection-list/${variant}/unnest-text`,
+            wire: listWire["unnest-text"],
             ...measure(lc.values, decoded),
             rawText: render(unnested.map((r) => r.x)),
           });
         }
       }
     }
+
+    // ---- [EXP-F02b] every kind and cardinality was measured on its pinned encoding ----
+    for (const kind of kinds)
+      for (const cardinality of ["one", "many"]) {
+        const measured = wireCoverage.get(`${kind}/${cardinality}`) ?? 0;
+        results.push({
+          engine: "xtdb",
+          path: "wire-coverage",
+          kind,
+          caseId: cardinality,
+          outcome: "info",
+          pinned: attrSpec(kind, cardinality === "many").xtdb.wire,
+          measuredPinnedRecords: measured,
+          verdict: measured > 0 ? "ok" : "critical-no-pinned-path-measured",
+        });
+      }
 
     // ---- (c) native provider: decode on the declared row type, and bound equality parameters ----
     const nativeCast = {
@@ -803,10 +867,10 @@ const qleverDecode = (kind, term) => {
 
 const qleverPaths = async () => {
   const client = qleverPkg.makeQleverClient(QLEVER_URL);
-  const graph = `<urn:f02wire:${runId}>`;
-  const subject = (kind, id) => `<urn:f02wire:${runId}:${kind}:${id}>`;
+  const graph = `<urn:${tag}wire:${runId}>`;
+  const subject = (kind, id) => `<urn:${tag}wire:${runId}:${kind}:${id}>`;
   const predicate = (kind) => `<${PhysicalNames.rdfAttribute(`:f02one/${kind}`, rdfBase)}>`;
-  const scope = DatabaseScope.test(`f02-wire:qlever-native:${runId}`);
+  const scope = DatabaseScope.test(`${tag}-wire:qlever-native:${runId}`);
   const native = qleverPkg.makeQleverNativeQueries(client, scope);
   const stored = new Map();
 
@@ -1055,6 +1119,7 @@ for (const r of results) {
 const output = {
   format: "triplex-f02-wire-exactness/1",
   experiment: "EXP-F02",
+  tag,
   runId,
   ...(keptRunId === undefined ? {} : { keptFromRunId: keptRunId, sectionsThisRun: sections }),
   started,
@@ -1068,6 +1133,8 @@ const output = {
     "spec-claims-exact-but-rejected": "spec claims exact; the engine refused the value with an error (not silent, but a valid write fails)",
     "spec-conservative": "spec marks inexact; the engine held the value exactly",
     "critical-spec-says-native-order-but-differs": "spec says native ordering; engine order or range filter differs from Triplex order",
+    "n/a-encoding-refused-by-spec": "EXP-F02b: the XTDB wire encoding this path used is not the attribute's pinned encoding; ProjectionSpec.checkXtdbWire refuses it (typed ProjectionSpecError unpinned-encoding)",
+    "critical-no-pinned-path-measured": "EXP-F02b: no measured path used the spec's pinned encoding for this kind and cardinality, so the falsifier proved nothing for it",
   },
   counts,
   results,

@@ -19,6 +19,7 @@ import { Effect } from "effect";
 
 import * as CanonicalJson from "../content/CanonicalJson.js";
 import * as ContentId from "../content/ContentId.js";
+import * as ExactJson from "../content/ExactJson.js";
 import type * as ConfigStore from "../config/ConfigStore.js";
 import * as TypeExpr from "../config/TypeExpr.js";
 import type { TripleValue } from "../Value.js";
@@ -47,9 +48,15 @@ export type ExactnessRule =
   | { readonly _tag: "NonEmpty" }
   /** Integers (JS number or int64 decimal) must lie in `[min, max]`, given as decimal text. */
   | { readonly _tag: "IntegerRange"; readonly min: string; readonly max: string }
-  /** `-0` is not representable (integer columns). */
+  /**
+   * `-0` is not representable (integer columns, instants, and anywhere inside a JSON value: the
+   * lanes write JSON with `JSON.stringify`, which prints -0 as 0).
+   */
   | { readonly _tag: "NoNegativeZero" }
-  /** NaN and ±Infinity are not representable (JSON wire for lists, integer and time columns). */
+  /**
+   * NaN and ±Infinity are not representable (JSON wire for lists, integer and time columns, and
+   * anywhere inside a JSON value).
+   */
   | { readonly _tag: "Finite" }
   /**
    * The engine stores binary64 with the low `droppedBits` mantissa bits cut off and exports
@@ -78,10 +85,15 @@ const WELL_FORMED: ExactnessRule = { _tag: "WellFormedUnicode" };
 const NON_EMPTY: ExactnessRule = { _tag: "NonEmpty" };
 const NO_NEGATIVE_ZERO: ExactnessRule = { _tag: "NoNegativeZero" };
 const FINITE: ExactnessRule = { _tag: "Finite" };
-const INT64_RANGE: ExactnessRule = {
+/**
+ * [EXP-F02b] RULINGS Q30e: the `integer` kind is TypeSchema `Schema.Int` (safe integers), so its
+ * range rule is its safe-integer domain on both engines; the old int64 / 60-bit rules were wider
+ * than any value the codec admits (F02 spec item 5, cosmetic).
+ */
+const SAFE_INTEGER_RANGE: ExactnessRule = {
   _tag: "IntegerRange",
-  min: "-9223372036854775808",
-  max: "9223372036854775807",
+  min: String(Number.MIN_SAFE_INTEGER),
+  max: String(Number.MAX_SAFE_INTEGER),
 };
 /** QLever stores integers in 60 bits: `[-2^59, 2^59 - 1]`, wrapping silently outside (R2 4.1). */
 const QLEVER_INTEGER_RANGE: ExactnessRule = {
@@ -175,6 +187,21 @@ const textOf = (value: TripleValue | number | string): string | undefined =>
         ? value.value
         : undefined;
 
+/**
+ * [EXP-F02b] RULINGS Q30a: `Finite` and `NoNegativeZero` also apply to every number inside a JSON
+ * value, because both lanes carry JSON as text written by `JSON.stringify` (-0 prints as 0). F02
+ * records: `projection-scalar/{driver,text} json neg-zero-in-object|list` (xtdb),
+ * `projection-literal json neg-zero-*` and `native-decode json neg-zero-*` (qlever),
+ * `projection-list/array-cast/* json neg-zero-*` (xtdb).
+ */
+const jsonHolds = (
+  value: TripleValue | number | string,
+  accept: (n: number) => boolean,
+): boolean | undefined =>
+  typeof value === "object" && value.type === "json"
+    ? ExactJson.findNumber(value.value, accept) === undefined
+    : undefined;
+
 const holds = (rule: ExactnessRule, value: TripleValue | number | string): boolean => {
   switch (rule._tag) {
     case "WellFormedUnicode": {
@@ -190,10 +217,14 @@ const holds = (rule: ExactnessRule, value: TripleValue | number | string): boole
       return int === undefined || (int >= BigInt(rule.min) && int <= BigInt(rule.max));
     }
     case "NoNegativeZero": {
+      const inJson = jsonHolds(value, (x) => !Object.is(x, -0));
+      if (inJson !== undefined) return inJson;
       const n = numeric(value);
       return n === undefined || !Object.is(n, -0);
     }
     case "Finite": {
+      const inJson = jsonHolds(value, Number.isFinite);
+      if (inJson !== undefined) return inJson;
       const n = numeric(value);
       return n === undefined || Number.isFinite(n);
     }
@@ -296,6 +327,45 @@ export type Ordering = "native" | "order-key" | "unordered";
  */
 export type NumericClass = "approximate" | "exact-integer";
 
+/**
+ * [EXP-F02b] RULINGS Q30c: the XTDB wire encoding EXP-F02 proved exact for an attribute. The
+ * exactness rules hold only on this encoding; a projection that writes or reads the attribute any
+ * other way fails `checkXtdbWire`. F02 findings: a card-many DOUBLE list sent as one JSON
+ * parameter turned -0 into 0 and could not carry int64 at all (`projection-list/json-param/*
+ * number neg-zero|set{0,-0}|all-spec-exact`, `int64 *`); TIMESTAMPTZ read through the driver
+ * turned year 0001 into 2001 and dropped microseconds (`projection-scalar/driver instant year-1`).
+ */
+export interface XtdbWire {
+  /** SQL for one bound value: `?` or `CAST(? AS <type>)`. */
+  readonly bind: string;
+  /**
+   * The JS form of each bound parameter: `text`, `boolean`, `number` as is (XtdbClient sends -0 as
+   * float8 `-0.0`); `bigint` from int64 decimal text; `iso-8601` UTC text carrying every
+   * sub-millisecond digit of the epoch-ms value, converted through its decimal text, never `Date`;
+   * `canonical-json` text.
+   */
+  readonly param: "text" | "boolean" | "number" | "bigint" | "iso-8601" | "canonical-json";
+  /**
+   * `scalar` for cardinality one; `array` for lists: `ARRAY[<bind>, ...]` with one parameter per
+   * element, never one JSON parameter.
+   */
+  readonly shape: "scalar" | "array";
+  /**
+   * Reads proven exact: `driver` (postgres.js decoding as XtdbClient configures it) and `text`
+   * (`CAST(<column> AS VARCHAR)`, for lists `UNNEST` then `CAST`). Date and instant: text only.
+   */
+  readonly reads: ReadonlyArray<"driver" | "text">;
+}
+
+/** What a projection actually does on the XTDB wire for one attribute (checked by `checkXtdbWire`). */
+export interface XtdbWireUse {
+  readonly bind: string;
+  readonly param: string;
+  /** `json-parameter`: the whole list as one JSON parameter (refused for every attribute). */
+  readonly shape: "scalar" | "array" | "json-parameter";
+  readonly read: "driver" | "text";
+}
+
 export interface XtdbAttributeSpec {
   readonly column: string;
   readonly type: XtdbColumnType;
@@ -303,6 +373,8 @@ export interface XtdbAttributeSpec {
   readonly list: boolean;
   /** How the value is carried: JSON values are canonical JSON text in a VARCHAR column. */
   readonly encoding: "native" | "canonical-json";
+  /** The pinned wire encoding (RULINGS Q30c). */
+  readonly wire: XtdbWire;
   readonly ordering: Ordering;
   readonly exactness: ReadonlyArray<ExactnessRule>;
 }
@@ -392,7 +464,7 @@ export interface CompileOptions {
   readonly rdfBase?: string;
   /** Defaults to `ledger-only`. */
   readonly inexactPolicy?: InexactPolicy;
-  /** `reject` fails the compile for any binary64 (`number`) attribute. Defaults to `allow`. */
+  /** `reject` fails the compile for any binary64 (`number`), also inside List and Struct (Q30a). */
   readonly approximateNumbers?: "allow" | "reject";
 }
 
@@ -449,11 +521,16 @@ const kindOf = (expr: TypeExpr.TypeExpr, family: StorageFamily): Kind => {
 
 interface Physical {
   readonly numeric?: NumericClass;
-  readonly xtdb: Omit<XtdbAttributeSpec, "column" | "list">;
+  readonly xtdb: Omit<XtdbAttributeSpec, "column" | "list" | "wire">;
+  /** The pinned XTDB wire encoding; `shape` follows the cardinality. */
+  readonly xtdbWire: Omit<XtdbWire, "shape">;
   readonly rdf: Omit<RdfAttributeSpec, "predicate">;
 }
 
 const literal = (datatype: string): RdfObject => ({ kind: "literal", datatype });
+const BOTH_READS = ["driver", "text"] as const;
+/** [EXP-F02b] RULINGS Q30c: date and instant only as text, never the driver's TIMESTAMPTZ decoding. */
+const TEXT_READ = ["text"] as const;
 
 /**
  * One declared physical type per kind per engine.
@@ -474,6 +551,7 @@ const physicalFor = (kind: Kind): Physical => {
           ordering: "order-key",
           exactness: [WELL_FORMED],
         },
+        xtdbWire: { bind: "?", param: "text", reads: BOTH_READS },
         rdf: {
           object: literal(`${XSD}string`),
           encoding: "native",
@@ -484,6 +562,7 @@ const physicalFor = (kind: Kind): Physical => {
     case "date":
       return {
         xtdb: { type: "DATE", encoding: "native", ordering: "native", exactness: [CALENDAR_DATE] },
+        xtdbWire: { bind: "CAST(? AS DATE)", param: "text", reads: TEXT_READ },
         rdf: {
           object: literal(`${XSD}date`),
           encoding: "native",
@@ -500,6 +579,7 @@ const physicalFor = (kind: Kind): Physical => {
           ordering: "native",
           exactness: [FINITE],
         },
+        xtdbWire: { bind: "CAST(? AS DOUBLE PRECISION)", param: "number", reads: BOTH_READS },
         rdf: {
           object: literal(`${XSD}double`),
           encoding: "native",
@@ -514,19 +594,21 @@ const physicalFor = (kind: Kind): Physical => {
           type: "BIGINT",
           encoding: "native",
           ordering: "native",
-          exactness: [FINITE, INT64_RANGE, NO_NEGATIVE_ZERO],
+          exactness: [FINITE, SAFE_INTEGER_RANGE, NO_NEGATIVE_ZERO],
         },
+        xtdbWire: { bind: "CAST(? AS BIGINT)", param: "number", reads: BOTH_READS },
         rdf: {
           object: literal(`${XSD}integer`),
           encoding: "native",
           ordering: "native",
-          exactness: [FINITE, QLEVER_INTEGER_RANGE, NO_NEGATIVE_ZERO],
+          exactness: [FINITE, SAFE_INTEGER_RANGE, NO_NEGATIVE_ZERO],
         },
       };
     case "int64":
       return {
         numeric: "exact-integer",
         xtdb: { type: "BIGINT", encoding: "native", ordering: "native", exactness: [] },
+        xtdbWire: { bind: "CAST(? AS BIGINT)", param: "bigint", reads: BOTH_READS },
         rdf: {
           object: literal(`${XSD}integer`),
           encoding: "native",
@@ -537,6 +619,7 @@ const physicalFor = (kind: Kind): Physical => {
     case "boolean":
       return {
         xtdb: { type: "BOOLEAN", encoding: "native", ordering: "native", exactness: [] },
+        xtdbWire: { bind: "?", param: "boolean", reads: BOTH_READS },
         rdf: {
           object: literal(`${XSD}boolean`),
           encoding: "native",
@@ -546,17 +629,25 @@ const physicalFor = (kind: Kind): Physical => {
       };
     case "instant":
       return {
+        // [EXP-F02b] RULINGS Q30b: an instant of -0 is not exact on either engine (F02 finding 3:
+        // `projection-scalar/* instant neg-zero`, `projection-list/array-cast/* instant
+        // neg-zero|all-spec-exact` on xtdb, `projection-literal instant neg-zero` on qlever).
         xtdb: {
           type: "TIMESTAMP WITH TIME ZONE",
           encoding: "native",
           ordering: "native",
-          exactness: [XTDB_DATETIME],
+          exactness: [XTDB_DATETIME, NO_NEGATIVE_ZERO],
+        },
+        xtdbWire: {
+          bind: "CAST(? AS TIMESTAMP WITH TIME ZONE)",
+          param: "iso-8601",
+          reads: TEXT_READ,
         },
         rdf: {
           object: literal(`${XSD}dateTime`),
           encoding: "native",
           ordering: "native",
-          exactness: [QLEVER_DATETIME],
+          exactness: [QLEVER_DATETIME, NO_NEGATIVE_ZERO],
         },
       };
     case "ref":
@@ -567,6 +658,7 @@ const physicalFor = (kind: Kind): Physical => {
           ordering: "order-key",
           exactness: [WELL_FORMED],
         },
+        xtdbWire: { bind: "?", param: "text", reads: BOTH_READS },
         rdf: {
           object: { kind: "iri" },
           encoding: "native",
@@ -575,13 +667,21 @@ const physicalFor = (kind: Kind): Physical => {
         },
       };
     case "json":
+      // [EXP-F02b] RULINGS Q30a: JSON is exact only with every number finite and no -0 inside
+      // (the rules look inside the value; F02 spec item 1, "json has no rules").
       return {
-        xtdb: { type: "VARCHAR", encoding: "canonical-json", ordering: "unordered", exactness: [] },
+        xtdb: {
+          type: "VARCHAR",
+          encoding: "canonical-json",
+          ordering: "unordered",
+          exactness: [FINITE, NO_NEGATIVE_ZERO],
+        },
+        xtdbWire: { bind: "?", param: "canonical-json", reads: BOTH_READS },
         rdf: {
           object: literal(RDF_JSON),
           encoding: "canonical-json",
           ordering: "unordered",
-          exactness: [],
+          exactness: [FINITE, NO_NEGATIVE_ZERO],
         },
       };
   }
@@ -615,6 +715,28 @@ const usagesOf = (input: EntityTypeInput): ReadonlyArray<AttributeUsageInput> =>
     ? (input.attributes as ReadonlyArray<AttributeUsageInput>)
     : Object.values(input.attributes as Readonly<Record<string, AttributeUsageInput>>);
 
+/**
+ * [EXP-F02b] RULINGS Q30a: `approximateNumbers: "reject"` applies recursively, so a binary64
+ * declared inside a List or Struct (a JSON attribute) is refused too. F02 records: `spec
+ * compile/approximateNumbers=reject list(number)` and `struct{amount:number}` were accepted.
+ */
+const declaresBinary64 = (expr: TypeExpr.TypeExpr): boolean => {
+  switch (expr._tag) {
+    case "Prim":
+      return expr.prim === "number";
+    case "List":
+      return declaresBinary64(expr.item);
+    case "Struct":
+      return Object.values(expr.fields).some((field) => declaresBinary64(field.type));
+    case "Union":
+      return expr.members.some(declaresBinary64);
+    case "Constrained":
+      return declaresBinary64(expr.base);
+    default:
+      return false;
+  }
+};
+
 const refTargetOf = (expr: TypeExpr.TypeExpr): string | undefined => {
   switch (expr._tag) {
     case "Ref":
@@ -646,10 +768,10 @@ const canonicalBody = (spec: Omit<ProjectionSpec, "id">): string =>
  * Compile entity types into a projection spec. Fails, naming every offending input, on: XTDB
  * column collisions (`-` vs `_`), table collisions (case-folded names such as `ABTest`/`AbTest`),
  * reserved and SQL-keyword names, reserved namespaces, invalid names, duplicate types or usages,
- * one key used with two value types, refs to types not in the inputs, binary64 attributes when
- * `approximateNumbers` is `reject`, an invalid or ledger-overlapping `rdfBase`, and types with no
- * single physical type (`Any`, unions across storage families). The checks match the release path
- * (`fromRelease`), so both paths accept and reject the same inputs.
+ * one key used with two value types, refs to types not in the inputs, binary64 attributes (also
+ * nested) when `approximateNumbers` is `reject`, an invalid or ledger-overlapping `rdfBase`, and
+ * types with no single physical type (`Any`, unions across storage families). The checks match the
+ * release path (`fromRelease`), so both paths accept and reject the same inputs.
  */
 export const compile = (
   inputs: ReadonlyArray<EntityTypeInput>,
@@ -761,7 +883,10 @@ export const compile = (
           );
         }
         const physical = physicalFor(kindOf(usage.type, storage));
-        if (physical.numeric === "approximate" && options.approximateNumbers === "reject") {
+        if (
+          options.approximateNumbers === "reject" &&
+          (physical.numeric === "approximate" || declaresBinary64(usage.type))
+        ) {
           return yield* fail(
             "approximate-number",
             [where],
@@ -777,7 +902,15 @@ export const compile = (
           storage,
           ...(physical.numeric === undefined ? {} : { numeric: physical.numeric }),
           ...(refTarget === undefined ? {} : { refTarget }),
-          xtdb: { column, list: usage.cardinality === "many", ...physical.xtdb },
+          xtdb: {
+            column,
+            list: usage.cardinality === "many",
+            ...physical.xtdb,
+            wire: {
+              ...physical.xtdbWire,
+              shape: usage.cardinality === "many" ? "array" : "scalar",
+            },
+          },
           rdf: { predicate: Names.rdfAttribute(key, rdfBase), ...physical.rdf },
         });
       }
@@ -825,3 +958,36 @@ export const attribute = (
   key: string,
 ): AttributeSpec | undefined =>
   entityType(spec, entityTypeName)?.attributes.find((usage) => usage.key === key);
+
+const normalizeSql = (sql: string): string => sql.replace(/\s+/g, " ").trim().toUpperCase();
+
+/**
+ * [EXP-F02b] RULINGS Q30c: fail with ProjectionSpecError `unpinned-encoding` unless `use` is the
+ * attribute's pinned XTDB wire encoding: same bind expression and parameter form, the shape its
+ * cardinality requires (never one JSON parameter for a list), and a read the spec lists.
+ */
+export const checkXtdbWire = (
+  attribute: AttributeSpec,
+  use: XtdbWireUse,
+): Effect.Effect<void, ProjectionSpecError> => {
+  const pinned = attribute.xtdb.wire;
+  const problem =
+    use.shape !== pinned.shape
+      ? `shape ${use.shape}, pinned ${pinned.shape}`
+      : normalizeSql(use.bind) !== normalizeSql(pinned.bind)
+        ? `bind ${use.bind}, pinned ${pinned.bind}`
+        : use.param !== pinned.param
+          ? `parameter ${use.param}, pinned ${pinned.param}`
+          : !pinned.reads.includes(use.read)
+            ? `read ${use.read}, pinned ${pinned.reads.join(" or ")}`
+            : undefined;
+  return problem === undefined
+    ? Effect.void
+    : Effect.fail(
+        fail(
+          "unpinned-encoding",
+          [attribute.key, `${use.shape} ${use.bind} ${use.param} read ${use.read}`],
+          `${attribute.key} on XTDB must use its pinned wire encoding (RULINGS Q30c): ${problem}`,
+        ),
+      );
+};

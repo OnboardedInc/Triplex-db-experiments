@@ -29,6 +29,7 @@ import type {
   WriteError,
   ReadError,
   DatalogQueryError,
+  InvalidTripleError,
   CommandAlreadyCommittedError,
   TransactionConflictError,
   ConstraintViolationError,
@@ -225,6 +226,8 @@ export interface TriplesService {
     TransactionResult,
     | WriteError
     | ReadError
+    // [EXP-F02b] RULINGS Q30a/Q30b: an inexact value is rejected before any mutation.
+    | InvalidTripleError
     | TransactionConflictError
     | CommandAlreadyCommittedError
     | ConstraintViolationError

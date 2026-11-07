@@ -13,6 +13,7 @@ import * as ContentIds from "../content/ContentId.js";
 import type {
   CommandAlreadyCommittedError,
   ConstraintViolationError,
+  InvalidTripleError,
   ReadError,
   TransactionConflictError,
   WriteError,
@@ -73,6 +74,8 @@ export type ConsumerCheckpointError =
   | CorruptConsumerCheckpointError
   | ReadError
   | WriteError
+  // [EXP-F02b] transact rejects inexact values with InvalidTripleError (RULINGS Q30a/Q30b).
+  | InvalidTripleError
   | TransactionConflictError
   | CommandAlreadyCommittedError
   | ConstraintViolationError;

@@ -220,3 +220,155 @@ describe("F6: names the compiler must flag", () => {
     );
   });
 });
+
+// [EXP-F02b] RULINGS Q30a-e: the rules EXP-F02 found wrong or missing (lab/experiments/
+// EXP-F02-wire-exactness/REPORT.md, "ProjectionSpec rules wrong or missing" 1-5).
+describe("Q30: wire exactness rules from EXP-F02", () => {
+  const wire = compile([
+    {
+      entityType: "Wire",
+      attributes: [
+        usage(":wire/json", TypeExpr.list(TypeExpr.number)),
+        { ...usage(":wire/num", TypeExpr.number), cardinality: "many" },
+        { ...usage(":wire/big", TypeExpr.int64), cardinality: "many" },
+        usage(":wire/day", TypeExpr.date),
+        { ...usage(":wire/at", TypeExpr.instant), cardinality: "many" },
+      ],
+    },
+  ]);
+  const attr = (key: string) => ProjectionSpec.attribute(wire, "Wire", key)!;
+  const json = (value: unknown) => ({ type: "json" as const, value });
+
+  it.each(["xtdb", "rdf"] as const)(
+    "Q30a: JSON is exact only with no -0 and no non-finite number anywhere inside (%s)",
+    (engine) => {
+      const jsonRules = attr(":wire/json")[engine].exactness;
+      expect(jsonRules.map((rule) => rule._tag)).toEqual(["Finite", "NoNegativeZero"]);
+      expect(ProjectionSpec.firstViolation(jsonRules, json({ amount: -0 }))?._tag).toBe(
+        "NoNegativeZero",
+      );
+      expect(ProjectionSpec.isExact(jsonRules, json([0, -0, 1]))).toBe(false);
+      expect(ProjectionSpec.isExact(jsonRules, json({ a: [{ b: -0 }] }))).toBe(false);
+      expect(ProjectionSpec.firstViolation(jsonRules, json([Number.NaN]))?._tag).toBe("Finite");
+      expect(ProjectionSpec.isExact(jsonRules, json([1.0000000000000002, 1 + 2 ** -40]))).toBe(
+        true,
+      );
+      expect(ProjectionSpec.isExact(jsonRules, json({ v: 2 ** 53 + 2, s: "-0" }))).toBe(true);
+    },
+  );
+
+  it("Q30a: approximateNumbers reject applies recursively inside List, Struct and Constrained", () => {
+    const doc = (type: TypeExpr.TypeExpr) => [
+      { entityType: "Doc", attributes: [usage(":doc/v", type)] },
+    ];
+    for (const type of [
+      TypeExpr.list(TypeExpr.number),
+      TypeExpr.struct({ amount: TypeExpr.required(TypeExpr.number) }),
+      TypeExpr.list(TypeExpr.struct({ v: TypeExpr.optional(TypeExpr.number) })),
+      TypeExpr.struct({
+        v: TypeExpr.required(TypeExpr.constrained(TypeExpr.number, [TypeExpr.min(0)])),
+      }),
+    ]) {
+      const error = compileError(doc(type), { approximateNumbers: "reject" });
+      expect(error.reason).toBe("approximate-number");
+      expect(error.inputs).toEqual(["Doc.:doc/v"]);
+    }
+    for (const type of [
+      TypeExpr.list(TypeExpr.integer),
+      TypeExpr.struct({ cents: TypeExpr.required(TypeExpr.int64) }),
+    ])
+      expect(compile(doc(type), { approximateNumbers: "reject" }).entityTypes).toHaveLength(1);
+  });
+
+  it.each(["xtdb", "rdf"] as const)("Q30b: an instant of -0 is not exact (%s)", (engine) => {
+    const atRules = attr(":wire/at")[engine].exactness;
+    expect(ProjectionSpec.firstViolation(atRules, { type: "datetime", value: -0 })?._tag).toBe(
+      "NoNegativeZero",
+    );
+    expect(ProjectionSpec.isExact(atRules, { type: "datetime", value: 0 })).toBe(true);
+  });
+
+  it("Q30c: XTDB lists bind ARRAY[CAST(? AS <type>) ...]; date and instant read as text only", () => {
+    expect(attr(":wire/num").xtdb.wire).toEqual({
+      bind: "CAST(? AS DOUBLE PRECISION)",
+      param: "number",
+      shape: "array",
+      reads: ["driver", "text"],
+    });
+    expect(attr(":wire/big").xtdb.wire).toMatchObject({
+      bind: "CAST(? AS BIGINT)",
+      param: "bigint",
+      shape: "array",
+    });
+    expect(attr(":wire/day").xtdb.wire).toEqual({
+      bind: "CAST(? AS DATE)",
+      param: "text",
+      shape: "scalar",
+      reads: ["text"],
+    });
+    expect(attr(":wire/at").xtdb.wire).toMatchObject({
+      bind: "CAST(? AS TIMESTAMP WITH TIME ZONE)",
+      param: "iso-8601",
+      shape: "array",
+      reads: ["text"],
+    });
+  });
+
+  it("Q30c: checkXtdbWire accepts the pinned encoding and refuses every other, typed", () => {
+    const check = (key: string, use: ProjectionSpec.XtdbWireUse) => {
+      const result = Effect.runSync(Effect.result(ProjectionSpec.checkXtdbWire(attr(key), use)));
+      return Result.isSuccess(result) ? "ok" : result.failure.reason;
+    };
+    const num: ProjectionSpec.XtdbWireUse = {
+      bind: "CAST(? AS DOUBLE PRECISION)",
+      param: "number",
+      shape: "array",
+      read: "driver",
+    };
+    expect(check(":wire/num", num)).toBe("ok");
+    expect(check(":wire/num", { ...num, read: "text", bind: "cast(?  as double precision)" })).toBe(
+      "ok",
+    );
+    // F02 finding 2: the whole list as one JSON parameter.
+    expect(check(":wire/num", { ...num, shape: "json-parameter", bind: "?" })).toBe(
+      "unpinned-encoding",
+    );
+    expect(check(":wire/big", { ...num, bind: "?", param: "json", shape: "json-parameter" })).toBe(
+      "unpinned-encoding",
+    );
+    expect(check(":wire/num", { ...num, bind: "?" })).toBe("unpinned-encoding");
+    // F02 finding 4: TIMESTAMPTZ and DATE through the driver's decoding.
+    const at: ProjectionSpec.XtdbWireUse = {
+      bind: "CAST(? AS TIMESTAMP WITH TIME ZONE)",
+      param: "iso-8601",
+      shape: "array",
+      read: "text",
+    };
+    expect(check(":wire/at", at)).toBe("ok");
+    expect(check(":wire/at", { ...at, read: "driver" })).toBe("unpinned-encoding");
+    expect(check(":wire/at", { ...at, param: "date" })).toBe("unpinned-encoding");
+    const day: ProjectionSpec.XtdbWireUse = {
+      bind: "CAST(? AS DATE)",
+      param: "text",
+      shape: "scalar",
+      read: "driver",
+    };
+    expect(check(":wire/day", day)).toBe("unpinned-encoding");
+    expect(check(":wire/day", { ...day, read: "text" })).toBe("ok");
+    expect(check(":wire/day", { ...day, read: "text", shape: "array" })).toBe("unpinned-encoding");
+  });
+
+  it.each(["xtdb", "rdf"] as const)(
+    "Q30e: the integer range rule is the safe-integer domain (%s)",
+    (engine) => {
+      const integerRules = rules(":person/age", engine);
+      expect(integerRules.find((rule) => rule._tag === "IntegerRange")).toEqual({
+        _tag: "IntegerRange",
+        min: "-9007199254740991",
+        max: "9007199254740991",
+      });
+      expect(ProjectionSpec.isExact(integerRules, num(Number.MAX_SAFE_INTEGER))).toBe(true);
+      expect(ProjectionSpec.isExact(integerRules, num(2 ** 53))).toBe(false);
+    },
+  );
+});

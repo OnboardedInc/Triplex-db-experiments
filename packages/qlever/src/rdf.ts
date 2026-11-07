@@ -1,4 +1,5 @@
 import { integer, type TripleValue } from "@triplex-build/triplex";
+import { ExactJson } from "@triplex-build/triplex/content";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 
 export const columns = [
@@ -80,12 +81,29 @@ export const numericFromOrderKey = (key: string): number => {
   view.setBigUint64(0, bits);
   return view.getFloat64(0);
 };
+/**
+ * Does a `_native` shadow give `value` back bit for bit? Only then may it answer a query; otherwise
+ * the lexical and order channels are authoritative and the shadow is flagged inexact.
+ *
+ * [EXP-F02b] Why: RULINGS Q30d (repeats the EXP-R01 VERIFY F1 fix, ProjectionSpec
+ * `DoubleRoundTrip`). QLever keeps integers in 60 bits, stores a double with its low 4 mantissa
+ * bits dropped (ValueId.h:263-270), and exports a non-integral double with `%.13g`
+ * (ExportIds.cpp:244-247); an integer literal `-0` is the integer 0. The old predicate checked only
+ * the dropped bits, so EXP-F02 read changed values from shadows flagged exact:
+ * `native-ledger/value_number_native` neg-zero (-0 -> 0), min-normal (-> 2.225073858507e-308),
+ * bit-5 (1+2^-48 -> 1), 1+2^-40 (-> 1.000000000001), and `native-ledger/value_datetime_native`
+ * half-ms (1731000000123.5 -> ...124) and neg-zero. Now: never -0; integers only within
+ * [-2^59, 2^59); anything else must keep its low 4 bits clear and survive the `%.13g` rendering
+ * (`toPrecision(13)` rounds to the same 13 significant digits).
+ * Rejected: admitting -0 as the integer 0 (silent conversion); trusting integral doubles beyond
+ * 2^59 without the `%.13g` check (Q30d admits integers only within the 60-bit range).
+ */
 export const numericShadowIsExact = (value: number): boolean => {
-  if (!Number.isFinite(value)) return false;
+  if (!Number.isFinite(value) || Object.is(value, -0)) return false;
   if (Number.isInteger(value) && value >= -(2 ** 59) && value < 2 ** 59) return true;
   const view = new DataView(new ArrayBuffer(8));
   view.setFloat64(0, value);
-  return (view.getUint32(4) & 15) === 0;
+  return (view.getUint32(4) & 15) === 0 && Number(value.toPrecision(13)) === value;
 };
 export const nativeNumeric = (value: number): string =>
   Number.isInteger(value) && value >= -(2 ** 59) && value < 2 ** 59
@@ -156,7 +174,9 @@ export const packValue = (value: TripleValue) => {
       break;
     case "json":
       canonicalJson(value.value);
-      row.value_json = JSON.stringify(value.value);
+      // [EXP-F02b] AMB-04 / Q34c: lossless for -0 (the journal embeds typed values in JSON; a
+      // number -0 change was journaled as 0). Byte-identical to JSON.stringify otherwise.
+      row.value_json = ExactJson.stringify(value.value);
       break;
     case "blob":
       if (!Number.isSafeInteger(value.size) || value.size < 0)

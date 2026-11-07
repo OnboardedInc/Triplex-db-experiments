@@ -1,5 +1,7 @@
 import postgres from "postgres";
 
+import { jsonParameterProblem } from "./codecs.js";
+
 export interface XtdbBasis {
   readonly snapshotToken?: string;
   readonly clockTime?: string;
@@ -159,6 +161,13 @@ export const makeXtdbClient = (
                     ? 20
                     : 701
                   : 114;
+      // [EXP-F02b] RULINGS Q30c / EXP-F02 finding 2: a JSON parameter would turn -0 into 0 and
+      // cannot carry a bigint; refuse it here, before submission, rather than send a changed value.
+      if (oid === 114) {
+        const problem = jsonParameterProblem(value);
+        if (problem !== undefined)
+          throw new TypeError(`XTDB JSON parameter cannot be sent exactly: ${problem}`);
+      }
       return pool.typed(
         negativeZero ? "-0.0" : typeof value === "bigint" ? value.toString() : value,
         oid,

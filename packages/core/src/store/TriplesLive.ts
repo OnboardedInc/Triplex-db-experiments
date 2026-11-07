@@ -37,6 +37,7 @@ import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
 import { validateDatalogQuery, validateWrappedQuery } from "../datalog/validation.js";
 import {
   WriteError,
+  InvalidTripleError,
   UnsupportedValueTypeError,
   ReadError,
   DatalogError,
@@ -66,6 +67,7 @@ import {
   reservedAssertError,
   reservedWriteError,
 } from "./systemNamespace.js";
+import { requireExactOperations } from "./exactValues.js";
 import { resolveTemporalBasis } from "../Temporal.js";
 import { TxAttributes } from "../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../Pagination.js";
@@ -257,6 +259,7 @@ export const TriplesLive = Layer.effect(
       TransactionResult,
       | WriteError
       | ReadError
+      | InvalidTripleError
       | TransactionConflictError
       | CommandAlreadyCommittedError
       | ConstraintViolationError
@@ -270,7 +273,18 @@ export const TriplesLive = Layer.effect(
           }),
           catch: (cause) =>
             new WriteError({ message: "Cannot snapshot transaction command", cause }),
-        }),
+        }).pipe(
+          // [EXP-F02b] RULINGS Q30a/Q30b/Q23: refuse a user value the lanes would change (-0 or
+          // a non-finite number inside JSON, an instant of -0) on the snapshot structuredClone
+          // took (it keeps -0), before the transaction opens and before any lane encoder runs.
+          // Fixes EXP-F02 `ledger json neg-zero-in-object` / `neg-zero-in-list` on xtdb and
+          // qlever. Q34c: user-supplied values only; JSON Triplex generates (system writes, and
+          // the journal, which is written below without passing through here) is not checked and
+          // is stored losslessly by the lanes (ExactJson.stringify).
+          Effect.tap(({ operations, meta }) =>
+            isSystemWriteAuthorized(meta) ? Effect.void : requireExactOperations(operations),
+          ),
+        ),
         ({ operations, meta }) =>
           adapter.withTransaction(
             Effect.gen(function* () {

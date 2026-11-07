@@ -18,6 +18,7 @@ import type {
   CommandAlreadyCommittedError,
   ConstraintViolationError,
   DatalogQueryError,
+  InvalidTripleError,
   ReadError,
   TransactionConflictError,
   WriteError,
@@ -150,6 +151,8 @@ export class CorruptMaterializationError extends Data.TaggedError(
 export type MaterializationError =
   | ReadError
   | WriteError
+  // [EXP-F02b] transact rejects inexact values with InvalidTripleError (RULINGS Q30a/Q30b).
+  | InvalidTripleError
   | TransactionConflictError
   | CommandAlreadyCommittedError
   | ConstraintViolationError

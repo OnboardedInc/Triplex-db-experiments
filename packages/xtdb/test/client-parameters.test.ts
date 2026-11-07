@@ -38,6 +38,26 @@ describe("XTDB PostgreSQL parameter encoding", () => {
     await client.close();
   });
 
+  // [EXP-F02b] RULINGS Q30c / EXP-F02 finding 2: a list sent as one JSON parameter turned -0 into 0
+  // (`projection-list/json-param/* number neg-zero`) and could not carry int64 at all.
+  it("refuses a JSON parameter that would lose -0 or cannot carry a bigint, before any send", async () => {
+    const client = makeXtdbClient("postgresql://unused-unit-test");
+    for (const param of [[-0], [0, -0], { amount: -0 }, [{ nested: [1, -0] }]])
+      await expect(client.query("SELECT $1", [param])).rejects.toThrow(
+        /-0, which a JSON parameter/,
+      );
+    await expect(client.query("SELECT $1", [[1n, 2n]])).rejects.toThrow(/bigint/);
+    await expect(
+      client.submit([{ sql: "INSERT INTO unit VALUES ($1)", params: [[0, -0]] }]),
+    ).rejects.toThrow(/-0/);
+    // Only transaction control may have been sent; no statement carried the refused parameter.
+    for (const call of driver.connection.unsafe.mock.calls as unknown as Array<[string]>)
+      expect(call[0]).not.toMatch(/SELECT \$1|INSERT INTO unit/);
+    await client.query("SELECT $1", [[0, 1.5, "x", { a: [true, null] }]]);
+    expect(driver.typed.mock.calls).toEqual([[[0, 1.5, "x", { a: [true, null] }], 114]]);
+    await client.close();
+  });
+
   it("uses the same lossless parameter mapping in the transaction submission route", async () => {
     const client = makeXtdbClient("postgresql://unused-unit-test");
     await client.submit([

@@ -63,7 +63,9 @@ export class ProjectionSpecError extends Data.TaggedError("ProjectionSpecError")
     | "attribute-type-conflict"
     | "unknown-ref-target"
     | "approximate-number"
-    | "invalid-option";
+    | "invalid-option"
+    // [EXP-F02b] RULINGS Q30c: a projection used a wire encoding the spec does not pin.
+    | "unpinned-encoding";
   readonly inputs: ReadonlyArray<string>;
   readonly message: string;
 }> {}

@@ -26,6 +26,7 @@ import {
   CommandAlreadyCommittedError,
   TransactionConflictError,
   ConstraintViolationError,
+  InvalidTripleError,
   PaginationCursorError,
   DatalogValidationError,
   UnboundVariableError,
@@ -58,6 +59,7 @@ import {
   reservedAssertError,
   reservedWriteError,
 } from "../../store/systemNamespace.js";
+import { requireExactOperations } from "../../store/exactValues.js";
 import { resolveTemporalBasis, type ResolvedTemporalBasis } from "../../Temporal.js";
 import { TxAttributes } from "../../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../../Pagination.js";
@@ -432,6 +434,9 @@ const makeKvTriplesService = Effect.gen(function* () {
             ) {
               return yield* Effect.fail(new UnsupportedValueTypeError("KV runtime", "integer"));
             }
+            // [EXP-F02b] RULINGS Q30a/Q30b: the same exact-value guard as TriplesLive, before any
+            // write in this KV transaction; user values only (Q34c).
+            if (!isSystemWriteAuthorized(meta)) yield* requireExactOperations(operations);
             if (!isSystemWriteAuthorized(meta)) {
               const reserved = reservedAssertError(operations);
               if (reserved) return yield* Effect.fail(reserved);
@@ -639,7 +644,9 @@ const makeKvTriplesService = Effect.gen(function* () {
             e instanceof WriteError ||
             e instanceof TransactionConflictError ||
             e instanceof CommandAlreadyCommittedError ||
-            e instanceof ConstraintViolationError
+            e instanceof ConstraintViolationError ||
+            // [EXP-F02b] keep the typed Q30a/Q30b rejection (contract E-INVALID-VALUE).
+            e instanceof InvalidTripleError
               ? Effect.fail(e)
               : Effect.fail(new WriteError({ message: `Transact failed: ${String(e)}`, cause: e })),
           ),

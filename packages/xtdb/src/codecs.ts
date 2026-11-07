@@ -4,6 +4,7 @@ import {
   type TripleValue,
   type ResolvedTemporalBasis,
 } from "@triplex-build/triplex";
+import { ExactJson } from "@triplex-build/triplex/content";
 import type { QueryPattern, TripleRow } from "@triplex-build/triplex/runtime";
 
 export const assertionColumns = [
@@ -66,6 +67,46 @@ export const canonicalJson = (value: unknown): string => {
   return encode(value);
 };
 
+/**
+ * Why a value cannot travel as one JSON parameter (PostgreSQL json, oid 114), or `undefined`.
+ *
+ * [EXP-F02b] Why: RULINGS Q30c and EXP-F02 finding 2. A list or object bound as one parameter is
+ * serialized as JSON text, so -0 inside it arrives as 0 (`projection-list/json-param/* number
+ * neg-zero`, `set{0,-0}`, `all-spec-exact`) and a bigint cannot be serialized at all (`int64 *`:
+ * "Do not know how to serialize a BigInt"). XtdbClient refuses such a parameter before submission;
+ * card-many values bind `ARRAY[CAST(? AS <type>), ...]` with one parameter per element instead
+ * (ProjectionSpec `XtdbWire`). Rejected: rewriting -0 to 0 or bigint to a number (silent).
+ */
+export const jsonParameterProblem = (
+  value: unknown,
+  path = "$",
+  seen: Set<object> = new Set(),
+): string | undefined => {
+  if (typeof value === "bigint")
+    return `${path} is a bigint, which JSON cannot carry; bind int64 lists as ARRAY[CAST(? AS BIGINT), ...]`;
+  if (typeof value === "number")
+    return Object.is(value, -0)
+      ? `${path} is -0, which a JSON parameter turns into 0; bind lists as ARRAY[CAST(? AS DOUBLE PRECISION), ...]`
+      : Number.isFinite(value)
+        ? undefined
+        : `${path} is ${value}, which JSON cannot carry`;
+  if (value === null || typeof value !== "object" || seen.has(value)) return undefined;
+  seen.add(value);
+  try {
+    for (const [key, item] of Object.entries(value)) {
+      const problem = jsonParameterProblem(
+        item,
+        Array.isArray(value) ? `${path}[${key}]` : `${path}.${key}`,
+        seen,
+      );
+      if (problem !== undefined) return problem;
+    }
+    return undefined;
+  } finally {
+    seen.delete(value);
+  }
+};
+
 export const packValue = (value: TripleValue) => {
   const packed = {
     value_type: value.type,
@@ -97,7 +138,9 @@ export const packValue = (value: TripleValue) => {
       break;
     case "json":
       canonicalJson(value.value); // validate while retaining Triplex's public scalar spelling
-      packed.value_json = JSON.stringify(value.value);
+      // [EXP-F02b] AMB-04 / Q34c: lossless for -0 (the journal embeds typed values in JSON; a
+      // number -0 change was journaled as 0). Byte-identical to JSON.stringify otherwise.
+      packed.value_json = ExactJson.stringify(value.value);
       break;
     case "blob":
       if (!Number.isSafeInteger(value.size) || value.size < 0)

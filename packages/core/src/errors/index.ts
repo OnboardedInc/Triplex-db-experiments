@@ -63,6 +63,13 @@ export class InvalidTripleError extends Data.TaggedError("InvalidTripleError")<{
   readonly field: string;
   readonly value: unknown;
   readonly message: string;
+  /**
+   * [EXP-F02b] Contract reason (lab/acceptance/ACCEPTANCE.md 4.7, E-INVALID-VALUE). Optional so
+   * existing constructors keep compiling; the exact-value guard always sets it.
+   */
+  readonly reason?: "invalid-value";
+  /** Finer reason: `inexact-json-number` (RULINGS Q30a) or `negative-zero-instant` (Q30b). */
+  readonly detail?: string;
 }> {}
 
 export class TransactionError extends Data.TaggedError("TransactionError")<{

@@ -89,6 +89,8 @@ describe("ProjectionSpec.compile", () => {
                 list: false,
                 type: "VARCHAR",
                 encoding: "native",
+                // [EXP-F02b] RULINGS Q30c: the pinned XTDB wire encoding.
+                wire: { bind: "?", param: "text", shape: "scalar", reads: ["driver", "text"] },
                 ordering: "order-key",
                 exactness: [{ _tag: "WellFormedUnicode" }],
               },
@@ -386,7 +388,9 @@ describe("ProjectionSpec exactness", () => {
     expect(exact(":person/age", "xtdb", { type: "number", value: -0 })).toBe(false);
     expect(exact(":person/age", "rdf", { type: "number", value: -0 })).toBe(false);
     expect(exact(":person/age", "xtdb", { type: "number", value: 2 ** 63 })).toBe(false);
-    expect(exact(":person/age", "rdf", { type: "number", value: 2 ** 53 })).toBe(true);
+    // [EXP-F02b] RULINGS Q30e: the integer range rule is the safe-integer domain on both engines.
+    expect(exact(":person/age", "rdf", { type: "number", value: 2 ** 53 - 1 })).toBe(true);
+    expect(exact(":person/age", "rdf", { type: "number", value: 2 ** 53 })).toBe(false);
     expect(exact(":person/age", "rdf", { type: "number", value: 2 ** 59 })).toBe(false);
   });
 

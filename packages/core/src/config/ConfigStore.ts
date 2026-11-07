@@ -13,6 +13,7 @@ import type {
   CommandAlreadyCommittedError,
   ConstraintViolationError,
   DatalogQueryError,
+  InvalidTripleError,
   ReadError,
   TransactionConflictError,
   WriteError,
@@ -79,6 +80,8 @@ export type LoadError = ReadError | CorruptConfigStoreError;
 export type CommitError =
   | LoadError
   | WriteError
+  // [EXP-F02b] transact rejects inexact values with InvalidTripleError (RULINGS Q30a/Q30b).
+  | InvalidTripleError
   | TransactionConflictError
   | CommandAlreadyCommittedError
   | ConstraintViolationError
@@ -110,6 +113,8 @@ export interface ConfigStoreService {
     InMemoryConfigStore.ConfigSnapshot,
     | LoadError
     | WriteError
+    // [EXP-F02b] transact rejects inexact values with InvalidTripleError (RULINGS Q30a/Q30b).
+    | InvalidTripleError
     | TransactionConflictError
     | CommandAlreadyCommittedError
     | ConstraintViolationError
