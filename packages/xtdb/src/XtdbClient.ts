@@ -19,6 +19,23 @@ export interface XtdbStatement {
   readonly parameterSyntax?: "postgresql";
 }
 
+/** A transaction `METADATA` value: what XTDB stores in `xt.txs.user_metadata`. */
+export type XtdbMetadataValue =
+  | string
+  | number
+  | boolean
+  | readonly XtdbMetadataValue[]
+  | { readonly [key: string]: XtdbMetadataValue | undefined };
+
+export interface XtdbSubmitOptions {
+  /**
+   * Written with the transaction as `BEGIN READ WRITE WITH (METADATA = {...})`, so it commits or
+   * aborts with it and is readable from `xt.txs` by tx id (EXP-P2X; R16 3.4: the lightest carrier of
+   * entity, attribute and valid range for a feed). Keys must be SQL identifiers.
+   */
+  readonly metadata?: { readonly [key: string]: XtdbMetadataValue | undefined };
+}
+
 export interface XtdbClient {
   query<T extends Record<string, unknown> = Record<string, unknown>>(
     sql: string,
@@ -26,9 +43,34 @@ export interface XtdbClient {
     basis?: XtdbBasis,
     options?: XtdbQueryOptions,
   ): Promise<T[]>;
-  submit(statements: readonly XtdbStatement[]): Promise<unknown>;
+  submit(statements: readonly XtdbStatement[], options?: XtdbSubmitOptions): Promise<unknown>;
   close(): Promise<void>;
 }
+
+/**
+ * Encode METADATA as an XTDB struct literal. BEGIN takes no bound parameters, so values are
+ * inlined. Probe p2-sql-details (EXP-P2X) showed that doubling single quotes is the only escape
+ * needed: backslashes, double quotes and non-ASCII text round-trip unchanged, and integers up to
+ * 2^53 come back as exact numbers. Anything else is rejected rather than silently converted.
+ */
+export const metadataLiteral = (value: XtdbMetadataValue): string => {
+  if (typeof value === "string") {
+    if (!value.isWellFormed()) throw new TypeError("METADATA text must be well-formed Unicode");
+    return `'${value.replaceAll("'", "''")}'`;
+  }
+  if (typeof value === "boolean") return value ? "TRUE" : "FALSE";
+  if (typeof value === "number") {
+    if (!Number.isSafeInteger(value)) throw new TypeError("METADATA numbers must be safe integers");
+    return String(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(metadataLiteral).join(", ")}]`;
+  const entries = Object.entries(value as Record<string, XtdbMetadataValue | undefined>).filter(
+    (entry): entry is [string, XtdbMetadataValue] => entry[1] !== undefined,
+  );
+  for (const [key] of entries)
+    if (!/^[a-z_][a-z0-9_]*$/.test(key)) throw new TypeError(`Invalid METADATA key ${key}`);
+  return `{${entries.map(([key, entry]) => `${key}: ${metadataLiteral(entry)}`).join(", ")}}`;
+};
 
 /** A synchronous processing failure is a known rejection, unlike transport loss. */
 export class XtdbTransactionRejected extends Error {
@@ -223,7 +265,15 @@ export const makeXtdbClient = (
         }
       }, queryOptions);
     },
-    async submit(statements) {
+    async submit(statements, submitOptions) {
+      let begin = "BEGIN READ WRITE";
+      try {
+        if (submitOptions?.metadata !== undefined)
+          begin = `BEGIN READ WRITE WITH (METADATA = ${metadataLiteral(submitOptions.metadata)})`;
+      } catch (error) {
+        // Nothing was sent, so this is a definite rejection, never an unknown outcome.
+        throw new XtdbTransactionRejected(error);
+      }
       return withDeadline(
         async (signal) => {
           const connection = await pool.reserve();
@@ -249,7 +299,7 @@ export const makeXtdbClient = (
             }
           };
           try {
-            await run("BEGIN READ WRITE");
+            await run(begin);
             for (const statement of statements) {
               await run(statement.sql, statement.params, statement.parameterSyntax);
             }

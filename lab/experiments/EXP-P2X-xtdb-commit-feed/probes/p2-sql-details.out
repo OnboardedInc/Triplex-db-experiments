@@ -1,0 +1,12 @@
+concat [{"v":"{\"type\":\"number\",\"value\":1794082664214921}"}]
+concat-text [{"v":"{\"type\":\"number\",\"value\":1794082664236100}"}]
+dml "ok"
+dml-readback [{"_id":"a","pos":"1794082664295859","ident":"{\"type\":\"number\",\"value\":1794082664295859}","n":"5","sys":"1794082664295859"}]
+param-compare [{"n":"1"}]
+meta-begin []
+meta-ins []
+meta-commit []
+meta-readback {"roundTrip":true,"n":1794082329542086,"typeofN":"number","got":"a'b\\c\"d:é/_triplex/x"}
+log-window {"ids":[419419,420725,422176],"midUpper":["419419","420725"],"limited":["419419"],"badLower":"log file corrupted at 419422 - expected record separator"}
+txs-in [{"_id":"422176","committed":true},{"_id":"420725","committed":true},{"_id":"419419","committed":true}]
+create-twice "ok"

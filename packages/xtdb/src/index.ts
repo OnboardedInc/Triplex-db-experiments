@@ -8,7 +8,7 @@ import {
   type MigrationError,
 } from "@triplex-build/triplex/runtime";
 import { makeXtdbClient, type XtdbClient } from "./XtdbClient.js";
-import { makeXtdbStorageAdapter } from "./XtdbStorageAdapter.js";
+import { makeXtdbStorageAdapter, type XtdbCommitPath } from "./XtdbStorageAdapter.js";
 import { makeXtdbQueryExecutor, type XtdbQueryLimits } from "./XtdbQueryExecutor.js";
 
 export interface XtdbRuntimeOptions {
@@ -18,8 +18,23 @@ export interface XtdbRuntimeOptions {
   readonly admissionQueue?: boolean;
   /** Experimental SQL constraint strategies; portable remains the default. */
   readonly constraintStrategy?: "portable" | "inline" | "projection";
+  /**
+   * Experimental (EXP-P2X). Default `scope-counter`. When omitted, `XTDB_COMMIT_PATH` may select
+   * `subject-stamp`, so the unchanged lab gates (which build the runtime from the public factory)
+   * can run the candidate; the gate note must record it.
+   */
+  readonly commitPath?: XtdbCommitPath;
   readonly queryLimits?: XtdbQueryLimits;
 }
+
+const commitPathOf = (options: XtdbRuntimeOptions): XtdbCommitPath | undefined => {
+  if (options.commitPath !== undefined) return options.commitPath;
+  const requested = process.env["XTDB_COMMIT_PATH"];
+  if (requested === undefined || requested === "") return undefined;
+  if (requested !== "scope-counter" && requested !== "subject-stamp")
+    throw new TypeError("Unknown XTDB_COMMIT_PATH; choose scope-counter or subject-stamp");
+  return requested;
+};
 
 class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb/Connection") {}
 
@@ -31,6 +46,7 @@ class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb
 export const makeXtdbRuntime = (
   options: XtdbRuntimeOptions,
 ): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> => {
+  const commitPath = commitPathOf(options);
   const connection = Layer.effect(
     Connection,
     Effect.acquireRelease(
@@ -52,6 +68,7 @@ export const makeXtdbRuntime = (
         ...(options.constraintStrategy === undefined
           ? {}
           : { constraintStrategy: options.constraintStrategy }),
+        ...(commitPath === undefined ? {} : { commitPath }),
       });
     }),
   ).pipe(Layer.provide(connection));
@@ -73,7 +90,28 @@ export const makeXtdbRuntime = (
 };
 
 export { makeXtdbClient, type XtdbClient, type XtdbBasis } from "./XtdbClient.js";
-export { makeXtdbStorageAdapter } from "./XtdbStorageAdapter.js";
+export {
+  makeXtdbStorageAdapter,
+  stampedPosition,
+  POSITION_BASE_US,
+  POSITION_ORDINALS,
+  type XtdbCommitPath,
+} from "./XtdbStorageAdapter.js";
+export {
+  makeXtdbCommitFeed,
+  feedEffects,
+  effectStatements,
+  checkpointStatements,
+  readFeedCheckpoint,
+  recordFeedProgress,
+  type XtdbCommitFeed,
+  type XtdbFeedCursor,
+  type XtdbFeedPage,
+  type XtdbFeedResolution,
+  type XtdbFeedTransact,
+  type XtdbFeedChange,
+  type XtdbFeedEffect,
+} from "./CommitFeed.js";
 export { makeXtdbQueryExecutor, type XtdbQueryLimits } from "./XtdbQueryExecutor.js";
 export {
   makeXtdbTemporalQueries,
