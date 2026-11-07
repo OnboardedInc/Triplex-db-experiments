@@ -707,3 +707,23 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - X02's live checks are the pattern to copy: hand-derived controls in both languages (100/100), 21/21 mutants killed, and a writer
   between calls that must stay invisible at the pinned cut.
 - Queued for the next free slot: V-X02 independent verification (promotion gate), including the XTQL candidate rerun on an exclusive slot.
+
+## 2026-11-08 ~01:40Z: hourly learnings pass (NORTH-STAR reread first)
+- **Learnings are current** through EXP-X02, Codex round 4, R17, R19, R20, V-O02 and the W0 draft. No report is unprocessed.
+- **What the evidence says about direction, by priority:**
+  - P1: on both engines reads never lock writers but starve them of CPU on a shared node (R16, R17). Separate read processes are the
+    lever: EXP-X05 (XTDB read-only follower, no Kafka needed per R19) is running; QLever read replicas fed from the host log follow P2Q.
+  - P2: XTDB is correct with a ~15 ms floor mostly outside fsync (R19); EXP-P2X tests per-subject CAS. QLever's ACK must not wait for
+    QLever (R17); EXP-P2Q tests ACK at the host log's durable frame.
+  - P3: both lanes get their feed from a log Triplex controls (XTDB same-tx feed row plus one tailer; QLever host log), with durable
+    watermarks and keyed effects.
+  - P4: per-subject world documents (R18 X1) on XTDB; bundle rows on QLever. Not started (PLAN 8 order 5).
+  - P5: W0 under independent review (V-D01); sweeps on a separate read-only process on both engines.
+- **New research direction (queued, R21):** both pinned engines may be behind fixes that change the plan. R17 found QLever upstream
+  #3607 (merged 2026-10-06: snapshot creation proportional to the update; authors report 700 ms to 60 ms per update at 500k delta) and
+  open #3267/#3612, none in 0.6.0; QLever also lacks TCP_NODELAY and clears the whole cache per update. XTDB 2.2.0 lacks per-database
+  authorization, encryption and a change stream, and hard-codes the 100 ms idle heartbeat (R19). R21 surveys what QLever master and XTDB
+  releases after 2.2.0 change for P1 to P5 and the requirements, what an upgrade would cost (new image digests, re-qualification), and
+  whether EXP-P2Q's overlay design is still needed on a newer QLever. Queued first for the next free slot, ahead of V-X02, because it can
+  change the design of experiments already running.
+- No research agent was started this pass: all 10 slots are busy.
