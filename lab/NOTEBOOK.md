@@ -840,3 +840,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
   fails if they diverge; 151 obligations; 101/101 applicable regressions caught. Claim admission (Q42a) now has fixtures for all-zero
   hashes, stale binaries, stale receipts, too few fault repetitions, missing measurement or control, a control from another window, unknown
   ids, an empty store, null pins, excluded and refused obligations. Codex round 6 started; EXP-O04 (F2 plus erasure) started.
+
+## 2026-11-08 ~23:30Z: Codex round 6: 3 closed, 2 partial, 2 new (open count 14, 13, 7, 6, 5, 4)
+- **Learning: hashing evidence proves it exists, not what it says.** With the real accepted pins, Codex qualified a claim whose verifier
+  object was `{"notAVerifierRecord":true}` and whose case objects recorded oracle exit 2 / X-NOT-MODELED labelled PASS. Q47a: admission
+  validates record schemas and recomputes every verdict from retained raw results.
+- **Learning: `None == None` is a matched control.** A claim with no trace hash and no window matched a control with none. Q47b: nonempty
+  validated workload identity on both sides, and the A0 control comes from a frozen registry, never from the claimant.
+- **Learning: an oracle scope list cannot replace running the oracle.** A decimal (5,2) to (6,3) redeclaration reached through CS-MIGRATION
+  was refused by O-REPLAY yet classified closable, because refusal matching knew only CS-DECIMAL case names. Q47c: re-judge per case, and
+  propagate unsupported-rule dependencies through indirect selections.
+- **Self-inflicted:** my Q46 append to RULINGS-PENDING.md broke `--verify` (0.3.6 forbids pending rows). Restored by holding pending rulings
+  in the review response file until 0.3.7 implements Q47d (pending rows allowed, no authority, recorded).
+- Contract 0.3.7 (Q46, Q47) waits for a free slot; EXP-E01 has Q47a-c now.
