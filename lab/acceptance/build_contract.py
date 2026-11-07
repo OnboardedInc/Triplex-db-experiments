@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.6"
+VERSION = "0.3.7"
 STATUS = "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review"
 DATE = "2026-11-07"
 
@@ -63,7 +63,7 @@ def sha_text(t):
     return hashlib.sha256(t.encode()).hexdigest()
 
 
-SCOPE_SOURCES = ["lab/SCOPE.md", "lab/NORTH-STAR.md", "lab/TARGETS.md", "lab/research/SAM-pasted-numbers-2026-11-07.md", "lab/acceptance/RULINGS.md", "lab/acceptance/RULINGS-PENDING.md", "lab/verify/O02/v-o03/pin_scope.json", "lab/verify/O02/v-o03/hashes.8cc2c26.json"]
+SCOPE_SOURCES = ["lab/SCOPE.md", "lab/NORTH-STAR.md", "lab/TARGETS.md", "lab/research/SAM-pasted-numbers-2026-11-07.md", "lab/acceptance/RULINGS.md", "lab/acceptance/RULINGS-PENDING.md", "lab/verify/O02/v-o03/pin_scope.json", "lab/verify/O02/v-o03/hashes.8cc2c26.json", "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS"]
 
 # ============================================================================ rulings (compiled)
 # Each ruling is compiled into the data below; ruling_checks() verifies each one is reflected.
@@ -211,6 +211,18 @@ RULINGS = [
     {"id": "Q45", "topic": "O-REPLAY pin and V-O03 findings (Q45a to Q45e)",
      "ruling": "Q45a O-REPLAY ACCEPTED at 8cc2c26 with 29 pinned hashes and acceptance receipt V-O03; per-oracle excludes (G1.decimal.channel-routing). Q45b an exit 2 with X-NOT-MODELED fails the obligation closed, never a case-authoring error; erasure cases spell erase; outbox steps are never O-REPLAY ops. Q45c the three key-byte cases move to the O-TDK1 obligations. Q45d DO-ROUND precision for a larger scale. Q45e follow-up EXP-O04 (F2 and erasure modeling), then an independent re-check before the pin moves.",
      "compiledInto": ["O_REPLAY_FILES", "ORACLE_PINS O-REPLAY", "oracle_scope", "ORACLE_REFUSALS", "ORACLE_REFUSAL_RULE", "PIN_SCOPE_EXPECTED_DIFF", "TDK1_KEY_BYTE_CASES", "DO-ROUND", "CX-REFUSAL-AS-AUTHORING"]},
+    {"id": "Q46", "topic": "Contract 0.3.6 questions (Q46a to Q46d)",
+     "ruling": "Q46a Q42c's crash cases cover all 10 pairs of the five transitions. Q46b once EXP-N01/N02 measures A0 at the budget re-freeze, the A0 commit and tree are pinned in the contract and the evaluator takes the control's identity from there, never from the claim. Q46c the W0 pin's file list is adjusted when W0-1.1.1 merges. Q46d when EXP-O04 lands and is re-verified, a new O-REPLAY pin is compiled and the excludes and refusals shrink, with the pin-scope expected differences updated.",
+     "compiledInto": ["ATOMIC_UNIT_CASES", "A0_REGISTRY", "W0_PIN files", "ORACLE_PINS O-REPLAY nextPin"]},
+    {"id": "Q47", "topic": "Codex plan-v2 round 6 (Q47a to Q47d)",
+     "ruling": "Q47a admission validates the complete object graph and every record's schema: executed modules and the binary are retained objects hashing to the manifest, verifier records match their schema, and every case verdict is recomputed from the retained raw result (an oracle exit 2 or X-NOT-MODELED never PASS). Q47b measurement and control carry nonempty, validated workload identity (trace generator hash, seed, offer schedule hash, window, slot), a missing field never matching a missing field; the A0 control's identity comes from the frozen A0 registry, never the claim. Q47c admission re-judges every selected case and rejects any retained refusal; the generator propagates unsupported-rule dependencies through indirect selections, so CS-MIGRATION and CS-WIDEN obligations are blocked while decimal redeclaration is refused. Q47d RULINGS-PENDING.md may hold ruling rows with no authority; they are listed and hashed, never compiled, and never invalidate generation.",
+     "compiledInto": ["EVIDENCE_SCHEMAS", "open_record", "case_verdict", "evidence_ok", "WORKLOAD_IDENTITY", "workload_ok", "A0_REGISTRY", "admit_claim", "refused_by", "ORACLE_REFUSALS scale-evolution reachedThrough", "oracle_scope", "PIN_SCOPE_EXPECTED_DIFF", "CX-R6-UNOPENED-MEANING", "CX-R6-UNMATCHED-CONTROL", "CX-R6-INDIRECT-REFUSAL", "pending_ruling_ids", "pendingRulings", "CLAIM_ADMISSION"]},
+    {"id": "Q48", "topic": "W0 accepted; V-D01 delta-check notes (Q48a to Q48c)",
+     "ruling": "Q48a W0-1.1.1 at ada2e90 is ACCEPTED (V-D01 delta check); the contract pins its 95 file hashes and pins the fingerprint once O-DOMAIN's independent generator reproduces it (Q40g). Q48b the scoped-release P5 measurement runs at the 100k rung, and a scoped sweep's P5 receipt binds the reached-subject list and its hash instead of every placement. Q48c W0-1.1.2 adds an R3 case with a listed jurisdiction that has no facts, the skip-rule wording, and the measured R3 counts (9,497 reached, 418 changed); none changes an output, a case result, a floor or the fingerprint.",
+     "compiledInto": ["W0_FILES", "W0_PIN", "W0_FINGERPRINT_CANDIDATE", "GATE-W0", "WORLD_W0 version", "WORLD_W0 nextEdit", "NS.P5", "NS-P5-SCOPED-RELEASE-REACHED", "load-contract P5 scopedRelease"]},
+    {"id": "Q49", "topic": "EXP-O04 erasure and decimal questions (Q49a to Q49e)",
+     "ruling": "Q49a an erasure commit is an ordinary data-journal transaction with identity-only changes, also written to the separate erasure ledger; earlier :_tx/change facts for erased values show the marker, so ER-JOURNAL-MODULO compares markers on both sides. Q49b the first erasure sets erasedAt, re-erasure changes nothing, an erase matching nothing commits an empty change list. Q49c (provisional, under the Q24 flag for Sam) erased values match no value predicate, value aggregates skip them while COUNT counts them, ORDER BY places them last by assertion id, grouping keys them by the marker, Unique ignores them, an erased reference include returns the marker. Q49d in-flight reads may return the old value or the marker. Q49e a JSON number converts to decimal from its as-written reading (toDecimal(json 0.1, 2, 1) = 0.1); decimal text inside a JSON string is E-INVALID-VALUE unless converted explicitly.",
+     "compiledInto": ["ERASURE journalCommit, idempotence, queries, inFlight", "CS-ERASURE", "G9.erasure.commit-semantics", "G9.erasure.query-semantics", "G9.erasure.visibility-boundary", "G9.erasure.reproduction-modulo", "G7.journal.logical-contract", "DR-JSON-CONVERT", "DR-JSON-STRING-TEXT", "R-DEC-6", "G1.decimal.channel-routing"]},
 ]
 
 # ============================================================================ language accounting
@@ -323,7 +335,7 @@ Q33_RULES = [
     {"id": "R-DEC-2", "rule": "-0.00 is refused, consistent with Q30b", "error": "E-INVALID-VALUE", "case": "DEC-NEGZERO-REFUSED", "ruling": "Q33b"},
     {"id": "R-DEC-3", "rule": "fractional digits are counted on the value: 16.500 fits scale 2 and is returned as 16.50; the original input text is still captured (Q22)", "error": "-", "case": "DEC-TRAILING-ZERO-FITS", "ruling": "Q33b"},
     {"id": "R-DEC-5", "rule": "decimal divide(a, b, scale, rounding) is modeled by the oracle (follow-up EXP-O03)", "error": "-", "case": "DEC-OP-DIVIDE", "ruling": "Q33b"},
-    {"id": "R-DEC-6", "rule": "toDecimal(number) starts from the exact binary expansion, then applies the caller's scale and rounding", "error": "-", "case": "DEC-TODECIMAL-EXACT-EXPANSION", "ruling": "Q33b"},
+    {"id": "R-DEC-6", "rule": "toDecimal(number) starts from the exact binary expansion, then applies the caller's scale and rounding; a JSON number instead starts from its as-written reading (DR-JSON-CONVERT, RULINGS Q49e)", "error": "-", "case": "DEC-TODECIMAL-EXACT-EXPANSION", "ruling": "Q33b"},
     {"id": "R-DEC-7", "rule": "AVG over decimal is a preflight error unless written as divide(SUM, COUNT, scale, rounding)", "error": "E-DECIMAL-AVG", "case": "DEC-AVG-PREFLIGHT", "ruling": "Q33b"},
     {"id": "R-LANE-2", "rule": "a retract-pattern value outside the lane's range", "error": "E-VALUE-OUT-OF-RANGE", "case": "RANGE-OUT-RETRACT-PATTERN", "ruling": "Q33c"},
     {"id": "R-CMP-3", "rule": "every ordered comparison across families is a preflight error, never false; equality across families is false except where a ruling makes it an error (decimal, Q22)", "error": "E-MIXED-FAMILY", "case": "Q33-CROSS-FAMILY-ORDER", "ruling": "Q33d"},
@@ -451,7 +463,8 @@ DECIMAL_ROUTING = [
     {"id": "DR-AGGREGATE", "rule": "SUM over decimals decodes the keys or canonical text, computes exactly, and encodes any decimal result used for ordering; MIN and MAX compare keys", "case": "DR-AGGREGATE"},
     {"id": "DR-KEY-ARITHMETIC", "rule": "arithmetic on key strings (summing or subtracting decimal_order_v1 values as text or numbers) is invalid: preflight E-MIXED-FAMILY", "case": "DR-KEY-ARITHMETIC"},
     {"id": "DR-JSON-OPAQUE", "rule": "a decimal-looking number inside a JSON value is opaque: it is never compared, ordered or summed as a decimal", "case": "DR-JSON-OPAQUE"},
-    {"id": "DR-JSON-CONVERT", "rule": "an explicit conversion of a JSON value to a typed decimal (toDecimal with declared precision and scale) validates it (E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW or E-INVALID-VALUE) and encodes the TDK1 key", "case": "DR-JSON-CONVERT"},
+    {"id": "DR-JSON-CONVERT", "rule": "an explicit conversion of a JSON number to a typed decimal (toDecimal with declared precision and scale) starts from the number's as-written reading (the read-back-as-written text of RULINGS Q33a), never its exact binary64 expansion, so toDecimal(json 0.1, 2, 1) = 0.1; it validates the result (E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW or E-INVALID-VALUE) and encodes the TDK1 key (RULINGS Q49e)", "case": "DR-JSON-CONVERT"},
+    {"id": "DR-JSON-STRING-TEXT", "rule": "decimal text inside a JSON string is E-INVALID-VALUE where a decimal is required, unless the query converts the string explicitly (RULINGS Q49e)", "case": "DR-JSON-STRING-TEXT"},
 ]
 
 # RULINGS Q22: one row per operator, conversion and scale change; every row is a named CS-DECIMAL case.
@@ -1154,7 +1167,7 @@ ATOMIC_UNIT_CASES.update({"AU-GUARD-ADVANCES-EMPTY": "an empty evaluation advanc
 # ============================================================================ erasure (TARGETS section 7, RULINGS Q24)
 ERASURE = {
     "status": "PROVISIONAL product ruling (RULINGS Q24), flagged for Sam: explain at a pre-erasure basis shows the marker, not the value",
-    "boundary": "the boundary is the erasure commit's publication; a read that started before it may return the old value; every read that starts after it, at any basis including bases before the erasure, returns ErasedValue {erasedAt} in place of the value",
+    "boundary": "the boundary is the erasure commit's publication; a read that started before it may return, for each erased value, the old value or the marker (RULINGS Q49d); every read that starts after it, at any basis including bases before the erasure, returns ErasedValue {erasedAt} in place of the value",
     "shape": "assertion identities and valid and record intervals keep their shape",
     "reproduction": "every reproduction contract holds modulo erasure: the C6 whole-journal comparison, raw and native query results, SDK results, cursor stability, bit-for-bit explain and GS.12; both sides of a comparison replace erased values with their markers before comparing (RULINGS Q31f)",
     "frontier": "an index or cache may serve any basis only after it has applied every erasure published so far, independently of the requested basis; an old-basis read never passes on the strength of its basis alone (RULINGS Q31f)",
@@ -1162,6 +1175,10 @@ ERASURE = {
     "keyEvidence": "for crypto-shredding, the lane's inventory shows that every surviving copy of a protected value, and of anything derived from it, is encrypted only under the destroyed key; deleting some key is not evidence",
     "derivedChannels": "a PII attribute's order key and lexical channel are inside the encrypted envelope (range rules on PII then run in the kernel after decryption), or the attribute is not eligible for range rules",
     "restore": "the erasure ledger is kept apart from the data and replayed after any restore or rebuild",
+    "journalCommit": "an erasure commit is an ordinary data-journal transaction: it has a position, a txId, a record in transactions() and its own :_tx/ facts, and its changes list only identities (entity, attribute, assertion ids), never values; it is also written to the erasure ledger kept apart from the data, which restore and rebuild replay; earlier transactions' :_tx/change facts for erased values show the ErasedValue marker, so ER-JOURNAL-MODULO compares markers on both sides (RULINGS Q49a)",
+    "idempotence": "the first erasure of an identity sets erasedAt; erasing it again changes nothing; an erase that matches nothing still commits, as a journal record with an empty change list (RULINGS Q49b)",
+    "queries": "provisional, under the Q24 flag for Sam: an erased value is present with no readable value; it matches no value predicate (equality, inequality, range, pattern), so a filter never selects or rejects a subject by it; SUM, AVG, MIN and MAX skip it while COUNT of assertions counts it; ORDER BY places erased markers last in a deterministic order by assertion id; grouping puts all erased values of an attribute in one group keyed by the marker; Unique ignores erased values; an erased reference cannot be followed (an include returns the marker) (RULINGS Q49c)",
+    "inFlight": "for a read that started before the erasure published, each erased value may be the old value or the marker (RULINGS Q49d)",
     "tests": ["ER-PINNED-READER", "ER-REBUILD", "ER-RESTORE-PRE-BACKUP", "ER-ORACLE-POST"],
 }
 PROTECTED_COPY_INVENTORY = ["source log and journal", "current index", "history index", "analytical copy", "order-key channels", "lexical channels", "QLever broker log of record", "caches", "checkpoints", "backups"]
@@ -1195,6 +1212,27 @@ A0_CONTROLS = {
     "A0-XTDB": {"source": "xtdb", "why": "today's scope-counter allocator; runs the four falsifiers like every other composition (RULINGS Q38a)"},
     "A0-QLEVER": {"source": "qlever", "why": "today's scope-counter allocator; runs the four falsifiers like every other composition (RULINGS Q38a)"},
 }
+# RULINGS Q46b, Q47b: the frozen A0 registry. The evaluator takes the control's identity from here, never from the claim.
+A0_REGISTRY = {
+    "rule": "when EXP-N01/N02 measures A0 at the budget re-freeze, the A0 commit, source tree and composition are frozen here in a contract version bump; the evaluator takes a comparison's control identity from the entry for the claim's source engine, never from the claim, so a candidate-selected control cannot qualify a comparison; while an entry is null every comparison against it is a diagnostic (RULINGS Q46b, Q47b)",
+    "entryShape": {"commit": "the A0 code commit (40 hex digits)", "sourceTreeSha256": "the A0 source tree hash", "composition": "the four assignments, each with engine, imageDigest, configSha256 and slot", "measuredBy": "the EXP-N01/N02 receipt that froze it"},
+    "byEngine": {"xtdb": "A0-XTDB", "qlever": "A0-QLEVER"},
+    "entries": {"A0-XTDB": None, "A0-QLEVER": None},
+}
+# RULINGS Q47b: the workload identity both the measurement and its control carry, nonempty and validated; a missing field never matches.
+WORKLOAD_IDENTITY = {
+    "fields": {"generatorSourceSha256": "hex64", "seed": "int", "offerScheduleSha256": "hex64", "window": "window", "slot": "str"},
+    "rule": "every measurement and control receipt carries workload {generatorSourceSha256 (trace generator hash), seed, offerScheduleSha256, window [from, to] with 0 <= from < to, slot (the source assignment's slot)}, every field present, typed and nonempty; a control matches a measurement only when the two workload identities are equal field by field; a missing field never matches a missing field (RULINGS Q47b)",
+}
+# RULINGS Q47a: record schemas of the retained objects admission opens; verdicts are recomputed from the raw results.
+EVIDENCE_SCHEMAS = {
+    "build-manifest/1": {"fields": {"schema": "str", "sourceTreeSha256": "str", "binarySha256": "hex64", "modules": "list"},
+                         "rule": "binds the source tree to the executed binary; the binary and every executed or imported module ({path, sha256}, at least one) are retained objects whose bytes hash to the listed values"},
+    "verifier-record/1": {"fields": {"schema": "str", "obligation": "str", "definitionSha256": "hex64", "verifier": "str", "verdict": "str"},
+                          "rule": "names the receipt's obligation and definition hash, a nonempty verifier and the verdict ACCEPT"},
+    "case-result/1": {"fields": {"schema": "str", "obligation": "str", "case": "str", "selection": "str", "oracle": "str", "oracleExit": "int", "oracleCode": "str-or-null", "expectedSha256": "hex64", "observedSha256": "hex64"},
+                      "rule": "the retained raw oracle run and observation for one case and the selection it covers; PASS only when oracleExit is 0, oracleCode is null, the expected and observed objects are both retained and equal; an oracle exit 2 or X-NOT-MODELED is a refusal and never PASS (RULINGS Q45b, Q47a)"},
+}
 
 
 def position_selection(composition):
@@ -1204,7 +1242,7 @@ def position_selection(composition):
 
 # RULINGS Q34d, Q38b: claim admission from validated, source-bound receipt evidence only.
 CLAIM_ADMISSION = {
-    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator derives every prerequisite from validated, source-bound receipt evidence, never from supplied case names or Booleans: a VA-valid G7.position.coordinates receipt for the claim's own source tree and composition covering all of POSITION_REQUIRED_CASES; composition identity bound on every receipt (four assignments with image digest, configuration hash and slot); where any claimed obligation uses O-DOMAIN, the W0 pin and a W0.coverage-floors receipt; and a non-null, accepted ORACLE_PINS entry for every oracle the claim depends on, including the oracles of its prerequisite obligations, with the claimed obligation outside that pin's excludes and the oracle's refusals. Evidence is opened, never trusted by shape (RULINGS Q42a): every referenced object exists in the content-addressed store and hashes to its recorded value; the executed binary is bound to the claimed source tree through a build/import manifest object; receipts are fresh (produced at the claim's commit, after the last change to any file in their dependency closure); modes, fault repetitions and verifier evidence are present; the claimed obligation's own measurement receipts exist with a matched control (A0 on the same slot, trace, seed and window); unknown obligation ids are rejected, never dropped. lab/bin implements this (EXP-E01) with these functions as the reference model and adds the full VA rules (RULINGS Q41d). A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
+    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator derives every prerequisite from validated, source-bound receipt evidence, never from supplied case names or Booleans: a VA-valid G7.position.coordinates receipt for the claim's own source tree and composition covering all of POSITION_REQUIRED_CASES; composition identity bound on every receipt (four assignments with image digest, configuration hash and slot); where any claimed obligation uses O-DOMAIN, the W0 pin and a W0.coverage-floors receipt; and a non-null, accepted ORACLE_PINS entry for every oracle the claim depends on, including the oracles of its prerequisite obligations, with the claimed obligation outside that pin's excludes and the oracle's refusals. Evidence is opened, never trusted by shape (RULINGS Q42a, Q47a): every referenced object exists in the content-addressed store and hashes to its recorded value, and every record matches its schema in EVIDENCE_SCHEMAS; the executed binary is bound to the claimed source tree through a build/import manifest object, and the binary and every executed or imported module it lists are retained objects whose bytes hash to the manifest; verifier records match the verifier-record schema; every case verdict is recomputed from its retained raw result, so an oracle exit 2 or X-NOT-MODELED never counts as PASS, and the claim is rejected if any case the obligation selects, directly or through a broader case set, has a retained refusal (RULINGS Q47c); receipts are fresh (produced at the claim's commit, after the last change to any file in their dependency closure); modes, fault repetitions and verifier evidence are present; the claimed obligation's own measurement receipts exist with a matched control whose identity (commit, source tree, composition) comes from the frozen A0_REGISTRY entry for the claim's source engine, never from the claim, and whose nonempty, validated workload identity (WORKLOAD_IDENTITY: trace generator hash, seed, offer schedule hash, window, slot) equals the measurement's, a missing field never matching a missing field (RULINGS Q46b, Q47b); while the A0 registry entry is null every comparison is a diagnostic; unknown obligation ids are rejected, never dropped. lab/bin implements this (EXP-E01) with these functions as the reference model and adds the full VA rules (RULINGS Q41d). A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
     "verdicts": ["QUALIFIED", "DIAGNOSTIC"],
 }
 COMPOSITION_FIELDS = ("engine", "imageDigest", "configSha256", "slot")
@@ -1214,9 +1252,53 @@ def _obj_ok(h, store):
     return isinstance(h, str) and h in store and hashlib.sha256(store[h]).hexdigest() == h
 
 
+def _typed(v, t):
+    if t == "hex64":
+        return isinstance(v, str) and re.fullmatch(r"[0-9a-f]{64}", v) is not None
+    if t == "int":
+        return isinstance(v, int) and not isinstance(v, bool)
+    if t == "list":
+        return isinstance(v, list) and len(v) > 0
+    if t == "window":
+        return isinstance(v, list) and len(v) == 2 and all(_typed(x, "int") for x in v) and 0 <= v[0] < v[1]
+    if t == "str-or-null":
+        return v is None or (isinstance(v, str) and v != "")
+    return isinstance(v, str) and v.strip() != ""
+
+
+def open_record(h, store, schema):
+    """RULINGS Q47a: open a retained object and validate it against its record schema; None when absent, misbound or invalid."""
+    if not _obj_ok(h, store):
+        return None
+    try:
+        rec = json.loads(store.get(h, b""))
+    except ValueError:
+        return None
+    spec = EVIDENCE_SCHEMAS[schema]["fields"]
+    if not isinstance(rec, dict) or set(rec) != set(spec) or rec.get("schema") != schema or not all(_typed(rec[k], t) for k, t in spec.items()):
+        return None
+    return rec
+
+
+def case_verdict(rec, store):
+    """RULINGS Q47a: the verdict recomputed from the retained raw result, never read from the receipt."""
+    if rec["oracleExit"] == 2 or rec["oracleCode"] == "X-NOT-MODELED":
+        return "REFUSED"
+    if rec["oracleExit"] != 0 or rec["oracleCode"] is not None or not _obj_ok(rec["expectedSha256"], store) or not _obj_ok(rec["observedSha256"], store):
+        return "FAIL"
+    return "PASS" if rec["expectedSha256"] == rec["observedSha256"] else "FAIL"
+
+
+def workload_ok(w, comp):
+    f = WORKLOAD_IDENTITY["fields"]
+    return isinstance(w, dict) and set(w) == set(f) and all(_typed(w[k], t) for k, t in f.items()) and w["slot"] == ((comp or {}).get("source") or {}).get("slot")
+
+
 def evidence_ok(r, obligation, tree, comp, commit, env):
     """RULINGS Q38b, Q42a reference model: open and hash every object; bind the executed binary to the source tree through the
-    build/import manifest object; require freshness, modes, fault repetitions, verifier evidence and full PASS coverage."""
+    build/import manifest object and retain the binary and every module (Q47a); validate every record's schema; recompute every case
+    verdict from its retained raw result and reject any refusal (Q47a, Q47c); require freshness, modes, fault repetitions, a verifier
+    record and full PASS coverage."""
     store = env.get("store", {})
     if r.get("obligation") != obligation["id"] or r.get("definitionSha256") != obligation_hash(obligation):
         return False
@@ -1226,32 +1308,39 @@ def evidence_ok(r, obligation, tree, comp, commit, env):
         return False
     if r.get("commit") != commit or not isinstance(r.get("producedAt"), int) or r["producedAt"] <= env.get("dependencyClosureChangedAt", 10 ** 18):
         return False
-    m = r.get("buildManifestSha256")
-    if not _obj_ok(m, store):
+    man = open_record(r.get("buildManifestSha256"), store, "build-manifest/1")
+    if man is None or man["sourceTreeSha256"] != tree or man["binarySha256"] != r.get("executedBinarySha256") or not _obj_ok(man["binarySha256"], store):
         return False
-    try:
-        man = json.loads(store.get(m, b""))
-    except ValueError:
-        return False
-    if man.get("sourceTreeSha256") != tree or man.get("binarySha256") != r.get("executedBinarySha256"):
+    if not all(isinstance(x, dict) and set(x) == {"path", "sha256"} and _typed(x["path"], "str") and _obj_ok(x["sha256"], store) for x in man["modules"]):
         return False
     if not set(obligation["closure"]["modes"]) <= set(r.get("modes", [])):
         return False
     if "CR-FAULT" in obligation["closure"]["rules"] and r.get("faultReps", 0) < THRESHOLDS["T-FAULT-REPS"]["value"]:
         return False
-    if not _obj_ok(r.get("verifierObjectSha256"), store):
+    vr = open_record(r.get("verifierObjectSha256"), store, "verifier-record/1")
+    if vr is None or vr["obligation"] != obligation["id"] or vr["definitionSha256"] != obligation_hash(obligation) or vr["verdict"] != "ACCEPT":
         return False
     need = POSITION_REQUIRED_CASES if obligation["id"] == "G7.position.coordinates" else [t for c in obligation["cases"] for t in c["select"]]
-    got = {x.get("case") for x in r.get("caseResults", []) if x.get("verdict") == "PASS" and _obj_ok(x.get("objectSha256"), store)}
-    return set(need) <= got
+    got = set()
+    for x in r.get("caseResults", []):
+        rec = open_record(x.get("objectSha256"), store, "case-result/1")
+        if rec is None or rec["obligation"] != obligation["id"] or rec["case"] != x.get("case") or rec["selection"] != x.get("selection") or (obligation["oracles"] and rec["oracle"] not in obligation["oracles"]):
+            return False
+        # RULINGS Q47a, Q47c: every retained case is re-judged; one refused, failing or mislabelled case rejects the evidence
+        if case_verdict(rec, store) != "PASS" or x.get("verdict") != "PASS":
+            return False
+        got.add(rec["selection"])
+    return bool(need) and set(need) <= got
 
 
-def admit_claim(claim, env=None, pins=None, w0=None):
-    """RULINGS Q38b, Q42a: claim = {obligations, commit, sourceTreeSha256, composition, control {sourceTreeSha256, composition}, receipts}.
-    The environment (content-addressed store, dependency-closure change time) comes from the evaluator, never the claimant."""
+def admit_claim(claim, env=None, pins=None, w0=None, a0=None):
+    """RULINGS Q38b, Q42a, Q47: claim = {obligations, commit, sourceTreeSha256, composition, receipts}. The environment (content-addressed
+    store, dependency-closure change time) and the A0 registry come from the evaluator and the contract, never the claimant; any control
+    identity the claim supplies is ignored (Q47b)."""
     env = env or {}
     pins = ORACLE_PINS if pins is None else pins
     w0 = W0_PIN if w0 is None else w0
+    a0 = A0_REGISTRY["entries"] if a0 is None else a0
     obl = {o["id"]: o for o in OBL}
     ids = claim.get("obligations", [])
     if not ids or any(i not in obl for i in ids):
@@ -1265,13 +1354,15 @@ def admit_claim(claim, env=None, pins=None, w0=None):
     for pid in prereq:
         if not any(evidence_ok(r, obl[pid], tree, comp, commit, env) for r in rs):
             return "DIAGNOSTIC"
-    ctl = claim.get("control") or {}
+    entry = a0.get(A0_REGISTRY["byEngine"].get((comp.get("source") or {}).get("engine")))
+    if not entry:
+        return "DIAGNOSTIC"
     for o in claimed:
-        own = [r for r in rs if r.get("role") == "measurement" and evidence_ok(r, o, tree, comp, commit, env)]
+        own = [r for r in rs if r.get("role") == "measurement" and evidence_ok(r, o, tree, comp, commit, env) and workload_ok(r.get("workload"), comp)]
         if not own:
             return "DIAGNOSTIC"
-        matched = [c for c in rs if c.get("role") == "control" and evidence_ok(c, o, ctl.get("sourceTreeSha256"), ctl.get("composition") or {}, commit, env)
-                   and any(c.get("trace") == m.get("trace") and c.get("window") == m.get("window") and (c["composition"].get("source") or {}).get("slot") == (m["composition"].get("source") or {}).get("slot") for m in own)]
+        matched = [c for c in rs if c.get("role") == "control" and evidence_ok(c, o, entry["sourceTreeSha256"], entry["composition"], commit, env)
+                   and workload_ok(c.get("workload"), entry["composition"]) and any(c["workload"] == m["workload"] for m in own)]
         if not matched:
             return "DIAGNOSTIC"
     if domain and (any(v is None for v in w0["files"].values()) or w0.get("reviewReceipt") is None or w0.get("deltaCheck") is None or w0.get("oDomainFingerprint") is None):
@@ -1286,9 +1377,8 @@ def admit_claim(claim, env=None, pins=None, w0=None):
         elif ORACLES[x]["status"] not in ("EXISTS", "COMPILED", "ACCEPTED", "BUILT-ACCEPTED"):
             return "DIAGNOSTIC"
     for o in claimed:
-        pairs = selected_pairs(o)
         for x in set(o["oracles"]) & set(ORACLE_REFUSALS):
-            if any(any(sname in ref["sets"] for sname, _ in pairs) or any(tuple(c) in pairs for c in ref["cases"]) for ref in ORACLE_REFUSALS[x].values()):
+            if any(refused_by(o, ref) for ref in ORACLE_REFUSALS[x].values()):
                 return "DIAGNOSTIC"
     return "QUALIFIED"
 
@@ -1296,7 +1386,7 @@ def admit_claim(claim, env=None, pins=None, w0=None):
 # A gate blocks an obligation from closing until its condition holds; the evaluator treats an unmet or unknown gate as OPEN.
 GATES = {
     "GATE-POSITION": {"rule": "no comparative or promotion claim on any composition, A0 included, until a VA-valid G7.position.coordinates receipt for that composition's source covers POSITION_REQUIRED_CASES, the four falsifiers included; no source-hash allowlist or declared density grants an exemption (RULINGS Q31c, Q38a; OUTSIDE_BLOCK_MUTATION_FIXTURE shows why)", "requires": ["G7.position.coordinates"], "appliesTo": "NS.* and GS.* obligations and every comparative or promotion claim (CLAIM_ADMISSION)"},
-    "GATE-W0": {"rule": "no domain-dependent obligation closes until V-D01 has independently reviewed W0 (SPEC.md, releases, golden cases) and every W0_PIN hash is pinned in this contract (RULINGS Q31i); a null pin fails closed", "requires": ["W0_PIN complete", "W0.coverage-floors"], "appliesTo": "every obligation whose oracles include O-DOMAIN"},
+    "GATE-W0": {"rule": "no domain-dependent obligation closes until V-D01 has independently reviewed W0 (SPEC.md, releases, golden cases), every W0_PIN hash is pinned in this contract (RULINGS Q31i, Q48a) and O-DOMAIN has reproduced the population fingerprint (RULINGS Q40g); a null field fails closed", "requires": ["W0_PIN complete", "W0.coverage-floors"], "appliesTo": "every obligation whose oracles include O-DOMAIN"},
 }
 # V-O02 C1: oracle pins are required inputs; null until the oracle is accepted (O-REPLAY after EXP-O03 and its verification).
 # RULINGS Q45a: O-REPLAY accepted at 8cc2c26 (V-O03), 29 file hashes from lab/verify/O02/v-o03/hashes.8cc2c26.json.
@@ -1332,13 +1422,25 @@ O_REPLAY_FILES = {
     "lab/oracles/replay/views.py": "4d23472c85ac559f8d1bad7257fe219e7dc5fa7b0827c2595e7ff072d1816f28"
 }
 ORACLE_PINS = {"O-TDK1": {"files": "lab/oracles/decimal/", "sha256": dict(O_TDK1_FILES), "acceptReceipt": None, "acceptedAfter": "independent review of the oracle and of tdk1-vectors.json", "rule": "file hashes pinned (RULINGS Q37c, Q38e); acceptance null until the independent review, so obligations it would close fail closed"},
-               "O-REPLAY": {"files": "lab/oracles/replay/**", "commit": "8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b", "oracleVersion": "0.3.1", "sha256": O_REPLAY_FILES, "acceptReceipt": "V-O03 (lab/verify/O02/VERIFY.md; verify/O02 8f631ab; merged 4591715)", "excludes": ["G1.decimal.channel-routing"], "excludesWhy": {"G1.decimal.channel-routing": "V-O03 F2: DR-JSON-CONVERT answered wrong; excluded until EXP-O04 fixes it and an independent re-check moves the pin (RULINGS Q45a, Q45e)"}, "ruledAgainst": "contract 0.3.5 + Q43", "rule": "accepted with a scoped pin; obligations in excludes, and cases the oracle refuses (ORACLE_REFUSALS), fail closed; moving the pin needs an independent re-check and a contract version bump (RULINGS Q45a, Q45e)"}}
+               "O-REPLAY": {"files": "lab/oracles/replay/**", "commit": "8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b", "oracleVersion": "0.3.1", "sha256": O_REPLAY_FILES, "acceptReceipt": "V-O03 (lab/verify/O02/VERIFY.md; verify/O02 8f631ab; merged 4591715)", "excludes": ["G1.decimal.channel-routing"], "excludesWhy": {"G1.decimal.channel-routing": "V-O03 F2: DR-JSON-CONVERT answered wrong; excluded until EXP-O04 fixes it and an independent re-check moves the pin (RULINGS Q45a, Q45e)"}, "ruledAgainst": "contract 0.3.5 + Q43", "nextPin": "EXP-O04 (oracle 0.3.2 f4b59b4 fixes F2; oracle 0.4.0 9fdc3b4 models erasure) is not yet merged or independently re-verified, so this pin stays at 8cc2c26; once it is, a new pin is compiled and the excludes and refusals shrink in that version, with PIN_SCOPE_EXPECTED_DIFF updated (RULINGS Q45e, Q46d)", "rule": "accepted with a scoped pin; obligations in excludes, and cases the oracle refuses (ORACLE_REFUSALS), fail closed; moving the pin needs an independent re-check and a contract version bump (RULINGS Q45a, Q45e)"}}
 # RULINGS Q45b: an oracle exit 2 with X-NOT-MODELED means "not modeled": the obligation fails closed, never a case-authoring error.
 ORACLE_REFUSAL_RULE = "an oracle that exits 2 with X-NOT-MODELED for a case has not modeled it: every obligation selecting that case fails closed (stays OPEN); the refusal is never treated as a case-authoring error and never skipped. Erasure cases spell the op erase; outbox steps are never encoded as O-REPLAY ops, because O-DOMAIN owns them (RULINGS Q45b)"
 ORACLE_REFUSALS = {"O-REPLAY": {
     "erasure": {"sets": ["CS-ERASURE"], "cases": [["CS-GS", "GS-16"], ["CS-GS", "GS-16-WITNESS-POS"], ["CS-GS", "GS-16-WITNESS-NEG"], ["CS-REQ", "pii-erasure"], ["CS-COMPOSITION", "CO-ERASURE-FRONTIER"]], "until": "EXP-O04 models erasure (Q24, Q31f) and an independent re-check"},
-    "scale-evolution": {"sets": [], "cases": [["CS-DECIMAL", "DEC-SCALE-WIDEN"], ["CS-DECIMAL", "DEC-SCALE-WIDEN-MIGRATE"], ["CS-DECIMAL", "DEC-SCALE-NARROW"]], "until": "the oracle models decimal redeclaration (R-DEC-15)"},
+    "scale-evolution": {"sets": [], "cases": [["CS-DECIMAL", "DEC-SCALE-WIDEN"], ["CS-DECIMAL", "DEC-SCALE-WIDEN-MIGRATE"], ["CS-DECIMAL", "DEC-SCALE-NARROW"]],
+                        "reachedThrough": [["CS-DECIMAL", "scale-evolution"], ["CS-MIGRATION", "*"], ["CS-WIDEN", "*"]],
+                        "reachedWhy": "any CS-MIGRATION or CS-WIDEN case may redeclare a decimal attribute's precision or scale (for example (5,2) to (6,3)), which the pinned oracle refuses with X-NOT-MODELED; every obligation selecting those sets, through any tag, is blocked (lab/reviews/plan-v2-round6.codex.md finding 6; RULINGS Q47c)",
+                        "until": "the oracle models decimal redeclaration (R-DEC-15)"},
 }}
+
+
+def refused_by(o, ref):
+    """RULINGS Q45b, Q47c: a refusal blocks an obligation that selects a refused set, a refused case, or a set or tag through which an
+    unsupported rule is reached ("*" is any selection of that set)."""
+    pairs = selected_pairs(o)
+    sets = {s for s, _ in pairs}
+    return (any(s in ref["sets"] for s in sets) or any(tuple(c) in pairs for c in ref["cases"])
+            or any((s in sets) if t == "*" else ((s, t) in pairs) for s, t in ref.get("reachedThrough", [])))
 
 
 def selected_pairs(o):
@@ -1361,9 +1463,8 @@ def oracle_scope(oracle):
         why = []
         if o["id"] in pin.get("excludes", []):
             why.append("excluded")
-        pairs = selected_pairs(o)
         for name, ref in ORACLE_REFUSALS.get(oracle, {}).items():
-            if any(sname in ref["sets"] for sname, _ in pairs) or any(tuple(x) in pairs for x in ref["cases"]):
+            if refused_by(o, ref):
                 why.append(name)
         if why:
             blocked[o["id"]] = why
@@ -1372,13 +1473,119 @@ def oracle_scope(oracle):
 
 GATES["GATE-ORACLE-PIN"] = {"rule": "an obligation whose expected answers come from an oracle closes only once ORACLE_PINS pins that oracle's files with an acceptance receipt, the obligation is not in the pin's excludes, and the oracle does not refuse any case it selects (oracle_scope); a null pin fails closed (V-O02 C1, RULINGS Q45a, Q45b)", "requires": ["ORACLE_PINS complete for every oracle the obligation uses"], "appliesTo": "every obligation using an oracle listed in ORACLE_PINS (O-REPLAY, O-TDK1)"}
 GATES["GATE-TDK1-VECTORS"] = {"rule": "G1.decimal.tdk1-differential closes only once TDK1_VECTOR_PIN names a reviewed vector file by sha256; a null pin fails closed (RULINGS Q35, R20 V5)", "requires": ["TDK1_VECTOR_PIN complete"], "appliesTo": "G1.decimal.tdk1-differential"}
-# RULINGS Q31i: required input; null until V-D01 reviews W0. The evaluator fails closed on any null field.
+# RULINGS Q31i, Q48a: W0-1.1.1 at ada2e90 ACCEPTED by V-D01's delta check; the 95 file hashes of
+# lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS are pinned. The fingerprint stays a required null input until O-DOMAIN's independent
+# generator reproduces V-D01's final fingerprint (RULINGS Q40g); until then every domain-dependent claim fails closed.
+W0_FILES = {
+    "lab/world/W0/README.md": "891af156079bac5fc3dab7614a6070f76580f0d97d9f8e400d41417c81b93052",
+    "lab/world/W0/SPEC.md": "c93fcbd1f5ef145a0b1ab468482fb74ac6357bc318bc00ce948cd9bfac5d00a0",
+    "lab/world/W0/cases/C01-base-r1.json": "3ccb749c222ee47848f3904629fa9a8c07f668f20fb664c7dcde1cc12867e8ee",
+    "lab/world/W0/cases/C02-base-r2.json": "c5350dc56365feec4eba7bb4c5df2d5f92849a900d414e287a7a0f9e68f00117",
+    "lab/world/W0/cases/C03-new-hire-pre-start-r1.json": "22bb577dbdc60eb04d4214d15f2d9cdea0f3dc187accc40a5f8f317a0c7a2e60",
+    "lab/world/W0/cases/C04-start-date-moved-r1.json": "37b706ba926295eca770a62032afe25ae0fe7ab3359cc073d28c84c46fa9c97d",
+    "lab/world/W0/cases/C05-start-unknown-r1.json": "24f0f50af9d9be9b7208b5768b6c24df555249f482152a51ce0607c783c30e88",
+    "lab/world/W0/cases/C06-i9s1-due-exact-boundary-r1.json": "feb873bb99b59412c3a2bdf983bf4859c9858cf01638a4a21802d459a5a21236",
+    "lab/world/W0/cases/C07-ssn-erased-r1.json": "d63a60eaf4fb69af25d4de49bec6d9343ab54ed97e449f21ef3fc2d5a9a085ec",
+    "lab/world/W0/cases/C08-ssn-bad-format-r1.json": "7c2b281829c42ebdc947d15a19eb89ae1d2845fc378b38c6cfcdb6ed3fa495c6",
+    "lab/world/W0/cases/C09-everify-submit-r1.json": "f50e25678a6e313131541dd087a74cad379cfada036f2202b8c337c069bff4ad",
+    "lab/world/W0/cases/C10-everify-tnc-r1.json": "dbc03fc0dc77a04fdfb699156f2a7fdb0328f15b7f6b85df2df8d77b6061d373",
+    "lab/world/W0/cases/C11-flags-authorized-overtime-r1.json": "b28d2d6146b43e978d7a67235a727831ef6d44c81733f7a05474b6246cc0e10e",
+    "lab/world/W0/cases/C12-everify-fnc-bgc-consider-r1.json": "8417a6e9b89ab9d6fa17e257e7bc077d21d1386c3b3a719102c35d73a106abc1",
+    "lab/world/W0/cases/C13-bgc-reject-r1.json": "9cd764476b44bfdfe177a1f05d8d2c5cedf9860a2b0dcbe103a2cf9665f83fb2",
+    "lab/world/W0/cases/C14-proposal-only-r1.json": "981a5add96447160474160c5fdbcc6c4f97444f9392f9a5412b99e7f50492a5d",
+    "lab/world/W0/cases/C15-proposal-then-decision-r1.json": "61206e550163dd8cbd6a6e7df589bddb8112fb3ffb383f0c93cdc6d58fd90ae0",
+    "lab/world/W0/cases/C16-agent-decision-record-r1.json": "9c08447c19f28f9d2640d8f038d578bd7719157ee0e24932828a092ca24a09b3",
+    "lab/world/W0/cases/C17-decisions-last-wins-r1.json": "2c9eade2d25af6283513bd622d3206254a8cbae0d89161c52f0417599882cec1",
+    "lab/world/W0/cases/C18-decisions-same-tx-tie-r1.json": "1767beb767651d9c219e0e1ccea1f819b914e9b7ad69148b18dffe1df7bcbd5f",
+    "lab/world/W0/cases/C19-docs-before-expiry-r1.json": "919f8937a6ae4d806db1c4ca485ff6e0b63a6c8ed08512abe1a7d58b8d9136bc",
+    "lab/world/W0/cases/C20-docs-before-expiry-r2.json": "3858027be2fe9c079e92ec38f5b79ba11a7257e7983393f2d8ea1acf4b90296e",
+    "lab/world/W0/cases/C21-docs-ead-at-expiry-r1.json": "423def4d67694b977cf2977b35db8b781c2f220c8c30a277577bd630403c2c85",
+    "lab/world/W0/cases/C22-docs-other-rows-r1.json": "25dc757a6bd255a0052ab44bcba1c0473de0fd9be118496cbc47b18d87549821",
+    "lab/world/W0/cases/C23-minwage-below-after-raise-r1.json": "b96a18f379d505cf286d53684c174424e0575e606125f49f72b28dd5f370e0a9",
+    "lab/world/W0/cases/C24-minwage-floor-unknown-r1.json": "a5d02f108ef1e96591a9e13f7ae7cf43d960bf589837fc021d77f77228adda91",
+    "lab/world/W0/cases/C25-minwage-local-floor-r2.json": "1319f9456cefb164415cc167daa04f2b2d19b4657eb327de47a7bbca25502ea6",
+    "lab/world/W0/cases/C26-section2-window-r2.json": "cee564a9ce38ad17daeb5a9e6c720577313771f143a20f37bbf9d4d3cf2f62a1",
+    "lab/world/W0/cases/C27-numeric-max-values-r1.json": "4683dbaeb070028aee184e38feb02afae8abc8cacc4b2d5a9c951dba68dcb6af",
+    "lab/world/W0/cases/C28-paychg-501-stale-approval-r1.json": "3790f271331212501b34b3763047d2fa68d7947d6b235459443ac277e046fee7",
+    "lab/world/W0/cases/C29-paychg-500-r1.json": "1fa81a661be4f468076ba5af3b306793dce568a6389a0c28a0d95236535e37af",
+    "lab/world/W0/cases/C30-paychg-approval-same-tx-r1.json": "5329dac407e3caa80b2b8abe55b185903bd9e8e63cdb400170f7599fb2f00ec5",
+    "lab/world/W0/cases/C31-reconcile-after-activation.json": "bb087a95afac4b7a4bd7a5c40883517b021f397aeaf4e2466bd6d07218596951",
+    "lab/world/W0/cases/C32-reconcile-before-activation.json": "ef23082d88efbd218d9c81b7d871de731b675f73e567b1a52753df28c140c478",
+    "lab/world/W0/cases/C33-reconcile-no-release.json": "ae26c941d67b0caf2ae99c43bd396c1e6bce09be3a4913b6283f86a0f9b03da5",
+    "lab/world/W0/cases/C34-affected-state-wage-r1.json": "b4687a0e75cdeb263e5c4e9460900b335a92a07ba69c01fa57064121d9455b89",
+    "lab/world/W0/cases/C35-affected-local-wage-r1.json": "bf96c2e2a3e8d516b20081b92e0911b7f8ec73d0ff3da5684dd743026763e371",
+    "lab/world/W0/cases/C36-affected-local-wage-r2.json": "6df8be1450ba75d08b1c936d25606bd54f55ade3a3cbf17b4e590a65e12e8a17",
+    "lab/world/W0/cases/C37-err-minutes-10081.json": "4d1838c75f24766da351ccdee515cd64625ca8c023762cbe7c3efbf369d3afd8",
+    "lab/world/W0/cases/C38-err-cents-integral-float.json": "19076dfd0a0145927c47868cd13fd9628591d7a7560e33f73bc6c479de38fba3",
+    "lab/world/W0/cases/C39-err-cents-2pow53.json": "4bc13ca5a15cfddde2ac733d0e4bde8db81996f78254bc12053f4118eab73271",
+    "lab/world/W0/cases/C40-err-cardinality.json": "0d36d9ab3346bd333a64747e629afbddac1b5b709e4e74e9a94da474469df34b",
+    "lab/world/W0/cases/C41-err-fact-after-basis.json": "19fcfde7b898fe945ad754303c68c555b355e3ab72a2efb70bafa43f311b9a57",
+    "lab/world/W0/cases/C42-five-work-items-r1.json": "6483f46c44fd42188279b8f0c8e6f5b23fb197067646e2e12f0ed53e9c4a59ef",
+    "lab/world/W0/cases/C43-err-first-failing-fact.json": "28b8c34e68e2e6b22b35589a8bc5d81596459bfa99a525fdaee70a46e58ff955",
+    "lab/world/W0/cases/C44-err-unreachable-fact-validated.json": "44c5954cfc9992d70b9a86d0838e7122ac8331ed155bfc9762488a860f986d76",
+    "lab/world/W0/cases/C45-err-tx-float-token.json": "138f32476814c5400c329768ce60f54c1b0549bc625b618d6a5dcb23aeb0358b",
+    "lab/world/W0/cases/C46-prop-older-and-equal-decisions-r1.json": "fe72db73ab4e07d59eefc8c9f32a362fc0e233390d850b09fa3d82e1ace02372",
+    "lab/world/W0/cases/C47-paychg-reject-after-change-r1.json": "6418b607f6102d86d0f0dabf04b66a4f3ad29d36bf93b4f779d469f0e9aa5d44",
+    "lab/world/W0/cases/C48-minwage-no-location-r1.json": "8b8af098733e671ab1e165f10d76ea984487cf222573970011421c17fc423eee",
+    "lab/world/W0/cases/C49-evstat-tnc-without-status-at-r1.json": "35c836b391aab2fe7237e810a4f1d7d1de910ba6d778bea2bd882e9842bf463a",
+    "lab/world/W0/cases/C50-evsub-submit-without-start-r1.json": "2e8713f05aff95c6d6519ec1384b98f2c0a1a3eafa50ca85deac7d4c7df93d58",
+    "lab/world/W0/cases/C51-docs-ead-at-window-r2.json": "93bf45f9b9e49211b7534f01ae0f4f112366782ba9e1fc4ab46e4b7be7ebdac6",
+    "lab/world/W0/cases/C52-evsub-result-accepted-r1.json": "f289904288b1abe5d8437e17c71605362efa7bb9928098fbfbf4173da68db5fb",
+    "lab/world/W0/cases/C53-evsub-result-rejected-r1.json": "03a4740aaecdbbbf802dfafe50554e2e52fc099bf3fb4ee607db66bc21c01902",
+    "lab/world/W0/cases/C54-ot-r3-at-threshold.json": "194c65730a60cb8f446466b08a0b9f732f50af74069727fffa31c46b9290eae2",
+    "lab/world/W0/cases/C55-ot-r3-above-threshold.json": "2ede0132eae69126683ad44d81605a22442de68fbc78b2afeaf9b450d4140176",
+    "lab/world/W0/cases/C56-ballast-world-r1.json": "3d196002f1d1080d7d9abd8e78c78ab33a94d3d4a7c67ec339baf994bd3c4228",
+    "lab/world/W0/cases/C57-affected-ballast-write-r1.json": "9d873cc434df2345b4e35cdd144a1231ad2fd6038c1f1a4cee4a09a7faed280b",
+    "lab/world/W0/cases/C58-affected-jurisdiction-write-r1.json": "fb82eedb87ed2da85e810be9cc16aad24f6c8ca3be7154f8bcf59a745a19425f",
+    "lab/world/W0/cases/C59-affected-jurisdiction-write-r2.json": "6b15e68e3a079dad147e527f5127c17766b36aa576d213c735b1b6d483eadc89",
+    "lab/world/W0/cases/C60-affected-location-repoint-r1.json": "16d71dc2f403dc904fd3274cc72e3ffb26fc24ea0adefcdd3018636fd3c2aeba",
+    "lab/world/W0/cases/C61-reconcile-equal-from-tie.json": "fdb193c360b8483ab826652f9b6ff480c851d531ea359f7c7d4033a80c7b85ca",
+    "lab/world/W0/cases/C62-err-unknown-other-placement-entity.json": "606531670e91d931ef50a65c8685da6f96e0f2cd4f51ed6fcb67223603721fa9",
+    "lab/world/W0/cases/C63-err-unknown-attribute.json": "79bf45ba1f80aef85f1ee3ecd4f538068427b54c30d8a32e07b67da99953dbeb",
+    "lab/world/W0/cases/C64-err-erased-non-pii.json": "b918cc794ef7a9a5bfd6e3d952a1b977ad48a53aa7dc34a2477f19b6aa65e6f3",
+    "lab/world/W0/cases/C65-err-activation-bad-hash.json": "a3be66c261085e67543dc22914b0ba0955b2b1ad0274d8086525c684e2294bee",
+    "lab/world/W0/cases/C66-err-duplicate-key-in-v.json": "6ef9ac78cf95bcfc5569213f382abce18ab064eea87ff6efd53e4e7aa9f58904",
+    "lab/world/W0/cases/C67-err-affected-duplicate-subjects.json": "72e044b49b5c668a688592ce21eae681ea97895c4a0ced42e212f9bbbf49ddd8",
+    "lab/world/W0/cases/C68-err-cents-exponent.json": "8dcb739eb4870d2a4d9739624ecf7ed7f5e14968a5b642283327efb5238b581b",
+    "lab/world/W0/cases/C69-err-cents-negative.json": "ea7a721fb328945ce0f438aa2c5283d8a3d319806c40fe6cff014b4b7e0d00b5",
+    "lab/world/W0/cases/C70-err-cents-string.json": "a5c5daec312400da7e3e1bd2c8937f16a5c8e3d219c437c64f7bc2cf54304f05",
+    "lab/world/W0/cases/C71-err-basis-tx-float.json": "e4eb699ba206b26c051607bf8a4c022ba2a737634080c3f75a282ce5588b1bcd",
+    "lab/world/W0/cases/C72-err-activation-tx-float.json": "728d2e4b83b05ba2bd1c47369a9b927e692306e08bc900d8e8a089291b0e8497",
+    "lab/world/W0/cases/C73-publish-rollback-r1-r2-r1.json": "1a95b75d69f5cab67da986e722c500a25d6e73adc09e27bac769c869c1dba9d1",
+    "lab/world/W0/cases/C74-publish-correction-revert.json": "a374d0e4f745fcd996327c5cfb8dc094afde10cecf27231e1d8c9789a003523e",
+    "lab/world/W0/cases/C75-publish-crash-before-delivery.json": "124d3420cfbcd6250658648f84175d0143bcbe8dc76ab222e0b6fa7bfda52f0c",
+    "lab/world/W0/cases/C76-publish-unchanged-activation-recovery.json": "385c72184dc9fcaa4a999ac0250723777967169354b703fa499a8ee9a2ec85fe",
+    "lab/world/W0/cases/C77-publish-older-basis-skipped.json": "209624aee8c34fc8210658d65b41d24135ed8312c0db291943e94172eaf8e195",
+    "lab/world/W0/cases/C78-publish-retirement-reappear.json": "7ecabfb5399b605803097db180a4e66ef64f9f56394e0afb55f37576780cb5dd",
+    "lab/world/W0/cases/C79-receive-reversed-arrival.json": "074a40b0142ddfa279834c168425a87649bac3efd33ba067ba058585779dc078",
+    "lab/world/W0/cases/C80-receive-gap.json": "c8c6d9d844440d794b19dcb4b62ae90d66e0ab024de87d54c4f41fb89c7997dd",
+    "lab/world/W0/cases/C81-receive-restart-mid-sequence.json": "03e62d3d28469348ffc31d88e123191f7407e44624533919365b2d3294f59cd1",
+    "lab/world/W0/cases/C82-publish-guard-advances-on-unchanged.json": "a9f7550c44b79499ca6b80d69decf9a34bc25a2ece075d573fe97e8ea6553377",
+    "lab/world/W0/cases/C83-receive-duplicates-and-gap.json": "6898782d51e376bfb083d1e8f84627e24d7e773ea945ccaabe20a7fa2d4ae2a6",
+    "lab/world/W0/cases/C84-err-publish-state-without-pending.json": "a4067364cab65000435c4ac82f5d245930bc8c07d16a4271899a9ecd88b62507",
+    "lab/world/W0/cases/C85-err-receive-seq-zero.json": "b6e6df8dfdb169fc4940d70641b60236d5f0ab95227e34ce2507552be92b2af7",
+    "lab/world/W0/cases/C86-ot-r3-outside-scope.json": "e37c0c1781f873d8230308f10cb4b30cf847b43b07605b78ca1d730649381ef9",
+    "lab/world/W0/cases/C87-affected-r3-scope-reach.json": "78aeafcc5b6018ddaa948b174b76db9988e773c319d3148761f903a5ec10ccec",
+    "lab/world/W0/releases/R1.json": "c8c6de6df5068396eef8648a9c984376b56bbeddbd4af88677b5212239f210b7",
+    "lab/world/W0/releases/R2.json": "be914f7a9ed8e7799c0fd445fc5564e0a61361c1f58d14263f68e7f95c83a051",
+    "lab/world/W0/releases/R3.json": "8f7962e89c1150b6b56bff180e67042ad82c18491f011c406d7ca417d08264fd",
+    "lab/world/W0/releases/index.json": "f5e3f8c16a8dd2c64f0de27762368febd2e08aa5b3f5a622a2a57e9b61dc0dfc",
+    "lab/world/W0/schema.json": "9fe277a11ced24a88703bb36e05397c15f30b7d4b0346f37f1599801b966da09",
+    "lab/world/W0/validate.py": "b4e87db8d4bea3177c5528e8e11ce17d3ac6a0139b98d824cdbafef0c7ac20d8"
+}
+W0_FINGERPRINT_CANDIDATE = {
+    "source": "V-D01 delta check of W0-1.1.1 (lab/verify/D01/VERIFY.md, final fingerprint)", "rung": "100k",
+    "basisTx": 4338757, "facts": 44537987,
+    "worldsSha256": "fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760",
+    "releasesSha256": {"R1": "c1b2d410244121d64b476c2f99c32830ea1b1f536928c9d12b0e886132351a79", "R2": "551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562", "R3": "a595092272c16343b0dfe9c9db57fbcdd7556fbf8be40afbaed014710fceee2f"},
+}
 W0_PIN = {
-    "rule": "null until V-D01 reviews W0; pinning the hashes needs a contract version bump (RULINGS Q31i, Q32f)",
-    "reviewedBy": "V-D01", "reviewReceipt": None,
-    "files": {"lab/world/W0/SPEC.md": None, "lab/world/W0/releases/R1.json": None, "lab/world/W0/releases/R2.json": None, "lab/world/W0/releases/R3.json": None, "lab/world/W0/schema.json": None, "lab/world/W0/cases/": None},
-    "deltaCheck": None, "oDomainFingerprint": None,
-    "requires": "V-D01's delta check of W0-1.1.x and O-DOMAIN's independent reproduction of the population fingerprint (RULINGS Q40g, Q44a); every field null fails closed",
+    "rule": "pinned at a contract version bump only (RULINGS Q31i, Q32f); W0-1.1.1 ACCEPTED at ada2e90 with its 95 file hashes (RULINGS Q48a); the population fingerprint is pinned only once O-DOMAIN's independent generator reproduces W0_FINGERPRINT_CANDIDATE with SPEC 12.7's recipe (RULINGS Q40g); a null field fails closed",
+    "reviewedBy": "V-D01", "reviewReceipt": "V-D01 delta check of W0-1.1.1 (lab/verify/D01/VERIFY.md; bee0b25; merged e7c1346)",
+    "version": "W0-1.1.1", "commit": "ada2e90337b7ab210dc302df01c81896fe546bcf", "hashTable": "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS",
+    "files": W0_FILES,
+    "deltaCheck": "ACCEPT (V-D01, 2026-11-08: 87 cases byte-identical; floors unchanged)", "oDomainFingerprint": None, "fingerprintCandidate": W0_FINGERPRINT_CANDIDATE,
+    "requires": "O-DOMAIN's independent reproduction of the population fingerprint (RULINGS Q40g, Q44a, Q48a); until then oDomainFingerprint is a required null input and every domain-dependent claim fails closed",
 }
 
 # ============================================================================ composition identity (TARGETS 4.1, RULINGS Q28)
@@ -1407,7 +1614,8 @@ WORLD_W0 = {
     "witnesses": "every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not)",
     "workItemIdentity": "a work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; its content version hashes (release hash, input positions, payload) and is not the delivery identity; each id carries a durable publication sequence that increments whenever the payload to publish differs from the latest published payload for that id, and the outbox delivery key is (id, publication sequence); an activation that leaves the payload equal to the latest published one publishes nothing (early cutoff); duplicate-effect checks count by delivery key (RULINGS Q36a, Q38f)",
     "affectedSet": "the expected affected set of a transaction is the subjects whose static read set contains a changed fact; static read sets over-approximate and never miss (RULINGS Q36e)",
-    "version": "W0-1.1.x (W0-1.1.1 in progress on exp/D01-world-definition, not merged); the W0 pin stays null until the W0 delta check and O-DOMAIN's fingerprint reproduction (RULINGS Q40, Q44)",
+    "version": "W0-1.1.1, ACCEPTED at ada2e90 by V-D01's delta check and merged (e7c1346); its 95 file hashes are pinned (W0_PIN); the fingerprint pin waits for O-DOMAIN's reproduction (RULINGS Q40, Q44, Q48a)",
+    "nextEdit": "W0-1.1.2 adds an R3 case with a listed jurisdiction that has no facts, adds \"and A's entry for that rule is unscoped\" to the SPEC 5.3 skip rule, and records measured R3 counts (9,497 reached, 418 changed) beside the expected ones; it changes no output, case result, floor or the fingerprint, and re-pinning its hashes needs a contract version bump (RULINGS Q48c)",
     "ballast": "rule-neutral ballast (owned answer entities <S>/ans:k with field and value text no rule reads, and a reference chain deep enough for 3 to 6 hops) sizes each world from P4's frozen buckets (50% 50-200 facts, 35% 201-800, 15% 801-2,000; a world may fall up to 2 facts below its bucket); trace commands use W0 and ballast attributes only, other attributes stay E_UNKNOWN; a ballast write affects nobody (RULINGS Q40a, Q44a)",
     "twoHopFloor": "the wage floor is S.location -> L.jurisdiction -> J.stateMinWageCents (R2's local floor stays on L), so the dependency index follows two references; cases: a jurisdiction wage write, re-pointing (L, jurisdiction), and the R1/R2 split at that depth (RULINGS Q40b)",
     "positionOrdinal": "positions in W0 are the 1-based dense ordinal of committed Triplex transacts in the tenant's source-of-truth stream, in coordinate order, supplied identically to the kernel and to O-DOMAIN (RULINGS Q40f)",
@@ -1462,6 +1670,9 @@ EVALUATOR_COUNTEREXAMPLES = [
     {"id": "CX-UNKNOWN-OBLIGATION", "defeats": ["CR-NS", "CR-GS", "CR-PASS-ALL"], "receipts": "a claim naming an obligation id the contract does not define", "why": "RULINGS Q42a: unknown ids are rejected, never dropped"},
     {"id": "CX-REFUSAL-AS-AUTHORING", "defeats": ["CR-PASS-ALL"], "receipts": "a receipt that treats an oracle exit 2 with X-NOT-MODELED as a case-authoring error and skips the case", "why": "RULINGS Q45b: the obligation fails closed"},
     {"id": "CX-POSITION-GATE", "defeats": ["CR-NS", "CR-GS"], "receipts": "comparative NS receipts on a non-dense source while G7.position.coordinates is open", "why": "GATE-POSITION"},
+    {"id": "CX-R6-UNOPENED-MEANING", "defeats": ["CR-NS", "CR-GS", "CR-PASS-ALL"], "receipts": "a claim with every object hash correct but no retained binary or module bytes, a verifier object {\"notAVerifierRecord\": true}, and case objects with oracleExit 2 and X-NOT-MODELED labelled PASS", "why": "RULINGS Q47a: schemas validated, binary and modules retained, verdicts recomputed (lab/reviews/plan-v2-round6.codex.md finding 1)"},
+    {"id": "CX-R6-UNMATCHED-CONTROL", "defeats": ["CR-NS", "CR-GS"], "receipts": "a claim whose measurement and control receipts have no trace and no window, and whose control identity the claimant chose", "why": "RULINGS Q47b: validated workload identity on both sides; the control comes from A0_REGISTRY (finding 5)"},
+    {"id": "CX-R6-INDIRECT-REFUSAL", "defeats": ["CR-PASS-ALL", "CR-NS"], "receipts": "a G7.migration.schema-evolution claim whose CS-MIGRATION case redeclares a decimal attribute from (5,2) to (6,3), retained with oracle exit 2 and X-NOT-MODELED and labelled PASS", "why": "RULINGS Q47c: refusals propagate through indirect selections and every retained case is re-judged (finding 6)"},
 ]
 
 # RULINGS Q31k: complete receipt sets the evaluator must judge CLOSED, one per closure rule in use, so an always-OPEN evaluator fails.
@@ -1548,7 +1759,7 @@ NS_NAMED_CASES = {
     "NS.P2": ["NS-P2-BAND-5-10", "NS-P2-BAND-11-25", "NS-P2-BAND-26-50", "NS-P2-ACCOUNTING", "NS-P2-PROGRESS", "NS-P2-QUEUE-BOUND", "NS-P2-BURST-DRAIN"],
     "NS.P3": ["NS-P3-CRASH-BEFORE-EFFECT", "NS-P3-CRASH-AFTER-EFFECT", "NS-P3-CRASH-AFTER-CHECKPOINT", "NS-P3-DOMAIN-AFFECTED-SET"],
     "NS.P4": ["NS-P4-BUCKETS", "NS-P4-MATCHED-HISTORY"],
-    "NS.P5": ["NS-P5-COVERAGE", "NS-P5-POST-CAPTURE-MUTATION", "NS-P5-THROTTLED-COMPACTION"],
+    "NS.P5": ["NS-P5-COVERAGE", "NS-P5-POST-CAPTURE-MUTATION", "NS-P5-THROTTLED-COMPACTION", "NS-P5-SCOPED-RELEASE-REACHED"],
 }
 cs("CS-NS", "COMPILED", "load-contract.json (generated): frozen trace generator, P1 reader ladder, P2 open-loop bands, P3 feed, P4 buckets, P5 release sweep (TARGETS 1.1, 2.1)", ["calibration", "p1-ladder", "p1-stress", "p2", "p3", "p4", "p5", "secondary"], [c for v in NS_NAMED_CASES.values() for c in v])
 GS_FAILURE_SCHEDULES = {
@@ -1564,9 +1775,11 @@ GS_CASES = ["GS-NUM-RANGE-1650", "GS-NUM-HOURS-40", "GS-NUM-UNHOLDABLE", GS_COMM
 GS_CASES += [c for v in GS_FAILURE_SCHEDULES.values() for c, _, _ in v]
 GS_CASES += [f"GS-{i:02d}-WITNESS-{k}" for i in range(1, 21) for k in ("POS", "NEG")]
 cs("CS-GS", "TO-AUTHOR", "GOLDEN_SCENARIOS (TARGETS section 6) and WORLD_W0 (TARGETS 6.1): one seeded deterministic generator per scenario, overlaid on the background trace", [f"GS-{i:02d}" for i in range(1, 21)], GS_CASES)
-cs("CS-ERASURE", "TO-AUTHOR", "ERASURE (TARGETS section 7, RULINGS Q24)", ["all", "boundary", "marker", "reproduction", "inventory", "derived-channels", "restore"],
+ERASURE_COMMIT_CASES = ["ER-COMMIT-JOURNAL-IDENTITY-ONLY", "ER-COMMIT-LEDGER", "ER-EARLIER-CHANGE-MARKER", "ER-IDEMPOTENT-REERASE", "ER-EMPTY-ERASURE-RECORD"]  # RULINGS Q49a, Q49b
+ERASURE_QUERY_CASES = ["ER-PREDICATE-NO-MATCH", "ER-AGGREGATE-SKIP-COUNT", "ER-ORDER-MARKERS-LAST", "ER-GROUP-ONE-MARKER", "ER-UNIQUE-IGNORES", "ER-REFERENCE-MARKER"]  # RULINGS Q49c
+cs("CS-ERASURE", "TO-AUTHOR", "ERASURE (TARGETS section 7, RULINGS Q24, Q49)", ["all", "boundary", "marker", "reproduction", "inventory", "derived-channels", "restore", "commit", "queries"],
    ["ER-INFLIGHT-READ", "ER-AFTER-PUBLICATION-ALL-BASES", "ER-SHAPE-KEPT", "ER-PINNED-READER", "ER-REBUILD", "ER-RESTORE-PRE-BACKUP", "ER-ORACLE-POST", "ER-ORDER-KEY-CHANNEL", "ER-LEXICAL-CHANNEL", "ER-CURSOR-MODULO", "ER-EXPLAIN-MODULO",
-    "ER-FRONTIER-OLD-BASIS", "ER-CACHE-INVALIDATION", "ER-JOURNAL-MODULO", "ER-RAW-NATIVE-MODULO", "ER-SDK-MODULO", "ER-KEY-EXCLUSIVE"])
+    "ER-FRONTIER-OLD-BASIS", "ER-CACHE-INVALIDATION", "ER-JOURNAL-MODULO", "ER-RAW-NATIVE-MODULO", "ER-SDK-MODULO", "ER-KEY-EXCLUSIVE"] + ERASURE_COMMIT_CASES + ERASURE_QUERY_CASES)
 cs("CS-COMPOSITION", "TO-AUTHOR", "COMPOSITION (TARGETS 4.1, RULINGS Q28, Q31d, Q31e)", ["all", "watermark", "ack", "identity"],
    ["CO-WATERMARK-WAIT", "CO-WATERMARK-FALLBACK", "CO-NO-STALE-ANSWER", "CO-ASYNC-HISTORY", "CO-RECEIPT-BINDS-ALL", "CO-SCOPE-KEY-FROM-ASSIGNMENT",
     "CO-EPOCH-MISMATCH", "CO-RECONSTRUCT-OUTSIDE-VALIDITY", "CO-ERASURE-FRONTIER", "CO-FALLBACK-LATENCY-COUNTS", "CO-FALLBACK-LANGUAGE", "CO-FALLBACK-SHARE",
@@ -1636,7 +1849,7 @@ for vid, t in TDK1_TESTS.items():
       closure=("CR-PASS-ALL", "CR-MUTANT-KILL") if vid in ("V4", "V5") else ("CR-PASS-ALL",),
       sources=["lab/research/R20-order-preserving-decimal-encodings.md section 5.3", "RULINGS Q35"])
 O("G1.decimal.channel-routing", ["G1", "G2", "G5"], "Every decimal comparison routes through the decimal_order_v1 key",
-  "Per DECIMAL_ROUTING (RULINGS Q38d), on the repository, the native surface in the lane language and the raw recipes: ordering and ranges on decimals use the decimal_order_v1 key (DR-REPO-ORDER, DR-NATIVE-ORDER, DR-RAW-ORDER), including derived expressions (DR-DERIVED) and aggregate results (DR-AGGREGATE: SUM decodes, computes exactly and encodes a result used for ordering); arithmetic on key strings is preflight E-MIXED-FAMILY (DR-KEY-ARITHMETIC); JSON is opaque unless explicitly converted (DR-JSON-OPAQUE), and the conversion validates and encodes (DR-JSON-CONVERT).",
+  "Per DECIMAL_ROUTING (RULINGS Q38d), on the repository, the native surface in the lane language and the raw recipes: ordering and ranges on decimals use the decimal_order_v1 key (DR-REPO-ORDER, DR-NATIVE-ORDER, DR-RAW-ORDER), including derived expressions (DR-DERIVED) and aggregate results (DR-AGGREGATE: SUM decodes, computes exactly and encodes a result used for ordering); arithmetic on key strings is preflight E-MIXED-FAMILY (DR-KEY-ARITHMETIC); JSON is opaque unless explicitly converted (DR-JSON-OPAQUE), and the conversion reads a JSON number as written, never its binary64 expansion (toDecimal(json 0.1, 2, 1) = 0.1), then validates and encodes (DR-JSON-CONVERT, RULINGS Q49e); decimal text inside a JSON string is E-INVALID-VALUE unless the query converts the string explicitly (DR-JSON-STRING-TEXT).",
   cases=["CS-DECIMAL-ROUTING", "CS-DECIMAL-ROUTING:" + ",".join(r["case"] for r in DECIMAL_ROUTING)], oracle=["O-REPLAY", "O-TDK1", "O-ERR"], ep=["EP-REPO", "EP-NATIVE", "EP-RAW-HATCH", "EP-KERNEL"], modes=CUR_REOPEN,
   mutants=["M-DECIMAL-LEXICAL-ORDER"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), sources=["RULINGS Q38d", "lab/reviews/plan-v2-round4.codex.md finding 6"])
 O("G7.outbox.publication-sequence", ["G7", "GS"], "Outbox deliveries are keyed by (id, publication sequence)",
@@ -1824,8 +2037,8 @@ O("G7.receipt.journal-complete", ["G7"], "Receipts are complete and ordered",
   scope="engine", cases=["CS-WRITE:receipts"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-WRITER", "EP-RESOLVE"], modes=CRR,
   mutants=["M-JOURNAL-ORDER"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), sources=["handoffs/claude-native/README.md:41"])
 O("G7.journal.logical-contract", ["G7"], "The logical journal stays queryable (C6)",
-  "Every C6-* case: direct match and Datalog queries over :_tx/change and :_tx/changed-entity, transactions(), transactionsForEntity and transactionByCommand return O-REPLAY's outputs per JOURNAL_RULES: creation order (JN-ORDER), staged facts visible to later operations of the same command (JN-STAGED), bit-exact -0.0 change values (JN-NEGZERO, RULINGS Q21 AMB-04, provisional, flagged for Sam) and the documented and testkit-pinned fields (JN-FIELDS); whole-journal byte identity of a physically slimmed journal is checked against a separate T0-capture baseline (C6-SLIM-BYTE-IDENTICAL), modulo erasure: both sides replace erased values with their markers first (ER-JOURNAL-MODULO, RULINGS Q31f).",
-  scope="engine", cases=["CS-JOURNAL", "CS-ERASURE:ER-JOURNAL-MODULO", "CS-WIRE:WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"], oracle=["O-REPLAY"], ep=["EP-TRIPLES"], modes=CRR, contracts=["C6"],
+  "Every C6-* case: direct match and Datalog queries over :_tx/change and :_tx/changed-entity, transactions(), transactionsForEntity and transactionByCommand return O-REPLAY's outputs per JOURNAL_RULES: creation order (JN-ORDER), staged facts visible to later operations of the same command (JN-STAGED), bit-exact -0.0 change values (JN-NEGZERO, RULINGS Q21 AMB-04, provisional, flagged for Sam) and the documented and testkit-pinned fields (JN-FIELDS); whole-journal byte identity of a physically slimmed journal is checked against a separate T0-capture baseline (C6-SLIM-BYTE-IDENTICAL), modulo erasure: an erasure commit is an ordinary journal transaction whose changes list only identities (ER-COMMIT-JOURNAL-IDENTITY-ONLY) and earlier transactions' :_tx/change facts for erased values show the ErasedValue marker (ER-EARLIER-CHANGE-MARKER), so both sides of the whole-journal comparison carry markers (ER-JOURNAL-MODULO, RULINGS Q31f, Q49a).",
+  scope="engine", cases=["CS-JOURNAL", "CS-ERASURE:ER-JOURNAL-MODULO,ER-COMMIT-JOURNAL-IDENTITY-ONLY,ER-EARLIER-CHANGE-MARKER", "CS-WIRE:WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"], oracle=["O-REPLAY"], ep=["EP-TRIPLES"], modes=CRR, contracts=["C6"],
   sources=["lab/PLAN.md C6", "lab/reviews/acceptance-review-r1.codex.md finding 6"])
 O("G7.commit.protocol-transitions", ["G7"], "Commit outcomes follow the witnessed transition table",
   "For every C2-* (QLever) and X-* (XTDB) fault point of CS-FAULT, injected T-FAULT-REPS times, the final state, the original caller's outcome, retries with the same commandId and reads match COMMIT_OUTCOMES for the last witnessed transition: a group with QT2-LOGGED evidence is always published by recovery; retries before publication return E-COMMIT-PENDING or E-REPAIRING; a success receipt exists only after publication.",
@@ -2012,7 +2225,7 @@ O("NS.P4", ["NS"], "P4: a fast path to current values, separate from history (pe
   "Under TARGETS 1.1 P4: subject pulls at the current basis in the lane's language over the frozen weighted buckets (50% 50 to 200 facts, 35% 201 to 800, 15% 801 to 2,000; hops 3 at 40%, 4 at 35%, 6 at 25%; NS-P4-BUCKETS) meet NS-P4-PULL-P50-MS and NS-P4-PULL-P99-MS single-client on the weighted mix, each bucket reports its own p50 and p99, and the largest bucket meets NS-P4-PULL-P99-LARGEST-MS; throughput sustains NS-P4-PULLS-PER-CORE per engine core, with cores taken from the CPU quota bound in the receipt and host broker and kernel CPU reported beside it; on one matched sample of 1,000 subjects grown from history depth 1 to 3 to 10, current-pull p99 and bytes read stay within NS-P4-HISTORY-FLATNESS (NS-P4-MATCHED-HISTORY, RULINGS Q27); the receipt records whether current reads touch history.",
   cases=["CS-NS:p4", "CS-NS:" + ",".join(NS_NAMED_CASES["NS.P4"])], ep=["EP-REPO", "EP-NATIVE", "EP-ENGINE-OBS"], thresholds=["NS-P4-PULL-P50-MS", "NS-P4-PULL-P99-MS", "NS-P4-PULL-P99-LARGEST-MS", "NS-P4-PULLS-PER-CORE", "NS-P4-HISTORY-FLATNESS", "T-RUNS"], modes=SE, **NS_COMMON)
 O("NS.P5", ["NS"], "P5: release activation re-evaluates 100k subjects without hurting live traffic (per surface)",
-  "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); results are published as work items through EP-OUTBOX under the delivery key (id, publication sequence) with early cutoff, so an activation that leaves a payload equal to the latest published one publishes nothing and a return to an earlier payload publishes a new sequence (RULINGS Q36a, Q38f), and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
+  "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); a scoped release (W0 R3) is measured at the 100k rung, where its scope is not vacuous, and its receipt binds the reached-subject list and that list's hash instead of every placement (9,497 reached at 100k in V-D01's measurement; NS-P5-SCOPED-RELEASE-REACHED, RULINGS Q48b); results are published as work items through EP-OUTBOX under the delivery key (id, publication sequence) with early cutoff, so an activation that leaves a payload equal to the latest published one publishes nothing and a return to an earlier payload publishes a new sequence (RULINGS Q36a, Q38f), and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
   cases=["CS-NS:p5", "CS-NS:" + ",".join(NS_NAMED_CASES["NS.P5"])], ep=["EP-REPO", "EP-NATIVE", "EP-WRITER", "EP-OUTBOX", "EP-ENGINE-OBS"], thresholds=["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS", "T-RUNS"], modes=SE,
   oracle=["O-REPLAY", "O-DOMAIN", "O-OBS"], profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-NS",), sources=["lab/NORTH-STAR.md", "lab/TARGETS.md sections 1, 1.1 and 6.1"])
 O("NS.SEC.bulk-lane", ["NS"], "Secondary: the bulk lane does not hurt live reads",
@@ -2111,7 +2324,7 @@ for o in OBL:
 # ---------------- erasure (TARGETS section 7, RULINGS Q24: provisional, flagged for Sam)
 ER_NOTE = "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it."
 O("G9.erasure.visibility-boundary", ["G9"], "Erasure is a visibility boundary at the erasure commit's publication",
-  "Every CS-ERASURE boundary, marker and reproduction case per ERASURE: a read that started before the erasure published may return the old value (ER-INFLIGHT-READ); every read that starts after it, at any basis including bases before the erasure, returns ErasedValue {erasedAt} in place of the value (ER-AFTER-PUBLICATION-ALL-BASES), with assertion identities and valid and record intervals unchanged (ER-SHAPE-KEPT); a reader already pinned when the erasure lands follows the same rule (ER-PINNED-READER); an index or cache serves any basis only after applying every published erasure, independently of the basis (ER-FRONTIER-OLD-BASIS), and erasure invalidates every old-basis cache entry holding the value (ER-CACHE-INVALIDATION); expected post-erasure answers come independently from O-REPLAY (ER-ORACLE-POST).",
+  "Every CS-ERASURE boundary, marker and reproduction case per ERASURE: a read that started before the erasure published may return, for each erased value, the old value or the marker (ER-INFLIGHT-READ, RULINGS Q49d); every read that starts after it, at any basis including bases before the erasure, returns ErasedValue {erasedAt} in place of the value (ER-AFTER-PUBLICATION-ALL-BASES), with assertion identities and valid and record intervals unchanged (ER-SHAPE-KEPT); a reader already pinned when the erasure lands follows the same rule (ER-PINNED-READER); an index or cache serves any basis only after applying every published erasure, independently of the basis (ER-FRONTIER-OLD-BASIS), and erasure invalidates every old-basis cache entry holding the value (ER-CACHE-INVALIDATION); expected post-erasure answers come independently from O-REPLAY (ER-ORACLE-POST).",
   cases=["CS-ERASURE:boundary,marker", "CS-ERASURE:ER-INFLIGHT-READ,ER-AFTER-PUBLICATION-ALL-BASES,ER-SHAPE-KEPT,ER-PINNED-READER,ER-ORACLE-POST,ER-FRONTIER-OLD-BASIS,ER-CACHE-INVALIDATION"], mutants=["M-ERASURE-FRONTIER-SKIP"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-REPO", "EP-NATIVE", "EP-TRIPLES"], profiles=["P-TINY-CONC"], modes=CRR,
   sources=["lab/TARGETS.md section 7", "RULINGS Q24"], notes=ER_NOTE, params={"provisional": True})
 O("G9.erasure.protected-copies", ["G9"], "Erasure reaches every protected copy",
@@ -2144,10 +2357,19 @@ O("W0.coverage-floors", ["GS", "NS"], "W0 is reviewed, pinned and meets its froz
   "V-D01 has independently reviewed W0's SPEC.md, releases and golden cases and every W0_PIN hash is pinned in this contract (W0-COV-REVIEW-PINNED; a null pin fails closed, GATE-W0); over the frozen trace at the 100k rung O-DOMAIN finds that R2 changes the outputs of at least W0-R2-CHANGED-SHARE of in-scope subjects (W0-COV-R2-CHANGED), every rule fires for at least W0-RULE-FIRE-SHARE of subjects (W0-COV-RULE-FIRES), worker-to-location fanout follows Zipf s = W0-LOCATION-ZIPF-S over W0-LOCATIONS-100K locations (W0-COV-LOCATION-FANOUT), and at least W0-MULTI-WORK-ITEM-SHARE of evaluations produce three or more work items (W0-COV-MULTI-WORK-ITEMS); world sizes follow P4's buckets through ballast (W0-COV-BALLAST-BUCKETS), the wage floor is two hops deep (W0-COV-TWO-HOP), R3 reaches its subjects through the reverse two-hop index with affected and changed subjects stated separately (W0-COV-R3-SCOPED), and O-DOMAIN reproduces the population fingerprint (W0-COV-FINGERPRINT) (RULINGS Q40, Q44).",
   scope="engine", cases=["CS-W0-COVERAGE", "CS-W0-COVERAGE:" + ",".join(CS["CS-W0-COVERAGE"]["requiredCases"])], oracle=["O-DOMAIN"], ep=["EP-KERNEL"], profiles=["P-RUNGS"], closure=("CR-W0-COVERAGE",),
   thresholds=["W0-R2-CHANGED-SHARE", "W0-RULE-FIRE-SHARE", "W0-LOCATIONS-100K", "W0-LOCATION-ZIPF-S", "W0-MULTI-WORK-ITEM-SHARE"], sources=["lab/TARGETS.md section 6.1 items 6 and 7", "RULINGS Q31i"])
+O("G9.erasure.commit-semantics", ["G9", "G7"], "An erasure commit is an ordinary, idempotent journal transaction",
+  "Per ERASURE journalCommit and idempotence (RULINGS Q49a, Q49b): an erasure commit has a position, a txId, a record in transactions() and its own :_tx/ facts, and its changes list only identities (entity, attribute, assertion ids), never values (ER-COMMIT-JOURNAL-IDENTITY-ONLY); it is also written to the erasure ledger kept apart from the data, which restore and rebuild replay (ER-COMMIT-LEDGER); earlier transactions' :_tx/change facts for erased values show the ErasedValue marker (ER-EARLIER-CHANGE-MARKER); the first erasure of an identity sets erasedAt and erasing it again changes nothing (ER-IDEMPOTENT-REERASE); an erase that matches nothing still commits a journal record with an empty change list (ER-EMPTY-ERASURE-RECORD).",
+  scope="engine", cases=["CS-ERASURE:commit", "CS-ERASURE:" + ",".join(ERASURE_COMMIT_CASES)], oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-TRIPLES", "EP-REPLAY"], modes=CRR,
+  sources=["lab/TARGETS.md section 7 items 1 and 5", "RULINGS Q24", "RULINGS Q49a, Q49b"], notes=ER_NOTE, params={"provisional": True})
+O("G9.erasure.query-semantics", ["G9", "G5"], "Erased values give deterministic query answers",
+  "Per ERASURE queries (RULINGS Q49c, provisional under the Q24 flag for Sam), on the repository, the native surface in the lane language and the raw recipes: an erased value is present with no readable value; it matches no value predicate (equality, inequality, range, pattern), so a filter never selects or rejects a subject by it (ER-PREDICATE-NO-MATCH); SUM, AVG, MIN and MAX skip it while COUNT of assertions counts it (ER-AGGREGATE-SKIP-COUNT); ORDER BY places erased markers last, in a deterministic order by assertion id (ER-ORDER-MARKERS-LAST); grouping puts all erased values of an attribute in one group keyed by the marker (ER-GROUP-ONE-MARKER); Unique ignores erased values (ER-UNIQUE-IGNORES); an erased reference cannot be followed and an include returns the marker (ER-REFERENCE-MARKER).",
+  cases=["CS-ERASURE:queries", "CS-ERASURE:" + ",".join(ERASURE_QUERY_CASES)], oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-REPO", "EP-NATIVE", "EP-RAW-HATCH"], modes=CUR_REOPEN,
+  sources=["lab/TARGETS.md section 7", "RULINGS Q24", "RULINGS Q49c"], notes=ER_NOTE, params={"provisional": True})
+
 
 # ---------------- erasure reproduction modulo erasure (RULINGS Q31f)
 O("G9.erasure.reproduction-modulo", ["G9", "G7", "R"], "Every reproduction contract holds modulo erasure",
-  "Per ERASURE reproduction (RULINGS Q31f): the C6 whole-journal comparison (ER-JOURNAL-MODULO), raw and native query results (ER-RAW-NATIVE-MODULO), SDK results (ER-SDK-MODULO), cursors (ER-CURSOR-MODULO) and explain (ER-EXPLAIN-MODULO) compare equal after both sides replace erased values with their ErasedValue markers, and only then.",
+  "Per ERASURE reproduction (RULINGS Q31f): the C6 whole-journal comparison, where the erasure commit's identity-only changes and the markers in earlier :_tx/change facts appear on both sides (ER-JOURNAL-MODULO, RULINGS Q49a), raw and native query results (ER-RAW-NATIVE-MODULO), SDK results (ER-SDK-MODULO), cursors (ER-CURSOR-MODULO) and explain (ER-EXPLAIN-MODULO) compare equal after both sides replace erased values with their ErasedValue markers, and only then.",
   cases=["CS-ERASURE:reproduction", "CS-ERASURE:ER-JOURNAL-MODULO,ER-RAW-NATIVE-MODULO,ER-SDK-MODULO,ER-CURSOR-MODULO,ER-EXPLAIN-MODULO"], oracle=["O-REPLAY"], ep=["EP-TRIPLES", "EP-REPO", "EP-NATIVE", "EP-RAW-HATCH", "EP-RAW-WIRE", "EP-PKG"], profiles=["P-TINY-CONC"], modes=CUR_REOPEN,
   sources=["lab/TARGETS.md section 7 item 8", "RULINGS Q31f"], notes=ER_NOTE, params={"provisional": True})
 O("G10.composition.identity-bound", ["G10", "R"], "Receipts bind the whole composition",
@@ -2543,6 +2765,7 @@ def build_load_contract():
                    "history": "one matched sample of 1,000 subjects: measure at history depth 1, add corrections to the same subjects to depth 3 and then 10, measure again; compare p99 latency and bytes read (RULINGS Q16, Q27)",
                    "bars": ["NS-P4-PULL-P50-MS", "NS-P4-PULL-P99-MS", "NS-P4-PULL-P99-LARGEST-MS", "NS-P4-PULLS-PER-CORE", "NS-P4-HISTORY-FLATNESS"]},
             "P5": {"sweep": "evaluate release R against WORLD_W0 for every subject in R's scope (100k) at one shared basis; the receipt binds the basis and R's content hash", "coverage": "every in-scope subject evaluated exactly once; the receipt carries the hash of the subject list",
+                   "scopedRelease": {"rung": "100k", "binds": "the reached-subject list and its sha256, instead of every placement", "measuredReached": 9497, "measuredChanged": 418, "why": "R3 is vacuous above the 100k rung (V-D01 N3); a scoped sweep's receipt binds what it reached (V-D01 N4; RULINGS Q48b)"},
                    "publication": "results published as work items through the atomic outbox path (EP-OUTBOX) under the delivery key (id, publication sequence) with early cutoff: a payload equal to the latest published one publishes nothing, a different one (including a return to an earlier payload) publishes the next sequence of the same id; publication state is persisted atomically with the outbox record (RULINGS Q36a, Q38f); expected outputs from O-DOMAIN, independently", "postCaptureMutations": "after the basis is captured the driver mutates selected subjects; their outputs must reflect the captured basis",
                    "wallTime": "includes evaluation and publication", "throttledVariant": "about 10 minutes, overlapping a real compaction or index rebuild; keeps its basis and never blocks writers",
                    "concurrent": "the writer trace and 64 live readers", "noSweepBaseline": "same run, same 64 readers and writer trace, before the sweep", "bars": ["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS"]},
@@ -2591,19 +2814,39 @@ BANNED_TEXT = [
 
 
 # RULINGS Q45a: recorded differences between the generator's O-REPLAY pin scope and V-O03's pin_scope.json (contract 0.3.5).
-PIN_SCOPE_EXPECTED_DIFF = {"onlyGeneratorBlocked": [], "onlyVerifierBlocked": [], "onlyGeneratorUses": [], "onlyVerifierUses": []}
+# RULINGS Q47c (0.3.7): the decimal-redeclaration reach blocks the three CS-MIGRATION and CS-WIDEN obligations; the two Q49 erasure
+# obligations are new since V-O03 and blocked by the erasure refusal.
+PIN_SCOPE_EXPECTED_DIFF = {"onlyGeneratorBlocked": ["G1.types.storage-widening-safe", "G7.migration.schema-evolution", "G7.migration.valid-writes-never-rejected", "G9.erasure.commit-semantics", "G9.erasure.query-semantics"], "onlyVerifierBlocked": [], "onlyGeneratorUses": ["G9.erasure.commit-semantics", "G9.erasure.query-semantics"], "onlyVerifierUses": []}
 # RULINGS Q38c: every RULINGS.md entry is compiled or listed as recorded-not-compiled.
 # Q40 (V-D01, W0-1.1.0) is recorded in RULINGS.md for the next contract version.
 EXPECTED_RECORDED_NOT_COMPILED = []
 
 
-def rulings_md_ids():
+def ruling_row_ids(text):
     ids = []
-    for line in (REPO / "lab/acceptance/RULINGS.md").read_text().splitlines():
+    for line in text.splitlines():
         m = re.match(r"^\| (Q\d+[a-z]?(?:-clarified)?|AMB-\d\d)\b", line)
         if m and m.group(1) not in ids:
             ids.append(m.group(1))
     return ids
+
+
+def rulings_md_ids():
+    return ruling_row_ids((REPO / "lab/acceptance/RULINGS.md").read_text())
+
+
+# RULINGS Q47d: RULINGS-PENDING.md may hold ruling rows. They carry no authority and are never compiled; the generator records the
+# file's hash (inputs) and lists the pending ids (pendingRulings) without invalidating generation.
+PENDING_RULINGS_FILE = "lab/acceptance/RULINGS-PENDING.md"
+PENDING_RULE = "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
+
+
+def pending_ruling_ids(text=None):
+    return ruling_row_ids((REPO / PENDING_RULINGS_FILE).read_text() if text is None else text)
+
+
+def pending_rulings():
+    return {"file": PENDING_RULINGS_FILE, "sha256": sha_file(PENDING_RULINGS_FILE), "ids": pending_ruling_ids(), "authority": "none", "rule": PENDING_RULE}
 
 
 def rulings_coverage():
@@ -2925,11 +3168,22 @@ def ruling_checks():
     for o in OBL:
         if "O-DOMAIN" in o["oracles"] and o["id"] != "W0.coverage-floors" and "GATE-W0" not in o["closure"]["params"].get("gates", []):
             e.append(f"Q31i: {o['id']} is domain-dependent but not gated on W0")
-    if set(W0_PIN["files"]) != {"lab/world/W0/SPEC.md", "lab/world/W0/releases/R1.json", "lab/world/W0/releases/R2.json", "lab/world/W0/releases/R3.json", "lab/world/W0/schema.json", "lab/world/W0/cases/"} or "reviewReceipt" not in W0_PIN:
-        e.append("Q31i: W0_PIN must name the reviewed files")
+    _sums = {ln.split("  ", 1)[1]: ln.split("  ", 1)[0] for ln in (REPO / W0_PIN["hashTable"]).read_text().splitlines() if ln.strip()}
+    if W0_PIN["files"] != _sums or len(W0_PIN["files"]) != 95 or "reviewReceipt" not in W0_PIN:
+        e.append("Q48a: W0_PIN must pin exactly the 95 hashes of W0-1.1.1-ada2e90-SHA256SUMS")
+    for need in ("lab/world/W0/SPEC.md", "lab/world/W0/schema.json", "lab/world/W0/releases/R1.json", "lab/world/W0/releases/R2.json", "lab/world/W0/releases/R3.json"):
+        if need not in W0_PIN["files"] or not any(f.startswith("lab/world/W0/cases/") for f in W0_PIN["files"]):
+            e.append(f"Q46c/Q48a: W0_PIN layout names {need} and the case files")
+    if W0_PIN["oDomainFingerprint"] is not None or W0_PIN["reviewReceipt"] is None or not str(W0_PIN["deltaCheck"]).startswith("ACCEPT") or W0_PIN["commit"][:7] != "ada2e90":
+        e.append("Q48a: W0 accepted at ada2e90 with the fingerprint a required null input until O-DOMAIN reproduces it")
+    _fp = W0_PIN["fingerprintCandidate"]
+    _vtxt = (REPO / "lab/verify/D01/VERIFY.md").read_text()
+    _vtxt = re.sub(r"\s+", " ", _vtxt[_vtxt.index("Final fingerprint"):])
+    if not all(_typed(h, "hex64") and f"sha256:{h}" in _vtxt for h in [_fp["worldsSha256"]] + list(_fp["releasesSha256"].values())) or f"basis.tx {_fp['basisTx']:,}; {_fp['facts']:,} facts" not in _vtxt:
+        e.append("Q48a: the fingerprint candidate must be V-D01's final fingerprint")
     for f, h in W0_PIN["files"].items():
-        if h is not None and not f.endswith("/") and ((REPO / f).exists() is False or sha_file(f) != h):
-            e.append(f"Q31i: W0_PIN {f} does not match the file")
+        if h is None or (REPO / f).exists() is False or sha_file(f) != h:
+            e.append(f"Q31i/Q48a: W0_PIN {f} does not match the file")
     # Q31j
     scan = legacy_out_of_range_scan()
     if set(scan) != set(LEGACY_LANE_OUTCOMES):
@@ -3000,7 +3254,7 @@ def ruling_checks():
         e.append("Q34c: guard on user JSON only, with the paired test")
     if "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP" not in {t for c in obl["G7.journal.logical-contract"]["cases"] for t in c["select"]} or "M-JSON-GUARD-ON-JOURNAL" not in obl["G1.wire.write-guards"]["mutationControls"]:
         e.append("Q34c: journal side of the paired test")
-    # Q38b and Q42a: claim admission from opened, source-bound evidence, with Q37b
+    # Q38b, Q42a, Q47a-c: claim admission from opened, schema-valid, source-bound evidence, with Q37b
     store = {}
 
     def _put(b_):
@@ -3008,67 +3262,142 @@ def ruling_checks():
         store[h] = b_
         return h
 
+    def _putj(x_):
+        return _put(json.dumps(x_, sort_keys=True).encode())
+
     def _comp(slot="dev"):
         return {k: {"engine": "xtdb", "imageDigest": "sha256:aa", "configSha256": "bb", "slot": slot} for k in COMPOSITION["assignments"]}
-    man = _put(json.dumps({"sourceTreeSha256": "t1", "binarySha256": "bin1"}).encode())
-    man_a0 = _put(json.dumps({"sourceTreeSha256": "t0", "binarySha256": "bin0"}).encode())
-    ver = _put(b"verifier record")
+    bin1, bin0, mod1, mod0, ans, other = _put(b"candidate binary"), _put(b"A0 binary"), _put(b"candidate module"), _put(b"A0 module"), _put(b"expected answer"), _put(b"other answer")
+    man = _putj({"schema": "build-manifest/1", "sourceTreeSha256": "t1", "binarySha256": bin1, "modules": [{"path": "dist/index.js", "sha256": mod1}]})
+    man_a0 = _putj({"schema": "build-manifest/1", "sourceTreeSha256": "t0", "binarySha256": bin0, "modules": [{"path": "dist/index.js", "sha256": mod0}]})
     env = {"store": store, "dependencyClosureChangedAt": 100}
+    wl = {"generatorSourceSha256": "a" * 64, "seed": 1, "offerScheduleSha256": "b" * 64, "window": [0, 600], "slot": "dev"}
 
-    def _rcpt(oid, cases=None, tree="t1", comp=None, role="prerequisite", commit="c1", produced=200, binary="bin1", manifest=None, obj=None, reps=3):
+    def _ver(oid):
+        return _putj({"schema": "verifier-record/1", "obligation": oid, "definitionSha256": obligation_hash(obl[oid]), "verifier": "V-TEST", "verdict": "ACCEPT"})
+
+    def _case(oid, c, sel=None, exit_=0, code=None, observed=None):
+        return _putj({"schema": "case-result/1", "obligation": oid, "case": c, "selection": sel or c, "oracle": (obl[oid]["oracles"] or ["none"])[0], "oracleExit": exit_, "oracleCode": code, "expectedSha256": ans, "observedSha256": observed or ans})
+
+    def _rcpt(oid, cases=None, tree="t1", comp=None, role="prerequisite", commit="c1", produced=200, binary=None, manifest=None, obj=None, reps=3, ver=None, workload=None, extra=()):
         o = obl[oid]
         need = cases if cases is not None else (POSITION_REQUIRED_CASES if oid == "G7.position.coordinates" else [t for c in o["cases"] for t in c["select"]])
-        return {"obligation": oid, "definitionSha256": obligation_hash(o), "sourceTreeSha256": tree, "composition": comp or _comp(), "role": role, "commit": commit, "producedAt": produced,
-                "buildManifestSha256": manifest or (man if tree == "t1" else man_a0), "executedBinarySha256": binary, "modes": o["closure"]["modes"], "faultReps": reps, "verifierObjectSha256": ver,
-                "trace": {"generatorSourceSha256": "g", "seed": 1}, "window": [0, 600],
-                "caseResults": [{"case": c, "verdict": "PASS", "objectSha256": obj or _put(f"{oid}:{c}".encode())} for c in need]}
+        r_ = {"obligation": oid, "definitionSha256": obligation_hash(o), "sourceTreeSha256": tree, "composition": comp or _comp(), "role": role, "commit": commit, "producedAt": produced,
+              "buildManifestSha256": manifest or (man if tree == "t1" else man_a0), "executedBinarySha256": binary or (bin1 if tree == "t1" else bin0), "modes": o["closure"]["modes"], "faultReps": reps, "verifierObjectSha256": ver or _ver(oid),
+              "caseResults": [{"case": c, "selection": c, "verdict": "PASS", "objectSha256": obj or _case(oid, c)} for c in need] + list(extra)}
+        if role in ("measurement", "control"):
+            r_["workload"] = dict(wl) if workload is None else workload
+        return r_
     full_pins = {k: dict(v, acceptReceipt="R", sha256=(v["sha256"] if isinstance(v["sha256"], dict) else "c" * 64), excludes=v.get("excludes", [])) for k, v in ORACLE_PINS.items()}
     full_pins["O-OBS"] = {"sha256": "d" * 64, "acceptReceipt": "R"}
+    a0_full = {"A0-XTDB": {"commit": "a" * 40, "sourceTreeSha256": "t0", "composition": _comp(), "measuredBy": "EXP-N01 (test entry)"}, "A0-QLEVER": None}
     pre = [_rcpt("G7.position.coordinates"), _rcpt("G10.composition.identity-bound")]
     meas = _rcpt("NS.P2", role="measurement")
-    ctl = _rcpt("NS.P2", role="control", tree="t0", binary="bin0")
-    good = {"obligations": ["NS.P2"], "commit": "c1", "sourceTreeSha256": "t1", "composition": _comp(), "control": {"sourceTreeSha256": "t0", "composition": _comp()}, "receipts": pre + [meas, ctl], "profile": "P-SCREEN"}
-    if admit_claim(good, env=env, pins=full_pins) != "QUALIFIED":
-        e.append("Q38b/Q42a: a complete, evidence-backed screening claim with every oracle pinned must be admitted (positive control)")
+    ctl = _rcpt("NS.P2", role="control", tree="t0")
+    good = {"obligations": ["NS.P2"], "commit": "c1", "sourceTreeSha256": "t1", "composition": _comp(), "receipts": pre + [meas, ctl], "profile": "P-SCREEN"}
+
+    def _adm(claim, pins=None, a0=None, env_=None, w0=None):
+        return admit_claim(claim, env=env if env_ is None else env_, pins=full_pins if pins is None else pins, a0=a0_full if a0 is None else a0, w0=w0)
+    if _adm(good) != "QUALIFIED":
+        e.append("Q38b/Q42a/Q47: a complete, evidence-backed screening claim with every oracle pinned and A0 registered must be admitted (positive control)")
     null_replay = dict(full_pins, **{"O-REPLAY": dict(full_pins["O-REPLAY"], acceptReceipt=None)})
+    bad_man_nobin = _putj({"schema": "build-manifest/1", "sourceTreeSha256": "t1", "binarySha256": "9" * 64, "modules": [{"path": "dist/index.js", "sha256": mod1}]})
+    bad_man_nomod = _putj({"schema": "build-manifest/1", "sourceTreeSha256": "t1", "binarySha256": bin1, "modules": [{"path": "dist/index.js", "sha256": "8" * 64}]})
+    bad_man_empty = _putj({"schema": "build-manifest/1", "sourceTreeSha256": "t1", "binarySha256": bin1, "modules": []})
+    not_ver = _putj({"notAVerifierRecord": True})
+    refused = _case("G7.position.coordinates", "FX-NESTED-CUTS", exit_=2, code="X-NOT-MODELED")
+    wrong = _case("G7.position.coordinates", "FX-NESTED-CUTS", observed=other)
+
+    def _pos(**kw):
+        return dict(good, receipts=[_rcpt("G7.position.coordinates", **kw), pre[1], meas, ctl])
+
+    def _pos_case(objsha):
+        r_ = _rcpt("G7.position.coordinates")
+        r_["caseResults"] = [x if x["case"] != "FX-NESTED-CUTS" else dict(x, objectSha256=objsha) for x in r_["caseResults"]]
+        return dict(good, receipts=[r_, pre[1], meas, ctl])
+    nowl_meas, nowl_ctl = dict(meas), dict(ctl)
+    nowl_meas.pop("workload")
+    nowl_ctl.pop("workload")
+    weak_ctl = _rcpt("NS.P2", role="control", tree="t9", manifest=_putj({"schema": "build-manifest/1", "sourceTreeSha256": "t9", "binarySha256": bin0, "modules": [{"path": "dist/index.js", "sha256": mod0}]}), binary=bin0)
     for bad, why in (
-            (admit_claim(good, env=env, pins=null_replay), "a claim while O-REPLAY's pin is null (Q37b)"),
-            (admit_claim(dict(good, receipts=[], positionCasesClosed=POSITION_REQUIRED_CASES, compositionBound=True), env=env, pins=full_pins), "supplied case names or Booleans"),
-            (admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", tree="t2", manifest=man), pre[1], meas, ctl]), env=env, pins=full_pins), "a falsifier receipt for another source tree"),
-            (admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", cases=POSITION_DENSE_CASES), pre[1], meas, ctl]), env=env, pins=full_pins), "a position receipt without the four falsifiers"),
-            (admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", obj="0" * 64), pre[1], meas, ctl]), env=env, pins=full_pins), "all-zero object hashes (Q42a)"),
-            (admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", binary="bin-stale"), pre[1], meas, ctl]), env=env, pins=full_pins), "a stale binary under the same source label (Q42a)"),
-            (admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", commit="c0"), pre[1], meas, ctl]), env=env, pins=full_pins), "a falsifier receipt from an earlier commit (Q42a)"),
-            (admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", produced=50), pre[1], meas, ctl]), env=env, pins=full_pins), "a receipt older than its dependency closure (Q42a)"),
-            (admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", reps=2), pre[1], meas, ctl]), env=env, pins=full_pins), "too few fault repetitions (Q42a)"),
-            (admit_claim(dict(good, receipts=pre + [ctl]), env=env, pins=full_pins), "prerequisites but no measurement receipt (Q42a)"),
-            (admit_claim(dict(good, receipts=pre + [meas]), env=env, pins=full_pins), "a measurement without a matched control (Q42a)"),
-            (admit_claim(dict(good, receipts=pre + [meas, dict(ctl, window=[0, 300])]), env=env, pins=full_pins), "a control from another window (Q42a)"),
-            (admit_claim(dict(good, obligations=["NS.P2", "NS.P9"]), env=env, pins=full_pins), "an unknown obligation id (Q42a)"),
-            (admit_claim(good, env={"store": {}, "dependencyClosureChangedAt": 100}, pins=full_pins), "objects missing from the store (Q42a)")):
+            (_adm(good, pins=null_replay), "a claim while O-REPLAY's pin is null (Q37b)"),
+            (admit_claim(good, env=env, pins=full_pins), "a comparison while the A0 registry entry is null (Q46b, Q47b)"),
+            (_adm(dict(good, receipts=[], positionCasesClosed=POSITION_REQUIRED_CASES, compositionBound=True)), "supplied case names or Booleans"),
+            (_adm(_pos(tree="t2", manifest=man, binary=bin1)), "a falsifier receipt labelled for another source tree"),
+            (_adm(_pos(cases=POSITION_DENSE_CASES)), "a position receipt without the four falsifiers"),
+            (_adm(_pos(obj="0" * 64)), "all-zero object hashes (Q42a)"),
+            (_adm(_pos(binary="bin-stale")), "a stale binary under the same source label (Q42a)"),
+            (_adm(_pos(commit="c0")), "a falsifier receipt from an earlier commit (Q42a)"),
+            (_adm(_pos(produced=50)), "a receipt older than its dependency closure (Q42a)"),
+            (_adm(_pos(reps=2)), "too few fault repetitions (Q42a)"),
+            (_adm(_pos(manifest=bad_man_nobin, binary="9" * 64)), "a manifest whose binary bytes are not retained (Q47a)"),
+            (_adm(_pos(manifest=bad_man_nomod)), "a manifest whose module bytes are not retained (Q47a)"),
+            (_adm(_pos(manifest=bad_man_empty)), "a manifest listing no executed modules (Q47a)"),
+            (_adm(_pos(ver=not_ver)), "a verifier object that is not a verifier record (Q47a)"),
+            (_adm(_pos(ver=_ver("G10.composition.identity-bound"))), "a verifier record for another obligation (Q47a)"),
+            (_adm(_pos(ver=_putj({"schema": "verifier-record/1", "obligation": "G7.position.coordinates", "definitionSha256": obligation_hash(obl["G7.position.coordinates"]), "verifier": "", "verdict": "ACCEPT"}))), "a verifier record with an empty verifier (Q47a)"),
+            (_adm(_pos(ver=_putj({"schema": "verifier-record/1", "obligation": "G7.position.coordinates", "definitionSha256": obligation_hash(obl["G7.position.coordinates"]), "verifier": "V-TEST", "verdict": "ACCEPT", "trusted": True}))), "a verifier record with fields outside its schema (Q47a)"),
+            (_adm(_pos_case(refused)), "a case object with oracle exit 2 and X-NOT-MODELED labelled PASS (Q47a)"),
+            (_adm(_pos_case(wrong)), "a case object whose observation differs from the expected answer, labelled PASS (Q47a)"),
+            (_adm(_pos_case(_case("G7.position.coordinates", "FX-ABORT-GAP"))), "a case object recorded for another case (Q47a)"),
+            (_adm(dict(good, receipts=pre + [ctl])), "prerequisites but no measurement receipt (Q42a)"),
+            (_adm(dict(good, receipts=pre + [meas])), "a measurement without a matched control (Q42a)"),
+            (_adm(dict(good, receipts=pre + [meas, dict(ctl, workload=dict(wl, window=[0, 300]))])), "a control from another window (Q42a)"),
+            (_adm(dict(good, receipts=pre + [meas, dict(ctl, workload=dict(wl, seed=2))])), "a control with another seed (Q47b)"),
+            (_adm(dict(good, receipts=pre + [nowl_meas, nowl_ctl])), "measurement and control without workload identity, None matching None (Q47b)"),
+            (_adm(dict(good, receipts=pre + [dict(meas, workload=dict(wl, offerScheduleSha256="")), dict(ctl, workload=dict(wl, offerScheduleSha256=""))])), "an empty offer schedule hash on both sides (Q47b)"),
+            (_adm(dict(good, receipts=pre + [dict(meas, workload=dict(wl, slot="other")), dict(ctl, workload=dict(wl, slot="other"))])), "a workload slot that is not the composition's slot (Q47b)"),
+            (_adm(dict(good, control={"sourceTreeSha256": "t9", "composition": _comp()}, receipts=pre + [meas, weak_ctl])), "a control identity chosen by the claimant (Q47b)"),
+            (_adm(dict(good, obligations=["NS.P2", "NS.P9"])), "an unknown obligation id (Q42a)"),
+            (_adm(good, env_={"store": {}, "dependencyClosureChangedAt": 100}), "objects missing from the store (Q42a)")):
         if bad != "DIAGNOSTIC":
-            e.append(f"Q38b/Q42a: {why} must be a diagnostic")
+            e.append(f"Q38b/Q42a/Q47: {why} must be a diagnostic")
+    # Codex round 6 counterexamples (Q47a, Q47b, Q47c), each as one fixture combining the reported defects
+    r6_pos = _rcpt("G7.position.coordinates", manifest=bad_man_nobin, binary="9" * 64, ver=not_ver)
+    r6_pos["caseResults"] = [dict(x, objectSha256=_case("G7.position.coordinates", x["case"], exit_=2, code="X-NOT-MODELED")) for x in r6_pos["caseResults"]]
+    cx_r6_1 = dict(good, receipts=[r6_pos, pre[1], meas, ctl])
+    cx_r6_5 = dict(good, control={"sourceTreeSha256": "t9", "composition": _comp()}, receipts=pre + [nowl_meas, dict(weak_ctl, workload=None)])
+    mig = "G7.migration.schema-evolution"
+    mig_refused = {"case": "MIG-DECIMAL-5-2-TO-6-3", "selection": "all", "verdict": "PASS", "objectSha256": _case(mig, "MIG-DECIMAL-5-2-TO-6-3", sel="all", exit_=2, code="X-NOT-MODELED")}
+    cx_r6_6 = dict(good, obligations=[mig], receipts=pre + [_rcpt(mig, role="measurement", extra=[mig_refused]), _rcpt(mig, role="control", tree="t0")])
+    for cx, claim in (("CX-R6-UNOPENED-MEANING", cx_r6_1), ("CX-R6-UNMATCHED-CONTROL", cx_r6_5), ("CX-R6-INDIRECT-REFUSAL", cx_r6_6)):
+        if cx not in {x["id"] for x in EVALUATOR_COUNTEREXAMPLES} or _adm(claim) != "DIAGNOSTIC" or _adm(claim, pins=dict(full_pins, **{"O-REPLAY": dict(full_pins["O-REPLAY"], excludes=[])})) != "DIAGNOSTIC":
+            e.append(f"Q47: {cx} must be rejected even with every oracle pinned and A0 registered")
+    # Q47c: a retained refusal rejects a claim the static scope would allow
+    p2_refused = {"case": "NS-P2-EXTRA", "selection": meas["caseResults"][0]["selection"], "verdict": "PASS", "objectSha256": _case("NS.P2", "NS-P2-EXTRA", sel=meas["caseResults"][0]["selection"], exit_=2, code="X-NOT-MODELED")}
+    if _adm(dict(good, receipts=pre + [_rcpt("NS.P2", role="measurement", extra=[p2_refused]), ctl])) != "DIAGNOSTIC":
+        e.append("Q47c: a retained refusal on any selected case rejects the claim, whatever the static scope says")
+    _sc = oracle_scope("O-REPLAY")
+    for oid in ("G7.migration.schema-evolution", "G1.types.storage-widening-safe"):
+        if "scale-evolution" not in _sc["blocked"].get(oid, []):
+            e.append(f"Q47c: {oid} must be blocked by the decimal-redeclaration reach of the scale-evolution refusal")
+    if _adm(dict(good, obligations=[mig], receipts=pre + [_rcpt(mig, role="measurement"), _rcpt(mig, role="control", tree="t0")])) != "DIAGNOSTIC":
+        e.append("Q47c: a CS-MIGRATION claim is blocked statically while the oracle refuses decimal redeclaration")
     bad_comp = _comp()
     bad_comp["history"].pop("slot")
-    if admit_claim(dict(good, composition=bad_comp, receipts=[_rcpt("G7.position.coordinates", comp=bad_comp), _rcpt("G10.composition.identity-bound", comp=bad_comp), _rcpt("NS.P2", role="measurement", comp=bad_comp), ctl]), env=env, pins=full_pins) != "DIAGNOSTIC":
+    if _adm(dict(good, composition=bad_comp, receipts=[_rcpt("G7.position.coordinates", comp=bad_comp), _rcpt("G10.composition.identity-bound", comp=bad_comp), _rcpt("NS.P2", role="measurement", comp=bad_comp), ctl])) != "DIAGNOSTIC":
         e.append("Q38b: an incompletely bound composition must not count")
     dom_pins = dict(full_pins, **{k: {"sha256": "e" * 64, "acceptReceipt": "R"} for k in ("O-DOMAIN", "O-HAND")})
-    dom = dict(good, obligations=["GS.05"], receipts=pre + [_rcpt("W0.coverage-floors"), _rcpt("GS.05", role="measurement"), _rcpt("GS.05", role="control", tree="t0", binary="bin0")])
-    w0_full = dict(W0_PIN, reviewReceipt="R", deltaCheck="D", oDomainFingerprint="F", files={k: "f" * 64 for k in W0_PIN["files"]})
-    if admit_claim(dom, env=env, pins=dom_pins, w0=w0_full) != "QUALIFIED":
+    dom = dict(good, obligations=["GS.05"], receipts=pre + [_rcpt("W0.coverage-floors"), _rcpt("GS.05", role="measurement"), _rcpt("GS.05", role="control", tree="t0")])
+    w0_full = dict(W0_PIN, oDomainFingerprint="F")
+    if _adm(dom, pins=dom_pins, w0=w0_full) != "QUALIFIED":
         e.append("Q38b: a complete domain-dependent claim with W0 pinned must be admitted (positive control)")
-    if admit_claim(dom, env=env, pins=dom_pins) != "DIAGNOSTIC":
-        e.append("Q38b: a domain-dependent claim must be a diagnostic while the W0 pin is null")
-    if admit_claim(dom, env=env, pins=dom_pins, w0=dict(w0_full, oDomainFingerprint=None)) != "DIAGNOSTIC":
-        e.append("Q40g/Q44a: a domain-dependent claim must be a diagnostic until O-DOMAIN reproduces the fingerprint")
-    if admit_claim(dict(dom, receipts=[r for r in dom["receipts"] if r["obligation"] != "W0.coverage-floors"]), env=env, pins=dom_pins, w0=w0_full) != "DIAGNOSTIC":
+    if _adm(dom, pins=dom_pins) != "DIAGNOSTIC":
+        e.append("Q48a: a domain-dependent claim must be a diagnostic while O-DOMAIN has not reproduced the fingerprint")
+    if _adm(dom, pins=dom_pins, w0=dict(w0_full, files=dict(w0_full["files"], **{"lab/world/W0/SPEC.md": None}))) != "DIAGNOSTIC":
+        e.append("Q31i: a domain-dependent claim must be a diagnostic while a W0 file hash is null")
+    if _adm(dict(dom, receipts=[r for r in dom["receipts"] if r["obligation"] != "W0.coverage-floors"]), pins=dom_pins, w0=w0_full) != "DIAGNOSTIC":
         e.append("Q38b: a domain-dependent claim needs a W0.coverage-floors receipt")
-    if admit_claim(dict(good, obligations=["G1.decimal.channel-routing"], receipts=pre + [_rcpt("G1.decimal.channel-routing", role="measurement"), _rcpt("G1.decimal.channel-routing", role="control", tree="t0", binary="bin0")]), env=env, pins=full_pins) != "DIAGNOSTIC":
+    if _adm(dict(good, obligations=["G1.decimal.channel-routing"], receipts=pre + [_rcpt("G1.decimal.channel-routing", role="measurement"), _rcpt("G1.decimal.channel-routing", role="control", tree="t0")])) != "DIAGNOSTIC":
         e.append("Q45a: a claim on an obligation in O-REPLAY's excludes must be a diagnostic")
-    if admit_claim(dict(good, obligations=["G9.erasure.visibility-boundary"], receipts=pre + [_rcpt("G9.erasure.visibility-boundary", role="measurement"), _rcpt("G9.erasure.visibility-boundary", role="control", tree="t0", binary="bin0")]), env=env, pins=full_pins) != "DIAGNOSTIC":
+    if _adm(dict(good, obligations=["G9.erasure.visibility-boundary"], receipts=pre + [_rcpt("G9.erasure.visibility-boundary", role="measurement"), _rcpt("G9.erasure.visibility-boundary", role="control", tree="t0")])) != "DIAGNOSTIC":
         e.append("Q45b: a claim on an obligation whose cases the oracle refuses must be a diagnostic")
-    if "never from supplied case names or Booleans" not in CLAIM_ADMISSION["rule"] or "O-REPLAY's pin is null" not in CLAIM_ADMISSION["rule"] or "opened" not in CLAIM_ADMISSION["rule"]:
-        e.append("Q38b/Q42a: claim admission rule text")
+    if A0_REGISTRY["entries"] != {"A0-XTDB": None, "A0-QLEVER": None} or set(A0_REGISTRY["byEngine"].values()) != set(A0_CONTROLS):
+        e.append("Q46b/Q47b: the A0 registry exists with null entries until EXP-N01/N02 freezes A0")
+    if set(WORKLOAD_IDENTITY["fields"]) != {"generatorSourceSha256", "seed", "offerScheduleSha256", "window", "slot"} or set(EVIDENCE_SCHEMAS) != {"build-manifest/1", "verifier-record/1", "case-result/1"}:
+        e.append("Q47a/Q47b: workload identity fields and evidence schemas")
+    if "never from supplied case names or Booleans" not in CLAIM_ADMISSION["rule"] or "O-REPLAY's pin is null" not in CLAIM_ADMISSION["rule"] or "opened" not in CLAIM_ADMISSION["rule"] or "A0_REGISTRY" not in CLAIM_ADMISSION["rule"] or "X-NOT-MODELED never counts as PASS" not in CLAIM_ADMISSION["rule"]:
+        e.append("Q38b/Q42a/Q47: claim admission rule text")
     # Q35
     for v, k in TDK1["examples"]:
         try:
@@ -3254,10 +3583,42 @@ def ruling_checks():
         e.append("Q42c: a crash case between every pair of the five transitions")
     if any("O-REPLAY" in obl[oid]["oracles"] for oid in ("G7.outbox.receiver-ordering", "G7.outbox.atomic-unit")):
         e.append("Q45b: outbox steps are never O-REPLAY ops")
-    # RULINGS-PENDING.md holds no compiled item
-    pend = (REPO / "lab/acceptance/RULINGS-PENDING.md").read_text()
-    if re.search(r"^\| Q\d+", pend, re.M):
-        e.append("RULINGS-PENDING.md still holds ruling rows")
+    # Q46a, Q46d
+    if len([c for c in ATOMIC_UNIT_CASES if c.startswith("AU-CRASH-")]) != len(ATOMIC_UNIT_PARTS) * (len(ATOMIC_UNIT_PARTS) - 1) // 2 or len(ATOMIC_UNIT_PARTS) != 5:
+        e.append("Q46a: crash cases cover all 10 pairs of the five transitions")
+    if "Q46d" not in ORACLE_PINS["O-REPLAY"].get("nextPin", "") or not ORACLE_PINS["O-REPLAY"]["commit"].startswith("8cc2c26"):
+        e.append("Q46d: the O-REPLAY pin stays at 8cc2c26 until EXP-O04 is re-verified, with the follow-up recorded")
+    # Q48b, Q48c
+    _lc = build_load_contract()["measurements"]["P5"]
+    if _lc.get("scopedRelease", {}).get("rung") != "100k" or "reached-subject list" not in _lc["scopedRelease"].get("binds", "") or "NS-P5-SCOPED-RELEASE-REACHED" not in {t for c in obl["NS.P5"]["cases"] for t in c["select"]} or "reached-subject list" not in obl["NS.P5"]["statement"]:
+        e.append("Q48b: the scoped-release P5 measurement runs at 100k and binds the reached-subject list and its hash")
+    if "9,497 reached, 418 changed" not in WORLD_W0.get("nextEdit", "") or "Q48c" not in WORLD_W0.get("nextEdit", ""):
+        e.append("Q48c: the next W0 edit is recorded")
+    # Q49a-e
+    for k, need in (("journalCommit", "changes list only identities"), ("journalCommit", "compares markers on both sides"), ("journalCommit", "erasure ledger"), ("idempotence", "empty change list"), ("idempotence", "changes nothing"),
+                    ("queries", "matches no value predicate"), ("queries", "COUNT of assertions counts it"), ("queries", "markers last in a deterministic order by assertion id"), ("queries", "one group keyed by the marker"), ("queries", "Unique ignores"), ("queries", "include returns the marker"), ("inFlight", "old value or the marker")):
+        if need not in ERASURE.get(k, ""):
+            e.append(f"Q49: ERASURE {k} must say: {need}")
+    if ERASURE_COMMIT_CASES != ["ER-COMMIT-JOURNAL-IDENTITY-ONLY", "ER-COMMIT-LEDGER", "ER-EARLIER-CHANGE-MARKER", "ER-IDEMPOTENT-REERASE", "ER-EMPTY-ERASURE-RECORD"] or ERASURE_QUERY_CASES != ["ER-PREDICATE-NO-MATCH", "ER-AGGREGATE-SKIP-COUNT", "ER-ORDER-MARKERS-LAST", "ER-GROUP-ONE-MARKER", "ER-UNIQUE-IGNORES", "ER-REFERENCE-MARKER"]:
+        e.append("Q49: the erasure commit and query cases are named one per rule")
+    for oid, need in (("G9.erasure.commit-semantics", set(ERASURE_COMMIT_CASES)), ("G9.erasure.query-semantics", set(ERASURE_QUERY_CASES)), ("G7.journal.logical-contract", {"ER-JOURNAL-MODULO", "ER-COMMIT-JOURNAL-IDENTITY-ONLY", "ER-EARLIER-CHANGE-MARKER"}), ("G9.erasure.visibility-boundary", {"ER-INFLIGHT-READ"})):
+        if oid not in obl or not need <= {t for c in obl[oid]["cases"] for t in c["select"]} or "O-REPLAY" not in obl[oid]["oracles"]:
+            e.append(f"Q49: {oid} selects {sorted(need)}")
+    if "old value or the marker" not in obl["G9.erasure.visibility-boundary"]["statement"] or "Q49a" not in obl["G9.erasure.reproduction-modulo"]["statement"]:
+        e.append("Q49a/Q49d: in-flight reads and marker comparison in the dependent obligations")
+    _jc = next((r["rule"] for r in DECIMAL_ROUTING if r["id"] == "DR-JSON-CONVERT"), "")
+    if "as-written" not in _jc or "toDecimal(json 0.1, 2, 1) = 0.1" not in _jc or "never its exact binary64 expansion" not in _jc or "E-INVALID-VALUE" not in next((r["rule"] for r in DECIMAL_ROUTING if r["id"] == "DR-JSON-STRING-TEXT"), ""):
+        e.append("Q49e: JSON number to decimal from its as-written reading; decimal text in a JSON string is E-INVALID-VALUE")
+    # RULINGS Q47d: pending rows are listed, never compiled, and never fail generation by existing
+    _compiled_ids = {r["id"] for r in RULINGS}
+    _both = [p for p in pending_ruling_ids() if p in _compiled_ids]
+    if _both:
+        e.append(f"Q47d: ruling ids both pending and compiled (remove them from RULINGS-PENDING.md when compiling): {_both}")
+    _probe = "# pending\n| Q99z probe | a pending row | basis |\n| Q47a | a pending row reusing a compiled sub-ruling id | basis |\n"
+    if pending_ruling_ids(_probe) != ["Q99z", "Q47a"] or "Q99z" in rulings_coverage()["compiled"] or "Q99z" in _compiled_ids:
+        e.append("Q47d: a pending row is listed by id and gains no authority")
+    if pending_rulings()["authority"] != "none" or "never invalidates generation" not in PENDING_RULE or PENDING_RULINGS_FILE not in SCOPE_SOURCES:
+        e.append("Q47d: the pending file is hashed as an input and its rows carry no authority")
     for o in OBL:
         if "O-REPLAY" in o["oracles"] and "GATE-ORACLE-PIN" not in o["closure"]["params"].get("gates", []):
             e.append(f"V-O02 C1: {o['id']} uses O-REPLAY but is not gated on its pin")
@@ -3621,6 +3982,20 @@ CHANGELOG_020 = [
 ]
 
 
+CHANGELOG_037 = [
+    ("Q47d", "Pending rulings", "RULINGS-PENDING.md may hold ruling rows with no authority: pending_ruling_ids lists them (pendingRulings, with the file's hash also under inputs), they are never compiled and never fail generation or --verify; an id both pending and compiled is an error; a regression check feeds a synthetic pending row and confirms it is listed and gains no authority."),
+    ("Q47a", "Evidence meaning", "EVIDENCE_SCHEMAS (build-manifest/1, verifier-record/1, case-result/1) and open_record: the binary and every executed or imported module are retained objects hashing to the manifest; verifier records must match their schema and name the obligation; case_verdict recomputes every verdict from the retained raw result, so an oracle exit 2 or X-NOT-MODELED never counts as PASS and a mislabelled case rejects the evidence."),
+    ("Q47b, Q46b", "Matched control", "WORKLOAD_IDENTITY (trace generator hash, seed, offer schedule hash, window, slot), validated and equal on measurement and control, a missing field never matching; A0_REGISTRY with null A0-XTDB and A0-QLEVER entries supplies the control's commit, tree and composition, never the claim, so every comparison is a diagnostic until EXP-N01/N02's A0 is frozen."),
+    ("Q47c", "Refusals per case", "evidence_ok re-judges every retained case and rejects any refusal; refused_by propagates unsupported rules through indirect selections (scale-evolution reachedThrough CS-DECIMAL scale-evolution, CS-MIGRATION and CS-WIDEN), so G7.migration.schema-evolution, G7.migration.valid-writes-never-rejected and G1.types.storage-widening-safe are blocked; PIN_SCOPE_EXPECTED_DIFF records them."),
+    ("Round 6 fixtures", "Codex counterexamples", "CX-R6-UNOPENED-MEANING (finding 1), CX-R6-UNMATCHED-CONTROL (finding 5) and CX-R6-INDIRECT-REFUSAL (finding 6) are executed against admit_claim with every oracle pinned and A0 registered and must be rejected, beside single-defect fixtures for each new check."),
+    ("Q46a, Q46c, Q46d", "0.3.6 questions", "Crash cases cover all 10 pairs (checked); the W0 pin layout follows the merged W0-1.1.1 files; the O-REPLAY pin stays at 8cc2c26 until EXP-O04 is re-verified (nextPin)."),
+    ("Q48a", "W0 accepted", "W0_PIN: W0-1.1.1 ACCEPTED at ada2e90 with the 95 hashes of W0-1.1.1-ada2e90-SHA256SUMS (checked against the table and the tree), review receipt and delta check set; W0_FINGERPRINT_CANDIDATE holds V-D01's final fingerprint; oDomainFingerprint stays a required null input, so domain-dependent claims remain diagnostics until O-DOMAIN reproduces it."),
+    ("Q48b, Q48c", "Narrow release, next W0 edit", "NS.P5 and load-contract P5: a scoped release is measured at the 100k rung and its receipt binds the reached-subject list and hash (NS-P5-SCOPED-RELEASE-REACHED); WORLD_W0 nextEdit records W0-1.1.2 (no output, floor or fingerprint change)."),
+    ("Q49a, Q49b, Q49d", "Erasure commit", "ERASURE journalCommit, idempotence and inFlight; G9.erasure.commit-semantics (identity-only journal changes, ledger, earlier change markers, idempotent re-erase, empty erase commits); G7.journal.logical-contract and G9.erasure.reproduction-modulo compare markers on both sides; in-flight reads may see the old value or the marker."),
+    ("Q49c", "Erased values in queries", "ERASURE queries and G9.erasure.query-semantics (predicates, aggregates, ORDER BY, grouping, Unique, references), provisional under the Q24 flag for Sam."),
+    ("Q49e", "JSON number to decimal", "DR-JSON-CONVERT converts from the as-written reading (toDecimal(json 0.1, 2, 1) = 0.1), never the binary64 expansion; DR-JSON-STRING-TEXT: decimal text in a JSON string is E-INVALID-VALUE unless converted."),
+    ("Rulings files", "RULINGS.md", "Q46 to Q49 moved into RULINGS.md from lab/reviews/plan-v2-round6.responses.md; RULINGS-PENDING.md pending ids at generation: " + (", ".join(pending_ruling_ids()) or "none") + "; no RULINGS.md entry is recorded-not-compiled."),
+]
 CHANGELOG_036 = [
     ("Q45a", "O-REPLAY accepted", "O-REPLAY BUILT-ACCEPTED at 8cc2c26 with the 29 hashes of hashes.8cc2c26.json (checked against the tree) and acceptance receipt V-O03; per-oracle excludes (G1.decimal.channel-routing); oracle_scope recomputes the pin scope and is checked against pin_scope.json."),
     ("Q45b to Q45d", "Refusals, key bytes, DO-ROUND", "ORACLE_REFUSAL_RULE and ORACLE_REFUSALS (erasure, scale evolution): an exit 2 with X-NOT-MODELED fails closed; CX-REFUSAL-AS-AUTHORING. The three key-byte cases move from G1.types.decimal to G1.decimal.tdk1-admission and -serialization. DO-ROUND to a larger scale: precision p + (s - s_x) capped at 38."),
@@ -3705,7 +4080,9 @@ def render_acceptance(doc, cells, counts):
     A("**Generated by `python3 -I lab/acceptance/build_contract.py`. Do not edit this file.** `obligations.json` is the only authority an evaluator reads; this file renders it for people. Where any text here and `obligations.json` differ, `obligations.json` wins.\n")
     A(f"Transitive contract hash: `{doc['transitiveContractSha256']}`.\n")
     A("## 0. Change log\n")
-    A("### 0.3.6 (this version): rulings Q40 to Q45\n")
+    A("### 0.3.7 (this version): rulings Q46 to Q49\n")
+    A(md_table(["Ruling", "What", "Change"], CHANGELOG_037))
+    A("\n### 0.3.6: rulings Q40 to Q45\n")
     A(md_table(["Ruling", "What", "Change"], CHANGELOG_036))
     A("\n### 0.3.5: rulings Q37 to Q39\n")
     A(md_table(["Ruling", "What", "Change"], CHANGELOG_035))
@@ -3790,6 +4167,8 @@ def render_acceptance(doc, cells, counts):
     A(f"**O-REPLAY pin scope (RULINGS Q45a, Q45b).** Accepted at {ORACLE_PINS['O-REPLAY']['commit'][:7]} ({len(ORACLE_PINS['O-REPLAY']['sha256'])} files, {ORACLE_PINS['O-REPLAY']['acceptReceipt']}). Uses: {len(_sc['uses'])}; may close: {len(_sc['mayClose'])}; blocked: {len(_sc['blocked'])}. " + ORACLE_REFUSAL_RULE + ".\n")
     A(md_table(["Blocked obligation", "Why"], [[k, ", ".join(v)] for k, v in sorted(_sc["blocked"].items())]))
     A("")
+    A(md_table(["Refusal", "Sets", "Cases", "Reached through (RULINGS Q47c)", "Until"], [[k, ", ".join(v["sets"]) or "-", ", ".join(":".join(c) for c in v["cases"]), ", ".join(":".join(c) for c in v.get("reachedThrough", [])) or "-", v["until"]] for k, v in ORACLE_REFUSALS["O-REPLAY"].items()]))
+    A("\nNext O-REPLAY pin: " + ORACLE_PINS["O-REPLAY"]["nextPin"] + ".\n")
     A("**Outbox publication (RULINGS Q38f).** " + " ".join(f"{k}: {v}." for k, v in OUTBOX.items() if k != "cases") + "\n")
     A(md_table(["Case", "Expected"], list(OUTBOX["cases"].items())))
     A("")
@@ -3986,8 +4365,12 @@ def render_acceptance(doc, cells, counts):
     A(md_table(["Gate", "Rule", "Requires", "Applies to"], [[k, v["rule"], ", ".join(v["requires"]), v["appliesTo"]] for k, v in GATES.items()]))
     A("\nNo density exemption (RULINGS Q38a): every composition, A0 included, needs " + ", ".join(POSITION_REQUIRED_CASES) + ". Evidence that a source-hash allowlist was unsafe: " + OUTSIDE_BLOCK_MUTATION_FIXTURE["mutation"] + "; all five 0.3.4 block hashes stayed unchanged and the old check returned " + OUTSIDE_BLOCK_MUTATION_FIXTURE["oldMechanismVerdict"] + "; now " + OUTSIDE_BLOCK_MUTATION_FIXTURE["requiredVerdict"] + ".\n")
     A("\n" + CLAIM_ADMISSION["rule"] + ".\n")
-    _pending = [f for f, h in W0_PIN["files"].items() if h is None]
-    A(f"\nW0_PIN (required input, reviewed by {W0_PIN['reviewedBy']}): " + ("BLOCKED, fails closed until pinned: " + ", ".join(_pending) if _pending or W0_PIN["reviewReceipt"] is None else "pinned") + ".\n")
+    A("\n" + md_table(["Evidence record (RULINGS Q47a)", "Fields", "Rule"], [[k, ", ".join(v["fields"]), v["rule"]] for k, v in EVIDENCE_SCHEMAS.items()]))
+    A("\nWorkload identity (RULINGS Q47b): " + WORKLOAD_IDENTITY["rule"] + ".\n")
+    A("\nA0 registry (RULINGS Q46b, Q47b): " + A0_REGISTRY["rule"] + ". Entries: " + "; ".join(f"{k} " + ("null, fails closed" if v is None else v["commit"]) for k, v in A0_REGISTRY["entries"].items()) + ".\n")
+    A("\nPending rulings (RULINGS Q47d): " + PENDING_RULE + ". Pending at generation: " + (", ".join(pending_ruling_ids()) or "none") + ".\n")
+    _pending = [f for f, h in W0_PIN["files"].items() if h is None] + [k for k in ("reviewReceipt", "deltaCheck", "oDomainFingerprint") if W0_PIN.get(k) is None]
+    A(f"\nW0_PIN (required input, reviewed by {W0_PIN['reviewedBy']}): {W0_PIN['version']} at {W0_PIN['commit'][:7]}, {len(W0_PIN['files'])} file hashes from {W0_PIN['hashTable']}; " + ("BLOCKED, fails closed until set: " + ", ".join(_pending) if _pending else "pinned") + ". Fingerprint candidate (V-D01): basis.tx " + f"{W0_FINGERPRINT_CANDIDATE['basisTx']:,}; {W0_FINGERPRINT_CANDIDATE['facts']:,} facts; worlds sha256:{W0_FINGERPRINT_CANDIDATE['worldsSha256']}; " + "; ".join(f"{k} sha256:{v}" for k, v in W0_FINGERPRINT_CANDIDATE["releasesSha256"].items()) + ".\n")
     A("\n## 9. PLAN C1-C8 traceability\n")
     A("Each named case must exist in its case set's manifest and stays required even when broader end-state checks pass.\n")
     A(md_table(["Contract", "Case", "Case set", "Observation", "Closing obligation"], [[t["contract"], t["case"], t["set"], t["observation"], t["obligation"]] for t in TRACE]))
@@ -4070,8 +4453,8 @@ def main():
         "valueKinds": VALUE_KINDS, "decimalRules": DECIMAL_RULES, "decimalOps": DECIMAL_OPS, "decimalConversions": DECIMAL_CONVERSIONS, "decimalScaleEvolution": DECIMAL_SCALE_EVOLUTION, "decimalTests": DECIMAL_TEST_TEXT, "screeningProfiles": SCREENING_PROFILES,
         "temporalRules": TEMPORAL_RULES, "readShapeRules": READ_SHAPE_RULES, "journalRules": JOURNAL_RULES, "ambRulings": AMB_RULINGS, "goldenResolutions": GOLDEN_RESOLUTIONS, "goldenRule": GOLDEN_RULE, "goldenFilesPinned": {f"{GOLDEN_DIR}/{k}": sha_file(f"{GOLDEN_DIR}/{k}") for k in golden_vectors()},
         "erasure": ERASURE, "protectedCopyInventory": PROTECTED_COPY_INVENTORY, "composition": COMPOSITION, "worldW0": WORLD_W0, "goldenFailureSchedules": {f"GS.{k:02d}": [{"case": c, "schedule": w, "expected": x} for c, w, x in v] for k, v in GS_FAILURE_SCHEDULES.items()},
-        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
-        "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
+        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "a0Registry": A0_REGISTRY, "workloadIdentity": WORKLOAD_IDENTITY, "evidenceSchemas": EVIDENCE_SCHEMAS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
+        "pendingRulings": pending_rulings(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,

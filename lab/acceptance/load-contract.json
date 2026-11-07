@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -318,6 +318,13 @@
     "P5": {
       "sweep": "evaluate release R against WORLD_W0 for every subject in R's scope (100k) at one shared basis; the receipt binds the basis and R's content hash",
       "coverage": "every in-scope subject evaluated exactly once; the receipt carries the hash of the subject list",
+      "scopedRelease": {
+        "rung": "100k",
+        "binds": "the reached-subject list and its sha256, instead of every placement",
+        "measuredReached": 9497,
+        "measuredChanged": 418,
+        "why": "R3 is vacuous above the 100k rung (V-D01 N3); a scoped sweep's receipt binds what it reached (V-D01 N4; RULINGS Q48b)"
+      },
       "publication": "results published as work items through the atomic outbox path (EP-OUTBOX) under the delivery key (id, publication sequence) with early cutoff: a payload equal to the latest published one publishes nothing, a different one (including a return to an earlier payload) publishes the next sequence of the same id; publication state is persisted atomically with the outbox record (RULINGS Q36a, Q38f); expected outputs from O-DOMAIN, independently",
       "postCaptureMutations": "after the basis is captured the driver mutates selected subjects; their outputs must reflect the captured basis",
       "wallTime": "includes evaluation and publication",
