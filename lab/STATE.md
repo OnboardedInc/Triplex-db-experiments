@@ -22,6 +22,8 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | exp/R01-entity-core | MERGED db249d8 (verified PROMOTE) | follow-ups go to EXP-R02 / EXP-F02 |
 | exp/O01-replay-oracle (03d86f3) | V-O01 FIX-FIRST (verify/O01 745547d; lab/verify/O01/VERIFY.md) | EXP-O02 fixes it; then re-verify -> ACCEPT -> merge |
+| exp/002-qlever-baseline | MERGED 85aba57 (G0/G1/G2 PASS, G4 FAIL as expected) | QLever dev resident recreated from main config (holder EXP-000) |
+| exp/F02-wire-exactness | MERGED 7247c82 (lab only; partly falsified) | fixes in EXP-F02b |
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
 | contract 0.3.2 (main 01fb285) | Q21-Q28 + TARGETS v2 compiled; 136 obligations, 42 thresholds; Q29 recorded, not yet compiled | compile Q29 with Codex round-2 findings (0.3.3) |
@@ -33,8 +35,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
 | EXP-O02 oracle conformance (opus, exp/O02-oracle-conformance) | correctness floor for GS and P2 | lab/oracles/replay |
 | EXP-X02 XTQL parity (opus, exp/X02-xtql-parity) | read priorities on XTDB, floor | branch; waiting on own live-check rerun |
-| EXP-002 QLever baseline (opus, exp/002-qlever-baseline) | A0 control | receipts |
-| EXP-F02 wire exactness (opus) | numeric rule floor | branch |
+| EXP-F02b wire exactness fixes (opus, exp/F02b-wire-exactness-fixes, dev residents) | numeric rule floor | branch |
 | R19 XTDB read nodes, commit floor, tenancy (sonnet xhigh) | P1, P2, tenant isolation | lab/research/R19-*.md |
 | R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
 | EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |

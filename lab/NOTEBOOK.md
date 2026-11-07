@@ -506,3 +506,23 @@ EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) 
 - R19 (Sonnet xhigh) researches the three questions R16 left open on XTDB: what read nodes need (log and object store, per-node
   indexing CPU, token travel, memory inside our 11 GiB pool), where the ~15 ms commit floor comes from and which knobs move it, and a
   storage-isolated tenancy design for 1 large plus 1,000 small tenants on both engines.
+
+## 2026-11-07 ~22:05Z: EXP-F02 partly falsified; EXP-002 QLever baseline merged; EXP-F02b dispatched
+- **F02 learning: "exact" in the spec is only as good as the encoding actually used.** Five silent changes where ProjectionSpec claimed
+  exactness: JSON loses -0 everywhere (ledger included: `packValue` uses JSON.stringify and CanonicalJson normalizes -0); XTDB card-many
+  DOUBLE as one JSON parameter turns -0 into 0 (array-cast writes keep it); instant -0 becomes 0; XTDB TIMESTAMPTZ via driver defaults
+  turns year 0001 into 2001 and drops microseconds (text reads are exact); QLever `_native` shadows flagged exact but exported through
+  `%.13g` (`numericShadowIsExact` repeated the F1 bug). Ruled Q30: reject at qualified write routes, pin the proven encodings in
+  ProjectionSpec, fix the QLever predicate at the root. EXP-F02b fixes; the falsifier (lab/falsifiers/wire) is now on main as a
+  regression tool and should run on every promotion that touches codecs.
+- **EXP-002 learning: QLever's planner budget, not the memory cap, decided G1.** Default budget 1500 OOM-killed the engine at 2.5 GiB
+  during planning (0/88); budget 1 passed 88/88 with the f1 profile at a 347 MiB peak (native queries about 23% slower than budget 100).
+  The dev config now runs `-j 4 -c 512M -e 128M -s 10s`, planner budget 1, no unbounded logs.
+- **EXP-002 learning, P2 on QLever: update latency grows with the delta.** 7 ms median on a fresh engine, 494 ms and then 1.3 s as the
+  delta grew, max 59 s. A QLever source of truth or current index must bound the delta (online `rebuild-index` on a schedule or a delta
+  size trigger) and amortize the fixed per-update cost (group commit), or P2 fails by orders of magnitude. This is the core of EXP-P2Q.
+- **EXP-002 learning, C8 on QLever: reads still write.** 14 of 71 G2 tasks write scratch graphs through `BasisRelations` (about 62
+  updates per run) and `recursion.ts` writes on the Datalog path. Under P1 those writes compete with real commits on QLever's FIFO
+  pool (R18) and grow the delta; C8's read-only frontier loop is a P1 and P2 fix on QLever, not only a correctness item.
+- G4 counterexamples confirmed on QLever (identical current and reopen): ICU string order where codepoint order is expected, and
+  decorrelated correlated NOT EXISTS; EXP-Q03 (order keys, EXISTS re-binding) is the fix track.

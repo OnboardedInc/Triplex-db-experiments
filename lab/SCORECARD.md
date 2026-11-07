@@ -68,3 +68,7 @@ checkout only. Cell values: OPEN, MEASURED(<value, receipt>), PASS(<receipt>), G
 | G1 unchanged44 | PASS 88/88 `G1-xtdb-20261107T190528Z-50077c` | FAIL 0/88 (OOM at 2.5 GiB) `G1-qlever-20261107T185736Z-ea0be5`; EXP-002 running |
 | G2 native142 | PASS 142/142 `G2-xtdb-20261107T190622Z-f59e9c` (strict XTQL 0, SQL 58, hybrid 13) | no receipt yet |
 | NS, GS | not built | not built |
+- QLever baseline (EXP-002, merged 85aba57): G0 PASS 916 `G0-qlever-20261107T190644Z-50f7a4`; G1 PASS 88/88 (f1, planner 1)
+  `G1-qlever-20261107T191405Z-e08600`; G2 PASS 142/142 `G2-qlever-20261107T200815Z-fdd70e` (planner 100) and
+  `G2-qlever-20261107T200954Z-594199` (planner 1); G4 FAIL as expected (16 counterexample executions) `G4-qlever-20261107T201137Z-d6a89e`.
+- Wire exactness falsifier (EXP-F02, merged 7247c82): partly falsified, 5 silent changes; fixes in EXP-F02b.
