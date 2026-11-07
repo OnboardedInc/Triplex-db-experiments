@@ -53,6 +53,13 @@ ERROR_TABLE = {
     "E-UNSUPPORTED-VALUE": ("UnsupportedValueTypeError", "unsupported-value-type", "preflight"),
     "E-RESERVED": ("WriteError", "reserved-namespace", "preflight"),
     "E-OUTCOME-UNKNOWN": ("TransactionOutcomeUnknown", "outcome-unknown", "outcome"),
+    # rows added by ACC 0.3.2 / 0.3.3 (RULINGS Q22, Q30a, Q30b)
+    "E-INEXACT-JSON-NUMBER": ("InvalidTripleError", "invalid-value", "preflight"),
+    "E-NEGATIVE-ZERO-INSTANT": ("InvalidTripleError", "invalid-value", "preflight"),
+    "E-DECIMAL-OVERFLOW": ("DatalogValidationError", "decimal-overflow", "execution"),
+    "E-DECIMAL-BARE-DIVIDE": ("DatalogValidationError", "decimal-divide-requires-scale", "preflight"),
+    "E-DECIMAL-FRACTION": ("DatalogValidationError", "decimal-fraction-not-zero", "execution"),
+    "E-DECIMAL-NARROWING": ("WriteError", "decimal-narrowing-loses-digits", "preflight"),
 }
 
 # Ids the oracle itself can produce as an expected answer. The rest (deadlines, admission,

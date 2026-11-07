@@ -113,7 +113,22 @@ EXAMPLES = {
     "AG-SUM-F": {
         "[1e16, 1.0, -1e16]": lambda: X.agg_sum([N(1e16), N(1.0), N(-1e16)]),
     },
+    "AG-SUM-ONE-ENTITY": {
+        "SUM(:conf/amount) with 10 asserted twice on entity agg:c": lambda: _one_entity(["agg:c", "agg:c"], "sum"),
+        "COUNT with the same fixture": lambda: _one_entity(["agg:c", "agg:c"], "count"),
+        "SUM with 10 on agg:a and 10 on agg:b": lambda: _one_entity(["agg:a", "agg:b"], "sum"),
+    },
 }
+
+
+def _one_entity(entities, op):
+    """AG-SUM-ONE-ENTITY fixture (Q21 AMB-09): integer 10 on :conf/amount per listed entity."""
+    ops = [assert_op(f"m{i}", e, ":conf/amount", i64(10)) for i, e in enumerate(entities)]
+    rep = evaluate(case([{"clock": 1, "operations": ops}],
+                        [{"id": "q", "kind": "aggregate", "cut": {"validAt": 1},
+                          "match": {"attributes": {"amount": ":conf/amount"}},
+                          "aggregates": [{"op": op, "var": "amount", "as": "x"}]}]))
+    return V.integer(int(result(rep, "q")["rows"][0]["x"]["value"]))
 
 
 def _stored_negative_zero():
@@ -364,6 +379,16 @@ class Aggregates(ExampleMixin, unittest.TestCase):
     def test_AG_SUM_I(self):
         self.check_examples("aggregateRules", "AG-SUM-I")
         self.assertEqual(X.agg_sum([I(2 ** 63 - 1), I(1), I(-1)]).payload, 2 ** 63 - 1)   # partial sums never wrap
+
+    def test_AG_SUM_ONE_ENTITY(self):
+        self.check_examples("aggregateRules", "AG-SUM-ONE-ENTITY")
+
+    def test_AG_INT_RESULT(self):
+        """Q21 AMB-10: integer results are IntegerValue canonical decimal text, never a JS number."""
+        big = [{"clock": 1, "operations": [assert_op("k", "e", ":s/v", i64(2 ** 62 + 1))]}]
+        out = self.agg([{"op": "sum", "var": "v", "as": "s"}], cmds=big)["rows"][0]["s"]
+        self.assertEqual((out["type"], out["value"]), ("integer", str(2 ** 62 + 1)))
+        self.assertEqual(X.add(I(2 ** 53), I(1)).to_output().get("value"), str(2 ** 53 + 1))
 
     def test_AG_SUM_F(self):
         self.check_examples("aggregateRules", "AG-SUM-F")
