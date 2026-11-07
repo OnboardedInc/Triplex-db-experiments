@@ -853,3 +853,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Self-inflicted:** my Q46 append to RULINGS-PENDING.md broke `--verify` (0.3.6 forbids pending rows). Restored by holding pending rulings
   in the review response file until 0.3.7 implements Q47d (pending rows allowed, no authority, recorded).
 - Contract 0.3.7 (Q46, Q47) waits for a free slot; EXP-E01 has Q47a-c now.
+
+## 2026-11-08 ~23:40Z: hourly learnings pass (NORTH-STAR reread first)
+- **Learnings are current** through Codex round 6, contract 0.3.6, V-O03, the W0 re-review, EXP-N01, EXP-F02b and R21.
+- **Residents:** both dev residents healthy (qlever-dev 607 MiB of 3.5 GiB since the fresh restart; xtdb-dev 2.63 of 3.0 GiB at 204% CPU
+  under scenario load). xtdb-s1 (EXP-P2X) sits at 3.30 of 3.5 GiB, close to its cap. Host load average 12.3 / 14.4 / 13.7 on 12 cores.
+- **Where evidence points, by priority:** unchanged from the 01:40Z pass; the newest learning is about measurement itself. Every
+  measurement this session ran on a saturated host (load 12-14, 14 GiB compressed), so absolute latencies moved 2x to 3x between runs (R17)
+  and a gate went from 11 s to 482 s. Relative A/B judgments on one slot and window are the only valid ones, and even those need a
+  protocol that cancels drift.
+- **Research queued (no slot free; all 10 busy), R22: noise-robust benchmarking on a shared, saturated host.** Interleaved A/B and ABBA
+  run orders, paired statistics and bootstrap confidence intervals for p50/p99 differences, how many repetitions a 1.25x bar needs to be
+  decided at a stated confidence, CPU isolation available inside colima (docker --cpuset-cpus, cgroup v2 cpu.max, nice/taskset), detecting
+  and rejecting windows with host interference (steal time, load average, memory pressure), and prior art (for example the "Producing
+  wrong data without doing anything obviously wrong" line of work, Google's benchmarking practice, JMH and hyperfine methodology). It
+  feeds EXP-N01's A0 and every A0-versus-candidate verdict (P2X, P2Q, X05).
