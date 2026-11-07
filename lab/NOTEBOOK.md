@@ -409,3 +409,60 @@ Report lab/research/R15-presence-deletion-cascade.md. Options A (retraction only
 - Anti-leak: repo-root CLAUDE.md points every agent at lab/SCOPE.md; superseded banners added to AGENTS.md, wiki/goals.md,
   wiki/status.md, handoffs/claude-native/README.md and START-HERE.md, qualification/devloop/PLAN.md, qualification/PLAN.md;
   RULINGS Q2/Q4/Q11 and the int64 rulings marked superseded. All future briefs carry North star and Scope lines.
+
+## GEN-2 dispatch 2026-11-07 (scope v2)
+EXP-N01 (NS benchmark driver), EXP-W01 (20 golden scenarios), EXP-A01 retarget to contract 0.3.0, EXP-R01 fixes F1-F8 under the
+corrected numeric rule, V-O01 oracle acceptance with the G01 cross-check, R16 and R17 north-star fit research per engine. EXP-X02 and
+EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) sum finding).
+
+## Hourly learnings pass (cron ae766d26) after the gen-2 dispatch
+- North star reread. No experiment finished since the gen-2 dispatch entry; notebook current.
+- Contention ahead: pool 9/11 GiB (dev XTDB 3, dev QLever 2.5, xtdb-s2 3.5 held by R16), so EXP-N01 (the fitness function, priority
+  order 1) could not get an exclusive slot. R16 time-boxed to ~30 minutes on s2; R17 falls back to dev QLever. Rule reinforced:
+  measurement work for the fitness function outranks research probes for slots.
+- New research: R18 engine-independent prior art for P1/P3/P4/P5 (pinned-version serving, current vs history split, change feed to
+  dependency index, read-your-own-write with derived layers, sweep scheduling, bounded subgraph pulls), ending in ranked falsifiable
+  experiment proposals.
+
+## EXP-R01 fixes F1-F8 (commit 4e073a8) — PROGRESSED; re-verification requested
+- Exactness now follows the corrected numeric rule: DoubleRoundTrip, numeric classes, InexactValueError, inexactPolicy in the spec id,
+  CalendarDate, Finite, XTDB valid-time grid fixed. core 826 tests. Decimal value kind deferred to EXP-R02 (needs a TypeExpr primitive).
+
+## EXP-R01 PROMOTED to main (merge db249d8), first promotion of the loop
+- Verifier round 2 PROMOTE: all gates rerun (typecheck 31/31, core 826, http 12, testkit 46, lint 0, 18/18 negative type tests); the new
+  double rule matched an independent model of QLever (truncate 4 low bits, exact %.13g) on 200,016 doubles with 0 mismatches.
+- Post-merge G0 on main: PASS 1004/1004, 130 expected skips (`G0-xtdb-20261107T193849Z-307c45`).
+- Follow-ups carried to EXP-R02 / EXP-F02: (1) `approximateNumbers: "reject"` does not reach floats inside JSON (List/Struct) values,
+  and CanonicalJson turns -0 into 0 inside JSON; (2) XTDB card-many DOUBLE still marks -0 exact although list parameters travel as JSON
+  (`JSON.stringify(-0)` is "0"): add NoNegativeZero for lists unless EXP-F02 proves the round trip; (3) the rdfBase overlap check is
+  slightly over-broad (refuses `urn:triplex:scopes:`).
+
+## 2026-11-07 ~20:45Z: V-O01 FIX-FIRST, contract 0.3.1, Q21 rulings
+- **Learning: an oracle built against an earlier contract draft drifts silently.** O-REPLAY was built on 0.1.0-draft; 0.2.0 added the
+  section 4 tables and Q13-Q15, and the oracle broke six of them (family order, -0/+0 identity, mixed-family comparison, strict integer
+  text, missing rem/toNumber/toInt64, error tags). Rule for the loop: every contract version bump re-runs the oracle's section 4 probe
+  before the oracle can close anything; the oracle's file hashes are pinned in the contract once accepted.
+- **Learning: the 13 vector/oracle disagreements were all oracle bugs** (assertionTxId missing, reserved namespaces, entityPage limit).
+  The independent-two-author design worked: the G01 author and the O01 author made different mistakes, and the comparator caught all 8
+  planted errors. Keep the two independent.
+- **Ruling Q21 (all 17 AMB items).** The product-shaping ones tie to the north star: AMB-09 (duplicates are one value; SUM 10) is P2
+  idempotency under the 10% duplicate trace; AMB-04 and AMB-12 follow Sam's "hard error, never silent conversion".
+- Contract 0.3.1 (Q16-Q20 compiled) committed 9c01194; EXP-O02 dispatched to make the oracle conform (no packages/ reads; the brief
+  states the four implementation facts it needs).
+
+## 2026-11-07 ~21:10Z: Codex plan-v2 review NOT READY; all 14 findings accepted (675db6b)
+- **Learning: naming a basis proves nothing about pinning.** If readers and writers touch disjoint subjects, a reader that silently
+  reads latest state passes every check. The fix is to make the workload discriminate: a shared hot set, split subgraph reads with a
+  forced commit between steps, and a requested basis recorded by the driver, not echoed by the engine (TARGETS 1.1 P1).
+- **Learning: a closed-loop commit probe hides queueing.** P2 is now open loop from the scheduled offer to the published ACK on the
+  trace's own commands, per size band, with every offered command accounted for.
+- **Learning: a sweep that only fetches is not release activation.** P5 now needs W0 evaluation, exact coverage, outbox publication and
+  post-capture mutations; this created EXP-D01 (W0 kernel plus the independent O-DOMAIN oracle), which GS also needs because O-REPLAY
+  models database state, not domain rules.
+- **Learning: erasure and bit-for-bit history conflict unless the boundary is defined.** Ruled Q24: reads after the erasure publishes
+  see a typed ErasedValue marker at every basis; reproduction holds modulo erasure (provisional, flagged for Sam).
+- **Process fix:** PLAN 6.1 said "lowest-ranked unmet priority", which reverses Sam's order; now "highest-priority unmet". Generation 2
+  reordered: freeze semantics, tiny commit/feed/fault controls on both sources, A0, W0, layer swaps one at a time, then the broad suite.
+- **Composition identity** is per layer (source, current, history, analytics) with watermark routing and ACK after the current index
+  reaches the commit (Q28); bundled "all read layers move together" comparisons could not tell layers apart.
+- Next: A01 compiles 0.3.2; N01 and W01 got the new semantics; Codex round 2 on 0.3.2 when it lands; EXP-D01 when a slot frees.

@@ -45,3 +45,17 @@ Branch `exp/R01-entity-core` (commits 7d9c63a, f66b831, 8dccd43, b3d24a2 on 00a3
 1. Which value to project when supports differ only in representation (-0 vs 0, JSON key order); EntityCodec keeps the last.
 2. Mixed membership: IR marks the entity partial and the codec rejects it on read; golden vectors should confirm.
 3. One commit cut across a page and its includes through the public Triples API.
+
+## Addendum: verifier fixes F1-F8 (commit 4e073a8), saved by the orchestrator
+Gates: typecheck pass; core 826 (was 799); http 12; testkit 46; lint 0; bench:config:typecheck pass; 18 negative type tests.
+Exactness section superseded by these rules (under Sam's corrected numeric rule, lab/SCOPE.md):
+- `DoubleRoundTrip`: an RDF double is exact only if it survives QLever's 4-bit storage cut AND its `%.13g` export.
+- Numeric class per attribute (`approximate` | `exact-integer`); compile option `approximateNumbers: "reject"` refuses binary64.
+- Per-engine `ordering` per attribute; text uses `order-key` so range rules on text are visibly order-key dependent.
+- `requireExact` raises typed `InexactValueError`; `inexactPolicy` (`ledger-only` | `reject`) is part of the spec and its id.
+- `CalendarDate` (years 1-9999, leap years) and `Finite` (no NaN/Infinity) rules on both engines.
+- XTDB valid time: whole-millisecond exact to ±8.64e15; fractional only with ≤ 3 decimal digits, converted via decimal text.
+- compile rejects `attribute-type-conflict`, `unknown-ref-target`, SQL keyword table names, rdfBase overlapping ledger namespaces.
+- Model types: computed cardinality typed `V | ReadonlyArray<V>`; no `startsWith` on refs. rowSegments stub tested.
+Deferred to EXP-R02: the decimal value kind (new TypeExpr primitive, TypeSchema, storageFamily, subsumption; scaled integer or
+order-preserving decimal string, kernel arithmetic) and XTDB -0 in card-many lists (EXP-F02).

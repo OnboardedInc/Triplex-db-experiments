@@ -84,8 +84,9 @@ Consequences for the design:
        each read layer: XTDB tables or QLever graphs, picked by measurement
 ```
 
-1. **Compositions to measure:** all-XTDB; all-QLever (with its log of record); XTDB source of truth with QLever read layers;
-   QLever source of truth with XTDB read layers where the measurements favor it.
+1. **Compositions are chosen per layer, not as bundles:** a composition names four assignments (source of truth, current, history,
+   analytics), and layers are swapped one at a time under matched workloads before the two or three best compositions are validated
+   end to end (TARGETS 4.1, RULINGS Q28). All-XTDB and all-QLever are the two A0 reference points.
 2. **Read-your-own-write is immediate (P2):** the current index used by the reconcile pull is maintained synchronously with the
    commit (same engine transaction, or published before the ACK), or the pull reads the source of truth at the returned tx.
 3. **The ledger stays the exact record** in whichever engine is the source of truth; read layers are derived and rebuildable from
@@ -168,7 +169,7 @@ under the load Onboarded expects. They are specified in `lab/TARGETS.md` section
 ### 6.1 One generation
 
 1. **Reread `lab/NORTH-STAR.md`, `lab/SCOPE.md`, `lab/STATE.md`, `lab/SCORECARD.md` and the notebook tail.**
-2. **Select by priority order:** the lowest-ranked unmet priority P1 to P5 with a feasible experiment goes first; correctness
+2. **Select by priority order:** the highest-priority unmet objective (P1 first, then P2, and so on) with a feasible experiment goes first (corrected after the Codex plan-v2 review, finding 12); correctness
    obligations it depends on are pulled forward. Keep two or three rival hypotheses per bottleneck; at most two unintegrated
    branches per lane; an obligation with no progress for two generations escalates.
 3. **Brief and dispatch** with the template in 6.3.
@@ -243,18 +244,23 @@ comparisons are matched (same slot configuration, fixture, co-runners, three run
 | Host processes | the QLever broker and log run on the macOS host (R13) | log fsync is `F_FULLFSYNC` |
 | Agents | at most 10 concurrent; at most 4 heavy local commands | research probes take the smallest cap that fits, default 1.5 GiB, with a time box |
 
-## 8. Generation 2 (north-star order)
+## 8. Generation 2 (north-star order; reordered after the Codex plan-v2 review, finding 12)
+
+Measurement semantics are frozen before effort goes into broad machinery, and layers are compared one at a time at small rungs
+before any composition is scaled. Both engines stay eligible for every layer throughout.
 
 | Order | Id | Experiment | Priority |
 | --- | --- | --- | --- |
-| 1 | EXP-N01 | north-star benchmark driver: fixed writer trace, reader ladder, subject pull, feed consumer, sweep runner, receipts (NS gate) | P1 to P5 measurement |
-| 1 | EXP-W01 | the 20 golden scenarios: generators, oracle expectations, load profiles, GS gate | all five, under real load |
-| 2 | EXP-N02 | north-star controls on today's adapters for both engines at small rungs | P1 to P5 baseline |
-| 3 | EXP-X04, EXP-Q05 | current index per engine with synchronous maintenance and read-your-own-write | P4, P1, P2 |
-| 4 | EXP-P2X, EXP-P2Q | per-subject commit path: CAS on the subject's last position, commit latency, duplicates, lost ACK | P2 |
-| 5 | EXP-CF01 | change feed with (tx, entity, attribute, valid-time range), gap-free, resumable, lag | P3 |
-| 6 | EXP-S5 | release sweep at a pinned basis with live traffic | P5 |
-| always | correctness floor | XTQL parity (EXP-X02), oracle acceptance (O01 + G01), entity core (R01/R02), H-X-CUT (F01), wire exactness under the corrected numeric rule (F02), decimal value kind, erasure, tenant isolation, outbox path | ten goals and requirements |
+| 1 | EXP-N01 + A01 0.3.2 | freeze measurement semantics: TARGETS 1.1 and 2.1 in the driver (open-loop schedule, hot set, requested-basis capture, per-band P2, P3 definitions, P4 buckets, real P5 sweep) and in contract 0.3.2 | P1 to P5 measurement |
+| 2 | EXP-P2X, EXP-P2Q, EXP-CF01 (tiny) | per-subject commit (CAS on the subject's last position, duplicates, lost ACK) and the change feed (durable checkpoint, three crash points) on both sources at the 10k rung, plus a kill-and-restart fault control | P2, P3 |
+| 3 | EXP-N02 | A0 measurements of both sources on P1 to P3 at 10k and 100k; re-freeze budgets | P1 to P3 baseline |
+| 4 | EXP-D01 | world definition W0: the TypeScript reference kernel and the independent O-DOMAIN oracle | P5, P3 dependency rules, GS expectations |
+| 5 | EXP-X04, EXP-Q05 | current index per engine fed from the same feed, synchronous with the ACK, swapped one at a time at small rungs; then the history layer | P4, P1, P2 |
+| 6 | EXP-W01 (broad), EXP-S5 | the full golden suite on the two or three best compositions; the release sweep at a pinned basis with live traffic; then scaling to 1m and 10m | all five; P5 |
+| always | correctness floor | XTQL parity (EXP-X02), oracle conformance (EXP-O02) and acceptance, entity core (R01/R02), H-X-CUT (F01), wire exactness (F02), decimal kind under Q22, erasure under Q24, tenant isolation, outbox path | ten goals and requirements |
+
+EXP-W01 (already running) is narrowed to: all 20 scenario specs including TARGETS 6.1's added failure combinations, the runner seam
+against the composition interface, an O-DOMAIN seam, and the first 8 scenarios end to end at the 10k rung. No scaling until order 6.
 
 ## 9. Resume protocol
 
@@ -269,3 +275,4 @@ notebook tail before acting.
   ten goals, not knockout gates; both engines are candidates for every layer, including source of truth; impossibilities get
   documented workarounds; "exact int64 and decimal" is replaced by Sam's corrected numeric rule (no silent precision loss); 20
   real-world golden scenarios join the done condition. Contracts C1 to C8 keep their substance; R14's XTDB hazards are listed in 3.1.
+- 2026-11-07: v2.1 after the Codex plan-v2 review (14 findings accepted): selection picks the highest-priority unmet objective; generation 2 reordered (section 8); composition identity and layer swaps (TARGETS 4.1); W0 and O-DOMAIN; erasure semantics.

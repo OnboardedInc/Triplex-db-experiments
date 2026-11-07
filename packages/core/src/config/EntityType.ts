@@ -21,11 +21,20 @@ const RESERVED_PROPERTIES = new Set([
 
 type Uses = Readonly<Record<string, Attribute.Use<Attribute.AnyDefinition>>>;
 
-export interface AttributeHandle<D extends Attribute.AnyDefinition> {
+/**
+ * [EXP-R01] Why: handles carry the literal usage flags of their `Attribute.use` so models
+ * typed from an EntityType know which properties are always present and which are arrays.
+ * The defaults keep existing `AttributeHandle<D>` annotations valid.
+ */
+export interface AttributeHandle<
+  D extends Attribute.AnyDefinition,
+  Req extends boolean = boolean,
+  Card extends Attribute.Cardinality = Attribute.Cardinality,
+> {
   readonly key: D["key"];
   readonly type: TypeExpr.TypeExpr;
-  readonly required: boolean;
-  readonly cardinality: "one" | "many";
+  readonly required: Req;
+  readonly cardinality: Card;
   readonly unique: boolean;
   readonly definition: D;
   readonly assertion: (
@@ -34,8 +43,12 @@ export interface AttributeHandle<D extends Attribute.AnyDefinition> {
   ) => Attribute.Assertion<D["key"]>;
 }
 
-type Handles<A extends Uses> = {
-  readonly [P in keyof A]: AttributeHandle<A[P]["attribute"]>;
+export type Handles<A extends Uses> = {
+  readonly [P in keyof A]: AttributeHandle<
+    A[P]["attribute"],
+    A[P]["required"],
+    A[P]["cardinality"]
+  >;
 };
 
 export type EntityType<N extends string, A extends Uses> = {

@@ -125,3 +125,41 @@ integer.**
 Scratch probes (differential test, exactness probes, expect-error checker) are kept at
 `/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/`
 (`zzold/diff.test.ts`, `zz-verify.test.ts`, `expect-errors.mjs`).
+
+## Round 2 (fix commit 4e073a8, verify/R01 = main df2caa7 + branch): PROMOTE
+
+**Gates:** all measured and all pass.
+
+| Gate | Result |
+| --- | --- |
+| typecheck | 31/31 |
+| core tests | 826 / 56 files |
+| http tests | 12 / 3 |
+| testkit | 46 |
+| lint | 0 errors |
+| bench:config:typecheck | pass |
+| type-level negatives | 18/18 fire |
+
+**F1 to F8, each checked against the original reproduction and against lab/SCOPE.md 2.4:**
+
+- **F1 fixed:** `1+2^-40` is now inexact, and `requireExact` returns a typed `InexactValueError`. The `DoubleRoundTrip`
+  rule agrees with an independent reference (truncate the low 4 bits, exact BigInt `%.13g` with round-half-even) on
+  200,016 doubles, with 0 mismatches.
+- **F2 fixed:** invalid dates, leap-year errors and year 0 are now rejected.
+- **F3 fixed:** whole-ms values up to ±8.64e15 are exact, and fractional values need at most 3 decimal places.
+- **F4 fixed:** NaN and Infinity are now inexact.
+- **F5 fixed:** type conflicts and dangling refs (including refs nested in lists) are now rejected.
+- **F6 fixed:** SQL keywords and ledger-overlapping bases are now rejected. The base check is slightly over-broad:
+  `urn:triplex:scopes:` is refused.
+- **F7 fixed:** widened cardinality is now `V | ReadonlyArray<V>`. The ref-`startsWith` test fires on an incidental
+  error (from the brand object type), but it is still a valid regression test.
+- **F8 fixed.**
+
+**Follow-ups (Low, not blocking):**
+
+- **R2-1:** `approximateNumbers: "reject"` does not catch binary64 inside List or Struct attributes. Those are the
+  json kind, which has empty exactness, so `list(number)` is accepted. CanonicalJson also normalizes `-0` to `0`
+  inside json values, without any error.
+- **R2-2:** XTDB card-many DOUBLE still treats `-0` as exact, but list parameters go over JSON, where
+  `JSON.stringify(-0)` gives `"0"`. Until EXP-F02 proves the round trip, either add `NoNegativeZero` for lists or
+  make that experiment a precondition.
