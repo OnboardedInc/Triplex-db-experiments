@@ -614,3 +614,17 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Learning: gates attached to closure do not protect comparisons.** Screening receipts could still crown a winner without the position
   and W0 prerequisites; Q34d checks prerequisites when any comparative or promotion claim is admitted.
 - Contract 0.3.4 (Q33, Q34; regenerate twice, byte-identical) waits for a free agent slot (all 10 busy); Codex round 4 after it.
+
+## 2026-11-07 ~23:50Z: R20 landed: TDK1 decimal order key; Q35; A01 compiling 0.3.4
+- **Learning: QLever's ICU string order is safe inside `[0-9a-z]`.** ICU equals codepoint order there (R5's probe: 47,988 strings on
+  the pinned image; R20's system-ICU check: 0 disagreements over 300k random pairs), and breaks on punctuation and mixed case (1,099 of
+  4,465 ASCII pairs differ). A key alphabet of digits plus lowercase letters needs no hex wrapping, so one key string works byte for
+  byte on XTDB (no collation on 2.2.0: unsigned UTF-8 byte order) and on QLever. A negative control with a `~` terminator passed
+  codepoint order and failed ICU on 44 of 100k pairs, which is the bug this rule prevents.
+- **Learning: a value-determined key beats a declaration-determined one.** Fixed-width keys (offset scaled integers) change on every
+  widening and silently misorder values across attributes of different scale (5 at (3,0) sorted after 0.50 at (3,2)); TDK1 depends on
+  the value only, so widening is always metadata-only and cross-scale comparison is exact. Ruled Q35: one decimal representation (TDK1
+  key authoritative plus derived text), amending Q18's scaled-integer storage for the decimal kind; money as integer cents stays
+  available through the integer kind.
+- R20's property suite (0 failures; 5/5 mutant encoders caught) becomes the decimal kind's unit tests; its engine-side gates V3 to V7
+  become contract obligations in 0.3.4.
