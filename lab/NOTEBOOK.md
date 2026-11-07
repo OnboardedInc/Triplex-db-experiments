@@ -868,3 +868,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   and rejecting windows with host interference (steal time, load average, memory pressure), and prior art (for example the "Producing
   wrong data without doing anything obviously wrong" line of work, Google's benchmarking practice, JMH and hyperfine methodology). It
   feeds EXP-N01's A0 and every A0-versus-candidate verdict (P2X, P2Q, X05).
+- 23:55Z: W0-1.1.1 (ada2e90): scoped R3 reaches 9.56% of subjects through the reverse two-hop dependency index and changes 0.41% of them,
+  so P5 can now test the difference between "re-run what the index reaches" and "re-run everything"; a sweep may skip the other ~90%.
+  V-D01 delta check running (resumed); on ACCEPT: merge W0, pin it, then two independent implementers (TS kernel, O-DOMAIN) reproduce the
+  fingerprint.
