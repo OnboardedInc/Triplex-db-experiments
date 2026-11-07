@@ -188,12 +188,20 @@ const trace = async () => {
   const originals = new Map();
   const startAt = now() + 1000;
   const inflight = new Set();
+  // Drain cap (same for both arms): commands still in flight 'drain' seconds after the window are
+  // recorded as pending-at-cap with a censored ACK time, so every offered command is accounted for
+  // (TARGETS 1.1 P2 item 3) and a backlog that would take hours cannot hold the slot.
+  const drainS = Number(opt('drain', 180));
+  const pending = new Map();
+  let frozen = false;
   const dispatch = (event) => {
     const offered = startAt + event.atMs;
     const p = (async () => {
       const started = now();
       const meta = { commandId: `p2x:${seed}:${event.seq}`, actor: event.kind };
       const record = { seq: event.seq, resend: event.resend, band: bandOf(event.facts), facts: event.facts, burst: event.burst, kind: event.kind, subject: event.subject, offered, started };
+      const key = `${event.seq}:${event.resend}`;
+      pending.set(key, record);
       try {
         const result = await transact(rt, commandOps(event, Date.now()), meta);
         record.position = result.position; record.txId = result.txId; record.outcome = 'committed';
@@ -209,7 +217,8 @@ const trace = async () => {
         else record.error = String(error?.message ?? error).slice(0, 200);
       }
       record.acked = now();
-      records.push(record);
+      pending.delete(key);
+      if (!frozen) records.push(record);
     })();
     inflight.add(p); p.finally(() => inflight.delete(p));
   };
@@ -218,8 +227,15 @@ const trace = async () => {
     if (wait > 1) await sleep(wait);
     dispatch(event);
   }
-  await Promise.all([...inflight]);
+  const capAt = startAt + (windowS + drainS) * 1000;
+  await Promise.race([Promise.all([...inflight]), sleep(Math.max(0, capAt - now()))]);
   const drained = now();
+  frozen = true;
+  for (const record of pending.values()) records.push({ ...record, outcome: 'pending-at-cap', acked: drained, censored: true });
+  const pendingAtCap = pending.size;
+  // Stop the writers before draining the consumer, so doomed retries stop loading the engine.
+  const closing = rt.close().catch(() => undefined);
+  await Promise.race([closing, sleep(10_000)]);
   const consumed = await feed.stop();
   const committed = records.filter((r) => r.outcome === 'committed').map((r) => [r.position, `subj:${r.subject}`]);
   const audit = await auditFeed({ scope, consumer, committed, processed: consumed.processed });
@@ -241,13 +257,13 @@ const trace = async () => {
     all: { offerToAckMs: summary(latency(committedOriginals)), serviceMs: summary(committedOriginals.map((r) => r.acked - r.started)) },
     steady: { offerToAckMs: summary(latency(committedOriginals.filter((r) => !r.burst))) },
     burst: { offerToAckMs: summary(latency(committedOriginals.filter((r) => r.burst))), committedInBurstWindow: committedOriginals.filter((r) => r.acked >= burstStart && r.acked < burstEnd).length },
-    throughput: { committedPerS: round(committedOriginals.length / windowS, 2), drainAfterWindowS: round((drained - startAt) / 1000 - windowS, 1) },
+    throughput: { committedPerS: round(committedOriginals.length / windowS, 2), drainAfterWindowS: round((drained - startAt) / 1000 - windowS, 1), drainCapS: drainS, pendingAtCap },
+    censoredOfferToAckLowerBoundMs: summary(latency(originalsOnly.filter((r) => r.outcome === 'committed' || r.censored))),
     conflicts: { casConflicts: rt.counts.casConflicts, commandConflicts: rt.counts.commandConflicts, submits: rt.counts.submits },
     timings: timingSummary(rt.timings),
     feed: { lagMs: summary(consumed.lags), ...audit, polls: consumed.stats.polls, writes: consumed.stats.writes, abortedListed: consumed.stats.aborted ?? 0, blockedPolls: consumed.stats.blockedPolls ?? 0, missingPublication: consumed.stats.missingPublication, pollMs: summary(consumed.stats.pollMs), writeMs: summary(consumed.stats.writeMs) },
     raw: { records, lags: consumed.lags },
   };
-  await rt.close();
   return result;
 };
 

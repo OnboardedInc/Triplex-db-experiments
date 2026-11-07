@@ -78,7 +78,18 @@ One tailer per node reads `xt.source_log_msgs` from a record start; fan-out to s
 checkpoint. A page with only other scopes' records does not write: the consumer's own checkpoint transactions are records in the
 same log, and writing for them would feed back on itself.
 
-## 6. Open questions
+## 6. XTDB 2.2.0 behaviors found while building this (each shaped the code)
+
+| Finding | Evidence | What the code does |
+| --- | --- | --- |
+| A VALUES cell that is an expression, rather than a literal or parameter, gets its own compiled projection, memoized under a key that holds the statement's whole parameter-type map. 200-row inserts with a stamp expression per row exhausted the 2 GiB heap, and ingestion stopped ("Ingestion stopped ... Java heap space"); the slot had to be recreated fresh. | `operator/table.clj:106-113 @ c6c1962` (the source calls it "quite heavyweight"); engine log stack in `emit_rows_table` / `lru_memoize` | stamped inserts are `INSERT ... SELECT <projection> FROM (VALUES <parameters only>)`: one stamp expression per column per statement, ordinals as parameters (probe `p8-insert-select`) |
+| `xt.source_log_msgs` decodes records in batches of up to 1,024 and builds each record's message text whatever the `LIMIT`, so cost follows log bytes, not rows asked for | `log_tables.clj` `->cursor` | the tailer reads at most 8 MiB of log per poll, with a fallback read so a record larger than the window cannot stall it |
+| A read reaching a record still being appended raised "Protocol message contained an invalid tag (zero)" once; every record decoded afterwards | probe `p7-log-decode` (300/300 decode) | an undecodable tail is treated as "not yet readable": the watermark does not move; a persistent failure surfaces after 500 polls |
+| A `msg_id` upper bound of `epochStart + 2^48 - 1` returns no rows; `epochStart + 2^47` works | probe `p4-log-params` | reads end at `epochStart + 2^47 - 1` (128 TiB of log per epoch) |
+| A lower bound that is not a record start fails ("expected record separator"), so `msg_id > x` cannot resume | R16 3.1, probe `p2-sql-details` | cursors are (record start, processed flag), read inclusively |
+| `ASSERT` over a table that has never existed fails at planning | live test failure | `initialize()` declares the feed and consumer tables |
+
+## 7. Open questions
 
 1. **Core contract.** `nextCommitPosition` hands out a position before commit, but the engine fixes it at commit. The adapter therefore
    returns negative placeholders and rewrites `position` fields in the callback's result (`bindPositions`), failing closed if a
@@ -89,5 +100,10 @@ same log, and writing for them would feed back on itself.
 3. **Engine crash between append and resolution.** This is covered by the deterministic falsifier and by a live run with a writer that
    dies after handing over its commit (sections F3 in the tests). An engine kill mid-resolution is not, because `lab/bin/engine.mjs`
    has no kill.
-4. **Costs not yet measured at scale:** `xt.txs` lookups and `METADATA` size at 1M+ transactions; the scope head row's version chain
-   (one blind write per commit). Both arms still scan by `scope_key` on the read path; that is P4 work.
+4. **Log volume.** The slot volume grew about 250 KB per Triplex commit (log plus storage) on 2.2.0. Both arms send the same eight
+   statements, so this is the engine's encoding of parameterized statements in the source log, not the candidate. It decides what a
+   source-log tailer reads (about 3 MB/s at 15 commits/s) and what 100k commits cost on disk (about 25 GB), which is why this
+   experiment's history stopped short of 100k (REPORT). Worth a probe of statement shapes that shrink records (fewer, wider parameters).
+5. **Costs not yet measured at scale:** `xt.txs` lookups and `METADATA` size at 1M+ transactions. The scope head's version chain read
+   stayed flat to 8.7k versions (probe `p11-hot-head`: 6.5 ms against 4.7 to 5.5 ms). Both arms still scan by `scope_key` on the read
+   path; that is P4 work.
