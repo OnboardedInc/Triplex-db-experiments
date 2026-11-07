@@ -757,3 +757,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   with gap recovery; W0 gains a `receive` operation so the expected receiver state is oracle-computed.
 - **Learning: every piece of outbox state is one atomic unit** (basis guard, retirement, sequence, latest payload, outbox records), or a
   crash between them reopens the stale-publication window (Q42c).
+- 02:45Z: EXP-O03 landed: O-REPLAY 0.3.0 gives 0 confident wrong answers on V-O02's 0.3.3 probe (11 before), refuses only erasure,
+  268/268 tests, converter results unchanged item by item. Learning: an oracle racing a moving contract needs a final alignment pass to
+  the contract version it will be pinned against; 0.3.4 renamed two decimal error ids after O03 started. Alignment to 0.3.5 (Q43) runs
+  now; then the independent re-check (resume the V-O02 verifier), then the pin.
