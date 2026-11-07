@@ -1094,6 +1094,13 @@ for (const section of sections) {
   if (section === "xtdb") await xtdbPaths();
   if (section === "qlever") await qleverPaths();
   console.error(`${section}: ${Math.round(performance.now() - t0)} ms`);
+  // [EXP-F02b] Checkpoint after every section, so a shared resident that exits mid-run does not
+  // lose the sections already measured (qlever-dev exited three times during EXP-F02b runs).
+  mkdirSync(dirname(outPath), { recursive: true });
+  writeFileSync(
+    outPath.replace(/\.json$/, ".partial.json"),
+    `${JSON.stringify({ format: "triplex-f02-wire-exactness/1-partial", tag, runId, sectionsDone: sections.slice(0, sections.indexOf(section) + 1), results }, null, 2)}\n`,
+  );
 }
 
 // --keep-from FILE: keep that file's results for engines this invocation did not run (for example
