@@ -6,6 +6,8 @@
  */
 export * as Descriptors from "./Descriptors.js";
 export * as EntityCodec from "./EntityCodec.js";
+export * as PhysicalNames from "./PhysicalNames.js";
+export * as ProjectionSpec from "./ProjectionSpec.js";
 export {
   ConflictingValuesError,
   DescriptorCompileError,

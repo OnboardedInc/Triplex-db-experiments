@@ -52,6 +52,8 @@ export const Domain = {
   consumerCheckpoint: "triplex/consumer-checkpoint",
   paginationCursor: "triplex/pagination-cursor",
   paginationScope: "triplex/pagination-scope",
+  /** [EXP-R01] Compiled entity projection spec (physical names, declared types, exactness). */
+  projectionSpec: "triplex/projection-spec",
 } as const;
 
 export type Domain = (typeof Domain)[keyof typeof Domain];
