@@ -1,13 +1,11 @@
-"""Runs both reference models over the claim fixtures (EXP-E01). Usage: python3 -I -B claim_ref.py <input.json>
+"""Runs the proposed reference model over the claim fixtures (EXP-E01). Usage: python3 -I -B claim_ref.py <input.json>
 
-input = {"objects": store dir, "fixtures": [{"id", "repo", "claim"}]}; prints {id: {"ref035": verdict, "refQ42a": verdict, "q42aReasons": [...]}}.
+input = {"objects": store dir, "fixtures": [{"id", "repo", "claim"}]}; prints {id: {"verdict", "reasons"}}.
 
-ref035 is the generator's admit_claim exactly as compiled in contract 0.3.5, fed the structural projection of each lab receipt
-(the fields receipt_valid reads; the projection adds nothing and drops nothing it reads). refQ42a is the proposed replacement in
-lab/experiments/EXP-E01-claim-evaluator/admit_claim_q42a.py, fed what I/O found (this runner does the git and store reads).
-Pins, the W0 pin and the frozen trace pair come from the contract files at the claimed commit, as the lab evaluator reads them.
+The model is lab/experiments/EXP-E01-claim-evaluator/admit_claim_q47.py (pure). This runner does the I/O it needs and nothing
+else: the contract and load contract at the claimed commit, every tracked file at the claimed commit and at each commit the
+contract's A0 registry names, and the object store. It passes no judgement of its own.
 """
-import hashlib
 import importlib.util
 import json
 import pathlib
@@ -16,70 +14,58 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent.parent
+spec = importlib.util.spec_from_file_location("admit_claim_q47", REPO / "lab/experiments/EXP-E01-claim-evaluator/admit_claim_q47.py")
+model = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(model)
 
 
-def load(name, file):
-    spec = importlib.util.spec_from_file_location(name, file)
-    m = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(m)
-    return m
+def git(repo, *args, data=None, check=True):
+    return subprocess.run(["git", *args], cwd=repo, input=data, capture_output=True, check=check).stdout
 
 
-bc = load("build_contract", REPO / "lab/acceptance/build_contract.py")
-q42a = load("admit_claim_q42a", REPO / "lab/experiments/EXP-E01-claim-evaluator/admit_claim_q42a.py")
-
-
-def git(repo, *args, data=None):
-    return subprocess.run(["git", *args], cwd=repo, input=data, capture_output=True, check=True).stdout
-
-
-def tree_files(repo, commit):
-    """{path: sha256 of blob bytes} for every tracked file at the commit."""
+def home(repo, commit):
+    """{"tree", "time", "files": {path: bytes}} for a commit, or None if it does not resolve."""
+    r = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{commit}^{{commit}}"], cwd=repo, capture_output=True)
+    if r.returncode != 0 or r.stdout.decode().strip() != commit:
+        return None
     entries = [line.split("\t", 1) for line in git(repo, "ls-tree", "-r", "-z", commit).decode().split("\0") if line]
     blobs = [(meta.split()[2], p) for meta, p in entries if meta.split()[1] == "blob"]
     out = git(repo, "cat-file", "--batch", data="".join(f"{oid}\n" for oid, _ in blobs).encode())
     files, at = {}, 0
-    for oid, p in blobs:
+    for _, p in blobs:
         nl = out.index(b"\n", at)
         size = int(out[at:nl].split()[2])
-        files[p] = hashlib.sha256(out[nl + 1:nl + 1 + size]).hexdigest()
+        files[p] = out[nl + 1:nl + 1 + size]
         at = nl + 1 + size + 1
-    return files
-
-
-def project(r):
-    """The structural receipt the 0.3.5 reference reads, one per obligation entry."""
-    out = []
-    for ob in r.get("obligations") or []:
-        out.append({"obligation": ob.get("id"), "definitionSha256": ob.get("definitionSha256"),
-                    "sourceTreeSha256": (r.get("profileIdentity") or {}).get("sourceTreeSha256"), "composition": r.get("composition"),
-                    "caseResults": [{"case": e.get("caseId"), "verdict": e.get("verdict"), "objectSha256": e.get("objectSha256")}
-                                    for e in r.get("evidence") or [] if e.get("kind") == "case-result"]})
-    return out
+    return {"tree": git(repo, "rev-parse", f"{commit}^{{tree}}").decode().strip(), "time": int(git(repo, "show", "-s", "--format=%ct", commit)), "files": files}
 
 
 def main():
-    spec = json.loads(pathlib.Path(sys.argv[1]).read_text())
-    store = pathlib.Path(spec["objects"])
-    objects = {p.name: p.read_bytes() for p in store.iterdir() if p.is_file()}
-    results, cache = {}, {}
-    for fx in spec["fixtures"]:
+    spec_ = json.loads(pathlib.Path(sys.argv[1]).read_text())
+    objects = {p.name: p.read_bytes() for p in pathlib.Path(spec_["objects"]).iterdir() if p.is_file()}
+    homes_cache, results = {}, {}
+    for fx in spec_["fixtures"]:
         claim, repo = fx["claim"], fx["repo"]
-        commit = claim["commit"]
-        key = (repo, commit)
-        if key not in cache:
-            tree = git(repo, "rev-parse", f"{commit}^{{tree}}").decode().strip()
-            label = hashlib.sha256(json.dumps({"headTree": tree, "diffSha256": hashlib.sha256(b"").hexdigest(), "untracked": []}, separators=(",", ":")).encode()).hexdigest()
-            contract = json.loads(git(repo, "show", f"{commit}:lab/acceptance/obligations.json"))
-            load_contract = json.loads(git(repo, "show", f"{commit}:lab/acceptance/load-contract.json"))
-            cache[key] = ({"commit": commit, "tree": tree, "label": label, "time": int(git(repo, "show", "-s", "--format=%ct", commit)),
-                           "files": tree_files(repo, commit), "objects": objects}, contract, load_contract)
-        ctx, contract, load_contract = cache[key]
-        pins, w0 = contract["oraclePins"], contract["w0Pin"]
-        ref_claim = {k: claim[k] for k in ("obligations", "sourceTreeSha256", "composition", "profile", "positionCasesClosed", "compositionBound") if k in claim}
-        ref_claim["receipts"] = [p for r in claim.get("receipts") or [] if isinstance(r, dict) for p in project(r)]
-        verdict, reasons = q42a.admit_claim_q42a(claim, ctx, bc, pins=pins, w0=w0, frozen=load_contract["writerTrace"]["generator"].get("frozen"))
-        results[fx["id"]] = {"ref035": bc.admit_claim(ref_claim, pins=pins, w0=w0), "refQ42a": verdict, "q42aReasons": reasons}
+        get = lambda c: homes_cache.setdefault((repo, c), home(repo, c))
+        h = get(claim["commit"])
+        if h is None:
+            results[fx["id"]] = {"verdict": "DIAGNOSTIC", "reasons": ["claim commit unknown"]}
+            continue
+        if "parsed" not in h:
+            h["parsed"] = (json.loads(h["files"]["lab/acceptance/obligations.json"]), json.loads(h["files"]["lab/acceptance/load-contract.json"]))
+        contract, load_contract = h["parsed"]
+        homes = {claim["commit"]: h}
+        pin = contract.get("a0Registry")
+        if isinstance(pin, dict) and pin.get("path") in h["files"]:
+            try:
+                for entry in json.loads(h["files"][pin["path"]]).get("controls", {}).values():
+                    c = entry.get("commit") if isinstance(entry, dict) else None
+                    if isinstance(c, str) and get(c) is not None:
+                        homes[c] = get(c)
+            except ValueError:
+                pass
+        verdict, reasons = model.admit_claim_q47(claim, contract, load_contract, {"objects": objects, "homes": homes})
+        results[fx["id"]] = {"verdict": verdict, "reasons": reasons}
     json.dump(results, sys.stdout)
 
 
