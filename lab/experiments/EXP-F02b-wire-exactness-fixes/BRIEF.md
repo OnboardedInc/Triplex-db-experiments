@@ -26,8 +26,9 @@ the exact encodings the falsifier proved.
 - Worktree branch `exp/F02b-wire-exactness-fixes`. Files: packages/core/src/entity/ProjectionSpec.ts and the write-path guard nearby,
   packages/xtdb/src/codecs.ts (and the list-parameter encoding), packages/qlever/src/rdf.ts and native/NativeContext.ts, their tests.
   EXP-P2X also touches packages/xtdb (XtdbStorageAdapter.ts); stay out of that file, and rebase if needed.
-- Engines: `node lab/bin/engine.mjs up --lane xtdb|qlever --slot s2|s3` for the falsifier runs (one lane at a time if the pool is tight;
-  release slots when done). Never ports 15442/17019; Docker only via DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock.
+- Engines: the pool is full, so use the shared dev residents (`tx2-xtdb-dev` :5470 and `tx2-qlever-dev` :7070, recreated from main's
+  config at 85aba57) with scope keys and graph names unique to EXP-F02b; never down or recreate a dev resident. If a dev resident is
+  unhealthy, wait and report rather than taking another agent's slot. Never ports 15442/17019; Docker only via DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock.
 
 ## Gates
 1. Falsifier on both engines: zero silent changes; every remaining difference is a typed rejection.
