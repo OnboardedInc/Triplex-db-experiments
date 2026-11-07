@@ -12,19 +12,28 @@ Updated: 2026-11-07 (gen-0, planning)
 - Agent models: research = Sonnet xhigh; coding = Opus high (commander's-intent briefs); adversarial review = Codex gpt-6.1-sol xhigh.
 
 ## Phase
-- [x] read context  - [x] PLAN v0  - [x] research R1-R6 folded in (PLAN v1-pre, commit 8499483)
-- [ ] Codex adversarial review round 1 running -> lab/reviews/plan-review-r1.codex.md (+ .log has session id)
-- [ ] Codex round 2 (resume same session)  - [ ] PLAN v1  - [ ] build loop (EXP-000 brief ready)  - [ ] gen-1 dispatch
+- [x] read context  - [x] PLAN v0  - [x] research R1-R6 folded in (PLAN v1-pre)
+- [x] Codex review round 1 (session 01a1b72e-26d6-77a1-ac09-6ab8c3b10d43): lab/reviews/plan-review-r1.codex.md,
+      response lab/reviews/plan-review-r1.response.md; PLAN v1-rc committed d22ba76
+- [ ] Codex round 2 running (resume same session) -> lab/reviews/plan-review-r2.codex.md
+- [ ] PLAN v1 final  - [~] build loop: EXP-000 harness RUNNING on main; EXP-A01 acceptance contract RUNNING
 - Hourly cron ae766d26 (:07): update learnings in NOTEBOOK, launch Sonnet research if learnings raise questions.
 
 ## Running agents
 | Agent | Purpose | Output |
 | --- | --- | --- |
-| R7 (sonnet xhigh) | XTDB page pruning, _id/IID, index-table shapes, ingest tuning; probe tx2-probe-r7:5467 (5g) | lab/research/R7-xtdb-indexing-ingest.md |
-| R8 (sonnet xhigh) | QLever idempotent reapply, rebuild under load, group commit curve; probe tx2-probe-r8:7068 (5g) | lab/research/R8-qlever-write-lifecycle.md |
-| R9 (sonnet xhigh) | core write/journal/schema/read plumbing for projection + repository | lab/research/R9-core-plumbing.md |
-| Codex r1 (gpt-6.1-sol xhigh) | adversarial plan review | lab/reviews/plan-review-r1.codex.md |
-| R1-R6 | DONE | lab/research/R1..R6 |
+| EXP-000 (opus high, on main) | loop harness lab/bin, slots, pool, bound receipts, dev engines | lab/experiments/EXP-000-loop-harness/REPORT.md |
+| EXP-A01 (opus high) | acceptance contract lab/acceptance/* (no commit; orchestrator commits) | lab/experiments/EXP-A01-acceptance-contract/REPORT.md |
+| R7 (sonnet xhigh) | XTDB pruning/IID/index-table shapes (+skew/ranges/ordered pages, extended), ingest | lab/research/R7-xtdb-indexing-ingest.md |
+| R8 (sonnet xhigh) | QLever reapply/rebuild under load/group commit/durability | lab/research/R8-qlever-write-lifecycle.md |
+| Codex r2 | plan review round 2 | lab/reviews/plan-review-r2.codex.md |
+| DONE | R1-R6, R9 | lab/research/ |
+
+## Briefs ready, not dispatched
+- EXP-R01 entity core (worktree, engine-free) - dispatch after Codex r2 (pushback C2 about skeleton timing).
+- EXP-F01 (needs exclusive xtdb slot), F02/F03/F04 (dev slots) - dispatch once EXP-000 has dev engines up.
+- To write: EXP-F05 QLever fault injection (after R8), EXP-O01 oracle (after A01), EXP-001/002 baselines (after EXP-000),
+  EXP-Q03 QLever order keys + EXISTS helpers (after QLever baseline).
 
 ## Engine slots
 | Slot | Holder | Ports |

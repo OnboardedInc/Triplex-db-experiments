@@ -83,3 +83,35 @@ Result: PROGRESSED (knowledge). Nothing promoted; no lane gate has run.
   historical plain triples to raw queries and 100m named graphs are an unmeasured cost.
 - D3 name collisions: release-compile check, no key regex change. D4 repository lives in a new core subpath.
 - D5 absent optional = missing property; cardinality-many = array always.
+
+## GEN-0 2026-11-07 Research R9 (core plumbing) + Codex plan review round 1
+### R9 learnings (lab/research/R9-core-plumbing.md)
+- Projection hook = the adapter's `persist(state, ...)` (XTDB `XtdbStorageAdapter.ts:188-331`, called `:405-406`;
+  QLever `QleverStorageAdapter.ts:187-278`, called `:343-344`). `state.rows` carries every row of the tx incl.
+  retraction columns, claims, position, sourceK. Spec enters via `XtdbRuntimeOptions` / `QleverRuntimeOptions`.
+  Zero edits needed to TriplesLive, StorageAdapter, Runtime.define, KV, testkit. A post-commit StoreCapability is
+  the wrong place (not atomic). Planner needs post-tx live facts of touched entities: pure `planProjection` in core
+  plus one batched read before `persist`.
+- Journal: every TransactionChange field is a ledger column, so `changes[]` can be served from the ledger; but
+  adapters never see TransactionMeta, so a small envelope per tx must still be stored, and `_Transaction` facts are
+  public (docs promise them to Datalog; shared cases 29 and 39 read them). "Slim journal" (drop `:_tx/change` and
+  `:_tx/changed-entity`, keep envelope) keeps all 44 cases; XTDB rows `2A+E+2+m` → `A+2+m`; QLever -52% triples
+  at the dense profile.
+- Reuse: extract `ConfigApi.compile` and `EntityCodec` from packages/http into core for the repository.
+### Orchestrator decisions on R9's open questions
+- Journal tier: slim journal, as an optional adapter `journal?` member (precedent: `validateConstraints?`), gen-2
+  track, gated by cases 29, 30, 31, 32, 34, 36, 39 staying byte-identical. Fully native journal rejected (breaks 29/39).
+- Derived `changes[]` order: must reproduce today's order exactly; if the ledger lacks a per-tx row sequence, add one.
+- Projection planner failure policy: never reject a valid Triplex write for the projection's sake (review r1 #12).
+  Commit the ledger, mark affected entities projection-stale in the same engine tx, route their reads to the
+  ledger, repair asynchronously, count and surface planner errors.
+### Codex review round 1 (lab/reviews/plan-review-r1.codex.md): 16 findings, 8 critical
+- Accepted 13 as stated, 3 with a different remedy (lab/reviews/plan-review-r1.response.md). Biggest corrections:
+  gates did not establish the done condition (now lab/acceptance, EXP-A01); receipts could certify unexecuted
+  builds (now bound to dist hashes, fail closed); H-X-CUT is false for nested multi-position XTDB transactions
+  (narrowed to physical commit boundaries, interior cuts → ledger); QLever can corrupt its own state on a timed-out
+  single operation, so a QLever-only ledger is untrustworthy (new hypothesis H-Q-LOG: durable log of record outside
+  QLever, QLever as rebuildable index, fenced single writer); T1's "one atomic step" was false for QLever's
+  separately advancing views (new B2: one update operation per commit group carrying ledger, projection and
+  publication marker); 12 + 3.5x3 GiB residents/slots exceeded the 12 GiB VM (one pool now).
+- Result: PROGRESSED (plan). Round 2 running.
