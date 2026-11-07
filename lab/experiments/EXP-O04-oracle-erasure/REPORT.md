@@ -18,7 +18,7 @@
   G9.erasure.reproduction-modulo and R.repo.mutation-controls wait on Q49a.
 - Evidence: /Users/sam/Claude/Projects/triplex-db-2/EXP-O04-oracle-erasure/.
 
-## Q49 implemented: O-REPLAY 0.4.1 (a9c1327d4e1d6756696db6844e17008671d4a193; saved 2026-11-07 23:05Z)
+## Q49 implemented: O-REPLAY 0.4.1 (a9c1327d4e1d6756696db6844e17008671d4a193; saved 2026-11-07 22:59Z)
 - F2 commit unchanged (f4b59b4). Q49a: an erasure commit is an ordinary journal transaction (position, txId, `transactions()`,
   `:_tx/changed-entity` and `:_tx/change` facts) whose changes carry identities only (`{"op":"erase", entityId, attribute, assertionIds}`);
   earlier changes are re-rendered with the marker; whole journal = no-erasure control journal with markers; no plaintext anywhere.

@@ -1,4 +1,4 @@
-# EXP-D01c O-DOMAIN: report (saved by the orchestrator, 2026-11-07 23:20Z)
+# EXP-D01c O-DOMAIN: report (saved by the orchestrator, 2026-11-07 23:03Z)
 
 **Bottom line:** an independent stdlib-Python implementation of W0-1.1.1, written from SPEC.md alone, reproduced every golden case and
 the whole 100k fingerprint on its first run. Commit 276a2809d5bc41c63177ce5091d48516cc4d1856 on `exp/D01c-o-domain` (only
