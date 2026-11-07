@@ -81,3 +81,19 @@ here). Merged to main as 4591715.
   precision). N2 refusals refuse the whole case (exit 2); only `erase`/`erasure` refuse, other unknown ops are E-INVALID-VALUE, so outbox
   steps must never be O-REPLAY ops. N3 G1.types.decimal lists only O-REPLAY and O-ERR but selects three key-byte cases that need O-TDK1.
   N4 resuming at an abort gap maps the gap coordinate to its ordinal through a coordinate cut.
+
+## V-O04b: O-REPLAY 0.4.1 at a9c1327 (saved by the orchestrator, 2026-11-08 00:05Z)
+- Verdict FIX-FIRST, narrow: every Q49a-e answer passes (probe_q49 81 probes: 74 MATCH, 0 WRONG-ANSWER, 7 DERIVED-NOTE; self-test 7/7);
+  the residual refusals are exactly the nine Q52 shapes (9/9 X-NOT-MODELED; the only other X-NOT-MODELED sites are 0.3.1's
+  entities.py:61, run.py:53, views.py:129; the blanket refusal at replay.py:384 is gone); no answer changed outside erasure and
+  JSON-to-decimal (differential 0.3.1 at 8cc2c26 against 0.4.1 over 1,443 cases: seed 49 643 cases, 632 identical, 6 refused by both, 5
+  expected differences; seed 4949 800/800 identical; raw golden answers 0.2.0 against 0.4.1 0 differences over 87 runs per lane).
+- Failed clause: on six undecided erasure shapes the oracle answers instead of refusing (F4) and an unknown erase target or id is rejected
+  where Q49b's text says commit (F3). Ruled Q56a-g as the oracle answers; Q56h (N1: in-flight outputs hold old values; synthetic data only).
+- Counts: unit 342/342; self-check 61/61; converter core 317/19/2/3 and qlever 298/18/19/1/2/3, 0 item differences from EXP-O02;
+  unpatched converter identical; judge_changed 47/47; planted errors 22/22; V-O01 mutants 8/8; probe_delta_033 20/20; section-4 23/23;
+  probe_035 119/119 MATCH (stale probe replaced; self-test 13/13 non-MATCH).
+- 29 files of lab/oracles/replay at a9c1327 match four ways (git archive, working tree, the oracle's sourceSha256 13/13, the author's
+  hashes.q49.txt); table in lab/verify/O02/v-o04b/results/hashes.a9c1327.json on verify/O02 (bfc129a). Independence holds (stdlib only, no
+  subprocess, socket or urllib; no new packages/ references).
+- Next: V-O04c converts the seven DERIVED-NOTE rows to checked rows under Q56 and returns the final pin verdict.

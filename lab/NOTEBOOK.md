@@ -954,3 +954,11 @@ Where each priority stands, from evidence so far (research probes and baselines;
   (6) repository read-your-own-write says nothing about native queries; (7) P2Q's feed lag starts at the ACK, not at source publication.
   Ruled Q55b-d. Q55c (native queries report their basis, honor a basis token, otherwise read the replica's position) is flagged for Sam.
 - The count went up by one because a new composition entered the evidence, which is the review doing its job, not a regression.
+
+## 2026-11-08 00:05Z: V-O04b: O-REPLAY 0.4.1 is right on everything Q49 decides; seven undecided shapes ruled (Q56)
+- 74/74 decided probes match, 0 unexpected differences over 1,443 differential cases. The failure was on the refusal side: seven
+  erasure shapes nobody ruled on got confident answers. All seven are ruled as the oracle answers (Q56), so 0.4.1 pins byte for byte.
+- Learning (Q56c): the rule that settles erasure edge cases is "an answer after erasure never depends on the erased value". Erasing one of
+  two equal supports of a card-one value therefore makes the read a conflict, because returning the value would reveal what was erased.
+- Learning: the verifier's DERIVED-NOTE probes (answers it derived but no ruling decides) are the fastest way to find gaps in rulings;
+  keep that probe class in every oracle verification.

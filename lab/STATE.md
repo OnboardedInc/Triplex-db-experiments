@@ -25,7 +25,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | W0-1.1.1 (ada2e90) | ACCEPTED (V-D01 delta check), MERGED e7c1346; 95 hashes verified | pin after O-DOMAIN reproduces the fingerprint |
 | exp/P2Q-qlever-log-broker (d7c6086) | PROGRESSED: candidate ACK 4-8 ms p50 vs A0 0.96-7.4 s on the same resident; feed and falsifiers pass | V-P2Q, controlled runs (Q50e), hardening (Q50d) |
 | exp/P2X-xtdb-commit-feed (fb6681a) | PROGRESSED: 0 cross-subject conflicts (A0 thousands), service 6-8x lower at ~20k history; feed exact but lag p99 2.9 s (bar 250 ms); G1 PASS on and off | V-P2X later; EXP-P2B (XTDB behind the broker, Q51b) is the next XTDB P2/P3 move |
-| exp/O04-oracle-erasure (a9c1327) | O-REPLAY 0.4.1: Q49 implemented, all 11 erasure obligations closable on the oracle side; residuals ruled Q52 | V-O04 re-check, then pin; Q52 as 0.4.2 with a delta check |
+| exp/O04-oracle-erasure (a9c1327) | O-REPLAY 0.4.1: V-O04b FIX-FIRST narrow (74/74 decided probes match; 7 undecided shapes answered, ruled Q56 as answered) | V-O04c, merge, pin in 0.3.8; Q52 + SCHEMA note as 0.4.2 |
 | exp/D01c-o-domain (276a280) | O-DOMAIN reproduced W0-1.1.1 exactly: 87/87 cases, 6/6 fingerprint values, floors equal to V-D01 to the last digit | V-D01c, then pin W0 and O-DOMAIN; W0-1.1.2 folds Q53 readings |
 | exp/002-qlever-baseline | MERGED 85aba57 (G0/G1/G2 PASS, G4 FAIL as expected) | QLever dev resident recreated from main config (holder EXP-000) |
 | exp/F02-wire-exactness | MERGED 7247c82 (lab only; partly falsified) | fixes in EXP-F02b |
@@ -40,7 +40,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | EXP-N01 driver MERGED; waiting for an exclusive XTDB slot for A0 (opus) | P1-P5 measurement (NS gate) | A0 receipts |
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
-| V-O04 re-check of O-REPLAY 0.4.1 (opus, resumed verifier a24def81f188f0df6) | correctness floor (11 erasure obligations) | verdict, then pin |
+| V-O04c final check of O-REPLAY 0.4.1 under Q56 (opus, resumed verifier a24def81f188f0df6) | correctness floor (11 erasure obligations) | ACCEPT -> merge exp/O04 and pin in 0.3.8 |
 | EXP-E01 claim evaluator (opus, exp/E01-claim-evaluator) | floor for every claim | lab/bin/claim.mjs |
 | EXP-D01b TypeScript W0 kernel (opus, exp/D01b-w0-kernel) | P5, P3 deps, GS domain answers | packages/w0, cases + fingerprint + per-subject cost |
 | EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |
