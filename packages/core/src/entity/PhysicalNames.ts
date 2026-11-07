@@ -54,16 +54,60 @@ const IRI_FORBIDDEN = {
     [...text].some((ch) => ch.charCodeAt(0) <= 0x20 || '<>"{}|\\^`'.includes(ch)),
 };
 
-/** Validate a base IRI: absolute (`scheme:`), no IRI-forbidden characters, ends with `:`, `/` or `#`. */
+/**
+ * SQL words a table name cannot be without quoting. The first five were rejected unquoted by
+ * XTDB 2.2 in R1 Q3's 41-word probe; the rest are core SQL keywords, rejected conservatively so
+ * raw SQL over the projection never needs quoted table names (VERIFY F6).
+ */
+const SQL_KEYWORDS = new Set([
+  "order", "group", "default", "from", "to",
+  "all", "and", "any", "as", "between", "by", "case", "create", "cross", "delete", "distinct",
+  "drop", "else", "end", "exists", "false", "full", "having", "in", "inner", "insert", "intersect",
+  "into", "is", "join", "left", "like", "limit", "natural", "not", "null", "offset", "on", "or",
+  "outer", "right", "select", "set", "table", "then", "true", "union", "update", "using", "values",
+  "when", "where", "with",
+]); // prettier-ignore
+
+export const isSqlKeyword = (name: string): boolean => SQL_KEYWORDS.has(name);
+
+/**
+ * IRI namespaces the QLever ledger and engine metadata already use (packages/qlever/src). Domain
+ * IRIs must stay outside them so domain-pattern queries see only the current graph (C7.2).
+ */
+export const LEDGER_IRI_NAMESPACES = [
+  "urn:triplex:assertion",
+  "urn:triplex:claim",
+  "urn:triplex:derived",
+  "urn:triplex:field",
+  "urn:triplex:meta",
+  "urn:triplex:native",
+  "urn:triplex:operation",
+  "urn:triplex:scope",
+] as const;
+
+/**
+ * Validate a base IRI: absolute (`scheme:`), no IRI-forbidden characters, ends with `:`, `/` or
+ * `#`, and its attribute, type and entity namespaces do not overlap a ledger namespace.
+ */
 export const validateRdfBase = (base: string): string | undefined => {
   if (!/^[A-Za-z][A-Za-z0-9+.-]*:/.test(base)) return "must be an absolute IRI with a scheme";
   if (IRI_FORBIDDEN.test(base)) return "contains characters that are not allowed in an IRI";
   if (!/[:/#]$/.test(base)) return "must end with ':', '/' or '#'";
+  const sep = separator(base);
+  for (const domain of ["attr", "type", "entity"].map((kind) => `${base}${kind}${sep}`)) {
+    for (const ledger of LEDGER_IRI_NAMESPACES) {
+      if (domain.startsWith(ledger) || ledger.startsWith(domain)) {
+        return `puts domain IRIs ${domain}... inside the ledger namespace ${ledger}`;
+      }
+    }
+  }
   return undefined;
 };
 
 /** `urn:` style bases join segments with `:`, hierarchical bases (`http.../`, `...#`) with `/`. */
-const separator = (base: string): string => (base.endsWith(":") ? ":" : "/");
+function separator(base: string): string {
+  return base.endsWith(":") ? ":" : "/";
+}
 
 /** `:person/first-name` becomes `<base>attr:person:first-name` (or `<base>attr/person/first-name`). */
 export const rdfAttribute = (key: string, base: string = DEFAULT_RDF_BASE): string => {

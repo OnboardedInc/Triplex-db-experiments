@@ -60,8 +60,26 @@ export class ProjectionSpecError extends Data.TaggedError("ProjectionSpecError")
     | "unsupported-type"
     | "duplicate-entity-type"
     | "duplicate-attribute"
+    | "attribute-type-conflict"
+    | "unknown-ref-target"
+    | "approximate-number"
     | "invalid-option";
   readonly inputs: ReadonlyArray<string>;
+  readonly message: string;
+}> {}
+
+/**
+ * A value (or coordinate, or entity id) that an engine's declared type cannot hold exactly.
+ * [EXP-R01] Why: Sam's numeric rule (lab/SCOPE.md 2.4): a hard error, never silent conversion.
+ * Lanes raise this instead of rounding, or keep the value ledger-only when the spec's
+ * `inexactPolicy` is `ledger-only`.
+ */
+export class InexactValueError extends Data.TaggedError("InexactValueError")<{
+  readonly engine: "xtdb" | "rdf";
+  /** The `_tag` of the first exactness rule the value fails. */
+  readonly rule: string;
+  /** A lossless rendering of the offending value. */
+  readonly value: string;
   readonly message: string;
 }> {}
 
