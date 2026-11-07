@@ -787,3 +787,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   and a new reverse check fails if the oracle keeps an error id the contract dropped. The V-O02 verifier is re-checking it (V-O03) with
   the probe extended to 0.3.5's rules; on ACCEPT the oracle merges and its hashes are pinned in contract 0.3.6, which unblocks the
   obligations it can close (claims still also need EXP-E01's evaluator).
+- 03:35Z: W0-1.1.0 built (50d92ef): 82 cases; R3 is the narrow release (4.3% of subjects change, all through OT); worlds now average
+  about 447 facts over 3-6 hops (a 100k sweep reads about 44.7M facts, up from 1.6M), so P5 tests something close to Onboarded's real pull
+  size. Floor 4 (3+ work items) is thinner (about 1.65% expected) and the re-review measures it on the real population. V-D01 re-review
+  running; then the pin and the two independent implementations (TS kernel, O-DOMAIN).

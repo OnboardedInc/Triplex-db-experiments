@@ -34,3 +34,16 @@
 - A cold-read Opus review re-derived 15 cases (13 exact; C34 and C36 exposed the undefined `affected` output, now fixed) and found 9
   ambiguities, all fixed.
 - Open questions: ruled as Q36.
+
+## W0-1.1.0 (commit 50d92ef, 2026-11-08), after V-D01 and rulings Q40, Q42b, Q42c
+- 82 cases validate (`python3 -I lab/world/W0/validate.py`); no evaluator in the repo. Releases: R1 sha256:fd57551a...b031, R2
+  sha256:7d2f4008...07a9, R3 sha256:de954f77...971f (diff(R2, R3) = OT). R1/R2 hashes changed because MINWAGE now reads `floorSources`
+  (two-hop floor via jurisdiction).
+- Ballast answer chains (3, 4 or 6 hops) size each world from P4's buckets: expected 124 / 499.5 / 1,399.5 facts per bucket, 446.8 overall
+  (W0 facts about 17); a 100k sweep reads about 44.7M facts (1.6M before).
+- Outbox: (id, seq) delivery key, version as content identity only, `publish` (SPEC 8.8) and `receive` (SPEC 8.9) as pure operations,
+  basis-ordered publication, one atomic per-subject state, retirement and republication.
+- Expected coverage: R2 changes 62.3%; lowest rule firing 7.9%; 3+ work items 1.65% (R1) / 2.52% (R2), thinner than 1.0.0 because an
+  accepted E-Verify submission now yields no work item; R3 changes 4.3% of subjects (all through OT); GS.06b jurisdiction write affects
+  1,953 placements for the largest jurisdiction, mean 990.
+- The 37 new cases C46-C82 are not yet independently re-derived; V-D01 re-review in progress.
