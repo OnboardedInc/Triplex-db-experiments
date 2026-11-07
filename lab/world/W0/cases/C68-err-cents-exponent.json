@@ -1,0 +1,20 @@
+{
+  "id": "C68",
+  "slug": "err-cents-exponent",
+  "title": "payRateCents written as 1.65e3",
+  "op": "evaluate",
+  "checks": [],
+  "notes": ["1.65e3 has an exponent, so it is not a JSON integer token: W0.E_VALUE."],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650.0, "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}

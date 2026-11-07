@@ -1,0 +1,19 @@
+{
+  "id": "C71",
+  "slug": "err-basis-tx-float",
+  "title": "basis.tx written as 10.0",
+  "op": "evaluate",
+  "checks": [],
+  "notes": ["basis.tx must be a JSON integer token: W0.E_SHAPE (4.4 step 1)."],
+  "input": {
+    "basis": {"tx": 10.0, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_SHAPE"}
+}

@@ -4,7 +4,9 @@
   "title": "C03 under R2: Section 2 is due one business day earlier, E-Verify is unchanged",
   "op": "evaluate",
   "checks": [
-    {"rule": "LIFE", "polarity": "positive"}, {"rule": "I9S2", "polarity": "positive"}, {"rule": "EVSUB", "polarity": "positive"},
+    {"rule": "LIFE", "polarity": "positive"},
+    {"rule": "I9S2", "polarity": "positive"},
+    {"rule": "EVSUB", "polarity": "positive"},
     {"rule": "MINWAGE", "polarity": "negative"}
   ],
   "notes": [
@@ -18,7 +20,8 @@
     "world": {
       "subject": "pl:a",
       "facts": [
-        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
         {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
         {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
@@ -28,19 +31,33 @@
   "expected": {
     "basis": {"tx": 10, "validTime": "2026-10-30T09:00:00.000000Z"},
     "dependencies": [
-      ["loc:nyc", "localMinWageCents"], ["loc:nyc", "stateMinWageCents"],
-      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
-      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
-      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"]
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["loc:nyc", "localMinWageCents"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"]
     ],
-    "flags": [{"name": "pre-start", "rule": "LIFE"}],
+    "flags": [
+      {"name": "pre-start", "rule": "LIFE"}
+    ],
     "obligations": [
       {"boundary": "2026-11-06T00:00:00.000000Z", "id": "pl:a#everify.collect-ssn@due", "kind": "due", "rule": "EVSUB"},
       {"boundary": "2026-11-03T00:00:00.000000Z", "id": "pl:a#i9.section1@due", "kind": "due", "rule": "I9S1"},
       {"boundary": "2026-11-05T00:00:00.000000Z", "id": "pl:a#i9.section2@due", "kind": "due", "rule": "I9S2"},
       {"boundary": "2026-11-02T00:00:00.000000Z", "id": "pl:a#start", "kind": "start", "rule": "LIFE"}
     ],
-    "release": "sha256:4fe8c3fa51e528550d255931263ed46f85cac8e57238cdfed1c3246b71847f98",
+    "release": "sha256:7d2f4008e55f43458ae1288cb65a4cf92f3f04a40a1c6eeafb3fc754435807a9",
     "subject": "pl:a",
     "tasks": [
       {"dueAt": "2026-11-06T00:00:00.000000Z", "id": "pl:a#everify.collect-ssn", "kind": "everify.collect-ssn", "overdue": false, "rule": "EVSUB"},
@@ -61,7 +78,7 @@
       {"inputs": [], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:3ff50c9ed0a3fe1afa8b91231bb6861bee1be973b44ad79f525672cfc3d96249"}
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:6766d9962b124535173caa947959ad03f00150e41b8e38117d448029a4531e15"}
     ]
   }
 }

@@ -4,7 +4,9 @@
   "title": "C19 previewed under R2: the ead task opens 90 days early, bgc.order is unchanged, the pay notice gets a new version",
   "op": "evaluate",
   "checks": [
-    {"rule": "DOCEXP", "polarity": "positive"}, {"rule": "BGC", "polarity": "positive"}, {"rule": "MINWAGE", "polarity": "positive"}
+    {"rule": "DOCEXP", "polarity": "positive"},
+    {"rule": "BGC", "polarity": "positive"},
+    {"rule": "MINWAGE", "polarity": "positive"}
   ],
   "notes": [
     "R2 leadDays: ead 90, visa 0. doc:1 (ead): W = startOf(addDays(2027-01-15, 1 - 90)) = 2026-10-18T00; B = 2027-01-16T00.",
@@ -21,7 +23,8 @@
     "world": {
       "subject": "pl:a",
       "facts": [
-        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
         {"e": "loc:nyc", "a": "localMinWageCents", "v": 1700, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
         {"e": "pl:a", "a": "payRateCents", "v": 1600, "tx": 2},
@@ -47,20 +50,38 @@
   "expected": {
     "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
     "dependencies": [
-      ["loc:nyc", "localMinWageCents"], ["loc:nyc", "stateMinWageCents"],
-      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
-      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
-      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
-      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"],
-      ["pl:a/doc:1", "docType"], ["pl:a/doc:1", "expiresOn"], ["pl:a/doc:1", "reverified"],
-      ["pl:a/doc:2", "docType"], ["pl:a/doc:2", "expiresOn"], ["pl:a/doc:2", "reverified"]
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["loc:nyc", "localMinWageCents"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"],
+      ["pl:a/doc:1", "docType"],
+      ["pl:a/doc:1", "expiresOn"],
+      ["pl:a/doc:1", "reverified"],
+      ["pl:a/doc:2", "docType"],
+      ["pl:a/doc:2", "expiresOn"],
+      ["pl:a/doc:2", "reverified"]
     ],
     "flags": [],
     "obligations": [
       {"boundary": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1@due", "kind": "due", "rule": "DOCEXP"},
       {"boundary": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.window#pl:a/doc:2", "kind": "doc.window", "rule": "DOCEXP"}
     ],
-    "release": "sha256:4fe8c3fa51e528550d255931263ed46f85cac8e57238cdfed1c3246b71847f98",
+    "release": "sha256:7d2f4008e55f43458ae1288cb65a4cf92f3f04a40a1c6eeafb3fc754435807a9",
     "subject": "pl:a",
     "tasks": [
       {"dueAt": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": false, "rule": "DOCEXP"},
@@ -81,8 +102,8 @@
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:6c3c681f2f4c53ecf32c29891a1178a39fd9bd71516eed1bc395a343dcd62054"},
-      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:3ff50c9ed0a3fe1afa8b91231bb6861bee1be973b44ad79f525672cfc3d96249"}
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"},
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:6766d9962b124535173caa947959ad03f00150e41b8e38117d448029a4531e15"}
     ]
   }
 }

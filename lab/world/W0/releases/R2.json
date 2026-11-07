@@ -8,7 +8,7 @@
     {"id": "EVSTAT", "params": {"tncBusinessDays": 8}},
     {"id": "BGC", "params": {}},
     {"id": "DOCEXP", "params": {"leadDays": {"ead": 90, "visa": 0}}},
-    {"id": "MINWAGE", "params": {"floorAttributes": ["localMinWageCents", "stateMinWageCents"]}},
+    {"id": "MINWAGE", "params": {"floorSources": ["jurisdiction.stateMinWageCents", "location.localMinWageCents"]}},
     {"id": "OT", "params": {"thresholdMinutes": 2400}},
     {"id": "PAYCHG", "params": {"thresholdCents": 500}},
     {"id": "PROP", "params": {}}

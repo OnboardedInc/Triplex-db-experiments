@@ -4,7 +4,9 @@
   "title": "Numeric maxima: 10,080 weekly minutes, pay 2^53 - 1 cents against a baseline of 0",
   "op": "evaluate",
   "checks": [
-    {"rule": "OT", "polarity": "positive"}, {"rule": "PAYCHG", "polarity": "positive"}, {"rule": "MINWAGE", "polarity": "negative"}
+    {"rule": "OT", "polarity": "positive"},
+    {"rule": "PAYCHG", "polarity": "positive"},
+    {"rule": "MINWAGE", "polarity": "negative"}
   ],
   "notes": [
     "weeklyMinutes 10080 is the largest valid value (one full week): OT row 2, flag overtime.",
@@ -18,7 +20,8 @@
     "world": {
       "subject": "pl:a",
       "facts": [
-        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
         {"e": "pl:a", "a": "payRateCents", "v": 9007199254740991, "tx": 2},
         {"e": "pl:a", "a": "baselinePayRateCents", "v": 0, "tx": 2},
@@ -39,15 +42,30 @@
   "expected": {
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
     "dependencies": [
-      ["loc:nyc", "stateMinWageCents"],
-      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
-      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
-      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
-      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"]
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"]
     ],
-    "flags": [{"name": "overtime", "rule": "OT"}],
+    "flags": [
+      {"name": "overtime", "rule": "OT"}
+    ],
     "obligations": [],
-    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
     "subject": "pl:a",
     "tasks": [
       {"dueAt": null, "id": "pl:a#pay.change-approval", "kind": "pay.change-approval", "overdue": false, "rule": "PAYCHG"}
@@ -66,7 +84,7 @@
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:76a8e53770d5b608edfbd75b07534cdae74350dfe63853cb7296a4fb7c77ed8d", "inputs": [2], "key": "", "kind": "notify.pay-change-approval", "payload": {"baselinePayRateCents": 0, "payRateCents": 9007199254740991}, "rule": "PAYCHG", "version": "wv:ea2d49eafff98d010802fea56198966f9e561573f363dff7cf8e3104d56a1a6d"}
+      {"id": "wi:76a8e53770d5b608edfbd75b07534cdae74350dfe63853cb7296a4fb7c77ed8d", "inputs": [2], "key": "", "kind": "notify.pay-change-approval", "payload": {"baselinePayRateCents": 0, "payRateCents": 9007199254740991}, "rule": "PAYCHG", "version": "wv:935a30fd5ff74198c9e1556891c9bddf053e094427cb91ad291b550843de7ea6"}
     ]
   }
 }

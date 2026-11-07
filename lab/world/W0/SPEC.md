@@ -1,4 +1,4 @@
-# W0: the frozen world definition (spec version W0-1.0.0, 2026-11-07)
+# W0: the frozen world definition (spec version W0-1.1.0, 2026-11-08)
 
 W0 is a small synthetic world definition. It stands in for Onboarded's real world definition in every Triplex test: the P5
 release sweep, the P3 dependency rules and the domain expectations of the 20 golden scenarios (`lab/TARGETS.md` sections 1.1,
@@ -6,7 +6,9 @@ release sweep, the P3 dependency rules and the domain expectations of the 20 gol
 stdlib-only Python oracle O-DOMAIN, and they must produce byte-identical outputs for every input. When they disagree, either one
 of them has a bug or this file is ambiguous, and the ambiguity gets a named entry in section 14.
 
-**Frozen.** Nothing in this file changes in place. A change of meaning makes a new world (`W1`) with its own releases and cases.
+**Frozen once pinned.** W0-1.1.0 replaces W0-1.0.0 after the independent review V-D01 (`lab/verify/D01/VERIFY.md`, RULINGS Q40);
+neither was pinned, so the world keeps its name. After the pin nothing changes in place: a change of meaning makes a new world
+(`W1`) with its own releases and cases.
 
 ## 0. Contents
 
@@ -28,7 +30,7 @@ of them has a bug or this file is ambiguous, and the ambiguity gets a named entr
 
 ## 1. Operations and files
 
-**W0 defines four pure functions.** None reads a clock, a random source, the environment or anything outside its arguments.
+**W0 defines five pure functions.** None reads a clock, a random source, the environment or anything outside its arguments.
 "Now" is always the basis valid time.
 
 | Operation | Signature | Output |
@@ -37,6 +39,7 @@ of them has a bug or this file is ambiguous, and the ambiguity gets a named entr
 | `resolveRelease` | `resolveRelease(activations, validTime)` | the hash of the release in force at that valid time, or an error |
 | `reconcile` | `evaluate(world, resolveRelease(activations, basis.validTime), basis)` | the same output shape as `evaluate` |
 | `affected` | `affected(release, worlds, writes)` | `{"affected": [<subject>, ...]}`: the subjects whose dependencies meet the writes, ascending (section 10) |
+| `publish` | `publish(state, evaluations)` | `{"deliveries": [...], "state": ...}`: what the outbox delivers and its new state (section 8.8) |
 
 **Preview and activation use the same function.** A preview (GS.11, plan impact) is `evaluate` with a release that is not
 active. An activated sweep (GS.10, P5) is `reconcile` after the activation fact exists. At one basis both give the same bytes
@@ -48,9 +51,9 @@ active. An activated sweep (GS.10, P5) is `reconcile` after the activation fact 
 | --- | --- |
 | `SPEC.md` | this file, the only normative text |
 | `schema.json` | the attribute table of section 3 and the release parameter table of section 5, as data |
-| `releases/R1.json`, `releases/R2.json` | the two releases |
+| `releases/R1.json`, `releases/R2.json`, `releases/R3.json` | the three releases |
 | `releases/index.json` | release name to content hash |
-| `cases/*.json` | the 45 golden cases (section 11) |
+| `cases/*.json` | the 78 golden cases (section 11) |
 | `validate.py` | a stdlib-only shape validator (`python3 -I validate.py`); it holds no rule logic |
 | `README.md` | how to use the folder |
 
@@ -87,14 +90,16 @@ years.
 
 ## 3. Entities and attributes
 
-**Four entity kinds, told apart by the id.** A local part is 1 to 32 characters from `[a-z0-9-]`.
+**Six entity kinds, told apart by the id.** A local part is 1 to 32 characters from `[a-z0-9-]`.
 
 | Kind | Id grammar | Example | Role |
 | --- | --- | --- | --- |
 | placement | `pl:<local>` | `pl:a` | the subject; one placement is one worker at one job |
 | document | `<placement id>/doc:<local>` | `pl:a/doc:1` | owned by that placement |
 | decision | `<placement id>/dec:<local>` | `pl:a/dec:1` | owned by that placement; an immutable reviewer or agent record |
+| answer | `<placement id>/ans:<local>` | `pl:a/ans:1` | owned by that placement; ballast (below) |
 | location | `loc:<local>` | `loc:nyc` | shared: many placements reference one location |
+| jurisdiction | `jur:<local>` | `jur:ny` | shared: many locations reference one jurisdiction (RULINGS Q40b) |
 
 **Placement attributes.**
 
@@ -105,6 +110,7 @@ years.
 | `ssn` | text | one | yes | social security number as entered |
 | `everifyStatus` | enum `pending`, `tnc`, `authorized`, `fnc` | one | no | E-Verify case status (`tnc` tentative nonconfirmation, `fnc` final nonconfirmation) |
 | `everifyStatusAt` | instant | one | no | when the vendor reported that status |
+| `everifySubmitResult` | enum `accepted`, `rejected` | one | no | the runtime's result of performing the `everify.submit-case` work item: a runtime-outcome fact (RULINGS Q40i) |
 | `bgcStatus` | enum `pending`, `clear`, `consider` | one | no | background-check result |
 | `payRateCents` | cents | one | no | hourly pay rate in cents |
 | `baselinePayRateCents` | cents | one | no | the pay rate the placement was approved at |
@@ -112,13 +118,25 @@ years.
 | `location` | ref to a location | one | no | work location |
 | `documents` | ref to a document whose id starts with this placement's id + `/doc:` | many | no | identity and work-authorization documents |
 | `decisions` | ref to a decision whose id starts with this placement's id + `/dec:` | many | no | reviewer decisions and agent proposals |
+| `answers` | ref to an answer whose id starts with this placement's id + `/ans:` | many | no | ballast: the first answer of each answer chain |
 
 **Document attributes:** `docType` (enum `passport`, `ead`, `visa`; one), `expiresOn` (date; one), `reverified` (boolean; one).
 
 **Decision attributes:** `target` (enum `i9.section2`, `bgc.adjudication`, `pay.change`; one), `verdict` (enum `approve`,
 `waive`, `reject`; one), `author` (enum `person`, `system`, `agent`; one). An agent-authored record is a proposal.
 
-**Location attributes:** `stateMinWageCents` (cents; one), `localMinWageCents` (cents; one).
+**Answer attributes (ballast):** `field` (text; one), `value` (text; one), `next` (ref to an answer owned by the same placement; one).
+
+**Location attributes:** `jurisdiction` (ref to a jurisdiction; one), `localMinWageCents` (cents; one).
+
+**Jurisdiction attributes:** `stateMinWageCents` (cents; one). The state floor sits two references away from the placement
+(`S.location`, then `L.jurisdiction`), so the dependency index has to follow two hops (RULINGS Q40b).
+
+**Ballast is rule-neutral (RULINGS Q40a).** The placement's `answers` attribute and every answer attribute are ballast: no rule
+reads them, so they are in no read set, never in `dependencies`, never inputs, and a write to them affects no subject (case C57).
+They exist so a generated world has the size and depth of a real subject pull: 50 to 2,000 facts over 3 to 6 hops (section 12.3).
+Ballast is part of the schema, so the trace's commands can carry 5 to 50 facts without inventing attributes: an attribute that is
+not in this section is `W0.E_UNKNOWN` (case C63), never silently dropped.
 
 No other attribute exists. `schema.json` holds the same table as data.
 
@@ -131,12 +149,12 @@ basis = {"tx": <integer 0 to 9007199254740991>, "validTime": <instant>}
 ```
 
 **`tx` is the record-time position** of the read: the world holds what the store knew after committing transaction `tx`.
-**`validTime` is "now"** for every rule. A lane's position is a coordinate `(stream, epoch, offset, ordinal)` ordered
-lexicographically and not necessarily dense (RULINGS Q31c). W0 needs only its order, so the adapter passes one integer per
-transaction that preserves that order: the oracle's dense ordinal, which O-REPLAY already assigns by sorting coordinates. Every
-W0 rule compares positions only with `<`, `>=` and `max`, so any order-preserving integer gives the same outputs except the
-`inputs` arrays and the work item versions, which carry the integers themselves. The kernel and O-DOMAIN must therefore use the same
-mapping, the dense ordinal, when they are compared.
+**`validTime` is "now"** for every rule. **Positions (RULINGS Q40f):** every `tx` in W0 (on a fact, an activation or a basis) is
+the 1-based dense ordinal of committed Triplex transacts in the tenant's source-of-truth stream, in coordinate order. A lane's
+position is a coordinate `(stream, epoch, offset, ordinal)` ordered lexicographically and not necessarily dense (RULINGS Q31c); the
+ordinal counts only committed transacts, so aborted offsets take no number, and the first committed transact of the tenant is 1.
+The same ordinal is supplied to the kernel and to O-DOMAIN. Every W0 rule compares positions only with `<`, `>=` and `max`, so the
+choice matters only for the `inputs` arrays and the work item versions, which carry the integers themselves.
 
 ### 4.2 The world
 
@@ -149,11 +167,13 @@ fact  = {"e": <entity id>, "a": <attribute>, "v": <value>, "tx": <integer 1 to 9
    The store, not W0, applies bitemporal visibility, retroactive corrections and the supersession of stale vendor revisions.
 2. **`tx` on a fact is the commit position of the transaction that asserted it.** Facts asserted in one command share one `tx`.
    This is the "commit order the store reports" that decision resolution uses (section 6.2).
-3. **Allowed entities:** the subject, entities it owns (id starts with `<subject>/`), and locations. A document or decision id
-   always starts with its owner's id, so a world for `pl:a` cannot carry `pl:b/doc:1`.
-4. **Reachable entities** are the subject, the documents and decisions named by the subject's `documents` and `decisions` facts,
-   and the location named by its `location` fact. Every fact is validated (4.4), reachable or not; reachability only decides
-   which facts the rules read. A valid fact of an allowed but unreachable entity is read by no rule (case C44).
+3. **Allowed entities:** the subject, entities it owns (id starts with `<subject>/`), locations and jurisdictions. A document,
+   decision or answer id always starts with its owner's id, so a world for `pl:a` cannot carry `pl:b/doc:1` (case C62).
+4. **Reachable entities** are the subject; the documents, decisions and answers named by the subject's `documents`, `decisions`
+   and `answers` facts; every answer named by a reachable answer's `next` fact; the location named by the subject's `location`
+   fact; and the jurisdiction named by that location's `jurisdiction` fact. Every fact is validated (4.4), reachable or not;
+   reachability only decides which facts the rules can read. A valid fact of an allowed but unreachable entity is read by no rule
+   (case C44).
 5. **Fact order in the array carries no meaning.** Outputs never depend on it, except which error is reported first (4.4).
 6. **An erased value keeps its fact.** After a PII erasure the fact stays with its `e`, `a` and `tx`; only `v` becomes
    `{"erasedAt": ...}`. Per `lab/TARGETS.md` section 7 a store returns the marker at every basis once the erasure has published,
@@ -166,22 +186,26 @@ For a many-cardinality attribute, `S.documents` is the set of its values.
 
 | Operation | Input object (exact keys) |
 | --- | --- |
-| `evaluate` | `{"basis", "release", "world"}`, where `release` is `"R1"` or `"R2"` and names `releases/<name>.json` |
+| `evaluate` | `{"basis", "release", "world"}`, where `release` is `"R1"`, `"R2"` or `"R3"` and names `releases/<name>.json` |
 | `reconcile` | `{"activations", "basis", "world"}`, where `activations` is an array of `{"from": <instant>, "release": <hash>, "tx": <integer>}` |
 | `affected` | `{"basis", "release", "worlds", "writes"}`, where `worlds` is an array of worlds with distinct subjects and `writes` is an array of `[<entity id string>, <attribute string>]` |
+| `publish` | `{"evaluations", "state"}`, where `evaluations` is an array of evaluation records and `state` is an outbox state (section 8.8) |
 
 ### 4.4 Validation and errors
 
 **An invalid input yields `{"error": "<code>"}` and nothing else.** Checks run in the order below and the first failure wins.
 
 1. **`W0.E_SHAPE`:** the input is not a JSON object with exactly the keys of 4.3, or any of these kinds is wrong:
-   - objects with exactly the listed keys: the input, `basis`, `world`, each fact, each activation;
-   - arrays: `facts`, `activations`, `worlds`, `writes`; each write is a two-element array of strings;
+   - objects with exactly the listed keys: the input, `basis`, `world`, each fact, each activation, and for `publish` each
+     evaluation record, work item, item state, subject state and delivery (8.4, 8.8);
+   - arrays: `facts`, `activations`, `worlds`, `writes`, `evaluations`, `workItems`, `items`, `pending`, `subjects`; each write is a
+     two-element array of strings;
    - strings: `basis.validTime`, `world.subject`, a fact's `e` and `a`, an activation's `from` and `release`, the `release` name;
    - JSON integer tokens (section 2, so `3.0` and `1e1` fail): `basis.tx`, a fact's `tx`, an activation's `tx`;
    - a fact's `v` may be any JSON kind here; its type is checked in step 3.
-   Also `W0.E_SHAPE`: an object with a duplicate key, a `release` name other than `R1` or `R2`, two worlds in `affected` with the
-   same subject. A string that has the right kind but a bad form (an instant that is not an instant, an unknown entity id) is
+   Also `W0.E_SHAPE`: an object with a duplicate key anywhere in the input, including inside a fact's `v` (case C66); a `release`
+   name other than `R1`, `R2` or `R3`; two worlds in `affected` with the same subject (case C67). `publish` checks shapes only:
+   it trusts that its evaluation records came from `evaluate` or `reconcile`. A string that has the right kind but a bad form (an instant that is not an instant, an unknown entity id) is
    left to the later steps.
 2. **`W0.E_BASIS`:** `basis.validTime` is not a valid instant, or `basis.tx` is outside its range.
 3. **For each world in array order** (one world for `evaluate` and `reconcile`):
@@ -204,29 +228,33 @@ For a many-cardinality attribute, `S.documents` is the set of its values.
 ### 5.1 The release document
 
 ```
-{"name": <"R1" or "R2">, "rules": [<rule entry> x 11], "world": "W0"}
+{"name": <"R1", "R2" or "R3">, "rules": [<rule entry> x 11], "world": "W0"}
 rule entry = {"id": <rule id>, "params": <object>}
 ```
 
 **The eleven rule entries appear in this fixed order:** `LIFE`, `I9S1`, `I9S2`, `EVSUB`, `EVSTAT`, `BGC`, `DOCEXP`, `MINWAGE`, `OT`,
 `PAYCHG`, `PROP`. The order is the evaluation and trace order (section 8). One rule is one requirement.
 
-| Rule | Params | R1 | R2 |
-| --- | --- | --- | --- |
-| `LIFE` | none | `{}` | `{}` |
-| `I9S1` | none | `{}` | `{}` |
-| `I9S2` | `businessDays` integer 1 to 10 | `{"businessDays": 3}` | `{"businessDays": 2}` (changed) |
-| `EVSUB` | `businessDays` integer 1 to 10 | `{"businessDays": 3}` | same |
-| `EVSTAT` | `tncBusinessDays` integer 1 to 20 | `{"tncBusinessDays": 8}` | same |
-| `BGC` | none | `{}` | `{}` |
-| `DOCEXP` | `leadDays`: object from document type to integer 0 to 365; the keys are the tracked types | `{"leadDays": {"ead": 0, "visa": 0}}` | `{"leadDays": {"ead": 90, "visa": 0}}` (changed) |
-| `MINWAGE` | `floorAttributes`: non-empty array of distinct location `cents` attribute names in ascending byte order | `{"floorAttributes": ["stateMinWageCents"]}` | `{"floorAttributes": ["localMinWageCents", "stateMinWageCents"]}` (changed) |
-| `OT` | `thresholdMinutes` minutes | `{"thresholdMinutes": 2400}` | same |
-| `PAYCHG` | `thresholdCents` cents | `{"thresholdCents": 500}` | same |
-| `PROP` | none | `{}` | `{}` |
+| Rule | Params | R1 | R2 | R3 |
+| --- | --- | --- | --- | --- |
+| `LIFE` | none | `{}` | `{}` | `{}` |
+| `I9S1` | none | `{}` | `{}` | `{}` |
+| `I9S2` | `businessDays` integer 1 to 10 | `{"businessDays": 3}` | `{"businessDays": 2}` (changed) | as R2 |
+| `EVSUB` | `businessDays` integer 1 to 10 | `{"businessDays": 3}` | same | same |
+| `EVSTAT` | `tncBusinessDays` integer 1 to 20 | `{"tncBusinessDays": 8}` | same | same |
+| `BGC` | none | `{}` | `{}` | `{}` |
+| `DOCEXP` | `leadDays`: object from document type to integer 0 to 365; the keys are the tracked types | `{"leadDays": {"ead": 0, "visa": 0}}` | `{"leadDays": {"ead": 90, "visa": 0}}` (changed) | as R2 |
+| `MINWAGE` | `floorSources`: non-empty array of distinct strings from `jurisdiction.stateMinWageCents` and `location.localMinWageCents`, ascending | `{"floorSources": ["jurisdiction.stateMinWageCents"]}` | `{"floorSources": ["jurisdiction.stateMinWageCents", "location.localMinWageCents"]}` (changed) | as R2 |
+| `OT` | `thresholdMinutes` minutes | `{"thresholdMinutes": 2400}` | same | `{"thresholdMinutes": 2700}` (changed from R2) |
+| `PAYCHG` | `thresholdCents` cents | `{"thresholdCents": 500}` | same | same |
+| `PROP` | none | `{}` | `{}` | `{}` |
 
-**R2 changes exactly three requirements:** the Section 2 due window (`I9S2`), the minimum-wage rule's location attributes
+**R2 changes exactly three requirements of R1:** the Section 2 due window (`I9S2`), the minimum-wage rule's floor sources
 (`MINWAGE`, which changes its read set), and the expiry handling of one document type (`DOCEXP`, `ead` only).
+
+**R3 changes exactly one requirement of R2 (RULINGS Q40i):** `OT`'s threshold rises from 2,400 to 2,700 minutes. `OT` reads one
+attribute, `S.weeklyMinutes`, so R3 is the narrow release: a sweep that re-runs only the rules in the diff touches one rule per
+subject and changes the outputs of about 4% of subjects (section 12.4).
 
 ### 5.2 Content hash
 
@@ -236,7 +264,7 @@ are in `releases/index.json`, and `validate.py` recomputes them. A release is im
 ### 5.3 Release diff
 
 `diff(A, B)` is the list of rule ids, in release order, whose rule entries have different canonical JSON in A and in B.
-`diff(R1, R2) = ["I9S2", "DOCEXP", "MINWAGE"]`. This is the definition tier of R18 section 3.1 item 3: a sweep may skip a
+`diff(R1, R2) = ["I9S2", "DOCEXP", "MINWAGE"]`, `diff(R2, R3) = ["OT"]` and `diff(R1, R3) = ["I9S2", "DOCEXP", "MINWAGE", "OT"]`. This is the definition tier of R18 section 3.1 item 3: a sweep may skip a
 `(subject, rule)` pair whose rule is not in the diff and whose inputs did not change.
 
 ### 5.4 Activation
@@ -250,7 +278,7 @@ are in `releases/index.json`, and `validate.py` recomputes them. A release is im
 2. No candidate: `W0.E_NO_RELEASE`.
 3. Pick the candidate with the greatest `from`; among equal `from`, the greatest `tx`; among equal `tx`, the greatest `release`
    string (byte order).
-4. If the picked hash is neither R1's nor R2's: `W0.E_NO_RELEASE`. Otherwise return it.
+4. If the picked hash is not R1's, R2's or R3's: `W0.E_NO_RELEASE`. Otherwise return it. Case C61 pins the equal-`from` tie.
 
 In-flight reconciles finishing on the old release is runtime behavior: each reconcile resolves the release once, at its own basis.
 
@@ -296,6 +324,8 @@ For subject S, with `D` ranging over `S.decisions`:
 - `D.x` is `(D, x)` for every value D of the subject's `decisions` facts.
 - `d.x` is `(d, x)` for every value d of the subject's `documents` facts.
 - `L.x` is `(L, x)` where L is the value of `S.location`; it yields no pair when `S.location = ⊥`.
+- `J.x` is `(J, x)` where J is the value of the fact `(L, jurisdiction)`; it yields no pair when `S.location = ⊥` or when the world
+  has no `(L, jurisdiction)` fact.
 
 The pairs are instantiated from the reference values even when the referenced entity has no facts in the world, and whether or
 not the pair's own fact is present, because a later write to that pair can change the output. Every pair is listed regardless of the order
@@ -347,7 +377,7 @@ a table names only the kind and, for keyed rules, the key. Every row number is r
 
 ### 7.4 `EVSUB`: E-Verify case submission
 
-- **Read set:** `S.startDate`, `S.ssn`, `S.everifyStatus`. **Input facts:** those three facts when present.
+- **Read set:** `S.startDate`, `S.ssn`, `S.everifyStatus`, `S.everifySubmitResult`. **Input facts:** those four facts when present.
 - **Due:** `endOfDay(addBusinessDays(S.startDate, businessDays))`, or `null`. The case must exist by the third business day.
 
 | Row | Condition | Outputs |
@@ -356,7 +386,12 @@ a table names only the kind and, for keyed rules, the key. Every row number is r
 | 2 | `S.ssn = ⊥` | task `everify.collect-ssn`, due as above |
 | 3 | `S.ssn` is an erased marker | task `everify.ssn-erased`, due as above |
 | 4 | `S.ssn` is not exactly 9 characters each in `0` to `9` | task `everify.fix-ssn`, due as above |
-| 5 | otherwise | work item `everify.submit-case` |
+| 5 | `S.everifySubmitResult = accepted` | none (submitted; the vendor's first status has not arrived) |
+| 6 | `S.everifySubmitResult = rejected` | task `everify.submit-rejected`, due as above |
+| 7 | otherwise | work item `everify.submit-case` |
+
+`everifySubmitResult` is written by the runtime writer class after it performs the `everify.submit-case` work item, so rows 5 and 6
+close the loop from a published work item back to a fact (cases C52, C53).
 
 ### 7.5 `EVSTAT`: E-Verify case status
 
@@ -406,19 +441,21 @@ notice's payload (its due time) and so publishes a new version of the same id (s
 
 At `B` the open task turns overdue and the work item appears; this is the midnight expiry wave of GS.20.
 
-### 7.8 `MINWAGE`: pay rate at or above the location's minimum wage
+### 7.8 `MINWAGE`: pay rate at or above the minimum wage, two hops away
 
-- **Read set:** `S.startDate`, `S.payRateCents`, `S.location`, and `L.a` for each `a` in `floorAttributes`.
+- **Read set:** `S.startDate`, `S.payRateCents`, `S.location`, and per floor source: `jurisdiction.stateMinWageCents` reads
+  `L.jurisdiction` and `J.stateMinWageCents`; `location.localMinWageCents` reads `L.localMinWageCents`. Under R1 the read set
+  therefore reaches the jurisdiction through the location (two hops); R2 adds the location's own local floor.
 - **Input facts:** every fact whose pair is in the read set.
-- **Floor:** the greatest value among the present `L.a` facts for `a` in `floorAttributes`. R1 reads only `stateMinWageCents`.
-  R2 also reads `localMinWageCents`, so a city ordinance above the state floor applies.
+- **Floor:** the greatest value among the present facts named by the floor sources: `(J, stateMinWageCents)` and, under R2,
+  `(L, localMinWageCents)`. A city ordinance above the state floor applies under R2.
 - **Due:** every task of this rule is due at `startOf(S.startDate)`, or `null`. Pay must be fixed before the first shift.
 
 | Row | Condition | Outputs |
 | --- | --- | --- |
 | 1 | `S.payRateCents = ⊥` | task `pay.rate-missing` |
 | 2 | `S.location = ⊥` | task `pay.location-missing` |
-| 3 | no `L.a` fact is present for any `a` in `floorAttributes` | task `pay.floor-unknown` |
+| 3 | no fact named by a floor source is present (no jurisdiction reference, no jurisdiction floor, and under R2 no local floor) | task `pay.floor-unknown` |
 | 4 | `S.payRateCents >= floor` | none |
 | 5 | otherwise | task `pay.below-minimum`; work item `notify.pay-below-minimum` |
 
@@ -504,20 +541,21 @@ of R18 section 3.4 item 3). Three kinds exist:
 
 A `due` obligation carries the task's rule. Every boundary is strictly greater than `v`.
 
-### 8.4 Work items (RULINGS Q36a)
+### 8.4 Work items (RULINGS Q36a, Q38f, Q40c)
 
 - **Fields:** `kind` and `key` from the rule's table (`key` is `""` for unkeyed rules, d for `DOCEXP`), `rule`, `inputs` equal to
   the `inputs` of the trace entry with the same rule and key, `payload` from the table below, `id` and `version`.
-- **The id names the work, not its content:** `"wi:" + lowercase hex of SHA-256 over the UTF-8 bytes of
+- **The id names the work:** `"wi:" + lowercase hex of SHA-256 over the UTF-8 bytes of
   canonicalJson({"key": ..., "kind": ..., "rule": ..., "subject": S})`, with exactly those four keys. The id does not change with
   the release or the inputs.
-- **The version names the content:** `"wv:" + lowercase hex of SHA-256 over the UTF-8 bytes of
-  canonicalJson({"inputs": ..., "payload": ..., "release": <release hash>})`, with exactly those three keys.
+- **The version names the content and is not a delivery identity:** `"wv:" + lowercase hex of SHA-256 over the UTF-8 bytes of
+  canonicalJson({"inputs": ..., "payload": ..., "release": <release hash>})`, with exactly those three keys. Two deliveries can
+  carry the same version (case C73).
 - **Payloads** carry the values the rule decided on, never a PII value:
 
 | Kind | Rule | Payload |
 | --- | --- | --- |
-| `everify.submit-case` | `EVSUB` | `{"startDate": S.startDate}`, or `null` for the value when the start date is absent |
+| `everify.submit-case` | `EVSUB` | `{"startDate": S.startDate}`, or `null` for the value when the start date is absent (case C50) |
 | `notify.everify-tnc` | `EVSTAT` | `{"dueAt": <the everify.tnc task's dueAt, an instant or null>}` |
 | `notify.everify-fnc` | `EVSTAT` | `{}` |
 | `bgc.order` | `BGC` | `{}` |
@@ -526,17 +564,8 @@ A `due` obligation carries the task's rule. Every boundary is strictly greater t
 | `notify.pay-below-minimum` | `MINWAGE` | `{"floorCents": <the floor of 7.8>, "payRateCents": S.payRateCents}` |
 | `notify.pay-change-approval` | `PAYCHG` | `{"baselinePayRateCents": S.baselinePayRateCents, "payRateCents": S.payRateCents}` |
 
-- **Publication** is the outbox's rule, stated here so the expected outbox content is defined. For each work item an evaluation
-  produces, the outbox publishes `(id, version)` with its payload when no version of that id has been published yet, or when the
-  payload differs from the payload of the latest published version of that id. Otherwise it publishes nothing. The delivery key is
-  `(id, version)`, so a redelivered version is deduplicated at the receiver (GS.19b).
-- **Consequences:**
-  - Re-evaluating the same inputs under the same release gives the same id and the same version.
-  - An activation that leaves a payload unchanged publishes nothing, although the version changes with the release hash (early
-    cutoff, R18 X5). In C19 against C20, `bgc.order` keeps its id and its empty payload.
-  - An activation that changes a payload publishes a new version of the same id. In C19 against C20, `notify.pay-below-minimum`
-    keeps its id and its payload's floor moves from 1650 to 1700.
-  - W0 defines no retraction: when a work item stops appearing in the outputs, its published versions stay as they are.
+- **Which work items reach the receiver** is decided by `publish` (8.8): each id carries a publication sequence, and the delivery
+  key is `(id, seq)`.
 
 ### 8.5 Flags
 
@@ -560,6 +589,52 @@ single row-0 entry when there are no items. `row` is the matching row number. `i
 
 "Ascending" for strings is byte order of their ASCII bytes (equal here to Unicode code point order and to JavaScript's default
 string comparison, because every W0 string is printable ASCII).
+
+### 8.8 The outbox: `publish` (RULINGS Q38f, Q40c, Q40d, Q40h)
+
+`publish(state, evaluations)` returns `{"deliveries": [...], "state": <new state>}`. It is the expected outbox, so O-DOMAIN can
+test a store's outbox and the receiver's view.
+
+```
+evaluation record = {"basis": {"tx", "validTime"}, "release": <hash>, "subject": S, "workItems": [<work item of 8.4>, ...]}
+state             = {"items": [<item state>, ...], "pending": [<delivery>, ...], "subjects": [<subject state>, ...]}
+item state        = {"id", "payload", "retired": <boolean>, "seq": <integer >= 1>, "subject"}
+subject state     = {"basis": {"tx", "validTime"}, "subject"}
+delivery          = {"id", "key", "kind", "payload", "rule", "seq", "subject", "version"}
+```
+
+An evaluation record is the `basis`, `release`, `subject` and `workItems` of one `evaluate` or `reconcile` output. The empty
+state is `{"items": [], "pending": [], "subjects": []}`. In every state `items` is ascending by `id`, `subjects` ascending by
+`subject`, and `pending` in publication order.
+
+**Processing.** Evaluation records are applied one at a time, in array order:
+
+1. **Basis order (Q40d).** Let A be the subject's stored basis. When A exists and the record's basis is older (its `tx` is less
+   than A's, or equal with a `validTime` earlier than A's), the record is skipped: no delivery and no state change (case C77).
+   Otherwise the record's basis becomes the subject's stored basis. An equal basis is not older, so re-applying a record is
+   allowed and publishes nothing new (case C75).
+2. **Publication (Q38f, Q40c).** For each work item W of the record, in `id` order, with I the item state of `W.id`:
+   - no I: publish W with `seq` 1;
+   - I is retired: publish W with `seq` = I.seq + 1, even when the payload equals I's (Q40h, case C78);
+   - `canonicalJson(W.payload)` differs from `canonicalJson(I.payload)`: publish W with `seq` = I.seq + 1;
+   - otherwise: nothing.
+
+   Publishing appends the delivery `{id, key, kind, payload, rule, seq, subject, version}` (taken from W, with the new `seq`) to
+   this call's `deliveries` and to `state.pending`, and sets I to `{id, payload, retired: false, seq, subject}`.
+3. **Retirement (Q40h).** Every item state of this subject that is not retired and whose id is not among the record's work items
+   becomes retired; its `seq` and `payload` stay.
+
+**What the outputs mean.**
+
+- **The delivery key is `(id, seq)`.** A rollback R1, R2, R1 delivers three times with sequences 1, 2 and 3 (payload floors 1650,
+  1700, 1650), and the receiver never suppresses the return to 1650 (case C73). A correction that is later reverted works the same
+  way (case C74).
+- **An unchanged payload publishes nothing,** whatever the release: an activation that changes no payload of an id leaves it alone
+  (early cutoff, R18 X5; case C76).
+- **Atomic persistence.** A store persists the new state, `pending` included, in the same write as its outbox records. `pending`
+  holds published deliveries the receiver has not acknowledged; acknowledgement removes an entry and is outside W0. After a crash,
+  every pending delivery is sent again with its original `(id, seq)`, and the re-evaluation that follows the restart publishes
+  nothing new (case C75).
 
 ## 9. Canonical JSON
 
@@ -586,15 +661,20 @@ order.
 
 1. **This is the expected affected-subject set** of `lab/TARGETS.md` 1.1 P3 item 3 for one transaction, with `worlds` at the basis
    before the transaction and `writes` the `(entity, attribute)` pairs the transaction asserts or retracts.
-2. **Before-only is enough.** Every reference attribute (`location`, `documents`, `decisions`) is in the read set of some rule in
-   both releases. A transaction that changes which entity a subject references therefore writes a pair already in that subject's
-   dependencies, so the dependencies before the transaction catch every subject the after-state would add.
-3. **Direct writes are included.** Every placement, document and decision attribute is in some read set in both releases, so a
-   write to a subject's own facts always affects it.
-4. **The release matters.** Under R1 a write to `localMinWageCents` affects no one; under R2 it affects every placement at that
-   location (cases C35 and C36).
-5. **No valid-time filtering.** A correction to a past valid-time range still marks the subject; whether its current output changed
-   is left to the re-run.
+2. **Before-only is enough.** Every rule-relevant reference attribute (`S.location`, `S.documents`, `S.decisions` and
+   `L.jurisdiction`) is in the read set of some rule in all three releases. A transaction that changes which entity a subject
+   reaches therefore writes a pair already in that subject's dependencies (re-pointing a location's jurisdiction marks every
+   placement at the location, case C60), so the dependencies before the transaction catch every subject the after-state would add.
+3. **Direct writes are included, ballast excepted.** Every placement, document and decision attribute other than ballast is in some
+   read set in all three releases, so a write to a subject's rule-relevant facts always affects it. A ballast write affects nobody
+   (case C57).
+4. **Two hops.** A write to a jurisdiction's `stateMinWageCents` affects every placement at every location that references that
+   jurisdiction, under every release (cases C58 and C59).
+5. **The release matters.** Under R1 a write to `localMinWageCents` affects no one; under R2 and R3 it affects every placement at
+   that location (cases C35 and C36). The depth-two pair `(J, stateMinWageCents)` is read under every release, the depth-one pair
+   `(L, localMinWageCents)` only from R2 on.
+6. **No valid-time filtering.** A correction to a past valid-time range still marks the subject; whether its current output changed
+   is left to the re-run (RULINGS Q36e).
 
 ## 11. Golden cases
 
@@ -602,7 +682,7 @@ order.
 
 ```
 {
-  "id": "C01", "slug": "...", "title": "...", "op": "evaluate" | "reconcile" | "affected",
+  "id": "C01", "slug": "...", "title": "...", "op": "evaluate" | "reconcile" | "affected" | "publish",
   "checks": [{"rule": <rule id>, "polarity": "positive" | "negative"}, ...],
   "identicalTo": <case id>      (optional: the expected bytes equal that case's),
   "notes": [<derivation step>, ...],

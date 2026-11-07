@@ -4,7 +4,9 @@
   "title": "A +501 cent pay change with an approval committed before the change: approval still needed",
   "op": "evaluate",
   "checks": [
-    {"rule": "PAYCHG", "polarity": "positive"}, {"rule": "MINWAGE", "polarity": "negative"}, {"rule": "PROP", "polarity": "negative"}
+    {"rule": "PAYCHG", "polarity": "positive"},
+    {"rule": "MINWAGE", "polarity": "negative"},
+    {"rule": "PROP", "polarity": "negative"}
   ],
   "notes": [
     "baseline 1149 (tx 2); payRateCents 1650 asserted at tx 9; abs(1650 - 1149) = 501 > 500.",
@@ -18,7 +20,8 @@
     "world": {
       "subject": "pl:a",
       "facts": [
-        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
         {"e": "pl:a", "a": "baselinePayRateCents", "v": 1149, "tx": 2},
         {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
@@ -43,16 +46,31 @@
   "expected": {
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
     "dependencies": [
-      ["loc:nyc", "stateMinWageCents"],
-      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
-      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
-      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
-      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"],
-      ["pl:a/dec:2", "author"], ["pl:a/dec:2", "target"], ["pl:a/dec:2", "verdict"]
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"],
+      ["pl:a/dec:2", "author"],
+      ["pl:a/dec:2", "target"],
+      ["pl:a/dec:2", "verdict"]
     ],
     "flags": [],
     "obligations": [],
-    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
     "subject": "pl:a",
     "tasks": [
       {"dueAt": null, "id": "pl:a#pay.change-approval", "kind": "pay.change-approval", "overdue": false, "rule": "PAYCHG"}
@@ -71,7 +89,7 @@
       {"inputs": [6, 8], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:76a8e53770d5b608edfbd75b07534cdae74350dfe63853cb7296a4fb7c77ed8d", "inputs": [2, 8, 9], "key": "", "kind": "notify.pay-change-approval", "payload": {"baselinePayRateCents": 1149, "payRateCents": 1650}, "rule": "PAYCHG", "version": "wv:9f9fefb96941acbf50906ca59431daea7b0e778f7f57bd20af8bed13f183d919"}
+      {"id": "wi:76a8e53770d5b608edfbd75b07534cdae74350dfe63853cb7296a4fb7c77ed8d", "inputs": [2, 8, 9], "key": "", "kind": "notify.pay-change-approval", "payload": {"baselinePayRateCents": 1149, "payRateCents": 1650}, "rule": "PAYCHG", "version": "wv:86e954d20d20c8242d8d64a1c9d2729d72209263b4e232737fb30384a6c4af32"}
     ]
   }
 }

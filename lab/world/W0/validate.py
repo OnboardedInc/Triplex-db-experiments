@@ -1,9 +1,9 @@
 """Shape validator for lab/world/W0 (stdlib only; run with `python3 -I validate.py`).
 
-It checks JSON shape, value types, canonical ordering, release hashes, work item id and
-version hashes, payload keys and the output-assembly consistency rules of SPEC.md section 8 (overdue flags,
-due obligations, trace order).
-It holds no rule logic: it never decides which tasks, obligations, work items or flags a world produces.
+It checks JSON shape, value types, canonical ordering, release hashes, work item id and version hashes, payload keys and the
+output-assembly consistency rules of SPEC.md section 8 (overdue flags, due obligations, trace order, ballast never in
+dependencies, publish deliveries copied from their work items and appended to pending).
+It holds no rule logic: it never decides which tasks, obligations, work items, flags or deliveries a world produces.
 """
 import datetime
 import hashlib
@@ -21,15 +21,19 @@ class FloatToken(str):
     """A number token with a fraction or exponent, kept as its source text."""
 
 
+class DuplicateKey(Exception):
+    pass
+
+
 def err(where, msg):
     ERRORS.append(f"{where}: {msg}")
 
 
-def load(path):
+def load(path, allow_duplicates=False):
     def pairs(items):
         keys = [k for k, _ in items]
-        if len(keys) != len(set(keys)):
-            raise ValueError(f"duplicate key in {path}")
+        if len(keys) != len(set(keys)) and not allow_duplicates:
+            raise DuplicateKey(f"duplicate key in {path}")
         return dict(items)
 
     def bad_constant(name):
@@ -89,6 +93,8 @@ KINDS = SCHEMA["entityKinds"]
 RULES = SCHEMA["ruleOrder"]
 KEYED = set(SCHEMA["keyedRules"])
 FLAGS = SCHEMA["flagNames"]
+OWNED = {"document", "decision", "answer"}
+BALLAST = {(k, a) for k, spec in KINDS.items() for a, s in spec["attributes"].items() if s.get("ballast")}
 
 
 def kind_of(entity):
@@ -98,12 +104,13 @@ def kind_of(entity):
     return None
 
 
-def check_value(where, subject, entity, attr, spec, v):
+def check_value(where, entity, attr, spec, v):
     t = spec["type"]
     if isinstance(v, dict):
         if not (spec["pii"] and list(v) == ["erasedAt"] and valid_instant(v["erasedAt"])):
             err(where, f"bad erased marker or erased non-PII value on {attr}")
         return
+    owner = entity.split("/")[0]
     ok = {
         "date": lambda: valid_date(v),
         "instant": lambda: valid_instant(v),
@@ -113,7 +120,8 @@ def check_value(where, subject, entity, attr, spec, v):
         "text": lambda: isinstance(v, str) and 1 <= len(v) <= 64 and all(32 <= ord(c) <= 126 for c in v),
         "enum": lambda: isinstance(v, str) and v in spec["values"],
         "ref": lambda: isinstance(v, str) and kind_of(v) == spec["refKind"]
-        and (not spec.get("owned") or v.startswith(entity + "/")),
+        and (not spec.get("owned") or v.startswith(entity + "/"))
+        and (not spec.get("sameOwner") or v.startswith(owner + "/")),
     }[t]()
     if not ok:
         err(where, f"value {v!r} is not a valid {t} for {attr}")
@@ -121,10 +129,12 @@ def check_value(where, subject, entity, attr, spec, v):
 
 def check_world(where, world, basis):
     if set(world) != {"facts", "subject"} or not isinstance(world["facts"], list):
-        return err(where, "world must be {subject, facts[]}")
+        err(where, "world must be {subject, facts[]}")
+        return set()
     s = world["subject"]
     if kind_of(s) != "placement":
-        return err(where, "subject is not a placement id")
+        err(where, "subject is not a placement id")
+        return set()
     seen = set()
     txs = set()
     for n, f in enumerate(world["facts"]):
@@ -134,14 +144,14 @@ def check_world(where, world, basis):
             continue
         e, a, v, tx = f["e"], f["a"], f["v"], f["tx"]
         k = kind_of(e) if isinstance(e, str) else None
-        if k is None or (k in ("document", "decision") and not e.startswith(s + "/")) or (k == "placement" and e != s):
+        if k is None or (k in OWNED and not e.startswith(s + "/")) or (k == "placement" and e != s):
             err(w, f"entity {e!r} not allowed in this world")
             continue
         spec = KINDS[k]["attributes"].get(a)
         if spec is None:
             err(w, f"unknown attribute {a!r} for {k}")
             continue
-        check_value(w, s, e, a, spec, v)
+        check_value(w, e, a, spec, v)
         if not is_int(tx) or tx < 1 or tx > basis["tx"]:
             err(w, f"tx {tx!r} outside 1..basis.tx")
         key = (e, a) if spec["cardinality"] == "one" else (e, a, canon(v))
@@ -167,7 +177,7 @@ def sorted_unique(xs):
 def check_releases():
     index = load(os.path.join(HERE, "releases", "index.json"))
     out = {}
-    for name in ("R1", "R2"):
+    for name in SCHEMA["releases"]:
         r = load(os.path.join(HERE, "releases", f"{name}.json"))
         w = f"releases/{name}.json"
         if set(r) != {"name", "rules", "world"} or r["name"] != name or r["world"] != "W0":
@@ -184,6 +194,22 @@ def check_releases():
     return out
 
 
+def check_work_item(where, wi, subject, rhash):
+    if set(wi) != {"id", "inputs", "key", "kind", "payload", "rule", "version"}:
+        err(where, f"bad work item {wi}")
+        return False
+    keys = SCHEMA["workItemPayloadKeys"].get(wi["kind"])
+    if not isinstance(wi["payload"], dict) or keys is None or sorted(wi["payload"]) != sorted(keys):
+        err(where, f"work item {wi['kind']} payload keys should be {keys}")
+    want = "wi:" + sha({"key": wi["key"], "kind": wi["kind"], "rule": wi["rule"], "subject": subject})
+    if wi["id"] != want:
+        err(where, f"work item {wi['kind']} key {wi['key']!r} id should be {want}")
+    want_v = "wv:" + sha({"inputs": wi["inputs"], "payload": wi["payload"], "release": rhash})
+    if wi["version"] != want_v:
+        err(where, f"work item {wi['kind']} key {wi['key']!r} version should be {want_v}")
+    return True
+
+
 def check_output(where, out, world, basis, release, txs):
     keys = {"basis", "dependencies", "flags", "obligations", "release", "subject", "tasks", "trace", "workItems"}
     if set(out) != keys:
@@ -197,11 +223,11 @@ def check_output(where, out, world, basis, release, txs):
         err(where, "dependencies must be distinct [e, a] pairs in ascending order")
     for e, a in deps:
         k = kind_of(e)
-        if k is None or a not in KINDS[k]["attributes"]:
-            err(where, f"dependency {e} {a} is not a schema pair")
+        if k is None or a not in KINDS[k]["attributes"] or (k, a) in BALLAST:
+            err(where, f"dependency {e} {a} is not a rule-relevant schema pair")
     for a in KINDS["placement"]["attributes"]:
-        if [s, a] not in deps:
-            err(where, f"dependency {s} {a} missing (every placement attribute is read)")
+        if ("placement", a) not in BALLAST and [s, a] not in deps:
+            err(where, f"dependency {s} {a} missing (every non-ballast placement attribute is read)")
     for name in ("flags", "obligations", "tasks", "workItems"):
         ids = [x.get("name" if name == "flags" else "id") for x in out[name]]
         if not sorted_unique(ids):
@@ -258,20 +284,72 @@ def check_output(where, out, world, basis, release, txs):
         if n == 0 or (r not in KEYED and n != 1):
             err(where, f"trace has {n} entries for {r}")
     for wi in out["workItems"]:
-        if set(wi) != {"id", "inputs", "key", "kind", "payload", "rule", "version"}:
-            err(where, f"bad work item {wi}")
-            continue
-        if entries.get((wi["rule"], wi["key"])) != wi["inputs"]:
+        if check_work_item(where, wi, s, rhash) and entries.get((wi["rule"], wi["key"])) != wi["inputs"]:
             err(where, f"work item {wi['kind']} inputs differ from its trace entry")
-        keys = SCHEMA["workItemPayloadKeys"].get(wi["kind"])
-        if not isinstance(wi["payload"], dict) or keys is None or sorted(wi["payload"]) != sorted(keys):
-            err(where, f"work item {wi['kind']} payload keys {sorted(wi['payload'])} should be {keys}")
-        want = "wi:" + sha({"key": wi["key"], "kind": wi["kind"], "rule": wi["rule"], "subject": s})
-        if wi["id"] != want:
-            err(where, f"work item {wi['kind']} key {wi['key']!r} id should be {want}")
-        want_v = "wv:" + sha({"inputs": wi["inputs"], "payload": wi["payload"], "release": rhash})
-        if wi["version"] != want_v:
-            err(where, f"work item {wi['kind']} key {wi['key']!r} version should be {want_v}")
+
+
+def check_publish(where, inp, exp, by_hash):
+    if set(inp) != {"evaluations", "state"} or set(exp) != {"deliveries", "state"}:
+        return err(where, "publish input must be {evaluations, state} and output {deliveries, state}")
+    published = {}
+    for n, ev in enumerate(inp["evaluations"]):
+        w = f"{where} evaluation {n}"
+        if set(ev) != {"basis", "release", "subject", "workItems"} or ev["release"] not in by_hash:
+            err(w, "evaluation record must be {basis, release, subject, workItems} with a known release")
+            continue
+        check_basis(w, ev["basis"])
+        ids = [wi.get("id") for wi in ev["workItems"]]
+        if not sorted_unique(ids):
+            err(w, "workItems not in ascending id order")
+        for wi in ev["workItems"]:
+            if check_work_item(w, wi, ev["subject"], ev["release"]):
+                published[(wi["id"], wi["version"])] = dict(wi, subject=ev["subject"])
+    for st_name, st in (("input state", inp["state"]), ("output state", exp["state"])):
+        if set(st) != {"items", "pending", "subjects"}:
+            err(where, f"{st_name} must be {{items, pending, subjects}}")
+            continue
+        if not sorted_unique([i["id"] for i in st["items"]]) or not sorted_unique([x["subject"] for x in st["subjects"]]):
+            err(where, f"{st_name} items or subjects not in ascending order")
+        for i in st["items"]:
+            if set(i) != {"id", "payload", "retired", "seq", "subject"} or not is_int(i["seq"]) or i["seq"] < 1:
+                err(where, f"{st_name} bad item state {i}")
+        for x in st["subjects"]:
+            if set(x) != {"basis", "subject"}:
+                err(where, f"{st_name} bad subject state {x}")
+    dkeys = {"id", "key", "kind", "payload", "rule", "seq", "subject", "version"}
+    for d in exp["deliveries"] + inp["state"]["pending"]:
+        if set(d) != dkeys or not is_int(d["seq"]) or d["seq"] < 1:
+            err(where, f"bad delivery {d}")
+            continue
+    for d in exp["deliveries"]:
+        src = published.get((d.get("id"), d.get("version")))
+        if src is None or any(src[k] != d[k] for k in ("key", "kind", "payload", "rule", "subject")):
+            err(where, f"delivery {d.get('kind')} seq {d.get('seq')} is not a copy of a work item in the evaluations")
+    if exp["state"].get("pending") != inp["state"]["pending"] + exp["deliveries"]:
+        err(where, "output pending must be input pending followed by this call's deliveries")
+
+
+def check_receive(where, inp, exp):
+    dkeys = {"id", "key", "kind", "payload", "rule", "seq", "subject", "version"}
+    if set(inp) != {"deliveries", "state"} or set(exp) != {"applied", "state"} \
+            or set(exp["applied"]) != {"effects", "projection"}:
+        return err(where, "receive input must be {deliveries, state} and output {applied: {effects, projection}, state}")
+    for st_name, st in (("input state", inp["state"]), ("output state", exp["state"])):
+        if set(st) != {"effects", "projection"}:
+            err(where, f"{st_name} must be {{effects, projection}}")
+            continue
+        if not sorted_unique([e["id"] for e in st["effects"]]) or not sorted_unique([p["id"] for p in st["projection"]]):
+            err(where, f"{st_name} effects or projection not in ascending id order")
+        for e in st["effects"]:
+            if set(e) != {"done", "id", "waiting"} or not is_int(e["done"]) or e["done"] < 0 \
+                    or not sorted_unique([x["seq"] for x in e["waiting"]]) or any(x["seq"] <= e["done"] + 1 for x in e["waiting"]):
+                err(where, f"{st_name} bad effect state {e}")
+        for p in st["projection"]:
+            if set(p) != {"id", "payload", "seq"}:
+                err(where, f"{st_name} bad projection entry {p}")
+    for dl in inp["deliveries"] + exp["applied"]["effects"] + exp["applied"]["projection"]:
+        if set(dl) != dkeys or not is_int(dl["seq"]) or dl["seq"] < 1:
+            err(where, f"bad delivery {dl}")
 
 
 def emitted_rules(out):
@@ -282,7 +360,12 @@ def emitted_rules(out):
 
 
 def check_case(path, releases, by_hash, cases):
-    c = load(path)
+    try:
+        c = load(path)
+    except DuplicateKey:
+        c = load(path, allow_duplicates=True)
+        if c.get("expected") != {"error": "W0.E_SHAPE"}:
+            return err(os.path.basename(path), "duplicate keys are allowed only in an E_SHAPE case's input")
     w = os.path.basename(path)
     need = {"id", "slug", "title", "op", "checks", "notes", "input", "expected"}
     if not need <= set(c) or not set(c) <= need | {"identicalTo"}:
@@ -300,11 +383,17 @@ def check_case(path, releases, by_hash, cases):
         if c["checks"]:
             err(w, "error cases carry no rule checks")
         return
+    if op == "publish":
+        if c["checks"]:
+            err(w, "publish cases carry no rule checks")
+        return check_publish(w, inp, exp, by_hash)
+    if op == "receive":
+        return check_receive(w, inp, exp)
     basis = inp.get("basis")
     if not check_basis(w, basis):
         return
     if op == "affected":
-        if set(inp) != {"basis", "release", "worlds", "writes"} or set(exp) != {"affected"}:
+        if set(inp) != {"basis", "release", "worlds", "writes"} or set(exp) != {"affected"} or inp["release"] not in releases:
             return err(w, "bad affected case shape")
         subjects = [x["subject"] for x in inp["worlds"]]
         for n, world in enumerate(inp["worlds"]):
