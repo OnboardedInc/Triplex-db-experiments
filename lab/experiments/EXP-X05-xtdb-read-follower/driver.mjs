@@ -191,7 +191,12 @@ class Writer {
 const workers = Array.from({ length: P.threads }, (_, w) => new Worker(path.join(HERE, 'reader-worker.mjs'), { workerData: { worker: w, subjects: P.subjects, seed: P.seed } }));
 const workerWaiters = new Map(); // `${type}|${worker}` -> resolve
 for (const w of workers) w.on('message', m => {
-  if (m.type === 'error') { log(`worker ${m.worker} error: ${m.message}`); }
+  if (m.type === 'error') {
+    // A worker that fails to open its connections or crashes ends the window instead of hanging it.
+    log(`worker ${m.worker} error: ${m.message}`);
+    for (const type of ['ready', 'result']) { const resolve = workerWaiters.get(`${type}|${m.worker}`); if (resolve) { workerWaiters.delete(`${type}|${m.worker}`); resolve(m); } }
+    return;
+  }
   const resolve = workerWaiters.get(`${m.type}|${m.worker}`);
   if (resolve) { workerWaiters.delete(`${m.type}|${m.worker}`); resolve(m); }
 });
@@ -350,6 +355,7 @@ async function runWindow({ name, mode = 'zero', readers = 0, trace, seconds, cut
   const readyAll = Promise.all(plan.map(a => waitWorker('ready', a.w)));
   for (const a of plan) workers[a.w].postMessage({ type: 'level', level: { ...level, readers: a.readers, conns: a.conns, cap: a.cap } });
   const ready = await readyAll;
+  if (ready.some(m => m.type === 'error')) throw new Error(`window ${name}: a reader worker failed before the start: ${ready.find(m => m.type === 'error').message}`);
   const resultsP = Promise.all(plan.map(a => waitWorker('result', a.w)));
   const start = absNow() + 1000, end = start + seconds * 1000;
   for (const a of plan) workers[a.w].postMessage({ type: 'go', start, end });
@@ -365,7 +371,9 @@ async function runWindow({ name, mode = 'zero', readers = 0, trace, seconds, cut
   }
   await sleep(Math.max(0, end - absNow()));
   const offerEnd = absNow();
-  const readerResults = (await resultsP).map(m => m.result);
+  const finished = await resultsP;
+  if (finished.some(m => m.type === 'error')) throw new Error(`window ${name}: a reader worker crashed: ${finished.find(m => m.type === 'error').message}`);
+  const readerResults = finished.map(m => m.result);
   const drain = await writer.drain(P.drainMaxMs);
   loopDelay.disable();
   sampler.stop();
