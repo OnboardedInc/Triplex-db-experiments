@@ -66,15 +66,25 @@ export async function ensureWorld(comp, { rung, seed, size, log }) {
   const batches = worldBatches(seed, size);
   const last = await comp.byCommand(worldBatchId(rung, seed, batches.length - 1));
   if (last.ok && last.record) { log(`world ${rung}: already loaded (${batches.length} batches, last at position ${last.record.position})`); return { loaded: false, batches: batches.length, ms: 0, facts: size * 5 }; }
-  const t0 = performance.now(); const lat = [];
-  for (const b of batches) {
+  // Batches commit in order, so the first missing one is found by binary search over commandIds.
+  const has = async k => { const r = await comp.byCommand(worldBatchId(rung, seed, k)); return r.ok && !!r.record; };
+  let lo = 0, hi = batches.length - 1;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (await has(mid)) lo = mid + 1; else hi = mid; }
+  if (lo > 0) log(`world ${rung}: resuming at batch ${lo + 1}/${batches.length}`);
+  const t0 = performance.now(); const lat = []; let unknown = 0;
+  for (const b of batches.slice(lo)) {
     const s = performance.now();
-    const r = await comp.transact(b.operations, { actor: 'bulk:hris', commandId: worldBatchId(rung, seed, b.k) });
-    if (r.status !== 'committed' && r.category !== 'command-already-committed') throw new Error(`world batch ${b.k} failed: ${JSON.stringify(r).slice(0, 500)}`);
+    for (let attempt = 0; ; attempt++) {
+      const r = await comp.transact(b.operations, { actor: 'bulk:hris', commandId: worldBatchId(rung, seed, b.k) });
+      if (r.status === 'committed' || r.category === 'command-already-committed') break;
+      // Outcome unknown or a transient WriteError: resolve by commandId, then re-send (claims make it safe).
+      if ((r.status === 'unknown' || r.category === 'write-error') && attempt < 10) { unknown++; await new Promise(res => setTimeout(res, 2000)); if (await has(b.k)) break; continue; }
+      throw new Error(`world batch ${b.k} failed: ${JSON.stringify(r).slice(0, 500)}`);
+    }
     lat.push(performance.now() - s);
     if (b.k % 10 === 0) log(`world ${rung}: batch ${b.k + 1}/${batches.length} (${Math.round(performance.now() - t0)} ms)`);
   }
-  return { loaded: true, batches: batches.length, ms: Math.round(performance.now() - t0), facts: size * 5, batchMs: quantiles(lat) };
+  return { loaded: true, resumedAtBatch: lo, batches: batches.length, ms: Math.round(performance.now() - t0), facts: size * 5, batchMs: quantiles(lat), unknownOutcomes: unknown };
 }
 
 // ------------------------------------------------------------------ executor
