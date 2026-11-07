@@ -20,10 +20,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 CLI = ROOT / "lab/oracles/replay/cli.py"
 WORK = Path(sys.argv[1])
-OUT = ROOT / "lab/verify/O02/v-o03/results/probe_035.json"
+RESULTS = ROOT / "lab/verify/O02" / next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--results=")),
+                                         "v-o03/results")
+OUT = RESULTS / "probe_035.json"
 C = json.loads((ROOT / "lab/acceptance/obligations.json").read_text())
 ERR = {r["id"]: r for r in C["errorTable"]}
-assert C["version"] == "0.3.5", C["version"]
+assert C["version"] in ("0.3.5", "0.3.6"), C["version"]
 
 I = lambda s: {"type": "integer", "value": str(s)}  # noqa: E731
 N = lambda x: {"type": "number", "value": x}  # noqa: E731
@@ -419,10 +421,17 @@ probe("epochs order", "POSITION epochs (lexicographic)", "a cut at (epoch 2, off
 
 # --------------------------------------------------------------------------- 7. refusals that must answer X-NOT-MODELED (fail closed)
 
-for opname in ("erase", "erasure"):
-    probe(f"refuse erasure op {opname!r}", "Q24 / Q31f / R-CMD-13", "X-NOT-MODELED refusal (no expected answer)",
-          case([cmd([asrt("a", "person:1", ":person/ssn", S("123"))], 100),
-                cmd([{"op": opname, "entityId": "person:1", "attribute": ":person/ssn"}], 200)]), None, refusal=True)
+# V-O04b: from O-REPLAY 0.4.x erasure is modeled (Q24, Q31f, Q49a); the `erase` op commits and the old refusal probe is
+# replaced by a check that can fail: the erase commits as its own transaction and the value reads back as the marker.
+probe("erasure op 'erase' (Q49a)", "Q24 / Q49a / R-ERA-1", "commits; the value reads back as ErasedValue {erasedAt: 200}, no plaintext",
+      case([cmd([asrt("a", "person:1", ":person/ssn", S("PLAINTEXT-SSN-123"))], 100),
+            cmd([{"op": "erase", "entityId": "person:1", "attribute": ":person/ssn"}], 200)],
+           [{"id": "q", "kind": "match", "cut": {"validAt": 1}, "pattern": {"entityId": "person:1"}}]),
+      lambda rep: (outc(rep, 1).get("outcome") == "committed" and res(rep)["raw"][0]["value"] == {"_tag": "ErasedValue", "erasedAt": 200}
+                   and "PLAINTEXT-SSN-123" not in json.dumps(rep), [outc(rep, 1), res(rep)["raw"][0]["value"]]))
+probe("refuse erasure op 'erasure'", "Q45b / R-CMD-13 (residual, Q52g)", "X-NOT-MODELED refusal (no expected answer)",
+      case([cmd([asrt("a", "person:1", ":person/ssn", S("123"))], 100),
+            cmd([{"op": "erasure", "entityId": "person:1", "attribute": ":person/ssn"}], 200)]), None, refusal=True)
 probe("refuse scale evolution (widen)", "DS-WIDEN / R-DEC-15", "X-NOT-MODELED refusal",
       case([cmd([asrt("r", "e", ":p/rate", DW("1.00"))])], attributeDeclarations=RATE,
            schemas=[{"version": 2, "entityTypes": {"P": {"attributes": {"rate": {"attribute": ":p/rate", "type": "decimal",
@@ -482,7 +491,7 @@ probe("DR-JSON-CONVERT non-number", "Q38d DR-JSON-CONVERT", "toDecimal(json 'abc
 # Deliberately wrong expectations: every one must come back WRONG-ANSWER, or the checkers above are too lenient.
 
 if "--self-test" in sys.argv:
-    OUT = ROOT / "lab/verify/O02/v-o03/results/probe_035.self-test.json"
+    OUT = RESULTS / "probe_035.self-test.json"
     PROBES = []
     probe("ST add value", "self-test", "1.76 (wrong)", expr(["add", D("1.25", 3, 2), D("0.5", 2, 1)]), decval("1.76", 2, 4))
     probe("ST add precision", "self-test", "precision 3 (wrong)", expr(["add", D("1.25", 3, 2), D("0.5", 2, 1)]), decval("1.75", 2, 3))
@@ -502,8 +511,16 @@ if "--self-test" in sys.argv:
           match_count(2))
     probe("ST nested negative passes", "self-test", "PASS (wrong)",
           case(NESTED, [], receipts=[rcpt(0, coord(7, 0)), rcpt(1, coord(7, 2)), rcpt(2, coord(7, 3))]), consistency("PASS"))
-    probe("ST erasure answered", "self-test", "a non-refusal check on a refused case must not MATCH",
-          case([cmd([asrt("a", "p", ":p/s", S("1"))], 100), cmd([{"op": "erase", "entityId": "p", "attribute": ":p/s"}], 200)]),
+    probe("ST erased value readable", "self-test", "the plaintext is still readable after the erase (wrong)",
+          case([cmd([asrt("a", "p", ":p/s", S("PLAINTEXT-1"))], 100), cmd([{"op": "erase", "entityId": "p", "attribute": ":p/s"}], 200)],
+               [{"id": "q", "kind": "match", "cut": {"validAt": 1}, "pattern": {"entityId": "p"}}]),
+          lambda rep: (res(rep)["raw"][0]["value"] == S("PLAINTEXT-1"), res(rep)["raw"][0]["value"]))
+    probe("ST erasedAt of the assert", "self-test", "erasedAt 100, the assert's instant (wrong: the erase commit's)",
+          case([cmd([asrt("a", "p", ":p/s", S("PLAINTEXT-1"))], 100), cmd([{"op": "erase", "entityId": "p", "attribute": ":p/s"}], 200)],
+               [{"id": "q", "kind": "match", "cut": {"validAt": 1}, "pattern": {"entityId": "p"}}]),
+          lambda rep: (res(rep)["raw"][0]["value"] == {"_tag": "ErasedValue", "erasedAt": 100}, res(rep)["raw"][0]["value"]))
+    probe("ST refused 'erasure' answered", "self-test", "a non-refusal check on the refused `erasure` spelling must not MATCH",
+          case([cmd([asrt("a", "p", ":p/s", S("1"))], 100), cmd([{"op": "erasure", "entityId": "p", "attribute": ":p/s"}], 200)]),
           committed(1))
     probe("ST cross-family eq as error", "self-test", "eq E-MIXED-FAMILY for string vs integer (wrong: eq is false)",
           case(queries=[{"id": "q", "kind": "compare", "left": S("a"), "right": I(1)}]),
