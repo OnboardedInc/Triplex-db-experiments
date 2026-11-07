@@ -112,3 +112,12 @@ in `proposed_rulings.json`.
 | Q29c default mode | Accepted: `single-execution` is the default for every obligation that declares no mode, which removes the zero-execution count everywhere, not only for NS and GS. | Q26 |
 | Q29d A01's chosen values | Accepted as provisional: engine-scoped obligations key on the layer their goal names (for example G7 on source, G9 on history); T-WATERMARK-WAIT-MS = 250 (observe); error names E-DECIMAL-OVERFLOW, E-DECIMAL-BARE-DIVIDE, E-DECIMAL-FRACTION, E-DECIMAL-NARROWING; 38 digits of precision for round() and decimal SUM results. The Q15 verifier checks the error tags against the public error types before 1.0.0. | Q22, Q28 |
 | Q29e erasure profile | Accepted: the three erasure obligations run on the tiny concurrent profile; GS.16 covers erasure at year-one size. | Q24 |
+
+## Rulings on the EXP-F02 wire exactness findings (2026-11-07; Q30)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q30a JSON values | A JSON value containing -0, a non-finite number, or a number that is not exactly a binary64 value is rejected at every qualified write route with InvalidTripleError / invalid-value (reason detail `inexact-json-number`), never normalized. Canonical identity (CanonicalJson) is unchanged; the guard runs before it. `approximateNumbers: "reject"` applies recursively inside List and Struct. | numeric rule item 3 (hard error, never silent conversion); F02 findings 1 and spec item 1 |
+| Q30b instant | An instant given as -0 is rejected (`NoNegativeZero`), never turned into 0. | F02 finding 3 |
+| Q30c XTDB encodings | ProjectionSpec pins the XTDB encodings that F02 proved exact: card-many DOUBLE and integer lists are written as `ARRAY[CAST(? AS <type>) ...]`, never as one JSON parameter; date and instant are read as text, never through the driver's TIMESTAMPTZ decoding. Any other encoding fails the projection check. | F02 findings 2 and 4 |
+| Q30d QLever numeric shadow | A binary64 shadow counts as exact only if it survives QLever's export bit for bit: not -0, and parsing its `%.13g` rendering returns the same value; integers only within ±2^59. Otherwise the lexical channel is authoritative and the shadow is flagged inexact (usable for coarse pruning, never for an answer). | F02 finding 5; repeats the F1 fix |
+| Q30e integer range rule | Narrowed to its safe-integer domain (cosmetic). | F02 spec item 5 |
