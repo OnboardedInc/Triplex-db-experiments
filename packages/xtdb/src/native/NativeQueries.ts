@@ -30,6 +30,8 @@ export interface XtdbNativeReachabilityContext extends XtdbNativeContext {
 export interface XtdbNativeReachabilityOptions extends NativeReadOptions {
   readonly maxRecursiveRows?: number;
   readonly maxRounds?: number;
+  /** [EXP-C8] See XtdbNativeReachabilityBudgets.strategy (Reachability.ts). */
+  readonly strategy?: "single-read" | "rounds";
 }
 export const XTDB_NATIVE_MAPPING_ID = "triplex-xtdb/assertion-native-basis/1";
 

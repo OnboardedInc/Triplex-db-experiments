@@ -75,5 +75,8 @@ export {
   reachFrom,
   closurePairs,
   ruleClosure,
+  memoryEdges,
+  type RuleStep,
+  type RuleTail,
   countSimplePaths,
 } from "../native/FrontierClosure.js";

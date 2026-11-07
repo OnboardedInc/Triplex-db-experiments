@@ -81,6 +81,8 @@ export interface QleverNativeRelationContext extends QleverNativeContext {
 }
 export interface QleverNativeRelationOptions extends NativeReadOptions {
   readonly maxRelationRows?: number;
+  /** [EXP-C8] `single-read` (default) or `rounds`; see BasisRelations.ts. */
+  readonly relationStrategy?: "single-read" | "rounds";
 }
 
 /** Public schema-aware native SPARQL. No Datalog AST or compiler is invoked. */
@@ -151,6 +153,7 @@ const nativeQueries = (
                 steps,
                 { timeoutMs, maxResponseBytes },
                 (options as QleverNativeRelationOptions).maxRelationRows,
+                (options as QleverNativeRelationOptions).relationStrategy,
               )
             : undefined;
           {

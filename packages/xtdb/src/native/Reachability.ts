@@ -2,6 +2,7 @@ import {
   FRONTIER_DEFAULTS,
   closurePairs,
   frontierClosure,
+  memoryEdges,
   nativeEvidenceValue,
   type FrontierEdge,
   type NativeQueryStep,
@@ -39,7 +40,15 @@ export interface XtdbNativeReachability {
 export interface XtdbNativeReachabilityBudgets {
   /** Closure pairs per relation (and reached nodes); the old helper's `maxRecursiveRows`. */
   readonly maxRecursiveRows?: number;
+  /** Hop rounds (default 100, the old helper's). */
   readonly maxRounds?: number;
+  /**
+   * `single-read` (default): one bounded read of each edge relation, the frontier loop in memory.
+   * `rounds`: one read per frontier round; pays off only where a round can use an index
+   * (entity-keyed projection tables, R10 6.4), not on today's ledger (see memoryEdges in
+   * packages/core FrontierClosure.ts for the measurements).
+   */
+  readonly strategy?: "single-read" | "rounds";
 }
 
 /**
@@ -48,8 +57,10 @@ export interface XtdbNativeReachabilityBudgets {
  * [EXP-C8] Why: the previous helper created `tx_native_relations`, then ran one
  * `INSERT ... SELECT` + `COMMIT SYNC` per round and an `ERASE` at the end: every round was a
  * durable transaction (205 to 410 ms each on any graph size, R10 1.5 and 3.6) competing with
- * the writer commits P1/P2 measure. Now each round is one read, `edges` restricted to the
- * frontier, and the closure is computed by the shared frontierClosure (R10 6.2, 6.4). The answer
+ * the writer commits P1/P2 measure. Now the closure is computed by the shared frontierClosure
+ * (R10 6.2, 6.4) from reads only: by default one bounded read of the edge relation (on the
+ * ledger every round would scan anyway; memoryEdges in FrontierClosure.ts), or, with
+ * `strategy: "rounds"`, one read per round with the frontier as one parameter. The answer
  * query receives the closure inline as ONE structured parameter, so nothing is written.
  *
  * Round shapes (both measured or probed on XTDB 2.2.0):
@@ -89,7 +100,10 @@ export const resolveNativeReachability = async (
     if (!/^[A-Za-z_][A-Za-z0-9_-]{0,127}$/.test(definition.name))
       throw new TypeError("Invalid native reachability relation name");
   const maxPairs = budgets.maxRecursiveRows ?? 100_000;
-  const maxRounds = budgets.maxRounds ?? FRONTIER_DEFAULTS.maxRounds;
+  const maxRounds = budgets.maxRounds ?? 100;
+  const strategy = budgets.strategy ?? "single-read";
+  if (strategy !== "single-read" && strategy !== "rounds")
+    throw new TypeError("Native reachability strategy must be single-read or rounds");
   if (![maxPairs, maxRounds].every((value) => Number.isSafeInteger(value) && value > 0))
     throw new RangeError("Native reachability budgets must be positive safe integers");
   // [EXP-C8] Why: 10,000 ids per XTDB round. A single 111,000-id array parameter ran in 409 ms
@@ -141,7 +155,7 @@ export const resolveNativeReachability = async (
   for (const definition of definitions) {
     signal.throwIfAborted();
     let seeds: readonly string[] | undefined;
-    let fetch: (batch: readonly string[], limit: number) => Promise<FrontierEdge[]>;
+    let fetch: (batch: readonly string[], limit: number) => Promise<Iterable<FrontierEdge>>;
     const declared = definition.seeds
       ? definition.seeds(makeNativeContext(language, basis).context, input)
       : undefined;
@@ -161,7 +175,7 @@ export const resolveNativeReachability = async (
       seeds = rows.map((row) => text(row.seed, "seed"));
     } else if (declared) seeds = declared.map((seed) => text(seed, "seed"));
 
-    if (seeds) {
+    if (seeds && strategy === "rounds") {
       fetch = async (batch, limit) =>
         (
           await read<{ source: unknown; target: unknown }>(
@@ -174,8 +188,8 @@ export const resolveNativeReachability = async (
           )
         ).map((row) => [text(row.source, "source"), text(row.target, "target")] as const);
     } else {
-      // All-pairs mode keeps the old public contract (closure of every source) without its
-      // writes: one bounded read of the whole edge relation, then the same loop in memory.
+      // One bounded read of the whole edge relation, then the same loop in memory. Without
+      // declared seeds this keeps the old public contract (the closure of every source).
       const rows = await read<{ source: unknown; target: unknown }>(
         "frontier-edges",
         (context) =>
@@ -184,15 +198,11 @@ export const resolveNativeReachability = async (
             : `SELECT DISTINCT e.source AS source, e.target AS target FROM (${edgesOf(definition, context)}\n) e`,
         FRONTIER_DEFAULTS.maxRoundRows + 1,
       );
-      if (rows.length > FRONTIER_DEFAULTS.maxRoundRows)
-        throw new RangeError("Native reachability edge relation exceeds its row budget");
-      const out = new Map<string, FrontierEdge[]>();
-      for (const row of rows) {
-        const edge = [text(row.source, "source"), text(row.target, "target")] as const;
-        out.set(edge[0], [...(out.get(edge[0]) ?? []), edge]);
-      }
-      seeds = [...out.keys()];
-      fetch = async (batch, limit) => batch.flatMap((source) => out.get(source) ?? []).slice(0, limit);
+      const memory = memoryEdges(
+        rows.map((row) => [text(row.source, "source"), text(row.target, "target")] as const),
+      );
+      seeds ??= memory.sources;
+      fetch = memory;
     }
     const closure = await frontierClosure({
       seeds,

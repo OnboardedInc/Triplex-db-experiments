@@ -282,13 +282,15 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
     url,
     artifact: path.resolve(directory, target),
     makeRuntime: () => runtime,
-    openNative: (scope: DatabaseScope) => {
+    // [EXP-C8] `nativeUrl` lets a caller route native reads through an engine-boundary write
+    // counter (engine-write-counter.ts); the default is the backend's own endpoint.
+    openNative: (scope: DatabaseScope, nativeUrl: string = url) => {
       const makeClient = api[selected.client],
         makeNative = api[selected.native];
       if (typeof makeClient !== "function" || typeof makeNative !== "function")
         throw new Error(`UNSUPPORTED_PUBLIC_API:${queryPath}:native provider is not built`);
       const client = (makeClient as (url: string, options?: { accessToken?: string }) => Client)(
-        url,
+        nativeUrl,
         accessToken ? { accessToken } : {},
       );
       return {

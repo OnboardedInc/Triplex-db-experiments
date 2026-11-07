@@ -57,6 +57,7 @@ describe("read-only native reachability (EXP-C8)", () => {
       {},
       new AbortController().signal,
       steps,
+      { strategy: "rounds" },
     );
     expect(queries.map((query) => query.params.at(-1))).toEqual([["X"], ["W", "Y"], ["Z"]]);
     for (const { sql } of queries) {
@@ -98,6 +99,7 @@ describe("read-only native reachability (EXP-C8)", () => {
       {},
       new AbortController().signal,
       [],
+      { strategy: "rounds" },
     );
     expect(queries[0]!.sql).toContain("(aggregate seed)");
     for (const { sql } of queries) {
@@ -132,6 +134,30 @@ describe("read-only native reachability (EXP-C8)", () => {
     );
   });
 
+  it("single-read (default): one bounded read of the edge relation, closure from the seeds in memory", async () => {
+    const { client, queries } = engine();
+    const steps: NativeQueryStep[] = [];
+    const working = await resolveNativeReachability(
+      client,
+      "xtdb-sql",
+      basis,
+      sqlEdges,
+      {},
+      new AbortController().signal,
+      steps,
+    );
+    expect(queries).toHaveLength(1);
+    expect(queries[0]!.sql).not.toContain("UNNEST");
+    expect(steps.map((step) => step.phase)).toEqual(["frontier-edges"]);
+    const native = makeNativeContext("xtdb-sql", basis);
+    working.relation("deps", native.context);
+    expect(native.parameters[0]).toEqual([
+      ["X", "W"],
+      ["X", "Y"],
+      ["X", "Z"],
+    ]);
+  });
+
   it("without seeds, reads the edge relation once and closes every source in memory", async () => {
     const { client, queries } = engine();
     const working = await resolveNativeReachability(
@@ -160,7 +186,7 @@ describe("read-only native reachability (EXP-C8)", () => {
         {},
         new AbortController().signal,
         [],
-        { maxRecursiveRows: 2 },
+        { maxRecursiveRows: 2, strategy: "rounds" },
       ),
     ).rejects.toBeInstanceOf(RecursionBudgetExceeded);
     await expect(
@@ -172,7 +198,8 @@ describe("read-only native reachability (EXP-C8)", () => {
         {},
         new AbortController().signal,
         [],
-        { maxRounds: 2 },
+        // Depth 2 (X->Y->Z) completes within maxRounds 2; maxRounds 1 does not.
+        { maxRounds: 1, strategy: "rounds" },
       ),
     ).rejects.toMatchObject({ kind: "rounds" });
   });

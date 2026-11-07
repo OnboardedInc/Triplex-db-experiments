@@ -1,7 +1,7 @@
 import {
-  FRONTIER_DEFAULTS,
   closurePairs,
   frontierClosure,
+  memoryEdges,
   type FrontierEdge,
   type NativeQueryStep,
   type NativeReadBasis,
@@ -127,7 +127,13 @@ export const resolveQleverNativeRelations = async (
   steps: NativeQueryStep[],
   request: Omit<QleverRequestOptions, "signal">,
   maxRows = 100_000,
+  // [EXP-C8] single-read (default): one bounded read of the edge relation, the loop in memory;
+  // rounds: one VALUES read per frontier round (memoryEdges in FrontierClosure.ts says why the
+  // default is cheaper on today's ledger mapping: each round re-evaluates the edge fragment).
+  strategy: "single-read" | "rounds" = "single-read",
 ) => {
+  if (strategy !== "single-read" && strategy !== "rounds")
+    throw new TypeError("Native relation strategy must be single-read or rounds");
   if (
     !definitions.length ||
     new Set(definitions.map((definition) => definition.name)).size !== definitions.length
@@ -159,8 +165,8 @@ export const resolveQleverNativeRelations = async (
     const context = makeQleverNativeContext(basis);
     const source = selectFragment(definition.edges(context, input));
     const declared = definition.seeds?.(context, input);
-    let seeds: readonly string[];
-    let fetch: (batch: readonly string[], limit: number) => Promise<FrontierEdge[]>;
+    let seeds: readonly string[] | undefined;
+    let fetch: (batch: readonly string[], limit: number) => Promise<Iterable<FrontierEdge>>;
     const edgeRows = (rows: Awaited<ReturnType<QleverClient["query"]>>) =>
       rows.map(
         (row) => [identity(row["source"], "source"), identity(row["target"], "target")] as const,
@@ -179,6 +185,8 @@ export const resolveQleverNativeRelations = async (
           if (typeof seed !== "string") throw new TypeError("Native relation seeds must be text");
           return seed;
         });
+    }
+    if (seeds && strategy === "rounds") {
       // One read per round: the frontier is one VALUES block joined to the authored edges.
       fetch = async (batch, limit) =>
         edgeRows(
@@ -188,8 +196,8 @@ export const resolveQleverNativeRelations = async (
           ),
         );
     } else {
-      // All pairs keeps the old public contract without its writes: one bounded read of the edge
-      // relation, then the same loop in memory.
+      // One bounded read of the edge relation, then the same loop in memory. Without declared
+      // seeds this keeps the old public contract (the closure of every source).
       const rows = edgeRows(
         await read(
           "frontier-edges",
@@ -198,15 +206,16 @@ export const resolveQleverNativeRelations = async (
       );
       if (rows.length > maxRows)
         throw new RangeError("Native relation exceeds complete row budget; no partial answer");
-      const out = new Map<string, FrontierEdge[]>();
-      for (const edge of rows) out.set(edge[0], [...(out.get(edge[0]) ?? []), edge]);
-      seeds = [...out.keys()];
-      fetch = async (batch, limit) => batch.flatMap((node) => out.get(node) ?? []).slice(0, limit);
+      const memory = memoryEdges(rows);
+      seeds ??= memory.sources;
+      fetch = memory;
     }
     const closure = await frontierClosure({
       seeds,
       edges: fetch,
-      budgets: { maxVisited: maxRows, maxRounds: FRONTIER_DEFAULTS.maxRounds, maxBatch: 1_000 },
+      // The old native `p+` had no depth limit; the visited budget bounds the rounds the same way
+      // (every round reaches a new node), so no tighter round limit is introduced.
+      budgets: { maxVisited: maxRows, maxRounds: maxRows, maxBatch: 1_000 },
       signal,
     });
     relations.set(definition.name, closurePairs(closure, maxRows));

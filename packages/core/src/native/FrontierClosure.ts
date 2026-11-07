@@ -33,7 +33,11 @@ export type FrontierEdge = readonly [source: string, target: string];
 
 /** Explicit resource budgets (R10 6.2). Each one fails with a typed error; none truncates. */
 export interface FrontierBudgets {
-  /** Fetch rounds. Hierarchies are 3 to 8 deep (R10 3.2); the old helpers allowed 100. */
+  /**
+   * Hop rounds: a closure of depth up to `maxRounds` completes; one further read (which finds
+   * nothing new) confirms the fixpoint and is not charged. This matches the old XTDB helper, which
+   * completed a chain of `maxRounds` edges. Hierarchies are 3 to 8 deep (R10 3.2).
+   */
   readonly maxRounds?: number;
   /** Distinct reached nodes. Same constant as the old `maxRecursiveRows`, now counting nodes. */
   readonly maxVisited?: number;
@@ -159,8 +163,8 @@ export const frontierClosure = async (input: FrontierClosureInput): Promise<Fron
   let edgeCount = 0;
   while (frontier.length > 0) {
     if (maxDepth !== undefined && rounds.length >= maxDepth) break;
-    if (rounds.length >= budgets.maxRounds)
-      throw new RecursionBudgetExceeded("rounds", budgets.maxRounds, rounds.length + 1);
+    if (rounds.length > budgets.maxRounds)
+      throw new RecursionBudgetExceeded("rounds", budgets.maxRounds, rounds.length);
     input.signal?.throwIfAborted();
     const started = performance.now();
     // Expanded nodes get an entry even without out-edges, so local traversal can tell "no
@@ -273,61 +277,151 @@ export const closurePairs = (
 };
 
 /**
- * The closure of a bounded right-linear binary Datalog rule (the only recursive shape
- * validation.ts admits: `R(h, t) :- [h attr n], R(n, t)` plus non-recursive bases):
- * R = union over k = 0..maxDepth of A^k composed with B, where B is the base relation and A the
- * union of the recursive definitions' edge attributes. This is exactly the relation the old
- * depth-tagged scratch rounds produced (a row first inserted at round k had k recursive steps).
+ * How a recursive definition's call tail relates to its body (validation.ts admits only
+ * `R(h, t) :- [h attr n], R(n, t)`, with `t` any variable): `free` when `t` is a fresh variable,
+ * `head` when `t` is `h` (so only pairs `(n, h)` extend), `next` when `t` is `n` (only `(n, n)`).
+ */
+export type RuleTail = "free" | "head" | "next";
+
+export interface RuleStep {
+  /** The A edges INTO the batch, reversed as `[next, head]` (every `next` in the batch). */
+  readonly predecessors: FrontierClosureInput["edges"];
+  readonly tail: RuleTail;
+}
+
+/**
+ * The closure of bounded right-linear binary Datalog rules:
+ * R = B, then repeatedly R += { (h, t) : [h attr n] is an edge of a recursive definition and
+ * (n, t) in R, with that definition's tail constraint }, for at most `maxDepth` rounds. This is
+ * exactly the relation the old depth-tagged scratch rounds produced: a row first inserted at
+ * round k had k recursive steps, each round joined only rows of depth < k, and the old SQL bound
+ * the call's tail variable, so `t = h` or `t = n` were equality conditions (EXP-C8 review).
  *
- * `predecessors(batch)` returns the A edges INTO the batch, reversed as `[next, head]`, so the
- * frontier runs backwards from the base sources; per-seed hop bounds come from reachFrom.
+ * Semi-naive (R10 3.1): each round extends only the pairs that are new since the previous round;
+ * a derivation through an older pair was already made one round after that pair appeared, so the
+ * relation is the same. Predecessor edges are read once per node (`steps[i].predecessors`, a
+ * frontier of the new pairs' sources) and cached, so the engine sees one read per round and
+ * definition, never a write.
  */
 export const ruleClosure = async (input: {
   readonly base: Iterable<FrontierEdge>;
-  readonly predecessors?: FrontierClosureInput["edges"];
+  readonly steps?: readonly RuleStep[];
   readonly maxDepth: number;
   readonly maxPairs: number;
   readonly budgets?: FrontierBudgets;
   readonly signal?: AbortSignal;
-}): Promise<{ readonly pairs: FrontierEdge[]; readonly closure?: FrontierClosure }> => {
-  positive("maxPairs", input.maxPairs);
-  const byHead = new Map<string, Set<string>>();
-  const add = (head: string, tail: string) => {
-    const tails = byHead.get(head) ?? new Set<string>();
+}): Promise<{ readonly pairs: FrontierEdge[]; readonly rounds: readonly FrontierRoundStats[] }> => {
+  const budgets = resolveFrontierBudgets(input.budgets);
+  const maxPairs = positive("maxPairs", input.maxPairs);
+  const maxDepth = positive("maxDepth", input.maxDepth);
+  const relation = new Map<string, Set<string>>();
+  let size = 0;
+  const add = (head: string, tail: string): boolean => {
+    const tails = relation.get(head) ?? new Set<string>();
+    if (tails.has(tail)) return false;
     tails.add(tail);
-    byHead.set(head, tails);
+    relation.set(head, tails);
+    if (++size > maxPairs) throw new RecursionBudgetExceeded("pairs", maxPairs, size);
+    return true;
   };
-  const base = new Map<string, Set<string>>();
+  let delta: FrontierEdge[] = [];
   for (const edge of input.base) {
     const source = identity(edge[0], "source"),
       target = identity(edge[1], "target");
-    const tails = base.get(source) ?? new Set<string>();
-    tails.add(target);
-    base.set(source, tails);
-    add(source, target);
+    if (add(source, target)) delta.push([source, target]);
   }
-  let closure: FrontierClosure | undefined;
-  if (input.predecessors && base.size > 0) {
-    closure = await frontierClosure({
-      seeds: base.keys(),
-      edges: input.predecessors,
-      maxDepth: input.maxDepth,
-      // The old rounds were bounded only by the pair budget and maxDepth; every reached node
-      // contributes at least one pair, so maxVisited = maxPairs keeps that bound.
-      budgets: { maxRounds: input.maxDepth, maxVisited: input.maxPairs, ...input.budgets },
-      ...(input.signal ? { signal: input.signal } : {}),
+  const steps = input.steps ?? [];
+  const caches = steps.map(() => new Map<string, Set<string>>());
+  const rounds: FrontierRoundStats[] = [];
+  let edgeCount = 0;
+  for (let depth = 1; depth <= maxDepth && delta.length > 0 && steps.length > 0; depth++) {
+    input.signal?.throwIfAborted();
+    const started = performance.now();
+    let calls = 0,
+      rows = 0;
+    const fresh: FrontierEdge[] = [];
+    let frontierSize = 0;
+    for (const [index, step] of steps.entries()) {
+      const cache = caches[index]!;
+      const frontier = sorted(new Set(delta.map(([next]) => next).filter((node) => !cache.has(node))));
+      frontierSize += frontier.length;
+      for (const node of frontier) cache.set(node, new Set());
+      for (let offset = 0; offset < frontier.length; offset += budgets.maxBatch) {
+        input.signal?.throwIfAborted();
+        const batch = frontier.slice(offset, offset + budgets.maxBatch);
+        const members = new Set(batch);
+        const result = await step.predecessors(batch, budgets.maxRoundRows - rows + 1, input.signal);
+        calls++;
+        for (const edge of result) {
+          if (++rows > budgets.maxRoundRows)
+            throw new RecursionBudgetExceeded("roundRows", budgets.maxRoundRows, rows);
+          if (!Array.isArray(edge) || edge.length !== 2)
+            throw new TypeError("A recursive edge read must return [next, head] pairs");
+          const next = identity(edge[0], "source"),
+            head = identity(edge[1], "target");
+          if (!members.has(next))
+            throw new TypeError("A recursive edge read returned a node outside its frontier batch");
+          const heads = cache.get(next)!;
+          if (!heads.has(head)) {
+            heads.add(head);
+            if (++edgeCount > budgets.maxEdges)
+              throw new RecursionBudgetExceeded("edges", budgets.maxEdges, edgeCount);
+          }
+        }
+      }
+      for (const [next, tail] of delta)
+        for (const head of cache.get(next)!) {
+          if (step.tail === "head" && tail !== head) continue;
+          if (step.tail === "next" && tail !== next) continue;
+          if (add(head, tail)) fresh.push([head, tail]);
+        }
+    }
+    rounds.push({
+      round: depth,
+      frontier: frontierSize,
+      calls,
+      rows,
+      newNodes: fresh.length,
+      elapsedMs: performance.now() - started,
     });
-    for (const [next, tails] of base)
-      for (const head of reachFrom(closure, next)) for (const tail of tails) add(head, tail);
+    delta = fresh;
   }
   const pairs: FrontierEdge[] = [];
-  for (const head of sorted(byHead.keys()))
-    for (const tail of sorted(byHead.get(head)!)) {
-      pairs.push([head, tail]);
-      if (pairs.length > input.maxPairs)
-        throw new RecursionBudgetExceeded("pairs", input.maxPairs, pairs.length);
-    }
-  return closure ? { pairs, closure } : { pairs };
+  for (const head of sorted(relation.keys()))
+    for (const tail of sorted(relation.get(head)!)) pairs.push([head, tail]);
+  return { pairs, rounds };
+};
+
+/**
+ * One bounded read of a whole edge relation, served from memory as a frontier reader.
+ *
+ * [EXP-C8] Why: on the current ledger mappings a frontier round is not cheaper than reading the
+ * whole edge relation. XTDB scans `tx_assertions` for every round whatever the frontier
+ * (measured on the dev engine: 2.0 to 3.7 s for a 4-id frontier, a full edge read and every
+ * predicate placement alike, on 536k rows under load), because the ledger has no entity-keyed
+ * index (R10 3.4, 6.4: per-round point lookups need the entity-keyed projection tables). QLever
+ * re-evaluates the authored edge fragment per round (150 to 1,900 ms). So the default is one read
+ * of the edge relation (`LIMIT maxRoundRows + 1`, typed error above it) and the same frontier
+ * loop in memory: exact, read-only, and one scan where the old helpers paid one scan plus a
+ * commit per round. Per-round frontier reads stay available for indexed relations.
+ */
+export const memoryEdges = (
+  edges: Iterable<FrontierEdge>,
+  maxRows: number = FRONTIER_DEFAULTS.maxRoundRows,
+): FrontierClosureInput["edges"] & { readonly sources: readonly string[] } => {
+  const out = new Map<string, FrontierEdge[]>();
+  let count = 0;
+  for (const edge of edges) {
+    if (++count > maxRows) throw new RecursionBudgetExceeded("roundRows", maxRows, count);
+    const source = identity(edge[0], "source"),
+      target = identity(edge[1], "target");
+    const list = out.get(source) ?? [];
+    list.push([source, target]);
+    out.set(source, list);
+  }
+  const read = async (batch: readonly string[], limit: number) =>
+    batch.flatMap((source) => out.get(source) ?? []).slice(0, limit);
+  return Object.assign(read, { sources: sorted(out.keys()) });
 };
 
 /**

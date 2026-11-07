@@ -16,6 +16,7 @@ import {
   closurePairs,
   countSimplePaths,
   frontierClosure,
+  memoryEdges,
   reachFrom,
   ruleClosure,
   type FrontierEdge,
@@ -290,15 +291,22 @@ describe("frontierClosure semantics and budgets", () => {
 });
 
 describe("ruleClosure (bounded right-linear Datalog rules)", () => {
-  /** Independent reference: the old depth-tagged naive rounds, evaluated in memory. */
-  const naive = (base: FrontierEdge[], edges: FrontierEdge[], maxDepth: number) => {
+  type Tail = "free" | "head" | "next";
+  /**
+   * Independent reference: the old depth-tagged naive rounds, evaluated in memory, with the old
+   * SQL's tail binding (`t = h` or `t = n` as equality conditions).
+   */
+  const naive = (base: FrontierEdge[], steps: { edges: FrontierEdge[]; tail: Tail }[], maxDepth: number) => {
     const key = (s: string, t: string) => JSON.stringify([s, t]);
     const relation = new Map(base.map(([s, t]) => [key(s, t), [s, t] as FrontierEdge]));
     for (let depth = 1; depth <= maxDepth; depth++) {
       // Each round reads only rows of depth < round (the old `depth < $round` filter).
       const previous = [...relation.values()];
-      for (const [h, n] of edges)
-        for (const [s, t] of previous) if (s === n) relation.set(key(h, t), [h, t]);
+      for (const { edges, tail } of steps)
+        for (const [h, n] of edges)
+          for (const [s, t] of previous)
+            if (s === n && (tail === "free" || (tail === "head" ? t === h : t === n)))
+              relation.set(key(h, t), [h, t]);
       if (relation.size === previous.length) break;
     }
     return [...relation.values()].sort((a, b) => (key(...a) < key(...b) ? -1 : 1));
@@ -306,23 +314,39 @@ describe("ruleClosure (bounded right-linear Datalog rules)", () => {
   const reverse = (edges: readonly FrontierEdge[]) =>
     reader(edges.map(([h, n]) => [n, h] as FrontierEdge));
 
-  it("equals the naive depth-bounded fixpoint on random graphs and depths", async () => {
+  it("equals the naive depth-bounded fixpoint on random graphs, depths and tail constraints", async () => {
     const random = prng(5);
-    for (const graph of randomGraphs(120, 15, 11)) {
+    const tails: Tail[] = ["free", "head", "next"];
+    for (const [index, graph] of randomGraphs(150, 15, 11).entries()) {
       const base = graph.edges.filter(() => random() < 0.5);
       const maxDepth = 1 + Math.floor(random() * 6);
+      // Two recursive definitions of one name over different edge subsets, as rules allow.
+      const steps = [
+        { edges: graph.edges.filter(() => random() < 0.7), tail: tails[index % 3]! },
+        { edges: graph.edges.filter(() => random() < 0.3), tail: tails[(index + 1) % 3]! },
+      ];
       const { pairs } = await ruleClosure({
         base,
-        predecessors: reverse(graph.edges),
+        steps: steps.map((step) => ({ predecessors: reverse(step.edges), tail: step.tail })),
         maxDepth,
         maxPairs: 100_000,
+        budgets: { maxBatch: 2 },
       });
-      expect(pairs).toEqual(naive(base, graph.edges, maxDepth));
+      expect(pairs, `graph ${index}`).toEqual(naive(base, steps, maxDepth));
     }
   });
 
+  it("keeps the tail constraint (EXP-C8 review: r(h,h) :- [h next n], r(n,h))", async () => {
+    // Facts 1->2, 2->3; base r = next. Free tail adds (1,3); a tail equal to the head adds nothing.
+    const next: FrontierEdge[] = [["1", "2"], ["2", "3"]];
+    const free = await ruleClosure({ base: next, steps: [{ predecessors: reverse(next), tail: "free" }], maxDepth: 10, maxPairs: 10 });
+    expect(free.pairs).toEqual([["1", "2"], ["1", "3"], ["2", "3"]]);
+    const head = await ruleClosure({ base: next, steps: [{ predecessors: reverse(next), tail: "head" }], maxDepth: 10, maxPairs: 10 });
+    expect(head.pairs).toEqual([["1", "2"], ["2", "3"]]);
+  });
+
   it("returns the base relation alone when there is no recursive definition", async () => {
-    const { pairs, closure } = await ruleClosure({
+    const { pairs, rounds } = await ruleClosure({
       base: [["b", "c"], ["a", "b"], ["a", "b"]],
       maxDepth: 100,
       maxPairs: 10,
@@ -331,17 +355,36 @@ describe("ruleClosure (bounded right-linear Datalog rules)", () => {
       ["a", "b"],
       ["b", "c"],
     ]);
-    expect(closure).toBeUndefined();
+    expect(rounds).toHaveLength(0);
   });
 
   it("enforces the pair budget", async () => {
     await expect(
       ruleClosure({
         base: [["c", "d"]],
-        predecessors: reverse([["a", "b"], ["b", "c"]]),
+        steps: [{ predecessors: reverse([["a", "b"], ["b", "c"]]), tail: "free" }],
         maxDepth: 10,
         maxPairs: 2,
       }),
     ).rejects.toBeInstanceOf(RecursionBudgetExceeded);
+  });
+});
+
+describe("rounds budget and single-read edges", () => {
+  it("completes a chain of exactly maxRounds edges, like the old helper, and fails one beyond", async () => {
+    const chain = (length: number) => Array.from({ length }, (_, i) => [`n${i}`, `n${i + 1}`] as FrontierEdge);
+    const ok = await frontierClosure({ seeds: ["n0"], edges: reader(chain(3)), budgets: { maxRounds: 3 } });
+    expect(ok.reached.size).toBe(3);
+    await expect(
+      frontierClosure({ seeds: ["n0"], edges: reader(chain(4)), budgets: { maxRounds: 3 } }),
+    ).rejects.toMatchObject({ kind: "rounds" });
+  });
+
+  it("memoryEdges serves the frontier loop from one read and bounds it", async () => {
+    const edges = memoryEdges([["X", "Y"], ["X", "W"], ["W", "Z"], ["Y", "Z"], ["Z", "Y"]]);
+    expect(edges.sources).toEqual(["W", "X", "Y", "Z"]);
+    const closure = await frontierClosure({ seeds: ["X"], edges });
+    expect([...closure.reached].sort()).toEqual(["W", "Y", "Z"]);
+    expect(() => memoryEdges([["a", "b"], ["b", "c"]], 1)).toThrow(RecursionBudgetExceeded);
   });
 });

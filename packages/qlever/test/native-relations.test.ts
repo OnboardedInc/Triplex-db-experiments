@@ -62,6 +62,8 @@ describe("native QLever basis relations", () => {
       new AbortController().signal,
       steps,
       { timeoutMs: 1000 },
+      100_000,
+      "rounds",
     );
     expect(queries).toHaveLength(3);
     for (const query of queries) {
@@ -79,6 +81,38 @@ describe("native QLever basis relations", () => {
     expect(working.relation("edge", "X", "Z")).toBe("{ }");
     expect(working.relation("edge", "Y", "Z")).toBe("{ FILTER(false) }");
     expect(() => working.relation("other", "?source", "?target")).toThrow();
+  });
+
+  it("[EXP-C8] single-read (default): one SELECT of the edge relation, closure in memory", async () => {
+    const queries: string[] = [];
+    const graph: [string, string][] = [["X", "Y"], ["X", "W"], ["W", "Z"], ["Y", "Z"], ["Z", "Y"]];
+    const client: QleverClient = {
+      query: async (query) => {
+        queries.push(query);
+        return graph.map(([source, target]) => ({
+          source: { type: "literal", value: source },
+          target: { type: "literal", value: target },
+        }));
+      },
+      update: async () => {
+        throw new Error("C8: a read path attempted an update");
+      },
+      command: async () => {},
+      cancel: async () => {},
+      close: async () => {},
+    };
+    const working = await resolveQleverNativeRelations(
+      client,
+      basis,
+      [{ name: "edge", edges: () => "SELECT ?source ?target WHERE { ?source <urn:e> ?target }", seeds: () => ["X"] }],
+      {},
+      new AbortController().signal,
+      [],
+      {},
+    );
+    expect(queries).toHaveLength(1);
+    expect(queries[0]).not.toContain("VALUES");
+    expect(working.relation("edge", "?s", "?t")).toBe('VALUES (?s ?t) { ("X" "W") ("X" "Y") ("X" "Z") }');
   });
 
   it("[EXP-C8] rejects non-string endpoints and budget overruns with no partial answer", async () => {

@@ -1,5 +1,11 @@
 import { assertDatalogQuery, DatalogValidationError } from "@triplex-build/triplex/runtime";
-import { ruleClosure, type FrontierEdge } from "@triplex-build/triplex/runtime";
+import {
+  FRONTIER_DEFAULTS,
+  memoryEdges,
+  ruleClosure,
+  type FrontierEdge,
+  type RuleTail,
+} from "@triplex-build/triplex/runtime";
 import type { DatalogQuery } from "@triplex-build/triplex/datalog";
 import type { QleverClient } from "./QleverClient.js";
 import {
@@ -10,7 +16,6 @@ import {
 } from "./compiler.js";
 import type { QleverDomainPlan } from "./FamilyDomains.js";
 import type { QleverSourcePlan } from "./ScalarSource.js";
-import { literal } from "./rdf.js";
 
 type Rule = NonNullable<DatalogQuery["rules"]>[number];
 type Clause = Rule["body"][number];
@@ -18,6 +23,23 @@ const isVariable = (value: unknown): value is string =>
   typeof value === "string" && value.startsWith("?");
 const isRuleCall = (clause: readonly unknown[], names: ReadonlySet<string>) =>
   typeof clause[0] === "string" && names.has(clause[0]) && !String(clause[1]).startsWith(":");
+
+/**
+ * How the recursive call's tail relates to the body (`[head attr next] [R next tail]`). The old
+ * rounds compiled the whole body with the tail projected, so `tail = head` and `tail = next` are
+ * equality conditions. A tail bound to the attribute variable is refused, typed.
+ */
+const ruleTail = (query: DatalogQuery, rule: Rule, pattern: Clause, call: Clause): RuleTail => {
+  const tail = call[2];
+  if (tail === pattern[0]) return "head";
+  if (tail === pattern[2]) return "next";
+  if (tail === pattern[1])
+    throw new DatalogValidationError({
+      query,
+      message: `QLever rule ${rule.name}: a recursive tail bound to the attribute is not supported`,
+    });
+  return "free";
+};
 
 /** Evaluated rule relations, by rule name: the distinct `(arg1, arg2)` string pairs. */
 export type QleverRuleRelations = ReadonlyMap<string, readonly FrontierEdge[]>;
@@ -33,10 +55,11 @@ export const placeholderQleverRuleRelations = (query: DatalogQuery): QleverRuleR
  * inside a query call and never removed it: one SPARQL update per rule per round, each emptying
  * QLever's whole result cache (R17 finding 2) and growing the delta (EXP-002). The relations are
  * now computed on the host by the shared `ruleClosure`: each non-recursive base body is one
- * SELECT (B), and the recursive definitions' edges A (`[head, attr, next]`) are read backwards
- * from the base sources, one frontier round per hop, with the frontier as one `VALUES` block;
- * R = union of A^k composed with B for k = 0..maxDepth, exactly the relation the old depth-tagged
- * rounds produced (checked in packages/core/test/native/frontier-closure.test.ts). The main query
+ * SELECT (B), each recursive definition's edge pattern `[head attr next]` is one SELECT (A; one
+ * bounded read, cheaper than a VALUES round per hop on this mapping, memoryEdges in
+ * FrontierClosure.ts), and the semi-naive rounds run in memory with the call's tail constraint:
+ * exactly the relation the old depth-tagged rounds produced (the old body compile bound the tail
+ * variable; checked in packages/core/test/native/frontier-closure.test.ts). The main query
  * receives each relation as an inline `VALUES` block (compiler.ts). Bodies are compiled by the
  * same compiler and plans as before, so endpoint families and basis filters are unchanged; only
  * string-family endpoints enter a relation, as before.
@@ -70,7 +93,7 @@ export const evaluateQleverRules = async (
     ...(options.maxResponseBytes === undefined ? {} : { maxResponseBytes: options.maxResponseBytes }),
   };
   /** One pattern-only rule body as `SELECT DISTINCT ?v0_value ?v1_value` over string endpoints. */
-  const selection = (patterns: readonly Clause[], frontier?: readonly string[]) => {
+  const selection = (patterns: readonly Clause[]) => {
     const first = patterns.find((clause) => isVariable(clause[0]))?.[0];
     const last = patterns.toReversed().find((clause) => isVariable(clause[2]))?.[2];
     if (!isVariable(first) || !isVariable(last))
@@ -95,9 +118,7 @@ export const evaluateQleverRules = async (
     });
     options.onCompilation?.(performance.now() - compileStarted);
     const headAliases = sameEndpoint ? "BIND(?v0_value AS ?v1_value) BIND(?v0_type AS ?v1_type)" : "";
-    // The frontier joins the compiled body on the second endpoint as ONE VALUES block (R10 3.3).
-    const values = frontier ? `VALUES ?v1_value { ${frontier.map(literal).join(" ")} } ` : "";
-    return `SELECT DISTINCT ?v0_value ?v1_value WHERE { ${values}{ ${body.sparql} } ${headAliases} FILTER(?v0_type = "string" && ?v1_type = "string") }`;
+    return `SELECT DISTINCT ?v0_value ?v1_value WHERE { { ${body.sparql} } ${headAliases} FILTER(?v0_type = "string" && ?v1_type = "string") }`;
   };
   const read = async (sparql: string, limit: number) => {
     options.signal.throwIfAborted();
@@ -121,26 +142,22 @@ export const evaluateQleverRules = async (
     const base: FrontierEdge[] = [];
     for (const rule of definitions.filter((rule) => !recursive.includes(rule)))
       base.push(...(await read(selection(rule.body), maxRows - total + 1)));
+    // Recursive definitions are `[head, attr, next]` then `[name, next, tail]` (validation.ts).
+    const steps = [];
+    for (const rule of recursive) {
+      const patterns = rule.body.filter((clause) => !isRuleCall(clause, names));
+      const call = rule.body.find((clause) => isRuleCall(clause, names))!;
+      const rows = await read(selection(patterns), FRONTIER_DEFAULTS.maxRoundRows + 1);
+      steps.push({
+        predecessors: memoryEdges(rows.map(([head, next]) => [next, head] as const)),
+        tail: ruleTail(query, rule, patterns[0]!, call),
+      });
+    }
     const { pairs } = await ruleClosure({
       base,
-      // Recursive definitions are `[head, attr, next]` then `[name, next, tail]` (validation.ts).
-      ...(recursive.length
-        ? {
-            predecessors: async (batch: readonly string[], limit: number) => {
-              const edges: FrontierEdge[] = [];
-              for (const rule of recursive) {
-                const patterns = rule.body.filter((clause) => !isRuleCall(clause, names));
-                const rows = await read(selection(patterns, batch), limit - edges.length);
-                edges.push(...rows.map(([head, next]) => [next, head] as const));
-              }
-              return edges;
-            },
-          }
-        : {}),
+      steps,
       maxDepth,
       maxPairs: Math.max(1, maxRows - total),
-      // QLever plans each VALUES literal in about 0.23 ms; 1,000 is the measured knee (R10 3.3).
-      budgets: { maxBatch: 1_000 },
       signal: options.signal,
     });
     total += pairs.length;

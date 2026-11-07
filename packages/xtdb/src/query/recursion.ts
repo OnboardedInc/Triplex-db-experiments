@@ -1,5 +1,11 @@
 import type { DatalogQuery } from "@triplex-build/triplex/datalog";
-import { ruleClosure, type FrontierEdge } from "@triplex-build/triplex/runtime";
+import {
+  FRONTIER_DEFAULTS,
+  memoryEdges,
+  ruleClosure,
+  type FrontierEdge,
+  type RuleTail,
+} from "@triplex-build/triplex/runtime";
 import type { XtdbClient } from "../XtdbClient.js";
 import { lowerSource, type QueryBasis } from "./compiler.js";
 
@@ -11,6 +17,21 @@ const isRuleCall = (clause: readonly unknown[], names: Set<string>) =>
   typeof clause[0] === "string" &&
   names.has(clause[0]) &&
   !(typeof clause[1] === "string" && clause[1].startsWith(":"));
+
+/**
+ * How the recursive call's tail relates to the body (`[head attr next] [R next tail]`). The old
+ * rounds bound the tail variable, so `tail = head` and `tail = next` are equality conditions. A
+ * tail equal to the attribute variable would need the attribute in the edge read; it is refused,
+ * typed, rather than answered differently.
+ */
+export const ruleTail = (rule: Rule, pattern: Clause, call: Clause): RuleTail => {
+  const tail = call[2];
+  if (tail === pattern[0]) return "head";
+  if (tail === pattern[2]) return "next";
+  if (tail === pattern[1])
+    throw new Error(`Rule ${rule.name}: a recursive tail bound to the attribute is not supported`);
+  return "free";
+};
 
 /** Evaluated rule relations, by rule name: the distinct `(arg1, arg2)` text pairs. */
 export type RuleRelations = ReadonlyMap<string, readonly FrontierEdge[]>;
@@ -46,14 +67,12 @@ const temporal = (alias: string, basis: QueryBasis, params: unknown[]): string =
 /**
  * One read-only SELECT of a rule body's pattern clauses: `SELECT DISTINCT a AS arg1, b AS arg2`,
  * with `a` the first entity variable and `b` the last value variable (the pinned Triplex bounded
- * binary-rule endpoint inference, unchanged from the old rounds). With `frontier`, only rows whose
- * `b` is in the frontier are returned (`b IN (SELECT x FROM UNNEST($n) AS u(x))`).
+ * binary-rule endpoint inference, unchanged from the old rounds).
  */
 export const compileRuleSelection = (
   patterns: readonly Clause[],
   scopeKey: string,
   basis: QueryBasis,
-  frontier?: readonly string[],
 ) => {
   const params: unknown[] = [];
   const parameter = (value: unknown) => {
@@ -91,10 +110,6 @@ export const compileRuleSelection = (
   if (!first || !last) throw new Error("Datalog rules require identity endpoints");
   const a = bindings.get(first)!;
   const b = bindings.get(last)!;
-  // [EXP-C8] Why the IN (SELECT ... UNNEST) form: `b = ANY($n) AND ...` returns zero or wrong
-  // rows on XTDB 2.2.0 (R10 finding 7, R14 H05); this form was correct in every probe and is an
-  // uncorrelated semi-join in WHERE, outside #6313 and #6345 (R14 H02, H03).
-  if (frontier) conditions.push(`${b} IN (SELECT x FROM UNNEST(${parameter([...frontier])}) AS u(x))`);
   const sql = `SELECT DISTINCT ${a} AS arg1, ${b} AS arg2 FROM ${sources.join(" CROSS JOIN ")} WHERE ${conditions.join(" AND ")}`;
   return { sql: lowerSource(sql, parameter(scopeKey)), params };
 };
@@ -105,11 +120,13 @@ export const compileRuleSelection = (
  * [EXP-C8] Why: the old evaluator materialized every rule in `tx_query_relations` with one
  * `INSERT ... SELECT` transaction per rule per round (each a `COMMIT SYNC`) from inside a
  * query call, so a Datalog read wrote and competed with the commits P1 and P2 measure. The
- * relations are now computed on the host by the shared `ruleClosure`: the non-recursive bases
- * are read once (B), and the recursive definitions' edges A are fetched backwards from the base
- * sources one frontier round per hop, then R = union of A^k composed with B for k = 0..maxDepth.
- * That is exactly the old depth-tagged relation (a row first inserted at round k had k recursive
- * steps), checked against the naive rounds in packages/core/test/native/frontier-closure.test.ts.
+ * relations are now computed on the host by the shared `ruleClosure`: each non-recursive base is
+ * read once (B), each recursive definition's edge pattern `[head attr next]` is read once (A; one
+ * bounded read, because on the ledger a frontier round scans as much as the whole edge read,
+ * memoryEdges in FrontierClosure.ts), and the semi-naive rounds run in memory with the call's
+ * tail constraint. That is exactly the old depth-tagged relation (a row first inserted at round k
+ * had k recursive steps; the old SQL bound the tail variable), checked against the naive rounds
+ * in packages/core/test/native/frontier-closure.test.ts.
  * The main query receives each relation as one JSON-array parameter (compiler.ts lowerRules).
  * Every read carries the same basis, so commits during evaluation cannot change the answer
  * (R10 3.8). Budget: `maxRows` distinct pairs in total, as before; no partial answer.
@@ -154,30 +171,25 @@ export const evaluateRules = async (
       );
       base.push(...rows);
     }
+    // Recursive definitions are `[head, attr, next]` then `[name, next, tail]` (validation.ts).
+    const steps = [];
+    for (const rule of recursive) {
+      const patterns = rule.body.filter((clause) => !isRuleCall(clause, names));
+      const call = rule.body.find((clause) => isRuleCall(clause, names))!;
+      const rows = await read(
+        compileRuleSelection(patterns, scopeKey, basis),
+        FRONTIER_DEFAULTS.maxRoundRows + 1,
+      );
+      steps.push({
+        predecessors: memoryEdges(rows.map(([head, next]) => [next, head] as const)),
+        tail: ruleTail(rule, patterns[0]!, call),
+      });
+    }
     const { pairs } = await ruleClosure({
       base,
-      // Recursive definitions are `[head, attr, next]` then `[name, next, tail]` (validation.ts);
-      // the edge read returns `(head, next)` with `next` in the frontier, reversed for the loop.
-      ...(recursive.length
-        ? {
-            predecessors: async (batch: readonly string[], limit: number) => {
-              const edges: FrontierEdge[] = [];
-              for (const rule of recursive) {
-                const patterns = rule.body.filter((clause) => !isRuleCall(clause, names));
-                const rows = await read(
-                  compileRuleSelection(patterns, scopeKey, basis, batch),
-                  limit - edges.length,
-                );
-                edges.push(...rows.map(([head, next]) => [next, head] as const));
-              }
-              return edges;
-            },
-          }
-        : {}),
+      steps,
       maxDepth,
       maxPairs: Math.max(1, maxRows - total),
-      // XTDB rounds take large frontiers cheaply (R10 3.4, 10,000-id batches).
-      budgets: { maxBatch: 10_000 },
       ...(signal ? { signal } : {}),
     });
     total += pairs.length;

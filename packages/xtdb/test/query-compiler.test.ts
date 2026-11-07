@@ -67,20 +67,16 @@ describe("XTDB compiler", () => {
     ).toThrow(/evaluated rule relations/);
   });
 
-  it("[EXP-C8] rule selections are reads: no INSERT, frontier as one UNNEST parameter", () => {
-    const result = compileRuleSelection(
-      [["?x", ":parent", "?z"]],
-      "s",
-      { validAt: 1, recordedPosition: 2 },
-      ["b", "c"],
-    );
+  it("[EXP-C8] rule selections are plain reads of the pattern body", () => {
+    const result = compileRuleSelection([["?x", ":parent", "?z"]], "s", {
+      validAt: 1,
+      recordedPosition: 2,
+    });
     expect(result.sql.startsWith("SELECT DISTINCT")).toBe(true);
     expect(result.sql).not.toMatch(/\b(INSERT|ERASE|DELETE|UPDATE)\b/);
-    expect(result.sql).toMatch(/IN \(SELECT x FROM UNNEST\(\$\d+\) AS u\(x\)\)/);
     expect(result.sql).not.toMatch(/\bANY\s*\(/);
     expect(result.sql).toContain("retracted_position");
     expect(result.sql).not.toMatch(/\b(?:FROM|JOIN) triples\b/);
-    expect(result.params).toContainEqual(["b", "c"]);
   });
 
   it("lowers comma-separated negation sources without changing quoted SQL", () => {

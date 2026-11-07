@@ -1,5 +1,5 @@
 import { Effect, Layer } from "effect";
-import { readOnlyXtdbClient } from "./ReadOnlyClient.js";
+import { readOnlyXtdbClient, readPathBase } from "./ReadOnlyClient.js";
 import {
   QueryExecutor,
   ReadError,
@@ -156,7 +156,7 @@ const queryExecutor = (
           if ("inner" in input) assertWrappedQuery(input);
           else assertDatalogQuery(input);
           const state = [...transactions.values()].findLast(
-            (state) => state.client === client && state.scopeKey === scopeKey,
+            (state) => state.client === readPathBase(client) && state.scopeKey === scopeKey,
           );
           if (state && state.rows.size > maxResultRows)
             throw new ReadError({

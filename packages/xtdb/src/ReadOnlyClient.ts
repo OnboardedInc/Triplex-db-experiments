@@ -19,10 +19,23 @@ export class ReadPathWriteRefused extends Error {
  * engine-boundary proof; this facade is the structural guard. `close` is not delegated: the
  * runtime layer owns the shared client.
  */
-export const readOnlyXtdbClient = (client: XtdbClient): XtdbClient => ({
-  query: (sql, params, basis, options) => client.query(sql, params, basis, options),
-  submit: async () => {
-    throw new ReadPathWriteRefused("xtdb");
-  },
-  close: async () => {},
-});
+export const readOnlyXtdbClient = (client: XtdbClient): XtdbClient => {
+  const base = readPathBase(client);
+  const view: XtdbClient = {
+    query: (sql, params, basis, options) => base.query(sql, params, basis, options),
+    submit: async () => {
+      throw new ReadPathWriteRefused("xtdb");
+    },
+    close: async () => {},
+  };
+  bases.set(view, base);
+  return view;
+};
+
+const bases = new WeakMap<XtdbClient, XtdbClient>();
+/**
+ * The shared client behind a read-only view (the client itself otherwise). Transaction state is
+ * keyed by the storage adapter's client, so a read path compares through this (EXP-C8 review:
+ * comparing the view itself hid a transaction's staged writes from its own reads).
+ */
+export const readPathBase = (client: XtdbClient): XtdbClient => bases.get(client) ?? client;
