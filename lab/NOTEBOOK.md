@@ -886,3 +886,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   whole-journal comparison works modulo erasure), plus a separate ledger for restore replay; erased values match no value predicate and
   sort last (provisional under the Q24 erasure flag for Sam); JSON numbers convert to decimal as written. The author implements Q49, then
   the V-O03 verifier re-checks before the pin moves.
+- 00:40Z: EXP-F02b closed out: 0 silent value changes on both engines; G1 qlever f1 84/88 with timeouts only (478 s against 62 s on main's
+  passing run). Learning: with 10 agents on a saturated host there is no quiet window by chance, so gate reruns (F02b G1 xtdb and G1 qlever
+  f1, X02's XTQL candidate G2) wait for a scheduled gate window: the orchestrator pauses new dispatches when several agents finish and runs
+  the owed gates one at a time through heavy.mjs.

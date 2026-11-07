@@ -37,19 +37,23 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
 | EXP-O04 Q49 implementation (opus, O02/O03 author, exp/O04-oracle-erasure; F2 f4b59b4, erasure 9fdc3b4) | correctness floor (11 erasure obligations) | then V-O04 re-check, new pin |
 | EXP-E01 claim evaluator (opus, exp/E01-claim-evaluator) | floor for every claim | lab/bin/claim.mjs |
-| EXP-F02b G1 qlever f1 run (opus, exp/F02b-wire-exactness-fixes cad7f3f) | numeric rule floor | 0 silent changes both engines; then V-F02b; G1 xtdb in a quiet window |
+| EXP-A01 contract 0.3.7 (opus, main, no commit) | Q46-Q49 into the contract | lab/acceptance/ |
 | EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |
 | EXP-P2Q QLever log of record + broker (opus, exp/P2Q-qlever-log-broker) | P2, P3 | packages/qlever/src/broker |
 | EXP-C8 reads never write (opus, exp/C8-read-only-frontier) | P1, C8 floor | both lanes |
 | EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
 | EXP-D01c O-DOMAIN independent oracle (opus, exp/D01c-o-domain) | P5, P3 deps, GS domain expectations | reproduce 87 cases + fingerprint -> W0 pin |
-Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. NEXT FREE SLOTS, in order: (000) A01 contract 0.3.7 (Q46-Q48, engine-free); (000b) EXP-D01b TypeScript W0 kernel (different author, checked against O-DOMAIN); (0000) R22 noise-robust benchmarking research (Sonnet xhigh, engine-free); then (Q46 + Q47 from lab/reviews/plan-v2-round6.responses.md); (00) V-F02b independent verification of exp/F02b-wire-exactness-fixes (after its f1 G1 run); (1) V-X02 (verify exp/X02-xtql-parity bf1ad4d; XTQL candidate rerun on an exclusive slot); (2) EXP-Q07 QLever version side-by-side (R21 E1) when an exclusive QLever slot frees; (3) XTDB 2.2.1 re-qualification when tagged.
+Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. NEXT FREE SLOTS, in order: (000b) EXP-D01b TypeScript W0 kernel (different author, checked against O-DOMAIN); (0000) R22 noise-robust benchmarking research (Sonnet xhigh, engine-free); then (Q46 + Q47 from lab/reviews/plan-v2-round6.responses.md); (00) V-F02b independent verification of exp/F02b-wire-exactness-fixes (after its f1 G1 run); (1) V-X02 (verify exp/X02-xtql-parity bf1ad4d; XTQL candidate rerun on an exclusive slot); (2) EXP-Q07 QLever version side-by-side (R21 E1) when an exclusive QLever slot frees; (3) XTDB 2.2.1 re-qualification when tagged.
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 
 ## Exclusive slot queue (pool: xtdb-dev 3.0 + qlever-dev 3.5 leave 4.5 GiB)
 XTDB: EXP-P2X (s1, now) -> EXP-X05 (s2 + follower capped about 1 GiB) -> EXP-N01 A0 XTDB (zero-readers, then ladder) -> V-X02 XTQL rerun.
 QLever: EXP-P2Q measurement -> A0 QLever (bulk-seeded) -> EXP-Q07 version side-by-side (needs a dev resident paused or the XTDB queue drained).
+
+## Gate window (owed reruns, run one at a time through heavy.mjs when several agents finish)
+- F02b: G1 xtdb and G1 qlever f1 at c443381 (both last failed by timeouts only).
+- X02: XTQL candidate G2 on an exclusive XTDB slot.
 
 ## Infrastructure policy (2026-11-08 22:10Z)
 Host saturated (36 GiB, about 14 GiB compressed, load 12-13 on 12 cores; Sam's default colima VM shares it), so the triplex2 VM cannot

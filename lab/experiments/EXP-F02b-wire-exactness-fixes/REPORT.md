@@ -57,3 +57,10 @@ OOM-killed three times during the runs); both G1 receipts FAIL for infrastructur
   21 s (919 s on the old resident), QLever paths 16 s.
 - G1 qlever `G1-qlever-20261107T220838Z-86451c` (default profile, planner 1): 84/88, the same 4 failures as main's default-profile receipt
   (two datalog aggregation cases needing a server result key); the f1-profile regression check is running.
+
+## G1 qlever, f1 profile (c443381)
+- `G1-qlever-20261107T221624Z-58b0eb`: 84/88; all 4 failures (actor due-work ranges, Datalog reads bounded by default, recursive relations
+  cursor pagination in both phases) and the suite failure are timeouts; no assertion failure. 478 s against 62 s in main's f1 PASS
+  (e08600). The two aggregation cases that fail under the default profile pass under f1. No regression from the fixes.
+- Branch for the verifier: 2b59021 (fixes), 08368fa (XTDB results), cad7f3f (QLever results, slots.json from main), c443381 (f1 receipt).
+- Owed: clean G1 xtdb and G1 qlever f1 reruns in a quiet gate window.
