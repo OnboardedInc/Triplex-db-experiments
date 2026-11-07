@@ -1,0 +1,230 @@
+{
+ "converter": "lab/verify/O02/convert_and_run_o01.py",
+ "plants": {
+  "planted": 22,
+  "caught": 9,
+  "rows": [
+   {
+    "patch": "P1",
+    "vector": "C5-03",
+    "item": "Q1",
+    "mutation": "conflict set names the wrong attribute (:item/name)",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P1",
+    "vector": "C5-07",
+    "item": "Q2",
+    "mutation": "conflict expected with the wrong _tag (QueryError)",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P2",
+    "vector": "G5-SUM-01",
+    "item": "Q",
+    "mutation": "overflow expected as number-overflow",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P2",
+    "vector": "G5-SUM-10",
+    "item": "Q",
+    "mutation": "same tag DatalogValidationError, wrong reason (mixed-family)",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P2",
+    "vector": "G5-SUM-02",
+    "item": "Q",
+    "mutation": "exact total off by one (2^62 + 1)",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P3",
+    "vector": "C5-03",
+    "item": "Q7",
+    "mutation": "count({name: 'three'}) = 2",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P3",
+    "vector": "C5-03",
+    "item": "Q6",
+    "mutation": "count({color: 'red'}) succeeds with 1 although color is conflicted",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P3+P7",
+    "vector": "C5-03",
+    "item": "Q8",
+    "mutation": "AMB-17 reading A names the wrong conflicted entity",
+    "verdict": "AMBIGUOUS"
+   },
+   {
+    "patch": "P4",
+    "vector": "G9-CUT-01",
+    "item": "T2",
+    "mutation": "retractTxId of A1 is C1's tx instead of C2's",
+    "verdict": "MISSING"
+   },
+   {
+    "patch": "P4",
+    "vector": "G9-V4-06",
+    "item": "G9-V4-06-Q4",
+    "mutation": "retractedAt of 0/present/2 is 1005.25 instead of 1006.25",
+    "verdict": "MISSING"
+   },
+   {
+    "patch": "P4",
+    "vector": "G9-V4-04",
+    "item": "G9-V4-04-Q4",
+    "mutation": "known retirement of 0/label/0 hidden (null)",
+    "verdict": "MISSING"
+   },
+   {
+    "patch": "P5",
+    "vector": "C6-01",
+    "item": "Q12",
+    "mutation": ":_tx/change count 3 instead of 4",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P5",
+    "vector": "C6-01",
+    "item": "Q11",
+    "mutation": "changed entities include j:3 (changed by C3, not C2)",
+    "verdict": "DISAGREE"
+   },
+   {
+    "patch": "P6",
+    "vector": "G10-CUR-01",
+    "item": "E3",
+    "mutation": "invalid limit expected as other-query",
+    "verdict": "AGREE"
+   },
+   {
+    "patch": "P6",
+    "vector": "G10-CUR-01",
+    "item": "E1",
+    "mutation": "basis change expected as malformed (a 4.7 reason, but the wrong one)",
+    "verdict": "NOT-MODELED"
+   },
+   {
+    "patch": "P6",
+    "vector": "G10-CUR-01",
+    "item": "E2",
+    "mutation": "foreign cursor expected with tag ReadError",
+    "verdict": "NOT-MODELED"
+   },
+   {
+    "patch": "P7",
+    "vector": "G5-SUM-13",
+    "item": "Q",
+    "mutation": "AMB-09 reading B says SUM 20",
+    "verdict": "AMBIGUOUS"
+   },
+   {
+    "patch": "P7",
+    "vector": "C6-02",
+    "item": "Q2",
+    "mutation": "AMB-04 reading B says +0.0",
+    "verdict": "AMBIGUOUS"
+   },
+   {
+    "patch": "P7",
+    "vector": "G1-I64-01",
+    "item": "Q7",
+    "mutation": "AMB-16 reading A drops n:p59 (gt is off by one)",
+    "verdict": "AMBIGUOUS"
+   },
+   {
+    "patch": "P7",
+    "vector": "G9-CUT-01",
+    "item": "Q3",
+    "mutation": "AMB-01 reading A replaced by the snapshot rendering",
+    "verdict": "AMBIGUOUS"
+   },
+   {
+    "patch": "P8",
+    "vector": "G9-CUT-01",
+    "item": "Q2",
+    "mutation": "ordinary match expected in the snapshot shape (no AMB marker)",
+    "verdict": "AGREE-ONE-CONTRACT"
+   },
+   {
+    "patch": "P7 fixture",
+    "vector": "Q8F-05",
+    "item": "Q1",
+    "mutation": "fixture order swapped: Z2 (+0.0) is now op 0, so the representative is +0.0",
+    "verdict": "AMBIGUOUS"
+   }
+  ]
+ },
+ "q8f05SwappedOracleAnswer": [
+  {
+   "value": {
+    "type": "number",
+    "value": 0,
+    "bits": "0x0000000000000000"
+   },
+   "supports": [
+    "Z2",
+    "Z1"
+   ]
+  }
+ ],
+ "o01NegativeControl": {
+  "planted": 8,
+  "caught": 8,
+  "rows": [
+   {
+    "vector": "Q8F-03",
+    "item": "Q1",
+    "mutation": "bit flip in one binary64",
+    "verdict": "DISAGREE"
+   },
+   {
+    "vector": "Q8F-01",
+    "item": "Q1",
+    "mutation": "UTF-16 order instead of codepoint order",
+    "verdict": "DISAGREE"
+   },
+   {
+    "vector": "G9-CUT-01",
+    "item": "N4",
+    "mutation": "future retirement leaks into the snapshot",
+    "verdict": "DISAGREE"
+   },
+   {
+    "vector": "G9-CUT-01",
+    "item": "Q4",
+    "mutation": "exclusive R",
+    "verdict": "DISAGREE"
+   },
+   {
+    "vector": "G5-SUM-07",
+    "item": "Q",
+    "mutation": "binary64 rounding of an int64 sum",
+    "verdict": "DISAGREE"
+   },
+   {
+    "vector": "C5-02",
+    "item": "Q4",
+    "mutation": "wrong surviving support",
+    "verdict": "DISAGREE"
+   },
+   {
+    "vector": "C5-07",
+    "item": "cmd:C3",
+    "mutation": "worsened violation accepted",
+    "verdict": "DISAGREE"
+   },
+   {
+    "vector": "G9-HO-01",
+    "item": "V30.5",
+    "mutation": "inclusive validTo",
+    "verdict": "DISAGREE"
+   }
+  ]
+ }
+}
