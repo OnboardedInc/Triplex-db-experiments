@@ -28,6 +28,12 @@ import { prepareAggregateAnswers } from "./AggregateAnswers.js";
 
 export interface QleverQueryOptions {
   readonly sourceView?: Effect.Effect<QleverSourceView | undefined>;
+  /**
+   * EXP-P2Q broker mode (default absent): the basis for a query outside a transaction. The compiled query
+   * reads only the replica, so the broker adapter waits (deadline-aware, RULINGS Q31d) until the replica
+   * has reached the requested basis, or the broker head when none is named, and fails otherwise.
+   */
+  readonly resolveBasis?: (requested: number | undefined) => Promise<number>;
   readonly sourcePlan?: QleverSourcePlan;
   readonly domainPlan?: QleverDomainPlan;
   readonly timeoutMs?: number;
@@ -211,6 +217,9 @@ export const makeQleverQueryExecutor = (
             });
           const position =
             sourceView?.sourcePosition ??
+            (options.resolveBasis && !sourceView
+              ? await options.resolveBasis(basis?.recordedPosition)
+              : undefined) ??
             basis?.recordedPosition ??
             safeCount(
               (

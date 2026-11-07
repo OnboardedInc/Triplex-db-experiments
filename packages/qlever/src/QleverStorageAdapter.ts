@@ -11,6 +11,11 @@ import {
   type QueryPattern,
 } from "@triplex-build/triplex/runtime";
 import type { QleverClient } from "./QleverClient.js";
+import type { HostBroker } from "./broker/broker.js";
+import {
+  makeQleverBrokerStorageAdapter,
+  type BrokerAdapterOptions,
+} from "./broker/BrokerStorageAdapter.js";
 import {
   assertionIri,
   claimIri,
@@ -79,8 +84,19 @@ export const makeQleverStorageAdapter = (
     readonly maxRetries?: number;
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
+    /**
+     * EXP-P2Q candidate (default off): the host log plus broker is the source of truth, the ACK follows the
+     * durable frame, and reads route through the broker's overlay (src/broker/BrokerStorageAdapter.ts).
+     */
+    readonly broker?: HostBroker;
+    readonly brokerOptions?: BrokerAdapterOptions;
   } = {},
 ): QleverStorageAdapterService => {
+  if (options.broker)
+    return makeQleverBrokerStorageAdapter(client, scopeKey, options.broker, {
+      ...(options.maxRetries === undefined ? {} : { maxRetries: options.maxRetries }),
+      ...options.brokerOptions,
+    });
   const graph = graphIri(scopeKey),
     key = Symbol(scopeKey),
     admission = Semaphore.makeUnsafe(1);
