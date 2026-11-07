@@ -741,3 +741,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   to 2% of population outputs. Q40e adds a case for each.
 - **Learning: recurring notices need a retirement record** (Q40h), or a second FNC notice is never delivered.
 - **Learning: a release that touches every subject cannot test blast-radius selection.** Q40i adds R3 (one rule, narrow read set).
+- 02:10Z: contract 0.3.5 committed (15a07b6): 149 obligations, 74 planted regressions caught, `--verify` byte-identical; 124 obligations
+  fail closed on null oracle pins (O-REPLAY, O-TDK1) until those oracles are accepted. The Q38c check worked the first time it mattered:
+  Q40 landed in RULINGS.md mid-compile and the generator refused until it was listed as recorded-not-compiled. Rulings the contract has
+  not compiled yet now live in lab/acceptance/RULINGS-PENDING.md (Q41). R21 (engine-upgrade survey) and Codex round 5 started.
