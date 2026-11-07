@@ -273,6 +273,14 @@ export const SOURCE_ROOTS = ['packages', 'qualification', 'lab/bin', 'lab/config
 const SECRET = /(token|secret|credential|\.pem$|\.key$|\.env)/i;
 
 /**
+ * The source label every receipt carries (profileIdentity.sourceTreeSha256). [EXP-E01] Shared with
+ * lab/bin/claim.mjs, which recomputes the clean label of a claimed commit (empty diff, no untracked
+ * inputs) to bind receipts to that commit's tree.
+ */
+export const sourceTreeIdOf = (headTree, diffSha256 = sha256(Buffer.alloc(0)), untracked = []) =>
+  sha256(JSON.stringify({ headTree, diffSha256, untracked }));
+
+/**
  * Identity of the source that ran, including uncommitted changes. `git stash create` covers
  * tracked edits only, so untracked executed inputs and modified files are listed explicitly.
  */
@@ -300,7 +308,7 @@ export function sourceIdentity() {
   const untrackedFiles = untracked.map(fileEntry);
   const modifiedFiles = modified.map(fileEntry);
   const diffSha256 = sha256(diff);
-  const sourceTreeId = sha256(JSON.stringify({ headTree, diffSha256, untracked: untrackedFiles.map(f => [f.path, f.sha256 ?? null]) }));
+  const sourceTreeId = sourceTreeIdOf(headTree, diffSha256, untrackedFiles.map(f => [f.path, f.sha256 ?? null]));
   return { head, headTree, branch, dirty, stashCommit, stashTree, diffScope: SOURCE_ROOTS, diffSha256, diffBytes: diff.length, modifiedFiles, untrackedFiles, otherDirtyPaths, sourceTreeId, diff };
 }
 
