@@ -36,11 +36,12 @@ def _validate_rule(rule):
 
 
 class Fact:
-    __slots__ = ("id", "entityId", "attribute", "value", "entityType", "lo", "hi")
+    __slots__ = ("id", "entityId", "attribute", "value", "entityType", "lo", "hi", "erased")
 
-    def __init__(self, id, entityId, attribute, value, entityType, lo, hi):
+    def __init__(self, id, entityId, attribute, value, entityType, lo, hi, erased=False):
         self.id, self.entityId, self.attribute, self.value = id, entityId, attribute, value
         self.entityType, self.lo, self.hi = entityType, lo, hi
+        self.erased = erased      # R-ERA-4 (Q49c): Unique ignores erased values
 
     def at(self, v):
         return self.lo <= v and (self.hi is None or v < self.hi)
@@ -51,7 +52,7 @@ def _facts(state, plan):
     assertion staged earlier in the same command (target ("staged", opIndex)); such an
     assertion is absent from the post-state."""
     pre = [Fact(a.id, a.entityId, a.attribute, a.value, a.entityType, a.validFrom.frac,
-                None if a.validTo is None else a.validTo.frac) for a in state.live()]
+                None if a.validTo is None else a.validTo.frac, a.erasure is not None) for a in state.live()]
     retracted = {target for _, target, _ in plan.retracts}
     post = [f for f in pre if f.id not in retracted]
     for index, fields in plan.asserts:
@@ -92,7 +93,8 @@ def violations_at(facts, rules, v, membership="valid-at-instant"):
         elif tag == "Unique":
             claimants = {}
             for f in rows:
-                claimants.setdefault(f.value, set()).add(f.entityId)
+                if not f.erased:          # Q49c: Unique ignores erased values
+                    claimants.setdefault(f.value, set()).add(f.entityId)
             for value, entities in claimants.items():
                 if len(entities) > 1:
                     found[("unique", etype, attr, value_identity_text(value))] = (

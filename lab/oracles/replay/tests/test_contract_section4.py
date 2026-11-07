@@ -12,6 +12,7 @@ answer (right column).
 """
 
 import json
+import re
 import struct
 import unittest
 from pathlib import Path
@@ -20,7 +21,7 @@ from lab.oracles.replay import errors as ERR
 from lab.oracles.replay import exact as X
 from lab.oracles.replay import values as V
 from lab.oracles.replay.tests import test_rulings as T
-from lab.oracles.replay.tests.helpers import assert_op, case, committed_receipts, evaluate, i64, outcome, result, s
+from lab.oracles.replay.tests.helpers import assert_op, case, committed_receipts, evaluate, i64, outcome, ref, result, s
 
 ROOT = Path(__file__).resolve().parents[4]
 CONTRACT = json.loads((ROOT / "lab/acceptance/obligations.json").read_text())
@@ -197,15 +198,20 @@ class Coverage(unittest.TestCase):
               "decimalScaleEvolution": "DecimalScaleEvolution", "wireRules": "WireRules",
               "temporalRules": "TemporalRules", "readShapeRules": "ReadShapeRules", "journalRules": "JournalRules",
               # contract 0.3.5 (EXP-O03 alignment)
-              "q33Rules": "Q33Rules"}
+              "q33Rules": "Q33Rules",
+              # decimalRouting (V-O03 F2: its absence let DR-JSON-CONVERT drift unnoticed)
+              "decimalRouting": "DecimalRouting",
+              # contract 0.3.6 (EXP-O04)
+              "q43Rules": "Q43Rules"}
 
     def test_every_section4_row_has_a_named_test(self):
         classes = {cls.__name__: cls for cls in (NumericOps, Conversions, Comparisons, Aggregates, Constraints, Errors,
                                                  DecimalOps, DecimalConversions, DecimalScaleEvolution, WireRules,
-                                                 TemporalRules, ReadShapeRules, JournalRules, Q33Rules)}
+                                                 TemporalRules, ReadShapeRules, JournalRules, Q33Rules,
+                                                 DecimalRouting, Q43Rules)}
         for table, cls in self.TABLES.items():
             for row in CONTRACT[table]:
-                name = "test_" + row["id"].replace("-", "_").replace(".", "_")
+                name = "test_" + re.sub(r"[^A-Za-z0-9]", "_", row["id"])
                 self.assertTrue(hasattr(classes[cls], name), f"{table} {row['id']} has no {cls}.{name}")
         for row in CONTRACT["valueKinds"]:
             self.assertTrue(hasattr(ValueKinds, "test_kind_" + row["kind"]), row["kind"])
@@ -214,6 +220,8 @@ class Coverage(unittest.TestCase):
         for key in CONTRACT["decimalRules"]:
             if key != "source":
                 self.assertTrue(hasattr(DecimalRules, "test_decimal_" + key), key)
+        for case_id in CONTRACT["caseSets"]["CS-ERASURE"]["requiredCases"] + CONTRACT["erasure"]["tests"]:
+            self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
         for key in ("positionDenseCases", "positionRequiredCases"):
             for case_id in CONTRACT[key]:
                 self.assertTrue(hasattr(Positions, "test_" + case_id.replace("-", "_")), f"{key} {case_id}")
@@ -887,6 +895,94 @@ class DecimalConversions(unittest.TestCase):
                 V.predicate(op, dec("1"), I(1))               # CMP-DECIMAL-CROSS: every comparison
 
 
+def jsonv(x):
+    return {"type": "json", "value": x}
+
+
+PAY_SCHEMA = [{"version": 1, "entityTypes": {"Pay": {"attributes": {
+    "rate": {"attribute": ":pay/rate", "type": "decimal", "precision": 9, "scale": 6, "cardinality": "one"}}}}}]
+PAY_RATES = ("16.5", "16.499999", "-0.5", "-0.55", "12.25")
+
+
+def pay_case(queries):
+    ops = [assert_op(f"r{k}", f"w{k}", ":pay/rate", decimal_value(v), entity_type="Pay") for k, v in enumerate(PAY_RATES)]
+    return evaluate(case([{"clock": 1, "operations": ops}], queries, schemas=PAY_SCHEMA))
+
+
+class DecimalRouting(unittest.TestCase):
+    """decimalRouting (Q38d). The key channel (decimal_order_v1, TDK1) is the lanes' and
+    O-TDK1's; the oracle pins the exact value order and the exact results every route must
+    reproduce, and the value-side rules (key arithmetic, JSON opacity, JSON conversion)."""
+
+    def test_DR_REPO_ORDER(self):
+        rep = pay_case([{"id": "asc", "kind": "find", "entityType": "Pay", "cut": {"validAt": 1},
+                         "orderBy": [{"prop": "rate", "direction": "asc"}]},
+                        {"id": "gte", "kind": "find", "entityType": "Pay", "cut": {"validAt": 1},
+                         "where": [{"prop": "rate", "op": "gte", "value": decimal_value("16.50")}]}])
+        self.assertEqual(result(rep, "asc")["pages"][0]["ids"], ["w3", "w2", "w4", "w1", "w0"])   # exact, not lexical
+        self.assertEqual(result(rep, "gte")["pages"][0]["ids"], ["w0"])
+
+    def test_DR_NATIVE_ORDER(self):
+        rep = evaluate(case([], [{"id": "o", "kind": "sortValues", "values": [decimal_value(v) for v in PAY_RATES]}]))
+        self.assertEqual([v["value"] for v in result(rep, "o")], ["-0.55", "-0.5", "12.25", "16.499999", "16.5"])
+
+    def test_DR_RAW_ORDER(self):
+        rep = pay_case([{"id": "lt", "kind": "find", "entityType": "Pay", "cut": {"validAt": 1},
+                         "where": [{"prop": "rate", "op": "lt", "value": decimal_value("12.25")}],
+                         "orderBy": [{"prop": "rate", "direction": "desc"}]}])
+        self.assertEqual(result(rep, "lt")["pages"][0]["ids"], ["w2", "w3"])        # -0.5 then -0.55
+
+    def test_DR_DERIVED(self):
+        rep = evaluate(case([], [{"id": "c", "kind": "compare", "left": ["mul", decimal_value("1.25"), decimal_value("13.2")],
+                                  "right": decimal_value("16.5")}]))
+        c = result(rep, "c")
+        self.assertEqual((c["eq"], c["lt"], c["gt"]), (True, False, False))         # 16.500 = 16.5, computed exactly
+
+    def test_DR_AGGREGATE(self):
+        rep = pay_case([{"id": "a", "kind": "aggregate", "cut": {"validAt": 1}, "match": {"attributes": {"r": ":pay/rate"}},
+                         "aggregates": [{"op": "sum", "var": "r", "as": "sum"}, {"op": "min", "var": "r", "as": "lo"},
+                                        {"op": "max", "var": "r", "as": "hi"}]}])
+        row = result(rep, "a")["rows"][0]
+        self.assertEqual((row["sum"]["value"], row["lo"]["value"], row["hi"]["value"]),
+                         ("44.199999", "-0.550000", "16.500000"))
+
+    def test_DR_KEY_ARITHMETIC(self):
+        node = result(evaluate(case([], [{"id": "q", "kind": "expr", "expr": ["add", s("p0212"), s("p011")]}])), "q")
+        self.assertEqual(node["error"], "E-MIXED-FAMILY")
+
+    def test_DR_JSON_OPAQUE(self):
+        rep = evaluate(case([{"clock": 1, "operations": [assert_op("a", "e1", ":x/j", jsonv(1.5)),
+                                                         assert_op("b", "e2", ":x/j", jsonv(2.5))]}],
+                            [{"id": "c", "kind": "compare", "left": jsonv(1.5), "right": decimal_value("1.5")},
+                             {"id": "sum", "kind": "aggregate", "cut": {"validAt": 1}, "match": {"attributes": {"v": ":x/j"}},
+                              "aggregates": [{"op": "sum", "var": "v", "as": "x"}]}]))
+        c = result(rep, "c")
+        self.assertEqual((c["eq"], c["lt"]["error"]), (False, "E-MIXED-FAMILY"))
+        self.assertEqual(result(rep, "sum")["error"], "E-MIXED-FAMILY")
+
+    def test_DR_JSON_CONVERT(self):
+        """V-O03 F2: the contract's three answers; Q49e (R-DEC-18): the as-written reading."""
+        def conv(value, *params):
+            return q_expr(["toDecimal", jsonv(value)] + list(params))
+        self.assertEqual(dec_out(conv(1.5, 2, 1)), ("1.5", 1, 2))
+        self.assertEqual(dec_out(conv(12, 4, 2)), ("12.00", 2, 4))
+        node = conv(1.55, 2, 1)
+        self.assertEqual((node["error"],) + err_fields(node), ("E-DECIMAL-FRACTION", "InvalidTripleError", "decimal-fraction"))
+        node = conv("abc", 2, 1)
+        self.assertEqual((node["error"],) + err_fields(node), ("E-INVALID-VALUE", "InvalidTripleError", "invalid-value"))
+        for other in (True, None, [1.5], {"a": 1.5}):
+            self.assertEqual(conv(other, 2, 1)["error"], "E-INVALID-VALUE", other)
+        self.assertEqual(conv(1234.5, 4, 1)["error"], "E-DECIMAL-OVERFLOW")
+        # Q49e: a JSON number converts from its as-written reading, never its binary64 expansion
+        self.assertEqual(dec_out(conv(0.1, 2, 1)), ("0.1", 1, 2))
+        self.assertEqual(dec_out(conv(0.30000000000000004, 17, 17)), ("0.30000000000000004", 17, 17))
+        self.assertEqual(conv(0.1, 2, 0)["error"], "E-DECIMAL-FRACTION")
+        self.assertEqual(conv("1.50", 3, 2)["error"], "E-INVALID-VALUE")   # decimal text inside a JSON string
+        self.assertEqual(conv(1.5, 2, 1, "half-even")["error"], "X-NOT-MODELED")   # no rounding is named
+        with self.assertRaises(V.OracleInputError):
+            conv(1.5)
+
+
 class DecimalScaleEvolution(unittest.TestCase):
     """decimalScaleEvolution (Q22, Q31g, Q35b): a schema release that redeclares a decimal
     attribute is a widening or a migration, which the oracle does not model yet. It refuses
@@ -1274,6 +1370,414 @@ class Q33Rules(unittest.TestCase):
         T.BriefFacts.test_fact_3_cursor_sequence_and_errors(self)
 
 
+class Q43Rules(unittest.TestCase):
+    """q43Rules (contract 0.3.6): the Q43 rulings on EXP-O03's decisions, one test per row."""
+
+    def test_R_DEC_13_16(self):
+        self.assertEqual(kernel(lambda: X.to_decimal(N(1e20), 5, 2, "down")), ("error", "E-DECIMAL-OVERFLOW"))
+        self.assertEqual(kernel(lambda: X.to_decimal(dec("1.234"), 5, 2)), ("error", "E-DECIMAL-FRACTION"))
+        self.assertNotIn("E-DECIMAL-UNREPRESENTABLE", ERR.ERROR_TABLE)
+
+    def test_R_DEC_14(self):
+        self.assertEqual(kernel(lambda: X.agg_avg([dec("1.50")])), ("error", "E-DECIMAL-AVG"))
+
+    def test_R_DEC_8(self):
+        self.assertEqual(dec_out(json.loads(V.dumps(dec("12.50").to_output()))), ("12.50", 2, 4))
+        self.assertEqual(dec_out(json.loads(V.dumps(dec("0.5").to_output()))), ("0.5", 1, 1))
+
+    def test_R_DEC_9(self):
+        ties = [("2.5", "half-even", "2"), ("3.5", "half-even", "4"), ("-2.5", "half-up", "-3"),
+                ("2.5", "half-up", "3"), ("-2.9", "down", "-2"), ("2.9", "down", "2")]
+        for text, mode, want in ties:
+            self.assertEqual(dec_out(kernel(lambda: X.round_(dec(text), 0, mode))[1])[0], want, (text, mode))
+
+    def test_R_DEC_10(self):
+        self.assertEqual(kernel(lambda: X.add(dec(nines(38), 38, 0), dec("1", 1, 0))), ("error", "E-DECIMAL-OVERFLOW"))
+
+    def test_R_DEC_11(self):
+        self.assertEqual(dec_out(kernel(lambda: X.round_(dec("1.5", 2, 1), 3, "half-even"))[1]), ("1.500", 3, 4))
+
+    def test_R_DEC_12(self):
+        self.assertEqual(kernel(lambda: X.to_integer(dec(str(2 ** 63), 19, 0))), ("error", "E-INTEGER-OVERFLOW"))
+
+    def test_R_CUT_4(self):
+        node = result(evaluate(case([], [{"id": "q", "kind": "match", "cut": {"validAt": NZ}}])), "q")
+        self.assertEqual((node["error"], node["detail"]), ("E-NEGATIVE-ZERO-INSTANT", "no-negative-zero"))
+
+
+# --------------------------------------------------------------------------- erasure (EXP-O04; TARGETS 7, Q24, Q31f)
+
+SSN, NAME = ":person/ssn", ":person/name"
+PLAIN = "123-45-6789"
+PERSON_SCHEMA = [{"version": 1, "entityTypes": {"Person": {"attributes": {
+    "ssn": {"attribute": SSN, "type": "string"}, "name": {"attribute": NAME, "type": "string"}}}}}]
+
+
+def marker(at):
+    return {"_tag": "ErasedValue", "erasedAt": at}
+
+
+def erasure_commands(erase=True):
+    """P1 (clock 100): ssn1 and name1 on person:1, name2 on person:2; P2 (clock 200): ssn1
+    retracted, ssn2 asserted; P3 (clock 300): the erasure of person:1's ssn (or, as the
+    control, an empty command at the same position)."""
+    return [{"clock": 100, "operations": [assert_op("ssn1", "person:1", SSN, s(PLAIN), entity_type="Person"),
+                                          assert_op("name1", "person:1", NAME, s("Ann"), entity_type="Person"),
+                                          assert_op("name2", "person:2", NAME, s("Bo"), entity_type="Person")]},
+            {"clock": 200, "operations": [{"op": "retract", "target": "ssn1"},
+                                          assert_op("ssn2", "person:1", SSN, s("987-65-4321"), entity_type="Person")]},
+            {"clock": 300, "operations": [{"op": "erase", "entityId": "person:1", "attribute": SSN}] if erase else []}]
+
+
+def erasure_eval(queries, extra=(), erase=True, **kw):
+    return evaluate(case(erasure_commands(erase) + list(extra), queries, schemas=PERSON_SCHEMA, **kw))
+
+
+def match_q(qid, position="latest", attribute=SSN, **cut):
+    c = {"position": position, "validAt": 1e15}
+    c.update(cut)
+    return {"id": qid, "kind": "match", "cut": c, "pattern": {"attribute": attribute}}
+
+
+class Erasure(unittest.TestCase):
+    """CS-ERASURE required cases, the oracle's side of each (ACC 8.8 ERASURE; RULES.md
+    R-ERA-*). Every read the oracle answers starts after the case's erasures published."""
+
+    def test_ER_AFTER_PUBLICATION_ALL_BASES(self):
+        rep = erasure_eval([match_q("p1", 1), match_q("p2", 2), match_q("now"),
+                            {"id": "h", "kind": "history", "entityId": "person:1"}, match_q("name", 1, NAME)])
+        self.assertEqual(outcome(rep, 2)["outcome"], "committed")
+        self.assertEqual([r["value"] for r in result(rep, "p1")["raw"]], [marker(300)])   # a basis before the erasure
+        self.assertEqual([r["value"] for r in result(rep, "p2")["raw"]], [marker(300)])
+        self.assertEqual([r["value"] for r in result(rep, "now")["raw"]], [marker(300)])
+        self.assertEqual([(r["id"], r["value"]) for r in result(rep, "h")["rawLifetime"] if r["attribute"] == SSN],
+                         [("ssn1", marker(300)), ("ssn2", marker(300))])
+        self.assertEqual(result(rep, "name")["raw"][0]["value"], s("Ann"))               # only the named values
+
+    def test_ER_SHAPE_KEPT(self):
+        """Identities, valid and record intervals and retirement fields are unchanged; only the
+        value is the marker (control: the same stream with an empty command at P3)."""
+        q = [{"id": "all", "kind": "assertions"}]
+        erased, control = erasure_eval(q), erasure_eval(q, erase=False)
+        rows = {r["id"]: r for r in result(erased, "all")["assertions"]}
+        for r in result(control, "all")["assertions"]:
+            got = dict(rows[r["id"]])
+            self.assertEqual(got.pop("value"), marker(300) if r["attribute"] == SSN else r["value"])
+            self.assertEqual(got, {k: v for k, v in r.items() if k != "value"})
+
+    def test_ER_INFLIGHT_READ(self):
+        """A read that started before the erasure published may return the old value: both
+        forms are acceptable (R-ERA-6). One that started after it gets the marker."""
+        rep = erasure_eval([dict(match_q("before", 1), readStart={"afterCommand": 1}),
+                            dict(match_q("after", 1), readStart={"afterCommand": 2})])
+        self.assertEqual(result(rep, "before")["raw"][0]["value"],
+                         {"_tag": "InFlightErasure", "acceptable": [s(PLAIN), marker(300)],
+                          "rule": "ER-INFLIGHT-READ: the read started before the erasure published"})
+        self.assertEqual(result(rep, "after")["raw"][0]["value"], marker(300))
+
+    def test_ER_PINNED_READER(self):
+        """A cursor pinned at P2 before the erasure: every page read after the erasure
+        published shows the marker, at the pinned basis."""
+        rep = erasure_eval([{"id": "p", "kind": "entityPage", "entityType": "Person", "limit": 1,
+                             "cut": {"position": 2, "validAt": 1e15}},
+                            {"id": "c", "kind": "entityPage", "entityType": "Person", "limit": 1,
+                             "cursorFrom": {"query": "p"}}])
+        first = result(rep, "p")["pages"][0]["entities"][0]
+        self.assertEqual({t["id"]: t["value"] for t in first["triples"]}, {"name1": s("Ann"), "ssn2": marker(300)})
+        self.assertEqual(result(rep, "c")["cut"]["position"], 2)
+
+    def test_ER_REBUILD(self):
+        """The oracle has no rebuild step: after a rebuild the expected answers are the
+        post-erasure answers (the ledger erases the same assertions by identity), and a value
+        written after the erasure is not erased."""
+        later = [{"clock": 400, "operations": [assert_op("ssn3", "person:1", SSN, s("555-00-1111"), entity_type="Person")]}]
+        rep = erasure_eval([{"id": "all", "kind": "assertions"}], extra=later)
+        values = {r["id"]: r["value"] for r in result(rep, "all")["assertions"] if r["attribute"] == SSN}
+        self.assertEqual(values, {"ssn1": marker(300), "ssn2": marker(300), "ssn3": s("555-00-1111")})
+
+    def test_ER_RESTORE_PRE_BACKUP(self):
+        """Restore from a pre-erasure backup replays the ledger: the expected answer at the
+        backup's basis (P2) is the marker, never the backed-up value."""
+        rep = erasure_eval([match_q("backup", 2, recordedAt=250)])
+        self.assertEqual(result(rep, "backup")["raw"][0]["value"], marker(300))
+
+    def test_ER_ORACLE_POST(self):
+        rep = erasure_eval([{"id": "g", "kind": "get", "entityType": "Person", "entityId": "person:1",
+                             "cut": {"validAt": 1e15}}])
+        props = result(rep, "g")["properties"]
+        self.assertEqual((props["ssn"]["value"], props["ssn"]["supports"]), (marker(300), ["ssn2"]))
+        self.assertEqual(props["name"]["value"], s("Ann"))
+
+    def test_ER_ORDER_KEY_CHANNEL(self):
+        """Q49c: ordering and ranges never read an erased value: a range neither selects nor
+        rejects by it, ORDER BY puts the marker last whatever the direction (by assertion id),
+        and the oracle refuses only an order over both erased and missing values."""
+        ssn_p2 = [{"clock": 400, "operations": [assert_op("ssn3", "person:2", SSN, s("222"), entity_type="Person")]}]
+        find = lambda qid, **kw: dict({"id": qid, "kind": "find", "entityType": "Person", "cut": {"validAt": 1e15}}, **kw)
+        rep = erasure_eval([find("asc", orderBy=[{"prop": "ssn"}]), find("desc", orderBy=[{"prop": "ssn", "direction": "desc"}]),
+                            find("gt", where=[{"prop": "ssn", "op": "gt", "value": s("0")}]),
+                            find("ne", where=[{"prop": "ssn", "op": "ne", "value": s("x")}]),
+                            find("has", where=[{"prop": "ssn", "op": "exists"}]),
+                            find("plain", where=[{"prop": "name", "op": "eq", "value": s("Ann")}])], extra=ssn_p2)
+        for qid, want in (("asc", ["person:2", "person:1"]), ("desc", ["person:2", "person:1"]), ("gt", ["person:2"]),
+                          ("ne", ["person:2"]), ("has", ["person:1", "person:2"]), ("plain", ["person:1"])):
+            self.assertEqual(result(rep, qid)["pages"][0]["ids"], want, qid)
+        self.assertEqual(result(rep, "plain")["pages"][0]["entities"][0]["properties"]["ssn"]["value"], marker(300))
+        both = erasure_eval([find("o", orderBy=[{"prop": "ssn"}])])      # person:2 has no ssn at all
+        self.assertEqual(result(both, "o")["error"], "X-NOT-MODELED")
+
+    def test_ER_LEXICAL_CHANNEL(self):
+        """No expected answer carries a copy of the erased value: value patterns over it are
+        refused and the complete output document holds no plaintext (M-ERASURE-LEAK)."""
+        q = [{"id": "byvalue", "kind": "match", "cut": {"validAt": 1e15},
+              "pattern": {"attribute": SSN, "value": s(PLAIN)}},
+             {"id": "all", "kind": "assertions"}, {"id": "tx0", "kind": "transaction", "txId": "tx:0"},
+             {"id": "h", "kind": "history", "entityId": "person:1"},
+             {"id": "chg", "kind": "match", "cut": {"validAt": 1e15}, "pattern": {"attribute": ":_tx/change"}},
+             {"id": "jf", "kind": "journalFacts"}]
+        rep = erasure_eval(q)
+        self.assertEqual(result(rep, "byvalue")["count"], 0)         # Q49c: an erased value matches no pattern
+        self.assertNotIn(PLAIN, json.dumps(rep))                     # journal change facts included (Q49a)
+
+    def test_ER_KEY_EXCLUSIVE(self):
+        """Key-destruction evidence is O-OBS's; the oracle's side is that the post-erasure
+        answer is the same whatever route erased the value: every read shows the marker,
+        including the state summary and the journal changes."""
+        rep = erasure_eval([])
+        state = rep["state"][0]
+        self.assertEqual({a["id"]: a["value"] for a in state["assertions"] if a["attribute"] == SSN},
+                         {"ssn1": marker(300), "ssn2": marker(300)})
+        self.assertEqual(state["transactions"][2]["changes"],
+                         [{"op": "erase", "entityId": "person:1", "attribute": SSN, "assertionIds": ["ssn1", "ssn2"]}])
+
+    def test_ER_CURSOR_MODULO(self):
+        rep = erasure_eval([{"id": "p", "kind": "entityPage", "entityType": "Person", "limit": 1, "cut": {"validAt": 1e15}},
+                            {"id": "c", "kind": "entityPage", "entityType": "Person", "limit": 1,
+                             "cursorFrom": {"query": "p"}}])
+        control = erasure_eval([{"id": "p", "kind": "entityPage", "entityType": "Person", "limit": 1,
+                                 "cut": {"validAt": 1e15}}], erase=False)
+        pages = [result(rep, "p")["pages"][0], result(rep, "c")["pages"][0]]
+        self.assertEqual([[e["entityId"] for e in p["entities"]] for p in pages], [["person:1"], ["person:2"]])
+        # modulo erasure: the page equals the control page with the erased value replaced by its marker
+        ctl = result(control, "p")["pages"][0]["entities"][0]["triples"]
+        got = pages[0]["entities"][0]["triples"]
+        self.assertEqual([dict(t, value=marker(300)) if t["attribute"] == SSN else t for t in ctl], got)
+
+    def test_ER_EXPLAIN_MODULO(self):
+        """Explain at a pre-erasure basis shows the marker, not the value (Q24, provisional):
+        the as-of rows at P1 and the snapshot helper both carry the marker."""
+        rep = erasure_eval([{"id": "h", "kind": "history", "entityId": "person:1", "cut": {"position": 1}},
+                            {"id": "snap", "kind": "assertionSnapshot", "mode": "known-at-valid",
+                             "cut": {"position": 1, "validAt": 5}, "pattern": {"attribute": SSN}},
+                            {"id": "sup", "kind": "valueSupports", "cut": {"position": 1, "validAt": 5},
+                             "pattern": {"attribute": SSN}}])
+        self.assertEqual([r["value"] for r in result(rep, "h")["asOfSnapshot"] if r["attribute"] == SSN], [marker(300)])
+        self.assertEqual([r["value"] for r in result(rep, "snap")["assertions"]], [marker(300)])
+        # Q49c: supports group the erased values of the attribute under the marker
+        self.assertEqual(result(rep, "sup")["supports"], [{"entityId": "person:1", "attribute": SSN, "value": marker(300),
+                                                           "count": 1, "assertionIds": ["ssn1"]}])
+
+    def test_ER_FRONTIER_OLD_BASIS(self):
+        """An old-basis read never passes on the strength of its basis alone."""
+        rep = erasure_eval([match_q("old", 1, recordedAt=100), match_q("older", 1, recordedAt=150)])
+        self.assertEqual([result(rep, k)["raw"][0]["value"] for k in ("old", "older")], [marker(300)] * 2)
+
+    def test_ER_CACHE_INVALIDATION(self):
+        """The same old-basis read: answered before the erasure published (it may be the old
+        value), then after it (always the marker)."""
+        rep = erasure_eval([dict(match_q("cached", 1), readStart={"afterCommand": 0}), match_q("fresh", 1)])
+        self.assertEqual(result(rep, "cached")["raw"][0]["value"]["acceptable"], [s(PLAIN), marker(300)])
+        self.assertEqual(result(rep, "fresh")["raw"][0]["value"], marker(300))
+
+    def test_ER_JOURNAL_MODULO(self):
+        """Q49a: the erasure commit is an ordinary journaled transaction whose changes list
+        identities only; earlier changes and their :_tx/change facts show the marker, so the
+        whole journal equals the control journal with erased values replaced by markers."""
+        qs = [{"id": "all", "kind": "transactions"}, {"id": "tx2", "kind": "transactionByCommand", "commandId": "erase-1"},
+              {"id": "chg", "kind": "match", "cut": {"validAt": 1e15}, "pattern": {"attribute": ":_tx/change"}},
+              {"id": "ent", "kind": "transactionsForEntity", "entityId": "person:1"},
+              {"id": "jf", "kind": "journalFacts", "txId": "tx:2"}]
+        cmds = erasure_commands()
+        cmds[2]["meta"] = {"commandId": "erase-1"}
+        rep = evaluate(case(cmds, qs, schemas=PERSON_SCHEMA))
+        control = erasure_eval([{"id": "all", "kind": "transactions"}], erase=False)
+        records = result(rep, "all")["transactions"]
+        erase_change = {"op": "erase", "entityId": "person:1", "attribute": SSN, "assertionIds": ["ssn1", "ssn2"]}
+        self.assertEqual((records[2]["txId"], records[2]["changes"], records[2]["changedEntities"]),
+                         ("tx:2", [erase_change], ["person:1"]))
+        self.assertEqual(result(rep, "tx2")["changes"], [erase_change])
+
+        def modulo(record):
+            return dict(record, changes=[dict(c, value=marker(300)) if c.get("attribute") == SSN else c
+                                         for c in record["changes"]])
+        self.assertEqual(records[:2], [modulo(r) for r in result(control, "all")["transactions"][:2]])
+        facts = result(rep, "chg")["raw"]
+        self.assertEqual(len(facts), 6)                                 # 3 + 2 + the erasure's one change
+        ssn_facts = [f["value"]["value"] for f in facts if f["value"]["value"].get("attribute") == SSN
+                     and f["value"]["value"]["op"] != "erase"]
+        self.assertEqual([v["value"] for v in ssn_facts], [marker(300)] * 3)
+        self.assertEqual([r["txId"] for r in result(rep, "ent")["transactions"]], ["tx:2", "tx:1", "tx:0"])
+        self.assertEqual(sorted(f["attribute"] for f in result(rep, "jf")["facts"]), [":_tx/change", ":_tx/changed-entity"])
+
+    def test_ER_RAW_NATIVE_MODULO(self):
+        rep = erasure_eval([{"id": "et", "kind": "entityTriples", "entityId": "person:1", "cut": {"validAt": 1e15}},
+                            {"id": "snap", "kind": "assertionSnapshot", "cut": {"validAt": 1e15},
+                             "pattern": {"entityId": "person:1"}}])
+        self.assertEqual({r["id"]: r["value"] for r in result(rep, "et")["raw"]}, {"name1": s("Ann"), "ssn2": marker(300)})
+        self.assertEqual({r["id"]: r["value"] for r in result(rep, "snap")["assertions"]},
+                         {"name1": s("Ann"), "ssn2": marker(300)})
+
+    def test_ER_SDK_MODULO(self):
+        rep = erasure_eval([{"id": "tl", "kind": "timeline", "entityType": "Person", "prop": "ssn",
+                             "entityId": "person:1", "cut": {}},
+                            {"id": "many", "kind": "getMany", "entityType": "Person",
+                             "entityIds": ["person:1", "person:2"], "cut": {"validAt": 1e15}},
+                            {"id": "n", "kind": "count", "entityType": "Person", "cut": {"validAt": 1e15},
+                             "where": [{"prop": "name", "op": "exists"}]}])
+        self.assertEqual([(r["identity"], r["value"]) for r in result(rep, "tl")["assertions"]],
+                         [("ssn1", marker(300)), ("ssn2", marker(300))])
+        self.assertEqual(result(rep, "many")[0]["properties"]["ssn"]["value"], marker(300))
+        self.assertEqual(result(rep, "n")["total"], 2)
+
+    # rules of the erase command itself (R-ERA-2, R-ERA-3)
+
+    def test_erase_op_forms_and_validation(self):
+        cmds = [{"clock": 100, "operations": [assert_op("a", "e1", ":x/s", s("one")), assert_op("b", "e1", ":x/t", s("two")),
+                                              assert_op("c", "e2", ":x/s", s("three"))]},
+                {"clock": 200, "operations": [{"op": "erase", "target": "a"}]},
+                {"clock": 300, "operations": [{"op": "erase", "entityId": "e2"}]},
+                {"clock": 400, "operations": [{"op": "erase", "entityId": "e1"}]},      # a already erased at 200
+                {"clock": 500, "operations": [{"op": "erase", "entityId": "nobody"}]},  # nothing to erase: commits
+                {"clock": 600, "operations": [{"op": "erase", "entityId": "_triplex/x"}]},
+                {"clock": 700, "operations": [{"op": "erase", "entityId": "e1", "value": s("x")}]},
+                {"clock": 800, "operations": [{"op": "erase", "id": "missing"}]}]
+        rep = evaluate(case(cmds, [{"id": "all", "kind": "assertions"}, {"id": "cat", "kind": "cutCatalog"}]))
+        self.assertEqual([outcome(rep, k).get("error") for k in range(8)],
+                         [None, None, None, None, None, "E-RESERVED", "E-INVALID-VALUE", "E-INVALID-VALUE"])
+        self.assertEqual({r["id"]: r["value"] for r in result(rep, "all")["assertions"]},
+                         {"a": marker(200), "b": marker(400), "c": marker(300)})    # the first erasure names erasedAt
+        self.assertEqual([r.get("erasure", False) for r in result(rep, "cat")], [False, True, True, True, True])
+
+    def test_erase_commands_refused_when_not_ruled(self):
+        mixed = [{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("v")), {"op": "erase", "target": "a"}]}]
+        spelled = [{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("v"))]},
+                   {"clock": 2, "operations": [{"op": "erasure", "entityId": "e"}]}]
+        guarded = [{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("v"))]},
+                   {"clock": 2, "operations": [{"op": "erase", "entityId": "e"}],
+                    "meta": {"preconditions": [{"_tag": "EntityState", "entityId": "e", "targets": ["a"]}]}}]
+        for cmds in (mixed, spelled, guarded):
+            with self.assertRaises(V.OracleInputError) as ctx:
+                evaluate(case(cmds))
+            self.assertIn("X-NOT-MODELED", str(ctx.exception))
+
+    def test_writes_after_erasure(self):
+        """Identity-based writes still work; Q49c: an erased value matches no retract pattern
+        and Unique ignores it; ReferenceTarget over an erased reference stays refused."""
+        unique = {"enforce": {"constraints": [{"_tag": "Unique", "v": 1, "entityType": "Person", "attribute": SSN}]}}
+        rep = erasure_eval([{"id": "tx3", "kind": "transaction", "txId": "tx:3"}, {"id": "tx4", "kind": "transaction",
+                                                                                     "txId": "tx:4"}], extra=[
+            {"clock": 400, "operations": [{"op": "retract", "target": "ssn2"}]},
+            {"clock": 500, "operations": [{"op": "retract-pattern", "pattern": {"attribute": SSN, "value": s(PLAIN)}}]},
+            {"clock": 600, "operations": [assert_op("n2", "person:1", NAME, s("Ann B"), entity_type="Person")],
+             "meta": {"enforce": {"constraints": [{"_tag": "Required", "v": 1, "entityType": "Person",
+                                                   "attribute": NAME}]}}},
+            {"clock": 700, "operations": [assert_op("ssn9", "person:2", SSN, s("987-65-4321"), entity_type="Person")],
+             "meta": unique}])
+        self.assertEqual([outcome(rep, k)["outcome"] for k in (3, 4, 5, 6)], ["committed"] * 4)
+        self.assertEqual(result(rep, "tx3")["changes"][0]["value"], marker(300))
+        self.assertEqual(result(rep, "tx4")["changes"], [])            # the pattern matched nothing
+        ref_schema = [{"version": 1, "entityTypes": {"P": {"attributes": {"org": {"attribute": ":p/org", "type": "ref"}}},
+                                                     "Org": {"attributes": {}}}}]
+        cmds = [{"clock": 1, "operations": [assert_op("o", "p1", ":p/org", ref("org:1"), entity_type="P")]},
+                {"clock": 2, "operations": [{"op": "erase", "target": "o"}]},
+                {"clock": 3, "operations": [assert_op("o2", "p2", ":p/org", ref("org:1"), entity_type="P")],
+                 "meta": {"enforce": {"constraints": [{"_tag": "ReferenceTarget", "v": 1, "entityType": "P",
+                                                       "attribute": ":p/org", "targetEntityType": "Org"}]}}}]
+        with self.assertRaises(V.OracleInputError):
+            evaluate(case(cmds, schemas=ref_schema))
+
+    def test_value_dependent_reads_follow_q49c(self):
+        """Q49c on models, aggregates, timelines and reachability."""
+        later = [{"clock": 400, "operations": [assert_op("ssn3", "person:1", SSN, s("555"), entity_type="Person")]}]
+        rep = erasure_eval([{"id": "g", "kind": "get", "entityType": "Person", "entityId": "person:1",
+                             "cut": {"validAt": 1e15}},
+                            {"id": "agg", "kind": "aggregate", "cut": {"validAt": 1e15},
+                             "match": {"attributes": {"v": SSN}}, "aggregates": [{"op": "count", "var": "v", "as": "n"},
+                                                                                {"op": "min", "var": "v", "as": "lo"}]},
+                            {"id": "grp", "kind": "aggregate", "cut": {"validAt": 1e15},
+                             "match": {"attributes": {"v": SSN}}, "groupBy": ["v"],
+                             "aggregates": [{"op": "count", "var": "$entity", "as": "n"}]},
+                            {"id": "mt", "kind": "modelTimeline", "entityType": "Person", "entityId": "person:1",
+                             "cut": {"validAt": 1e15}},
+                            {"id": "reach", "kind": "reachability", "cut": {"validAt": 1e15}, "attribute": SSN,
+                             "from": "person:1"}], extra=later)
+        # a readable value and the marker group are two values of a cardinality-one attribute: a conflict
+        self.assertEqual(result(rep, "g")["error"], "E-CONFLICTING-VALUES")
+        row = result(rep, "agg")["rows"][0]
+        self.assertEqual((row["n"]["value"], row["lo"]["value"]), ("2", "555"))     # COUNT counts it; MIN skips it
+        self.assertEqual([r["v"] for r in result(rep, "grp")["rows"]], [s("555"), marker(300)])
+        self.assertEqual([e["position"] for e in result(rep, "mt")], [1, 2, 3, 4])   # the erasure is an entry
+        self.assertEqual(result(rep, "mt")[2]["model"]["properties"]["ssn"]["value"], marker(300))
+        self.assertEqual(result(rep, "reach")["closure"], ["555"])                   # the erased edge is not followed
+
+    def test_value_aggregates_skip_erased(self):
+        pay = [{"clock": 1, "operations": [assert_op(f"p{k}", f"w{k}", ":w/pay", i64(v)) for k, v in enumerate((10, 20, 30))]},
+               {"clock": 2, "operations": [{"op": "erase", "target": "p2"}]}]
+        q = {"id": "a", "kind": "aggregate", "cut": {"validAt": 1}, "match": {"attributes": {"v": ":w/pay"}},
+             "aggregates": [{"op": "sum", "var": "v", "as": "sum"}, {"op": "max", "var": "v", "as": "hi"},
+                            {"op": "count", "var": "v", "as": "n"}]}
+        row = result(evaluate(case(pay, [q])), "a")["rows"][0]
+        self.assertEqual((row["sum"]["value"], row["hi"]["value"], row["n"]["value"]), ("30", "20", "3"))
+        two = pay + [{"clock": 3, "operations": [{"op": "erase", "target": "p1"}]}]
+        node = result(evaluate(case(two, [q])), "a")
+        self.assertEqual(node["error"], "X-NOT-MODELED")   # COUNT of 2 erased: distinct (1) or assertions (2)
+        where = dict(q, id="w", where=[{"var": "v", "op": "gte", "value": i64(0)}],
+                     aggregates=[{"op": "sum", "var": "v", "as": "sum"}])
+        self.assertEqual(result(evaluate(case(pay, [where])), "w")["rows"][0]["sum"]["value"], "30")
+
+    def test_erased_reference_include_returns_marker(self):
+        schema = [{"version": 1, "entityTypes": {"P": {"attributes": {"org": {"attribute": ":p/org", "type": "ref",
+                                                                              "target": "Org"}}},
+                                                 "Org": {"attributes": {"name": {"attribute": ":o/name", "type": "string"}}}}}]
+        cmds = [{"clock": 1, "operations": [assert_op("o", "p1", ":p/org", ref("org:1"), entity_type="P"),
+                                            assert_op("n", "org:1", ":o/name", s("Acme"), entity_type="Org")]},
+                {"clock": 2, "operations": [{"op": "erase", "target": "o"}]}]
+        rep = evaluate(case(cmds, [{"id": "g", "kind": "get", "entityType": "P", "entityId": "p1", "include": ["org"],
+                                    "cut": {"validAt": 1}},
+                                   {"id": "rev", "kind": "get", "entityType": "Org", "entityId": "org:1",
+                                    "include": [{"reverse": {"type": "P", "prop": "org", "name": "members"}}],
+                                    "cut": {"validAt": 1}}], schemas=schema))
+        self.assertEqual(result(rep, "g")["includes"]["org"], marker(2))
+        self.assertEqual(result(rep, "rev")["includes"]["members"], [])
+
+    def test_reerase_and_empty_erase_records(self):
+        """Q49b: re-erasing changes nothing and an erase that matches nothing commits; both
+        journal an empty change list."""
+        cmds = [{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("v"))]},
+                {"clock": 2, "operations": [{"op": "erase", "target": "a"}]},
+                {"clock": 3, "operations": [{"op": "erase", "target": "a"}]},
+                {"clock": 4, "operations": [{"op": "erase", "entityId": "nobody"}]}]
+        rep = evaluate(case(cmds, [{"id": "all", "kind": "transactions"}, {"id": "m", "kind": "assertions"}]))
+        self.assertEqual([r["changes"] for r in result(rep, "all")["transactions"][2:]], [[], []])
+        self.assertEqual(result(rep, "m")["assertions"][0]["value"], marker(2))
+
+    def test_inflight_computations_refuse(self):
+        """Q49d: an in-flight value may be the old value or the marker, so a computed answer
+        over it has two readings; row outputs list both forms instead."""
+        rep = erasure_eval([dict(match_q("pat", 1), readStart={"afterCommand": 1},
+                                 pattern={"attribute": SSN, "value": s(PLAIN)}),
+                            {"id": "sup", "kind": "valueSupports", "cut": {"position": 1, "validAt": 5},
+                             "pattern": {"attribute": SSN}, "readStart": {"afterCommand": 1}}])
+        self.assertEqual((result(rep, "pat")["error"], result(rep, "sup")["error"]), ("X-NOT-MODELED",) * 2)
+
+    def test_erase_receipts(self):
+        c = case(erasure_commands(), [match_q("m")], schemas=PERSON_SCHEMA)
+        c["receipts"] = committed_receipts(c)
+        rep = evaluate(c)
+        self.assertEqual((rep["verdict"], rep["receiptConsistency"]["status"]), ("PASS", "PASS"))
+        self.assertEqual(result(rep, "m")["raw"][0]["value"], marker(300))
+
+
 class Rulings033(unittest.TestCase):
     """Rulings compiled into 0.3.3 to 0.3.5 that have no table row of their own."""
 
@@ -1296,10 +1800,16 @@ class Rulings033(unittest.TestCase):
                          ["E-INVALID-VALUE", "E-INVALID-VALUE", "E-NEGATIVE-ZERO-INSTANT"])   # Q43h for z
         self.assertEqual(result(rep, "z")["detail"], "no-negative-zero")
 
-    def test_Q24_Q31f_erasure_is_refused(self):
+    def test_Q24_Q31f_erasure_is_modeled(self):
+        """EXP-O04: the `erase` op commits and reads show the marker (the Erasure class has
+        one test per CS-ERASURE case); the `erasure` spelling stays refused (Q45b)."""
+        rep = evaluate(case([{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("x"))]},
+                             {"clock": 2, "operations": [{"op": "erase", "target": "a"}]}],
+                            [{"id": "m", "kind": "match", "cut": {"validAt": 1}}]))
+        self.assertEqual(result(rep, "m")["raw"][0]["value"], {"_tag": "ErasedValue", "erasedAt": 2})
         with self.assertRaises(V.OracleInputError) as ctx:
             evaluate(case([{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("x"))]},
-                           {"clock": 2, "operations": [{"op": "erase", "target": "a"}]}]))
+                           {"clock": 2, "operations": [{"op": "erasure", "target": "a"}]}]))
         self.assertIn("X-NOT-MODELED", str(ctx.exception))
 
     def test_Q35_order_keys_are_refused(self):

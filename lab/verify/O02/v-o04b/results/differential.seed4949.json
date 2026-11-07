@@ -1,0 +1,11 @@
+{
+ "old": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/at8cc2c26",
+ "new": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6",
+ "cases": 800,
+ "random": 800,
+ "seed": 4949,
+ "identical": 800,
+ "bothRefused": 0,
+ "different": 0,
+ "rows": []
+}

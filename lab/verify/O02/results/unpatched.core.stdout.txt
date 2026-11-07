@@ -1,0 +1,40 @@
+{
+ "vectors": 49,
+ "itemCounts": {
+  "AGREE": 292,
+  "NOT-MODELED": 5,
+  "DISAGREE": 17,
+  "AMBIGUOUS": 19,
+  "AGREE-DERIVED": 3,
+  "CONVERTER-ERROR": 5
+ },
+ "vectorCounts": {
+  "AGREE": 24,
+  "DISAGREE": 13,
+  "AGREE+AMBIGUOUS": 7,
+  "AMBIGUOUS": 3,
+  "AGREE+NOT-MODELED": 2
+ }
+}
+-- C5-03 Q1 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:3", ":item/color"]]}, "ambiguity": "AMB-13"}
+-- C5-03 Q2 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:3", ":item/color"]]}, "ambiguity": "AMB-13"}
+-- C5-03 Q4 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:3", ":item/color"]]}}
+-- C5-03 Q5 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:3", ":item/color"]]}}
+-- C5-03 Q6 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:3", ":item/color"]]}}
+-- C5-03 Q7 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": 1}
+-- C5-04 V10 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:5", ":item/color"]]}}
+-- C5-04 V19.999999999999996 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:5", ":item/color"]]}}
+-- C5-07 Q1 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:8", ":item/color"]]}}
+-- C5-07 Q2 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:8", ":item/color"]]}}
+-- C5-08 Q2 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:9", ":item/color"]]}}
+-- C5-09 Q1 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:10", ":item/color"]]}}
+-- C5-09 Q5 DISAGREE {"oracle": {"error": "E-CONFLICTING-VALUES", "message": null}, "golden": {"error": "ConflictingValuesError", "conflicts": [["item:10", ":item/color"]]}}
+-- G5-SUM-01 Q DISAGREE {"oracle": "E-INTEGER-OVERFLOW", "golden": {"code": "integer-overflow", "partialRows": "none"}}
+-- G5-SUM-05 Q DISAGREE {"oracle": "E-INTEGER-OVERFLOW", "golden": {"code": "integer-overflow", "partialRows": "none"}}
+-- G5-SUM-08 Q DISAGREE {"oracle": "E-INTEGER-OVERFLOW", "golden": {"code": "integer-overflow", "partialRows": "none"}}
+-- G5-SUM-10 Q DISAGREE {"oracle": "E-INTEGER-AVG", "golden": {"phase": "preflight (before any backend runs)", "_tag": "DatalogValidationError", "tagGrounding": "derived: docs/datalog.md says unsupported programs fail with typed DatalogValidationError during preflight; Q8b says typed preflight error"}}
+-- G9-CUT-01 converter-error CONVERTER-ERROR {"error": "KeyError('recordedAt')"}
+-- G9-CUT-01 converter-error CONVERTER-ERROR {"error": "KeyError('recordedAt')"}
+-- G9-V4-03 converter-error CONVERTER-ERROR {"error": "KeyError('recordedAt')"}
+-- G9-V4-04 converter-error CONVERTER-ERROR {"error": "KeyError('recordedAt')"}
+-- G9-V4-06 converter-error CONVERTER-ERROR {"error": "KeyError('recordedAt')"}

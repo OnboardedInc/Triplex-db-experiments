@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.3.1)
+# O-REPLAY case and output schema (v1; oracle 0.4.1)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -74,7 +74,8 @@ python3 -m lab.oracles.replay CASE.json                         # module form; n
      "entityType": "Person", "createdBy": "agent:a", "validFrom": 0, "validTo": 86400000},
     {"op": "retract", "target": "ann-name"},       // by symbol, or {"op":"retract","id":"<actual id>"}
     {"op": "retract-pattern", "pattern": {"entityId": "...", "attribute": "...", "entityType": "...", "value": {...}}}
-    // {"op": "erase", ...} is refused: erasure (Q24, Q31f) is not modeled (R-CMD-13, exit 2)
+    // erasure (R-ERA-2), in a command of its own: {"op": "erase", "entityId": "...", "attribute": "..."},
+    // {"op": "erase", "entityId": "..."} (every value of the entity) or {"op": "erase", "target": "ann-name"}
   ],
   "meta": {
     "actor": "agent:a", "commandId": "cmd-1", "correlationId": "req-1", "causationId": "evt-1",
@@ -175,7 +176,7 @@ Every query has `id`, `kind`, and usually a `cut`:
 | `transactions` | `after`, `limit` (1..1000, default 100; outside it E-CURSOR malformed, R-JNL-7) | `{transactions, next}` |
 | `transaction` / `transactionByCommand` | `txId` / `commandId` | record or null |
 | `transactionsForEntity` | `entityId`, `limit`, `snapshotPosition`, `beforePosition` | newest first, `nextBeforePosition` |
-| `cutCatalog` | `scope` | every position (the oracle's ordinal) with instant, txId, command, internal flag, group, and the receipt `coordinate` when the scope uses coordinates |
+| `cutCatalog` | `scope` | every position (the oracle's ordinal) with instant, txId, command, internal flag, group, the receipt `coordinate` when the scope uses coordinates, and `erasure: true` for an erasure commit |
 | `entityPage` | `entityType`, `limit` (1..200, default 50), `cut`, or `cursorFrom: {query, page}` / `cursor` | pages of complete bodies, ids in codepoint order, `nextCursor` per page (R-PAGE-2..4) |
 | `get` / `getMany` | `entityType`, `entityId` / `entityIds`, `include`, `schemaVersion`, `cut` | model(s) or E-CONFLICTING-VALUES |
 | `find` | `entityType`, `where`, `orderBy`, `include`, `select`, `limit`, `pageSize`, `compare`, `cut` | `{total, pages:[{ids, entities, hasMore}]}`; fails on a conflicted attribute in a returned document (AMB-17 A) |
@@ -186,11 +187,14 @@ Every query has `id`, `kind`, and usually a `cut`:
 | `valueSupports` | `cut`, `pattern` | per (entity, attribute, value identity): count and assertion ids |
 | `reachability` | `cut`, `attribute`, `from`, optional `to` | closure; supportCount, paths with edge assertion ids |
 | `aggregate` | `cut`, `match.attributes {var: attribute}`, `match.entityType`, `where`, `groupBy`, `aggregates [{op, var, as, convert?}]`, `varTypes`, `emptyAs` | rows; `convert: "toNumber"` before AVG (AMB-11; `integerAvg: "convert"` is the 0.1 alias) |
-| `expr` | `expr: ["add", v, ["mul", v, v]]`: add sub mul div rem neg abs cast-int64 to-number (toNumber) to-int64 (toInt64, toInteger) to-decimal (toDecimal); `["divide", a, b, scale, "half-even"]`, `["round", x, scale, "half-up"]`, `["toDecimal", x, p, s]` and `["toDecimal", number, p, s, "down"]` take bare JSON integers and rounding strings as parameters | typed value or typed error |
+| `expr` | `expr: ["add", v, ["mul", v, v]]`: add sub mul div rem neg abs cast-int64 to-number (toNumber) to-int64 (toInt64, toInteger) to-decimal (toDecimal); `["divide", a, b, scale, "half-even"]`, `["round", x, scale, "half-up"]`, `["toDecimal", x, p, s]` (x an integer, decimal or json value; a JSON number converts as written, DR-JSON-CONVERT, Q49e) and `["toDecimal", number, p, s, "down"]` take bare JSON integers and rounding strings as parameters | typed value or typed error |
 | `compare` | `left` (value or expression), `right` (value, expression or untyped constant), `compare` mode | eq/ne/lt/gt each a boolean or the pinned error, identity, same group |
 | `sortValues` | `values` | distinct values in ACC 4.5 order (first given representation survives) |
 | `analyticCounts` | `n`, `width` (1 or 10) | configured-entity population counts |
 | `orderKey` / `decimalKey` / `tdk1Key` | any | refused, exit 2 `X-NOT-MODELED` (TDK1 keys, Q35; R-DEC-17) |
+
+Any query may carry `"readStart"` (a position, `{"afterCommand": k}` or `{"coordinate": c}`): the last position
+published when the read started; erasures published after it are in flight for it (R-ERA-6).
 
 `where` items: `{"prop"|"var": ..., "op": "eq|ne|lt|lte|gt|gte|in|exists|missing", "value": ...}` (`values` for
 `in`); `value` is a typed value object or an untyped bare JSON string/number. `orderBy`:
@@ -201,14 +205,15 @@ example `E-CONFLICTING-VALUES`, `E-INTEGER-OVERFLOW`, `E-MIXED-FAMILY`, `E-INTEG
 `reason`, `phase`, `reasonAlternatives` (multi-reason ids), `message` and detail (`conflicts` lists every
 conflicted `{entityId, attribute}`). Errors without a 4.7 row use `X-` ids (`X-CYCLE`, `X-NO-POSITION`,
 `X-NOT-MODELED`) with `ruling` naming the RULING-NEEDED item (R-ERR-2). A case the oracle cannot answer
-exactly (erasure, decimal scale evolution, TDK1 keys) exits 2 with a message starting `X-NOT-MODELED`.
+exactly (the op spelled `erasure`, erase commands mixed with other ops or carrying preconditions, ReferenceTarget
+enforcement over an erased reference, decimal scale evolution, TDK1 keys) exits 2 with a message starting `X-NOT-MODELED`.
 
 ## 4. Output document
 
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.3.1", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.4.1", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",
@@ -226,6 +231,10 @@ exactly (erasure, decimal scale evolution, TDK1 keys) exits 2 with a message sta
 - **Typed values** come out as `{"type","value"}`; binary64 and datetime add `"bits"`; json adds
   `"canonical"`; decimal adds `"scale"` and `"precision"` (no storage form, Q35b); `value` of a number is the ECMAScript
   shortest lexeme, `-0` for negative zero; integers are canonical decimal text (AMB-10).
+- **Erased values** (R-ERA-1): `{"_tag": "ErasedValue", "erasedAt": <instant>}` in place of the typed value, at every
+  basis; for a read whose `readStart` precedes the erasure, `{"_tag": "InFlightErasure", "acceptable": [<old value>,
+  <marker>], "rule": "ER-INFLIGHT-READ ..."}` (R-ERA-6). An erasure commit's journal record lists identity-only
+  changes `{"op": "erase", "entityId", "attribute", "assertionIds"}` (R-ERA-3, Q49a).
 - **Assertion rows** carry every field of spec item 4: `id, entityId, attribute, value, validFrom, validTo,
   recordedAt, recordedPosition, createdBy, entityType, schemaVersion, txId, retractedAt,
   retractedPosition, retractTxId`; journal fact rows add `"journal": true`.

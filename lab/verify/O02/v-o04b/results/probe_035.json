@@ -1,0 +1,1788 @@
+{
+ "contract": "0.3.6",
+ "counts": {
+  "MATCH": 119
+ },
+ "probes": 119,
+ "rows": [
+  {
+   "probe": "DEC write excess fraction",
+   "rule": "decimalRules.reject / DC-T2D / Q43a",
+   "contract": "16.505 at (9,2): rejected E-DECIMAL-FRACTION",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-DECIMAL-FRACTION",
+    "errorTag": "InvalidTripleError",
+    "reason": "decimal-fraction",
+    "phase": "preflight",
+    "message": "decimal: 16.505 has more than 2 fractional digits",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC write beyond precision",
+   "rule": "decimalRules.reject / DC-T2D / Q43a",
+   "contract": "12345678.00 at (9,2): rejected E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-DECIMAL-OVERFLOW",
+    "errorTag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "preflight",
+    "message": "decimal: 12345678 has more than 7 integer digits (precision 9, scale 2, at most 38 digits)",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC write at the boundary",
+   "rule": "DEC-SCALE-BOUNDARY",
+   "contract": "1234567.99 at (9,2) commits",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "probe": "DEC write 39 digits at (38,0)",
+   "rule": "decimalRules.reject (38 digits)",
+   "contract": "rejected E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-DECIMAL-OVERFLOW",
+    "errorTag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "preflight",
+    "message": "decimal: 100000000000000000000000000000000000000 has more than 38 integer digits (precision 38, scale 0, at most 38 digits)",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC trailing zeros fit (R-DEC-3)",
+   "rule": "R-DEC-3",
+   "contract": "16.500 at (9,2) commits and reads back 16.50",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "16.50",
+    "scale": 2,
+    "precision": 9
+   }
+  },
+  {
+   "probe": "DEC -0.00 refused (R-DEC-2)",
+   "rule": "R-DEC-2",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "decimal: negative zero text '-0.00' is not canonical",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC undeclared attribute (R-DEC-0)",
+   "rule": "R-DEC-0",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "decimal: attribute :p/other declares no decimal precision and scale (Q18)",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC non-canonical text '+1.00'",
+   "rule": "decimalRules inputGrammar / DC-T2D / TDK1-V7",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "decimal: non-canonical decimal text '+1.00'",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC non-canonical text '01.00'",
+   "rule": "decimalRules inputGrammar / DC-T2D / TDK1-V7",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "decimal: non-canonical decimal text '01.00'",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC non-canonical text '1.'",
+   "rule": "decimalRules inputGrammar / DC-T2D / TDK1-V7",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "decimal: non-canonical decimal text '1.'",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC non-canonical text '.5'",
+   "rule": "decimalRules inputGrammar / DC-T2D / TDK1-V7",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "decimal: non-canonical decimal text '.5'",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC non-canonical text '1e3'",
+   "rule": "decimalRules inputGrammar / DC-T2D / TDK1-V7",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "decimal: non-canonical decimal text '1e3'",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "DEC AVG (R-DEC-7, Q43b)",
+   "rule": "R-DEC-7 / Q43b",
+   "contract": "preflight E-DECIMAL-AVG",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-AVG",
+    "_tag": "DatalogValidationError",
+    "reason": "decimal-avg-requires-divide",
+    "phase": "preflight",
+    "message": "AVG over decimals; write divide(SUM, COUNT, scale, rounding)"
+   }
+  },
+  {
+   "probe": "DEC AVG with toNumber",
+   "rule": "AG-AVG-CONV (decimal)",
+   "contract": "binary64 0.875 (exact mean rounded once)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "x": {
+      "type": "number",
+      "value": 0.875,
+      "bits": "0x3fec000000000000"
+     }
+    }
+   ]
+  },
+  {
+   "probe": "DEC SUM",
+   "rule": "DO-SUM",
+   "contract": "1.25 + 0.50 = 1.75, scale 2, precision 38",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "x": {
+      "type": "decimal",
+      "value": "1.75",
+      "scale": 2,
+      "precision": 38
+     }
+    }
+   ]
+  },
+  {
+   "probe": "DEC bare /",
+   "rule": "DO-BARE-DIV",
+   "contract": "preflight E-DECIMAL-BARE-DIVIDE",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-BARE-DIVIDE",
+    "_tag": "DatalogValidationError",
+    "reason": "decimal-divide-requires-scale",
+    "phase": "preflight",
+    "message": "bare / on decimals; use divide(a, b, scale, rounding)"
+   }
+  },
+  {
+   "probe": "DEC toInteger(1.50)",
+   "rule": "DC-D2I",
+   "contract": "E-DECIMAL-FRACTION",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-FRACTION",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-fraction",
+    "phase": "preflight",
+    "message": "decimal to integer with a non-zero fraction; use round(x, 0, rounding) first",
+    "operand": "1.50"
+   }
+  },
+  {
+   "probe": "DEC toInteger(2.00)",
+   "rule": "DC-D2I",
+   "contract": "integer 2",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "integer",
+    "value": "2"
+   }
+  },
+  {
+   "probe": "DEC toInteger(2^63) (Q43g)",
+   "rule": "Q43g R-DEC-12",
+   "contract": "E-INTEGER-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-INTEGER-OVERFLOW",
+    "_tag": "QueryError",
+    "reason": "integer-overflow",
+    "phase": "execution",
+    "message": "result outside the core integer range [-2^63, 2^63-1]",
+    "result": "9223372036854775808"
+   }
+  },
+  {
+   "probe": "DEC toDecimal(1e20, 10, 0) (Q43a)",
+   "rule": "Q43a / DC-N2D",
+   "contract": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "decimal: 100000000000000000000 has more than 10 integer digits (precision 10, scale 0, at most 38 digits)"
+   }
+  },
+  {
+   "probe": "DEC toDecimal(integer 12345, 4, 0)",
+   "rule": "DC-I2D",
+   "contract": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "decimal: 12345 has more than 4 integer digits (precision 4, scale 0, at most 38 digits)"
+   }
+  },
+  {
+   "probe": "DEC toDecimal(integer 12345, 7, 2)",
+   "rule": "DC-I2D",
+   "contract": "12345.00 at scale 2",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "12345.00",
+    "scale": 2,
+    "precision": 7
+   }
+  },
+  {
+   "probe": "DEC add beyond 38 digits",
+   "rule": "DO-ADD / Q43e",
+   "contract": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "add: the result has more than 38 integer digits (precision 38, scale 0)",
+    "result": "100000000000000000000000000000000000000"
+   }
+  },
+  {
+   "probe": "DEC add 38 digits that fit",
+   "rule": "DO-ADD / Q43e",
+   "contract": "99..9 (38 nines) exactly, no error",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "99999999999999999999999999999999999999",
+    "scale": 0,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "DEC add type",
+   "rule": "DO-ADD",
+   "contract": "1.25 + 0.5 = 1.75, scale 2, precision 4",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.75",
+    "scale": 2,
+    "precision": 4
+   }
+  },
+  {
+   "probe": "DEC sub type",
+   "rule": "DO-ADD",
+   "contract": "0.5 - 1.25 = -0.75, scale 2, precision 4",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-0.75",
+    "scale": 2,
+    "precision": 4
+   }
+  },
+  {
+   "probe": "DEC mul type",
+   "rule": "DO-MUL",
+   "contract": "1.25 * 0.5 = 0.625, scale 3, precision 5",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.625",
+    "scale": 3,
+    "precision": 5
+   }
+  },
+  {
+   "probe": "DEC literal type (Q43c)",
+   "rule": "Q43c R-DEC-8",
+   "contract": "undeclared 12.5 + 1 = 13.5: (3,1)+(1,0) -> scale 1, precision 2+1+1 = 4",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "13.5",
+    "scale": 1,
+    "precision": 4
+   }
+  },
+  {
+   "probe": "DEC compare 1.50 = 1.5",
+   "rule": "DO-CMP",
+   "contract": "eq true",
+   "verdict": "MATCH",
+   "oracle": {
+    "comparable": true,
+    "identical": true,
+    "eq": true,
+    "ne": false,
+    "lt": false,
+    "gt": false,
+    "sameGroup": true
+   }
+  },
+  {
+   "probe": "DEC divide 1/8 half-even",
+   "rule": "DO-DIV / Q43d",
+   "contract": "0.125 at scale 2 -> 0.12",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.12",
+    "scale": 2,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "DEC divide 1/8 half-up",
+   "rule": "DO-DIV / Q43d",
+   "contract": "0.125 at scale 2 -> 0.13",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.13",
+    "scale": 2,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "DEC divide 1/8 down",
+   "rule": "DO-DIV / Q43d",
+   "contract": "0.125 at scale 2 -> 0.12",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.12",
+    "scale": 2,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "DEC divide -1/8 half-even",
+   "rule": "DO-DIV / Q43d (negative ties)",
+   "contract": "-0.125 at scale 2 -> -0.12",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-0.12",
+    "scale": 2,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "DEC divide -1/8 half-up",
+   "rule": "DO-DIV / Q43d (negative ties)",
+   "contract": "-0.125 at scale 2 -> -0.13",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-0.13",
+    "scale": 2,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "DEC divide -1/8 down",
+   "rule": "DO-DIV / Q43d (negative ties)",
+   "contract": "-0.125 at scale 2 -> -0.12",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-0.12",
+    "scale": 2,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "DEC divide 1/3",
+   "rule": "DO-DIV",
+   "contract": "0.33",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.33",
+    "scale": 2,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "DEC divide by zero",
+   "rule": "DO-DIV",
+   "contract": "E-DIVISION-BY-ZERO",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DIVISION-BY-ZERO",
+    "_tag": "QueryError",
+    "reason": "division-by-zero",
+    "phase": "execution",
+    "message": "decimal division by zero"
+   }
+  },
+  {
+   "probe": "DEC divide beyond 38",
+   "rule": "DO-DIV / Q43e",
+   "contract": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "divide: the result has more than 38 integer digits (precision 38, scale 0)",
+    "result": "999999999999999999999999999999999999990"
+   }
+  },
+  {
+   "probe": "DEC round(1.25, 1, half-even)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "1.2 at scale 1, precision 2",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.2",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "probe": "DEC round(1.25, 1, half-up)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "1.3 at scale 1, precision 2",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.3",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "probe": "DEC round(1.25, 1, down)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "1.2 at scale 1, precision 2",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.2",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "probe": "DEC round(-1.25, 1, half-up)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "-1.3 at scale 1, precision 2",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-1.3",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "probe": "DEC round(-1.35, 1, half-even)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "-1.4 at scale 1, precision 2",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-1.4",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "probe": "DEC round(2.5, 0, half-even)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "2 at scale 0, precision 1",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "2",
+    "scale": 0,
+    "precision": 1
+   }
+  },
+  {
+   "probe": "DEC round(3.5, 0, half-even)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "4 at scale 0, precision 1",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "4",
+    "scale": 0,
+    "precision": 1
+   }
+  },
+  {
+   "probe": "DEC round(-2.5, 0, half-up)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "-3 at scale 0, precision 1",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-3",
+    "scale": 0,
+    "precision": 1
+   }
+  },
+  {
+   "probe": "DEC round(-1.29, 1, down)",
+   "rule": "DO-ROUND / Q43d",
+   "contract": "-1.2 at scale 1, precision 2",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-1.2",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "probe": "DEC round carry overflow",
+   "rule": "DO-ROUND",
+   "contract": "round(9.99 (3,2), 1, half-up) = 10.0 needs 3 digits > precision 2: E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "round: the result has more than 1 integer digits (precision 2, scale 1)",
+    "result": "10.0"
+   }
+  },
+  {
+   "probe": "DEC round to a larger scale (Q43f)",
+   "rule": "Q43f R-DEC-11",
+   "contract": "round(1.5 (2,1), 3) = 1.500, scale 3, precision 4",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.500",
+    "scale": 3,
+    "precision": 4
+   }
+  },
+  {
+   "probe": "DEC round larger scale past 38 (Q43f)",
+   "rule": "Q43f",
+   "contract": "37 integer digits to scale 2 needs 39 digits: E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "round: the result has more than 36 integer digits (precision 38, scale 2)",
+    "result": "1000000000000000000000000000000000000.00"
+   }
+  },
+  {
+   "probe": "DEC round same scale",
+   "rule": "DO-ROUND",
+   "contract": "round(1.25, 2) = 1.25",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.25",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "probe": "DEC toDecimal(0.1, 20, 18, down) (R-DEC-6)",
+   "rule": "R-DEC-6 / DC-N2D",
+   "contract": "0.100000000000000005 (exact binary expansion, truncated)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.100000000000000005",
+    "scale": 18,
+    "precision": 20
+   }
+  },
+  {
+   "probe": "DEC toDecimal(0.1, 20, 18, half-even)",
+   "rule": "R-DEC-6",
+   "contract": "0.100000000000000006 (next digits 5511... > half)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.100000000000000006",
+    "scale": 18,
+    "precision": 20
+   }
+  },
+  {
+   "probe": "DEC toDecimal(2.675, 4, 2, half-even)",
+   "rule": "R-DEC-6",
+   "contract": "2.67 (binary 2.67499999...)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "2.67",
+    "scale": 2,
+    "precision": 4
+   }
+  },
+  {
+   "probe": "DEC toNumber(0.1)",
+   "rule": "DC-D2N",
+   "contract": "binary64 0x3fb999999999999a",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "number",
+    "value": 0.1,
+    "bits": "0x3fb999999999999a"
+   }
+  },
+  {
+   "probe": "DEC rem",
+   "rule": "Q33e R-NUM-8",
+   "contract": "E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "rem is defined for integers only (Q33e)",
+    "left": "decimal",
+    "right": "decimal"
+   }
+  },
+  {
+   "probe": "DEC vs integer eq",
+   "rule": "CMP-DECIMAL-CROSS",
+   "contract": "eq is preflight E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "comparable": false,
+    "identical": false,
+    "eq": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "eq between decimal and integer needs an explicit conversion",
+     "left": "decimal",
+     "right": "integer",
+     "op": "eq"
+    },
+    "ne": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "ne between decimal and integer needs an explicit conversion",
+     "left": "decimal",
+     "right": "integer",
+     "op": "ne"
+    },
+    "lt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "lt between decimal and integer needs an explicit conversion",
+     "left": "decimal",
+     "right": "integer",
+     "op": "lt"
+    },
+    "gt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "gt between decimal and integer needs an explicit conversion",
+     "left": "decimal",
+     "right": "integer",
+     "op": "gt"
+    },
+    "sameGroup": false
+   }
+  },
+  {
+   "probe": "validFrom -0",
+   "rule": "WR-INSTANT",
+   "contract": "rejected E-NEGATIVE-ZERO-INSTANT, detail no-negative-zero",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-NEGATIVE-ZERO-INSTANT",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "validFrom given as -0",
+    "detail": "no-negative-zero"
+   }
+  },
+  {
+   "probe": "datetime -0",
+   "rule": "WR-INSTANT",
+   "contract": "rejected E-NEGATIVE-ZERO-INSTANT",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-NEGATIVE-ZERO-INSTANT",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "datetime: an instant given as -0 (Q30b)",
+    "family": "datetime",
+    "detail": "no-negative-zero"
+   }
+  },
+  {
+   "probe": "read basis validAt -0 (Q43h)",
+   "rule": "Q43h R-CUT-4",
+   "contract": "E-NEGATIVE-ZERO-INSTANT",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-NEGATIVE-ZERO-INSTANT",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "validAt given as -0",
+    "detail": "no-negative-zero"
+   }
+  },
+  {
+   "probe": "read basis recordedAt -0 (Q43h)",
+   "rule": "Q43h R-CUT-4",
+   "contract": "E-NEGATIVE-ZERO-INSTANT",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-NEGATIVE-ZERO-INSTANT",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "recordedAt given as -0",
+    "detail": "no-negative-zero"
+   }
+  },
+  {
+   "probe": "read basis validAt +0",
+   "rule": "control",
+   "contract": "a +0 basis is ordinary (count 1)",
+   "verdict": "MATCH",
+   "oracle": 1
+  },
+  {
+   "probe": "JSON 0.1 accepted (Q33a)",
+   "rule": "R-VAL-7a",
+   "contract": "commits",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "probe": "JSON 9007199254740993 (Q33a)",
+   "rule": "R-VAL-7a / WR-JSON",
+   "contract": "rejected E-INEXACT-JSON-NUMBER, detail inexact-json-number",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INEXACT-JSON-NUMBER",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "json: json.a: 9007199254740993 reads back as 9007199254740992",
+    "family": "json",
+    "detail": "inexact-json-number"
+   }
+  },
+  {
+   "probe": "JSON nested struct -0",
+   "rule": "WR-JSON (recursive)",
+   "contract": "rejected E-INEXACT-JSON-NUMBER",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INEXACT-JSON-NUMBER",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "json: json.a.b[1].c: -0",
+    "family": "json",
+    "detail": "inexact-json-number"
+   }
+  },
+  {
+   "probe": "JSON non-finite 1e400",
+   "rule": "WR-JSON",
+   "contract": "rejected E-INEXACT-JSON-NUMBER",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INEXACT-JSON-NUMBER",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "json: json.a: non-finite number 1e400",
+    "family": "json",
+    "detail": "inexact-json-number"
+   }
+  },
+  {
+   "probe": "JSON -0 before duplicate keys collapse",
+   "rule": "WR-JSON (guard before CanonicalJson)",
+   "contract": "rejected E-INEXACT-JSON-NUMBER",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INEXACT-JSON-NUMBER",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "json: json.a: -0",
+    "family": "json",
+    "detail": "inexact-json-number"
+   }
+  },
+  {
+   "probe": "number -0 journals bit-exact (Q34c)",
+   "rule": "WR-JSON journal exemption / JN-NEGZERO",
+   "contract": "commits; journal change value bits 0x8000000000000000; :_tx/change readable",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "type": "number",
+     "value": 0,
+     "bits": "0x8000000000000000"
+    },
+    1
+   ]
+  },
+  {
+   "probe": "R-CMP-3 eq across families",
+   "rule": "Q33d",
+   "contract": "string 'a' = integer 1 is false (not an error)",
+   "verdict": "MATCH",
+   "oracle": {
+    "comparable": false,
+    "identical": false,
+    "eq": false,
+    "ne": true,
+    "lt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "lt between string and integer needs an explicit conversion",
+     "left": "string",
+     "right": "integer",
+     "op": "lt"
+    },
+    "gt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "gt between string and integer needs an explicit conversion",
+     "left": "string",
+     "right": "integer",
+     "op": "gt"
+    },
+    "sameGroup": false
+   }
+  },
+  {
+   "probe": "R-CMP-3 in find (CMP-CROSS-FAMILY-ORDERED)",
+   "rule": "Q33d",
+   "contract": "find where integer n lt 'x': preflight E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "lt between integer and string needs an explicit conversion",
+    "left": "integer",
+    "right": "string",
+    "op": "lt"
+   }
+  },
+  {
+   "probe": "R-NUM-7",
+   "rule": "Q33e",
+   "contract": "'a' + 1: E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "add needs two operands of one numeric family (convert explicitly with toNumber / toInteger / toDecimal)",
+    "left": "string",
+    "right": "integer"
+   }
+  },
+  {
+   "probe": "R-NUM-8",
+   "rule": "Q33e",
+   "contract": "rem(1.5, 1.0): E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "rem is defined for integers only (Q33e)",
+    "left": "number",
+    "right": "number"
+   }
+  },
+  {
+   "probe": "R-AGG-5 sum over strings",
+   "rule": "Q33e",
+   "contract": "E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "sum over the non-numeric family string",
+    "family": "string"
+   }
+  },
+  {
+   "probe": "R-AGG-5 avg over strings",
+   "rule": "Q33e",
+   "contract": "E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "avg over the non-numeric family string",
+    "family": "string"
+   }
+  },
+  {
+   "probe": "R-CMD-9 unknown op",
+   "rule": "Q33f",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "unknown op 'frobnicate'"
+   }
+  },
+  {
+   "probe": "R-CMD-9 duplicate retract",
+   "rule": "Q33f",
+   "contract": "rejected E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "retract a appears twice"
+   }
+  },
+  {
+   "probe": "R-CMD-12 retract-pattern on tx entity",
+   "rule": "Q33f",
+   "contract": "rejected E-RESERVED",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-RESERVED",
+    "errorTag": "WriteError",
+    "reason": "reserved-namespace",
+    "phase": "preflight",
+    "message": "entity tx:0 is a transaction envelope (journal)"
+   }
+  },
+  {
+   "probe": "R-JNL-5 valid from commit instant (before)",
+   "rule": "Q33g",
+   "contract": "match :_tx/change of tx:0 at V=50 < commit 100: none",
+   "verdict": "MATCH",
+   "oracle": 0
+  },
+  {
+   "probe": "R-JNL-5 valid from commit instant (at)",
+   "rule": "Q33g",
+   "contract": "at V=100: one :_tx/change fact",
+   "verdict": "MATCH",
+   "oracle": 1
+  },
+  {
+   "probe": "R-JNL-6 tx entity without attribute",
+   "rule": "Q33g",
+   "contract": "X-NOT-MODELED (no partial answer)",
+   "verdict": "MATCH",
+   "oracle": {
+    "id": "q",
+    "kind": "match",
+    "error": {
+     "error": "X-NOT-MODELED",
+     "_tag": null,
+     "reason": null,
+     "phase": null,
+     "ruling": "R-JNL-6: envelope fact families and presence are not frozen (ORCHESTRATOR-RULING-NEEDED)",
+     "message": "the pattern selects transaction envelope facts other than :_tx/change and :_tx/changed-entity"
+    }
+   }
+  },
+  {
+   "probe": "R-JNL-6 :_tx/instant",
+   "rule": "Q33g",
+   "contract": "X-NOT-MODELED",
+   "verdict": "MATCH",
+   "oracle": {
+    "id": "q",
+    "kind": "match",
+    "error": {
+     "error": "X-NOT-MODELED",
+     "_tag": null,
+     "reason": null,
+     "phase": null,
+     "ruling": "R-JNL-6: envelope fact families and presence are not frozen (ORCHESTRATOR-RULING-NEEDED)",
+     "message": "the pattern selects transaction envelope facts other than :_tx/change and :_tx/changed-entity"
+    }
+   }
+  },
+  {
+   "probe": "R-JNL-7 transactions limit 1001",
+   "rule": "Q33g",
+   "contract": "E-CURSOR malformed",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "malformed",
+    "phase": "preflight",
+    "message": "limit must be 1..1000"
+   }
+  },
+  {
+   "probe": "R-JNL-7 transactionsForEntity limit 0",
+   "rule": "Q33g",
+   "contract": "E-CURSOR malformed",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "malformed",
+    "phase": "preflight",
+    "message": "limit must be 1..1000"
+   }
+  },
+  {
+   "probe": "R-CUT-3 negative recordedAt",
+   "rule": "Q33h",
+   "contract": "E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-INVALID-VALUE",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "recordedAt must be a non-negative instant"
+   }
+  },
+  {
+   "probe": "R-CUT-3 negative position",
+   "rule": "Q33h",
+   "contract": "E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-INVALID-VALUE",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "position -1 is negative"
+   }
+  },
+  {
+   "probe": "R-PAGE-3 entityPage limit 0",
+   "rule": "Q33h",
+   "contract": "E-CURSOR malformed",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "malformed",
+    "phase": "preflight",
+    "message": "entityPage limit must be an integer 1..200"
+   }
+  },
+  {
+   "probe": "R-PAGE-3 entityPage limit 201",
+   "rule": "Q33h",
+   "contract": "E-CURSOR malformed",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "malformed",
+    "phase": "preflight",
+    "message": "entityPage limit must be an integer 1..200"
+   }
+  },
+  {
+   "probe": "R-PAGE-4 other basis",
+   "rule": "Q33h",
+   "contract": "E-CURSOR other-query",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "other-query",
+    "phase": "preflight",
+    "message": "the request's validAt differs from the cursor's pinned basis (CE-OTHER-QUERY)"
+   }
+  },
+  {
+   "probe": "R-PAGE-4 other page size allowed",
+   "rule": "Q33h",
+   "contract": "continuation with limit 3 returns page:2, page:3, page:4",
+   "verdict": "MATCH",
+   "oracle": [
+    "page:2",
+    "page:3",
+    "page:4"
+   ]
+  },
+  {
+   "probe": "PO-LEXICOGRAPHIC-ORDER",
+   "rule": "POSITION order",
+   "contract": "offsets 9 < 10 (numeric, not string) then epoch 2: consistent; ordinals 1,2,3",
+   "verdict": "MATCH",
+   "oracle": [
+    "PASS",
+    [
+     [
+      1,
+      9,
+      1
+     ],
+     [
+      2,
+      10,
+      1
+     ],
+     [
+      3,
+      3,
+      2
+     ]
+    ]
+   ]
+  },
+  {
+   "probe": "PO-LEXICOGRAPHIC-ORDER negative",
+   "rule": "POSITION order / R-RCP-1",
+   "contract": "offset 10 then 9 in stream order: receipt violation",
+   "verdict": "MATCH",
+   "oracle": {
+    "status": "FAIL",
+    "violations": [
+     {
+      "rule": "R-RCP-1",
+      "command": 1,
+      "problem": "position decreases in stream order outside a race group"
+     }
+    ],
+    "positions": [
+     {
+      "scope": "s",
+      "coordinates": "tuple",
+      "dense": null,
+      "aborted": []
+     }
+    ]
+   }
+  },
+  {
+   "probe": "PO-ORACLE-DENSE-ORDINALS",
+   "rule": "POSITION oracle",
+   "contract": "sparse offsets 5, 20, 1000 -> ordinals 1, 2, 3; cut at offset 20 sees 2 facts",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [
+      1,
+      5,
+      1
+     ],
+     [
+      2,
+      20,
+      1
+     ],
+     [
+      3,
+      1000,
+      1
+     ]
+    ],
+    2
+   ]
+  },
+  {
+   "probe": "FX-NESTED-CUTS / PO-NESTED-CUTS-DENSE",
+   "rule": "POSITION nested / FX-NESTED-CUTS",
+   "contract": "one offset, ordinals 0,1,2: consistent; cuts at each interior ordinal see 1, 2, 3 facts",
+   "verdict": "MATCH",
+   "oracle": [
+    "PASS",
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "probe": "FX-NESTED-CUTS negative (gap in ordinals)",
+   "rule": "R-RCP-5",
+   "contract": "ordinals 0, 2, 3 inside one engine transaction: violation",
+   "verdict": "MATCH",
+   "oracle": {
+    "status": "FAIL",
+    "violations": [
+     {
+      "rule": "R-RCP-5",
+      "physicalGroup": "g",
+      "problem": "positions of one physical transaction are not consecutive",
+      "positions": [
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 7,
+        "ordinal": 0
+       },
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 7,
+        "ordinal": 2
+       },
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 7,
+        "ordinal": 3
+       }
+      ]
+     }
+    ],
+    "positions": [
+     {
+      "scope": "s",
+      "coordinates": "tuple",
+      "dense": null,
+      "aborted": []
+     }
+    ]
+   }
+  },
+  {
+   "probe": "FX-NESTED-CUTS negative (split offsets)",
+   "rule": "R-RCP-5",
+   "contract": "one physical group across two offsets: violation",
+   "verdict": "MATCH",
+   "oracle": {
+    "status": "FAIL",
+    "violations": [
+     {
+      "rule": "R-RCP-5",
+      "physicalGroup": "g",
+      "problem": "positions of one physical transaction are not consecutive",
+      "positions": [
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 7,
+        "ordinal": 0
+       },
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 7,
+        "ordinal": 1
+       },
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 8,
+        "ordinal": 0
+       }
+      ]
+     }
+    ],
+    "positions": [
+     {
+      "scope": "s",
+      "coordinates": "tuple",
+      "dense": null,
+      "aborted": []
+     }
+    ]
+   }
+  },
+  {
+   "probe": "FX-ABORT-GAP",
+   "rule": "POSITION aborted / FX-ABORT-GAP",
+   "contract": "cut at the aborted offset 20 (and 25) equals the cut at 10 (1 fact); at 30, 2 facts",
+   "verdict": "MATCH",
+   "oracle": [
+    "PASS",
+    1,
+    1,
+    1,
+    2
+   ]
+  },
+  {
+   "probe": "PO-ABORTED-LISTED",
+   "rule": "POSITION aborted",
+   "contract": "receiptConsistency.positions lists offset 20 as aborted",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "scope": "s",
+     "coordinates": "tuple",
+     "dense": null,
+     "aborted": [
+      {
+       "stream": "log",
+       "epoch": 1,
+       "offset": 20,
+       "ordinal": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "probe": "FX-ABORT-GAP negative",
+   "rule": "R-RCP-1",
+   "contract": "a committed receipt on the listed aborted offset 20: violation",
+   "verdict": "MATCH",
+   "oracle": {
+    "status": "FAIL",
+    "violations": [
+     {
+      "rule": "R-RCP-1",
+      "command": 1,
+      "problem": "a committed receipt holds an aborted position"
+     }
+    ],
+    "positions": [
+     {
+      "scope": "s",
+      "coordinates": "tuple",
+      "dense": null,
+      "aborted": [
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 20,
+        "ordinal": 0
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "probe": "FX-RESUME-AT-ABORT-GAP",
+   "rule": "FX-RESUME-AT-ABORT-GAP (oracle side)",
+   "contract": "the gap's cut ordinal is 1; transactions(after: 1) returns only the command at offset 30",
+   "verdict": "MATCH",
+   "oracle": [
+    1,
+    [
+     "t1"
+    ]
+   ]
+  },
+  {
+   "probe": "FX-CRASH-APPEND-RESOLUTION resolved",
+   "rule": "FX-CRASH-APPEND-RESOLUTION / R-RCP-6",
+   "contract": "unknown resolved committed: consistent, fact visible",
+   "verdict": "MATCH",
+   "oracle": [
+    "PASS",
+    2
+   ]
+  },
+  {
+   "probe": "FX-CRASH-APPEND-RESOLUTION unresolved",
+   "rule": "R-RCP-6",
+   "contract": "unknown without resolution: violation (fails closed)",
+   "verdict": "MATCH",
+   "oracle": {
+    "status": "FAIL",
+    "violations": [
+     {
+      "rule": "R-RCP-6",
+      "command": 1,
+      "problem": "unresolved unknown outcome"
+     },
+     {
+      "rule": "R-RCP-6",
+      "command": 1,
+      "problem": "no receipt / unresolved"
+     }
+    ],
+    "positions": [
+     {
+      "scope": "s",
+      "coordinates": "tuple",
+      "dense": null,
+      "aborted": []
+     }
+    ]
+   }
+  },
+  {
+   "probe": "epochs order",
+   "rule": "POSITION epochs (lexicographic)",
+   "contract": "a cut at (epoch 2, offset 0) sees every epoch-1 commit",
+   "verdict": "MATCH",
+   "oracle": 2
+  },
+  {
+   "probe": "erasure op 'erase' (Q49a)",
+   "rule": "Q24 / Q49a / R-ERA-1",
+   "contract": "commits; the value reads back as ErasedValue {erasedAt: 200}, no plaintext",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    {
+     "_tag": "ErasedValue",
+     "erasedAt": 200
+    }
+   ]
+  },
+  {
+   "probe": "refuse erasure op 'erasure'",
+   "rule": "Q45b / R-CMD-13 (residual, Q52g)",
+   "contract": "X-NOT-MODELED refusal (no expected answer)",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: op 'erasure' is not an O-REPLAY op; erasure cases spell the op erase (RULINGS Q45b)"
+  },
+  {
+   "probe": "refuse scale evolution (widen)",
+   "rule": "DS-WIDEN / R-DEC-15",
+   "contract": "X-NOT-MODELED refusal",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: schema 2 P.rate redeclares decimal :p/rate (scale evolution DS-WIDEN / DS-NARROW is not modeled)"
+  },
+  {
+   "probe": "refuse scale evolution (narrow, two releases)",
+   "rule": "DS-NARROW / R-DEC-15",
+   "contract": "X-NOT-MODELED refusal",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: schema 2 P.rate redeclares decimal :p/rate (scale evolution DS-WIDEN / DS-NARROW is not modeled)"
+  },
+  {
+   "probe": "refuse TDK1 query orderKey",
+   "rule": "TDK1 / R-DEC-17",
+   "contract": "X-NOT-MODELED refusal",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: TDK1 order keys (RULINGS Q35) are not modeled"
+  },
+  {
+   "probe": "refuse TDK1 query decimalKey",
+   "rule": "TDK1 / R-DEC-17",
+   "contract": "X-NOT-MODELED refusal",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: TDK1 order keys (RULINGS Q35) are not modeled"
+  },
+  {
+   "probe": "refuse TDK1 query tdk1Key",
+   "rule": "TDK1 / R-DEC-17",
+   "contract": "X-NOT-MODELED refusal",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: TDK1 order keys (RULINGS Q35) are not modeled"
+  },
+  {
+   "probe": "control: same declaration twice is not evolution",
+   "rule": "R-DEC-15 control",
+   "contract": "commits (no refusal)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "probe": "DR-KEY-ARITHMETIC",
+   "rule": "Q38d DECIMAL_ROUTING",
+   "contract": "arithmetic on key strings: preflight E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "add needs two operands of one numeric family (convert explicitly with toNumber / toInteger / toDecimal)",
+    "left": "string",
+    "right": "string"
+   }
+  },
+  {
+   "probe": "DR-JSON-OPAQUE compare",
+   "rule": "Q38d / R-CMP-3",
+   "contract": "json 1.5 vs decimal 1.5: eq false, lt E-MIXED-FAMILY (never compared as a decimal)",
+   "verdict": "MATCH",
+   "oracle": {
+    "comparable": false,
+    "identical": false,
+    "eq": false,
+    "ne": true,
+    "lt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "lt between json and decimal needs an explicit conversion",
+     "left": "json",
+     "right": "decimal",
+     "op": "lt"
+    },
+    "gt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "gt between json and decimal needs an explicit conversion",
+     "left": "json",
+     "right": "decimal",
+     "op": "gt"
+    },
+    "sameGroup": false
+   }
+  },
+  {
+   "probe": "DR-JSON-OPAQUE sum",
+   "rule": "Q38d / R-AGG-5",
+   "contract": "SUM over a json attribute: E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "sum over the non-numeric family json",
+    "family": "json"
+   }
+  },
+  {
+   "probe": "DR-REPO-ORDER (value order)",
+   "rule": "Q38d DR-REPO-ORDER / DO-CMP",
+   "contract": "orderBy rate asc: w3 (-0.55), w2 (-0.5), w4 (12.25), w1 (16.499999), w0 (16.5)",
+   "verdict": "MATCH",
+   "oracle": [
+    "w3",
+    "w2",
+    "w4",
+    "w1",
+    "w0"
+   ]
+  },
+  {
+   "probe": "DR-REPO-ORDER range 'at or above 16.50'",
+   "rule": "Q38d / RS-FIND-RANGE",
+   "contract": "where rate gte 16.50: only w0",
+   "verdict": "MATCH",
+   "oracle": [
+    "w0"
+   ]
+  },
+  {
+   "probe": "DR-AGGREGATE min/max",
+   "rule": "Q38d DR-AGGREGATE",
+   "contract": "MIN -0.550000, MAX 16.500000 (scale 6)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "lo": {
+      "type": "decimal",
+      "value": "-0.550000",
+      "scale": 6,
+      "precision": 9
+     },
+     "hi": {
+      "type": "decimal",
+      "value": "16.500000",
+      "scale": 6,
+      "precision": 9
+     }
+    }
+   ]
+  },
+  {
+   "probe": "DR-JSON-CONVERT valid",
+   "rule": "Q38d DR-JSON-CONVERT",
+   "contract": "toDecimal(json 1.5, 2, 1) = 1.5",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.5",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "probe": "DR-JSON-CONVERT excess fraction",
+   "rule": "Q38d DR-JSON-CONVERT",
+   "contract": "toDecimal(json 1.55, 2, 1): E-DECIMAL-FRACTION",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-FRACTION",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-fraction",
+    "phase": "preflight",
+    "message": "decimal: 1.55 has more than 1 fractional digits"
+   }
+  },
+  {
+   "probe": "DR-JSON-CONVERT non-number",
+   "rule": "Q38d DR-JSON-CONVERT",
+   "contract": "toDecimal(json 'abc', 2, 1): E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-INVALID-VALUE",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "toDecimal of a json value that is not a number (Q49e)",
+    "json": "\"abc\""
+   }
+  }
+ ],
+ "reverseCheck": {
+  "tableDifferences": [
+   {
+    "id": "E-DECIMAL-OVERFLOW",
+    "oracle": [
+     "InvalidTripleError",
+     "decimal-overflow",
+     [
+      "preflight",
+      "execution"
+     ]
+    ],
+    "contract": [
+     "InvalidTripleError",
+     "decimal-overflow",
+     "preflight or execution"
+    ]
+   }
+  ],
+  "eLiteralsNotInContract": {},
+  "xIdsInSource": {
+   "X-NOT-MODELED": [
+    "entities.py",
+    "exact.py",
+    "replay.py",
+    "views.py"
+   ],
+   "X-NO-POSITION": [
+    "views.py"
+   ],
+   "X-CYCLE": [
+    "views.py"
+   ]
+  },
+  "producedNotInContract": [],
+  "droppedIdsStillInSource": {},
+  "retiredXIdsStillInSource": {}
+ }
+}
