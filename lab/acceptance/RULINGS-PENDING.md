@@ -31,3 +31,4 @@ Round 5: R4-1, 2, 3, 5, 6, 7 CLOSED; R4-4 and R4-8 PARTIAL; 3 new (9 to 11). All
 | Q43f R-DEC-11 (overrides the refusal) | `round(x, s)` with s greater than x's scale is exact: it returns x at scale s by appending zeros, never refused (subject to the 38-digit limit). | exact operation |
 | Q43g R-DEC-12 | Accepted: `toInteger` of a whole decimal outside the integer range is E-INTEGER-OVERFLOW. | numeric rule item 3 |
 | Q43h R-CUT-4 | A read basis given as -0 is E-NEGATIVE-ZERO-INSTANT, consistent with Q30b. | Q30b |
+| Q43f-detail | Accepted the oracle author's choice: `round(x, s)` to a larger scale has result precision p + (s - s_x), capped at 38, so x's integer digits always fit. | Q43f |

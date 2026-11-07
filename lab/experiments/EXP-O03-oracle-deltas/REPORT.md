@@ -22,3 +22,12 @@
 - Decisions: ruled as Q43 (RULINGS-PENDING.md); an alignment pass to contract 0.3.5 is in progress before the independent re-check.
 - Evidence: /Users/sam/Claude/Projects/triplex-db-2/EXP-O03-oracle-033-deltas/ (probe before/after, converter results, negative control,
   self-check output, hashes.99d85be.txt).
+
+## Alignment to contract 0.3.5 (Q43), final commit 8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b (O-REPLAY 0.3.1)
+- E-DECIMAL-UNREPRESENTABLE removed (E-DECIMAL-FRACTION and E-DECIMAL-OVERFLOW per Q43a, with preflight on writes and execution on query
+  results); AVG over decimals is E-DECIMAL-AVG; round to a larger scale is exact (precision p + (s - s_x), capped at 38); a -0 read basis is
+  E-NEGATIVE-ZERO-INSTANT. New coverage tests: q33Rules (21), the position falsifier cases, CMP-CROSS-FAMILY-ORDERED, four new decimalRules
+  keys, and a reverse check that fails if the oracle keeps an error id the contract dropped.
+- Results: 300/300 unit tests; --self-check 61/61; probe 19 MATCH, 1 REFUSES (erasure), 0 WRONG-ANSWER; converter core and qlever identical
+  item by item to EXP-O02 (qlever's 19 DISAGREE = the 10 Q33i vectors recorded as rejected on QLever); negative control 8/8.
+- Evidence: hashes.8cc2c26.txt and the q43 result files in /Users/sam/Claude/Projects/triplex-db-2/EXP-O03-oracle-033-deltas/.
