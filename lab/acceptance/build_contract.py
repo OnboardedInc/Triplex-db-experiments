@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.4"
+VERSION = "0.3.5"
 STATUS = "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review"
 DATE = "2026-11-07"
 
@@ -184,10 +184,20 @@ RULINGS = [
     {"id": "Q36", "topic": "W0 questions from EXP-D01a (Q36a to Q36h)",
      "ruling": "Contract impact only of Q36a (work item id over (subject, rule, kind, key); content version over (release hash, input positions, payload); outbox delivery key (id, version); early cutoff: an unchanged payload publishes nothing), Q36e (expected affected set = subjects whose static read set contains a changed fact) and Q36g/h (location fanout Zipf s = 0.5 over 2,000 locations at 100k; other rungs N / 50 with the same s). Q36b, c, d and f have no contract impact.",
      "compiledInto": ["WORLD_W0 workItemIdentity", "WORLD_W0 affectedSet", "WORLD_W0 fanout", "W0-LOCATION-ZIPF-S", "GS.19", "GS-19B-OUTBOX-CRASH", "NS.P5", "NS.P3", "load-contract.json P3 and P5"]},
+    {"id": "Q37", "topic": "contract 0.3.4 questions (Q37a to Q37d)",
+     "ruling": "Q37a accepted the five-block allowlist scope, then superseded by Q38a (no allowlist). Q37b every obligation O-REPLAY would close fails closed until the oracle is accepted after EXP-O03 and pinned; A0 measurements produce diagnostics, never closures. Q37c O-TDK1's reference and vectors live in lab/oracles/decimal/ and are pinned (hashes as revised by Q38e). Q37d E-DECIMAL-FRACTION covers excess fraction digits at write and decimal-to-integer with a nonzero fraction.",
+     "compiledInto": ["GATE-ORACLE-PIN", "CLAIM_ADMISSION", "ORACLE_PINS O-TDK1", "O_TDK1_FILES", "TDK1_VECTOR_PIN", "E-DECIMAL-FRACTION"]},
+    {"id": "Q38", "topic": "Codex plan-v2 round 4 (Q38a to Q38f)",
+     "ruling": "Q38a no density exemption: every composition, A0 included, runs the four falsifiers; the allowlist is removed and an outside-block mutation fixture kept. Q38b admit_claim derives every prerequisite from validated, source-bound receipts and enforces Q37b. Q38c every RULINGS change is compiled and verified; uncompiled entries are listed as recorded-not-compiled. Q38d decimal channel routing on repository, native and raw surfaces, derived expressions and aggregates; JSON opaque unless converted; SUM decodes, computes, encodes; key arithmetic invalid. Q38e O-TDK1 BUILT with pinned files; the vector pin null until independent review. Q38f outbox delivery identity (id, publication sequence) with durable atomic publication state and crash replay.",
+     "compiledInto": ["OUTSIDE_BLOCK_MUTATION_FIXTURE", "POSITION_REQUIRED_CASES", "G7.position.coordinates", "M-WITHTRANSACTION-REBIND", "admit_claim", "receipt_valid", "CLAIM_ADMISSION", "RULINGS_COVERAGE", "DECIMAL_ROUTING", "G1.decimal.channel-routing", "M-DECIMAL-LEXICAL-ORDER", "O-TDK1", "OUTBOX", "G7.outbox.publication-sequence", "M-OUTBOX-VERSION-DEDUP", "GS.10", "GS.11", "GS.19", "NS.P5", "load-contract.json P5"]},
+    {"id": "Q39", "topic": "EXP-X02 (Q39a, Q39b)",
+     "ruling": "Q39a an XTDB engine-side exact sum uses SUM(CAST(x AS DECIMAL(32,0))) read as text, never cast back to BIGINT or a numeric client type (XTDB 2.2.0 rounds through a double); on the XTDB hazard list. Q39b every XTDB receipt records TRIPLEX_XTDB_NATIVE_LANGUAGE; XTQL and SQL results never share an obligation closure.",
+     "compiledInto": ["KL-X9", "G5.agg.projection-sums", "M-X-DECIMAL-SUM-BIGINT", "RECEIPT_SCHEMA nativeLanguage", "LANGUAGE_RULES xtdbNativeLanguage", "STATUS_ALGORITHM", "keyByNativeLanguage"]},
 ]
 
 # ============================================================================ language accounting
 LANGUAGE_RULES = {
+    "xtdbNativeLanguage": "every XTDB receipt records TRIPLEX_XTDB_NATIVE_LANGUAGE (xtql or xtdb-sql) as executed; XTQL and SQL results never share an obligation closure: lane receipts close only their own lane, and an engine-scope receipt whose evidence includes a native or raw surface closes only the lane of its recorded language (RULINGS Q39b)",
     "substep": "Every read substep records exactly one language: xtql (native.select), sql (selectSql), sparql (QLever native). A lane receipt counts a task only when every relational substep is in the lane's language.",
     "hybrid": "A task with a relational substep in another language, or with a host step not listed below, counts for neither XTDB language.",
     "permittedHostSteps": [
@@ -398,7 +408,21 @@ TDK1_TESTS = {
     "V7": {"obligation": "G1.decimal.tdk1-writer-negative", "case": "TDK1-V7-WRITER-NEGATIVE", "check": "values outside (p, s), excess nonzero fractional digits (R-DEC-3), -0, more than 38 digits, malformed text", "pass": "typed error (E-DECIMAL-OVERFLOW, E-DECIMAL-FRACTION or E-INVALID-VALUE), no residue, no rounding anywhere on the path"},
 }
 # Required input for V5: null until the seeded vector file is generated and reviewed; fails closed.
-TDK1_VECTOR_PIN = {"file": "lab/oracles/decimal/tdk1-vectors.json", "sha256": None, "generator": "R20 decimal_key_test.py sets (seed recorded in the file)", "rule": "null until the vector file exists and is reviewed; pinning needs a contract version bump"}
+TDK1_VECTOR_PIN = {"file": "lab/oracles/decimal/tdk1-vectors.json", "sha256": None, "candidateSha256": "0a699f59e16821ddf00c82319569a7e727fa1042e6d36a95fc577a6a4213d2a5", "reviewReceipt": None, "generator": "lab/oracles/decimal/gen_vectors.py (seed 20261108, exact construction with a Fraction assertion)", "rule": "null until an independent review of the candidate vector file; pinning needs a contract version bump (RULINGS Q37c, Q38e)"}
+# RULINGS Q37c, Q38e: O-TDK1 files pinned at their current hashes.
+O_TDK1_FILES = {"lab/oracles/decimal/tdk1_reference.py": "73467589480deb93fb700cdaf856cccb8f67b9a24d1963e26744a0ac4754bf33", "lab/oracles/decimal/gen_vectors.py": "b30b430acbfc7476cf47e676d38abaa247d3545b20aac5d481bea67a11cf11e1"}
+
+# RULINGS Q38d: decimal channel routing on every surface.
+DECIMAL_ROUTING = [
+    {"id": "DR-REPO-ORDER", "rule": "repository ORDER BY and range on a decimal attribute use the decimal_order_v1 key", "case": "DR-REPO-ORDER"},
+    {"id": "DR-NATIVE-ORDER", "rule": "native ORDER BY and range in the lane language use the decimal_order_v1 key, never QLever's lexical canonical text", "case": "DR-NATIVE-ORDER"},
+    {"id": "DR-RAW-ORDER", "rule": "raw recipes order and range on the documented decimal_order_v1 channel, never the lexical text", "case": "DR-RAW-ORDER"},
+    {"id": "DR-DERIVED", "rule": "a derived decimal expression used for ordering or comparison is computed exactly in the kernel and encoded to TDK1 before it is compared", "case": "DR-DERIVED"},
+    {"id": "DR-AGGREGATE", "rule": "SUM over decimals decodes the keys or canonical text, computes exactly, and encodes any decimal result used for ordering; MIN and MAX compare keys", "case": "DR-AGGREGATE"},
+    {"id": "DR-KEY-ARITHMETIC", "rule": "arithmetic on key strings (summing or subtracting decimal_order_v1 values as text or numbers) is invalid: preflight E-MIXED-FAMILY", "case": "DR-KEY-ARITHMETIC"},
+    {"id": "DR-JSON-OPAQUE", "rule": "a decimal-looking number inside a JSON value is opaque: it is never compared, ordered or summed as a decimal", "case": "DR-JSON-OPAQUE"},
+    {"id": "DR-JSON-CONVERT", "rule": "an explicit conversion of a JSON value to a typed decimal (toDecimal with declared precision and scale) validates it (E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW or E-INVALID-VALUE) and encodes the TDK1 key", "case": "DR-JSON-CONVERT"},
+]
 
 # RULINGS Q22: one row per operator, conversion and scale change; every row is a named CS-DECIMAL case.
 DECIMAL_OPS = [
@@ -677,7 +701,7 @@ ORACLES = {
                  "spec": "WORLD_W0 (TARGETS 6.1): expected next tasks, obligations with due times, work items, affected-subject sets and effect traces from the same command stream", "independence": "Python stdlib only; imports no Triplex, kernel or engine code; shares only the W0 rule text and the command stream"},
     "O-CONTRACT": {"status": "COMPILED", "files": ["lab/acceptance/obligations.json#evaluatorCounterexamples"], "comparator": "verdict equality",
                    "spec": "the verdict the status algorithm must return for each EVALUATOR_COUNTEREXAMPLES receipt set (OPEN)", "independence": "pinned by this contract"},
-    "O-TDK1": {"status": "TO-BUILD", "files": ["lab/oracles/decimal/"], "comparator": "CMP-ORDERED-ROWS for orders, CMP-EXACT-VALUE for keys and decodes",
+    "O-TDK1": {"status": "BUILT", "files": ["lab/oracles/decimal/"], "comparator": "CMP-ORDERED-ROWS for orders, CMP-EXACT-VALUE for keys and decodes",
                "spec": "TDK1 (R20 section 6): the Python reference encoder and exact-rational order (fractions.Fraction) from R20's raw material, brought into the repository", "independence": "Python stdlib only; imports no Triplex code"},
     "O-TESTKIT": {"status": "EXISTS", "files": ["packages/testkit/src/index.ts"], "comparator": "testkit checks",
                   "spec": "authored expectations inside the 44 shared cases", "independence": "literal expectations; KV is a regression participant only"},
@@ -781,6 +805,7 @@ KNOWN_LIMITS = {
     "KL-X4": ("XTDB 2.2.0", "recursive CTEs rejected; XTQL has no recursion", "lab/research/R6-xtdb-gap-analysis.md 3.3"),
     "KL-X6": ("postgres 3.4.9 driver", "TIMESTAMP WITH TIME ZONE decoded to millisecond Date; TIMESTAMP without zone parsed in the local zone", "lab/research/R1-xtdb-capabilities.md Q3 (probed)"),
     "KL-X7": ("XTDB 2.2.0", "a DECIMAL aggregate failed: MAX(CAST(v AS DECIMAL(32,0))) raised No method in multimethod 'set-value-code' :decimal", "packages/xtdb/experiments/query/integer-extrema-1793974552733.json (probe in checkout)"),
+    "KL-X9": ("XTDB 2.2.0", "a DECIMAL value read back as BIGINT (or any numeric client type) is rounded through a double: 1e18 + 4 reads back as 1e18; exact sums read DECIMAL as text", "lab/experiments/EXP-X02 (RULINGS Q39a); packages/core/src/datalog/compiler.ts:572 checked by EXP-R02"),
     "KL-X8": ("current XTDB layout", "Triplex R is not engine system time; FOR SYSTEM_TIME answers Triplex bases only at physical commit boundaries", "lab/research/R6-xtdb-gap-analysis.md 3.4; R1 Q1"),
     "KL-Q1": ("QLever 0.6.0", "integers are 60-bit; integer values outside +/-2^59 wrap silently unless the writer rejects them first", "lab/research/R2-qlever-capabilities.md 4.1 (probed)"),
     "KL-Q2": ("QLever 0.6.0", "integer + and * wrap in 60 bits without an overflow check", "R2 4.1 arithmetic (probed)"),
@@ -928,11 +953,15 @@ MUTANTS = {
     "M-DECIMAL-PRECAPTURE-ROUND": {"fault": "the writer normalizes (rounds) a decimal before capturing the caller's typed input", "reachProbe": "write.captureInput", "targets": ["CS-DECIMAL:DEC-INPUT-CAPTURE"]},
     "M-ERASURE-LEAK": {"fault": "an erased value stays readable from one inventoried location or derived channel (order key, lexical channel, restored backup)", "reachProbe": "erasure.apply", "targets": ["CS-ERASURE:ER-ORDER-KEY-CHANNEL", "CS-ERASURE:ER-RESTORE-PRE-BACKUP"]},
     "M-STALE-INDEX-ANSWER": {"fault": "an index answers for a basis beyond its watermark, or a current-only index answers for a basis it cannot reconstruct", "reachProbe": "route.watermark", "targets": ["CS-COMPOSITION:CO-NO-STALE-ANSWER", "CS-COMPOSITION:CO-RECONSTRUCT-OUTSIDE-VALIDITY"]},
+    "M-WITHTRANSACTION-REBIND": {"fault": "the exported withTransaction binding allocates an extra position before executing the transaction, outside every hashed allocator block (OUTSIDE_BLOCK_MUTATION_FIXTURE)", "reachProbe": "xtdb.withTransactionBinding", "targets": ["CS-POSITION:FX-NESTED-CUTS"]},
     "M-ACK-BEFORE-PUBLICATION": {"fault": "the source sends the ACK before its own publication", "reachProbe": "commit.ack", "targets": ["CS-COMPOSITION:CO-ACK-AFTER-SOURCE-PUBLICATION"]},
     "M-RYOW-STALE-ROUTE": {"fault": "the pull at the returned position is served by an index that is not yet eligible for it", "reachProbe": "route.ryow", "targets": ["CS-COMPOSITION:CO-RYOW-ROUTED", "CS-COMPOSITION:CO-OUTAGE-ACKS-CONTINUE"]},
     "M-ERASURE-FRONTIER-SKIP": {"fault": "an old-basis read is served by an index or cache that has not applied a newer published erasure", "reachProbe": "route.erasureFrontier", "targets": ["CS-ERASURE:ER-FRONTIER-OLD-BASIS", "CS-ERASURE:ER-CACHE-INVALIDATION"]},
     "M-JSON-NEGZERO-NORMALIZE": {"fault": "a JSON value's -0 or inexact number is normalized by CanonicalJson before the guard runs, so it is stored instead of rejected", "reachProbe": "write.jsonGuard", "targets": ["CS-WIRE:WIRE-JSON-NEGZERO", "CS-WIRE:WIRE-JSON-BEFORE-CANONICAL"]},
     "M-JSON-GUARD-ON-JOURNAL": {"fault": "the user-JSON guard runs on journal JSON that Triplex generates, so a number -0 assertion's journal is rejected or normalized", "reachProbe": "journal.encodeChange", "targets": ["CS-WIRE:WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"]},
+    "M-OUTBOX-VERSION-DEDUP": {"fault": "the receiver or publisher deduplicates by content version, so a return to an earlier payload (R1, R2, R1) is suppressed", "reachProbe": "outbox.publish", "targets": ["CS-OUTBOX:OB-RELEASE-ROLLBACK"]},
+    "M-DECIMAL-LEXICAL-ORDER": {"fault": "a decimal ORDER BY or range on QLever uses the lexical canonical text instead of the decimal_order_v1 key", "reachProbe": "decimal.orderChannel", "targets": ["CS-DECIMAL-ROUTING:DR-NATIVE-ORDER", "CS-DECIMAL-ROUTING:DR-RAW-ORDER"]},
+    "M-X-DECIMAL-SUM-BIGINT": {"fault": "an XTDB engine-side exact sum casts the DECIMAL result back to BIGINT (rounded through a double: 1e18 + 4 reads back as 1e18)", "reachProbe": "xtdb.sumDecode", "targets": ["CS-NUMERIC:projection-sums"]},
     "M-TDK1-NO-TERMINATOR": {"fault": "the TypeScript TDK1 encoder omits the negative terminator z (one of R20's five mutant encoders)", "reachProbe": "decimal.tdk1Encode", "targets": ["CS-TDK1:TDK1-V5-DIFFERENTIAL"]},
     "M-TDK1-PREFIX-USE": {"fault": "a range or lookup uses a TDK1 key as a prefix or inside a concatenated composite key", "reachProbe": "decimal.tdk1Compare", "targets": ["CS-TDK1:TDK1-V4-RANGES"]},
     "M-X-JSON-LIST-PARAM": {"fault": "XTDB card-many DOUBLE or integer lists sent as one JSON parameter instead of ARRAY[CAST(? AS <type>) ...]", "reachProbe": "xtdb.listEncoding", "targets": ["CS-WIRE:WIRE-X-DOUBLE-LIST-ARRAY"]},
@@ -1067,6 +1096,16 @@ LEGACY_LANE_OUTCOMES = {
 }
 LEGACY_RULE = "Follow-up EXP-G02 (RULINGS Q32b): QLever in-range companion vectors by an independent golden author. For every golden vector (or vector case) that commits an integer outside QLever's accepted range, the evaluator applies the compiled lane outcome in LEGACY_LANE_OUTCOMES instead of the vector's single expected answer: XTDB commits and keeps the original answer; QLever's qualified write routes reject the command with E-VALUE-OUT-OF-RANGE before any mutation (RULINGS Q23, Q31j). The original vectors stay unchanged as audit evidence (RULINGS Q29a). QLever's in-range coverage of the same boundaries comes from CS-TYPES8 integer-edges and CS-RANGE-OUT."
 
+# ============================================================================ outbox publication (RULINGS Q38f, refining Q36a and its clarification)
+OUTBOX = {
+    "deliveryKey": "(id, publication sequence)",
+    "sequence": "durable per work-item id; increments when the payload to publish differs from the latest published payload for that id, so R1 to R2 to R1 publishes three deliveries (1650, 1700, 1650) and the receiver never suppresses the return",
+    "contentVersion": "hashes (release, inputs, payload); recorded, never the delivery identity",
+    "atomicity": "publication state (sequence and latest published payload) is persisted atomically with its outbox record",
+    "recovery": "unacknowledged deliveries survive crashes and replay with their original identity",
+    "cases": {"OB-RELEASE-ROLLBACK": "activate R1, R2, R1 over unchanged business facts: three deliveries with sequences 1, 2, 3 and payloads 1650, 1700, 1650", "OB-CRASH-BEFORE-DELIVERY": "crash after the outbox record and publication state commit but before delivery: replay delivers the same (id, publication sequence) exactly once", "OB-UNCHANGED-ACTIVATION-RECOVERY": "an activation that leaves the payload unchanged while an earlier delivery is still unacknowledged after a crash: nothing new is published and the pending delivery replays with its original identity", "OB-ATOMIC-STATE": "a crash between the outbox record and its publication state is impossible: both or neither are visible"},
+}
+
 # ============================================================================ erasure (TARGETS section 7, RULINGS Q24)
 ERASURE = {
     "status": "PROVISIONAL product ruling (RULINGS Q24), flagged for Sam: explain at a pre-erasure basis shows the marker, not the value",
@@ -1096,105 +1135,88 @@ POSITION = {
 }
 # RULINGS Q32e: the selection of G7.position.coordinates depends on whether the composition's positions are dense.
 POSITION_DENSE_CASES = ["PO-LEXICOGRAPHIC-ORDER", "PO-ORACLE-DENSE-ORDINALS", "PO-NESTED-CUTS-DENSE"]
-# RULINGS Q34a: density is proven by source, never declared. A block is extracted from a bound source file by
-# ALLOCATOR_EXTRACTION_RULE (the marker line, then every following line that is blank, more indented than the marker, or starts
-# with a closing bracket at the marker's indentation; trailing blank lines dropped; joined with newline plus a final newline)
-# and hashed with sha256. The pinned values are the A0 allocators at main 820607281edf (both files last changed at f1939df).
-ALLOCATOR_EXTRACTION_RULE = "marker line, then every following line that is blank, more indented than the marker, or starts with ), ] or } at the marker's indentation; trailing blank lines dropped; lines joined with \\n plus a final \\n; sha256 of the UTF-8 bytes"
-A0_ALLOCATOR_ALLOWLIST = {
-    "xtdb": {"file": "packages/xtdb/src/XtdbStorageAdapter.ts", "a0Commit": "820607281edf4b8d87b9c46bfa2b9c583f93be68", "blocks": [
-        {"marker": "  const committedPosition = () =>", "linesAtA0": "92-104", "sha256": "f4e600f36f7563508610f03b3b4c6b9eb83b14fffa94a7cf7f92f3380be126bd"},
-        {"marker": "  const persist = (", "linesAtA0": "188-331", "sha256": "e1272f80323eb02049179fbaa4c35c7a174161a3379f62c99eae932828a3112c"},
-        {"marker": "  const withTransaction = <A, E>(", "linesAtA0": "333-427", "sha256": "f2ebd36fc7b31ce6098d58f18555cbbcdaa7837965e3ca143aadca1d4fa81380"},
-        {"marker": "    nextCommitPosition: () =>", "linesAtA0": "486-496", "sha256": "62c1b2805ec7bcfbcd55a895195add4c0d32b6a882c6772379af081eb3603f16"},
-        {"marker": "    currentCommitPosition: () =>", "linesAtA0": "497-500", "sha256": "7d54d2315040284eb04df9fdd86a06f2e579f8519b92fa5966172012e20d6360"}]},
-    "qlever": {"file": "packages/qlever/src/QleverStorageAdapter.ts", "a0Commit": "820607281edf4b8d87b9c46bfa2b9c583f93be68", "blocks": [
-        {"marker": "  const position = () =>", "linesAtA0": "93-102", "sha256": "588f62d05d048d24fa22bb0615a8d0e4651feb23bb0ff3472fa192b1d219d7f3"},
-        {"marker": "  const persist = (", "linesAtA0": "187-278", "sha256": "7f510d6f9a6967fe90262c35abdf2ace1f1871eaf9c0fc2b0cb988fa8418695b"},
-        {"marker": "  const withTransaction = <A, E>(", "linesAtA0": "279-365", "sha256": "ffe6de1d4ca52457c93ec12cb2e2293e10ba993435b6b69bd60d0883846c6b48"},
-        {"marker": "    nextCommitPosition: () =>", "linesAtA0": "416-426", "sha256": "e7fda2c2745dd71769acae1c6637a0385aa9223c2cd3cb89b6cb7dbdf47b1bfa"},
-        {"marker": "    currentCommitPosition: () =>", "linesAtA0": "427-428", "sha256": "370babd466b3e707a49d0ecb8e3ccf2e69ee85ec63c9f2f7b702f445991f7136"}]},
+# RULINGS Q38a (replaces Q32e and Q34a): no density exemption. Every composition, A0 included, runs the four position falsifiers
+# before any comparative or promotion claim. The fixture below records why a source-hash allowlist was unsafe.
+OUTSIDE_BLOCK_MUTATION_FIXTURE = {
+    "source": "xtdb", "file": "packages/xtdb/src/XtdbStorageAdapter.ts",
+    "mutation": "the exported withTransaction binding (about line 485) is rebound in memory to allocate an extra position before executing the transaction",
+    "unchangedBlockHashes": {"  const committedPosition = () =>": "f4e600f36f7563508610f03b3b4c6b9eb83b14fffa94a7cf7f92f3380be126bd", "  const persist = (": "e1272f80323eb02049179fbaa4c35c7a174161a3379f62c99eae932828a3112c", "  const withTransaction = <A, E>(": "f2ebd36fc7b31ce6098d58f18555cbbcdaa7837965e3ca143aadca1d4fa81380", "    nextCommitPosition: () =>": "62c1b2805ec7bcfbcd55a895195add4c0d32b6a882c6772379af081eb3603f16", "    currentCommitPosition: () =>": "7d54d2315040284eb04df9fdd86a06f2e579f8519b92fa5966172012e20d6360"},
+    "oldMechanismVerdict": "dense, falsifiers skipped (0.3.4 density_proven returned True)",
+    "requiredVerdict": "the four falsifiers run; FX-NESTED-CUTS fails under the mutation (mutant M-WITHTRANSACTION-REBIND)",
+    "source_of_finding": "lab/reviews/plan-v2-round4.codex.md finding 1",
 }
-
-
-def allocator_block(text, marker):
-    lines = text.split("\n")
-    idx = [i for i, line in enumerate(lines) if line.startswith(marker)]
-    if len(idx) != 1:
-        return None
-    i = idx[0]
-    ind = len(lines[i]) - len(lines[i].lstrip(" "))
-    j = i + 1
-    while j < len(lines):
-        line = lines[j]
-        if line.strip() == "" or len(line) - len(line.lstrip(" ")) > ind or line.lstrip(" ")[:1] in ")]}":
-            j += 1
-            continue
-        break
-    while j - 1 > i and lines[j - 1].strip() == "":
-        j -= 1
-    return hashlib.sha256(("\n".join(lines[i:j]) + "\n").encode()).hexdigest()
-
-
-def allocator_hashes(engine, text):
-    return {b_["marker"]: allocator_block(text, b_["marker"]) for b_ in A0_ALLOCATOR_ALLOWLIST[engine]["blocks"]}
-
-
-def density_proven(composition):
-    """RULINGS Q34a: dense only when every allocator block hash of the receipt's bound source equals the A0 allowlist; the receipt's positionsDense field carries no authority."""
-    eng = composition.get("source")
-    if eng not in A0_ALLOCATOR_ALLOWLIST:
-        return False
-    want = {b_["marker"]: b_["sha256"] for b_ in A0_ALLOCATOR_ALLOWLIST[eng]["blocks"]}
-    return composition.get("allocatorBlocks") == want
-
-
+POSITION_REQUIRED_CASES = list(POSITION_DENSE_CASES) + list(POSITION["falsifiers"]) + ["PO-ABORTED-LISTED"]
 A0_CONTROLS = {
-    "A0-XTDB": {"source": "xtdb", "allocatorBlocks": {b_["marker"]: b_["sha256"] for b_ in A0_ALLOCATOR_ALLOWLIST["xtdb"]["blocks"]}, "why": "today's scope-counter allocator, on the A0 allowlist"},
-    "A0-QLEVER": {"source": "qlever", "allocatorBlocks": {b_["marker"]: b_["sha256"] for b_ in A0_ALLOCATOR_ALLOWLIST["qlever"]["blocks"]}, "why": "today's scope-counter allocator, on the A0 allowlist"},
+    "A0-XTDB": {"source": "xtdb", "why": "today's scope-counter allocator; runs the four falsifiers like every other composition (RULINGS Q38a)"},
+    "A0-QLEVER": {"source": "qlever", "why": "today's scope-counter allocator; runs the four falsifiers like every other composition (RULINGS Q38a)"},
 }
-FORGED_DENSITY_FIXTURE = {"source": "xtdb", "positionsDense": True, "allocatorBlocks": {**A0_CONTROLS["A0-XTDB"]["allocatorBlocks"], "  const persist = (": "0" * 64}, "why": "claims dense but its persist block differs from the allowlist: must be treated as non-dense (RULINGS Q34a)"}
-POSITION_NONDENSE_ADDS = list(POSITION["falsifiers"]) + ["PO-ABORTED-LISTED"]
 
 
 def position_selection(composition):
-    """Cases of G7.position.coordinates required for a composition: the conditional selection is authoritative (RULINGS Q34a)."""
-    if density_proven(composition):
-        return list(POSITION_DENSE_CASES)
-    return list(POSITION_DENSE_CASES) + POSITION_NONDENSE_ADDS
+    """Cases of G7.position.coordinates every composition needs (RULINGS Q38a): no exemption, whatever the composition declares."""
+    return list(POSITION_REQUIRED_CASES)
 
 
-def position_gate_blocks(composition, closed_with):
-    """True when GATE-POSITION blocks comparative claims: the closed G7.position.coordinates receipts must cover position_selection(composition)."""
-    return not set(position_selection(composition)) <= set(closed_with)
-
-
-# RULINGS Q34d: every comparative or promotion claim is admitted only with its prerequisites met; screening claims included.
+# RULINGS Q34d, Q38b: claim admission from validated, source-bound receipt evidence only.
 CLAIM_ADMISSION = {
-    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator checks: GATE-POSITION for the composition's source (allocator proven dense, or the four falsifiers closed); composition identity (VA14: four assignments, replication edges, watermarks); and, where the claim depends on domain outputs, GATE-W0. A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner (RULINGS Q34d)",
+    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator derives every prerequisite from validated, source-bound receipt evidence, never from supplied case names or Booleans: a VA-valid G7.position.coordinates receipt for the claim's own source tree and composition covering all of POSITION_REQUIRED_CASES; composition identity bound on every receipt (four assignments with image digest, configuration hash and slot); where any claimed obligation uses O-DOMAIN, the W0 pin and a W0.coverage-floors receipt; and a non-null, accepted ORACLE_PINS entry for every oracle the claim depends on, including the oracles of its prerequisite obligations. A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
     "verdicts": ["QUALIFIED", "DIAGNOSTIC"],
 }
+COMPOSITION_FIELDS = ("engine", "imageDigest", "configSha256", "slot")
 
 
-def admit_claim(claim):
-    comp = claim.get("composition", {})
-    if position_gate_blocks(comp, claim.get("positionCasesClosed", [])):
+def receipt_valid(r, obligation, claim):
+    """Structural model of the evaluator's check: the receipt names the obligation and its definition hash, binds the claim's source tree
+    and the full composition, and carries a PASS result with a retained object for every case of the required selection."""
+    if r.get("obligation") != obligation["id"] or r.get("definitionSha256") != obligation_hash(obligation):
+        return False
+    if r.get("sourceTreeSha256") != claim.get("sourceTreeSha256") or r.get("composition") != claim.get("composition"):
+        return False
+    comp = r.get("composition") or {}
+    if set(comp) != set(COMPOSITION["assignments"]) or any(set(comp[k]) != set(COMPOSITION_FIELDS) or any(not comp[k][f] for f in COMPOSITION_FIELDS) for k in comp):
+        return False
+    need = POSITION_REQUIRED_CASES if obligation["id"] == "G7.position.coordinates" else [t for c in obligation["cases"] for t in c["select"]]
+    got = {x.get("case") for x in r.get("caseResults", []) if x.get("verdict") == "PASS" and re.fullmatch(r"[0-9a-f]{64}", x.get("objectSha256", ""))}
+    return set(need) <= got
+
+
+def admit_claim(claim, pins=None, w0=None):
+    """RULINGS Q38b. claim = {obligations: [ids], sourceTreeSha256, composition, receipts: [...]}; supplied names or Booleans are ignored."""
+    pins = ORACLE_PINS if pins is None else pins
+    w0 = W0_PIN if w0 is None else w0
+    obl = {o["id"]: o for o in OBL}
+    claimed = [obl[i] for i in claim.get("obligations", []) if i in obl]
+    if not claimed:
         return "DIAGNOSTIC"
-    if not claim.get("compositionBound"):
+    prereq = ["G7.position.coordinates", "G10.composition.identity-bound"]
+    domain = any("O-DOMAIN" in o["oracles"] for o in claimed)
+    if domain:
+        prereq.append("W0.coverage-floors")
+    for pid in prereq:
+        if not any(receipt_valid(r, obl[pid], claim) for r in claim.get("receipts", [])):
+            return "DIAGNOSTIC"
+    if domain and (any(v is None for v in w0["files"].values()) or w0.get("reviewReceipt") is None):
         return "DIAGNOSTIC"
-    if claim.get("domainDependent") and (any(v is None for v in W0_PIN["files"].values()) or W0_PIN["reviewReceipt"] is None or not claim.get("w0CoverageClosed")):
-        return "DIAGNOSTIC"
+    oracles = {x for o in claimed + [obl[i] for i in prereq] for x in o["oracles"]}
+    for x in oracles:
+        if x in pins:
+            sha = pins[x].get("sha256")
+            if pins[x].get("acceptReceipt") is None or sha is None or (isinstance(sha, dict) and any(v is None for v in sha.values())):
+                return "DIAGNOSTIC"
+        elif ORACLES[x]["status"] not in ("EXISTS", "COMPILED", "ACCEPTED"):
+            return "DIAGNOSTIC"
     return "QUALIFIED"
 
 
 # A gate blocks an obligation from closing until its condition holds; the evaluator treats an unmet or unknown gate as OPEN.
 GATES = {
-    "GATE-POSITION": {"rule": "no comparative claim on a composition until G7.position.coordinates is closed for its source with position_selection(composition): only a source whose allocator block hashes equal A0_ALLOCATOR_ALLOWLIST (the A0 scope-counter allocators) closes with the nested-cut cases alone; any changed or unknown allocator is non-dense and needs the four falsifiers; a receipt's own positionsDense field carries no authority (RULINGS Q31c, Q32e, Q34a)", "requires": ["G7.position.coordinates"], "appliesTo": "NS.* and GS.* obligations and every comparative or promotion claim (CLAIM_ADMISSION)"},
+    "GATE-POSITION": {"rule": "no comparative or promotion claim on any composition, A0 included, until a VA-valid G7.position.coordinates receipt for that composition's source covers POSITION_REQUIRED_CASES, the four falsifiers included; no source-hash allowlist or declared density grants an exemption (RULINGS Q31c, Q38a; OUTSIDE_BLOCK_MUTATION_FIXTURE shows why)", "requires": ["G7.position.coordinates"], "appliesTo": "NS.* and GS.* obligations and every comparative or promotion claim (CLAIM_ADMISSION)"},
     "GATE-W0": {"rule": "no domain-dependent obligation closes until V-D01 has independently reviewed W0 (SPEC.md, releases, golden cases) and every W0_PIN hash is pinned in this contract (RULINGS Q31i); a null pin fails closed", "requires": ["W0_PIN complete", "W0.coverage-floors"], "appliesTo": "every obligation whose oracles include O-DOMAIN"},
 }
 # V-O02 C1: oracle pins are required inputs; null until the oracle is accepted (O-REPLAY after EXP-O03 and its verification).
-ORACLE_PINS = {"O-REPLAY": {"files": "lab/oracles/replay/**", "sha256": None, "acceptReceipt": None, "acceptedAfter": "EXP-O03 and its independent verification", "rule": "null until the oracle is accepted; every obligation O-REPLAY would close fails closed until then; pinning needs a contract version bump"}}
-GATES["GATE-ORACLE-PIN"] = {"rule": "an obligation whose expected answers come from an oracle closes only once ORACLE_PINS pins that oracle's files with an acceptance receipt; a null pin fails closed (V-O02 C1)", "requires": ["ORACLE_PINS complete for every oracle the obligation uses"], "appliesTo": "every obligation using O-REPLAY"}
+ORACLE_PINS = {"O-TDK1": {"files": "lab/oracles/decimal/", "sha256": dict(O_TDK1_FILES), "acceptReceipt": None, "acceptedAfter": "independent review of the oracle and of tdk1-vectors.json", "rule": "file hashes pinned (RULINGS Q37c, Q38e); acceptance null until the independent review, so obligations it would close fail closed"},
+               "O-REPLAY": {"files": "lab/oracles/replay/**", "sha256": None, "acceptReceipt": None, "acceptedAfter": "EXP-O03 and its independent verification", "rule": "null until the oracle is accepted; every obligation O-REPLAY would close fails closed until then; pinning needs a contract version bump"}}
+GATES["GATE-ORACLE-PIN"] = {"rule": "an obligation whose expected answers come from an oracle closes only once ORACLE_PINS pins that oracle's files with an acceptance receipt; a null pin fails closed (V-O02 C1)", "requires": ["ORACLE_PINS complete for every oracle the obligation uses"], "appliesTo": "every obligation using an oracle listed in ORACLE_PINS (O-REPLAY, O-TDK1)"}
 GATES["GATE-TDK1-VECTORS"] = {"rule": "G1.decimal.tdk1-differential closes only once TDK1_VECTOR_PIN names a reviewed vector file by sha256; a null pin fails closed (RULINGS Q35, R20 V5)", "requires": ["TDK1_VECTOR_PIN complete"], "appliesTo": "G1.decimal.tdk1-differential"}
 # RULINGS Q31i: required input; null until V-D01 reviews W0. The evaluator fails closed on any null field.
 W0_PIN = {
@@ -1227,7 +1249,7 @@ WORLD_W0 = {
     "implementations": "the TypeScript reference kernel the drivers call, and O-DOMAIN, an independent stdlib-only Python oracle giving expected next tasks, obligations with due times, work items and effect traces from the same command stream",
     "previewActivation": "plan-impact preview (GS.11) and activation (GS.10) are compared at one common input basis (GS-10-11-COMMON-BASIS), never at different bases",
     "witnesses": "every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not)",
-    "workItemIdentity": "a work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; its content version hashes (release hash, input positions, payload); the outbox delivery key is (id, version); an activation that leaves a work item's payload unchanged publishes nothing (early cutoff), one that changes it publishes a new version of the same id; duplicate-effect checks count by delivery key (RULINGS Q36a)",
+    "workItemIdentity": "a work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; its content version hashes (release hash, input positions, payload) and is not the delivery identity; each id carries a durable publication sequence that increments whenever the payload to publish differs from the latest published payload for that id, and the outbox delivery key is (id, publication sequence); an activation that leaves the payload equal to the latest published one publishes nothing (early cutoff); duplicate-effect checks count by delivery key (RULINGS Q36a, Q38f)",
     "affectedSet": "the expected affected set of a transaction is the subjects whose static read set contains a changed fact; static read sets over-approximate and never miss (RULINGS Q36e)",
     "fanout": "work-location fanout is a seeded Zipf with s = 0.5 over 2,000 locations at the 100k rung (largest location about 1,100 workers, mean 50); other rungs keep N / 50 locations with the same s; only the 100k numbers are frozen floors (RULINGS Q36g, Q36h)",
 }
@@ -1265,7 +1287,10 @@ EVALUATOR_COUNTEREXAMPLES = [
     {"id": "CX-W0-UNPINNED", "defeats": ["CR-W0-COVERAGE", "CR-GS", "CR-NS"], "receipts": "complete domain-dependent receipts while a W0_PIN field is null", "why": "GATE-W0 fails closed"},
     {"id": "CX-W0-FLOOR-MISSED", "defeats": ["CR-W0-COVERAGE"], "receipts": "a coverage record where R2 changes 15% of in-scope subjects' outputs", "why": "W0-R2-CHANGED-SHARE"},
     {"id": "CX-P2-REJECTS-VALID", "defeats": ["CR-NS"], "receipts": "a P2 run where every oracle-valid command is accounted for but some were typed-rejected", "why": "NS-P2-UNJUSTIFIED-OUTCOMES-MAX: accounting is not progress"},
-    {"id": "CX-FORGED-DENSITY", "defeats": ["CR-NS", "CR-GS", "CR-FAULT"], "receipts": "a receipt declaring positionsDense true whose bound allocator source differs from A0_ALLOCATOR_ALLOWLIST (FORGED_DENSITY_FIXTURE), with only the dense nested-cut cases closed", "why": "density is proven by allocator source, never declared (RULINGS Q34a)"},
+    {"id": "CX-FORGED-DENSITY", "defeats": ["CR-NS", "CR-GS", "CR-FAULT"], "receipts": "a receipt declaring positionsDense true, or matching the 0.3.4 allocator hashes (OUTSIDE_BLOCK_MUTATION_FIXTURE), with only the dense nested-cut cases closed", "why": "no composition is exempt from the four falsifiers (RULINGS Q38a)"},
+    {"id": "CX-CLAIM-NULL-ORACLE-PIN", "defeats": ["CR-NS", "CR-GS", "CR-PASS-ALL"], "receipts": "a complete comparative claim with valid position, identity and W0 receipts while O-REPLAY's pin is null", "why": "RULINGS Q37b, Q38b: an unpinned oracle the claim depends on makes it a diagnostic"},
+    {"id": "CX-CLAIM-SUPPLIED-NAMES", "defeats": ["CR-NS", "CR-GS"], "receipts": "a claim listing closed case names and compositionBound true but carrying no source-bound receipts", "why": "RULINGS Q38b: prerequisites come from receipts, never from supplied names or Booleans"},
+    {"id": "CX-XTDB-SHARED-LANGUAGE", "defeats": ["CR-PASS-ALL", "CR-NS"], "receipts": "an XTDB receipt executed in xtql used to close the xtdb-sql lane (or the reverse), or a receipt without nativeLanguage", "why": "RULINGS Q39b"},
     {"id": "CX-SCREENING-CLAIM-PREREQ", "defeats": ["CR-NS", "CR-GS"], "receipts": "a P-SCREEN comparative claim whose composition is not proven dense and whose falsifiers are open, or whose W0 pin is pending", "why": "CLAIM_ADMISSION: prerequisites are checked on every comparative claim, screening included; the claim is a diagnostic (RULINGS Q34d)"},
     {"id": "CX-POSITION-GATE", "defeats": ["CR-NS", "CR-GS"], "receipts": "comparative NS receipts on a non-dense source while G7.position.coordinates is open", "why": "GATE-POSITION"},
 ]
@@ -1296,6 +1321,8 @@ DECIMAL_CASES = ["DEC-SMALL-PRECISION-TDK1", "DEC-LARGE-PRECISION-TDK1", "DEC-CR
 DECIMAL_CASES += [r["case"] for r in DECIMAL_OPS + DECIMAL_CONVERSIONS + DECIMAL_SCALE_EVOLUTION if r["case"] not in DECIMAL_CASES] + [c for c in DECIMAL_TESTS if c not in DECIMAL_CASES]
 cs("CS-DECIMAL", "TO-AUTHOR", "VALUE_KINDS decimal; DECIMAL_RULES (RULINGS Q18); DECIMAL_OPS, DECIMAL_CONVERSIONS, DECIMAL_SCALE_EVOLUTION, DECIMAL_TESTS (RULINGS Q22); TARGETS section 3", ["all", "roundtrip", "range", "unrepresentable", "kernel-arithmetic", "cross-family", "operations", "conversions", "scale-evolution", "paths"], DECIMAL_CASES)
 cs("CS-WIRE", "TO-AUTHOR", "WIRE_RULES (RULINGS Q30, EXP-F02 EXP-F02 wire-exactness report)", ["all", "json", "instant", "xtdb-encodings", "qlever-shadow", "integer-range"], [c for r in WIRE_RULES for c in r["cases"]])
+cs("CS-OUTBOX", "TO-AUTHOR", "OUTBOX (RULINGS Q38f)", ["all"], list(OUTBOX["cases"]))
+cs("CS-DECIMAL-ROUTING", "TO-AUTHOR", "DECIMAL_ROUTING (RULINGS Q38d)", ["all", "repository", "native", "raw", "derived", "aggregate", "json"], [r["case"] for r in DECIMAL_ROUTING])
 cs("CS-TDK1", "TO-AUTHOR", "TDK1_TESTS (R20 section 5.3 V3 to V7, RULINGS Q35)", ["all", "engine-order", "ranges", "differential", "serialization", "writer-negative"], [t["case"] for t in TDK1_TESTS.values()])
 cs("CS-RANGE-OUT", "TO-AUTHOR", "LANE_INTEGER_RANGE; NUMERIC; RULINGS Q23 (every qualified write route rejects)", ["all"], ["RANGE-OUT-WRITER", "RANGE-OUT-BULK", "RANGE-OUT-REPLAY", "RANGE-OUT-RESTORE"])
 cs("CS-TYPES8-NEG", "TO-AUTHOR", "ACCEPTANCE 7.1", ["all"])
@@ -1358,7 +1385,7 @@ GS_FAILURE_SCHEDULES = {
     6: [("GS-06B-SHARED-REFERENCE", "a work location's minimum wage changes (one shared referenced entity)", "every worker at that location appears in the feed's affected-subject set and is re-run; no other worker is")],
     15: [("GS-15-STORAGE-ACCESS", "a tenant-A route attempts to read tenant B's storage directly", "the access fails at the storage layer"),
          ("GS-15-SLOW-TENANT", "one tenant's feed consumer is slowed 10x", "other tenants' feed lag and p99 hold")],
-    19: [("GS-19B-OUTBOX-CRASH", "the consumer crashes after delivering an outbox item but before recording completion", "the receiver deduplicates by the delivery key (id, version) of WORLD_W0 workItemIdentity: exactly one externally visible effect per delivery key (RULINGS Q36a)")],
+    19: [("GS-19B-OUTBOX-CRASH", "the consumer crashes after delivering an outbox item but before recording completion", "the receiver deduplicates by the delivery key (id, publication sequence) of OUTBOX: exactly one externally visible effect per delivery key, and a later return to an earlier payload is a new delivery (RULINGS Q36a, Q38f)")],
 }
 GS_COMMON_BASIS_CASE = "GS-10-11-COMMON-BASIS"
 GS_CASES = ["GS-NUM-RANGE-1650", "GS-NUM-HOURS-40", "GS-NUM-UNHOLDABLE", GS_COMMON_BASIS_CASE]
@@ -1436,6 +1463,14 @@ for vid, t in TDK1_TESTS.items():
       mutants=["M-TDK1-NO-TERMINATOR"] if vid == "V5" else (["M-TDK1-PREFIX-USE"] if vid == "V4" else []),
       closure=("CR-PASS-ALL", "CR-MUTANT-KILL") if vid in ("V4", "V5") else ("CR-PASS-ALL",),
       sources=["lab/research/R20-order-preserving-decimal-encodings.md section 5.3", "RULINGS Q35"])
+O("G1.decimal.channel-routing", ["G1", "G2", "G5"], "Every decimal comparison routes through the decimal_order_v1 key",
+  "Per DECIMAL_ROUTING (RULINGS Q38d), on the repository, the native surface in the lane language and the raw recipes: ordering and ranges on decimals use the decimal_order_v1 key (DR-REPO-ORDER, DR-NATIVE-ORDER, DR-RAW-ORDER), including derived expressions (DR-DERIVED) and aggregate results (DR-AGGREGATE: SUM decodes, computes exactly and encodes a result used for ordering); arithmetic on key strings is preflight E-MIXED-FAMILY (DR-KEY-ARITHMETIC); JSON is opaque unless explicitly converted (DR-JSON-OPAQUE), and the conversion validates and encodes (DR-JSON-CONVERT).",
+  cases=["CS-DECIMAL-ROUTING", "CS-DECIMAL-ROUTING:" + ",".join(r["case"] for r in DECIMAL_ROUTING)], oracle=["O-REPLAY", "O-TDK1", "O-ERR"], ep=["EP-REPO", "EP-NATIVE", "EP-RAW-HATCH", "EP-KERNEL"], modes=CUR_REOPEN,
+  mutants=["M-DECIMAL-LEXICAL-ORDER"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), sources=["RULINGS Q38d", "lab/reviews/plan-v2-round4.codex.md finding 6"])
+O("G7.outbox.publication-sequence", ["G7", "GS"], "Outbox deliveries are keyed by (id, publication sequence)",
+  "Per OUTBOX (RULINGS Q38f): the delivery key is (id, publication sequence); the sequence increments whenever the payload to publish differs from the latest published payload for that id, so a release rollback R1, R2, R1 publishes three deliveries 1650, 1700, 1650 (OB-RELEASE-ROLLBACK); publication state is persisted atomically with its outbox record (OB-ATOMIC-STATE); a crash before delivery replays the same identity exactly once (OB-CRASH-BEFORE-DELIVERY); an unchanged activation during recovery publishes nothing new while the pending delivery keeps its identity (OB-UNCHANGED-ACTIVATION-RECOVERY).",
+  scope="engine", cases=["CS-OUTBOX", "CS-OUTBOX:" + ",".join(OUTBOX["cases"])], oracle=["O-DOMAIN", "O-REPLAY"], ep=["EP-OUTBOX", "EP-WRITER", "EP-KERNEL"], profiles=["P-FAULT"], modes=CRR,
+  mutants=["M-OUTBOX-VERSION-DEDUP"], closure=("CR-PASS-ALL", "CR-FAULT", "CR-MUTANT-KILL"), thresholds=["T-FAULT-REPS"], sources=["RULINGS Q38f", "lab/reviews/plan-v2-round4.codex.md finding 8"])
 O("G1.types.invalid-rejected", ["G1"], "Invalid values are rejected atomically",
   "Every case of CS-TYPES8-NEG is rejected with its pinned error (E-INVALID-VALUE or E-UNSUPPORTED-VALUE); the committed position is unchanged, no receipt or claim exists, and no partial row or triple is visible through any access path.",
   scope="engine", cases=["CS-TYPES8-NEG"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-WRITER"], modes=CUR_REOPEN,
@@ -1559,9 +1594,9 @@ O("G5.agg.typed-groups", ["G5"], "Group keys keep typed identity",
   "Every CS-NUMERIC groups case groups by the COMPARISON_RULES identities on the repository and supported native fragments.",
   cases=["CS-NUMERIC:groups"], oracle=["O-REPLAY"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN, sources=["testkit 'datalog having preserves typed group and aggregate equality'"])
 O("G5.agg.projection-sums", ["G5"], "Engine-side sums are exact where a projection needs them",
-  "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using on XTDB SUM(CAST(x AS DECIMAL(32,0))) once EXP-X02 confirms it, else the split-sum fallback (RULINGS Q13, Q19), with EXP-F02 cross-checking the chosen recipe; whichever recipe is used passes these same cases; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
+  "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using on XTDB SUM(CAST(x AS DECIMAL(32,0))) read as text and never cast back to BIGINT or any numeric client type (KL-X9, RULINGS Q39a; confirmed by EXP-X02), else the split-sum fallback (RULINGS Q13, Q19), with EXP-F02 cross-checking the chosen recipe; whichever recipe is used passes these same cases; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
   cases=["CS-NUMERIC:projection-sums"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-REPO", "EP-NATIVE"], modes=CUR_REOPEN,
-  mutants=["M-INTEGER-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), params={"diagnostics": ["D-X-SUM"]},
+  mutants=["M-INTEGER-ROUND", "M-X-DECIMAL-SUM-BIGINT"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), params={"diagnostics": ["D-X-SUM"]},
   sources=["RULINGS Q8a", "RULINGS Q8b", "RULINGS Q13", "RULINGS Q19", "RULINGS Q20", "lab/research/SAM-pasted-numbers-2026-11-07.md section 5 (arithmetic over many rows only where a projection needs it)"])
 
 # ---------------- Goal 6
@@ -1797,7 +1832,7 @@ O("NS.P4", ["NS"], "P4: a fast path to current values, separate from history (pe
   "Under TARGETS 1.1 P4: subject pulls at the current basis in the lane's language over the frozen weighted buckets (50% 50 to 200 facts, 35% 201 to 800, 15% 801 to 2,000; hops 3 at 40%, 4 at 35%, 6 at 25%; NS-P4-BUCKETS) meet NS-P4-PULL-P50-MS and NS-P4-PULL-P99-MS single-client on the weighted mix, each bucket reports its own p50 and p99, and the largest bucket meets NS-P4-PULL-P99-LARGEST-MS; throughput sustains NS-P4-PULLS-PER-CORE per engine core, with cores taken from the CPU quota bound in the receipt and host broker and kernel CPU reported beside it; on one matched sample of 1,000 subjects grown from history depth 1 to 3 to 10, current-pull p99 and bytes read stay within NS-P4-HISTORY-FLATNESS (NS-P4-MATCHED-HISTORY, RULINGS Q27); the receipt records whether current reads touch history.",
   cases=["CS-NS:p4", "CS-NS:" + ",".join(NS_NAMED_CASES["NS.P4"])], ep=["EP-REPO", "EP-NATIVE", "EP-ENGINE-OBS"], thresholds=["NS-P4-PULL-P50-MS", "NS-P4-PULL-P99-MS", "NS-P4-PULL-P99-LARGEST-MS", "NS-P4-PULLS-PER-CORE", "NS-P4-HISTORY-FLATNESS", "T-RUNS"], modes=SE, **NS_COMMON)
 O("NS.P5", ["NS"], "P5: release activation re-evaluates 100k subjects without hurting live traffic (per surface)",
-  "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); results are published as work items through EP-OUTBOX under the delivery key (id, version) with early cutoff, so an activation that leaves a payload unchanged publishes nothing (RULINGS Q36a), and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
+  "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); results are published as work items through EP-OUTBOX under the delivery key (id, publication sequence) with early cutoff, so an activation that leaves a payload equal to the latest published one publishes nothing and a return to an earlier payload publishes a new sequence (RULINGS Q36a, Q38f), and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
   cases=["CS-NS:p5", "CS-NS:" + ",".join(NS_NAMED_CASES["NS.P5"])], ep=["EP-REPO", "EP-NATIVE", "EP-WRITER", "EP-OUTBOX", "EP-ENGINE-OBS"], thresholds=["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS", "T-RUNS"], modes=SE,
   oracle=["O-REPLAY", "O-DOMAIN", "O-OBS"], profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-NS",), sources=["lab/NORTH-STAR.md", "lab/TARGETS.md sections 1, 1.1 and 6.1"])
 O("NS.SEC.bulk-lane", ["NS"], "Secondary: the bulk lane does not hurt live reads",
@@ -1832,7 +1867,7 @@ GOLDEN_SCENARIOS = [
     (16, "PII erasure request", "erase PII for 10k subjects (crypto-shredding or real deletion) during live traffic", "reads that start after the erasure publishes return ErasedValue markers at every basis; values are unrecoverable from every PROTECTED_COPY_INVENTORY location; history keeps its shape; explain still works modulo erasure (provisional, flagged for Sam)", ["P1", "P3"], ["NS-P1-READ-P99-256-MS", "NS-P3-GAPS-MAX"]),
     (17, "Agent proposals churn", "agents write drafts and proposals at 5x the human rate, most discarded", "proposals never leak into decisions; pulls at a basis see exactly what was committed", ["P2", "P4"], ["NS-P4-PULL-P99-MS", "NS-P1-VIOLATIONS-MAX"]),
     (18, "Recruiter dashboards", "'placements in this branch with an overdue I-9' lists with filters, sort and paging at 256 concurrent readers", "answers come from maintained projections, match the oracle, and keep stable cursors while writes continue", ["P1", "P4"], ["NS-P1-READ-P99-256-MS", "NS-P1-VIOLATIONS-MAX"]),
-    (19, "Feed consumer crash", "the dependency-index consumer crashes mid-stream and resumes from its checkpoint", "no gap; zero duplicate externally visible effects throughout, counted by the outbox delivery key (id, version), with replay attempts allowed and counted; per-subject order kept; catch-up lag measured (RULINGS Q31h, Q36a)", ["P3"], ["NS-P3-GAPS-MAX", "NS-P3-ORDER-VIOLATIONS-MAX"]),
+    (19, "Feed consumer crash", "the dependency-index consumer crashes mid-stream and resumes from its checkpoint", "no gap; zero duplicate externally visible effects throughout, counted by the outbox delivery key (id, publication sequence), with replay attempts allowed and counted; per-subject order kept; catch-up lag measured (RULINGS Q31h, Q36a)", ["P3"], ["NS-P3-GAPS-MAX", "NS-P3-ORDER-VIOLATIONS-MAX"]),
     (20, "Midnight expiry wave", "20,000 documents expire at midnight (valid-time boundaries) while morning traffic starts", "every affected subject is re-run at the boundary; reads before and after midnight are exact; live p99 holds", ["P3", "P5", "P1"], ["NS-P3-LAG-P99-MS", "NS-P1-READ-P99-256-MS"]),
 ]
 GS_RULES = [
@@ -1859,9 +1894,9 @@ def gs_cases(n):
 for n, title, story, checks, prios, bars in GOLDEN_SCENARIOS:
     extra = "".join(f" Added failure schedule {c}: {what}; expected: {outcome}." for c, what, outcome in GS_FAILURE_SCHEDULES.get(n, []))
     if n == 11:
-        extra += " The preview is compared with GS.10's activation at one common input basis (GS-10-11-COMMON-BASIS)."
+        extra += " The preview is compared with GS.10's activation at one common input basis (GS-10-11-COMMON-BASIS); preview publishes nothing to the outbox."
     if n == 10:
-        extra += " Activation is compared with GS.11's preview at one common input basis (GS-10-11-COMMON-BASIS)."
+        extra += " Activation is compared with GS.11's preview at one common input basis (GS-10-11-COMMON-BASIS); work items publish under the delivery key (id, publication sequence) with early cutoff (OUTBOX, RULINGS Q38f)."
     O(f"GS.{n:02d}", ["GS"], f"{title} ({', '.join(prios)})",
       f"Story and load: {story}. Checked beyond exact answers: {checks}.{extra} Positive and negative witnesses: GS-{n:02d}-WITNESS-POS, GS-{n:02d}-WITNESS-NEG. Bars: {', '.join(bars)}. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
       cases=["CS-GS:" + ",".join(gs_cases(n))], oracle=["O-REPLAY", "O-DOMAIN", "O-HAND", "O-OBS", "O-ERR"],
@@ -1920,9 +1955,9 @@ O("G7.composition.ack-and-routed-ryow", ["G7"], "ACK after source publication; r
 
 # ---------------- position coordinates (TARGETS 4.1 item 3, RULINGS Q31c)
 O("G7.position.coordinates", ["G7", "G9"], "Positions are totally ordered coordinates with a fully resolved watermark",
-  "Per POSITION: a position is (stream, epoch, offset, ordinal), ordered lexicographically and not necessarily dense (PO-LEXICOGRAPHIC-ORDER); several Triplex transacts in one engine transaction take consecutive ordinals at one offset, assigned atomically with their assertions and the subject compare-and-set; a watermark is a fully resolved prefix and every aborted offset is listed in the feed's resolution stream (PO-ABORTED-LISTED); O-REPLAY sorts by coordinate and assigns its own dense ordinals for cuts (PO-ORACLE-DENSE-ORDINALS). The required selection depends on the composition (position_selection, RULINGS Q32e, Q34a): a composition whose allocator source hashes equal A0_ALLOCATOR_ALLOWLIST (the A0 controls) closes with the nested-cut cases PO-NESTED-CUTS-DENSE, PO-LEXICOGRAPHIC-ORDER and PO-ORACLE-DENSE-ORDINALS; a non-dense one also needs the four falsifiers FX-NESTED-CUTS, FX-ABORT-GAP, FX-CRASH-APPEND-RESOLUTION and FX-RESUME-AT-ABORT-GAP before any comparative claim (GATE-POSITION).",
-  scope="engine", cases=["CS-POSITION:" + ",".join(POSITION_DENSE_CASES)], oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-TRIPLES", "EP-FEED", "EP-REPLAY"], profiles=["P-FAULT"], modes=CRR,
-  closure=("CR-PASS-ALL", "CR-FAULT"), thresholds=["T-FAULT-REPS"], params={"conditionalSelection": {"rule": "position_selection(composition) is authoritative: the static selection is the dense nested-cut cases; when density_proven(composition) is false the evaluator adds nonDenseAdds (RULINGS Q34a)", "nonDenseAdds": POSITION_NONDENSE_ADDS}}, sources=["lab/TARGETS.md section 4.1 item 3", "RULINGS Q31c", "lab/reviews/plan-v2-round2.codex.md finding 15"])
+  "Per POSITION: a position is (stream, epoch, offset, ordinal), ordered lexicographically and not necessarily dense (PO-LEXICOGRAPHIC-ORDER); several Triplex transacts in one engine transaction take consecutive ordinals at one offset, assigned atomically with their assertions and the subject compare-and-set (PO-NESTED-CUTS-DENSE); a watermark is a fully resolved prefix and every aborted offset is listed in the feed's resolution stream (PO-ABORTED-LISTED); O-REPLAY sorts by coordinate and assigns its own dense ordinals for cuts (PO-ORACLE-DENSE-ORDINALS). Every composition, A0 included, passes the four falsifiers FX-NESTED-CUTS, FX-ABORT-GAP, FX-CRASH-APPEND-RESOLUTION and FX-RESUME-AT-ABORT-GAP before any comparative or promotion claim (GATE-POSITION, RULINGS Q38a); a dense allocator passes them cheaply, and no allowlist exempts it (OUTSIDE_BLOCK_MUTATION_FIXTURE, mutant M-WITHTRANSACTION-REBIND).",
+  scope="engine", cases=["CS-POSITION:" + ",".join(POSITION_REQUIRED_CASES)], oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-TRIPLES", "EP-FEED", "EP-REPLAY"], profiles=["P-FAULT"], modes=CRR,
+  mutants=["M-WITHTRANSACTION-REBIND"], closure=("CR-PASS-ALL", "CR-FAULT", "CR-MUTANT-KILL"), thresholds=["T-FAULT-REPS"], sources=["lab/TARGETS.md section 4.1 item 3", "RULINGS Q31c", "RULINGS Q38a", "lab/reviews/plan-v2-round4.codex.md finding 1"])
 
 # ---------------- W0 coverage floors and review gate (TARGETS 6.1 items 6 and 7, RULINGS Q31i)
 O("W0.coverage-floors", ["GS", "NS"], "W0 is reviewed, pinned and meets its frozen coverage floors",
@@ -2011,9 +2046,14 @@ for o in OBL:
         g.append("GATE-W0")
     if o["id"] == "G1.decimal.tdk1-differential":
         g.append("GATE-TDK1-VECTORS")
-    if "O-REPLAY" in o["oracles"]:
+    if set(o["oracles"]) & set(ORACLE_PINS):
         g.append("GATE-ORACLE-PIN")
     o["closure"]["params"]["gates"] = g
+
+# RULINGS Q39b: engine-scope obligations on XTDB that touch a native or raw surface are keyed by native language.
+for o in OBL:
+    if o["receiptScope"] == "engine" and set(X) <= set(o["lanes"]) and set(o["entrypoints"]) & {"EP-NATIVE", "EP-RAW-HATCH", "EP-RAW-WIRE"}:
+        o["closure"]["params"]["keyByNativeLanguage"] = True
 
 # RULINGS Q26: the calibration requirement is every threshold an NS obligation names.
 NS_CAL_REQUIRED = sorted({t for o in OBL if o["id"].startswith("NS.") and o["id"] != "NS.calibration" for t in o["thresholds"]})
@@ -2078,7 +2118,8 @@ RECEIPT_SCHEMA = {
         "contract": "{version, transitiveSha256}",
         "obligations": "[{id, definitionSha256}]",
         "lane": "lane id for lane-scope receipts; for engine-scope receipts the scope key (layer, engine, imageDigest, configSha256, slot) derived from the composition assignment of the obligation's layer (COMPOSITION scopeKey)",
-        "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever, imageDigest, configSha256, slot} (RULINGS Q28); allocatorBlocks {marker: sha256} recomputed by the evaluator from the receipt's bound source tree with ALLOCATOR_EXTRACTION_RULE (RULINGS Q34a; any positionsDense field is ignored)",
+        "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever, imageDigest, configSha256, slot} (RULINGS Q28); no density field carries authority (RULINGS Q38a)",
+        "nativeLanguage": "for XTDB receipts, TRIPLEX_XTDB_NATIVE_LANGUAGE (xtql or xtdb-sql) as executed; XTQL and SQL results never share an obligation closure (RULINGS Q39b)",
         "replicationEdges": "[{from, to, consumerSourceSha256, translationGeneration}] for every edge of the composition",
         "watermarks": "per read: {readId, basisPosition, servingIndex, watermarkAtRead, waitMs, route, surface, recipeLanguage, semanticQueryId (parameters, basis, meaning), totalLatencyMs} (RULINGS Q31d, Q34b)",
         "trace": "{generatorSourceSha256, seed, backgroundCommands, overlayCommands} (TARGETS 2.1 freeze; background and scenario overlay accounted separately)",
@@ -2184,6 +2225,7 @@ STATUS_ALGORITHM = [
     "for each lane L and integrated profile T:",
     "  for each obligation O with L in O.lanes:",
     "    key = L if O.receiptScope == 'lane' else (O.layer, T.composition[O.layer].engine, imageDigest, configSha256, slot)  # RULINGS Q28",
+    "    if O.closure.params.keyByNativeLanguage: key = (key, receipt.nativeLanguage) and only receipts whose nativeLanguage is L's language count for L  # RULINGS Q39b",
     "    A = acceptance receipts for (O.id, key) on T that pass VA (using VC records they cite)",
     "    closed(O, L, T) = O.grounding != 'policy-pending' and every case set of O is pinned",
     "                      and A non-empty and every rule in O.closure.rules holds by its recompute",
@@ -2321,7 +2363,7 @@ def build_load_contract():
                    "history": "one matched sample of 1,000 subjects: measure at history depth 1, add corrections to the same subjects to depth 3 and then 10, measure again; compare p99 latency and bytes read (RULINGS Q16, Q27)",
                    "bars": ["NS-P4-PULL-P50-MS", "NS-P4-PULL-P99-MS", "NS-P4-PULL-P99-LARGEST-MS", "NS-P4-PULLS-PER-CORE", "NS-P4-HISTORY-FLATNESS"]},
             "P5": {"sweep": "evaluate release R against WORLD_W0 for every subject in R's scope (100k) at one shared basis; the receipt binds the basis and R's content hash", "coverage": "every in-scope subject evaluated exactly once; the receipt carries the hash of the subject list",
-                   "publication": "results published as work items through the atomic outbox path (EP-OUTBOX) under the delivery key (id, version) with early cutoff: an unchanged payload publishes nothing, a changed one publishes a new version of the same id (RULINGS Q36a); expected outputs from O-DOMAIN, independently", "postCaptureMutations": "after the basis is captured the driver mutates selected subjects; their outputs must reflect the captured basis",
+                   "publication": "results published as work items through the atomic outbox path (EP-OUTBOX) under the delivery key (id, publication sequence) with early cutoff: a payload equal to the latest published one publishes nothing, a different one (including a return to an earlier payload) publishes the next sequence of the same id; publication state is persisted atomically with the outbox record (RULINGS Q36a, Q38f); expected outputs from O-DOMAIN, independently", "postCaptureMutations": "after the basis is captured the driver mutates selected subjects; their outputs must reflect the captured basis",
                    "wallTime": "includes evaluation and publication", "throttledVariant": "about 10 minutes, overlapping a real compaction or index rebuild; keeps its basis and never blocks writers",
                    "concurrent": "the writer trace and 64 live readers", "noSweepBaseline": "same run, same 64 readers and writer trace, before the sweep", "bars": ["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS"]},
             "secondary": {"bulk": "a 1M-fact import through the bulk lane with 64 live readers; bar NS-SEC-BULK-READ-P99-RATIO", "retroactive": "1,000 corrections 30 days back; feed valid-time range and explain at the old basis checked", "audit": "explain at a past basis, repeated three times; bit-for-bit identical"},
@@ -2366,6 +2408,30 @@ BANNED_TEXT = [
     (r"fixed-width, sign-aware", "superseded decimal key wording (RULINGS Q35a)"),
     (r"E-DECIMAL-UNREPRESENTABLE", "superseded error name (RULINGS Q35e)"),
 ]
+
+
+# RULINGS Q38c: every RULINGS.md entry is compiled or listed as recorded-not-compiled.
+# Q40 (V-D01, W0-1.1.0) is recorded in RULINGS.md for the next contract version.
+EXPECTED_RECORDED_NOT_COMPILED = ['Q40a', 'Q40b', 'Q40c', 'Q40d', 'Q40e', 'Q40f', 'Q40g', 'Q40h', 'Q40i']
+
+
+def rulings_md_ids():
+    ids = []
+    for line in (REPO / "lab/acceptance/RULINGS.md").read_text().splitlines():
+        m = re.match(r"^\| (Q\d+[a-z]?(?:-clarified)?|AMB-\d\d)\b", line)
+        if m and m.group(1) not in ids:
+            ids.append(m.group(1))
+    return ids
+
+
+def rulings_coverage():
+    compiled = {r["id"] for r in RULINGS}
+    out = {"compiled": [], "recordedNotCompiled": []}
+    for mid in rulings_md_ids():
+        base = re.match(r"^(Q\d+)", mid)
+        ok = mid in compiled or (base and base.group(1) in compiled) or (mid.startswith("AMB-") and "Q21" in compiled) or (re.match(r"^Q8[a-f]$", mid) and mid in compiled)
+        out["compiled" if ok else "recordedNotCompiled"].append(mid)
+    return out
 
 
 def s_render_oracle():
@@ -2634,8 +2700,8 @@ def ruling_checks():
     if "consecutive positions in callback order" in s_render_oracle() or "totally ordered coordinates" not in s_render_oracle():
         e.append("Q31c: O-REPLAY position text")
     for fx in ("FX-NESTED-CUTS", "FX-ABORT-GAP", "FX-CRASH-APPEND-RESOLUTION", "FX-RESUME-AT-ABORT-GAP"):
-        if fx not in obl["G7.position.coordinates"]["closure"]["params"].get("conditionalSelection", {}).get("nonDenseAdds", []):
-            e.append(f"Q31c: falsifier {fx} not in the conditional selection")
+        if fx not in [t for c in obl["G7.position.coordinates"]["cases"] for t in c["select"]]:
+            e.append(f"Q31c/Q38a: falsifier {fx} not selected")
     for o in OBL:
         if o["id"].startswith(("NS.", "GS.")) and o["id"] != "NS.calibration" and "GATE-POSITION" not in o["closure"]["params"].get("gates", []):
             e.append(f"Q31c: {o['id']} lacks GATE-POSITION")
@@ -2723,30 +2789,23 @@ def ruling_checks():
     # Q32d
     if "divided by the steady offered rate" not in THRESHOLDS["NS-P2-QUEUE-MAX-S"]["unit"] or "back within" not in THRESHOLDS["NS-P2-BURST-DRAIN-S"]["unit"]:
         e.append("Q32d: queue depth definition")
-    # Q34a (replaces Q32e's mechanism): density proven by allocator source
+    # Q38a (replaces Q32e and Q34a): no density exemption
     for k, comp in A0_CONTROLS.items():
-        if not density_proven(comp) or position_gate_blocks(comp, POSITION_DENSE_CASES):
-            e.append(f"Q34a: {k} on the allowlist must not be blocked by the falsifiers")
-    if density_proven(FORGED_DENSITY_FIXTURE) or not position_gate_blocks(FORGED_DENSITY_FIXTURE, POSITION_DENSE_CASES):
-        e.append("Q34a: the forged-density fixture must be rejected")
-    if density_proven({"source": "xtdb", "positionsDense": True}) or density_proven({"source": "unknown", "allocatorBlocks": {}}):
-        e.append("Q34a: positionsDense or an unknown allocator must never prove density")
-    nd = {"source": "xtdb", "allocatorBlocks": {}}
-    if not position_gate_blocks(nd, POSITION_DENSE_CASES) or position_gate_blocks(nd, position_selection(nd)):
-        e.append("Q34a: a non-dense composition must need the four falsifiers, and close with them")
-    if not set(POSITION["falsifiers"]) <= set(position_selection(nd)) or set(POSITION["falsifiers"]) & set(position_selection(A0_CONTROLS["A0-XTDB"])):
-        e.append("Q34a: falsifiers only for compositions not proven dense")
+        if set(position_selection(comp)) != set(POSITION_REQUIRED_CASES):
+            e.append(f"Q38a: {k} must run the four falsifiers")
+    for comp in ({"source": "xtdb", "positionsDense": True}, dict(OUTSIDE_BLOCK_MUTATION_FIXTURE, allocatorBlocks=OUTSIDE_BLOCK_MUTATION_FIXTURE["unchangedBlockHashes"])):
+        if not set(POSITION["falsifiers"]) <= set(position_selection(comp)):
+            e.append("Q38a: declared density or matching block hashes must never skip the falsifiers")
     gpc = obl["G7.position.coordinates"]
     static = [t for c in gpc["cases"] for t in c["select"]]
-    if "all" in static or set(static) & set(POSITION["falsifiers"]) or sorted(static) != sorted(POSITION_DENSE_CASES):
-        e.append("Q34a: the static selection must be the dense cases only; the conditional selection is authoritative")
-    if gpc["closure"]["params"].get("conditionalSelection", {}).get("nonDenseAdds") != POSITION_NONDENSE_ADDS:
-        e.append("Q34a: conditional nonDenseAdds must be the four falsifiers plus PO-ABORTED-LISTED")
-    for eng, al in A0_ALLOCATOR_ALLOWLIST.items():
-        if len(al["blocks"]) < 4 or any(not re.fullmatch(r"[0-9a-f]{64}", b_["sha256"]) for b_ in al["blocks"]) or not re.fullmatch(r"[0-9a-f]{40}", al["a0Commit"]):
-            e.append(f"Q34a: allowlist for {eng} malformed")
-    if "positionsDense" in json.dumps(GATES["GATE-POSITION"]) and "no authority" not in GATES["GATE-POSITION"]["rule"]:
-        e.append("Q34a: GATE-POSITION must deny authority to positionsDense")
+    if sorted(static) != sorted(POSITION_REQUIRED_CASES) or "conditionalSelection" in gpc["closure"]["params"]:
+        e.append("Q38a: G7.position.coordinates selects all required cases unconditionally")
+    if "M-WITHTRANSACTION-REBIND" not in gpc["mutationControls"] or MUTANTS["M-WITHTRANSACTION-REBIND"]["targets"] != ["CS-POSITION:FX-NESTED-CUTS"]:
+        e.append("Q38a: the outside-block mutation must be a mutant the falsifiers kill")
+    if "A0 included" not in GATES["GATE-POSITION"]["rule"] or "allowlist" not in GATES["GATE-POSITION"]["rule"] or any(k in globals() for k in ("A0_ALLOCATOR_ALLOWLIST", "density_proven")):
+        e.append("Q38a: the allowlist must be gone and GATE-POSITION must cover A0")
+    if len(OUTSIDE_BLOCK_MUTATION_FIXTURE["unchangedBlockHashes"]) != 5 or "withTransaction" not in OUTSIDE_BLOCK_MUTATION_FIXTURE["mutation"]:
+        e.append("Q38a: outside-block mutation fixture")
     # Q34b
     ar = obl["G7.composition.ack-and-routed-ryow"]
     sel = {t for c in ar["cases"] for t in c["select"]}
@@ -2759,13 +2818,42 @@ def ruling_checks():
         e.append("Q34c: guard on user JSON only, with the paired test")
     if "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP" not in {t for c in obl["G7.journal.logical-contract"]["cases"] for t in c["select"]} or "M-JSON-GUARD-ON-JOURNAL" not in obl["G1.wire.write-guards"]["mutationControls"]:
         e.append("Q34c: journal side of the paired test")
-    # Q34d
-    a0claim = {"composition": A0_CONTROLS["A0-XTDB"], "positionCasesClosed": POSITION_DENSE_CASES, "compositionBound": True, "domainDependent": False, "profile": "P-SCREEN"}
-    if admit_claim(a0claim) != "QUALIFIED":
-        e.append("Q34d: a complete A0 screening claim must be admitted")
-    for bad, why in ((dict(a0claim, composition=FORGED_DENSITY_FIXTURE), "forged density"), (dict(a0claim, compositionBound=False), "unbound composition"), (dict(a0claim, domainDependent=True, w0CoverageClosed=True), "pending W0 pin")):
-        if admit_claim(bad) != "DIAGNOSTIC":
-            e.append(f"Q34d: a screening claim with {why} must be a diagnostic")
+    # Q38b (replaces Q34d's checks): claim admission from validated receipts, with Q37b
+    def _comp():
+        return {k: {"engine": "xtdb", "imageDigest": "sha256:aa", "configSha256": "bb", "slot": "dev"} for k in COMPOSITION["assignments"]}
+
+    def _rcpt(oid, cases=None, tree="t1", comp=None):
+        o = obl[oid]
+        need = cases if cases is not None else (POSITION_REQUIRED_CASES if oid == "G7.position.coordinates" else [t for c in o["cases"] for t in c["select"]])
+        return {"obligation": oid, "definitionSha256": obligation_hash(o), "sourceTreeSha256": tree, "composition": comp or _comp(), "caseResults": [{"case": c, "verdict": "PASS", "objectSha256": "a" * 64} for c in need]}
+    full_pins = {k: dict(v, acceptReceipt="R", sha256=(v["sha256"] if isinstance(v["sha256"], dict) else "c" * 64)) for k, v in ORACLE_PINS.items()}
+    full_pins["O-OBS"] = {"sha256": "d" * 64, "acceptReceipt": "R"}
+    good = {"obligations": ["NS.P2"], "sourceTreeSha256": "t1", "composition": _comp(), "receipts": [_rcpt("G7.position.coordinates"), _rcpt("G10.composition.identity-bound")], "profile": "P-SCREEN"}
+    if admit_claim(good, pins=full_pins) != "QUALIFIED":
+        e.append("Q38b: a complete, source-bound screening claim with every oracle pinned must be admitted (positive control)")
+    if admit_claim(good) != "DIAGNOSTIC":
+        e.append("Q38b/Q37b: a claim must be a diagnostic while O-REPLAY's pin is null")
+    if admit_claim(dict(good, receipts=[], positionCasesClosed=POSITION_REQUIRED_CASES, compositionBound=True), pins=full_pins) != "DIAGNOSTIC":
+        e.append("Q38b: supplied case names or Booleans must never admit a claim")
+    if admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", tree="t2"), _rcpt("G10.composition.identity-bound")]), pins=full_pins) != "DIAGNOSTIC":
+        e.append("Q38b: a falsifier receipt for another source tree must not count")
+    if admit_claim(dict(good, receipts=[_rcpt("G7.position.coordinates", cases=POSITION_DENSE_CASES), _rcpt("G10.composition.identity-bound")]), pins=full_pins) != "DIAGNOSTIC":
+        e.append("Q38b: a position receipt without the four falsifiers must not count")
+    bad_comp = _comp()
+    bad_comp["history"].pop("slot")
+    if admit_claim(dict(good, composition=bad_comp, receipts=[_rcpt("G7.position.coordinates", comp=bad_comp), _rcpt("G10.composition.identity-bound", comp=bad_comp)]), pins=full_pins) != "DIAGNOSTIC":
+        e.append("Q38b: an incompletely bound composition must not count")
+    dom_pins = dict(full_pins, **{k: {"sha256": "e" * 64, "acceptReceipt": "R"} for k in ("O-DOMAIN", "O-HAND")})
+    dom = dict(good, obligations=["GS.05"], receipts=good["receipts"] + [_rcpt("W0.coverage-floors")])
+    w0_full = dict(W0_PIN, reviewReceipt="R", files={k: "f" * 64 for k in W0_PIN["files"]})
+    if admit_claim(dom, pins=dom_pins, w0=w0_full) != "QUALIFIED":
+        e.append("Q38b: a complete domain-dependent claim with W0 pinned must be admitted (positive control)")
+    if admit_claim(dom, pins=dom_pins) != "DIAGNOSTIC":
+        e.append("Q38b: a domain-dependent claim must be a diagnostic while the W0 pin is null")
+    if admit_claim(dict(dom, receipts=good["receipts"]), pins=dom_pins, w0=w0_full) != "DIAGNOSTIC":
+        e.append("Q38b: a domain-dependent claim needs a W0.coverage-floors receipt")
+    if "never from supplied case names or Booleans" not in CLAIM_ADMISSION["rule"] or "O-REPLAY's pin is null" not in CLAIM_ADMISSION["rule"]:
+        e.append("Q38b: claim admission rule text")
     # Q35
     for v, k in TDK1["examples"]:
         try:
@@ -2822,11 +2910,11 @@ def ruling_checks():
     # Q36
     if THRESHOLDS["W0-LOCATION-ZIPF-S"]["value"] != 0.5 or "s = 0.5" not in WORLD_W0.get("fanout", ""):
         e.append("Q36g: location fanout Zipf s = 0.5")
-    if "(id, version)" not in WORLD_W0.get("workItemIdentity", "") or "early cutoff" not in WORLD_W0["workItemIdentity"]:
+    if "(id, publication sequence)" not in WORLD_W0.get("workItemIdentity", "") or "early cutoff" not in WORLD_W0["workItemIdentity"]:
         e.append("Q36a: work item identity and delivery key")
     for where, text in (("GS.19", obl["GS.19"]["statement"]), ("GS-19B", GS_FAILURE_SCHEDULES[19][0][2]), ("NS.P5", obl["NS.P5"]["statement"]), ("load-contract P5", lc["measurements"]["P5"]["publication"])):
-        if "(id, version)" not in text:
-            e.append(f"Q36a: {where} must use the delivery key (id, version)")
+        if "(id, publication sequence)" not in text or "(id, version)" in text:
+            e.append(f"Q36a/Q38f: {where} must use the delivery key (id, publication sequence)")
     if "early cutoff" not in obl["NS.P5"]["statement"] or "early cutoff" not in lc["measurements"]["P5"]["publication"]:
         e.append("Q36a: early cutoff on P5 publication")
     if "read set contains a changed fact" not in obl["NS.P3"]["statement"] or "read set contains a changed fact" not in lc["measurements"]["P3"]["expectedAffected"]:
@@ -2836,6 +2924,56 @@ def ruling_checks():
         e.append("Q32f: W0 pin set without a V-D01 review receipt")
     if "version bump" not in W0_PIN.get("rule", ""):
         e.append("Q32f: pinning needs a contract version bump")
+    # Q38c
+    cov = rulings_coverage()
+    if cov["recordedNotCompiled"] != EXPECTED_RECORDED_NOT_COMPILED:
+        e.append(f"Q38c: RULINGS.md entries not compiled and not listed as recorded-not-compiled: {sorted(set(cov['recordedNotCompiled']) - set(EXPECTED_RECORDED_NOT_COMPILED))}; listed but compiled or absent: {sorted(set(EXPECTED_RECORDED_NOT_COMPILED) - set(cov['recordedNotCompiled']))}")
+    if not any(row[0] == "Recorded, not compiled" for row in CHANGELOG_035):
+        e.append("Q38c: the change log must state the recorded-not-compiled list")
+    # Q38d
+    dr = obl.get("G1.decimal.channel-routing")
+    if not dr or not {"EP-REPO", "EP-NATIVE", "EP-RAW-HATCH"} <= set(dr["entrypoints"]) or "M-DECIMAL-LEXICAL-ORDER" not in dr["mutationControls"]:
+        e.append("Q38d: channel routing on repository, native and raw surfaces with the lexical-order mutant")
+    for need in ("DR-DERIVED", "DR-AGGREGATE", "DR-KEY-ARITHMETIC", "DR-JSON-OPAQUE", "DR-JSON-CONVERT"):
+        if need not in {r["id"] for r in DECIMAL_ROUTING} or (dr and need not in {t for c in dr["cases"] for t in c["select"]}):
+            e.append(f"Q38d: {need}")
+    agg = next((r["rule"] for r in DECIMAL_ROUTING if r["id"] == "DR-AGGREGATE"), "")
+    if not all(x in agg for x in ("decodes", "exactly", "encodes")) or "E-MIXED-FAMILY" not in next((r["rule"] for r in DECIMAL_ROUTING if r["id"] == "DR-KEY-ARITHMETIC"), "") or "validates" not in next((r["rule"] for r in DECIMAL_ROUTING if r["id"] == "DR-JSON-CONVERT"), ""):
+        e.append("Q38d: SUM decode-compute-encode, key arithmetic invalid, JSON conversion validates")
+    # Q38e, Q37c
+    if ORACLES["O-TDK1"]["status"] != "BUILT" or O_TDK1_FILES.get("lab/oracles/decimal/gen_vectors.py") != "b30b430acbfc7476cf47e676d38abaa247d3545b20aac5d481bea67a11cf11e1":
+        e.append("Q38e: O-TDK1 BUILT with gen_vectors.py pinned")
+    for f, h in O_TDK1_FILES.items():
+        if not (REPO / f).exists() or sha_file(f) != h:
+            e.append(f"Q38e: pinned O-TDK1 file {f} does not match")
+    if TDK1_VECTOR_PIN["sha256"] is not None and TDK1_VECTOR_PIN.get("reviewReceipt") is None:
+        e.append("Q38e: the vector pin may be set only with an independent review receipt")
+    if (REPO / TDK1_VECTOR_PIN["file"]).exists() and sha_file(TDK1_VECTOR_PIN["file"]) != TDK1_VECTOR_PIN["candidateSha256"]:
+        e.append("Q38e: the candidate vector file under review changed")
+    if "O-TDK1" not in ORACLE_PINS or ORACLE_PINS["O-TDK1"]["acceptReceipt"] is not None and TDK1_VECTOR_PIN["reviewReceipt"] is None:
+        e.append("Q38e: O-TDK1 pinned in ORACLE_PINS, accepted only after review")
+    # Q38f
+    if OUTBOX["deliveryKey"] != "(id, publication sequence)" or "1650, 1700, 1650" not in OUTBOX["sequence"] or "atomically" not in OUTBOX["atomicity"] or "original identity" not in OUTBOX["recovery"]:
+        e.append("Q38f: outbox delivery identity, rollback example, atomic state, crash replay")
+    ob = obl.get("G7.outbox.publication-sequence")
+    if not ob or not {"OB-RELEASE-ROLLBACK", "OB-CRASH-BEFORE-DELIVERY", "OB-UNCHANGED-ACTIVATION-RECOVERY"} <= {t for c in ob["cases"] for t in c["select"]} or "M-OUTBOX-VERSION-DEDUP" not in ob["mutationControls"]:
+        e.append("Q38f: outbox cases and the version-dedup mutant")
+    for oid in ("GS.10", "GS.19", "NS.P5"):
+        if "(id, publication sequence)" not in obl[oid]["statement"]:
+            e.append(f"Q38f: {oid} must use (id, publication sequence)")
+    for oid in ("GS.10", "GS.11", "GS.19", "NS.P5"):
+        if "(id, version)" in obl[oid]["statement"]:
+            e.append(f"Q38f: {oid} still uses (id, version)")
+    if "(id, version)" in json.dumps(lc) or "(id, version)" in WORLD_W0["workItemIdentity"] or "(id, version)" in GS_FAILURE_SCHEDULES[19][0][2]:
+        e.append("Q38f: (id, version) remains in the load contract, W0 or GS.19b")
+    # Q39a, Q39b
+    if "KL-X9" not in KNOWN_LIMITS or "text" not in KNOWN_LIMITS["KL-X9"][1] or "M-X-DECIMAL-SUM-BIGINT" not in obl["G5.agg.projection-sums"]["mutationControls"] or "never cast back to BIGINT" not in obl["G5.agg.projection-sums"]["statement"]:
+        e.append("Q39a: XTDB DECIMAL sums read as text, with hazard and mutant")
+    if "nativeLanguage" not in RECEIPT_SCHEMA["fields"] or "never share an obligation closure" not in LANGUAGE_RULES.get("xtdbNativeLanguage", "") or not any("keyByNativeLanguage" in line for line in STATUS_ALGORITHM):
+        e.append("Q39b: XTDB native language recorded and never shared")
+    for o in OBL:
+        if o["receiptScope"] == "engine" and set(X) <= set(o["lanes"]) and set(o["entrypoints"]) & {"EP-NATIVE", "EP-RAW-HATCH", "EP-RAW-WIRE"} and not o["closure"]["params"].get("keyByNativeLanguage"):
+            e.append(f"Q39b: {o['id']} could share XTQL and SQL results")
     # V-O02 C2: a legacy case hidden in a contrastCase or a commandTemplate case is found by the scan
     probe = {"probe.json": {"vectors": [
         {"id": "PROBE-CONTRAST", "commandTemplate": {"expect": {"outcome": "rejected"}}, "cases": [{"case": "bad", "text": "9223372036854775808"}], "contrastCase": {"case": "edge", "text": "-9223372036854775808", "expect": {"outcome": "committed"}}},
@@ -3211,6 +3349,17 @@ CHANGELOG_020 = [
 ]
 
 
+CHANGELOG_035 = [
+    ("Q37", "Contract 0.3.4 questions", "Q37a superseded by Q38a. Q37b compiled: every obligation an unaccepted oracle would close fails closed; A0 measurements are diagnostics. Q37c compiled with Q38e's revised hashes. Q37d confirmed: E-DECIMAL-FRACTION is one error for both uses."),
+    ("Q38a", "No density exemption", "A0_ALLOCATOR_ALLOWLIST and density_proven removed; every composition, A0 included, runs the four falsifiers (POSITION_REQUIRED_CASES selected unconditionally by G7.position.coordinates); OUTSIDE_BLOCK_MUTATION_FIXTURE records the withTransaction rebinding that the old allowlist missed; mutant M-WITHTRANSACTION-REBIND must be killed by FX-NESTED-CUTS."),
+    ("Q38b", "Evidence-based claim admission", "admit_claim derives position, composition identity, W0 and oracle-pin prerequisites from VA-valid, source-bound receipts (receipt_valid); supplied names and Booleans are ignored; any unpinned or unaccepted oracle the claim or its prerequisites use makes it a diagnostic, screening included; fixtures for a null O-REPLAY pin, supplied names, another source tree, missing falsifiers and an incompletely bound composition, plus a positive control."),
+    ("Q38c", "Regeneration discipline", "rulings_coverage parses RULINGS.md and fails unless every entry is compiled or listed below; --verify runs after every compile."),
+    ("Recorded, not compiled", "RULINGS.md entries without contract effect", (", ".join(EXPECTED_RECORDED_NOT_COMPILED) or "none") + "."),
+    ("Q38d", "Decimal channel routing", "DECIMAL_ROUTING and G1.decimal.channel-routing (repository, native, raw; derived expressions; aggregates decode, compute exactly and encode; key arithmetic is E-MIXED-FAMILY; JSON opaque unless converted with validation); mutant M-DECIMAL-LEXICAL-ORDER."),
+    ("Q38e", "O-TDK1", "O-TDK1 BUILT at lab/oracles/decimal/ with tdk1_reference.py 73467589...bf33 and gen_vectors.py b30b430a...e1e1 pinned; acceptance and the V5 vector pin stay null until an independent review of tdk1-vectors.json (candidate 0a699f59...d2a5)."),
+    ("Q38f", "Outbox publication sequence", "OUTBOX: delivery key (id, publication sequence), sequence increments when the payload differs from the latest published one, publication state atomic with the outbox record, unacknowledged deliveries replay with original identity; G7.outbox.publication-sequence with OB-RELEASE-ROLLBACK (1650, 1700, 1650), OB-CRASH-BEFORE-DELIVERY, OB-UNCHANGED-ACTIVATION-RECOVERY; (id, version) replaced in GS.10, GS.11, GS.19, GS.19b, NS.P5 and the load contract; mutant M-OUTBOX-VERSION-DEDUP."),
+    ("Q39", "EXP-X02", "KL-X9: XTDB DECIMAL read back as BIGINT rounds through a double; exact sums read DECIMAL as text (G5.agg.projection-sums, mutant M-X-DECIMAL-SUM-BIGINT). Receipts record nativeLanguage; engine-scope XTDB obligations touching a native or raw surface are keyed by native language, so XTQL and SQL never share a closure."),
+]
 CHANGELOG_034 = [
     ("Q33", "EXP-O02 RULING-NEEDED items", "Q33_RULES (21 rules, each a named case selected by its owning obligation): read-back-as-written JSON numbers (refines Q30a); decimal R-DEC-0 to 7 (E-DECIMAL-AVG new); retract-pattern out of range; CMP-CROSS-FAMILY-ORDERED; non-numeric operands and aggregates; unmapped faults and transaction-entity retracts; journal envelope; pagination reasons (malformed, other-query). Q33i: G10-CUR-01 E1/E2 compiled as other-query; QLever outcomes cross-checked against Q31j."),
     ("Q34a", "Density proven", "A0_ALLOCATOR_ALLOWLIST: sha256 of five allocator blocks per adapter (committedPosition or position, persist, withTransaction, nextCommitPosition, currentCommitPosition) at main 820607281edf, by ALLOCATOR_EXTRACTION_RULE; density_proven ignores positionsDense; G7.position.coordinates selects only the dense cases statically, with the falsifiers as conditional nonDenseAdds; FORGED_DENSITY_FIXTURE and CX-FORGED-DENSITY."),
@@ -3274,7 +3423,9 @@ def render_acceptance(doc, cells, counts):
     A("**Generated by `python3 -I lab/acceptance/build_contract.py`. Do not edit this file.** `obligations.json` is the only authority an evaluator reads; this file renders it for people. Where any text here and `obligations.json` differ, `obligations.json` wins.\n")
     A(f"Transitive contract hash: `{doc['transitiveContractSha256']}`.\n")
     A("## 0. Change log\n")
-    A("### 0.3.4 (this version): rulings Q33 to Q36\n")
+    A("### 0.3.5 (this version): rulings Q37 to Q39\n")
+    A(md_table(["Ruling", "What", "Change"], CHANGELOG_035))
+    A("\n### 0.3.4: rulings Q33 to Q36\n")
     A(md_table(["Ruling", "What", "Change"], CHANGELOG_034))
     A("\n### 0.3.3: rulings Q29 to Q32 and the revised TARGETS 1.1, 4.1, 6.1 and 7\n")
     A(md_table(["Ruling", "What", "Change"], CHANGELOG_033))
@@ -3348,6 +3499,12 @@ def render_acceptance(doc, cells, counts):
     A(md_table(["Test", "Obligation", "Check", "Pass", "Case"], [[k, v["obligation"], v["check"], v["pass"], v["case"]] for k, v in TDK1_TESTS.items()]))
     A("O-REPLAY pin (V-O02 C1): " + ("BLOCKED, fails closed until accepted after EXP-O03" if ORACLE_PINS["O-REPLAY"]["sha256"] is None else ORACLE_PINS["O-REPLAY"]["sha256"]) + "; every obligation using O-REPLAY carries GATE-ORACLE-PIN.\n")
     A(f"\nTDK1_VECTOR_PIN ({TDK1_VECTOR_PIN['file']}): " + ("BLOCKED, fails closed until pinned" if TDK1_VECTOR_PIN["sha256"] is None else TDK1_VECTOR_PIN["sha256"]) + ".\n")
+    A("**Decimal channel routing (RULINGS Q38d).**\n")
+    A(md_table(["Id", "Rule", "Case"], [[r["id"], r["rule"], r["case"]] for r in DECIMAL_ROUTING]))
+    A("\nO-TDK1 files pinned (RULINGS Q37c, Q38e): " + "; ".join(f"{k} {v}" for k, v in O_TDK1_FILES.items()) + f". Vector candidate {TDK1_VECTOR_PIN['candidateSha256']} awaits independent review.\n")
+    A("**Outbox publication (RULINGS Q38f).** " + " ".join(f"{k}: {v}." for k, v in OUTBOX.items() if k != "cases") + "\n")
+    A(md_table(["Case", "Expected"], list(OUTBOX["cases"].items())))
+    A("")
     A("**EXP-O02 rulings (RULINGS Q33).**\n")
     A(md_table(["Id", "Rule", "Error", "Case", "Ruling"], [[r["id"], r["rule"], r["error"], r["case"], r["ruling"]] for r in Q33_RULES]))
     A("")
@@ -3539,10 +3696,8 @@ def render_acceptance(doc, cells, counts):
     A(md_table(["Item", "Rule"], [[k, (", ".join(v) if isinstance(v, list) else json.dumps(v) if isinstance(v, dict) else v)] for k, v in POSITION.items()]))
     A("")
     A(md_table(["Gate", "Rule", "Requires", "Applies to"], [[k, v["rule"], ", ".join(v["requires"]), v["appliesTo"]] for k, v in GATES.items()]))
-    A("\nDensity proof (RULINGS Q34a): " + ALLOCATOR_EXTRACTION_RULE + ".\n")
-    A(md_table(["Engine", "File", "A0 commit", "Marker", "Lines at A0", "sha256"], [[k, v["file"], v["a0Commit"][:12], f"`{b_['marker'].strip()}`", b_["linesAtA0"], b_["sha256"]] for k, v in A0_ALLOCATOR_ALLOWLIST.items() for b_ in v["blocks"]]))
+    A("\nNo density exemption (RULINGS Q38a): every composition, A0 included, needs " + ", ".join(POSITION_REQUIRED_CASES) + ". Evidence that a source-hash allowlist was unsafe: " + OUTSIDE_BLOCK_MUTATION_FIXTURE["mutation"] + "; all five 0.3.4 block hashes stayed unchanged and the old check returned " + OUTSIDE_BLOCK_MUTATION_FIXTURE["oldMechanismVerdict"] + "; now " + OUTSIDE_BLOCK_MUTATION_FIXTURE["requiredVerdict"] + ".\n")
     A("\n" + CLAIM_ADMISSION["rule"] + ".\n")
-    A("\nG7.position.coordinates selection (RULINGS Q32e, Q34a): dense compositions need " + ", ".join(POSITION_DENSE_CASES) + "; non-dense ones also need " + ", ".join(POSITION["falsifiers"] + ["PO-ABORTED-LISTED"]) + "; a composition not proven dense by its allocator source is treated as non-dense. A0 controls: " + "; ".join(f"{k} ({v['source']}: {v['why']})" for k, v in A0_CONTROLS.items()) + ".\n")
     _pending = [f for f, h in W0_PIN["files"].items() if h is None]
     A(f"\nW0_PIN (required input, reviewed by {W0_PIN['reviewedBy']}): " + ("BLOCKED, fails closed until pinned: " + ", ".join(_pending) if _pending or W0_PIN["reviewReceipt"] is None else "pinned") + ".\n")
     A("\n## 9. PLAN C1-C8 traceability\n")
@@ -3627,8 +3782,8 @@ def main():
         "valueKinds": VALUE_KINDS, "decimalRules": DECIMAL_RULES, "decimalOps": DECIMAL_OPS, "decimalConversions": DECIMAL_CONVERSIONS, "decimalScaleEvolution": DECIMAL_SCALE_EVOLUTION, "decimalTests": DECIMAL_TEST_TEXT, "screeningProfiles": SCREENING_PROFILES,
         "temporalRules": TEMPORAL_RULES, "readShapeRules": READ_SHAPE_RULES, "journalRules": JOURNAL_RULES, "ambRulings": AMB_RULINGS, "goldenResolutions": GOLDEN_RESOLUTIONS, "goldenRule": GOLDEN_RULE, "goldenFilesPinned": {f"{GOLDEN_DIR}/{k}": sha_file(f"{GOLDEN_DIR}/{k}") for k in golden_vectors()},
         "erasure": ERASURE, "protectedCopyInventory": PROTECTED_COPY_INVENTORY, "composition": COMPOSITION, "worldW0": WORLD_W0, "goldenFailureSchedules": {f"GS.{k:02d}": [{"case": c, "schedule": w, "expected": x} for c, w, x in v] for k, v in GS_FAILURE_SCHEDULES.items()},
-        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "positionNonDenseAdds": POSITION_NONDENSE_ADDS, "a0Controls": A0_CONTROLS, "a0AllocatorAllowlist": A0_ALLOCATOR_ALLOWLIST, "allocatorExtractionRule": ALLOCATOR_EXTRACTION_RULE, "forgedDensityFixture": FORGED_DENSITY_FIXTURE, "claimAdmission": CLAIM_ADMISSION,
-        "oraclePins": ORACLE_PINS, "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
+        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
+        "oraclePins": ORACLE_PINS, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,
