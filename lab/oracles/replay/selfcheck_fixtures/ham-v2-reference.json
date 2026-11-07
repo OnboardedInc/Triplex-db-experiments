@@ -1,0 +1,810 @@
+{
+ "format": "o-replay-selfcheck/ham-v2-reference/1",
+ "source": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+ "sourceSha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b",
+ "events": [
+  {
+   "position": 1,
+   "recordedAt": 1000.25,
+   "txId": "logical-tx1",
+   "assert": [
+    {
+     "id": "label-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1
+    },
+    {
+     "id": "present-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1
+    }
+   ],
+   "retract": []
+  },
+  {
+   "position": 2,
+   "recordedAt": 1001.25,
+   "txId": "logical-tx2",
+   "assert": [
+    {
+     "id": "label-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1
+    }
+   ],
+   "retract": [
+    "label-a"
+   ]
+  },
+  {
+   "position": 3,
+   "recordedAt": 1002.25,
+   "txId": "logical-tx3",
+   "assert": [
+    {
+     "id": "present-false",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": false
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1
+    }
+   ],
+   "retract": [
+    "present-a"
+   ]
+  },
+  {
+   "position": 4,
+   "recordedAt": 1003.25,
+   "txId": "logical-tx4",
+   "assert": [
+    {
+     "id": "present-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1
+    }
+   ],
+   "retract": [
+    "present-false"
+   ]
+  }
+ ],
+ "sameTimeEvents": [
+  {
+   "position": 1,
+   "recordedAt": 2000.25,
+   "txId": "same-time-tx1",
+   "assert": [
+    {
+     "id": "same-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1
+    }
+   ],
+   "retract": []
+  },
+  {
+   "position": 2,
+   "recordedAt": 2000.25,
+   "txId": "same-time-tx2",
+   "assert": [
+    {
+     "id": "same-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1
+    }
+   ],
+   "retract": [
+    "same-a"
+   ]
+  }
+ ],
+ "lifetime": [
+  {
+   "id": "label-a",
+   "entityId": "metadata:e0",
+   "attribute": ":metadata/label",
+   "value": {
+    "type": "string",
+    "value": "A"
+   },
+   "entityType": "MetadataProbe",
+   "validFrom": 10.125,
+   "validTo": 30.5,
+   "createdBy": "metadata-fixture",
+   "schemaVersion": 1,
+   "assertion": {
+    "recordedAt": 1000.25,
+    "position": 1,
+    "txId": "logical-tx1"
+   },
+   "retirement": {
+    "recordedAt": 1001.25,
+    "position": 2,
+    "txId": "logical-tx2"
+   }
+  },
+  {
+   "id": "present-a",
+   "entityId": "metadata:e0",
+   "attribute": ":metadata/present",
+   "value": {
+    "type": "boolean",
+    "value": true
+   },
+   "entityType": "MetadataProbe",
+   "validFrom": 10.125,
+   "validTo": 30.5,
+   "createdBy": "metadata-fixture",
+   "schemaVersion": 1,
+   "assertion": {
+    "recordedAt": 1000.25,
+    "position": 1,
+    "txId": "logical-tx1"
+   },
+   "retirement": {
+    "recordedAt": 1002.25,
+    "position": 3,
+    "txId": "logical-tx3"
+   }
+  },
+  {
+   "id": "label-b",
+   "entityId": "metadata:e0",
+   "attribute": ":metadata/label",
+   "value": {
+    "type": "string",
+    "value": "B"
+   },
+   "entityType": "MetadataProbe",
+   "validFrom": 10.125,
+   "validTo": 30.5,
+   "createdBy": "metadata-fixture",
+   "schemaVersion": 1,
+   "assertion": {
+    "recordedAt": 1001.25,
+    "position": 2,
+    "txId": "logical-tx2"
+   },
+   "retirement": null
+  },
+  {
+   "id": "present-false",
+   "entityId": "metadata:e0",
+   "attribute": ":metadata/present",
+   "value": {
+    "type": "boolean",
+    "value": false
+   },
+   "entityType": "MetadataProbe",
+   "validFrom": 10.125,
+   "validTo": 30.5,
+   "createdBy": "metadata-fixture",
+   "schemaVersion": 1,
+   "assertion": {
+    "recordedAt": 1002.25,
+    "position": 3,
+    "txId": "logical-tx3"
+   },
+   "retirement": {
+    "recordedAt": 1003.25,
+    "position": 4,
+    "txId": "logical-tx4"
+   }
+  },
+  {
+   "id": "present-b",
+   "entityId": "metadata:e0",
+   "attribute": ":metadata/present",
+   "value": {
+    "type": "boolean",
+    "value": true
+   },
+   "entityType": "MetadataProbe",
+   "validFrom": 10.125,
+   "validTo": 30.5,
+   "createdBy": "metadata-fixture",
+   "schemaVersion": 1,
+   "assertion": {
+    "recordedAt": 1003.25,
+    "position": 4,
+    "txId": "logical-tx4"
+   },
+   "retirement": null
+  }
+ ],
+ "cases": [
+  {
+   "id": "before-creation",
+   "capturedUpperP": 4,
+   "recordedAt": 999.25,
+   "validAt": 20.25,
+   "expected": []
+  },
+  {
+   "id": "original-R-after-all-writes",
+   "capturedUpperP": 4,
+   "recordedAt": 1000.25,
+   "validAt": 20.25,
+   "expected": [
+    {
+     "id": "label-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": null
+    },
+    {
+     "id": "present-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "id": "corrected-R",
+   "capturedUpperP": 4,
+   "recordedAt": 1001.25,
+   "validAt": 20.25,
+   "expected": [
+    {
+     "id": "present-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": null
+    },
+    {
+     "id": "label-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1001.25,
+     "txId": "logical-tx2",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "id": "presence-off-R",
+   "capturedUpperP": 4,
+   "recordedAt": 1002.25,
+   "validAt": 20.25,
+   "expected": [
+    {
+     "id": "label-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1001.25,
+     "txId": "logical-tx2",
+     "knownRetirement": null
+    },
+    {
+     "id": "present-false",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": false
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1002.25,
+     "txId": "logical-tx3",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "id": "latest-no-invented-R",
+   "capturedUpperP": 4,
+   "validAt": 20.25,
+   "expected": [
+    {
+     "id": "label-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1001.25,
+     "txId": "logical-tx2",
+     "knownRetirement": null
+    },
+    {
+     "id": "present-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1003.25,
+     "txId": "logical-tx4",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "id": "inclusive-valid-start",
+   "capturedUpperP": 4,
+   "recordedAt": 1000.25,
+   "validAt": 10.125,
+   "expected": [
+    {
+     "id": "label-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": null
+    },
+    {
+     "id": "present-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "id": "exclusive-valid-end",
+   "capturedUpperP": 4,
+   "recordedAt": 1000.25,
+   "validAt": 30.5,
+   "expected": []
+  },
+  {
+   "id": "history-before-retirement",
+   "capturedUpperP": 4,
+   "recordedAt": 1000.25,
+   "validAt": 20.25,
+   "mode": "known-at-valid",
+   "expected": [
+    {
+     "id": "label-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": null
+    },
+    {
+     "id": "present-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "id": "history-at-retirement",
+   "capturedUpperP": 4,
+   "recordedAt": 1001.25,
+   "validAt": 20.25,
+   "mode": "known-at-valid",
+   "expected": [
+    {
+     "id": "label-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": {
+      "recordedAt": 1001.25,
+      "txId": "logical-tx2"
+     }
+    },
+    {
+     "id": "present-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": null
+    },
+    {
+     "id": "label-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1001.25,
+     "txId": "logical-tx2",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "id": "history-latest-retains-all-lineage",
+   "capturedUpperP": 4,
+   "validAt": 20.25,
+   "mode": "known-at-valid",
+   "expected": [
+    {
+     "id": "label-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": {
+      "recordedAt": 1001.25,
+      "txId": "logical-tx2"
+     }
+    },
+    {
+     "id": "present-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "logical-tx1",
+     "knownRetirement": {
+      "recordedAt": 1002.25,
+      "txId": "logical-tx3"
+     }
+    },
+    {
+     "id": "label-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1001.25,
+     "txId": "logical-tx2",
+     "knownRetirement": null
+    },
+    {
+     "id": "present-false",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": false
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1002.25,
+     "txId": "logical-tx3",
+     "knownRetirement": {
+      "recordedAt": 1003.25,
+      "txId": "logical-tx4"
+     }
+    },
+    {
+     "id": "present-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1003.25,
+     "txId": "logical-tx4",
+     "knownRetirement": null
+    }
+   ]
+  }
+ ],
+ "sameTimeCases": [
+  {
+   "capturedUpperP": 1,
+   "recordedAt": 2000.25,
+   "validAt": 20.25,
+   "expected": [
+    {
+     "id": "same-a",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 2000.25,
+     "txId": "same-time-tx1",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "capturedUpperP": 2,
+   "recordedAt": 2000.25,
+   "validAt": 20.25,
+   "expected": [
+    {
+     "id": "same-b",
+     "entityId": "metadata:e0",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 2000.25,
+     "txId": "same-time-tx2",
+     "knownRetirement": null
+    }
+   ]
+  }
+ ],
+ "openEnded": [
+  {
+   "validAt": 10.124,
+   "expected": []
+  },
+  {
+   "validAt": 10.125,
+   "expected": [
+    {
+     "id": "open",
+     "entityId": "metadata:open",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "open"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": null,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "open-tx",
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "validAt": 1000000000000,
+   "expected": [
+    {
+     "id": "open",
+     "entityId": "metadata:open",
+     "attribute": ":metadata/label",
+     "value": {
+      "type": "string",
+      "value": "open"
+     },
+     "entityType": "MetadataProbe",
+     "validFrom": 10.125,
+     "validTo": null,
+     "createdBy": "metadata-fixture",
+     "schemaVersion": 1,
+     "recordedAt": 1000.25,
+     "txId": "open-tx",
+     "knownRetirement": null
+    }
+   ]
+  }
+ ]
+}
