@@ -1,0 +1,38 @@
+{
+  "name": "@triplex-build/w0",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript reference kernel for the W0 world definition (lab/world/W0/SPEC.md, W0-1.1.1)",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest --run",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p test/tsconfig.json",
+    "clean": "rm -rf dist",
+    "fingerprint": "node dist/cli/fingerprint.js",
+    "cost": "node dist/cli/cost.js"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "effect": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "effect": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

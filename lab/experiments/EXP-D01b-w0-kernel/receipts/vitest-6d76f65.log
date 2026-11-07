@@ -1,0 +1,131 @@
+
+ RUN  v5.0.4 <repo>/packages/w0
+
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > has the 87 cases of SPEC 11.2 3ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C01 evaluate 7ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C02 evaluate 2ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C03 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C04 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C05 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C06 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C07 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C08 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C09 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C10 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C11 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C12 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C13 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C14 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C15 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C16 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C17 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C18 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C19 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C20 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C21 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C22 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C23 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C24 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C25 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C26 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C27 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C28 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C29 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C30 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C31 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C32 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C33 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C34 affected 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C35 affected 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C36 affected 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C37 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C38 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C39 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C40 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C41 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C42 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C43 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C44 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C45 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C46 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C47 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C48 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C49 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C50 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C51 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C52 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C53 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C54 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C55 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C56 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C57 affected 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C58 affected 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C59 affected 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C60 affected 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C61 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C62 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C63 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C64 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C65 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C66 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C67 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C68 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C69 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C70 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C71 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C72 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C73 publish 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C74 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C75 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C76 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C77 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C78 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C79 receive 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C80 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C81 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C82 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C83 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C84 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C85 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C86 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11) > C87 affected 0ms
+ ✓ test/kernel.test.ts > releases (SPEC 5) > R1 equals releases/R1.json and its index hash 2ms
+ ✓ test/kernel.test.ts > releases (SPEC 5) > R2 equals releases/R2.json and its index hash 1ms
+ ✓ test/kernel.test.ts > releases (SPEC 5) > R3 equals releases/R3.json and its index hash 1ms
+ ✓ test/kernel.test.ts > releases (SPEC 5) > diff (SPEC 5.3) 1ms
+ ✓ test/kernel.test.ts > dates (SPEC 6.1) > SPEC 6.1 addBusinessDays examples 0ms
+ ✓ test/kernel.test.ts > dates (SPEC 6.1) > matches Date.UTC and getUTCDay on every day from 1999 to 2100 247ms
+ ✓ test/kernel.test.ts > dates (SPEC 6.1) > validates dates: years 2000 to 2099, real days only 1ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > keeps integer and non-integer number tokens apart 1ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > flags a duplicate key on every enclosing container 0ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > rejects what is not one JSON value 2ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > is iterative: 200,000 levels of nesting scan without a stack overflow (D01b-A13) 125ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > decodes strict UTF-8 and refuses a byte order mark (A01) 1ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > escapes as json.dumps(ensure_ascii=True) (A07) 0ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > orders keys by code point, which is UTF-8 byte order (SPEC 9 item 2, D01b-A14) 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > the base world is valid 1ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A01: bytes that are not one JSON value are E_SHAPE 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A02: -0 is an integer token with value 0, written 0 6ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A03: cardinality runs after every fact passes 3.2, so a later E_UNKNOWN beats an earlier duplicate 4ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A04: affected validates world by world 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A05: activations one at a time in array order; within one, E_VALUE before E_BASIS 3ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A06: a picked activation naming an unknown well-formed hash is E_NO_RELEASE, no fall-back 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A07: opaque payloads keep integer tokens, other number tokens as source text, escaped strings 3ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A08: input states indexed by id (later wins); arrays re-sorted; pending keeps input order and appends 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A09: a duplicate work-item id in one record is processed in stable id order 0ms
+ ✓ test/kernel.test.ts > D01b-A11 and D01b-A12: number tokens a lenient parser would accept or refuse > NaN and Infinity are not JSON values: E_SHAPE, not E_VALUE 0ms
+ ✓ test/kernel.test.ts > D01b-A11 and D01b-A12: number tokens a lenient parser would accept or refuse > an integer token with 5,000 digits is an integer token outside its domain 0ms
+ ✓ test/kernel.test.ts > D01b-A11 and D01b-A12: number tokens a lenient parser would accept or refuse > a 10,000-deep array as a fact value is E_VALUE (D01b-A13) 2ms
+ ✓ test/kernel.test.ts > typed entry points > bigint and number integers give the same bytes 1ms
+ ✓ test/kernel.test.ts > typed entry points > the Effect boundary carries the W0 error code as a tagged value 3ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > isqrt is exact 0ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > generated worlds are valid under R1, R2 and R3 and hold 48 to 2,000 facts 121ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > 13.1 determinism: shuffling facts changes nothing 51ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > 13.6 ballast neutrality: removing every ballast fact changes no output 101ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > sweepSubject gives the output, its bytes and its outbox record 1ms
+
+ Test Files  2 passed (2)
+      Tests  122 passed (122)
+   Start at  18:43:38
+   Duration  1.54s (import 58%, tests 36%, transform 5%)
+
