@@ -591,3 +591,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   tenants (100) are active in any 15-minute window until Sam gives a number.
 - 23:10Z: contract 0.3.3 committed (89376e1; Q29-Q32 compiled, 142 obligations, 35 regression checks all caught). Codex round 3
   started on it. R20 (order-preserving decimal encodings, both lanes, with a property test) dispatched from the research queue.
+
+## 2026-11-07 ~23:25Z: EXP-O02 conforms (0 DISAGREE on 49 vectors); V-O02 dispatched; Q33
+- **Learning: conformance broke the old converter, which is expected and dangerous.** The original V-O01 converter now reports 17
+  DISAGREE plus 5 CONVERTER-ERROR, all from output shapes the contract required (4.7 error ids, AMB-02 field names, `find` returning
+  documents). The author patched a copy (P1 to P9) and got 0 DISAGREE. A patch that maps names can also hide a real disagreement, so
+  V-O02 reviews each patch and plants new wrong expectations in exactly the patched areas before anything is accepted.
+- **Learning: lane-specific numeric outcomes were missing from 10 golden items** (G1-I64-01, Q8F-02, G1-I64-02 min-exact, seven G5-SUM
+  fixtures): they assume every lane commits values beyond ±2^59. A QLever-lane oracle run found them; the contract records QLever's
+  outcome as rejection at write (Q33i, cross-checked with Q31j).
+- **Ruling Q33a refines Sam's numeric rule for JSON numbers:** accepted only if it reads back as written (0.1 yes; 9007199254740993 no).
+  Q33d makes every cross-family ordered comparison a typed preflight error instead of `false`.
+- Oracle follow-up EXP-O03 (after V-O02): decimal `divide`, Q30 wire guards, Q31c coordinates, Q33 rulings.
