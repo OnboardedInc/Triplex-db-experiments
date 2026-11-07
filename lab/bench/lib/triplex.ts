@@ -30,12 +30,21 @@ export interface TriplesHandle {
   close(): Promise<void>;
 }
 
-/** One runtime opening on a named scope; `run` executes an Effect from the service. */
-export async function openTriples(lane: Lane, scopeName: string): Promise<TriplesHandle> {
+/**
+ * One runtime opening on a named scope; `run` executes an Effect from the service.
+ * `xtdbOptions` (XTDB only) builds the runtime from the public `makeXtdbRuntime` export with explicit
+ * adapter options (for example `admissionQueue: true`) instead of the qualification default.
+ */
+export async function openTriples(lane: Lane, scopeName: string, xtdbOptions?: Record<string, unknown>): Promise<TriplesHandle> {
   process.env["TRIPLEX_QUERY_PATH"] ??= `${lane}-datalog`;
   const backend = await qualification.loadQualificationBackend(lane);
   const scope = runtimeApi.DatabaseScope.test(scopeName);
-  const layer = backend.makeRuntime().layer({ scope, capabilities: runtimeApi.Capabilities.none });
+  let definition = backend.makeRuntime();
+  if (xtdbOptions && lane === "xtdb") {
+    const xtdb: any = await import(dist("xtdb", "index.js"));
+    definition = xtdb.makeXtdbRuntime({ url: backend.url, ...xtdbOptions });
+  }
+  const layer = definition.layer({ scope, capabilities: runtimeApi.Capabilities.none });
   const managed: any = (ManagedRuntime as any).make(layer);
   const triples = await managed.runPromise(Effect.service(core.Triples));
   return {

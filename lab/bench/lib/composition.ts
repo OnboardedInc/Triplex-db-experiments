@@ -98,8 +98,8 @@ function failureOf(exit: any): StoreFailure {
   return { ok: false, tag: String(error?._tag ?? failure?._tag ?? "Unknown"), error };
 }
 
-async function publicComposition(lane: Lane, scope: string): Promise<CompositionHandle> {
-  const h: TriplesHandle = await openTriples(lane, scope);
+async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" = "public"): Promise<CompositionHandle> {
+  const h: TriplesHandle = await openTriples(lane, scope, variant === "public-queued" ? { admissionQueue: true } : undefined);
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   const outcome = async <A>(effect: any): Promise<Outcome<A>> => {
@@ -130,10 +130,10 @@ async function publicComposition(lane: Lane, scope: string): Promise<Composition
     // every basis it has published, so no wait and no fallback are possible here.
     return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: "source", language, waitedMs: 0 };
   };
-  const one = { lane, role: "triplex public Triples service on one engine slot" };
+  const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}` };
   const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : "triplex-entities(sparql)";
   return {
-    name: "public",
+    name: variant,
     assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
     watermarks: async () => ({ source: await h.run(T.currentPosition()) }),
     // Triplex exposes one dense position per scope; every transact is its own engine transaction, so
@@ -151,7 +151,9 @@ async function publicComposition(lane: Lane, scope: string): Promise<Composition
 }
 
 export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise<CompositionHandle>> = {
-  public: publicComposition,
+  public: (lane, scope) => publicComposition(lane, scope, "public"),
+  /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
+  "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),
 };
 
 export async function openComposition(name: string, lane: Lane, scope: string): Promise<CompositionHandle> {

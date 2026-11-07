@@ -449,7 +449,7 @@ async function run() {
     phases.push(entry);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
-    if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, spec.maxS ?? 1800);
+    if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.sweep) entry.sweep = await runSweep(idx, spec.maxS ?? 1800);
     else if (spec.seconds) await sleep(spec.seconds * 1000);
     entry.end = now();
@@ -533,11 +533,12 @@ async function run() {
         const cmd = buildHistoryGrowth({ runTag, label: `v${v}.${k}`, subjects: group, version: v, ids: versionIds });
         let receipt: Receipt | null = null;
         for (let attempt = 1; attempt <= 6 && !receipt; attempt++) {
+          if (now() > deadline) break;
           const res = await writer.transact(cmd.operations, { commandId: cmd.commandId, actor: "p4-history", preconditions: cmd.preconditions });
           receipt = res.ok ? res.value : await resolveByCommand(cmd.commandId);
           if (!receipt) { failures++; await sleep(50 * attempt); }
         }
-        if (!receipt) throw new Error(`history growth command ${cmd.commandId} failed`);
+        if (!receipt) { log(`history growth: ${cmd.commandId} failed 6 times; stopping growth at version ${v - 1}`); return { targetDepth: depth, reachedDepth: Math.min(...historyList.map((i) => historyVersion.get(i) ?? 0)) + 1, subjects: historyList.length, commands, assertions, failures, wallS: (now() - started) / 1000, incomplete: true }; }
         commands++;
         assertions += cmd.operations.filter((o) => o.op === "assert").length;
         const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1 });
