@@ -82,7 +82,7 @@ here). Merged to main as 4591715.
   steps must never be O-REPLAY ops. N3 G1.types.decimal lists only O-REPLAY and O-ERR but selects three key-byte cases that need O-TDK1.
   N4 resuming at an abort gap maps the gap coordinate to its ordinal through a coordinate cut.
 
-## V-O04b: O-REPLAY 0.4.1 at a9c1327 (saved by the orchestrator, 2026-11-08 00:05Z)
+## V-O04b: O-REPLAY 0.4.1 at a9c1327 (saved by the orchestrator, 2026-11-07 23:26Z)
 - Verdict FIX-FIRST, narrow: every Q49a-e answer passes (probe_q49 81 probes: 74 MATCH, 0 WRONG-ANSWER, 7 DERIVED-NOTE; self-test 7/7);
   the residual refusals are exactly the nine Q52 shapes (9/9 X-NOT-MODELED; the only other X-NOT-MODELED sites are 0.3.1's
   entities.py:61, run.py:53, views.py:129; the blanket refusal at replay.py:384 is gone); no answer changed outside erasure and

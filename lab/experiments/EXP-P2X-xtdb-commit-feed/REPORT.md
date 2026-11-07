@@ -1,4 +1,4 @@
-# EXP-P2X per-subject commits and a log-ordered feed on XTDB: report (saved by the orchestrator, 2026-11-07 23:05Z)
+# EXP-P2X per-subject commits and a log-ordered feed on XTDB: report (saved by the orchestrator, 2026-11-07 22:59Z)
 
 **Bottom line:** the candidate (`commitPath: "subject-stamp"`, default `"scope-counter"` = A0 unchanged) removes cross-subject contention
 (0 conflicts against thousands for A0) and, after about 20k commits of history, cuts commit service time 6 to 8x. The feed is gap-free,

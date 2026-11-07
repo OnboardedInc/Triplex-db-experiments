@@ -1,4 +1,4 @@
-# Codex round 7 (contract 0.3.7): responses (orchestrator, 2026-11-07 23:55Z)
+# Codex round 7 (contract 0.3.7): responses (orchestrator, 2026-11-07 23:18Z)
 
 Verdict NOT READY. Status of round-6 items: 1 PARTIAL, 5 PARTIAL, 6 CLOSED, 7 CLOSED; new: 5 (critical), 6, 7; item 8 confirms domain
 blocking. Open findings by round: 14, 13, 7, 6, 5, 4, now 5 (two carried, three new from the broker composition entering the evidence).

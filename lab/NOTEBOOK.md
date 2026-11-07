@@ -908,7 +908,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   estimated dates appear in a few REPORT.md headers (saved by the orchestrator) and in STATE's infrastructure policy line.
 - From now on every header takes its time from `date -u`.
 
-## 2026-11-07 23:05Z: EXP-P2X and EXP-O04 (Q49) landed; the host log wins the feed on both lanes
+## 2026-11-07 22:59Z: EXP-P2X and EXP-O04 (Q49) landed; the host log wins the feed on both lanes
 - **EXP-P2X (XTDB, subject-stamp commit path):** cross-subject conflicts 0 against A0's 3,376-3,657 CAS rejections; service time 6.5-7.8x
   lower at ~20k commits (A0 grows with history because its asserts scan `scope_key`). Feed exact (0 gaps, order violations, duplicates
   across 5k preload, three traces, 400 crash injections) but lag p99 2.9 s steady, because the consumer's durable write waits in the same
@@ -924,7 +924,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   item on both lanes; all 11 erasure obligations closable on the oracle side. Residual RULING-NEEDED items ruled as Q52 (held).
 - Dispatched: V-P2Q (new verifier) and the V-O04 re-check (resumed verifier). Running: 10 of 10.
 
-## 2026-11-07 23:20Z: MILESTONE: O-DOMAIN reproduced W0-1.1.1 exactly on its first run
+## 2026-11-07 23:03Z: MILESTONE: O-DOMAIN reproduced W0-1.1.1 exactly on its first run
 - An independent implementation written from SPEC.md alone matched 87/87 golden cases and all six 100k fingerprint values (basis.tx
   4,338,757; 44,537,987 facts; worlds, R1, R2, R3 hashes), and its measured floors equal V-D01's scratch evaluator to the last digit. That
   is three implementations (author, V-D01's scratch evaluator, O-DOMAIN) agreeing on 44.5M facts. 99.5 s and 23 MiB streamed.
@@ -933,7 +933,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   or payload escaping: Q53b adds one case per reading in W0-1.1.2.
 - Dispatched V-D01c (mutation-based review: can the cases fail O-DOMAIN?). Running: 10 of 10.
 
-## 2026-11-07 23:40Z: contract 0.3.7 committed; Codex round 7; EXP-D01b dispatched
+## 2026-11-07 23:11Z: contract 0.3.7 committed; Codex round 7; EXP-D01b dispatched
 - Contract 0.3.7 (ca42e06): Q46-Q49 compiled, 153 obligations (two new erasure obligations), evidence schemas (build-manifest/1,
   verifier-record/1, case-result/1) opened and re-judged at admission, workload identity required on both arms, A0 taken only from the
   registry (null, so every comparison is DIAGNOSTIC), indirect refusals followed through reachedThrough, pending rulings listed with no
@@ -944,7 +944,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   can now be recorded the moment they are made, and the contract proves they carry no authority.
 - Dispatched EXP-D01b (TypeScript W0 kernel, independent of O-DOMAIN) and told E01 to adopt 0.3.7's schemas. Codex round 7 running.
 
-## 2026-11-07 23:55Z: Codex round 7: NOT READY, 5 open (open count 14, 13, 7, 6, 5, 4, 5)
+## 2026-11-07 23:18Z: Codex round 7: NOT READY, 5 open (open count 14, 13, 7, 6, 5, 4, 5)
 - Closed: indirect refusals (R6-6), pending-ruling authority (R6-7); domain blocking confirmed (26 O-DOMAIN obligations stay DIAGNOSTIC).
 - Still partial: invented evidence (well-formed records with invented cases and self-consistent expected objects pass) and control
   provenance (a manifest label makes a candidate binary the control). Learning: every round has found a new way to forge a document, so
@@ -955,10 +955,32 @@ Where each priority stands, from evidence so far (research probes and baselines;
   Ruled Q55b-d. Q55c (native queries report their basis, honor a basis token, otherwise read the replica's position) is flagged for Sam.
 - The count went up by one because a new composition entered the evidence, which is the review doing its job, not a regression.
 
-## 2026-11-08 00:05Z: V-O04b: O-REPLAY 0.4.1 is right on everything Q49 decides; seven undecided shapes ruled (Q56)
+## 2026-11-07 23:26Z: V-O04b: O-REPLAY 0.4.1 is right on everything Q49 decides; seven undecided shapes ruled (Q56)
 - 74/74 decided probes match, 0 unexpected differences over 1,443 differential cases. The failure was on the refusal side: seven
   erasure shapes nobody ruled on got confident answers. All seven are ruled as the oracle answers (Q56), so 0.4.1 pins byte for byte.
 - Learning (Q56c): the rule that settles erasure edge cases is "an answer after erasure never depends on the erased value". Erasing one of
   two equal supports of a card-one value therefore makes the read a conflict, because returning the value would reveal what was erased.
 - Learning: the verifier's DERIVED-NOTE probes (answers it derived but no ruling decides) are the fastest way to find gaps in rulings;
   keep that probe class in every oracle verification.
+
+## 2026-11-07 23:29Z: hourly learnings pass (NORTH-STAR reread first)
+- **Learnings are current** through EXP-P2Q, EXP-P2X, EXP-O04 (0.4.1), EXP-D01c, contract 0.3.7, Codex round 7 and V-O04b. Headers drifted
+  ahead of the real clock a second time (entries said 23:40Z to 00:05Z the next day at a real 23:27Z); reset to commit times, and this
+  header is written by `date -u` in the same command.
+- **Residents:** pool 11.0 of 11.0 GiB (xtdb-dev 2.65 of 3.0 GiB at 153% CPU for EXP-W01; qlever-dev 946 MiB of 3.5 GiB; EXP-X05 now holds
+  xtdb-s2 plus its 1 GiB read-only follower). Host load 9.3 / 10.6 / 10.8 on 12 cores, the lowest this session. EXP-N01's A0 poller waits
+  for X05 to release s2.
+- **Where evidence points, by priority:**
+  - P1: X05 (follower) and C8 (reads never write) are running; no new evidence this hour.
+  - P2 and P3: the host log of record is the design that works. On QLever it removed the engine from the ACK path (4-8 ms p50) and the
+    feed path (12.8-24.5 ms p99, ACK-based; Q55d requires a recompute from source publication). XTDB's own feed cannot beat its serial
+    indexer (2.9 s p99). Next: EXP-P2B, XTDB behind the same broker, after V-P2Q.
+  - Write amplification is a cross-lane problem (XTDB 27.6 KB per 10-fact commit, QLever about 750 triples), so EXP-J01 owns it for both.
+  - P5: three implementations of W0 agree on 44.5M facts; the TypeScript kernel (D01b) now measures per-subject cost for the sweep.
+  - Floor: each Codex round has found a new way to forge an evidence document, so Q55a makes qualification a run the evaluator executes.
+- **Research dispatched (Sonnet xhigh):** R22 noise-robust benchmarking on this host (run order, paired bootstrap for p50/p99 ratios,
+  isolation inside colima, window rejection); R23 log-of-record compositions (prior art for engine-as-replica with read-your-writes, basis
+  tokens on native surfaces against Q55c, the host log's substrate: hand-rolled file against SQLite WAL or LMDB, XTDB 2.2.0 as a replica,
+  overlay-merge pitfalls). R23 feeds the EXP-P2B brief and the Q55c question for Sam. A bytes-per-commit code audit becomes EXP-J01's first
+  phase instead of a separate research.
+- **Running (10):** W01, X05, C8 (background run), E01, V-P2Q, V-D01c, D01b, V-O04c, R22, R23.
