@@ -47,7 +47,7 @@ export function effectiveConfig(config, info) {
   const effective = {
     lane: 'qlever', slot: info.slot, image: info.laneConf.image, startScriptSha256: sha256(script),
     sourceStartScriptSha256: sha256(original), qleverMemory: info.qleverMemory, memBytes: info.memBytes, cpus: info.cpus,
-    publish: `127.0.0.1:${info.port}:7019`, volume: `${info.volume}:/data`, entrypoint: ['/bin/bash', '/config/start.sh'],
+    publish: `127.0.0.1:${info.port}:7019`, volume: `${info.volume}:/data`, volumeInit: 'chown 999:999 /data (image user qlever)', entrypoint: ['/bin/bash', '/config/start.sh'],
     health: "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'",
   };
   return { effective, sha256: sha256(JSON.stringify(effective)), files: { startScript: file } };
@@ -181,7 +181,15 @@ async function up(config, info, opts) {
         if (docker(['volume', 'inspect', info.volume], { allowFail: true })) fail('ENGINE', `volume ${info.volume} still exists after --fresh removal`);
       }
       if (existing && !opts.fresh) docker(['start', info.container]);
-      else docker(runArgs(info, eff, holder));
+      else {
+        if (info.lane === 'qlever') {
+          // The QLever image runs as uid 999 and has no /data, so a new named volume would be
+          // root-owned. Give it to uid 999 once instead of running the server as root.
+          docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', info.volume]);
+          docker(['run', '--rm', '--network', 'none', '-u', '0:0', '-v', `${info.volume}:/data`, '--entrypoint', 'chown', info.laneConf.image, '999:999', '/data']);
+        }
+        docker(runArgs(info, eff, holder));
+      }
       const ready = await waitReady(info);
       await withPool(async ledger => {
         const entry = ledger.reservations.find(item => item.container === info.container);
