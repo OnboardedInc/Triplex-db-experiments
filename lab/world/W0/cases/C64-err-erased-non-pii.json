@@ -1,0 +1,20 @@
+{
+  "id": "C64",
+  "slug": "err-erased-non-pii",
+  "title": "An erased marker on a non-PII attribute",
+  "op": "evaluate",
+  "checks": [],
+  "notes": ["payRateCents is not PII, so an erased marker is not a valid value for it: W0.E_VALUE."],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": {"erasedAt": "2026-11-04T08:00:00.000000Z"}, "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}

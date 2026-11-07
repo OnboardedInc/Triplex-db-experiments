@@ -1,0 +1,52 @@
+{
+  "id": "C76",
+  "slug": "publish-unchanged-activation-recovery",
+  "title": "An activation that changes no payload, applied during recovery, publishes nothing",
+  "op": "publish",
+  "checks": [],
+  "notes": [
+    "The state is the outbox after C73's second evaluation (R2, tx 21), with the seq 2 pay notice still pending when the process restarts.",
+    "R3 is activated (it changes only OT) and the subject is re-evaluated at tx 23: both payloads equal the latest published ones, so nothing is published.",
+    "The pending R2 delivery keeps its (id, seq 2) and its R2 version; the guard moves to tx 23."
+  ],
+  "input": {
+    "evaluations": [
+      {
+        "basis": {"tx": 23, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:de954f77ba18ec2799b483696efac3e400a3dd29c840d183b0609ab29497971f",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:db3ad7e0a5044a5a460549e0904b39815be8dcfc16e0ccf749d813de17535958"},
+          {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:4a2d834b67de500161f74f98127ff2c8d24433dcad2bfef9da2fe9aee937d327"}
+        ]
+      }
+    ],
+    "state": {
+      "items": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1700, "payRateCents": 1600}, "retired": false, "seq": 2, "subject": "pl:a"},
+        {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "payload": {}, "retired": false, "seq": 1, "subject": "pl:a"}
+      ],
+      "pending": [
+        {"id": "wi:TBD", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"}
+      ],
+      "subjects": [
+        {"basis": {"tx": 21, "validTime": "2026-11-04T12:00:00.000000Z"}, "subject": "pl:a"}
+      ]
+    }
+  },
+  "expected": {
+    "deliveries": [],
+    "state": {
+      "items": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1700, "payRateCents": 1600}, "retired": false, "seq": 2, "subject": "pl:a"},
+        {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "payload": {}, "retired": false, "seq": 1, "subject": "pl:a"}
+      ],
+      "pending": [
+        {"id": "wi:TBD", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"}
+      ],
+      "subjects": [
+        {"basis": {"tx": 23, "validTime": "2026-11-04T12:00:00.000000Z"}, "subject": "pl:a"}
+      ]
+    }
+  }
+}

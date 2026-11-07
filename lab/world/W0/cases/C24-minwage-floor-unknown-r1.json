@@ -8,8 +8,8 @@
   ],
   "notes": [
     "S.location = loc:new, which has no facts. MINWAGE row 3: task pay.floor-unknown due 2026-11-02T00, overdue.",
-    "The pair [loc:new, stateMinWageCents] is in the dependencies anyway, because read sets are instantiated from the reference value.",
-    "The loc:nyc fact (tx 1) is allowed but unreachable, so it is ignored: no dependency, not an input. MINWAGE inputs [2]."
+    "The pair [loc:new, jurisdiction] is in the dependencies anyway, because read sets are instantiated from the reference value; no jurisdiction pair follows, because loc:new has no jurisdiction fact.",
+    "The loc:nyc and jur:ny facts (tx 1) are allowed but unreachable, so it is ignored: no dependency, not an input. MINWAGE inputs [2]."
   ],
   "input": {
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
@@ -17,7 +17,8 @@
     "world": {
       "subject": "pl:a",
       "facts": [
-        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
         {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
         {"e": "pl:a", "a": "location", "v": "loc:new", "tx": 2},
@@ -37,15 +38,27 @@
   "expected": {
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
     "dependencies": [
-      ["loc:new", "stateMinWageCents"],
-      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
-      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
-      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
-      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"]
+      ["loc:new", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"]
     ],
     "flags": [],
     "obligations": [],
-    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
     "subject": "pl:a",
     "tasks": [
       {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.floor-unknown", "kind": "pay.floor-unknown", "overdue": true, "rule": "MINWAGE"}

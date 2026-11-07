@@ -1,0 +1,37 @@
+{
+  "id": "C57",
+  "slug": "affected-ballast-write-r1",
+  "title": "A ballast write (an answer's value and the placement's answers list) affects nobody",
+  "op": "affected",
+  "checks": [],
+  "notes": [
+    "Ballast pairs are in no read set (RULINGS Q40a), so neither [pl:a/ans:1, value] nor [pl:a, answers] is in any subject's dependencies. Expected: []."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "worlds": [
+      {
+        "subject": "pl:a",
+        "facts": [
+          {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+          {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+          {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+          {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+          {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+          {"e": "pl:a", "a": "answers", "v": "pl:a/ans:1", "tx": 8},
+          {"e": "pl:a/ans:1", "a": "field", "v": "q1", "tx": 8},
+          {"e": "pl:a/ans:1", "a": "value", "v": "a1", "tx": 8}
+        ]
+      },
+      {"subject": "pl:d", "facts": [{"e": "pl:d", "a": "startDate", "v": "2026-11-02", "tx": 7}, {"e": "pl:d", "a": "payRateCents", "v": 1650, "tx": 7}]}
+    ],
+    "writes": [
+      ["pl:a/ans:1", "value"],
+      ["pl:a", "answers"]
+    ]
+  },
+  "expected": {
+    "affected": []
+  }
+}

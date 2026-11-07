@@ -1,0 +1,56 @@
+{
+  "id": "C78",
+  "slug": "publish-retirement-reappear",
+  "title": "An FNC notice that disappears and reappears is delivered again with the next sequence",
+  "op": "publish",
+  "checks": [],
+  "notes": [
+    "tx 20: notify.everify-fnc publishes with seq 1.",
+    "tx 21: the status changed and the evaluation has no work items: the fnc id is retired (RULINGS Q40h), nothing is published.",
+    "tx 22: fnc again, with the same empty payload: because the id was retired, it publishes seq 2."
+  ],
+  "input": {
+    "evaluations": [
+      {
+        "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:ba31df8bdebe1c41c21a6b7bf70842aee0d3ec57eb0f14f3cb41a7c1622ed587", "inputs": [5], "key": "", "kind": "notify.everify-fnc", "payload": {}, "rule": "EVSTAT", "version": "wv:671f553423df5d3c205b33644cb6b6eb500675aab2b9fe727449fa91a3371181"}
+        ]
+      },
+      {"basis": {"tx": 21, "validTime": "2026-11-04T12:00:00.000000Z"}, "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031", "subject": "pl:a", "workItems": []},
+      {
+        "basis": {"tx": 22, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:ba31df8bdebe1c41c21a6b7bf70842aee0d3ec57eb0f14f3cb41a7c1622ed587", "inputs": [22], "key": "", "kind": "notify.everify-fnc", "payload": {}, "rule": "EVSTAT", "version": "wv:1d55d39994d9e773a37c2657ce74384222aa0d5cf67fcc290e6c5a2ed3171005"}
+        ]
+      }
+    ],
+    "state": {
+      "items": [],
+      "pending": [],
+      "subjects": []
+    }
+  },
+  "expected": {
+    "deliveries": [
+      {"id": "wi:ba31df8bdebe1c41c21a6b7bf70842aee0d3ec57eb0f14f3cb41a7c1622ed587", "key": "", "kind": "notify.everify-fnc", "payload": {}, "rule": "EVSTAT", "seq": 1, "subject": "pl:a", "version": "wv:671f553423df5d3c205b33644cb6b6eb500675aab2b9fe727449fa91a3371181"},
+      {"id": "wi:ba31df8bdebe1c41c21a6b7bf70842aee0d3ec57eb0f14f3cb41a7c1622ed587", "key": "", "kind": "notify.everify-fnc", "payload": {}, "rule": "EVSTAT", "seq": 2, "subject": "pl:a", "version": "wv:1d55d39994d9e773a37c2657ce74384222aa0d5cf67fcc290e6c5a2ed3171005"}
+    ],
+    "state": {
+      "items": [
+        {"id": "wi:ba31df8bdebe1c41c21a6b7bf70842aee0d3ec57eb0f14f3cb41a7c1622ed587", "payload": {}, "retired": false, "seq": 2, "subject": "pl:a"}
+      ],
+      "pending": [
+        {"id": "wi:ba31df8bdebe1c41c21a6b7bf70842aee0d3ec57eb0f14f3cb41a7c1622ed587", "key": "", "kind": "notify.everify-fnc", "payload": {}, "rule": "EVSTAT", "seq": 1, "subject": "pl:a", "version": "wv:671f553423df5d3c205b33644cb6b6eb500675aab2b9fe727449fa91a3371181"},
+        {"id": "wi:ba31df8bdebe1c41c21a6b7bf70842aee0d3ec57eb0f14f3cb41a7c1622ed587", "key": "", "kind": "notify.everify-fnc", "payload": {}, "rule": "EVSTAT", "seq": 2, "subject": "pl:a", "version": "wv:1d55d39994d9e773a37c2657ce74384222aa0d5cf67fcc290e6c5a2ed3171005"}
+      ],
+      "subjects": [
+        {"basis": {"tx": 22, "validTime": "2026-11-04T12:00:00.000000Z"}, "subject": "pl:a"}
+      ]
+    }
+  }
+}

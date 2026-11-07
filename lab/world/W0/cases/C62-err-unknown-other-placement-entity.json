@@ -1,0 +1,20 @@
+{
+  "id": "C62",
+  "slug": "err-unknown-other-placement-entity",
+  "title": "A fact about another placement's document",
+  "op": "evaluate",
+  "checks": [],
+  "notes": ["pl:b/doc:1 is owned by pl:b, not by the subject pl:a: W0.E_UNKNOWN (4.2 item 3)."],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:b/doc:1", "a": "docType", "v": "ead", "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_UNKNOWN"}
+}

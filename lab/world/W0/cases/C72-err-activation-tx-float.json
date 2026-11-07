@@ -1,0 +1,21 @@
+{
+  "id": "C72",
+  "slug": "err-activation-tx-float",
+  "title": "An activation's tx written as 9.0",
+  "op": "reconcile",
+  "checks": [],
+  "notes": ["An activation's tx must be a JSON integer token: W0.E_SHAPE (4.4 step 1)."],
+  "input": {
+    "activations": [
+      {"from": "2026-01-01T00:00:00.000000Z", "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031", "tx": 9.0}
+    ],
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_SHAPE"}
+}

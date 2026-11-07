@@ -16,7 +16,8 @@
     "world": {
       "subject": "pl:a",
       "facts": [
-        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
         {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
         {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
@@ -40,16 +41,33 @@
   "expected": {
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
     "dependencies": [
-      ["loc:nyc", "stateMinWageCents"],
-      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
-      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
-      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
-      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"],
-      ["pl:a/dec:2", "author"], ["pl:a/dec:2", "target"], ["pl:a/dec:2", "verdict"]
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"],
+      ["pl:a/dec:2", "author"],
+      ["pl:a/dec:2", "target"],
+      ["pl:a/dec:2", "verdict"]
     ],
-    "flags": [{"name": "i9-section2-waived", "rule": "I9S2"}],
+    "flags": [
+      {"name": "i9-section2-waived", "rule": "I9S2"}
+    ],
     "obligations": [],
-    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
     "subject": "pl:a",
     "tasks": [],
     "trace": [

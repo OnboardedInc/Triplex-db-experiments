@@ -12,29 +12,42 @@
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
     "release": "R2",
     "worlds": [
-      {"subject": "pl:a", "facts": [
-        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
-        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
-        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
-        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
-      ]},
-      {"subject": "pl:b", "facts": [
-        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
-        {"e": "pl:b", "a": "startDate", "v": "2026-11-09", "tx": 3},
-        {"e": "pl:b", "a": "payRateCents", "v": 1700, "tx": 3},
-        {"e": "pl:b", "a": "location", "v": "loc:nyc", "tx": 3}
-      ]},
-      {"subject": "pl:c", "facts": [
-        {"e": "loc:sfo", "a": "stateMinWageCents", "v": 1800, "tx": 4},
-        {"e": "pl:c", "a": "payRateCents", "v": 1800, "tx": 5},
-        {"e": "pl:c", "a": "location", "v": "loc:sfo", "tx": 5}
-      ]},
-      {"subject": "pl:d", "facts": [
-        {"e": "pl:d", "a": "startDate", "v": "2026-11-02", "tx": 6},
-        {"e": "pl:d", "a": "payRateCents", "v": 1650, "tx": 6}
-      ]}
+      {
+        "subject": "pl:a",
+        "facts": [
+          {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+          {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+          {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+          {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+          {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
+        ]
+      },
+      {
+        "subject": "pl:b",
+        "facts": [
+          {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+          {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+          {"e": "pl:b", "a": "startDate", "v": "2026-11-09", "tx": 3},
+          {"e": "pl:b", "a": "payRateCents", "v": 1700, "tx": 3},
+          {"e": "pl:b", "a": "location", "v": "loc:nyc", "tx": 3}
+        ]
+      },
+      {
+        "subject": "pl:c",
+        "facts": [
+          {"e": "loc:sfo", "a": "jurisdiction", "v": "jur:ca", "tx": 4},
+          {"e": "jur:ca", "a": "stateMinWageCents", "v": 1800, "tx": 4},
+          {"e": "pl:c", "a": "payRateCents", "v": 1800, "tx": 5},
+          {"e": "pl:c", "a": "location", "v": "loc:sfo", "tx": 5}
+        ]
+      },
+      {"subject": "pl:d", "facts": [{"e": "pl:d", "a": "startDate", "v": "2026-11-02", "tx": 6}, {"e": "pl:d", "a": "payRateCents", "v": 1650, "tx": 6}]}
     ],
-    "writes": [["loc:nyc", "localMinWageCents"]]
+    "writes": [
+      ["loc:nyc", "localMinWageCents"]
+    ]
   },
-  "expected": {"affected": ["pl:a", "pl:b"]}
+  "expected": {
+    "affected": ["pl:a", "pl:b"]
+  }
 }

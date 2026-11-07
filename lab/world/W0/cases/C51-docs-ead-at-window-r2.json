@@ -1,0 +1,92 @@
+{
+  "id": "C51",
+  "slug": "docs-ead-at-window-r2",
+  "title": "The basis exactly at the ead's R2 window start: the reverification task opens",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "DOCEXP", "polarity": "positive"},
+    {"rule": "LIFE", "polarity": "negative"}
+  ],
+  "notes": [
+    "R2 ead lead 90: W = startOf(addDays(2027-01-15, 1 - 90)) = 2026-10-18T00, and v is exactly W.",
+    "Row 4 needs v < W, which is false at equality; row 5 (v < B = 2027-01-16T00) matches: task doc.reverify#pl:a/doc:1 due 2027-01-16T00, not overdue, with a due obligation.",
+    "The start date 2026-10-12 is before v, so LIFE is quiet; every other rule matches C02."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-10-18T00:00:00.000000Z"},
+    "release": "R2",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-10-12", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-09T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-10-13T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7},
+        {"e": "pl:a", "a": "documents", "v": "pl:a/doc:1", "tx": 8},
+        {"e": "pl:a/doc:1", "a": "docType", "v": "ead", "tx": 8},
+        {"e": "pl:a/doc:1", "a": "expiresOn", "v": "2027-01-15", "tx": 8}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-10-18T00:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["loc:nyc", "localMinWageCents"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"],
+      ["pl:a/doc:1", "docType"],
+      ["pl:a/doc:1", "expiresOn"],
+      ["pl:a/doc:1", "reverified"]
+    ],
+    "flags": [],
+    "obligations": [
+      {"boundary": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1@due", "kind": "due", "rule": "DOCEXP"}
+    ],
+    "release": "sha256:7d2f4008e55f43458ae1288cb65a4cf92f3f04a40a1c6eeafb3fc754435807a9",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": false, "rule": "DOCEXP"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [8], "key": "pl:a/doc:1", "row": 5, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": []
+  }
+}

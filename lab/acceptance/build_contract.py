@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.3"
+VERSION = "0.3.4"
 STATUS = "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review"
 DATE = "2026-11-07"
 
@@ -132,7 +132,7 @@ RULINGS = [
      "compiledInto": ["THRESHOLDS NS-P4-HISTORY-FLATNESS", "load-contract.json basisMix and windows", "PROFILES P-SCREEN", "budgets.json"]},
     {"id": "Q17", "topic": "sparse profile", "ruling": "Dropped; scenario GS.15 (one large tenant and 1,000 small ones) covers population skew.", "compiledInto": ["GS.15", "SCALE_POPULATION"]},
     {"id": "Q18", "topic": "decimal value kind",
-     "ruling": "A decimal attribute declares precision and scale. Stored as a scaled integer when precision <= 15 (the scaled value stays within 2^53), otherwise as an order-preserving decimal string. A value with more fractional digits than the scale, or outside the precision, is rejected with a typed error, never rounded. Decimal is its own family, ordered between number and datetime; comparison between decimal and integer or number is a typed preflight error unless the query converts explicitly; arithmetic runs in the TypeScript kernel with exact decimal arithmetic.",
+     "ruling": "Amended by Q35b: a decimal attribute declares precision and scale and has one stored representation on both lanes, the TDK1 key (channel decimal_order_v1, value-determined, order-preserving) plus derived canonical text at the declared scale. A value with more fractional digits than the scale, or outside the precision, is rejected with a typed error, never rounded. Decimal is its own family, ordered between number and datetime; comparison between decimal and integer or number is a typed preflight error unless the query converts explicitly; arithmetic runs in the TypeScript kernel with exact decimal arithmetic.",
      "compiledInto": ["VALUE_KINDS decimal", "DECIMAL_RULES", "CARD_MANY_ORDER", "COMPARISON_RULES CMP-DECIMAL-CROSS", "G1.types.decimal", "CS-DECIMAL"]},
     {"id": "Q19", "topic": "engine-side exact sums",
      "ruling": "Needed only where a projection sums many rows. EXP-X02 confirms the XTDB recipe (R14 measured SUM(CAST(x AS DECIMAL(32,0))) exact and free on 2.2.0; the split-sum is the fallback); EXP-F02 cross-checks.",
@@ -172,6 +172,18 @@ RULINGS = [
     {"id": "Q32", "topic": "contract 0.3.3 questions (Q32a to Q32f)",
      "ruling": "Q32a compile Q30 now. Q32b a vector with all values in one command is a rejection test on QLever; in-range companion vectors by an independent golden author follow as EXP-G02. Q32c 0.1% of trace commands are deliberately invalid and marked. Q32d queue depth in seconds = queued commands / steady offered rate; drain runs until back within 2 s. Q32e the four position falsifiers gate a composition only when its positions are non-dense; dense compositions (the A0 controls) close G7.position.coordinates with the nested-cut cases. Q32f the W0 pin stays null until V-D01 reviews W0; pinning needs a version bump.",
      "compiledInto": ["Q30", "LEGACY_RULE", "CHANGELOG_033 (EXP-G02)", "WRITER_TRACE generator invalidCommands", "NS-P2-QUEUE-MAX-S", "NS-P2-BURST-DRAIN-S", "position_selection", "position_gate_blocks", "A0_CONTROLS", "GATE-POSITION", "W0_PIN"]},
+    {"id": "Q33", "topic": "EXP-O02 RULING-NEEDED items (Q33a to Q33i)",
+     "ruling": "Q33a a JSON number is accepted only if it reads back as written (refines Q30a). Q33b decimal R-DEC-0, 1, 2, 3, 5, 6, 7. Q33c retract-pattern out of range is E-VALUE-OUT-OF-RANGE. Q33d every ordered comparison across families is E-MIXED-FAMILY; cross-family equality false except decimal. Q33e non-numeric operands and aggregates are E-MIXED-FAMILY; rem integer-only. Q33f unmapped operation faults are E-INVALID-VALUE; retract-pattern on a transaction entity is E-RESERVED. Q33g journal envelope, X-NOT-MODELED, transactions limit malformed. Q33h invalid basis E-INVALID-VALUE; entityPage limit malformed; a cursor continued with another basis is other-query. Q33i the oracle's readings for G10-CUR-01 E1/E2 and the QLever lane outcomes, cross-checked against Q31j.",
+     "compiledInto": ["Q33_RULES", "WR-JSON", "DECIMAL_RULES", "CMP-CROSS-FAMILY-ORDERED", "CS-ERRORS", "CS-JOURNAL", "CS-CURSOR", "CS-RANGE-OUT", "Q33I_CURSOR_READINGS", "Q33I_QLEVER_REJECTED", "LEGACY_LANE_OUTCOMES"]},
+    {"id": "Q34", "topic": "Codex plan-v2 round 3 (Q34a to Q34e)",
+     "ruling": "Q34a density is proven by an allowlist of A0 allocator source hashes checked against the receipt's bound source; positionsDense has no authority; conditional selection authoritative; forged-density fixture. Q34b outage read-your-own-write on every serving surface, native included; stale-fallback rejection; cross-language recipes bound to one semantic query identity and one oracle answer. Q34c the Q30a guard validates user JSON only; generated journal JSON is exempt; lossless typed journal; paired test. Q34d prerequisites checked at admission of every comparative or promotion claim, screening included; failed or pending means diagnostic. Q34e two regenerations are byte-identical.",
+     "compiledInto": ["A0_ALLOCATOR_ALLOWLIST", "ALLOCATOR_EXTRACTION_RULE", "density_proven", "position_selection", "FORGED_DENSITY_FIXTURE", "G7.position.coordinates", "COMPOSITION fallbackEquivalence", "G7.composition.ack-and-routed-ryow", "WR-JSON", "G1.wire.write-guards", "G7.journal.logical-contract", "CLAIM_ADMISSION", "admit_claim", "main --verify"]},
+    {"id": "Q35", "topic": "R20 order-preserving decimal encodings (Q35a to Q35e)",
+     "ruling": "Q35a the decimal order key is TDK1 (value-determined, order-preserving). Q35b one stored representation on both lanes (TDK1 key plus derived canonical text), amending Q18; widening that admits every value is metadata-only. Q35c channel decimal_order_v1. Q35d keys never concatenated nor used for prefix queries. Q35e error names E-DECIMAL-OVERFLOW, E-DECIMAL-FRACTION, E-DECIMAL-NARROWING, E-DECIMAL-BARE-DIVIDE (the earlier unrepresentable error is retired); precision 38; -0.00 refused; no native XTDB DECIMAL lane; signed-zero rounding tests if decimal.js or big.js is used.",
+     "compiledInto": ["TDK1", "tdk1_encode", "DECIMAL_RULES", "VALUE_KINDS decimal", "DS-WIDEN", "ERROR_TABLE", "TDK1_TESTS", "CS-TDK1", "G1.decimal.tdk1-*", "O-TDK1", "TDK1_VECTOR_PIN", "GATE-TDK1-VECTORS"]},
+    {"id": "Q36", "topic": "W0 questions from EXP-D01a (Q36a to Q36h)",
+     "ruling": "Contract impact only of Q36a (work item id over (subject, rule, kind, key); content version over (release hash, input positions, payload); outbox delivery key (id, version); early cutoff: an unchanged payload publishes nothing), Q36e (expected affected set = subjects whose static read set contains a changed fact) and Q36g/h (location fanout Zipf s = 0.5 over 2,000 locations at 100k; other rungs N / 50 with the same s). Q36b, c, d and f have no contract impact.",
+     "compiledInto": ["WORLD_W0 workItemIdentity", "WORLD_W0 affectedSet", "WORLD_W0 fanout", "W0-LOCATION-ZIPF-S", "GS.19", "GS-19B-OUTBOX-CRASH", "NS.P5", "NS.P3", "load-contract.json P3 and P5"]},
 ]
 
 # ============================================================================ language accounting
@@ -240,6 +252,7 @@ COMPARISON_RULES = [
     {"id": "CMP-NUMERIC-CONST", "rule": "an untyped numeric constant compares by numeric value with number and datetime values (number 7 and datetime 7 both equal 7); text '7' is not equal", "source": "testkit 'datalog equality predicates compare numeric values as numbers' (packages/testkit/src/index.ts:721)"},
     {"id": "CMP-INT-FLOAT", "rule": "integer versus number: equality is false and they never share a group; an ordered comparison across them is preflight E-MIXED-FAMILY unless converted explicitly", "source": "RULINGS Q8d (core silent for stored integer versus number)"},
     {"id": "CMP-DECIMAL-CROSS", "rule": "every comparison between decimal and integer or number, equality included, and any grouping or set operation mixing them, is a preflight E-MIXED-FAMILY unless the query converts explicitly (DECIMAL_CONVERSIONS); there is no false or null result", "source": "RULINGS Q18, Q22"},
+    {"id": "CMP-CROSS-FAMILY-ORDERED", "rule": "every ordered comparison across type families is a preflight E-MIXED-FAMILY, never false; equality across families is false except where a ruling makes it an error (decimal, CMP-DECIMAL-CROSS)", "source": "RULINGS Q33d (R-CMP-3); Q14d"},
     {"id": "CMP-IDENTITY", "rule": "entity ids and ref identities compare only with text or ref constants; a numeric or boolean constant is never equal and != is true", "source": "testkit 'datalog equality keeps identity bindings string-typed'"},
     {"id": "CMP-UNTYPED-STRING", "rule": "an untyped string constant matches string and ref values; a typed ref constant matches only ref values", "source": "testkit 'datalog untyped strings match string and ref values while typed refs stay exact'"},
     {"id": "CMP-BOOL-INT", "rule": "boolean true and integer 1 are distinct values and distinct groups", "source": "packet oracle identity() (event_oracles.py: bool true vs i64 one)"},
@@ -274,6 +287,37 @@ CONSTRAINT_RULES = [
     {"id": "CN-PREEXISTING-CONFLICT", "rule": "a card-one conflict that predates the enforcing write stays a conflict (C5.2) and reads per C5.3", "source": "PLAN C5.2"},
 ]
 
+# RULINGS Q33 (EXP-O02 RULING-NEEDED items).
+Q33_RULES = [
+    {"id": "R-VAL-7a", "rule": "a JSON number is accepted only if it reads back as written: its shortest round-trip binary64 rendering equals the given text in canonical form (0.1 accepted; 9007199254740993 rejected, it would read back as ...992); this is what Q30a's 'not exactly a binary64 value' means", "error": "E-INEXACT-JSON-NUMBER", "case": "Q33-JSON-READBACK", "ruling": "Q33a"},
+    {"id": "R-DEC-0", "rule": "a decimal on an attribute not declared decimal", "error": "E-INVALID-VALUE", "case": "DEC-UNDECLARED-ATTRIBUTE", "ruling": "Q33b"},
+    {"id": "R-DEC-1", "rule": "decimal wire shape {\"type\": \"decimal\", \"value\": \"16.50\"}", "error": "-", "case": "DEC-SMALL-PRECISION-TDK1", "ruling": "Q33b"},
+    {"id": "R-DEC-2", "rule": "-0.00 is refused, consistent with Q30b", "error": "E-INVALID-VALUE", "case": "DEC-NEGZERO-REFUSED", "ruling": "Q33b"},
+    {"id": "R-DEC-3", "rule": "fractional digits are counted on the value: 16.500 fits scale 2 and is returned as 16.50; the original input text is still captured (Q22)", "error": "-", "case": "DEC-TRAILING-ZERO-FITS", "ruling": "Q33b"},
+    {"id": "R-DEC-5", "rule": "decimal divide(a, b, scale, rounding) is modeled by the oracle (follow-up EXP-O03)", "error": "-", "case": "DEC-OP-DIVIDE", "ruling": "Q33b"},
+    {"id": "R-DEC-6", "rule": "toDecimal(number) starts from the exact binary expansion, then applies the caller's scale and rounding", "error": "-", "case": "DEC-TODECIMAL-EXACT-EXPANSION", "ruling": "Q33b"},
+    {"id": "R-DEC-7", "rule": "AVG over decimal is a preflight error unless written as divide(SUM, COUNT, scale, rounding)", "error": "E-DECIMAL-AVG", "case": "DEC-AVG-PREFLIGHT", "ruling": "Q33b"},
+    {"id": "R-LANE-2", "rule": "a retract-pattern value outside the lane's range", "error": "E-VALUE-OUT-OF-RANGE", "case": "RANGE-OUT-RETRACT-PATTERN", "ruling": "Q33c"},
+    {"id": "R-CMP-3", "rule": "every ordered comparison across families is a preflight error, never false; equality across families is false except where a ruling makes it an error (decimal, Q22)", "error": "E-MIXED-FAMILY", "case": "Q33-CROSS-FAMILY-ORDER", "ruling": "Q33d"},
+    {"id": "R-NUM-7", "rule": "an arithmetic operand of a non-numeric family", "error": "E-MIXED-FAMILY", "case": "Q33-NONNUMERIC-OPERAND", "ruling": "Q33e"},
+    {"id": "R-NUM-8", "rule": "rem is integer-only; a binary64 operand is a preflight error", "error": "E-MIXED-FAMILY", "case": "Q33-REM-BINARY64", "ruling": "Q33e"},
+    {"id": "R-AGG-5", "rule": "SUM or AVG over a non-numeric family", "error": "E-MIXED-FAMILY", "case": "Q33-AGG-NONNUMERIC", "ruling": "Q33e"},
+    {"id": "R-CMD-9", "rule": "an operation fault with no ERROR_TABLE row", "error": "E-INVALID-VALUE", "case": "Q33-CMD-UNMAPPED-FAULT", "ruling": "Q33f"},
+    {"id": "R-CMD-12", "rule": "retract-pattern on a transaction entity", "error": "E-RESERVED", "case": "Q33-CMD-RETRACT-TX-ENTITY", "ruling": "Q33f"},
+    {"id": "R-JNL-5", "rule": "journal facts are valid from the commit instant, carry synthetic ids, and :_tx/change json carries the logical change content", "error": "-", "case": "Q33-JNL-ENVELOPE", "ruling": "Q33g"},
+    {"id": "R-JNL-6", "rule": "other envelope facts return X-NOT-MODELED, never a partial answer", "error": "-", "case": "Q33-JNL-NOT-MODELED", "ruling": "Q33g"},
+    {"id": "R-JNL-7", "rule": "an invalid transactions limit is PaginationCursorError / malformed, the same as entityPage", "error": "E-CURSOR", "case": "Q33-JNL-LIMIT", "ruling": "Q33g"},
+    {"id": "R-CUT-3", "rule": "an invalid basis", "error": "E-INVALID-VALUE", "case": "Q33-CUT-INVALID-BASIS", "ruling": "Q33h"},
+    {"id": "R-PAGE-3", "rule": "an out-of-range entityPage limit is PaginationCursorError / malformed (G10-CUR-01 E3)", "error": "E-CURSOR", "case": "Q33-PAGE-LIMIT", "ruling": "Q33h"},
+    {"id": "R-PAGE-4", "rule": "continuing a cursor with a different basis is PaginationCursorError / other-query; a different page size is allowed", "error": "E-CURSOR", "case": "Q33-PAGE-OTHER-BASIS", "ruling": "Q33h"},
+]
+# RULINGS Q33i: the oracle's readings for vector bugs; the vectors stay unchanged as audit evidence (Q29a).
+Q33I_CURSOR_READINGS = [
+    {"vector": "G10-CUR-01", "query": "E1", "vectorReason": "basis_mismatch", "compiled": {"_tag": "PaginationCursorError", "reason": "other-query"}, "why": "R-PAGE-4: a different basis is other-query"},
+    {"vector": "G10-CUR-01", "query": "E2", "vectorReason": "query_mismatch", "compiled": {"_tag": "PaginationCursorError", "reason": "other-query"}, "why": "E-CURSOR has only malformed, other-scope and other-query"},
+]
+Q33I_QLEVER_REJECTED = ["G1-I64-01", "Q8F-02", "G1-I64-02#min-exact", "G5-SUM-01", "G5-SUM-02", "G5-SUM-04", "G5-SUM-05", "G5-SUM-06", "G5-SUM-08", "G5-SUM-11#case2"]
+
 TEMPORAL_RULES = [
     {"id": "TM-HALF-OPEN", "rule": "valid intervals are [validFrom, validTo) with null open-ended", "source": "handoff README 46-48"},
     {"id": "TM-EMPTY-REJECTED", "rule": "an interval with validTo <= validFrom is rejected with E-INVALID-VALUE before any mutation, because an interval that can never be visible would be a silent no-op", "source": "RULINGS Q21 AMB-12"},
@@ -296,14 +340,66 @@ JOURNAL_RULES = [
 DECIMAL_RULES = {
     "source": "RULINGS Q18",
     "declaration": "every decimal attribute declares precision p (total significant digits) and scale s (fractional digits), 0 <= s <= p",
-    "storage": [{"when": "p <= 15", "as": "scaled integer value * 10^s (|scaled| < 10^15 < 2^53)"}, {"when": "p > 15", "as": "order-preserving decimal string (fixed-width, sign-aware encoding whose bytewise order equals numeric order)"}],
-    "reject": "a value with more than s fractional digits, or with more than p - s integer digits, fails the write with E-DECIMAL-UNREPRESENTABLE and leaves no residue; never rounded or truncated",
+    "storage": [{"when": "every declared precision and scale (both lanes)", "as": "the TDK1 key in channel decimal_order_v1 (authoritative, decodes exactly) plus derived canonical text at the declared scale; QLever also keeps its lexical channel for parity with other kinds (RULINGS Q35b, amending Q18)"}],
+    "oneRepresentation": "the decimal kind has exactly one stored representation; Q18's scaled-integer path no longer applies; money modeled as integer cents uses the integer kind (RULINGS Q35b)",
+    "reject": "a value with more than s fractional digits (counted on the value, so 16.500 fits scale 2, R-DEC-3) fails with E-DECIMAL-FRACTION; a value beyond the declared precision or 38 digits fails with E-DECIMAL-OVERFLOW; -0.00 in any spelling is refused with E-INVALID-VALUE (R-DEC-2); a decimal on an attribute not declared decimal is E-INVALID-VALUE (R-DEC-0); every rejection leaves no residue; never rounded or truncated (RULINGS Q33b, Q35e)",
+    "wireShape": "{\"type\": \"decimal\", \"value\": \"16.50\"} (R-DEC-1); a value with extra trailing zeros is returned at the declared scale (16.500 at scale 2 reads back as 16.50) while the original input text is still captured (Q22, R-DEC-3)",
+    "toDecimal": "toDecimal(number, p, s, rounding) starts from the number's exact binary expansion, then applies the caller's scale and rounding (R-DEC-6)",
+    "avg": "AVG over decimal is preflight E-DECIMAL-AVG unless written as divide(SUM, COUNT, scale, rounding) (R-DEC-7); decimal divide is modeled by the oracle (follow-up EXP-O03, R-DEC-5)",
     "family": "decimal is its own family, ordered between number and datetime (CARD_MANY_ORDER); 1.50 and 1.5 are one value",
     "comparison": "CMP-DECIMAL-CROSS: comparison with integer or number is preflight E-MIXED-FAMILY unless the query converts explicitly",
     "arithmetic": "TypeScript kernel, exact decimal arithmetic; engine-side decimal arithmetic only where a projection needs it (RULINGS Q19)",
     "inputCapture": "the writer captures the caller's original typed input before any normalization; tests assert nothing was rounded before capture (DEC-INPUT-CAPTURE, M-DECIMAL-PRECAPTURE-ROUND)",
     "kernelMaxDigits": 38,
 }
+# RULINGS Q35a, Q35c, Q35d: the decimal order key (R20 section 6).
+TDK1 = {
+    "name": "TDK1 (Triplex decimal key, version 1)", "channel": "decimal_order_v1", "source": "lab/research/R20-order-preserving-decimal-encodings.md section 6; RULINGS Q35a",
+    "summary": "value-determined, order-preserving (TDK1): zero o; positive p LL I F (LL two-digit integer-digit count, I without leading zeros, F without trailing zeros); negative n (99-L) comp(I) comp(F) z with comp(d) = 9 - d",
+    "alphabet": "0123456789nopz",
+    "inputGrammar": "-?(0|[1-9][0-9]*)(\\.[0-9]+)?; refused: +1, 01, 1., .5, 1e3, whitespace, non-ASCII digits, negative zero in any spelling",
+    "decode": "parse strictly, then render the sign, I or 0, and when s > 0 a '.' followed by F right-padded with zeros to s digits",
+    "order": "codepoint order of keys equals numeric order; the alphabet [0-9nopz] makes ICU order equal codepoint order on QLever and byte order on XTDB (no collation on 2.2.0)",
+    "useConstraints": "keys are never concatenated into a composite string and never used for prefix queries (p0212 is a prefix of p02125); only whole-key equality and ordered comparison, as a separate sort column (RULINGS Q35d)",
+    "versioning": "a future encoding gets a new channel name and a migration (RULINGS Q35c)",
+    "limits": "maximum precision 38 (TDK1 has headroom to 99 integer digits); no native XTDB DECIMAL lane: one verification path (RULINGS Q35e)",
+    "kernelNote": "if the kernel uses decimal.js or big.js, rounding tests cover their signed zero (RULINGS Q35e)",
+    "examples": [["0", "o"], ["0.00", "o"], ["1", "p011"], ["1.10", "p0111"], ["0.01", "p0001"], ["0.05", "p0005"], ["0.5", "p005"], ["12", "p0212"], ["12.25", "p021225"], ["12.5", "p02125"], ["16.50", "p02165"], ["16.499999", "p0216499999"], ["125", "p03125"],
+                 ["-0.01", "n9998z"], ["-0.5", "n994z"], ["-0.55", "n9944z"], ["-12", "n9787z"], ["-12.5", "n97874z"], ["-16.50", "n97834z"], ["-125", "n96874z"],
+                 ["12345678901234567890.12", "p201234567890123456789012"], ["-99999999999999999999.99", "n790000000000000000000000z"], ["9" * 38, "p38" + "9" * 38], ["-" + "9" * 38, "n61" + "0" * 38 + "z"]],
+}
+
+
+def tdk1_encode(text):
+    """Reference TDK1 encoder (R20 section 6.1), used by the generator's self-check only."""
+    if not re.fullmatch(r"-?(0|[1-9][0-9]*)(\.[0-9]+)?", text):
+        raise ValueError("malformed")
+    neg = text.startswith("-")
+    ip, _, fp = text.lstrip("-").partition(".")
+    i, f = ip.lstrip("0"), fp.rstrip("0")
+    if not i and not f:
+        if neg:
+            raise ValueError("negative zero")
+        return "o"
+    if len(i) > 99:
+        raise ValueError("too many integer digits")
+    if not neg:
+        return f"p{len(i):02d}{i}{f}"
+    comp = lambda d: "".join(str(9 - int(c)) for c in d)
+    return f"n{99 - len(i):02d}{comp(i)}{comp(f)}z"
+
+
+# RULINGS Q35 (R20 section 5.3): engine-side property tests V3 to V7, each a decimal-kind obligation.
+TDK1_TESTS = {
+    "V3": {"obligation": "G1.decimal.tdk1-admission", "case": "TDK1-V3-ORDER-PROBE", "check": "per-image admission probe: the 121,005-key sorted chain, all boundary keys, 20,000 prefix pairs (p0212 / p02125) and negatives (n9944z / n994z) loaded as VARCHAR on XTDB (flushed and compacted L0 blocks plus bloom pages) and as plain literals in an order predicate on QLever (including a post-index INSERT DATA delta)", "pass": "ORDER BY key returns exactly the exact-rational order and the two engines return byte-identical orders"},
+    "V4": {"obligation": "G1.decimal.tdk1-ranges", "case": "TDK1-V4-RANGES", "check": "1,000 random closed and half-open ranges whose bounds are not in the set and have more fractional digits than any scale", "pass": "count, first key and last key equal the oracle; keyset and LIMIT/OFFSET pagination concatenate to the full order"},
+    "V5": {"obligation": "G1.decimal.tdk1-differential", "case": "TDK1-V5-DIFFERENTIAL", "check": "the TypeScript encoder in packages/core against the Python reference on a pinned vector file (TDK1_VECTOR_PIN)", "pass": "byte-for-byte equal keys and equal decode results; mutants of the TypeScript encoder fail"},
+    "V6": {"obligation": "G1.decimal.tdk1-serialization", "case": "TDK1-V6-SERIALIZATION", "check": "the key through the pg wire, JSON export, SPARQL result export, ledger and projection", "pass": "the key string is unchanged: no case change, trimming or numeric coercion"},
+    "V7": {"obligation": "G1.decimal.tdk1-writer-negative", "case": "TDK1-V7-WRITER-NEGATIVE", "check": "values outside (p, s), excess nonzero fractional digits (R-DEC-3), -0, more than 38 digits, malformed text", "pass": "typed error (E-DECIMAL-OVERFLOW, E-DECIMAL-FRACTION or E-INVALID-VALUE), no residue, no rounding anywhere on the path"},
+}
+# Required input for V5: null until the seeded vector file is generated and reviewed; fails closed.
+TDK1_VECTOR_PIN = {"file": "lab/oracles/decimal/tdk1-vectors.json", "sha256": None, "generator": "R20 decimal_key_test.py sets (seed recorded in the file)", "rule": "null until the vector file exists and is reviewed; pinning needs a contract version bump"}
+
 # RULINGS Q22: one row per operator, conversion and scale change; every row is a named CS-DECIMAL case.
 DECIMAL_OPS = [
     {"id": "DO-ADD", "op": "a + b, a - b (decimal(p1, s1), decimal(p2, s2))", "resultScale": "max(s1, s2)", "resultPrecision": "max(p1 - s1, p2 - s2) + max(s1, s2) + 1", "error": "E-DECIMAL-OVERFLOW when the result exceeds the target's declared precision or 38 digits", "case": "DEC-OP-ADD"},
@@ -315,16 +411,16 @@ DECIMAL_OPS = [
     {"id": "DO-SUM", "op": "SUM over decimals (kernel; engine side only where a projection needs it)", "resultScale": "max scale of the inputs", "resultPrecision": "38", "error": "E-DECIMAL-OVERFLOW when the exact total exceeds 38 digits", "case": "DEC-OP-SUM"},
 ]
 DECIMAL_CONVERSIONS = [
-    {"id": "DC-I2D", "rule": "integer to decimal(p, s): exact when the integer fits p - s digits, else E-DECIMAL-UNREPRESENTABLE", "case": "DEC-CV-INT-TO-DEC"},
+    {"id": "DC-I2D", "rule": "integer to decimal(p, s): exact when the integer fits p - s digits, else E-DECIMAL-OVERFLOW", "case": "DEC-CV-INT-TO-DEC"},
     {"id": "DC-D2I", "rule": "decimal to integer: only when the fraction is zero, else E-DECIMAL-FRACTION unless the caller writes round(x, 0, rounding) first", "case": "DEC-CV-DEC-TO-INT"},
     {"id": "DC-D2N", "rule": "decimal to number: only through toNumber(x) (named, lossy, one correctly rounded binary64)", "case": "DEC-CV-DEC-TO-NUM"},
     {"id": "DC-N2D", "rule": "number to decimal: only through toDecimal(x, p, s, rounding); NaN and infinities never occur (rejected at write)", "case": "DEC-CV-NUM-TO-DEC"},
-    {"id": "DC-T2D", "rule": "text to decimal at the write boundary: the canonical decimal grammar only; more fractional digits than s or more than p - s integer digits is E-DECIMAL-UNREPRESENTABLE, never rounded", "case": "DEC-CV-TEXT-TO-DEC"},
+    {"id": "DC-T2D", "rule": "text to decimal at the write boundary: the canonical decimal grammar only; more fractional digits than s (counted on the value) is E-DECIMAL-FRACTION and more than p - s integer digits is E-DECIMAL-OVERFLOW, never rounded", "case": "DEC-CV-TEXT-TO-DEC"},
     {"id": "DC-IMPLICIT", "rule": "no implicit conversion between decimal and integer or number in any expression; mixing them is preflight E-MIXED-FAMILY (CMP-DECIMAL-CROSS)", "case": "DEC-CROSS-FAMILY-PREFLIGHT"},
 ]
 DECIMAL_SCALE_EVOLUTION = [
-    {"id": "DS-WIDEN", "rule": "increasing scale or precision is a metadata change only when the integer digits p - s do not shrink (precision grows by at least the scale increase) and the order-key encoding is proven unchanged for every existing value; stored values then read back with the new declared scale", "case": "DEC-SCALE-WIDEN"},
-    {"id": "DS-WIDEN-MIGRATE", "rule": "any other widening (integer digits would shrink, or an existing value's order key would change) is a migration that rewrites values and order keys atomically, or fails atomically with E-DECIMAL-NARROWING before any mutation", "case": "DEC-SCALE-WIDEN-MIGRATE"},
+    {"id": "DS-WIDEN", "rule": "a declaration change that admits every existing value is metadata-only: TDK1 keys depend on the value alone, so Q31g's key-compatibility condition always holds and no key is rewritten; stored values read back with the new declared scale (RULINGS Q35b, superseding Q31g's migration path)", "case": "DEC-SCALE-WIDEN"},
+    {"id": "DS-WIDEN-MIGRATE", "rule": "a change under which some existing value no longer fits (for example integer digits p - s shrink) validates every live and historical value first and fails atomically with E-DECIMAL-NARROWING before any mutation; no key rewrite is ever needed", "case": "DEC-SCALE-WIDEN-MIGRATE"},
     {"id": "DS-NARROW", "rule": "narrowing precision or scale is a migration that fails atomically with E-DECIMAL-NARROWING, before any mutation, if any live or historical value would lose digits", "case": "DEC-SCALE-NARROW"},
 ]
 DECIMAL_TESTS = ["DEC-ADJACENT-LARGE", "DEC-NEGATIVE", "DEC-ZERO", "DEC-SCALE-BOUNDARY", "DEC-INTERMEDIATE", "DEC-EVERY-PATH", "DEC-ORDER-KEY-INDEPENDENT", "DEC-INPUT-CAPTURE"]
@@ -348,7 +444,7 @@ VALUE_KINDS = [
     {"kind": "string", "rule": "exact codepoint sequence; ill-formed UTF-16 rejected with E-INVALID-VALUE"},
     {"kind": "integer", "rule": "exact; every lane accepts at least [-(2^53-1), 2^53-1]; each lane declares its accepted range (LANE_INTEGER_RANGE); a value outside the lane's range fails the write with E-VALUE-OUT-OF-RANGE and leaves no residue; never wrapped, widened or rounded"},
     {"kind": "number", "rule": "binary64 for approximate, deterministic values only (for example a risk score), never business values; stored and read bit-exact; NaN and infinities rejected"},
-    {"kind": "decimal", "rule": "value kind for money and business decimals (RULINGS Q18, DECIMAL_RULES): the attribute declares precision and scale; stored as a scaled integer when precision <= 15, otherwise as an order-preserving decimal string; exact storage and round trip; order-preserving encoding for range rules; a value with more fractional digits than the scale, or outside the precision, fails with E-DECIMAL-UNREPRESENTABLE, never rounded; its own family; arithmetic in the TypeScript kernel with exact decimal arithmetic"},
+    {"kind": "decimal", "rule": "value kind for money and business decimals (RULINGS Q18 as amended by Q35b, DECIMAL_RULES): the attribute declares precision and scale; one stored representation on both lanes, the TDK1 key (value-determined, order-preserving, channel decimal_order_v1) plus derived canonical text; exact storage and round trip; more fractional digits than the scale fail with E-DECIMAL-FRACTION, a value beyond the precision with E-DECIMAL-OVERFLOW, never rounded; its own family; arithmetic in the TypeScript kernel with exact decimal arithmetic"},
     {"kind": "boolean", "rule": "exact"},
     {"kind": "datetime", "rule": "exact epoch-millisecond instant including fractional milliseconds; values needing nanoseconds use ISO strings (NUMERIC table)"},
     {"kind": "ref", "rule": "exact target id"},
@@ -357,7 +453,7 @@ VALUE_KINDS = [
 ]
 # RULINGS Q30a to Q30e (compiled by Q32a): wire exactness findings of EXP-F02.
 WIRE_RULES = [
-    {"id": "WR-JSON", "rule": "a JSON value containing -0, a non-finite number, or a number that is not exactly a binary64 value is rejected at every qualified write route with E-INEXACT-JSON-NUMBER (InvalidTripleError / invalid-value, detail inexact-json-number), never normalized; the guard runs before CanonicalJson, whose canonical identity is unchanged; approximateNumbers: reject applies recursively inside List and Struct", "source": "RULINGS Q30a", "cases": ["WIRE-JSON-NEGZERO", "WIRE-JSON-NONFINITE", "WIRE-JSON-INEXACT", "WIRE-JSON-NESTED-LIST", "WIRE-JSON-NESTED-STRUCT", "WIRE-JSON-BEFORE-CANONICAL"]},
+    {"id": "WR-JSON", "rule": "a user-supplied JSON value containing -0, a non-finite number, or a number that does not read back as written (its shortest round-trip binary64 rendering differs from the given text in canonical form, RULINGS Q33a: 0.1 accepted, 9007199254740993 rejected) is rejected at every qualified write route with E-INEXACT-JSON-NUMBER (InvalidTripleError / invalid-value, detail inexact-json-number), never normalized; the guard runs before CanonicalJson, whose canonical identity is unchanged; approximateNumbers: reject applies recursively inside List and Struct; the guard applies to user JSON only: JSON that Triplex generates (journal changes, metadata) never passes through it, and the journal encodes typed values losslessly, so a number -0 assertion commits, journals, replays and reads back bit-exact (RULINGS Q34c, AMB-04)", "source": "RULINGS Q30a, Q33a, Q34c", "cases": ["WIRE-JSON-NEGZERO", "WIRE-JSON-NONFINITE", "WIRE-JSON-INEXACT", "WIRE-JSON-NESTED-LIST", "WIRE-JSON-NESTED-STRUCT", "WIRE-JSON-BEFORE-CANONICAL", "Q33-JSON-READBACK", "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"]},
     {"id": "WR-INSTANT", "rule": "an instant given as -0 is rejected with E-NEGATIVE-ZERO-INSTANT (NoNegativeZero), never turned into 0", "source": "RULINGS Q30b", "cases": ["WIRE-INSTANT-NEGZERO"]},
     {"id": "WR-X-ENCODINGS", "rule": "ProjectionSpec pins the XTDB encodings F02 proved exact: card-many DOUBLE and integer lists are written as ARRAY[CAST(? AS <type>) ...], never as one JSON parameter; date and instant are read as text, never through the driver's TIMESTAMPTZ decoding; any other encoding fails the projection check", "source": "RULINGS Q30c", "cases": ["WIRE-X-DOUBLE-LIST-ARRAY", "WIRE-X-INTEGER-LIST-ARRAY", "WIRE-X-DATE-TEXT", "WIRE-X-INSTANT-TEXT", "WIRE-X-OTHER-ENCODING-FAILS"]},
     {"id": "WR-Q-SHADOW", "rule": "a QLever binary64 shadow counts as exact only if it is not -0 and parsing its %.13g rendering returns the same bits; integers only within +/-2^59; otherwise the lexical channel is authoritative and the shadow is flagged inexact (coarse pruning only, never an answer)", "source": "RULINGS Q30d", "cases": ["WIRE-Q-SHADOW-NEGZERO", "WIRE-Q-SHADOW-13G", "WIRE-Q-SHADOW-INT59", "WIRE-Q-LEXICAL-AUTHORITATIVE"]},
@@ -371,7 +467,6 @@ RANGE_RULE = "Every attribute used in a range rule (for example 'pay rate at or 
 ERROR_TABLE = [
     {"id": "E-INTEGER-OVERFLOW", "tag": "QueryError", "reason": "integer-overflow", "phase": "execution", "status": "existing reason string (compiler.ts:572), tag frozen here"},
     {"id": "E-VALUE-OUT-OF-RANGE", "tag": "InvalidTripleError", "reason": "value-out-of-range", "phase": "preflight", "status": "new reason (NUMERIC): the value is valid Triplex but outside the lane's declared exact range; rejected before any engine mutation"},
-    {"id": "E-DECIMAL-UNREPRESENTABLE", "tag": "InvalidTripleError", "reason": "decimal-unrepresentable", "phase": "preflight", "status": "new reason (decimal value kind)"},
     {"id": "E-NUMBER-OVERFLOW", "tag": "QueryError", "reason": "number-overflow", "phase": "execution", "status": "new"},
     {"id": "E-DIVISION-BY-ZERO", "tag": "QueryError", "reason": "division-by-zero", "phase": "execution", "status": "new (RULINGS Q8c)"},
     {"id": "E-INVALID-CONVERSION", "tag": "QueryError", "reason": "invalid-conversion", "phase": "execution", "status": "new"},
@@ -401,9 +496,10 @@ ERROR_TABLE = [
     {"id": "E-INVALID-VALUE", "tag": "InvalidTripleError", "reason": "invalid-value", "phase": "preflight", "status": "existing class; also an empty valid interval (TM-EMPTY-REJECTED, AMB-12) and invalid integer text (AMB-14)"},
     {"id": "E-INEXACT-JSON-NUMBER", "tag": "InvalidTripleError", "reason": "invalid-value", "phase": "preflight", "status": "existing reason with detail inexact-json-number (RULINGS Q30a): -0, a non-finite number or an inexact binary64 inside a JSON value, at any depth"},
     {"id": "E-NEGATIVE-ZERO-INSTANT", "tag": "InvalidTripleError", "reason": "invalid-value", "phase": "preflight", "status": "existing reason with detail no-negative-zero (RULINGS Q30b): an instant given as -0"},
-    {"id": "E-DECIMAL-OVERFLOW", "tag": "DatalogValidationError", "reason": "decimal-overflow", "phase": "execution", "status": "new reason (RULINGS Q22): a decimal result beyond the target's declared precision or 38 digits"},
+    {"id": "E-DECIMAL-OVERFLOW", "tag": "InvalidTripleError", "reason": "decimal-overflow", "phase": "preflight or execution", "status": "new reason (RULINGS Q22, Q35e): a written value or a result beyond the declared precision or 38 digits"},
     {"id": "E-DECIMAL-BARE-DIVIDE", "tag": "DatalogValidationError", "reason": "decimal-divide-requires-scale", "phase": "preflight", "status": "new reason (RULINGS Q22): bare / on decimals; use divide(a, b, scale, rounding)"},
-    {"id": "E-DECIMAL-FRACTION", "tag": "DatalogValidationError", "reason": "decimal-fraction-not-zero", "phase": "execution", "status": "new reason (RULINGS Q22): decimal to integer with a non-zero fraction and no round()"},
+    {"id": "E-DECIMAL-FRACTION", "tag": "InvalidTripleError", "reason": "decimal-fraction", "phase": "preflight", "status": "new reason (RULINGS Q22, Q35e): more fractional digits than the declared scale at write, or decimal to integer with a non-zero fraction and no round()"},
+    {"id": "E-DECIMAL-AVG", "tag": "DatalogValidationError", "reason": "decimal-avg-requires-divide", "phase": "preflight", "status": "new reason (RULINGS Q33b R-DEC-7): AVG over decimal; write divide(SUM, COUNT, scale, rounding)"},
     {"id": "E-DECIMAL-NARROWING", "tag": "WriteError", "reason": "decimal-narrowing-loses-digits", "phase": "preflight", "status": "new reason (RULINGS Q22): a scale or precision narrowing would lose digits; the migration fails atomically"},
     {"id": "E-UNSUPPORTED-VALUE", "tag": "UnsupportedValueTypeError", "reason": "unsupported-value-type", "phase": "preflight", "status": "existing class"},
     {"id": "E-RESERVED", "tag": "WriteError", "reason": "reserved-namespace", "phase": "preflight", "status": "existing behavior; reason frozen here (RULINGS Q21 AMB-14)"},
@@ -536,7 +632,7 @@ THRESHOLDS = {
     "W0-R2-CHANGED-SHARE": th("coverage", 0.20, "share of R2's in-scope subjects whose outputs R2 changes against R1", "min", "RULINGS Q31i; lab/TARGETS.md 6.1 item 6 (provisional)"),
     "W0-RULE-FIRE-SHARE": th("coverage", 0.05, "share of subjects for which each W0 rule fires (every rule separately)", "min", "RULINGS Q31i; lab/TARGETS.md 6.1 item 6 (provisional)"),
     "W0-LOCATIONS-100K": th("coverage", 2000, "work locations at the 100k rung", "min", "RULINGS Q31i; lab/TARGETS.md 6.1 item 6 (provisional)"),
-    "W0-LOCATION-ZIPF-S": th("coverage", 1.0, "Zipf exponent of the seeded worker-to-location fanout (fixed, not a bound to beat)", "eq", "RULINGS Q31i; lab/TARGETS.md 6.1 item 6 (provisional)"),
+    "W0-LOCATION-ZIPF-S": th("coverage", 0.5, "Zipf exponent of the seeded worker-to-location fanout at the 100k rung (fixed, not a bound to beat; other rungs N / 50 locations with the same s)", "eq", "RULINGS Q31i, Q36g, Q36h; lab/TARGETS.md 6.1 item 6"),
     "W0-MULTI-WORK-ITEM-SHARE": th("coverage", 0.01, "share of evaluations that each produce three or more work items", "min", "RULINGS Q31i; lab/TARGETS.md 6.1 item 6 (provisional)"),
     "T-REUSE-AVOIDED": th("witness", 0.5, "engine work units of a reused read divided by the first read at the same key", "max", "derived (positive reuse witness)"),
     "T-INCR-WORK": th("witness", 0.01, "engine work for a one-entity change divided by full recomputation, at the 1m rung", "max", "derived (incremental maintenance witness)"),
@@ -555,7 +651,7 @@ ORACLES = {
               "comparator": "CMP-SET-ROWS",
               "spec": "expected_rows for the 71 packet cases from immutable events, parameters and two-time cuts; validate_workloads.py re-derives all 71",
               "independence": "Python, imports no Triplex code"},
-    "O-REPLAY": {"status": "TO-BUILD", "files": ["lab/acceptance/oracle/replay.py"], "comparator": "per case (CMP-SET-ROWS, CMP-BAG-ROWS, CMP-EXACT-VALUE, CMP-ERROR, CMP-PAGES)",
+    "O-REPLAY": {"status": "BUILT-PENDING-PIN", "files": ["lab/oracles/replay/"], "comparator": "per case (CMP-SET-ROWS, CMP-BAG-ROWS, CMP-EXACT-VALUE, CMP-ERROR, CMP-PAGES)",
                  "spec": "ACCEPTANCE 6.1", "independence": "Python stdlib only; imports no production visibility, constraint, projection, hydration or codec code"},
     "O-HAM": {"status": "EXISTS", "files": ["qualification/capacity/historical-assertion-metadata-v1/oracle.mjs", "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs"],
               "comparator": "CMP-EXACT-VALUE", "spec": "finite-nine snapshot metadata", "independence": "Node only; must be re-verified to import no Triplex code before ACCEPTED"},
@@ -581,6 +677,8 @@ ORACLES = {
                  "spec": "WORLD_W0 (TARGETS 6.1): expected next tasks, obligations with due times, work items, affected-subject sets and effect traces from the same command stream", "independence": "Python stdlib only; imports no Triplex, kernel or engine code; shares only the W0 rule text and the command stream"},
     "O-CONTRACT": {"status": "COMPILED", "files": ["lab/acceptance/obligations.json#evaluatorCounterexamples"], "comparator": "verdict equality",
                    "spec": "the verdict the status algorithm must return for each EVALUATOR_COUNTEREXAMPLES receipt set (OPEN)", "independence": "pinned by this contract"},
+    "O-TDK1": {"status": "TO-BUILD", "files": ["lab/oracles/decimal/"], "comparator": "CMP-ORDERED-ROWS for orders, CMP-EXACT-VALUE for keys and decodes",
+               "spec": "TDK1 (R20 section 6): the Python reference encoder and exact-rational order (fractions.Fraction) from R20's raw material, brought into the repository", "independence": "Python stdlib only; imports no Triplex code"},
     "O-TESTKIT": {"status": "EXISTS", "files": ["packages/testkit/src/index.ts"], "comparator": "testkit checks",
                   "spec": "authored expectations inside the 44 shared cases", "independence": "literal expectations; KV is a regression participant only"},
     "O-KV": {"status": "EXISTS", "files": ["packages/core/src/kv/"], "comparator": "differential only",
@@ -834,6 +932,9 @@ MUTANTS = {
     "M-RYOW-STALE-ROUTE": {"fault": "the pull at the returned position is served by an index that is not yet eligible for it", "reachProbe": "route.ryow", "targets": ["CS-COMPOSITION:CO-RYOW-ROUTED", "CS-COMPOSITION:CO-OUTAGE-ACKS-CONTINUE"]},
     "M-ERASURE-FRONTIER-SKIP": {"fault": "an old-basis read is served by an index or cache that has not applied a newer published erasure", "reachProbe": "route.erasureFrontier", "targets": ["CS-ERASURE:ER-FRONTIER-OLD-BASIS", "CS-ERASURE:ER-CACHE-INVALIDATION"]},
     "M-JSON-NEGZERO-NORMALIZE": {"fault": "a JSON value's -0 or inexact number is normalized by CanonicalJson before the guard runs, so it is stored instead of rejected", "reachProbe": "write.jsonGuard", "targets": ["CS-WIRE:WIRE-JSON-NEGZERO", "CS-WIRE:WIRE-JSON-BEFORE-CANONICAL"]},
+    "M-JSON-GUARD-ON-JOURNAL": {"fault": "the user-JSON guard runs on journal JSON that Triplex generates, so a number -0 assertion's journal is rejected or normalized", "reachProbe": "journal.encodeChange", "targets": ["CS-WIRE:WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"]},
+    "M-TDK1-NO-TERMINATOR": {"fault": "the TypeScript TDK1 encoder omits the negative terminator z (one of R20's five mutant encoders)", "reachProbe": "decimal.tdk1Encode", "targets": ["CS-TDK1:TDK1-V5-DIFFERENTIAL"]},
+    "M-TDK1-PREFIX-USE": {"fault": "a range or lookup uses a TDK1 key as a prefix or inside a concatenated composite key", "reachProbe": "decimal.tdk1Compare", "targets": ["CS-TDK1:TDK1-V4-RANGES"]},
     "M-X-JSON-LIST-PARAM": {"fault": "XTDB card-many DOUBLE or integer lists sent as one JSON parameter instead of ARRAY[CAST(? AS <type>) ...]", "reachProbe": "xtdb.listEncoding", "targets": ["CS-WIRE:WIRE-X-DOUBLE-LIST-ARRAY"]},
     "M-Q-SHADOW-EXACT-FLAG": {"fault": "a QLever numeric shadow is flagged exact although its %.13g export does not parse back to the same bits", "reachProbe": "qlever.numericShadowIsExact", "targets": ["CS-WIRE:WIRE-Q-SHADOW-13G", "CS-WIRE:WIRE-Q-SHADOW-NEGZERO"]},
     "M-FEED-GAP": {"fault": "one change-feed entry is dropped", "reachProbe": "feed.append", "targets": ["CS-REQ:change-feed", "CS-GS:GS-19"]},
@@ -907,8 +1008,9 @@ def golden_vectors():
 QLEVER_INT_RANGE = (-2 ** 59, 2 ** 59 - 1)
 
 
-def legacy_out_of_range_scan():
-    """Golden vectors (or vector cases) that commit an integer outside QLever's accepted range."""
+def legacy_out_of_range_scan(vectors=None):
+    """Golden vectors (or vector cases) that commit an integer outside QLever's accepted range: commands, inputs, input cases, and
+    commandTemplate cases and contrastCase entries whose expected outcome is a commit (RULINGS Q31j, V-O02 C2)."""
     out = {}
     lo, hi = QLEVER_INT_RANGE
 
@@ -918,7 +1020,7 @@ def legacy_out_of_range_scan():
         except ValueError:
             return False
         return not (lo <= n <= hi)
-    for fname, d in golden_vectors().items():
+    for fname, d in (vectors if vectors is not None else golden_vectors()).items():
         for v in d["vectors"]:
             vals = []
             for c in v.get("commands", []):
@@ -936,6 +1038,13 @@ def legacy_out_of_range_scan():
                 cv = [str(x) for x in c.get("inputs", []) if bad(x)] if isinstance(c, dict) else []
                 if cv:
                     out[f"{v['id']}#case{i + 1}"] = {"file": fname, "values": cv}
+            template_expect = (v.get("commandTemplate") or {}).get("expect", {}).get("outcome")
+            for c in (v.get("cases", []) if isinstance(v.get("cases"), list) else []) + ([v["contrastCase"]] if isinstance(v.get("contrastCase"), dict) else []):
+                if not isinstance(c, dict) or "text" not in c:
+                    continue
+                outcome = (c.get("expect") or {}).get("outcome", template_expect)
+                if outcome == "committed" and bad(c["text"]):
+                    out[f"{v['id']}#{c.get('case')}"] = {"file": fname, "values": [str(c["text"])]}
     return out
 
 
@@ -954,6 +1063,7 @@ LEGACY_LANE_OUTCOMES = {
     "G5-SUM-06": {"xtdb": LEGACY_XTDB, "qlever": LEGACY_Q_SUM},
     "G5-SUM-08": {"xtdb": LEGACY_XTDB, "qlever": LEGACY_Q_SUM_GROUPED},
     "G5-SUM-11#case2": {"xtdb": LEGACY_XTDB, "qlever": LEGACY_Q_SUM},
+    "G1-I64-02#min-exact": {"xtdb": "the min-exact command (-2^63) commits on both XTDB lanes; the contrast case's original expectation applies", "qlever": "the min-exact command fails with E-VALUE-OUT-OF-RANGE before any mutation on every qualified route (position unchanged, transactionByCommand null, no residue)"},
 }
 LEGACY_RULE = "Follow-up EXP-G02 (RULINGS Q32b): QLever in-range companion vectors by an independent golden author. For every golden vector (or vector case) that commits an integer outside QLever's accepted range, the evaluator applies the compiled lane outcome in LEGACY_LANE_OUTCOMES instead of the vector's single expected answer: XTDB commits and keeps the original answer; QLever's qualified write routes reject the command with E-VALUE-OUT-OF-RANGE before any mutation (RULINGS Q23, Q31j). The original vectors stay unchanged as audit evidence (RULINGS Q29a). QLever's in-range coverage of the same boundaries comes from CS-TYPES8 integer-edges and CS-RANGE-OUT."
 
@@ -986,31 +1096,106 @@ POSITION = {
 }
 # RULINGS Q32e: the selection of G7.position.coordinates depends on whether the composition's positions are dense.
 POSITION_DENSE_CASES = ["PO-LEXICOGRAPHIC-ORDER", "PO-ORACLE-DENSE-ORDINALS", "PO-NESTED-CUTS-DENSE"]
-A0_CONTROLS = {
-    "A0-XTDB": {"source": "xtdb", "positionsDense": True, "why": "today's scope-counter adapter assigns dense positions"},
-    "A0-QLEVER": {"source": "qlever", "positionsDense": True, "why": "today's scope-counter adapter assigns dense positions"},
+# RULINGS Q34a: density is proven by source, never declared. A block is extracted from a bound source file by
+# ALLOCATOR_EXTRACTION_RULE (the marker line, then every following line that is blank, more indented than the marker, or starts
+# with a closing bracket at the marker's indentation; trailing blank lines dropped; joined with newline plus a final newline)
+# and hashed with sha256. The pinned values are the A0 allocators at main 820607281edf (both files last changed at f1939df).
+ALLOCATOR_EXTRACTION_RULE = "marker line, then every following line that is blank, more indented than the marker, or starts with ), ] or } at the marker's indentation; trailing blank lines dropped; lines joined with \\n plus a final \\n; sha256 of the UTF-8 bytes"
+A0_ALLOCATOR_ALLOWLIST = {
+    "xtdb": {"file": "packages/xtdb/src/XtdbStorageAdapter.ts", "a0Commit": "820607281edf4b8d87b9c46bfa2b9c583f93be68", "blocks": [
+        {"marker": "  const committedPosition = () =>", "linesAtA0": "92-104", "sha256": "f4e600f36f7563508610f03b3b4c6b9eb83b14fffa94a7cf7f92f3380be126bd"},
+        {"marker": "  const persist = (", "linesAtA0": "188-331", "sha256": "e1272f80323eb02049179fbaa4c35c7a174161a3379f62c99eae932828a3112c"},
+        {"marker": "  const withTransaction = <A, E>(", "linesAtA0": "333-427", "sha256": "f2ebd36fc7b31ce6098d58f18555cbbcdaa7837965e3ca143aadca1d4fa81380"},
+        {"marker": "    nextCommitPosition: () =>", "linesAtA0": "486-496", "sha256": "62c1b2805ec7bcfbcd55a895195add4c0d32b6a882c6772379af081eb3603f16"},
+        {"marker": "    currentCommitPosition: () =>", "linesAtA0": "497-500", "sha256": "7d54d2315040284eb04df9fdd86a06f2e579f8519b92fa5966172012e20d6360"}]},
+    "qlever": {"file": "packages/qlever/src/QleverStorageAdapter.ts", "a0Commit": "820607281edf4b8d87b9c46bfa2b9c583f93be68", "blocks": [
+        {"marker": "  const position = () =>", "linesAtA0": "93-102", "sha256": "588f62d05d048d24fa22bb0615a8d0e4651feb23bb0ff3472fa192b1d219d7f3"},
+        {"marker": "  const persist = (", "linesAtA0": "187-278", "sha256": "7f510d6f9a6967fe90262c35abdf2ace1f1871eaf9c0fc2b0cb988fa8418695b"},
+        {"marker": "  const withTransaction = <A, E>(", "linesAtA0": "279-365", "sha256": "ffe6de1d4ca52457c93ec12cb2e2293e10ba993435b6b69bd60d0883846c6b48"},
+        {"marker": "    nextCommitPosition: () =>", "linesAtA0": "416-426", "sha256": "e7fda2c2745dd71769acae1c6637a0385aa9223c2cd3cb89b6cb7dbdf47b1bfa"},
+        {"marker": "    currentCommitPosition: () =>", "linesAtA0": "427-428", "sha256": "370babd466b3e707a49d0ecb8e3ccf2e69ee85ec63c9f2f7b702f445991f7136"}]},
 }
 
 
+def allocator_block(text, marker):
+    lines = text.split("\n")
+    idx = [i for i, line in enumerate(lines) if line.startswith(marker)]
+    if len(idx) != 1:
+        return None
+    i = idx[0]
+    ind = len(lines[i]) - len(lines[i].lstrip(" "))
+    j = i + 1
+    while j < len(lines):
+        line = lines[j]
+        if line.strip() == "" or len(line) - len(line.lstrip(" ")) > ind or line.lstrip(" ")[:1] in ")]}":
+            j += 1
+            continue
+        break
+    while j - 1 > i and lines[j - 1].strip() == "":
+        j -= 1
+    return hashlib.sha256(("\n".join(lines[i:j]) + "\n").encode()).hexdigest()
+
+
+def allocator_hashes(engine, text):
+    return {b_["marker"]: allocator_block(text, b_["marker"]) for b_ in A0_ALLOCATOR_ALLOWLIST[engine]["blocks"]}
+
+
+def density_proven(composition):
+    """RULINGS Q34a: dense only when every allocator block hash of the receipt's bound source equals the A0 allowlist; the receipt's positionsDense field carries no authority."""
+    eng = composition.get("source")
+    if eng not in A0_ALLOCATOR_ALLOWLIST:
+        return False
+    want = {b_["marker"]: b_["sha256"] for b_ in A0_ALLOCATOR_ALLOWLIST[eng]["blocks"]}
+    return composition.get("allocatorBlocks") == want
+
+
+A0_CONTROLS = {
+    "A0-XTDB": {"source": "xtdb", "allocatorBlocks": {b_["marker"]: b_["sha256"] for b_ in A0_ALLOCATOR_ALLOWLIST["xtdb"]["blocks"]}, "why": "today's scope-counter allocator, on the A0 allowlist"},
+    "A0-QLEVER": {"source": "qlever", "allocatorBlocks": {b_["marker"]: b_["sha256"] for b_ in A0_ALLOCATOR_ALLOWLIST["qlever"]["blocks"]}, "why": "today's scope-counter allocator, on the A0 allowlist"},
+}
+FORGED_DENSITY_FIXTURE = {"source": "xtdb", "positionsDense": True, "allocatorBlocks": {**A0_CONTROLS["A0-XTDB"]["allocatorBlocks"], "  const persist = (": "0" * 64}, "why": "claims dense but its persist block differs from the allowlist: must be treated as non-dense (RULINGS Q34a)"}
+POSITION_NONDENSE_ADDS = list(POSITION["falsifiers"]) + ["PO-ABORTED-LISTED"]
+
+
 def position_selection(composition):
-    """Cases of G7.position.coordinates required for a composition (RULINGS Q32e)."""
-    if composition.get("positionsDense") is True:
+    """Cases of G7.position.coordinates required for a composition: the conditional selection is authoritative (RULINGS Q34a)."""
+    if density_proven(composition):
         return list(POSITION_DENSE_CASES)
-    return list(POSITION_DENSE_CASES) + list(POSITION["falsifiers"]) + ["PO-ABORTED-LISTED"]
+    return list(POSITION_DENSE_CASES) + POSITION_NONDENSE_ADDS
 
 
 def position_gate_blocks(composition, closed_with):
-    """True when GATE-POSITION blocks comparative claims: the closed G7.position.coordinates receipts must cover position_selection(composition); unknown density fails closed."""
-    if "positionsDense" not in composition:
-        return True
+    """True when GATE-POSITION blocks comparative claims: the closed G7.position.coordinates receipts must cover position_selection(composition)."""
     return not set(position_selection(composition)) <= set(closed_with)
+
+
+# RULINGS Q34d: every comparative or promotion claim is admitted only with its prerequisites met; screening claims included.
+CLAIM_ADMISSION = {
+    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator checks: GATE-POSITION for the composition's source (allocator proven dense, or the four falsifiers closed); composition identity (VA14: four assignments, replication edges, watermarks); and, where the claim depends on domain outputs, GATE-W0. A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner (RULINGS Q34d)",
+    "verdicts": ["QUALIFIED", "DIAGNOSTIC"],
+}
+
+
+def admit_claim(claim):
+    comp = claim.get("composition", {})
+    if position_gate_blocks(comp, claim.get("positionCasesClosed", [])):
+        return "DIAGNOSTIC"
+    if not claim.get("compositionBound"):
+        return "DIAGNOSTIC"
+    if claim.get("domainDependent") and (any(v is None for v in W0_PIN["files"].values()) or W0_PIN["reviewReceipt"] is None or not claim.get("w0CoverageClosed")):
+        return "DIAGNOSTIC"
+    return "QUALIFIED"
 
 
 # A gate blocks an obligation from closing until its condition holds; the evaluator treats an unmet or unknown gate as OPEN.
 GATES = {
-    "GATE-POSITION": {"rule": "no comparative claim on a composition whose source uses non-dense positions until G7.position.coordinates, with the four falsifiers, is closed for that source; a composition whose positions are dense (today's scope-counter adapters, the A0 controls) satisfies G7.position.coordinates with the existing nested-cut cases and is not blocked by the falsifiers (RULINGS Q31c, Q32e)", "requires": ["G7.position.coordinates"], "appliesTo": "NS.* and GS.* obligations; the falsifier selection applies only when composition.positionsDense is false"},
+    "GATE-POSITION": {"rule": "no comparative claim on a composition until G7.position.coordinates is closed for its source with position_selection(composition): only a source whose allocator block hashes equal A0_ALLOCATOR_ALLOWLIST (the A0 scope-counter allocators) closes with the nested-cut cases alone; any changed or unknown allocator is non-dense and needs the four falsifiers; a receipt's own positionsDense field carries no authority (RULINGS Q31c, Q32e, Q34a)", "requires": ["G7.position.coordinates"], "appliesTo": "NS.* and GS.* obligations and every comparative or promotion claim (CLAIM_ADMISSION)"},
     "GATE-W0": {"rule": "no domain-dependent obligation closes until V-D01 has independently reviewed W0 (SPEC.md, releases, golden cases) and every W0_PIN hash is pinned in this contract (RULINGS Q31i); a null pin fails closed", "requires": ["W0_PIN complete", "W0.coverage-floors"], "appliesTo": "every obligation whose oracles include O-DOMAIN"},
 }
+# V-O02 C1: oracle pins are required inputs; null until the oracle is accepted (O-REPLAY after EXP-O03 and its verification).
+ORACLE_PINS = {"O-REPLAY": {"files": "lab/oracles/replay/**", "sha256": None, "acceptReceipt": None, "acceptedAfter": "EXP-O03 and its independent verification", "rule": "null until the oracle is accepted; every obligation O-REPLAY would close fails closed until then; pinning needs a contract version bump"}}
+GATES["GATE-ORACLE-PIN"] = {"rule": "an obligation whose expected answers come from an oracle closes only once ORACLE_PINS pins that oracle's files with an acceptance receipt; a null pin fails closed (V-O02 C1)", "requires": ["ORACLE_PINS complete for every oracle the obligation uses"], "appliesTo": "every obligation using O-REPLAY"}
+GATES["GATE-TDK1-VECTORS"] = {"rule": "G1.decimal.tdk1-differential closes only once TDK1_VECTOR_PIN names a reviewed vector file by sha256; a null pin fails closed (RULINGS Q35, R20 V5)", "requires": ["TDK1_VECTOR_PIN complete"], "appliesTo": "G1.decimal.tdk1-differential"}
 # RULINGS Q31i: required input; null until V-D01 reviews W0. The evaluator fails closed on any null field.
 W0_PIN = {
     "rule": "null until V-D01 reviews W0; pinning the hashes needs a contract version bump (RULINGS Q31i, Q32f)",
@@ -1026,6 +1211,7 @@ COMPOSITION = {
     "basis": "a basis is a source-of-truth position (POSITION coordinates (stream, epoch, offset, ordinal)) plus a valid time",
     "eligibility": "index I is eligible to serve basis B only when all hold: its watermark (a fully resolved prefix) has reached B in B's epoch; C1's eligibility for the query (mapping, valid time, exact cut); I can actually reconstruct B (a current-only index only when B is at or after the last change to every attribute the read touches, the validity interval of R18); and I has applied every erasure published so far, independently of B (ERASURE frontier) (RULINGS Q31d)",
     "watermarkRouting": "a read that finds no eligible index waits at most T-WATERMARK-WAIT-MS for one, then routes to an eligible fallback (the source of truth's own query surface or another index); the fallback's latency counts in the read's own latency; the receipt records the route and the surface language, a cross-language fallback is counted per surface, and fallbacks are reported as a share of reads per window; no index answers for a basis it is not eligible for (RULINGS Q31d)",
+    "fallbackEquivalence": "outage read-your-own-write is tested on every serving surface the composition claims, native surfaces included; a stale fallback is rejected; where a fallback answers in another language, both recipes are bound to one semantic query identity (parameters, basis, meaning) and one expected answer from the oracle; total request latency and language attribution stay recorded (RULINGS Q34b)",
     "ackOwnership": "the source of truth sends the ACK after its own publication; read-your-own-write holds by routing (the pull at the returned position goes to an eligible index, else the fallback); in normal operation the current index is kept synchronous so the fast path serves that pull; during a current-index outage commits and ACKs continue, pulls fall back, the index catches up from the feed through a bounded queue, and fallback share and recovery time are measured (GS.04b); history and analytics stay asynchronous behind watermarks (RULINGS Q31e, replacing Q28's ACK clause)",
     "layerSwaps": "layers are swapped one at a time under matched workloads at small rungs (current-index candidates on P1 and P4; history candidates on past-basis reads and GS.12; source candidates on P2 and P3); only the two or three best compositions go on to end-to-end validation with the golden scenarios",
     "scopeKey": "an engine-scope receipt's key is (layer, the engine assigned to that layer, its image digest, configuration hash and slot), derived from the composition, never from engineOfLane",
@@ -1041,6 +1227,9 @@ WORLD_W0 = {
     "implementations": "the TypeScript reference kernel the drivers call, and O-DOMAIN, an independent stdlib-only Python oracle giving expected next tasks, obligations with due times, work items and effect traces from the same command stream",
     "previewActivation": "plan-impact preview (GS.11) and activation (GS.10) are compared at one common input basis (GS-10-11-COMMON-BASIS), never at different bases",
     "witnesses": "every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not)",
+    "workItemIdentity": "a work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; its content version hashes (release hash, input positions, payload); the outbox delivery key is (id, version); an activation that leaves a work item's payload unchanged publishes nothing (early cutoff), one that changes it publishes a new version of the same id; duplicate-effect checks count by delivery key (RULINGS Q36a)",
+    "affectedSet": "the expected affected set of a transaction is the subjects whose static read set contains a changed fact; static read sets over-approximate and never miss (RULINGS Q36e)",
+    "fanout": "work-location fanout is a seeded Zipf with s = 0.5 over 2,000 locations at the 100k rung (largest location about 1,100 workers, mean 50); other rungs keep N / 50 locations with the same s; only the 100k numbers are frozen floors (RULINGS Q36g, Q36h)",
 }
 
 # ============================================================================ evaluator counterexamples (RULINGS Q26)
@@ -1076,6 +1265,8 @@ EVALUATOR_COUNTEREXAMPLES = [
     {"id": "CX-W0-UNPINNED", "defeats": ["CR-W0-COVERAGE", "CR-GS", "CR-NS"], "receipts": "complete domain-dependent receipts while a W0_PIN field is null", "why": "GATE-W0 fails closed"},
     {"id": "CX-W0-FLOOR-MISSED", "defeats": ["CR-W0-COVERAGE"], "receipts": "a coverage record where R2 changes 15% of in-scope subjects' outputs", "why": "W0-R2-CHANGED-SHARE"},
     {"id": "CX-P2-REJECTS-VALID", "defeats": ["CR-NS"], "receipts": "a P2 run where every oracle-valid command is accounted for but some were typed-rejected", "why": "NS-P2-UNJUSTIFIED-OUTCOMES-MAX: accounting is not progress"},
+    {"id": "CX-FORGED-DENSITY", "defeats": ["CR-NS", "CR-GS", "CR-FAULT"], "receipts": "a receipt declaring positionsDense true whose bound allocator source differs from A0_ALLOCATOR_ALLOWLIST (FORGED_DENSITY_FIXTURE), with only the dense nested-cut cases closed", "why": "density is proven by allocator source, never declared (RULINGS Q34a)"},
+    {"id": "CX-SCREENING-CLAIM-PREREQ", "defeats": ["CR-NS", "CR-GS"], "receipts": "a P-SCREEN comparative claim whose composition is not proven dense and whose falsifiers are open, or whose W0 pin is pending", "why": "CLAIM_ADMISSION: prerequisites are checked on every comparative claim, screening included; the claim is a diagnostic (RULINGS Q34d)"},
     {"id": "CX-POSITION-GATE", "defeats": ["CR-NS", "CR-GS"], "receipts": "comparative NS receipts on a non-dense source while G7.position.coordinates is open", "why": "GATE-POSITION"},
 ]
 
@@ -1101,10 +1292,11 @@ cs("CS-PKT71", "EXISTS", "qualification/workloads/temporal-workloads.json with r
 cs("CS-PKT-MULTICALL", "TO-AUTHOR", "the 16 multi-call packet tasks plus the writer-between-calls shape of packages/qualification/experiments/qlever-task-basis.ts", ["all", "writer-between-calls"])
 cs("CS-ENTRY", "EXISTS", "packages/xtdb/experiments/native-entry.ts and packages/qlever/experiments/native-entry.ts", ["all", "read-only", "safe-parameters"])
 cs("CS-TYPES8", "TO-AUTHOR", "ACCEPTANCE 7.1 (value kinds)", ["all", "integer-edges", "number-edges", "decimal"])
-DECIMAL_CASES = ["DEC-P15-SCALED", "DEC-P16-STRING", "DEC-SCALE-EXCESS", "DEC-PRECISION-EXCESS", "DEC-CROSS-FAMILY-PREFLIGHT", "DEC-CONVERTED-COMPARE"]
+DECIMAL_CASES = ["DEC-SMALL-PRECISION-TDK1", "DEC-LARGE-PRECISION-TDK1", "DEC-CROSS-SCALE-COMPARE", "DEC-UNDECLARED-ATTRIBUTE", "DEC-NEGZERO-REFUSED", "DEC-TRAILING-ZERO-FITS", "DEC-TODECIMAL-EXACT-EXPANSION", "DEC-AVG-PREFLIGHT", "DEC-SCALE-EXCESS", "DEC-PRECISION-EXCESS", "DEC-CROSS-FAMILY-PREFLIGHT", "DEC-CONVERTED-COMPARE"]
 DECIMAL_CASES += [r["case"] for r in DECIMAL_OPS + DECIMAL_CONVERSIONS + DECIMAL_SCALE_EVOLUTION if r["case"] not in DECIMAL_CASES] + [c for c in DECIMAL_TESTS if c not in DECIMAL_CASES]
 cs("CS-DECIMAL", "TO-AUTHOR", "VALUE_KINDS decimal; DECIMAL_RULES (RULINGS Q18); DECIMAL_OPS, DECIMAL_CONVERSIONS, DECIMAL_SCALE_EVOLUTION, DECIMAL_TESTS (RULINGS Q22); TARGETS section 3", ["all", "roundtrip", "range", "unrepresentable", "kernel-arithmetic", "cross-family", "operations", "conversions", "scale-evolution", "paths"], DECIMAL_CASES)
 cs("CS-WIRE", "TO-AUTHOR", "WIRE_RULES (RULINGS Q30, EXP-F02 EXP-F02 wire-exactness report)", ["all", "json", "instant", "xtdb-encodings", "qlever-shadow", "integer-range"], [c for r in WIRE_RULES for c in r["cases"]])
+cs("CS-TDK1", "TO-AUTHOR", "TDK1_TESTS (R20 section 5.3 V3 to V7, RULINGS Q35)", ["all", "engine-order", "ranges", "differential", "serialization", "writer-negative"], [t["case"] for t in TDK1_TESTS.values()])
 cs("CS-RANGE-OUT", "TO-AUTHOR", "LANE_INTEGER_RANGE; NUMERIC; RULINGS Q23 (every qualified write route rejects)", ["all"], ["RANGE-OUT-WRITER", "RANGE-OUT-BULK", "RANGE-OUT-REPLAY", "RANGE-OUT-RESTORE"])
 cs("CS-TYPES8-NEG", "TO-AUTHOR", "ACCEPTANCE 7.1", ["all"])
 cs("CS-WIDEN", "TO-AUTHOR", "ACCEPTANCE 7.1", ["all"])
@@ -1162,11 +1354,11 @@ NS_NAMED_CASES = {
 cs("CS-NS", "COMPILED", "load-contract.json (generated): frozen trace generator, P1 reader ladder, P2 open-loop bands, P3 feed, P4 buckets, P5 release sweep (TARGETS 1.1, 2.1)", ["calibration", "p1-ladder", "p1-stress", "p2", "p3", "p4", "p5", "secondary"], [c for v in NS_NAMED_CASES.values() for c in v])
 GS_FAILURE_SCHEDULES = {
     3: [("GS-03-SUPERSEDED-REVISION", "a vendor's older revision of a status arrives after a newer one for the same subject", "acknowledged as superseded: no change to current values, recorded in the journal (provisional, flagged for Sam)")],
-    4: [("GS-04B-INDEX-PARTITION", "the current index's feed consumer is cut for 60 s while the source keeps committing", "commits and ACKs continue throughout the outage; reads for which the index is not eligible wait at most 10 ms (COMPOSITION watermarkRouting) then route to the fallback; none answers from the stale index; the receipt measures the fallback share per window and the recovery time until the index is eligible again (RULINGS Q31e)")],
+    4: [("GS-04B-INDEX-PARTITION", "the current index's feed consumer is cut for 60 s while the source keeps committing", "commits and ACKs continue throughout the outage; on every serving surface the composition claims, native included, reads for which the index is not eligible wait at most 10 ms (COMPOSITION watermarkRouting) then route to the fallback; none answers from the stale index; the receipt measures the fallback share per window and the recovery time until the index is eligible again (RULINGS Q31e)")],
     6: [("GS-06B-SHARED-REFERENCE", "a work location's minimum wage changes (one shared referenced entity)", "every worker at that location appears in the feed's affected-subject set and is re-run; no other worker is")],
     15: [("GS-15-STORAGE-ACCESS", "a tenant-A route attempts to read tenant B's storage directly", "the access fails at the storage layer"),
          ("GS-15-SLOW-TENANT", "one tenant's feed consumer is slowed 10x", "other tenants' feed lag and p99 hold")],
-    19: [("GS-19B-OUTBOX-CRASH", "the consumer crashes after delivering an outbox item but before recording completion", "the receiver deduplicates by the delivery key: exactly one externally visible effect")],
+    19: [("GS-19B-OUTBOX-CRASH", "the consumer crashes after delivering an outbox item but before recording completion", "the receiver deduplicates by the delivery key (id, version) of WORLD_W0 workItemIdentity: exactly one externally visible effect per delivery key (RULINGS Q36a)")],
 }
 GS_COMMON_BASIS_CASE = "GS-10-11-COMMON-BASIS"
 GS_CASES = ["GS-NUM-RANGE-1650", "GS-NUM-HOURS-40", "GS-NUM-UNHOLDABLE", GS_COMMON_BASIS_CASE]
@@ -1179,7 +1371,7 @@ cs("CS-ERASURE", "TO-AUTHOR", "ERASURE (TARGETS section 7, RULINGS Q24)", ["all"
 cs("CS-COMPOSITION", "TO-AUTHOR", "COMPOSITION (TARGETS 4.1, RULINGS Q28, Q31d, Q31e)", ["all", "watermark", "ack", "identity"],
    ["CO-WATERMARK-WAIT", "CO-WATERMARK-FALLBACK", "CO-NO-STALE-ANSWER", "CO-ASYNC-HISTORY", "CO-RECEIPT-BINDS-ALL", "CO-SCOPE-KEY-FROM-ASSIGNMENT",
     "CO-EPOCH-MISMATCH", "CO-RECONSTRUCT-OUTSIDE-VALIDITY", "CO-ERASURE-FRONTIER", "CO-FALLBACK-LATENCY-COUNTS", "CO-FALLBACK-LANGUAGE", "CO-FALLBACK-SHARE",
-    "CO-ACK-AFTER-SOURCE-PUBLICATION", "CO-RYOW-ROUTED", "CO-OUTAGE-ACKS-CONTINUE", "CO-CATCHUP-BOUNDED-QUEUE"])
+    "CO-ACK-AFTER-SOURCE-PUBLICATION", "CO-RYOW-ROUTED", "CO-OUTAGE-ACKS-CONTINUE", "CO-CATCHUP-BOUNDED-QUEUE", "CO-RYOW-PER-SURFACE", "CO-STALE-FALLBACK-REJECTED", "CO-CROSS-LANGUAGE-RECIPE-IDENTITY"])
 cs("CS-POSITION", "TO-AUTHOR", "POSITION falsifiers and dense nested-cut cases (TARGETS 4.1 item 3, RULINGS Q31c, Q32e)", ["all", "falsifiers", "ordering", "dense"], POSITION["falsifiers"] + ["PO-LEXICOGRAPHIC-ORDER", "PO-ORACLE-DENSE-ORDINALS", "PO-ABORTED-LISTED", "PO-NESTED-CUTS-DENSE"])
 cs("CS-W0-COVERAGE", "TO-AUTHOR", "W0 coverage floors over the frozen trace and releases (TARGETS 6.1 items 6 and 7, RULINGS Q31i)", ["all"], ["W0-COV-R2-CHANGED", "W0-COV-RULE-FIRES", "W0-COV-LOCATION-FANOUT", "W0-COV-MULTI-WORK-ITEMS", "W0-COV-REVIEW-PINNED"])
 cs("CS-EVAL-COUNTER", "COMPILED", "EVALUATOR_COUNTEREXAMPLES (RULINGS Q26) and EVALUATOR_POSITIVE_FIXTURES (RULINGS Q31k)", ["all", "negative", "positive"], [x["id"] for x in EVALUATOR_COUNTEREXAMPLES] + [x["id"] for x in EVALUATOR_POSITIVE_FIXTURES])
@@ -1219,14 +1411,14 @@ O("G1.types.out-of-range-rejected", ["G1", "G2"], "Values a lane cannot hold fai
   mutants=["M-OUT-OF-RANGE-WRAP"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), params={"diagnostics": ["D-Q-INT60"]},
   sources=["lab/research/SAM-pasted-numbers-2026-11-07.md section 5", "lab/TARGETS.md section 3", "lab/acceptance/RULINGS.md superseded section"])
 O("G1.types.decimal", ["G1", "G2", "G5"], "Decimal value kind for money and business decimals",
-  "Every CS-DECIMAL case, per DECIMAL_RULES (RULINGS Q18) and the operation, conversion and scale tables DECIMAL_OPS, DECIMAL_CONVERSIONS and DECIMAL_SCALE_EVOLUTION (RULINGS Q22), one named case per row, plus DECIMAL_TESTS (adjacent large decimals, negatives, zero, scale boundaries, arithmetic intermediates, every query and serialization path, an independent order-key check, and input capture before normalization): each decimal attribute declares precision and scale; precision <= 15 is stored as a scaled integer (DEC-P15-SCALED), larger precision as an order-preserving decimal string (DEC-P16-STRING); both round-trip exactly on every surface; every comparison with integer or number, equality included, is preflight E-MIXED-FAMILY (DEC-CROSS-FAMILY-PREFLIGHT) and exact after explicit conversion (DEC-CONVERTED-COMPARE); results beyond the precision fail with E-DECIMAL-OVERFLOW, bare / with E-DECIMAL-BARE-DIVIDE, decimal to integer with a fraction with E-DECIMAL-FRACTION, and a narrowing migration that would lose digits with E-DECIMAL-NARROWING, atomically; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value with more fractional digits than the scale (DEC-SCALE-EXCESS) or outside the precision (DEC-PRECISION-EXCESS) fails with E-DECIMAL-UNREPRESENTABLE, never rounded; kernel arithmetic over decimals is exact.",
+  "Every CS-DECIMAL case, per DECIMAL_RULES (RULINGS Q18) and the operation, conversion and scale tables DECIMAL_OPS, DECIMAL_CONVERSIONS and DECIMAL_SCALE_EVOLUTION (RULINGS Q22), one named case per row, plus DECIMAL_TESTS (adjacent large decimals, negatives, zero, scale boundaries, arithmetic intermediates, every query and serialization path, an independent order-key check, and input capture before normalization): each decimal attribute declares precision and scale; every precision is stored as the TDK1 key plus derived canonical text (DEC-SMALL-PRECISION-TDK1, DEC-LARGE-PRECISION-TDK1; RULINGS Q35b), compared exactly across attributes of different declared scale (DEC-CROSS-SCALE-COMPARE), and round-trips exactly on every surface; a decimal on an undeclared attribute (DEC-UNDECLARED-ATTRIBUTE) and -0.00 (DEC-NEGZERO-REFUSED) fail with E-INVALID-VALUE; 16.500 fits scale 2 and reads back as 16.50 (DEC-TRAILING-ZERO-FITS); toDecimal starts from the exact binary expansion (DEC-TODECIMAL-EXACT-EXPANSION); AVG over decimal fails with E-DECIMAL-AVG unless written with divide (DEC-AVG-PREFLIGHT) (RULINGS Q33b); every comparison with integer or number, equality included, is preflight E-MIXED-FAMILY (DEC-CROSS-FAMILY-PREFLIGHT) and exact after explicit conversion (DEC-CONVERTED-COMPARE); results beyond the precision fail with E-DECIMAL-OVERFLOW, bare / with E-DECIMAL-BARE-DIVIDE, decimal to integer with a fraction with E-DECIMAL-FRACTION, and a narrowing migration that would lose digits with E-DECIMAL-NARROWING, atomically; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value with more fractional digits than the scale fails with E-DECIMAL-FRACTION (DEC-SCALE-EXCESS) and one outside the precision with E-DECIMAL-OVERFLOW (DEC-PRECISION-EXCESS), never rounded; kernel arithmetic over decimals is exact.",
   cases=["CS-DECIMAL", "CS-DECIMAL:" + ",".join(DECIMAL_CASES)], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-REPO", "EP-WRITER", "EP-KERNEL", "EP-NATIVE", "EP-RAW-HATCH", "EP-FEED", "EP-REPLAY"], modes=CRR,
   mutants=["M-DECIMAL-ROUND", "M-DECIMAL-PRECAPTURE-ROUND"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"),
   sources=["RULINGS Q18", "RULINGS Q22", "lab/TARGETS.md section 3 (decimal value kind on the critical path for goal 1)", "lab/research/SAM-pasted-numbers-2026-11-07.md section 3"])
 O("G1.wire.write-guards", ["G1"], "Qualified write routes reject inexact JSON numbers and -0 instants",
-  "Per WIRE_RULES WR-JSON, WR-INSTANT and WR-INTEGER-RANGE (RULINGS Q30a, Q30b, Q30e): on every qualified write route a JSON value holding -0, a non-finite number or an inexact binary64 at any depth, including inside List and Struct, fails atomically with E-INEXACT-JSON-NUMBER before CanonicalJson runs and before any mutation; an instant given as -0 fails with E-NEGATIVE-ZERO-INSTANT; the ProjectionSpec integer range rule covers only the safe-integer domain.",
+  "Per WIRE_RULES WR-JSON, WR-INSTANT and WR-INTEGER-RANGE (RULINGS Q30a, Q30b, Q30e): on every qualified write route a JSON value holding -0, a non-finite number or an inexact binary64 at any depth, including inside List and Struct, fails atomically with E-INEXACT-JSON-NUMBER before CanonicalJson runs and before any mutation, where an inexact number is one that does not read back as written (Q33-JSON-READBACK, RULINGS Q33a); the guard applies to user JSON only, and the paired test holds on both engines: user JSON with -0 is rejected (WIRE-JSON-NEGZERO) while a number -0 assertion commits, journals, replays and reads back bit-exact (WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP, RULINGS Q34c); an instant given as -0 fails with E-NEGATIVE-ZERO-INSTANT; the ProjectionSpec integer range rule covers only the safe-integer domain.",
   scope="engine", cases=["CS-WIRE:json,instant,integer-range", "CS-WIRE:" + ",".join(c for r in WIRE_RULES if r["id"] in ("WR-JSON", "WR-INSTANT", "WR-INTEGER-RANGE") for c in r["cases"])], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-WRITER", "EP-BULK", "EP-REPLAY"], modes=CUR_REOPEN,
-  mutants=["M-JSON-NEGZERO-NORMALIZE"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), sources=["RULINGS Q30", "EXP-F02 wire-exactness report"])
+  mutants=["M-JSON-NEGZERO-NORMALIZE", "M-JSON-GUARD-ON-JOURNAL"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), sources=["RULINGS Q30", "RULINGS Q33a", "RULINGS Q34c", "EXP-F02 wire-exactness report"])
 O("G1.wire.xtdb-encodings", ["G1"], "XTDB projections use the pinned exact encodings",
   "Per WR-X-ENCODINGS (RULINGS Q30c): card-many DOUBLE and integer lists are written as ARRAY[CAST(? AS <type>) ...] and read back bit-exact (-0 kept); date and instant are read as text and keep year 0001 and microseconds; any other encoding fails the projection check (WIRE-X-OTHER-ENCODING-FAILS).",
   lanes=X, scope="engine", cases=["CS-WIRE:xtdb-encodings", "CS-WIRE:WIRE-X-DOUBLE-LIST-ARRAY,WIRE-X-INTEGER-LIST-ARRAY,WIRE-X-DATE-TEXT,WIRE-X-INSTANT-TEXT,WIRE-X-OTHER-ENCODING-FAILS"], oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-REPO", "EP-NATIVE"], modes=CRR,
@@ -1235,6 +1427,15 @@ O("G1.wire.qlever-shadow", ["G1"], "QLever numeric shadows count as exact only w
   "Per WR-Q-SHADOW (RULINGS Q30d): a binary64 shadow is exact only if it is not -0 and its %.13g rendering parses back to the same bits, and integer shadows only within +/-2^59; otherwise the lexical channel is authoritative and the shadow is flagged inexact and never used for an answer (WIRE-Q-LEXICAL-AUTHORITATIVE).",
   lanes=Q, scope="engine", cases=["CS-WIRE:qlever-shadow", "CS-WIRE:WIRE-Q-SHADOW-NEGZERO,WIRE-Q-SHADOW-13G,WIRE-Q-SHADOW-INT59,WIRE-Q-LEXICAL-AUTHORITATIVE"], oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-REPO", "EP-NATIVE", "EP-RAW-HATCH"], modes=CRR,
   mutants=["M-Q-SHADOW-EXACT-FLAG"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), sources=["RULINGS Q30d", "EXP-F02 wire-exactness report finding 5"])
+TDK1_EP = {"V3": ["EP-NATIVE", "EP-RAW-WIRE", "EP-WRITER"], "V4": ["EP-REPO", "EP-NATIVE", "EP-RAW-HATCH"], "V5": ["EP-KERNEL"], "V6": ["EP-RAW-WIRE", "EP-NATIVE", "EP-FEED", "EP-TRIPLES"], "V7": ["EP-WRITER", "EP-BULK", "EP-REPLAY", "EP-TRIPLES"]}
+for vid, t in TDK1_TESTS.items():
+    O(t["obligation"], ["G1"], f"TDK1 {vid}: {t['check'].split(':')[0].split(' (')[0]}",
+      f"Per TDK1 (RULINGS Q35, R20 section 5.3 {vid}): {t['check']}. Pass: {t['pass']} ({t['case']}).",
+      scope="lane" if vid == "V4" else "engine", cases=[f"CS-TDK1:{t['case']}"], oracle=["O-TDK1"] + (["O-ERR"] if vid == "V7" else []), ep=TDK1_EP[vid],
+      profiles=["P-HEAVY"] if vid == "V3" else ["P-TINY"], modes=CUR_REOPEN if vid in ("V3", "V4", "V6") else None,
+      mutants=["M-TDK1-NO-TERMINATOR"] if vid == "V5" else (["M-TDK1-PREFIX-USE"] if vid == "V4" else []),
+      closure=("CR-PASS-ALL", "CR-MUTANT-KILL") if vid in ("V4", "V5") else ("CR-PASS-ALL",),
+      sources=["lab/research/R20-order-preserving-decimal-encodings.md section 5.3", "RULINGS Q35"])
 O("G1.types.invalid-rejected", ["G1"], "Invalid values are rejected atomically",
   "Every case of CS-TYPES8-NEG is rejected with its pinned error (E-INVALID-VALUE or E-UNSUPPORTED-VALUE); the committed position is unchanged, no receipt or claim exists, and no partial row or triple is visible through any access path.",
   scope="engine", cases=["CS-TYPES8-NEG"], oracle=["O-REPLAY", "O-ERR"], ep=["EP-TRIPLES", "EP-WRITER"], modes=CUR_REOPEN,
@@ -1409,7 +1610,7 @@ O("G7.receipt.journal-complete", ["G7"], "Receipts are complete and ordered",
   mutants=["M-JOURNAL-ORDER"], closure=("CR-PASS-ALL", "CR-MUTANT-KILL"), sources=["handoffs/claude-native/README.md:41"])
 O("G7.journal.logical-contract", ["G7"], "The logical journal stays queryable (C6)",
   "Every C6-* case: direct match and Datalog queries over :_tx/change and :_tx/changed-entity, transactions(), transactionsForEntity and transactionByCommand return O-REPLAY's outputs per JOURNAL_RULES: creation order (JN-ORDER), staged facts visible to later operations of the same command (JN-STAGED), bit-exact -0.0 change values (JN-NEGZERO, RULINGS Q21 AMB-04, provisional, flagged for Sam) and the documented and testkit-pinned fields (JN-FIELDS); whole-journal byte identity of a physically slimmed journal is checked against a separate T0-capture baseline (C6-SLIM-BYTE-IDENTICAL), modulo erasure: both sides replace erased values with their markers first (ER-JOURNAL-MODULO, RULINGS Q31f).",
-  scope="engine", cases=["CS-JOURNAL", "CS-ERASURE:ER-JOURNAL-MODULO"], oracle=["O-REPLAY"], ep=["EP-TRIPLES"], modes=CRR, contracts=["C6"],
+  scope="engine", cases=["CS-JOURNAL", "CS-ERASURE:ER-JOURNAL-MODULO", "CS-WIRE:WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"], oracle=["O-REPLAY"], ep=["EP-TRIPLES"], modes=CRR, contracts=["C6"],
   sources=["lab/PLAN.md C6", "lab/reviews/acceptance-review-r1.codex.md finding 6"])
 O("G7.commit.protocol-transitions", ["G7"], "Commit outcomes follow the witnessed transition table",
   "For every C2-* (QLever) and X-* (XTDB) fault point of CS-FAULT, injected T-FAULT-REPS times, the final state, the original caller's outcome, retries with the same commandId and reads match COMMIT_OUTCOMES for the last witnessed transition: a group with QT2-LOGGED evidence is always published by recovery; retries before publication return E-COMMIT-PENDING or E-REPAIRING; a success receipt exists only after publication.",
@@ -1589,14 +1790,14 @@ O("NS.P2", ["NS"], "P2: small, atomic, idempotent per-subject commits with low l
   "Open loop under TARGETS 1.1 P2: commands are offered on the frozen schedule and latency runs from the scheduled offer to the published ACK (sent only once the commit is durable and readable), so queueing behind other writers counts. The trace's own commands are reported per size band: the 5-to-10 band (NS-P2-BAND-5-10) and the 11-to-25 band (NS-P2-BAND-11-25) each meet NS-P2-COMMIT-P50-MS and NS-P2-COMMIT-P99-MS, the 26-to-50 band (NS-P2-BAND-26-50) meets NS-P2-COMMIT-P99-26-50-MS, all with P1's 256 readers running; the 10-fact probe is a diagnostic only. Every offered command is committed with a receipt, rejected with a typed error, or a typed conflict (NS-P2-UNACCOUNTED-MAX, NS-P2-ACCOUNTING), and accounting is not progress: every oracle-valid trace command publishes; typed rejections count only for the trace's deliberately invalid commands and typed conflicts only where the oracle independently finds a compare-and-set race (NS-P2-UNJUSTIFIED-OUTCOMES-MAX, NS-P2-PROGRESS); queued commands never exceed NS-P2-QUEUE-MAX-S of the offered rate at steady state (NS-P2-QUEUE-BOUND) and the queue drains within NS-P2-BURST-DRAIN-S after each burst (NS-P2-BURST-DRAIN) (RULINGS Q31a). The pull at the returned tx sees the commit every time with no extra wait (NS-P2-RYOW-FRACTION); duplicates and lost ACKs return the original receipt every time (NS-P2-DUP-RECEIPT-FRACTION).",
   scope="engine", cases=["CS-NS:p2", "CS-NS:" + ",".join(NS_NAMED_CASES["NS.P2"])], ep=["EP-WRITER", "EP-REPO", "EP-RESOLVE"], thresholds=["NS-P2-COMMIT-P50-MS", "NS-P2-COMMIT-P99-MS", "NS-P2-COMMIT-P99-26-50-MS", "NS-P2-UNACCOUNTED-MAX", "NS-P2-UNJUSTIFIED-OUTCOMES-MAX", "NS-P2-QUEUE-MAX-S", "NS-P2-BURST-DRAIN-S", "NS-P2-RYOW-FRACTION", "NS-P2-DUP-RECEIPT-FRACTION", "T-RUNS"], modes=SE, **NS_COMMON)
 O("NS.P3", ["NS"], "P3: an ordered, resumable change feed",
-  "Under TARGETS 1.1 P3: feed entries carry tx, entity, attribute and the valid-time range affected; commit time is the source's publication instant on the shared host monotonic clock; the cursor is (epoch, position); the expected affected-subject set per transaction is the directly written subjects (O-REPLAY) plus subjects affected through referenced entities under WORLD_W0 (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET); 'affected subjects known' is the consumer's single durable write of the set and its checkpoint. Over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); lag stays within NS-P3-LAG-P99-MS with P1's 256 readers running; delivery is at-least-once from the last checkpoint with effects keyed by (consumer, position, subject), so crashes before the effect, after the effect before the checkpoint, and after the checkpoint (NS-P3-CRASH-BEFORE-EFFECT, NS-P3-CRASH-AFTER-EFFECT, NS-P3-CRASH-AFTER-CHECKPOINT) leave zero visible duplicate effects (NS-P3-VISIBLE-DUP-EFFECTS-MAX) while replay attempts are counted separately; resume from a checkpoint replays exactly.",
+  "Under TARGETS 1.1 P3: feed entries carry tx, entity, attribute and the valid-time range affected; commit time is the source's publication instant on the shared host monotonic clock; the cursor is (epoch, position); the expected affected-subject set per transaction is the directly written subjects (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET, RULINGS Q36e); 'affected subjects known' is the consumer's single durable write of the set and its checkpoint. Over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); lag stays within NS-P3-LAG-P99-MS with P1's 256 readers running; delivery is at-least-once from the last checkpoint with effects keyed by (consumer, position, subject), so crashes before the effect, after the effect before the checkpoint, and after the checkpoint (NS-P3-CRASH-BEFORE-EFFECT, NS-P3-CRASH-AFTER-EFFECT, NS-P3-CRASH-AFTER-CHECKPOINT) leave zero visible duplicate effects (NS-P3-VISIBLE-DUP-EFFECTS-MAX) while replay attempts are counted separately; resume from a checkpoint replays exactly.",
   scope="engine", cases=["CS-NS:p3", "CS-NS:" + ",".join(NS_NAMED_CASES["NS.P3"])], ep=["EP-FEED", "EP-WRITER", "EP-ENGINE-OBS"], thresholds=["NS-P3-GAPS-MAX", "NS-P3-ORDER-VIOLATIONS-MAX", "NS-P3-LAG-P99-MS", "NS-P3-VISIBLE-DUP-EFFECTS-MAX", "T-RUNS"], modes=SE,
   oracle=["O-REPLAY", "O-DOMAIN", "O-OBS"], profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-NS",), sources=["lab/NORTH-STAR.md", "lab/TARGETS.md sections 1, 1.1 and 2"])
 O("NS.P4", ["NS"], "P4: a fast path to current values, separate from history (per surface)",
   "Under TARGETS 1.1 P4: subject pulls at the current basis in the lane's language over the frozen weighted buckets (50% 50 to 200 facts, 35% 201 to 800, 15% 801 to 2,000; hops 3 at 40%, 4 at 35%, 6 at 25%; NS-P4-BUCKETS) meet NS-P4-PULL-P50-MS and NS-P4-PULL-P99-MS single-client on the weighted mix, each bucket reports its own p50 and p99, and the largest bucket meets NS-P4-PULL-P99-LARGEST-MS; throughput sustains NS-P4-PULLS-PER-CORE per engine core, with cores taken from the CPU quota bound in the receipt and host broker and kernel CPU reported beside it; on one matched sample of 1,000 subjects grown from history depth 1 to 3 to 10, current-pull p99 and bytes read stay within NS-P4-HISTORY-FLATNESS (NS-P4-MATCHED-HISTORY, RULINGS Q27); the receipt records whether current reads touch history.",
   cases=["CS-NS:p4", "CS-NS:" + ",".join(NS_NAMED_CASES["NS.P4"])], ep=["EP-REPO", "EP-NATIVE", "EP-ENGINE-OBS"], thresholds=["NS-P4-PULL-P50-MS", "NS-P4-PULL-P99-MS", "NS-P4-PULL-P99-LARGEST-MS", "NS-P4-PULLS-PER-CORE", "NS-P4-HISTORY-FLATNESS", "T-RUNS"], modes=SE, **NS_COMMON)
 O("NS.P5", ["NS"], "P5: release activation re-evaluates 100k subjects without hurting live traffic (per surface)",
-  "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); results are published as work items through EP-OUTBOX and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
+  "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); results are published as work items through EP-OUTBOX under the delivery key (id, version) with early cutoff, so an activation that leaves a payload unchanged publishes nothing (RULINGS Q36a), and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
   cases=["CS-NS:p5", "CS-NS:" + ",".join(NS_NAMED_CASES["NS.P5"])], ep=["EP-REPO", "EP-NATIVE", "EP-WRITER", "EP-OUTBOX", "EP-ENGINE-OBS"], thresholds=["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS", "T-RUNS"], modes=SE,
   oracle=["O-REPLAY", "O-DOMAIN", "O-OBS"], profiles=["P-YEAR-ONE", "P-NS"], closure=("CR-NS",), sources=["lab/NORTH-STAR.md", "lab/TARGETS.md sections 1, 1.1 and 6.1"])
 O("NS.SEC.bulk-lane", ["NS"], "Secondary: the bulk lane does not hurt live reads",
@@ -1631,7 +1832,7 @@ GOLDEN_SCENARIOS = [
     (16, "PII erasure request", "erase PII for 10k subjects (crypto-shredding or real deletion) during live traffic", "reads that start after the erasure publishes return ErasedValue markers at every basis; values are unrecoverable from every PROTECTED_COPY_INVENTORY location; history keeps its shape; explain still works modulo erasure (provisional, flagged for Sam)", ["P1", "P3"], ["NS-P1-READ-P99-256-MS", "NS-P3-GAPS-MAX"]),
     (17, "Agent proposals churn", "agents write drafts and proposals at 5x the human rate, most discarded", "proposals never leak into decisions; pulls at a basis see exactly what was committed", ["P2", "P4"], ["NS-P4-PULL-P99-MS", "NS-P1-VIOLATIONS-MAX"]),
     (18, "Recruiter dashboards", "'placements in this branch with an overdue I-9' lists with filters, sort and paging at 256 concurrent readers", "answers come from maintained projections, match the oracle, and keep stable cursors while writes continue", ["P1", "P4"], ["NS-P1-READ-P99-256-MS", "NS-P1-VIOLATIONS-MAX"]),
-    (19, "Feed consumer crash", "the dependency-index consumer crashes mid-stream and resumes from its checkpoint", "no gap; zero duplicate externally visible effects throughout, with replay attempts allowed and counted; per-subject order kept; catch-up lag measured (RULINGS Q31h)", ["P3"], ["NS-P3-GAPS-MAX", "NS-P3-ORDER-VIOLATIONS-MAX"]),
+    (19, "Feed consumer crash", "the dependency-index consumer crashes mid-stream and resumes from its checkpoint", "no gap; zero duplicate externally visible effects throughout, counted by the outbox delivery key (id, version), with replay attempts allowed and counted; per-subject order kept; catch-up lag measured (RULINGS Q31h, Q36a)", ["P3"], ["NS-P3-GAPS-MAX", "NS-P3-ORDER-VIOLATIONS-MAX"]),
     (20, "Midnight expiry wave", "20,000 documents expire at midnight (valid-time boundaries) while morning traffic starts", "every affected subject is re-run at the boundary; reads before and after midnight are exact; live p99 holds", ["P3", "P5", "P1"], ["NS-P3-LAG-P99-MS", "NS-P1-READ-P99-256-MS"]),
 ]
 GS_RULES = [
@@ -1645,7 +1846,7 @@ GS_RULES = [
     "Unless a scenario says otherwise it runs on P-YEAR-ONE with the fixed writer trace running and 256 concurrent pinned readers (P-NS).",
     "A scenario fails on any wrong answer, any lost or duplicated commit, any feed gap or order violation, or any missed bar; its receipt records the correctness verdicts and the P1 to P5 measurements together.",
     "All 20 run on every composition being compared, and the final acceptance reruns all 20 fresh.",
-    "Numbers inside the scenarios: pay rates, hours and money use scaled integers or order-preserving decimal strings; the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650 and GS-NUM-HOURS-40, selected by GS.18's dashboard filters) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE or E-DECIMAL-UNREPRESENTABLE (GS-NUM-UNHOLDABLE, selected by GS.02).",
+    "Numbers inside the scenarios: pay rates, hours and money use integer cents (the integer kind) or the decimal kind (TDK1 key); the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650 and GS-NUM-HOURS-40, selected by GS.18's dashboard filters) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE, E-DECIMAL-OVERFLOW or E-DECIMAL-FRACTION (GS-NUM-UNHOLDABLE, selected by GS.02).",
 ]
 GS_NAMED_CASES = {2: ["GS-NUM-UNHOLDABLE"], 18: ["GS-NUM-RANGE-1650", "GS-NUM-HOURS-40"]}
 def gs_cases(n):
@@ -1713,15 +1914,15 @@ O("G8.composition.watermark-routing", ["G8"], "Reads are served only by an index
   cases=["CS-COMPOSITION:watermark", "CS-COMPOSITION:CO-WATERMARK-WAIT,CO-WATERMARK-FALLBACK,CO-NO-STALE-ANSWER,CO-ASYNC-HISTORY,CO-EPOCH-MISMATCH,CO-RECONSTRUCT-OUTSIDE-VALIDITY,CO-ERASURE-FRONTIER,CO-FALLBACK-LATENCY-COUNTS,CO-FALLBACK-LANGUAGE,CO-FALLBACK-SHARE"], oracle=["O-REPLAY", "O-OBS"], ep=["EP-REPO", "EP-NATIVE", "EP-FEED", "EP-ENGINE-OBS"], profiles=["P-TINY-CONC"], modes=CUR_REOPEN,
   thresholds=["T-WATERMARK-WAIT-MS"], mutants=["M-STALE-INDEX-ANSWER"], closure=("CR-PASS-ALL", "CR-OBSERVE", "CR-MUTANT-KILL"), sources=["lab/TARGETS.md section 4.1 items 3 to 5", "RULINGS Q28", "RULINGS Q31d"])
 O("G7.composition.ack-and-routed-ryow", ["G7"], "ACK after source publication; read-your-own-write by routing",
-  "Per COMPOSITION ackOwnership (RULINGS Q31e, replacing Q28's ACK clause): the source of truth sends every ACK after its own publication (CO-ACK-AFTER-SOURCE-PUBLICATION, OBS-ACK-ORDER); the pull at the returned position is served by an index eligible for it, else by the fallback, so read-your-own-write is exact (CO-RYOW-ROUTED); during a current-index outage commits and ACKs continue and pulls fall back (CO-OUTAGE-ACKS-CONTINUE), and the index catches up from the feed through a bounded queue (CO-CATCHUP-BOUNDED-QUEUE).",
-  scope="engine", cases=["CS-COMPOSITION:ack", "CS-COMPOSITION:CO-ACK-AFTER-SOURCE-PUBLICATION,CO-RYOW-ROUTED,CO-OUTAGE-ACKS-CONTINUE,CO-CATCHUP-BOUNDED-QUEUE"], oracle=["O-REPLAY", "O-OBS"], ep=["EP-WRITER", "EP-REPO", "EP-FEED", "EP-ENGINE-OBS"], profiles=["P-TINY-CONC"], modes=CUR_REOPEN,
+  "Per COMPOSITION ackOwnership (RULINGS Q31e, replacing Q28's ACK clause): the source of truth sends every ACK after its own publication (CO-ACK-AFTER-SOURCE-PUBLICATION, OBS-ACK-ORDER); the pull at the returned position is served by an index eligible for it, else by the fallback, so read-your-own-write is exact (CO-RYOW-ROUTED); during a current-index outage commits and ACKs continue and pulls fall back (CO-OUTAGE-ACKS-CONTINUE), and the index catches up from the feed through a bounded queue (CO-CATCHUP-BOUNDED-QUEUE). Per COMPOSITION fallbackEquivalence (RULINGS Q34b), this holds on every serving surface the composition claims in the lane's language, native included (CO-RYOW-PER-SURFACE); a stale fallback is rejected (CO-STALE-FALLBACK-REJECTED); a cross-language fallback recipe is bound to the same semantic query identity (parameters, basis, meaning) and the same oracle answer (CO-CROSS-LANGUAGE-RECIPE-IDENTITY), with total request latency and language attribution recorded.",
+  cases=["CS-COMPOSITION:ack", "CS-COMPOSITION:CO-ACK-AFTER-SOURCE-PUBLICATION,CO-RYOW-ROUTED,CO-OUTAGE-ACKS-CONTINUE,CO-CATCHUP-BOUNDED-QUEUE,CO-RYOW-PER-SURFACE,CO-STALE-FALLBACK-REJECTED,CO-CROSS-LANGUAGE-RECIPE-IDENTITY"], oracle=["O-REPLAY", "O-OBS"], ep=["EP-WRITER", "EP-REPO", "EP-NATIVE", "EP-FEED", "EP-ENGINE-OBS"], profiles=["P-TINY-CONC"], modes=CUR_REOPEN,
   mutants=["M-ACK-BEFORE-PUBLICATION", "M-RYOW-STALE-ROUTE"], closure=("CR-PASS-ALL", "CR-OBSERVE", "CR-MUTANT-KILL"), sources=["lab/TARGETS.md section 4.1 item 6", "RULINGS Q31e"])
 
 # ---------------- position coordinates (TARGETS 4.1 item 3, RULINGS Q31c)
 O("G7.position.coordinates", ["G7", "G9"], "Positions are totally ordered coordinates with a fully resolved watermark",
-  "Per POSITION: a position is (stream, epoch, offset, ordinal), ordered lexicographically and not necessarily dense (PO-LEXICOGRAPHIC-ORDER); several Triplex transacts in one engine transaction take consecutive ordinals at one offset, assigned atomically with their assertions and the subject compare-and-set; a watermark is a fully resolved prefix and every aborted offset is listed in the feed's resolution stream (PO-ABORTED-LISTED); O-REPLAY sorts by coordinate and assigns its own dense ordinals for cuts (PO-ORACLE-DENSE-ORDINALS). The required selection depends on the composition (position_selection, RULINGS Q32e): a dense-position composition (the A0 controls on today's scope-counter adapters) closes with the nested-cut cases PO-NESTED-CUTS-DENSE, PO-LEXICOGRAPHIC-ORDER and PO-ORACLE-DENSE-ORDINALS; a non-dense one also needs the four falsifiers FX-NESTED-CUTS, FX-ABORT-GAP, FX-CRASH-APPEND-RESOLUTION and FX-RESUME-AT-ABORT-GAP before any comparative claim (GATE-POSITION).",
-  scope="engine", cases=["CS-POSITION", "CS-POSITION:" + ",".join(CS["CS-POSITION"]["requiredCases"])], oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-TRIPLES", "EP-FEED", "EP-REPLAY"], profiles=["P-FAULT"], modes=CRR,
-  closure=("CR-PASS-ALL", "CR-FAULT"), thresholds=["T-FAULT-REPS"], sources=["lab/TARGETS.md section 4.1 item 3", "RULINGS Q31c", "lab/reviews/plan-v2-round2.codex.md finding 15"])
+  "Per POSITION: a position is (stream, epoch, offset, ordinal), ordered lexicographically and not necessarily dense (PO-LEXICOGRAPHIC-ORDER); several Triplex transacts in one engine transaction take consecutive ordinals at one offset, assigned atomically with their assertions and the subject compare-and-set; a watermark is a fully resolved prefix and every aborted offset is listed in the feed's resolution stream (PO-ABORTED-LISTED); O-REPLAY sorts by coordinate and assigns its own dense ordinals for cuts (PO-ORACLE-DENSE-ORDINALS). The required selection depends on the composition (position_selection, RULINGS Q32e, Q34a): a composition whose allocator source hashes equal A0_ALLOCATOR_ALLOWLIST (the A0 controls) closes with the nested-cut cases PO-NESTED-CUTS-DENSE, PO-LEXICOGRAPHIC-ORDER and PO-ORACLE-DENSE-ORDINALS; a non-dense one also needs the four falsifiers FX-NESTED-CUTS, FX-ABORT-GAP, FX-CRASH-APPEND-RESOLUTION and FX-RESUME-AT-ABORT-GAP before any comparative claim (GATE-POSITION).",
+  scope="engine", cases=["CS-POSITION:" + ",".join(POSITION_DENSE_CASES)], oracle=["O-REPLAY"], ep=["EP-WRITER", "EP-TRIPLES", "EP-FEED", "EP-REPLAY"], profiles=["P-FAULT"], modes=CRR,
+  closure=("CR-PASS-ALL", "CR-FAULT"), thresholds=["T-FAULT-REPS"], params={"conditionalSelection": {"rule": "position_selection(composition) is authoritative: the static selection is the dense nested-cut cases; when density_proven(composition) is false the evaluator adds nonDenseAdds (RULINGS Q34a)", "nonDenseAdds": POSITION_NONDENSE_ADDS}}, sources=["lab/TARGETS.md section 4.1 item 3", "RULINGS Q31c", "lab/reviews/plan-v2-round2.codex.md finding 15"])
 
 # ---------------- W0 coverage floors and review gate (TARGETS 6.1 items 6 and 7, RULINGS Q31i)
 O("W0.coverage-floors", ["GS", "NS"], "W0 is reviewed, pinned and meets its frozen coverage floors",
@@ -1773,6 +1974,34 @@ O("S.budgets.cumulative", ["S", "G8"], "The integrated candidate stays inside fr
   cases=["CS-BUDGET"], oracle=["O-OBS"], ep=["EP-ENGINE-OBS", "EP-REPO", "EP-WRITER"], profiles=["P-RUNGS"], closure=("CR-BUDGET",),
   sources=["lab/PLAN.md section 7.4", "lab/PLAN.md section 1 item 5", "lab/reviews/acceptance-review-r1.codex.md finding 14"])
 
+# RULINGS Q33: every Q33 rule is a named case of the set that owns it, selected by the owning obligation.
+Q33_PLACEMENT = {"CS-WIRE": "G1.wire.write-guards", "CS-DECIMAL": "G1.types.decimal", "CS-RANGE-OUT": "G1.types.out-of-range-rejected", "CS-JOURNAL": "G7.journal.logical-contract", "CS-CURSOR": "G10.cursor.stable", "CS-ERRORS": "G2.errors.typed-taxonomy"}
+
+
+def q33_set(case):
+    if case.startswith("DEC-"):
+        return "CS-DECIMAL"
+    if case.startswith("RANGE-OUT-"):
+        return "CS-RANGE-OUT"
+    if case == "Q33-JSON-READBACK":
+        return "CS-WIRE"
+    if case in ("Q33-JNL-ENVELOPE", "Q33-JNL-NOT-MODELED"):
+        return "CS-JOURNAL"
+    if case in ("Q33-JNL-LIMIT", "Q33-PAGE-LIMIT", "Q33-PAGE-OTHER-BASIS"):
+        return "CS-CURSOR"
+    return "CS-ERRORS"
+
+
+_obl = {o["id"]: o for o in OBL}
+for r in Q33_RULES:
+    cid = q33_set(r["case"])
+    if r["case"] not in CS[cid]["requiredCases"]:
+        CS[cid]["requiredCases"].append(r["case"])
+    o = _obl[Q33_PLACEMENT[cid]]
+    if not any(c["set"] == cid and r["case"] in c["select"] for c in o["cases"]):
+        o["cases"].append({"set": cid, "select": [r["case"]]})
+_obl["G2.errors.typed-taxonomy"]["oracles"] = sorted(set(_obl["G2.errors.typed-taxonomy"]["oracles"]) | {"O-REPLAY"})
+
 # RULINGS Q31c, Q31i: gates. A gated obligation stays OPEN until every gate it lists holds.
 for o in OBL:
     g = []
@@ -1780,6 +2009,10 @@ for o in OBL:
         g.append("GATE-POSITION")
     if "O-DOMAIN" in o["oracles"] and o["id"] != "W0.coverage-floors":
         g.append("GATE-W0")
+    if o["id"] == "G1.decimal.tdk1-differential":
+        g.append("GATE-TDK1-VECTORS")
+    if "O-REPLAY" in o["oracles"]:
+        g.append("GATE-ORACLE-PIN")
     o["closure"]["params"]["gates"] = g
 
 # RULINGS Q26: the calibration requirement is every threshold an NS obligation names.
@@ -1789,7 +2022,7 @@ for o in OBL:
         o["closure"]["params"]["requiredThresholds"] = NS_CAL_REQUIRED
 
 # RULINGS Q28: every engine-scope obligation names the composition layer its scope key derives from.
-LAYER_OVERRIDES = {"NS.P2": "source", "NS.P3": "source", "G8.composition.watermark-routing": "current", "G7.composition.ack-and-routed-ryow": "source", "W0.coverage-floors": "source", "S.maintenance.correct-during": "current",
+LAYER_OVERRIDES = {"NS.P2": "source", "NS.P3": "source", "G8.composition.watermark-routing": "current", "W0.coverage-floors": "source", "S.maintenance.correct-during": "current",
                    "REQ.snapshot-reads": "history", "REQ.read-your-write": "current", "REQ.retro-corrections": "current", "REQ.pii-erasure": "source", "REQ.tenant-isolation": "source"}
 for o in OBL:
     o["layer"] = (LAYER_OVERRIDES.get(o["id"]) or LAYER_BY_GOAL[o["goals"][0]]) if o["receiptScope"] == "engine" else None
@@ -1845,9 +2078,9 @@ RECEIPT_SCHEMA = {
         "contract": "{version, transitiveSha256}",
         "obligations": "[{id, definitionSha256}]",
         "lane": "lane id for lane-scope receipts; for engine-scope receipts the scope key (layer, engine, imageDigest, configSha256, slot) derived from the composition assignment of the obligation's layer (COMPOSITION scopeKey)",
-        "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever, imageDigest, configSha256, slot} (RULINGS Q28); positionsDense: bool with its evidence (RULINGS Q32e; missing means non-dense)",
+        "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever, imageDigest, configSha256, slot} (RULINGS Q28); allocatorBlocks {marker: sha256} recomputed by the evaluator from the receipt's bound source tree with ALLOCATOR_EXTRACTION_RULE (RULINGS Q34a; any positionsDense field is ignored)",
         "replicationEdges": "[{from, to, consumerSourceSha256, translationGeneration}] for every edge of the composition",
-        "watermarks": "per read: {readId, basisPosition, servingIndex, watermarkAtRead, waitMs, route}",
+        "watermarks": "per read: {readId, basisPosition, servingIndex, watermarkAtRead, waitMs, route, surface, recipeLanguage, semanticQueryId (parameters, basis, meaning), totalLatencyMs} (RULINGS Q31d, Q34b)",
         "trace": "{generatorSourceSha256, seed, backgroundCommands, overlayCommands} (TARGETS 2.1 freeze; background and scenario overlay accounted separately)",
         "cpuQuota": "{engineCores, hostBrokerCpu, kernelCpu} (TARGETS 1.1 P4 item 3)",
         "profileIdentity": "{sourceTreeSha256 (including uncommitted and untracked executed inputs), buildManifestSha256, importedDist [{path, sha256}], lockfileSha256, node, pnpm, composition (per-assignment image digests, configuration hashes and slots), resourceCaps, enabledCapabilities [], fixtureSha256, gateScriptSha256, oracleFiles [{id, sha256}], caseManifests [{set, sha256}], projectionSpecVersion, logFormatVersion}",
@@ -2077,7 +2310,7 @@ def build_load_contract():
                    "ryow": "the next pull at the returned tx", "idempotency": "the trace's duplicates and lost ACKs", "readers": 256,
                    "bars": ["NS-P2-COMMIT-P50-MS", "NS-P2-COMMIT-P99-MS", "NS-P2-COMMIT-P99-26-50-MS", "NS-P2-UNACCOUNTED-MAX", "NS-P2-UNJUSTIFIED-OUTCOMES-MAX", "NS-P2-QUEUE-MAX-S", "NS-P2-BURST-DRAIN-S", "NS-P2-RYOW-FRACTION", "NS-P2-DUP-RECEIPT-FRACTION"]},
             "P3": {"commitTime": "the source of truth's publication instant for the transaction, stamped by the source on the host monotonic clock the driver also reads", "cursor": "(epoch, position), a total order over transactions; per-subject order follows from it",
-                   "expectedAffected": "subjects written directly (O-REPLAY) plus subjects affected through referenced entities under WORLD_W0's dependency rules (O-DOMAIN)",
+                   "expectedAffected": "subjects written directly (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN; RULINGS Q36e)",
                    "milestone": "the consumer durably records the affected-subject set and its checkpoint in one durable write; lag runs from commit time to that record",
                    "delivery": "at-least-once from the last checkpoint; effects keyed by (consumer, position, subject), so replay is idempotent; visible duplicate effects must be zero (NS-P3-VISIBLE-DUP-EFFECTS-MAX); replay attempts allowed and counted separately",
                    "crashPoints": ["before the effect", "after the effect, before the checkpoint", "after the checkpoint"], "readers": 256,
@@ -2088,7 +2321,7 @@ def build_load_contract():
                    "history": "one matched sample of 1,000 subjects: measure at history depth 1, add corrections to the same subjects to depth 3 and then 10, measure again; compare p99 latency and bytes read (RULINGS Q16, Q27)",
                    "bars": ["NS-P4-PULL-P50-MS", "NS-P4-PULL-P99-MS", "NS-P4-PULL-P99-LARGEST-MS", "NS-P4-PULLS-PER-CORE", "NS-P4-HISTORY-FLATNESS"]},
             "P5": {"sweep": "evaluate release R against WORLD_W0 for every subject in R's scope (100k) at one shared basis; the receipt binds the basis and R's content hash", "coverage": "every in-scope subject evaluated exactly once; the receipt carries the hash of the subject list",
-                   "publication": "results published as work items through the atomic outbox path (EP-OUTBOX); expected outputs from O-DOMAIN, independently", "postCaptureMutations": "after the basis is captured the driver mutates selected subjects; their outputs must reflect the captured basis",
+                   "publication": "results published as work items through the atomic outbox path (EP-OUTBOX) under the delivery key (id, version) with early cutoff: an unchanged payload publishes nothing, a changed one publishes a new version of the same id (RULINGS Q36a); expected outputs from O-DOMAIN, independently", "postCaptureMutations": "after the basis is captured the driver mutates selected subjects; their outputs must reflect the captured basis",
                    "wallTime": "includes evaluation and publication", "throttledVariant": "about 10 minutes, overlapping a real compaction or index rebuild; keeps its basis and never blocks writers",
                    "concurrent": "the writer trace and 64 live readers", "noSweepBaseline": "same run, same 64 readers and writer trace, before the sweep", "bars": ["NS-P5-SWEEP-S", "NS-P5-LIVE-READ-P99-RATIO", "NS-P5-WRITER-P99-RATIO", "NS-P1-WRITER-WAIT-MAX-MS"]},
             "secondary": {"bulk": "a 1M-fact import through the bulk lane with 64 live readers; bar NS-SEC-BULK-READ-P99-RATIO", "retroactive": "1,000 corrections 30 days back; feed valid-time range and explain at the old basis checked", "audit": "explain at a past basis, repeated three times; bit-for-bit identical"},
@@ -2130,6 +2363,8 @@ BANNED_TEXT = [
     (r"no duplicate processing", "superseded GS.19 wording (RULINGS Q31h)"),
     (r"driver commits a mutation", "superseded forced mutations (RULINGS Q31b)"),
     (r"waits up to 250 ms", "superseded watermark wait (RULINGS Q31d)"),
+    (r"fixed-width, sign-aware", "superseded decimal key wording (RULINGS Q35a)"),
+    (r"E-DECIMAL-UNREPRESENTABLE", "superseded error name (RULINGS Q35e)"),
 ]
 
 
@@ -2399,8 +2634,8 @@ def ruling_checks():
     if "consecutive positions in callback order" in s_render_oracle() or "totally ordered coordinates" not in s_render_oracle():
         e.append("Q31c: O-REPLAY position text")
     for fx in ("FX-NESTED-CUTS", "FX-ABORT-GAP", "FX-CRASH-APPEND-RESOLUTION", "FX-RESUME-AT-ABORT-GAP"):
-        if fx not in [t for c in obl["G7.position.coordinates"]["cases"] for t in c["select"]]:
-            e.append(f"Q31c: falsifier {fx} not selected")
+        if fx not in obl["G7.position.coordinates"]["closure"]["params"].get("conditionalSelection", {}).get("nonDenseAdds", []):
+            e.append(f"Q31c: falsifier {fx} not in the conditional selection")
     for o in OBL:
         if o["id"].startswith(("NS.", "GS.")) and o["id"] != "NS.calibration" and "GATE-POSITION" not in o["closure"]["params"].get("gates", []):
             e.append(f"Q31c: {o['id']} lacks GATE-POSITION")
@@ -2429,13 +2664,14 @@ def ruling_checks():
         e.append("Q31f: key exclusivity evidence")
     # Q31g
     dw = next(r for r in DECIMAL_SCALE_EVOLUTION if r["id"] == "DS-WIDEN")["rule"]
-    if "p - s do not shrink" not in dw or "order-key encoding is proven unchanged" not in dw or not any(r["id"] == "DS-WIDEN-MIGRATE" for r in DECIMAL_SCALE_EVOLUTION):
-        e.append("Q31g: DS-WIDEN corrected")
+    dm = next((r["rule"] for r in DECIMAL_SCALE_EVOLUTION if r["id"] == "DS-WIDEN-MIGRATE"), "")
+    if "admits every existing value is metadata-only" not in dw or "fails atomically with E-DECIMAL-NARROWING" not in dm:
+        e.append("Q31g (as superseded by Q35b): DS-WIDEN and DS-WIDEN-MIGRATE")
     # Q31h
     if "zero duplicate externally visible effects" not in obl["GS.19"]["statement"] or "no duplicate processing" in obl["GS.19"]["statement"]:
         e.append("Q31h: GS.19 wording")
     # Q31i
-    for t, v in (("W0-R2-CHANGED-SHARE", 0.20), ("W0-RULE-FIRE-SHARE", 0.05), ("W0-LOCATIONS-100K", 2000), ("W0-LOCATION-ZIPF-S", 1.0), ("W0-MULTI-WORK-ITEM-SHARE", 0.01)):
+    for t, v in (("W0-R2-CHANGED-SHARE", 0.20), ("W0-RULE-FIRE-SHARE", 0.05), ("W0-LOCATIONS-100K", 2000), ("W0-LOCATION-ZIPF-S", 0.5), ("W0-MULTI-WORK-ITEM-SHARE", 0.01)):
         if THRESHOLDS.get(t, {}).get("value") != v:
             e.append(f"Q31i: {t} = {v}")
     for o in OBL:
@@ -2487,24 +2723,135 @@ def ruling_checks():
     # Q32d
     if "divided by the steady offered rate" not in THRESHOLDS["NS-P2-QUEUE-MAX-S"]["unit"] or "back within" not in THRESHOLDS["NS-P2-BURST-DRAIN-S"]["unit"]:
         e.append("Q32d: queue depth definition")
-    # Q32e: A0 is not blocked; a non-dense composition is
+    # Q34a (replaces Q32e's mechanism): density proven by allocator source
     for k, comp in A0_CONTROLS.items():
-        if position_gate_blocks(comp, POSITION_DENSE_CASES):
-            e.append(f"Q32e: {k} (dense) must not be blocked by the position falsifiers")
-    nd = {"source": "xtdb", "positionsDense": False}
+        if not density_proven(comp) or position_gate_blocks(comp, POSITION_DENSE_CASES):
+            e.append(f"Q34a: {k} on the allowlist must not be blocked by the falsifiers")
+    if density_proven(FORGED_DENSITY_FIXTURE) or not position_gate_blocks(FORGED_DENSITY_FIXTURE, POSITION_DENSE_CASES):
+        e.append("Q34a: the forged-density fixture must be rejected")
+    if density_proven({"source": "xtdb", "positionsDense": True}) or density_proven({"source": "unknown", "allocatorBlocks": {}}):
+        e.append("Q34a: positionsDense or an unknown allocator must never prove density")
+    nd = {"source": "xtdb", "allocatorBlocks": {}}
     if not position_gate_blocks(nd, POSITION_DENSE_CASES) or position_gate_blocks(nd, position_selection(nd)):
-        e.append("Q32e: a non-dense composition must need the four falsifiers, and close with them")
-    if not position_gate_blocks({"source": "xtdb"}, position_selection(nd)):
-        e.append("Q32e: unknown density must fail closed")
+        e.append("Q34a: a non-dense composition must need the four falsifiers, and close with them")
     if not set(POSITION["falsifiers"]) <= set(position_selection(nd)) or set(POSITION["falsifiers"]) & set(position_selection(A0_CONTROLS["A0-XTDB"])):
-        e.append("Q32e: falsifiers only for non-dense compositions")
-    if not set(position_selection(nd)) <= {t for c in obl["G7.position.coordinates"]["cases"] for t in c["select"]}:
-        e.append("Q32e: G7.position.coordinates must select every case either selection needs")
+        e.append("Q34a: falsifiers only for compositions not proven dense")
+    gpc = obl["G7.position.coordinates"]
+    static = [t for c in gpc["cases"] for t in c["select"]]
+    if "all" in static or set(static) & set(POSITION["falsifiers"]) or sorted(static) != sorted(POSITION_DENSE_CASES):
+        e.append("Q34a: the static selection must be the dense cases only; the conditional selection is authoritative")
+    if gpc["closure"]["params"].get("conditionalSelection", {}).get("nonDenseAdds") != POSITION_NONDENSE_ADDS:
+        e.append("Q34a: conditional nonDenseAdds must be the four falsifiers plus PO-ABORTED-LISTED")
+    for eng, al in A0_ALLOCATOR_ALLOWLIST.items():
+        if len(al["blocks"]) < 4 or any(not re.fullmatch(r"[0-9a-f]{64}", b_["sha256"]) for b_ in al["blocks"]) or not re.fullmatch(r"[0-9a-f]{40}", al["a0Commit"]):
+            e.append(f"Q34a: allowlist for {eng} malformed")
+    if "positionsDense" in json.dumps(GATES["GATE-POSITION"]) and "no authority" not in GATES["GATE-POSITION"]["rule"]:
+        e.append("Q34a: GATE-POSITION must deny authority to positionsDense")
+    # Q34b
+    ar = obl["G7.composition.ack-and-routed-ryow"]
+    sel = {t for c in ar["cases"] for t in c["select"]}
+    if "EP-NATIVE" not in ar["entrypoints"] or ar["receiptScope"] != "lane" or not {"CO-RYOW-PER-SURFACE", "CO-STALE-FALLBACK-REJECTED", "CO-CROSS-LANGUAGE-RECIPE-IDENTITY"} <= sel:
+        e.append("Q34b: outage RYOW on every serving surface with stale-fallback rejection and recipe identity")
+    if "semantic query identity" not in COMPOSITION.get("fallbackEquivalence", "") or "semanticQueryId" not in RECEIPT_SCHEMA["fields"]["watermarks"] or "native included" not in GS_FAILURE_SCHEDULES[4][0][2]:
+        e.append("Q34b: semantic query identity recorded and GS.04b on native surfaces")
+    # Q34c
+    if "user JSON only" not in WIRE_RULES[0]["rule"] or "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP" not in WIRE_RULES[0]["cases"] or "WIRE-JSON-NEGZERO" not in WIRE_RULES[0]["cases"]:
+        e.append("Q34c: guard on user JSON only, with the paired test")
+    if "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP" not in {t for c in obl["G7.journal.logical-contract"]["cases"] for t in c["select"]} or "M-JSON-GUARD-ON-JOURNAL" not in obl["G1.wire.write-guards"]["mutationControls"]:
+        e.append("Q34c: journal side of the paired test")
+    # Q34d
+    a0claim = {"composition": A0_CONTROLS["A0-XTDB"], "positionCasesClosed": POSITION_DENSE_CASES, "compositionBound": True, "domainDependent": False, "profile": "P-SCREEN"}
+    if admit_claim(a0claim) != "QUALIFIED":
+        e.append("Q34d: a complete A0 screening claim must be admitted")
+    for bad, why in ((dict(a0claim, composition=FORGED_DENSITY_FIXTURE), "forged density"), (dict(a0claim, compositionBound=False), "unbound composition"), (dict(a0claim, domainDependent=True, w0CoverageClosed=True), "pending W0 pin")):
+        if admit_claim(bad) != "DIAGNOSTIC":
+            e.append(f"Q34d: a screening claim with {why} must be a diagnostic")
+    # Q35
+    for v, k in TDK1["examples"]:
+        try:
+            if tdk1_encode(v) != k:
+                e.append(f"Q35a: TDK1 {v} encodes to {tdk1_encode(v)}, not {k}")
+        except ValueError as x:
+            e.append(f"Q35a: TDK1 {v}: {x}")
+    from fractions import Fraction
+    vals = sorted({v for v, _ in TDK1["examples"]}, key=lambda t: Fraction(t))
+    keys = [tdk1_encode(v) for v in vals]
+    if keys != sorted(keys) or any(not set(k_) <= set(TDK1["alphabet"]) for k_ in keys):
+        e.append("Q35a: TDK1 key order must equal numeric order over the alphabet [0-9nopz]")
+    for bad in ("-0", "-0.00", "+1", "01", "1.", ".5", "1e3", " 1"):
+        try:
+            tdk1_encode(bad)
+            e.append(f"Q35a: TDK1 must refuse {bad!r}")
+        except ValueError:
+            pass
+    if TDK1["channel"] != "decimal_order_v1" or "never concatenated" not in TDK1["useConstraints"] or "prefix" not in TDK1["useConstraints"]:
+        e.append("Q35c/d: channel name and use constraints")
+    if "TDK1" not in DECIMAL_RULES["storage"][0]["as"] or "one stored representation" not in DECIMAL_RULES["oneRepresentation"].replace("exactly one", "one") and "exactly one stored representation" not in DECIMAL_RULES["oneRepresentation"]:
+        e.append("Q35b: one representation")
+    if any(x["id"] == "E-DECIMAL-UNREPRESENTABLE" for x in ERROR_TABLE) or not {"E-DECIMAL-OVERFLOW", "E-DECIMAL-FRACTION", "E-DECIMAL-NARROWING", "E-DECIMAL-BARE-DIVIDE"} <= {x["id"] for x in ERROR_TABLE}:
+        e.append("Q35e: decimal error names")
+    for vid, t in TDK1_TESTS.items():
+        if t["obligation"] not in obl or t["case"] not in {x for c in obl[t["obligation"]]["cases"] for x in c["select"]}:
+            e.append(f"Q35: {vid} obligation {t['obligation']} missing or not selecting {t['case']}")
+    if "GATE-TDK1-VECTORS" not in obl["G1.decimal.tdk1-differential"]["closure"]["params"].get("gates", []) or TDK1_VECTOR_PIN["sha256"] is not None and not (REPO / TDK1_VECTOR_PIN["file"]).exists():
+        e.append("Q35: V5 vector pin gate")
+    if "metadata-only" not in next(r for r in DECIMAL_SCALE_EVOLUTION if r["id"] == "DS-WIDEN")["rule"] or "value alone" not in next(r for r in DECIMAL_SCALE_EVOLUTION if r["id"] == "DS-WIDEN")["rule"]:
+        e.append("Q35b: widening that admits every value is metadata-only")
+    # Q33
+    q33_ids = {r["id"] for r in Q33_RULES}
+    for need in ("R-VAL-7a", "R-DEC-0", "R-DEC-1", "R-DEC-2", "R-DEC-3", "R-DEC-5", "R-DEC-6", "R-DEC-7", "R-LANE-2", "R-CMP-3", "R-NUM-7", "R-NUM-8", "R-AGG-5", "R-CMD-9", "R-CMD-12", "R-JNL-5", "R-JNL-6", "R-JNL-7", "R-CUT-3", "R-PAGE-3", "R-PAGE-4"):
+        if need not in q33_ids:
+            e.append(f"Q33: {need} missing")
+    for r in Q33_RULES:
+        if r["error"] not in ("-",) and r["error"] not in {x["id"] for x in ERROR_TABLE}:
+            e.append(f"Q33: {r['id']} names unknown error {r['error']}")
+        if not any(r["case"] in c["select"] for o in OBL for c in o["cases"]):
+            e.append(f"Q33: case {r['case']} of {r['id']} not selected")
+    if "read back as written" not in WIRE_RULES[0]["rule"] or "9007199254740993" not in WIRE_RULES[0]["rule"]:
+        e.append("Q33a: read-back-as-written refines Q30a")
+    if not any(c["id"] == "CMP-CROSS-FAMILY-ORDERED" and "E-MIXED-FAMILY" in c["rule"] and "never false" in c["rule"] for c in COMPARISON_RULES):
+        e.append("Q33d: ordered cross-family comparison is E-MIXED-FAMILY")
+    if next(r for r in Q33_RULES if r["id"] == "R-PAGE-4")["error"] != "E-CURSOR" or "other-query" not in next(r for r in Q33_RULES if r["id"] == "R-PAGE-4")["rule"] or "malformed" not in next(r for r in Q33_RULES if r["id"] == "R-JNL-7")["rule"]:
+        e.append("Q33g/h: pagination reasons")
+    if [x["compiled"]["reason"] for x in Q33I_CURSOR_READINGS] != ["other-query", "other-query"]:
+        e.append("Q33i: G10-CUR-01 E1/E2 readings")
+    only_q33 = sorted(set(Q33I_QLEVER_REJECTED) - set(LEGACY_LANE_OUTCOMES))
+    only_q31 = sorted(set(LEGACY_LANE_OUTCOMES) - set(Q33I_QLEVER_REJECTED))
+    if only_q33 or only_q31:
+        e.append(f"Q33i: lists differ; only in Q33i: {only_q33}; only in Q31j: {only_q31}")
+    # Q36
+    if THRESHOLDS["W0-LOCATION-ZIPF-S"]["value"] != 0.5 or "s = 0.5" not in WORLD_W0.get("fanout", ""):
+        e.append("Q36g: location fanout Zipf s = 0.5")
+    if "(id, version)" not in WORLD_W0.get("workItemIdentity", "") or "early cutoff" not in WORLD_W0["workItemIdentity"]:
+        e.append("Q36a: work item identity and delivery key")
+    for where, text in (("GS.19", obl["GS.19"]["statement"]), ("GS-19B", GS_FAILURE_SCHEDULES[19][0][2]), ("NS.P5", obl["NS.P5"]["statement"]), ("load-contract P5", lc["measurements"]["P5"]["publication"])):
+        if "(id, version)" not in text:
+            e.append(f"Q36a: {where} must use the delivery key (id, version)")
+    if "early cutoff" not in obl["NS.P5"]["statement"] or "early cutoff" not in lc["measurements"]["P5"]["publication"]:
+        e.append("Q36a: early cutoff on P5 publication")
+    if "read set contains a changed fact" not in obl["NS.P3"]["statement"] or "read set contains a changed fact" not in lc["measurements"]["P3"]["expectedAffected"]:
+        e.append("Q36e: expected affected set")
     # Q32f
     if any(v is not None for v in W0_PIN["files"].values()) and W0_PIN["reviewReceipt"] is None:
         e.append("Q32f: W0 pin set without a V-D01 review receipt")
     if "version bump" not in W0_PIN.get("rule", ""):
         e.append("Q32f: pinning needs a contract version bump")
+    # V-O02 C2: a legacy case hidden in a contrastCase or a commandTemplate case is found by the scan
+    probe = {"probe.json": {"vectors": [
+        {"id": "PROBE-CONTRAST", "commandTemplate": {"expect": {"outcome": "rejected"}}, "cases": [{"case": "bad", "text": "9223372036854775808"}], "contrastCase": {"case": "edge", "text": "-9223372036854775808", "expect": {"outcome": "committed"}}},
+        {"id": "PROBE-TEMPLATE", "commandTemplate": {"expect": {"outcome": "committed"}}, "cases": [{"case": "big", "text": "576460752303423488"}, {"case": "small", "text": "5"}]}]}}
+    if set(legacy_out_of_range_scan(probe)) != {"PROBE-CONTRAST#edge", "PROBE-TEMPLATE#big"}:
+        e.append("V-O02 C2: the legacy scan must read contrastCase and commandTemplate cases")
+    if "G1-I64-02#min-exact" not in legacy_out_of_range_scan() or "G1-I64-02#min-exact" not in LEGACY_LANE_OUTCOMES:
+        e.append("V-O02 C2: G1-I64-02 min-exact missing from the legacy outcomes")
+    # V-O02 C1: O-REPLAY pin
+    orp = ORACLES["O-REPLAY"]
+    if orp["status"] != "BUILT-PENDING-PIN" or orp["files"] != ["lab/oracles/replay/"] or ORACLE_PINS["O-REPLAY"]["sha256"] is not None and ORACLE_PINS["O-REPLAY"].get("acceptReceipt") is None:
+        e.append("V-O02 C1: O-REPLAY is BUILT-PENDING-PIN at lab/oracles/replay/ with a required pin")
+    for o in OBL:
+        if "O-REPLAY" in o["oracles"] and "GATE-ORACLE-PIN" not in o["closure"]["params"].get("gates", []):
+            e.append(f"V-O02 C1: {o['id']} uses O-REPLAY but is not gated on its pin")
+            break
     # Q31k
     closes = {x["closes"] for x in EVALUATOR_POSITIVE_FIXTURES}
     if used_rules - closes:
@@ -2559,9 +2906,9 @@ def ruling_checks():
         e.append("Q18: decimal must sit between number and datetime")
     if not any(c["id"] == "CMP-DECIMAL-CROSS" and "E-MIXED-FAMILY" in c["rule"] for c in COMPARISON_RULES):
         e.append("Q18: CMP-DECIMAL-CROSS missing")
-    if "p <= 15" not in DECIMAL_RULES["storage"][0]["when"] or "never rounded" not in DECIMAL_RULES["reject"]:
-        e.append("Q18: decimal storage or reject rule wrong")
-    for rc in ("DEC-P15-SCALED", "DEC-P16-STRING", "DEC-SCALE-EXCESS", "DEC-PRECISION-EXCESS", "DEC-CROSS-FAMILY-PREFLIGHT"):
+    if "TDK1" not in DECIMAL_RULES["storage"][0]["as"] or "never rounded" not in DECIMAL_RULES["reject"]:
+        e.append("Q18 (as amended by Q35b): decimal storage or reject rule wrong")
+    for rc in ("DEC-SMALL-PRECISION-TDK1", "DEC-LARGE-PRECISION-TDK1", "DEC-SCALE-EXCESS", "DEC-PRECISION-EXCESS", "DEC-CROSS-FAMILY-PREFLIGHT"):
         if rc not in CS["CS-DECIMAL"]["requiredCases"]:
             e.append(f"Q18: CS-DECIMAL lacks {rc}")
     # Q19
@@ -2690,7 +3037,7 @@ def validate():
         for rc in s["requiredCases"]:
             if cid in ("CS-CURSOR", "CS-RAW-MAPPED"):
                 continue
-            if not any(t["case"] == rc for t in TRACE) and not rc.startswith("X-") and not any(c["set"] == cid and rc in c["select"] for o in OBL for c in o["cases"]):
+            if not any(t["case"] == rc for t in TRACE) and not rc.startswith("X-") and not any(c["set"] == cid and rc in c["select"] for o in OBL for c in o["cases"]) and not any(rc in o["closure"]["params"].get("conditionalSelection", {}).get("nonDenseAdds", []) for o in OBL):
                 e.append(f"{cid}: required case {rc} not traced")
     # mutants
     for m, d in MUTANTS.items():
@@ -2864,6 +3211,17 @@ CHANGELOG_020 = [
 ]
 
 
+CHANGELOG_034 = [
+    ("Q33", "EXP-O02 RULING-NEEDED items", "Q33_RULES (21 rules, each a named case selected by its owning obligation): read-back-as-written JSON numbers (refines Q30a); decimal R-DEC-0 to 7 (E-DECIMAL-AVG new); retract-pattern out of range; CMP-CROSS-FAMILY-ORDERED; non-numeric operands and aggregates; unmapped faults and transaction-entity retracts; journal envelope; pagination reasons (malformed, other-query). Q33i: G10-CUR-01 E1/E2 compiled as other-query; QLever outcomes cross-checked against Q31j."),
+    ("Q34a", "Density proven", "A0_ALLOCATOR_ALLOWLIST: sha256 of five allocator blocks per adapter (committedPosition or position, persist, withTransaction, nextCommitPosition, currentCommitPosition) at main 820607281edf, by ALLOCATOR_EXTRACTION_RULE; density_proven ignores positionsDense; G7.position.coordinates selects only the dense cases statically, with the falsifiers as conditional nonDenseAdds; FORGED_DENSITY_FIXTURE and CX-FORGED-DENSITY."),
+    ("Q34b", "Fallback equivalence", "G7.composition.ack-and-routed-ryow is lane-scoped with EP-NATIVE; CO-RYOW-PER-SURFACE, CO-STALE-FALLBACK-REJECTED, CO-CROSS-LANGUAGE-RECIPE-IDENTITY; receipts record surface, recipe language, semanticQueryId and total latency; GS.04b on every claimed surface."),
+    ("Q34c", "JSON guard and journal", "WR-JSON applies to user JSON only; generated journal JSON exempt; paired test WIRE-JSON-NEGZERO plus WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP on both engines; mutant M-JSON-GUARD-ON-JOURNAL."),
+    ("Q34d", "Claim admission", "CLAIM_ADMISSION and admit_claim: position, composition identity and W0 prerequisites on every comparative or promotion claim, screening included; failed or pending means DIAGNOSTIC; CX-SCREENING-CLAIM-PREREQ."),
+    ("Q34e", "Consistent regeneration", "The generator regenerates a second time in a fresh process (--verify) and fails unless all five files are byte-identical."),
+    ("Q35", "TDK1 decimal key", "TDK1 (channel decimal_order_v1, value-determined and order-preserving) replaces the earlier key wording and Q18's scaled-integer path (one representation); never concatenated or used as a prefix; errors E-DECIMAL-OVERFLOW and E-DECIMAL-FRACTION replace the earlier unrepresentable error; widening that admits every value is metadata-only; obligations G1.decimal.tdk1-admission, -ranges, -differential (gated on TDK1_VECTOR_PIN), -serialization, -writer-negative (R20 V3 to V7); oracle O-TDK1; generator self-check of the R20 worked examples and their order."),
+    ("V-O02", "Oracle check C1 to C3", "C1: O-REPLAY points at lab/oracles/replay/ with status BUILT-PENDING-PIN; ORACLE_PINS is a required null input and GATE-ORACLE-PIN makes every obligation it would close fail closed until the oracle is accepted after EXP-O03. C2: the legacy scan reads commandTemplate cases and contrastCase entries; G1-I64-02 min-exact (-2^63) added (XTDB commits, QLever rejects with E-VALUE-OUT-OF-RANGE before mutation), making ten legacy outcomes. C3: Q33 compiled."),
+    ("Q36", "W0 work items and fanout", "Delivery key (id, version) with early cutoff on GS.19, GS.19b, NS.P5 and the load contract; expected affected set = subjects whose static read set contains a changed fact (NS.P3); W0-LOCATION-ZIPF-S = 0.5 at 100k, other rungs N / 50 with the same s."),
+]
 CHANGELOG_033 = [
     ("Q30 (Q32a)", "Wire exactness", "WIRE_RULES WR-JSON, WR-INSTANT, WR-X-ENCODINGS, WR-Q-SHADOW, WR-INTEGER-RANGE; errors E-INEXACT-JSON-NUMBER and E-NEGATIVE-ZERO-INSTANT (InvalidTripleError invalid-value with details); CS-WIRE; G1.wire.write-guards (writer, bulk, replay), G1.wire.xtdb-encodings (XTDB lanes), G1.wire.qlever-shadow (QLever); mutants M-JSON-NEGZERO-NORMALIZE, M-X-JSON-LIST-PARAM, M-Q-SHADOW-EXACT-FLAG."),
     ("Q32b to Q32f", "Contract 0.3.3 questions", "Legacy vectors are rejection tests on QLever; pending follow-up EXP-G02: QLever in-range companion vectors by an independent golden author. 0.1% of trace commands are deliberately invalid and marked. Queue depth definition confirmed. Position falsifiers gate only non-dense compositions (position_selection, position_gate_blocks; the A0 controls on scope-counter adapters close with the nested-cut cases; unknown density fails closed). W0 pin null until V-D01, pinning needs a version bump."),
@@ -2877,7 +3235,7 @@ CHANGELOG_033 = [
     ("Q31g", "Decimal widening", "DS-WIDEN is metadata-only only when p - s does not shrink and order keys are proven unchanged; DS-WIDEN-MIGRATE otherwise (atomic rewrite or atomic failure)."),
     ("Q31h", "GS.19 wording", "Zero duplicate externally visible effects throughout; replay attempts allowed and counted."),
     ("Q31i", "W0 coverage and review", "W0-* coverage thresholds under CR-W0-COVERAGE (W0.coverage-floors); GATE-W0 on every O-DOMAIN obligation; W0_PIN is a required input that is null until V-D01 reviews W0, so those obligations fail closed."),
-    ("Q31j", "Legacy signed-64 vectors", "LEGACY_LANE_OUTCOMES for the nine golden vectors or cases that commit integers outside QLever's range (XTDB commits, QLever rejects with E-VALUE-OUT-OF-RANGE before mutation); checked against a scan of the golden files; originals unchanged."),
+    ("Q31j", "Legacy signed-64 vectors", "LEGACY_LANE_OUTCOMES for the golden vectors or cases that commit integers outside QLever's range (nine in 0.3.3, ten from 0.3.4) (XTDB commits, QLever rejects with E-VALUE-OUT-OF-RANGE before mutation); checked against a scan of the golden files; originals unchanged."),
     ("Q31k", "Positive evaluator fixtures", "EVALUATOR_POSITIVE_FIXTURES, one complete receipt set per closure rule in use that must CLOSE, so an always-OPEN evaluator fails."),
 ]
 CHANGELOG_032 = [
@@ -2895,7 +3253,7 @@ CHANGELOG_032 = [
 CHANGELOG_031 = [
     ("Q16", "Derived thresholds, basis mix, timing, budgets", "History flatness 1.1 kept; reader basis mix now 80% latest committed tx, 15% within the last hour, 5% up to 90 days back (load-contract basisMix); acceptance windows 120 s + 600 s per level kept; new screening profile P-SCREEN (30 s + 120 s) that no obligation may list and whose receipts never close anything; budgets.json marked PROVISIONAL, re-frozen after EXP-N02 and before any candidate comparison."),
     ("Q17", "Sparse profile", "Stays dropped; GS.15 covers skew; the generator fails if a sparse profile reappears."),
-    ("Q18", "Decimal", "DECIMAL_RULES: declared precision and scale; scaled integer when precision <= 15, else order-preserving decimal string; excess digits rejected with E-DECIMAL-UNREPRESENTABLE; own family between number and datetime; CMP-DECIMAL-CROSS preflight error unless converted; kernel arithmetic; six named CS-DECIMAL cases selected by G1.types.decimal."),
+    ("Q18", "Decimal", "DECIMAL_RULES: declared precision and scale; scaled integer when precision <= 15, else an order-preserving string (both replaced by TDK1 in 0.3.4); excess digits rejected with a typed error (renamed by Q35e); own family between number and datetime; CMP-DECIMAL-CROSS preflight error unless converted; kernel arithmetic; six named CS-DECIMAL cases selected by G1.types.decimal."),
     ("Q19", "Engine-side sums", "G5.agg.projection-sums: XTDB uses SUM(CAST(x AS DECIMAL(32,0))) once EXP-X02 confirms it, split-sum as fallback, EXP-F02 cross-checks; Q13 marked refined by Q19."),
     ("Q20", "Q8a and Q8b wording", "Both read integer, not int64; per-subject sums in the kernel (BigInt)."),
 ]
@@ -2916,7 +3274,9 @@ def render_acceptance(doc, cells, counts):
     A("**Generated by `python3 -I lab/acceptance/build_contract.py`. Do not edit this file.** `obligations.json` is the only authority an evaluator reads; this file renders it for people. Where any text here and `obligations.json` differ, `obligations.json` wins.\n")
     A(f"Transitive contract hash: `{doc['transitiveContractSha256']}`.\n")
     A("## 0. Change log\n")
-    A("### 0.3.3 (this version): rulings Q29 and Q31 and the revised TARGETS 1.1, 4.1, 6.1 and 7\n")
+    A("### 0.3.4 (this version): rulings Q33 to Q36\n")
+    A(md_table(["Ruling", "What", "Change"], CHANGELOG_034))
+    A("\n### 0.3.3: rulings Q29 to Q32 and the revised TARGETS 1.1, 4.1, 6.1 and 7\n")
     A(md_table(["Ruling", "What", "Change"], CHANGELOG_033))
     A("\n### 0.3.2: rulings Q21 to Q28 and TARGETS v2\n")
     A(md_table(["Ruling", "What", "Change"], CHANGELOG_032))
@@ -2965,7 +3325,7 @@ def render_acceptance(doc, cells, counts):
     A("\n### 3.2 Legacy signed-64 golden vectors (RULINGS Q31j)\n")
     A(LEGACY_RULE + "\n")
     _scan = legacy_out_of_range_scan()
-    A(md_table(["Vector", "File", "Committed values outside QLever's range", "XTDB lanes", "qlever-sparql"], [[k, _scan[k]["file"], ", ".join(_scan[k]["values"]), v["xtdb"], v["qlever"]] for k, v in LEGACY_LANE_OUTCOMES.items()]))
+    A(md_table(["Vector", "File", "Committed values outside QLever's range", "XTDB lanes", "qlever-sparql"], [[k, _scan.get(k, {}).get("file", "NOT FOUND BY SCAN"), ", ".join(_scan.get(k, {}).get("values", [])), v["xtdb"], v["qlever"]] for k, v in LEGACY_LANE_OUTCOMES.items()]))
     A("\n## 4. Frozen semantic tables (expected-answer authority)\n")
     A("A later change in production behavior never changes an expected answer automatically; it needs a contract version.\n")
     A("### 4.0 Value kinds and the numeric rule (NUMERIC)\n")
@@ -2982,6 +3342,17 @@ def render_acceptance(doc, cells, counts):
     A("**Wire exactness (RULINGS Q30).**\n")
     A(md_table(["Id", "Rule", "Source", "Cases"], [[r["id"], r["rule"], r["source"], ", ".join(r["cases"])] for r in WIRE_RULES]))
     A("")
+    A("**Decimal order key TDK1 (RULINGS Q35).** " + " ".join(f"{k}: {v}." for k, v in TDK1.items() if k not in ("examples", "name")) + "\n")
+    A(md_table(["Value", "TDK1 key"], [[v, f"`{k}`"] for v, k in TDK1["examples"]]))
+    A("")
+    A(md_table(["Test", "Obligation", "Check", "Pass", "Case"], [[k, v["obligation"], v["check"], v["pass"], v["case"]] for k, v in TDK1_TESTS.items()]))
+    A("O-REPLAY pin (V-O02 C1): " + ("BLOCKED, fails closed until accepted after EXP-O03" if ORACLE_PINS["O-REPLAY"]["sha256"] is None else ORACLE_PINS["O-REPLAY"]["sha256"]) + "; every obligation using O-REPLAY carries GATE-ORACLE-PIN.\n")
+    A(f"\nTDK1_VECTOR_PIN ({TDK1_VECTOR_PIN['file']}): " + ("BLOCKED, fails closed until pinned" if TDK1_VECTOR_PIN["sha256"] is None else TDK1_VECTOR_PIN["sha256"]) + ".\n")
+    A("**EXP-O02 rulings (RULINGS Q33).**\n")
+    A(md_table(["Id", "Rule", "Error", "Case", "Ruling"], [[r["id"], r["rule"], r["error"], r["case"], r["ruling"]] for r in Q33_RULES]))
+    A("")
+    A(md_table(["Vector", "Query", "Vector's reason", "Compiled reading", "Why"], [[x["vector"], x["query"], x["vectorReason"], f"{x['compiled']['_tag']} / {x['compiled']['reason']}", x["why"]] for x in Q33I_CURSOR_READINGS]))
+    A("\nQ33i QLever lane outcomes (rejected with E-VALUE-OUT-OF-RANGE at write): " + ", ".join(Q33I_QLEVER_REJECTED) + "; cross-checked against LEGACY_LANE_OUTCOMES.\n")
     A("**Temporal, read-shape and journal rules (RULINGS Q21).**\n")
     A(md_table(["Id", "Rule", "Source"], [[r["id"], r["rule"], r["source"]] for r in TEMPORAL_RULES + READ_SHAPE_RULES + JOURNAL_RULES]))
     A("")
@@ -3085,7 +3456,7 @@ def render_acceptance(doc, cells, counts):
     A(md_table(["Family", "Edge values"], [
         ["string", "\"\", ASCII mixed case A E c z, NFC U+00E9 and NFD e U+0301 as distinct values, U+E000, U+10000, U+1F600, quote, backslash, CR, LF, a 64 KiB text"],
         ["integer", "0, 1, -1, 2^53-1, -(2^53-1) on every lane; 2^53+1, 2^59-1, -2^59 where the lane accepts them; values beyond the lane's range belong to CS-RANGE-OUT"],
-        ["decimal", "0.00, 16.50, 16.49, 1e11 cents as a scaled integer, a negative value, an order-preserving string encoding round trip (CS-DECIMAL covers scale overflow)"],
+        ["decimal", "0.00, 16.50, 16.49, a 38-digit value, a negative value, the TDK1 key and canonical text round trip (CS-DECIMAL covers scale overflow)"],
         ["number (binary64, approximate values only)", "+0.0, -0.0, 0.1, 0.30000000000000004, 1.0000000000000002, 2^53 as a double, 5e-324, 2.2250738585072014e-308, 1.7976931348623157e308, -1.5, 3.0 (stays a number)"],
         ["boolean", "true, false"],
         ["datetime", "0, a negative instant, 1700000000000.5 (fractional millisecond), the earliest and latest instant Triplex accepts"],
@@ -3168,7 +3539,10 @@ def render_acceptance(doc, cells, counts):
     A(md_table(["Item", "Rule"], [[k, (", ".join(v) if isinstance(v, list) else json.dumps(v) if isinstance(v, dict) else v)] for k, v in POSITION.items()]))
     A("")
     A(md_table(["Gate", "Rule", "Requires", "Applies to"], [[k, v["rule"], ", ".join(v["requires"]), v["appliesTo"]] for k, v in GATES.items()]))
-    A("\nG7.position.coordinates selection (RULINGS Q32e): dense compositions need " + ", ".join(POSITION_DENSE_CASES) + "; non-dense ones also need " + ", ".join(POSITION["falsifiers"] + ["PO-ABORTED-LISTED"]) + "; unknown density is treated as non-dense. A0 controls: " + "; ".join(f"{k} ({v['source']}, dense: {v['why']})" for k, v in A0_CONTROLS.items()) + ".\n")
+    A("\nDensity proof (RULINGS Q34a): " + ALLOCATOR_EXTRACTION_RULE + ".\n")
+    A(md_table(["Engine", "File", "A0 commit", "Marker", "Lines at A0", "sha256"], [[k, v["file"], v["a0Commit"][:12], f"`{b_['marker'].strip()}`", b_["linesAtA0"], b_["sha256"]] for k, v in A0_ALLOCATOR_ALLOWLIST.items() for b_ in v["blocks"]]))
+    A("\n" + CLAIM_ADMISSION["rule"] + ".\n")
+    A("\nG7.position.coordinates selection (RULINGS Q32e, Q34a): dense compositions need " + ", ".join(POSITION_DENSE_CASES) + "; non-dense ones also need " + ", ".join(POSITION["falsifiers"] + ["PO-ABORTED-LISTED"]) + "; a composition not proven dense by its allocator source is treated as non-dense. A0 controls: " + "; ".join(f"{k} ({v['source']}: {v['why']})" for k, v in A0_CONTROLS.items()) + ".\n")
     _pending = [f for f, h in W0_PIN["files"].items() if h is None]
     A(f"\nW0_PIN (required input, reviewed by {W0_PIN['reviewedBy']}): " + ("BLOCKED, fails closed until pinned: " + ", ".join(_pending) if _pending or W0_PIN["reviewReceipt"] is None else "pinned") + ".\n")
     A("\n## 9. PLAN C1-C8 traceability\n")
@@ -3253,7 +3627,8 @@ def main():
         "valueKinds": VALUE_KINDS, "decimalRules": DECIMAL_RULES, "decimalOps": DECIMAL_OPS, "decimalConversions": DECIMAL_CONVERSIONS, "decimalScaleEvolution": DECIMAL_SCALE_EVOLUTION, "decimalTests": DECIMAL_TEST_TEXT, "screeningProfiles": SCREENING_PROFILES,
         "temporalRules": TEMPORAL_RULES, "readShapeRules": READ_SHAPE_RULES, "journalRules": JOURNAL_RULES, "ambRulings": AMB_RULINGS, "goldenResolutions": GOLDEN_RESOLUTIONS, "goldenRule": GOLDEN_RULE, "goldenFilesPinned": {f"{GOLDEN_DIR}/{k}": sha_file(f"{GOLDEN_DIR}/{k}") for k in golden_vectors()},
         "erasure": ERASURE, "protectedCopyInventory": PROTECTED_COPY_INVENTORY, "composition": COMPOSITION, "worldW0": WORLD_W0, "goldenFailureSchedules": {f"GS.{k:02d}": [{"case": c, "schedule": w, "expected": x} for c, w, x in v] for k, v in GS_FAILURE_SCHEDULES.items()},
-        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
+        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "positionNonDenseAdds": POSITION_NONDENSE_ADDS, "a0Controls": A0_CONTROLS, "a0AllocatorAllowlist": A0_ALLOCATOR_ALLOWLIST, "allocatorExtractionRule": ALLOCATOR_EXTRACTION_RULE, "forgedDensityFixture": FORGED_DENSITY_FIXTURE, "claimAdmission": CLAIM_ADMISSION,
+        "oraclePins": ORACLE_PINS, "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,
@@ -3286,12 +3661,31 @@ def main():
         print("CONTRACT INVALID:")
         print("\n".join(sorted(set(errs))))
         sys.exit(1)
-    for name, text in [("obligations.json", obl_text), ("load-contract.json", load_text), ("budgets.json", budgets_text), ("capability-matrix.md", matrix_text), ("ACCEPTANCE.md", acc_text)]:
+    outputs = [("obligations.json", obl_text), ("load-contract.json", load_text), ("budgets.json", budgets_text), ("capability-matrix.md", matrix_text), ("ACCEPTANCE.md", acc_text)]
+    if "--verify" in sys.argv:
+        diff = [n for n, t in outputs if not (HERE / n).exists() or (HERE / n).read_text() != t]
+        print("verify transitive hash:", doc["transitiveContractSha256"])
+        for n, t in outputs:
+            print(f"verify {n}: {sha_text(t)}")
+        if diff:
+            print("REGENERATION NOT BYTE-IDENTICAL:", ", ".join(diff))
+            sys.exit(1)
+        print("second regeneration byte-identical (RULINGS Q34e)")
+        return
+    for name, text in outputs:
         (HERE / name).write_text(text)
     print(counts)
     print(f"obligations: {len(OBL)}; raw exceptions: {len(RAW_EXCEPTIONS)}; traced cases: {len(TRACE)}; mutants: {len(MUTANTS)}; thresholds: {len(THRESHOLDS)} ({sum(1 for v in THRESHOLDS.values() if v['source'].startswith('derived'))} derived)")
     print("rulings compiled: " + ", ".join(r["id"] for r in RULINGS if r.get("status") != "SUPERSEDED") + "; superseded: " + ", ".join(r["id"] for r in RULINGS if r.get("status") == "SUPERSEDED"))
     print("transitive hash:", doc["transitiveContractSha256"])
+    for n, t in outputs:
+        print(f"{n}: {sha_text(t)}")
+    import subprocess
+    r = subprocess.run([sys.executable, "-I", str(pathlib.Path(__file__).resolve()), "--verify"], capture_output=True, text=True, cwd=str(REPO))
+    print(r.stdout.strip())
+    if r.returncode != 0:
+        print("CONTRACT INVALID: second regeneration differs (RULINGS Q34e)")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
