@@ -1,10 +1,11 @@
-# O-REPLAY rules (0.3.0, conforms to ACCEPTANCE 0.3.3 and RULINGS through Q36)
+# O-REPLAY rules (0.3.1, conforms to ACCEPTANCE 0.3.5 and RULINGS through Q36, plus pending Q43)
 
 Every semantic rule the oracle applies, with where it comes from. Status:
 
-- **SOURCED**: stated in the acceptance contract (ACC 0.3.3, cited by table row id: section 4 and the 0.3.3
-  tables decimalOps DO-*, decimalConversions DC-*, decimalScaleEvolution DS-*, wireRules WR-*, temporalRules
-  TM-*, readShapeRules RS-*, journalRules JN-*, POSITION), RULINGS.md (cited Qn or Q21 AMB-nn), the EXP-O02
+- **SOURCED**: stated in the acceptance contract (ACC 0.3.5, cited by table row id: section 4 and the tables
+  decimalOps DO-*, decimalConversions DC-*, decimalScaleEvolution DS-*, wireRules WR-*, temporalRules TM-*,
+  readShapeRules RS-*, journalRules JN-*, q33Rules, POSITION), RULINGS.md (cited Qn or Q21 AMB-nn), the
+  pending Q43 rulings on EXP-O03's decisions (`RULINGS-PENDING.md`, cited Q43x, to compile in 0.3.6), the EXP-O02
   brief's implementation facts (cited "brief fact n"), a public doc, PLAN v1.1, or the orchestrator's
   correction message of 2026-11-07 (cited "OC-n").
 - **Q21-DEFAULT**: an O-REPLAY 0.1 default that RULINGS Q21 keeps, with the citation in
@@ -18,8 +19,8 @@ Every semantic rule the oracle applies, with where it comes from. Status:
 
 Independence: no rule was inferred by running Triplex or by reading code under `packages/`. EXP-O02 used only
 the contract, the rulings, the golden vectors, `docs/operational-primitives.md` and the brief's stated facts.
-EXP-O03 added only ACC 0.3.3, RULINGS Q22 to Q36 and V-O02's findings (`lab/verify/O02/VERIFY.md`, the
-verifier's probe cases).
+EXP-O03 added only ACC 0.3.3 to 0.3.5, RULINGS Q22 to Q36, the pending Q43 rulings and V-O02's findings
+(`lab/verify/O02/VERIFY.md`, the verifier's probe cases).
 The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397, the Constraint.ts
 `newlyViolated` docstring) are unchanged sources.
 
@@ -41,21 +42,21 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-DEC-0 | Every decimal attribute declares precision p and scale s (0 <= s <= p, p >= 1), from the case's `attributeDeclarations` or a schema release; a malformed declaration is a case error; a decimal written to an undeclared attribute is E-INVALID-VALUE. | SOURCED: ACC 4.0 decimal, Q18; R-DEC-0 ruled by Q33b |
 | R-DEC-1 | Wire form `{"type":"decimal","value":"16.50"}` (optional inline precision and scale): optional `-`, no leading zeros, optional `.` with at least one digit, no `+`, no exponent. | SOURCED: Q33b (R-DEC-1) |
 | R-DEC-2 | `-0` / `-0.00` decimal text is E-INVALID-VALUE, not normalized; computed decimal zero has no sign. | SOURCED: Q33b (R-DEC-2, consistent with Q30b) |
-| R-DEC-3 | Fractional digits are counted on the value: more than s fractional digits, or more than p - s integer digits, is E-DECIMAL-UNREPRESENTABLE at write, never rounded or truncated; `16.500` is 16.5 and fits scale 2. Output text has exactly s fractional digits plus `scale` and `precision`. There is no `storage` field: Q35b (one TDK1 representation) amends the compiled p <= 15 / p > 15 storage row, so the physical form is not an expected answer. | SOURCED: ACC 0.3.3 decimalRules.reject, DC-T2D; Q33b (R-DEC-3). Storage claim dropped: Q35b, **O03**. Error id: see R-DEC-16 |
-| R-DEC-4 | Kernel decimal arithmetic is exact and typed. add/sub: scale max(s1, s2), precision max(p1 - s1, p2 - s2) + scale + 1; mul: scale s1 + s2, precision p1 + p2; SUM: the inputs' maximum scale, precision 38; neg/abs keep the operand's type. Precision is capped at 38 (R-DEC-10); a result with more integer digits than precision - scale is E-DECIMAL-OVERFLOW, never rounded or widened. Equality and order between decimals compare exact values (1.50 = 1.5). | SOURCED: decimalOps DO-ADD, DO-MUL, DO-SUM, DO-CMP (Q22). **O03** |
-| R-DEC-5 | `divide(a, b, scale, rounding)` with rounding `half-even`, `half-up` or `down`: the exact quotient rounded once at the named scale (the only rounding, and only when named); b = 0 is E-DIVISION-BY-ZERO; beyond 38 digits E-DECIMAL-OVERFLOW. `a` is a decimal, `b` a decimal or an integer (so R-DEC-7's divide(SUM, COUNT, ...) is expressible). A bare `/` with a decimal operand is preflight E-DECIMAL-BARE-DIVIDE. `round(x, s, rounding)`: scale s, precision p - (s_x - s), E-DECIMAL-OVERFLOW only when a carry exceeds it; s = s_x returns x. | SOURCED: DO-DIV, DO-BARE-DIV, DO-ROUND (Q22); Q33b (R-DEC-5). Integer divisor: DERIVED. **O03** |
-| R-DEC-6 | Conversions. DC-I2D: `toDecimal(integer[, p, s])` exact, more than p - s integer digits E-DECIMAL-UNREPRESENTABLE; without (p, s) its type is (digits, 0). DC-D2I: `toInteger(decimal)` only when the fraction is zero, else E-DECIMAL-FRACTION (write `round(x, 0, rounding)` first). DC-D2N: `toNumber(decimal)` one correctly rounded binary64. DC-N2D: `toDecimal(number, p, s, rounding)` only, from the exact binary expansion, rounded once (2.675 becomes 2.67 at scale 2); `toDecimal(number)` without (p, s, rounding) is a malformed case. DC-IMPLICIT: no implicit conversion, E-MIXED-FAMILY. | SOURCED: decimalConversions (Q22); Q33b (R-DEC-6). **O03** |
-| R-DEC-7 | AVG over decimals is a preflight error unless written `divide(SUM, COUNT, scale, rounding)`; the error id is E-DECIMAL-BARE-DIVIDE (R-DEC-14). With `convert: "toNumber"` it follows AG-AVG-CONV. | SOURCED: Q33b (R-DEC-7). Error id: **O03 RULING-NEEDED** (R-DEC-14) |
-| R-DEC-8 | The type of a decimal literal with no declaration (expression operands): scale = written fractional digits, precision = max(1, integer digits + scale). A declaration replaces it at write. | DERIVED. **O03 RULING-NEEDED** |
-| R-DEC-9 | Rounding modes: `half-even` ties to the even digit, `half-up` ties away from zero, `down` toward zero (decimal.js / BigDecimal names). | DERIVED from the mode names. **O03 RULING-NEEDED** (confirm half-up on negative ties) |
-| R-DEC-10 | No target is declared inside an expression, so DO-ADD / DO-MUL / DO-DIV's "the target's declared precision or 38 digits" is 38 there; a write of the result is checked against the attribute declaration (R-DEC-3). | DERIVED. **O03 RULING-NEEDED** |
-| R-DEC-11 | `round(x, s, rounding)` with s > s_x is X-NOT-MODELED: DO-ROUND's "else p" would leave fewer integer digits than x has. | **O03 RULING-NEEDED** |
-| R-DEC-12 | `toInteger` of a whole decimal outside the core integer range is E-INTEGER-OVERFLOW (as CV-T2I's exact text). | DERIVED. **O03 RULING-NEEDED** |
-| R-DEC-13 | `toDecimal(number, p, s, rounding)` with more than p - s integer digits is E-DECIMAL-UNREPRESENTABLE (DC-I2D's error for the same conversion family). | DERIVED. **O03 RULING-NEEDED** |
-| R-DEC-14 | The error id of R-DEC-7 is E-DECIMAL-BARE-DIVIDE (AVG is a division without a named scale and rounding). | DERIVED. **O03 RULING-NEEDED** |
-| R-DEC-15 | Scale evolution is NOT-MODELED: a case whose `attributeDeclarations` and schema releases declare one decimal attribute with different (precision, scale) (DS-WIDEN, DS-WIDEN-MIGRATE, DS-NARROW) is refused with exit 2 and an `X-NOT-MODELED` message. The oracle therefore never produces E-DECIMAL-NARROWING. | SOURCED: decimalScaleEvolution (Q22, Q31g, Q35b) is not modeled yet. **O03** |
-| R-DEC-16 | Write-time decimal errors use E-DECIMAL-UNREPRESENTABLE, as compiled in ACC 0.3.3 (decimalRules.reject, DC-I2D, DC-T2D). Q35e (not compiled) names E-DECIMAL-OVERFLOW / E-DECIMAL-FRACTION instead and drops E-DECIMAL-UNREPRESENTABLE; the oracle follows the compiled contract until it is recompiled. | SOURCED: ACC 0.3.3. **O03 PENDING CONFLICT** with Q35e |
-| R-DEC-17 | TDK1 order keys (Q35) are NOT-MODELED: query kinds `orderKey`, `decimalKey` and `tdk1Key` are refused (exit 2, `X-NOT-MODELED`). The oracle answers values, never key bytes. | Q35 not compiled. **O03** |
+| R-DEC-3 | Fractional digits are counted on the value: more than s fractional digits is E-DECIMAL-FRACTION and more than p - s integer digits (p capped at 38) is E-DECIMAL-OVERFLOW (phase preflight at write), never rounded or truncated; `16.500` is 16.5 and fits scale 2. Output text has exactly s fractional digits plus `scale` and `precision`. There is no `storage` field: the stored form is the TDK1 key for every declaration (Q35b), a lane-side form, not an expected answer. | SOURCED: ACC 0.3.5 decimalRules.reject, DC-T2D; Q33b (R-DEC-3); Q35e; Q43a |
+| R-DEC-4 | Kernel decimal arithmetic is exact and typed. add/sub: scale max(s1, s2), precision max(p1 - s1, p2 - s2) + scale + 1; mul: scale s1 + s2, precision p1 + p2; SUM: the inputs' maximum scale, precision 38; neg/abs keep the operand's type. Precision is capped at 38 (R-DEC-10); a result with more integer digits than precision - scale is E-DECIMAL-OVERFLOW (phase execution), never rounded or widened. Equality and order between decimals compare exact values (1.50 = 1.5). | SOURCED: decimalOps DO-ADD, DO-MUL, DO-SUM, DO-CMP (Q22) |
+| R-DEC-5 | `divide(a, b, scale, rounding)` with rounding `half-even`, `half-up` or `down`: the exact quotient rounded once at the named scale (the only rounding, and only when named); b = 0 is E-DIVISION-BY-ZERO; beyond 38 digits E-DECIMAL-OVERFLOW. `a` is a decimal, `b` a decimal or an integer (so R-DEC-7's divide(SUM, COUNT, ...) is expressible). A bare `/` with a decimal operand is preflight E-DECIMAL-BARE-DIVIDE. `round(x, s, rounding)`: scale s, precision p - (s_x - s), E-DECIMAL-OVERFLOW only when a carry exceeds it; s = s_x returns x; s > s_x see R-DEC-11. | SOURCED: DO-DIV, DO-BARE-DIV, DO-ROUND (Q22); Q33b (R-DEC-5). Integer divisor: DERIVED |
+| R-DEC-6 | Conversions. DC-I2D: `toDecimal(integer[, p, s])` exact, more than p - s integer digits E-DECIMAL-OVERFLOW; without (p, s) its type is (digits, 0). DC-D2I: `toInteger(decimal)` only when the fraction is zero, else E-DECIMAL-FRACTION (write `round(x, 0, rounding)` first). DC-D2N: `toNumber(decimal)` one correctly rounded binary64. DC-N2D: `toDecimal(number, p, s, rounding)` only, from the exact binary expansion, rounded once (2.675 becomes 2.67 at scale 2); `toDecimal(number)` without (p, s, rounding) is a malformed case. `toDecimal(decimal, p, s)` re-declares exactly (E-DECIMAL-FRACTION / E-DECIMAL-OVERFLOW). DC-IMPLICIT: no implicit conversion, E-MIXED-FAMILY. | SOURCED: decimalConversions (ACC 0.3.5); Q33b (R-DEC-6); Q43a |
+| R-DEC-7 | AVG over decimals is preflight E-DECIMAL-AVG unless written `divide(SUM, COUNT, scale, rounding)`. With `convert: "toNumber"` it follows AG-AVG-CONV. | SOURCED: Q33b (R-DEC-7); ACC 0.3.5 decimalRules.avg; Q43b |
+| R-DEC-8 | The type of a decimal literal with no declaration (expression operands): scale = written fractional digits, precision = max(1, integer digits + scale). A declaration replaces it at write. | SOURCED: Q43c (accepted) |
+| R-DEC-9 | Rounding modes: `half-even` ties to the even digit, `half-up` ties away from zero (negative ties included), `down` toward zero. | SOURCED: Q43d (accepted) |
+| R-DEC-10 | No target is declared inside an expression, so DO-ADD / DO-MUL / DO-DIV's "the target's declared precision or 38 digits" is 38 there; a write of the result is checked against the attribute declaration (R-DEC-3). | SOURCED: Q43e (accepted) |
+| R-DEC-11 | `round(x, s, rounding)` with s > s_x is exact: x at scale s with zeros appended, never refused, subject only to the 38-digit limit (E-DECIMAL-OVERFLOW). Its precision is p + (s - s_x), capped at 38, so x's integer digits keep their room (DO-ROUND's "else p" would drop them). | SOURCED: Q43f (overrides 0.3.0's refusal). Result precision: DERIVED from Q43f |
+| R-DEC-12 | `toInteger` of a whole decimal outside the core integer range is E-INTEGER-OVERFLOW (as CV-T2I's exact text). | SOURCED: Q43g (accepted) |
+| R-DEC-13 | `toDecimal(number, p, s, rounding)` with more than p - s integer digits is E-DECIMAL-OVERFLOW. | SOURCED: Q43a; ACC 0.3.5 decimalRules.reject |
+| R-DEC-14 | The error id of R-DEC-7 is E-DECIMAL-AVG (DatalogValidationError / decimal-avg-requires-divide, preflight). | SOURCED: Q43b; ACC 0.3.5 errorTable |
+| R-DEC-15 | Scale evolution is NOT-MODELED: a case whose `attributeDeclarations` and schema releases declare one decimal attribute with different (precision, scale) (DS-WIDEN, DS-WIDEN-MIGRATE, DS-NARROW) is refused with exit 2 and an `X-NOT-MODELED` message. The oracle therefore never produces E-DECIMAL-NARROWING. | decimalScaleEvolution (ACC 0.3.5, Q35b) is not modeled yet |
+| R-DEC-16 | E-DECIMAL-UNREPRESENTABLE is gone: ACC 0.3.5 compiled Q35e. A decimal beyond its declared or 38-digit precision, including number-to-decimal overflow, is E-DECIMAL-OVERFLOW; excess fraction digits are E-DECIMAL-FRACTION. E-DECIMAL-OVERFLOW has two phases: preflight for a written value, execution for a computed result. The 0.1 receipt category `decimal-unrepresentable` is no longer mapped. | SOURCED: ACC 0.3.5 errorTable, decimalRules.reject; Q35e; Q43a (resolves 0.3.0's pending conflict) |
+| R-DEC-17 | TDK1 order keys (Q35a) are NOT-MODELED here: query kinds `orderKey`, `decimalKey` and `tdk1Key` are refused (exit 2, `X-NOT-MODELED`). O-REPLAY answers values, never key bytes; O-TDK1 (`lab/oracles/decimal/`) is the key oracle. | ACC 0.3.5 tdk1, oraclePins O-TDK1 |
 | R-LANE-1 | Each lane's accepted integer range: core and xtdb [-2^63, 2^63-1]; qlever [-2^59, 2^59-1]; `laneIntegerRanges` may override, but every lane contains [-(2^53-1), 2^53-1] and stays inside the core type. A written integer outside the lane's range fails the whole command with E-VALUE-OUT-OF-RANGE before any mutation. The lane is the case's `lane` or `cli.py --lane`. | SOURCED: ACC 4.0 LANE_INTEGER_RANGE; NUMERIC; Q1 (re-scoped) |
 | R-LANE-2 | A retract-pattern value outside the lane's range is E-VALUE-OUT-OF-RANGE too. | SOURCED: Q33c |
 | R-LANE-3 | Read-side constants are compared exactly whatever the lane; no stored value can exceed the lane's range. | DERIVED |
@@ -105,14 +106,14 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-CMD-5 | An explicit retract of a no-longer-live assertion is E-TX-CONFLICT [`retractNonLive`]; an unknown id, or the same id twice in one command, is E-INVALID-VALUE. | Q21-DEFAULT (operational-primitives "Retraction is the atomic comparison") |
 | R-CMD-6 | Reserved namespaces are E-RESERVED (WriteError / reserved-namespace) for assert, retract (of an existing assertion or a journal fact) and retract-pattern: entity ids starting `_triplex/`; attributes starting `:triplex/` or `:_tx/`; entity types starting `triplex.` or equal to `_Transaction` [`reservedNamespaces`]. Other leading-underscore names are ordinary. | SOURCED: brief fact 2; V-O01 R-CMD-6 (TK-RESERVED); operational-primitives `_Transaction` / `:_tx/*`; Q21 AMB-14 |
 | R-CMD-7 | `retract-pattern` applies in operation order over staged facts: it retracts the pre-state's recorded-live matches and this command's earlier asserts that match (value by identity), in creation order. An empty pattern is E-INVALID-VALUE. | SOURCED: Q21 AMB-06 (A), AMB-07. Empty pattern: Q21-DEFAULT (R-CMD-7) |
-| R-CMD-8 | Check precedence: operation validation in operation order (E-INVALID-VALUE, E-INEXACT-JSON-NUMBER, E-NEGATIVE-ZERO-INSTANT, E-DECIMAL-UNREPRESENTABLE, E-VALUE-OUT-OF-RANGE, E-RESERVED) -> command claim -> preconditions -> retract liveness -> constraint enforcement. Cases must not depend on it (one fault per command). | Q21-DEFAULT |
-| R-CMD-9 | Every rejection carries its ACC 4.7 id, tag, reason and phase. Faults that 4.7 does not name separately (unknown op, unknown retract id, duplicate retract, TripleLive without retract, missing field, empty pattern) map to E-INVALID-VALUE; a declared `hostAbort` is `host-abort` with no tag (host-defined). | SOURCED: ACC 4.7; Q15; Q21 (R-CMD-9). The E-INVALID-VALUE mapping of operation faults: **NEW RULING-NEEDED** |
+| R-CMD-8 | Check precedence: operation validation in operation order (E-INVALID-VALUE, E-INEXACT-JSON-NUMBER, E-NEGATIVE-ZERO-INSTANT, E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW, E-VALUE-OUT-OF-RANGE, E-RESERVED) -> command claim -> preconditions -> retract liveness -> constraint enforcement. Cases must not depend on it (one fault per command). | Q21-DEFAULT |
+| R-CMD-9 | Every rejection carries its ACC 4.7 id, tag, reason and phase. Faults that 4.7 does not name separately (unknown op, unknown retract id, duplicate retract, TripleLive without retract, missing field, empty pattern) map to E-INVALID-VALUE; a declared `hostAbort` is `host-abort` with no tag (host-defined). | SOURCED: ACC 4.7; Q15; Q21 (R-CMD-9); Q33f |
 | R-CMD-10 | Race groups: committed members replay in receipt position order and must succeed; a rejected member must fail at some serialization point (`possibleCategories` lists the error ids). | DERIVED from OC-3 |
 | R-CMD-11 | Nested transactions: every allocated position is its own cut; a failing member is rejected alone; an abandoned outer transaction is `hostAbort` on every member. | SOURCED: OC-2; PLAN C2.2 |
-| R-CMD-12 | A retract-pattern whose `entityId` is a transaction entity of the scope targets journal facts and is E-RESERVED. | **NEW RULING-NEEDED** |
+| R-CMD-12 | A retract-pattern whose `entityId` is a transaction entity of the scope targets journal facts and is E-RESERVED. | SOURCED: Q33f |
 | R-CMD-13 | Erasure commands (an `erase` / `erasure` operation: ErasedValue markers, the erasure frontier, reproduction modulo erasure) are NOT-MODELED: the case is refused with exit 2 and an `X-NOT-MODELED` message. | Q24, Q31f not modeled yet. **O03** |
 | R-ERR-1 | An expected error matches a receipt when its `_tag` equals the pinned tag and its reason equals the pinned reason or one of the listed alternatives (`reasonAlternatives` for E-CONSTRAINT and E-CURSOR); a receipt may also name the error id or an 0.1 category. | SOURCED: ACC 4.7 errorComparison |
-| R-ERR-2 | Errors without a 4.7 row use `X-` ids with an explicit tag (or null) and the ruling that leaves them open: X-CYCLE (R-SUP-2), X-NO-POSITION (a cut names a command the oracle rejects), X-NOT-MODELED (R-JNL-6, R-CUT-4, R-DEC-11). X-READ-LIMIT and X-INVALID-BASIS are retired (Q33g, Q33h). | DERIVED (never invent a 4.7 reason) |
+| R-ERR-2 | Errors without a 4.7 row use `X-` ids with an explicit tag (or null) and the ruling that leaves them open: X-CYCLE (R-SUP-2), X-NO-POSITION (a cut names a command the oracle rejects), X-NOT-MODELED (R-JNL-6). X-READ-LIMIT and X-INVALID-BASIS are retired (Q33g, Q33h). | DERIVED (never invent a 4.7 reason) |
 
 ## Constraints (R-CON)
 
@@ -145,7 +146,7 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-CUT-1 | An event is known at cut (P, R) iff its position <= P and (R unbound or its instant <= R). R is independent of P. | SOURCED: ACC 6.1 R independent of P |
 | R-CUT-2 | Visible at (P, R, V): arrival known, retirement not known, validFrom <= V < validTo. | SOURCED |
 | R-CUT-3 | P beyond the latest committed position is E-UNAVAILABLE-CUT; a negative P, R or V is E-INVALID-VALUE (InvalidTripleError / invalid-value). | SOURCED: ACC 4.7 E-UNAVAILABLE-CUT; Q33h (R-CUT-3). **O03** |
-| R-CUT-4 | A read basis (R or V) given as -0 is X-NOT-MODELED: Q30b names instants at write routes only, and whether a -0 basis is E-NEGATIVE-ZERO-INSTANT or the instant 0 is not ruled. | **O03 RULING-NEEDED** |
+| R-CUT-4 | A read basis (R or V) given as -0 is E-NEGATIVE-ZERO-INSTANT (`detail: "no-negative-zero"`), consistent with Q30b. | SOURCED: Q43h (overrides 0.3.0's X-NOT-MODELED) |
 | R-CUT-5 | A cut may name its position as `{"coordinate": c}`: it resolves to the ordinal of the greatest committed position at or below c, so a cut inside an abort gap equals the cut just before the gap (FX-ABORT-GAP), and a cut at an interior ordinal of one engine transaction sees exactly the members up to it (FX-NESTED-CUTS). | SOURCED: Q31c (watermark = fully resolved prefix). **O03** |
 | R-HIST-1 | Raw lifetime: every assertion whose arrival is known at the cut, with complete retirement fields even when the retirement is after the cut. Ordinary `match`, `entityTriples` and `entityPage` answer in this contract (`raw`; `contract` names it). | SOURCED: Q21 AMB-01 (A) |
 | R-HIST-2 | As-of snapshot: same membership, retirement fields null unless retractedPosition <= P and (R unbound or retractedAt <= R). `history.asOfSnapshot` and `match.snapshot` give it for repository as-of reads and native history helpers. | SOURCED: ACC 6.1 Outputs; OC-1 |
@@ -191,7 +192,7 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-SCALE-2 | Value families of generated facts follow the O-CFG8 notation. | DERIVED |
 | R-SCALE-3 | configFacts and receipt/journal/claim metadata counts are null. | SOURCED: O-CFG8 counts |
 
-## Contract 0.3.3 tables (where each row lives)
+## Contract tables beyond section 4 (ACC 0.3.3 to 0.3.5; where each row lives)
 
 | Table | Rows | Oracle rule |
 | --- | --- | --- |
@@ -203,7 +204,9 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | temporalRules | TM-HALF-OPEN; TM-EMPTY-REJECTED | R-CUT-2; R-CMD-4 |
 | readShapeRules | RS-RAW-LIFETIME, RS-RETIREMENT-CONTENT, RS-TIMELINE, RS-FIND-RANGE, RS-FIND-CONFLICT, RS-ENTITY-ORDER | R-HIST-1, R-HIST-3, R-ENT-7, R-ENT-5 (and AMB-16), R-ENT-5, R-ORD-3 |
 | journalRules | JN-NEGZERO, JN-FIELDS, JN-STAGED, JN-ORDER | R-JNL-4 with R-VAL-11 (Q34c), R-JNL-1, R-CMD-7, R-JNL-2 |
-| POSITION, positionDenseCases | PO-LEXICOGRAPHIC-ORDER, PO-ORACLE-DENSE-ORDINALS, PO-NESTED-CUTS-DENSE | R-RCP-1, R-RCP-5, R-RCP-8, R-CUT-5 |
+| POSITION, positionDenseCases, positionRequiredCases | PO-LEXICOGRAPHIC-ORDER, PO-ORACLE-DENSE-ORDINALS, PO-NESTED-CUTS-DENSE, PO-ABORTED-LISTED; the oracle side of FX-NESTED-CUTS, FX-ABORT-GAP, FX-CRASH-APPEND-RESOLUTION (an `unknown` receipt resolved or not), FX-RESUME-AT-ABORT-GAP (`transactions(after)` from the gap's ordinal) | R-RCP-1, R-RCP-5, R-RCP-6, R-RCP-8, R-CUT-5, R-JNL-3 |
+| q33Rules | R-VAL-7a, R-DEC-0 to R-DEC-7, R-LANE-2, R-CMP-3, R-NUM-7, R-NUM-8, R-AGG-5, R-CMD-9, R-CMD-12, R-JNL-5 to R-JNL-7, R-CUT-3, R-PAGE-3, R-PAGE-4 | the rule of the same id |
+| comparisonRules (0.3.5) | CMP-CROSS-FAMILY-ORDERED | R-CMP-3 |
 
-`tests/test_contract_section4.py` has one test per row of every table above and fails when the contract gains a
-row without one.
+`tests/test_contract_section4.py` has one test per row of every table above (and per decimalRules key) and fails
+when the contract gains a row without one, or when the oracle's error table keeps an id the contract dropped.

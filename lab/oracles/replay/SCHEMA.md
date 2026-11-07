@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.3.0)
+# O-REPLAY case and output schema (v1; oracle 0.3.1)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -32,7 +32,7 @@ python3 -m lab.oracles.replay CASE.json                         # module form; n
 - **Instants and valid-time coordinates** (`clock`, `instant`, `validFrom`, `validTo`, `recordedAt`,
   `validAt`) are JS numbers, possibly fractional, compared exactly as rationals. A written instant
   (`validFrom`, `validTo`, a datetime value) given as -0 rejects the command with E-NEGATIVE-ZERO-INSTANT
-  (R-VAL-10, Q30b); a read basis given as -0 is X-NOT-MODELED (R-CUT-4).
+  (R-VAL-10, Q30b); a read basis given as -0 is E-NEGATIVE-ZERO-INSTANT too (R-CUT-4, Q43h).
 - **Untyped predicate constants**: in `where` items and `compare.right`, a bare JSON string or number
   is an untyped constant (CMP-UNTYPED-STRING, CMP-NUMERIC-CONST); typed constants are value objects.
 
@@ -208,7 +208,7 @@ exactly (erasure, decimal scale evolution, TDK1 keys) exits 2 with a message sta
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.3.0", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.3.1", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",
@@ -232,5 +232,7 @@ exactly (erasure, decimal scale evolution, TDK1 keys) exits 2 with a message sta
 - **Rejected expected outcomes**: `{"outcome":"rejected","error":"<4.7 id>","errorTag","reason","phase",
   "reasonAlternatives"?,"detail"?,"message",...}`; `detail` is `inexact-json-number` (E-INEXACT-JSON-NUMBER) or
   `no-negative-zero` (E-NEGATIVE-ZERO-INSTANT); `host-abort` has `errorTag` null and a `ruling` note (R-CMD-9).
+- **Phase of a two-phase row**: E-DECIMAL-OVERFLOW ("preflight or execution") is `preflight` on a rejected
+  write and `execution` on a query result (R-DEC-16).
 - **Verdicts per command**: `PASS`, `PASS-OUTCOME-ONLY` (rejected as expected, tag not checkable),
   `FAIL`, `EXPECTED-ONLY`.

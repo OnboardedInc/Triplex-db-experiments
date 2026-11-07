@@ -63,11 +63,20 @@ class InvalidValue(Exception):
         self.reason = reason
 
 
-class DecimalUnrepresentable(InvalidValue):
-    """ACC 4.0 decimal / Q18: more fractional digits than the declared scale, or more
-    integer digits than precision - scale. Never rounded: E-DECIMAL-UNREPRESENTABLE."""
+class DecimalOverflow(InvalidValue):
+    """ACC 0.3.5 decimalRules.reject (Q35e, RULINGS Q43a): a decimal with more integer digits
+    than precision - scale (declared, or the 38-digit kernel maximum) fails with
+    E-DECIMAL-OVERFLOW. Never rounded or truncated."""
 
-    error_id = "E-DECIMAL-UNREPRESENTABLE"
+    error_id = "E-DECIMAL-OVERFLOW"
+
+
+class DecimalFraction(InvalidValue):
+    """ACC 0.3.5 decimalRules.reject (Q35e, RULINGS Q43a): a decimal with more fractional
+    digits than the declared scale (counted on the value, R-DEC-3) fails with
+    E-DECIMAL-FRACTION. Never rounded or truncated."""
+
+    error_id = "E-DECIMAL-FRACTION"
 
 
 class InexactJsonNumber(InvalidValue):
@@ -592,26 +601,27 @@ KERNEL_MAX_DIGITS = 38   # ACC decimalRules.kernelMaxDigits; RULINGS Q22, Q29d
 
 
 def declare_decimal(value: Value, precision, scale, where="decimal") -> Value:
-    """Bind a decimal to its attribute declaration (Q18, DC-T2D). A value with more
-    fractional digits than s, or more integer digits than p - s, fails with
-    E-DECIMAL-UNREPRESENTABLE (ACC 0.3.3 decimalRules.reject; Q35e's renaming is not yet
-    compiled); it is never rounded or truncated. Fractional digits are counted on the value,
-    so trailing zeros carry no digit (1.500 is 1.5, fits scale 2 and reads back "1.50";
-    R-DEC-3, ruled by Q33b)."""
+    """Bind a decimal to its attribute declaration (Q18, DC-T2D, ACC 0.3.5 decimalRules.reject,
+    RULINGS Q43a). More fractional digits than s is E-DECIMAL-FRACTION; more integer digits
+    than p - s, with p capped at the 38-digit kernel maximum, is E-DECIMAL-OVERFLOW; never
+    rounded or truncated. Fractional digits are counted on the value, so trailing zeros
+    carry no digit (1.500 is 1.5, fits scale 2 and reads back "1.50"; R-DEC-3, Q33b)."""
     p, s = _declaration(precision, scale, where)
     frac = value.payload
     if natural_scale(frac) > s:
-        raise DecimalUnrepresentable("decimal", f"{decimal_text(frac, None)} has more than {s} fractional digits")
-    if integer_digits(frac) > p - s:
-        raise DecimalUnrepresentable(
-            "decimal", f"{decimal_text(frac, None)} has more than {p - s} integer digits (precision {p}, scale {s})")
+        raise DecimalFraction("decimal", f"{decimal_text(frac, None)} has more than {s} fractional digits")
+    limit = min(p, KERNEL_MAX_DIGITS)
+    if integer_digits(frac) > limit - s:
+        raise DecimalOverflow(
+            "decimal", f"{decimal_text(frac, None)} has more than {limit - s} integer digits (precision {p}, "
+            f"scale {s}, at most {KERNEL_MAX_DIGITS} digits)")
     return Value("decimal", frac, (s, p, True))
 
 
 def decimal(text, precision=None, scale=None) -> Value:
     """A decimal from its wire text (R-DEC-1). Its type is the inline (precision, scale)
     when given, else the text's own: scale = written fractional digits, precision =
-    max(1, integer digits + scale) (R-DEC-8, DERIVED); the attribute declaration, when one
+    max(1, integer digits + scale) (R-DEC-8, RULINGS Q43c); the attribute declaration, when one
     exists, replaces it at write (replay.py)."""
     if not isinstance(text, str) or isinstance(text, Lex):
         raise InvalidValue("decimal", "decimals travel as decimal text")
@@ -648,7 +658,7 @@ ROUNDING_MODES = ("half-even", "half-up", "down")
 def round_fraction(value: Fraction, scale: int, mode: str) -> Fraction:
     """Q22 rounding, the one place rounding happens and only when the caller names it:
     half-even (ties to the even digit), half-up (ties away from zero) and down (toward
-    zero), as decimal.js / BigDecimal name them (R-DEC-9, DERIVED from the mode names)."""
+    zero), as decimal.js / BigDecimal name them (R-DEC-9, RULINGS Q43d)."""
     if mode not in ROUNDING_MODES:
         raise OracleInputError(f"rounding mode must be one of {ROUNDING_MODES}, got {mode!r}")
     scaled = value * 10 ** scale

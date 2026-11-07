@@ -1,6 +1,7 @@
-"""ACCEPTANCE section 4 (frozen semantic tables, 0.3.1) and the 0.3.3 tables (decimalOps,
-decimalConversions, decimalScaleEvolution, wireRules, temporalRules, readShapeRules,
-journalRules, positionDenseCases), one test per table row.
+"""ACCEPTANCE section 4 (frozen semantic tables) and the tables added through 0.3.5
+(decimalOps, decimalConversions, decimalScaleEvolution, wireRules, temporalRules,
+readShapeRules, journalRules, q33Rules, positionDenseCases, positionRequiredCases), one test
+per table row.
 
 Each test is named after its contract row id (test_N_I_ADD for N-I-ADD). The coverage
 tests read lab/acceptance/obligations.json (the contract's only machine authority) and
@@ -191,18 +192,20 @@ def err_fields(node):
 class Coverage(unittest.TestCase):
     TABLES = {"numericOps": "NumericOps", "conversionRules": "Conversions", "comparisonRules": "Comparisons",
               "aggregateRules": "Aggregates", "constraintRules": "Constraints", "errorTable": "Errors",
-              # contract 0.3.3 tables (EXP-O03)
+              # tables added by contracts 0.3.3 to 0.3.5 (EXP-O03)
               "decimalOps": "DecimalOps", "decimalConversions": "DecimalConversions",
               "decimalScaleEvolution": "DecimalScaleEvolution", "wireRules": "WireRules",
-              "temporalRules": "TemporalRules", "readShapeRules": "ReadShapeRules", "journalRules": "JournalRules"}
+              "temporalRules": "TemporalRules", "readShapeRules": "ReadShapeRules", "journalRules": "JournalRules",
+              # contract 0.3.5 (EXP-O03 alignment)
+              "q33Rules": "Q33Rules"}
 
     def test_every_section4_row_has_a_named_test(self):
         classes = {cls.__name__: cls for cls in (NumericOps, Conversions, Comparisons, Aggregates, Constraints, Errors,
                                                  DecimalOps, DecimalConversions, DecimalScaleEvolution, WireRules,
-                                                 TemporalRules, ReadShapeRules, JournalRules)}
+                                                 TemporalRules, ReadShapeRules, JournalRules, Q33Rules)}
         for table, cls in self.TABLES.items():
             for row in CONTRACT[table]:
-                name = "test_" + row["id"].replace("-", "_")
+                name = "test_" + row["id"].replace("-", "_").replace(".", "_")
                 self.assertTrue(hasattr(classes[cls], name), f"{table} {row['id']} has no {cls}.{name}")
         for row in CONTRACT["valueKinds"]:
             self.assertTrue(hasattr(ValueKinds, "test_kind_" + row["kind"]), row["kind"])
@@ -211,9 +214,16 @@ class Coverage(unittest.TestCase):
         for key in CONTRACT["decimalRules"]:
             if key != "source":
                 self.assertTrue(hasattr(DecimalRules, "test_decimal_" + key), key)
-        for case_id in CONTRACT["positionDenseCases"]:
-            self.assertTrue(hasattr(Positions, "test_" + case_id.replace("-", "_")), case_id)
+        for key in ("positionDenseCases", "positionRequiredCases"):
+            for case_id in CONTRACT[key]:
+                self.assertTrue(hasattr(Positions, "test_" + case_id.replace("-", "_")), f"{key} {case_id}")
         self.assertTrue(hasattr(CardManyOrder, "test_card_many_order"))
+
+    def test_oracle_error_table_has_no_row_the_contract_dropped(self):
+        """0.3.5 removed E-DECIMAL-UNREPRESENTABLE (Q35e, RULINGS Q43a): the oracle may emit
+        only ids the contract's errorTable still lists."""
+        self.assertEqual(set(ERR.ERROR_TABLE) - {r["id"] for r in CONTRACT["errorTable"]}, set())
+        self.assertLessEqual(ERR.PRODUCED, set(ERR.ERROR_TABLE))
 
     def test_every_contract_example_is_evaluated(self):
         for table in ("numericOps", "conversionRules", "aggregateRules"):
@@ -351,6 +361,18 @@ class Comparisons(unittest.TestCase):
         r = self.cmp({"type": "boolean", "value": True}, i64(1))
         self.assertFalse(r["eq"])
         self.assertFalse(r["sameGroup"])
+
+    def test_CMP_CROSS_FAMILY_ORDERED(self):
+        """Q33d: every ordered comparison across families is preflight E-MIXED-FAMILY, never
+        false; equality across families is false (decimal pairs are errors, CMP-DECIMAL-CROSS)."""
+        pairs = [(V.string("a"), I(1)), (V.boolean(True), I(1)), (I(1), N(1.0)), (V.ref("e:1"), V.string("e:1"))]
+        for a, b in pairs:
+            self.assertFalse(V.predicate("eq", a, b), (a.family, b.family))
+            for op in ("lt", "lte", "gt", "gte"):
+                with self.assertRaises(V.MixedFamily):
+                    V.predicate(op, a, b)
+        with self.assertRaises(V.MixedFamily):
+            V.predicate("eq", dec("1"), I(1))
 
     def test_CMP_NEGZERO(self):
         r = self.cmp(nbits("0x8000000000000000"), num(0.0))
@@ -542,7 +564,7 @@ class ValueKinds(unittest.TestCase):
         v = result(rep, "m")["raw"][0]["value"]
         self.assertEqual(v, {"type": "decimal", "value": "16.50", "scale": 2, "precision": 4})
         rep = self.write(decimal_value("16.505"), attributeDeclarations=decl)
-        self.assertEqual(err_fields(outcome(rep, 0)), ("InvalidTripleError", "decimal-unrepresentable"))
+        self.assertEqual(err_fields(outcome(rep, 0)), ("InvalidTripleError", "decimal-fraction"))   # Q43a
 
     def test_kind_boolean(self):
         self.assertEqual(result(self.write({"type": "boolean", "value": False}), "m")["raw"][0]["value"]["value"], False)
@@ -598,9 +620,9 @@ class DecimalRules(unittest.TestCase):
             self.run_writes([decimal_value("1.5")], {"precision": 2, "scale": 3})   # s <= p
 
     def test_decimal_storage(self):
-        """DEC-P15-SCALED and DEC-P16-STRING read back exactly on both sides of p = 15. The
-        oracle makes no storage claim: Q35b (one TDK1 representation) amends the compiled
-        storage row, so the physical form is not an expected answer."""
+        """Values read back exactly on both sides of the old p = 15 boundary. The oracle makes no
+        storage claim: the storage row is the TDK1 key for every declaration (Q35b, compiled in
+        0.3.5), a lane-side form, not an expected answer."""
         small = self.run_writes([decimal_value("1000000000.00")], {"precision": 15, "scale": 2},
                                 [{"id": "m", "kind": "match", "cut": {"validAt": 1}}])
         v = result(small, "m")["raw"][0]["value"]
@@ -614,8 +636,9 @@ class DecimalRules(unittest.TestCase):
         """DEC-SCALE-EXCESS and DEC-PRECISION-EXCESS: never rounded, no residue."""
         rep = self.run_writes([decimal_value("16.499"), decimal_value("100.00"), decimal_value("16.500")],
                               {"precision": 4, "scale": 2}, [{"id": "all", "kind": "assertions"}])
-        self.assertEqual(outcome(rep, 0)["error"], "E-DECIMAL-UNREPRESENTABLE")
-        self.assertEqual(outcome(rep, 1)["error"], "E-DECIMAL-UNREPRESENTABLE")
+        self.assertEqual(outcome(rep, 0)["error"], "E-DECIMAL-FRACTION")              # Q43a: excess fraction
+        self.assertEqual((outcome(rep, 1)["error"], outcome(rep, 1)["phase"]),
+                         ("E-DECIMAL-OVERFLOW", "preflight"))                          # beyond p - s, at write
         self.assertEqual(outcome(rep, 2)["outcome"], "committed")                # 16.500 is 16.5: fits scale 2
         self.assertEqual([a["value"]["value"] for a in result(rep, "all")["assertions"]], ["16.50"])
 
@@ -662,7 +685,31 @@ class DecimalRules(unittest.TestCase):
         part is that its expected answer comes from the caller's typed input before any
         rounding: 16.505 at scale 2 is rejected, never stored as 16.50 or 16.51."""
         rep = self.run_writes([decimal_value("16.505")], {"precision": 4, "scale": 2}, [{"id": "all", "kind": "assertions"}])
-        self.assertEqual((outcome(rep, 0)["error"], result(rep, "all")["assertions"]), ("E-DECIMAL-UNREPRESENTABLE", []))
+        self.assertEqual((outcome(rep, 0)["error"], result(rep, "all")["assertions"]), ("E-DECIMAL-FRACTION", []))
+
+    def test_decimal_oneRepresentation(self):
+        """Q35b (compiled in 0.3.5): one stored representation; the expected answer is the
+        value at the declared scale, never a storage form (no scaled-integer path)."""
+        rep = self.run_writes([decimal_value("12.5")], {"precision": 4, "scale": 2},
+                              [{"id": "m", "kind": "match", "cut": {"validAt": 1}}])
+        self.assertEqual(result(rep, "m")["raw"][0]["value"], {"type": "decimal", "value": "12.50", "scale": 2,
+                                                               "precision": 4})
+
+    def test_decimal_wireShape(self):
+        """R-DEC-1 / R-DEC-3: {"type":"decimal","value":"16.50"}; 16.500 reads back as 16.50."""
+        rep = self.run_writes([decimal_value("16.500")], {"precision": 4, "scale": 2}, [{"id": "all", "kind": "assertions"}])
+        self.assertEqual(result(rep, "all")["assertions"][0]["value"]["value"], "16.50")
+
+    def test_decimal_toDecimal(self):
+        """R-DEC-6: toDecimal(number, p, s, rounding) starts from the exact binary expansion."""
+        self.assertEqual(X.to_decimal(N(2.675), 5, 2, "half-up").to_output().get("value"), "2.67")
+        self.assertEqual(X.to_decimal(N(0.5), 3, 0, "half-even").to_output().get("value"), "0")
+
+    def test_decimal_avg(self):
+        """R-DEC-7 (Q43b): AVG over decimal is preflight E-DECIMAL-AVG."""
+        with self.assertRaises(X.TypedError) as ctx:
+            X.agg_avg([dec("1.50"), dec("2.50")])
+        self.assertEqual(ctx.exception.code, "E-DECIMAL-AVG")
 
     def test_decimal_kernelMaxDigits(self):
         self.assertEqual(V.KERNEL_MAX_DIGITS, CONTRACT["decimalRules"]["kernelMaxDigits"])
@@ -670,7 +717,7 @@ class DecimalRules(unittest.TestCase):
             X.divide(dec("1"), dec("3"), CONTRACT["decimalRules"]["kernelMaxDigits"] + 1, "down")
 
 
-# --------------------------------------------------------------------------- contract 0.3.3 tables (EXP-O03)
+# --------------------------------------------------------------------------- contract 0.3.3 to 0.3.5 tables (EXP-O03)
 
 
 def kernel(thunk):
@@ -710,6 +757,9 @@ class DecimalOps(unittest.TestCase):
         self.assertEqual(dec_out(kernel(lambda: X.sub(b, a))[1]), ("9.25", 2, 5))
         big, one = dec(nines(38), 38, 0), dec("1", 1, 0)
         self.assertEqual(kernel(lambda: X.add(big, one)), ("error", "E-DECIMAL-OVERFLOW"))   # 10^38: 39 digits
+        node = q_expr(["add", decimal_value(nines(38)), decimal_value("1")])
+        self.assertEqual((node["error"], node["_tag"], node["phase"]), ("E-DECIMAL-OVERFLOW", "InvalidTripleError",
+                                                                        "execution"))   # a computed result
         self.assertEqual(kernel(lambda: X.sub(dec("-" + nines(38), 38, 0), one)), ("error", "E-DECIMAL-OVERFLOW"))
         self.assertEqual(dec_out(kernel(lambda: X.sub(big, one))[1]), (nines(37) + "8", 0, 38))
         self.assertEqual(dec_out(q_expr(["add", decimal_value("0.10"), decimal_value("0.20")])), ("0.30", 2, 3))
@@ -760,7 +810,11 @@ class DecimalOps(unittest.TestCase):
         self.assertEqual(kernel(lambda: X.round_(dec("9.99", 3, 2), 1, "half-up")), ("error", "E-DECIMAL-OVERFLOW"))
         self.assertEqual(dec_out(kernel(lambda: X.round_(dec("9.99", 3, 2), 1, "down"))[1]), ("9.9", 1, 2))
         self.assertIs(X.round_(x, 3, "down"), x)                                       # s = s_x: x itself
-        self.assertEqual(kernel(lambda: X.round_(x, 4, "down")), ("error", "X-NOT-MODELED"))   # R-DEC-11
+        # R-DEC-11 (Q43f): s > s_x is exact, zeros appended; integer digits keep their room
+        self.assertEqual(dec_out(kernel(lambda: X.round_(x, 5, "down"))[1]), ("2.34500", 5, 7))
+        self.assertEqual(dec_out(kernel(lambda: X.round_(dec("123", 3, 0), 2, "half-up"))[1]), ("123.00", 2, 5))
+        self.assertEqual(kernel(lambda: X.round_(dec(nines(37), 37, 0), 2, "down")),
+                         ("error", "E-DECIMAL-OVERFLOW"))                              # only the 38-digit limit
 
     def test_DO_CMP(self):
         self.assertTrue(V.predicate("eq", dec("1.50"), dec("1.5")))
@@ -785,7 +839,7 @@ class DecimalConversions(unittest.TestCase):
 
     def test_DC_I2D(self):
         self.assertEqual(dec_out(kernel(lambda: X.to_decimal(I(123), 5, 2))[1]), ("123.00", 2, 5))
-        self.assertEqual(kernel(lambda: X.to_decimal(I(1234), 5, 2)), ("error", "E-DECIMAL-UNREPRESENTABLE"))
+        self.assertEqual(kernel(lambda: X.to_decimal(I(1234), 5, 2)), ("error", "E-DECIMAL-OVERFLOW"))   # Q43a
         self.assertEqual(dec_out(kernel(lambda: X.to_decimal(I(-7)))[1]), ("-7", 0, 1))
 
     def test_DC_D2I(self):
@@ -797,7 +851,7 @@ class DecimalConversions(unittest.TestCase):
                          ("ok", {"type": "integer", "value": "2"}))
         node = q_expr(["toInteger", decimal_value("1.50")])
         self.assertEqual((node["error"],) + err_fields(node),
-                         ("E-DECIMAL-FRACTION", "DatalogValidationError", "decimal-fraction-not-zero"))
+                         ("E-DECIMAL-FRACTION", "InvalidTripleError", "decimal-fraction"))
 
     def test_DC_D2N(self):
         self.assertEqual(kernel(lambda: X.to_number(dec("0.1")))[1]["bits"], "0x3fb999999999999a")
@@ -811,7 +865,7 @@ class DecimalConversions(unittest.TestCase):
             self.assertEqual(dec_out(kernel(lambda: X.to_decimal(N(2.675), 5, 2, mode))[1]), ("2.67", 2, 5), mode)
         self.assertEqual(dec_out(kernel(lambda: X.to_decimal(N(0.125), 5, 2, "half-even"))[1]), ("0.12", 2, 5))
         self.assertEqual(dec_out(kernel(lambda: X.to_decimal(N(0.125), 5, 2, "half-up"))[1]), ("0.13", 2, 5))
-        self.assertEqual(kernel(lambda: X.to_decimal(N(1e20), 5, 2, "down")), ("error", "E-DECIMAL-UNREPRESENTABLE"))
+        self.assertEqual(kernel(lambda: X.to_decimal(N(1e20), 5, 2, "down")), ("error", "E-DECIMAL-OVERFLOW"))  # Q43a
         with self.assertRaises(V.OracleInputError):
             X.to_decimal(N(0.1))                              # only toDecimal(x, p, s, rounding)
 
@@ -821,7 +875,7 @@ class DecimalConversions(unittest.TestCase):
         rep = evaluate(case([{"clock": 1, "operations": [assert_op(f"a{k}", f"e{k}", ":pay/rate", decimal_value(t))]}
                              for k, t in enumerate(texts)], [{"id": "all", "kind": "assertions"}], **decl))
         self.assertEqual([outcome(rep, k).get("error") for k in range(len(texts))],
-                         ["E-DECIMAL-UNREPRESENTABLE", "E-DECIMAL-UNREPRESENTABLE", None,
+                         ["E-DECIMAL-FRACTION", "E-DECIMAL-OVERFLOW", None,
                           "E-INVALID-VALUE", "E-INVALID-VALUE", "E-INVALID-VALUE"])
         self.assertEqual([a["value"]["value"] for a in result(rep, "all")["assertions"]], ["16.50"])   # R-DEC-3
 
@@ -1000,14 +1054,14 @@ class Positions(unittest.TestCase):
     totally ordered coordinates, not necessarily dense; the oracle sorts them and assigns its
     own dense ordinals for cuts; aborted offsets are accounted and take no ordinal."""
 
-    def run_positions(self, positions, cuts=(), groups=None, aborted=None):
+    def run_positions(self, positions, cuts=(), groups=None, aborted=None, queries=()):
         cmds = [{"clock": k + 1, "operations": [assert_op(f"r{k}", f"e{k}", ":p/v", i64(k))]}
                 for k in range(len(positions))]
         for k, group in enumerate(groups or []):
             cmds[k]["physicalGroup"] = group
         queries = [{"id": "cat", "kind": "cutCatalog"}] + [
             {"id": f"cut{k}", "kind": "match", "cut": {"position": p, "validAt": 1}, "pattern": {"attribute": ":p/v"}}
-            for k, p in enumerate(cuts)]
+            for k, p in enumerate(cuts)] + list(queries)
         extra = {} if aborted is None else {"abortedPositions": {"s": aborted}}
         c = case(cmds, queries, **extra)
         c["receipts"] = committed_receipts(c)
@@ -1062,8 +1116,166 @@ class Positions(unittest.TestCase):
             self.assertEqual([v["rule"] for v in rep["receiptConsistency"]["violations"]], ["R-RCP-5"], broken)
 
 
+    # positionRequiredCases (0.3.5): the oracle's side of the four position falsifiers
+
+    def test_FX_NESTED_CUTS(self):
+        """Cuts at every interior ordinal of one engine transaction holding several transacts."""
+        nested = [coord(7, k) for k in range(4)]
+        rep, counts = self.run_positions(nested, groups=["g"] * 4, cuts=[{"coordinate": c} for c in nested])
+        self.assertEqual((rep["receiptConsistency"]["status"], counts), ("PASS", [1, 2, 3, 4]))
+
+    def test_FX_ABORT_GAP(self):
+        """An aborted offset between two committed ones: cuts on both sides of it and the
+        resolution-stream entry (abortedPositions)."""
+        cuts = [{"coordinate": coord(19, 9)}, {"coordinate": coord(20)}, {"coordinate": coord(21)},
+                {"coordinate": coord(30)}]
+        rep, counts = self.run_positions([coord(10), coord(30)], aborted=[coord(20)], cuts=cuts)
+        self.assertEqual(counts, [1, 1, 1, 2])
+        self.assertEqual(rep["receiptConsistency"]["positions"][0]["aborted"], [coord(20)])
+
+    def test_FX_CRASH_APPEND_RESOLUTION(self):
+        """A crash between append and resolution leaves the receipt `unknown`. Resolved as
+        committed it binds at its coordinate; left unresolved it is an R-RCP-6 violation. The
+        aborted resolution is an aborted position with no committed receipt (FX-ABORT-GAP,
+        PO-ABORTED-LISTED)."""
+        def run(resolved):
+            cmds = [{"clock": k + 1, "operations": [assert_op(f"r{k}", f"e{k}", ":p/v", i64(k))]} for k in range(2)]
+            c = case(cmds, [{"id": "cut", "kind": "match", "cut": {"position": {"coordinate": coord(11)}, "validAt": 1},
+                             "pattern": {"attribute": ":p/v"}}])
+            c["receipts"] = committed_receipts(c)
+            for rec, position in zip(c["receipts"], [coord(10), coord(11)]):
+                rec["position"] = position
+            c["receipts"][1]["outcome"] = "unknown"
+            if resolved:
+                c["receipts"][1]["resolvedOutcome"] = "committed"
+            return evaluate(c)
+        ok = run(True)
+        self.assertEqual((ok["receiptConsistency"]["status"], result(ok, "cut")["count"]), ("PASS", 2))
+        unresolved = run(False)
+        self.assertIn("R-RCP-6", [v["rule"] for v in unresolved["receiptConsistency"]["violations"]])
+
+    def test_FX_RESUME_AT_ABORT_GAP(self):
+        """A feed consumer whose checkpoint sits at an abort gap resumes with exactly the
+        commits after the gap: the checkpoint resolves to the ordinal before the gap, and
+        transactions(after=that ordinal) lists the rest."""
+        rep, counts = self.run_positions([coord(10), coord(30), coord(40)], aborted=[coord(20)],
+                                         cuts=[{"coordinate": coord(20)}],
+                                         queries=[{"id": "feed", "kind": "transactions", "after": 1}])
+        self.assertEqual(counts, [1])
+        self.assertEqual([r["position"] for r in result(rep, "feed")["transactions"]], [2, 3])
+
+    def test_PO_ABORTED_LISTED(self):
+        """Aborted offsets are accounted: receiptConsistency lists the case's aborted positions
+        per scope, and they take no ordinal."""
+        rep, _ = self.run_positions([coord(10), coord(40)], aborted=[coord(20), coord(30)])
+        self.assertEqual(rep["receiptConsistency"]["positions"][0]["aborted"], [coord(20), coord(30)])
+        self.assertEqual([r["position"] for r in result(rep, "cat")], [1, 2])
+
+
+class Q33Rules(unittest.TestCase):
+    """q33Rules (contract 0.3.5): the Q33 rulings on oracle rules, one test per row."""
+
+    PAGES = T.BriefFacts.PAGES      # for the delegated brief-fact tests
+    DECL = {":x/d": {"type": "decimal", "precision": 4, "scale": 2}}
+
+    def write_decimals(self, texts):
+        ops = [{"clock": 1, "operations": [assert_op(f"a{k}", f"e{k}", ":x/d", decimal_value(t))]}
+               for k, t in enumerate(texts)]
+        return evaluate(case(ops, [{"id": "all", "kind": "assertions"}], attributeDeclarations=self.DECL))
+
+    def test_R_VAL_7a(self):
+        self.assertEqual(outcome(json_write("9007199254740993"), 0)["error"], "E-INEXACT-JSON-NUMBER")
+        self.assertEqual(outcome(json_write("0.1"), 0)["outcome"], "committed")
+
+    def test_R_DEC_0(self):
+        rep = evaluate(case([{"clock": 1, "operations": [assert_op("a", "e", ":x/u", decimal_value("1.5"))]}]))
+        self.assertEqual(outcome(rep, 0)["error"], "E-INVALID-VALUE")
+
+    def test_R_DEC_1(self):
+        rep = self.write_decimals(["16.50", "+1.5", "1e2", "01.5"])
+        self.assertEqual(result(rep, "all")["assertions"][0]["value"],
+                         {"type": "decimal", "value": "16.50", "scale": 2, "precision": 4})
+        self.assertEqual([outcome(rep, k)["error"] for k in (1, 2, 3)], ["E-INVALID-VALUE"] * 3)
+
+    def test_R_DEC_2(self):
+        rep = self.write_decimals(["-0.00", "-0"])
+        self.assertEqual([outcome(rep, k)["error"] for k in (0, 1)], ["E-INVALID-VALUE"] * 2)
+
+    def test_R_DEC_3(self):
+        rep = self.write_decimals(["16.500"])
+        self.assertEqual([a["value"]["value"] for a in result(rep, "all")["assertions"]], ["16.50"])
+
+    def test_R_DEC_5(self):
+        self.assertEqual(dec_out(kernel(lambda: X.divide(dec("1"), dec("3"), 2, "half-even"))[1]), ("0.33", 2, 38))
+
+    def test_R_DEC_6(self):
+        self.assertEqual(dec_out(kernel(lambda: X.to_decimal(N(2.675), 5, 2, "half-up"))[1]), ("2.67", 2, 5))
+
+    def test_R_DEC_7(self):
+        """AVG over decimals is E-DECIMAL-AVG (RULINGS Q43b), from the data or from varTypes."""
+        ops = [{"clock": 1, "operations": [assert_op("a", "e1", ":x/d", decimal_value("1.50")),
+                                           assert_op("b", "e2", ":x/d", decimal_value("2.50"))]}]
+        q = {"id": "avg", "kind": "aggregate", "cut": {"validAt": 1}, "match": {"attributes": {"v": ":x/d"}},
+             "aggregates": [{"op": "avg", "var": "v"}]}
+        rep = evaluate(case(ops, [q], attributeDeclarations=self.DECL))
+        node = result(rep, "avg")
+        self.assertEqual((node["error"],) + err_fields(node),
+                         ("E-DECIMAL-AVG", "DatalogValidationError", "decimal-avg-requires-divide"))
+        self.assertEqual(kernel(lambda: X.agg_avg([dec("1.50")])), ("error", "E-DECIMAL-AVG"))
+
+    def test_R_LANE_2(self):
+        op = {"op": "retract-pattern", "pattern": {"attribute": ":x/i", "value": i64(2 ** 60)}}
+        rep = evaluate(case([{"clock": 1, "operations": [op]}], lane="qlever"))
+        self.assertEqual(outcome(rep, 0)["error"], "E-VALUE-OUT-OF-RANGE")
+
+    def test_R_CMP_3(self):
+        c = result(evaluate(case([], [{"id": "c", "kind": "compare", "left": s("a"), "right": i64(1)}])), "c")
+        self.assertEqual((c["eq"], c["lt"]["error"]), (False, "E-MIXED-FAMILY"))
+
+    def test_R_NUM_7(self):
+        self.assertEqual(kernel(lambda: X.add(V.string("a"), V.string("b"))), ("error", "E-MIXED-FAMILY"))
+
+    def test_R_NUM_8(self):
+        self.assertEqual(kernel(lambda: X.rem(N(7.0), N(2.0))), ("error", "E-MIXED-FAMILY"))
+
+    def test_R_AGG_5(self):
+        self.assertEqual(kernel(lambda: X.agg_sum([V.string("a")])), ("error", "E-MIXED-FAMILY"))
+        self.assertEqual(kernel(lambda: X.agg_avg([V.string("a")])), ("error", "E-MIXED-FAMILY"))
+
+    def test_R_CMD_9(self):
+        T.OracleChanges.test_R_CMD_9(self)
+
+    def test_R_CMD_12(self):
+        rep = evaluate(case([{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("x"))]},
+                             {"clock": 2, "operations": [{"op": "retract-pattern", "pattern": {"entityId": "tx:0"}}]}]))
+        self.assertEqual(outcome(rep, 1)["error"], "E-RESERVED")
+
+    def test_R_JNL_5(self):
+        T.BriefFacts.test_fact_4_journal_facts_are_queryable(self)
+
+    def test_R_JNL_6(self):
+        cmds = [{"clock": 1, "operations": [assert_op("a", "e", ":x/s", s("x"))]}]
+        rep = evaluate(case(cmds, [{"id": "env", "kind": "match", "cut": {"validAt": 1e15},
+                                    "pattern": {"entityId": "tx:0"}}]))
+        self.assertEqual(result(rep, "env")["error"], "X-NOT-MODELED")
+
+    def test_R_JNL_7(self):
+        node = result(evaluate(case([], [{"id": "t", "kind": "transactions", "limit": 0}])), "t")
+        self.assertEqual(err_fields(node), ("PaginationCursorError", "malformed"))
+
+    def test_R_CUT_3(self):
+        node = result(evaluate(case([], [{"id": "c", "kind": "match", "cut": {"position": -1, "validAt": 1}}])), "c")
+        self.assertEqual((node["error"],) + err_fields(node), ("E-INVALID-VALUE", "InvalidTripleError", "invalid-value"))
+
+    def test_R_PAGE_3(self):
+        T.BriefFacts.test_fact_3_entity_page_limits(self)
+
+    def test_R_PAGE_4(self):
+        T.BriefFacts.test_fact_3_cursor_sequence_and_errors(self)
+
+
 class Rulings033(unittest.TestCase):
-    """Rulings compiled into 0.3.3 that have no table row of their own."""
+    """Rulings compiled into 0.3.3 to 0.3.5 that have no table row of their own."""
 
     def test_Q33d_ordered_cross_family_is_mixed_family(self):
         rep = evaluate(case([], [{"id": "c", "kind": "compare", "left": s("a"), "right": i64(1)}]))
@@ -1080,7 +1292,9 @@ class Rulings033(unittest.TestCase):
              {"id": "r", "kind": "match", "cut": {"recordedAt": -1, "validAt": 1}},
              {"id": "z", "kind": "match", "cut": {"validAt": NZ}}]
         rep = evaluate(case([], q))
-        self.assertEqual([result(rep, k)["error"] for k in "prz"], ["E-INVALID-VALUE", "E-INVALID-VALUE", "X-NOT-MODELED"])
+        self.assertEqual([result(rep, k)["error"] for k in "prz"],
+                         ["E-INVALID-VALUE", "E-INVALID-VALUE", "E-NEGATIVE-ZERO-INSTANT"])   # Q43h for z
+        self.assertEqual(result(rep, "z")["detail"], "no-negative-zero")
 
     def test_Q24_Q31f_erasure_is_refused(self):
         with self.assertRaises(V.OracleInputError) as ctx:
@@ -1111,8 +1325,6 @@ def _scenarios():
         "E-INTEGER-OVERFLOW": ("q", case([], [{"id": "q", "kind": "expr", "expr": ["add", i64(2 ** 62), i64(2 ** 62)]}])),
         "E-VALUE-OUT-OF-RANGE": ("c", case([{"clock": 1, "operations": [assert_op("a", "e", ":v", i64(2 ** 60))]}],
                                            lane="qlever")),
-        "E-DECIMAL-UNREPRESENTABLE": ("c", case([{"clock": 1, "operations": [
-            assert_op("a", "e", ":v", {"type": "decimal", "value": "1.234", "precision": 3, "scale": 2})]}])),
         "E-NUMBER-OVERFLOW": ("q", case([], [{"id": "q", "kind": "expr", "expr": ["mul", num(1e308), num(10.0)]}])),
         "E-DIVISION-BY-ZERO": ("q", case([], [{"id": "q", "kind": "expr", "expr": ["div", i64(7), i64(0)]}])),
         "E-INVALID-CONVERSION": ("q", case([], [{"id": "q", "kind": "expr", "expr": ["cast-int64", s("01")]}])),
@@ -1137,7 +1349,7 @@ def _scenarios():
             "operations": [assert_op("a", "p1", ":p/age", i64(1), entity_type="P")]}])),
         "E-INVALID-VALUE": ("c", case([{"clock": 1, "operations": [assert_op("a", "e", ":v", i64("01"))]}])),
         "E-RESERVED": ("c", case([{"clock": 1, "operations": [assert_op("a", "_triplex/x", ":v", s("x"))]}])),
-        # contract 0.3.3 rows (EXP-O03)
+        # contract 0.3.3 to 0.3.5 rows (EXP-O03)
         "E-INEXACT-JSON-NUMBER": ("c", case([{"clock": 1, "operations": [
             assert_op("a", "e", ":v", {"type": "json", "value": {"a": [1, NZ]}})]}])),
         "E-NEGATIVE-ZERO-INSTANT": ("c", case([{"clock": 1, "operations": [
@@ -1147,6 +1359,8 @@ def _scenarios():
         "E-DECIMAL-BARE-DIVIDE": ("q", case([], [{"id": "q", "kind": "expr", "expr": [
             "div", decimal_value("1"), decimal_value("2")]}])),
         "E-DECIMAL-FRACTION": ("q", case([], [{"id": "q", "kind": "expr", "expr": ["toInteger", decimal_value("1.50")]}])),
+        "E-DECIMAL-AVG": ("q", case([], [{"id": "q", "kind": "aggregate", "cut": {"validAt": 1}, "varTypes": {"v": "decimal"},
+                                          "match": {"attributes": {"v": ":v"}}, "aggregates": [{"op": "avg", "var": "v"}]}])),
     }
 
 
@@ -1162,7 +1376,8 @@ def _error_test(row):
     def test(self):
         tag, reasons, phase = ERR.ERROR_TABLE[row["id"]]
         contract_reasons = tuple(row["reason"].split("|")) if "|" in row["reason"] else row["reason"]
-        self.assertEqual((tag, reasons, phase), (row["tag"], contract_reasons, row["phase"]))
+        contract_phase = tuple(row["phase"].split(" or ")) if " or " in row["phase"] else row["phase"]
+        self.assertEqual((tag, reasons, phase), (row["tag"], contract_reasons, contract_phase))
         if row["id"] not in ERR.PRODUCED:
             return
         where, c = SCENARIOS[row["id"]]
@@ -1173,6 +1388,7 @@ def _error_test(row):
         self.assertEqual(got_tag, row["tag"])
         allowed = contract_reasons if isinstance(contract_reasons, tuple) else (contract_reasons,)
         self.assertIn(got_reason, allowed)
+        self.assertIn(node["phase"], contract_phase if isinstance(contract_phase, tuple) else (contract_phase,))
     return test
 
 

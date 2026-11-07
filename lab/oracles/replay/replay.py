@@ -59,7 +59,9 @@ LEGACY_CATEGORY = {
     "command-already-committed": "E-COMMAND-COMMITTED", "transaction-conflict": "E-TX-CONFLICT",
     "constraint-violation": "E-CONSTRAINT", "invalid-value": "E-INVALID-VALUE",
     "reserved-namespace": "E-RESERVED", "invalid-operation": "E-INVALID-VALUE",
-    "value-out-of-range": "E-VALUE-OUT-OF-RANGE", "decimal-unrepresentable": "E-DECIMAL-UNREPRESENTABLE",
+    "value-out-of-range": "E-VALUE-OUT-OF-RANGE",
+    # 0.1's "decimal-unrepresentable" is not mapped: 0.3.5 split it into E-DECIMAL-OVERFLOW and
+    # E-DECIMAL-FRACTION (Q35e, RULINGS Q43a), so the old name cannot say which
 }
 
 JOURNAL_ATTRIBUTES = (":_tx/change", ":_tx/changed-entity")   # brief fact 4 (C6): modeled journal facts
@@ -92,7 +94,10 @@ class Rejected(Exception):
             out += [("error", "host-abort"), ("errorTag", None), ("reason", None), ("phase", None),
                     ("ruling", "R-CMD-9: host-defined abort; Triplex pins no tag")]
         else:
-            for key, value in ERR.fields(self.category, self.reason, self.alternatives):
+            # a write-time rejection of a two-phase row (E-DECIMAL-OVERFLOW) is preflight
+            phases = ERR.ERROR_TABLE.get(self.category, (None, None, None))[2]
+            phase = "preflight" if isinstance(phases, tuple) else None
+            for key, value in ERR.fields(self.category, self.reason, self.alternatives, phase=phase):
                 out.append(("errorTag" if key == "_tag" else key, value))
         out.append(("message", self.message))
         for key, value in self.detail.items():
@@ -254,7 +259,7 @@ class Engine:
 
     def _decode_written(self, raw, attribute):
         """Decode a written value: value domain (E-INVALID-VALUE), decimal declaration
-        (Q18, E-DECIMAL-UNREPRESENTABLE), lane range (E-VALUE-OUT-OF-RANGE)."""
+        (Q18; E-DECIMAL-FRACTION / E-DECIMAL-OVERFLOW, Q43a), lane range (E-VALUE-OUT-OF-RANGE)."""
         try:
             value = V.decode_value(raw, datetime_range=self.dt_range)
             if value.family == "decimal":
@@ -331,7 +336,7 @@ class Engine:
     def plan(self, state, command, instant):
         """Validate a command against `state` and return a Plan or raise Rejected.
 
-        Precedence (R-CMD-8): operation validation (E-INVALID-VALUE, E-DECIMAL-UNREPRESENTABLE,
+        Precedence (R-CMD-8): operation validation (E-INVALID-VALUE, E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW,
         E-VALUE-OUT-OF-RANGE, E-RESERVED, in operation order) -> command claim -> preconditions
         -> retract liveness -> constraint enforcement.
         """

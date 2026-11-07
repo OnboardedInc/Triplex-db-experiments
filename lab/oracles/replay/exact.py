@@ -34,7 +34,10 @@ class TypedError(Exception):
         self.detail = detail
 
     def to_output(self):
-        out = ERR.fields(self.code, self.reason, self.alternatives, self.tag, self.ruling)
+        # a query-time error of a two-phase row (E-DECIMAL-OVERFLOW) is a computed result: execution
+        phases = ERR.ERROR_TABLE.get(self.code, (None, None, None))[2]
+        phase = "execution" if isinstance(phases, tuple) else None
+        out = ERR.fields(self.code, self.reason, self.alternatives, self.tag, self.ruling, phase)
         if self.message:
             out.append(("message", self.message))
         for key, value in self.detail.items():
@@ -79,13 +82,13 @@ def _binary_family(op, a: V.Value, b: V.Value):
 
 
 def _dtype(v):
-    """(scale, precision) of a decimal value (R-DEC-8)."""
+    """(scale, precision) of a decimal value (R-DEC-8, RULINGS Q43c)."""
     return v.extra[0], v.extra[1]
 
 
 def decimal_checked(frac, scale, precision, what):
     """Q22 / DO-*: the result type's precision is capped at the 38-digit kernel maximum
-    (no target is declared inside an expression, R-DEC-10); a result whose integer digits
+    (no target is declared inside an expression, R-DEC-10, RULINGS Q43e); a result whose integer digits
     exceed precision - scale is E-DECIMAL-OVERFLOW, never rounded."""
     p = min(precision, V.KERNEL_MAX_DIGITS)
     if V.integer_digits(frac) > p - scale:
@@ -198,8 +201,10 @@ def divide(a, b, scale, rounding):
 def round_(x, scale, rounding):
     """DO-ROUND (Q22): round(x, s, rounding) on a decimal: result scale s, precision
     p - (s_x - s) when s < s_x; E-DECIMAL-OVERFLOW only when a carry exceeds that precision.
-    s = s_x returns x. s > s_x is refused (X-NOT-MODELED, R-DEC-11): DO-ROUND's "else p"
-    would leave fewer integer digits than x has, which the contract does not resolve."""
+    s = s_x returns x. R-DEC-11 (RULINGS Q43f): s > s_x is exact, x at scale s with zeros
+    appended, subject only to the 38-digit limit; its precision is p + (s - s_x) so x's
+    integer digits still fit (DO-ROUND's "else p" would drop them; DERIVED from Q43f's
+    "never refused")."""
     s, mode = _param_int(scale, "round scale"), _param_mode(rounding)
     if x.family != "decimal":
         raise TypedError("E-MIXED-FAMILY", "round needs a decimal operand", operand=x.family)
@@ -207,8 +212,7 @@ def round_(x, scale, rounding):
     if s == sx:
         return x
     if s > sx:
-        raise TypedError("X-NOT-MODELED", "round to a larger scale", ruling="R-DEC-11: DO-ROUND result "
-                         "precision for s > s_x is not resolved (ORCHESTRATOR-RULING-NEEDED)")
+        return decimal_checked(x.payload, s, px + (s - sx), "round")
     return decimal_checked(V.round_fraction(x.payload, s, mode), s, px - (sx - s), "round")
 
 
@@ -271,7 +275,7 @@ def to_integer(a):
     the core integer range, else E-INVALID-CONVERSION; -0.0 converts to 0. DC-D2I (Q22): a
     decimal converts only when its fraction is zero, else E-DECIMAL-FRACTION (write
     round(x, 0, rounding) first); a whole decimal outside the core range is
-    E-INTEGER-OVERFLOW (R-DEC-12, like CV-T2I's exact text). Integers pass through."""
+    E-INTEGER-OVERFLOW (R-DEC-12, RULINGS Q43g). Integers pass through."""
     if a.family == "integer":
         return a
     if a.family == "decimal":
@@ -292,11 +296,12 @@ def to_integer(a):
 def to_decimal(a, precision=None, scale=None, rounding=None):
     """Conversions into the decimal family (decimalConversions):
       DC-I2D: toDecimal(integer[, p, s]) is exact when the integer fits p - s digits, else
-        E-DECIMAL-UNREPRESENTABLE; without (p, s) its type is (digits, 0).
+        E-DECIMAL-OVERFLOW; without (p, s) its type is (digits, 0).
       DC-N2D: toDecimal(number, p, s, rounding) only: the exact binary expansion (R-DEC-6,
         Q33b) rounded once at scale s with the named mode; more than p - s integer digits
-        is E-DECIMAL-UNREPRESENTABLE (R-DEC-13: the conversion row's error, as DC-I2D).
-      a decimal with (p, s) is re-declared exactly (excess digits E-DECIMAL-UNREPRESENTABLE).
+        is E-DECIMAL-OVERFLOW (R-DEC-13, RULINGS Q43a).
+      a decimal with (p, s) is re-declared exactly: excess fraction digits E-DECIMAL-FRACTION,
+        excess integer digits E-DECIMAL-OVERFLOW (Q43a, DR-JSON-CONVERT).
     """
     if a.family == "number":
         if precision is None or scale is None or rounding is None:
@@ -322,8 +327,8 @@ def to_decimal(a, precision=None, scale=None, rounding=None):
 def _declared(value, p, s):
     try:
         return V.declare_decimal(value, p, s, "toDecimal")
-    except V.DecimalUnrepresentable as error:
-        raise TypedError("E-DECIMAL-UNREPRESENTABLE", str(error))
+    except (V.DecimalOverflow, V.DecimalFraction) as error:
+        raise TypedError(error.error_id, str(error))
 
 
 def cast_integer(a):
@@ -416,14 +421,14 @@ def agg_avg(items, *, convert=None):
     E-INTEGER-AVG (raised even for empty input). AG-AVG-CONV (AMB-11: the conversion is
     toNumber(?v)): binary64 of the exact sum divided by the count, rounded once. AVG over
     number: the exact mean rounded once. R-DEC-7 (ruled by Q33b): AVG over decimals is a
-    preflight error unless written divide(SUM, COUNT, scale, rounding); AVG is a division
-    without a named scale and rounding, so the error is E-DECIMAL-BARE-DIVIDE (R-DEC-14).
+    preflight error unless written divide(SUM, COUNT, scale, rounding); the error is
+    E-DECIMAL-AVG (R-DEC-14, RULINGS Q43b; the id contract 0.3.4 created).
     AVG(toNumber(?v)) over decimals is AVG over numbers (DC-D2N)."""
     families = _families(items)
     if convert is None and "integer" in families:
         raise TypedError("E-INTEGER-AVG", "AVG over integers requires an explicit conversion (toNumber)")
     if convert is None and "decimal" in families:
-        raise TypedError("E-DECIMAL-BARE-DIVIDE", "AVG over decimals; write divide(SUM, COUNT, scale, rounding)")
+        raise TypedError("E-DECIMAL-AVG", "AVG over decimals; write divide(SUM, COUNT, scale, rounding)")
     if convert not in (None, "toNumber"):
         raise V.OracleInputError(f"unknown AVG conversion {convert!r}")
     if not items:

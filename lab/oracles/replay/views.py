@@ -74,10 +74,9 @@ def resolve_cut(run, raw, *, need_valid=True):
             if n.frac < 0:
                 raise X.TypedError("E-INVALID-VALUE", f"{name} must be a non-negative instant")   # Q33h
             if n.bits == V.NEG_ZERO_BITS:
-                # Q30b names instants given as -0 at write routes; whether a read basis of -0 is
-                # E-NEGATIVE-ZERO-INSTANT or the instant 0 is not ruled, so refuse (R-CUT-4)
-                raise X.TypedError("X-NOT-MODELED", f"{name} given as -0",
-                                   ruling="R-CUT-4: a -0 read basis is not ruled (Q30b covers writes)")
+                # R-CUT-4 (RULINGS Q43h, consistent with Q30b): a read basis given as -0 is
+                # E-NEGATIVE-ZERO-INSTANT, never the instant 0
+                raise X.TypedError("E-NEGATIVE-ZERO-INSTANT", f"{name} given as -0", detail="no-negative-zero")
     return Cut(scope, P, R, Vf, R_raw, V_raw)
 
 
@@ -603,7 +602,8 @@ def q_aggregate(run, query):
         if "integer" in families:
             raise X.TypedError("E-INTEGER-AVG", "AVG over integers requires an explicit conversion (toNumber)")
         if "decimal" in families:
-            raise X.TypedError("E-DECIMAL-BARE-DIVIDE", "AVG over decimals; write divide(SUM, COUNT, scale, rounding)")
+            # R-DEC-7 / R-DEC-14 (RULINGS Q43b): E-DECIMAL-AVG
+            raise X.TypedError("E-DECIMAL-AVG", "AVG over decimals; write divide(SUM, COUNT, scale, rounding)")
     try:
         for cond in where:
             if cond["op"] in ("exists", "missing"):
