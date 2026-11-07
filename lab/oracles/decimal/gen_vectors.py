@@ -31,11 +31,15 @@ for _ in range(2000):
     p = rng.randint(1, 38)
     s = rng.randint(0, p)
     n = rng.randint(-(10 ** p - 1), 10 ** p - 1)
-    d = Decimal(n).scaleb(-s)
+    # Codex round 4 finding 7: Decimal(n).scaleb(-s) rounds to the default 28-digit context and silently changed 518 of 2,000
+    # values. Build the Decimal exactly from its digit tuple and exponent, and assert it equals n / 10^s as a Fraction.
+    d = Decimal((1 if n < 0 else 0, tuple(int(c) for c in str(abs(n))), -s))
+    assert Fraction(d) == Fraction(n, 10 ** s), (n, s, d)
     values.append((ref.render(d, s), p, s))
 rows = []
 for text, p, s in values:
-    d = Decimal(text)
+    d = Decimal(text)  # parsing text is exact (no context rounding applies to the Decimal constructor)
+    assert Fraction(d) == Fraction(text) if "e" not in text.lower() else True
     if d == 0 and text.startswith("-"):
         continue
     rows.append({"text": ref.render(d, s), "precision": p, "scale": s, "key": ref.encode(d), "_exact": Fraction(d)})

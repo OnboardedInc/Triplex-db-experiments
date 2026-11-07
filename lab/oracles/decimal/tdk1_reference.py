@@ -199,7 +199,7 @@ def suite_adjacent_and_boundaries(enc, rng, n):
     fails = []
     for _ in range(n):
         v, p, s = rand_value(rng)
-        nxt = make(int(v.scaleb(s)) + 1, s)
+        nxt = make(int(Fraction(v) * 10 ** s) + 1, s)  # exact: v.scaleb(s) rounds to the 28-digit default context (orchestrator fix, Codex round 4 finding 7)
         check_pair(enc, v, nxt, fails, "adjacent")
     for p in range(1, KERNEL_MAX_PRECISION + 1):
         for s in range(0, p + 1):
