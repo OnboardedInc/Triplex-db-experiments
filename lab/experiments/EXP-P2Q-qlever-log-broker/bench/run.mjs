@@ -188,14 +188,16 @@ const auditEffects = (consumerDir, consumer, committed, processed) => {
 };
 
 const trace = async () => {
-  requireUrl();
+  const offline = flag('offline');
+  if (!offline) requireUrl();
+  if (offline && opt('arm') !== 'C') throw new Error('--offline is the candidate with no replica');
   const arm = opt('arm'), seed = opt('seed', 'p2q-a'), subjects = Number(opt('subjects', 10000)), windowS = Number(opt('window', 180));
   const ryowEvery = Number(opt('ryow-every', 1));
-  const scope = `p2q-trace-${arm}-${randomUUID()}`;
+  const scope = `p2q-trace-${arm}${offline ? '-offline' : ''}-${randomUUID()}`;
   const events = generateTrace({ seed, subjects, durationS: windowS });
   const recorder = brokerRecorder(), reads = routeRecorder();
   const rt = await armRuntime(url, arm, scope, {
-    onEvent: recorder.onEvent, onRead: reads.onRead,
+    offline, onEvent: recorder.onEvent, onRead: reads.onRead,
     brokerOptions: opt('rebuild-at') ? { rebuildAtDeltaTriples: Number(opt('rebuild-at')) } : {},
   });
   const consumerDir = path.join(BROKER_ROOT, 'consumers', scope.replace(/[^a-zA-Z0-9-]/g, '_'));
@@ -216,10 +218,14 @@ const trace = async () => {
         record.position = result.position; record.txId = result.txId; record.outcome = 'committed';
         originals.set(event.seq, result.txId);
         if (ryowCount++ % ryowEvery === 0) {
+          // A failed read must not turn a committed command into an error (accounting is about commits).
           const before = reads.routes.length;
-          const rows = await pullAt(rt, event.subject, result.position);
-          record.ryow = sawCommand(rows, event.seq, event.facts); record.ryowMs = now() - record.acked;
-          record.route = reads.routes.slice(before).map((r) => r.route).join(',');
+          try {
+            const rows = await pullAt(rt, event.subject, result.position);
+            record.ryow = sawCommand(rows, event.seq, event.facts);
+          } catch (error) { record.ryow = false; record.ryowError = String(error?.message ?? error).slice(0, 160); }
+          record.ryowMs = now() - record.acked;
+          record.route = reads.routes.slice(before).map((r) => r.route).join(',') || 'error';
         }
         if (event.ackLoss && !event.resend) {
           try { await transact(rt, commandOps(event, Date.now()), meta); record.ackLossRetry = 'committed-twice'; }
@@ -257,7 +263,8 @@ const trace = async () => {
   if (arm === 'C') { const t = now(); drain = { ok: await rt.broker.drain(600_000), ms: round(now() - t), broker: rt.broker.stats() }; }
   const published = recorder.events.filter((e) => e.type === 'published');
   const result = {
-    arm, armLabel: ARMS[arm].label, scope, seed, subjects, windowS, generatorSha256: GENERATOR_SHA256, traceSha256: traceDigest(events),
+    arm: offline ? 'C-offline' : arm, armLabel: offline ? 'candidate with no QLever replica (ACK path and feed only; RYOW served by the overlay alone)' : ARMS[arm].label,
+    scope, seed, subjects, windowS, generatorSha256: GENERATOR_SHA256, traceSha256: traceDigest(events),
     offered: { events: events.length, originals: originalsOnly.length, resends: events.length - originalsOnly.length, burstOriginals: originalsOnly.filter((r) => r.burst).length },
     accounting: { ...tally(records.map((r) => (r.resend ? `resend:${r.outcome}` : r.outcome))), unaccounted: events.length - records.length },
     errorsSample: records.filter((r) => r.error).slice(0, 3).map((r) => r.error),

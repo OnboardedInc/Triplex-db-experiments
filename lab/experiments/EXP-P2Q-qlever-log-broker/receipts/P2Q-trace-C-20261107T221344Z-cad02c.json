@@ -1,0 +1,265 @@
+{
+  "format": "p2q-receipt/1",
+  "id": "P2Q-trace-C-20261107T221344Z-cad02c",
+  "kind": "trace-C",
+  "writtenAt": "2026-11-07T22:13:44.534Z",
+  "mode": "trace",
+  "slot": "dev",
+  "startedAt": "2026-11-07T22:01:54.885Z",
+  "identity": {
+    "gitHead": "650b18f1215b522ab22957c4c01d0b7e17a5587b",
+    "dirty": false,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "engineConfig": {
+      "dir": "/Users/sam/projects/triplex-db-2",
+      "arm": "default (repo qlever-start.sh)",
+      "startScriptSha256": "16c50037e97004e1345b5060b65c5cb3c26d3b4a153cc377a65ccc5e7f304930",
+      "persistUpdates": true
+    },
+    "distSha256": "317ca1ecfdd5a17db3d6743fdc3314ccd8c0a07f2d2e74982409293db168d925",
+    "engineImage": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "endpoint": "http://127.0.0.1:7070",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        10.97,
+        11.71,
+        11.95
+      ],
+      "freeBytes": 14267224064
+    }
+  },
+  "hostLoadAfter": [
+    8.94,
+    10.4,
+    11.35
+  ],
+  "arm": "C",
+  "armLabel": "candidate: host log + broker, ACK at durable frame, overlay RYOW, async guarded publication",
+  "scope": "p2q-trace-C-95c84f83-9349-41d8-87ac-46e5e3e6f57d",
+  "seed": "p2q-dev",
+  "subjects": 10000,
+  "windowS": 100,
+  "generatorSha256": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+  "traceSha256": "dc240f677379f3f53f47e7649e4b9a1abfbbd4e2afe446d167b836c68da3681c",
+  "offered": {
+    "events": 106,
+    "originals": 102,
+    "resends": 4,
+    "burstOriginals": 0
+  },
+  "accounting": {
+    "committed": 73,
+    "error:ReadError": 29,
+    "resend:duplicate": 4,
+    "unaccounted": 0
+  },
+  "errorsSample": [
+    "QLever read failed",
+    "QLever read failed",
+    "QLever read failed"
+  ],
+  "ackLoss": {},
+  "resendReceipts": {
+    "true": 4
+  },
+  "byBand": {
+    "5-10": {
+      "offerToAckMs": {
+        "n": 41,
+        "p50": 4.4,
+        "p90": 8.1,
+        "p99": 16,
+        "max": 16,
+        "mean": 5.4
+      },
+      "steady": {
+        "n": 41,
+        "p50": 4.4,
+        "p90": 8.1,
+        "p99": 16,
+        "max": 16,
+        "mean": 5.4
+      },
+      "burst": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      }
+    },
+    "11-25": {
+      "offerToAckMs": {
+        "n": 25,
+        "p50": 5,
+        "p90": 7.4,
+        "p99": 29.4,
+        "max": 29.4,
+        "mean": 6.3
+      },
+      "steady": {
+        "n": 25,
+        "p50": 5,
+        "p90": 7.4,
+        "p99": 29.4,
+        "max": 29.4,
+        "mean": 6.3
+      },
+      "burst": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      }
+    },
+    "26-50": {
+      "offerToAckMs": {
+        "n": 7,
+        "p50": 5.2,
+        "p90": 8.5,
+        "p99": 8.5,
+        "max": 8.5,
+        "mean": 5.6
+      },
+      "steady": {
+        "n": 7,
+        "p50": 5.2,
+        "p90": 8.5,
+        "p99": 8.5,
+        "max": 8.5,
+        "mean": 5.6
+      },
+      "burst": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      }
+    }
+  },
+  "all": {
+    "offerToAckMs": {
+      "n": 73,
+      "p50": 4.9,
+      "p90": 8,
+      "p99": 29.4,
+      "max": 29.4,
+      "mean": 5.7
+    }
+  },
+  "steady": {
+    "offerToAckMs": {
+      "n": 73,
+      "p50": 4.9,
+      "p90": 8,
+      "p99": 29.4,
+      "max": 29.4,
+      "mean": 5.7
+    }
+  },
+  "burst": {
+    "offerToAckMs": {
+      "n": 0,
+      "p50": null,
+      "p90": null,
+      "p99": null,
+      "max": null,
+      "mean": null
+    }
+  },
+  "throughput": {
+    "committedPerS": 0.73,
+    "drainAfterWindowS": -0.5
+  },
+  "ryow": {
+    "trials": 5,
+    "hits": 5,
+    "routes": {
+      "overlay": 4,
+      "overlay,overlay": 1
+    },
+    "readMs": {
+      "n": 5,
+      "p50": 1384.4,
+      "p90": 2070,
+      "p99": 2070,
+      "max": 2070,
+      "mean": 1322.1
+    }
+  },
+  "feed": {
+    "lagMs": {
+      "n": 102,
+      "p50": 5.6,
+      "p90": 8.8,
+      "p99": 11.2,
+      "max": 11.5,
+      "mean": 5.7
+    },
+    "committedEffects": 73,
+    "durableEffects": 102,
+    "gaps": 0,
+    "extras": 29,
+    "visibleDuplicates": 0,
+    "replayedEffects": 0,
+    "orderViolations": 0,
+    "gapSample": [],
+    "polls": 17006,
+    "writes": 103,
+    "aborted": 0,
+    "missingAck": 0
+  },
+  "publication": {
+    "updates": 2,
+    "updateMs": {
+      "n": 2,
+      "p50": 3958.3,
+      "p90": 6715,
+      "p99": 6715,
+      "max": 6715,
+      "mean": 5336.6
+    },
+    "membersPerUpdate": {
+      "n": 2,
+      "p50": 1,
+      "p90": 4,
+      "p99": 4,
+      "max": 4,
+      "mean": 2.5
+    },
+    "lastDelta": 2358758,
+    "rebuilds": [],
+    "applyErrors": 242,
+    "drain": {
+      "ok": false,
+      "ms": 600003.1,
+      "broker": {
+        "epoch": 1,
+        "headPosition": 105472,
+        "durableLsn": 103,
+        "replicaPosition": 7167,
+        "unpublishedFrames": 97,
+        "overlayFrames": 101,
+        "frames": 102,
+        "commits": 102,
+        "conflicts": 0,
+        "replays": 0,
+        "applyErrors": 242,
+        "rebuilds": 0,
+        "abortedLsns": [],
+        "fsyncCalibrationMs": 2.6977919999999926,
+        "recovery": "created",
+        "lastDeltaTotal": 2358758
+      }
+    }
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2Q-qlever-log-broker/P2Q-trace-C-20261107T221344Z-cad02c.raw.json",
+  "rawSha256": "e5914c30e809751c9a9c968b8bdbc8e32b7f01a9abad0ad62bdbf3f611ee5af2"
+}

@@ -10,6 +10,15 @@ import { Effect, Layer, ManagedRuntime } from 'effect';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPO = path.resolve(HERE, '../../../..');
+// The bench imports dist: refuse to run when any broker source is newer than the built bundle (a stale dist
+// once ran an older applier in a receipt, P2Q-trace-C-20261107T221344Z-cad02c).
+{
+  const built = fs.statSync(path.join(REPO, 'packages/qlever/dist/index.js')).mtimeMs;
+  for (const dir of ['packages/qlever/src', 'packages/qlever/src/broker'])
+    for (const file of fs.readdirSync(path.join(REPO, dir)).filter((f) => f.endsWith('.ts')))
+      if (fs.statSync(path.join(REPO, dir, file)).mtimeMs > built)
+        throw new Error(`packages/qlever/dist is older than ${dir}/${file}; rebuild before running the bench`);
+}
 const qlever = await import(path.join(REPO, 'packages/qlever/dist/index.js'));
 const core = await import(path.join(REPO, 'packages/core/dist/index.js'));
 const runtimeApi = await import(path.join(REPO, 'packages/core/dist/runtime/index.js'));
@@ -68,8 +77,12 @@ export const commandOps = (event, nowMs) => {
  * A Triplex runtime for one arm and scope. The candidate opens a HostBroker on a log directory under
  * runs/broker/EXP-P2Q/ and routes reads through it; A0 is the unchanged default adapter.
  */
-export const armRuntime = async (url, arm, scope, { brokerDir, brokerOptions = {}, onEvent, onRead, replica = true } = {}) => {
-  const base = arm === 'A0' ? qlever.makeQleverClient(url) : qlever.makeFreshConnectionClient(url);
+const nullClient = { query: async () => [], update: async () => ({}), command: async () => ({}), cancel: async () => {}, close: async () => {} };
+export const armRuntime = async (url, arm, scope, { brokerDir, brokerOptions = {}, onEvent, onRead, replica = true, offline = false } = {}) => {
+  // offline (candidate only): no QLever at all; the broker keeps every frame in its overlay and log, which
+  // isolates the ACK path and the feed (a diagnostic, not the composition under test).
+  const base = offline ? nullClient : arm === 'A0' ? qlever.makeQleverClient(url) : qlever.makeFreshConnectionClient(url);
+  if (offline) replica = false;
   const counting = countingClient(base);
   let broker, adapter;
   if (arm === 'C') {
