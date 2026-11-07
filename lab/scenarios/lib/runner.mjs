@@ -197,7 +197,9 @@ class Executor {
         const same = original.receipt && r.transactionId === original.receipt.txId;
         check(`resend-${cmd.index}-original-receipt`, same, same ? null : `CommandAlreadyCommitted carried ${r.transactionId}, original receipt ${original.receipt?.txId}`, { counts: 'idempotency' });
         if (cmd.tags.lostAckRetry) {
-          const found = await comp.byCommand(this.ctx.physCommand(cmd.meta.commandId));
+          // A lookup that races a runtime restart fails with an interruption; retry it after the restart.
+          let found;
+          for (let t = 0; t < 20; t++) { while (this.ctx.restarting) await sleep(50); found = await comp.byCommand(this.ctx.physCommand(cmd.meta.commandId)).catch(e => ({ ok: false, error: String(e) })); if (found.ok) break; await sleep(250); }
           const ok = found.ok && found.record?.txId === original.receipt?.txId && found.record?.position === original.receipt?.position;
           check(`lost-ack-${cmd.tags.resendOf}-resolved`, ok, ok ? null : `transactionByCommand gave ${JSON.stringify(found.record ?? found.error)?.slice(0, 300)}`, { counts: 'idempotency' });
         }
