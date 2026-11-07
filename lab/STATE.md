@@ -34,7 +34,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | EXP-N01 north-star benchmark driver (opus, exp/N01-northstar-bench) | P1-P5 measurement (NS gate) | lab/bench/, receipts |
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
-| EXP-O03 alignment to contract 0.3.5 per Q43 (opus, O02 author, exp/O02-oracle-conformance; F1 c8817ba, 0.3.0 at 99d85be) | correctness floor | then re-verify (resume V-O02 verifier) -> ACCEPT -> pin |
+| V-O03 re-verification of O-REPLAY 0.3.1 at 8cc2c26 (opus, V-O02 verifier, verify/O02) | correctness floor | ACCEPT -> merge oracle, pin hashes in contract 0.3.6 |
 | EXP-E01 claim evaluator (opus, exp/E01-claim-evaluator) | floor for every claim | lab/bin/claim.mjs |
 | EXP-F02b wire exactness fixes (opus, exp/F02b-wire-exactness-fixes, dev residents) | numeric rule floor | branch |
 | EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |

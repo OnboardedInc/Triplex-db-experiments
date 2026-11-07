@@ -783,3 +783,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   exclusive QLever slot frees; XTDB re-qualification on 2.2.1 the day it is tagged (a rehearsal on nightly-20261106 can run earlier).
   P2's p50 bar stays at 10 ms (only Sam can loosen a bar). Filing the DECIMAL-cast and `= ANY` findings upstream would publish lab
   findings, so that is Sam's call, flagged in STATE.
+- 03:20Z: O-REPLAY 0.3.1 (8cc2c26) aligned to contract 0.3.5: 300/300 tests, 0 wrong answers on the probe, converter results unchanged,
+  and a new reverse check fails if the oracle keeps an error id the contract dropped. The V-O02 verifier is re-checking it (V-O03) with
+  the probe extended to 0.3.5's rules; on ACCEPT the oracle merges and its hashes are pinned in contract 0.3.6, which unblocks the
+  obligations it can close (claims still also need EXP-E01's evaluator).
