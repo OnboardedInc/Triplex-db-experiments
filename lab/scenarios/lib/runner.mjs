@@ -156,6 +156,7 @@ class Executor {
         if (found.ok && !found.record) {
           try { r = await comp.transact(this.physOps(cmd), this.physMeta(cmd)); } catch (error) { r = { status: 'error', message: String(error) }; }
           a.resolvedBy = 'retry';
+          if (r.category === 'command-already-committed') continue; // the first attempt did commit: resolve it by commandId
           if (r.status === 'committed' || (r.status === 'rejected' && !this.ctx.restarting)) break;
         }
       }

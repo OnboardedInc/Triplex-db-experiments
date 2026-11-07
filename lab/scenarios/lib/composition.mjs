@@ -51,8 +51,12 @@ export async function openComposition({ lane, scope: scopeName, tenant = 'test',
   };
   await open();
   const run = effect => rt.runPromise(effect);
+  // A call in flight on a runtime that is being restarted may never settle; it is released as an unknown
+  // outcome (resolved later by commandId) so the single-flight writer slot cannot leak.
+  let restarted; const arm = () => { restarted = new Promise(resolve => { arm.fire = resolve; }); }; arm();
   const settle = async effect => {
-    const exit = await rt.runPromiseExit(effect);
+    const exit = await Promise.race([rt.runPromiseExit(effect), restarted.then(() => 'RESTARTED')]);
+    if (exit === 'RESTARTED') return { ok: false, error: { _tag: 'RuntimeRestarted', reason: 'outcome-unknown', message: 'Triplex runtime restarted while the call was in flight' } };
     if (T.Exit.isSuccess(exit)) return { ok: true, value: exit.value };
     const failure = T.Cause.findErrorOption ? T.Cause.findErrorOption(exit.cause) : null;
     const error = failure && failure._tag === 'Some' ? failure.value : (T.Cause.squash ? T.Cause.squash(exit.cause) : exit.cause);
@@ -99,7 +103,11 @@ export async function openComposition({ lane, scope: scopeName, tenant = 'test',
     },
     async currentPosition() { return run(triples.currentPosition()); },
     /** Restart the Triplex runtime (client process restart); in-flight calls fail and must be resolved. */
-    async restart() { const old = rt; await old.dispose(); await open(); },
+    async restart() {
+      const old = rt; const fire = arm.fire; arm(); fire();
+      await Promise.race([old.dispose().catch(() => {}), new Promise(r => setTimeout(r, 10_000))]);
+      await open();
+    },
     async close() { await rt.dispose(); },
   };
 }
