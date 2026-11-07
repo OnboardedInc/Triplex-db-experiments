@@ -461,7 +461,9 @@ async function postRunOracle(ctx) {
       const command = caseCommands.length;
       caseCommands.push(entry);
       if (a.status === 'committed') receipts.push({ command, outcome: a.unknown ? 'unknown' : 'committed', ...(a.unknown ? { resolvedOutcome: 'committed' } : {}), txId: a.receipt.txId, position: a.receipt.position, instant: a.receipt.instant, assertionIds: ids.map((id, k) => operations[k].op === 'assert' ? id : null) });
-      else receipts.push({ command, outcome: 'rejected', category: a.category, error: { _tag: a.tag } });
+      // 'write-error' is not an O-REPLAY category (Triplex documents no tag for invalid values, R-CMD-9): omit it
+      // so the oracle judges the outcome alone (PASS-OUTCOME-ONLY) instead of a category it cannot know.
+      else receipts.push({ command, outcome: 'rejected', ...(a.category && a.category !== 'write-error' ? { category: a.category } : {}), error: { _tag: a.tag } });
     }
     if (ctx.P0 > 0 && caseCommands.length) { /* positions before the live phase are other commands */ }
     const queries = [];
