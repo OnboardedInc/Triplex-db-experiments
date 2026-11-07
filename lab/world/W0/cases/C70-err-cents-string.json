@@ -1,0 +1,20 @@
+{
+  "id": "C70",
+  "slug": "err-cents-string",
+  "title": "payRateCents written as the string 1650",
+  "op": "evaluate",
+  "checks": [],
+  "notes": ["A JSON string is never cents, even when its text is digits: W0.E_VALUE."],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": "1650", "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}

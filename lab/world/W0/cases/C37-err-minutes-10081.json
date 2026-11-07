@@ -1,0 +1,22 @@
+{
+  "id": "C37",
+  "slug": "err-minutes-10081",
+  "title": "weeklyMinutes 10081 is one minute more than a week: a hard error",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "minutes allows 0 to 10080. 10081 is an integer token outside the domain: W0.E_VALUE (section 4.4 step 3.2). C27 shows 10080 is valid."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 10081, "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}

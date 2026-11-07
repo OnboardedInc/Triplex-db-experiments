@@ -1,0 +1,22 @@
+{
+  "id": "C41",
+  "slug": "err-fact-after-basis",
+  "title": "A fact committed after the basis position: the world is not pinned to its basis",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "The payRateCents fact has tx 11 > basis.tx 10, so it cannot be visible at the basis: W0.E_BASIS (section 4.4 step 3.2)."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 11}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_BASIS"}
+}

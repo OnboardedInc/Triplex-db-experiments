@@ -1,0 +1,54 @@
+{
+  "id": "C75",
+  "slug": "publish-crash-before-delivery",
+  "title": "Crash before delivery: the pending deliveries keep their (id, seq) and the re-evaluation publishes nothing",
+  "op": "publish",
+  "checks": [],
+  "notes": [
+    "The state is the outbox after C73's first evaluation: both deliveries are pending (published, not yet acknowledged) when the process crashes.",
+    "After the restart the same evaluation (same basis tx 20) is applied again: an equal basis is not older, and both payloads equal the latest published ones, so nothing is published.",
+    "The pending deliveries stay with their original (id, seq) and are sent again by the outbox (RULINGS Q38f)."
+  ],
+  "input": {
+    "evaluations": [
+      {
+        "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+          {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:edc2adc27d37abaf16d093e47ef08bc2235081f482c6c9164fe06a8dd1c92900"}
+        ]
+      }
+    ],
+    "state": {
+      "items": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1650, "payRateCents": 1600}, "retired": false, "seq": 1, "subject": "pl:a"},
+        {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "payload": {}, "retired": false, "seq": 1, "subject": "pl:a"}
+      ],
+      "pending": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+        {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:a", "version": "wv:edc2adc27d37abaf16d093e47ef08bc2235081f482c6c9164fe06a8dd1c92900"}
+      ],
+      "subjects": [
+        {"basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"}, "subject": "pl:a"}
+      ]
+    }
+  },
+  "expected": {
+    "deliveries": [],
+    "state": {
+      "items": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1650, "payRateCents": 1600}, "retired": false, "seq": 1, "subject": "pl:a"},
+        {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "payload": {}, "retired": false, "seq": 1, "subject": "pl:a"}
+      ],
+      "pending": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+        {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:a", "version": "wv:edc2adc27d37abaf16d093e47ef08bc2235081f482c6c9164fe06a8dd1c92900"}
+      ],
+      "subjects": [
+        {"basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"}, "subject": "pl:a"}
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "C85",
+  "slug": "err-receive-seq-zero",
+  "title": "A delivery with seq 0: W0.E_SHAPE",
+  "op": "receive",
+  "checks": [],
+  "notes": [
+    "A delivery's seq is an integer token of at least 1 (4.4 step 1), so the input is W0.E_SHAPE.",
+    "Without the check, the effects would ignore seq 0 as a duplicate (0 <= done) while the projection applied it as a new id."
+  ],
+  "input": {
+    "deliveries": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 0, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}
+    ],
+    "state": {
+      "effects": [],
+      "projection": []
+    }
+  },
+  "expected": {"error": "W0.E_SHAPE"}
+}

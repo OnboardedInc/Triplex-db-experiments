@@ -1,0 +1,101 @@
+{
+  "id": "C42",
+  "slug": "five-work-items-r1",
+  "title": "One evaluation with five work items: E-Verify submission, background-check order, expired ead, pay below the floor, pay change needing approval",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "EVSUB", "polarity": "positive"},
+    {"rule": "BGC", "polarity": "positive"},
+    {"rule": "DOCEXP", "polarity": "positive"},
+    {"rule": "MINWAGE", "polarity": "positive"},
+    {"rule": "PAYCHG", "polarity": "positive"},
+    {"rule": "OT", "polarity": "negative"}
+  ],
+  "notes": [
+    "EVSUB row 7 (no status, valid SSN, no submit result): everify.submit-case, inputs [2, 3]. BGC row 1 (no status): bgc.order, inputs [] (same id and version as C03).",
+    "DOCEXP doc:1 ead expiresOn 2026-10-31: B = 2026-11-01T00 <= v, row 6: overdue doc.reverify and notify.document-expired, inputs [4].",
+    "MINWAGE: 1649 < 1650, row 5: overdue pay.below-minimum due 2026-11-02T00 and notify.pay-below-minimum, inputs [1, 2, 6].",
+    "PAYCHG: abs(1649 - 1000) = 649 > 500, no pay.change decision, row 5: pay.change-approval and notify.pay-change-approval, inputs [2, 6].",
+    "Floor 4 witness (SPEC 12.4 item 3). Work items are ordered by id, which is a hash, so their order looks arbitrary."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "baselinePayRateCents", "v": 1000, "tx": 2},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "documents", "v": "pl:a/doc:1", "tx": 4},
+        {"e": "pl:a/doc:1", "a": "docType", "v": "ead", "tx": 4},
+        {"e": "pl:a/doc:1", "a": "expiresOn", "v": "2026-10-31", "tx": 4},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 5},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 5},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 5},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 5},
+        {"e": "pl:a", "a": "payRateCents", "v": 1649, "tx": 6}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"],
+      ["pl:a/doc:1", "docType"],
+      ["pl:a/doc:1", "expiresOn"],
+      ["pl:a/doc:1", "reverified"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-01T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": true, "rule": "DOCEXP"},
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.below-minimum", "kind": "pay.below-minimum", "overdue": true, "rule": "MINWAGE"},
+      {"dueAt": null, "id": "pl:a#pay.change-approval", "kind": "pay.change-approval", "overdue": false, "rule": "PAYCHG"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 5], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3], "key": "", "row": 7, "rule": "EVSUB"},
+      {"inputs": [], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
+      {"inputs": [4], "key": "pl:a/doc:1", "row": 6, "rule": "DOCEXP"},
+      {"inputs": [1, 2, 6], "key": "", "row": 5, "rule": "MINWAGE"},
+      {"inputs": [2], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2, 6], "key": "", "row": 5, "rule": "PAYCHG"},
+      {"inputs": [5], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:6b2c7cb84e491e7effc9383bef991f44ed8ca3fea8d25f5ea60ac56e31cd5fa7", "inputs": [4], "key": "pl:a/doc:1", "kind": "notify.document-expired", "payload": {"docType": "ead", "expiresOn": "2026-10-31"}, "rule": "DOCEXP", "version": "wv:2c085c7df8e54dee6f92eb467d5cc0c255d378256c8e1715faa9eaf0c3eb78e6"},
+      {"id": "wi:76a8e53770d5b608edfbd75b07534cdae74350dfe63853cb7296a4fb7c77ed8d", "inputs": [2, 6], "key": "", "kind": "notify.pay-change-approval", "payload": {"baselinePayRateCents": 1000, "payRateCents": 1649}, "rule": "PAYCHG", "version": "wv:ec6d53bcb9f8fb5ab83657aef66204acbd96189ab24293e64279e4b7e1d8cac2"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2, 6], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1649}, "rule": "MINWAGE", "version": "wv:abe79fa0e209a02cba17a9f28345f4f8d7762914da5962a81e1b155d8bdd688c"},
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:edc2adc27d37abaf16d093e47ef08bc2235081f482c6c9164fe06a8dd1c92900"},
+      {"id": "wi:ff8b88355941ea54f7062644b6cb3e2b11462118d4d45ea83ee5a78c89fad249", "inputs": [2, 3], "key": "", "kind": "everify.submit-case", "payload": {"startDate": "2026-11-02"}, "rule": "EVSUB", "version": "wv:bf82d1bf70bb77dc872648ea63c673925aeb0cf4c02f368992cb8da36cd95ce1"}
+    ]
+  }
+}

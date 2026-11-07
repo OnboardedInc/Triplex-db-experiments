@@ -1,0 +1,83 @@
+{
+  "id": "C50",
+  "slug": "evsub-submit-without-start-r1",
+  "title": "E-Verify submission with no start date: the payload's startDate is null",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "EVSUB", "polarity": "positive"},
+    {"rule": "LIFE", "polarity": "positive"},
+    {"rule": "I9S1", "polarity": "negative"}
+  ],
+  "notes": [
+    "No startDate fact. LIFE row 1: flag start-unknown. I9S1 row 1 (attested, SSN present), inputs [3].",
+    "EVSUB: no status, valid SSN, no runtime result: row 7, work item everify.submit-case with payload {startDate: null}; inputs [3].",
+    "MINWAGE row 4 (1650 >= jur:ny 1650), inputs [1, 2] without a startDate fact."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"]
+    ],
+    "flags": [
+      {"name": "start-unknown", "rule": "LIFE"}
+    ],
+    "obligations": [],
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "tasks": [],
+    "trace": [
+      {"inputs": [], "key": "", "row": 1, "rule": "LIFE"},
+      {"inputs": [3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [3], "key": "", "row": 7, "rule": "EVSUB"},
+      {"inputs": [], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:ff8b88355941ea54f7062644b6cb3e2b11462118d4d45ea83ee5a78c89fad249", "inputs": [3], "key": "", "kind": "everify.submit-case", "payload": {"startDate": null}, "rule": "EVSUB", "version": "wv:78c908ad8b5399377eda59af296dceb1c30acf1374874631fd3add9dd5096d6a"}
+    ]
+  }
+}

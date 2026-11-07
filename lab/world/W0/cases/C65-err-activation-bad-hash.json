@@ -1,0 +1,21 @@
+{
+  "id": "C65",
+  "slug": "err-activation-bad-hash",
+  "title": "An activation whose release is not a sha256 hash",
+  "op": "reconcile",
+  "checks": [],
+  "notes": ["sha256:R2 does not match ^sha256:[0-9a-f]{64}$: W0.E_VALUE (4.4 step 4)."],
+  "input": {
+    "activations": [
+      {"from": "2026-01-01T00:00:00.000000Z", "release": "sha256:R2", "tx": 9}
+    ],
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}
