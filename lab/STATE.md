@@ -32,7 +32,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | exp/X02-xtql-parity (bf1ad4d) | PROGRESSED: G0/G1 PASS, G2 SQL 142/142, XTQL diagnostic 142/142, XTQL candidate timeouts under load | V-X02, then promote; EXP-C8 builds on it |
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
-| contract 0.3.7 (main ca42e06) | Q46-Q49 compiled; 153 obligations; W0-1.1.1 pinned ACCEPTED; O-DOMAIN fingerprint null; Q50-Q54 pending rows (no authority) | Codex round 7 running (shell by6r5z04f); 0.3.8 compiles Q50-Q54 |
+| contract 0.3.7 (main ca42e06) | Q46-Q49 compiled; 153 obligations; W0-1.1.1 pinned ACCEPTED; O-DOMAIN fingerprint null; Q50-Q54 pending rows (no authority) | Codex round 7 DONE: NOT READY, 5 open (2 partial, 3 new), all accepted as Q55; 0.3.8 compiles Q50-Q55 |
 | contract 0.3.3 (main 89376e1) | Q29-Q32 compiled; 142 obligations, 50 thresholds; W0 pin null until V-D01 | Codex round 3 |
 
 ## Running agents (10 of 10, plus Codex shell b0losx599)
@@ -66,6 +66,9 @@ engine-heavy dispatches; heavy commands via lab/bin/heavy.mjs; gate reruns one a
 residents at every check-in; recreate qlever-dev fresh when its delta grows.
 
 ## Pending decisions for Sam (flagged, provisional rulings in force)
+- Q55c native queries in a host-log composition: repository pulls always read your own write; a native query (SPARQL, XTQL, SQL, Datalog)
+  reports the basis it answered at, waits for your basis token if you pass one, and otherwise answers at the replica's position (it may lag
+  by milliseconds) instead of every native query paying the overlay cost.
 - R15 presence/deletion/cascade: Option C staged; delete = end valid time; default restrict; cascade any-parent card-one.
 - Q21 AMB-09: two equal-valued assertions on one entity are one value, so a duplicated pay fact never doubles a total (SUM 10, not 20).
 - Q21 AMB-17: `find` fails with ConflictingValuesError when a returned document has a conflicted attribute (a projection omitting it succeeds).
