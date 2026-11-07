@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.0"   # EXP-O04: erasure (Q24, Q31f, TARGETS 7) and DR-JSON-CONVERT; ACCEPTANCE 0.3.6
+ORACLE_VERSION = "0.4.1"   # EXP-O04: erasure (Q24, Q31f, TARGETS 7, held Q49) and DR-JSON-CONVERT; ACCEPTANCE 0.3.6
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -577,7 +577,7 @@ def evaluate_case(case, case_sha256=None, lane=None):
         scopes.append(V.OrderedOut([
             ("scope", name), ("lastPosition", state.last_position),
             ("assertions", [R.assertion_output(a) for a in W.ordered(state.assertions.values())]),
-            ("transactions", [_state_record(r) for r in state.records if getattr(r, "journaled", True)]),
+            ("transactions", [R.record_output(r) for r in state.records if getattr(r, "journaled", True)]),
         ]))
     return V.OrderedOut([
         ("format", OUTPUT_FORMAT),
@@ -591,16 +591,6 @@ def evaluate_case(case, case_sha256=None, lane=None):
         ("rulesInEffect", V.OrderedOut((k, _plain_rule(v)) for k, v in sorted(run.engine.rules.items()))),
         ("reservedNamespaces", V.OrderedOut((k, list(v)) for k, v in sorted(run.engine.reserved.items()))),
     ])
-
-
-def _state_record(record):
-    """The oracle's own state summary. An erasure commit (R-ERA-2) lists what it erased; its
-    journal content is not ruled (R-ERA-5), so it is marked instead of rendered."""
-    if not getattr(record, "erasure", False):
-        return R.record_output(record)
-    return V.OrderedOut([("txId", record.txId), ("position", record.position), ("instant", R._num(record.instant)),
-                         ("erasure", V.OrderedOut([("erasedAssertionIds", list(record.erased)),
-                                                   ("journal", "X-NOT-MODELED (" + R.ERASURE_RECORD_RULING + ")")]))])
 
 
 def _plain_rule(v):

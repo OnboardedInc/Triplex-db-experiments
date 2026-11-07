@@ -2,20 +2,20 @@
  "format": "triplex-db-2/o-replay-expected/1",
  "oracle": {
   "id": "O-REPLAY",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "sourceSha256": {
    "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
    "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
    "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
    "errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
    "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
-   "exact.py": "1a414606e904d787a89d93f404da23e89669c8a5f213fb00955af5c24e4906e4",
-   "replay.py": "6c57706acc928aa1ec2cb38025feed9a8a1dfa6804e2be827871d6334f29b359",
-   "constraints.py": "e93fcba3ca36be607b05f522dd779869ced816e2834f629130ecdd2408527571",
-   "views.py": "51631b3cb556bebf3047c0b2a5e9cb463ee291b8df80325a8fa5a8eea3bc7e42",
-   "entities.py": "e90cb9928181cb4a3c604a21e8776a22ba6404358c3c2fe5cdd834f1c2b5a2e5",
+   "exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+   "replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+   "constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+   "views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a",
+   "entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
    "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
-   "run.py": "8e58e590354f9023a604206c7f6a6a039f4465c6fbd890083829aa73725464a3",
+   "run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
    "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
   }
  },

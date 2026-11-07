@@ -11,7 +11,7 @@ import json
 from . import exact as X
 from . import replay as RP
 from . import values as V
-from .replay import _num, assertion_output, read_value, record_output, refuse_erased
+from .replay import ErasedValue, _num, assertion_output, is_erased, read_value, record_output, value_matches
 
 
 # --------------------------------------------------------------------------- cuts
@@ -131,34 +131,11 @@ def journal_selection(run, scope, pattern):
                        "presence are not frozen (ORCHESTRATOR-RULING-NEEDED)")
 
 
-def erasure_tx_ids(run, scope):
-    return {r.txId for r in run.engine.scope(scope).records if getattr(r, "erasure", False)}
-
-
 def fact_source(run, cut, pattern):
     rows = scope_assertions(run, cut)
     if journal_selection(run, cut.scope, pattern) == "include":
-        # R-ERA-5: whether an erasure commit has :_tx/ facts is not ruled, so a journal read
-        # that could select facts of an erasure commit refuses (one naming another tx answers)
-        erasures = erasure_tx_ids(run, cut.scope)
-        if erasures and (pattern.get("entityId") is None or pattern["entityId"] in erasures):
-            raise X.TypedError("X-NOT-MODELED", "the pattern could select journal facts of an erasure commit",
-                               ruling=RP.ERASURE_RECORD_RULING)
         rows = rows + list(run.engine.scope(cut.scope).journal)
     return rows
-
-
-def _check_erasure(rows, candidates, pattern, what):
-    """R-ERA-4 / R-ERA-5: rows are returned with markers in place of erased values, but a
-    value pattern over an erased candidate, or a :_tx/change fact describing an erased
-    value, would need the value the system no longer holds: X-NOT-MODELED."""
-    if "value" in pattern:
-        refuse_erased(candidates, what + " with a value pattern")
-    refuse_erased([a for a in rows if a.journal], what)
-
-
-def _without_value(pattern):
-    return {k: v for k, v in pattern.items() if k != "value"}
 
 
 # --------------------------------------------------------------------------- triple reads
@@ -169,7 +146,7 @@ def _pattern_match(a, pattern):
         "entityId" not in pattern or a.entityId == pattern["entityId"],
         "attribute" not in pattern or a.attribute == pattern["attribute"],
         "entityType" not in pattern or a.entityType == pattern["entityType"],
-        "value" not in pattern or a.value == pattern["value"],
+        "value" not in pattern or value_matches(a, pattern["value"]),   # Q49c: an erased value matches none
     ))
 
 
@@ -190,9 +167,7 @@ def q_match(run, query):
     timeline and native history helpers that use it."""
     cut = resolve_cut(run, query.get("cut"))
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
-    source = [a for a in ordered(fact_source(run, cut, pattern)) if visible(a, cut)]
-    rows = [a for a in source if _pattern_match(a, pattern)]
-    _check_erasure(rows, [a for a in source if _pattern_match(a, _without_value(pattern))], pattern, "match")
+    rows = [a for a in ordered(fact_source(run, cut, pattern)) if visible(a, cut) and _pattern_match(a, pattern)]
     return V.OrderedOut([("cut", cut.to_output()), ("count", len(rows)), ("contract", "raw-lifetime (AMB-01 A)"),
                          ("raw", [assertion_output(a) for a in rows]),
                          ("snapshot", [assertion_output(a, mask=(cut.P, cut.R)) for a in rows])])
@@ -204,7 +179,6 @@ def q_entity_triples(run, query):
     entity = query["entityId"]
     pattern = {"entityId": entity}
     rows = [a for a in ordered(fact_source(run, cut, pattern)) if a.entityId == entity and visible(a, cut)]
-    _check_erasure(rows, rows, pattern, "entityTriples")
     return V.OrderedOut([("cut", cut.to_output()), ("entityId", entity), ("contract", "raw-lifetime (AMB-01 A)"),
                          ("raw", [assertion_output(a) for a in rows]),
                          ("snapshot", [assertion_output(a, mask=(cut.P, cut.R)) for a in rows])])
@@ -249,9 +223,6 @@ def q_assertion_snapshot(run, query):
     if mode not in ("live-at-valid", "known-at-valid"):
         raise V.OracleInputError("mode must be live-at-valid or known-at-valid")
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
-    _check_erasure([], [a for a in scope_assertions(run, cut) if _pattern_match(a, _without_value(pattern))
-                        and known(a.recordedPosition, a.recordedAt, cut) and a.valid_at(cut.V)],
-                   pattern, "assertionSnapshot")
     out = []
     for a in ordered(scope_assertions(run, cut)):
         if not _pattern_match(a, pattern) or not known(a.recordedPosition, a.recordedAt, cut) or not a.valid_at(cut.V):
@@ -278,11 +249,7 @@ def q_assertions(run, query):
 def q_journal_facts(run, query):
     """R-JNL-5: the modeled journal facts of a scope (or of one transaction)."""
     scope = query.get("scope") or run.engine.default_scope
-    erasures = erasure_tx_ids(run, scope)
-    if erasures and (query.get("txId") is None or query["txId"] in erasures):
-        raise X.TypedError("X-NOT-MODELED", "journal facts of an erasure commit", ruling=RP.ERASURE_RECORD_RULING)
     rows = [a for a in run.engine.scope(scope).journal if query.get("txId") is None or a.txId == query["txId"]]
-    refuse_erased(rows, "journalFacts")
     return V.OrderedOut([("scope", scope), ("facts", [assertion_output(a) for a in rows])])
 
 
@@ -343,15 +310,10 @@ def q_transactions_for_entity(run, query):
     snapshot = int(query["snapshotPosition"]) if query.get("snapshotPosition") is not None \
         else run.engine.scope(scope).last_position
     before = int(query["beforePosition"]) if query.get("beforePosition") is not None else None
-    in_range = [r for r in _journal(run, scope) if not r.internal and r.position <= snapshot
-                and (before is None or r.position < before)]
-    state = run.engine.scope(scope)
-    if any(getattr(r, "erasure", False) and any(state.assertions[i].entityId == entity for i in r.erased)
-           for r in in_range):
-        # R-ERA-5: whether the entity's transaction list shows the erasure commit is not ruled
-        raise X.TypedError("X-NOT-MODELED", f"transactionsForEntity({entity}) spans an erasure of its values",
-                           ruling=RP.ERASURE_RECORD_RULING)
-    rows = [r for r in in_range if any(a.entityId == entity for _, a in r.changes)]
+    # Q49a: an erasure commit's identity changes name the entity, so it is listed like any change
+    rows = [r for r in _journal(run, scope) if not r.internal and r.position <= snapshot
+            and (before is None or r.position < before)
+            and any(a.entityId == entity for _, a in r.changes)]
     rows.sort(key=lambda r: -r.position)
     page = rows[:limit]
     out = [("transactions", [record_output(r) for r in page]), ("snapshotPosition", snapshot)]
@@ -499,17 +461,22 @@ def q_value_supports(run, query):
     representation of the support with the lowest (recordedPosition, op index)."""
     cut = resolve_cut(run, query.get("cut"))
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
-    source = [a for a in fact_source(run, cut, pattern) if visible(a, cut)]
-    # R-ERA-4: supports group by value identity, which an erased value no longer has
-    refuse_erased([a for a in source if _pattern_match(a, _without_value(pattern))], "valueSupports")
-    groups = {}
-    for a in ordered(source):
-        if _pattern_match(a, pattern):
-            groups.setdefault((a.entityId, a.attribute, a.value), []).append(a.id)
-    keys = sorted(groups, key=lambda k: (k[0], k[1], k[2].order_key()))
+    groups, erased = {}, {}
+    for a in ordered(fact_source(run, cut, pattern)):
+        if visible(a, cut) and _pattern_match(a, pattern):
+            if a.about is None and is_erased(a, "valueSupports"):
+                # Q49c: all erased values of an attribute form one group keyed by the marker
+                erased.setdefault((a.entityId, a.attribute), []).append(a)
+            else:
+                groups.setdefault((a.entityId, a.attribute, read_value(a)), []).append(a.id)
+    keys = sorted(groups, key=lambda k: (k[0], k[1], 0, k[2].order_key()))
+    rows = [(k[0], k[1], k[2].to_output(), groups[k]) for k in keys]
+    rows += [(e, attr, ErasedValue(*members).to_output(), [m.id for m in members])
+             for (e, attr), members in erased.items()]
+    rows.sort(key=lambda r: (r[0], r[1]))        # stable: readable values first, the marker group last
     return V.OrderedOut([("cut", cut.to_output()), ("supports", [
-        V.OrderedOut([("entityId", k[0]), ("attribute", k[1]), ("value", k[2].to_output()),
-                      ("count", len(groups[k])), ("assertionIds", groups[k])]) for k in keys])])
+        V.OrderedOut([("entityId", e), ("attribute", attr), ("value", value), ("count", len(ids)),
+                      ("assertionIds", ids)]) for e, attr, value, ids in rows])])
 
 
 def q_reachability(run, query):
@@ -520,12 +487,11 @@ def q_reachability(run, query):
     each path listed with the assertion ids of its edges."""
     cut = resolve_cut(run, query.get("cut"))
     attribute = query["attribute"]
-    # R-ERA-4: an erased edge value cannot be followed
-    refuse_erased([a for a in scope_assertions(run, cut) if a.attribute == attribute and visible(a, cut)],
-                  "reachability")
     edges = {}
     for a in ordered(scope_assertions(run, cut)):
-        if a.attribute == attribute and visible(a, cut) and a.value.family in ("ref", "string"):
+        # Q49c: an erased reference cannot be followed
+        if a.attribute == attribute and visible(a, cut) and not is_erased(a, "reachability") \
+                and a.value.family in ("ref", "string"):
             edges.setdefault(a.entityId, {}).setdefault(a.value.payload, []).append(a.id)
     origin = query["from"]
     seen, pending = set(), list(edges.get(origin, {}))
@@ -570,9 +536,6 @@ def _rows(run, cut, match):
     equal values on distinct entities are distinct rows. Value identity per R-VAL-3."""
     names = list(match["attributes"].keys())
     etype = match.get("entityType")
-    # R-ERA-4: aggregate rows bind distinct values, which an erased value no longer has
-    attrs = set(match["attributes"].values())
-    refuse_erased([a for a in scope_assertions(run, cut) if a.attribute in attrs and visible(a, cut)], "aggregate")
     by_entity = {}
     for a in ordered(scope_assertions(run, cut)):
         if visible(a, cut):
@@ -585,11 +548,15 @@ def _rows(run, cut, match):
         choices = []
         for name in names:
             attr = match["attributes"][name]
-            distinct = {}
+            distinct, erased = {}, []
             for a in facts:
                 if a.attribute == attr:
-                    distinct.setdefault(a.value, a.value)   # first (lowest creation order) representative
-            choices.append(sorted(distinct, key=lambda v: v.order_key()))
+                    if is_erased(a, "aggregate"):
+                        erased.append(a)
+                    else:
+                        distinct.setdefault(a.value, a.value)   # first (lowest creation order) representative
+            # Q49c: the entity's erased values of the attribute bind once, as the marker group, last
+            choices.append(sorted(distinct, key=lambda v: v.order_key()) + ([ErasedValue(*erased)] if erased else []))
         if any(not c for c in choices):
             continue
         combos = [[]]
@@ -648,7 +615,8 @@ def q_aggregate(run, query):
     for agg in aggs:
         if agg["op"] != "avg" or (agg.get("convert") or legacy_convert) is not None:
             continue
-        families = {var_types.get(agg["var"])} | {r[agg["var"]].family for r in rows}
+        families = {var_types.get(agg["var"])} | {r[agg["var"]].family for r in rows
+                                                   if not isinstance(r[agg["var"]], ErasedValue)}
         if "integer" in families:
             raise X.TypedError("E-INTEGER-AVG", "AVG over integers requires an explicit conversion (toNumber)")
         if "decimal" in families:
@@ -659,30 +627,58 @@ def q_aggregate(run, query):
             if cond["op"] in ("exists", "missing"):
                 raise V.OracleInputError("aggregate where supports value predicates only")
             expected = _where_constant(cond)
-            rows = [r for r in rows if V.predicate(cond["op"], r[cond["var"]], expected, query.get("compare", "typed"))]
+            # Q49c: an erased value matches no value predicate
+            rows = [r for r in rows if not isinstance(r[cond["var"]], ErasedValue)
+                    and V.predicate(cond["op"], r[cond["var"]], expected, query.get("compare", "typed"))]
     except V.MixedFamily as error:
         raise X.mixed(error)
     group_by = list(query.get("groupBy") or [])
-    groups = {}
+    groups, marker_groups = {}, {}
     for r in rows:
-        groups.setdefault(tuple(r[g] for g in group_by), []).append(r)
+        # Q49c: grouping puts all erased values of an attribute in one group keyed by the marker
+        key = tuple(_ERASED_KEY if isinstance(r[g], ErasedValue) else r[g] for g in group_by)
+        groups.setdefault(key, []).append(r)
+        for g in group_by:
+            if isinstance(r[g], ErasedValue):
+                marker_groups.setdefault((key, g), []).extend(r[g].assertions)
     if not group_by and not groups:
         groups[()] = []     # AG-EMPTY-UNGROUPED: one row; AG-EMPTY-GROUPED: no rows
     out_rows = []
-    for key in sorted(groups, key=lambda k: [v.order_key() for v in k]):
+    for key in sorted(groups, key=lambda k: [(1, ()) if v is _ERASED_KEY else (0, v.order_key()) for v in k]):
         members = groups[key]
-        row = [(g, v.to_output()) for g, v in zip(group_by, key)]
+        row = [(g, ErasedValue(*marker_groups[(key, g)]).to_output() if v is _ERASED_KEY else v.to_output())
+               for g, v in zip(group_by, key)]
         for agg in aggs:
             convert = agg.get("convert") or legacy_convert
-            items = [r[agg["var"]] for r in members]
+            values = [r[agg["var"]] for r in members]
+            items = [v for v in values if not isinstance(v, ErasedValue)]   # Q49c: value aggregates skip it
+            if agg["op"] == "count":
+                _check_count(values)
             if convert is not None and agg["op"] != "avg":
                 raise V.OracleInputError("convert is defined for avg only (AMB-11)")
             result = X.aggregate(agg["op"], items, convert=convert if agg["op"] == "avg" else None)
+            if agg["op"] == "count":
+                result = V.integer(result.payload + (1 if len(items) < len(values) else 0))
             if result is None and query.get("emptyAs") is not None:
                 result = V.decode_value(query["emptyAs"])   # AG-PACKET-COALESCE (task-specific)
             row.append((agg.get("as", agg["op"]), None if result is None else result.to_output()))
         out_rows.append(V.OrderedOut(row))
     return V.OrderedOut([("cut", cut.to_output()), ("rows", out_rows)])
+
+
+_ERASED_KEY = object()      # the marker group key of Q49c
+
+
+def _check_count(values):
+    """AG-COUNT counts distinct values of the variable; Q49c says COUNT of assertions counts
+    an erased value. The marker group counts once as a distinct value; where that differs from
+    counting each erased assertion (two or more erased assertions bound), the two readings
+    disagree and the oracle refuses (R-ERA-4)."""
+    erased = [a for v in values if isinstance(v, ErasedValue) for a in v.assertions]
+    if len(erased) > 1:
+        raise X.TypedError("X-NOT-MODELED", "COUNT over a variable bound to several erased values",
+                           ruling="R-ERA-4: Q49c counts erased assertions while AG-COUNT counts distinct values "
+                           "(ORCHESTRATOR-RULING-NEEDED)")
 
 
 def _decode_expr(node):

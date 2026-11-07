@@ -327,56 +327,26 @@ def to_decimal(a, precision=None, scale=None, rounding=None):
     return _declared(value, _param_int(precision, "toDecimal precision", 1), _param_int(scale, "toDecimal scale"))
 
 
-def _json_decimal_outcome(frac, p, s):
-    """The answer toDecimal gives for one exact value: ("ok", value) or (error id,)."""
-    try:
-        return ("ok", V.declare_decimal(V.Value("decimal", frac, (0, 1, False)), p, s, "toDecimal"))
-    except V.DecimalFraction:
-        return ("E-DECIMAL-FRACTION",)
-    except V.DecimalOverflow:
-        return ("E-DECIMAL-OVERFLOW",)
-
-
 def _json_to_decimal(a, precision, scale, rounding):
-    """DR-JSON-CONVERT (ACC decimalRouting, Q38d): an explicit toDecimal(json, p, s) with a
-    declared precision and scale validates the JSON value, never rounding it: a JSON number
-    becomes decimal(p, s), with E-DECIMAL-FRACTION for excess fraction digits and
-    E-DECIMAL-OVERFLOW beyond p - s integer digits (or 38); a JSON boolean, null, array,
-    object or non-decimal string is E-INVALID-VALUE (toDecimal(json 1.5, 2, 1) = 1.5;
-    json 1.55 at scale 1 is E-DECIMAL-FRACTION; json "abc" is E-INVALID-VALUE).
-
-    R-DEC-18 (ORCHESTRATOR-RULING-NEEDED): a JSON number is a binary64 that reads back as
-    written (Q33a), so its decimal value has two readings, the number as written (its
-    shortest rendering) and its exact binary expansion, and the contract names neither. The
-    oracle answers when both readings give the same answer and refuses (X-NOT-MODELED) when
-    they differ (json 0.1 at scale 1: 0.1 as written, E-DECIMAL-FRACTION as binary). A JSON
-    string holding decimal text ("1.50") is refused the same way: the contract does not say
-    whether the conversion reads text inside a JSON string. A rounding argument is refused:
-    DR-JSON-CONVERT names none."""
+    """DR-JSON-CONVERT (ACC decimalRouting, Q38d; R-DEC-18, ruled by Q49e): an explicit
+    toDecimal(json, p, s) with a declared precision and scale validates the JSON value,
+    never rounding it. A JSON number converts from its as-written reading (Q33a's
+    read-back-as-written text, its shortest rendering), never its binary64 expansion:
+    toDecimal(json 0.1, 2, 1) = 0.1; excess fraction digits are E-DECIMAL-FRACTION, more than
+    p - s integer digits (or 38) E-DECIMAL-OVERFLOW. Any other JSON value, a string holding
+    decimal text included, is E-INVALID-VALUE. A rounding argument stays refused: neither
+    DR-JSON-CONVERT nor Q49e names one."""
     if rounding is not None:
         raise TypedError("X-NOT-MODELED", "toDecimal(json, p, s, rounding)",
-                         ruling="R-DEC-18: DR-JSON-CONVERT names no rounding (ORCHESTRATOR-RULING-NEEDED)")
+                         ruling="R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)")
     if precision is None or scale is None:
         raise V.OracleInputError("DR-JSON-CONVERT: toDecimal of a json value needs a declared precision and scale")
     p, s = _param_int(precision, "toDecimal precision", 1), _param_int(scale, "toDecimal scale")
     node = a.extra.node
-    if isinstance(node, str):
-        if V._DECIMAL_TEXT.match(node):
-            raise TypedError("X-NOT-MODELED", "toDecimal of a json string holding decimal text",
-                             ruling="R-DEC-18: whether DR-JSON-CONVERT reads decimal text inside a JSON string is "
-                             "not ruled (ORCHESTRATOR-RULING-NEEDED)")
-        raise TypedError("E-INVALID-VALUE", "toDecimal of a json string that is not a number", json=a.payload)
     if isinstance(node, bool) or not isinstance(node, float):
-        raise TypedError("E-INVALID-VALUE", "toDecimal of a json value that is not a number", json=a.payload)
-    as_written = _json_decimal_outcome(Fraction(V.es_number_to_string(node)), p, s)
-    as_binary = _json_decimal_outcome(Fraction(node), p, s)
-    if as_written != as_binary:
-        raise TypedError("X-NOT-MODELED", f"toDecimal(json {a.payload}, {p}, {s}): the number as written and its "
-                         "binary64 expansion give different answers", ruling="R-DEC-18: which decimal value a JSON "
-                         "number converts from is not ruled (ORCHESTRATOR-RULING-NEEDED)")
-    if as_written[0] != "ok":
-        raise TypedError(as_written[0], f"toDecimal(json {a.payload}, {p}, {s})")
-    return as_written[1]
+        raise TypedError("E-INVALID-VALUE", "toDecimal of a json value that is not a number (Q49e)", json=a.payload)
+    as_written = V.Value("decimal", Fraction(V.es_number_to_string(node)), (0, 1, False))
+    return _declared(as_written, p, s)
 
 
 def _declared(value, p, s):

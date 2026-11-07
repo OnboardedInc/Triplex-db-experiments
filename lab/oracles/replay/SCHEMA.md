@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.4.0)
+# O-REPLAY case and output schema (v1; oracle 0.4.1)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -187,7 +187,7 @@ Every query has `id`, `kind`, and usually a `cut`:
 | `valueSupports` | `cut`, `pattern` | per (entity, attribute, value identity): count and assertion ids |
 | `reachability` | `cut`, `attribute`, `from`, optional `to` | closure; supportCount, paths with edge assertion ids |
 | `aggregate` | `cut`, `match.attributes {var: attribute}`, `match.entityType`, `where`, `groupBy`, `aggregates [{op, var, as, convert?}]`, `varTypes`, `emptyAs` | rows; `convert: "toNumber"` before AVG (AMB-11; `integerAvg: "convert"` is the 0.1 alias) |
-| `expr` | `expr: ["add", v, ["mul", v, v]]`: add sub mul div rem neg abs cast-int64 to-number (toNumber) to-int64 (toInt64, toInteger) to-decimal (toDecimal); `["divide", a, b, scale, "half-even"]`, `["round", x, scale, "half-up"]`, `["toDecimal", x, p, s]` (x an integer, decimal or json value, DR-JSON-CONVERT) and `["toDecimal", number, p, s, "down"]` take bare JSON integers and rounding strings as parameters | typed value or typed error |
+| `expr` | `expr: ["add", v, ["mul", v, v]]`: add sub mul div rem neg abs cast-int64 to-number (toNumber) to-int64 (toInt64, toInteger) to-decimal (toDecimal); `["divide", a, b, scale, "half-even"]`, `["round", x, scale, "half-up"]`, `["toDecimal", x, p, s]` (x an integer, decimal or json value; a JSON number converts as written, DR-JSON-CONVERT, Q49e) and `["toDecimal", number, p, s, "down"]` take bare JSON integers and rounding strings as parameters | typed value or typed error |
 | `compare` | `left` (value or expression), `right` (value, expression or untyped constant), `compare` mode | eq/ne/lt/gt each a boolean or the pinned error, identity, same group |
 | `sortValues` | `values` | distinct values in ACC 4.5 order (first given representation survives) |
 | `analyticCounts` | `n`, `width` (1 or 10) | configured-entity population counts |
@@ -205,15 +205,15 @@ example `E-CONFLICTING-VALUES`, `E-INTEGER-OVERFLOW`, `E-MIXED-FAMILY`, `E-INTEG
 `reason`, `phase`, `reasonAlternatives` (multi-reason ids), `message` and detail (`conflicts` lists every
 conflicted `{entityId, attribute}`). Errors without a 4.7 row use `X-` ids (`X-CYCLE`, `X-NO-POSITION`,
 `X-NOT-MODELED`) with `ruling` naming the RULING-NEEDED item (R-ERR-2). A case the oracle cannot answer
-exactly (the op spelled `erasure`, erase commands mixed with other ops or carrying preconditions, value-dependent
-writes over an erased value, decimal scale evolution, TDK1 keys) exits 2 with a message starting `X-NOT-MODELED`.
+exactly (the op spelled `erasure`, erase commands mixed with other ops or carrying preconditions, ReferenceTarget
+enforcement over an erased reference, decimal scale evolution, TDK1 keys) exits 2 with a message starting `X-NOT-MODELED`.
 
 ## 4. Output document
 
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.4.0", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.4.1", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",
@@ -233,8 +233,8 @@ writes over an erased value, decimal scale evolution, TDK1 keys) exits 2 with a 
   shortest lexeme, `-0` for negative zero; integers are canonical decimal text (AMB-10).
 - **Erased values** (R-ERA-1): `{"_tag": "ErasedValue", "erasedAt": <instant>}` in place of the typed value, at every
   basis; for a read whose `readStart` precedes the erasure, `{"_tag": "InFlightErasure", "acceptable": [<old value>,
-  <marker>], "rule": "ER-INFLIGHT-READ ..."}` (R-ERA-6). The state summary shows an erasure commit as
-  `{"txId", "position", "instant", "erasure": {"erasedAssertionIds", "journal"}}` (R-ERA-5).
+  <marker>], "rule": "ER-INFLIGHT-READ ..."}` (R-ERA-6). An erasure commit's journal record lists identity-only
+  changes `{"op": "erase", "entityId", "attribute", "assertionIds"}` (R-ERA-3, Q49a).
 - **Assertion rows** carry every field of spec item 4: `id, entityId, attribute, value, validFrom, validTo,
   recordedAt, recordedPosition, createdBy, entityType, schemaVersion, txId, retractedAt,
   retractedPosition, retractTxId`; journal fact rows add `"journal": true`.
