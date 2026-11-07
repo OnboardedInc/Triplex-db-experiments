@@ -16,14 +16,8 @@ from .replay import Rejected
 
 
 def value_identity_text(value: V.Value) -> str:
-    out = value.to_output()
-    if value.family in ("number", "datetime"):
-        return f"{value.family}:{out.get('bits')}"
-    if value.family == "json":
-        return "json:" + value.payload
-    if value.family == "blob":
-        return "blob:" + V.dumps(out, indent=0)
-    return f"{value.family}:{out.get('value')}"
+    """Unique claimants group by value identity (R-VAL-3: -0.0 and +0.0 are one value, Q14b)."""
+    return V.identity_text(value)
 
 
 def _validate_rule(rule):
@@ -53,11 +47,16 @@ class Fact:
 
 
 def _facts(state, plan):
+    """Pre-state and projected post-state. AMB-06 A: a retract-pattern may retract an
+    assertion staged earlier in the same command (target ("staged", opIndex)); such an
+    assertion is absent from the post-state."""
     pre = [Fact(a.id, a.entityId, a.attribute, a.value, a.entityType, a.validFrom.frac,
                 None if a.validTo is None else a.validTo.frac) for a in state.live()]
     retracted = {target for _, target, _ in plan.retracts}
     post = [f for f in pre if f.id not in retracted]
     for index, fields in plan.asserts:
+        if ("staged", index) in retracted:
+            continue
         post.append(Fact(f"<new:{index}>", fields["entityId"], fields["attribute"], fields["value"],
                          fields["entityType"], fields["validFrom"].frac,
                          None if fields["validTo"] is None else fields["validTo"].frac))

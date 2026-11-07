@@ -100,8 +100,14 @@ def check_ham():
     results.append({"check": "ham-receipts-and-outcomes", "pass": report.get("verdict") == "PASS"})
 
     def norm(row):
-        return {k: row[k] for k in ("id", "entityId", "attribute", "value", "entityType", "validFrom", "validTo",
-                                    "createdBy", "schemaVersion", "recordedAt", "txId", "knownRetirement")}
+        out = {k: row[k] for k in ("id", "entityId", "attribute", "value", "entityType", "validFrom", "validTo",
+                                   "createdBy", "schemaVersion", "recordedAt", "txId", "knownRetirement")}
+        kr = out["knownRetirement"]
+        if kr is not None:
+            # Q21 AMB-02: O-REPLAY emits the logical names {retractedAt, retractTxId} (+ retractedPosition);
+            # O-HAM v2's SnapshotAssertion spells the same content {recordedAt, txId}
+            out["knownRetirement"] = {"recordedAt": kr["retractedAt"], "txId": kr["retractTxId"]}
+        return out
 
     for c in ref["cases"]:
         got = [norm(r) for r in query_result(report, c["id"])["assertions"]]

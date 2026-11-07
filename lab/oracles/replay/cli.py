@@ -1,6 +1,6 @@
 """O-REPLAY command line.
 
-  python3 -I lab/oracles/replay/cli.py CASE.json [-o OUT.json]
+  python3 -I lab/oracles/replay/cli.py CASE.json [-o OUT.json] [--lane qlever]
   python3 -I lab/oracles/replay/cli.py --self-check [-o OUT.json]
   python3 -I lab/oracles/replay/cli.py --test
 
@@ -27,6 +27,7 @@ def main(argv=None):
     parser.add_argument("-o", "--output")
     parser.add_argument("--self-check", action="store_true")
     parser.add_argument("--test", action="store_true")
+    parser.add_argument("--lane", help="evaluate for a lane (core, xtdb, qlever, or a lane id); overrides the case")
     args = parser.parse_args(argv)
     if args.test:
         here = Path(__file__).resolve().parent
@@ -42,7 +43,7 @@ def main(argv=None):
         if not args.case:
             parser.error("a case file is required")
         try:
-            report = RUN.evaluate_text(Path(args.case).read_bytes())
+            report = RUN.evaluate_text(Path(args.case).read_bytes(), args.lane)
         except V.OracleInputError as error:
             print(f"o-replay: malformed case: {error}", file=sys.stderr)
             return 2

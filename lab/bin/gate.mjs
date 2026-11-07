@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// lab/bin/gate.mjs <G0|G1|G2|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
+// lab/bin/gate.mjs <G0|G1|G2|G4|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
+//   [--profile default|bounded|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
 //
 // Writes an append-only receipt lab/runs/<gate>/<run-id>.json and raw output under
 // runs/<gate>/<run-id>/ (gitignored). Preimages go to the content-addressed store runs/objects/.
@@ -277,6 +278,68 @@ function packetIdentity() {
 
 // ---------------------------------------------------------------- G1 and G2
 
+// [EXP-002] Why: the homebase qualified unchanged44 only under its explicit F1 profile (persisted
+// source, eligible MINUS, paired retirement, bounded aggregate answers, planner threshold 1;
+// wiki/problems/qlever-planner-memory.md, qualification/qlever-live/planner-budget-wave1.json).
+// cleanEnv strips QLEVER_*_PLAN so no profile leaks in from the shell; a profile is now named on
+// the command line and recorded in the receipt. Rejected: reading the plan variables from the
+// caller's environment (an unrecorded shell export would change what an obligation means).
+const QLEVER_PROFILES = {
+  default: {},
+  // qualification/qlever-live/upstream44-bounded-v2.json: the homebase unchanged44 pass profile.
+  bounded: { QLEVER_AGGREGATE_ANSWER_PLAN: 'bounded' },
+  // planner-budget-wave1.json fixedProfile (with --planner-budget 1): the homebase F arm.
+  f1: { QLEVER_AGGREGATE_ANSWER_PLAN: 'bounded', QLEVER_NEGATION_PLAN: 'minus', QLEVER_SOURCE_PLAN: 'persisted', QLEVER_RETIREMENT_PLAN: 'paired' },
+};
+
+/** QLever server settings over the admin GET API (the lab server runs with --no-access-check). */
+async function qleverSettings(endpoint, set) {
+  const target = new URL(endpoint);
+  if (set) for (const [key, value] of Object.entries(set)) target.searchParams.set(key, value);
+  else target.searchParams.set('cmd', 'get-settings');
+  const response = await fetch(target, { signal: AbortSignal.timeout(5000), redirect: 'error' });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`QLever settings HTTP ${response.status}: ${text.slice(0, 200)}`);
+  return set ? text : JSON.parse(text);
+}
+
+// [EXP-002] Why: query-planning-budget is one server-wide runtime parameter (source default 1500;
+// the homebase pinned 100 and qualified F at 1). A run that selects a budget sets it, verifies the
+// read-back, and restores the value it found, all recorded; every QLever run records the budget it
+// observed before and after. The setting chooses planner algorithms; it is not a memory ceiling.
+async function plannerBefore(run, result, bound) {
+  if (bound.info.lane !== 'qlever') return null;
+  const wanted = run.options['planner-budget'];
+  const planner = result.planner = { requested: wanted ?? null };
+  try {
+    const before = await qleverSettings(bound.info.endpoint);
+    run.storeBytes(Buffer.from(JSON.stringify(before, null, 2) + '\n'), 'engine-settings-before', 'qlever get-settings before');
+    planner.before = before['query-planning-budget'];
+    if (wanted === undefined) { planner.effective = planner.before; return null; }
+    if (!/^[0-9]+$/.test(String(wanted))) fail('USAGE', '--planner-budget must be a decimal integer');
+    await qleverSettings(bound.info.endpoint, { 'query-planning-budget': String(wanted) });
+    planner.selected = (await qleverSettings(bound.info.endpoint))['query-planning-budget'];
+    if (planner.selected !== String(wanted)) run.reason(`query-planning-budget read back ${planner.selected}, wanted ${wanted}`);
+    planner.effective = planner.selected;
+    return planner.before;
+  } catch (error) { run.reason(`planner setting failed before the run: ${error.message}`); return planner.before ?? null; }
+}
+async function plannerAfter(run, result, bound, restoreTo) {
+  if (bound.info.lane !== 'qlever' || !result.planner) return;
+  const planner = result.planner;
+  try {
+    if (restoreTo !== null && restoreTo !== undefined) {
+      await qleverSettings(bound.info.endpoint, { 'query-planning-budget': restoreTo });
+      planner.restoredTo = restoreTo;
+    }
+    const after = await qleverSettings(bound.info.endpoint);
+    run.storeBytes(Buffer.from(JSON.stringify(after, null, 2) + '\n'), 'engine-settings-after', 'qlever get-settings after');
+    planner.after = after['query-planning-budget'];
+    const expected = restoreTo ?? planner.before;
+    if (planner.after !== expected) run.reason(`query-planning-budget after the run is ${planner.after}, expected ${expected} (changed by a co-runner or restore failed)`);
+  } catch (error) { run.reason(`planner setting read or restore failed after the run: ${error.message}`); }
+}
+
 async function engineGate(run, config, entry) {
   const result = {};
   result.build = await build(run);
@@ -285,16 +348,23 @@ async function engineGate(run, config, entry) {
   if (!bound.engine) return { result, step: null, bound: null };
   const ready = await probe(bound.info);
   if (!ready.ok) run.reason(`${bound.info.container} not ready before the run: ${ready.why}`);
+  const profileName = run.options.profile ?? 'default';
+  const profile = bound.info.lane === 'qlever' ? QLEVER_PROFILES[profileName] : profileName === 'default' ? {} : undefined;
+  if (!profile) fail('USAGE', `unknown --profile ${profileName} for lane ${bound.info.lane}`);
+  result.profile = { name: profileName, env: profile };
   const env = cleanEnv({
     [bound.info.laneConf.envVar]: bound.info.endpoint,
     TRIPLEX_LAB_SLOT_OWNER: bound.info.ownerFile,
     TRIPLEX_QUERY_PATH: entry.queryPath,
+    ...profile,
   });
   result.queryPath = entry.queryPath;
   result.diskBefore = vmDisk(config);
+  const restoreTo = await plannerBefore(run, result, bound);
   const stop = startSampler();
-  const step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs });
-  result.containers = stop();
+  let step;
+  try { step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs }); }
+  finally { result.containers = stop(); await plannerAfter(run, result, bound, restoreTo); }
   result.coRunning = listTx2Containers().map(c => ({ name: c.name, memCapBytes: c.memBytes, nanoCpus: c.nanoCpus, health: c.health }));
   result.volumeBytes = volumeBytes(config, bound.info.volume);
   result.diskAfter = vmDisk(config);
@@ -438,13 +508,56 @@ async function gateGS(run, config) {
   return result;
 }
 
+// ---------------------------------------------------------------- G4
+
+// [EXP-002] Why: G4 (PLAN 7.5) is "semantic counterexamples with original expected answers". The
+// A0 baseline records the raw QLever counterexamples as FAILs against their original oracles, plus
+// a control that must PASS so the FAILs are not vacuous. The gate verdict stays FAIL whenever any
+// execution misses its original oracle (a baseline FAIL is still a FAIL); `baselineAsExpected`
+// says separately whether every execution matched its declared A0 expectation.
+// Rejected: a "PASS when the expected failures happen" verdict (it would read as semantic success).
+async function gateG4(run, config) {
+  if (run.lane !== 'qlever') fail('USAGE', 'G4 is implemented for --lane qlever only (EXP-002)');
+  const output = run.raw('g4-report.json');
+  const entryFile = 'packages/qlever/experiments/lab-counterexamples.ts';
+  const { result, step, bound } = await engineGate(run, config, { name: 'lab-counterexamples', queryPath: `${run.lane}-native`, args: [entryFile, '--output', output], timeoutMs: 15 * 60_000 });
+  if (!bound) return result;
+  result.fixtures = fileHashes(run, [entryFile, 'packages/qlever/experiments/lab-endpoint.ts', 'qualification/native-controls/qlever-collation-tiny-v1/oracle.json',
+    'qualification/native-controls/qlever-collation-tiny-v1/fixture.nt', 'packages/qlever/experiments/native-query-shapes.ts', 'lab/research/R5-probe/probe1.py', 'lab/research/R5-probe/probe3.py'], 'oracle-fixture');
+  const report = readJson(output, null);
+  if (!report) { run.reason('no G4 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  run.store(output, 'raw-outcome');
+  result.contactedEndpoint = report.endpoint;
+  if (report.endpoint !== bound.info.endpoint) run.reason(`G4 contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);
+  if (report.status !== 'COMPLETE') { run.reason(`G4 entry status ${report.status}: ${String(report.error ?? '').slice(0, 300)}`); run.failure({ step: step.name, tail: step.tail, error: report.error }); }
+  const executions = report.executions ?? [];
+  const missed = executions.filter(e => e.status !== 'PASS');
+  for (const e of missed) run.failure({ case: e.caseId, mode: e.mode, status: e.status, expected: e.expected, actual: e.actual ?? null, error: e.error ?? null });
+  if (executions.length === 0) run.reason('zero executed cases');
+  const counterFails = missed.filter(e => e.kind === 'counterexample').length, controlFails = missed.filter(e => e.kind === 'control').length;
+  if (counterFails) run.reason(`${counterFails} counterexample executions miss their original oracle (the declared A0 baseline expectation is FAIL)`);
+  if (controlFails) run.reason(`${controlFails} control executions miss their oracle (controls must PASS; harness or engine defect)`);
+  const unexpected = executions.filter(e => !e.matchesBaseline);
+  result.scope = 'full';
+  result.counts = { executed: executions.length, pass: executions.length - missed.length, fail: missed.length, skip: 0,
+    counterexamples: executions.filter(e => e.kind === 'counterexample').length, controls: executions.filter(e => e.kind === 'control').length,
+    errors: executions.filter(e => e.status === 'ERROR').length };
+  result.baselineAsExpected = unexpected.length === 0;
+  result.unexpectedVersusBaseline = unexpected.map(e => ({ caseId: e.caseId, mode: e.mode, expectedBaseline: e.expectedBaseline, status: e.status }));
+  result.cases = executions.map(e => ({ caseId: e.caseId, mode: e.mode, status: e.status, kind: e.kind, expectedBaseline: e.expectedBaseline, oracleId: e.oracleId,
+    oracleSource: e.oracleSource, expected: e.expected, actual: e.actual ?? null, query: e.query ?? null, rawResultSha256: e.rawResultSha256 ?? null, ...caseLanguages([{ operation: 'public-native-query', ...(e.trace ?? {}) }]) }));
+  result.scopes = { scope: report.scope, fresh: true, write: report.write };
+  result.timings = { casesMs: executions.reduce((s, e) => s + e.elapsedMs, 0), writeMs: report.write?.elapsedMs ?? null };
+  return result;
+}
+
 // ---------------------------------------------------------------- receipt
 
 main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const gate = positional[0];
-  if (!['G0', 'G1', 'G2', 'GS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
-    fail('USAGE', 'usage: gate.mjs G0|G1|G2|GS --lane xtdb|qlever [--slot dev] [--scenario 2,3] [--rung 10k] [--readers 16] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]');
+  if (!['G0', 'G1', 'G2', 'G4', 'GS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
+    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|GS --lane xtdb|qlever [--slot dev] [--scenario 2,3] [--rung 10k] [--readers 16] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).
   const runKind = options['run-kind'] ?? 'diagnostic';
@@ -466,7 +579,7 @@ main(async () => {
     lockfileSha256 = run.store(path.join(REPO, 'pnpm-lock.yaml'), 'lockfile').sha256;
     gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json']
       .map(file => [file, run.store(path.join(REPO, file), 'gate-script').sha256]));
-    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'GS' ? await gateGS(run, config) : await gateG2(run, config);
+    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'GS' ? await gateGS(run, config) : await gateG4(run, config);
   } catch (error) {
     run.reason(`harness error: ${error.message}`);
     run.failure({ harnessError: String(error.stack ?? error).slice(0, 3000) });
@@ -492,6 +605,8 @@ main(async () => {
   fs.writeSync(fd, JSON.stringify(receipt, null, 2) + '\n'); fs.fsyncSync(fd); fs.closeSync(fd);
   const c = receipt.counts ?? {};
   console.log(`${verdict} ${gate} ${options.lane}${receipt.slot ? '/' + receipt.slot : ''} scope=${receipt.scope} executed=${c.executed ?? 0} pass=${c.pass ?? 0} fail=${c.fail ?? 0} skip=${c.skip ?? 0}`);
+  if (result.profile || result.planner) console.log(`profile: ${result.profile?.name ?? '-'}; planner budget: ${JSON.stringify(result.planner ?? null)}`);
+  if (result.baselineAsExpected !== undefined) console.log(`G4 baseline as expected (counterexamples FAIL, controls PASS): ${result.baselineAsExpected}`);
   if (result.languages) console.log(`languages (answer): ${JSON.stringify(result.languages.answer)}; strict: ${JSON.stringify(result.languages.strict)}`);
   for (const reason of reasons.slice(0, 10)) console.log(`  reason: ${reason}`);
   console.log(`receipt: ${run.rel(run.receiptPath)}`);

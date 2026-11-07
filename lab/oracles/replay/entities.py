@@ -1,10 +1,12 @@
-"""Entity models at a basis (RULES.md R-ENT-*), repository get/getMany/find/timeline.
+"""Entity models at a basis (RULES.md R-ENT-*), repository get/getMany/find/count/timeline.
 
 Conflict semantics follow PLAN v1.1 C5 and RULINGS Q8e/Q8f: equal-valued duplicates
 are one value with several supports; a cardinality-one attribute with two or more
-distinct live values is a conflict and every repository read that references it
-fails with ConflictingValuesError; cardinality-many is a set in canonical value
-order.
+distinct live values is a conflict and every repository read whose document or query
+references it fails with ConflictingValuesError (E-CONFLICTING-VALUES; Q21 AMB-13 and
+AMB-17); cardinality-many is a set in canonical value order (ACC 4.5). Value identity
+is R-VAL-3 (-0.0 and +0.0 are one value; the representative is the support with the
+lowest (recordedPosition, op index), Q14b / AMB-08).
 """
 
 from __future__ import annotations
@@ -13,9 +15,10 @@ import functools
 
 from . import exact as X
 from . import values as V
-from .views import Cut, ordered, resolve_cut, visible
+from .views import Cut, known, known_retirement, ordered, resolve_cut, visible
+from .replay import _num
 
-VALUE_TYPES = {"string", "number", "integer", "boolean", "datetime", "ref", "json", "blob"}
+VALUE_TYPES = {"string", "number", "integer", "decimal", "boolean", "datetime", "ref", "json", "blob"}
 
 
 def load_schemas(raw_list):
@@ -32,12 +35,39 @@ def load_schemas(raw_list):
                 vtype = pdef.get("type")
                 if vtype not in VALUE_TYPES:
                     raise V.OracleInputError(f"{tname}.{pname}: unknown type {vtype!r}")
-                props[pname] = {"attribute": pdef["attribute"], "type": vtype, "cardinality": card,
-                                "required": bool(pdef.get("required", False)),
-                                "unique": bool(pdef.get("unique", False)), "target": pdef.get("target")}
+                prop = {"attribute": pdef["attribute"], "type": vtype, "cardinality": card,
+                        "required": bool(pdef.get("required", False)),
+                        "unique": bool(pdef.get("unique", False)), "target": pdef.get("target")}
+                if vtype == "decimal":
+                    # Q18: every decimal attribute declares precision and scale
+                    if pdef.get("precision") is None or pdef.get("scale") is None:
+                        raise V.OracleInputError(f"{tname}.{pname}: a decimal attribute declares precision and scale")
+                    prop["decimal"] = V._declaration(pdef["precision"], pdef["scale"], f"{tname}.{pname}")
+                props[pname] = prop
             types[tname] = props
         schemas[version] = types
     return schemas
+
+
+def decimal_declarations(schemas, case_declarations):
+    """attribute -> (precision, scale) from the case's attributeDeclarations and every
+    schema release (Q18). Two sources that disagree are a case error."""
+    out = {}
+
+    def put(attribute, decl, where):
+        if attribute in out and out[attribute] != decl:
+            raise V.OracleInputError(f"{where}: decimal declaration of {attribute} disagrees with another release")
+        out[attribute] = decl
+    for attribute, raw in (case_declarations or {}).items():
+        if raw.get("type", "decimal") != "decimal":
+            continue
+        put(attribute, V._declaration(raw.get("precision"), raw.get("scale"), attribute), "attributeDeclarations")
+    for version, types in schemas.items():
+        for tname, props in types.items():
+            for pname, p in props.items():
+                if p["type"] == "decimal":
+                    put(p["attribute"], p["decimal"], f"schema {version} {tname}.{pname}")
+    return out
 
 
 def schema_rules(schemas, version):
@@ -59,13 +89,17 @@ def schema_rules(schemas, version):
 
 
 class Conflicts(Exception):
+    """E-CONFLICTING-VALUES (PLAN C5.3; AMB-13: compare _tag, reason and the set of
+    {entityId, attribute})."""
+
     def __init__(self, items):
         super().__init__("conflict")
         self.items = sorted(set(items))
 
     def to_output(self):
-        return V.OrderedOut([("error", "ConflictingValuesError"), ("conflicts", [
-            V.OrderedOut([("entityId", e), ("attribute", a)]) for e, a in self.items])])
+        error = X.TypedError("E-CONFLICTING-VALUES", "", conflicts=[
+            V.OrderedOut([("entityId", e), ("attribute", a)]) for e, a in self.items])
+        return error.to_output()
 
 
 class Model:
@@ -100,7 +134,7 @@ def build_model(run, cut, etype, entity_id, version):
     declared = {p["attribute"] for p in props_def.values()}
     for name, p in props_def.items():
         groups = {}
-        for a in facts:
+        for a in facts:            # creation order: the first key of an identity class is Q14b's representative
             if a.attribute == p["attribute"]:
                 groups.setdefault(a.value, []).append(a.id)
         if not groups:
@@ -119,9 +153,11 @@ def build_model(run, cut, etype, entity_id, version):
     return model
 
 
-def model_output(model, nested=None):
+def model_output(model, nested=None, select=None):
     props = []
     for name in sorted(model.props):
+        if select is not None and name not in select:
+            continue
         p = model.props[name]
         if p[0] == "one":
             props.append((name, V.OrderedOut([("value", p[1].to_output()), ("supports", p[2])])))
@@ -182,6 +218,9 @@ def _resolve_includes(run, cut, model, include, version, conflicts):
 
 
 def q_get(run, query):
+    """R-ENT-3 (C5.3): get/getMany decode every attribute of the document, so any
+    conflicted attribute fails the read with E-CONFLICTING-VALUES listing every
+    conflicted (entity, attribute); getMany keeps order and gives null for missing ids."""
     cut = resolve_cut(run, query.get("cut"))
     version = int(query.get("schemaVersion", 1))
     ids = query["entityIds"] if "entityIds" in query else [query["entityId"]]
@@ -200,7 +239,8 @@ def q_get(run, query):
 
 
 def _cmp_values(a, b, direction):
-    """R-ENT-6: present before missing; family rank ascending; direction inside a family."""
+    """R-ENT-6 (ACC 4.5 family order, Q14a): present before missing; family rank
+    ascending; direction inside a family; entity id (codepoint) breaks ties (caller)."""
     if a is None or b is None:
         return (a is None) - (b is None)
     ka, kb = a.order_key(), b.order_key()
@@ -210,25 +250,52 @@ def _cmp_values(a, b, direction):
     return -c if direction == "desc" else c
 
 
-def q_find(run, query):
+ORDERED_OPS = ("lt", "lte", "gt", "gte")
+
+
+def _preflight_find(props_def, where):
+    """E-MIXED-FAMILY is preflight: a predicate whose declared attribute family and typed
+    constant cannot be compared (CMP-INT-FLOAT ordered; CMP-DECIMAL-CROSS any op) fails
+    before evaluation, whatever the data (AMB-16 A: integer range predicates are offered,
+    so integer-vs-integer ranges are fine)."""
+    for c in where:
+        if c["op"] in ("exists", "missing"):
+            continue
+        family = props_def[c["prop"]]["type"]
+        raw = c["values"] if c["op"] == "in" else [c["value"]]
+        for item in raw:
+            constant = V.decode_constant(item)
+            cfam = constant.family if isinstance(constant, V.Value) else \
+                ("number" if constant.kind == "number" else "string")
+            pair = {family, cfam}
+            op = c["op"]
+            if ("decimal" in pair and pair & {"integer", "number"}) or \
+                    (pair == {"integer", "number"} and op in ORDERED_OPS):
+                raise X.mixed(V.MixedFamily(family, cfam, op))
+
+
+def _select_and_order(run, query, count_only=False):
     cut = resolve_cut(run, query.get("cut"))
     version = int(query.get("schemaVersion", 1))
     etype = query["entityType"]
     props_def = _types(run, version)[etype]
     mode = query.get("compare", "typed")
     where = query.get("where") or []
-    order = query.get("orderBy") or []
-    include = query.get("include") or []
+    order = [] if count_only else (query.get("orderBy") or [])
+    include = [] if count_only else (query.get("include") or [])
     referenced = {c["prop"] for c in where} | {o["prop"] for o in order} | {i for i in include if isinstance(i, str)}
     for name in referenced:
         if name not in props_def:
             raise V.OracleInputError(f"{etype} has no property {name}")
     for o in order:
         if props_def[o["prop"]]["cardinality"] == "many":
-            raise X.TypedError("invalid-query", "cannot order by a cardinality-many property", prop=o["prop"])
+            raise X.TypedError("E-INVALID-QUERY", "cannot order by a cardinality-many property", prop=o["prop"])
+    _preflight_find(props_def, where)
     ids = sorted({a.entityId for a in run.engine.scope(cut.scope).assertions.values()
                   if visible(a, cut) and a.entityType == etype})
     models = [m for m in (build_model(run, cut, etype, e, version) for e in ids) if m is not None]
+    # R-ENT-5 (C5.3): an attribute the query references (where, orderBy, include) that is
+    # conflicted for any candidate fails the read; filtering on it would be a false absence
     conflicts = [c for m in models for c in m.conflicts(referenced)]
     if conflicts:
         raise Conflicts(conflicts)
@@ -248,8 +315,11 @@ def q_find(run, query):
             elif op == "missing":
                 ok = not vals
             else:
-                expected = [V.decode_value(x) for x in c["values"]] if op == "in" else V.decode_value(c["value"])
-                ok = any(V.predicate(op, v, expected, mode) for v in vals)
+                expected = [V.decode_constant(x) for x in c["values"]] if op == "in" else V.decode_constant(c["value"])
+                try:
+                    ok = any(V.predicate(op, v, expected, mode) for v in vals)
+                except V.MixedFamily as error:
+                    raise X.mixed(error)
             if not ok:
                 return False
         return True
@@ -266,8 +336,34 @@ def q_find(run, query):
         return (m1.entity_id > m2.entity_id) - (m1.entity_id < m2.entity_id)
 
     selected.sort(key=functools.cmp_to_key(compare))
+    return cut, version, props_def, include, selected
+
+
+def q_count(run, query):
+    """Repository.count(where): the number of matching entities. It returns no
+    documents, so only the attributes the filter references can fail it (C5.3)."""
+    cut, _, _, _, selected = _select_and_order(run, query, count_only=True)
+    return V.OrderedOut([("cut", cut.to_output()), ("total", len(selected))])
+
+
+def q_find(run, query):
+    """Repository.find: filter (R-ENT-5), order (R-ENT-6), limit, pages (R-PAGE-1).
+    Q21 AMB-17 (A): a returned document decodes every attribute it contains, so the find
+    fails with E-CONFLICTING-VALUES when a returned document contains a conflicted
+    attribute; `select` (a list of property names) projects the documents, and a
+    projection that omits the conflicted attribute succeeds."""
+    cut, version, props_def, include, selected = _select_and_order(run, query)
+    select = query.get("select")
+    if select is not None:
+        for name in select:
+            if name not in props_def:
+                raise V.OracleInputError(f"{query['entityType']} has no property {name}")
+        select = set(select)
     if query.get("limit") is not None:
         selected = selected[:int(query["limit"])]
+    conflicts = [c for m in selected for c in m.conflicts(select)]
+    if conflicts:
+        raise Conflicts(conflicts)
     page_size = int(query.get("pageSize", len(selected) or 1))
     pages = []
     for start in range(0, max(len(selected), 1), page_size):
@@ -276,7 +372,7 @@ def q_find(run, query):
         bodies = []
         for m in chunk:
             nested = _resolve_includes(run, cut, m, include, version, conflicts)
-            bodies.append(model_output(m, nested))
+            bodies.append(model_output(m, nested, select))
         if conflicts:
             raise Conflicts(conflicts)
         pages.append(V.OrderedOut([("ids", [m.entity_id for m in chunk]), ("entities", bodies),
@@ -285,8 +381,33 @@ def q_find(run, query):
 
 
 def q_timeline(run, query):
-    """R-ENT-7 recorded timeline: the model after every journaled position that changed
-    the entity, read at (that position, cut R, cut V)."""
+    """Repository.timeline(entityId, prop) at a basis (R-ENT-7; Q21 AMB-02 and AMB-03).
+
+    AMB-03: lists every assertion of the attribute on the entity recorded at (P, R),
+    with no V filter (the V-filtered view is the native known-at-valid helper,
+    assertionSnapshot). AMB-02: the compared logical content is {identity, value,
+    recordedAt, knownRetirement: null | {retractedAt, retractTxId}}; native rows add
+    retractedPosition; validFrom/validTo are listed because the timeline is how intervals
+    are seen. Membership and retirement knowledge per R-HIST-2 (as-of snapshot)."""
+    cut = resolve_cut(run, query.get("cut"), need_valid=False)
+    entity = query["entityId"]
+    attribute = query.get("attribute")
+    if attribute is None:
+        props_def = _types(run, int(query.get("schemaVersion", 1)))[query["entityType"]]
+        attribute = props_def[query["prop"]]["attribute"]
+    rows = [a for a in ordered(run.engine.scope(cut.scope).assertions.values())
+            if a.entityId == entity and a.attribute == attribute and known(a.recordedPosition, a.recordedAt, cut)]
+    out = [V.OrderedOut([("identity", a.id), ("value", a.value.to_output()), ("recordedAt", _num(a.recordedAt)),
+                         ("recordedPosition", a.recordedPosition), ("txId", a.txId),
+                         ("validFrom", _num(a.validFrom)), ("validTo", _num(a.validTo)),
+                         ("knownRetirement", known_retirement(a, cut))]) for a in rows]
+    return V.OrderedOut([("cut", cut.to_output()), ("entityId", entity), ("attribute", attribute),
+                         ("assertions", out)])
+
+
+def q_model_timeline(run, query):
+    """R-ENT-8a (the 0.1 `timeline`, renamed): the model after every journaled position
+    that changed the entity, read at (that position, cut R, cut V)."""
     base = resolve_cut(run, query.get("cut"))
     version = int(query.get("schemaVersion", 1))
     entity, etype = query["entityId"], query["entityType"]

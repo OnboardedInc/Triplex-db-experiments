@@ -18,7 +18,7 @@ class Outcomes(unittest.TestCase):
         cmds = [{"clock": 1, "meta": {"commandId": "c1"}, "operations": [person("a", "p1", "A")]},
                 {"clock": 2, "meta": {"commandId": "c1"}, "operations": [person("b", "p1", "B")]}]
         rep = evaluate(case(cmds))
-        self.assertEqual(outcome(rep, 1)["category"], "command-already-committed")
+        self.assertEqual(outcome(rep, 1)["error"], "E-COMMAND-COMMITTED")
         self.assertEqual(outcome(rep, 1)["errorTag"], "CommandAlreadyCommittedError")
         self.assertEqual(outcome(rep, 1)["transactionId"], "tx:0")
         self.assertEqual(rep["state"][0]["lastPosition"], 1)   # rejected commands hold no position
@@ -34,7 +34,7 @@ class Outcomes(unittest.TestCase):
         rep = evaluate(case(cmds))
         self.assertEqual(outcome(rep, 1)["outcome"], "committed")
         self.assertEqual(outcome(rep, 2)["errorTag"], "TransactionConflictError")
-        self.assertEqual(outcome(rep, 3)["category"], "invalid-operation")
+        self.assertEqual(outcome(rep, 3)["error"], "E-INVALID-VALUE")
 
     def test_entity_state_precondition(self):
         cmds = [{"clock": 1, "operations": [person("a", "p1", "A")]},
@@ -44,13 +44,13 @@ class Outcomes(unittest.TestCase):
                  "meta": {"preconditions": [{"_tag": "EntityState", "entityId": "p1", "targets": ["a"]}]}}]
         rep = evaluate(case(cmds))
         self.assertEqual(outcome(rep, 1)["outcome"], "committed")
-        self.assertEqual(outcome(rep, 2)["category"], "transaction-conflict")
+        self.assertEqual(outcome(rep, 2)["error"], "E-TX-CONFLICT")
 
     def test_invalid_value_rejects_whole_command(self):
         cmds = [{"clock": 1, "operations": [person("a", "p1", "A"),
                                             assert_op("b", "p1", ":person/age", {"type": "integer", "value": "01"})]}]
         rep = evaluate(case(cmds, [{"id": "all", "kind": "assertions"}]))
-        self.assertEqual(outcome(rep, 0)["category"], "invalid-value")
+        self.assertEqual(outcome(rep, 0)["error"], "E-INVALID-VALUE")
         self.assertEqual(result(rep, "all")["assertions"], [])
 
     def test_reserved_namespace(self):
@@ -58,7 +58,7 @@ class Outcomes(unittest.TestCase):
                    assert_op("a", "t", ":x/y", s("x"), entity_type="_Transaction"),
                    {"op": "retract-pattern", "pattern": {"entityType": "_Transaction"}}):
             rep = evaluate(case([{"clock": 1, "operations": [op]}]))
-            self.assertEqual(outcome(rep, 0)["category"], "reserved-namespace")
+            self.assertEqual(outcome(rep, 0)["error"], "E-RESERVED")
 
     def test_retract_pattern_and_retract_non_live(self):
         cmds = [{"clock": 1, "operations": [person("a", "p1", "A"), person("b", "p1", "A"), person("c", "p2", "A")]},
@@ -67,14 +67,14 @@ class Outcomes(unittest.TestCase):
         rep = evaluate(case(cmds, [{"id": "tx", "kind": "transactions"}]))
         changes = result(rep, "tx")["transactions"][1]["changes"]
         self.assertEqual([c["tripleId"] for c in changes], ["a", "b"])
-        self.assertEqual(outcome(rep, 2)["category"], "transaction-conflict")
+        self.assertEqual(outcome(rep, 2)["error"], "E-TX-CONFLICT")
 
     def test_host_abort_and_empty_interval(self):
         cmds = [{"clock": 1, "hostAbort": True, "operations": [person("a", "p1", "A")]},
                 {"clock": 2, "operations": [person("b", "p1", "B", valid_from=5, valid_to=5)]}]
         rep = evaluate(case(cmds))
-        self.assertEqual(outcome(rep, 0)["category"], "host-abort")
-        self.assertEqual(outcome(rep, 1)["category"], "invalid-operation")
+        self.assertEqual(outcome(rep, 0)["error"], "host-abort")
+        self.assertEqual(outcome(rep, 1)["error"], "E-INVALID-VALUE")
 
     def test_valid_from_defaults_to_transaction_instant(self):
         op = person("a", "p1", "A")

@@ -65,6 +65,7 @@ const REQUIRED = {
   G0: ['packet.sha256'],
   G1: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint'],
   G2: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint', 'packet.sha256'],
+  G4: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint'],
 };
 const pick = (object, key) => key.split('.').reduce((value, part) => value?.[part], object);
 

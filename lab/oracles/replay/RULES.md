@@ -1,141 +1,169 @@
-# O-REPLAY rules
+# O-REPLAY rules (0.2.0, conforms to ACCEPTANCE 0.3.1 section 4 and RULINGS Q1 to Q21)
 
 Every semantic rule the oracle applies, with where it comes from. Status:
 
-- **SOURCED**: stated in a public doc, a public type declaration, the acceptance contract, PLAN v1.1,
-  RULINGS.md, or the orchestrator's correction message of 2026-11-07 (cited as "OC-n").
+- **SOURCED**: stated in the acceptance contract (ACC 0.3.1, cited by table row id), RULINGS.md (cited Qn or
+  Q21 AMB-nn), the EXP-O02 brief's implementation facts (cited "brief fact n"), a public doc, PLAN v1.1, or the
+  orchestrator's correction message of 2026-11-07 (cited "OC-n").
+- **Q21-DEFAULT**: an O-REPLAY 0.1 default that RULINGS Q21 keeps, with the citation in
+  `lab/verify/O01/proposed_rulings.json`.
 - **DERIVED**: follows from a sourced rule; the derivation is written here.
-- **RULING-NEEDED**: `ORCHESTRATOR-RULING-NEEDED`. Documentation is silent. The oracle uses the stated
-  default; when the default is a switch, the case can override it in `rules` (switch name in brackets).
+- **RULING-NEEDED**: `ORCHESTRATOR-RULING-NEEDED`. Sources are silent; the oracle uses the stated default.
+  Rules added in 0.2.0 that are still open are marked **NEW**.
 
-No rule was inferred by running Triplex or by reading adapter or core implementation code. The only
-implementation lines read were the two the orchestrator authorized for their rule (OC-4):
-`packages/core/src/datalog/compiler.ts` around line 1397 (integer AVG) and the docstring of
-`packages/core/src/Constraint.ts` `newlyViolated` (line 376).
+Independence: no rule was inferred by running Triplex or by reading code under `packages/`. EXP-O02 used only
+the contract, the rulings, the golden vectors, `docs/operational-primitives.md` and the brief's stated facts.
+The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397, the Constraint.ts
+`newlyViolated` docstring) are unchanged sources.
 
-## Values (R-VAL)
+## Values (R-VAL, R-DEC, R-LANE)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-VAL-1 | Eight families with exact representations: string = codepoint sequence; integer = Python int in [-2^63, 2^63-1]; number = binary64 raw bits; boolean; datetime = binary64 (JS number) bits, ordered as an exact rational; ref = entity id string; json = JSON.parse result with original key order plus canonical text; blob = (content id, mimeType, size, filename?). | SOURCED: `packages/core/src/Value.ts` field names; brief "exact representations" |
-| R-VAL-2 | int64 travels as canonical decimal text `^(0\|-[1-9]\d*\|[1-9]\d*)$`; `"01"`, `"+1"`, `"1.0"`, `"-0"`, out-of-range and JSON numbers are invalid values. | SOURCED: Value.ts `Int64Decimal` declaration; ACCEPTANCE 6.1 CS-TYPES8-NEG |
-| R-VAL-3 | Value identity (sets, conflicts, grouping, distinct count, Unique claimants) is family plus exact payload; binary64 by bits, so `-0.0` and `+0.0` are two values. | DERIVED from M-NEGZERO (ACCEPTANCE 4.3) and Q8d/Q8f. **RULING-NEEDED** whether a card-one attribute holding `0.0` and `-0.0` is a conflict |
-| R-VAL-4 | NaN, ±Infinity, and decimal lexemes that overflow binary64 are invalid values. | SOURCED: Q8c "Triplex numbers are finite"; CS-TYPES8-NEG |
-| R-VAL-5 | Strings with a lone surrogate are invalid (values, entity ids, attributes, json keys). NFC and NFD stay distinct; nothing is casefolded or normalized. | SOURCED: CS-TYPES8 / CS-TYPES8-NEG; spec item 11 "No casefolding" |
-| R-VAL-6 | datetime accepts any finite JS number, negative and fractional included. The earliest and latest instant Triplex accepts is unknown [`datetimeRange`, default none]. | **RULING-NEEDED** (CS-TYPES8 names the bounds without values) |
-| R-VAL-7 | json values follow JSON.parse: numbers become binary64 (so `9007199254740993` reads as `9007199254740992`, `1e400` is invalid), duplicate keys keep the first position and the last value. | DERIVED: the json payload is a JS value (Value.ts `Schema.Unknown`) |
-| R-VAL-8 | Canonical json text: RFC 8785 style, keys sorted by UTF-16 code units, no whitespace, ECMAScript number text, `-0` written `0`. | **RULING-NEEDED**: Triplex CanonicalJson rules are not documented; the key order (UTF-16 vs codepoint) matters only for keys above U+FFFF |
-| R-VAL-9 | blob size is a finite non-negative whole number (sizes above 2^32 allowed; negative rejected); filename optional. | SOURCED: CS-TYPES8 / CS-TYPES8-NEG. Whole-number requirement **RULING-NEEDED** |
+| R-VAL-1 | Nine families: string = codepoint sequence; integer = Python int in the core integer type [-2^63, 2^63-1]; number = binary64 raw bits; decimal = exact Fraction plus declared (scale, precision); boolean; datetime = binary64 bits, ordered as an exact rational; ref = entity id; json = JSON.parse result with original key order plus canonical text; blob = (content id, mimeType, size, filename?). | SOURCED: ACC 4.0 VALUE_KINDS |
+| R-VAL-2 | Integers travel as canonical decimal text `^(0\|-[1-9]\d*\|[1-9]\d*)$`; `"01"`, `"+1"`, `"1.0"`, `"-0"`, text outside the core range and JSON numbers are E-INVALID-VALUE. | SOURCED: ACC 7.1 CS-TYPES8-NEG; Q21 AMB-14 |
+| R-VAL-3 | Value identity (sets, conflicts, grouping, distinct count, Unique claimants, retract-pattern match) is family plus exact payload, except that binary64 -0.0 and +0.0 are one value (number and datetime). When supports differ only in representation, the reported representation is the support with the lowest (recordedPosition, op index); a single-assertion read returns the stored bits. Decimal identity is the exact value (1.50 = 1.5). | SOURCED: ACC 4.3 CMP-NEGZERO; Q14b; Q21 AMB-08 |
+| R-VAL-4 | NaN, ±Infinity and lexemes that overflow binary64 are E-INVALID-VALUE. | SOURCED: Q8c; ACC 4.0 number |
+| R-VAL-5 | Strings with a lone surrogate are E-INVALID-VALUE (values, entity ids, attributes, json keys). NFC and NFD stay distinct; nothing is casefolded or normalized. | SOURCED: ACC 4.0 string; CS-TYPES8 |
+| R-VAL-6 | datetime accepts any finite JS number, negative and fractional included; the earliest and latest accepted instant is unknown [`datetimeRange`, default none]. | Q21-DEFAULT (R-VAL-6 confirm against Value.ts outstanding) |
+| R-VAL-7 | A JSON number in a case (typed number value, json payload, datetime, coordinate, blob size) must read back as written: its decimal value equals the binary64 exactly or equals the binary64's shortest ECMAScript spelling. Otherwise the case is malformed (exit 2), never rounded: `9007199254740993` and `1e-400` are case errors, `0.1` is the binary64 0.1 (ACC 4.1 N-F-ARITH uses it as a literal). | SOURCED: brief ("a JSON number that is not exactly a binary64 value is an input error"); V-O01 R-VAL-7. **NEW RULING-NEEDED** (R-VAL-7a): the round-trip criterion that admits `0.1` |
+| R-VAL-8 | Canonical json text: RFC 8785 style, keys by UTF-16 code units, no whitespace, ECMAScript numbers, `-0` written `0`. | Q21-DEFAULT |
+| R-VAL-9 | blob size is a finite non-negative whole number. | Q21-DEFAULT |
+| R-DEC-0 | Every decimal attribute declares precision p and scale s (0 <= s <= p, p >= 1), from the case's `attributeDeclarations` or a schema release; a malformed declaration is a case error; a decimal written to an undeclared attribute is E-INVALID-VALUE. | SOURCED: ACC 4.0 decimal, Q18. **NEW RULING-NEEDED**: the error for an undeclared decimal |
+| R-DEC-1 | Wire form `{"type":"decimal","value":"16.50"}` (optional inline precision and scale): optional `-`, no leading zeros, optional `.` with at least one digit, no `+`, no exponent. | **NEW RULING-NEEDED**: the TS wire shape of the decimal kind is EXP-R01's |
+| R-DEC-2 | `-0` / `-0.00` decimal text is E-INVALID-VALUE (like integer `-0`), not normalized. | **NEW RULING-NEEDED** |
+| R-DEC-3 | Fractional digits are counted on the value: more than s fractional digits, or more than p - s integer digits, is E-DECIMAL-UNREPRESENTABLE, never rounded or truncated; `16.500` is 16.5 and fits scale 2. Output text has exactly s fractional digits plus `scale`, `precision` and `storage` (p <= 15: scaled integer value * 10^s; p > 15: order-preserving decimal string). | SOURCED: ACC 4.0 decimal / DECIMAL_RULES. Counting on the value: DERIVED, **NEW RULING-NEEDED** (confirm) |
+| R-DEC-4 | Kernel decimal arithmetic is exact: add/sub result scale max(sa, sb), mul sa + sb; neg/abs keep the scale; SUM exact with the max scale. | SOURCED: Q18 (exact kernel arithmetic). Result scales DERIVED |
+| R-DEC-5 | Decimal division is not modeled (case error). | **NEW RULING-NEEDED** (result scale and rounding not frozen) |
+| R-DEC-6 | `toDecimal`: integer and decimal exact; binary64 to its exact binary expansion. `toNumber(decimal)` rounds once; `toInteger(decimal)` needs an integral value in range. | DERIVED from CV-I2F / CV-F2I; **NEW RULING-NEEDED** for toDecimal(number) |
+| R-DEC-7 | AVG over decimals without conversion is not modeled (case error); with `toNumber` it follows AG-AVG-CONV. | **NEW RULING-NEEDED** |
+| R-LANE-1 | Each lane's accepted integer range: core and xtdb [-2^63, 2^63-1]; qlever [-2^59, 2^59-1]; `laneIntegerRanges` may override, but every lane contains [-(2^53-1), 2^53-1] and stays inside the core type. A written integer outside the lane's range fails the whole command with E-VALUE-OUT-OF-RANGE before any mutation. The lane is the case's `lane` or `cli.py --lane`. | SOURCED: ACC 4.0 LANE_INTEGER_RANGE; NUMERIC; Q1 (re-scoped) |
+| R-LANE-2 | A retract-pattern value outside the lane's range is E-VALUE-OUT-OF-RANGE too. | **NEW RULING-NEEDED** |
+| R-LANE-3 | Read-side constants are compared exactly whatever the lane; no stored value can exceed the lane's range. | DERIVED |
 
 ## Order and comparison (R-ORD, R-CMP)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-ORD-1 | Inside a family: integers and binary64/datetimes numerically (exact rationals; `-0.0` before `+0.0`), booleans false < true, text and refs by codepoint, json by canonical text, blobs by (id, mime, size, filename). | SOURCED: Q8f; spec item 11 codepoint order |
-| R-ORD-2 | Across families: integer < number < datetime < boolean < string < ref < json < blob. | **RULING-NEEDED**: Q8f says "then type family" without a rank; docs/datalog.md's Datalog page order (numbers/datetimes, booleans, text, null) is the inspiration |
-| R-ORD-3 | Entity ids order by codepoint everywhere (entityPage, find tie-break, includes). JavaScript's default string sort (UTF-16) differs for U+E000..U+FFFF versus astral characters. | SOURCED: spec item 11; RULINGS Q8f |
-| R-CMP-1 | Typed mode (default): values of different families are never equal and never ordered; `int64 1` vs `binary64 1.0`, `true` vs `1`, `"1"` vs `1` are distinct as filters and as group keys. | SOURCED: Q8d |
-| R-CMP-2 | Predicate equality and ranges inside number/datetime use the numeric value, so `-0.0 = +0.0` as a predicate (identity still differs, R-VAL-3). | **RULING-NEEDED** |
-| R-CMP-3 | Incompatible equality is false, incompatible inequality true, incompatible ranges false. A `datalog` comparison mode merges only number and datetime. | SOURCED: docs/datalog.md "Predicates", "Values and equality". Integer vs number in Datalog: Q8d default (distinct) |
+| R-ORD-1 | Inside a family: integers, binary64 and datetimes numerically (exact rationals; -0.0 and +0.0 tie), decimals by exact value, booleans false < true, text and refs by codepoint, json by canonical text, blobs by content id (then the other descriptor fields). | SOURCED: ACC 4.5 CARD_MANY_ORDER |
+| R-ORD-2 | Across families: boolean < integer < number < decimal < datetime < string < ref < json < blob. | SOURCED: ACC 4.5; Q14a; Q18 |
+| R-ORD-3 | Entity ids order by codepoint everywhere (entityPage, find tie-break, includes); U+E000 sorts before U+10000. | SOURCED: Q21 AMB-15; Q8f |
+| R-CMP-1 | Same family: exact comparison (CMP-SAME). | SOURCED: ACC 4.3 CMP-SAME |
+| R-CMP-2 | `-0.0 = +0.0` as a predicate and as identity. | SOURCED: CMP-NEGZERO; Q14b |
+| R-CMP-3 | integer vs number: `eq` false, `ne` true, ordered comparisons preflight E-MIXED-FAMILY (CMP-INT-FLOAT, Q14d). decimal vs integer or number: every comparison E-MIXED-FAMILY unless converted (CMP-DECIMAL-CROSS). An untyped bare-JSON string matches string and ref values (CMP-UNTYPED-STRING); an untyped number compares numerically with number and datetime and as a number elsewhere (CMP-NUMERIC-CONST). Other cross-family pairs (CMP-IDENTITY, CMP-BOOL-INT): never equal, `ne` true, ordered false. `compare: "datalog"` merges typed number and datetime (0.1 switch). | SOURCED: ACC 4.3 rows named. Ordered comparisons of the other pairs returning false: Q21-DEFAULT (R-CMP-3 rest), **NEW RULING-NEEDED** whether they should also be E-MIXED-FAMILY |
+| R-CMP-4 | E-MIXED-FAMILY is preflight: `find` checks the attribute's declared family against each typed constant before evaluation; `aggregate` does the same when the query declares `varTypes`, otherwise on the first offending row. | SOURCED: ACC 4.7 phase; DERIVED for the data-driven case |
 
 ## Arithmetic and aggregates (R-NUM, R-AGG)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-NUM-1 | int64 add/sub/mul/neg/abs are exact; any scalar result outside int64 is `integer-overflow`. | SOURCED: CS-NUMERIC rows; Q8a |
-| R-NUM-2 | binary64 arithmetic is IEEE 754 round-to-nearest-even (CPython float). `-0.0 + 0.0 = +0.0`, `-0.0 * -1 = +0.0`, `+0.0 * -1 = -0.0`. A non-finite result is `number-overflow`. | SOURCED: OC-4; Q8c |
-| R-NUM-3 | Division by zero (int64 or binary64) is `division-by-zero`. | SOURCED: Q8c |
-| R-NUM-4 | int64 division truncates toward zero; `-2^63 / -1` overflows. | **RULING-NEEDED** |
-| R-NUM-5 | CAST text to int64 accepts an optional sign and decimal digits; out of range is `integer-overflow`, other text `invalid-cast`. | SOURCED for the two CS-NUMERIC rows; accepted syntax **RULING-NEEDED** |
-| R-NUM-6 | Mixed-family arithmetic is `type-mismatch`. | DERIVED from Q8d |
-| R-AGG-0 | Aggregate input rows are Datalog-like bindings: distinct tuples of (entity, distinct visible values); equal-valued duplicate assertions on one entity form one row, equal values on two entities are two rows. | DERIVED: docs/datalog.md "count counts distinct public source values. The other numeric aggregates retain duplicate input rows" |
-| R-AGG-1 | `count` counts distinct values; ungrouped empty input gives one row with count 0 and other aggregates null; grouped empty input gives no rows. | SOURCED: docs/datalog.md "Aggregation" |
-| R-AGG-2 | int64 `sum` is the exact total; `integer-overflow` only when the final total is outside int64. | SOURCED: Q8a |
-| R-AGG-3 | binary64 `sum` is the exact rational total rounded once; all-`-0.0` input sums to `-0.0`. | **RULING-NEEDED** (SQL leaves summation order unspecified; this is the order-independent choice) |
-| R-AGG-4 | `avg` over int64 is a typed preflight `DatalogValidationError` ("Exact integer AVG requires an explicit conversion to number"), raised even for empty input. With explicit conversion (`integerAvg: "convert"`) it is binary64 of exact sum / count rounded once. binary64 `avg` is the exact mean rounded once. | SOURCED: OC-4 and core compiler.ts:1397; Q8b |
-| R-AGG-5 | `min`/`max` stay in their family, ordered by R-ORD-1. Mixed families in one aggregate are `mixed-families`; non-numeric `sum`/`avg` are `non-numeric-aggregate`. | DERIVED: Q8d; docs/datalog.md "nonnumeric aggregate comparisons are typed preflight failures" |
+| R-NUM-1 | integer + - * and unary minus / ABS are exact; a result outside [-2^63, 2^63-1] is E-INTEGER-OVERFLOW. | SOURCED: ACC 4.1 N-I-ADD, N-I-NEG |
+| R-NUM-2 | binary64 arithmetic is IEEE 754 round-to-nearest-even, one rounding (CPython float); a non-finite result is E-NUMBER-OVERFLOW; signed zeros per IEEE. | SOURCED: N-F-ARITH, N-F-NEGZERO |
+| R-NUM-3 | Division by zero (integer, or binary64 +0.0 / -0.0) is E-DIVISION-BY-ZERO. | SOURCED: N-I-DIV, N-F-ARITH; Q8c |
+| R-NUM-4 | integer `/` truncates toward zero (-2^63 / -1 overflows); `rem` is a - trunc(a/b)*b. | SOURCED: N-I-DIV, N-I-REM |
+| R-NUM-5 | `cast-int64` (CAST text to integer) accepts canonical decimal only; out of range is E-INTEGER-OVERFLOW, other text (`'+1'`, `'01'`, `'-0'`) E-INVALID-CONVERSION. | SOURCED: CV-T2I |
+| R-NUM-6 | Mixing integer and number (or decimal with either) in arithmetic is preflight E-MIXED-FAMILY unless one operand is converted (`toNumber`, `toInteger`/`toInt64`, `toDecimal`). | SOURCED: N-MIXED; CV-NONE |
+| R-NUM-7 | A non-numeric arithmetic operand is E-MIXED-FAMILY. | **NEW RULING-NEEDED** (4.7 has no other preflight reason) |
+| R-NUM-8 | `rem` over binary64 is not modeled (case error). | **NEW RULING-NEEDED** |
+| R-NUM-9 | `toNumber(integer)` rounds to nearest binary64, ties to even, once; `toInteger(number)` needs an integral value inside the core range (else E-INVALID-CONVERSION), -0.0 gives 0. | SOURCED: CV-I2F, CV-F2I |
+| R-AGG-0 | Aggregate input rows are bindings: one row per (entity, distinct values of the matched attributes). Two equal-valued assertions on one entity are one row (SUM 10, COUNT 1); equal values on distinct entities are distinct rows. | SOURCED: Q21 AMB-09 (B); ACC 4.4 AG-SUM-I "bag of distinct bindings" |
+| R-AGG-1 | COUNT counts distinct values; ungrouped empty input gives one row (COUNT 0, others null); grouped empty input gives no rows. | SOURCED: AG-COUNT, AG-EMPTY-UNGROUPED, AG-EMPTY-GROUPED |
+| R-AGG-2 | integer SUM is the exact total; E-INTEGER-OVERFLOW only for a final total outside the integer range. | SOURCED: AG-SUM-I; Q8a; Q20 |
+| R-AGG-3 | binary64 SUM is the exact rational total rounded once; all-(-0.0) input sums to -0.0. | SOURCED: AG-SUM-F; Q14c |
+| R-AGG-4 | AVG over integers without conversion is preflight E-INTEGER-AVG (also over empty input when `varTypes` declares the variable integer). The conversion is `{"op":"avg","convert":"toNumber"}` (0.1 alias `integerAvg: "convert"`): binary64 of exact sum / count, rounded once. | SOURCED: AG-AVG-I, AG-AVG-CONV; Q8b; Q21 AMB-11 |
+| R-AGG-5 | MIN/MAX stay in their family; mixed families or a non-numeric SUM/AVG are E-MIXED-FAMILY. | SOURCED: AG-MINMAX-TIES; CV-NONE. Tag choice for non-numeric SUM/AVG: **NEW RULING-NEEDED** |
+| R-AGG-6 | `emptyAs` (COALESCE) is task-specific. | SOURCED: AG-PACKET-COALESCE |
 
-## Commands and outcomes (R-CMD)
+## Commands and outcomes (R-CMD, R-ERR)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-CMD-0 | The oracle decides validity from command intent, order, preconditions and rules. Receipts bind txId, position, instant and assertion ids only; a disagreeing receipt is a mismatch and never enters the expected state. | SOURCED: OC-3 |
-| R-CMD-1 | A command whose `commandId` was committed earlier in the same scope fails with `CommandAlreadyCommittedError` carrying the original txId, and allocates no position. | SOURCED: docs/operational-primitives.md "Causal transaction envelopes"; docs/agents.md 3.2 |
-| R-CMD-2 | `TripleLive` needs a matching explicit `retract` in the same command (else invalid-operation); a non-live target is `TransactionConflictError`. `EntityState` compares the complete set of recorded-live assertion ids of the entity; a mismatch is `TransactionConflictError`. Recorded-live means not retracted, regardless of valid time. | SOURCED: Triples.ts `TransactionMeta.preconditions`, Triple.ts `EntityStatePrecondition`. "Regardless of valid time" **RULING-NEEDED** |
-| R-CMD-3 | Omitted `validFrom` = the transaction instant [`validFromDefault`]; omitted `validTo` = open. Omitted `createdBy` = null [`createdByDefault`: `null` or `actor`]. `recordedAt` = receipt instant; `schemaVersion` = the adapter metadata the case declares. | validTo: SOURCED (Triple.ts nullable). validFrom and createdBy defaults **RULING-NEEDED**. schemaVersion: SOURCED tiny-v4 contract (XTDB codec Some(1)) |
-| R-CMD-4 | `validTo <= validFrom` is invalid-operation [`emptyIntervalRejected`]. | **RULING-NEEDED** |
-| R-CMD-5 | An explicit retract of an assertion that is no longer live is `TransactionConflictError` [`retractNonLive`: `transaction-conflict`, `invalid-operation`, `noop`]. Retracting an unknown id, or the same id twice in one command, is invalid-operation. | DERIVED from operational-primitives "Retraction is the atomic comparison"; **RULING-NEEDED** |
-| R-CMD-6 | Reserved namespace: attributes starting `:_` and entity types starting `_` (for example `:_tx/*`, `_Transaction`) are rejected for assert, retract and retract-pattern [`reservedAttributePrefix`, `reservedEntityTypePrefix`]. Attribute syntax is not checked by default [`attributeSyntax`: `agents-md` applies the docs/agents.md regex]. | `_Transaction` / `:_tx/` reserved: SOURCED (operational-primitives; lab/research/R9 notes the reserved-namespace error). Exact prefixes and syntax enforcement **RULING-NEEDED** |
-| R-CMD-7 | `retract-pattern` retracts every recorded-live assertion of the pre-state matching all given fields (value by identity), in creation order. An empty pattern is invalid-operation [`retractPatternEmptyRejected`]. | Matching fields SOURCED (Triple.ts `QueryRequest`). Pre-state, valid-time independence, order and empty pattern **RULING-NEEDED** |
-| R-CMD-8 | Check precedence: operation validation (invalid-value, reserved-namespace, invalid-operation) -> command claim -> preconditions -> retract liveness -> constraint enforcement. | **RULING-NEEDED** |
-| R-CMD-9 | Error tags: CommandAlreadyCommittedError, TransactionConflictError, ConstraintViolationError are documented. invalid-value, reserved-namespace, invalid-operation and host-abort have no documented tag; the oracle reports the category and compares the receipt's `category` when given, else marks `PASS-OUTCOME-ONLY`. | Tags SOURCED (Triples.ts error union). Others **RULING-NEEDED** (O-ERR) |
-| R-CMD-10 | Race groups: committed members replay in receipt position order and must succeed; a rejected member must fail at some serialization point; a member that succeeds at every point is a FAIL. | DERIVED from OC-3 (serial order is a system fact; validity is not) |
-| R-CMD-11 | Nested transactions: every allocated position is its own cut; members of a physical group validate against the state including earlier accepted members; a failing member is rejected alone; an abandoned outer transaction is declared with `hostAbort` on every member. | SOURCED: OC-2; PLAN C2.2 "A member that fails is rejected alone"; review r1 #6 |
+| R-CMD-0 | The oracle decides validity from command intent, order, preconditions and rules. Receipts bind txId, position, instant and assertion ids only. | SOURCED: OC-3; ACC 6.1 Outcomes |
+| R-CMD-1 | A command whose `commandId` was committed earlier in the scope fails with E-COMMAND-COMMITTED carrying the original txId and allocates no position. | SOURCED: docs/operational-primitives.md "Causal transaction envelopes" |
+| R-CMD-2 | `TripleLive` needs a matching explicit retract (else E-INVALID-VALUE); a non-live target is E-TX-CONFLICT. `EntityState` compares the recorded-live ids regardless of valid time; a mismatch is E-TX-CONFLICT. | SOURCED: operational-primitives "Compare-and-retract". Valid-time independence: Q21-DEFAULT |
+| R-CMD-3 | Omitted `validFrom` = the transaction instant; omitted `validTo` = open; omitted `createdBy` = null. | Q21-DEFAULT (TK-JOURNAL assertion.validFrom === committed.instant) |
+| R-CMD-4 | `validTo <= validFrom` is E-INVALID-VALUE. | SOURCED: Q21 AMB-12 (B) |
+| R-CMD-5 | An explicit retract of a no-longer-live assertion is E-TX-CONFLICT [`retractNonLive`]; an unknown id, or the same id twice in one command, is E-INVALID-VALUE. | Q21-DEFAULT (operational-primitives "Retraction is the atomic comparison") |
+| R-CMD-6 | Reserved namespaces are E-RESERVED (WriteError / reserved-namespace) for assert, retract (of an existing assertion or a journal fact) and retract-pattern: entity ids starting `_triplex/`; attributes starting `:triplex/` or `:_tx/`; entity types starting `triplex.` or equal to `_Transaction` [`reservedNamespaces`]. Other leading-underscore names are ordinary. | SOURCED: brief fact 2; V-O01 R-CMD-6 (TK-RESERVED); operational-primitives `_Transaction` / `:_tx/*`; Q21 AMB-14 |
+| R-CMD-7 | `retract-pattern` applies in operation order over staged facts: it retracts the pre-state's recorded-live matches and this command's earlier asserts that match (value by identity), in creation order. An empty pattern is E-INVALID-VALUE. | SOURCED: Q21 AMB-06 (A), AMB-07. Empty pattern: Q21-DEFAULT (R-CMD-7) |
+| R-CMD-8 | Check precedence: operation validation in operation order (E-INVALID-VALUE, E-DECIMAL-UNREPRESENTABLE, E-VALUE-OUT-OF-RANGE, E-RESERVED) -> command claim -> preconditions -> retract liveness -> constraint enforcement. Cases must not depend on it (one fault per command). | Q21-DEFAULT |
+| R-CMD-9 | Every rejection carries its ACC 4.7 id, tag, reason and phase. Faults that 4.7 does not name separately (unknown op, unknown retract id, duplicate retract, TripleLive without retract, missing field, empty pattern) map to E-INVALID-VALUE; a declared `hostAbort` is `host-abort` with no tag (host-defined). | SOURCED: ACC 4.7; Q15; Q21 (R-CMD-9). The E-INVALID-VALUE mapping of operation faults: **NEW RULING-NEEDED** |
+| R-CMD-10 | Race groups: committed members replay in receipt position order and must succeed; a rejected member must fail at some serialization point (`possibleCategories` lists the error ids). | DERIVED from OC-3 |
+| R-CMD-11 | Nested transactions: every allocated position is its own cut; a failing member is rejected alone; an abandoned outer transaction is `hostAbort` on every member. | SOURCED: OC-2; PLAN C2.2 |
+| R-CMD-12 | A retract-pattern whose `entityId` is a transaction entity of the scope targets journal facts and is E-RESERVED. | **NEW RULING-NEEDED** |
+| R-ERR-1 | An expected error matches a receipt when its `_tag` equals the pinned tag and its reason equals the pinned reason or one of the listed alternatives (`reasonAlternatives` for E-CONSTRAINT and E-CURSOR); a receipt may also name the error id or an 0.1 category. | SOURCED: ACC 4.7 errorComparison |
+| R-ERR-2 | Errors without a 4.7 row use `X-` ids with an explicit tag (or null) and the ruling that leaves them open: X-READ-LIMIT (R-JNL-7), X-INVALID-BASIS (R-CUT-3), X-CYCLE (R-SUP-2), X-NO-POSITION (a cut names a command the oracle rejects), X-NOT-MODELED (R-JNL-6). | DERIVED (never invent a 4.7 reason) |
 
 ## Constraints (R-CON)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-CON-1 | Enforcement applies only when the command carries `meta.enforce` (or the case enforcement mode is `on`). It evaluates pre-state and post-state at every validFrom and validTo boundary of every pre-state and post-state fact and rejects only violations that are new, or worsened (larger count) for cardinality and uniqueness. Existing violations never block unrelated writes or repairs. | SOURCED: docs/configuration.md "Atomic graph constraints"; OC-4 (Constraint.ts:376 docstring) |
-| R-CON-2 | An entity is of type T at valid instant v when it has a live-at-v assertion carrying entityType T [`typeMembership`]. Retracting every fact of an entity therefore removes it from T. | **RULING-NEEDED** |
-| R-CON-3 | Required: a member of T with no live value of the attribute. Cardinality: live assertion count above `max` (equal-valued duplicates count). Unique: one value claimed by two or more members of T. ReferenceTarget: a value that is not a ref to a live member of the target type. | SOURCED: rule names (Constraint.ts types), PLAN C5.1 (cardinality counts assertions). Exact predicates DERIVED |
-| R-CON-4 | Violation detail reported: code, entityType, attribute, validAt, actual, subject (Unique: claimants and value identity). Receipt comparison checks the tag and, when present, the code set. | DERIVED from Constraint.ts `Violation`/`ViolationAt` field names |
-| R-CON-5 | A schema release yields Required (required), Cardinality max 1 (cardinality one), Unique (unique), ReferenceTarget (ref with target). | SOURCED: docs/configuration.md "Employer.constraints yields ... required, cardinality, uniqueness, and reference-target rules". `max 1` DERIVED |
+| R-CON-1 | Enforcement applies when the command carries `meta.enforce` (or the case enforcement mode is `on`). It evaluates pre-state and post-state at every validFrom/validTo boundary and rejects only new or worsened violations; existing violations never block unrelated writes. | SOURCED: ACC 4.6 CN-NEW-OR-WORSENED; OC-4 |
+| R-CON-2 | An entity is of type T at valid instant v when it has a live-at-v assertion carrying entityType T. | Q21-DEFAULT |
+| R-CON-3 | Required, Cardinality (live assertions, equal-valued duplicates counted), Unique (one value identity claimed by two or more members; -0.0 and +0.0 are one value), ReferenceTarget. | SOURCED: CN-CARD-COUNT; PLAN C5.1; R-VAL-3 |
+| R-CON-4 | A rejection is E-CONSTRAINT with `reason` = the rule kind (or `reasonAlternatives` when several kinds are violated) and the violation rows (code, entityType, attribute, validAt, actual, subject). | SOURCED: ACC 4.7 E-CONSTRAINT |
+| R-CON-5 | A schema release yields Required, Cardinality max 1, Unique, ReferenceTarget. | SOURCED: docs/configuration.md |
+| R-CON-6 | A card-one conflict that predates the enforcing write stays a conflict and reads per C5.3. | SOURCED: CN-PREEXISTING-CONFLICT |
 
 ## Receipts (R-RCP)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-RCP-1 | Committed positions per scope are dense (from `initialPositions`+1 when declared) and increase in stream order outside race groups. Committed receipts carry txId, position, instant. | SOURCED: spec item 2 |
-| R-RCP-2 | Rejected receipts hold no position, txId or assertion ids. | SOURCED: spec item 2 |
-| R-RCP-3 | txIds and assertion ids are unique. | SOURCED: spec item 2; M-IDENTITY-COLLAPSE |
-| R-RCP-4 | `assertionIds` align with operations, non-null exactly at asserts. Unbindable ids are replaced with `unbound:<command>:<op>` and the case is marked diverged. | DERIVED |
-| R-RCP-5 | Committed members of one physical group hold consecutive positions. | DERIVED from OC-2 (one physical transaction serializes) |
-| R-RCP-6 | `unknown` outcomes must carry `resolvedOutcome`; an unresolved or missing receipt fails. | SOURCED: CR-FAULT "zero unresolved outcomes" |
-| R-RCP-7 | When the command declares a deterministic `clock`, the receipt instant must equal it. Instants are **not** required to be non-decreasing in position order. | SOURCED: OC-1 (each runtime supplies its own clock); tiny-v4 explicit runtime clocks |
+| R-RCP-1 | Committed positions per scope are dense and increase in stream order outside race groups. | SOURCED: ACC 6.1 Position accounting |
+| R-RCP-2 | Rejected receipts hold no position, txId or assertion ids. | SOURCED |
+| R-RCP-3 | txIds and assertion ids are unique. | SOURCED |
+| R-RCP-4 | `assertionIds` align with operations; unbindable ids become `unbound:<command>:<op>` and the case is marked diverged. | DERIVED |
+| R-RCP-5 | Committed members of one physical group hold consecutive positions. | DERIVED from OC-2 |
+| R-RCP-6 | `unknown` outcomes must carry `resolvedOutcome`. | SOURCED: CR-FAULT |
+| R-RCP-7 | A declared deterministic `clock` must equal the receipt instant; instants need not be non-decreasing. | SOURCED: OC-1; ACC 6.1 Clocks |
 
 ## Cuts and history (R-CUT, R-HIST)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-CUT-1 | An event (arrival or retirement) is known at cut (P, R) iff its position <= P and (R unbound or its instant <= R). R is independent of P. | SOURCED: OC-1; O-HAM `known()` |
-| R-CUT-2 | Visible at (P, R, V): arrival known, retirement not known, and validFrom <= V < validTo (null validTo = open). | SOURCED: spec item 5; docs/concepts.md (interval ends exclusive) |
-| R-CUT-3 | Public cuts need non-negative R and V (`invalid-basis`); P outside 0..last is `unavailable-cut`. Self-checks may set `publicBasis: false`. | SOURCED: Temporal.ts `validateTemporalInstant` declaration |
-| R-HIST-1 | Raw lifetime: every assertion of the entity whose arrival is known at the cut (all, without a cut), with complete retirement fields even when the retirement is after the cut. | SOURCED: spec item 6; docs/concepts.md (`history` includes retracted) |
-| R-HIST-2 | As-of snapshot: same membership, retirement fields null unless retractedPosition <= P and (R unbound or retractedAt <= R). `match`/`entityTriples` return both contracts. | SOURCED: spec item 6; OC-1 |
-| R-HIST-3 | O-HAM SnapshotAssertion view: `live-at-valid` = visible rows; `known-at-valid` = arrival known and valid at V, with `knownRetirement` only when known. | SOURCED: historical-assertion-metadata v1 MENU.md and v2 oracle |
+| R-CUT-1 | An event is known at cut (P, R) iff its position <= P and (R unbound or its instant <= R). R is independent of P. | SOURCED: ACC 6.1 R independent of P |
+| R-CUT-2 | Visible at (P, R, V): arrival known, retirement not known, validFrom <= V < validTo. | SOURCED |
+| R-CUT-3 | P beyond the latest committed position is E-UNAVAILABLE-CUT; a negative P, R or V is X-INVALID-BASIS (tag ReadError). | SOURCED: ACC 4.7 E-UNAVAILABLE-CUT. Invalid basis: **RULING-NEEDED** (no 4.7 row) |
+| R-HIST-1 | Raw lifetime: every assertion whose arrival is known at the cut, with complete retirement fields even when the retirement is after the cut. Ordinary `match`, `entityTriples` and `entityPage` answer in this contract (`raw`; `contract` names it). | SOURCED: Q21 AMB-01 (A) |
+| R-HIST-2 | As-of snapshot: same membership, retirement fields null unless retractedPosition <= P and (R unbound or retractedAt <= R). `history.asOfSnapshot` and `match.snapshot` give it for repository as-of reads and native history helpers. | SOURCED: ACC 6.1 Outputs; OC-1 |
+| R-HIST-3 | `assertionSnapshot` (O-HAM SnapshotAssertion, the native V-filtered helper): `live-at-valid` = visible rows; `known-at-valid` = arrival known and valid at V; `knownRetirement` = `{retractedAt, retractTxId, retractedPosition}` when known. | SOURCED: Q21 AMB-02, AMB-03 |
 
 ## Journal (R-JNL)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-JNL-1 | A record per committed position: txId, position, instant, actor, commandId, correlationId, causationId, configSnapshot (present when given), changes. A change carries op, tripleId, entityId, attribute, entityType?, value, validFrom, validTo?, recordedAt; a retract also retractedAt, assertionTxId, retractionTxId. `changedEntities` lists the changed entities once each. | SOURCED: Triples.ts `TransactionRecord`/`TransactionChange`; operational-primitives `:_tx/*` facts; PLAN C6. Which optional fields appear on which op **RULING-NEEDED** |
-| R-JNL-2 | Changes are in operation order, retract-pattern matches expanded in place in creation order [`journalChangeOrder`: `operation-order`, `asserts-then-retracts`, `retracts-then-asserts`]. | **RULING-NEEDED** (M-JOURNAL-ORDER needs the frozen order) |
-| R-JNL-3 | `transactions({after, limit})`: positions > after ascending, limit 1..1000 default 100, `next` = last returned position. `transactionsForEntity`: newest first, `snapshotPosition` captured on the first page, `beforePosition` exclusive, `nextBeforePosition` when more exist. Internal writes appear as opaque records unless `journaled: false`. | SOURCED: Triples.ts page types; operational-primitives |
-| R-JNL-4 | The journal value of a binary64 `-0.0` change is reported exactly (`-0`). C6 says `transactions()` keeps its "`-0` behavior" without stating it. | **RULING-NEEDED** |
+| R-JNL-1 | A record per committed position: txId, position, instant, actor, commandId, correlationId, causationId, configSnapshot (when given), changes, changedEntities. Every change carries op, tripleId, entityId, attribute, entityType?, value, validFrom, validTo?, recordedAt and assertionTxId; a retract also retractedAt and retractionTxId. | SOURCED: brief fact 1; Q21 AMB-05 |
+| R-JNL-2 | Changes are in operation order with retract-pattern matches expanded in creation order (recordedPosition, op index) [`journalChangeOrder`]. | SOURCED: Q21 AMB-07 |
+| R-JNL-3 | `transactions({after, limit})`: positions > after ascending, limit 1..1000 default 100, `next` = last returned position. `transactionsForEntity`: newest first, `snapshotPosition` on the first page, `beforePosition` exclusive. Internal writes appear as opaque records unless `journaled: false`. | SOURCED: operational-primitives |
+| R-JNL-4 | The journal value of a binary64 -0.0 change is bit-exact -0.0. | SOURCED: Q21 AMB-04 (B) |
+| R-JNL-5 | Journal facts are queryable like ordinary facts: the `_Transaction` entity (id = txId) of each journaled commit has one `:_tx/changed-entity` ref per changed application entity and one `:_tx/change` json fact per change, recorded at the commit's position and instant. `match` / `entityTriples` / `valueSupports` include them when the pattern names the journal (a `:_tx/` attribute, the `_Transaction` type or a transaction entity id); `journalFacts` lists them; `assertions` is the application relation only. Journal fact ids are synthetic (compare by entityId, attribute, value); retracting one is E-RESERVED. | SOURCED: brief fact 4; ACC 6.1 Outputs; operational-primitives. **NEW RULING-NEEDED**: valid time (taken as [commit instant, open)), ids, and the exact `:_tx/change` json content (the logical change here; compare count and membership) |
+| R-JNL-6 | The other envelope facts (`:_tx/position`, `:_tx/instant`, `:_tx/actor`, `:_tx/command-id`, `:_tx/correlation-id`, `:_tx/causation-id`, `:_tx/config-snapshot`) are not modeled: a pattern that could select them returns X-NOT-MODELED instead of a partial answer. | **NEW RULING-NEEDED**: their value families and whether absent meta fields produce facts |
+| R-JNL-7 | An invalid `transactions` / `transactionsForEntity` limit is X-READ-LIMIT with tag ReadError. | SOURCED: operational-primitives ("fail with ReadError"). Reason: **RULING-NEEDED** (no 4.7 row) |
 
 ## Entities and repository (R-ENT, R-PAGE, R-SUP)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-ENT-1 | An entity exists as type T at a cut iff a visible assertion on it carries entityType T. Every visible assertion on a declared attribute contributes, whatever its own entityType. | **RULING-NEEDED** (Repository contract EXP-R01 not frozen) |
-| R-ENT-2 | Cardinality one: one distinct value -> value with its supports; two or more distinct values -> conflict; equal-valued duplicates are one value with several supports. Cardinality many: distinct values in canonical order (R-ORD-1) with supports. Absent optional -> missing property. | SOURCED: PLAN C5.1, C5.2; RULINGS Q8e, Q8f; spec item 7 |
-| R-ENT-3 | `get`/`getMany` fail with `ConflictingValuesError` listing every conflicted (entity, attribute) among the requested entities; `getMany` preserves order and gives null for missing ids. | SOURCED: PLAN C5.3; CS-ENTITY |
-| R-ENT-4 | Includes resolve at the same cut; a conflicted include attribute or conflicted included entity fails the read. Reverse refs list referring entities by id. | SOURCED: spec item 7; C5.3 |
-| R-ENT-5 | `find` fails with `ConflictingValuesError` when an attribute it references (where, orderBy, include) is conflicted for any candidate; unreferenced conflicts do not affect it. Predicates on a cardinality-many property match when any element matches; a missing value fails every comparison except `missing`. | C5.3 SOURCED. Card-many and missing semantics **RULING-NEEDED** |
-| R-ENT-6 | Order: present values before missing, family rank ascending, direction inside the family, entity id ascending as tie-break. Ordering by a cardinality-many property is `invalid-query`. | DERIVED from docs/datalog.md total order. **RULING-NEEDED** for the repository |
-| R-ENT-7 | `timeline`: the model after each journaled position that changed the entity, at the cut's R and V. | **RULING-NEEDED** (repository `timeline` signature not frozen) |
-| R-ENT-8 | `validTimeline`: half-open segments between the validFrom/validTo boundaries of the entity's recorded-visible assertions, model at each segment start. | DERIVED |
-| R-ENT-9 | `missingRequired` and `undeclaredAttributes` are reported beside the model; a missing required value does not fail the read. | **RULING-NEEDED** |
-| R-PAGE-1 | `find` pages: the ordered result split by `pageSize`; every page is read at the one cut. | SOURCED: docs/datalog.md snapshot-stable pages; spec item 9 |
-| R-PAGE-2 | `entityPage`: ids with a visible assertion carrying the entity type, codepoint order, complete visible bodies (body order treated as a set). | SOURCED: Triples.ts `EntityPage` ("ordered by entity identity"); order by R-ORD-3 |
-| R-SUP-1 | Live support of a value = the visible assertions with that (entity, attribute, value identity). | SOURCED: C5.1, C5.5 `values(attribute)` |
-| R-SUP-2 | Reachability supports over one edge attribute: closure is the positive-length reachable set; supportCount is the number of distinct node-sequence paths (several equal-valued edge assertions are one edge, listed together); a cycle on a from-to path is a typed `cycle` error. | SOURCED: packet workload 20 projection text ("support count is the number of distinct node-sequence paths") |
+| R-ENT-1 | An entity exists as type T at a cut iff a visible assertion on it carries entityType T. | Q21-DEFAULT |
+| R-ENT-2 | Cardinality one: one distinct value -> value with its supports (Q14b representative); two or more -> conflict. Cardinality many: distinct values in ACC 4.5 order with supports. Absent optional -> missing property. | SOURCED: PLAN C5.1, C5.2; Q8e, Q8f; ACC 4.5 |
+| R-ENT-3 | `get`/`getMany` decode every attribute and fail with E-CONFLICTING-VALUES listing every conflicted (entity, attribute); getMany keeps order, null for missing ids. | SOURCED: PLAN C5.3; Q21 AMB-13 |
+| R-ENT-4 | Includes resolve at the same cut; conflicts propagate. | SOURCED: C5.3 |
+| R-ENT-5 | `find` fails when an attribute its filter, order or include references is conflicted for any candidate, and (AMB-17 A) when a returned document contains a conflicted attribute; `select` projects documents, and a projection that omits the attribute succeeds. `count` returns no documents, so only filter attributes matter. Card-many predicates match when any element matches; a missing value fails every comparison except `missing`. | SOURCED: C5.3; Q21 AMB-17 (A). Card-many / missing: Q21-DEFAULT |
+| R-ENT-6 | Order: present before missing, family rank (R-ORD-2), direction inside the family, entity id (codepoint) as tie-break. Ordering by a card-many property is E-INVALID-QUERY. | SOURCED: Q14a (R-ENT-6 per Q21) |
+| R-ENT-7 | `timeline(entityId, prop)` at a basis lists every assertion of that attribute on the entity recorded at (P, R), with no V filter, as `{identity, value, recordedAt, knownRetirement: null \| {retractedAt, retractTxId, retractedPosition}}` plus recordedPosition, txId, validFrom, validTo. | SOURCED: Q21 AMB-02, AMB-03 |
+| R-ENT-8 | `modelTimeline` (the 0.1 `timeline`): the model after each journaled position that changed the entity. `validTimeline`: half-open valid-time segments with models. | DERIVED |
+| R-ENT-9 | `missingRequired` and `undeclaredAttributes` are reported beside the model; a missing required value does not fail the read. | Q21-DEFAULT |
+| R-PAGE-1 | `find` pages: the ordered result split by `pageSize`, all at one cut. | SOURCED: docs/datalog.md snapshot-stable pages |
+| R-PAGE-2 | `entityPage`: ids with a visible assertion carrying the entity type, codepoint order, complete visible bodies in the raw-lifetime contract; every continuation page reads the cut the first page captured. | SOURCED: G10.cursor.stable; Q21 AMB-01, AMB-15 |
+| R-PAGE-3 | `entityPage` limit is an integer 1..200, default 50; outside that it is E-CURSOR with reason `malformed`. | SOURCED: brief fact 3. Tag and reason: from golden G10-CUR-01 E3, **NEW RULING-NEEDED** (4.7 CE-MALFORMED names token faults only) |
+| R-PAGE-4 | Cursor continuation (`cursorFrom` or an oracle `cursor` token): an altered token is E-CURSOR `malformed`; another scope `other-scope`; another entity type, or an explicitly given basis that differs from the pinned one, `other-query`. A different page size is allowed. | SOURCED: brief fact 3; ACC CURSOR_TRANSITIONS permittedErrors. Basis change as `other-query` and page-size change allowed: **NEW RULING-NEEDED** (golden E1/E2 name reasons outside 4.7) |
+| R-SUP-1 | Live support of a value = the visible assertions with that (entity, attribute, value identity), in creation order. | SOURCED: C5.1, C5.5 |
+| R-SUP-2 | Reachability supports: positive-length closure; supportCount = distinct node-sequence paths; a cycle on a from-to path is X-CYCLE. | SOURCED: packet workload 20. X-CYCLE tag: RULING-NEEDED (no 4.7 row) |
 
 ## Scale (R-SCALE)
 
 | Id | Rule | Status, source |
 | --- | --- | --- |
-| R-SCALE-1 | Configured-entity populations in closed form for any n <= 10m, width 1 or 10, re-derived from the generator rules in CONTRACT.md; unit tests check them against explicit replay of the generator for n in {1, 8, 101, 1001, 2501}. | SOURCED: configured-entities-v1/CONTRACT.md; S.dataset.target-population |
-| R-SCALE-2 | Value families of the generated facts follow the O-CFG8 frozen notation: untagged JS numbers are binary64 (score, amount, rank, type-version), the tagged integer field is int64, instant is a datetime, group a ref. | DERIVED from tiny-v4 oracle.json notation |
-| R-SCALE-3 | configFacts and receipt/journal/claim metadata counts are null (not predictable without ConfigStore internals). | SOURCED: O-CFG8 counts (null in the frozen oracle) |
+| R-SCALE-1 | Configured-entity populations in closed form for any n <= 10m, width 1 or 10, re-derived from CONTRACT.md and checked against explicit replay for small n. | SOURCED: configured-entities-v1/CONTRACT.md |
+| R-SCALE-2 | Value families of generated facts follow the O-CFG8 notation. | DERIVED |
+| R-SCALE-3 | configFacts and receipt/journal/claim metadata counts are null. | SOURCED: O-CFG8 counts |

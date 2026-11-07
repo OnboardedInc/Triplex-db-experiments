@@ -74,8 +74,9 @@ class Visibility(unittest.TestCase):
         q = [{"id": "neg", "kind": "match", "cut": {"validAt": -1}},
              {"id": "far", "kind": "match", "cut": {"position": 5, "validAt": 0}}]
         rep = evaluate(case(cmds, q))
-        self.assertEqual(result(rep, "neg")["error"], "invalid-basis")
-        self.assertEqual(result(rep, "far")["error"], "unavailable-cut")
+        self.assertEqual(result(rep, "neg")["error"], "X-INVALID-BASIS")
+        self.assertEqual(result(rep, "far")["error"], "E-UNAVAILABLE-CUT")
+        self.assertEqual((result(rep, "far")["_tag"], result(rep, "far")["reason"]), ("ReadError", "unavailable-cut"))
 
 
 class Pages(unittest.TestCase):
@@ -91,7 +92,7 @@ class Pages(unittest.TestCase):
 
     def test_transaction_limit_bounds(self):
         rep = evaluate(case([], [{"id": "bad", "kind": "transactions", "limit": 1001}]))
-        self.assertEqual(result(rep, "bad")["error"], "ReadError")
+        self.assertEqual(result(rep, "bad")["_tag"], "ReadError")
 
 
 class Supports(unittest.TestCase):
@@ -116,7 +117,7 @@ class Supports(unittest.TestCase):
         self.assertEqual(result(rep, "p1")["supportCount"], 2)
         self.assertEqual(result(rep, "p2")["supportCount"], 1)
         self.assertEqual(result(rep, "p2")["paths"][0]["edgeAssertionIds"], [["ac", "cd"]])
-        self.assertEqual(result(rep, "p3")["error"], "cycle")
+        self.assertEqual(result(rep, "p3")["error"], "X-CYCLE")
 
 
 class Aggregates(unittest.TestCase):
@@ -149,10 +150,10 @@ class Aggregates(unittest.TestCase):
             self.q(id="avg", aggregates=[{"op": "avg", "var": "amt"}]),
             self.q(id="by-amount", groupBy=["amt"], aggregates=[{"op": "count", "var": "$entity", "as": "n"}])]))
         self.assertEqual(result(rep, "usd")["rows"][0]["total"]["value"], str(2 ** 62))
-        self.assertEqual(result(rep, "eur")["error"], "mixed-families")
+        self.assertEqual(result(rep, "eur")["error"], "E-MIXED-FAMILY")
         self.assertEqual(result(rep, "none")["rows"], [{"sum": None, "count": {"type": "integer", "value": "0"}}])
         self.assertEqual(result(rep, "grouped-none")["rows"], [])
-        self.assertEqual(result(rep, "avg")["error"], "DatalogValidationError")
+        self.assertEqual(result(rep, "avg")["_tag"], "DatalogValidationError")
         groups = [(r["amt"]["type"], r["n"]["value"]) for r in result(rep, "by-amount")["rows"]]
         self.assertEqual(groups, [("integer", "1"), ("integer", "1"), ("integer", "2"), ("number", "1")])
 

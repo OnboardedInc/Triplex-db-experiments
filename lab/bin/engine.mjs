@@ -15,7 +15,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import {
-  ENGINE_DIR, LabError, MAIN, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, defaultHolder, docker, dockerStats,
+  CONFIG_DIR, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, defaultHolder, docker, dockerStats,
   fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now, parseArgs, readJson, readOwner, reconcile, sha256,
   sleep, slotInfo, vmDisk, volumeBytes, withPool,
 } from './lib.mjs';
@@ -27,7 +27,7 @@ export function effectiveConfig(config, info) {
   if (info.lane === 'xtdb') {
     // Unchanged repo xtdb-config.yaml (pgwire 5432, healthz 8080, local log and storage under
     // /var/lib/xtdb, 512 MiB memory cache). Heap and direct memory come from the slot.
-    const yaml = fs.readFileSync(path.join(MAIN, 'xtdb-config.yaml'));
+    const yaml = fs.readFileSync(path.join(CONFIG_DIR, 'xtdb-config.yaml'));
     const file = path.join(dir, 'config.yaml');
     fs.writeFileSync(file, yaml);
     const effective = {
@@ -39,7 +39,7 @@ export function effectiveConfig(config, info) {
     return { effective, sha256: sha256(JSON.stringify(effective)), files: { config: file } };
   }
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
-  const original = fs.readFileSync(path.join(MAIN, 'qlever-start.sh'), 'utf8');
+  const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
   if (!/ -m 2G /.test(original)) fail('CONFIG', 'qlever-start.sh no longer has "-m 2G"; update engine.mjs');
   const script = original.replace(' -m 2G ', ` -m ${info.qleverMemory} `);
   const file = path.join(dir, 'start.sh');
