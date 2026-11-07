@@ -103,3 +103,12 @@ in `proposed_rulings.json`.
 | Q26 closure rules | CR-CALIBRATION requires a calibration record for every threshold an NS obligation names and fails closed on an empty set. NS and GS obligations use an explicit `single-execution` mode, so executions equal selections. GS.01 selects only CS-GS-01. The generator checks that each GS obligation binds its own scenario's evidence and bars. The evaluator ships counterexamples proving that incomplete receipts cannot close an obligation. | Codex finding 14 |
 | Q27 history flatness statistic | The generated threshold and workload use p99 (as Q16 says), not p50, measured on the matched 1,000-subject sample of TARGETS 1.1 P4 item 2. | Q16; Codex finding 4 |
 | Q28 composition identity | TARGETS section 4.1: four assignments (source, current, history, analytics); receipts bind every component and replication edge and each index's watermark at read time; a read is served only by an index whose watermark has reached its basis, else it waits up to 250 ms and routes to a fallback that has it; the source of truth ACKs only after the current index has reached the commit's position. Scope keys derive from the assignment, not from `engineOfLane`. | Codex finding 11 |
+
+## Rulings on contract 0.3.2 questions (2026-11-07; Q29)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q29a golden JSON files | Kept unchanged as the audit record; the contract records the selected reading for each AMBIGUOUS query and pins each file's hash. | change control; EXP-O02 may not edit vectors either |
+| Q29b Q8F-05 representative sign | Accepted: the evaluator derives it from fixture order by the lowest (recordedPosition, op index); O-REPLAY computes it independently after EXP-O02, and the two must agree. | Q14b, AMB-08 |
+| Q29c default mode | Accepted: `single-execution` is the default for every obligation that declares no mode, which removes the zero-execution count everywhere, not only for NS and GS. | Q26 |
+| Q29d A01's chosen values | Accepted as provisional: engine-scoped obligations key on the layer their goal names (for example G7 on source, G9 on history); T-WATERMARK-WAIT-MS = 250 (observe); error names E-DECIMAL-OVERFLOW, E-DECIMAL-BARE-DIVIDE, E-DECIMAL-FRACTION, E-DECIMAL-NARROWING; 38 digits of precision for round() and decimal SUM results. The Q15 verifier checks the error tags against the public error types before 1.0.0. | Q22, Q28 |
+| Q29e erasure profile | Accepted: the three erasure obligations run on the tiny concurrent profile; GS.16 covers erasure at year-one size. | Q24 |
