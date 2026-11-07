@@ -1,0 +1,90 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "service-A0-20261107T220310Z-ab7c19",
+  "kind": "service-A0",
+  "writtenAt": "2026-11-07T22:03:10.239Z",
+  "mode": "service",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T22:01:47.293Z",
+  "identity": {
+    "gitHead": "11e0d9074c27a273cbf825aa0744a798f687f9e6",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "71ee2ce12a9a080e45b22ecc427176bfbb9b91c29f0f3cc1cfdb86eb8c7710c6",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        10.71,
+        11.67,
+        11.94
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    10.01,
+    11.23,
+    11.74
+  ],
+  "arm": "A0",
+  "scope": "p2x-service-A0-ce3f7e26-3296-42c6-b737-37b344957212",
+  "n": 150,
+  "facts": 10,
+  "serviceMs": {
+    "n": 135,
+    "p50": 484.2,
+    "p90": 759.3,
+    "p99": 1420.4,
+    "max": 1681.3,
+    "mean": 535.4
+  },
+  "warmupDropped": 15,
+  "commitsPerS": 1.8,
+  "counts": {
+    "submits": 151,
+    "casConflicts": 0,
+    "commandConflicts": 0,
+    "otherRejections": 0,
+    "transportErrors": 0
+  },
+  "timings": {
+    "submitMs": {
+      "n": 151,
+      "p50": 447.4,
+      "p90": 713.8,
+      "p99": 1303.9,
+      "max": 1583.7,
+      "mean": 495
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 150,
+        "p50": 13,
+        "p90": 24.5,
+        "p99": 39.1,
+        "max": 42.3,
+        "mean": 15.4
+      },
+      "claim": {
+        "n": 150,
+        "p50": 17.9,
+        "p90": 35.3,
+        "p99": 55.6,
+        "max": 85.5,
+        "mean": 21.5
+      },
+      "receipt": {
+        "n": 150,
+        "p50": 12.2,
+        "p90": 26.1,
+        "p99": 56.7,
+        "max": 89.2,
+        "mean": 15.2
+      }
+    }
+  },
+  "rawPath": null,
+  "rawSha256": null
+}

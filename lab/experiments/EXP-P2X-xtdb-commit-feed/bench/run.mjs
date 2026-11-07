@@ -126,8 +126,16 @@ const auditFeed = async ({ scope, consumer, committed, processed }) => {
     const duplicates = Object.values(durable).filter((n) => n > 1).length;
     const seen = tally(processed.map(([p, s]) => key(p, s)));
     const replays = Object.values(seen).filter((n) => n > 1).length;
-    const last = new Map(); let orderViolations = 0;
-    for (const [p, s] of processed) { if (last.has(s) && last.get(s) >= p) orderViolations++; last.set(s, p); }
+    // Order per subject over distinct effects in first-processing order: re-processing an effect
+    // after a crash is a replay (counted above), not a step backwards.
+    const last = new Map(), first = new Set(); let orderViolations = 0;
+    for (const [p, s] of processed) {
+      const k = key(p, s);
+      if (first.has(k)) continue;
+      first.add(k);
+      if (last.has(s) && last.get(s) >= p) orderViolations++;
+      last.set(s, p);
+    }
     // Expected per-subject order from the receipts must equal what the consumer saw (minus replays).
     return { committedEffects: expectedKeys.size, durableEffects: rows.length, gaps: gaps.length, extras: extras.length, visibleDuplicates: duplicates, replayedEffects: replays, orderViolations, gapSample: gaps.slice(0, 5), extraSample: extras.slice(0, 5) };
   } finally { await client.close(); }
@@ -194,13 +202,20 @@ const trace = async () => {
   const drainS = Number(opt('drain', 180));
   const pending = new Map();
   let frozen = false;
+  // --subject-queue: the driver keeps at most one command per subject in flight (TARGETS 2: serial
+  // per subject, parallel across subjects), so same-subject commands wait locally instead of racing
+  // the subject CAS and retrying through the serial indexer. Latency still runs from the offer.
+  const subjectQueue = args.includes('--subject-queue');
+  const chains = new Map();
   const dispatch = (event) => {
     const offered = startAt + event.atMs;
-    const p = (async () => {
+    const key = `${event.seq}:${event.resend}`;
+    pending.set(key, { seq: event.seq, resend: event.resend, band: bandOf(event.facts), facts: event.facts, burst: event.burst, kind: event.kind, subject: event.subject, offered, started: null });
+    const previous = subjectQueue ? chains.get(event.subject) ?? Promise.resolve() : Promise.resolve();
+    const p = previous.then(async () => {
       const started = now();
       const meta = { commandId: `p2x:${seed}:${event.seq}`, actor: event.kind };
       const record = { seq: event.seq, resend: event.resend, band: bandOf(event.facts), facts: event.facts, burst: event.burst, kind: event.kind, subject: event.subject, offered, started };
-      const key = `${event.seq}:${event.resend}`;
       pending.set(key, record);
       try {
         const result = await transact(rt, commandOps(event, Date.now()), meta);
@@ -219,7 +234,8 @@ const trace = async () => {
       record.acked = now();
       pending.delete(key);
       if (!frozen) records.push(record);
-    })();
+    });
+    if (subjectQueue) chains.set(event.subject, p.catch(() => undefined));
     inflight.add(p); p.finally(() => inflight.delete(p));
   };
   for (const event of events) {
@@ -248,7 +264,7 @@ const trace = async () => {
   const committedOriginals = originalsOnly.filter((r) => r.outcome === 'committed');
   const burstStart = startAt + PARAMS.firstBurstAtS * 1000, burstEnd = burstStart + PARAMS.burstDurationS * 1000;
   const result = {
-    arm, scope, seed, subjects, windowS, generatorSha256: GENERATOR_SHA256, traceSha256: traceDigest(events),
+    arm, subjectQueue, scope, seed, subjects, windowS, generatorSha256: GENERATOR_SHA256, traceSha256: traceDigest(events),
     offered: { events: events.length, originals: originalsOnly.length, resends: events.length - originalsOnly.length, burstOriginals: originalsOnly.filter((r) => r.burst).length },
     accounting: { ...tally(records.map((r) => (r.resend ? `resend:${r.outcome}` : r.outcome))), unaccounted: events.length - records.length },
     ackLoss: tally(records.filter((r) => r.ackLossRetry).map((r) => r.ackLossRetry)),

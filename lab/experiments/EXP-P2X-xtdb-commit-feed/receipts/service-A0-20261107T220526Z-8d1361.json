@@ -1,0 +1,90 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "service-A0-20261107T220526Z-8d1361",
+  "kind": "service-A0",
+  "writtenAt": "2026-11-07T22:05:26.620Z",
+  "mode": "service",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T22:03:22.663Z",
+  "identity": {
+    "gitHead": "11e0d9074c27a273cbf825aa0744a798f687f9e6",
+    "dirty": true,
+    "diffSha256": "6f8f03da7f093dee0b26da72acbcaf4ae348b89ba6027884e93ab83b54305fc0",
+    "distSha256": "71ee2ce12a9a080e45b22ecc427176bfbb9b91c29f0f3cc1cfdb86eb8c7710c6",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        9.19,
+        10.98,
+        11.65
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    19.08,
+    14.08,
+    12.76
+  ],
+  "arm": "A0",
+  "scope": "p2x-service-A0-62b7558c-113e-43b0-9f2e-9167f64281ec",
+  "n": 150,
+  "facts": 10,
+  "serviceMs": {
+    "n": 135,
+    "p50": 610.6,
+    "p90": 1577.7,
+    "p99": 1833.5,
+    "max": 1998.3,
+    "mean": 868.9
+  },
+  "warmupDropped": 15,
+  "commitsPerS": 1.2,
+  "counts": {
+    "submits": 151,
+    "casConflicts": 0,
+    "commandConflicts": 0,
+    "otherRejections": 0,
+    "transportErrors": 0
+  },
+  "timings": {
+    "submitMs": {
+      "n": 151,
+      "p50": 504.4,
+      "p90": 1417.1,
+      "p99": 1621.3,
+      "max": 1808.4,
+      "mean": 733.3
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 150,
+        "p50": 15.1,
+        "p90": 41.8,
+        "p99": 88.4,
+        "max": 90.7,
+        "mean": 22.8
+      },
+      "claim": {
+        "n": 150,
+        "p50": 21,
+        "p90": 75.2,
+        "p99": 202.1,
+        "max": 217.1,
+        "mean": 38.2
+      },
+      "receipt": {
+        "n": 150,
+        "p50": 15.8,
+        "p90": 43.8,
+        "p99": 112.8,
+        "max": 114,
+        "mean": 24.2
+      }
+    }
+  },
+  "rawPath": null,
+  "rawSha256": null
+}

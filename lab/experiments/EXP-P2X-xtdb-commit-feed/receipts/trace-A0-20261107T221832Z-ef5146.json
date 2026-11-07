@@ -1,0 +1,276 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "trace-A0-20261107T221832Z-ef5146",
+  "kind": "trace-A0",
+  "writtenAt": "2026-11-07T22:18:32.803Z",
+  "mode": "trace",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T22:10:18.987Z",
+  "identity": {
+    "gitHead": "9484b4baa5a85f5662e5006b825e88abd780d255",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "71ee2ce12a9a080e45b22ecc427176bfbb9b91c29f0f3cc1cfdb86eb8c7710c6",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        11.02,
+        11.6,
+        11.95
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    12.8,
+    12.61,
+    12.11
+  ],
+  "arm": "A0",
+  "scope": "p2x-trace-A0-ecd76def-55a9-4ef1-9ba9-3a6d56081801",
+  "seed": "p2x-a",
+  "subjects": 10000,
+  "windowS": 300,
+  "generatorSha256": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+  "traceSha256": "58b41e2300e0c143673b18571ed1f7b6f30399d45df7e59474ff28f507dc2fc1",
+  "offered": {
+    "events": 3664,
+    "originals": 3554,
+    "resends": 110,
+    "burstOriginals": 3312
+  },
+  "accounting": {
+    "committed": 105,
+    "conflict": 12,
+    "resend:duplicate": 2,
+    "unknown": 768,
+    "error:WriteError": 2031,
+    "resend:error:WriteError": 67,
+    "resend:unknown": 22,
+    "pending-at-cap": 638,
+    "resend:pending-at-cap": 19,
+    "unaccounted": 0
+  },
+  "ackLoss": {
+    "original-receipt": 1
+  },
+  "resendReceipts": {
+    "true": 2
+  },
+  "byBand": {
+    "5-10": {
+      "offerToAckMs": {
+        "n": 73,
+        "p50": 1845.2,
+        "p90": 7054.1,
+        "p99": 309466.1,
+        "max": 309466.1,
+        "mean": 8119.4
+      },
+      "serviceMs": {
+        "n": 73,
+        "p50": 1845.4,
+        "p90": 7052.7,
+        "p99": 309465.1,
+        "max": 309465.1,
+        "mean": 8119.3
+      }
+    },
+    "11-25": {
+      "offerToAckMs": {
+        "n": 25,
+        "p50": 2764.1,
+        "p90": 10900.6,
+        "p99": 290120.9,
+        "max": 290120.9,
+        "mean": 15602
+      },
+      "serviceMs": {
+        "n": 25,
+        "p50": 2764.8,
+        "p90": 10901.1,
+        "p99": 290120.7,
+        "max": 290120.7,
+        "mean": 15602.1
+      }
+    },
+    "26-50": {
+      "offerToAckMs": {
+        "n": 7,
+        "p50": 2987.7,
+        "p90": 8593.8,
+        "p99": 8593.8,
+        "max": 8593.8,
+        "mean": 4237.8
+      },
+      "serviceMs": {
+        "n": 7,
+        "p50": 2985.7,
+        "p90": 8594.2,
+        "p99": 8594.2,
+        "max": 8594.2,
+        "mean": 4237.3
+      }
+    }
+  },
+  "all": {
+    "offerToAckMs": {
+      "n": 105,
+      "p50": 2445.5,
+      "p90": 8067.5,
+      "p99": 290120.9,
+      "max": 309466.1,
+      "mean": 9642.2
+    },
+    "serviceMs": {
+      "n": 105,
+      "p50": 2446.6,
+      "p90": 8065.7,
+      "p99": 290120.7,
+      "max": 309465.1,
+      "mean": 9642.1
+    }
+  },
+  "steady": {
+    "offerToAckMs": {
+      "n": 101,
+      "p50": 2444.2,
+      "p90": 7054.1,
+      "p99": 12553.8,
+      "max": 71550.7,
+      "mean": 3728.2
+    }
+  },
+  "burst": {
+    "offerToAckMs": {
+      "n": 4,
+      "p50": 28815.6,
+      "p90": 309466.1,
+      "p99": 309466.1,
+      "max": 309466.1,
+      "mean": 158970.7
+    },
+    "committedInBurstWindow": 3
+  },
+  "throughput": {
+    "committedPerS": 0.35,
+    "drainAfterWindowS": 180,
+    "drainCapS": 180,
+    "pendingAtCap": 657
+  },
+  "censoredOfferToAckLowerBoundMs": {
+    "n": 743,
+    "p50": 307853.5,
+    "p90": 351637.8,
+    "p99": 359347.8,
+    "max": 359983.7,
+    "mean": 267771.9
+  },
+  "conflicts": {
+    "casConflicts": 5900,
+    "commandConflicts": 0,
+    "submits": 6797
+  },
+  "timings": {
+    "submitMs": {
+      "n": 112,
+      "p50": 822.2,
+      "p90": 1460.9,
+      "p99": 24607.8,
+      "max": 26285.8,
+      "mean": 2379.2
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 9241,
+        "p50": 17161.7,
+        "p90": 29999.5,
+        "p99": 30002.5,
+        "max": 30093.3,
+        "mean": 16774.7
+      },
+      "claim": {
+        "n": 8049,
+        "p50": 17566.1,
+        "p90": 30000.3,
+        "p99": 30002.3,
+        "max": 30095.9,
+        "mean": 16826.1
+      },
+      "receipt": {
+        "n": 896,
+        "p50": 1.5,
+        "p90": 20.2,
+        "p99": 5392.7,
+        "max": 18033.9,
+        "mean": 110.3
+      }
+    }
+  },
+  "feed": {
+    "lagMs": {
+      "n": 111,
+      "p50": 1002.8,
+      "p90": 2461.3,
+      "p99": 7964.7,
+      "max": 7992.3,
+      "mean": 1582.4
+    },
+    "lagSteadyMs": {
+      "n": 106,
+      "p50": 954.6,
+      "p90": 2149.4,
+      "p99": 7964.7,
+      "max": 7992.3,
+      "mean": 1366.3
+    },
+    "lagBurstMs": {
+      "n": 5,
+      "p50": 6140,
+      "p90": 7951.2,
+      "p99": 7951.2,
+      "max": 7951.2,
+      "mean": 6164.5
+    },
+    "committedEffects": 105,
+    "durableEffects": 111,
+    "gaps": 0,
+    "extras": 6,
+    "visibleDuplicates": 0,
+    "replayedEffects": 0,
+    "orderViolations": 0,
+    "gapSample": [],
+    "extraSample": [
+      "104|subj:1116",
+      "107|subj:7882",
+      "106|subj:6055",
+      "111|subj:7882",
+      "103|subj:7033"
+    ],
+    "polls": 249,
+    "writes": 105,
+    "abortedListed": 0,
+    "blockedPolls": 0,
+    "missingPublication": 0,
+    "pollMs": {
+      "n": 249,
+      "p50": 1078.4,
+      "p90": 4512.9,
+      "p99": 7136.2,
+      "max": 12928.9,
+      "mean": 1918
+    },
+    "writeMs": {
+      "n": 105,
+      "p50": 94.3,
+      "p90": 256.3,
+      "p99": 717,
+      "max": 1398.7,
+      "mean": 134.3
+    }
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2X-xtdb-commit-feed/trace-A0-20261107T221832Z-ef5146.raw.json",
+  "rawSha256": "88407f819a9ce1e39f716e7bef60b731f6dcfa5be7b0180055f4c8e2580fe4d7"
+}

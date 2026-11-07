@@ -1,0 +1,138 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "preload-C-20261107T220139Z-ece318",
+  "kind": "preload-C",
+  "writtenAt": "2026-11-07T22:01:39.005Z",
+  "mode": "preload",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T21:53:31.030Z",
+  "identity": {
+    "gitHead": "3d185c1704d5b322db786f09b1b47e0ccd584801",
+    "dirty": true,
+    "diffSha256": "ddf48aca2fb6a479b0436dce7e7d0146ee77205f341bf3bb521490f7a4273086",
+    "distSha256": "71ee2ce12a9a080e45b22ecc427176bfbb9b91c29f0f3cc1cfdb86eb8c7710c6",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        12.25,
+        12.85,
+        12.2
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    10.92,
+    11.74,
+    11.97
+  ],
+  "arm": "C",
+  "scope": "p2x-preload-C-36ebcc99-3440-4f5a-b812-4ccf15a301e0",
+  "commits": 5000,
+  "subjects": 10000,
+  "concurrency": 16,
+  "batch": 1,
+  "spread": "uniform",
+  "seed": "p2x-preload",
+  "generatorSha256": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+  "outcomes": {
+    "committed": 5000
+  },
+  "commitsPerS": 10.3,
+  "elapsedS": 487.4,
+  "latencyMs": {
+    "n": 5000,
+    "p50": 1508.1,
+    "p90": 2352.7,
+    "p99": 3648.6,
+    "max": 4396.2,
+    "mean": 1558.9
+  },
+  "counts": {
+    "submits": 5001,
+    "casConflicts": 0,
+    "commandConflicts": 0,
+    "otherRejections": 0,
+    "transportErrors": 0
+  },
+  "timings": {
+    "submitMs": {
+      "n": 5001,
+      "p50": 1376.6,
+      "p90": 2176.4,
+      "p99": 3298.6,
+      "max": 4168.4,
+      "mean": 1428.8
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 5000,
+        "p50": 34.9,
+        "p90": 92.5,
+        "p99": 182.1,
+        "max": 531.2,
+        "mean": 46
+      },
+      "claim": {
+        "n": 5000,
+        "p50": 30.7,
+        "p90": 74.5,
+        "p99": 165.2,
+        "max": 368.2,
+        "mean": 39.6
+      },
+      "receipt": {
+        "n": 5000,
+        "p50": 31.7,
+        "p90": 84,
+        "p99": 199.7,
+        "max": 515.2,
+        "mean": 42.8
+      }
+    }
+  },
+  "feed": {
+    "lagMs": {
+      "n": 5000,
+      "p50": 1159.6,
+      "p90": 2436.9,
+      "p99": 3758.4,
+      "max": 5853.2,
+      "mean": 1212.2
+    },
+    "committedEffects": 5000,
+    "durableEffects": 5000,
+    "gaps": 0,
+    "extras": 0,
+    "visibleDuplicates": 0,
+    "replayedEffects": 0,
+    "orderViolations": 0,
+    "gapSample": [],
+    "extraSample": [],
+    "polls": 1394,
+    "writes": 387,
+    "abortedListed": 0,
+    "blockedPolls": 1190,
+    "missingPublication": 0,
+    "pollMs": {
+      "n": 1394,
+      "p50": 36.8,
+      "p90": 170.7,
+      "p99": 436.2,
+      "max": 747.1,
+      "mean": 70.4
+    },
+    "writeMs": {
+      "n": 387,
+      "p50": 970.8,
+      "p90": 1933,
+      "p99": 3004.6,
+      "max": 3576.9,
+      "mean": 977
+    }
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2X-xtdb-commit-feed/preload-C-20261107T220139Z-ece318.raw.json",
+  "rawSha256": "42d4141aafed80f3efc77f276ea9d90a9d6a7bc0eb67901841953bc1c6cf5edf"
+}

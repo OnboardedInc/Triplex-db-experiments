@@ -291,7 +291,10 @@ export const effectStatements = (
   for (let i = 0; i < effects.length; i += 200) {
     const group = effects.slice(i, i + 200);
     out.push({
-      sql: `INSERT INTO tx_feed_effects (_id, scope_key, consumer, position, subject, msg_id) VALUES ${group.map(() => "(?, ?, ?, ?, ?, ?)").join(", ")}`,
+      // _valid_from at the epoch: a replayed effect must replace its row's whole valid lifetime.
+      // Without it XTDB opens a new valid-time slice at "now", and the crash runs (keyed-split)
+      // saw each replayed key twice under FOR ALL VALID_TIME.
+      sql: `INSERT INTO tx_feed_effects (_valid_from, _id, scope_key, consumer, position, subject, msg_id) VALUES ${group.map(() => "(TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', ?, ?, ?, ?, ?, ?)").join(", ")}`,
       params: group.flatMap((effect) => [
         options.keyed
           ? JSON.stringify([scopeKey, consumer, effect.position, effect.subject])

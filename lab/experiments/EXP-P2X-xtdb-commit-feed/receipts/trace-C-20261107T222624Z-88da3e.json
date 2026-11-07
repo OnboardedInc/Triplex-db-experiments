@@ -1,0 +1,278 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "trace-C-20261107T222624Z-88da3e",
+  "kind": "trace-C",
+  "writtenAt": "2026-11-07T22:26:24.739Z",
+  "mode": "trace",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T22:18:33.165Z",
+  "identity": {
+    "gitHead": "9484b4baa5a85f5662e5006b825e88abd780d255",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "71ee2ce12a9a080e45b22ecc427176bfbb9b91c29f0f3cc1cfdb86eb8c7710c6",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        12.8,
+        12.61,
+        12.11
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    14.68,
+    15.23,
+    13.88
+  ],
+  "arm": "C",
+  "scope": "p2x-trace-C-2efb9013-6527-41b1-a169-c8f46658ade1",
+  "seed": "p2x-a",
+  "subjects": 10000,
+  "windowS": 300,
+  "generatorSha256": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+  "traceSha256": "58b41e2300e0c143673b18571ed1f7b6f30399d45df7e59474ff28f507dc2fc1",
+  "offered": {
+    "events": 3664,
+    "originals": 3554,
+    "resends": 110,
+    "burstOriginals": 3312
+  },
+  "accounting": {
+    "committed": 569,
+    "resend:duplicate": 10,
+    "unknown": 2374,
+    "error:WriteError": 394,
+    "resend:unknown": 71,
+    "resend:error:WriteError": 8,
+    "duplicate": 1,
+    "resend:committed": 12,
+    "conflict": 216,
+    "resend:conflict": 9,
+    "unaccounted": 0
+  },
+  "ackLoss": {
+    "original-receipt": 5
+  },
+  "resendReceipts": {
+    "true": 5,
+    "null": 5
+  },
+  "byBand": {
+    "5-10": {
+      "offerToAckMs": {
+        "n": 328,
+        "p50": 78420,
+        "p90": 265573.9,
+        "p99": 319378.8,
+        "max": 328620.2,
+        "mean": 107674.6
+      },
+      "serviceMs": {
+        "n": 328,
+        "p50": 78418.3,
+        "p90": 265574.7,
+        "p99": 319376.3,
+        "max": 328620.4,
+        "mean": 107674.4
+      }
+    },
+    "11-25": {
+      "offerToAckMs": {
+        "n": 181,
+        "p50": 132501.9,
+        "p90": 239029.8,
+        "p99": 317904.7,
+        "max": 328785.1,
+        "mean": 112109.2
+      },
+      "serviceMs": {
+        "n": 181,
+        "p50": 132502.4,
+        "p90": 239030.8,
+        "p99": 317905.1,
+        "max": 328774.9,
+        "mean": 112108.8
+      }
+    },
+    "26-50": {
+      "offerToAckMs": {
+        "n": 60,
+        "p50": 53801.8,
+        "p90": 218090,
+        "p99": 279320.9,
+        "max": 279320.9,
+        "mean": 95421.9
+      },
+      "serviceMs": {
+        "n": 60,
+        "p50": 53802.9,
+        "p90": 218089.4,
+        "p99": 279318.4,
+        "max": 279318.4,
+        "mean": 95421.8
+      }
+    }
+  },
+  "all": {
+    "offerToAckMs": {
+      "n": 569,
+      "p50": 103623,
+      "p90": 251901.8,
+      "p99": 318783.1,
+      "max": 328785.1,
+      "mean": 107793.2
+    },
+    "serviceMs": {
+      "n": 569,
+      "p50": 103622,
+      "p90": 251902.3,
+      "p99": 318783.3,
+      "max": 328774.9,
+      "mean": 107792.9
+    }
+  },
+  "steady": {
+    "offerToAckMs": {
+      "n": 192,
+      "p50": 614.7,
+      "p90": 129361.2,
+      "p99": 218641.2,
+      "max": 220009.8,
+      "mean": 35179.6
+    }
+  },
+  "burst": {
+    "offerToAckMs": {
+      "n": 377,
+      "p50": 155996.7,
+      "p90": 279320.9,
+      "p99": 322245.4,
+      "max": 328785.1,
+      "mean": 144774.2
+    },
+    "committedInBurstWindow": 119
+  },
+  "throughput": {
+    "committedPerS": 1.9,
+    "drainAfterWindowS": 169.7,
+    "drainCapS": 180,
+    "pendingAtCap": 0
+  },
+  "censoredOfferToAckLowerBoundMs": {
+    "n": 569,
+    "p50": 103623,
+    "p90": 251901.8,
+    "p99": 318783.1,
+    "max": 328785.1,
+    "mean": 107793.2
+  },
+  "conflicts": {
+    "casConflicts": 4982,
+    "commandConflicts": 0,
+    "submits": 8009
+  },
+  "timings": {
+    "submitMs": {
+      "n": 846,
+      "p50": 9401.1,
+      "p90": 27400.3,
+      "p99": 29847.3,
+      "max": 29992.7,
+      "mean": 11431.2
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 8426,
+        "p50": 9224.4,
+        "p90": 29252.1,
+        "p99": 30001,
+        "max": 30013.3,
+        "mean": 13569.5
+      },
+      "claim": {
+        "n": 8216,
+        "p50": 9588.4,
+        "p90": 28783.8,
+        "p99": 30000.9,
+        "max": 30012.6,
+        "mean": 13670.8
+      },
+      "receipt": {
+        "n": 3031,
+        "p50": 1.7,
+        "p90": 7840.3,
+        "p99": 16494.1,
+        "max": 20120.9,
+        "mean": 1707.2
+      }
+    }
+  },
+  "feed": {
+    "lagMs": {
+      "n": 845,
+      "p50": 1116,
+      "p90": 2252.7,
+      "p99": 3528.8,
+      "max": 4293.1,
+      "mean": 1180.7
+    },
+    "lagSteadyMs": {
+      "n": 480,
+      "p50": 927.7,
+      "p90": 2198.9,
+      "p99": 2909.5,
+      "max": 4293.1,
+      "mean": 1017.1
+    },
+    "lagBurstMs": {
+      "n": 365,
+      "p50": 1238.4,
+      "p90": 2376.3,
+      "p99": 3545.4,
+      "max": 3880.6,
+      "mean": 1396
+    },
+    "committedEffects": 581,
+    "durableEffects": 908,
+    "gaps": 0,
+    "extras": 327,
+    "visibleDuplicates": 0,
+    "replayedEffects": 0,
+    "orderViolations": 0,
+    "gapSample": [],
+    "extraSample": [
+      "1730026396621488|subj:9406",
+      "1730026401764152|subj:8654",
+      "1730026500221104|subj:1365",
+      "1730026271062968|subj:9356",
+      "1730026396508064|subj:9713"
+    ],
+    "polls": 4921,
+    "writes": 419,
+    "abortedListed": 5313,
+    "blockedPolls": 586,
+    "missingPublication": 63,
+    "pollMs": {
+      "n": 4921,
+      "p50": 11.7,
+      "p90": 46.8,
+      "p99": 658.8,
+      "max": 1683.3,
+      "mean": 40
+    },
+    "writeMs": {
+      "n": 419,
+      "p50": 431.1,
+      "p90": 1202.9,
+      "p99": 2212.2,
+      "max": 2849.1,
+      "mean": 534
+    }
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2X-xtdb-commit-feed/trace-C-20261107T222624Z-88da3e.raw.json",
+  "rawSha256": "5dc582dac49e02d3006a7913f3048f282d91c2e57c05a687f4de66312af31e94"
+}
