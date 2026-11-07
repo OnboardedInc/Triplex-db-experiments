@@ -890,3 +890,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
   passing run). Learning: with 10 agents on a saturated host there is no quiet window by chance, so gate reruns (F02b G1 xtdb and G1 qlever
   f1, X02's XTQL candidate G2) wait for a scheduled gate window: the orchestrator pauses new dispatches when several agents finish and runs
   the owed gates one at a time through heavy.mjs.
+
+## 2026-11-09 ~00:55Z: EXP-P2Q: QLever's ACK no longer depends on its delta (the biggest P2 move so far)
+- Same resident, same windows: candidate ACK 4-8 ms p50 against A0's 0.96-7.4 s; on the open-loop trace A0 acknowledged 2 of 114
+  commands within the 30 s client timeout while the candidate committed 114/114 at 6.7 ms p50. Offline, with the 50x burst: 4.7 / 25.0 ms
+  p50/p99 over 3,414 commands. Inside the P2 bars in every run, judged relatively per Q47b until controlled runs exist.
+- Learning: making the host log the source of truth and QLever a replica turns QLever's worst property (update cost growing with the
+  delta) into a replication lag, which the overlay and routing absorb; the feed comes for free from the log (0 gaps, 0 duplicates, keyed
+  effects survive 100 crashes while the unkeyed control shows 129 duplicates).
+- Learning: A0 writes about 750 triples per 10-fact command, 8x R17's 94; the journal encoding inflates QLever's delta on every lane.
+- New design direction (Q50a): a broker-side current-entity index, both as the unreachable-replica fallback and as a P4 current layer on
+  the host; EXP-Q05 measures it.
