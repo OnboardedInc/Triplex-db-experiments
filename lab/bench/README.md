@@ -125,3 +125,24 @@ seams) and full histograms (`histograms["L256.read"]`, `tx2-loglinear-hist/1`, m
 - Engine bytes read per pull (history flatness bytes bar), QLever broker queue wait.
 - Expected affected subjects through dependency rules (O-DOMAIN); deliberately invalid trace commands (none yet).
 - One-engine compositions only: no index routing, so fallback share is 0 by construction.
+
+## QLever bulk seed (engine-free; for the QLever A0)
+
+Transacts on QLever cost 0.7-1.5 s each (about 30 facts/s), so a 10k rung seeds through an index build instead:
+
+```sh
+node lab/bench/qlever-bulk-seed.ts --rung 10k --out runs/qlever-seed/ns-v2-10k     # about 2.5 min, no engine
+#  -> seed.nq.gz (N-Quads, gzip members) + manifest.json (scope, positions, ids, oracle sample commands)
+# engine side (lab/bin/engine.mjs owns it; not implemented here): fresh QLever slot volume, then
+#   gunzip -c seed.nq.gz | qlever-index -i triplex -f - -F nq --stxxl-memory 512M --no-patterns
+# instead of the bootstrap-only index, then start the server as usual, then:
+node lab/bin/gate.mjs NS --lane qlever --slot s1 --rung 10k --composition public --seed-manifest runs/qlever-seed/ns-v2-10k/manifest.json ...
+```
+
+The loader runs the real Triplex write path (core `Triples.transact` over the public `makeQleverStorageAdapter`)
+against a capture client that writes each UPDATE's VALUES rows out as quads, so the bytes are what the adapter would
+have stored (rows and their field channels, the `:_tx/*` journal, command claims, operation receipts, the meta
+position). It refuses any query it does not recognize. The driver's `--seed-manifest` checks that the engine's position
+equals the manifest's last position before it starts. 10k rung (ns-v2): 384,785 assertions (closed form matches),
+1,031 commands, 24,550,838 quads, 6.74 GB decompressed, 150 MB gzipped. Not yet indexed or read back on a live QLever:
+`-F nq` on QLever 0.6.0 and the first pulls on the indexed scope are the first checks when a QLever slot is free.
