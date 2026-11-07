@@ -6,6 +6,7 @@
 // O-REPLAY (lab/oracles/replay) fed with the generated stream; hand-derived expectations (where O-REPLAY has
 // no rule) come from the scenario's generate() with a citation. --check regenerates in memory and fails if
 // any committed byte differs (TARGETS section 6 rule 1: same seed, same bytes).
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { BT, GEN_VERSION, RUNGS, sha256, worldSid } from './lib/gen.mjs';
@@ -24,7 +25,16 @@ export async function loadScenario(dir) {
   const hooks = await import(path.join(dir, 'run.mjs'));
   return { dir, spec, hooks };
 }
-const oracleIdentity = () => ({ id: 'O-REPLAY', files: Object.fromEntries(ORACLE_FILES.map(f => [f, sha256(fs.readFileSync(path.join(REPO, f)))])) });
+// The oracle identity bound into every golden: version, the last commit that touched lab/oracles/replay, the
+// branch it came from, and every source file's sha256, so regenerating against a pinned oracle is mechanical.
+export const ORACLE_SOURCE_BRANCH = 'exp/O02-oracle-conformance';
+const oracleIdentity = () => ({
+  id: 'O-REPLAY',
+  version: (/ORACLE_VERSION = "([^"]+)"/.exec(fs.readFileSync(path.join(REPO, 'lab/oracles/replay/run.py'), 'utf8')) ?? [])[1] ?? null,
+  commit: execFileSync('git', ['-C', REPO, 'log', '-1', '--format=%H', '--', 'lab/oracles/replay'], { encoding: 'utf8' }).trim(),
+  sourceBranch: ORACLE_SOURCE_BRANCH,
+  files: Object.fromEntries(ORACLE_FILES.map(f => [f, sha256(fs.readFileSync(path.join(REPO, f)))])),
+});
 
 export async function scenarioExpected({ spec, hooks }, rung, workDir) {
   const params = resolveParams(spec, rung);

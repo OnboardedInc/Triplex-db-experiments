@@ -15,6 +15,7 @@ import path from 'node:path';
 import { canonRow, digestRows, sha256, subjectEntities } from './gen.mjs';
 import { REPO } from './triplex.mjs';
 
+const TAG_CATEGORY = { CommandAlreadyCommittedError: 'command-already-committed', TransactionConflictError: 'transaction-conflict', InvalidTripleError: 'invalid-value', ConstraintViolationError: 'constraint-violation' };
 export const ORACLE_CLI = path.join(REPO, 'lab/oracles/replay/cli.py');
 export const ORACLE_FILES = fs.readdirSync(path.join(REPO, 'lab/oracles/replay')).filter(f => f.endsWith('.py') || f.endsWith('.md')).sort()
   .map(f => `lab/oracles/replay/${f}`);
@@ -115,7 +116,8 @@ export async function goldenStates({ caseIdPrefix, commands, subjects, validAts,
     cases.push({ caseId, caseSha256, verdict: result.verdict });
     for (const o of result.commandOutcomes) {
       const index = origin[o.command];
-      if (o.expected.outcome !== 'committed') outcomes[index] = { outcome: o.expected.outcome, category: o.expected.category ?? null, errorTag: o.expected.errorTag ?? null };
+      // O-REPLAY 0.2 reports the documented error tag and leaves category null where a tag exists.
+      if (o.expected.outcome !== 'committed') outcomes[index] = { outcome: o.expected.outcome, category: o.expected.category ?? TAG_CATEGORY[o.expected.errorTag] ?? null, errorTag: o.expected.errorTag ?? null };
     }
     const grouped = new Map();
     for (const q of result.queries) {
@@ -127,7 +129,8 @@ export async function goldenStates({ caseIdPrefix, commands, subjects, validAts,
     }
     for (const { tag, sid, V, rows: raw, error } of grouped.values()) {
       const entry = digests[sid] ??= { base: {}, after: {} };
-      if (error) { if (error.error !== 'unavailable-cut') throw new Error(`O-REPLAY query error for ${sid}: ${JSON.stringify(error)}`); continue; }
+      // A cut after a command the oracle rejects has no position (0.1: unavailable-cut; 0.2: X-NO-POSITION).
+      if (error) { if (!['unavailable-cut', 'X-NO-POSITION'].includes(error.error)) throw new Error(`O-REPLAY query error for ${sid}: ${JSON.stringify(error)}`); continue; }
       const canon = raw.map(r => canonRow(r));
       const d = digestRows(canon);
       if (tag === 'base') entry.base[V] = d;

@@ -362,9 +362,11 @@ async function commonChecks(ctx) {
     const exp = ctx.expected.outcomes[a.index];
     const want = exp ? `rejected:${exp.category}` : 'committed';
     const got = a.status === 'committed' ? 'committed' : `${a.status}:${a.category}`;
-    // No silent precision loss: an invalid value only has to fail with a typed error; Triplex documents no tag (R-CMD-9).
-    const equivalent = want === got || (want === "rejected:invalid-value" && a.status === "rejected" && ["invalid-value", "write-error"].includes(a.category));
-    if (!equivalent) { outcomeMismatches++; if (firstMismatch.length < 5) firstMismatch.push({ index: a.index, want, got, tag: a.tag, message: a.message }); }
+    // O-REPLAY 0.2 documents the error tag (e.g. InvalidTripleError for a value outside int64): the tag must
+    // match too. With no documented tag (null), any typed rejection of the right outcome counts.
+    const tagOk = !exp?.errorTag || exp.errorTag === a.tag;
+    const equivalent = (want === got && tagOk) || (!exp?.errorTag && want === 'rejected:invalid-value' && a.status === 'rejected' && ['invalid-value', 'write-error'].includes(a.category));
+    if (!equivalent) { outcomeMismatches++; if (firstMismatch.length < 5) firstMismatch.push({ index: a.index, want, wantTag: exp?.errorTag ?? null, got, tag: a.tag, message: a.message }); }
   }
   check('outcomes-match-golden', outcomeMismatches === 0, { mismatches: outcomeMismatches, first: firstMismatch });
   // Receipts: unique txIds and positions; live-phase positions dense from P0 (no lost or duplicated commit).
