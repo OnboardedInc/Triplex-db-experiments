@@ -117,6 +117,49 @@ export const makeNativeContext = (
   };
 };
 
+/**
+ * The source-cut read, in the same language as the answer it serves.
+ *
+ * [EXP-X02] Why: lane X counts a task for a language only when every read substep ran in that
+ * language, basis acquisition included (PLAN 7.5). The SQL lookup made every XTQL task hybrid
+ * under the strict reading (EXP-000 finding 1, R12 section 1). The XTQL form reads the same
+ * row of the same table: `from` with an explicit all-time valid-time binding, like
+ * `facts()` above. Inspired by: R12 section 1; references/xtdb @ c6c1962
+ * core/src/main/clojure/xtdb/xtql.clj:357-401 (from). Rejected: skipping the read when a
+ * position is pinned, because resolveNativeReadBasis needs the current position to refuse an
+ * unavailable pin.
+ */
+export const sourceCutQuery = (
+  language: "xtql" | "xtdb-sql",
+): { readonly query: string; readonly language: "xtql" | "xtdb-sql" } =>
+  language === "xtql"
+    ? {
+        language,
+        query: xtqlStatement(
+          "(-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position}))",
+          1,
+        ),
+      }
+    : { language, query: "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1" };
+
+/**
+ * A complete XTQL statement with its row bound applied inside XTQL.
+ *
+ * [EXP-X02] Why: `SELECT * FROM (XTQL ...) LIMIT n` is a SQL shell around the XTQL query; the
+ * pinned grammar accepts `XTQL ('...', $1, ...)` as a whole query expression, and XTQL's own
+ * `limit` takes an integer literal. Inspired by: references/xtdb @ c6c1962
+ * core/src/main/antlr/xtdb/antlr/Sql.g4:704 (XtqlQuery); xtql/plan.clj:870-890 (Limit).
+ * Rejected: keeping the SQL wrapper (the answer would carry SQL text under an xtql label).
+ */
+export const boundedXtqlStatement = (
+  query: string,
+  parameterCount: number,
+  limit: number,
+): string => {
+  if (!Number.isSafeInteger(limit) || limit < 1) throw new RangeError("Invalid XTQL row bound");
+  return xtqlStatement(`(-> ${query} (limit ${limit}))`, parameterCount);
+};
+
 export const xtqlStatement = (query: string, parameterCount: number): string => {
   // The pinned parser accepts XTQL ('EDN', $1, ...). A SQL single-quoted
   // literal plus untouched $n binds avoids rewriting XTQL exists? and strings.

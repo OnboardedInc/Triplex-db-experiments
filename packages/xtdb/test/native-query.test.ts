@@ -23,7 +23,7 @@ const fixture = (rows: Record<string, unknown>[] = [{ count: "922337203685477580
       options?: XtdbQueryOptions,
     ) => {
       calls.push({ sql, params, ...(options ? { options } : {}) });
-      return (sql.startsWith("SELECT position") ? [{ position: "9" }] : rows) as unknown as T[];
+      return (sql.includes("tx_meta") ? [{ position: "9" }] : rows) as unknown as T[];
     },
     submit: async () => {
       throw new Error("Native reads must not submit application mutations");
@@ -70,7 +70,17 @@ describe("XTDB native read provider", () => {
     expect(answer.trace.language).toBe("xtql");
     const main = calls[1]!;
     expect(main.options?.parameterSyntax).toBe("postgresql");
-    expect(main.sql).toContain("XTQL ('(fn [");
+    // [EXP-X02] The source cut and the answer are both whole XTQL statements; the row bound
+    // is XTQL `limit`, with no SQL envelope.
+    expect(calls[0]!.sql.startsWith("XTQL ('(fn [triplex_param_1] (-> (from :tx_meta")).toBe(true);
+    expect(calls[0]!.params).toEqual([scope]);
+    expect(answer.trace.steps?.map((step) => [step.phase, step.language])).toEqual([
+      ["source-cut", "xtql"],
+      ["answer", "xtql"],
+    ]);
+    expect(main.sql.startsWith("XTQL ('(fn [")).toBe(true);
+    expect(main.sql).not.toContain("SELECT");
+    expect(main.sql).toContain("(limit 1001)))'");
     expect(main.sql).toContain(":for-valid-time :all-time");
     expect(main.sql).toContain("(if (and");
     expect(main.sql).not.toContain("O'Reilly");
@@ -96,6 +106,8 @@ describe("XTDB native read provider", () => {
       ),
     );
     expect(result.rows).toEqual([{ message: "literal?" }]);
+    expect(calls[0]!.sql).toBe("SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1");
+    expect(result.trace.steps?.map((step) => step.language)).toEqual(["xtdb-sql", "xtdb-sql"]);
     expect(calls[1]!.sql).toContain("$native$literal?$native$");
     expect(calls[1]!.options?.parameterSyntax).toBe("postgresql");
     expect(calls[1]!.sql).toContain("CASE WHEN retracted_at IS NOT NULL");

@@ -148,6 +148,8 @@ const report: JsonRecord = {
   format: "triplex-public-workload-packet/3",
   backend: backend.name,
   queryPath: backend.queryPath,
+  // [EXP-X02] The XTDB native language this run used for every task (xtql | xtdb-sql).
+  nativeLanguage: backend.nativeLanguage ?? null,
   runId,
   status: "RUNNING",
   timestampUtc: new Date().toISOString(),
