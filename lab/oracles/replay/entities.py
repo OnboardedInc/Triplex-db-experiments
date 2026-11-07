@@ -16,7 +16,7 @@ import functools
 from . import exact as X
 from . import values as V
 from .views import Cut, known, known_retirement, ordered, resolve_cut, visible
-from .replay import _num
+from .replay import IN_FLIGHT_RULING, ErasedValue, _num, is_erased, read_value
 
 VALUE_TYPES = {"string", "number", "integer", "decimal", "boolean", "datetime", "ref", "json", "blob"}
 
@@ -136,13 +136,23 @@ def build_model(run, cut, etype, entity_id, version):
     props = {}
     declared = {p["attribute"] for p in props_def.values()}
     for name, p in props_def.items():
+        mine = [a for a in facts if a.attribute == p["attribute"]]
+        erased = [a for a in mine if a.erasure is not None]
+        if len(mine) > 1 and erased and ErasedValue(*erased).in_flight:
+            # Q49d: an in-flight value may be read as the old value or the marker; with several
+            # supports the grouping differs between the two readings
+            raise X.TypedError("X-NOT-MODELED", f"the {etype}.{name} model over a value whose erasure is in flight",
+                               ruling=IN_FLIGHT_RULING)
         groups = {}
-        for a in facts:            # creation order: the first key of an identity class is Q14b's representative
-            if a.attribute == p["attribute"]:
+        for a in mine:             # creation order: the first key of an identity class is Q14b's representative
+            if a.erasure is None:
                 groups.setdefault(a.value, []).append(a.id)
-        if not groups:
+        if not groups and not erased:
             continue
         items = sorted(groups.items(), key=lambda kv: kv[0].order_key())
+        if erased:
+            # Q49c: all erased values of the attribute form one group keyed by the marker, ordered last
+            items.append((ErasedValue(*erased), [a.id for a in erased]))
         if p["cardinality"] == "many":
             props[name] = ("many", items)
         elif len(items) == 1:
@@ -197,6 +207,10 @@ def _resolve_includes(run, cut, model, include, version, conflicts):
             targets = [current[1]] if current[0] == "one" else [v for v, _ in current[1]]
             resolved = []
             for t in targets:
+                if isinstance(t, ErasedValue):
+                    # Q49c: an erased reference cannot be followed; the include returns the marker
+                    resolved.append(t.settled(f"include {item}").to_output())
+                    continue
                 m = build_model(run, cut, p["target"], t.payload, version)
                 if m is not None:
                     conflicts.extend(m.conflicts())
@@ -206,8 +220,10 @@ def _resolve_includes(run, cut, model, include, version, conflicts):
             rev = item["reverse"]
             rtype, rprop = rev["type"], rev["prop"]
             rp = _types(run, version)[rtype][rprop]
+            # Q49c: an erased reference matches no value predicate, so it points nowhere
             ids = sorted({a.entityId for a in run.engine.scope(cut.scope).assertions.values()
-                          if visible(a, cut) and a.attribute == rp["attribute"] and a.value.family == "ref"
+                          if visible(a, cut) and a.attribute == rp["attribute"]
+                          and not is_erased(a, f"reverse include {rtype}.{rprop}") and a.value.family == "ref"
                           and a.value.payload == model.entity_id})
             models = []
             for rid in ids:
@@ -315,15 +331,24 @@ def _select_and_order(run, query, count_only=False):
             return []
         return [p[1]] if p[0] == "one" else [v for v, _ in p[1]]
 
+    # Q49d: a filter, order or include over a value whose erasure is in flight has two readings
+    for m in models:
+        for name in referenced:
+            for v in present(m, name):
+                if isinstance(v, ErasedValue):
+                    v.settled(f"{etype}.{name} in a filter, order or include")
+
     def keep(m):
         for c in where:
             vals = present(m, c["prop"])
             op = c["op"]
             if op == "exists":
-                ok = bool(vals)
+                ok = bool(vals)                 # Q49c: an erased value is present with no readable value
             elif op == "missing":
                 ok = not vals
             else:
+                # Q49c: an erased value matches no value predicate, so it neither selects nor rejects
+                vals = [v for v in vals if not isinstance(v, ErasedValue)]
                 expected = [V.decode_constant(x) for x in c["values"]] if op == "in" else V.decode_constant(c["value"])
                 try:
                     ok = any(V.predicate(op, v, expected, mode) for v in vals)
@@ -334,12 +359,24 @@ def _select_and_order(run, query, count_only=False):
         return True
 
     selected = [m for m in models if keep(m)]
+    for o in order:
+        firsts = [(present(m, o["prop"]) or [None])[0] for m in selected]
+        if any(isinstance(v, ErasedValue) for v in firsts) and any(v is None for v in firsts):
+            # Q49c puts erased markers last; R-ENT-6 puts missing values last: their mutual order is not ruled
+            raise X.TypedError("X-NOT-MODELED", f"orderBy {o['prop']} over both erased and missing values",
+                               ruling="R-ERA-4: Q49c (erased last) and R-ENT-6 (missing last) do not order erased "
+                               "against missing (ORCHESTRATOR-RULING-NEEDED)")
 
     def compare(m1, m2):
         for o in order:
             v1 = (present(m1, o["prop"]) or [None])[0]
             v2 = (present(m2, o["prop"]) or [None])[0]
-            c = _cmp_values(v1, v2, o.get("direction", "asc"))
+            e1, e2 = isinstance(v1, ErasedValue), isinstance(v2, ErasedValue)
+            if e1 or e2:
+                # Q49c: erased markers last whatever the direction, in assertion id order among themselves
+                c = (e1 - e2) if e1 != e2 else (v1.sort_key() > v2.sort_key()) - (v1.sort_key() < v2.sort_key())
+            else:
+                c = _cmp_values(v1, v2, o.get("direction", "asc"))
             if c:
                 return c
         return (m1.entity_id > m2.entity_id) - (m1.entity_id < m2.entity_id)
@@ -406,7 +443,7 @@ def q_timeline(run, query):
         attribute = props_def[query["prop"]]["attribute"]
     rows = [a for a in ordered(run.engine.scope(cut.scope).assertions.values())
             if a.entityId == entity and a.attribute == attribute and known(a.recordedPosition, a.recordedAt, cut)]
-    out = [V.OrderedOut([("identity", a.id), ("value", a.value.to_output()), ("recordedAt", _num(a.recordedAt)),
+    out = [V.OrderedOut([("identity", a.id), ("value", read_value(a).to_output()), ("recordedAt", _num(a.recordedAt)),
                          ("recordedPosition", a.recordedPosition), ("txId", a.txId),
                          ("validFrom", _num(a.validFrom)), ("validTo", _num(a.validTo)),
                          ("knownRetirement", known_retirement(a, cut))]) for a in rows]
@@ -420,7 +457,7 @@ def q_model_timeline(run, query):
     base = resolve_cut(run, query.get("cut"))
     version = int(query.get("schemaVersion", 1))
     entity, etype = query["entityId"], query["entityType"]
-    out = []
+    out = []      # Q49a: an erasure commit names the entity in its changes, so it is a timeline entry
     for r in run.engine.scope(base.scope).records:
         if r.internal or r.position > base.P or not any(a.entityId == entity for _, a in r.changes):
             continue
