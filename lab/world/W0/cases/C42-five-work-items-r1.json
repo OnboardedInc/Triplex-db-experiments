@@ -1,0 +1,81 @@
+{
+  "id": "C42",
+  "slug": "five-work-items-r1",
+  "title": "One evaluation with five work items: E-Verify submission, background-check order, expired ead, pay below the floor, pay change needing approval",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "EVSUB", "polarity": "positive"}, {"rule": "BGC", "polarity": "positive"}, {"rule": "DOCEXP", "polarity": "positive"},
+    {"rule": "MINWAGE", "polarity": "positive"}, {"rule": "PAYCHG", "polarity": "positive"}, {"rule": "OT", "polarity": "negative"}
+  ],
+  "notes": [
+    "EVSUB row 5 (no status, valid SSN): everify.submit-case, inputs [2, 3]. BGC row 1 (no status): bgc.order, inputs [] (same id as C03).",
+    "DOCEXP doc:1 ead expiresOn 2026-10-31: B = 2026-11-01T00 <= v, row 6: overdue doc.reverify and notify.document-expired, inputs [4].",
+    "MINWAGE: 1649 < 1650, row 5: overdue pay.below-minimum due 2026-11-02T00 and notify.pay-below-minimum, inputs [1, 2, 6].",
+    "PAYCHG: abs(1649 - 1000) = 649 > 500, no pay.change decision, row 5: pay.change-approval and notify.pay-change-approval, inputs [2, 6].",
+    "Floor 4 witness (SPEC 12.4 item 3). Work items are ordered by id, which is a hash, so their order looks arbitrary."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "baselinePayRateCents", "v": 1000, "tx": 2},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "documents", "v": "pl:a/doc:1", "tx": 4},
+        {"e": "pl:a/doc:1", "a": "docType", "v": "ead", "tx": 4},
+        {"e": "pl:a/doc:1", "a": "expiresOn", "v": "2026-10-31", "tx": 4},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 5},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 5},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 5},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 5},
+        {"e": "pl:a", "a": "payRateCents", "v": 1649, "tx": 6}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["loc:nyc", "stateMinWageCents"],
+      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"],
+      ["pl:a/doc:1", "docType"], ["pl:a/doc:1", "expiresOn"], ["pl:a/doc:1", "reverified"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-01T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": true, "rule": "DOCEXP"},
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.below-minimum", "kind": "pay.below-minimum", "overdue": true, "rule": "MINWAGE"},
+      {"dueAt": null, "id": "pl:a#pay.change-approval", "kind": "pay.change-approval", "overdue": false, "rule": "PAYCHG"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 5], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3], "key": "", "row": 5, "rule": "EVSUB"},
+      {"inputs": [], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
+      {"inputs": [4], "key": "pl:a/doc:1", "row": 6, "rule": "DOCEXP"},
+      {"inputs": [1, 2, 6], "key": "", "row": 5, "rule": "MINWAGE"},
+      {"inputs": [2], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2, 6], "key": "", "row": 5, "rule": "PAYCHG"},
+      {"inputs": [5], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:07f37d71c4604817ccace65b68e77015f742ca31ab46052c3b4e89d6045c89fb", "inputs": [], "key": "", "kind": "bgc.order", "rule": "BGC"},
+      {"id": "wi:1ef31b505b643be9e40ea14b9e8d76f97a04ae2a448f1de78ac15cc29d9140f6", "inputs": [2, 3], "key": "", "kind": "everify.submit-case", "rule": "EVSUB"},
+      {"id": "wi:36edbd01a5807877a95ad3a72c2d6514dc8379809a49975073f4c37035b7a4d6", "inputs": [1, 2, 6], "key": "", "kind": "notify.pay-below-minimum", "rule": "MINWAGE"},
+      {"id": "wi:6680a0f471ace08cde25f48fb669ec21f63965df4f3c298fcb185e0f6c1db53b", "inputs": [4], "key": "pl:a/doc:1", "kind": "notify.document-expired", "rule": "DOCEXP"},
+      {"id": "wi:6f253246908b1c0131ce2dd0698612519f52c351e889e52e182c3463f4835d22", "inputs": [2, 6], "key": "", "kind": "notify.pay-change-approval", "rule": "PAYCHG"}
+    ]
+  }
+}

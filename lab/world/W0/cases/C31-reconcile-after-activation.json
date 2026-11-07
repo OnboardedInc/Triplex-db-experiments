@@ -1,0 +1,84 @@
+{
+  "id": "C31",
+  "slug": "reconcile-after-activation",
+  "title": "C19's world reconciled after R2 is activated from 2026-11-04T00: identical bytes to the C20 preview",
+  "op": "reconcile",
+  "checks": [
+    {"rule": "DOCEXP", "polarity": "positive"}
+  ],
+  "identicalTo": "C20",
+  "notes": [
+    "Activations: R1 from 2026-01-01T00 (tx 11), R2 from 2026-11-04T00 (tx 12); both tx <= basis.tx 20.",
+    "resolveRelease at v 2026-11-04T12: both are candidates; the greatest from is R2's, so R2 applies.",
+    "Same world and same basis as C20, so the output bytes equal C20's (GS.10 against GS.11 at one basis)."
+  ],
+  "input": {
+    "activations": [
+      {"from": "2026-01-01T00:00:00.000000Z", "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b", "tx": 11},
+      {"from": "2026-11-04T00:00:00.000000Z", "release": "sha256:4fe8c3fa51e528550d255931263ed46f85cac8e57238cdfed1c3246b71847f98", "tx": 12}
+    ],
+    "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7},
+        {"e": "pl:a", "a": "documents", "v": "pl:a/doc:1", "tx": 8},
+        {"e": "pl:a/doc:1", "a": "docType", "v": "ead", "tx": 8},
+        {"e": "pl:a/doc:1", "a": "expiresOn", "v": "2027-01-15", "tx": 8},
+        {"e": "pl:a", "a": "documents", "v": "pl:a/doc:2", "tx": 8},
+        {"e": "pl:a/doc:2", "a": "docType", "v": "visa", "tx": 8},
+        {"e": "pl:a/doc:2", "a": "expiresOn", "v": "2027-01-15", "tx": 8}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["loc:nyc", "localMinWageCents"], ["loc:nyc", "stateMinWageCents"],
+      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"],
+      ["pl:a/doc:1", "docType"], ["pl:a/doc:1", "expiresOn"], ["pl:a/doc:1", "reverified"],
+      ["pl:a/doc:2", "docType"], ["pl:a/doc:2", "expiresOn"], ["pl:a/doc:2", "reverified"]
+    ],
+    "flags": [],
+    "obligations": [
+      {"boundary": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1@due", "kind": "due", "rule": "DOCEXP"},
+      {"boundary": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.window#pl:a/doc:2", "kind": "doc.window", "rule": "DOCEXP"}
+    ],
+    "release": "sha256:4fe8c3fa51e528550d255931263ed46f85cac8e57238cdfed1c3246b71847f98",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": false, "rule": "DOCEXP"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [8], "key": "pl:a/doc:1", "row": 5, "rule": "DOCEXP"},
+      {"inputs": [8], "key": "pl:a/doc:2", "row": 4, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": []
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "id": "C12",
+  "slug": "everify-fnc-bgc-consider-r1",
+  "title": "E-Verify final nonconfirmation and a background check marked consider with no decision",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "EVSTAT", "polarity": "positive"}, {"rule": "BGC", "polarity": "positive"}
+  ],
+  "notes": [
+    "EVSTAT row 4: fnc gives task everify.fnc (due null) and work item notify.everify-fnc, inputs [5].",
+    "BGC row 5: consider and final(bgc.adjudication, 0) = none (dec:1 targets i9.section2); task bgc.adjudicate due null, inputs [4]."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "consider", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "fnc", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["loc:nyc", "stateMinWageCents"],
+      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": null, "id": "pl:a#bgc.adjudicate", "kind": "bgc.adjudicate", "overdue": false, "rule": "BGC"},
+      {"dueAt": null, "id": "pl:a#everify.fnc", "kind": "everify.fnc", "overdue": false, "rule": "EVSTAT"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 4, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 5, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:f3736c4041b1bd7d8b648f2dcc677850cc3c8547f4b8d734bbdde5aa2c88edd1", "inputs": [5], "key": "", "kind": "notify.everify-fnc", "rule": "EVSTAT"}
+    ]
+  }
+}

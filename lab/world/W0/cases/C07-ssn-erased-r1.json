@@ -1,0 +1,69 @@
+{
+  "id": "C07",
+  "slug": "ssn-erased-r1",
+  "title": "Erased SSN: Section 1 stays complete, E-Verify submission is blocked",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "I9S1", "polarity": "negative"}, {"rule": "EVSUB", "polarity": "positive"}, {"rule": "EVSTAT", "polarity": "negative"}
+  ],
+  "notes": [
+    "The ssn fact keeps tx 3; its value is the erased marker (TARGETS section 7).",
+    "I9S1 row 1: the marker counts as present. EVSUB: no status (row 1 fails), SSN present (row 2 fails), erased: row 3.",
+    "EVSUB due endOfDay(addBusinessDays(2026-11-02, 3)) = 2026-11-06T00; v 2026-11-04T12 is before it, so a due obligation exists.",
+    "No output contains the SSN value; only the pair [pl:a, ssn] appears, in dependencies."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": {"erasedAt": "2026-11-04T08:00:00.000000Z"}, "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["loc:nyc", "stateMinWageCents"],
+      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"]
+    ],
+    "flags": [],
+    "obligations": [
+      {"boundary": "2026-11-06T00:00:00.000000Z", "id": "pl:a#everify.ssn-erased@due", "kind": "due", "rule": "EVSUB"}
+    ],
+    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-06T00:00:00.000000Z", "id": "pl:a#everify.ssn-erased", "kind": "everify.ssn-erased", "overdue": false, "rule": "EVSUB"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3], "key": "", "row": 3, "rule": "EVSUB"},
+      {"inputs": [], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": []
+  }
+}

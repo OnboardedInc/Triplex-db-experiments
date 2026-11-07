@@ -1,0 +1,17 @@
+{
+  "name": "R1",
+  "rules": [
+    {"id": "LIFE", "params": {}},
+    {"id": "I9S1", "params": {}},
+    {"id": "I9S2", "params": {"businessDays": 3}},
+    {"id": "EVSUB", "params": {"businessDays": 3}},
+    {"id": "EVSTAT", "params": {"tncBusinessDays": 8}},
+    {"id": "BGC", "params": {}},
+    {"id": "DOCEXP", "params": {"leadDays": {"ead": 0, "visa": 0}}},
+    {"id": "MINWAGE", "params": {"floorAttributes": ["stateMinWageCents"]}},
+    {"id": "OT", "params": {"thresholdMinutes": 2400}},
+    {"id": "PAYCHG", "params": {"thresholdCents": 500}},
+    {"id": "PROP", "params": {}}
+  ],
+  "world": "W0"
+}

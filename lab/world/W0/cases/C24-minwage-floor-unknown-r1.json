@@ -1,0 +1,68 @@
+{
+  "id": "C24",
+  "slug": "minwage-floor-unknown-r1",
+  "title": "The placement references a location with no facts; another location's fact is unreachable",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "MINWAGE", "polarity": "positive"}
+  ],
+  "notes": [
+    "S.location = loc:new, which has no facts. MINWAGE row 3: task pay.floor-unknown due 2026-11-02T00, overdue.",
+    "The pair [loc:new, stateMinWageCents] is in the dependencies anyway, because read sets are instantiated from the reference value.",
+    "The loc:nyc fact (tx 1) is allowed but unreachable, so it is ignored: no dependency, not an input. MINWAGE inputs [2]."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:new", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["loc:new", "stateMinWageCents"],
+      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"], ["pl:a/dec:1", "target"], ["pl:a/dec:1", "verdict"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.floor-unknown", "kind": "pay.floor-unknown", "overdue": true, "rule": "MINWAGE"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [2], "key": "", "row": 3, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": []
+  }
+}

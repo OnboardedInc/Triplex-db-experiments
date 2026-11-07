@@ -1,0 +1,67 @@
+{
+  "id": "C26",
+  "slug": "section2-window-r2",
+  "title": "C03 under R2: Section 2 is due one business day earlier, E-Verify is unchanged",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "LIFE", "polarity": "positive"}, {"rule": "I9S2", "polarity": "positive"}, {"rule": "EVSUB", "polarity": "positive"},
+    {"rule": "MINWAGE", "polarity": "negative"}
+  ],
+  "notes": [
+    "R2 I9S2 businessDays 2: addBusinessDays(Mon 2026-11-02, 2) = Wed 2026-11-04; due 2026-11-05T00 (R1 in C03: 2026-11-06T00).",
+    "EVSUB keeps businessDays 3: due 2026-11-06T00, as in C03.",
+    "MINWAGE under R2: no local floor, state 1650 <= 1650, row 4. The bgc.order id differs from C03 because the release hash is in the preimage."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-10-30T09:00:00.000000Z"},
+    "release": "R2",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-10-30T09:00:00.000000Z"},
+    "dependencies": [
+      ["loc:nyc", "localMinWageCents"], ["loc:nyc", "stateMinWageCents"],
+      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"]
+    ],
+    "flags": [{"name": "pre-start", "rule": "LIFE"}],
+    "obligations": [
+      {"boundary": "2026-11-06T00:00:00.000000Z", "id": "pl:a#everify.collect-ssn@due", "kind": "due", "rule": "EVSUB"},
+      {"boundary": "2026-11-03T00:00:00.000000Z", "id": "pl:a#i9.section1@due", "kind": "due", "rule": "I9S1"},
+      {"boundary": "2026-11-05T00:00:00.000000Z", "id": "pl:a#i9.section2@due", "kind": "due", "rule": "I9S2"},
+      {"boundary": "2026-11-02T00:00:00.000000Z", "id": "pl:a#start", "kind": "start", "rule": "LIFE"}
+    ],
+    "release": "sha256:4fe8c3fa51e528550d255931263ed46f85cac8e57238cdfed1c3246b71847f98",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-06T00:00:00.000000Z", "id": "pl:a#everify.collect-ssn", "kind": "everify.collect-ssn", "overdue": false, "rule": "EVSUB"},
+      {"dueAt": "2026-11-03T00:00:00.000000Z", "id": "pl:a#i9.section1", "kind": "i9.section1", "overdue": false, "rule": "I9S1"},
+      {"dueAt": "2026-11-05T00:00:00.000000Z", "id": "pl:a#i9.section2", "kind": "i9.section2", "overdue": false, "rule": "I9S2"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 2, "rule": "LIFE"},
+      {"inputs": [2], "key": "", "row": 2, "rule": "I9S1"},
+      {"inputs": [2], "key": "", "row": 4, "rule": "I9S2"},
+      {"inputs": [2], "key": "", "row": 2, "rule": "EVSUB"},
+      {"inputs": [], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [], "key": "", "row": 1, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:393569ee89acb1b2a5cc32a1cf8009bf2eb9a602110144749dad9289aef4aa5d", "inputs": [], "key": "", "kind": "bgc.order", "rule": "BGC"}
+    ]
+  }
+}

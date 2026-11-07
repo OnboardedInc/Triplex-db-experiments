@@ -1,0 +1,23 @@
+{
+  "id": "C38",
+  "slug": "err-cents-integral-float",
+  "title": "payRateCents written as 1650.0: a fraction token is never cents, even when integral",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "The token 1650.0 has a fraction part, so it is not a JSON integer token: W0.E_VALUE.",
+    "JSON.parse would return 1650 here; the fixture reader must check the token itself (self-review item 1)."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650.0, "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}

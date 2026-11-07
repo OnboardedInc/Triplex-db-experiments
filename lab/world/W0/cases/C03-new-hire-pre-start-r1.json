@@ -1,0 +1,72 @@
+{
+  "id": "C03",
+  "slug": "new-hire-pre-start-r1",
+  "title": "A new hire the Friday before a Monday start, R1",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "LIFE", "polarity": "positive"}, {"rule": "I9S1", "polarity": "positive"}, {"rule": "I9S2", "polarity": "positive"},
+    {"rule": "EVSUB", "polarity": "positive"}, {"rule": "EVSTAT", "polarity": "negative"}, {"rule": "BGC", "polarity": "positive"},
+    {"rule": "DOCEXP", "polarity": "negative"}, {"rule": "MINWAGE", "polarity": "negative"}, {"rule": "OT", "polarity": "negative"},
+    {"rule": "PAYCHG", "polarity": "negative"}, {"rule": "PROP", "polarity": "negative"}
+  ],
+  "notes": [
+    "LIFE row 2: v 2026-10-30T09 < startOf(2026-11-02); flag pre-start; obligation start at 2026-11-02T00.",
+    "I9S1 row 2: nothing attested; due endOfDay(2026-11-02) = 2026-11-03T00.",
+    "I9S2 row 4: no decision; addBusinessDays(Mon 2026-11-02, 3) = Thu 2026-11-05; due 2026-11-06T00.",
+    "EVSUB row 2: no status, no SSN; addBusinessDays(2026-11-02, 3) = 2026-11-05; due 2026-11-06T00.",
+    "BGC row 1: work item bgc.order with inputs [] (no bgcStatus fact, no counting adjudication).",
+    "All three tasks are before their due times, so each has a due obligation."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-10-30T09:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-10-30T09:00:00.000000Z"},
+    "dependencies": [
+      ["loc:nyc", "stateMinWageCents"],
+      ["pl:a", "baselinePayRateCents"], ["pl:a", "bgcStatus"], ["pl:a", "decisions"], ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"], ["pl:a", "everifyStatusAt"], ["pl:a", "location"], ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"], ["pl:a", "ssn"], ["pl:a", "startDate"], ["pl:a", "weeklyMinutes"]
+    ],
+    "flags": [{"name": "pre-start", "rule": "LIFE"}],
+    "obligations": [
+      {"boundary": "2026-11-06T00:00:00.000000Z", "id": "pl:a#everify.collect-ssn@due", "kind": "due", "rule": "EVSUB"},
+      {"boundary": "2026-11-03T00:00:00.000000Z", "id": "pl:a#i9.section1@due", "kind": "due", "rule": "I9S1"},
+      {"boundary": "2026-11-06T00:00:00.000000Z", "id": "pl:a#i9.section2@due", "kind": "due", "rule": "I9S2"},
+      {"boundary": "2026-11-02T00:00:00.000000Z", "id": "pl:a#start", "kind": "start", "rule": "LIFE"}
+    ],
+    "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-06T00:00:00.000000Z", "id": "pl:a#everify.collect-ssn", "kind": "everify.collect-ssn", "overdue": false, "rule": "EVSUB"},
+      {"dueAt": "2026-11-03T00:00:00.000000Z", "id": "pl:a#i9.section1", "kind": "i9.section1", "overdue": false, "rule": "I9S1"},
+      {"dueAt": "2026-11-06T00:00:00.000000Z", "id": "pl:a#i9.section2", "kind": "i9.section2", "overdue": false, "rule": "I9S2"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 2, "rule": "LIFE"},
+      {"inputs": [2], "key": "", "row": 2, "rule": "I9S1"},
+      {"inputs": [2], "key": "", "row": 4, "rule": "I9S2"},
+      {"inputs": [2], "key": "", "row": 2, "rule": "EVSUB"},
+      {"inputs": [], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [], "key": "", "row": 1, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:07f37d71c4604817ccace65b68e77015f742ca31ab46052c3b4e89d6045c89fb", "inputs": [], "key": "", "kind": "bgc.order", "rule": "BGC"}
+    ]
+  }
+}
