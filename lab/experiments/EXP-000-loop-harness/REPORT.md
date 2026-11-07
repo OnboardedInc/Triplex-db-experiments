@@ -24,7 +24,14 @@
 | G1 smoke (1 case x 2 modes) | xtdb, qlever | PASS_SUBSET 2/2 | lab/runs/G1/G1-xtdb-20261107T185552Z-2f76c8.json, lab/runs/G1/G1-qlever-20261107T185609Z-1ad93d.json |
 | G2 smoke (workload 01, 8 executions) | xtdb, qlever | PASS_SUBSET 8/8 | lab/runs/G2/G2-xtdb-20261107T185653Z-db1b4e.json, lab/runs/G2/G2-qlever-20261107T185705Z-b4dfae.json |
 
-**In flight:** full G1 then G2, runKind `candidate`, raw output in runs/G1/G1-xtdb-20261107T185736Z-a667aa and runs/G1/G1-qlever-20261107T185736Z-ea0be5. Their receipts land in lab/runs/G1/ and lab/runs/G2/ when they finish. Triage of their failures belongs to EXP-001 and EXP-002.
+**Full baselines (runKind `candidate`), first results:**
+
+| Gate | Lane | Verdict | Receipt and note |
+| --- | --- | --- | --- |
+| G1 full | xtdb | FAIL (88/88 executions and the complete suite all PASS) | lab/runs/G1/G1-xtdb-20261107T185736Z-a667aa.json. **The FAIL is the harness working as designed:** the concurrent qlever gate rebuilt the shared dist/ during the run, and the run-end re-hash caught it. Fixed by the per-worktree gate lock (commit de3647a). Rerun it. |
+| G1 full | qlever | FAIL 0/88 | lab/runs/G1/G1-qlever-20261107T185736Z-ea0be5.json. **tx2-qlever-dev was OOM-killed at its 2.5 GiB cap** on the first case (the default planner, without the F1 profile; R4 9.4.2). After a restart it is healthy again, and a 1-case smoke passes: lab/runs/G1/G1-qlever-20261107T185951Z-77d806.json. EXP-002 should size the slot or apply the F1 profile. |
+| G2 full | xtdb | PASS 142/142 | lab/runs/G2/G2-xtdb-20261107T185821Z-210ae9.json. Claims PKT.full142 for xtdb-xtql and xtdb-sql, but runKind is candidate, so it closes nothing. **Language split (answer reading):** xtql 22, xtdb-sql 116, hybrid 4. **Strict reading:** xtdb-sql 116, hybrid 26, xtql 0. |
+| G2 full | qlever | no receipt | **A harness bug wrote no receipt.** The engine was already dead, and engineGate returned the wrong shape. The raw dir runs/G2/G2-qlever-20261107T185817Z-d28cd4 remains. Fixed in de3647a. Rerun it. |
 
 ## Design as built
 
