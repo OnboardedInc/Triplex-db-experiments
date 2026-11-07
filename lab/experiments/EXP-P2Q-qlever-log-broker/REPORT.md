@@ -1,4 +1,4 @@
-# EXP-P2Q QLever behind a host log and broker: report (saved by the orchestrator, 2026-11-09)
+# EXP-P2Q QLever behind a host log and broker: report (saved by the orchestrator, 2026-11-07 22:50Z)
 
 **Bottom line:** the candidate (option `broker`, default off; A0 unchanged) ACKs independently of QLever's delta. In every paired window on
 the shared dev resident the candidate ACKed in 4 to 8 ms p50 while A0 took 0.96 to 7.4 s; read-your-own-write held on every completed pull;

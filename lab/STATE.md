@@ -1,6 +1,6 @@
 # Orchestrator state (read this first after any context compaction)
 
-Updated: 2026-11-07 ~20:50Z, generation 2 running (scope v2).
+Updated: 2026-11-07 22:55Z (from `date -u`; earlier notebook headers ran ahead of the real clock, see NOTEBOOK), generation 2 running (scope v2).
 
 ## Read first, every time
 1. lab/SCOPE.md (authoritative scope, Sam confirmed) 2. lab/NORTH-STAR.md (five priorities, fixed) 3. lab/TARGETS.md (measurements,
@@ -55,7 +55,7 @@ QLever: EXP-P2Q controlled run list (Q50e) -> A0 QLever (bulk-seeded) -> EXP-Q07
 - F02b: G1 xtdb and G1 qlever f1 at c443381 (both last failed by timeouts only).
 - X02: XTQL candidate G2 on an exclusive XTDB slot.
 
-## Infrastructure policy (2026-11-08 22:10Z)
+## Infrastructure policy (set about 20:00Z on 2026-11-07; the old header's date was an estimate)
 Host saturated (36 GiB, about 14 GiB compressed, load 12-13 on 12 cores; Sam's default colima VM shares it), so the triplex2 VM cannot
 grow. QLever dev resident raised to 3.5 GiB and recreated fresh after three OOM kills (pool now 10.0 of 11 GiB). Until pressure drops: no new
 engine-heavy dispatches; heavy commands via lab/bin/heavy.mjs; gate reruns one at a time; latency judged only relatively. Check both dev

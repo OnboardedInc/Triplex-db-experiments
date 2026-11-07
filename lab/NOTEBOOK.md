@@ -891,7 +891,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   f1, X02's XTQL candidate G2) wait for a scheduled gate window: the orchestrator pauses new dispatches when several agents finish and runs
   the owed gates one at a time through heavy.mjs.
 
-## 2026-11-09 ~00:55Z: EXP-P2Q: QLever's ACK no longer depends on its delta (the biggest P2 move so far)
+## 2026-11-07 22:50Z (real clock): EXP-P2Q: QLever's ACK no longer depends on its delta (the biggest P2 move so far)
 - Same resident, same windows: candidate ACK 4-8 ms p50 against A0's 0.96-7.4 s; on the open-loop trace A0 acknowledged 2 of 114
   commands within the 30 s client timeout while the candidate committed 114/114 at 6.7 ms p50. Offline, with the 50x burst: 4.7 / 25.0 ms
   p50/p99 over 3,414 commands. Inside the P2 bars in every run, judged relatively per Q47b until controlled runs exist.
@@ -901,3 +901,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - Learning: A0 writes about 750 triples per 10-fact command, 8x R17's 94; the journal encoding inflates QLever's delta on every lane.
 - New design direction (Q50a): a broker-side current-entity index, both as the unreachable-replica fallback and as a P4 current layer on
   the host; EXP-Q05 measures it.
+
+## 2026-11-07 22:55Z (real clock, `date -u`): clock correction for this notebook
+- The entry headers from "2026-11-07 ~20:45Z" through "2026-11-09 ~00:10Z" carry estimated times that ran ahead of the real clock; the
+  real time of this entry is 2026-11-07 22:55Z. Their order is correct; git commit timestamps are the authoritative times. The same
+  estimated dates appear in a few REPORT.md headers (saved by the orchestrator) and in STATE's infrastructure policy line.
+- From now on every header takes its time from `date -u`.
