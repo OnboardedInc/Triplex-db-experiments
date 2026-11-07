@@ -43,16 +43,53 @@ export interface UseOptions {
   readonly unique?: boolean;
 }
 
-export interface Use<D extends Definition<string, unknown>> {
+export type Cardinality = "one" | "many";
+
+/**
+ * [EXP-R01] Why: the typed repository derives document, input and include types from
+ * handles, so the usage flags must stay literal (`true`, `"many"`) instead of widening to
+ * `boolean` / `"one" | "many"`. The defaults keep every existing `Use<D>` annotation valid.
+ * Inspired by: lab/research/R3-orm-prior-art.md section 5.1 and R9 change 6.
+ * Rejected: caller-asserted model generics (unsound; a caller could claim any shape).
+ */
+export interface Use<
+  D extends Definition<string, unknown>,
+  Req extends boolean = boolean,
+  Card extends Cardinality = Cardinality,
+> {
   readonly _tag: "AttributeUse";
   readonly attribute: D;
-  readonly required: boolean;
-  readonly cardinality: "one" | "many";
+  readonly required: Req;
+  readonly cardinality: Card;
   readonly unique: boolean;
 }
 
+/**
+ * Literal requiredness of a `use` call. A literal `true`/`false` stays literal; a widened
+ * `boolean` stays `boolean`, so a computed option can never be typed narrower than runtime.
+ */
+export type RequiredOf<O> = "required" extends keyof O
+  ? LiteralRequired<O["required" & keyof O]>
+  : false;
+type LiteralRequired<R> = R extends true ? true : R extends false | undefined ? false : boolean;
+/** Literal cardinality of a `use` call; a widened option stays `"one" | "many"`. */
+export type CardinalityOf<O> = "cardinality" extends keyof O
+  ? LiteralCardinality<O["cardinality" & keyof O]>
+  : "one";
+type LiteralCardinality<C> = C extends "many" ? "many" : "one";
+
 export type AnyDefinition = Definition<string, any>;
 export type ValueOf<D> = D extends Definition<string, infer V> ? V : never;
+
+/**
+ * A ref definition remembers its target entity type at the type level and at runtime.
+ * [EXP-R01] Why: `include` may only expand ref attributes, and only to the declared target.
+ */
+export type RefDefinition<K extends string, Target extends string> = Definition<K, EntityId> & {
+  readonly refTarget: Target;
+};
+/** Target entity type of a ref definition, or `never` for non-ref definitions. */
+export type RefTargetOf<D> = D extends { readonly refTarget: infer T extends string } ? T : never;
 
 const DefinitionType = TypeExpr.struct({
   key: TypeExpr.required(TypeExpr.text),
@@ -121,22 +158,27 @@ export const enumOf = <const K extends string, const V extends string>(
 export const ref = <const K extends string, const Target extends { readonly entityType: string }>(
   key: K,
   target: Target,
-): Definition<K, EntityId> =>
-  make(key, TypeExpr.ref(target.entityType), Values.ref, [
+): RefDefinition<K, Target["entityType"]> => ({
+  ...make<K, EntityId>(key, TypeExpr.ref(target.entityType), Values.ref, [
     {
       rel: "references-entity-type",
       kind: "entity-schema",
       key: target.entityType,
     },
-  ]);
+  ]),
+  refTarget: target.entityType,
+});
 
 /** Requiredness and cardinality belong to an entity's use, not the global attribute. */
-export const use = <D extends AnyDefinition>(attribute: D, options: UseOptions = {}): Use<D> => ({
+export const use = <D extends AnyDefinition, const O extends UseOptions = {}>(
+  attribute: D,
+  options?: O,
+): Use<D, RequiredOf<O>, CardinalityOf<O>> => ({
   _tag: "AttributeUse",
   attribute,
-  required: options.required ?? false,
-  cardinality: options.cardinality ?? "one",
-  unique: options.unique ?? false,
+  required: (options?.required ?? false) as RequiredOf<O>,
+  cardinality: (options?.cardinality ?? "one") as CardinalityOf<O>,
+  unique: options?.unique ?? false,
 });
 
 export const assertion = <D extends AnyDefinition>(
