@@ -1,6 +1,5 @@
 """R-CMD-*, R-RCP-*, R-CON-*, R-JNL-*: command outcomes, receipts, constraints, journal."""
 
-import copy
 import unittest
 
 from lab.oracles.replay.tests.helpers import (assert_op, case, committed_receipts, evaluate, i64, outcome, ref,
@@ -98,7 +97,11 @@ class Receipts(unittest.TestCase):
     def test_gap_reuse_and_rejected_with_position(self):
         c = self.base()
         c["receipts"] = committed_receipts(c)
-        c["receipts"][1]["position"] = 3
+        c["receipts"][1]["position"] = 3          # Q31c: positions need not be dense
+        rc = evaluate(c)["receiptConsistency"]
+        self.assertEqual(rc["status"], "PASS")
+        self.assertEqual(rc["positions"], [{"scope": "s", "coordinates": "integer", "dense": False, "aborted": []}])
+        c["receipts"][1]["position"] = 1          # a reused position
         self.assertEqual(evaluate(c)["receiptConsistency"]["status"], "FAIL")
         c["receipts"] = committed_receipts(c)
         c["receipts"][1]["txId"] = "T0"

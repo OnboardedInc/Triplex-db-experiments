@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.2.0)
+# O-REPLAY case and output schema (v1; oracle 0.3.1)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -18,9 +18,11 @@ python3 -m lab.oracles.replay CASE.json                         # module form; n
 
 - **Numbers are read as lexemes.** The loader keeps every JSON number as its source text and converts
   it once with correctly rounded decimal-to-binary64 parsing. `NaN`/`Infinity` tokens are refused.
-  A lexeme that does not read back as written (its value is neither the binary64 nor the binary64's
-  shortest ECMAScript spelling, for example `9007199254740993` or `1e-400`) is a malformed case
-  (R-VAL-7); give the exact lexeme or `bits`.
+  A lexeme must read back as written (its shortest round-trip binary64 rendering has the same exact
+  value, R-VAL-7, Q33a). Inside a user `json` value a lexeme that does not, or a -0 or non-finite one,
+  rejects the command with E-INEXACT-JSON-NUMBER (R-VAL-11, Q30a). Anywhere else in the case
+  (`9007199254740993` or `1e-400` as a typed number, instant or coordinate) it is a malformed case;
+  give the exact lexeme or `bits`.
 - **Integers travel as canonical decimal text**: `{"type":"integer","value":"9223372036854775807"}`.
 - **binary64** is `{"type":"number","value":<JSON number>}` or `{"type":"number","bits":"0x<16 hex>"}`.
   `-0.0` (or `-0`) is kept.
@@ -28,7 +30,9 @@ python3 -m lab.oracles.replay CASE.json                         # module form; n
   `attributeDeclarations` or a schema release) gives precision and scale; inline `"precision"` and
   `"scale"` are allowed and must agree with it (R-DEC-0, R-DEC-1).
 - **Instants and valid-time coordinates** (`clock`, `instant`, `validFrom`, `validTo`, `recordedAt`,
-  `validAt`) are JS numbers, possibly fractional, compared exactly as rationals.
+  `validAt`) are JS numbers, possibly fractional, compared exactly as rationals. A written instant
+  (`validFrom`, `validTo`, a datetime value) given as -0 rejects the command with E-NEGATIVE-ZERO-INSTANT
+  (R-VAL-10, Q30b); a read basis given as -0 is E-NEGATIVE-ZERO-INSTANT too (R-CUT-4, Q43h).
 - **Untyped predicate constants**: in `where` items and `compare.right`, a bare JSON string or number
   is an untyped constant (CMP-UNTYPED-STRING, CMP-NUMERIC-CONST); typed constants are value objects.
 
@@ -44,6 +48,9 @@ python3 -m lab.oracles.replay CASE.json                         # module form; n
   "schemas": [ /* schema releases, 2.3 */ ],
   "enforcement": {"mode": "off"},             // or {"mode":"on","rules":[...]} / {"mode":"on","fromSchema":2}
   "initialPositions": {"s1": 0},              // optional: last position before the first command, per scope
+  "abortedPositions": {"s1": [{"stream": "log", "epoch": 1, "offset": 20, "ordinal": 0}]},
+                                              // optional (Q31c): positions the feed's resolution stream lists
+                                              // as aborted; they take no ordinal (R-RCP-1, R-RCP-8)
   "lane": "qlever",                           // optional (R-LANE-1): core (default), xtdb, qlever or a lane id;
                                               // cli.py --lane overrides it
   "laneIntegerRanges": {"qlever": ["-576460752303423488", "576460752303423487"]},   // optional override
@@ -67,6 +74,7 @@ python3 -m lab.oracles.replay CASE.json                         # module form; n
      "entityType": "Person", "createdBy": "agent:a", "validFrom": 0, "validTo": 86400000},
     {"op": "retract", "target": "ann-name"},       // by symbol, or {"op":"retract","id":"<actual id>"}
     {"op": "retract-pattern", "pattern": {"entityId": "...", "attribute": "...", "entityType": "...", "value": {...}}}
+    // {"op": "erase", ...} is refused: erasure (Q24, Q31f) is not modeled (R-CMD-13, exit 2)
   ],
   "meta": {
     "actor": "agent:a", "commandId": "cmd-1", "correlationId": "req-1", "causationId": "evt-1",
@@ -95,6 +103,11 @@ One per command, `command` = index into `commands`:
  "error": {"_tag": "ConstraintViolationError", "codes": ["unique"]}}
 {"command": 2, "outcome": "unknown", "resolvedOutcome": "committed", ...}          // after EP-RESOLVE
 ```
+
+`position` is an integer (a dense or gapped scope counter) or a coordinate (Q31c):
+`{"stream": "log", "epoch": 1, "offset": 12, "ordinal": 0}` or the list `["log", 1, 12, 0]`, ordered
+lexicographically; `stream` is a string or an integer, the other fields non-negative integers. One scope uses
+one kind. Positions need not be dense; the oracle assigns its own dense ordinals for cuts (R-RCP-8).
 
 **Receipts bind identities, never validity.** The oracle derives every expected outcome from the
 command intent, stream order, preconditions and rules, then compares. A receipt that commits a command
@@ -127,7 +140,8 @@ accounted for.
   position, txId and journal record. Members are validated in order against the state that includes
   the earlier accepted members; a failing member is rejected alone. If the host abandons the outer
   transaction, every member carries `hostAbort: true`.
-- **Receipt check:** committed members of one physical group must hold consecutive positions.
+- **Receipt check:** committed members of one physical group must hold consecutive positions
+  (coordinates: one (stream, epoch, offset) and consecutive ordinals, R-RCP-5).
 - **Internal writes** (ConfigStore commits, consumer checkpoints, maintenance) are `kind: "internal"`.
   They take a position, appear in `cutCatalog`, and appear in `transactions()` as opaque records unless
   `journaled: false`.
@@ -144,7 +158,7 @@ every point is a FAIL.
 Every query has `id`, `kind`, and usually a `cut`:
 
 ```jsonc
-"cut": {"scope": "s1", "position": 5 | "latest" | {"afterCommand": 3},
+"cut": {"scope": "s1", "position": 5 | "latest" | {"afterCommand": 3} | {"coordinate": {...}},   // R-CUT-5
         "recordedAt": 1000.25,   // optional R, independent of P
         "validAt": 20.25,        // V; required where the kind reads valid time
         "publicBasis": true}     // false lets self-checks use negative instants
@@ -158,10 +172,10 @@ Every query has `id`, `kind`, and usually a `cut`:
 | `entityTriples` | `cut`, `entityId` | visible rows of one entity, as `match` |
 | `history` | `entityId`, optional `cut` (no V needed), `applyValidAt` | `rawLifetime` and `asOfSnapshot` |
 | `assertionSnapshot` | `cut`, `mode` (`live-at-valid`/`known-at-valid`), `pattern` | O-HAM SnapshotAssertion rows; `knownRetirement` `{retractedAt, retractTxId, retractedPosition}` (AMB-02) |
-| `transactions` | `after`, `limit` (1..1000, default 100) | `{transactions, next}` |
+| `transactions` | `after`, `limit` (1..1000, default 100; outside it E-CURSOR malformed, R-JNL-7) | `{transactions, next}` |
 | `transaction` / `transactionByCommand` | `txId` / `commandId` | record or null |
 | `transactionsForEntity` | `entityId`, `limit`, `snapshotPosition`, `beforePosition` | newest first, `nextBeforePosition` |
-| `cutCatalog` | `scope` | every position with instant, txId, command, internal flag, group |
+| `cutCatalog` | `scope` | every position (the oracle's ordinal) with instant, txId, command, internal flag, group, and the receipt `coordinate` when the scope uses coordinates |
 | `entityPage` | `entityType`, `limit` (1..200, default 50), `cut`, or `cursorFrom: {query, page}` / `cursor` | pages of complete bodies, ids in codepoint order, `nextCursor` per page (R-PAGE-2..4) |
 | `get` / `getMany` | `entityType`, `entityId` / `entityIds`, `include`, `schemaVersion`, `cut` | model(s) or E-CONFLICTING-VALUES |
 | `find` | `entityType`, `where`, `orderBy`, `include`, `select`, `limit`, `pageSize`, `compare`, `cut` | `{total, pages:[{ids, entities, hasMore}]}`; fails on a conflicted attribute in a returned document (AMB-17 A) |
@@ -172,10 +186,11 @@ Every query has `id`, `kind`, and usually a `cut`:
 | `valueSupports` | `cut`, `pattern` | per (entity, attribute, value identity): count and assertion ids |
 | `reachability` | `cut`, `attribute`, `from`, optional `to` | closure; supportCount, paths with edge assertion ids |
 | `aggregate` | `cut`, `match.attributes {var: attribute}`, `match.entityType`, `where`, `groupBy`, `aggregates [{op, var, as, convert?}]`, `varTypes`, `emptyAs` | rows; `convert: "toNumber"` before AVG (AMB-11; `integerAvg: "convert"` is the 0.1 alias) |
-| `expr` | `expr: ["add", v, ["mul", v, v]]`: add sub mul div rem neg abs cast-int64 to-number (toNumber) to-int64 (toInt64, toInteger) to-decimal | typed value or typed error |
+| `expr` | `expr: ["add", v, ["mul", v, v]]`: add sub mul div rem neg abs cast-int64 to-number (toNumber) to-int64 (toInt64, toInteger) to-decimal (toDecimal); `["divide", a, b, scale, "half-even"]`, `["round", x, scale, "half-up"]`, `["toDecimal", x, p, s]` and `["toDecimal", number, p, s, "down"]` take bare JSON integers and rounding strings as parameters | typed value or typed error |
 | `compare` | `left` (value or expression), `right` (value, expression or untyped constant), `compare` mode | eq/ne/lt/gt each a boolean or the pinned error, identity, same group |
 | `sortValues` | `values` | distinct values in ACC 4.5 order (first given representation survives) |
 | `analyticCounts` | `n`, `width` (1 or 10) | configured-entity population counts |
+| `orderKey` / `decimalKey` / `tdk1Key` | any | refused, exit 2 `X-NOT-MODELED` (TDK1 keys, Q35; R-DEC-17) |
 
 `where` items: `{"prop"|"var": ..., "op": "eq|ne|lt|lte|gt|gte|in|exists|missing", "value": ...}` (`values` for
 `in`); `value` is a typed value object or an untyped bare JSON string/number. `orderBy`:
@@ -184,20 +199,23 @@ Every query has `id`, `kind`, and usually a `cut`:
 A query that fails returns `{"id", "kind", "error": {...}}` with the ACC 4.7 fields: `error` (the 4.7 id, for
 example `E-CONFLICTING-VALUES`, `E-INTEGER-OVERFLOW`, `E-MIXED-FAMILY`, `E-INTEGER-AVG`, `E-CURSOR`), `_tag`,
 `reason`, `phase`, `reasonAlternatives` (multi-reason ids), `message` and detail (`conflicts` lists every
-conflicted `{entityId, attribute}`). Errors without a 4.7 row use `X-` ids (`X-READ-LIMIT`, `X-INVALID-BASIS`,
-`X-CYCLE`, `X-NO-POSITION`, `X-NOT-MODELED`) with `ruling` naming the RULING-NEEDED item (R-ERR-2).
+conflicted `{entityId, attribute}`). Errors without a 4.7 row use `X-` ids (`X-CYCLE`, `X-NO-POSITION`,
+`X-NOT-MODELED`) with `ruling` naming the RULING-NEEDED item (R-ERR-2). A case the oracle cannot answer
+exactly (erasure, decimal scale evolution, TDK1 keys) exits 2 with a message starting `X-NOT-MODELED`.
 
 ## 4. Output document
 
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.2.0", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.3.1", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",
   "divergedAtCommand": null,          // first command whose receipt disagreed (answers after it bind fewer identities)
-  "receiptConsistency": {"status": "PASS | FAIL | NOT-APPLICABLE", "violations": [{"rule": "R-RCP-1", ...}]},
+  "receiptConsistency": {"status": "PASS | FAIL | NOT-APPLICABLE", "violations": [{"rule": "R-RCP-1", ...}],
+                         "positions": [{"scope": "s1", "coordinates": "integer | tuple", "dense": true,
+                                        "aborted": [...]}]},   // only when informative (R-RCP-8)
   "commandOutcomes": [{"command": 0, "expected": {"outcome": "committed"}, "observed": {...}, "verdict": "PASS"}],
   "state": [{"scope": "s1", "lastPosition": 5, "assertions": [...], "transactions": [...]}],
   "queries": [{"id": "...", "kind": "...", "result": ...}],
@@ -206,12 +224,15 @@ conflicted `{entityId, attribute}`). Errors without a 4.7 row use `X-` ids (`X-R
 ```
 
 - **Typed values** come out as `{"type","value"}`; binary64 and datetime add `"bits"`; json adds
-  `"canonical"`; decimal adds `"scale"`, `"precision"` and `"storage"`; `value` of a number is the ECMAScript
+  `"canonical"`; decimal adds `"scale"` and `"precision"` (no storage form, Q35b); `value` of a number is the ECMAScript
   shortest lexeme, `-0` for negative zero; integers are canonical decimal text (AMB-10).
 - **Assertion rows** carry every field of spec item 4: `id, entityId, attribute, value, validFrom, validTo,
   recordedAt, recordedPosition, createdBy, entityType, schemaVersion, txId, retractedAt,
   retractedPosition, retractTxId`; journal fact rows add `"journal": true`.
 - **Rejected expected outcomes**: `{"outcome":"rejected","error":"<4.7 id>","errorTag","reason","phase",
-  "reasonAlternatives"?,"message",...}`; `host-abort` has `errorTag` null and a `ruling` note (R-CMD-9).
+  "reasonAlternatives"?,"detail"?,"message",...}`; `detail` is `inexact-json-number` (E-INEXACT-JSON-NUMBER) or
+  `no-negative-zero` (E-NEGATIVE-ZERO-INSTANT); `host-abort` has `errorTag` null and a `ruling` note (R-CMD-9).
+- **Phase of a two-phase row**: E-DECIMAL-OVERFLOW ("preflight or execution") is `preflight` on a rejected
+  write and `execution` on a query result (R-DEC-16).
 - **Verdicts per command**: `PASS`, `PASS-OUTCOME-ONLY` (rejected as expected, tag not checkable),
   `FAIL`, `EXPECTED-ONLY`.

@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.3",
+  "version": "0.3.5",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-07",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
@@ -8,15 +8,15 @@
   "inputs": {
     "lab/SCOPE.md": "5a408004332474dc8ff7699ad5c89ef7ca03b96728a959ea9cc8ceb7a4ff7c03",
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
-    "lab/TARGETS.md": "038ebafca557ccb626358d36cba42cf01f5dc31d56db6c9d71f6edcbfaf66d51",
+    "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "12a8aaea50e29752102e052383cd52e391eb8add188b62470282bce4ff3d4531",
-    "lab/acceptance/build_contract.py": "bf85c8c5b8206619ec1242df45bc262d540c42a2dbaad45d34dd7bbe27c58d12"
+    "lab/acceptance/RULINGS.md": "7b460e0ad40bc805ef2c3b3c23d5f9878cd55c3373e08ace118fa709b577f3a1",
+    "lab/acceptance/build_contract.py": "4ac8746cbf87104dadd3f452cc87cc2b6e53dddfb53ee9dd3f658bc762ab012f"
   },
   "artifacts": {
-    "load-contract.json": "d14ea9a0fbe44f59526d0d22b79a2afaa8f4d7967afbf6106c188c5326a0fdc3",
-    "budgets.json": "ebaea1dd08abddef87504ee5f919df253c4f42adb11a453df4003319fc004542",
-    "capability-matrix.md": "087da8c647d44858c0ae967b560bbe01560a290c737b9fea84c2b2fe1a634479"
+    "load-contract.json": "075df2f931e2e9a9b0388288fc1fce16cf9ad29c1904b5c897eabe1fab6705fa",
+    "budgets.json": "7ea592a1c8fdef577ed3c48278f743a6f1e4fe5d3477fb1ab048d4f69181cc9e",
+    "capability-matrix.md": "42a93edb873d2c3740c320ef5882ef02c72939e05fad2795e2f5d968e4e1c763"
   },
   "lanes": [
     "xtdb-xtql",
@@ -348,7 +348,7 @@
     {
       "id": "Q18",
       "topic": "decimal value kind",
-      "ruling": "A decimal attribute declares precision and scale. Stored as a scaled integer when precision <= 15 (the scaled value stays within 2^53), otherwise as an order-preserving decimal string. A value with more fractional digits than the scale, or outside the precision, is rejected with a typed error, never rounded. Decimal is its own family, ordered between number and datetime; comparison between decimal and integer or number is a typed preflight error unless the query converts explicitly; arithmetic runs in the TypeScript kernel with exact decimal arithmetic.",
+      "ruling": "Amended by Q35b: a decimal attribute declares precision and scale and has one stored representation on both lanes, the TDK1 key (channel decimal_order_v1, value-determined, order-preserving) plus derived canonical text at the declared scale. A value with more fractional digits than the scale, or outside the precision, is rejected with a typed error, never rounded. Decimal is its own family, ordered between number and datetime; comparison between decimal and integer or number is a typed preflight error unless the query converts explicitly; arithmetic runs in the TypeScript kernel with exact decimal arithmetic.",
       "compiledInto": [
         "VALUE_KINDS decimal",
         "DECIMAL_RULES",
@@ -589,9 +589,138 @@
         "GATE-POSITION",
         "W0_PIN"
       ]
+    },
+    {
+      "id": "Q33",
+      "topic": "EXP-O02 RULING-NEEDED items (Q33a to Q33i)",
+      "ruling": "Q33a a JSON number is accepted only if it reads back as written (refines Q30a). Q33b decimal R-DEC-0, 1, 2, 3, 5, 6, 7. Q33c retract-pattern out of range is E-VALUE-OUT-OF-RANGE. Q33d every ordered comparison across families is E-MIXED-FAMILY; cross-family equality false except decimal. Q33e non-numeric operands and aggregates are E-MIXED-FAMILY; rem integer-only. Q33f unmapped operation faults are E-INVALID-VALUE; retract-pattern on a transaction entity is E-RESERVED. Q33g journal envelope, X-NOT-MODELED, transactions limit malformed. Q33h invalid basis E-INVALID-VALUE; entityPage limit malformed; a cursor continued with another basis is other-query. Q33i the oracle's readings for G10-CUR-01 E1/E2 and the QLever lane outcomes, cross-checked against Q31j.",
+      "compiledInto": [
+        "Q33_RULES",
+        "WR-JSON",
+        "DECIMAL_RULES",
+        "CMP-CROSS-FAMILY-ORDERED",
+        "CS-ERRORS",
+        "CS-JOURNAL",
+        "CS-CURSOR",
+        "CS-RANGE-OUT",
+        "Q33I_CURSOR_READINGS",
+        "Q33I_QLEVER_REJECTED",
+        "LEGACY_LANE_OUTCOMES"
+      ]
+    },
+    {
+      "id": "Q34",
+      "topic": "Codex plan-v2 round 3 (Q34a to Q34e)",
+      "ruling": "Q34a density is proven by an allowlist of A0 allocator source hashes checked against the receipt's bound source; positionsDense has no authority; conditional selection authoritative; forged-density fixture. Q34b outage read-your-own-write on every serving surface, native included; stale-fallback rejection; cross-language recipes bound to one semantic query identity and one oracle answer. Q34c the Q30a guard validates user JSON only; generated journal JSON is exempt; lossless typed journal; paired test. Q34d prerequisites checked at admission of every comparative or promotion claim, screening included; failed or pending means diagnostic. Q34e two regenerations are byte-identical.",
+      "compiledInto": [
+        "A0_ALLOCATOR_ALLOWLIST",
+        "ALLOCATOR_EXTRACTION_RULE",
+        "density_proven",
+        "position_selection",
+        "FORGED_DENSITY_FIXTURE",
+        "G7.position.coordinates",
+        "COMPOSITION fallbackEquivalence",
+        "G7.composition.ack-and-routed-ryow",
+        "WR-JSON",
+        "G1.wire.write-guards",
+        "G7.journal.logical-contract",
+        "CLAIM_ADMISSION",
+        "admit_claim",
+        "main --verify"
+      ]
+    },
+    {
+      "id": "Q35",
+      "topic": "R20 order-preserving decimal encodings (Q35a to Q35e)",
+      "ruling": "Q35a the decimal order key is TDK1 (value-determined, order-preserving). Q35b one stored representation on both lanes (TDK1 key plus derived canonical text), amending Q18; widening that admits every value is metadata-only. Q35c channel decimal_order_v1. Q35d keys never concatenated nor used for prefix queries. Q35e error names E-DECIMAL-OVERFLOW, E-DECIMAL-FRACTION, E-DECIMAL-NARROWING, E-DECIMAL-BARE-DIVIDE (the earlier unrepresentable error is retired); precision 38; -0.00 refused; no native XTDB DECIMAL lane; signed-zero rounding tests if decimal.js or big.js is used.",
+      "compiledInto": [
+        "TDK1",
+        "tdk1_encode",
+        "DECIMAL_RULES",
+        "VALUE_KINDS decimal",
+        "DS-WIDEN",
+        "ERROR_TABLE",
+        "TDK1_TESTS",
+        "CS-TDK1",
+        "G1.decimal.tdk1-*",
+        "O-TDK1",
+        "TDK1_VECTOR_PIN",
+        "GATE-TDK1-VECTORS"
+      ]
+    },
+    {
+      "id": "Q36",
+      "topic": "W0 questions from EXP-D01a (Q36a to Q36h)",
+      "ruling": "Contract impact only of Q36a (work item id over (subject, rule, kind, key); content version over (release hash, input positions, payload); outbox delivery key (id, version); early cutoff: an unchanged payload publishes nothing), Q36e (expected affected set = subjects whose static read set contains a changed fact) and Q36g/h (location fanout Zipf s = 0.5 over 2,000 locations at 100k; other rungs N / 50 with the same s). Q36b, c, d and f have no contract impact.",
+      "compiledInto": [
+        "WORLD_W0 workItemIdentity",
+        "WORLD_W0 affectedSet",
+        "WORLD_W0 fanout",
+        "W0-LOCATION-ZIPF-S",
+        "GS.19",
+        "GS-19B-OUTBOX-CRASH",
+        "NS.P5",
+        "NS.P3",
+        "load-contract.json P3 and P5"
+      ]
+    },
+    {
+      "id": "Q37",
+      "topic": "contract 0.3.4 questions (Q37a to Q37d)",
+      "ruling": "Q37a accepted the five-block allowlist scope, then superseded by Q38a (no allowlist). Q37b every obligation O-REPLAY would close fails closed until the oracle is accepted after EXP-O03 and pinned; A0 measurements produce diagnostics, never closures. Q37c O-TDK1's reference and vectors live in lab/oracles/decimal/ and are pinned (hashes as revised by Q38e). Q37d E-DECIMAL-FRACTION covers excess fraction digits at write and decimal-to-integer with a nonzero fraction.",
+      "compiledInto": [
+        "GATE-ORACLE-PIN",
+        "CLAIM_ADMISSION",
+        "ORACLE_PINS O-TDK1",
+        "O_TDK1_FILES",
+        "TDK1_VECTOR_PIN",
+        "E-DECIMAL-FRACTION"
+      ]
+    },
+    {
+      "id": "Q38",
+      "topic": "Codex plan-v2 round 4 (Q38a to Q38f)",
+      "ruling": "Q38a no density exemption: every composition, A0 included, runs the four falsifiers; the allowlist is removed and an outside-block mutation fixture kept. Q38b admit_claim derives every prerequisite from validated, source-bound receipts and enforces Q37b. Q38c every RULINGS change is compiled and verified; uncompiled entries are listed as recorded-not-compiled. Q38d decimal channel routing on repository, native and raw surfaces, derived expressions and aggregates; JSON opaque unless converted; SUM decodes, computes, encodes; key arithmetic invalid. Q38e O-TDK1 BUILT with pinned files; the vector pin null until independent review. Q38f outbox delivery identity (id, publication sequence) with durable atomic publication state and crash replay.",
+      "compiledInto": [
+        "OUTSIDE_BLOCK_MUTATION_FIXTURE",
+        "POSITION_REQUIRED_CASES",
+        "G7.position.coordinates",
+        "M-WITHTRANSACTION-REBIND",
+        "admit_claim",
+        "receipt_valid",
+        "CLAIM_ADMISSION",
+        "RULINGS_COVERAGE",
+        "DECIMAL_ROUTING",
+        "G1.decimal.channel-routing",
+        "M-DECIMAL-LEXICAL-ORDER",
+        "O-TDK1",
+        "OUTBOX",
+        "G7.outbox.publication-sequence",
+        "M-OUTBOX-VERSION-DEDUP",
+        "GS.10",
+        "GS.11",
+        "GS.19",
+        "NS.P5",
+        "load-contract.json P5"
+      ]
+    },
+    {
+      "id": "Q39",
+      "topic": "EXP-X02 (Q39a, Q39b)",
+      "ruling": "Q39a an XTDB engine-side exact sum uses SUM(CAST(x AS DECIMAL(32,0))) read as text, never cast back to BIGINT or a numeric client type (XTDB 2.2.0 rounds through a double); on the XTDB hazard list. Q39b every XTDB receipt records TRIPLEX_XTDB_NATIVE_LANGUAGE; XTQL and SQL results never share an obligation closure.",
+      "compiledInto": [
+        "KL-X9",
+        "G5.agg.projection-sums",
+        "M-X-DECIMAL-SUM-BIGINT",
+        "RECEIPT_SCHEMA nativeLanguage",
+        "LANGUAGE_RULES xtdbNativeLanguage",
+        "STATUS_ALGORITHM",
+        "keyByNativeLanguage"
+      ]
     }
   ],
   "languageRules": {
+    "xtdbNativeLanguage": "every XTDB receipt records TRIPLEX_XTDB_NATIVE_LANGUAGE (xtql or xtdb-sql) as executed; XTQL and SQL results never share an obligation closure: lane receipts close only their own lane, and an engine-scope receipt whose evidence includes a native or raw surface closes only the lane of its recorded language (RULINGS Q39b)",
     "substep": "Every read substep records exactly one language: xtql (native.select), sql (selectSql), sparql (QLever native). A lane receipt counts a task only when every relational substep is in the lane's language.",
     "hybrid": "A task with a relational substep in another language, or with a host step not listed below, counts for neither XTDB language.",
     "permittedHostSteps": [
@@ -644,7 +773,7 @@
     },
     {
       "kind": "decimal",
-      "rule": "value kind for money and business decimals (RULINGS Q18, DECIMAL_RULES): the attribute declares precision and scale; stored as a scaled integer when precision <= 15, otherwise as an order-preserving decimal string; exact storage and round trip; order-preserving encoding for range rules; a value with more fractional digits than the scale, or outside the precision, fails with E-DECIMAL-UNREPRESENTABLE, never rounded; its own family; arithmetic in the TypeScript kernel with exact decimal arithmetic"
+      "rule": "value kind for money and business decimals (RULINGS Q18 as amended by Q35b, DECIMAL_RULES): the attribute declares precision and scale; one stored representation on both lanes, the TDK1 key (value-determined, order-preserving, channel decimal_order_v1) plus derived canonical text; exact storage and round trip; more fractional digits than the scale fail with E-DECIMAL-FRACTION, a value beyond the precision with E-DECIMAL-OVERFLOW, never rounded; its own family; arithmetic in the TypeScript kernel with exact decimal arithmetic"
     },
     {
       "kind": "boolean",
@@ -672,15 +801,15 @@
     "declaration": "every decimal attribute declares precision p (total significant digits) and scale s (fractional digits), 0 <= s <= p",
     "storage": [
       {
-        "when": "p <= 15",
-        "as": "scaled integer value * 10^s (|scaled| < 10^15 < 2^53)"
-      },
-      {
-        "when": "p > 15",
-        "as": "order-preserving decimal string (fixed-width, sign-aware encoding whose bytewise order equals numeric order)"
+        "when": "every declared precision and scale (both lanes)",
+        "as": "the TDK1 key in channel decimal_order_v1 (authoritative, decodes exactly) plus derived canonical text at the declared scale; QLever also keeps its lexical channel for parity with other kinds (RULINGS Q35b, amending Q18)"
       }
     ],
-    "reject": "a value with more than s fractional digits, or with more than p - s integer digits, fails the write with E-DECIMAL-UNREPRESENTABLE and leaves no residue; never rounded or truncated",
+    "oneRepresentation": "the decimal kind has exactly one stored representation; Q18's scaled-integer path no longer applies; money modeled as integer cents uses the integer kind (RULINGS Q35b)",
+    "reject": "a value with more than s fractional digits (counted on the value, so 16.500 fits scale 2, R-DEC-3) fails with E-DECIMAL-FRACTION; a value beyond the declared precision or 38 digits fails with E-DECIMAL-OVERFLOW; -0.00 in any spelling is refused with E-INVALID-VALUE (R-DEC-2); a decimal on an attribute not declared decimal is E-INVALID-VALUE (R-DEC-0); every rejection leaves no residue; never rounded or truncated (RULINGS Q33b, Q35e)",
+    "wireShape": "{\"type\": \"decimal\", \"value\": \"16.50\"} (R-DEC-1); a value with extra trailing zeros is returned at the declared scale (16.500 at scale 2 reads back as 16.50) while the original input text is still captured (Q22, R-DEC-3)",
+    "toDecimal": "toDecimal(number, p, s, rounding) starts from the number's exact binary expansion, then applies the caller's scale and rounding (R-DEC-6)",
+    "avg": "AVG over decimal is preflight E-DECIMAL-AVG unless written as divide(SUM, COUNT, scale, rounding) (R-DEC-7); decimal divide is modeled by the oracle (follow-up EXP-O03, R-DEC-5)",
     "family": "decimal is its own family, ordered between number and datetime (CARD_MANY_ORDER); 1.50 and 1.5 are one value",
     "comparison": "CMP-DECIMAL-CROSS: comparison with integer or number is preflight E-MIXED-FAMILY unless the query converts explicitly",
     "arithmetic": "TypeScript kernel, exact decimal arithmetic; engine-side decimal arithmetic only where a projection needs it (RULINGS Q19)",
@@ -748,7 +877,7 @@
   "decimalConversions": [
     {
       "id": "DC-I2D",
-      "rule": "integer to decimal(p, s): exact when the integer fits p - s digits, else E-DECIMAL-UNREPRESENTABLE",
+      "rule": "integer to decimal(p, s): exact when the integer fits p - s digits, else E-DECIMAL-OVERFLOW",
       "case": "DEC-CV-INT-TO-DEC"
     },
     {
@@ -768,7 +897,7 @@
     },
     {
       "id": "DC-T2D",
-      "rule": "text to decimal at the write boundary: the canonical decimal grammar only; more fractional digits than s or more than p - s integer digits is E-DECIMAL-UNREPRESENTABLE, never rounded",
+      "rule": "text to decimal at the write boundary: the canonical decimal grammar only; more fractional digits than s (counted on the value) is E-DECIMAL-FRACTION and more than p - s integer digits is E-DECIMAL-OVERFLOW, never rounded",
       "case": "DEC-CV-TEXT-TO-DEC"
     },
     {
@@ -780,12 +909,12 @@
   "decimalScaleEvolution": [
     {
       "id": "DS-WIDEN",
-      "rule": "increasing scale or precision is a metadata change only when the integer digits p - s do not shrink (precision grows by at least the scale increase) and the order-key encoding is proven unchanged for every existing value; stored values then read back with the new declared scale",
+      "rule": "a declaration change that admits every existing value is metadata-only: TDK1 keys depend on the value alone, so Q31g's key-compatibility condition always holds and no key is rewritten; stored values read back with the new declared scale (RULINGS Q35b, superseding Q31g's migration path)",
       "case": "DEC-SCALE-WIDEN"
     },
     {
       "id": "DS-WIDEN-MIGRATE",
-      "rule": "any other widening (integer digits would shrink, or an existing value's order key would change) is a migration that rewrites values and order keys atomically, or fails atomically with E-DECIMAL-NARROWING before any mutation",
+      "rule": "a change under which some existing value no longer fits (for example integer digits p - s shrink) validates every live and historical value first and fails atomically with E-DECIMAL-NARROWING before any mutation; no key rewrite is ever needed",
       "case": "DEC-SCALE-WIDEN-MIGRATE"
     },
     {
@@ -1187,6 +1316,7 @@
     "basis": "a basis is a source-of-truth position (POSITION coordinates (stream, epoch, offset, ordinal)) plus a valid time",
     "eligibility": "index I is eligible to serve basis B only when all hold: its watermark (a fully resolved prefix) has reached B in B's epoch; C1's eligibility for the query (mapping, valid time, exact cut); I can actually reconstruct B (a current-only index only when B is at or after the last change to every attribute the read touches, the validity interval of R18); and I has applied every erasure published so far, independently of B (ERASURE frontier) (RULINGS Q31d)",
     "watermarkRouting": "a read that finds no eligible index waits at most T-WATERMARK-WAIT-MS for one, then routes to an eligible fallback (the source of truth's own query surface or another index); the fallback's latency counts in the read's own latency; the receipt records the route and the surface language, a cross-language fallback is counted per surface, and fallbacks are reported as a share of reads per window; no index answers for a basis it is not eligible for (RULINGS Q31d)",
+    "fallbackEquivalence": "outage read-your-own-write is tested on every serving surface the composition claims, native surfaces included; a stale fallback is rejected; where a fallback answers in another language, both recipes are bound to one semantic query identity (parameters, basis, meaning) and one expected answer from the oracle; total request latency and language attribution stay recorded (RULINGS Q34b)",
     "ackOwnership": "the source of truth sends the ACK after its own publication; read-your-own-write holds by routing (the pull at the returned position goes to an eligible index, else the fallback); in normal operation the current index is kept synchronous so the fast path serves that pull; during a current-index outage commits and ACKs continue, pulls fall back, the index catches up from the feed through a bounded queue, and fallback share and recovery time are measured (GS.04b); history and analytics stay asynchronous behind watermarks (RULINGS Q31e, replacing Q28's ACK clause)",
     "layerSwaps": "layers are swapped one at a time under matched workloads at small rungs (current-index candidates on P1 and P4; history candidates on past-basis reads and GS.12; source candidates on P2 and P3); only the two or three best compositions go on to end-to-end validation with the golden scenarios",
     "scopeKey": "an engine-scope receipt's key is (layer, the engine assigned to that layer, its image digest, configuration hash and slot), derived from the composition, never from engineOfLane"
@@ -1208,7 +1338,10 @@
     "releases": "two releases R1 and R2; R2 changes three requirements; releases are content-addressed and activation is a fact",
     "implementations": "the TypeScript reference kernel the drivers call, and O-DOMAIN, an independent stdlib-only Python oracle giving expected next tasks, obligations with due times, work items and effect traces from the same command stream",
     "previewActivation": "plan-impact preview (GS.11) and activation (GS.10) are compared at one common input basis (GS-10-11-COMMON-BASIS), never at different bases",
-    "witnesses": "every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not)"
+    "witnesses": "every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not)",
+    "workItemIdentity": "a work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; its content version hashes (release hash, input positions, payload) and is not the delivery identity; each id carries a durable publication sequence that increments whenever the payload to publish differs from the latest published payload for that id, and the outbox delivery key is (id, publication sequence); an activation that leaves the payload equal to the latest published one publishes nothing (early cutoff); duplicate-effect checks count by delivery key (RULINGS Q36a, Q38f)",
+    "affectedSet": "the expected affected set of a transaction is the subjects whose static read set contains a changed fact; static read sets over-approximate and never miss (RULINGS Q36e)",
+    "fanout": "work-location fanout is a seeded Zipf with s = 0.5 over 2,000 locations at the 100k rung (largest location about 1,100 workers, mean 50); other rungs keep N / 50 locations with the same s; only the 100k numbers are frozen floors (RULINGS Q36g, Q36h)"
   },
   "goldenFailureSchedules": {
     "GS.03": [
@@ -1222,7 +1355,7 @@
       {
         "case": "GS-04B-INDEX-PARTITION",
         "schedule": "the current index's feed consumer is cut for 60 s while the source keeps committing",
-        "expected": "commits and ACKs continue throughout the outage; reads for which the index is not eligible wait at most 10 ms (COMPOSITION watermarkRouting) then route to the fallback; none answers from the stale index; the receipt measures the fallback share per window and the recovery time until the index is eligible again (RULINGS Q31e)"
+        "expected": "commits and ACKs continue throughout the outage; on every serving surface the composition claims, native included, reads for which the index is not eligible wait at most 10 ms (COMPOSITION watermarkRouting) then route to the fallback; none answers from the stale index; the receipt measures the fallback share per window and the recovery time until the index is eligible again (RULINGS Q31e)"
       }
     ],
     "GS.06": [
@@ -1248,7 +1381,7 @@
       {
         "case": "GS-19B-OUTBOX-CRASH",
         "schedule": "the consumer crashes after delivering an outbox item but before recording completion",
-        "expected": "the receiver deduplicates by the delivery key: exactly one externally visible effect"
+        "expected": "the receiver deduplicates by the delivery key (id, publication sequence) of OUTBOX: exactly one externally visible effect per delivery key, and a later return to an earlier payload is a new delivery (RULINGS Q36a, Q38f)"
       }
     ]
   },
@@ -1506,6 +1639,53 @@
       "why": "NS-P2-UNJUSTIFIED-OUTCOMES-MAX: accounting is not progress"
     },
     {
+      "id": "CX-FORGED-DENSITY",
+      "defeats": [
+        "CR-NS",
+        "CR-GS",
+        "CR-FAULT"
+      ],
+      "receipts": "a receipt declaring positionsDense true, or matching the 0.3.4 allocator hashes (OUTSIDE_BLOCK_MUTATION_FIXTURE), with only the dense nested-cut cases closed",
+      "why": "no composition is exempt from the four falsifiers (RULINGS Q38a)"
+    },
+    {
+      "id": "CX-CLAIM-NULL-ORACLE-PIN",
+      "defeats": [
+        "CR-NS",
+        "CR-GS",
+        "CR-PASS-ALL"
+      ],
+      "receipts": "a complete comparative claim with valid position, identity and W0 receipts while O-REPLAY's pin is null",
+      "why": "RULINGS Q37b, Q38b: an unpinned oracle the claim depends on makes it a diagnostic"
+    },
+    {
+      "id": "CX-CLAIM-SUPPLIED-NAMES",
+      "defeats": [
+        "CR-NS",
+        "CR-GS"
+      ],
+      "receipts": "a claim listing closed case names and compositionBound true but carrying no source-bound receipts",
+      "why": "RULINGS Q38b: prerequisites come from receipts, never from supplied names or Booleans"
+    },
+    {
+      "id": "CX-XTDB-SHARED-LANGUAGE",
+      "defeats": [
+        "CR-PASS-ALL",
+        "CR-NS"
+      ],
+      "receipts": "an XTDB receipt executed in xtql used to close the xtdb-sql lane (or the reverse), or a receipt without nativeLanguage",
+      "why": "RULINGS Q39b"
+    },
+    {
+      "id": "CX-SCREENING-CLAIM-PREREQ",
+      "defeats": [
+        "CR-NS",
+        "CR-GS"
+      ],
+      "receipts": "a P-SCREEN comparative claim whose composition is not proven dense and whose falsifiers are open, or whose W0 pin is pending",
+      "why": "CLAIM_ADMISSION: prerequisites are checked on every comparative claim, screening included; the claim is a diagnostic (RULINGS Q34d)"
+    },
+    {
       "id": "CX-POSITION-GATE",
       "defeats": [
         "CR-NS",
@@ -1648,22 +1828,599 @@
   "a0Controls": {
     "A0-XTDB": {
       "source": "xtdb",
-      "positionsDense": true,
-      "why": "today's scope-counter adapter assigns dense positions"
+      "why": "today's scope-counter allocator; runs the four falsifiers like every other composition (RULINGS Q38a)"
     },
     "A0-QLEVER": {
       "source": "qlever",
-      "positionsDense": true,
-      "why": "today's scope-counter adapter assigns dense positions"
+      "why": "today's scope-counter allocator; runs the four falsifiers like every other composition (RULINGS Q38a)"
     }
   },
+  "outsideBlockMutationFixture": {
+    "source": "xtdb",
+    "file": "packages/xtdb/src/XtdbStorageAdapter.ts",
+    "mutation": "the exported withTransaction binding (about line 485) is rebound in memory to allocate an extra position before executing the transaction",
+    "unchangedBlockHashes": {
+      "  const committedPosition = () =>": "f4e600f36f7563508610f03b3b4c6b9eb83b14fffa94a7cf7f92f3380be126bd",
+      "  const persist = (": "e1272f80323eb02049179fbaa4c35c7a174161a3379f62c99eae932828a3112c",
+      "  const withTransaction = <A, E>(": "f2ebd36fc7b31ce6098d58f18555cbbcdaa7837965e3ca143aadca1d4fa81380",
+      "    nextCommitPosition: () =>": "62c1b2805ec7bcfbcd55a895195add4c0d32b6a882c6772379af081eb3603f16",
+      "    currentCommitPosition: () =>": "7d54d2315040284eb04df9fdd86a06f2e579f8519b92fa5966172012e20d6360"
+    },
+    "oldMechanismVerdict": "dense, falsifiers skipped (0.3.4 density_proven returned True)",
+    "requiredVerdict": "the four falsifiers run; FX-NESTED-CUTS fails under the mutation (mutant M-WITHTRANSACTION-REBIND)",
+    "source_of_finding": "lab/reviews/plan-v2-round4.codex.md finding 1"
+  },
+  "positionRequiredCases": [
+    "PO-LEXICOGRAPHIC-ORDER",
+    "PO-ORACLE-DENSE-ORDINALS",
+    "PO-NESTED-CUTS-DENSE",
+    "FX-NESTED-CUTS",
+    "FX-ABORT-GAP",
+    "FX-CRASH-APPEND-RESOLUTION",
+    "FX-RESUME-AT-ABORT-GAP",
+    "PO-ABORTED-LISTED"
+  ],
+  "claimAdmission": {
+    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator derives every prerequisite from validated, source-bound receipt evidence, never from supplied case names or Booleans: a VA-valid G7.position.coordinates receipt for the claim's own source tree and composition covering all of POSITION_REQUIRED_CASES; composition identity bound on every receipt (four assignments with image digest, configuration hash and slot); where any claimed obligation uses O-DOMAIN, the W0 pin and a W0.coverage-floors receipt; and a non-null, accepted ORACLE_PINS entry for every oracle the claim depends on, including the oracles of its prerequisite obligations. A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
+    "verdicts": [
+      "QUALIFIED",
+      "DIAGNOSTIC"
+    ]
+  },
+  "oraclePins": {
+    "O-TDK1": {
+      "files": "lab/oracles/decimal/",
+      "sha256": {
+        "lab/oracles/decimal/tdk1_reference.py": "73467589480deb93fb700cdaf856cccb8f67b9a24d1963e26744a0ac4754bf33",
+        "lab/oracles/decimal/gen_vectors.py": "b30b430acbfc7476cf47e676d38abaa247d3545b20aac5d481bea67a11cf11e1"
+      },
+      "acceptReceipt": null,
+      "acceptedAfter": "independent review of the oracle and of tdk1-vectors.json",
+      "rule": "file hashes pinned (RULINGS Q37c, Q38e); acceptance null until the independent review, so obligations it would close fail closed"
+    },
+    "O-REPLAY": {
+      "files": "lab/oracles/replay/**",
+      "sha256": null,
+      "acceptReceipt": null,
+      "acceptedAfter": "EXP-O03 and its independent verification",
+      "rule": "null until the oracle is accepted; every obligation O-REPLAY would close fails closed until then; pinning needs a contract version bump"
+    }
+  },
+  "oTdk1Files": {
+    "lab/oracles/decimal/tdk1_reference.py": "73467589480deb93fb700cdaf856cccb8f67b9a24d1963e26744a0ac4754bf33",
+    "lab/oracles/decimal/gen_vectors.py": "b30b430acbfc7476cf47e676d38abaa247d3545b20aac5d481bea67a11cf11e1"
+  },
+  "outbox": {
+    "deliveryKey": "(id, publication sequence)",
+    "sequence": "durable per work-item id; increments when the payload to publish differs from the latest published payload for that id, so R1 to R2 to R1 publishes three deliveries (1650, 1700, 1650) and the receiver never suppresses the return",
+    "contentVersion": "hashes (release, inputs, payload); recorded, never the delivery identity",
+    "atomicity": "publication state (sequence and latest published payload) is persisted atomically with its outbox record",
+    "recovery": "unacknowledged deliveries survive crashes and replay with their original identity",
+    "cases": {
+      "OB-RELEASE-ROLLBACK": "activate R1, R2, R1 over unchanged business facts: three deliveries with sequences 1, 2, 3 and payloads 1650, 1700, 1650",
+      "OB-CRASH-BEFORE-DELIVERY": "crash after the outbox record and publication state commit but before delivery: replay delivers the same (id, publication sequence) exactly once",
+      "OB-UNCHANGED-ACTIVATION-RECOVERY": "an activation that leaves the payload unchanged while an earlier delivery is still unacknowledged after a crash: nothing new is published and the pending delivery replays with its original identity",
+      "OB-ATOMIC-STATE": "a crash between the outbox record and its publication state is impossible: both or neither are visible"
+    }
+  },
+  "decimalRouting": [
+    {
+      "id": "DR-REPO-ORDER",
+      "rule": "repository ORDER BY and range on a decimal attribute use the decimal_order_v1 key",
+      "case": "DR-REPO-ORDER"
+    },
+    {
+      "id": "DR-NATIVE-ORDER",
+      "rule": "native ORDER BY and range in the lane language use the decimal_order_v1 key, never QLever's lexical canonical text",
+      "case": "DR-NATIVE-ORDER"
+    },
+    {
+      "id": "DR-RAW-ORDER",
+      "rule": "raw recipes order and range on the documented decimal_order_v1 channel, never the lexical text",
+      "case": "DR-RAW-ORDER"
+    },
+    {
+      "id": "DR-DERIVED",
+      "rule": "a derived decimal expression used for ordering or comparison is computed exactly in the kernel and encoded to TDK1 before it is compared",
+      "case": "DR-DERIVED"
+    },
+    {
+      "id": "DR-AGGREGATE",
+      "rule": "SUM over decimals decodes the keys or canonical text, computes exactly, and encodes any decimal result used for ordering; MIN and MAX compare keys",
+      "case": "DR-AGGREGATE"
+    },
+    {
+      "id": "DR-KEY-ARITHMETIC",
+      "rule": "arithmetic on key strings (summing or subtracting decimal_order_v1 values as text or numbers) is invalid: preflight E-MIXED-FAMILY",
+      "case": "DR-KEY-ARITHMETIC"
+    },
+    {
+      "id": "DR-JSON-OPAQUE",
+      "rule": "a decimal-looking number inside a JSON value is opaque: it is never compared, ordered or summed as a decimal",
+      "case": "DR-JSON-OPAQUE"
+    },
+    {
+      "id": "DR-JSON-CONVERT",
+      "rule": "an explicit conversion of a JSON value to a typed decimal (toDecimal with declared precision and scale) validates it (E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW or E-INVALID-VALUE) and encodes the TDK1 key",
+      "case": "DR-JSON-CONVERT"
+    }
+  ],
+  "rulingsCoverage": {
+    "compiled": [
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "Q5",
+      "Q6",
+      "Q7",
+      "Q8a",
+      "Q8b",
+      "Q8c",
+      "Q8d",
+      "Q8e",
+      "Q8f",
+      "Q9",
+      "Q10",
+      "Q11",
+      "Q12",
+      "Q13",
+      "Q14a",
+      "Q14b",
+      "Q14c",
+      "Q14d",
+      "Q15",
+      "Q16",
+      "Q17",
+      "Q18",
+      "Q19",
+      "Q20",
+      "AMB-01",
+      "AMB-02",
+      "AMB-03",
+      "AMB-04",
+      "AMB-05",
+      "AMB-06",
+      "AMB-07",
+      "AMB-08",
+      "AMB-09",
+      "AMB-10",
+      "AMB-11",
+      "AMB-12",
+      "AMB-13",
+      "AMB-14",
+      "AMB-15",
+      "AMB-16",
+      "AMB-17",
+      "Q22",
+      "Q23",
+      "Q24",
+      "Q25",
+      "Q26",
+      "Q27",
+      "Q28",
+      "Q29a",
+      "Q29b",
+      "Q29c",
+      "Q29d",
+      "Q29e",
+      "Q30a",
+      "Q30b",
+      "Q30c",
+      "Q30d",
+      "Q30e",
+      "Q31a",
+      "Q31b",
+      "Q31c",
+      "Q31d",
+      "Q31e",
+      "Q31f",
+      "Q31g",
+      "Q31h",
+      "Q31i",
+      "Q31j",
+      "Q31k",
+      "Q32a",
+      "Q32b",
+      "Q32c",
+      "Q32d",
+      "Q32e",
+      "Q32f",
+      "Q33a",
+      "Q33b",
+      "Q33c",
+      "Q33d",
+      "Q33e",
+      "Q33f",
+      "Q33g",
+      "Q33h",
+      "Q33i",
+      "Q34a",
+      "Q34b",
+      "Q34c",
+      "Q34d",
+      "Q34e",
+      "Q35a",
+      "Q35b",
+      "Q35c",
+      "Q35d",
+      "Q35e",
+      "Q36a",
+      "Q36b",
+      "Q36c",
+      "Q36d",
+      "Q36e",
+      "Q36f",
+      "Q36g",
+      "Q36h",
+      "Q36a-clarified",
+      "Q37a",
+      "Q37b",
+      "Q37c",
+      "Q37d",
+      "Q38a",
+      "Q38b",
+      "Q38c",
+      "Q38d",
+      "Q38e",
+      "Q38f",
+      "Q39a",
+      "Q39b"
+    ],
+    "recordedNotCompiled": [
+      "Q40a",
+      "Q40b",
+      "Q40c",
+      "Q40d",
+      "Q40e",
+      "Q40f",
+      "Q40g",
+      "Q40h",
+      "Q40i"
+    ]
+  },
+  "tdk1": {
+    "name": "TDK1 (Triplex decimal key, version 1)",
+    "channel": "decimal_order_v1",
+    "source": "lab/research/R20-order-preserving-decimal-encodings.md section 6; RULINGS Q35a",
+    "summary": "value-determined, order-preserving (TDK1): zero o; positive p LL I F (LL two-digit integer-digit count, I without leading zeros, F without trailing zeros); negative n (99-L) comp(I) comp(F) z with comp(d) = 9 - d",
+    "alphabet": "0123456789nopz",
+    "inputGrammar": "-?(0|[1-9][0-9]*)(\\.[0-9]+)?; refused: +1, 01, 1., .5, 1e3, whitespace, non-ASCII digits, negative zero in any spelling",
+    "decode": "parse strictly, then render the sign, I or 0, and when s > 0 a '.' followed by F right-padded with zeros to s digits",
+    "order": "codepoint order of keys equals numeric order; the alphabet [0-9nopz] makes ICU order equal codepoint order on QLever and byte order on XTDB (no collation on 2.2.0)",
+    "useConstraints": "keys are never concatenated into a composite string and never used for prefix queries (p0212 is a prefix of p02125); only whole-key equality and ordered comparison, as a separate sort column (RULINGS Q35d)",
+    "versioning": "a future encoding gets a new channel name and a migration (RULINGS Q35c)",
+    "limits": "maximum precision 38 (TDK1 has headroom to 99 integer digits); no native XTDB DECIMAL lane: one verification path (RULINGS Q35e)",
+    "kernelNote": "if the kernel uses decimal.js or big.js, rounding tests cover their signed zero (RULINGS Q35e)",
+    "examples": [
+      [
+        "0",
+        "o"
+      ],
+      [
+        "0.00",
+        "o"
+      ],
+      [
+        "1",
+        "p011"
+      ],
+      [
+        "1.10",
+        "p0111"
+      ],
+      [
+        "0.01",
+        "p0001"
+      ],
+      [
+        "0.05",
+        "p0005"
+      ],
+      [
+        "0.5",
+        "p005"
+      ],
+      [
+        "12",
+        "p0212"
+      ],
+      [
+        "12.25",
+        "p021225"
+      ],
+      [
+        "12.5",
+        "p02125"
+      ],
+      [
+        "16.50",
+        "p02165"
+      ],
+      [
+        "16.499999",
+        "p0216499999"
+      ],
+      [
+        "125",
+        "p03125"
+      ],
+      [
+        "-0.01",
+        "n9998z"
+      ],
+      [
+        "-0.5",
+        "n994z"
+      ],
+      [
+        "-0.55",
+        "n9944z"
+      ],
+      [
+        "-12",
+        "n9787z"
+      ],
+      [
+        "-12.5",
+        "n97874z"
+      ],
+      [
+        "-16.50",
+        "n97834z"
+      ],
+      [
+        "-125",
+        "n96874z"
+      ],
+      [
+        "12345678901234567890.12",
+        "p201234567890123456789012"
+      ],
+      [
+        "-99999999999999999999.99",
+        "n790000000000000000000000z"
+      ],
+      [
+        "99999999999999999999999999999999999999",
+        "p3899999999999999999999999999999999999999"
+      ],
+      [
+        "-99999999999999999999999999999999999999",
+        "n6100000000000000000000000000000000000000z"
+      ]
+    ]
+  },
+  "tdk1Tests": {
+    "V3": {
+      "obligation": "G1.decimal.tdk1-admission",
+      "case": "TDK1-V3-ORDER-PROBE",
+      "check": "per-image admission probe: the 121,005-key sorted chain, all boundary keys, 20,000 prefix pairs (p0212 / p02125) and negatives (n9944z / n994z) loaded as VARCHAR on XTDB (flushed and compacted L0 blocks plus bloom pages) and as plain literals in an order predicate on QLever (including a post-index INSERT DATA delta)",
+      "pass": "ORDER BY key returns exactly the exact-rational order and the two engines return byte-identical orders"
+    },
+    "V4": {
+      "obligation": "G1.decimal.tdk1-ranges",
+      "case": "TDK1-V4-RANGES",
+      "check": "1,000 random closed and half-open ranges whose bounds are not in the set and have more fractional digits than any scale",
+      "pass": "count, first key and last key equal the oracle; keyset and LIMIT/OFFSET pagination concatenate to the full order"
+    },
+    "V5": {
+      "obligation": "G1.decimal.tdk1-differential",
+      "case": "TDK1-V5-DIFFERENTIAL",
+      "check": "the TypeScript encoder in packages/core against the Python reference on a pinned vector file (TDK1_VECTOR_PIN)",
+      "pass": "byte-for-byte equal keys and equal decode results; mutants of the TypeScript encoder fail"
+    },
+    "V6": {
+      "obligation": "G1.decimal.tdk1-serialization",
+      "case": "TDK1-V6-SERIALIZATION",
+      "check": "the key through the pg wire, JSON export, SPARQL result export, ledger and projection",
+      "pass": "the key string is unchanged: no case change, trimming or numeric coercion"
+    },
+    "V7": {
+      "obligation": "G1.decimal.tdk1-writer-negative",
+      "case": "TDK1-V7-WRITER-NEGATIVE",
+      "check": "values outside (p, s), excess nonzero fractional digits (R-DEC-3), -0, more than 38 digits, malformed text",
+      "pass": "typed error (E-DECIMAL-OVERFLOW, E-DECIMAL-FRACTION or E-INVALID-VALUE), no residue, no rounding anywhere on the path"
+    }
+  },
+  "tdk1VectorPin": {
+    "file": "lab/oracles/decimal/tdk1-vectors.json",
+    "sha256": null,
+    "candidateSha256": "0a699f59e16821ddf00c82319569a7e727fa1042e6d36a95fc577a6a4213d2a5",
+    "reviewReceipt": null,
+    "generator": "lab/oracles/decimal/gen_vectors.py (seed 20261108, exact construction with a Fraction assertion)",
+    "rule": "null until an independent review of the candidate vector file; pinning needs a contract version bump (RULINGS Q37c, Q38e)"
+  },
+  "q33Rules": [
+    {
+      "id": "R-VAL-7a",
+      "rule": "a JSON number is accepted only if it reads back as written: its shortest round-trip binary64 rendering equals the given text in canonical form (0.1 accepted; 9007199254740993 rejected, it would read back as ...992); this is what Q30a's 'not exactly a binary64 value' means",
+      "error": "E-INEXACT-JSON-NUMBER",
+      "case": "Q33-JSON-READBACK",
+      "ruling": "Q33a"
+    },
+    {
+      "id": "R-DEC-0",
+      "rule": "a decimal on an attribute not declared decimal",
+      "error": "E-INVALID-VALUE",
+      "case": "DEC-UNDECLARED-ATTRIBUTE",
+      "ruling": "Q33b"
+    },
+    {
+      "id": "R-DEC-1",
+      "rule": "decimal wire shape {\"type\": \"decimal\", \"value\": \"16.50\"}",
+      "error": "-",
+      "case": "DEC-SMALL-PRECISION-TDK1",
+      "ruling": "Q33b"
+    },
+    {
+      "id": "R-DEC-2",
+      "rule": "-0.00 is refused, consistent with Q30b",
+      "error": "E-INVALID-VALUE",
+      "case": "DEC-NEGZERO-REFUSED",
+      "ruling": "Q33b"
+    },
+    {
+      "id": "R-DEC-3",
+      "rule": "fractional digits are counted on the value: 16.500 fits scale 2 and is returned as 16.50; the original input text is still captured (Q22)",
+      "error": "-",
+      "case": "DEC-TRAILING-ZERO-FITS",
+      "ruling": "Q33b"
+    },
+    {
+      "id": "R-DEC-5",
+      "rule": "decimal divide(a, b, scale, rounding) is modeled by the oracle (follow-up EXP-O03)",
+      "error": "-",
+      "case": "DEC-OP-DIVIDE",
+      "ruling": "Q33b"
+    },
+    {
+      "id": "R-DEC-6",
+      "rule": "toDecimal(number) starts from the exact binary expansion, then applies the caller's scale and rounding",
+      "error": "-",
+      "case": "DEC-TODECIMAL-EXACT-EXPANSION",
+      "ruling": "Q33b"
+    },
+    {
+      "id": "R-DEC-7",
+      "rule": "AVG over decimal is a preflight error unless written as divide(SUM, COUNT, scale, rounding)",
+      "error": "E-DECIMAL-AVG",
+      "case": "DEC-AVG-PREFLIGHT",
+      "ruling": "Q33b"
+    },
+    {
+      "id": "R-LANE-2",
+      "rule": "a retract-pattern value outside the lane's range",
+      "error": "E-VALUE-OUT-OF-RANGE",
+      "case": "RANGE-OUT-RETRACT-PATTERN",
+      "ruling": "Q33c"
+    },
+    {
+      "id": "R-CMP-3",
+      "rule": "every ordered comparison across families is a preflight error, never false; equality across families is false except where a ruling makes it an error (decimal, Q22)",
+      "error": "E-MIXED-FAMILY",
+      "case": "Q33-CROSS-FAMILY-ORDER",
+      "ruling": "Q33d"
+    },
+    {
+      "id": "R-NUM-7",
+      "rule": "an arithmetic operand of a non-numeric family",
+      "error": "E-MIXED-FAMILY",
+      "case": "Q33-NONNUMERIC-OPERAND",
+      "ruling": "Q33e"
+    },
+    {
+      "id": "R-NUM-8",
+      "rule": "rem is integer-only; a binary64 operand is a preflight error",
+      "error": "E-MIXED-FAMILY",
+      "case": "Q33-REM-BINARY64",
+      "ruling": "Q33e"
+    },
+    {
+      "id": "R-AGG-5",
+      "rule": "SUM or AVG over a non-numeric family",
+      "error": "E-MIXED-FAMILY",
+      "case": "Q33-AGG-NONNUMERIC",
+      "ruling": "Q33e"
+    },
+    {
+      "id": "R-CMD-9",
+      "rule": "an operation fault with no ERROR_TABLE row",
+      "error": "E-INVALID-VALUE",
+      "case": "Q33-CMD-UNMAPPED-FAULT",
+      "ruling": "Q33f"
+    },
+    {
+      "id": "R-CMD-12",
+      "rule": "retract-pattern on a transaction entity",
+      "error": "E-RESERVED",
+      "case": "Q33-CMD-RETRACT-TX-ENTITY",
+      "ruling": "Q33f"
+    },
+    {
+      "id": "R-JNL-5",
+      "rule": "journal facts are valid from the commit instant, carry synthetic ids, and :_tx/change json carries the logical change content",
+      "error": "-",
+      "case": "Q33-JNL-ENVELOPE",
+      "ruling": "Q33g"
+    },
+    {
+      "id": "R-JNL-6",
+      "rule": "other envelope facts return X-NOT-MODELED, never a partial answer",
+      "error": "-",
+      "case": "Q33-JNL-NOT-MODELED",
+      "ruling": "Q33g"
+    },
+    {
+      "id": "R-JNL-7",
+      "rule": "an invalid transactions limit is PaginationCursorError / malformed, the same as entityPage",
+      "error": "E-CURSOR",
+      "case": "Q33-JNL-LIMIT",
+      "ruling": "Q33g"
+    },
+    {
+      "id": "R-CUT-3",
+      "rule": "an invalid basis",
+      "error": "E-INVALID-VALUE",
+      "case": "Q33-CUT-INVALID-BASIS",
+      "ruling": "Q33h"
+    },
+    {
+      "id": "R-PAGE-3",
+      "rule": "an out-of-range entityPage limit is PaginationCursorError / malformed (G10-CUR-01 E3)",
+      "error": "E-CURSOR",
+      "case": "Q33-PAGE-LIMIT",
+      "ruling": "Q33h"
+    },
+    {
+      "id": "R-PAGE-4",
+      "rule": "continuing a cursor with a different basis is PaginationCursorError / other-query; a different page size is allowed",
+      "error": "E-CURSOR",
+      "case": "Q33-PAGE-OTHER-BASIS",
+      "ruling": "Q33h"
+    }
+  ],
+  "q33iCursorReadings": [
+    {
+      "vector": "G10-CUR-01",
+      "query": "E1",
+      "vectorReason": "basis_mismatch",
+      "compiled": {
+        "_tag": "PaginationCursorError",
+        "reason": "other-query"
+      },
+      "why": "R-PAGE-4: a different basis is other-query"
+    },
+    {
+      "vector": "G10-CUR-01",
+      "query": "E2",
+      "vectorReason": "query_mismatch",
+      "compiled": {
+        "_tag": "PaginationCursorError",
+        "reason": "other-query"
+      },
+      "why": "E-CURSOR has only malformed, other-scope and other-query"
+    }
+  ],
+  "q33iQleverRejected": [
+    "G1-I64-01",
+    "Q8F-02",
+    "G1-I64-02#min-exact",
+    "G5-SUM-01",
+    "G5-SUM-02",
+    "G5-SUM-04",
+    "G5-SUM-05",
+    "G5-SUM-06",
+    "G5-SUM-08",
+    "G5-SUM-11#case2"
+  ],
   "gates": {
     "GATE-POSITION": {
-      "rule": "no comparative claim on a composition whose source uses non-dense positions until G7.position.coordinates, with the four falsifiers, is closed for that source; a composition whose positions are dense (today's scope-counter adapters, the A0 controls) satisfies G7.position.coordinates with the existing nested-cut cases and is not blocked by the falsifiers (RULINGS Q31c, Q32e)",
+      "rule": "no comparative or promotion claim on any composition, A0 included, until a VA-valid G7.position.coordinates receipt for that composition's source covers POSITION_REQUIRED_CASES, the four falsifiers included; no source-hash allowlist or declared density grants an exemption (RULINGS Q31c, Q38a; OUTSIDE_BLOCK_MUTATION_FIXTURE shows why)",
       "requires": [
         "G7.position.coordinates"
       ],
-      "appliesTo": "NS.* and GS.* obligations; the falsifier selection applies only when composition.positionsDense is false"
+      "appliesTo": "NS.* and GS.* obligations and every comparative or promotion claim (CLAIM_ADMISSION)"
     },
     "GATE-W0": {
       "rule": "no domain-dependent obligation closes until V-D01 has independently reviewed W0 (SPEC.md, releases, golden cases) and every W0_PIN hash is pinned in this contract (RULINGS Q31i); a null pin fails closed",
@@ -1672,20 +2429,36 @@
         "W0.coverage-floors"
       ],
       "appliesTo": "every obligation whose oracles include O-DOMAIN"
+    },
+    "GATE-ORACLE-PIN": {
+      "rule": "an obligation whose expected answers come from an oracle closes only once ORACLE_PINS pins that oracle's files with an acceptance receipt; a null pin fails closed (V-O02 C1)",
+      "requires": [
+        "ORACLE_PINS complete for every oracle the obligation uses"
+      ],
+      "appliesTo": "every obligation using an oracle listed in ORACLE_PINS (O-REPLAY, O-TDK1)"
+    },
+    "GATE-TDK1-VECTORS": {
+      "rule": "G1.decimal.tdk1-differential closes only once TDK1_VECTOR_PIN names a reviewed vector file by sha256; a null pin fails closed (RULINGS Q35, R20 V5)",
+      "requires": [
+        "TDK1_VECTOR_PIN complete"
+      ],
+      "appliesTo": "G1.decimal.tdk1-differential"
     }
   },
   "wireRules": [
     {
       "id": "WR-JSON",
-      "rule": "a JSON value containing -0, a non-finite number, or a number that is not exactly a binary64 value is rejected at every qualified write route with E-INEXACT-JSON-NUMBER (InvalidTripleError / invalid-value, detail inexact-json-number), never normalized; the guard runs before CanonicalJson, whose canonical identity is unchanged; approximateNumbers: reject applies recursively inside List and Struct",
-      "source": "RULINGS Q30a",
+      "rule": "a user-supplied JSON value containing -0, a non-finite number, or a number that does not read back as written (its shortest round-trip binary64 rendering differs from the given text in canonical form, RULINGS Q33a: 0.1 accepted, 9007199254740993 rejected) is rejected at every qualified write route with E-INEXACT-JSON-NUMBER (InvalidTripleError / invalid-value, detail inexact-json-number), never normalized; the guard runs before CanonicalJson, whose canonical identity is unchanged; approximateNumbers: reject applies recursively inside List and Struct; the guard applies to user JSON only: JSON that Triplex generates (journal changes, metadata) never passes through it, and the journal encodes typed values losslessly, so a number -0 assertion commits, journals, replays and reads back bit-exact (RULINGS Q34c, AMB-04)",
+      "source": "RULINGS Q30a, Q33a, Q34c",
       "cases": [
         "WIRE-JSON-NEGZERO",
         "WIRE-JSON-NONFINITE",
         "WIRE-JSON-INEXACT",
         "WIRE-JSON-NESTED-LIST",
         "WIRE-JSON-NESTED-STRUCT",
-        "WIRE-JSON-BEFORE-CANONICAL"
+        "WIRE-JSON-BEFORE-CANONICAL",
+        "Q33-JSON-READBACK",
+        "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"
       ]
     },
     {
@@ -1776,6 +2549,10 @@
     "G5-SUM-11#case2": {
       "xtdb": "C1 commits on both XTDB lanes (BIGINT holds the whole core range); the original expected answers apply unchanged",
       "qlever": "C1 fails with E-VALUE-OUT-OF-RANGE before any mutation; the aggregate then runs over an empty scope: AG-EMPTY-UNGROUPED (one row, total null)"
+    },
+    "G1-I64-02#min-exact": {
+      "xtdb": "the min-exact command (-2^63) commits on both XTDB lanes; the contrast case's original expectation applies",
+      "qlever": "the min-exact command fails with E-VALUE-OUT-OF-RANGE before any mutation on every qualified route (position unchanged, transactionByCommand null, no residue)"
     }
   },
   "legacyRule": "Follow-up EXP-G02 (RULINGS Q32b): QLever in-range companion vectors by an independent golden author. For every golden vector (or vector case) that commits an integer outside QLever's accepted range, the evaluator applies the compiled lane outcome in LEGACY_LANE_OUTCOMES instead of the vector's single expected answer: XTDB commits and keeps the original answer; QLever's qualified write routes reject the command with E-VALUE-OUT-OF-RANGE before any mutation (RULINGS Q23, Q31j). The original vectors stay unchanged as audit evidence (RULINGS Q29a). QLever's in-range coverage of the same boundaries comes from CS-TYPES8 integer-edges and CS-RANGE-OUT.",
@@ -1788,6 +2565,12 @@
         "-9223372036854775807",
         "576460752303423488",
         "-576460752303423489"
+      ]
+    },
+    "G1-I64-02#min-exact": {
+      "file": "g1-int64.json",
+      "values": [
+        "-9223372036854775808"
       ]
     },
     "G5-SUM-01": {
@@ -2137,6 +2920,11 @@
       "source": "RULINGS Q18, Q22"
     },
     {
+      "id": "CMP-CROSS-FAMILY-ORDERED",
+      "rule": "every ordered comparison across type families is a preflight E-MIXED-FAMILY, never false; equality across families is false except where a ruling makes it an error (decimal, CMP-DECIMAL-CROSS)",
+      "source": "RULINGS Q33d (R-CMP-3); Q14d"
+    },
+    {
       "id": "CMP-IDENTITY",
       "rule": "entity ids and ref identities compare only with text or ref constants; a numeric or boolean constant is never equal and != is true",
       "source": "testkit 'datalog equality keeps identity bindings string-typed'"
@@ -2306,13 +3094,6 @@
       "reason": "value-out-of-range",
       "phase": "preflight",
       "status": "new reason (NUMERIC): the value is valid Triplex but outside the lane's declared exact range; rejected before any engine mutation"
-    },
-    {
-      "id": "E-DECIMAL-UNREPRESENTABLE",
-      "tag": "InvalidTripleError",
-      "reason": "decimal-unrepresentable",
-      "phase": "preflight",
-      "status": "new reason (decimal value kind)"
     },
     {
       "id": "E-NUMBER-OVERFLOW",
@@ -2519,10 +3300,10 @@
     },
     {
       "id": "E-DECIMAL-OVERFLOW",
-      "tag": "DatalogValidationError",
+      "tag": "InvalidTripleError",
       "reason": "decimal-overflow",
-      "phase": "execution",
-      "status": "new reason (RULINGS Q22): a decimal result beyond the target's declared precision or 38 digits"
+      "phase": "preflight or execution",
+      "status": "new reason (RULINGS Q22, Q35e): a written value or a result beyond the declared precision or 38 digits"
     },
     {
       "id": "E-DECIMAL-BARE-DIVIDE",
@@ -2533,10 +3314,17 @@
     },
     {
       "id": "E-DECIMAL-FRACTION",
+      "tag": "InvalidTripleError",
+      "reason": "decimal-fraction",
+      "phase": "preflight",
+      "status": "new reason (RULINGS Q22, Q35e): more fractional digits than the declared scale at write, or decimal to integer with a non-zero fraction and no round()"
+    },
+    {
+      "id": "E-DECIMAL-AVG",
       "tag": "DatalogValidationError",
-      "reason": "decimal-fraction-not-zero",
-      "phase": "execution",
-      "status": "new reason (RULINGS Q22): decimal to integer with a non-zero fraction and no round()"
+      "reason": "decimal-avg-requires-divide",
+      "phase": "preflight",
+      "status": "new reason (RULINGS Q33b R-DEC-7): AVG over decimal; write divide(SUM, COUNT, scale, rounding)"
     },
     {
       "id": "E-DECIMAL-NARROWING",
@@ -3068,10 +3856,10 @@
     },
     "W0-LOCATION-ZIPF-S": {
       "kind": "coverage",
-      "value": 1.0,
-      "unit": "Zipf exponent of the seeded worker-to-location fanout (fixed, not a bound to beat)",
+      "value": 0.5,
+      "unit": "Zipf exponent of the seeded worker-to-location fanout at the 100k rung (fixed, not a bound to beat; other rungs N / 50 locations with the same s)",
       "bound": "eq",
-      "source": "RULINGS Q31i; lab/TARGETS.md 6.1 item 6 (provisional)"
+      "source": "RULINGS Q31i, Q36g, Q36h; lab/TARGETS.md 6.1 item 6"
     },
     "W0-MULTI-WORK-ITEM-SHARE": {
       "kind": "coverage",
@@ -3264,7 +4052,7 @@
     "Unless a scenario says otherwise it runs on P-YEAR-ONE with the fixed writer trace running and 256 concurrent pinned readers (P-NS).",
     "A scenario fails on any wrong answer, any lost or duplicated commit, any feed gap or order violation, or any missed bar; its receipt records the correctness verdicts and the P1 to P5 measurements together.",
     "All 20 run on every composition being compared, and the final acceptance reruns all 20 fresh.",
-    "Numbers inside the scenarios: pay rates, hours and money use scaled integers or order-preserving decimal strings; the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650 and GS-NUM-HOURS-40, selected by GS.18's dashboard filters) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE or E-DECIMAL-UNREPRESENTABLE (GS-NUM-UNHOLDABLE, selected by GS.02)."
+    "Numbers inside the scenarios: pay rates, hours and money use integer cents (the integer kind) or the decimal kind (TDK1 key); the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650 and GS-NUM-HOURS-40, selected by GS.18's dashboard filters) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE, E-DECIMAL-OVERFLOW or E-DECIMAL-FRACTION (GS-NUM-UNHOLDABLE, selected by GS.02)."
   ],
   "requirements": [
     {
@@ -3377,9 +4165,9 @@
       "independence": "Python, imports no Triplex code"
     },
     "O-REPLAY": {
-      "status": "TO-BUILD",
+      "status": "BUILT-PENDING-PIN",
       "files": [
-        "lab/acceptance/oracle/replay.py"
+        "lab/oracles/replay/"
       ],
       "comparator": "per case (CMP-SET-ROWS, CMP-BAG-ROWS, CMP-EXACT-VALUE, CMP-ERROR, CMP-PAGES)",
       "spec": "ACCEPTANCE 6.1",
@@ -3495,6 +4283,15 @@
       "spec": "the verdict the status algorithm must return for each EVALUATOR_COUNTEREXAMPLES receipt set (OPEN)",
       "independence": "pinned by this contract"
     },
+    "O-TDK1": {
+      "status": "BUILT",
+      "files": [
+        "lab/oracles/decimal/"
+      ],
+      "comparator": "CMP-ORDERED-ROWS for orders, CMP-EXACT-VALUE for keys and decodes",
+      "spec": "TDK1 (R20 section 6): the Python reference encoder and exact-rational order (fractions.Fraction) from R20's raw material, brought into the repository",
+      "independence": "Python stdlib only; imports no Triplex code"
+    },
     "O-TESTKIT": {
       "status": "EXISTS",
       "files": [
@@ -3566,6 +4363,7 @@
     "O-HAND": [],
     "O-DOMAIN": [],
     "O-CONTRACT": [],
+    "O-TDK1": [],
     "O-TESTKIT": [
       {
         "path": "packages/testkit/src/index.ts",
@@ -6301,6 +7099,11 @@
       "behavior": "a DECIMAL aggregate failed: MAX(CAST(v AS DECIMAL(32,0))) raised No method in multimethod 'set-value-code' :decimal",
       "evidence": "packages/xtdb/experiments/query/integer-extrema-1793974552733.json (probe in checkout)"
     },
+    "KL-X9": {
+      "engine": "XTDB 2.2.0",
+      "behavior": "a DECIMAL value read back as BIGINT (or any numeric client type) is rounded through a double: 1e18 + 4 reads back as 1e18; exact sums read DECIMAL as text",
+      "evidence": "lab/experiments/EXP-X02 (RULINGS Q39a); packages/core/src/datalog/compiler.ts:572 checked by EXP-R02"
+    },
     "KL-X8": {
       "engine": "current XTDB layout",
       "behavior": "Triplex R is not engine system time; FOR SYSTEM_TIME answers Triplex bases only at physical commit boundaries",
@@ -6869,6 +7672,13 @@
         "CS-COMPOSITION:CO-RECONSTRUCT-OUTSIDE-VALIDITY"
       ]
     },
+    "M-WITHTRANSACTION-REBIND": {
+      "fault": "the exported withTransaction binding allocates an extra position before executing the transaction, outside every hashed allocator block (OUTSIDE_BLOCK_MUTATION_FIXTURE)",
+      "reachProbe": "xtdb.withTransactionBinding",
+      "targets": [
+        "CS-POSITION:FX-NESTED-CUTS"
+      ]
+    },
     "M-ACK-BEFORE-PUBLICATION": {
       "fault": "the source sends the ACK before its own publication",
       "reachProbe": "commit.ack",
@@ -6898,6 +7708,49 @@
       "targets": [
         "CS-WIRE:WIRE-JSON-NEGZERO",
         "CS-WIRE:WIRE-JSON-BEFORE-CANONICAL"
+      ]
+    },
+    "M-JSON-GUARD-ON-JOURNAL": {
+      "fault": "the user-JSON guard runs on journal JSON that Triplex generates, so a number -0 assertion's journal is rejected or normalized",
+      "reachProbe": "journal.encodeChange",
+      "targets": [
+        "CS-WIRE:WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"
+      ]
+    },
+    "M-OUTBOX-VERSION-DEDUP": {
+      "fault": "the receiver or publisher deduplicates by content version, so a return to an earlier payload (R1, R2, R1) is suppressed",
+      "reachProbe": "outbox.publish",
+      "targets": [
+        "CS-OUTBOX:OB-RELEASE-ROLLBACK"
+      ]
+    },
+    "M-DECIMAL-LEXICAL-ORDER": {
+      "fault": "a decimal ORDER BY or range on QLever uses the lexical canonical text instead of the decimal_order_v1 key",
+      "reachProbe": "decimal.orderChannel",
+      "targets": [
+        "CS-DECIMAL-ROUTING:DR-NATIVE-ORDER",
+        "CS-DECIMAL-ROUTING:DR-RAW-ORDER"
+      ]
+    },
+    "M-X-DECIMAL-SUM-BIGINT": {
+      "fault": "an XTDB engine-side exact sum casts the DECIMAL result back to BIGINT (rounded through a double: 1e18 + 4 reads back as 1e18)",
+      "reachProbe": "xtdb.sumDecode",
+      "targets": [
+        "CS-NUMERIC:projection-sums"
+      ]
+    },
+    "M-TDK1-NO-TERMINATOR": {
+      "fault": "the TypeScript TDK1 encoder omits the negative terminator z (one of R20's five mutant encoders)",
+      "reachProbe": "decimal.tdk1Encode",
+      "targets": [
+        "CS-TDK1:TDK1-V5-DIFFERENTIAL"
+      ]
+    },
+    "M-TDK1-PREFIX-USE": {
+      "fault": "a range or lookup uses a TDK1 key as a prefix or inside a concatenated composite key",
+      "reachProbe": "decimal.tdk1Compare",
+      "targets": [
+        "CS-TDK1:TDK1-V4-RANGES"
       ]
     },
     "M-X-JSON-LIST-PARAM": {
@@ -7165,8 +8018,14 @@
         "paths"
       ],
       "requiredCases": [
-        "DEC-P15-SCALED",
-        "DEC-P16-STRING",
+        "DEC-SMALL-PRECISION-TDK1",
+        "DEC-LARGE-PRECISION-TDK1",
+        "DEC-CROSS-SCALE-COMPARE",
+        "DEC-UNDECLARED-ATTRIBUTE",
+        "DEC-NEGZERO-REFUSED",
+        "DEC-TRAILING-ZERO-FITS",
+        "DEC-TODECIMAL-EXACT-EXPANSION",
+        "DEC-AVG-PREFLIGHT",
         "DEC-SCALE-EXCESS",
         "DEC-PRECISION-EXCESS",
         "DEC-CROSS-FAMILY-PREFLIGHT",
@@ -7218,6 +8077,8 @@
         "WIRE-JSON-NESTED-LIST",
         "WIRE-JSON-NESTED-STRUCT",
         "WIRE-JSON-BEFORE-CANONICAL",
+        "Q33-JSON-READBACK",
+        "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP",
         "WIRE-INSTANT-NEGZERO",
         "WIRE-X-DOUBLE-LIST-ARRAY",
         "WIRE-X-INTEGER-LIST-ARRAY",
@@ -7235,6 +8096,73 @@
       "pinnedSourceFiles": [],
       "note": null
     },
+    "CS-OUTBOX": {
+      "status": "TO-AUTHOR",
+      "source": "OUTBOX (RULINGS Q38f)",
+      "requiredTags": [
+        "all"
+      ],
+      "requiredCases": [
+        "OB-RELEASE-ROLLBACK",
+        "OB-CRASH-BEFORE-DELIVERY",
+        "OB-UNCHANGED-ACTIVATION-RECOVERY",
+        "OB-ATOMIC-STATE"
+      ],
+      "manifest": "lab/acceptance/cases/CS-OUTBOX.json",
+      "manifestSha256": null,
+      "pinnedSourceFiles": [],
+      "note": null
+    },
+    "CS-DECIMAL-ROUTING": {
+      "status": "TO-AUTHOR",
+      "source": "DECIMAL_ROUTING (RULINGS Q38d)",
+      "requiredTags": [
+        "all",
+        "repository",
+        "native",
+        "raw",
+        "derived",
+        "aggregate",
+        "json"
+      ],
+      "requiredCases": [
+        "DR-REPO-ORDER",
+        "DR-NATIVE-ORDER",
+        "DR-RAW-ORDER",
+        "DR-DERIVED",
+        "DR-AGGREGATE",
+        "DR-KEY-ARITHMETIC",
+        "DR-JSON-OPAQUE",
+        "DR-JSON-CONVERT"
+      ],
+      "manifest": "lab/acceptance/cases/CS-DECIMAL-ROUTING.json",
+      "manifestSha256": null,
+      "pinnedSourceFiles": [],
+      "note": null
+    },
+    "CS-TDK1": {
+      "status": "TO-AUTHOR",
+      "source": "TDK1_TESTS (R20 section 5.3 V3 to V7, RULINGS Q35)",
+      "requiredTags": [
+        "all",
+        "engine-order",
+        "ranges",
+        "differential",
+        "serialization",
+        "writer-negative"
+      ],
+      "requiredCases": [
+        "TDK1-V3-ORDER-PROBE",
+        "TDK1-V4-RANGES",
+        "TDK1-V5-DIFFERENTIAL",
+        "TDK1-V6-SERIALIZATION",
+        "TDK1-V7-WRITER-NEGATIVE"
+      ],
+      "manifest": "lab/acceptance/cases/CS-TDK1.json",
+      "manifestSha256": null,
+      "pinnedSourceFiles": [],
+      "note": null
+    },
     "CS-RANGE-OUT": {
       "status": "TO-AUTHOR",
       "source": "LANE_INTEGER_RANGE; NUMERIC; RULINGS Q23 (every qualified write route rejects)",
@@ -7245,7 +8173,8 @@
         "RANGE-OUT-WRITER",
         "RANGE-OUT-BULK",
         "RANGE-OUT-REPLAY",
-        "RANGE-OUT-RESTORE"
+        "RANGE-OUT-RESTORE",
+        "RANGE-OUT-RETRACT-PATTERN"
       ],
       "manifest": "lab/acceptance/cases/CS-RANGE-OUT.json",
       "manifestSha256": null,
@@ -7341,7 +8270,15 @@
       "requiredTags": [
         "all"
       ],
-      "requiredCases": [],
+      "requiredCases": [
+        "Q33-CROSS-FAMILY-ORDER",
+        "Q33-NONNUMERIC-OPERAND",
+        "Q33-REM-BINARY64",
+        "Q33-AGG-NONNUMERIC",
+        "Q33-CMD-UNMAPPED-FAULT",
+        "Q33-CMD-RETRACT-TX-ENTITY",
+        "Q33-CUT-INVALID-BASIS"
+      ],
       "manifest": "lab/acceptance/cases/CS-ERRORS.json",
       "manifestSha256": null,
       "pinnedSourceFiles": [],
@@ -7615,7 +8552,9 @@
         "C6-TRANSACTIONS-ORDER",
         "C6-NEGZERO-CHANGE",
         "C6-BYCOMMAND",
-        "C6-SLIM-BYTE-IDENTICAL"
+        "C6-SLIM-BYTE-IDENTICAL",
+        "Q33-JNL-ENVELOPE",
+        "Q33-JNL-NOT-MODELED"
       ],
       "manifest": "lab/acceptance/cases/CS-JOURNAL.json",
       "manifestSha256": null,
@@ -7798,7 +8737,10 @@
         "CE-OTHER-SCOPE",
         "CE-OTHER-QUERY",
         "CE-FUTURE-BASIS",
-        "CE-FENCED"
+        "CE-FENCED",
+        "Q33-JNL-LIMIT",
+        "Q33-PAGE-LIMIT",
+        "Q33-PAGE-OTHER-BASIS"
       ],
       "manifest": "lab/acceptance/cases/CS-CURSOR.json",
       "manifestSha256": null,
@@ -8163,7 +9105,10 @@
         "CO-ACK-AFTER-SOURCE-PUBLICATION",
         "CO-RYOW-ROUTED",
         "CO-OUTAGE-ACKS-CONTINUE",
-        "CO-CATCHUP-BOUNDED-QUEUE"
+        "CO-CATCHUP-BOUNDED-QUEUE",
+        "CO-RYOW-PER-SURFACE",
+        "CO-STALE-FALLBACK-REJECTED",
+        "CO-CROSS-LANGUAGE-RECIPE-IDENTITY"
       ],
       "manifest": "lab/acceptance/cases/CS-COMPOSITION.json",
       "manifestSha256": null,
@@ -8251,6 +9196,11 @@
         "CX-W0-UNPINNED",
         "CX-W0-FLOOR-MISSED",
         "CX-P2-REJECTS-VALID",
+        "CX-FORGED-DENSITY",
+        "CX-CLAIM-NULL-ORACLE-PIN",
+        "CX-CLAIM-SUPPLIED-NAMES",
+        "CX-XTDB-SHARED-LANGUAGE",
+        "CX-SCREENING-CLAIM-PREREQ",
         "CX-POSITION-GATE",
         "PX-PASS-ALL",
         "PX-COUNTEREXAMPLE",
@@ -8778,6 +9728,20 @@
       "obligation": "G7.journal.logical-contract"
     },
     {
+      "contract": "C6",
+      "case": "Q33-JNL-ENVELOPE",
+      "set": "CS-JOURNAL",
+      "observation": "direct audit beyond unchanged44",
+      "obligation": "G7.journal.logical-contract"
+    },
+    {
+      "contract": "C6",
+      "case": "Q33-JNL-NOT-MODELED",
+      "set": "CS-JOURNAL",
+      "observation": "direct audit beyond unchanged44",
+      "obligation": "G7.journal.logical-contract"
+    },
+    {
       "contract": "C7",
       "case": "C7-OWNER-MISMATCH",
       "set": "CS-SCOPE",
@@ -8877,9 +9841,10 @@
       "contract": "{version, transitiveSha256}",
       "obligations": "[{id, definitionSha256}]",
       "lane": "lane id for lane-scope receipts; for engine-scope receipts the scope key (layer, engine, imageDigest, configSha256, slot) derived from the composition assignment of the obligation's layer (COMPOSITION scopeKey)",
-      "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever, imageDigest, configSha256, slot} (RULINGS Q28); positionsDense: bool with its evidence (RULINGS Q32e; missing means non-dense)",
+      "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever, imageDigest, configSha256, slot} (RULINGS Q28); no density field carries authority (RULINGS Q38a)",
+      "nativeLanguage": "for XTDB receipts, TRIPLEX_XTDB_NATIVE_LANGUAGE (xtql or xtdb-sql) as executed; XTQL and SQL results never share an obligation closure (RULINGS Q39b)",
       "replicationEdges": "[{from, to, consumerSourceSha256, translationGeneration}] for every edge of the composition",
-      "watermarks": "per read: {readId, basisPosition, servingIndex, watermarkAtRead, waitMs, route}",
+      "watermarks": "per read: {readId, basisPosition, servingIndex, watermarkAtRead, waitMs, route, surface, recipeLanguage, semanticQueryId (parameters, basis, meaning), totalLatencyMs} (RULINGS Q31d, Q34b)",
       "trace": "{generatorSourceSha256, seed, backgroundCommands, overlayCommands} (TARGETS 2.1 freeze; background and scenario overlay accounted separately)",
       "cpuQuota": "{engineCores, hostBrokerCpu, kernelCpu} (TARGETS 1.1 P4 item 3)",
       "profileIdentity": "{sourceTreeSha256 (including uncommitted and untracked executed inputs), buildManifestSha256, importedDist [{path, sha256}], lockfileSha256, node, pnpm, composition (per-assignment image digests, configuration hashes and slots), resourceCaps, enabledCapabilities [], fixtureSha256, gateScriptSha256, oracleFiles [{id, sha256}], caseManifests [{set, sha256}], projectionSpecVersion, logFormatVersion}",
@@ -9197,6 +10162,7 @@
     "for each lane L and integrated profile T:",
     "  for each obligation O with L in O.lanes:",
     "    key = L if O.receiptScope == 'lane' else (O.layer, T.composition[O.layer].engine, imageDigest, configSha256, slot)  # RULINGS Q28",
+    "    if O.closure.params.keyByNativeLanguage: key = (key, receipt.nativeLanguage) and only receipts whose nativeLanguage is L's language count for L  # RULINGS Q39b",
     "    A = acceptance receipts for (O.id, key) on T that pass VA (using VC records they cite)",
     "    closed(O, L, T) = O.grounding != 'policy-pending' and every case set of O is pinned",
     "                      and A non-empty and every rule in O.closure.rules holds by its recompute",
@@ -9404,11 +10370,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "ebaea1dd08abddef87504ee5f919df253c4f42adb11a453df4003319fc004542"
+    "sha256": "7ea592a1c8fdef577ed3c48278f743a6f1e4fe5d3477fb1ab048d4f69181cc9e"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "d14ea9a0fbe44f59526d0d22b79a2afaa8f4d7967afbf6106c188c5326a0fdc3"
+    "sha256": "075df2f931e2e9a9b0388288fc1fce16cf9ad29c1904b5c897eabe1fab6705fa"
   },
   "obligations": [
     {
@@ -9516,7 +10482,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -9534,7 +10502,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "76fb31b0d5db630206b2b49b94a7ec232103525a48e479645ee7ade7b19033a0",
+      "definitionSha256": "44057b6e51757a9060af89fd95ff085978029cc0201a5f14457a41edd2739d53",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -9573,6 +10541,12 @@
             "RANGE-OUT-REPLAY",
             "RANGE-OUT-RESTORE"
           ]
+        },
+        {
+          "set": "CS-RANGE-OUT",
+          "select": [
+            "RANGE-OUT-RETRACT-PATTERN"
+          ]
         }
       ],
       "oracles": [
@@ -9601,7 +10575,9 @@
           "diagnostics": [
             "D-Q-INT60"
           ],
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -9618,7 +10594,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "d029a097439e18d92e871745622bc050c016a8e16417cb203e17df4e92bd1e38",
+      "definitionSha256": "8521afb66adc9e10eb592a4d8e5f4a280bc1eab5ab6990af4a90b2392bb2a693",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -9636,7 +10612,7 @@
         "G5"
       ],
       "title": "Decimal value kind for money and business decimals",
-      "statement": "Every CS-DECIMAL case, per DECIMAL_RULES (RULINGS Q18) and the operation, conversion and scale tables DECIMAL_OPS, DECIMAL_CONVERSIONS and DECIMAL_SCALE_EVOLUTION (RULINGS Q22), one named case per row, plus DECIMAL_TESTS (adjacent large decimals, negatives, zero, scale boundaries, arithmetic intermediates, every query and serialization path, an independent order-key check, and input capture before normalization): each decimal attribute declares precision and scale; precision <= 15 is stored as a scaled integer (DEC-P15-SCALED), larger precision as an order-preserving decimal string (DEC-P16-STRING); both round-trip exactly on every surface; every comparison with integer or number, equality included, is preflight E-MIXED-FAMILY (DEC-CROSS-FAMILY-PREFLIGHT) and exact after explicit conversion (DEC-CONVERTED-COMPARE); results beyond the precision fail with E-DECIMAL-OVERFLOW, bare / with E-DECIMAL-BARE-DIVIDE, decimal to integer with a fraction with E-DECIMAL-FRACTION, and a narrowing migration that would lose digits with E-DECIMAL-NARROWING, atomically; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value with more fractional digits than the scale (DEC-SCALE-EXCESS) or outside the precision (DEC-PRECISION-EXCESS) fails with E-DECIMAL-UNREPRESENTABLE, never rounded; kernel arithmetic over decimals is exact.",
+      "statement": "Every CS-DECIMAL case, per DECIMAL_RULES (RULINGS Q18) and the operation, conversion and scale tables DECIMAL_OPS, DECIMAL_CONVERSIONS and DECIMAL_SCALE_EVOLUTION (RULINGS Q22), one named case per row, plus DECIMAL_TESTS (adjacent large decimals, negatives, zero, scale boundaries, arithmetic intermediates, every query and serialization path, an independent order-key check, and input capture before normalization): each decimal attribute declares precision and scale; every precision is stored as the TDK1 key plus derived canonical text (DEC-SMALL-PRECISION-TDK1, DEC-LARGE-PRECISION-TDK1; RULINGS Q35b), compared exactly across attributes of different declared scale (DEC-CROSS-SCALE-COMPARE), and round-trips exactly on every surface; a decimal on an undeclared attribute (DEC-UNDECLARED-ATTRIBUTE) and -0.00 (DEC-NEGZERO-REFUSED) fail with E-INVALID-VALUE; 16.500 fits scale 2 and reads back as 16.50 (DEC-TRAILING-ZERO-FITS); toDecimal starts from the exact binary expansion (DEC-TODECIMAL-EXACT-EXPANSION); AVG over decimal fails with E-DECIMAL-AVG unless written with divide (DEC-AVG-PREFLIGHT) (RULINGS Q33b); every comparison with integer or number, equality included, is preflight E-MIXED-FAMILY (DEC-CROSS-FAMILY-PREFLIGHT) and exact after explicit conversion (DEC-CONVERTED-COMPARE); results beyond the precision fail with E-DECIMAL-OVERFLOW, bare / with E-DECIMAL-BARE-DIVIDE, decimal to integer with a fraction with E-DECIMAL-FRACTION, and a narrowing migration that would lose digits with E-DECIMAL-NARROWING, atomically; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value with more fractional digits than the scale fails with E-DECIMAL-FRACTION (DEC-SCALE-EXCESS) and one outside the precision with E-DECIMAL-OVERFLOW (DEC-PRECISION-EXCESS), never rounded; kernel arithmetic over decimals is exact.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -9653,8 +10629,14 @@
         {
           "set": "CS-DECIMAL",
           "select": [
-            "DEC-P15-SCALED",
-            "DEC-P16-STRING",
+            "DEC-SMALL-PRECISION-TDK1",
+            "DEC-LARGE-PRECISION-TDK1",
+            "DEC-CROSS-SCALE-COMPARE",
+            "DEC-UNDECLARED-ATTRIBUTE",
+            "DEC-NEGZERO-REFUSED",
+            "DEC-TRAILING-ZERO-FITS",
+            "DEC-TODECIMAL-EXACT-EXPANSION",
+            "DEC-AVG-PREFLIGHT",
             "DEC-SCALE-EXCESS",
             "DEC-PRECISION-EXCESS",
             "DEC-CROSS-FAMILY-PREFLIGHT",
@@ -9713,7 +10695,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -9732,7 +10716,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "217522b30165fd9f81e3f1b77343cb5efd615c4ff0bc7edfd5132980f8c8e2d4",
+      "definitionSha256": "af9683afb5893eeecf55697848e0f57f52cb669ffb5202113e043d5df76cb6c6",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -9748,7 +10732,7 @@
         "G1"
       ],
       "title": "Qualified write routes reject inexact JSON numbers and -0 instants",
-      "statement": "Per WIRE_RULES WR-JSON, WR-INSTANT and WR-INTEGER-RANGE (RULINGS Q30a, Q30b, Q30e): on every qualified write route a JSON value holding -0, a non-finite number or an inexact binary64 at any depth, including inside List and Struct, fails atomically with E-INEXACT-JSON-NUMBER before CanonicalJson runs and before any mutation; an instant given as -0 fails with E-NEGATIVE-ZERO-INSTANT; the ProjectionSpec integer range rule covers only the safe-integer domain.",
+      "statement": "Per WIRE_RULES WR-JSON, WR-INSTANT and WR-INTEGER-RANGE (RULINGS Q30a, Q30b, Q30e): on every qualified write route a JSON value holding -0, a non-finite number or an inexact binary64 at any depth, including inside List and Struct, fails atomically with E-INEXACT-JSON-NUMBER before CanonicalJson runs and before any mutation, where an inexact number is one that does not read back as written (Q33-JSON-READBACK, RULINGS Q33a); the guard applies to user JSON only, and the paired test holds on both engines: user JSON with -0 is rejected (WIRE-JSON-NEGZERO) while a number -0 assertion commits, journals, replays and reads back bit-exact (WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP, RULINGS Q34c); an instant given as -0 fails with E-NEGATIVE-ZERO-INSTANT; the ProjectionSpec integer range rule covers only the safe-integer domain.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -9773,6 +10757,8 @@
             "WIRE-JSON-NESTED-LIST",
             "WIRE-JSON-NESTED-STRUCT",
             "WIRE-JSON-BEFORE-CANONICAL",
+            "Q33-JSON-READBACK",
+            "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP",
             "WIRE-INSTANT-NEGZERO",
             "WIRE-INTEGER-SAFE-RANGE"
           ]
@@ -9801,23 +10787,28 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
       "mutationControls": [
-        "M-JSON-NEGZERO-NORMALIZE"
+        "M-JSON-NEGZERO-NORMALIZE",
+        "M-JSON-GUARD-ON-JOURNAL"
       ],
       "contracts": [],
       "sources": [
         "RULINGS Q30",
+        "RULINGS Q33a",
+        "RULINGS Q34c",
         "EXP-F02 wire-exactness report"
       ],
       "grounding": "grounded",
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "a78c8f65bca3fb2a941d9890cac724e855c4c88846f6e3e6f813d34d5ab0e2fe",
+      "definitionSha256": "a8bf38588c318c3b88c1338fa434100f6a6a1597684d1a70f1985224f019cc16",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -9879,7 +10870,10 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -9895,7 +10889,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "741366f5dcfe9d7d7a347af0acee93497a286dff16a02034f7805571b9ba5cdb",
+      "definitionSha256": "7527cc0a86d96a6c2ac7653976c23d6201b2478a69126fee674638b8e2d619fa",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN"
@@ -9955,7 +10949,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -9971,11 +10967,530 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "b51bf23cac29642c73467506af641f720583ae1bebeffc94d36caf454435d6cf",
+      "definitionSha256": "4985039b0633e05b0a28f7b6819c49813c8ca660f8146960a3991c647d40c217",
       "status": {
         "qlever-sparql": "OPEN"
       },
       "needsNewOracle": [
+        "O-REPLAY"
+      ]
+    },
+    {
+      "id": "G1.decimal.tdk1-admission",
+      "goals": [
+        "G1"
+      ],
+      "title": "TDK1 V3: per-image admission probe",
+      "statement": "Per TDK1 (RULINGS Q35, R20 section 5.3 V3): per-image admission probe: the 121,005-key sorted chain, all boundary keys, 20,000 prefix pairs (p0212 / p02125) and negatives (n9944z / n994z) loaded as VARCHAR on XTDB (flushed and compacted L0 blocks plus bloom pages) and as plain literals in an order predicate on QLever (including a post-index INSERT DATA delta). Pass: ORDER BY key returns exactly the exact-rational order and the two engines return byte-identical orders (TDK1-V3-ORDER-PROBE).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": [
+        {
+          "set": "CS-TDK1",
+          "select": [
+            "TDK1-V3-ORDER-PROBE"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-TDK1"
+      ],
+      "entrypoints": [
+        "EP-NATIVE",
+        "EP-RAW-WIRE",
+        "EP-WRITER"
+      ],
+      "profiles": [
+        "P-HEAVY"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "modes": [
+          "current",
+          "reopen"
+        ],
+        "params": {
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
+        }
+      },
+      "thresholds": [],
+      "mutationControls": [],
+      "contracts": [],
+      "sources": [
+        "lab/research/R20-order-preserving-decimal-encodings.md section 5.3",
+        "RULINGS Q35"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": "source",
+      "verifierMode": "rerun",
+      "definitionSha256": "2b892957adb8653dd7f04b240c33b0a20354b95ce26afb16f8bc7cfc795ddb6d",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-TDK1"
+      ]
+    },
+    {
+      "id": "G1.decimal.tdk1-ranges",
+      "goals": [
+        "G1"
+      ],
+      "title": "TDK1 V4: 1,000 random closed and half-open ranges whose bounds are not in the set and have more fractional digits than any scale",
+      "statement": "Per TDK1 (RULINGS Q35, R20 section 5.3 V4): 1,000 random closed and half-open ranges whose bounds are not in the set and have more fractional digits than any scale. Pass: count, first key and last key equal the oracle; keyset and LIMIT/OFFSET pagination concatenate to the full order (TDK1-V4-RANGES).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": [
+        {
+          "set": "CS-TDK1",
+          "select": [
+            "TDK1-V4-RANGES"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-TDK1"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profiles": [
+        "P-TINY"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "modes": [
+          "current",
+          "reopen"
+        ],
+        "params": {
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
+        }
+      },
+      "thresholds": [],
+      "mutationControls": [
+        "M-TDK1-PREFIX-USE"
+      ],
+      "contracts": [],
+      "sources": [
+        "lab/research/R20-order-preserving-decimal-encodings.md section 5.3",
+        "RULINGS Q35"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": null,
+      "verifierMode": "rerun",
+      "definitionSha256": "7b894c94d504738e7468ba34c88e1f829d0858d59825ef94227cfbddb460f53c",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-TDK1"
+      ]
+    },
+    {
+      "id": "G1.decimal.tdk1-differential",
+      "goals": [
+        "G1"
+      ],
+      "title": "TDK1 V5: the TypeScript encoder in packages/core against the Python reference on a pinned vector file",
+      "statement": "Per TDK1 (RULINGS Q35, R20 section 5.3 V5): the TypeScript encoder in packages/core against the Python reference on a pinned vector file (TDK1_VECTOR_PIN). Pass: byte-for-byte equal keys and equal decode results; mutants of the TypeScript encoder fail (TDK1-V5-DIFFERENTIAL).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": [
+        {
+          "set": "CS-TDK1",
+          "select": [
+            "TDK1-V5-DIFFERENTIAL"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-TDK1"
+      ],
+      "entrypoints": [
+        "EP-KERNEL"
+      ],
+      "profiles": [
+        "P-TINY"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "modes": [
+          "single-execution"
+        ],
+        "params": {
+          "gates": [
+            "GATE-TDK1-VECTORS",
+            "GATE-ORACLE-PIN"
+          ]
+        }
+      },
+      "thresholds": [],
+      "mutationControls": [
+        "M-TDK1-NO-TERMINATOR"
+      ],
+      "contracts": [],
+      "sources": [
+        "lab/research/R20-order-preserving-decimal-encodings.md section 5.3",
+        "RULINGS Q35"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": "source",
+      "verifierMode": "rerun",
+      "definitionSha256": "ba816c4662da0bbbf7b0c39e71537455bdcf59ee9d88d67147ddfbcbdbd726cb",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-TDK1"
+      ]
+    },
+    {
+      "id": "G1.decimal.tdk1-serialization",
+      "goals": [
+        "G1"
+      ],
+      "title": "TDK1 V6: the key through the pg wire, JSON export, SPARQL result export, ledger and projection",
+      "statement": "Per TDK1 (RULINGS Q35, R20 section 5.3 V6): the key through the pg wire, JSON export, SPARQL result export, ledger and projection. Pass: the key string is unchanged: no case change, trimming or numeric coercion (TDK1-V6-SERIALIZATION).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": [
+        {
+          "set": "CS-TDK1",
+          "select": [
+            "TDK1-V6-SERIALIZATION"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-TDK1"
+      ],
+      "entrypoints": [
+        "EP-RAW-WIRE",
+        "EP-NATIVE",
+        "EP-FEED",
+        "EP-TRIPLES"
+      ],
+      "profiles": [
+        "P-TINY"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "modes": [
+          "current",
+          "reopen"
+        ],
+        "params": {
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
+        }
+      },
+      "thresholds": [],
+      "mutationControls": [],
+      "contracts": [],
+      "sources": [
+        "lab/research/R20-order-preserving-decimal-encodings.md section 5.3",
+        "RULINGS Q35"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": "source",
+      "verifierMode": "rerun",
+      "definitionSha256": "db3e9b4fdccfdd49570e69b66ae2ca666ada9680bb28e9254bc456d211f35562",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-TDK1"
+      ]
+    },
+    {
+      "id": "G1.decimal.tdk1-writer-negative",
+      "goals": [
+        "G1"
+      ],
+      "title": "TDK1 V7: values outside",
+      "statement": "Per TDK1 (RULINGS Q35, R20 section 5.3 V7): values outside (p, s), excess nonzero fractional digits (R-DEC-3), -0, more than 38 digits, malformed text. Pass: typed error (E-DECIMAL-OVERFLOW, E-DECIMAL-FRACTION or E-INVALID-VALUE), no residue, no rounding anywhere on the path (TDK1-V7-WRITER-NEGATIVE).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": [
+        {
+          "set": "CS-TDK1",
+          "select": [
+            "TDK1-V7-WRITER-NEGATIVE"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-TDK1",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-WRITER",
+        "EP-BULK",
+        "EP-REPLAY",
+        "EP-TRIPLES"
+      ],
+      "profiles": [
+        "P-TINY"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "modes": [
+          "single-execution"
+        ],
+        "params": {
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
+        }
+      },
+      "thresholds": [],
+      "mutationControls": [],
+      "contracts": [],
+      "sources": [
+        "lab/research/R20-order-preserving-decimal-encodings.md section 5.3",
+        "RULINGS Q35"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": "source",
+      "verifierMode": "rerun",
+      "definitionSha256": "8b58137f3a1b95e19018d07e6773e983d22c057c722bdf964ee47a1eb4f4494b",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-TDK1"
+      ]
+    },
+    {
+      "id": "G1.decimal.channel-routing",
+      "goals": [
+        "G1",
+        "G2",
+        "G5"
+      ],
+      "title": "Every decimal comparison routes through the decimal_order_v1 key",
+      "statement": "Per DECIMAL_ROUTING (RULINGS Q38d), on the repository, the native surface in the lane language and the raw recipes: ordering and ranges on decimals use the decimal_order_v1 key (DR-REPO-ORDER, DR-NATIVE-ORDER, DR-RAW-ORDER), including derived expressions (DR-DERIVED) and aggregate results (DR-AGGREGATE: SUM decodes, computes exactly and encodes a result used for ordering); arithmetic on key strings is preflight E-MIXED-FAMILY (DR-KEY-ARITHMETIC); JSON is opaque unless explicitly converted (DR-JSON-OPAQUE), and the conversion validates and encodes (DR-JSON-CONVERT).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": [
+        {
+          "set": "CS-DECIMAL-ROUTING",
+          "select": [
+            "all"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL-ROUTING",
+          "select": [
+            "DR-REPO-ORDER",
+            "DR-NATIVE-ORDER",
+            "DR-RAW-ORDER",
+            "DR-DERIVED",
+            "DR-AGGREGATE",
+            "DR-KEY-ARITHMETIC",
+            "DR-JSON-OPAQUE",
+            "DR-JSON-CONVERT"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-REPLAY",
+        "O-TDK1",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH",
+        "EP-KERNEL"
+      ],
+      "profiles": [
+        "P-TINY"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "modes": [
+          "current",
+          "reopen"
+        ],
+        "params": {
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
+        }
+      },
+      "thresholds": [],
+      "mutationControls": [
+        "M-DECIMAL-LEXICAL-ORDER"
+      ],
+      "contracts": [],
+      "sources": [
+        "RULINGS Q38d",
+        "lab/reviews/plan-v2-round4.codex.md finding 6"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": null,
+      "verifierMode": "rerun",
+      "definitionSha256": "8660557a9118820e32720db7b471febb16eead13e1d005e72092ae8957e1d140",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-TDK1"
+      ]
+    },
+    {
+      "id": "G7.outbox.publication-sequence",
+      "goals": [
+        "G7",
+        "GS"
+      ],
+      "title": "Outbox deliveries are keyed by (id, publication sequence)",
+      "statement": "Per OUTBOX (RULINGS Q38f): the delivery key is (id, publication sequence); the sequence increments whenever the payload to publish differs from the latest published payload for that id, so a release rollback R1, R2, R1 publishes three deliveries 1650, 1700, 1650 (OB-RELEASE-ROLLBACK); publication state is persisted atomically with its outbox record (OB-ATOMIC-STATE); a crash before delivery replays the same identity exactly once (OB-CRASH-BEFORE-DELIVERY); an unchanged activation during recovery publishes nothing new while the pending delivery keeps its identity (OB-UNCHANGED-ACTIVATION-RECOVERY).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": [
+        {
+          "set": "CS-OUTBOX",
+          "select": [
+            "all"
+          ]
+        },
+        {
+          "set": "CS-OUTBOX",
+          "select": [
+            "OB-RELEASE-ROLLBACK",
+            "OB-CRASH-BEFORE-DELIVERY",
+            "OB-UNCHANGED-ACTIVATION-RECOVERY",
+            "OB-ATOMIC-STATE"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-DOMAIN",
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-OUTBOX",
+        "EP-WRITER",
+        "EP-KERNEL"
+      ],
+      "profiles": [
+        "P-FAULT"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-FAULT",
+          "CR-MUTANT-KILL"
+        ],
+        "modes": [
+          "current",
+          "reopen",
+          "engine-restart"
+        ],
+        "params": {
+          "gates": [
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
+          ]
+        }
+      },
+      "thresholds": [
+        "T-FAULT-REPS"
+      ],
+      "mutationControls": [
+        "M-OUTBOX-VERSION-DEDUP"
+      ],
+      "contracts": [],
+      "sources": [
+        "RULINGS Q38f",
+        "lab/reviews/plan-v2-round4.codex.md finding 8"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": "source",
+      "verifierMode": "rerun",
+      "definitionSha256": "bf5c7f4b05280f55df11916ce8cb0f89a7a3c088a50927565ac03bdcf6a9b6de",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-DOMAIN",
         "O-REPLAY"
       ]
     },
@@ -10020,7 +11535,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10033,7 +11550,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "2076b9ab816df45a10d8a6dbdefb22c9c254409d8520bd68d99241a23f03b31f",
+      "definitionSha256": "a53819cb20af53b3f5de9d9b19aba797c043bcc725b78f941402a05cce45c765",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10086,7 +11603,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10103,7 +11622,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "7ee45f1298eeeca7153fe031cc37823cb421786c3bbef4c5657642ec80604839",
+      "definitionSha256": "f647ed02f842e0ba743819077a0e8e00fdbe1c6eefc68ca11b161c8a83c04e68",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10153,7 +11672,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10168,7 +11689,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "31393c5bb5b331f2fc57d53b0983f51d2f2571fc0ef43470554d9fa8e1a0c18c",
+      "definitionSha256": "98cb3f94f88c70e837d974c9d3826deeff822952f74f76c5f5f1c85bd7670409",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10220,7 +11741,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10234,7 +11757,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "6df8546fd7aad390ac34a5874fbcc841a65c589beb4d337932ebfea8d35fc22b",
+      "definitionSha256": "1029adf3440064d4ba2ed0744d9c7dca386dc731ee7fda6ea5762c720e222ffa",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10288,7 +11811,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10304,7 +11829,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "fdb2ef97edd3bbaa9c83f05dc7e44acec6257e5ca8b88d866470294ecd162530",
+      "definitionSha256": "8b77d349800bb1d4a96c812391e02b0b5904d5e3939c7f40796d2b20211a1b2e",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10355,7 +11880,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10368,7 +11895,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "89e697ae985022ab57e8c791bf5ade0aebacd79ee6d0ae79893e7ed9b049dd6e",
+      "definitionSha256": "b138d8e5e0ba1efbc8b9441a239a4b843467063754b67802b2639421acae3977",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10419,7 +11946,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10433,7 +11962,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "f1a0bbf3b0a398992d9c75035d19e4d37d965ad942627b569e94ea0b00b19c2a",
+      "definitionSha256": "6d093d599ed3a2b8b0b13b9b856808d4c34f50bb740b8b2e360c25f4fb3e5306",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10485,7 +12014,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10499,7 +12030,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "69d8d673bbdb27adf3df42f6d8a128cbf04446e5746b8b28f69a0b41cccb180a",
+      "definitionSha256": "f84147d028577b0515904295d2d5de025f29ce98e17bb3f5a183e7c2755230a6",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10624,7 +12155,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10640,7 +12173,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "78ad64e3db727e633cb7706e6b8f76f82c599976da0ee3d55882bd37ba4e650b",
+      "definitionSha256": "5bacf540b6030b7a314c10c7f8dfe28f2892991e3ff9128f92082ea6f96b8e82",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10692,7 +12225,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10708,7 +12243,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "e36d9868396eea6b90f8a8242558708166e20c7e5a2cd08981c8a2e53eaf5893",
+      "definitionSha256": "152bf991fb98235e52468544e4395a3a49ee6a53f7b162bbb869930ba2956a15",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10759,7 +12294,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10773,7 +12310,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "081249b8af50480ec90c24ec9df732efb3c4731433268735f273a904cb8042f4",
+      "definitionSha256": "18ae5adc103b2334978eeafacef185ba05a14111fc12230562789fa910b653b4",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10802,10 +12339,53 @@
           "select": [
             "all"
           ]
+        },
+        {
+          "set": "CS-ERRORS",
+          "select": [
+            "Q33-CROSS-FAMILY-ORDER"
+          ]
+        },
+        {
+          "set": "CS-ERRORS",
+          "select": [
+            "Q33-NONNUMERIC-OPERAND"
+          ]
+        },
+        {
+          "set": "CS-ERRORS",
+          "select": [
+            "Q33-REM-BINARY64"
+          ]
+        },
+        {
+          "set": "CS-ERRORS",
+          "select": [
+            "Q33-AGG-NONNUMERIC"
+          ]
+        },
+        {
+          "set": "CS-ERRORS",
+          "select": [
+            "Q33-CMD-UNMAPPED-FAULT"
+          ]
+        },
+        {
+          "set": "CS-ERRORS",
+          "select": [
+            "Q33-CMD-RETRACT-TX-ENTITY"
+          ]
+        },
+        {
+          "set": "CS-ERRORS",
+          "select": [
+            "Q33-CUT-INVALID-BASIS"
+          ]
         }
       ],
       "oracles": [
-        "O-ERR"
+        "O-ERR",
+        "O-REPLAY"
       ],
       "entrypoints": [
         "EP-REPO",
@@ -10823,7 +12403,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -10836,13 +12418,15 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "e2391cff85ba7a84988863b5cc50909508fc89018decb1be6fd44a4229698169",
+      "definitionSha256": "0f71dab30467539e242beafaa804d5181556f6c8d735539eb11f2f01cbf29e2b",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
         "qlever-sparql": "OPEN"
       },
-      "needsNewOracle": []
+      "needsNewOracle": [
+        "O-REPLAY"
+      ]
     },
     {
       "id": "G2.strings.codepoint-supported",
@@ -11022,7 +12606,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -11038,7 +12624,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "332df40d7a5104cd30e28db1eeb1f32c06b1baf915f7d26a9d3eaf53da35167d",
+      "definitionSha256": "8f02de3fc2f9f30f6a928201294bc333ba76d3265903accf4a5a436bc0ca8dd2",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11223,7 +12809,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -11238,7 +12826,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "664434f3bb3e572129cea4e39e364e2554fa985398ddee3fcaba43fe2c11e66f",
+      "definitionSha256": "a557034683d20514253e02b51be9284b1b8e66b61795cce0781e627117825df9",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11291,7 +12879,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -11307,7 +12897,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "55cd9aee52fd04761e1ca1de98841a5bbc326dba27a9a0ac49fb77348df4520b",
+      "definitionSha256": "c925a16f5fd75b10cd74060ef376d6d61b16b5b15ab86bc5b70f71353511be32",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11360,7 +12950,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -11376,7 +12968,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "37bca792d44e65ac8b0f68f354d03f14cc8208501d68912a9088be0beebdd9e2",
+      "definitionSha256": "88421de11fbcb8420dffdaf6678da71bdbc6fedc3cc7a358c60a1f2bd7456fe5",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11491,7 +13083,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -11506,7 +13100,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "39dafc35f50e5b975f206b559ada4f51e6c6f96e1723b87d78552d7601bd8ada",
+      "definitionSha256": "e22bc56f766d2b322b0bb39f65ae7d4c530489f5900b3529d25756dbf411c17d",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11560,7 +13154,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -11581,7 +13177,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "fca10744277b3942eda7ad51ee85a6f77b13956b9d5d7962069dfb042e135f7b",
+      "definitionSha256": "6fd706355fdc96c9bdde5cabdba16bdbecc76fd07044732625416d59c77019d5",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11632,7 +13228,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -11646,7 +13244,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "cf8a2034bda8d3d71ce1586a9a7bfd5d41a3db73f2bc88e5890dadf10d273fad",
+      "definitionSha256": "ddb9df8da1ff49be0421a1a30fcc2ef28c0f86ea019a43b932ca0475275e1cd2",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11698,7 +13296,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -11714,7 +13314,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "c29e1ea448589c8e32e3b0506ad74383671ba98845a5f07f09988a6d2b153728",
+      "definitionSha256": "65a3ea45dce7cbdd462b47e5dc23da874a131e5884d658b900481926a571b887",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11764,7 +13364,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -11777,7 +13379,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "3cb6f30821b598acb7281dda7f4509adf665a6901fe42ed0d9cc437f6053e889",
+      "definitionSha256": "fce29dcbeb5357827ccfb22b3c1f0f368d7a887eb00f54963f0aaf254bdbc93f",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11793,7 +13395,7 @@
         "G5"
       ],
       "title": "Engine-side sums are exact where a projection needs them",
-      "statement": "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using on XTDB SUM(CAST(x AS DECIMAL(32,0))) once EXP-X02 confirms it, else the split-sum fallback (RULINGS Q13, Q19), with EXP-F02 cross-checking the chosen recipe; whichever recipe is used passes these same cases; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
+      "statement": "For every declared projection whose definition aggregates over many subjects, and every CS-NUMERIC projection-sums case, the engine-side SUM returns the AG-SUM-I total (exact; E-INTEGER-OVERFLOW only for a final total outside the integer range), using on XTDB SUM(CAST(x AS DECIMAL(32,0))) read as text and never cast back to BIGINT or any numeric client type (KL-X9, RULINGS Q39a; confirmed by EXP-X02), else the split-sum fallback (RULINGS Q13, Q19), with EXP-F02 cross-checking the chosen recipe; whichever recipe is used passes these same cases; unconverted integer AVG fails with E-INTEGER-AVG; per-subject sums run in the kernel and are covered by G2.arith.integer-exact.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -11832,12 +13434,15 @@
           "diagnostics": [
             "D-X-SUM"
           ],
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
       "mutationControls": [
-        "M-INTEGER-ROUND"
+        "M-INTEGER-ROUND",
+        "M-X-DECIMAL-SUM-BIGINT"
       ],
       "contracts": [],
       "sources": [
@@ -11852,7 +13457,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "1d969ec516be91215e595f56081718bd2abaf22d717e213ce83cbf36947688ee",
+      "definitionSha256": "13e6f5d9b6aacd04820d429ee2eeccde07916c80e97f2c7f12b399c95b6e4a75",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12306,7 +13911,10 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [
@@ -12322,7 +13930,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "6f98a7d08a154e054a5a5b420348b196e040d2572da28839719b919a546f585b",
+      "definitionSha256": "68fa9c7ec0c4b24e7b674eac7f68a4eccc22cf4742cd52c1f477ad0977dcde1c",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12374,7 +13982,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -12389,7 +13999,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "62f1650cf1a0fcb80736702009f2e92044c701a067d92ecac1e8656100baf184",
+      "definitionSha256": "5092148c07fe3384f792b8668386fbffdcf6ff873fead9215ff5b5e111ba9327",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12440,7 +14050,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -12453,7 +14065,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "c84d164fc09cdf97fbc197c8b2f15d1f86aa8b547f05d69d854ba7c903ad30fe",
+      "definitionSha256": "56b58975fd16aaca3f3722a65536d0fd4249de5b77261f7df0b74ff0986612a6",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12507,7 +14119,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -12522,7 +14136,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "fbb4db1561c498f13f0bf790d4c6a155585a5eaf25cfb3e0ae330ccd6a9818cf",
+      "definitionSha256": "49e95af70b3587d3ee496d9bb79d21b186c5e71b799a7ec130774903b9abe112",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12557,6 +14171,24 @@
           "select": [
             "ER-JOURNAL-MODULO"
           ]
+        },
+        {
+          "set": "CS-WIRE",
+          "select": [
+            "WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"
+          ]
+        },
+        {
+          "set": "CS-JOURNAL",
+          "select": [
+            "Q33-JNL-ENVELOPE"
+          ]
+        },
+        {
+          "set": "CS-JOURNAL",
+          "select": [
+            "Q33-JNL-NOT-MODELED"
+          ]
         }
       ],
       "oracles": [
@@ -12578,7 +14210,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -12594,7 +14228,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "74ccbdea537311cdb6df85bed077497553dd98002021e5698a6d41b616727ec7",
+      "definitionSha256": "54fbbfe7db66e1e56dd28c8cfe7fbf952598f78d2376dbcd41bb7010e24a9494",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12652,7 +14286,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [
@@ -12672,7 +14309,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "9e8d76cd77659ac96fe58ed48dc8f9f069287255e9a52178e2d256c03a7decdc",
+      "definitionSha256": "d1d544e1257095d1246aff01100bebc473451d960a5cf6ceb54d80fddc39bd60",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12787,7 +14424,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -12800,7 +14440,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "5b2532a156c148ce10cd929215babec67da16650f5971d01856c4ea8f7194831",
+      "definitionSha256": "1ca492e6571b47b332819871d077b8ac15bd60fcb3ffb56ace0096e014f987ce",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12853,7 +14493,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -12866,7 +14508,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "3718d8b008a1cf4af84261faf45afbeff5636f5da4cc2e2a90d58dfaa1d8f544",
+      "definitionSha256": "a83ad4b89149f107df97c2aca82c6d9939821a2d8bdf7b8807807e6fa3226597",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12918,7 +14560,10 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -12931,7 +14576,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "5507c71cd91f494b6af7ca7736a551c19b4a9be88b6dd86d2a559b75e937b8ae",
+      "definitionSha256": "876186e6c0b4b62bb0c61aedf1b5da6902af27580d3139c1970211b6d14a1502",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -12985,7 +14630,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13004,7 +14651,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "84d2dd22eb1991f19b5e27364924c69a3f0aaa7497b2d03f488df8cb7b3680c7",
+      "definitionSha256": "ba82cc850e84b3a6ed1c8001b6af9384dd97c484cf872341c95da17b55a21893",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13056,7 +14703,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13071,7 +14720,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "04d4d087b690cbeaf2a4ed6a27b59cc9be075ababe571581e861869b8e54d2c9",
+      "definitionSha256": "9c8483da1aa7da29a64c36266c8c3141535d04af2b1d7bca860d94d276331393",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13129,7 +14778,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13145,7 +14796,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "3f7cbde1304fb3645e8d15ab596650eb4ea2589f0730af694f35dd3411ae5595",
+      "definitionSha256": "c5ab9d1ec08821459d112e12a6964e8ad6dd62b5c03fdbd2943e84df8cd2c153",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13197,7 +14848,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13213,7 +14866,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "001a76a51cbb8a031b042fbb2e26066b4d5f85871fc34af2f6a480ea78a53466",
+      "definitionSha256": "70dcba09b5140800833e35c1c8047a8a00e0ec65d1a689c0ee66cab24202275f",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13267,7 +14920,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -13286,7 +14941,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "9fbde07a175bca5dff5aeacccbcf3ce84944db9f2ccdfa794679c9ea9c8c40bf",
+      "definitionSha256": "495826b925713ac2ead4366c2e2a7d3c67506b945ab6b0093748e8a18f6d56f1",
       "status": {
         "qlever-sparql": "OPEN"
       },
@@ -13340,7 +14995,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -13358,7 +15015,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "1e937cd9d323b5346b75a6301b30a9a3bc3a87d59866191379f30adf27417e44",
+      "definitionSha256": "4f9a9ad79a561ea892d8ecefa46898509c0e298569ff7bba003bbf1e1786323f",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13417,7 +15074,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -13432,7 +15091,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "81d3850c86938d0e7945bdb632bbca31455724b682328bf8646c9797026eb5cd",
+      "definitionSha256": "55711084ea3f50954c09bd01bfb189ebf737a516d6eca0605eb1722cc3a02e3d",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13485,7 +15144,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13500,7 +15161,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "0e012b4c79ed5a37b64a6b2f903a139b9fe249e0eff7c3da8039a58d15539a71",
+      "definitionSha256": "d2d9a40cb8b62de9caef7f594bce365714ecef8214b0636c74ce22b32641ab6e",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13557,7 +15218,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13572,7 +15235,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "4471265412165a4c300a2bdfac360c58caa44bf77f1ffb6cee8006872fdb7b92",
+      "definitionSha256": "f1bc8bbeffea5867dec12ec38dc21cf51d4125ffcc829e466dc157b443e5a314",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13626,7 +15289,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13642,7 +15307,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "cc8aa4c8c8e03eed2d944806bf0f0d19c320a4e60febeb73feee5f74dc400032",
+      "definitionSha256": "24ecbb932df86c8a518800d98ba131ef86c9099da33ef6a0aa9e40bc47c566a9",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13693,7 +15358,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13708,7 +15375,7 @@
       "notes": null,
       "layer": "history",
       "verifierMode": "rerun",
-      "definitionSha256": "15d30cea062e08b72d6f337c799dbba63917c2d5d772d00cb9abf85b3c11689c",
+      "definitionSha256": "f257e0424b2903ce093c8cdc55bebb5fc8bb8d7e357cdb3e335689930a3ec8d6",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13767,7 +15434,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13782,7 +15451,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "04865962fa38ae5c23ee325d8a32cee43bcbe941a9e966847d576f04b174e646",
+      "definitionSha256": "e1efb83987867ec0e124a88d29586ffeee7650064c161ac8548fd4060e111868",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13835,7 +15504,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13848,7 +15519,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "f3b4323eccd30ece3de30ea390f937a24de5e9df83b3c5ea677cfdd949b7604f",
+      "definitionSha256": "621dc66c98515e34523d20d672de3277f6f50f26ce8cb9abe0c595e9c212301a",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13898,7 +15569,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13911,7 +15584,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "460d3710dcb2874db0a93f8124833b1ae321d25ff984ccdcdf0cb1f279036449",
+      "definitionSha256": "f0d3ed1447d363e7bd19bc14638f33e5b065916b9f420bd8b95dbf366901aa26",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -13969,7 +15642,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -13983,7 +15658,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "0650d8f816fb83f80c61cc7a06ca2e6fab05d0cbb7dd5db6f61c8bd618bca1e0",
+      "definitionSha256": "eff5cd6fca3d76587c081c25572c83a06daa643649eb93cef4034121cfa7fd06",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14035,7 +15710,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14048,7 +15725,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "821ff9bbf2722bc9576ff0e01200a5c1dce78d6d883efe3d12eedfd0a0151cb1",
+      "definitionSha256": "238d00855c709f67f8eb3e74e2eb34f10c98ac9cd316a0e837c9b451edace3d3",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14099,7 +15776,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14112,7 +15791,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "28c113e2b0921532a83be6964a4ecc67ccb6a2c7344414e52c8fe278d7eef56d",
+      "definitionSha256": "c0836c243252029caedf7edbc633207070f5dbd4276f0180d91aa215fd3def98",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14161,7 +15840,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14175,7 +15856,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "9746e9609e80e20d0b0e74db3b05324f773c57cf8ba8ffc43125acbc506c27c3",
+      "definitionSha256": "c91f288847ad0ca9203e92a776a38b5fa3e2f19b40e385858e3cd713c44abb81",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14290,7 +15971,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14306,7 +15989,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "6ec4355a1fef86d8771a05b8e3b4167215543b9df481b370fab0c8e8ce071893",
+      "definitionSha256": "6650e8dd9d0046d6b320a21dfef5260b6d1f8c2a6fd57a0720c879594c59541c",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14358,7 +16041,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14375,7 +16060,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "d59ec6f5eb679d14129c120c00f5266af26a3c3168bf150228abfb9f20f415ed",
+      "definitionSha256": "b325a49bc347707d40d17a4f770ab5452e6961f4d9b07b151e68e5c2d864fc7a",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14410,6 +16095,24 @@
           "select": [
             "ER-CURSOR-MODULO"
           ]
+        },
+        {
+          "set": "CS-CURSOR",
+          "select": [
+            "Q33-JNL-LIMIT"
+          ]
+        },
+        {
+          "set": "CS-CURSOR",
+          "select": [
+            "Q33-PAGE-LIMIT"
+          ]
+        },
+        {
+          "set": "CS-CURSOR",
+          "select": [
+            "Q33-PAGE-OTHER-BASIS"
+          ]
         }
       ],
       "oracles": [
@@ -14432,7 +16135,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14445,7 +16150,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "300d04a424eb2ff86c152c63cdf5ddf683def664f3905c4a1c8de5327f67b0bc",
+      "definitionSha256": "b354d84d24d57acd90033962da1de12dd44c349da068ca43fd7749009d66f629",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14495,7 +16200,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -14510,7 +16217,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "096d7a4ce4150c749d5ee4f0c9f8284424af0d3db7d5419fc682002161d14acc",
+      "definitionSha256": "3c5a0194a7078b4e498ff86c93fa5252bab3dfd0df04041e562f8d0a0069198e",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14564,7 +16271,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -14579,7 +16288,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "cdf6d10b6d970a96d842ba85be7828ab35ce9f8594a6eda183c337c3348724e1",
+      "definitionSha256": "82b908649649fa3293fe32040373cbab4b4c5b1d12398ec2799b5acf5f918457",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14630,7 +16339,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14644,7 +16355,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "85029c9fa3eeff11c0dd521e26630c224860b67085a9ab6d0ed2108dfc254184",
+      "definitionSha256": "8a2dd206711b75502a60f05b5c7e6ec28e8a2f43bc8c161a3bdee0b7e215ba2a",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14760,7 +16471,9 @@
         ],
         "params": {
           "languagePurity": true,
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14773,7 +16486,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "3af5b2b974928b834e946a82c0fa8962f97b93a64f25d3524eebfb300bcad373",
+      "definitionSha256": "b0f1543a1168ebbc56ffec08dfb617aba3260cae24524a971efa3da643657273",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -14891,7 +16604,9 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -14908,7 +16623,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "7877f8d7c4f2909cdda8cd072c3690243e9bc0f74222b9b8a44e45aa8b819484",
+      "definitionSha256": "c6c13da96feddf02b230b015c7f8bb3bf7fa0a0e34d5b245df3996411689f2f7",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15121,7 +16836,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -15135,10 +16852,17 @@
         "M-DECIMAL-PRECAPTURE-ROUND",
         "M-ERASURE-LEAK",
         "M-STALE-INDEX-ANSWER",
+        "M-WITHTRANSACTION-REBIND",
         "M-ACK-BEFORE-PUBLICATION",
         "M-RYOW-STALE-ROUTE",
         "M-ERASURE-FRONTIER-SKIP",
         "M-JSON-NEGZERO-NORMALIZE",
+        "M-JSON-GUARD-ON-JOURNAL",
+        "M-OUTBOX-VERSION-DEDUP",
+        "M-DECIMAL-LEXICAL-ORDER",
+        "M-X-DECIMAL-SUM-BIGINT",
+        "M-TDK1-NO-TERMINATOR",
+        "M-TDK1-PREFIX-USE",
         "M-X-JSON-LIST-PARAM",
         "M-Q-SHADOW-EXACT-FLAG",
         "M-FEED-GAP",
@@ -15169,7 +16893,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "24135a8d59170d43ff8fe3a22456f6f5bba66e6f160565c45ffa5ced82c650ac",
+      "definitionSha256": "b9130cc7c151175fda8c34c636e417b38f5a356007c7fd55763979b80066a9ce",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15221,7 +16945,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -15235,7 +16961,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "13f8966ea99b8d4be3a3202e6454817183ee95d1cfdfe0df14b2d900b25d55ab",
+      "definitionSha256": "7b69297415ed9a648c33c2de0a8ae6867a3eacd3f18adee52a681160a8c62f5d",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15293,7 +17019,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -15307,7 +17035,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "bd3a5ffe6a7ec04b57f13a24693f78dfa85892286679d26c8bc90a79e4daa536",
+      "definitionSha256": "c329d6fad4f749e421ba424a41c9d0b3618721127360aaa6db273adfbb5121bf",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15423,7 +17151,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -15436,7 +17166,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "e9d570b3f450b6da2bffc2a027778774c7b62f0c516b0dddeced966bdc85bc6e",
+      "definitionSha256": "32b5806a6fde89253719663f514c6d84f4ee7548c90eb8ef5bafd4d32ca6b68e",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15487,7 +17217,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -15501,7 +17233,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "8671104e30309b8863d9116357973309349c3c5b01cd8f9347714765b4cd84ef",
+      "definitionSha256": "2a973d4448523d576470fc366cfc5e109b74e9e4044361d6d957e7e886c3fc9a",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15567,7 +17299,8 @@
         ],
         "params": {
           "gates": [
-            "GATE-POSITION"
+            "GATE-POSITION",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -15592,7 +17325,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "7622c693df3a66a47f3b0092a7d923c137c933910f755ffaa0a4d1ba635f0eee",
+      "definitionSha256": "eb7afa720fa0feaaae2d750fbaf5be7216565b3086adbce2d3450446d502ad50",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15658,7 +17391,8 @@
         ],
         "params": {
           "gates": [
-            "GATE-POSITION"
+            "GATE-POSITION",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -15684,7 +17418,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "647313e55a3075a3ab558ac32260765b57225a3bac91fd115e393e4d1e4a163e",
+      "definitionSha256": "7c02e4507bb6659368c960e83762e3f5a3014f011ae3c65382bc44b68055f69e",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15701,7 +17435,7 @@
         "NS"
       ],
       "title": "P3: an ordered, resumable change feed",
-      "statement": "Under TARGETS 1.1 P3: feed entries carry tx, entity, attribute and the valid-time range affected; commit time is the source's publication instant on the shared host monotonic clock; the cursor is (epoch, position); the expected affected-subject set per transaction is the directly written subjects (O-REPLAY) plus subjects affected through referenced entities under WORLD_W0 (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET); 'affected subjects known' is the consumer's single durable write of the set and its checkpoint. Over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); lag stays within NS-P3-LAG-P99-MS with P1's 256 readers running; delivery is at-least-once from the last checkpoint with effects keyed by (consumer, position, subject), so crashes before the effect, after the effect before the checkpoint, and after the checkpoint (NS-P3-CRASH-BEFORE-EFFECT, NS-P3-CRASH-AFTER-EFFECT, NS-P3-CRASH-AFTER-CHECKPOINT) leave zero visible duplicate effects (NS-P3-VISIBLE-DUP-EFFECTS-MAX) while replay attempts are counted separately; resume from a checkpoint replays exactly.",
+      "statement": "Under TARGETS 1.1 P3: feed entries carry tx, entity, attribute and the valid-time range affected; commit time is the source's publication instant on the shared host monotonic clock; the cursor is (epoch, position); the expected affected-subject set per transaction is the directly written subjects (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET, RULINGS Q36e); 'affected subjects known' is the consumer's single durable write of the set and its checkpoint. Over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); lag stays within NS-P3-LAG-P99-MS with P1's 256 readers running; delivery is at-least-once from the last checkpoint with effects keyed by (consumer, position, subject), so crashes before the effect, after the effect before the checkpoint, and after the checkpoint (NS-P3-CRASH-BEFORE-EFFECT, NS-P3-CRASH-AFTER-EFFECT, NS-P3-CRASH-AFTER-CHECKPOINT) leave zero visible duplicate effects (NS-P3-VISIBLE-DUP-EFFECTS-MAX) while replay attempts are counted separately; resume from a checkpoint replays exactly.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -15749,7 +17483,8 @@
         "params": {
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -15770,7 +17505,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "d6e4cfe9e69e9d75907f86bc5aaeb9f04aaf0f8921a52ba87cdbcd24f5fb81b3",
+      "definitionSha256": "5e6a1441418d976ec0dbf12c5d32fa659dcc09f4f0133ce030abe87978b0141c",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15832,7 +17567,8 @@
         ],
         "params": {
           "gates": [
-            "GATE-POSITION"
+            "GATE-POSITION",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -15854,7 +17590,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "b7e09803b5ba83a71cf14c15099281dcc0f5fb26df8ec973e4043dacce557c67",
+      "definitionSha256": "9e4abbb0295225bbe84c40b00d37ca411d8943d4a4d470c26cd4966575b9de9c",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15871,7 +17607,7 @@
         "NS"
       ],
       "title": "P5: release activation re-evaluates 100k subjects without hurting live traffic (per surface)",
-      "statement": "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); results are published as work items through EP-OUTBOX and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
+      "statement": "Under TARGETS 1.1 P5: a sweep evaluates release R against WORLD_W0 for every subject in R's scope at one shared basis, in the lane's language, while the writer trace and 64 live readers run; the receipt binds the basis and R's content hash; coverage is exact, every in-scope subject evaluated exactly once with the subject-list hash recorded (NS-P5-COVERAGE); results are published as work items through EP-OUTBOX under the delivery key (id, publication sequence) with early cutoff, so an activation that leaves a payload equal to the latest published one publishes nothing and a return to an earlier payload publishes a new sequence (RULINGS Q36a, Q38f), and equal O-DOMAIN's expected outputs; subjects the driver mutates after the basis is captured keep sweep outputs at the captured basis (NS-P5-POST-CAPTURE-MUTATION). Wall time including evaluation and publication stays within NS-P5-SWEEP-S; live read p99 and writer commit p99 stay within NS-P5-LIVE-READ-P99-RATIO and NS-P5-WRITER-P99-RATIO of their no-sweep values; a throttled variant of about 10 minutes overlaps a real compaction or index rebuild, keeps its basis and never blocks writers (no command waits beyond NS-P1-WRITER-WAIT-MAX-MS; OBS-MAINTENANCE shows the maintenance completing; NS-P5-THROTTLED-COMPACTION).",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -15920,7 +17656,8 @@
         "params": {
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -15941,7 +17678,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "5896a219c9e87863e9610e0c5ad61562d6c1b0181e4028481c61c231e9c1de62",
+      "definitionSha256": "011b6fa7c953460f8d6bd5d1ccd0f461eec2b2fec1ad783f45409075e355511e",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -15997,7 +17734,8 @@
         ],
         "params": {
           "gates": [
-            "GATE-POSITION"
+            "GATE-POSITION",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16015,7 +17753,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "d40a3681f14523ce2edd56f3956d92b91c818167ff21dc95ed7a19b7e1c281e8",
+      "definitionSha256": "eca18fe1eaf9517062cb7bd968b90fa90e719a5487f14fa68fb648a92156762d",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16076,7 +17814,8 @@
         ],
         "params": {
           "gates": [
-            "GATE-POSITION"
+            "GATE-POSITION",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16090,7 +17829,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "a1f5459fdd93da488138a53eb2c2bd02c6a6be9f02cd524548e0a295758742c1",
+      "definitionSha256": "e4b6962d1d053761633890a2a39d049eb5ce08e0c588f310321532b603736681",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16256,7 +17995,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16279,7 +18019,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "a6106deede1fb33d1b2a92cdea3a6c9065dd80c8e2a00e3a821576281c43c1fc",
+      "definitionSha256": "fdfab78a325aef2944f3f6c47e33644c880b0ea3f13611e2762c7ad8f8360eae",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16352,7 +18092,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16371,7 +18112,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "bf73f700b674654473a2e08ad425934325aca3dc84cb8ed7a2b3cadd066a3f44",
+      "definitionSha256": "e5b2ae4e818d90f1ebe764c18cfe13c784636bc09ba3585d165f5fd48e39dc09",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16444,7 +18185,8 @@
           "provisional": true,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16463,7 +18205,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "5956a014da3bf1ad837c79fbd4bc7e7f07ac384a8e52bdb2c043912b982e1a88",
+      "definitionSha256": "cbb4cf102283660535dbb4f64c06f63b88e1cb2c2491f70e544bb1c709b49f8a",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16482,7 +18224,7 @@
         "GS"
       ],
       "title": "Lost acknowledgements and a restart (P2, P1)",
-      "statement": "Story and load: 1% of commits lose their ACK and are retried; mid-run the engine (or QLever broker) is killed and restarted. Checked beyond exact answers: every retry returns the original receipt; no acknowledged commit is lost; readers resume at their pinned bases. Added failure schedule GS-04B-INDEX-PARTITION: the current index's feed consumer is cut for 60 s while the source keeps committing; expected: commits and ACKs continue throughout the outage; reads for which the index is not eligible wait at most 10 ms (COMPOSITION watermarkRouting) then route to the fallback; none answers from the stale index; the receipt measures the fallback share per window and the recovery time until the index is eligible again (RULINGS Q31e). Positive and negative witnesses: GS-04-WITNESS-POS, GS-04-WITNESS-NEG. Bars: NS-P2-DUP-RECEIPT-FRACTION, NS-P1-VIOLATIONS-MAX. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
+      "statement": "Story and load: 1% of commits lose their ACK and are retried; mid-run the engine (or QLever broker) is killed and restarted. Checked beyond exact answers: every retry returns the original receipt; no acknowledged commit is lost; readers resume at their pinned bases. Added failure schedule GS-04B-INDEX-PARTITION: the current index's feed consumer is cut for 60 s while the source keeps committing; expected: commits and ACKs continue throughout the outage; on every serving surface the composition claims, native included, reads for which the index is not eligible wait at most 10 ms (COMPOSITION watermarkRouting) then route to the fallback; none answers from the stale index; the receipt measures the fallback share per window and the recovery time until the index is eligible again (RULINGS Q31e). Positive and negative witnesses: GS-04-WITNESS-POS, GS-04-WITNESS-NEG. Bars: NS-P2-DUP-RECEIPT-FRACTION, NS-P1-VIOLATIONS-MAX. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -16536,7 +18278,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16555,7 +18298,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "870243e53de2e6216ae402d9249547a7ecc5b5982ffc117716fbd3c59f7662c6",
+      "definitionSha256": "d21e87ad4233a7d240bfd06139ddb197b1e5bcc2423e25fd0c652fb7289a8b31",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16627,7 +18370,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16646,7 +18390,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "b2598533b07f603d7f23ac1caff927f7bcdfb73a566efab32c2cccb2adb47138",
+      "definitionSha256": "9f059edc184d13cfdfa38058eda807d0ebd2756ef5ca75b619cd587c93f7cf7b",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16719,7 +18463,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16738,7 +18483,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "e812977ac42ee564b705ac50bd4d6201f2ac03ee87ff2bbffad2bdd1533af275",
+      "definitionSha256": "99eae569f850a14bc352c244366bc905927b26dbed1fff250302f46b732792f7",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16809,7 +18554,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16827,7 +18573,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "8bac2e87e579f7d5006f61f05597678d74ab209a6d0ae867a87194fb043f645e",
+      "definitionSha256": "daa060d9bbc16b438728010c2c65934633963e778604c6e6a8e2f912e5eec099",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16899,7 +18645,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -16918,7 +18665,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "8091db12e5c4775f7ed95c2e7def92c443ef23ec4bcd7825ee8f470980cd29b8",
+      "definitionSha256": "68f69e575e38cb9421a4da09f734954308c23d6da6b80b6607b89d137c11ff97",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16990,7 +18737,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17009,7 +18757,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "d003a995be8f7b1d508c8be8a27f03268f1e82cae306db68f7e609424d47394a",
+      "definitionSha256": "e04748efc638ed89a5d94a4f614cf24233cbbe66bd1a90e4197061f015d70ac8",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17028,7 +18776,7 @@
         "GS"
       ],
       "title": "Release activation (P5, P1)",
-      "statement": "Story and load: a new release changes 3 requirements; activation is a fact; the sweep re-reconciles 100k subjects at one pinned basis with live traffic. Checked beyond exact answers: P5 bars hold; in-flight reconciles finish on the old release. Activation is compared with GS.11's preview at one common input basis (GS-10-11-COMMON-BASIS). Positive and negative witnesses: GS-10-WITNESS-POS, GS-10-WITNESS-NEG. Bars: NS-P5-SWEEP-S, NS-P5-LIVE-READ-P99-RATIO, NS-P5-WRITER-P99-RATIO. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
+      "statement": "Story and load: a new release changes 3 requirements; activation is a fact; the sweep re-reconciles 100k subjects at one pinned basis with live traffic. Checked beyond exact answers: P5 bars hold; in-flight reconciles finish on the old release. Activation is compared with GS.11's preview at one common input basis (GS-10-11-COMMON-BASIS); work items publish under the delivery key (id, publication sequence) with early cutoff (OUTBOX, RULINGS Q38f). Positive and negative witnesses: GS-10-WITNESS-POS, GS-10-WITNESS-NEG. Bars: NS-P5-SWEEP-S, NS-P5-LIVE-READ-P99-RATIO, NS-P5-WRITER-P99-RATIO. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -17083,7 +18831,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17103,7 +18852,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "0bfcb66a29c0af1ab2636d56c6507c45687e9fefdd72195cd24cc500b23c94c4",
+      "definitionSha256": "1819a4847be66b1a96f5fba83d3e76f1346fb45d5edb9822c83dcf1551603cb9",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17122,7 +18871,7 @@
         "GS"
       ],
       "title": "Plan impact preview (P5, P1)",
-      "statement": "Story and load: 'who gains work' for a candidate release over 100k subjects, without applying it, during live traffic. Checked beyond exact answers: identical answer to the post-activation sweep; never blocks writers. The preview is compared with GS.10's activation at one common input basis (GS-10-11-COMMON-BASIS). Positive and negative witnesses: GS-11-WITNESS-POS, GS-11-WITNESS-NEG. Bars: NS-P1-WRITER-WAIT-MAX-MS, NS-P5-LIVE-READ-P99-RATIO. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
+      "statement": "Story and load: 'who gains work' for a candidate release over 100k subjects, without applying it, during live traffic. Checked beyond exact answers: identical answer to the post-activation sweep; never blocks writers. The preview is compared with GS.10's activation at one common input basis (GS-10-11-COMMON-BASIS); preview publishes nothing to the outbox. Positive and negative witnesses: GS-11-WITNESS-POS, GS-11-WITNESS-NEG. Bars: NS-P1-WRITER-WAIT-MAX-MS, NS-P5-LIVE-READ-P99-RATIO. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -17177,7 +18926,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17196,7 +18946,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "4724d18f7eac6631aa10f144d23895d9c6ed85c50190358c624eea4031ee95a2",
+      "definitionSha256": "0174af87f54351b0a4529be6589afd2c14b53f538bd41d40eed39a98d63f121f",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17267,7 +19017,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17285,7 +19036,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "35a4df15e135dd61e0db4543f605f4c5491ea1d721537a9feffd03fa5f1f012b",
+      "definitionSha256": "844ddc257801a4ab15e8cedf963895a250c5a5e49abe824d0fa1bbe198772dc3",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17358,7 +19109,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17377,7 +19129,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "0d6b38fbde3bdf9626bbc1a10bddc3438d40a7e2bf16d24259b89976c88cc6e3",
+      "definitionSha256": "b82c05f02975a52c005b05223b5db75f92f36cdcdeccf396bccd6c2671de7871",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17449,7 +19201,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17468,7 +19221,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "4c125213ba155c8353241deae9ace0f39cb01e9ac18090c78c4b5ef3e982d711",
+      "definitionSha256": "790e63a3e753d2e61affbb12fa1a0824a71586676744a646f481622048a6a76d",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17543,7 +19296,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17562,7 +19316,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "db5e11e93f76d7a03f1b286b0224749cabd4670be5f64d04660610685acbcaed",
+      "definitionSha256": "143d87931aa0ceef51fc69f9d10558dc1514d51cb5c09f999c38ee19087b9ca7",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17634,7 +19388,8 @@
           "provisional": true,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17653,7 +19408,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "70f4dde8b36d03449a6a7a1504c20839a22d1ca6ca5d23ad7a73e1a2ac3d1f40",
+      "definitionSha256": "f7fbed2786951563252b6a42abb8fa500cd33ca697ab24eb7c4c0bfffeb8f27f",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17725,7 +19480,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17744,7 +19500,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "b365e2935448461ca78564e90e0d3be604e442358b82fe89f3b7e09fc806d562",
+      "definitionSha256": "84db4036661498277fa7dcbbf3df587c891ccc3127fdf1337611b388aec43512",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17818,7 +19574,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17837,7 +19594,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "50d5dc97796a85fc2a2000f23f8dcaff997a2b5722e0a939c591e39e9720872f",
+      "definitionSha256": "9a0cf44d4947d77de1813a6fb0c8a11f2f056d0dc06241631e27e1ac78229a69",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -17856,7 +19613,7 @@
         "GS"
       ],
       "title": "Feed consumer crash (P3)",
-      "statement": "Story and load: the dependency-index consumer crashes mid-stream and resumes from its checkpoint. Checked beyond exact answers: no gap; zero duplicate externally visible effects throughout, with replay attempts allowed and counted; per-subject order kept; catch-up lag measured (RULINGS Q31h). Added failure schedule GS-19B-OUTBOX-CRASH: the consumer crashes after delivering an outbox item but before recording completion; expected: the receiver deduplicates by the delivery key: exactly one externally visible effect. Positive and negative witnesses: GS-19-WITNESS-POS, GS-19-WITNESS-NEG. Bars: NS-P3-GAPS-MAX, NS-P3-ORDER-VIOLATIONS-MAX. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
+      "statement": "Story and load: the dependency-index consumer crashes mid-stream and resumes from its checkpoint. Checked beyond exact answers: no gap; zero duplicate externally visible effects throughout, counted by the outbox delivery key (id, publication sequence), with replay attempts allowed and counted; per-subject order kept; catch-up lag measured (RULINGS Q31h, Q36a). Added failure schedule GS-19B-OUTBOX-CRASH: the consumer crashes after delivering an outbox item but before recording completion; expected: the receiver deduplicates by the delivery key (id, publication sequence) of OUTBOX: exactly one externally visible effect per delivery key, and a later return to an earlier payload is a new delivery (RULINGS Q36a, Q38f). Positive and negative witnesses: GS-19-WITNESS-POS, GS-19-WITNESS-NEG. Bars: NS-P3-GAPS-MAX, NS-P3-ORDER-VIOLATIONS-MAX. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -17910,7 +19667,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -17929,7 +19687,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "30a5122cb8262fa0605d8f9da325d4eac7e31209673dbbbef08cdaf4721fab60",
+      "definitionSha256": "939cb860b91cf8392c965b9f1c519399e003f48219f8c2ea031fce5bf66e10fa",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18002,7 +19760,8 @@
           "provisional": false,
           "gates": [
             "GATE-POSITION",
-            "GATE-W0"
+            "GATE-W0",
+            "GATE-ORACLE-PIN"
           ]
         }
       },
@@ -18021,7 +19780,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "9869abaa0ffaf8fcff808b658241d280a1b0832724c27f5740b60e006310a139",
+      "definitionSha256": "2742efd60be39c9aa86372b8ead5a285e23b3337f339801589dd3dcc187b78a6",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18078,7 +19837,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18092,7 +19854,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "45b69647beb2d5b339ed3d78307751268ece5e4c6ef8f1efc1e1acb3fa34a35e",
+      "definitionSha256": "d1d3dd1b04cf53abc2ebd0f2bb35e3d8c98027da7bea5b615dbcf5911b0c76da",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18148,7 +19910,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -18162,7 +19926,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "c58a61e4c600130f25ae1486a85a3df2c55a2fcecae4ffd8676fc6cd80fdfb5d",
+      "definitionSha256": "aea6dfcb435f403fabc2fc8ba967ffaf2ce9b126130e7feaa7677e151c42fa9c",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18219,7 +19983,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18235,7 +20002,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "6938872af1a4c69e4f886bad70d1b5dc12d0586eb55ba534c631b379a098efaf",
+      "definitionSha256": "1cd2a6bd7b172d76baa57a6916daf59af1181f9deffe52c4bee6d1115a629739",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18293,7 +20060,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18310,7 +20080,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "eebc54158e14ea21fd7c1a27d832aeed8c4b5490eaafa67c4dff23449057aceb",
+      "definitionSha256": "ad8ad5088b4fd23fad873977a1c0a8c7aae2add4e189f0fe158b176e84f6b394",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18365,7 +20135,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18379,7 +20152,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "6a6d5d41fdb158112a953e0f3b44ddc989bdf13bee4dc46c91adf79afda4a1da",
+      "definitionSha256": "200764a6ea0277ce40a2c50b9ee7e302250d6cf25a780408c27a4d9bcd3ed834",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18434,7 +20207,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18448,7 +20224,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "75fd56118ca6a30dbcb5c3d121140770f1f11d34be399d58c3d031938064e949",
+      "definitionSha256": "0eaf728eb9083e1bf2e3560bbc014b2a9b1ec2892d5e71e37caf8f34baef42bc",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18503,7 +20279,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18517,7 +20296,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "158791ae2a7a1e866abbba1280dad82033201d7e2c0ad959360694f982cd82a8",
+      "definitionSha256": "1d4015e2946164c4ff9708af70c1c0b7242847d199d2c863fb828e460d691450",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18573,7 +20352,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18587,7 +20369,7 @@
       "notes": null,
       "layer": "current",
       "verifierMode": "rerun",
-      "definitionSha256": "66c3d78d5b61009956bfc42ffffcb4e59d15736bfb9e68ecd85a2f325fb007a6",
+      "definitionSha256": "6aef1621cb871221255592d405cabc553e4ded062d39277ad04c1c6f9e22fc68",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18643,7 +20425,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -18657,7 +20441,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "e69818781a387cd1c4393a35b10e0aeb6da3a2410fff26baa9542b729775d191",
+      "definitionSha256": "4b01ddd6ae7a2ea9b20d788a1fde85e216e6392a54d231bed88bdb35bf47d48a",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18713,7 +20497,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18727,7 +20514,7 @@
       "notes": null,
       "layer": "current",
       "verifierMode": "rerun",
-      "definitionSha256": "e63213e6be142e1700e61b09c3e24a3e2ac666fb60041d92a7dbcabc25d1a040",
+      "definitionSha256": "9d962a1bbbbfbc9521a98a8f9e9316253fa1162927cc427410053c24488716fe",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18796,7 +20583,9 @@
         ],
         "params": {
           "provisional": true,
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -18812,7 +20601,7 @@
       "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "c1a388991eeb0b2eda96fc1853d590bd0a835801e4c1e3140c6e12a163074c1a",
+      "definitionSha256": "aa291929846e8cb361c57766a17b08209ed5e90f2dcce530c3b62763f063dfcb",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18876,7 +20665,10 @@
         ],
         "params": {
           "provisional": true,
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -18892,7 +20684,7 @@
       "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
       "layer": "history",
       "verifierMode": "rerun",
-      "definitionSha256": "863590475b13f7c617baefcbf6f15c6e0fcf71d9cafbb448f3a405fc5b29c649",
+      "definitionSha256": "44ea239e31cd99729fbc2a1ce868f6a30d0434307157749cc54a70336e943a85",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18955,7 +20747,9 @@
         ],
         "params": {
           "provisional": true,
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -18969,7 +20763,7 @@
       "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
       "layer": "history",
       "verifierMode": "rerun",
-      "definitionSha256": "399b75fab9333d5de88377e59fcdccb1b9c7082c54ede5f3e05808c0dd096012",
+      "definitionSha256": "03244f98281879d7cb6abf041ea1de53a2595a106a2a6c2b4bd6cf07c928bec6",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19040,7 +20834,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -19059,7 +20855,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "8047e6ad1e491e96629cbf39cb078f01d149a817f694bd8312fb982939a6d9f2",
+      "definitionSha256": "cc830c1c740799704dab13ba8791b25b0bd0cb028c9a4f46aa1c1e262f345509",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19076,13 +20872,13 @@
         "G7"
       ],
       "title": "ACK after source publication; read-your-own-write by routing",
-      "statement": "Per COMPOSITION ackOwnership (RULINGS Q31e, replacing Q28's ACK clause): the source of truth sends every ACK after its own publication (CO-ACK-AFTER-SOURCE-PUBLICATION, OBS-ACK-ORDER); the pull at the returned position is served by an index eligible for it, else by the fallback, so read-your-own-write is exact (CO-RYOW-ROUTED); during a current-index outage commits and ACKs continue and pulls fall back (CO-OUTAGE-ACKS-CONTINUE), and the index catches up from the feed through a bounded queue (CO-CATCHUP-BOUNDED-QUEUE).",
+      "statement": "Per COMPOSITION ackOwnership (RULINGS Q31e, replacing Q28's ACK clause): the source of truth sends every ACK after its own publication (CO-ACK-AFTER-SOURCE-PUBLICATION, OBS-ACK-ORDER); the pull at the returned position is served by an index eligible for it, else by the fallback, so read-your-own-write is exact (CO-RYOW-ROUTED); during a current-index outage commits and ACKs continue and pulls fall back (CO-OUTAGE-ACKS-CONTINUE), and the index catches up from the feed through a bounded queue (CO-CATCHUP-BOUNDED-QUEUE). Per COMPOSITION fallbackEquivalence (RULINGS Q34b), this holds on every serving surface the composition claims in the lane's language, native included (CO-RYOW-PER-SURFACE); a stale fallback is rejected (CO-STALE-FALLBACK-REJECTED); a cross-language fallback recipe is bound to the same semantic query identity (parameters, basis, meaning) and the same oracle answer (CO-CROSS-LANGUAGE-RECIPE-IDENTITY), with total request latency and language attribution recorded.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
         "qlever-sparql"
       ],
-      "receiptScope": "engine",
+      "receiptScope": "lane",
       "cases": [
         {
           "set": "CS-COMPOSITION",
@@ -19096,7 +20892,10 @@
             "CO-ACK-AFTER-SOURCE-PUBLICATION",
             "CO-RYOW-ROUTED",
             "CO-OUTAGE-ACKS-CONTINUE",
-            "CO-CATCHUP-BOUNDED-QUEUE"
+            "CO-CATCHUP-BOUNDED-QUEUE",
+            "CO-RYOW-PER-SURFACE",
+            "CO-STALE-FALLBACK-REJECTED",
+            "CO-CROSS-LANGUAGE-RECIPE-IDENTITY"
           ]
         }
       ],
@@ -19107,6 +20906,7 @@
       "entrypoints": [
         "EP-WRITER",
         "EP-REPO",
+        "EP-NATIVE",
         "EP-FEED",
         "EP-ENGINE-OBS"
       ],
@@ -19124,7 +20924,9 @@
           "reopen"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -19139,9 +20941,9 @@
       ],
       "grounding": "grounded",
       "notes": null,
-      "layer": "source",
+      "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "2f425e0a33070f73c2e140ef5ce21484e456b366179b82053f395bf74a5109b7",
+      "definitionSha256": "3d2fc154dbd77696b0dc6019d4fb28631cc3bb67e71daef753e8665b193494dc",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19159,7 +20961,7 @@
         "G9"
       ],
       "title": "Positions are totally ordered coordinates with a fully resolved watermark",
-      "statement": "Per POSITION: a position is (stream, epoch, offset, ordinal), ordered lexicographically and not necessarily dense (PO-LEXICOGRAPHIC-ORDER); several Triplex transacts in one engine transaction take consecutive ordinals at one offset, assigned atomically with their assertions and the subject compare-and-set; a watermark is a fully resolved prefix and every aborted offset is listed in the feed's resolution stream (PO-ABORTED-LISTED); O-REPLAY sorts by coordinate and assigns its own dense ordinals for cuts (PO-ORACLE-DENSE-ORDINALS). The required selection depends on the composition (position_selection, RULINGS Q32e): a dense-position composition (the A0 controls on today's scope-counter adapters) closes with the nested-cut cases PO-NESTED-CUTS-DENSE, PO-LEXICOGRAPHIC-ORDER and PO-ORACLE-DENSE-ORDINALS; a non-dense one also needs the four falsifiers FX-NESTED-CUTS, FX-ABORT-GAP, FX-CRASH-APPEND-RESOLUTION and FX-RESUME-AT-ABORT-GAP before any comparative claim (GATE-POSITION).",
+      "statement": "Per POSITION: a position is (stream, epoch, offset, ordinal), ordered lexicographically and not necessarily dense (PO-LEXICOGRAPHIC-ORDER); several Triplex transacts in one engine transaction take consecutive ordinals at one offset, assigned atomically with their assertions and the subject compare-and-set (PO-NESTED-CUTS-DENSE); a watermark is a fully resolved prefix and every aborted offset is listed in the feed's resolution stream (PO-ABORTED-LISTED); O-REPLAY sorts by coordinate and assigns its own dense ordinals for cuts (PO-ORACLE-DENSE-ORDINALS). Every composition, A0 included, passes the four falsifiers FX-NESTED-CUTS, FX-ABORT-GAP, FX-CRASH-APPEND-RESOLUTION and FX-RESUME-AT-ABORT-GAP before any comparative or promotion claim (GATE-POSITION, RULINGS Q38a); a dense allocator passes them cheaply, and no allowlist exempts it (OUTSIDE_BLOCK_MUTATION_FIXTURE, mutant M-WITHTRANSACTION-REBIND).",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -19170,20 +20972,14 @@
         {
           "set": "CS-POSITION",
           "select": [
-            "all"
-          ]
-        },
-        {
-          "set": "CS-POSITION",
-          "select": [
+            "PO-LEXICOGRAPHIC-ORDER",
+            "PO-ORACLE-DENSE-ORDINALS",
+            "PO-NESTED-CUTS-DENSE",
             "FX-NESTED-CUTS",
             "FX-ABORT-GAP",
             "FX-CRASH-APPEND-RESOLUTION",
             "FX-RESUME-AT-ABORT-GAP",
-            "PO-LEXICOGRAPHIC-ORDER",
-            "PO-ORACLE-DENSE-ORDINALS",
-            "PO-ABORTED-LISTED",
-            "PO-NESTED-CUTS-DENSE"
+            "PO-ABORTED-LISTED"
           ]
         }
       ],
@@ -19202,7 +20998,8 @@
       "closure": {
         "rules": [
           "CR-PASS-ALL",
-          "CR-FAULT"
+          "CR-FAULT",
+          "CR-MUTANT-KILL"
         ],
         "modes": [
           "current",
@@ -19210,24 +21007,29 @@
           "engine-restart"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
         "T-FAULT-REPS"
       ],
-      "mutationControls": [],
+      "mutationControls": [
+        "M-WITHTRANSACTION-REBIND"
+      ],
       "contracts": [],
       "sources": [
         "lab/TARGETS.md section 4.1 item 3",
         "RULINGS Q31c",
-        "lab/reviews/plan-v2-round2.codex.md finding 15"
+        "RULINGS Q38a",
+        "lab/reviews/plan-v2-round4.codex.md finding 1"
       ],
       "grounding": "grounded",
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "f8dc3049642076ef5d0a9de9b352d2bc93cfee84652014235cc0c6081b7541c3",
+      "definitionSha256": "87a07820481d9ca4458f1982b3c4e71206a18032f10c356c9579c2f0bff35241",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19373,7 +21175,9 @@
         ],
         "params": {
           "provisional": true,
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -19387,7 +21191,7 @@
       "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "a7ea9c0e4efc5d22577e596ec542390d94c3545ede056227959f01d4c10e70cc",
+      "definitionSha256": "71f63e700f5050986e3aa99f4c47aa3677f7140aa9a5acc531129ffb9ca279f5",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19518,6 +21322,11 @@
             "CX-W0-UNPINNED",
             "CX-W0-FLOOR-MISSED",
             "CX-P2-REJECTS-VALID",
+            "CX-FORGED-DENSITY",
+            "CX-CLAIM-NULL-ORACLE-PIN",
+            "CX-CLAIM-SUPPLIED-NAMES",
+            "CX-XTDB-SHARED-LANGUAGE",
+            "CX-SCREENING-CLAIM-PREREQ",
             "CX-POSITION-GATE",
             "PX-PASS-ALL",
             "PX-COUNTEREXAMPLE",
@@ -19570,7 +21379,7 @@
       "notes": null,
       "layer": "current",
       "verifierMode": "rerun",
-      "definitionSha256": "dc91b80fc0bb92731c8d165478560880cd47995e34c62598187c3ad8fcf72041",
+      "definitionSha256": "64f8637f25234a9a3cbb1a7956db2eb91563a83653b9d0ac169ad9cb1653b153",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19621,7 +21430,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -19635,7 +21447,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "709bb87704a89bf515264c8d8be2ad1362f91dfe60ba95b95f3dad78303257b5",
+      "definitionSha256": "2d4cb0ab546559f5ae5cc0e6a4dd5822738b54eb481b6c46fa6adcac57fcc473",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19685,7 +21497,9 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [],
@@ -19698,7 +21512,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "f5e979e7386c9703eedddfb78847e221665c09877ecc6ab6b8f1eadcebefa1a7",
+      "definitionSha256": "234899d0eb15e7580cca006dae948d35cccfcad7d9de25a719dbea3553365e42",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19748,7 +21562,9 @@
         ],
         "params": {
           "perRung": true,
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ]
         }
       },
       "thresholds": [
@@ -19765,7 +21581,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "1db0ca818e5e540b8a8466659241112c985eb23b07c502f8455edd2e102ce36f",
+      "definitionSha256": "b37e08e8b59579d004322619aa3f6e3059e31aca3365aac508eb876aaa5419e4",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -19941,7 +21757,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -19954,7 +21773,7 @@
       "notes": null,
       "layer": "current",
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "179b27cba6d9eb0537db9b9808684a13dd1dfb437bbff463db5d6488942ba342",
+      "definitionSha256": "991a6fd4708e12979ac4d73873b9a1415889f8925abadb5e34638359d0d4872c",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -20005,7 +21824,10 @@
           "single-execution"
         ],
         "params": {
-          "gates": []
+          "gates": [
+            "GATE-ORACLE-PIN"
+          ],
+          "keyByNativeLanguage": true
         }
       },
       "thresholds": [],
@@ -20018,7 +21840,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "7fc5d9460c942477ef05ee1cb16c9bdc949699358ae103bd901788b91ddef3ec",
+      "definitionSha256": "a5ce9693c4428bf87126c9861c0ce68f8c451bf10148955b656fd0a42e642ed4",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -20095,5 +21917,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "766285749995d05922bc8139fd8e1f2fa498d7b34cfeed7657c081fde6121780"
+  "transitiveContractSha256": "4d5c23196100e6d5c0ca1be735f65cf0957e6c54422fae5c3a73492dc300f76e"
 }

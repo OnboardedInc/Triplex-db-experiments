@@ -59,7 +59,9 @@ LEGACY_CATEGORY = {
     "command-already-committed": "E-COMMAND-COMMITTED", "transaction-conflict": "E-TX-CONFLICT",
     "constraint-violation": "E-CONSTRAINT", "invalid-value": "E-INVALID-VALUE",
     "reserved-namespace": "E-RESERVED", "invalid-operation": "E-INVALID-VALUE",
-    "value-out-of-range": "E-VALUE-OUT-OF-RANGE", "decimal-unrepresentable": "E-DECIMAL-UNREPRESENTABLE",
+    "value-out-of-range": "E-VALUE-OUT-OF-RANGE",
+    # 0.1's "decimal-unrepresentable" is not mapped: 0.3.5 split it into E-DECIMAL-OVERFLOW and
+    # E-DECIMAL-FRACTION (Q35e, RULINGS Q43a), so the old name cannot say which
 }
 
 JOURNAL_ATTRIBUTES = (":_tx/change", ":_tx/changed-entity")   # brief fact 4 (C6): modeled journal facts
@@ -92,7 +94,10 @@ class Rejected(Exception):
             out += [("error", "host-abort"), ("errorTag", None), ("reason", None), ("phase", None),
                     ("ruling", "R-CMD-9: host-defined abort; Triplex pins no tag")]
         else:
-            for key, value in ERR.fields(self.category, self.reason, self.alternatives):
+            # a write-time rejection of a two-phase row (E-DECIMAL-OVERFLOW) is preflight
+            phases = ERR.ERROR_TABLE.get(self.category, (None, None, None))[2]
+            phase = "preflight" if isinstance(phases, tuple) else None
+            for key, value in ERR.fields(self.category, self.reason, self.alternatives, phase=phase):
                 out.append(("errorTag" if key == "_tag" else key, value))
         out.append(("message", self.message))
         for key, value in self.detail.items():
@@ -254,13 +259,13 @@ class Engine:
 
     def _decode_written(self, raw, attribute):
         """Decode a written value: value domain (E-INVALID-VALUE), decimal declaration
-        (Q18, E-DECIMAL-UNREPRESENTABLE), lane range (E-VALUE-OUT-OF-RANGE)."""
+        (Q18; E-DECIMAL-FRACTION / E-DECIMAL-OVERFLOW, Q43a), lane range (E-VALUE-OUT-OF-RANGE)."""
         try:
             value = V.decode_value(raw, datetime_range=self.dt_range)
             if value.family == "decimal":
                 value = self._declare(value, attribute)
         except V.InvalidValue as error:
-            raise Rejected(error.error_id, str(error), family=error.family)
+            raise _value_rejection(error)
         self._check_lane(value)
         return value
 
@@ -270,7 +275,7 @@ class Engine:
         precision/scale on the value must agree with it. An undeclared decimal is refused
         with E-INVALID-VALUE (R-DEC-0: Q18 makes the declaration mandatory)."""
         decl = self.declarations.get(attribute)
-        inline = value.extra[1] is not None
+        inline = value.extra[2]
         if decl is None:
             if not inline:
                 raise V.InvalidValue("decimal", f"attribute {attribute} declares no decimal precision and scale (Q18)")
@@ -312,8 +317,8 @@ class Engine:
             try:
                 pattern["value"] = V.decode_value(raw["value"], datetime_range=self.dt_range)
             except V.InvalidValue as error:
-                raise Rejected(error.error_id, str(error), family=error.family)
-            # R-LANE-2 (RULING-NEEDED): a pattern value the lane cannot hold is refused like a write.
+                raise _value_rejection(error)
+            # R-LANE-2 (ruled by Q33c): a pattern value the lane cannot hold is refused like a write.
             # A decimal pattern value matches by exact value (identity), so it needs no declaration.
             self._check_lane(pattern["value"])
         return pattern
@@ -331,7 +336,7 @@ class Engine:
     def plan(self, state, command, instant):
         """Validate a command against `state` and return a Plan or raise Rejected.
 
-        Precedence (R-CMD-8): operation validation (E-INVALID-VALUE, E-DECIMAL-UNREPRESENTABLE,
+        Precedence (R-CMD-8): operation validation (E-INVALID-VALUE, E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW,
         E-VALUE-OUT-OF-RANGE, E-RESERVED, in operation order) -> command claim -> preconditions
         -> retract liveness -> constraint enforcement.
         """
@@ -372,6 +377,11 @@ class Engine:
                         retracted.append(target)
                         plan.retracts.append((index, target, False))
                         plan.changes.append(("retract", target))
+            elif kind in ("erase", "erasure"):
+                # Q24 / Q31f erasure (TARGETS 7, ACC erasure): ErasedValue markers, the erasure
+                # frontier and reproduction modulo erasure are not modeled yet; refuse the case
+                # rather than give a confident wrong answer (X-NOT-MODELED)
+                raise V.OracleInputError("X-NOT-MODELED: erasure commands (RULINGS Q24, Q31f) are not modeled")
             else:
                 raise Rejected("E-INVALID-VALUE", f"unknown op {kind!r}")
         # command claim (R-CMD-1)
@@ -445,6 +455,10 @@ class Engine:
             valid_to = V.Num.parse(op["validTo"], "validTo") if op.get("validTo") is not None else None
         except V.InvalidValue as error:
             raise Rejected("E-INVALID-VALUE", str(error))
+        for name, n in (("validFrom", valid_from), ("validTo", valid_to)):
+            if n is not None and n.bits == V.NEG_ZERO_BITS:
+                # Q30b / WR-INSTANT: an instant given as -0 is rejected, never turned into 0
+                raise Rejected("E-NEGATIVE-ZERO-INSTANT", f"{name} given as -0", detail="no-negative-zero")
         if valid_from is None:
             if self.rules["validFromDefault"] != "transaction-instant":
                 raise Rejected("E-INVALID-VALUE", "validFrom is required by this case's rules")
@@ -507,7 +521,7 @@ class Engine:
             changes = [c for c in changes if c[0] == "retract"] + [c for c in changes if c[0] == "assert"]
         record = TxRecord(txId=tx_id, position=position, instant=instant, meta=meta, changes=changes,
                           scope=state.name, internal=False, command=command["_index"],
-                          group=command.get("physicalGroup"))
+                          group=command.get("physicalGroup"), coordinate=identity.get("coordinate"))
         self._append_record(state, record)
         state.journal.extend(journal_facts(record))
         return record
@@ -515,7 +529,8 @@ class Engine:
     def apply_internal(self, state, command, identity):
         record = TxRecord(txId=identity["txId"], position=identity["position"], instant=identity["instant"],
                           meta={}, changes=[], scope=state.name, internal=True, command=command["_index"],
-                          group=command.get("physicalGroup"), journaled=command.get("journaled", True))
+                          group=command.get("physicalGroup"), journaled=command.get("journaled", True),
+                          coordinate=identity.get("coordinate"))
         self._append_record(state, record)
         return record
 
@@ -524,6 +539,12 @@ class Engine:
         state.records.append(record)
         state.records.sort(key=lambda r: r.position)
         state.last_position = max(state.last_position, record.position)
+
+
+def _value_rejection(error: V.InvalidValue):
+    """A value-domain fault as its ACC 4.7 rejection, with the wire guard's detail (Q30a/b)."""
+    detail = {"detail": error.detail} if error.detail else {}
+    return Rejected(error.error_id, str(error), family=error.family, **detail)
 
 
 def _fields_of(a: Assertion):

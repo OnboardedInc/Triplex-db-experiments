@@ -260,7 +260,9 @@ class OracleChanges(unittest.TestCase):
     def test_R_CMP_3(self):
         with self.assertRaises(V.MixedFamily):
             V.predicate("lt", V.integer(1), V.number(2.0))
-        self.assertFalse(V.predicate("lt", V.string("a"), V.integer(1)))   # other families: false (R-CMP-3 rest)
+        with self.assertRaises(V.MixedFamily):                              # R-CMP-3 rest, ruled by Q33d
+            V.predicate("lt", V.string("a"), V.integer(1))
+        self.assertFalse(V.predicate("eq", V.string("a"), V.integer(1)))   # equality across families: false
 
     def test_R_NUM_5(self):
         rep = evaluate(case([], [{"id": t, "kind": "expr", "expr": ["cast-int64", s(t)]} for t in ("+1", "01", "-0")]))

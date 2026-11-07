@@ -650,3 +650,174 @@ Where each priority stands, from evidence so far (research probes and baselines;
   committing). They go to EXP-O03 as "implement exactly or refuse with X-NOT-MODELED", so dependent obligations fail closed.
 - W01's scenario expectations came from the non-conforming O-REPLAY 0.1; W01 switches to the O02 branch now and records oracle hashes
   per expectation so the final regeneration after the pin is mechanical.
+- 00:35Z: W0 revised per Q36 (a10cd1e): work item id over (subject, rule, kind, key), version over (release, inputs, payload), outbox
+  publishes only a new id or a changed payload (the author resolved a conflict between Q36a's two clauses; accepted as Q36a-clarified).
+  At s = 0.5 the largest location holds about 1,125 placements and all four coverage floors still hold (R2 changes 62.3%; lowest rule
+  firing 7.9%; 3+ work items 1.97% / 2.98%). V-D01 dispatched; it measures the floors on its own generated population with an
+  evaluator kept outside the repo so the later implementers stay independent.
+
+## 2026-11-08 ~00:55Z: R17 (QLever fit) landed; contract 0.3.4; O-TDK1 in repo; EXP-P2Q and EXP-C8 dispatched; Codex round 4
+- **QLever P1 learning: the semantics are native, the bars are missed by CPU.** One request is one snapshot (0 wrong answers in 26,413
+  stored pulls); on 2 CPUs reads saturate at 4 readers (65 pulls/s) and the writer is CPU-starved, not locked (15 ms alone, 114 ms with 4
+  readers, 826 ms with 64). Same lesson as XTDB (R16): readers belong on their own process and cores.
+- **QLever P2 learning: the ACK must not wait for QLever.** ACK p50 from the host is 11 / 34 / 129 ms at delta 0 / 100k / 500k; a host
+  log fsync is about 3 ms. Q31e already allows ACK at the source's publication, so EXP-P2Q makes the host log plus broker the source of
+  truth, publishes to QLever asynchronously with group commit, and serves read-your-own-write through an overlay of unpublished frames.
+- **QLever P3 learning: the host log is the feed and met every bar** (0 gaps, exact resume after kill -9), but a tailer sees a frame about
+  3 ms before fsync returns, so consumers read only up to a durable watermark.
+- **QLever P4/P5 learning: QLever is fast at set-at-a-time work, slow at per-subject round trips.** Pulls p50 23-33 ms and 35-45 per core,
+  flat from 7M to 74M triples; bundle rows reach 1.2 ms; batched VALUES sweeps reach 815-825 pulls/s per core; one streamed export of the
+  whole current graph (33 s) stays pinned through 677 updates and a rebuild. Sweeps in the live process raise live p99 1.7x to 3x, so run
+  them on a separate read-only process. R17's role call: QLever for read replicas, history and the analytical copy; never the source of
+  truth or the feed.
+- **Three QLever engine facts that change client code:** no TCP_NODELAY (keep-alive adds about 40 ms per call; open a connection per
+  request); every update empties the whole result cache; the planner does not push a temporal FILTER or VALUES into the ledger scan
+  (8.5M-row scans; filter in the kernel).
+- **Erasure on QLever:** delete plus rebuild-index keeps the deleted literal in the vocabulary (rebuild merges old and new words), plus
+  `previous.*` and logs. Crypto-shredding (ciphertext PII) or a full reindex from the log is required (matches Q24).
+- **Precision on QLever:** 8 silent changes; a 6-kind write validator gave 0 wrong round trips in 6,241 accepted values (feeds F02b).
+- Contract 0.3.4 committed (60e4c57): 147 obligations, regenerates byte-identically; Q37 accepted the contract author's proposals; the
+  TDK1 reference and 2,017 ordered vectors are in lab/oracles/decimal/ (reproducible from seed 20261108).
+- EXP-C8 dispatched: removes every write from read paths on both lanes (XTDB scratch tables cost a COMMIT SYNC per recursion round).
+
+## 2026-11-08 ~01:15Z: Codex round 4: 2 closed, 3 still open, 3 new, NOT READY; Q38
+- **Learning: a source-hash allowlist does not prove behavior.** Codex changed `withTransaction`'s exported binding outside the five
+  hashed blocks; the allowlist still said "dense". Q38a removes every density exemption: all compositions, A0 included, run the four
+  cheap position falsifiers. Rule for the loop: prove behavior by tests that run, not by hashes of the code that is supposed to behave.
+- **Learning: my own generator rounded silently.** `Decimal(n).scaleb(-s)` rounds to Python's 28-digit default context; 518 of 2,000
+  vectors lost digits, and because input and expected key were computed from the same rounded value they still agreed. The same bug sat
+  in R20's adjacent-values suite. Fixed with exact construction plus a Fraction assertion; 526 vectors now exceed 28 digits; the suite
+  still has 0 failures with true adjacency. Rule: every Decimal built from integers in an oracle asserts equality with a Fraction.
+- **Learning: a content hash is not a delivery identity.** R1 then R2 then R1 returns the original (release, inputs, payload), so an
+  (id, version) key would let a receiver suppress the return to the earlier payload. Q38f: a durable per-id publication sequence is the
+  delivery identity, persisted atomically with the outbox record.
+- **Learning: claim admission must read evidence, not flags.** `admit_claim` returned QUALIFIED for A0 with a null O-REPLAY pin because it
+  trusted supplied case names and a Boolean. Q38b derives every prerequisite from receipts and enforces Q37b.
+- Process fix (Q38c): I appended Q37 to RULINGS after the contract was generated, so `--verify` failed. From now on every RULINGS change
+  is compiled and verified before commit, or listed as recorded-not-compiled.
+- Contract 0.3.5 (Q37, Q38) waits for a free agent slot (all 10 busy).
+
+## 2026-11-08 ~01:30Z: EXP-X02 PROGRESSED; A01 compiling 0.3.5
+- **XTQL parity learning: both languages give the same exact answers; XTQL is slower under load.** Pure XTQL 142/142 (diagnostic) and
+  pure SQL 142/142 (candidate) on G2; the XTQL candidate run timed out on 8 and 16 tasks while the shared dev XTDB sat at 200% CPU (no
+  wrong or impure answer). XTQL recursion by depth unrolling took 22.5 s at depth 6 against 0.6 s in SQL, which EXP-C8's frontier loop
+  replaces. Re-run the XTQL candidate on an exclusive slot before judging it.
+- **New XTDB hazard (Q39a): DECIMAL to BIGINT rounds through a double** (1e18 + 4 reads back as 1e18). Exact engine-side sums read the
+  DECIMAL result as text. Also fixed in X02: R12's split-sum recombination overflowed on totals that fit in int64.
+- X02's live checks are the pattern to copy: hand-derived controls in both languages (100/100), 21/21 mutants killed, and a writer
+  between calls that must stay invisible at the pinned cut.
+- Queued for the next free slot: V-X02 independent verification (promotion gate), including the XTQL candidate rerun on an exclusive slot.
+
+## 2026-11-08 ~01:40Z: hourly learnings pass (NORTH-STAR reread first)
+- **Learnings are current** through EXP-X02, Codex round 4, R17, R19, R20, V-O02 and the W0 draft. No report is unprocessed.
+- **What the evidence says about direction, by priority:**
+  - P1: on both engines reads never lock writers but starve them of CPU on a shared node (R16, R17). Separate read processes are the
+    lever: EXP-X05 (XTDB read-only follower, no Kafka needed per R19) is running; QLever read replicas fed from the host log follow P2Q.
+  - P2: XTDB is correct with a ~15 ms floor mostly outside fsync (R19); EXP-P2X tests per-subject CAS. QLever's ACK must not wait for
+    QLever (R17); EXP-P2Q tests ACK at the host log's durable frame.
+  - P3: both lanes get their feed from a log Triplex controls (XTDB same-tx feed row plus one tailer; QLever host log), with durable
+    watermarks and keyed effects.
+  - P4: per-subject world documents (R18 X1) on XTDB; bundle rows on QLever. Not started (PLAN 8 order 5).
+  - P5: W0 under independent review (V-D01); sweeps on a separate read-only process on both engines.
+- **New research direction (queued, R21):** both pinned engines may be behind fixes that change the plan. R17 found QLever upstream
+  #3607 (merged 2026-10-06: snapshot creation proportional to the update; authors report 700 ms to 60 ms per update at 500k delta) and
+  open #3267/#3612, none in 0.6.0; QLever also lacks TCP_NODELAY and clears the whole cache per update. XTDB 2.2.0 lacks per-database
+  authorization, encryption and a change stream, and hard-codes the 100 ms idle heartbeat (R19). R21 surveys what QLever master and XTDB
+  releases after 2.2.0 change for P1 to P5 and the requirements, what an upgrade would cost (new image digests, re-qualification), and
+  whether EXP-P2Q's overlay design is still needed on a newer QLever. Queued first for the next free slot, ahead of V-X02, because it can
+  change the design of experiments already running.
+- No research agent was started this pass: all 10 slots are busy.
+
+## 2026-11-08 ~01:55Z: V-D01 FIX-FIRST on W0; Q40; W0-1.1.0 in progress
+- **Learning: a spec can be deterministic and still unrepresentative.** A second implementer matched all 45 W0 cases byte for byte and
+  all four coverage floors held on a measured 100k population, yet generated worlds hold 6 to 31 facts (p50 17) over one reference hop,
+  while P4's frozen pull mix is 50 to 2,000 facts over 3 to 6 hops. A 100k sweep over those worlds reads 1.6M facts instead of 25M-50M,
+  so P5 could pass on a toy. Q40a adds rule-neutral ballast drawn from P4's buckets; Q40b moves the wage floor to a second hop so the
+  dependency index must follow two references.
+- **Learning: idempotent publication also needs an order.** Even with Q38f's publication sequence, a late older-basis evaluation (an
+  in-flight reconcile on the old release, GS.10) would publish after a newer one and leave the receiver stale. Q40d: per subject, only
+  newer-basis evaluations publish.
+- **Learning: misreading mutants are a cheap way to find missing cases.** Six plausible misreadings passed all 45 cases; each changes up
+  to 2% of population outputs. Q40e adds a case for each.
+- **Learning: recurring notices need a retirement record** (Q40h), or a second FNC notice is never delivered.
+- **Learning: a release that touches every subject cannot test blast-radius selection.** Q40i adds R3 (one rule, narrow read set).
+- 02:10Z: contract 0.3.5 committed (15a07b6): 149 obligations, 74 planted regressions caught, `--verify` byte-identical; 124 obligations
+  fail closed on null oracle pins (O-REPLAY, O-TDK1) until those oracles are accepted. The Q38c check worked the first time it mattered:
+  Q40 landed in RULINGS.md mid-compile and the generator refused until it was listed as recorded-not-compiled. Rulings the contract has
+  not compiled yet now live in lab/acceptance/RULINGS-PENDING.md (Q41). R21 (engine-upgrade survey) and Codex round 5 started.
+
+## 2026-11-08 ~02:30Z: Codex round 5: 6 closed, 2 partial, 3 new (converging: 14, 13, 7, 6, 5 open)
+- **Learning: a structural receipt check is a bypass waiting for the pins.** Codex fabricated a receipt with all eight position case names,
+  all-zero object hashes and a different binary; the reference `receipt_valid` accepted it, and with simulated accepted oracle pins the claim
+  qualified. Today's null pins make it DIAGNOSTIC, so nothing was wrongly claimed, but this must be closed before any oracle is pinned:
+  EXP-E01 builds a lab evaluator that opens objects, binds binaries to source through a manifest, checks freshness and requires the claim's
+  own measurement receipts and a matched control (Q42a).
+- **Learning: sender ordering is not receiver ordering.** Unique (id, seq) deliveries arriving reversed (seq 2, then a delayed seq 1) leave
+  a deduplicating receiver on the older payload. Q42b: receivers never regress a projection and process every-transition effects in order
+  with gap recovery; W0 gains a `receive` operation so the expected receiver state is oracle-computed.
+- **Learning: every piece of outbox state is one atomic unit** (basis guard, retirement, sequence, latest payload, outbox records), or a
+  crash between them reopens the stale-publication window (Q42c).
+- 02:45Z: EXP-O03 landed: O-REPLAY 0.3.0 gives 0 confident wrong answers on V-O02's 0.3.3 probe (11 before), refuses only erasure,
+  268/268 tests, converter results unchanged item by item. Learning: an oracle racing a moving contract needs a final alignment pass to
+  the contract version it will be pinned against; 0.3.4 renamed two decimal error ids after O03 started. Alignment to 0.3.5 (Q43) runs
+  now; then the independent re-check (resume the V-O02 verifier), then the pin.
+- 02:55Z goal check-in: N01, W01, P2X, P2Q, C8, D01a and O03 are all writing files (progressing); F02b waits on its own G1 run.
+  **Incident:** the shared QLever dev resident was OOM-killed at its 2.5 GiB cap at 20:57Z (during a 2.4 s update after a 145-tuple
+  VALUES query) and stayed down about 47 minutes because no agent owns restarting a shared resident. The orchestrator restarted it
+  (holder EXP-000). Learning: shared residents need an owner who watches them; I check them at every check-in. Several agents loading
+  one 2.5 GiB QLever at once is the likely cause; measurements belong on exclusive slots.
+  **Stall:** EXP-X05 had stopped with no background work, waiting for 5.1 GiB of pool while 2.0 GiB is free; told it to finish
+  engine-free work, wait in a background loop, and fall back to a provisional smaller run after 90 minutes.
+
+## 2026-11-08 ~03:10Z: R21 engine-upgrade survey: stay pinned on both engines
+- **QLever:** no release after 0.6.0 (404 commits on master). #3607 (part 2 of 4 of the update-cost umbrella) is merged; parts 3/4 are
+  unused or open, so the quoted "700 ms to 60 ms at 500k delta" exists in no merged state. Even fully merged, update p50 at 500k delta
+  stays near 25-60 ms, above P2's bars, so EXP-P2Q's ACK-at-host-log design stays. Two cheap levers on 0.6.0 today: `--persist-updates`
+  off (the host log already replays; persisting rewrites the whole delta per update, about 45 of 129 ms at 500k) and
+  `--rebuild-keep-previous-index-dirs none` (no pre-erasure `previous.*` copies). Unchanged on master: whole-cache clear per update, no
+  TCP_NODELAY, vocabulary never drops words on rebuild, 60-bit integers. Master cannot load 0.6.0 indexes without `qlever-upgrade-index`.
+- **XTDB:** no release after 2.2.0; 2.2.1 milestone closed (fixes #6345 mark join, #6174 slow plans after restart, #6358 erased rows
+  leaking through system-time windows). Still open: #6313, #6151, the token issues; no change stream (#2454); no per-database auth or
+  encryption; the idle heartbeat, read-only log reader, LocalLog and numThreads are byte-identical to 2.2.0, so R16/R19 hazards stand.
+- **Decisions:** stay pinned on both; QLever side-by-side E1 (0.6.0 vs #3607 vs master, persistence on/off) queued as EXP-Q07 when an
+  exclusive QLever slot frees; XTDB re-qualification on 2.2.1 the day it is tagged (a rehearsal on nightly-20261106 can run earlier).
+  P2's p50 bar stays at 10 ms (only Sam can loosen a bar). Filing the DECIMAL-cast and `= ANY` findings upstream would publish lab
+  findings, so that is Sam's call, flagged in STATE.
+- 03:20Z: O-REPLAY 0.3.1 (8cc2c26) aligned to contract 0.3.5: 300/300 tests, 0 wrong answers on the probe, converter results unchanged,
+  and a new reverse check fails if the oracle keeps an error id the contract dropped. The V-O02 verifier is re-checking it (V-O03) with
+  the probe extended to 0.3.5's rules; on ACCEPT the oracle merges and its hashes are pinned in contract 0.3.6, which unblocks the
+  obligations it can close (claims still also need EXP-E01's evaluator).
+- 03:35Z: W0-1.1.0 built (50d92ef): 82 cases; R3 is the narrow release (4.3% of subjects change, all through OT); worlds now average
+  about 447 facts over 3-6 hops (a 100k sweep reads about 44.7M facts, up from 1.6M), so P5 tests something close to Onboarded's real pull
+  size. Floor 4 (3+ work items) is thinner (about 1.65% expected) and the re-review measures it on the real population. V-D01 re-review
+  running; then the pin and the two independent implementations (TS kernel, O-DOMAIN).
+
+## 2026-11-08 ~22:10Z: EXP-F02b (XTDB proven); infrastructure pressure
+- **F02b result:** XTDB falsifier 0 silent changes (from 25 silent plus 3 spec gaps); the journal keeps number -0 by writing `-0` as JSON
+  text, which JSON.parse reads back exactly, so canonical identity and the journal's shape stay unchanged. QLever rerun owed.
+- **Infrastructure learning: the shared dev residents are the bottleneck and the measurement noise.** The QLever dev resident was
+  OOM-killed three times (20:47Z, 20:56Z, 22:02Z): its persisted delta grew under every agent's writes and reloaded on each restart, so a
+  plain restart died again 17 minutes later. Fixed by raising it to 3.5 GiB (-m 2000M) and recreating it fresh (5c684bd). The XTDB dev
+  resident runs at 200% CPU under scenario load, so a G1 that took 11 s took 482 s and timed out. The host itself is saturated: 36 GiB with
+  about 14 GiB compressed and load average 12-13 on 12 cores (Sam's default colima VM also runs), so the triplex2 VM cannot grow.
+- **Policy until pressure drops:** no new agent dispatches beyond replacing finished ones on light, engine-free work; heavy local commands
+  go through lab/bin/heavy.mjs (4 tokens); gate reruns one at a time; latency measurements are judged only relatively (same slot, same
+  window), never against absolute bars. The dev QLever resident needs a periodic fresh restart or rebuild while agents share it.
+- 22:25Z: W0-1.1.0 re-review: the reviewer's independent evaluator matches all 82 cases and the floors hold on 44.5M facts; only small
+  fixes remain (two case-file defects, two unpinned receive dedup rules, the fingerprint recipe, SPEC contradictions). Learning: static
+  read sets cannot narrow a release by subject, only by rule (R3's OT pair is in every placement's dependencies, so the index reaches all
+  100,000 while 4,291 change); Q44b makes R3 a jurisdiction-scoped release so P5 exercises subject selection through the reverse index.
+  Learning: a JSON round trip in a case generator normalized `1.65e3` to `1650.0`, so the exponent test tested nothing; validate.py now
+  asserts raw token text. W0-1.1.1 in progress; a delta check then the pin.
+
+## 2026-11-08 ~22:40Z: MILESTONE: O-REPLAY accepted and merged (scoped pin)
+- After O01 (built), V-O01 (FIX-FIRST), O02 (conformance), V-O02 (FIX-FIRST), O03 (deltas and alignment), V-O03 ACCEPTED O-REPLAY 0.3.1
+  at 8cc2c26: 300/300 tests, 0 differences against the previous version's answers on all 87 golden runs per lane, 22/22 planted errors
+  and 8/8 mutants caught, and a fresh 119-probe check of contract 0.3.5 written by the verifier (116 match; the 3 wrong answers are one
+  rule, DR-JSON-CONVERT, now excluded from the pin). It may close 106 of the 119 obligations that use it; 11 erasure obligations stay
+  blocked through its X-NOT-MODELED refusal until EXP-O04 models erasure.
+- Learning: two independent authors (G01 vectors, O01 oracle) plus an independent verifier converged in three rounds; each round's
+  verifier probe was written from the contract, not from the oracle, which is what found DR-JSON-CONVERT after the author reported zero
+  wrong answers on its own probe set. A coverage test only guards the tables it lists (`decimalRouting` was missing).
+- Next: contract 0.3.6 pins the oracle (A01); W01 regenerates scenario expectations from the pinned oracle; EXP-O04 (F2 plus erasure
+  modeling) queued for the oracle author; claims still also need EXP-E01's evaluator.
