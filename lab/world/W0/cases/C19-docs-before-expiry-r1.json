@@ -1,14 +1,17 @@
 {
   "id": "C19",
   "slug": "docs-before-expiry-r1",
-  "title": "An ead and a visa that expire 2027-01-15: two window obligations at the midnight after expiry",
+  "title": "An ead and a visa expiring 2027-01-15, no background check yet, pay below the state floor: the R1 half of the release pair",
   "op": "evaluate",
   "checks": [
-    {"rule": "DOCEXP", "polarity": "positive"}
+    {"rule": "DOCEXP", "polarity": "positive"}, {"rule": "BGC", "polarity": "positive"}, {"rule": "MINWAGE", "polarity": "positive"}
   ],
   "notes": [
     "R1 leadDays: ead 0, visa 0. For both: B = endOfDay(2027-01-15) = 2027-01-16T00; W = startOf(addDays(2027-01-15, 1 - 0)) = 2027-01-16T00 = B.",
     "v 2026-11-04T12 < W, so each document gives row 4: obligation doc.window at 2027-01-16T00. Each item's inputs are [8].",
+    "BGC row 1: no bgcStatus fact; work item bgc.order, payload {}, inputs [].",
+    "MINWAGE under R1 reads only stateMinWageCents: floor 1650 > pay 1600, row 5. Task pay.below-minimum due 2026-11-02T00 (overdue);",
+    "work item notify.pay-below-minimum, payload floorCents 1650 and payRateCents 1600, inputs [1, 2]. The local floor fact is not read under R1.",
     "Basis tx 20 leaves room for the activation facts of C31 and C32, which reuse this world."
   ],
   "input": {
@@ -18,12 +21,12 @@
       "subject": "pl:a",
       "facts": [
         {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "localMinWageCents", "v": 1700, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
-        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1600, "tx": 2},
         {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
         {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
         {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
-        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
         {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
         {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
         {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
@@ -58,21 +61,26 @@
     ],
     "release": "sha256:fc4b2c1bd4315c3e31cc06f19329c2034ec21a62c8b8bb8a668da0ba44cc0a2b",
     "subject": "pl:a",
-    "tasks": [],
+    "tasks": [
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.below-minimum", "kind": "pay.below-minimum", "overdue": true, "rule": "MINWAGE"}
+    ],
     "trace": [
       {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
       {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
       {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
       {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
       {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
-      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
       {"inputs": [8], "key": "pl:a/doc:1", "row": 4, "rule": "DOCEXP"},
       {"inputs": [8], "key": "pl:a/doc:2", "row": 4, "rule": "DOCEXP"},
-      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [1, 2], "key": "", "row": 5, "rule": "MINWAGE"},
       {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
       {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
-    "workItems": []
+    "workItems": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:319f5c2f0df7e5f14538fde87ccf851cb6910cf665304d2476bcd30d5b22de07"},
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:cfd16696abe14a9117b31836a95e69259fbb0fc5c2bac1cb7cbffd644e12394d"}
+    ]
   }
 }

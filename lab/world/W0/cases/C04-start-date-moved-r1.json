@@ -12,7 +12,7 @@
     "start obligation 2026-11-09T00; I9S1 due endOfDay(2026-11-09) = 2026-11-10T00.",
     "addBusinessDays(Mon 2026-11-09, 3) = Thu 2026-11-12, so I9S2 and EVSUB are due 2026-11-13T00.",
     "MINWAGE reads startDate, so its inputs become [1, 2, 8]; LIFE, I9S1, I9S2 and EVSUB inputs become [8].",
-    "bgc.order keeps the same inputs [] and therefore the same work item id as C03."
+    "bgc.order keeps its id (subject, rule, kind, key) and its version (release R1, inputs [], payload {}), so the outbox publishes nothing new for it."
   ],
   "input": {
     "basis": {"tx": 10, "validTime": "2026-10-30T09:00:00.000000Z"},
@@ -63,7 +63,7 @@
       {"inputs": [], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:07f37d71c4604817ccace65b68e77015f742ca31ab46052c3b4e89d6045c89fb", "inputs": [], "key": "", "kind": "bgc.order", "rule": "BGC"}
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:cfd16696abe14a9117b31836a95e69259fbb0fc5c2bac1cb7cbffd644e12394d"}
     ]
   }
 }

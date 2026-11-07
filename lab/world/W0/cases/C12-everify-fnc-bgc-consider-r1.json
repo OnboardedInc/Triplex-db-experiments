@@ -64,7 +64,7 @@
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:f3736c4041b1bd7d8b648f2dcc677850cc3c8547f4b8d734bbdde5aa2c88edd1", "inputs": [5], "key": "", "kind": "notify.everify-fnc", "rule": "EVSTAT"}
+      {"id": "wi:ba31df8bdebe1c41c21a6b7bf70842aee0d3ec57eb0f14f3cb41a7c1622ed587", "inputs": [5], "key": "", "kind": "notify.everify-fnc", "payload": {}, "rule": "EVSTAT", "version": "wv:bb7423e43410ec109aca5a92f1ab03bbf6aaf29dbc3a842f45e2d3d690774690"}
     ]
   }
 }

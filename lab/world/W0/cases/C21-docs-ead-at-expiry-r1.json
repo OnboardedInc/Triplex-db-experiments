@@ -68,7 +68,7 @@
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:80a75c8509ec66c059b561172ecbaedace7c779616061e79d01981639e5ec6f0", "inputs": [8], "key": "pl:a/doc:1", "kind": "notify.document-expired", "rule": "DOCEXP"}
+      {"id": "wi:6b2c7cb84e491e7effc9383bef991f44ed8ca3fea8d25f5ea60ac56e31cd5fa7", "inputs": [8], "key": "pl:a/doc:1", "kind": "notify.document-expired", "payload": {"docType": "ead", "expiresOn": "2027-01-15"}, "rule": "DOCEXP", "version": "wv:28afc4ea99f9feac22d367ac3f87e50231f2ddf10932b9fe53286ed1c7e55167"}
     ]
   }
 }

@@ -11,7 +11,7 @@
   "notes": [
     "LIFE row 1: start-unknown. Every start-based due time is null, so no task has a due obligation.",
     "MINWAGE row 1: payRateCents absent; task pay.rate-missing due null; inputs are the location fact (tx 2) and the floor (tx 1).",
-    "PAYCHG row 1: no pay rate. BGC row 1: same bgc.order work item id as C03 (same subject, release, inputs [])."
+    "PAYCHG row 1: no pay rate. BGC row 1: same bgc.order id and version as C03 (same subject, rule, kind and key; same release, inputs [] and payload {})."
   ],
   "input": {
     "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
@@ -56,7 +56,7 @@
       {"inputs": [], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:07f37d71c4604817ccace65b68e77015f742ca31ab46052c3b4e89d6045c89fb", "inputs": [], "key": "", "kind": "bgc.order", "rule": "BGC"}
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:cfd16696abe14a9117b31836a95e69259fbb0fc5c2bac1cb7cbffd644e12394d"}
     ]
   }
 }

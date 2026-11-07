@@ -1,7 +1,8 @@
 """Shape validator for lab/world/W0 (stdlib only; run with `python3 -I validate.py`).
 
-It checks JSON shape, value types, canonical ordering, release hashes, work item id hashes and the
-output-assembly consistency rules of SPEC.md section 8 (overdue flags, due obligations, trace order).
+It checks JSON shape, value types, canonical ordering, release hashes, work item id and
+version hashes, payload keys and the output-assembly consistency rules of SPEC.md section 8 (overdue flags,
+due obligations, trace order).
 It holds no rule logic: it never decides which tasks, obligations, work items or flags a world produces.
 """
 import datetime
@@ -257,15 +258,20 @@ def check_output(where, out, world, basis, release, txs):
         if n == 0 or (r not in KEYED and n != 1):
             err(where, f"trace has {n} entries for {r}")
     for wi in out["workItems"]:
-        if set(wi) != {"id", "inputs", "key", "kind", "rule"}:
+        if set(wi) != {"id", "inputs", "key", "kind", "payload", "rule", "version"}:
             err(where, f"bad work item {wi}")
             continue
         if entries.get((wi["rule"], wi["key"])) != wi["inputs"]:
             err(where, f"work item {wi['kind']} inputs differ from its trace entry")
-        pre = {"inputs": wi["inputs"], "key": wi["key"], "kind": wi["kind"], "release": rhash, "rule": wi["rule"], "subject": s}
-        want = "wi:" + sha(pre)
+        keys = SCHEMA["workItemPayloadKeys"].get(wi["kind"])
+        if not isinstance(wi["payload"], dict) or keys is None or sorted(wi["payload"]) != sorted(keys):
+            err(where, f"work item {wi['kind']} payload keys {sorted(wi['payload'])} should be {keys}")
+        want = "wi:" + sha({"key": wi["key"], "kind": wi["kind"], "rule": wi["rule"], "subject": s})
         if wi["id"] != want:
             err(where, f"work item {wi['kind']} key {wi['key']!r} id should be {want}")
+        want_v = "wv:" + sha({"inputs": wi["inputs"], "payload": wi["payload"], "release": rhash})
+        if wi["version"] != want_v:
+            err(where, f"work item {wi['kind']} key {wi['key']!r} version should be {want_v}")
 
 
 def emitted_rules(out):

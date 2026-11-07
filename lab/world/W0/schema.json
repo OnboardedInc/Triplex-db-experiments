@@ -71,5 +71,15 @@
   "errorCodes": ["W0.E_SHAPE", "W0.E_BASIS", "W0.E_UNKNOWN", "W0.E_VALUE", "W0.E_CARDINALITY", "W0.E_NO_RELEASE"],
   "flagNames": {"start-unknown": "LIFE", "pre-start": "LIFE", "i9-section2-waived": "I9S2", "everify-authorized": "EVSTAT", "overtime": "OT"},
   "obligationKinds": ["start", "doc.window", "due"],
-  "keyedRules": ["DOCEXP", "PROP"]
+  "keyedRules": ["DOCEXP", "PROP"],
+  "workItemPayloadKeys": {
+    "everify.submit-case": ["startDate"],
+    "notify.everify-tnc": ["dueAt"],
+    "notify.everify-fnc": [],
+    "bgc.order": [],
+    "notify.pre-adverse-action": [],
+    "notify.document-expired": ["docType", "expiresOn"],
+    "notify.pay-below-minimum": ["floorCents", "payRateCents"],
+    "notify.pay-change-approval": ["baselinePayRateCents", "payRateCents"]
+  }
 }

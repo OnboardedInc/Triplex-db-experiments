@@ -66,7 +66,7 @@
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:856ad46eef12770d8e83891505f4ff9f0c30f886379be7ec083301e96e950cd8", "inputs": [2], "key": "", "kind": "notify.pay-change-approval", "rule": "PAYCHG"}
+      {"id": "wi:76a8e53770d5b608edfbd75b07534cdae74350dfe63853cb7296a4fb7c77ed8d", "inputs": [2], "key": "", "kind": "notify.pay-change-approval", "payload": {"baselinePayRateCents": 0, "payRateCents": 9007199254740991}, "rule": "PAYCHG", "version": "wv:ea2d49eafff98d010802fea56198966f9e561573f363dff7cf8e3104d56a1a6d"}
     ]
   }
 }

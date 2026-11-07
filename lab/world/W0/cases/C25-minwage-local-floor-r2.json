@@ -65,7 +65,7 @@
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:f73979fce7ccf4a6db78744a6f3a36d04dee84edb028e9c3e2ab8605f6a0a752", "inputs": [1, 2, 9], "key": "", "kind": "notify.pay-below-minimum", "rule": "MINWAGE"}
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2, 9], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1650}, "rule": "MINWAGE", "version": "wv:8ba4766bfa6528ff82990f4c49913e515c65135f12bba0ad09141a39d821c9d0"}
     ]
   }
 }

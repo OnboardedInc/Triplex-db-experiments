@@ -10,7 +10,7 @@
   "notes": [
     "R2 I9S2 businessDays 2: addBusinessDays(Mon 2026-11-02, 2) = Wed 2026-11-04; due 2026-11-05T00 (R1 in C03: 2026-11-06T00).",
     "EVSUB keeps businessDays 3: due 2026-11-06T00, as in C03.",
-    "MINWAGE under R2: no local floor, state 1650 <= 1650, row 4. The bgc.order id differs from C03 because the release hash is in the preimage."
+    "MINWAGE under R2: no local floor, state 1650 <= 1650, row 4. bgc.order has the same id as in C03; only its version differs, through the release hash (RULINGS Q36a)."
   ],
   "input": {
     "basis": {"tx": 10, "validTime": "2026-10-30T09:00:00.000000Z"},
@@ -61,7 +61,7 @@
       {"inputs": [], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:393569ee89acb1b2a5cc32a1cf8009bf2eb9a602110144749dad9289aef4aa5d", "inputs": [], "key": "", "kind": "bgc.order", "rule": "BGC"}
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:3ff50c9ed0a3fe1afa8b91231bb6861bee1be973b44ad79f525672cfc3d96249"}
     ]
   }
 }

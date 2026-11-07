@@ -4,13 +4,14 @@
   "title": "C19's world reconciled after R2 is activated from 2026-11-04T00: identical bytes to the C20 preview",
   "op": "reconcile",
   "checks": [
-    {"rule": "DOCEXP", "polarity": "positive"}
+    {"rule": "DOCEXP", "polarity": "positive"}, {"rule": "MINWAGE", "polarity": "positive"}
   ],
   "identicalTo": "C20",
   "notes": [
     "Activations: R1 from 2026-01-01T00 (tx 11), R2 from 2026-11-04T00 (tx 12); both tx <= basis.tx 20.",
     "resolveRelease at v 2026-11-04T12: both are candidates; the greatest from is R2's, so R2 applies.",
-    "Same world and same basis as C20, so the output bytes equal C20's (GS.10 against GS.11 at one basis)."
+    "Same world and same basis as C20, so the output bytes equal C20's (GS.10 against GS.11 at one basis).",
+    "Against C32 (the same world under R1): bgc.order keeps its id and payload, so the outbox publishes nothing for it; notify.pay-below-minimum keeps its id with a changed payload, so the outbox publishes a new version (RULINGS Q36a)."
   ],
   "input": {
     "activations": [
@@ -22,12 +23,12 @@
       "subject": "pl:a",
       "facts": [
         {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "localMinWageCents", "v": 1700, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
-        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1600, "tx": 2},
         {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
         {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
         {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
-        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
         {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
         {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
         {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
@@ -63,7 +64,8 @@
     "release": "sha256:4fe8c3fa51e528550d255931263ed46f85cac8e57238cdfed1c3246b71847f98",
     "subject": "pl:a",
     "tasks": [
-      {"dueAt": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": false, "rule": "DOCEXP"}
+      {"dueAt": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": false, "rule": "DOCEXP"},
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.below-minimum", "kind": "pay.below-minimum", "overdue": true, "rule": "MINWAGE"}
     ],
     "trace": [
       {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
@@ -71,14 +73,17 @@
       {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
       {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
       {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
-      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
       {"inputs": [8], "key": "pl:a/doc:1", "row": 5, "rule": "DOCEXP"},
       {"inputs": [8], "key": "pl:a/doc:2", "row": 4, "rule": "DOCEXP"},
-      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [1, 2], "key": "", "row": 5, "rule": "MINWAGE"},
       {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
       {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
-    "workItems": []
+    "workItems": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:6c3c681f2f4c53ecf32c29891a1178a39fd9bd71516eed1bc395a343dcd62054"},
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:3ff50c9ed0a3fe1afa8b91231bb6861bee1be973b44ad79f525672cfc3d96249"}
+    ]
   }
 }

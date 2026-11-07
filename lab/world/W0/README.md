@@ -20,7 +20,7 @@ the domain expectations of the golden scenarios. `SPEC.md` is the only normative
 python3 -I lab/world/W0/validate.py
 ```
 
-It checks JSON shape and value types, recomputes both release hashes and every work item id, checks the ordering and
+It checks JSON shape and value types, recomputes both release hashes and every work item id and version, checks payload keys, the ordering and
 assembly rules of `SPEC.md` section 8 (overdue flags, due obligations, trace order, inputs), confirms each case's declared
 positive and negative checks against its expected output, and requires a positive and a negative case for every rule. It never
 decides which tasks, obligations, work items or flags a world produces; that is the kernel's and O-DOMAIN's job.

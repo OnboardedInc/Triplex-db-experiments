@@ -69,7 +69,7 @@
       {"inputs": [6, 8], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:834be280dd3ccb0a287224125d43719e564c855549a7b4368d0ec7d472f765a8", "inputs": [4, 8], "key": "", "kind": "notify.pre-adverse-action", "rule": "BGC"}
+      {"id": "wi:30a2ed1718be7124e91abc377a684ee4ba35afbb56763a55ecc7eac54a6446e8", "inputs": [4, 8], "key": "", "kind": "notify.pre-adverse-action", "payload": {}, "rule": "BGC", "version": "wv:2876085c9eea578eb511799624e3a46cdeb31aeb758a87de411b933ff854697f"}
     ]
   }
 }

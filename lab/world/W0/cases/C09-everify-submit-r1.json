@@ -59,7 +59,7 @@
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
     "workItems": [
-      {"id": "wi:1ef31b505b643be9e40ea14b9e8d76f97a04ae2a448f1de78ac15cc29d9140f6", "inputs": [2, 3], "key": "", "kind": "everify.submit-case", "rule": "EVSUB"}
+      {"id": "wi:ff8b88355941ea54f7062644b6cb3e2b11462118d4d45ea83ee5a78c89fad249", "inputs": [2, 3], "key": "", "kind": "everify.submit-case", "payload": {"startDate": "2026-11-02"}, "rule": "EVSUB", "version": "wv:bdb27a2b7569849038e4d657e79307161fe431b8aac6b6cfeb1565b070a33ba8"}
     ]
   }
 }

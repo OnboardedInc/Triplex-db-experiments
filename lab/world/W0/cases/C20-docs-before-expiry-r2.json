@@ -1,16 +1,18 @@
 {
   "id": "C20",
   "slug": "docs-before-expiry-r2",
-  "title": "C19 previewed under R2: the ead reverification opens 90 days early, the visa is unchanged",
+  "title": "C19 previewed under R2: the ead task opens 90 days early, bgc.order is unchanged, the pay notice gets a new version",
   "op": "evaluate",
   "checks": [
-    {"rule": "DOCEXP", "polarity": "positive"}, {"rule": "MINWAGE", "polarity": "negative"}
+    {"rule": "DOCEXP", "polarity": "positive"}, {"rule": "BGC", "polarity": "positive"}, {"rule": "MINWAGE", "polarity": "positive"}
   ],
   "notes": [
     "R2 leadDays: ead 90, visa 0. doc:1 (ead): W = startOf(addDays(2027-01-15, 1 - 90)) = 2026-10-18T00; B = 2027-01-16T00.",
     "v 2026-11-04T12 is >= W and < B: row 5, task doc.reverify#pl:a/doc:1 due 2027-01-16T00, not overdue, so a due obligation.",
     "doc:2 (visa) keeps lead 0: row 4, obligation doc.window at 2027-01-16T00, as under R1.",
-    "MINWAGE under R2: local floor absent, state 1650 <= pay 1650, row 4. dependencies gain [loc:nyc, localMinWageCents].",
+    "MINWAGE under R2: floor = max(local 1700, state 1650) = 1700 > 1600, row 5; inputs [1, 2] (both floor facts at tx 1).",
+    "Q36a: bgc.order has the same id and the same empty payload as in C19; its version differs only through the release hash, so activation publishes nothing for it.",
+    "notify.pay-below-minimum has the same id as in C19, but its payload's floorCents moves from 1650 to 1700, so activation publishes a new version.",
     "This is the preview half of the GS.11 pair; C31 reconciles the same world after activation and must give identical bytes."
   ],
   "input": {
@@ -20,12 +22,12 @@
       "subject": "pl:a",
       "facts": [
         {"e": "loc:nyc", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "localMinWageCents", "v": 1700, "tx": 1},
         {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
-        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1600, "tx": 2},
         {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
         {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
         {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
-        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
         {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
         {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
         {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
@@ -61,7 +63,8 @@
     "release": "sha256:4fe8c3fa51e528550d255931263ed46f85cac8e57238cdfed1c3246b71847f98",
     "subject": "pl:a",
     "tasks": [
-      {"dueAt": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": false, "rule": "DOCEXP"}
+      {"dueAt": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.reverify#pl:a/doc:1", "kind": "doc.reverify", "overdue": false, "rule": "DOCEXP"},
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.below-minimum", "kind": "pay.below-minimum", "overdue": true, "rule": "MINWAGE"}
     ],
     "trace": [
       {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
@@ -69,14 +72,17 @@
       {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
       {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
       {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
-      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
       {"inputs": [8], "key": "pl:a/doc:1", "row": 5, "rule": "DOCEXP"},
       {"inputs": [8], "key": "pl:a/doc:2", "row": 4, "rule": "DOCEXP"},
-      {"inputs": [1, 2], "key": "", "row": 4, "rule": "MINWAGE"},
+      {"inputs": [1, 2], "key": "", "row": 5, "rule": "MINWAGE"},
       {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
       {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
       {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
     ],
-    "workItems": []
+    "workItems": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:6c3c681f2f4c53ecf32c29891a1178a39fd9bd71516eed1bc395a343dcd62054"},
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:3ff50c9ed0a3fe1afa8b91231bb6861bee1be973b44ad79f525672cfc3d96249"}
+    ]
   }
 }
