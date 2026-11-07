@@ -13,6 +13,16 @@ checkout only. Cell values: OPEN, MEASURED(<value, receipt>), PASS(<receipt>), G
 | P4 fast current values, separate from history | OPEN | OPEN | OPEN | OPEN | OPEN |
 | P5 release activation over 100k subjects | OPEN | OPEN | OPEN | OPEN | OPEN |
 
+### 1.1 Research probes (direction only, not gate evidence: loaded host, not the frozen trace)
+
+| Priority | XTDB 2.2.0, one 2-CPU node (R16) | QLever (R17) |
+| --- | --- | --- |
+| P1 | Pinned reads exact (0 drift), writes never blocked; at 4+ closed-loop readers commit service time rose from about 17 ms to 90-112 ms (readers and indexer share the JVM's CPU); pgwire caps connections at `server.numThreads` (42) | pending |
+| P2 | Correct (RYOW 200/200, duplicates 100/100 P0004, CAS one winner); commit p50 16-24 ms, p99 33-200 ms (bars 10 and 50); 172 commits/s at 16 writers | pending |
+| P3 | No native change stream; METADATA plus feed row in the same tx, one source-log tailer: lag p50 29-35 ms, p99 about 120 ms; 32 pollers on `xt.txs` stalled commits | pending |
+| P4 | Flat with history: single-subject pull p50 3.95 / 3.81 / 5.34 ms at depth 1 / 3 / 10; a 4-query 40-entity pull 35-40 ms p50 | pending |
+| P5 | Token pins no files; 100k subjects in about 41 s alone, 91 s under live load (bar 100 s); live pull p99 +39% (bar 1.5x) | pending |
+
 ## 2. Golden scenarios (GS gate, 20 scenarios in TARGETS.md section 6)
 
 | Composition | Passing | Receipt |

@@ -36,9 +36,9 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-002 QLever baseline (opus, exp/002-qlever-baseline) | A0 control | receipts |
 | EXP-F02 wire exactness (opus) | numeric rule floor | branch |
 | EXP-A01 contract 0.3.2 (opus, main, no commit) | Q21-Q28 + TARGETS v2 into the contract | lab/acceptance/ |
-| R16 XTDB north-star fit (sonnet) | P1-P5 per layer | lab/research/R16-xtdb-northstar-fit.md |
 | R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
-| R18 read-path, feed, sweep prior art (sonnet) | P1, P3, P4, P5 | lab/research/R18-*.md |
+| EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
+| EXP-D01a W0 world-definition spec (opus, exp/D01-world-definition) | P5, P3 deps, GS domain expectations | lab/world/W0 |
 Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 on contract 0.3.2 when A01 lands it.
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
@@ -49,4 +49,5 @@ lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 
 - Q21 AMB-17: `find` fails with ConflictingValuesError when a returned document has a conflicted attribute (a projection omitting it succeeds).
 - Q21 AMB-04: a -0.0 assertion keeps bit-exact -0.0 in the journal; the numeric rule overrides C6's old byte-identity promise.
 - Q24 erasure: after the erasure commit publishes, reads at every basis (even before it) show a typed ErasedValue marker, not the value.
+- R18: Datomic-style `noHistory` for high-churn attributes? Default kept: history for everything (audit is a must-have).
 - GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
