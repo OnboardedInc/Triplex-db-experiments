@@ -47,7 +47,7 @@ export function effectiveConfig(config, info) {
   const effective = {
     lane: 'qlever', slot: info.slot, image: info.laneConf.image, startScriptSha256: sha256(script),
     sourceStartScriptSha256: sha256(original), qleverMemory: info.qleverMemory, memBytes: info.memBytes, cpus: info.cpus,
-    publish: `127.0.0.1:${info.port}:7019`, volume: `${info.volume}:/data`, volumeInit: 'chown 999:999 /data (image user qlever)', entrypoint: ['/bin/bash', '/config/start.sh'],
+    publish: `127.0.0.1:${info.port}:7019`, volume: `${info.volume}:/data`, volumeInit: 'marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)', entrypoint: ['/bin/bash', '/config/start.sh'],
     health: "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'",
   };
   return { effective, sha256: sha256(JSON.stringify(effective)), files: { startScript: file } };
@@ -65,7 +65,7 @@ function runArgs(info, eff, holder) {
   ];
   if (info.lane === 'xtdb')
     return [...common, '-e', `JDK_JAVA_OPTIONS=${info.javaOpts}`, '-v', `${eff.files.config}:/etc/xtdb/config.yaml:ro`, info.laneConf.image, ...e.cmd];
-  return [...common, '--platform', 'linux/arm64', '-w', '/data', '-v', `${eff.files.startScript}:/config/start.sh:ro`, '--entrypoint', '/bin/bash', info.laneConf.image, '/config/start.sh'];
+  return [...common, '--platform', 'linux/arm64', '-v', `${eff.files.startScript}:/config/start.sh:ro`, '--entrypoint', '/bin/bash', info.laneConf.image, '/config/start.sh'];
 }
 
 const tcpOpen = port => new Promise(resolve => {
@@ -186,7 +186,10 @@ async function up(config, info, opts) {
           // The QLever image runs as uid 999 and has no /data, so a new named volume would be
           // root-owned. Give it to uid 999 once instead of running the server as root.
           docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', info.volume]);
-          docker(['run', '--rm', '--network', 'none', '-u', '0:0', '-v', `${info.volume}:/data`, '--entrypoint', 'chown', info.laneConf.image, '999:999', '/data']);
+          // The marker keeps the volume non-empty: docker copies the mount point's ownership onto an
+          // EMPTY named volume at container create, which silently undid the chown (seen 2026-11-07).
+          docker(['run', '--rm', '--network', 'none', '-u', '0:0', '-v', `${info.volume}:/data`, '--entrypoint', 'sh', info.laneConf.image,
+            '-c', 'echo "tx2 volume initialized for uid 999" > /data/.tx2-volume && chown -R 999:999 /data']);
         }
         docker(runArgs(info, eff, holder));
       }
