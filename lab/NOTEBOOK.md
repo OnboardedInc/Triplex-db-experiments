@@ -761,3 +761,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
   268/268 tests, converter results unchanged item by item. Learning: an oracle racing a moving contract needs a final alignment pass to
   the contract version it will be pinned against; 0.3.4 renamed two decimal error ids after O03 started. Alignment to 0.3.5 (Q43) runs
   now; then the independent re-check (resume the V-O02 verifier), then the pin.
+- 02:55Z goal check-in: N01, W01, P2X, P2Q, C8, D01a and O03 are all writing files (progressing); F02b waits on its own G1 run.
+  **Incident:** the shared QLever dev resident was OOM-killed at its 2.5 GiB cap at 20:57Z (during a 2.4 s update after a 145-tuple
+  VALUES query) and stayed down about 47 minutes because no agent owns restarting a shared resident. The orchestrator restarted it
+  (holder EXP-000). Learning: shared residents need an owner who watches them; I check them at every check-in. Several agents loading
+  one 2.5 GiB QLever at once is the likely cause; measurements belong on exclusive slots.
+  **Stall:** EXP-X05 had stopped with no background work, waiting for 5.1 GiB of pool while 2.0 GiB is free; told it to finish
+  engine-free work, wait in a background loop, and fall back to a provisional smaller run after 90 minutes.
