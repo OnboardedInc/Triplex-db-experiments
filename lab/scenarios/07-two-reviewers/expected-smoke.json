@@ -1,0 +1,300 @@
+{
+ "format": "tx2-gs-expected/1",
+ "scenario": 7,
+ "slug": "two-reviewers",
+ "rung": "smoke",
+ "seed": 20261107,
+ "genVersion": "w01-gen/1",
+ "streamSha256": "e2af6df4dcba0dc55ca2c14b3e9f63a7fe8025861367498635cc27048ddddc75",
+ "commands": 28,
+ "setupCommands": 2,
+ "facts": 340,
+ "oracle": {
+  "id": "O-REPLAY",
+  "files": {
+   "lab/oracles/replay/RULES.md": "ecca74e262839ce29a9f0a136d2131a75785fe7d4e5c3399e4904df554a8842e",
+   "lab/oracles/replay/SCHEMA.md": "32b249f0b4c154564a1a2591d6b3a4d1884ffb433864bab9128b3ebfc49901ff",
+   "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "lab/oracles/replay/cli.py": "268f89e17509c8c043a1a309bfbb6dd7aa8b83e5bff49c8da391c83ddcab4495",
+   "lab/oracles/replay/constraints.py": "fec68280688517be36854ba10fb7a784d8db0d1c3c8e7a27ebc3a7fcab50af15",
+   "lab/oracles/replay/entities.py": "a0ee0cf69f0ffce50e094a31354ad1d48de8872fe944bcfb4c1f6bc5b9f7bb8f",
+   "lab/oracles/replay/exact.py": "8d3cdc340a0b4aae4f400bf4942b1ba586d6e35dcc77ebdfb01c204b1e9a7d31",
+   "lab/oracles/replay/replay.py": "ffb3d71857021b85cfe663c1879d28bfc031a80fda82bce1eb44562f3e4dce65",
+   "lab/oracles/replay/run.py": "df47415034bdda041f3bf7e3efd550d35e20ad2387902a8608a02c514368a0d5",
+   "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "lab/oracles/replay/selfcheck.py": "450a1fd8e8dea572a5e71a9e8c4966c56c993f54107943b9838f6b9e87a28911",
+   "lab/oracles/replay/values.py": "4e7881592c2041ac3f1ed58aee58d42aa56677767680b0010fa65d59e9629cd3",
+   "lab/oracles/replay/views.py": "3e4093b18308dfb6827de40eb507d77e4bb2230d6def8571aa59ef35491f25cd"
+  }
+ },
+ "oracleCases": [
+  {
+   "caseId": "GS/7/smoke/chunk-0000",
+   "caseSha256": "595fde04a1e21ea361d9130dc0f98f9759764bd6589d9895f980f8a8da7e482c",
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "validAts": [
+  1794052800000
+ ],
+ "digestSubjects": 13,
+ "noDigestSubjects": [
+  "r0000",
+  "r0001",
+  "r0002",
+  "r0003",
+  "r0004",
+  "r0005"
+ ],
+ "outcomes": {
+  "6": {
+   "outcome": "rejected",
+   "category": "transaction-conflict",
+   "errorTag": "TransactionConflictError"
+  },
+  "8": {
+   "outcome": "rejected",
+   "category": "transaction-conflict",
+   "errorTag": "TransactionConflictError"
+  },
+  "10": {
+   "outcome": "rejected",
+   "category": "transaction-conflict",
+   "errorTag": "TransactionConflictError"
+  },
+  "13": {
+   "outcome": "rejected",
+   "category": "transaction-conflict",
+   "errorTag": "TransactionConflictError"
+  },
+  "17": {
+   "outcome": "rejected",
+   "category": "transaction-conflict",
+   "errorTag": "TransactionConflictError"
+  },
+  "21": {
+   "outcome": "rejected",
+   "category": "transaction-conflict",
+   "errorTag": "TransactionConflictError"
+  }
+ },
+ "hand": null,
+ "gaps": [],
+ "digests": {
+  "r0000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "f9e36bc69495347eeb712176"
+    },
+    "5": {
+     "1794052800000": "b0f6f7a748e6e1ad8f1f6294"
+    },
+    "6": {
+     "1794052800000": "b0f6f7a748e6e1ad8f1f6294",
+     "rejected": true
+    }
+   }
+  },
+  "r0001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "109a474f0b480b0897544275"
+    },
+    "7": {
+     "1794052800000": "d276e831606bea227afcba21"
+    },
+    "8": {
+     "1794052800000": "d276e831606bea227afcba21",
+     "rejected": true
+    }
+   }
+  },
+  "r0002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "410864689214b2e194378983"
+    },
+    "9": {
+     "1794052800000": "a29d7ff039739e81c433c8e8"
+    },
+    "10": {
+     "1794052800000": "a29d7ff039739e81c433c8e8",
+     "rejected": true
+    }
+   }
+  },
+  "r0003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "7e14b1ebb50d4632d6fc94f0"
+    },
+    "12": {
+     "1794052800000": "2569f895b8d980817563b3e3"
+    },
+    "13": {
+     "1794052800000": "2569f895b8d980817563b3e3",
+     "rejected": true
+    }
+   }
+  },
+  "r0004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "0ebbbd21d06663a396ed0fe9"
+    },
+    "16": {
+     "1794052800000": "63e1a9f5bed2575cfbdb6940"
+    },
+    "17": {
+     "1794052800000": "63e1a9f5bed2575cfbdb6940",
+     "rejected": true
+    }
+   }
+  },
+  "r0005": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "dd6757ef71fb2f1283d4def6"
+    },
+    "20": {
+     "1794052800000": "faa571ebba1cd4f6052e108a"
+    },
+    "21": {
+     "1794052800000": "faa571ebba1cd4f6052e108a",
+     "rejected": true
+    }
+   }
+  },
+  "r0006": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "cde3aecacad991c09cc45801"
+    }
+   }
+  },
+  "r0007": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "4bb7e2573cbe62b572e9cb3e"
+    }
+   }
+  },
+  "tr00000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "271f29b3fb964afff35f2556"
+    },
+    "11": {
+     "1794052800000": "fd6c4101e976cf86571a9bff"
+    },
+    "25": {
+     "1794052800000": "dcb75f7b9c349035b4f0d901"
+    },
+    "26": {
+     "1794052800000": "a29ffd664fd00da4ea6cf964"
+    },
+    "27": {
+     "1794052800000": "1cff7ddbe7d529ffb5d814ff"
+    }
+   }
+  },
+  "tr00001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "3b0edd45f6434e9f72b073c6"
+    },
+    "2": {
+     "1794052800000": "839088cf5acbb6f08446846f"
+    },
+    "14": {
+     "1794052800000": "f94c9ce44453cc3d23402352"
+    }
+   }
+  },
+  "tr00002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "2f9f39cf785c902f1911ad5a"
+    },
+    "23": {
+     "1794052800000": "4aa0ec2786a27330b5b6088d"
+    },
+    "24": {
+     "1794052800000": "786051b3cbadc19c84c39186"
+    }
+   }
+  },
+  "tr00003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "cb93a8a60eb63d066b20e151"
+    },
+    "15": {
+     "1794052800000": "552ed9a6c4fb15ce28873f0b"
+    }
+   }
+  },
+  "tr00004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "0d82ec1729a9a6956e43ba9d"
+    },
+    "3": {
+     "1794052800000": "468dd447d35004652200721e"
+    },
+    "4": {
+     "1794052800000": "3b6391e8cbe512f06ba10f56"
+    },
+    "18": {
+     "1794052800000": "ba76fed30b8c31de57975a99"
+    },
+    "19": {
+     "1794052800000": "2e22a80af7439d96a42989f5"
+    },
+    "22": {
+     "1794052800000": "daf716518700c71de8a56cd3"
+    }
+   }
+  }
+ }
+}

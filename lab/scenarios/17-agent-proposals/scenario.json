@@ -1,0 +1,25 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 17,
+  "slug": "agent-proposals",
+  "title": "Agent proposals churn",
+  "priorities": ["P2", "P4"],
+  "status": "spec",
+  "source": "lab/TARGETS.md section 6 row 17",
+  "story": "Agents write drafts and proposals at 5x the human rate, most discarded.",
+  "checked": "Proposals never leak into decisions; pulls at a basis see exactly what was committed.",
+  "seed": 20261117,
+  "yearOne": { "agentToHumanRate": 5 },
+  "params": { "humanPerSubject": 2 },
+  "rungs": {
+    "10k": { "subjects": 30, "negatives": 10, "liveMs": 90000, "trace": { "subjects": 30, "factsPerSecond": 15 } }
+  },
+  "witnesses": { "positive": "subjects with at least one accepted proposal (the person's decision changes the I-9)", "negative": "idle subjects; also, database-side, no I-9 ever carries a proposal attribute" },
+  "domain": ["proposals never count as decisions (W0 rule; O-DOMAIN)"],
+  "bars": [
+    { "id": "P2.commit.p99", "metric": "commit.scenario.p99", "op": "<=", "value": 50, "unit": "ms", "source": "TARGETS section 1 P2" },
+    { "id": "P4.read.p99", "metric": "read.p99", "op": "<=", "value": 25, "unit": "ms", "source": "TARGETS section 1 P4" }
+  ],
+  "faults": [],
+  "oracle": { "source": "O-REPLAY (pulls read placement, worker and I-9; the proposal entity is outside the pull)", "gaps": [] }
+}

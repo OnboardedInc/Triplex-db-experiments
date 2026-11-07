@@ -1,0 +1,29 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 3,
+  "slug": "webhook-storm",
+  "title": "Webhook storm after an outage (with GS.03 late older vendor revision)",
+  "priorities": ["P2", "P3"],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 3 and section 6.1 (GS.03)",
+  "story": "1,000 duplicate E-Verify status signals across 100 subjects in 10 s, out of order. Added schedule: a vendor's older revision of a status arrives after a newer one for the same subject.",
+  "checked": "Exactly-once receipts; no read sees a half-applied command; per-subject order kept. GS.03: the late older revision is acknowledged as superseded, current values do not change, and it is recorded in the journal.",
+  "seed": 20261103,
+  "yearOne": { "subjects": 100, "deliveries": 1000, "windowMs": 10000 },
+  "params": { "revisions": 5, "stormStartFraction": 0.3 },
+  "rungs": {
+    "10k": { "subjects": 20, "negatives": 10, "stormMs": 10000, "liveMs": 40000, "trace": { "subjects": 30, "factsPerSecond": 15 } },
+    "smoke": { "subjects": 4, "negatives": 2, "stormMs": 5000, "liveMs": 12000, "trace": { "subjects": 5, "factsPerSecond": 15 } }
+  },
+  "rungNote": "At 10k: 20 subjects x 5 revisions, each delivery re-sent 0 to 2 times (about 200 deliveries in 10 s). The year-one 1,000 in 10 s waits for PLAN section 8 order 6.",
+  "witnesses": { "positive": "storm subjects (their E-Verify status changes)", "negative": "onboarded subjects outside the storm (state stays at the post-setup golden)" },
+  "domain": ["a revision older than the applied one is acknowledged as superseded (W0 rule; O-DOMAIN, fails closed until EXP-D01; provisional, flagged for Sam in TARGETS 6.1)"],
+  "reads": "Closed-loop pinned readers over storm, idle and trace subjects; every answer must equal one complete golden state (no half-applied command).",
+  "bars": [
+    { "id": "P2.commit.p99", "metric": "commit.scenario.p99", "op": "<=", "value": 50, "unit": "ms", "source": "TARGETS section 1 P2" },
+    { "id": "P3.feed.lag.p99", "metric": "feed.lag.p99", "op": "<=", "value": 250, "unit": "ms", "source": "TARGETS section 1 P3" },
+    { "id": "P1.writer.maxWait", "metric": "writer.maxWaitMs", "op": "<=", "value": 2000, "unit": "ms", "source": "TARGETS section 1 P1" }
+  ],
+  "faults": ["duplicate deliveries (same commandId)", "out-of-order arrival", "late older revision"],
+  "oracle": { "source": "O-REPLAY (state, outcomes, receipts); O-DOMAIN (superseded routing)", "gaps": ["O-REPLAY has no vendor-revision rule; the superseded routing is decided by the generator as a stand-in for the W0 kernel and is claimed only through O-DOMAIN"] }
+}

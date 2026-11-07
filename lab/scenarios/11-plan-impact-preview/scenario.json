@@ -1,0 +1,26 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 11,
+  "slug": "plan-impact-preview",
+  "title": "Plan impact preview",
+  "priorities": ["P5", "P1"],
+  "status": "spec",
+  "source": "lab/TARGETS.md section 6 row 11 and section 6.1 item 4",
+  "story": "\"Who gains work\" for a candidate release over 100k subjects, without applying it, during live traffic.",
+  "checked": "Identical answer to the post-activation sweep (GS.10) at one common input basis; never blocks writers.",
+  "seed": 20261110,
+  "setupStream": 10,
+  "yearOne": { "subjects": 100000 },
+  "params": {},
+  "rungs": {
+    "10k": { "subjects": 100, "liveMs": 40000, "trace": { "subjects": 30, "factsPerSecond": 15 } }
+  },
+  "witnesses": { "kind": "domain", "positive": "subjects below $16.50 that gain work under R2's added rule (candidate list from the stream; O-DOMAIN confirms)", "negative": "subjects at or above $16.50 (no new work)" },
+  "domain": ["the preview of R2 at GS.10's R_act equals GS.10's sweep output at R_act (O-DOMAIN)"],
+  "bars": [
+    { "id": "P5.preview.projected100k", "metric": "extra.preview.projected100kMs", "op": "<=", "value": 100000, "unit": "ms", "source": "TARGETS section 1 P5" },
+    { "id": "P1.writer.maxWait", "metric": "writer.maxWaitMs", "op": "<=", "value": 2000, "unit": "ms", "source": "TARGETS section 1 P1 (never blocks writers)" }
+  ],
+  "faults": [],
+  "oracle": { "source": "O-REPLAY (state at the basis); O-DOMAIN (preview)", "gaps": ["preview-equals-activation needs GS.10 and GS.11 on one world at one basis; same seed and subject ids are used for that reason"] }
+}

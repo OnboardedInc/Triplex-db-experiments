@@ -1,0 +1,262 @@
+{
+ "format": "tx2-gs-expected/1",
+ "scenario": 19,
+ "slug": "feed-consumer-crash",
+ "rung": "smoke",
+ "seed": 20261119,
+ "genVersion": "w01-gen/1",
+ "streamSha256": "6c8a0a87c421e5e4029ef1b492941dc3e38213c5234013d18ff0d98f0913e122",
+ "commands": 27,
+ "setupCommands": 2,
+ "facts": 393,
+ "oracle": {
+  "id": "O-REPLAY",
+  "files": {
+   "lab/oracles/replay/RULES.md": "ecca74e262839ce29a9f0a136d2131a75785fe7d4e5c3399e4904df554a8842e",
+   "lab/oracles/replay/SCHEMA.md": "32b249f0b4c154564a1a2591d6b3a4d1884ffb433864bab9128b3ebfc49901ff",
+   "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "lab/oracles/replay/cli.py": "268f89e17509c8c043a1a309bfbb6dd7aa8b83e5bff49c8da391c83ddcab4495",
+   "lab/oracles/replay/constraints.py": "fec68280688517be36854ba10fb7a784d8db0d1c3c8e7a27ebc3a7fcab50af15",
+   "lab/oracles/replay/entities.py": "a0ee0cf69f0ffce50e094a31354ad1d48de8872fe944bcfb4c1f6bc5b9f7bb8f",
+   "lab/oracles/replay/exact.py": "8d3cdc340a0b4aae4f400bf4942b1ba586d6e35dcc77ebdfb01c204b1e9a7d31",
+   "lab/oracles/replay/replay.py": "ffb3d71857021b85cfe663c1879d28bfc031a80fda82bce1eb44562f3e4dce65",
+   "lab/oracles/replay/run.py": "df47415034bdda041f3bf7e3efd550d35e20ad2387902a8608a02c514368a0d5",
+   "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "lab/oracles/replay/selfcheck.py": "450a1fd8e8dea572a5e71a9e8c4966c56c993f54107943b9838f6b9e87a28911",
+   "lab/oracles/replay/values.py": "4e7881592c2041ac3f1ed58aee58d42aa56677767680b0010fa65d59e9629cd3",
+   "lab/oracles/replay/views.py": "3e4093b18308dfb6827de40eb507d77e4bb2230d6def8571aa59ef35491f25cd"
+  }
+ },
+ "oracleCases": [
+  {
+   "caseId": "GS/19/smoke/chunk-0000",
+   "caseSha256": "a647a3dbd4de34f13706aa1c1cf4244938e0536ecb187ce526952dfc30e7daa6",
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "validAts": [
+  1794052800000
+ ],
+ "digestSubjects": 13,
+ "noDigestSubjects": [],
+ "outcomes": {
+  "14": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  }
+ },
+ "hand": null,
+ "gaps": [
+  "the outbox is the Triplex journal itself; an atomic outbox table in the source transaction (TARGETS section 3) is not in the triplex-public composition"
+ ],
+ "digests": {
+  "q0000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "e2ffff0604d80cd9410e5b0d"
+    },
+    "2": {
+     "1794052800000": "cfba8eb93b39c4449b693735"
+    },
+    "16": {
+     "1794052800000": "5cdaf158f5ec1f8e1369a6c3"
+    }
+   }
+  },
+  "q0001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "68989309140612343e9761e3"
+    },
+    "5": {
+     "1794052800000": "7dc6ed909337862858c86370"
+    },
+    "18": {
+     "1794052800000": "19427a0d6f70dc4c6e3eebe5"
+    }
+   }
+  },
+  "q0002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "a54feb438b35cf0e4ae54417"
+    },
+    "7": {
+     "1794052800000": "cc73d6bee81fbbba0edcdf71"
+    },
+    "20": {
+     "1794052800000": "05bc2569779cdc1590b923e7"
+    }
+   }
+  },
+  "q0003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "1c8a905421baf3852453e3a0"
+    },
+    "10": {
+     "1794052800000": "f8a819af6d50a916679aaa44"
+    },
+    "21": {
+     "1794052800000": "34ca8a64e279b1b25b4ae8c2"
+    }
+   }
+  },
+  "q0004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "a60638607476e4a9b6a751d4"
+    },
+    "12": {
+     "1794052800000": "7748f6c49adb5021660d4966"
+    },
+    "24": {
+     "1794052800000": "40ea76a55c92271a8476cad4"
+    }
+   }
+  },
+  "q0005": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "917d60a27194fe758bf0694d"
+    },
+    "15": {
+     "1794052800000": "ccb54b4bbae50d2d8d41cde9"
+    },
+    "25": {
+     "1794052800000": "6bc07d5b1f4840c647e506b3"
+    }
+   }
+  },
+  "q0006": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "4927cd49986d7d32126d8b25"
+    }
+   }
+  },
+  "q0007": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "fda6cbd369c246e178e0a887"
+    }
+   }
+  },
+  "tr00000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "de2353e9536f114fc3b87f14"
+    },
+    "9": {
+     "1794052800000": "18631a93b036268c8e087a34"
+    },
+    "17": {
+     "1794052800000": "f5a2602da3e1e816e07051bb"
+    }
+   }
+  },
+  "tr00001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "c4f709bb41ce0ad0cfc1072c"
+    },
+    "3": {
+     "1794052800000": "fdf5e413edb4a777e253cc50"
+    }
+   }
+  },
+  "tr00002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "fba1ff7760e506c6dbbb95ea"
+    },
+    "6": {
+     "1794052800000": "1579fa6cc21a9b00ee65bf54"
+    },
+    "8": {
+     "1794052800000": "f368cd55da3f6adde40ae8c1"
+    },
+    "23": {
+     "1794052800000": "422a9c3f0678ec3813aae710"
+    }
+   }
+  },
+  "tr00003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "f5b21df83098ea4190e4228b"
+    },
+    "13": {
+     "1794052800000": "5edadf9de28093755823de62"
+    },
+    "14": {
+     "1794052800000": "5edadf9de28093755823de62",
+     "rejected": true
+    },
+    "19": {
+     "1794052800000": "960b84ce42f6371865bc01ea"
+    },
+    "26": {
+     "1794052800000": "e09e145f49ac60cd88f99c67"
+    }
+   }
+  },
+  "tr00004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "7e9683cad71c599d3cabf114"
+    },
+    "4": {
+     "1794052800000": "81d58299d2bf757cc2238b26"
+    },
+    "11": {
+     "1794052800000": "1cf7d65f6972f9c2aa7e1140"
+    },
+    "22": {
+     "1794052800000": "6532ef435208aed8ddaa280f"
+    }
+   }
+  }
+ }
+}
