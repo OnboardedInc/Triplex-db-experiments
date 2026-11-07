@@ -22,7 +22,7 @@ import { acquireHeavy } from './heavy-lock.mjs';
 import { RUN_KINDS, caseLanguages, contractClaims, tallyLanguages, verdictOf } from './receipt.mjs';
 import {
   REPO, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
-  readJson, readOwner, runLogged, sha256, sha256File, slotInfo, sourceIdentity, storeFile, storeObject, treeFiles, volumeBytes,
+  readJson, readOwner, runLogged, withDirLock, sha256, sha256File, slotInfo, sourceIdentity, storeFile, storeObject, treeFiles, volumeBytes,
 } from './lib.mjs';
 
 const PACKAGES = {
@@ -282,7 +282,7 @@ async function engineGate(run, config, entry) {
   result.build = await build(run);
   const bound = engineBinding(run, config);
   result.engine = bound.engine ?? null;
-  if (!bound.engine) return result;
+  if (!bound.engine) return { result, step: null, bound: null };
   const ready = await probe(bound.info);
   if (!ready.ok) run.reason(`${bound.info.container} not ready before the run: ${ready.why}`);
   const env = cleanEnv({
@@ -398,6 +398,9 @@ main(async () => {
   if (!RUN_KINDS.includes(runKind)) fail('USAGE', `--run-kind must be one of ${RUN_KINDS.join('|')}`);
   if (runKind === 'acceptance' && (options.cases || options.workloads)) fail('USAGE', 'an acceptance run cannot select a subset (B12)');
   if (runKind === 'mutation' && (!options['mutation-id'] || !options['mutation-patch'])) fail('USAGE', 'a mutation run needs --mutation-id and --mutation-patch <file>');
+  // [EXP-000] Why: one gate at a time per worktree. Two concurrent gates rebuilt the same dist/ and
+  // the run-end re-hash correctly FAILed a G1 whose 88 cases all passed (2026-11-07).
+  const releaseWorktree = await worktreeGateLock();
   const run = new Run(gate, options.lane, options);
   const mutation = runKind === 'mutation'
     ? { id: options['mutation-id'], patch: run.store(path.resolve(options['mutation-patch']), 'mutation-patch') }
@@ -439,5 +442,17 @@ main(async () => {
   if (result.languages) console.log(`languages (answer): ${JSON.stringify(result.languages.answer)}; strict: ${JSON.stringify(result.languages.strict)}`);
   for (const reason of reasons.slice(0, 10)) console.log(`  reason: ${reason}`);
   console.log(`receipt: ${run.rel(run.receiptPath)}`);
+  releaseWorktree();
   if (verdict === 'FAIL') process.exitCode = 1;
 });
+
+async function worktreeGateLock() {
+  const dir = path.join(REPO, 'runs', '.gate-lock');
+  fs.mkdirSync(path.dirname(dir), { recursive: true });
+  let released = false;
+  let resolveHeld, releaseFn;
+  const held = new Promise(resolve => { resolveHeld = resolve; });
+  const done = withDirLock(dir, () => { resolveHeld(); return new Promise(resolve => { releaseFn = resolve; }); }, { timeoutMs: 6 * 3600_000, label: 'worktree gate lock' });
+  await held;
+  return () => { if (!released) { released = true; releaseFn(); } return done; };
+}
