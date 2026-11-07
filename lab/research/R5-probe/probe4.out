@@ -1,0 +1,5 @@
+st_none (0, 16045890, 9015032, 7030191)
+st_hex6 (0, 27594151, 16046062, 11547457)
+st_b36 (0, 27903284, 16355051, 11547567)
+st_hex6 extra bytes total 11548261 per assertion 57.741305 | avg text len ~24 codepoints
+st_b36 extra bytes total 11857394 per assertion 59.28697 | avg text len ~24 codepoints

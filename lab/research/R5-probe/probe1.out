@@ -1,0 +1,58 @@
+INDEX rc 0
+2026-11-07 14:50:52.569 - INFO: Statistics for POS: #relations = 8, #blocks = 1, #triples = 5,205
+2026-11-07 14:50:52.570 - INFO: Index build completed
+2026-11-07 14:50:52.570 - INFO: Index at /tmp/w/icu/triplex was unloaded.
+index files: ['triplex.index.ops', 'triplex.index.ops.meta', 'triplex.index.osp', 'triplex.index.osp.meta', 'triplex.index.pos', 'triplex.index.pos.meta', 'triplex.index.pso', 'triplex.index.pso.meta', 'triplex.index.resource-usage-log.tsv', 'triplex.index.sop', 'triplex.index.sop.meta', 'triplex.index.spo', 'triplex.index.spo.meta', 'triplex.internal.index.pos', 'triplex.internal.index.pos.meta', 'triplex.internal.index.pso', 'triplex.internal.index.pso.meta', 'triplex.meta-data.json', 'triplex.vocabulary.codebooks', 'triplex.vocabulary.words.external']
+CONFIG /tmp/w/icu/triplex.meta-data.json {"date-of-index-build":"2026-11-07T14:50:52Z","encoded-iri-prefixes":{"prefixes-with-leading-angle-brackets":["<http://qlever.cs.uni-freiburg.de/builtin-functions/graph/"]},"git-hash":"6c5861a","graphNameManager":{"allocatedGraphs":1,"prefix":"http://qlever.cs.uni-freiburg.de/builtin-functions/graph/"},"has-all-permutations":true,"has-icu-support":true,"index-format-version":{"date":"2024-10-22","pull-request-number":1572},"locale":{"country":"US","ignore-punctuation":false,"language":"en"},"num-blank-nodes-total":0,"num-objects":{"internal":0,"normal":5159},"num-predicates":{"internal":0,"nor
+T1a ORDER BY STR(?l) actual : ['emoji', 'ascii-A', 'ascii-c', 'ascii-E', 'nfd-e-acute', 'nfc-e-acute', 'ascii-z', 'astral-10000', 'private-use']
+T1a oracle expected       : ['ascii-A', 'ascii-E', 'ascii-c', 'nfd-e-acute', 'ascii-z', 'nfc-e-acute', 'private-use', 'astral-10000', 'emoji'] FAIL
+T1b ORDER BY ?l ?e actual   : ['emoji', 'ascii-A', 'ascii-c', 'ascii-E', 'nfd-e-acute', 'nfc-e-acute', 'ascii-z', 'astral-10000', 'private-use']
+T1c STR(?l)>"E" (expect ascii-c,nfd,z,nfc,pu,astral,emoji): ['ascii-z', 'astral-10000', 'nfc-e-acute', 'nfd-e-acute', 'private-use']
+T1d ?l>"E" : ['ascii-z', 'astral-10000', 'nfc-e-acute', 'nfd-e-acute', 'private-use']
+T1e STR(?l)<"c" (expect ascii-A, ascii-E): ['ascii-A', 'emoji']
+T1f VALUES(local vocab) ORDER BY ?v : ['A', 'c', 'E', 'z']
+T1g stored+local mix ORDER BY ?v (codepoint: A D E b c z): ['\\U0001f600', 'A', 'b', 'c', 'D', 'E', '\\xe9', 'z', '\\U00010000', '\\ue000']
+T1h ORDER BY STR(?s) IRIs  : ['A1', 'c1', 'cc', 'ce', 'cE', 'E1', 'z1'] (codepoint: A1 E1 cE cc ce c1 z1)
+T1i ORDER BY ?s IRIs       : ['A1', 'c1', 'cc', 'ce', 'cE', 'E1', 'z1']
+T1j ?l = NFC e-acute matches: ['nfc-e-acute']
+T1k STR(?l) = NFC e-acute matches: ['nfc-e-acute']
+T2a exhaustive hex len1-3 n= 4368 ORDER BY ?h == sorted()? True
+T2b same with ORDER BY STR(?h)? True
+T2c DESC? True
+T2d 400 random-unicode keys ORDER BY ?k == codepoint order of text? True n= 400
+T2e ... ORDER BY STR(?k)? True
+T2f raw text ORDER BY ?t == codepoint order? False  (baseline ICU on raw text)
+   first raw-text mismatches (actual id, expected id): [('\\u0301', ' '), (' ', '  \\uff21'), ('  \\uff21', ' -')]
+T2g range filters via hex keys: checks= 136 all match codepoint semantics? True []
+T2h pagination LIMIT 37 concatenation == codepoint order? True
+T3a UPDATE insert 150 {
+    "operations": [
+        {
+            "delta-triples": {
+                "after": {
+                    "deleted": 0,
+                    "inserted": 150,
+                    "total": 150
+                },
+                "before": {
+                    "deleted": 0,
+                    "inse
+T3b vocab+delta(local) keys ORDER BY ?k == codepoint order? True n= 550
+T3c ... ORDER BY STR(?k)? True
+T3d range filters over vocab+delta keys: checks= 20 all match? True
+N1 flat NOT EXISTS (expected two) -> ['one', 'two']
+N2 nested subselect NOT EXISTS (expected two) -> ['one', 'two']
+N3 NOT EXISTS, inner has NO filter, no shared var (spec: inner non-empty => all excluded => empty) -> []
+N4 positive EXISTS flat (expected one) -> []
+N5 NOT EXISTS with outer var re-bound in inner (expected two) -> ['two']
+N6 MINUS filter-correlated (spec/expected two) -> ['one', 'two']
+N7 MINUS with outer var re-bound (expected two) -> ['two']
+N8 OPTIONAL+!BOUND filter-correlated (spec two) -> ['one', 'two']
+N9 OPTIONAL+!BOUND with outer var re-bound (expected two) -> ['two']
+N10 positive grouping MAX join-back (expected two) -> ['two']
+S1 triple-shaped flat NOT EXISTS (expected r2,r4,r3,r5) -> ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']
+S2 same, ?r <ord> ?ord re-bound inside (expected r2,r3,r4,r5) -> ['r2', 'r3', 'r4', 'r5']
+S3 MINUS with re-bound -> ['r2', 'r3', 'r4', 'r5']
+S4 MAX-per-object join-back -> ['r2', 'r3', 'r4', 'r5']
+S5 OPTIONAL+!BOUND re-bound -> ['r2', 'r3', 'r4', 'r5']
+expected latest per object: A->r2,r4 (tie on '02'), B->r3, C->r5

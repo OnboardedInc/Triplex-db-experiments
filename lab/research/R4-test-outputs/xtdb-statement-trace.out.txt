@@ -1,0 +1,26 @@
+
+== 1 string assert, no meta: XTDB submit() calls = 1
+    ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR A
+    ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_T
+    ASSERT NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID
+    INSERT tx_assertions x5
+    INSERT tx_meta x1
+    INSERT tx_attempts x1
+
+== 1 assert + commandId + actor: XTDB submit() calls = 1
+    ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR A
+    ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_T
+    ASSERT NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIM
+    ASSERT NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID
+    INSERT tx_assertions x7
+    INSERT tx_claims x1
+    INSERT tx_meta x1
+    INSERT tx_attempts x1
+
+== 5 asserts, 1 entity: XTDB submit() calls = 1
+    ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR A
+    ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_T
+    ASSERT NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID
+    INSERT tx_assertions x13
+    INSERT tx_meta x1
+    INSERT tx_attempts x1

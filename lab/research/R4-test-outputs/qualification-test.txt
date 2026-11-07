@@ -1,0 +1,358 @@
+
+> @triplex-build/triplex-qualification@0.1.0 test /Users/sam/projects/triplex-db-2/packages/qualification
+> vitest run && node --test ../../qualification/compare.test.mjs
+
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/packages/qualification
+
+TAP version 13
+# Subtest: fixture sizes/profiles/command bound fail closed
+ok 1 - fixture sizes/profiles/command bound fail closed
+  ---
+  duration_ms: 2.121333
+  type: 'test'
+  ...
+# Subtest: two schema generations use public configuration nodes and explicit structural attributes
+ok 2 - two schema generations use public configuration nodes and explicit structural attributes
+  ---
+  duration_ms: 16.794333
+  type: 'test'
+  ...
+# Subtest: eight independently replayed seed entities equal actual public typed assertion descriptors
+ok 3 - eight independently replayed seed entities equal actual public typed assertion descriptors
+  ---
+  duration_ms: 4.7575
+  type: 'test'
+  ...
+# Subtest: tiny replay history/phase membership agrees with independently stated exact counts
+ok 4 - tiny replay history/phase membership agrees with independently stated exact counts
+  ---
+  duration_ms: 0.243333
+  type: 'test'
+  ...
+# Subtest: correction and presence transitions consume acknowledged IDs and preserve public value encodings
+ok 5 - correction and presence transitions consume acknowledged IDs and preserve public value encodings
+  ---
+  duration_ms: 0.735583
+  type: 'test'
+  ...
+# Subtest: 100k command descriptors remain bounded and account for each distinct entity exactly once
+ok 6 - 100k command descriptors remain bounded and account for each distinct entity exactly once
+  ---
+  duration_ms: 0.689375
+  type: 'test'
+  ...
+# Subtest: public schema rejects missing label and an untagged exact integer without query evaluation
+ok 7 - public schema rejects missing label and an untagged exact integer without query evaluation
+  ---
+  duration_ms: 0.423375
+  type: 'test'
+  ...
+ ❯ experiments/configured-entities-v1/recipe.test.mjs (0 test)
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32.430625
+TAP version 13
+# Subtest: independent oracle follows returned P and keeps historical R stable across corrections
+ok 1 - independent oracle follows returned P and keeps historical R stable across corrections
+  ---
+  duration_ms: 5.959458
+  type: 'test'
+  ...
+# Subtest: cold probes span the declared distinct-entity population and never change under hot corrections
+ok 2 - cold probes span the declared distinct-entity population and never change under hot corrections
+  ---
+  duration_ms: 5.149042
+  type: 'test'
+  ...
+# Subtest: oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+ok 3 - oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+  ---
+  duration_ms: 1.689334
+  type: 'test'
+  ...
+ ❯ load/model.test.ts (0 test)
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17.862125
+ ❯ experiments/configured-entities-v1/tiny-backend-v4/entry.test.mjs (0 test)
+TAP version 13
+# Subtest: explicit pinned Some1 passes without changing raw option or application version
+ok 1 - explicit pinned Some1 passes without changing raw option or application version
+  ---
+  duration_ms: 0.5055
+  type: 'test'
+  ...
+# Subtest: missing malformed and wrong version values refuse without coercion
+ok 2 - missing malformed and wrong version values refuse without coercion
+  ---
+  duration_ms: 3.459625
+  type: 'test'
+  ...
+# Subtest: the expectation must be explicitly the pinned adapter default, never inferred from data
+ok 3 - the expectation must be explicitly the pinned adapter default, never inferred from data
+  ---
+  duration_ms: 0.9515
+  type: 'test'
+  ...
+# Subtest: all24 retained V1 public rows and ACKs expose the same independently reviewed Some1
+not ok 4 - all24 retained V1 public rows and ACKs expose the same independently reviewed Some1
+  ---
+  duration_ms: 0.12025
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/codec-schema.test.mjs:25:34'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/Users/sam/projects/triplex-db-2/.devloop/jobs/configured-entity-xtdb-tiny-v1/attempts/0001/artifacts/009-snapshot-sparse-seed-raw-before-assert.json'"
+  code: 'ENOENT'
+  stack: |-
+    Object.openSync (node:fs:560:18)
+    readFileSync (node:fs:444:35)
+    TestContext.<anonymous> (/Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/codec-schema.test.mjs:22:27)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    processTicksAndRejections (node:internal/process/task_queues:103:5)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+ ❯ experiments/configured-entities-v1/tiny-backend-v2/codec-schema.test.mjs (0 test)
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10.409708
+TAP version 13
+# Subtest: explicit pinned Some1 passes without changing raw option or application version
+ok 1 - explicit pinned Some1 passes without changing raw option or application version
+  ---
+  duration_ms: 0.497208
+  type: 'test'
+  ...
+# Subtest: missing malformed and wrong version values refuse without coercion
+ok 2 - missing malformed and wrong version values refuse without coercion
+  ---
+  duration_ms: 3.545958
+  type: 'test'
+  ...
+# Subtest: the expectation must be explicitly the pinned adapter default, never inferred from data
+ok 3 - the expectation must be explicitly the pinned adapter default, never inferred from data
+  ---
+  duration_ms: 0.87825
+  type: 'test'
+  ...
+# Subtest: all24 retained V1 public rows and ACKs expose the same independently reviewed Some1
+not ok 4 - all24 retained V1 public rows and ACKs expose the same independently reviewed Some1
+  ---
+  duration_ms: 0.129875
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/codec-schema.test.mjs:25:34'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/Users/sam/projects/triplex-db-2/.devloop/jobs/configured-entity-xtdb-tiny-v1/attempts/0001/artifacts/009-snapshot-sparse-seed-raw-before-assert.json'"
+  code: 'ENOENT'
+  stack: |-
+    Object.openSync (node:fs:560:18)
+    readFileSync (node:fs:444:35)
+    TestContext.<anonymous> (/Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/codec-schema.test.mjs:22:27)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    processTicksAndRejections (node:internal/process/task_queues:103:5)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+ ❯ experiments/configured-entities-v1/tiny-backend-v3/codec-schema.test.mjs (0 test)
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10.466041
+TAP version 13
+# Subtest: explicit pinned Some1 passes without changing raw option or application version
+ok 1 - explicit pinned Some1 passes without changing raw option or application version
+  ---
+  duration_ms: 0.505167
+  type: 'test'
+  ...
+# Subtest: missing malformed and wrong version values refuse without coercion
+ok 2 - missing malformed and wrong version values refuse without coercion
+  ---
+  duration_ms: 3.589041
+  type: 'test'
+  ...
+# Subtest: the expectation must be explicitly the pinned adapter default, never inferred from data
+ok 3 - the expectation must be explicitly the pinned adapter default, never inferred from data
+  ---
+  duration_ms: 0.945458
+  type: 'test'
+  ...
+# Subtest: all24 retained V1 public rows and ACKs expose the same independently reviewed Some1
+not ok 4 - all24 retained V1 public rows and ACKs expose the same independently reviewed Some1
+  ---
+  duration_ms: 0.138959
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/codec-schema.test.mjs:25:34'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/Users/sam/projects/triplex-db-2/.devloop/jobs/configured-entity-xtdb-tiny-v1/attempts/0001/artifacts/009-snapshot-sparse-seed-raw-before-assert.json'"
+  code: 'ENOENT'
+  stack: |-
+    Object.openSync (node:fs:560:18)
+    readFileSync (node:fs:444:35)
+    TestContext.<anonymous> (/Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/codec-schema.test.mjs:22:27)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    processTicksAndRejections (node:internal/process/task_queues:103:5)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+ ❯ experiments/configured-entities-v1/tiny-backend-v4/codec-schema.test.mjs (0 test)
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11.013417
+TAP version 13
+ ❯ load/dispatch.test.ts (0 test)
+ ❯ test/query-paths.test.ts (3 tests | 1 failed) 5ms
+   ❯ five public query surface registry (3)
+     × loads the real built DuckDB async factory once and exposes the synchronous runtime facade 2ms
+TAP version 13
+# Subtest: one exact descriptor binds command source actual module argv and generation
+ok 1 - one exact descriptor binds command source actual module argv and generation
+  ---
+  duration_ms: 0.565875
+  type: 'test'
+  ...
+# Subtest: old entry and generation cannot satisfy a new worker declaration
+ok 2 - old entry and generation cannot satisfy a new worker declaration
+  ---
+  duration_ms: 2.677709
+  type: 'test'
+  ...
+# Subtest: missing wrong-role or changed worker pin refuses
+ok 3 - missing wrong-role or changed worker pin refuses
+  ---
+  duration_ms: 0.375042
+  type: 'test'
+  ...
+# Subtest: actual imported module argv bytes and size must independently match
+ok 4 - actual imported module argv bytes and size must independently match
+  ---
+  duration_ms: 0.782625
+  type: 'test'
+  ...
+ ❯ experiments/configured-entities-v1/tiny-backend-v3/entry.test.mjs (0 test)
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9.859042
+TAP version 13
+# Subtest: unexpected Success retains the full same public receipt; Failure keeps safe typed violations
+ok 1 - unexpected Success retains the full same public receipt; Failure keeps safe typed violations
+  ---
+  duration_ms: 0.721625
+  type: 'test'
+  ...
+ ❯ experiments/configured-entities-v1/tiny-backend-v4/required-evidence.test.mjs (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  load/dispatch.test.ts [ load/dispatch.test.ts ]
+Error: No test suite found in file /Users/sam/projects/triplex-db-2/packages/qualification/load/dispatch.test.ts
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  load/model.test.ts [ load/model.test.ts ]
+Error: No test suite found in file /Users/sam/projects/triplex-db-2/packages/qualification/load/model.test.ts
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  experiments/configured-entities-v1/recipe.test.mjs [ experiments/configured-entities-v1/recipe.test.mjs ]
+Error: No test suite found in file /Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/recipe.test.mjs
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  experiments/configured-entities-v1/tiny-backend-v2/codec-schema.test.mjs [ experiments/configured-entities-v1/tiny-backend-v2/codec-schema.test.mjs ]
+Error: No test suite found in file /Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/codec-schema.test.mjs
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  experiments/configured-entities-v1/tiny-backend-v3/codec-schema.test.mjs [ experiments/configured-entities-v1/tiny-backend-v3/codec-schema.test.mjs ]
+Error: No test suite found in file /Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/codec-schema.test.mjs
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  experiments/configured-entities-v1/tiny-backend-v3/entry.test.mjs [ experiments/configured-entities-v1/tiny-backend-v3/entry.test.mjs ]
+Error: No test suite found in file /Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/entry.test.mjs
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  experiments/configured-entities-v1/tiny-backend-v4/codec-schema.test.mjs [ experiments/configured-entities-v1/tiny-backend-v4/codec-schema.test.mjs ]
+Error: No test suite found in file /Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/codec-schema.test.mjs
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  experiments/configured-entities-v1/tiny-backend-v4/entry.test.mjs [ experiments/configured-entities-v1/tiny-backend-v4/entry.test.mjs ]
+Error: Cannot find module '../../../../../.runtime/experiments/xtdb-identity-handoff-v1/loop-v2/common.mjs' imported from /Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/entry.test.mjs
+ ❯ experiments/configured-entities-v1/tiny-backend-v4/entry.test.mjs:6:1
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  experiments/configured-entities-v1/tiny-backend-v4/required-evidence.test.mjs [ experiments/configured-entities-v1/tiny-backend-v4/required-evidence.test.mjs ]
+Error: No test suite found in file /Users/sam/projects/triplex-db-2/packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/required-evidence.test.mjs
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/query-paths.test.ts > five public query surface registry > loads the real built DuckDB async factory once and exposes the synchronous runtime facade
+Error: Cannot find module 'file:///Users/sam/projects/triplex-db-2/packages/duckdb/dist/index.js' imported from /Users/sam/projects/triplex-db-2/packages/qualification/src/index.ts
+ ❯ loadQualificationBackend src/index.ts:146:16
+    144|   if (!target?.startsWith("./dist/"))
+    145|     throw new Error(`Backend must expose built public artifacts: ${sel…
+    146|   const api = (await import(pathToFileURL(path.resolve(directory, targ…
+       |                ^
+    147|     string,
+    148|     unknown
+ ❯ test/query-paths.test.ts:39:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  10 failed | 1 skipped (11)
+      Tests  1 failed | 2 passed | 45 skipped (48)
+   Start at  09:44:54
+   Duration  1.53s (import 58%, transform 39%, worker 2%, tests 1%)
+
+    Isolate  11 workers spawned · ~53ms startup each (spawn + environment, per file)
+             at least ~528ms faster with isolate: false — reuses workers across files instead of one per file
+
+/Users/sam/projects/triplex-db-2/packages/qualification:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @triplex-build/triplex-qualification@0.1.0 test: `vitest run && node --test ../../qualification/compare.test.mjs`
+Exit status 1

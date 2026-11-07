@@ -1,0 +1,71 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/packages/qlever
+
+ ❯ test/intervals.test.ts (4 tests | 4 failed) 11ms
+   ❯ QLever bounded public interval provider (4)
+     × coalesces adjacent support, preserves gaps, and pins historical corrections 7ms
+     × discovers dynamic and negated boundaries without changing variable names 1ms
+     × retains integer aggregate values and empty-result meaning across spans 1ms
+     × discovers boundaries used only by optional projection fields 1ms
+ ❯ test/outcomes.test.ts (1 test | 1 failed) 8ms
+   ❯ QLever unknown operation recovery (1)
+     × keeps absence unresolved and resolves a delayed submission by durable identity 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/intervals.test.ts > QLever bounded public interval provider > coalesces adjacent support, preserves gaps, and pins historical corrections
+ FAIL  test/intervals.test.ts > QLever bounded public interval provider > discovers dynamic and negated boundaries without changing variable names
+ FAIL  test/intervals.test.ts > QLever bounded public interval provider > retains integer aggregate values and empty-result meaning across spans
+ FAIL  test/intervals.test.ts > QLever bounded public interval provider > discovers boundaries used only by optional projection fields
+qlever-native: Cannot access QLever RDF server
+ ❯ catch src/QleverStorageAdapter.ts:515:11
+    513|         },
+    514|         catch: (cause) =>
+    515|           new MigrationError({
+       |           ^
+    516|             version: 1,
+    517|             name: "qlever-native",
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: TypeError: fetch failed
+ ❯ request src/QleverClient.ts:85:24
+ ❯ Object.query src/QleverClient.ts:121:23
+ ❯ try src/QleverStorageAdapter.ts:512:11
+
+Caused by: Error: bad port
+ ❯ request src/QleverClient.ts:85:30
+ ❯ Object.query src/QleverClient.ts:121:29
+ ❯ try src/QleverStorageAdapter.ts:512:24
+ ❯ MixedScheduler.<anonymous> ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  test/outcomes.test.ts > QLever unknown operation recovery > keeps absence unresolved and resolves a delayed submission by durable identity
+AssertionError: expected WriteError: Cannot acquire QLever source … { _tag: '…' } to be an instance of TransactionOutcomeUnknown
+ ❯ test/outcomes.test.ts:47:25
+     45|             .pipe(Effect.flip),
+     46|         );
+     47|         expect(outcome).toBeInstanceOf(TransactionOutcomeUnknown);
+       |                         ^
+     48|         if (!(outcome instanceof TransactionOutcomeUnknown))
+     49|           throw new Error("Expected typed unknown outcome");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed (5)
+   Start at  09:46:40
+   Duration  503ms (import 80%, transform 14%, tests 6%, worker 1%)
+
+exit=1

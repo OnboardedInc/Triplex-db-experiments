@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", "module": "ESNext", "moduleResolution": "bundler", "lib": ["ESNext"],
+    "strict": true, "skipLibCheck": true, "noEmit": true, "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true, "isolatedModules": true, "types": [],
+    "ignoreDeprecations": "6.0", "baseUrl": ".",
+    "paths": {
+      "effect": ["/Users/sam/projects/triplex-db-2/packages/core/node_modules/effect/dist/index.d.ts"],
+      "effect/*": ["/Users/sam/projects/triplex-db-2/packages/core/node_modules/effect/dist/*.d.ts"],
+      "@triplex-build/triplex": ["/Users/sam/projects/triplex-db-2/packages/core/dist/index.d.ts"],
+      "@triplex-build/triplex/*": ["/Users/sam/projects/triplex-db-2/packages/core/dist/*/index.d.ts"]
+    }
+  },
+  "files": ["api-sketch.ts", "usage.ts"]
+}

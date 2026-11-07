@@ -1,0 +1,24 @@
+=== locale ('en', 'US_POSIX', False)
+index rc 0 
+recorded locale: {'country': 'US_POSIX', 'ignore-punctuation': False, 'language': 'en'}
+tiny order: ['emoji', 'ascii-A', 'ascii-E', 'ascii-c', 'nfd-e-acute', 'nfc-e-acute', 'ascii-z', 'astral-10000', 'private-use']
+tiny FAIL (expected ['ascii-A', 'ascii-E', 'ascii-c', 'nfd-e-acute', 'ascii-z', 'nfc-e-acute', 'private-use', 'astral-10000', 'emoji'])
+ASCII local-vocab VALUES order: ['0', 'A', 'B', 'E', '_', 'a', 'c', 'z', '~'] (codepoint: 0 A B E _ a c z ~)
+400 random strings positions mismatching codepoint order: 399 of 400 | ASCII-only subset (n=103) exact: True
+?t > "E" matches codepoint semantics: False 227 273
+=== locale ('', '', False)
+index rc 0 
+recorded locale: {'country': '', 'ignore-punctuation': False, 'language': ''}
+tiny order: ['emoji', 'ascii-A', 'ascii-c', 'ascii-E', 'nfd-e-acute', 'nfc-e-acute', 'ascii-z', 'astral-10000', 'private-use']
+tiny FAIL (expected ['ascii-A', 'ascii-E', 'ascii-c', 'nfd-e-acute', 'ascii-z', 'nfc-e-acute', 'private-use', 'astral-10000', 'emoji'])
+ASCII local-vocab VALUES order: ['_', '~', '0', 'a', 'A', 'B', 'c', 'E', 'z'] (codepoint: 0 A B E _ a c z ~)
+400 random strings positions mismatching codepoint order: 398 of 400 | ASCII-only subset (n=103) exact: False
+?t > "E" matches codepoint semantics: False 149 273
+=== locale ('und', '', False)
+index rc 0 
+recorded locale: {'country': '', 'ignore-punctuation': False, 'language': 'und'}
+tiny order: ['emoji', 'ascii-A', 'ascii-c', 'ascii-E', 'nfd-e-acute', 'nfc-e-acute', 'ascii-z', 'astral-10000', 'private-use']
+tiny FAIL (expected ['ascii-A', 'ascii-E', 'ascii-c', 'nfd-e-acute', 'ascii-z', 'nfc-e-acute', 'private-use', 'astral-10000', 'emoji'])
+ASCII local-vocab VALUES order: ['_', '~', '0', 'a', 'A', 'B', 'c', 'E', 'z'] (codepoint: 0 A B E _ a c z ~)
+400 random strings positions mismatching codepoint order: 398 of 400 | ASCII-only subset (n=103) exact: False
+?t > "E" matches codepoint semantics: False 149 273

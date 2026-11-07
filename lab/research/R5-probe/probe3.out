@@ -1,0 +1,9 @@
+index rc 0
+base36 [0-9a-z] len1..3 n=47988 ORDER BY == bytewise sorted: True
+base62 [0-9a-zA-Z] len1..2 n=3906 ORDER BY == bytewise sorted: False | mismatching positions: 3795 | first 8 actual: ['0', '00', '01', '02', '03', '04', '05', '06'] | first 8 expected: ['0', '00', '01', '02', '03', '04', '05', '06']
+S6 OPTIONAL aggregate + FILTER(!BOUND||>=) (expected r2,r3,r4,r5) -> ['r2', 'r3', 'r4', 'r5']
+S7 NOT EXISTS where inner restricted to ord<'05' via re-bind (expected: every row whose obj has no later row below 05): r2,r3,r4,r5,r6? -> see note -> ['r2', 'r3', 'r4', 'r5', 'r6']
+S8 same shape as S7 but filter-only correlation (wrong) -> ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']
+N4b positive EXISTS flat (expected one) -> []
+N4c positive EXISTS re-bound (expected one) -> ['one']
+note S7: r1(A,01): later A rows below 05 exist (r2,r4 ord 02)=>excluded; r2/r4 none >02 below 05 => kept; r3 kept; r5(C,07): r6 03<07 => not greater => kept; r6(C,03): r5 07 not <05 => kept

@@ -1,0 +1,4 @@
+1 string assert, no meta                   updates: 1 triples in one SPARQL UPDATE (data+journal+claim+operation+meta): 146 {"assertion":141,"meta":2,"operation":3}
+1 string assert + commandId + actor        updates: 1 triples in one SPARQL UPDATE (data+journal+claim+operation+meta): 205 {"assertion":196,"meta":2,"claim":4,"operation":3}
+5 string asserts on 1 entity, no meta      updates: 1 triples in one SPARQL UPDATE (data+journal+claim+operation+meta): 362 {"assertion":357,"meta":2,"operation":3}
+1 number assert, no meta                   updates: 1 triples in one SPARQL UPDATE (data+journal+claim+operation+meta): 149 {"assertion":144,"meta":2,"operation":3}

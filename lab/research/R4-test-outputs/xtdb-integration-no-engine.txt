@@ -1,0 +1,74 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/packages/xtdb
+
+ ❯ test/adapter.test.ts (14 tests | 12 skipped) 8ms
+ ❯ test/conformance.test.ts (45 tests | 1 failed | 44 skipped) 10ms
+   ❯ XTDB public runtime conformance (1)
+     × runs the complete unchanged upstream 44-case runtime contract 10ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/adapter.test.ts > XTDB storage transaction boundary
+xtdb-baseline: Cannot initialize XTDB tables
+ ❯ catch src/XtdbStorageAdapter.ts:646:11
+    644|         },
+    645|         catch: (cause) =>
+    646|           new MigrationError({
+       |           ^
+    647|             version: 1,
+    648|             name: "xtdb-baseline",
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: Error: connect ECONNREFUSED 127.0.0.1:1
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -61, code: 'ECONNREFUSED', syscall: 'connect', address: '127.0.0.1', port: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/conformance.test.ts > XTDB public runtime conformance > runs the complete unchanged upstream 44-case runtime contract
+AssertionError: promise rejected "xtdb-baseline: Cannot initialize XTDB tab… { …(2) }" instead of resolving
+ ❯ test/conformance.test.ts:26:8
+     24|           }).pipe(Effect.scoped) as Effect.Effect<void, unknown, never…
+     25|         ),
+     26|       ).resolves.toBeUndefined();
+       |        ^
+     27|     },
+     28|     240_000,
+
+Caused by: xtdb-baseline: Cannot initialize XTDB tables
+ ❯ catch src/XtdbStorageAdapter.ts:646:11
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:777:40
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Utils.js:71:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:777:21
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { version: 1, _tag: 'MigrationError' }
+Caused by: Error: connect ECONNREFUSED 127.0.0.1:1
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -61, code: 'ECONNREFUSED', syscall: 'connect', address: '127.0.0.1', port: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  1 failed | 2 passed | 56 skipped (59)
+   Start at  09:46:39
+   Duration  573ms (import 75%, transform 20%, tests 4%, worker 1%)
+
+exit=1
