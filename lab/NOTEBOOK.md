@@ -544,3 +544,22 @@ EXP-002 got scope notes (X02 also got R14's hazard guards and the DECIMAL(32,0) 
 - **Learning: the orchestrator can author W0, but coverage must be frozen and reviewed independently** (Q31i), or 100k no-op
   evaluations satisfy P5. Floors sent to EXP-D01a; V-D01 reviews before W0's hashes are pinned.
 - Contract 0.3.3 (Q29, Q31) is with A01. Codex round 3 after 0.3.3 compiles.
+
+## 2026-11-07 ~22:45Z: hourly learnings pass (NORTH-STAR reread first)
+Where each priority stands, from evidence so far (research probes and baselines; no NS receipts exist yet):
+
+| Priority | XTDB | QLever | Next experiment |
+| --- | --- | --- | --- |
+| P1 pinned reads, never block writers | exact, lock-free; fails by shared CPU at 4+ readers on one node (R16) | FIFO pool, no priority (R18); reads still write scratch graphs (EXP-002) | R19 (read nodes) then a follower layer swap; C8 read-only frontier on QLever |
+| P2 per-subject commits | correct; p50 16-24 ms on a loaded host; scope-wide counter serializes a scope | 7 ms fresh, grows with delta to seconds (EXP-002) | EXP-P2X (running); EXP-P2Q after R17 |
+| P3 change feed | none native; same-tx feed row plus one log tailer, lag p99 about 120 ms | log of record is the feed (design) | EXP-P2X includes it; CF01-Q with P2Q |
+| P4 current values | flat with history for one subject; multi-query pulls 35-40 ms | named graphs share delta and rebuild (R18) | EXP-X04 world document with validity interval |
+| P5 release sweep | token pins nothing; 100k in about 91 s under load | not measured | EXP-D01 (W0) then S5 |
+
+- **Learnings are current** through Codex round 2, contract 0.3.3, EXP-F02, EXP-002, R16 and R18.
+- **Research queue (no agent slot free; all 10 busy):** R20, order-preserving encodings for arbitrary-precision decimal strings and
+  their QLever lexical order keys (HBase OrderedBytes, CockroachDB's decimal key encoding, the FoundationDB tuple layer, PostgreSQL
+  numeric), because Q18/Q22 need a proven encoding for precision above 15 before the decimal kind can be built. R17 already covers the
+  QLever delta lifecycle and group commit (its probe outputs include latency at delta sizes 0 to 1M), so that is not queued twice.
+- **Watch item:** EXP-X02 has waited on its own live-check rerun for over an hour; its worktree shows a G2 run at 20:12Z and the
+  workload process alive, so it is progressing, not stuck.
