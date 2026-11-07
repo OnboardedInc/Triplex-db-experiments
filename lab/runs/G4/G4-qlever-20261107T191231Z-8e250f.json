@@ -1,0 +1,1546 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "G4",
+  "lane": "qlever",
+  "slot": "dev",
+  "runId": "G4-qlever-20261107T191231Z-8e250f",
+  "experiment": "EXP-002",
+  "note": "rerun: harness defect, STR.iri-order compared full IRIs to suffixes",
+  "previous": "G4-qlever-20261107T191201Z-ad15e2",
+  "startedAt": "2026-11-07T19:12:31.366Z",
+  "endedAt": "2026-11-07T19:12:44.644Z",
+  "durationMs": 13278,
+  "scope": "full",
+  "runKind": "candidate",
+  "mutation": null,
+  "contractVersion": "0.1.0-draft",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/1",
+    "version": "0.1.0-draft",
+    "status": "DRAFT-UNREVIEWED: not frozen; freezes as 1.0.0 after orchestrator and adversarial review",
+    "sha256": "2a9c8611ac8f2a6ef5088382312a735d24a83640584c75f2e88ebcf7e6cc7780"
+  },
+  "obligations": [],
+  "engineName": "qlever",
+  "git": {
+    "head": "105399835619ea8ef1d54aba8ef16bb3f1310dc3",
+    "headTree": "51513cef084354112f3059e461117ba3e6c6632c",
+    "branch": "exp/002-qlever-baseline",
+    "dirty": true,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/runs/G0/G0-qlever-20261107T190644Z-50f7a4.json",
+      "lab/runs/G4/"
+    ],
+    "sourceTreeId": "00186b899844c9ab88103cd6800fd37023e53bd4c11bf712d322b8e17c203e9d"
+  },
+  "lockfileSha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "7118f6b489bafa77faf5761c198a645960213e811925ed31fd0624ae18831201",
+    "lab/bin/lib.mjs": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740",
+    "lab/bin/receipt.mjs": "b6511d1eab385fcf453fe628aa4dd5437e3b78c02a2eca84165dcaa246c5abad",
+    "lab/bin/engine.mjs": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+  },
+  "build": {
+    "manifestSha256": "76c875f66821a3ea29376a681972a01801b23119972084f59ec7dee3663d105b",
+    "manifest": "runs/G4/G4-qlever-20261107T191231Z-8e250f/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 379,
+        "bytes": 2397489,
+        "sha256": "f959e52c7d82dc8fc9982194703b74b366bd1cb5412cfe22b57a7b5e5833b584"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "qlever": {
+        "files": 70,
+        "bytes": 409001,
+        "sha256": "c6cad514171b46de1e29193246780235c67bb361b8ffb9f029679fb8e64dc014"
+      },
+      "qualification": {
+        "files": 16,
+        "bytes": 212702,
+        "sha256": "19c1dd683a7e04a53b87902c6c2c2a304771a1000db8caff989778035de4da5c"
+      }
+    }
+  },
+  "engine": {
+    "container": "tx2-qlever-dev",
+    "containerId": "a09ec690de9b0233c1e804c489c83cbd6d600bca8e480985fd91fd833fc6d498",
+    "startedAt": "2026-11-07T18:59:17.38810399Z",
+    "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "repoDigests": [
+      "adfreiburg/qlever@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    ],
+    "configSha256": "e070b049267ddc90d998a8ea7ff3853eb4435019b4d987c5e0c9bb71be270556",
+    "effectiveConfig": {
+      "lane": "qlever",
+      "slot": "dev",
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "startScriptSha256": "240a7ebdeab1659c650a95acc9638f940482e31dabf81e5f07f95c760a5c5ad5",
+      "sourceStartScriptSha256": "a767184a76929768be651fb8c16bab76e6f472b422d3bb9415824887d8018d6e",
+      "qleverMemory": "1500M",
+      "memBytes": 2684354560,
+      "cpus": 2,
+      "publish": "127.0.0.1:7070:7019",
+      "volume": "tx2-qlever-dev-data:/data",
+      "volumeInit": "marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)",
+      "entrypoint": [
+        "/bin/bash",
+        "/config/start.sh"
+      ],
+      "health": "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'"
+    },
+    "endpoint": "http://127.0.0.1:7070",
+    "port": 7070,
+    "memCapBytes": 2684354560,
+    "nanoCpus": 2000000000,
+    "ownerSha256": "3167ae10b424dff110fc636f9fd9094ac4fbe8a18cdcef7ff4f3a314a3045ffa",
+    "holder": "worktree:/Users/sam/projects/triplex-db-2"
+  },
+  "profile": {
+    "name": "default",
+    "env": {}
+  },
+  "queryPath": "qlever-native",
+  "diskBefore": {
+    "totalBytes": 63088406528,
+    "usedBytes": 5996670976,
+    "availableBytes": 53853839360
+  },
+  "planner": {
+    "requested": null,
+    "before": "1500",
+    "effective": "1500",
+    "after": "1500"
+  },
+  "containers": {
+    "tx2-qlever-dev": {
+      "samples": 2,
+      "peakMemBytes": 353684685,
+      "peakCpuPercent": 4.61,
+      "memLimitBytes": 2684354560
+    },
+    "tx2-xtdb-dev": {
+      "samples": 2,
+      "peakMemBytes": 1669668536,
+      "peakCpuPercent": 101.6,
+      "memLimitBytes": 3221225472
+    }
+  },
+  "coRunning": [
+    {
+      "name": "tx2-qlever-dev",
+      "memCapBytes": 2684354560,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-dev",
+      "memCapBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    }
+  ],
+  "volumeBytes": 34562048,
+  "diskAfter": {
+    "totalBytes": 63088406528,
+    "usedBytes": 5996929024,
+    "availableBytes": 53853581312
+  },
+  "fixtures": {
+    "packages/qlever/experiments/lab-counterexamples.ts": "dbdd9b76742f9179e989af04637b3be289eca4c08848eab297d9255945eefd88",
+    "packages/qlever/experiments/lab-endpoint.ts": "3324649d13d3ab13d4567b4ab07c4e755b9e64323630b16a92f62463d0f7405d",
+    "qualification/native-controls/qlever-collation-tiny-v1/oracle.json": "bc53852343cd4da8bc14f52c75a4abdfdfc5ef1fbfc3031a8cc9779b38b03df6",
+    "qualification/native-controls/qlever-collation-tiny-v1/fixture.nt": "a9fd0bfea4c53b5623bac8b8a48478c798563b4bc0739ef9304f35973b7de570",
+    "packages/qlever/experiments/native-query-shapes.ts": "4de10a416263cf5717033d9cd92dde00b665c66db6ed46c74b4260bbb2f21367",
+    "lab/research/R5-probe/probe1.py": "031cb9887c7385e04ddf48e035461b8f981f65e5aeeabdd7bfa2a744e47434c6",
+    "lab/research/R5-probe/probe3.py": "67e5d6bbbc6e520ee3d01a03e00a5ec33d611a186dfb6fc844b162165349738e"
+  },
+  "contactedEndpoint": "http://127.0.0.1:7070",
+  "counts": {
+    "executed": 18,
+    "pass": 2,
+    "fail": 16,
+    "skip": 0,
+    "counterexamples": 16,
+    "controls": 2,
+    "errors": 0
+  },
+  "baselineAsExpected": true,
+  "unexpectedVersusBaseline": [],
+  "cases": [
+    {
+      "caseId": "STR.order",
+      "mode": "current",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-COLL",
+      "oracleSource": "qualification/native-controls/qlever-collation-tiny-v1/oracle.json expectedAscendingIds",
+      "expected": [
+        "ascii-A",
+        "ascii-E",
+        "ascii-c",
+        "nfd-e-acute",
+        "ascii-z",
+        "nfc-e-acute",
+        "private-use",
+        "astral-10000",
+        "emoji"
+      ],
+      "actual": [
+        "emoji",
+        "ascii-A",
+        "ascii-c",
+        "ascii-E",
+        "nfd-e-acute",
+        "nfc-e-acute",
+        "ascii-z",
+        "astral-10000",
+        "private-use"
+      ],
+      "query": "SELECT ?entity ?label WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJsYWItZzQtcWxldmVyLWJmYmMzMTAxLTU0ODUtNGQ4MS05MzU3LWM1NTRlN2Q2YjQwZiIsMF0> {\n?__triplex_native_0_assertion <urn:triplex:field:entity_id> ?entity ; <urn:triplex:field:attribute> \":lab-g4/label\" ; <urn:triplex:field:value_type> \"string\" ; <urn:triplex:field:value_string> ?label .\n\n\n\n?__triplex_native_0_assertion <urn:triplex:field:recorded_position_order> ?__triplex_native_0_recorded .\n?__triplex_native_0_assertion <urn:triplex:field:valid_from_order> ?__triplex_native_0_from . OPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:valid_to_order> ?__triplex_native_0_to }\nOPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:retracted_position_order> ?__triplex_native_0_retracted }\n\nFILTER(?__triplex_native_0_recorded <= \"bff0000000000000\")\nFILTER(?__triplex_native_0_from <= \"bff0000000000000\" && (!BOUND(?__triplex_native_0_to) || ?__triplex_native_0_to > \"bff0000000000000\"))\nFILTER(!BOUND(?__triplex_native_0_retracted) || ?__triplex_native_0_retracted > \"bff0000000000000\")\n\n} } ORDER BY STR(?label) STR(?entity)",
+      "rawResultSha256": "0b8478f0e2fdf74606dcc2195345dc2c6a1a8744dd8c3b46a81d4f1f1ca0bbec",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "STR.range-gt-E",
+      "mode": "current",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-COLL",
+      "oracleSource": "qualification/native-controls/qlever-collation-tiny-v1/oracle.json expectedGreaterThanE",
+      "expected": [
+        "ascii-c",
+        "nfd-e-acute",
+        "ascii-z",
+        "nfc-e-acute",
+        "private-use",
+        "astral-10000",
+        "emoji"
+      ],
+      "actual": [
+        "ascii-z",
+        "astral-10000",
+        "nfc-e-acute",
+        "nfd-e-acute",
+        "private-use"
+      ],
+      "query": "SELECT ?entity ?label WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJsYWItZzQtcWxldmVyLWJmYmMzMTAxLTU0ODUtNGQ4MS05MzU3LWM1NTRlN2Q2YjQwZiIsMF0> {\n?__triplex_native_0_assertion <urn:triplex:field:entity_id> ?entity ; <urn:triplex:field:attribute> \":lab-g4/label\" ; <urn:triplex:field:value_type> \"string\" ; <urn:triplex:field:value_string> ?label .\n\n\n\n?__triplex_native_0_assertion <urn:triplex:field:recorded_position_order> ?__triplex_native_0_recorded .\n?__triplex_native_0_assertion <urn:triplex:field:valid_from_order> ?__triplex_native_0_from . OPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:valid_to_order> ?__triplex_native_0_to }\nOPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:retracted_position_order> ?__triplex_native_0_retracted }\n\nFILTER(?__triplex_native_0_recorded <= \"bff0000000000000\")\nFILTER(?__triplex_native_0_from <= \"bff0000000000000\" && (!BOUND(?__triplex_native_0_to) || ?__triplex_native_0_to > \"bff0000000000000\"))\nFILTER(!BOUND(?__triplex_native_0_retracted) || ?__triplex_native_0_retracted > \"bff0000000000000\")\n\n} FILTER(STR(?label) > \"E\") } ORDER BY STR(?entity)",
+      "rawResultSha256": "3162b9e7107aedf2d9919189db33d1ff60887ce02e91b88af34d23623ca053e5",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "STR.range-lt-c",
+      "mode": "current",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-COLL",
+      "oracleSource": "qualification/native-controls/qlever-collation-tiny-v1/oracle.json rows, codepoint < \"c\" (derived in this entry)",
+      "expected": [
+        "ascii-A",
+        "ascii-E"
+      ],
+      "actual": [
+        "ascii-A",
+        "emoji"
+      ],
+      "query": "SELECT ?entity ?label WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJsYWItZzQtcWxldmVyLWJmYmMzMTAxLTU0ODUtNGQ4MS05MzU3LWM1NTRlN2Q2YjQwZiIsMF0> {\n?__triplex_native_0_assertion <urn:triplex:field:entity_id> ?entity ; <urn:triplex:field:attribute> \":lab-g4/label\" ; <urn:triplex:field:value_type> \"string\" ; <urn:triplex:field:value_string> ?label .\n\n\n\n?__triplex_native_0_assertion <urn:triplex:field:recorded_position_order> ?__triplex_native_0_recorded .\n?__triplex_native_0_assertion <urn:triplex:field:valid_from_order> ?__triplex_native_0_from . OPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:valid_to_order> ?__triplex_native_0_to }\nOPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:retracted_position_order> ?__triplex_native_0_retracted }\n\nFILTER(?__triplex_native_0_recorded <= \"bff0000000000000\")\nFILTER(?__triplex_native_0_from <= \"bff0000000000000\" && (!BOUND(?__triplex_native_0_to) || ?__triplex_native_0_to > \"bff0000000000000\"))\nFILTER(!BOUND(?__triplex_native_0_retracted) || ?__triplex_native_0_retracted > \"bff0000000000000\")\n\n} FILTER(STR(?label) < \"c\") } ORDER BY STR(?entity)",
+      "rawResultSha256": "b9c09a8916360cdae6a3c368c9d112fb100782763054d99e2c30e954decedfb4",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "STR.iri-order",
+      "mode": "current",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-COLL",
+      "oracleSource": "codepoint order of the IRI strings (R5 A3 / probe T1h class), computed in this entry",
+      "expected": [
+        "A1",
+        "E1",
+        "c1",
+        "cE",
+        "cc",
+        "ce",
+        "z1"
+      ],
+      "actual": [
+        "A1",
+        "c1",
+        "cc",
+        "ce",
+        "cE",
+        "E1",
+        "z1"
+      ],
+      "query": "SELECT (STR(?iri) AS ?s) WHERE { VALUES ?iri { <urn:triplex:s:A1> <urn:triplex:s:E1> <urn:triplex:s:c1> <urn:triplex:s:z1> <urn:triplex:s:cE> <urn:triplex:s:cc> <urn:triplex:s:ce> } } ORDER BY STR(?iri)",
+      "rawResultSha256": "5247cc51618b34376efb86968cad7aafb2bb36d0610440356584a041b1e6488b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "NEG.not-exists-flat",
+      "mode": "current",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "native-feature-matrix.json raw-outer-filter-correlated-not-exists; SPARQL 1.1 substitution",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "query": "SELECT ?revision WHERE {  VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") }  FILTER NOT EXISTS {  VALUES ?laterOrder { \"01\" \"02\" }  FILTER(?laterOrder > ?order) } }",
+      "rawResultSha256": "8f33741a53bf98499f1eda4e27d59402f8669ada7e50ff7aecf0443db11dc7c8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "NEG.not-exists-nested",
+      "mode": "current",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "native-feature-matrix.json raw-outer-filter-correlated-not-exists; SPARQL 1.1 substitution",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "query": "SELECT ?revision WHERE { { SELECT ?revision ?order WHERE { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } } } FILTER NOT EXISTS { { SELECT ?laterOrder WHERE { VALUES ?laterOrder { \"01\" \"02\" } } } FILTER(?laterOrder > ?order) } }",
+      "rawResultSha256": "8f33741a53bf98499f1eda4e27d59402f8669ada7e50ff7aecf0443db11dc7c8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "NEG.exists-flat",
+      "mode": "current",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "R5 probe1 N4; SPARQL 1.1 substitution",
+      "expected": [
+        "one"
+      ],
+      "actual": [],
+      "query": "SELECT ?revision WHERE { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } FILTER EXISTS { VALUES ?laterOrder { \"01\" \"02\" } FILTER(?laterOrder > ?order) } }",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "NEG.optional-not-bound",
+      "mode": "current",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "R5 probe1 N8; SPARQL 1.1 LeftJoin filter sees both sides",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "query": "SELECT ?revision WHERE { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } OPTIONAL { VALUES ?laterOrder { \"01\" \"02\" } FILTER(?laterOrder > ?order) } FILTER(!BOUND(?laterOrder)) }",
+      "rawResultSha256": "8f33741a53bf98499f1eda4e27d59402f8669ada7e50ff7aecf0443db11dc7c8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "CTRL.not-exists-rebound",
+      "mode": "current",
+      "status": "PASS",
+      "kind": "control",
+      "expectedBaseline": "PASS",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "R5 probe1 N5; SPARQL 1.1 substitution",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "two"
+      ],
+      "query": "SELECT ?revision WHERE { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } FILTER NOT EXISTS { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } VALUES ?laterOrder { \"01\" \"02\" } FILTER(?laterOrder > ?order) } }",
+      "rawResultSha256": "8443366c79023c8f01cd408506936b4be3ff102d22ac8112f97a4f68fb83e830",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "STR.order",
+      "mode": "reopen",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-COLL",
+      "oracleSource": "qualification/native-controls/qlever-collation-tiny-v1/oracle.json expectedAscendingIds",
+      "expected": [
+        "ascii-A",
+        "ascii-E",
+        "ascii-c",
+        "nfd-e-acute",
+        "ascii-z",
+        "nfc-e-acute",
+        "private-use",
+        "astral-10000",
+        "emoji"
+      ],
+      "actual": [
+        "emoji",
+        "ascii-A",
+        "ascii-c",
+        "ascii-E",
+        "nfd-e-acute",
+        "nfc-e-acute",
+        "ascii-z",
+        "astral-10000",
+        "private-use"
+      ],
+      "query": "SELECT ?entity ?label WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJsYWItZzQtcWxldmVyLWJmYmMzMTAxLTU0ODUtNGQ4MS05MzU3LWM1NTRlN2Q2YjQwZiIsMF0> {\n?__triplex_native_0_assertion <urn:triplex:field:entity_id> ?entity ; <urn:triplex:field:attribute> \":lab-g4/label\" ; <urn:triplex:field:value_type> \"string\" ; <urn:triplex:field:value_string> ?label .\n\n\n\n?__triplex_native_0_assertion <urn:triplex:field:recorded_position_order> ?__triplex_native_0_recorded .\n?__triplex_native_0_assertion <urn:triplex:field:valid_from_order> ?__triplex_native_0_from . OPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:valid_to_order> ?__triplex_native_0_to }\nOPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:retracted_position_order> ?__triplex_native_0_retracted }\n\nFILTER(?__triplex_native_0_recorded <= \"bff0000000000000\")\nFILTER(?__triplex_native_0_from <= \"bff0000000000000\" && (!BOUND(?__triplex_native_0_to) || ?__triplex_native_0_to > \"bff0000000000000\"))\nFILTER(!BOUND(?__triplex_native_0_retracted) || ?__triplex_native_0_retracted > \"bff0000000000000\")\n\n} } ORDER BY STR(?label) STR(?entity)",
+      "rawResultSha256": "0b8478f0e2fdf74606dcc2195345dc2c6a1a8744dd8c3b46a81d4f1f1ca0bbec",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "STR.range-gt-E",
+      "mode": "reopen",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-COLL",
+      "oracleSource": "qualification/native-controls/qlever-collation-tiny-v1/oracle.json expectedGreaterThanE",
+      "expected": [
+        "ascii-c",
+        "nfd-e-acute",
+        "ascii-z",
+        "nfc-e-acute",
+        "private-use",
+        "astral-10000",
+        "emoji"
+      ],
+      "actual": [
+        "ascii-z",
+        "astral-10000",
+        "nfc-e-acute",
+        "nfd-e-acute",
+        "private-use"
+      ],
+      "query": "SELECT ?entity ?label WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJsYWItZzQtcWxldmVyLWJmYmMzMTAxLTU0ODUtNGQ4MS05MzU3LWM1NTRlN2Q2YjQwZiIsMF0> {\n?__triplex_native_0_assertion <urn:triplex:field:entity_id> ?entity ; <urn:triplex:field:attribute> \":lab-g4/label\" ; <urn:triplex:field:value_type> \"string\" ; <urn:triplex:field:value_string> ?label .\n\n\n\n?__triplex_native_0_assertion <urn:triplex:field:recorded_position_order> ?__triplex_native_0_recorded .\n?__triplex_native_0_assertion <urn:triplex:field:valid_from_order> ?__triplex_native_0_from . OPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:valid_to_order> ?__triplex_native_0_to }\nOPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:retracted_position_order> ?__triplex_native_0_retracted }\n\nFILTER(?__triplex_native_0_recorded <= \"bff0000000000000\")\nFILTER(?__triplex_native_0_from <= \"bff0000000000000\" && (!BOUND(?__triplex_native_0_to) || ?__triplex_native_0_to > \"bff0000000000000\"))\nFILTER(!BOUND(?__triplex_native_0_retracted) || ?__triplex_native_0_retracted > \"bff0000000000000\")\n\n} FILTER(STR(?label) > \"E\") } ORDER BY STR(?entity)",
+      "rawResultSha256": "3162b9e7107aedf2d9919189db33d1ff60887ce02e91b88af34d23623ca053e5",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "STR.range-lt-c",
+      "mode": "reopen",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-COLL",
+      "oracleSource": "qualification/native-controls/qlever-collation-tiny-v1/oracle.json rows, codepoint < \"c\" (derived in this entry)",
+      "expected": [
+        "ascii-A",
+        "ascii-E"
+      ],
+      "actual": [
+        "ascii-A",
+        "emoji"
+      ],
+      "query": "SELECT ?entity ?label WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJsYWItZzQtcWxldmVyLWJmYmMzMTAxLTU0ODUtNGQ4MS05MzU3LWM1NTRlN2Q2YjQwZiIsMF0> {\n?__triplex_native_0_assertion <urn:triplex:field:entity_id> ?entity ; <urn:triplex:field:attribute> \":lab-g4/label\" ; <urn:triplex:field:value_type> \"string\" ; <urn:triplex:field:value_string> ?label .\n\n\n\n?__triplex_native_0_assertion <urn:triplex:field:recorded_position_order> ?__triplex_native_0_recorded .\n?__triplex_native_0_assertion <urn:triplex:field:valid_from_order> ?__triplex_native_0_from . OPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:valid_to_order> ?__triplex_native_0_to }\nOPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:retracted_position_order> ?__triplex_native_0_retracted }\n\nFILTER(?__triplex_native_0_recorded <= \"bff0000000000000\")\nFILTER(?__triplex_native_0_from <= \"bff0000000000000\" && (!BOUND(?__triplex_native_0_to) || ?__triplex_native_0_to > \"bff0000000000000\"))\nFILTER(!BOUND(?__triplex_native_0_retracted) || ?__triplex_native_0_retracted > \"bff0000000000000\")\n\n} FILTER(STR(?label) < \"c\") } ORDER BY STR(?entity)",
+      "rawResultSha256": "b9c09a8916360cdae6a3c368c9d112fb100782763054d99e2c30e954decedfb4",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "STR.iri-order",
+      "mode": "reopen",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-COLL",
+      "oracleSource": "codepoint order of the IRI strings (R5 A3 / probe T1h class), computed in this entry",
+      "expected": [
+        "A1",
+        "E1",
+        "c1",
+        "cE",
+        "cc",
+        "ce",
+        "z1"
+      ],
+      "actual": [
+        "A1",
+        "c1",
+        "cc",
+        "ce",
+        "cE",
+        "E1",
+        "z1"
+      ],
+      "query": "SELECT (STR(?iri) AS ?s) WHERE { VALUES ?iri { <urn:triplex:s:A1> <urn:triplex:s:E1> <urn:triplex:s:c1> <urn:triplex:s:z1> <urn:triplex:s:cE> <urn:triplex:s:cc> <urn:triplex:s:ce> } } ORDER BY STR(?iri)",
+      "rawResultSha256": "5247cc51618b34376efb86968cad7aafb2bb36d0610440356584a041b1e6488b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "NEG.not-exists-flat",
+      "mode": "reopen",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "native-feature-matrix.json raw-outer-filter-correlated-not-exists; SPARQL 1.1 substitution",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "query": "SELECT ?revision WHERE {  VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") }  FILTER NOT EXISTS {  VALUES ?laterOrder { \"01\" \"02\" }  FILTER(?laterOrder > ?order) } }",
+      "rawResultSha256": "8f33741a53bf98499f1eda4e27d59402f8669ada7e50ff7aecf0443db11dc7c8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "NEG.not-exists-nested",
+      "mode": "reopen",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "native-feature-matrix.json raw-outer-filter-correlated-not-exists; SPARQL 1.1 substitution",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "query": "SELECT ?revision WHERE { { SELECT ?revision ?order WHERE { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } } } FILTER NOT EXISTS { { SELECT ?laterOrder WHERE { VALUES ?laterOrder { \"01\" \"02\" } } } FILTER(?laterOrder > ?order) } }",
+      "rawResultSha256": "8f33741a53bf98499f1eda4e27d59402f8669ada7e50ff7aecf0443db11dc7c8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "NEG.exists-flat",
+      "mode": "reopen",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "R5 probe1 N4; SPARQL 1.1 substitution",
+      "expected": [
+        "one"
+      ],
+      "actual": [],
+      "query": "SELECT ?revision WHERE { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } FILTER EXISTS { VALUES ?laterOrder { \"01\" \"02\" } FILTER(?laterOrder > ?order) } }",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "NEG.optional-not-bound",
+      "mode": "reopen",
+      "status": "FAIL",
+      "kind": "counterexample",
+      "expectedBaseline": "FAIL",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "R5 probe1 N8; SPARQL 1.1 LeftJoin filter sees both sides",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "query": "SELECT ?revision WHERE { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } OPTIONAL { VALUES ?laterOrder { \"01\" \"02\" } FILTER(?laterOrder > ?order) } FILTER(!BOUND(?laterOrder)) }",
+      "rawResultSha256": "8f33741a53bf98499f1eda4e27d59402f8669ada7e50ff7aecf0443db11dc7c8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "CTRL.not-exists-rebound",
+      "mode": "reopen",
+      "status": "PASS",
+      "kind": "control",
+      "expectedBaseline": "PASS",
+      "oracleId": "O-SHAPE",
+      "oracleSource": "R5 probe1 N5; SPARQL 1.1 substitution",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "two"
+      ],
+      "query": "SELECT ?revision WHERE { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } FILTER NOT EXISTS { VALUES (?revision ?order) { (\"one\" \"01\") (\"two\" \"02\") } VALUES ?laterOrder { \"01\" \"02\" } FILTER(?laterOrder > ?order) } }",
+      "rawResultSha256": "8443366c79023c8f01cd408506936b4be3ff102d22ac8112f97a4f68fb83e830",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    }
+  ],
+  "scopes": {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g4-qlever-bfbc3101-5485-4d81-9357-c554e7d6b40f\",0]",
+    "fresh": true,
+    "write": {
+      "receipt": [
+        {
+          "id": "01M6VPTQSRWKSAY86759VCBRPZ",
+          "entityId": "ascii-A",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": "A"
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        },
+        {
+          "id": "01M6VPTQSRWKSAY86759VCBRQ0",
+          "entityId": "ascii-E",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": "E"
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        },
+        {
+          "id": "01M6VPTQSSDFKNYJEYRND8Y71T",
+          "entityId": "ascii-c",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": "c"
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        },
+        {
+          "id": "01M6VPTQSSDFKNYJEYRND8Y71V",
+          "entityId": "ascii-z",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": "z"
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        },
+        {
+          "id": "01M6VPTQSSDFKNYJEYRND8Y71W",
+          "entityId": "nfd-e-acute",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": "é"
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        },
+        {
+          "id": "01M6VPTQSSDFKNYJEYRND8Y71X",
+          "entityId": "nfc-e-acute",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": "é"
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        },
+        {
+          "id": "01M6VPTQSSDFKNYJEYRND8Y71Y",
+          "entityId": "private-use",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": ""
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        },
+        {
+          "id": "01M6VPTQSSDFKNYJEYRND8Y71Z",
+          "entityId": "astral-10000",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": "𐀀"
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        },
+        {
+          "id": "01M6VPTQSSDFKNYJEYRND8Y720",
+          "entityId": "emoji",
+          "attribute": ":lab-g4/label",
+          "value": {
+            "type": "string",
+            "value": "😀"
+          },
+          "recordedAt": 1794078760760,
+          "validFrom": 0,
+          "validTo": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "createdBy": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "retractedAt": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "entityType": {
+            "_id": "Option",
+            "_tag": "None"
+          },
+          "schemaVersion": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": 1
+          },
+          "txId": {
+            "_id": "Option",
+            "_tag": "Some",
+            "value": "_tx/01M6VPTQSRWKSAY86759VCBRPY"
+          },
+          "retractTxId": {
+            "_id": "Option",
+            "_tag": "None"
+          }
+        }
+      ],
+      "elapsedMs": 478.672042,
+      "labels": 9
+    }
+  },
+  "timings": {
+    "casesMs": 1171.1090840000006,
+    "writeMs": 478.672042
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 469,
+      "cwd": ".",
+      "stdout": "runs/G4/G4-qlever-20261107T191231Z-8e250f/pnpm-version.stdout.txt",
+      "stderr": "runs/G4/G4-qlever-20261107T191231Z-8e250f/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-qlever --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 6076,
+      "cwd": ".",
+      "stdout": "runs/G4/G4-qlever-20261107T191231Z-8e250f/build.stdout.txt",
+      "stderr": "runs/G4/G4-qlever-20261107T191231Z-8e250f/build.stderr.txt"
+    },
+    {
+      "name": "lab-counterexamples",
+      "command": "node packages/qlever/experiments/lab-counterexamples.ts --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a3b06928fb6869c5b/runs/G4/G4-qlever-20261107T191231Z-8e250f/g4-report.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 1890,
+      "cwd": ".",
+      "stdout": "runs/G4/G4-qlever-20261107T191231Z-8e250f/lab-counterexamples.stdout.txt",
+      "stderr": "runs/G4/G4-qlever-20261107T191231Z-8e250f/lab-counterexamples.stderr.txt"
+    }
+  ],
+  "firstFailures": [
+    {
+      "case": "STR.order",
+      "mode": "current",
+      "status": "FAIL",
+      "expected": [
+        "ascii-A",
+        "ascii-E",
+        "ascii-c",
+        "nfd-e-acute",
+        "ascii-z",
+        "nfc-e-acute",
+        "private-use",
+        "astral-10000",
+        "emoji"
+      ],
+      "actual": [
+        "emoji",
+        "ascii-A",
+        "ascii-c",
+        "ascii-E",
+        "nfd-e-acute",
+        "nfc-e-acute",
+        "ascii-z",
+        "astral-10000",
+        "private-use"
+      ],
+      "error": null
+    },
+    {
+      "case": "STR.range-gt-E",
+      "mode": "current",
+      "status": "FAIL",
+      "expected": [
+        "ascii-c",
+        "nfd-e-acute",
+        "ascii-z",
+        "nfc-e-acute",
+        "private-use",
+        "astral-10000",
+        "emoji"
+      ],
+      "actual": [
+        "ascii-z",
+        "astral-10000",
+        "nfc-e-acute",
+        "nfd-e-acute",
+        "private-use"
+      ],
+      "error": null
+    },
+    {
+      "case": "STR.range-lt-c",
+      "mode": "current",
+      "status": "FAIL",
+      "expected": [
+        "ascii-A",
+        "ascii-E"
+      ],
+      "actual": [
+        "ascii-A",
+        "emoji"
+      ],
+      "error": null
+    },
+    {
+      "case": "STR.iri-order",
+      "mode": "current",
+      "status": "FAIL",
+      "expected": [
+        "A1",
+        "E1",
+        "c1",
+        "cE",
+        "cc",
+        "ce",
+        "z1"
+      ],
+      "actual": [
+        "A1",
+        "c1",
+        "cc",
+        "ce",
+        "cE",
+        "E1",
+        "z1"
+      ],
+      "error": null
+    },
+    {
+      "case": "NEG.not-exists-flat",
+      "mode": "current",
+      "status": "FAIL",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "error": null
+    },
+    {
+      "case": "NEG.not-exists-nested",
+      "mode": "current",
+      "status": "FAIL",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "error": null
+    },
+    {
+      "case": "NEG.exists-flat",
+      "mode": "current",
+      "status": "FAIL",
+      "expected": [
+        "one"
+      ],
+      "actual": [],
+      "error": null
+    },
+    {
+      "case": "NEG.optional-not-bound",
+      "mode": "current",
+      "status": "FAIL",
+      "expected": [
+        "two"
+      ],
+      "actual": [
+        "one",
+        "two"
+      ],
+      "error": null
+    },
+    {
+      "case": "STR.order",
+      "mode": "reopen",
+      "status": "FAIL",
+      "expected": [
+        "ascii-A",
+        "ascii-E",
+        "ascii-c",
+        "nfd-e-acute",
+        "ascii-z",
+        "nfc-e-acute",
+        "private-use",
+        "astral-10000",
+        "emoji"
+      ],
+      "actual": [
+        "emoji",
+        "ascii-A",
+        "ascii-c",
+        "ascii-E",
+        "nfd-e-acute",
+        "nfc-e-acute",
+        "ascii-z",
+        "astral-10000",
+        "private-use"
+      ],
+      "error": null
+    },
+    {
+      "case": "STR.range-gt-E",
+      "mode": "reopen",
+      "status": "FAIL",
+      "expected": [
+        "ascii-c",
+        "nfd-e-acute",
+        "ascii-z",
+        "nfc-e-acute",
+        "private-use",
+        "astral-10000",
+        "emoji"
+      ],
+      "actual": [
+        "ascii-z",
+        "astral-10000",
+        "nfc-e-acute",
+        "nfd-e-acute",
+        "private-use"
+      ],
+      "error": null
+    }
+  ],
+  "rawDir": "runs/G4/G4-qlever-20261107T191231Z-8e250f",
+  "reasons": [
+    "16 counterexample executions miss their original oracle (the declared A0 baseline expectation is FAIL)"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 289866,
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 40262,
+      "sha256": "7118f6b489bafa77faf5761c198a645960213e811925ed31fd0624ae18831201"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 19956,
+      "sha256": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5027,
+      "sha256": "b6511d1eab385fcf453fe628aa4dd5437e3b78c02a2eca84165dcaa246c5abad"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 17892,
+      "sha256": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 3434,
+      "sha256": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+    },
+    {
+      "path": "runs/G4/G4-qlever-20261107T191231Z-8e250f/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 93496,
+      "sha256": "76c875f66821a3ea29376a681972a01801b23119972084f59ec7dee3663d105b"
+    },
+    {
+      "path": "qlever-dev effective config",
+      "role": "engine-effective-config",
+      "bytes": 797,
+      "sha256": "c689901c6f4f91a4779466e3df767bb802b423ca86ed3129df882f2a091f94a9"
+    },
+    {
+      "path": "start.sh",
+      "role": "engine-config-file",
+      "bytes": 437,
+      "sha256": "240a7ebdeab1659c650a95acc9638f940482e31dabf81e5f07f95c760a5c5ad5"
+    },
+    {
+      "path": "qlever get-settings before",
+      "role": "engine-settings-before",
+      "bytes": 1811,
+      "sha256": "30ee6370a07e3ac7b779d41e7fd5bc1d4bb2f9ef31295b4215a4d1d572e64f66"
+    },
+    {
+      "path": "qlever get-settings after",
+      "role": "engine-settings-after",
+      "bytes": 1811,
+      "sha256": "30ee6370a07e3ac7b779d41e7fd5bc1d4bb2f9ef31295b4215a4d1d572e64f66"
+    },
+    {
+      "path": "runs/G4/G4-qlever-20261107T191231Z-8e250f/build-manifest-after.json",
+      "role": "build-manifest",
+      "bytes": 93496,
+      "sha256": "76c875f66821a3ea29376a681972a01801b23119972084f59ec7dee3663d105b"
+    },
+    {
+      "path": "runs/G4/G4-qlever-20261107T191231Z-8e250f/lab-counterexamples.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 240,
+      "sha256": "9073349df4a0f4908bb665095c8ffe39b175a9f846fd66cc67c4aa9e0b77bdb1"
+    },
+    {
+      "path": "runs/G4/G4-qlever-20261107T191231Z-8e250f/lab-counterexamples.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "packages/qlever/experiments/lab-counterexamples.ts",
+      "role": "oracle-fixture",
+      "bytes": 14239,
+      "sha256": "dbdd9b76742f9179e989af04637b3be289eca4c08848eab297d9255945eefd88"
+    },
+    {
+      "path": "packages/qlever/experiments/lab-endpoint.ts",
+      "role": "oracle-fixture",
+      "bytes": 1172,
+      "sha256": "3324649d13d3ab13d4567b4ab07c4e755b9e64323630b16a92f62463d0f7405d"
+    },
+    {
+      "path": "qualification/native-controls/qlever-collation-tiny-v1/oracle.json",
+      "role": "oracle-fixture",
+      "bytes": 1415,
+      "sha256": "bc53852343cd4da8bc14f52c75a4abdfdfc5ef1fbfc3031a8cc9779b38b03df6"
+    },
+    {
+      "path": "qualification/native-controls/qlever-collation-tiny-v1/fixture.nt",
+      "role": "oracle-fixture",
+      "bytes": 548,
+      "sha256": "a9fd0bfea4c53b5623bac8b8a48478c798563b4bc0739ef9304f35973b7de570"
+    },
+    {
+      "path": "packages/qlever/experiments/native-query-shapes.ts",
+      "role": "oracle-fixture",
+      "bytes": 7003,
+      "sha256": "4de10a416263cf5717033d9cd92dde00b665c66db6ed46c74b4260bbb2f21367"
+    },
+    {
+      "path": "lab/research/R5-probe/probe1.py",
+      "role": "oracle-fixture",
+      "bytes": 10239,
+      "sha256": "031cb9887c7385e04ddf48e035461b8f981f65e5aeeabdd7bfa2a744e47434c6"
+    },
+    {
+      "path": "lab/research/R5-probe/probe3.py",
+      "role": "oracle-fixture",
+      "bytes": 3140,
+      "sha256": "67e5d6bbbc6e520ee3d01a03e00a5ec33d611a186dfb6fc844b162165349738e"
+    },
+    {
+      "path": "runs/G4/G4-qlever-20261107T191231Z-8e250f/g4-report.json",
+      "role": "raw-outcome",
+      "bytes": 71681,
+      "sha256": "2150fcebe40021ae17e57b11ac16ceece14efa65c8eeb147d236ac8f89111cf6"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 167182,
+      "sha256": "2a9c8611ac8f2a6ef5088382312a735d24a83640584c75f2e88ebcf7e6cc7780"
+    }
+  ]
+}
