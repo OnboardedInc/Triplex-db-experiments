@@ -16,18 +16,20 @@ Updated: 2026-11-07 (gen-0, planning)
 - [x] Codex review round 1 (session 01a1b72e-26d6-77a1-ac09-6ab8c3b10d43): lab/reviews/plan-review-r1.codex.md,
       response lab/reviews/plan-review-r1.response.md; PLAN v1-rc committed d22ba76
 - [x] Codex round 2 -> lab/reviews/plan-review-r2.codex.md; PLAN v1 written (contracts C1-C8, integrated done predicate)
-- [ ] Codex round 3 confirmation running -> lab/reviews/plan-review-r3.codex.md
-- [ ] PLAN v1 final verdict  - [~] build loop: EXP-000 harness RUNNING on main; EXP-A01 acceptance contract RUNNING
+- [x] Codex round 3 + round 4: READY TO EXECUTE (gated). PLAN v1.1 committed 4ddd773.
+- [x] EXP-A01 acceptance contract 0.1.0-draft (88 obligations) + lab/acceptance/RULINGS.md
+- [ ] Codex acceptance review r1 running -> lab/reviews/acceptance-review-r1.codex.md; then freeze contract 1.0.0  - [~] build loop: EXP-000 harness RUNNING on main; EXP-A01 acceptance contract RUNNING
 - Hourly cron ae766d26 (:07): update learnings in NOTEBOOK, launch Sonnet research if learnings raise questions.
 
 ## Running agents
 | Agent | Purpose | Output |
 | --- | --- | --- |
 | EXP-000 (opus high, on main) | loop harness lab/bin, slots, pool, bound receipts, dev engines | lab/experiments/EXP-000-loop-harness/REPORT.md |
-| EXP-A01 (opus high) | acceptance contract lab/acceptance/* (no commit; orchestrator commits) | lab/experiments/EXP-A01-acceptance-contract/REPORT.md |
+| EXP-O01 (opus high, worktree, exp/O01-replay-oracle) | O-REPLAY independent Python oracle | lab/oracles/replay (branch) |
+| EXP-G01 (opus high, main checkout, no commit) | hand-derived golden vectors | lab/acceptance/golden/ |
+| Codex acceptance r1 | review of contract + rulings | lab/reviews/acceptance-review-r1.codex.md |
 | R7 (sonnet xhigh) | XTDB pruning/IID/index-table shapes (+skew/ranges/ordered pages, extended), ingest | lab/research/R7-xtdb-indexing-ingest.md |
 | R8 (sonnet xhigh) | QLever reapply/rebuild under load/group commit/durability | lab/research/R8-qlever-write-lifecycle.md |
-| Codex r3 | plan confirmation | lab/reviews/plan-review-r3.codex.md |
 | EXP-R01 (opus high, worktree, branch exp/R01-entity-core) | entity core: spec, planner, repository, writer on KV | lab/experiments/EXP-R01-entity-core/REPORT.md |
 | R10 (sonnet xhigh) | read-only recursion (C8); probe tx2-probe-r10 7063/5465 max 1.5 GiB | lab/research/R10-read-only-recursion.md |
 | R12 (sonnet xhigh) | XTQL cookbook, 23 operations verified vs SQL; probe tx2-probe-r12 5464 max 1.5 GiB | lab/research/R12-xtql-cookbook.md |
@@ -36,7 +38,7 @@ Updated: 2026-11-07 (gen-0, planning)
 
 ## Briefs ready, not dispatched
 - EXP-F01 (needs exclusive xtdb slot), F02/F03/F04 (dev slots) - dispatch once EXP-000 has dev engines up.
-- To write: EXP-G01 golden vectors (after A01; gates F03/F04), EXP-F05 QLever fault injection (after R8), EXP-O01 oracle (after A01), EXP-001/002 baselines (after EXP-000),
+- To write: EXP-P01 presence/deletion/cascade policy draft (Q9), EXP-R02 (after G01 reviewed), EXP-F05 QLever fault injection (after R8), EXP-O01 oracle (after A01), EXP-001/002 baselines (after EXP-000),
   EXP-Q03 QLever order keys + EXISTS helpers (after QLever baseline).
 
 ## Engine slots

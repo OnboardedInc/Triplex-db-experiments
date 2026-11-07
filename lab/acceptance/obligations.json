@@ -1,0 +1,5358 @@
+{
+  "format": "triplex-db-2/acceptance-obligations/1",
+  "version": "0.1.0-draft",
+  "status": "DRAFT-UNREVIEWED: not frozen; freezes as 1.0.0 after orchestrator and adversarial review",
+  "generatedBy": "lab/acceptance/build_contract.py",
+  "lanes": [
+    "xtdb-xtql",
+    "xtdb-sql",
+    "qlever-sparql"
+  ],
+  "engineOfLane": {
+    "xtdb-xtql": "xtdb",
+    "xtdb-sql": "xtdb",
+    "qlever-sparql": "qlever"
+  },
+  "sections": [
+    {
+      "id": "G1",
+      "title": "Goal 1. Eight exact value types, schemas, cardinality, uniqueness, references"
+    },
+    {
+      "id": "G2",
+      "title": "Goal 2. Expressions, arithmetic boundaries, specified error semantics"
+    },
+    {
+      "id": "G3",
+      "title": "Goal 3. Useful plans, costing, preconstruction admission, recursion"
+    },
+    {
+      "id": "G4",
+      "title": "Goal 4. Completed absence and negation at coherent cuts"
+    },
+    {
+      "id": "G5",
+      "title": "Goal 5. Full-support aggregates, typed groups, empties, exact overflow"
+    },
+    {
+      "id": "G6",
+      "title": "Goal 6. Cancellation, deadlines, resource ownership, cleanup"
+    },
+    {
+      "id": "G7",
+      "title": "Goal 7. Atomic writes, receipts, migration and evolution, recovery"
+    },
+    {
+      "id": "G8",
+      "title": "Goal 8. Bounded reuse, transactional publication, maintained supports"
+    },
+    {
+      "id": "G9",
+      "title": "Goal 9. Bitemporal intervals, presence, corrections, lineage, deletion, cascades"
+    },
+    {
+      "id": "G10",
+      "title": "Goal 10. Public TypeScript and schema integration, scope, cursors, lifecycle, capabilities, consumers"
+    },
+    {
+      "id": "R",
+      "title": "R. Entity API (the ORM) and raw queries make sense"
+    },
+    {
+      "id": "S",
+      "title": "S. Scale: 10m distinct entities, 100m active representative facts"
+    },
+    {
+      "id": "L",
+      "title": "L. Load: 256 logical clients, 512 and 1024 stress"
+    }
+  ],
+  "receiptValidity": [
+    {
+      "id": "V1",
+      "rule": "Produced by lab/bin in this repository and stored append-only at lab/runs/<gate>/<run-id>.json with raw output under runs/<gate>/<run-id>/."
+    },
+    {
+      "id": "V2",
+      "rule": "Source tree identity includes uncommitted and untracked changes and equals the candidate tree under evaluation (or passes the carry-forward rule in 5.5)."
+    },
+    {
+      "id": "V3",
+      "rule": "The gate built first: sha256 of every built dist file the gate imported is recorded and was produced in this run from the V2 tree."
+    },
+    {
+      "id": "V4",
+      "rule": "Lockfile sha256, Node and pnpm versions are recorded."
+    },
+    {
+      "id": "V5",
+      "rule": "Engine image digest equals the pin (XTDB a6a42650..., QLever 37d5ede1...) or a named repaired image declared in this contract version; engine config hash recorded."
+    },
+    {
+      "id": "V6",
+      "rule": "The endpoint actually contacted equals the slot's endpoint; never 15442, 17019 or any homebase host."
+    },
+    {
+      "id": "V7",
+      "rule": "Gate script, oracle files and case-set files hash to the values pinned for this contract version."
+    },
+    {
+      "id": "V8",
+      "rule": "Fixture content hash and a fresh scope id are recorded."
+    },
+    {
+      "id": "V9",
+      "rule": "Raw results are retained and hashed before any assertion runs."
+    },
+    {
+      "id": "V10",
+      "rule": "Executed count equals the declared count; skipped = 0, unsupported = 0, not-implemented = 0; errors only where the case expects them."
+    },
+    {
+      "id": "V11",
+      "rule": "For lane receipts, every read substep records its language and it equals the lane's language; any other language or a hybrid task fails the case."
+    },
+    {
+      "id": "V12",
+      "rule": "runKind = acceptance. Calibration, diagnostic, probe and author-preview runs never close anything."
+    },
+    {
+      "id": "V13",
+      "rule": "A verifier receipt from a different agent role reproduces the result on the same candidate tree."
+    },
+    {
+      "id": "V14",
+      "rule": "The obligation's definition hash in the receipt equals its hash in the current contract version."
+    },
+    {
+      "id": "V15",
+      "rule": "The run was admitted by resource admission; co-running containers and peak memory, CPU and disk are recorded; no BLOCKED_CAPACITY."
+    },
+    {
+      "id": "V16",
+      "rule": "No acceptance receipt for the same obligation, lane and candidate tree failed; first failures are retained and a rerun cannot overwrite or outvote them."
+    }
+  ],
+  "closureRules": {
+    "CR-PASS-ALL": "Every declared case executes in every declared mode for the lane, each result is PASS against the named oracle, executed case ids equal the declared set exactly, and the receipt passes V1-V16.",
+    "CR-COUNTEREXAMPLE": "The original counterexample case runs with its original frozen expected answer (oracle file hash unchanged since the first recorded failure) and passes; the raw counterexample text is not edited; CR-PASS-ALL holds.",
+    "CR-MUTANT-KILL": "For each listed mutant, a mutation receipt on the same candidate tree (mutation patch hash recorded, oracle and case hashes unchanged) executes the full declared suite and records at least one FAIL; the unmutated suite passes CR-PASS-ALL on that tree.",
+    "CR-OBSERVE": "Every required observation level of O-OBS is evidenced and joined to one request or connection identity, within the stated bounds; uncertainty after timeout or lost acknowledgement fails the case.",
+    "CR-FAULT": "Every declared fault point is injected at least the stated number of times; after each injection and recovery the post-state equals O-REPLAY through every listed access path; zero ACKed commands lost; zero unresolved outcomes at the end.",
+    "CR-STATIC": "Every positive witness compiles and every negative witness fails with the expected diagnostic, against the packed public declarations of the candidate.",
+    "CR-SCALE": "The rung's dataset receipt meets the declared counts (verified by independent count queries in the lane language and O-REPLAY analytic counts), the run was admitted under a capacity forecast, and the correctness subsample passes with zero tolerance.",
+    "CR-PERF": "Each CALIBRATE threshold named by the obligation is frozen in a calibration receipt that predates the acceptance receipt, and every acceptance run meets it; three independent runs, all must pass.",
+    "CR-METRICS": "Every listed metric is present, measured (not estimated) and bound to the dataset and build identity; no threshold beyond presence unless stated.",
+    "CR-LOAD": "load-contract.json at its frozen version: calibration receipt exists and predates; every invariant holds with zero tolerance and every threshold is met in each of the required independent runs at the named level.",
+    "CR-MATRIX": "Every capability-matrix cell with a non-empty required-by list is EXACT with a passing receipt; every KNOWN-LIMIT cell has an empty required-by list, a retained counterexample receipt and an entry in the raw-query guide.",
+    "CR-PROVENANCE": "The receipt's authoring manifest lists only the raw-query guide and engine documentation hashes as inputs to the raw recipes, and the author identity differs from the authors of the lane's repository and projection code."
+  },
+  "oracles": {
+    "O-EVT": {
+      "status": "EXISTS",
+      "path": "qualification/workloads/event_oracles.py",
+      "check": "python3 qualification/workloads/validate_workloads.py (71 checked, 0 unchecked); qualification/workloads/test_event_oracles.py",
+      "computes": "expected_rows for the 71 packet cases from immutable events, parameters and two-time cuts",
+      "independence": "Python, imports no Triplex code, ignores normalized assertions"
+    },
+    "O-REPLAY": {
+      "status": "TO-BUILD",
+      "path": "lab/acceptance/oracle/replay.py (proposed; built by a later experiment, EXP-O01)",
+      "computes": "see ACCEPTANCE.md section 4.2: complete assertion metadata, raw-lifetime and snapshot history, entity models, transactions, receipts, expected failures, cursors, support counts, analytic scale counts",
+      "independence": "Python stdlib only; reads command streams, fixture specs and ACK receipts; imports no production visibility, constraint, projection, hydration or codec code; implements its own int64, binary64 and codepoint order"
+    },
+    "O-HAM": {
+      "status": "EXISTS",
+      "path": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs, qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+      "computes": "finite-nine historical assertion snapshot metadata (four-commit five-version microfixture plus same-R control)",
+      "independence": "Node only; independently accepted per handoffs/claude-native/README.md:116-119; independence of the v2 copy must be re-verified (no Triplex import) before use"
+    },
+    "O-CFG8": {
+      "status": "EXISTS",
+      "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
+      "computes": "configured-eight fixture: membership, typed values, ids, history, retirement-metadata target, receipts (52 checks, 5 retained failures)",
+      "independence": "Node only per CONTRACT.md; runtime ids only from assertion receipts"
+    },
+    "O-STR": {
+      "status": "EXISTS",
+      "path": "qualification/extensions/string-order-v1/oracle.json (SHA 8f4da85e...), policy.json",
+      "computes": "frozen codepoint order arrays: ASCII A,E,c,z; continuation c,z; Unicode codepoint order; range > U+E000",
+      "independence": "authored before execution; no engine output, no casefold"
+    },
+    "O-COLL": {
+      "status": "EXISTS",
+      "path": "qualification/native-controls/qlever-collation-tiny-v1/oracle.json",
+      "computes": "9-triple tiny collation control expected order and ranges",
+      "independence": "authored before execution; cites SPARQL 1.1 operator mapping"
+    },
+    "O-SHAPE": {
+      "status": "TO-AUTHOR",
+      "path": "lab/acceptance/cases/shape-controls.json (proposed)",
+      "computes": "frozen expected answers for correlated NOT EXISTS (flat, nested), EXISTS, MINUS, OPTIONAL plus !BOUND, latest revision, empty max group, grouped empty SUM, tied int64 maxima",
+      "independence": "hand-authored from SPARQL 1.1 / SQL semantics with citations, frozen before execution, cross-checked by O-REPLAY"
+    },
+    "O-ERR": {
+      "status": "TO-AUTHOR",
+      "path": "lab/acceptance/cases/error-semantics.json (proposed)",
+      "computes": "the specified typed error (tag, retained cause class) expected for every negative case",
+      "independence": "derived from Triplex public error types and docs, frozen before execution; needs an orchestrator ruling where Triplex specifies nothing"
+    },
+    "O-TESTKIT": {
+      "status": "EXISTS",
+      "path": "packages/testkit/src/index.ts (triplesConformanceCases)",
+      "computes": "authored expected values inside each of the 44 shared cases",
+      "independence": "expectations are literals in test code; KV runs the same cases as a regression participant only"
+    },
+    "O-OBS": {
+      "status": "TO-AUTHOR",
+      "path": "lab/acceptance/cases/observation-protocol.json (proposed), from wiki/problems/cancellation-observation-levels.md",
+      "computes": "required evidence per observation level (settled, transport acknowledged, owned work drained, reuse, engine idle) joined to one request id",
+      "independence": "engine-side observation (XTDB metrics and logs, QLever cmd=dump-active-queries and logs, container stats) never the client's own counter"
+    },
+    "O-SPEC": {
+      "status": "TO-AUTHOR",
+      "path": "lab/acceptance/cases/type-witnesses/ (proposed)",
+      "computes": "positive and negative TypeScript witnesses with expected tsc outcome per file; package export manifest expectations",
+      "independence": "tsc on the packed public declarations only"
+    },
+    "O-KV": {
+      "status": "EXISTS",
+      "path": "packages/core/src/kv/ (KvTriples.layer)",
+      "computes": "differential regression participant",
+      "independence": "NOT independent: shares core transaction, temporal, constraint and decoding code. Never the sole oracle for any obligation (review r1 finding 5)"
+    }
+  },
+  "entrypoints": {
+    "EP-TRIPLES": "Public `Triples` service (packages/core/src/store/Triples.ts: transact, assert, retract, get, entity, entities, entityPage, match, history, transaction, transactionByCommand, transactions, transactionsForEntity, currentPosition, queryAll, queryPage) over the lane Runtime (`packages/xtdb/src/index.ts` or `packages/qlever/src/index.ts`, `.layer({scope, capabilities})`).",
+    "EP-REPO": "Entity repository `Repository<Model>` typed from EntityType: `at(basis)`, `get`, `getMany`, `find({where, include, limit, cursor})`, `timeline` (public core entity subpath planned by EXP-R01; the receipt records the exact exported symbol and module it imported).",
+    "EP-WRITER": "`Writer` -> `WritePlan` -> `commit(plans, {actor, commandId, ...})`, exactly one transact per commit.",
+    "EP-NATIVE": "The lane's own native read surface. xtdb-xtql: `makeXtdbNativeQueries(...).select` (XTQL). xtdb-sql: `.selectSql` and `.selectSqlWithReachability`. qlever-sparql: `makeQleverNativeQueries(...)` native SPARQL. Helper fragments from the lane's native context are allowed.",
+    "EP-RAW-HATCH": "The documented raw escape hatch through Triplex (native query with declared contract) whose text references only names published in the raw-query guide and uses no helper fragments.",
+    "EP-RAW-WIRE": "Direct engine protocol from a client with no Triplex code: pgwire to XTDB (SQL, and XTQL through `XTQL(...)`), SPARQL 1.1 Protocol over HTTP to QLever, against the documented raw dataset.",
+    "EP-RESOLVE": "`resolveXtdbOperation` / `resolveQleverOperation` (packages/*/src/Operations.ts) or their public successors.",
+    "EP-EXPLAIN": "Public explain or plan capture for repository queries and native reads (QueryExecutor.explain exists for Datalog; repository and native explain are to be exposed).",
+    "EP-PKG": "Packed tarballs (`pnpm pack`) installed into a clean consumer project outside the workspace; only public package exports imported.",
+    "EP-CLI": "`triplex` bin from @triplex-build/triplex-cli, installed from its tarball.",
+    "EP-ENGINE-OBS": "Engine-side observation surfaces (XTDB /metrics and logs, QLever cmd=dump-active-queries and logs, docker stats/inspect). Observation only, never a public Triplex entrypoint."
+  },
+  "profiles": {
+    "P-STATIC": "No engine. Static checks on packed public declarations and sources.",
+    "P-TINY": "Fresh scope on the dev slot, at most 1,000 entities, single client. Modes: current (same runtime) and reopen (fresh runtime and fresh client on the same scope). Where the obligation says so, also engine-restart mode.",
+    "P-TINY-CONC": "P-TINY plus controlled concurrent actors: a writer committed between the calls of one task, and N-way races (N = 16 unless stated).",
+    "P-HEAVY": "Exclusive slot (s1..s3), fixture of at least 1m entities or a declared synthetic long-running query, so that cancellation, deadlines and admission act on real work.",
+    "P-FAULT": "Exclusive slot with fault injection: container kill, connection drop, request timeout, restart, at declared fault points.",
+    "P-RUNG": "Scale ladder rung 10k, 100k or 1m distinct entities (representative profile unless stated), admitted by capacity forecast.",
+    "P-SCALE-10M": "Target dataset of S.dataset.target-population: 10,000,000 distinct application entities, 100,000,000 active representative domain facts, one database scope, sparse and representative profiles, retained history.",
+    "P-LOAD": "lab/acceptance/load-contract.json levels 256 (acceptance), 512 and 1024 (stress) on P-SCALE-10M."
+  },
+  "caseSets": {
+    "CS-U44": {
+      "status": "EXISTS",
+      "source": "packages/testkit/src/index.ts triplesConformanceCases (44 cases); drivers packages/xtdb/test/conformance.test.ts, packages/qualification/test/runtime-conformance.test.ts",
+      "note": "QLever has no conformance.test.ts; a homebase-free runner is needed (R4 5.3)."
+    },
+    "CS-PKT71": {
+      "status": "EXISTS",
+      "source": "qualification/workloads/temporal-workloads.json (20 workloads, 71 cases) with recipes packages/qualification/src/native/xtdb-workloads.ts, qlever-workloads.ts, qlever-recursion.ts",
+      "note": "XTQL recipes must be authored for 57 SQL-only and 3 hybrid tasks (R6 2.2); 14 SQL tasks use SQL-only reachability."
+    },
+    "CS-PKT-MULTICALL": {
+      "status": "TO-AUTHOR",
+      "source": "the 16 multi-call tasks of CS-PKT71 (R6 2.6: 03 price, 04 coverage x3, 10 x4, 16 x3, 19 training x2, 20 supports x3) plus the writer-between-calls shape of packages/qualification/experiments/qlever-task-basis.ts"
+    },
+    "CS-ENTRY": {
+      "status": "EXISTS",
+      "source": "packages/xtdb/experiments/native-entry.ts (13 checks), packages/qlever/experiments/native-entry.ts (11 checks)",
+      "note": "XTQL versions of the 5 SQL-only read checks and SQL versions of the 6 XTQL-only read checks are to be authored (R6 2.5)."
+    },
+    "CS-TYPES8": {
+      "status": "TO-AUTHOR",
+      "source": "ACCEPTANCE.md 6.1; seeds: R6 goal 1 experiment, R2 4.1, R1 Q3, response r1 B5 step 3"
+    },
+    "CS-TYPES8-NEG": {
+      "status": "TO-AUTHOR",
+      "source": "ACCEPTANCE.md 6.1; seeds: R4 3.6 (surrogates, non-finite, non-canonical int64)"
+    },
+    "CS-WIDEN": {
+      "status": "TO-AUTHOR",
+      "source": "ACCEPTANCE.md 6.1; seeds: R1 Q3 union columns, R2 4.1 invalid typed literals, review r1 finding 12"
+    },
+    "CS-PARAMS": {
+      "status": "TO-AUTHOR",
+      "source": "wiki/problems/native-number-parameters.md (24 parameter checks, raw job absent from checkout)"
+    },
+    "CS-CONSTRAINTS": {
+      "status": "TO-AUTHOR",
+      "source": "testkit cases 'graph constraints reject invalid post-states across valid time', 'graph constraints agree across storage backends'; configured-eight Required rejection; packages/core/src/Constraint.ts"
+    },
+    "CS-SCHEMA-RELEASE": {
+      "status": "TO-AUTHOR",
+      "source": "configured-eight schema v1 -> v2 (CONTRACT.md); R4 1.4"
+    },
+    "CS-NUMERIC": {
+      "status": "TO-AUTHOR",
+      "source": "ACCEPTANCE.md 6.2; seeds: R6 goal 2 boundary probe, R2 4.1 arithmetic, packages/xtdb/experiments/query/integer-*.json"
+    },
+    "CS-ERRORS": {
+      "status": "TO-AUTHOR",
+      "source": "ACCEPTANCE.md 6.2; testkit 'datalog rejects invalid and unbound queries with backend-neutral typed errors'; R4 3.8 contract and row limits"
+    },
+    "CS-STR": {
+      "status": "EXISTS",
+      "source": "qualification/extensions/string-order-v1 (oracle.json, policy.json), qualification/native-controls/qlever-collation-tiny-v1, plus the R5 A3 IRI page-sample class (to author from R5 probe T1h)"
+    },
+    "CS-SHAPE": {
+      "status": "TO-AUTHOR",
+      "source": "wiki/problems/native-correlation.md, R5 sections 3-4 and 5.4, R6 experiment 5"
+    },
+    "CS-CONFLICT": {
+      "status": "TO-AUTHOR",
+      "source": "review r1 finding 13; response r1 B4"
+    },
+    "CS-SUPPORT": {
+      "status": "TO-AUTHOR",
+      "source": "testkit 'datalog aggregates preserve duplicate rows and define empty and distinct results', 'same-value facts in one batch keep distinct identities'; packet 05/06/18/20; review r1 finding 13"
+    },
+    "CS-QMIX": {
+      "status": "TO-AUTHOR",
+      "source": "qualification/benchmark-contract.json queryFamilies (point, selective-filter, join, anti-join, recursion, aggregate, historical, interval, pagination)"
+    },
+    "CS-ADMIT": {
+      "status": "TO-AUTHOR",
+      "source": "R6 goal 3 (admission after the fact), R2 3.3 and 6.5 (planner memory), review r1 finding 1"
+    },
+    "CS-RECURSION-TOPO": {
+      "status": "TO-AUTHOR",
+      "source": "qualification/benchmark-contract.json topologies (chain, tree, diamond, cycle, high-fanout, skewed-hotset); R6 goal 3 (100k-edge chain, depth 50)"
+    },
+    "CS-CANCEL": {
+      "status": "TO-AUTHOR",
+      "source": "native-entry cancellation check; wiki/problems/cancellation-observation-levels.md; R2 6.4; R6 experiment 9"
+    },
+    "CS-SCRATCH": {
+      "status": "TO-AUTHOR",
+      "source": "R4 3.1 scratch tables, 4.1 scratch graphs; R6 finding 4 and experiment 10"
+    },
+    "CS-LIFECYCLE": {
+      "status": "TO-AUTHOR",
+      "source": "wiki/problems/load-liveness.md (pool construction), R6 goal 10 (openNative pool), packages/qlever/src/QleverClient.ts no-op close"
+    },
+    "CS-WRITE": {
+      "status": "TO-AUTHOR",
+      "source": "testkit 'conditional transactions are atomic and journal their changes', 'transaction journals cannot be retracted', 'reserved Triplex namespaces reject ordinary writes atomically'; packages/qlever/test/storage.test.ts 16-way command test; R4 2.3, 3.4-3.7, 4.3-4.4"
+    },
+    "CS-FAULT": {
+      "status": "TO-AUTHOR",
+      "source": "ACCEPTANCE.md 6.3; review r1 finding 7; R2 1.8 probes A-C; R6 experiment 10"
+    },
+    "CS-MIGRATION": {
+      "status": "TO-AUTHOR",
+      "source": "review r1 finding 12; response r1 decision 12; configured-eight schema v1 -> v2"
+    },
+    "CS-PUBLISH": {
+      "status": "TO-AUTHOR",
+      "source": "review r1 finding 8; response r1 B2"
+    },
+    "CS-REUSE": {
+      "status": "TO-AUTHOR",
+      "source": "R6 goal 8; packages/xtdb MaintainedQueries.ts; testkit 'derivation materialization uses indexed dependency freshness'"
+    },
+    "CS-SUPPORT-DAG": {
+      "status": "TO-AUTHOR",
+      "source": "packet workload 20 (length-3 bound) extended to larger DAGs; review r1 finding 13"
+    },
+    "CS-TEMPORAL": {
+      "status": "TO-AUTHOR",
+      "source": "handoffs/claude-native/README.md:43-48; review r1 finding 6; response r1 decision 6; native-entry half-open checks"
+    },
+    "CS-HAM9": {
+      "status": "EXISTS",
+      "source": "qualification/capacity/historical-assertion-metadata-v1/reproducers.json, v2 README"
+    },
+    "CS-CFG8": {
+      "status": "EXISTS",
+      "source": "qualification/capacity/configured-entities-v1 (TINY-XTDB-CONTRACT-v4.md, oracle.mjs); five failing targets named in R6 3.1"
+    },
+    "CS-PRESENCE-DELETE": {
+      "status": "POLICY-PENDING",
+      "source": "wiki/research/presence-reference-deletion-requirements-v1.md (requirements menu, no policy chosen)"
+    },
+    "CS-CURSOR": {
+      "status": "TO-AUTHOR",
+      "source": "testkit 'Datalog reads are bounded by default and cursors traverse the complete snapshot', 'historical cursor pages intersect recorded time and the commit snapshot', 'paged queries use deterministic snapshot-stable cursors'; native-entry fixed-cut page continuation; review r1 finding 8"
+    },
+    "CS-SCOPE": {
+      "status": "TO-AUTHOR",
+      "source": "qlever native-entry scope-isolation; review r1 finding 9; response r1 B3"
+    },
+    "CS-CAPS": {
+      "status": "TO-AUTHOR",
+      "source": "lab/acceptance/capability-matrix.md rows; R6 goal 10 (Capabilities.none)"
+    },
+    "CS-SLICE": {
+      "status": "TO-AUTHOR",
+      "source": "response r1 B5 step 6 (vertical slice); public-native-consumer-v2 shape (wiki/status.md:127)"
+    },
+    "CS-TYPEWITNESS": {
+      "status": "TO-AUTHOR",
+      "source": "R3 artifacts api-sketch.ts and usage.ts; decision D5 (absent optional = missing property, card-many = array)"
+    },
+    "CS-ENTITY": {
+      "status": "TO-AUTHOR",
+      "source": "ACCEPTANCE.md 6.4 (entity suite specification)"
+    },
+    "CS-RAW-RECIPES": {
+      "status": "TO-AUTHOR",
+      "source": "ACCEPTANCE.md 6.5 plus the published raw-query guide (to be written)"
+    },
+    "CS-FRAGMENT-EQUIV": {
+      "status": "TO-AUTHOR",
+      "source": "R5 5.4 equivalence conditions C1-C4; review r1 finding 14"
+    },
+    "CS-SCALE-SAMPLE": {
+      "status": "TO-AUTHOR",
+      "source": "qualification/benchmark-contract.json queryFamilies, measurements; configured-entities-v1 CONTRACT.md (deterministic boundary/history samples, complete counts)"
+    },
+    "CS-LOAD": {
+      "status": "DRAFT",
+      "source": "lab/acceptance/load-contract.json"
+    }
+  },
+  "mutationControls": {
+    "M-HALF-OPEN": "validTo treated as inclusive (or validFrom as exclusive) in the visibility filter of the system under test.",
+    "M-DROPPED-SUPPORT": "when two live assertions support the same value, retracting one removes the value from the projection, plain triple or derived result.",
+    "M-FUTURE-RETIREMENT": "snapshot reads return retractedAt/retractTxId of a retirement recorded after the cut.",
+    "M-INT64-ROUND": "int64 values pass through binary64 on the read or write path.",
+    "M-ENTITY-TYPE-SWAP": "entity type labels of two EntityTypes swapped in the projection or in hydration.",
+    "M-STALE-PROJECTION": "the projection is served one publication behind while the returned basis reports the latest position.",
+    "M-CUT-OFF-BY-ONE": "reads use position P-1, or treat recordedAt <= R as < R.",
+    "M-NEGZERO": "-0.0 normalized to +0.0 on any path.",
+    "M-ICU-ORDER": "text order and range comparison use locale collation instead of codepoint order.",
+    "M-SCOPE-LEAK": "the scope predicate or graph selection is dropped from one read path.",
+    "M-MASK-RAW": "the snapshot retirement mask is applied to the ordinary raw-lifetime history contract.",
+    "M-CONFLICT-PICK": "a card-one conflict is resolved by an arbitrary pick instead of the typed conflict outcome.",
+    "M-IDENTITY-COLLAPSE": "same-value assertions in one batch collapse into one assertion identity.",
+    "M-JOURNAL-ORDER": "transaction changes are returned in a different order than written.",
+    "M-CLAIM-IGNORED": "the command-claim check is skipped, so a duplicate command commits twice.",
+    "M-DECORRELATE": "a negation helper omits the correlated-variable re-binding.",
+    "M-STALE-REUSE": "a reused derived result is not invalidated after an affecting write.",
+    "M-CARD-MANY-DROP": "one element of a cardinality-many array is dropped on hydration or projection."
+  },
+  "statusAlgorithm": {
+    "obligationClosed": "closed(O, lane, T) = every rule in O.closure.rules holds over the valid acceptance receipts R(O, scopeKey, T), where scopeKey = lane if O.receiptScope == 'lane' else engineOfLane[lane], and every receipt satisfies V1-V16",
+    "goalClosed": "closed(G, lane, T) = for every O with G in O.goals and lane in O.lanes: closed(O, lane, T); a goal with an obligation in grounding 'policy-pending' cannot close until that policy is frozen in a later contract version",
+    "done": "done(T) = closed(G, lane, T) for every G in G1..G10, R, S, L and every lane, on one integrated candidate tree T, plus the integrated verification receipt of section 5.6",
+    "statusValues": [
+      "OPEN",
+      "CLOSED"
+    ]
+  },
+  "obligations": [
+    {
+      "id": "G1.found.unchanged44",
+      "goals": [
+        "G1"
+      ],
+      "title": "Unchanged44 on the lane foundation",
+      "statement": "The unchanged 44-case shared conformance suite passes against the lane engine's Triples foundation in current and reopened form: 44 named cases per mode, 88 executions, zero skipped.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-U44",
+        "select": "all",
+        "executions": 88
+      },
+      "oracles": [
+        "O-TESTKIT"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:20-23",
+        "lab/research/R4-codebase-harness-map.md 5.3",
+        "lab/PLAN.md 5.4 G1"
+      ],
+      "grounding": "grounded",
+      "notes": "KV runs the same cases as a regression participant (packages/testkit/test/fixtures.test.ts); its agreement closes nothing.",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "5dc65de53879dc4b7e0dd3481f01a33f7a556fa42eac07c741714eabb8448408",
+      "needsNewOracle": [],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "G1.types.eight-type-roundtrip",
+      "goals": [
+        "G1"
+      ],
+      "title": "Eight value types round-trip exactly on every surface",
+      "statement": "Every case of CS-TYPES8 (one assertion per value family string, number, integer/int64, boolean, datetime, ref, json, blob, including the listed edge values) reads back bit-exact through Triples, the repository, the lane's native surface with a schema-derived contract, and the documented raw recipe, in current, reopen and engine-restart modes.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-TYPES8",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-INT64-ROUND",
+        "M-NEGZERO"
+      ],
+      "sources": [
+        "wiki/goals.md:9",
+        "lab/research/R6-xtdb-gap-analysis.md goal 1",
+        "lab/reviews/plan-review-r1.response.md B5 step 3",
+        "lab/research/R2-qlever-capabilities.md 4.1",
+        "lab/research/R1-xtdb-capabilities.md Q3"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "e525b0fa00ef7785581e7eb5546e77db754da2ff20477696128d13c4b0753d6c",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G1.types.invalid-rejected",
+      "goals": [
+        "G1"
+      ],
+      "title": "Invalid values are rejected atomically",
+      "statement": "Every case of CS-TYPES8-NEG (lone surrogate, NaN, +/-Infinity, non-canonical int64 text, integer outside int64, invalid datetime, malformed json or blob descriptor) is rejected with the specified typed WriteError; the committed position is unchanged, no receipt or claim exists, and no partial row or triple is visible through any access path.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-TYPES8-NEG",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/research/R4-codebase-harness-map.md 3.6",
+        "lab/research/R6-xtdb-gap-analysis.md goal 1"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "66c1d0b799acbc17b56ead631b8d11e1bf65acc45754db72324fd012158a2a7a",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G1.types.storage-widening-safe",
+      "goals": [
+        "G1"
+      ],
+      "title": "Later writes never change an earlier exact read",
+      "statement": "After the heterogeneous writes of CS-WIDEN (whole-number floats, text and int64 in attributes that share physical storage; invalid typed literals), every previously written value still reads back bit-exact on every surface, current and reopen.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-WIDEN",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-INT64-ROUND"
+      ],
+      "sources": [
+        "lab/research/R1-xtdb-capabilities.md Q3 (union columns reach Node as JSON numbers)",
+        "lab/research/R2-qlever-capabilities.md 4.1 (invalid typed literal becomes a plain string)",
+        "lab/reviews/plan-review-r1.codex.md finding 12"
+      ],
+      "grounding": "derived",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "0166e7ffe1d49071a1898d531cd734d83710d8512a68996763bc3872d7e416b3",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G1.types.native-parameters",
+      "goals": [
+        "G1"
+      ],
+      "title": "Native parameters keep exact values",
+      "statement": "Parameters of every value family bound into a native query in the lane language (including -0.0, int64 extremes, text containing quote, $$ and ;) reach the engine with their exact value and type, current and reopen.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PARAMS",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-NEGZERO"
+      ],
+      "sources": [
+        "wiki/problems/native-number-parameters.md",
+        "wiki/status.md:159-169"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "0a20c9d30a3ebf1f5d31b92bf43ddc1fd6eaa948002164c4968978ec237921a3",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G1.schema.required",
+      "goals": [
+        "G1"
+      ],
+      "title": "Required is enforced atomically",
+      "statement": "With enforcement on, a command that leaves a Required attribute missing at any represented valid-time boundary is rejected with the typed constraint error and no residue; the same command with the attribute present commits.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-CONSTRAINTS",
+        "select": "required"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:9",
+        "lab/research/R6-xtdb-gap-analysis.md 3.1 (Required rejection, no residue)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "8110ac46fd92eea0e363340d988b6561413210938a255f418a4355311ebf2646",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G1.schema.cardinality",
+      "goals": [
+        "G1"
+      ],
+      "title": "Cardinality-one is enforced with the specified counting rule",
+      "statement": "With enforcement on, a second live overlapping assertion for a cardinality-one attribute is rejected; the counting rule (assertions, including duplicate equal-valued assertions, per packages/core/src/Constraint.ts) matches O-REPLAY; cardinality-many keeps every live value.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-CONSTRAINTS",
+        "select": "cardinality"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER",
+        "EP-REPO"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-CARD-MANY-DROP"
+      ],
+      "sources": [
+        "wiki/goals.md:9",
+        "lab/reviews/plan-review-r1.codex.md finding 13 (Constraint.ts:193 counts assertions)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "61766366fee06dfe7ba87429d095c2ac5f4181b7529195d11d83b20ce2267244",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G1.schema.unique",
+      "goals": [
+        "G1"
+      ],
+      "title": "Uniqueness holds under concurrent writers",
+      "statement": "A unique attribute value can be live on at most one entity at any valid instant; a second writer is rejected with the typed error; in a 16-way race for the same value exactly one command commits.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-CONSTRAINTS",
+        "select": "unique"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:9",
+        "lab/PLAN.md 3.2 item 1 (uniqueness enforcement)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "1529e66ca79e2c3c91d5c5d218bc149437e2ef77682133338c600fb199913bc0",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G1.schema.reference-target",
+      "goals": [
+        "G1"
+      ],
+      "title": "Reference targets are enforced at represented boundaries",
+      "statement": "With ReferenceTarget rules supplied, a ref must target a visible entity of the required EntityType at every represented valid-time boundary of the source fact; same-batch forward references are admitted; a violating command is rejected atomically.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-CONSTRAINTS",
+        "select": "reference"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/research/presence-reference-deletion-requirements-v1.md (Temporal references row)",
+        "packages/core/src/Constraint.ts"
+      ],
+      "grounding": "grounded",
+      "notes": "Temporal coverage against presence intervals is a separate, policy-pending contract (see G9.presence.explicit).",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "15b21530c9793af0aaf4eefc1983400c0a8f25af5d1a6ccd9440bee8fe94e8fb",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G1.schema.release-derived-contracts",
+      "goals": [
+        "G1",
+        "G10"
+      ],
+      "title": "Contracts derive from the active schema release",
+      "statement": "Repository model types and native helper contracts are derived from the active ConfigStore release (Attribute/EntityType handles), not from hand-written TypeExpr; after a v1 -> v2 release the derived contracts change accordingly; every read reports the schema snapshot it used.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SCHEMA-RELEASE",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-SPEC"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "handoffs/claude-native/README.md:31-35",
+        "lab/research/R6-xtdb-gap-analysis.md goal 1 and goal 10",
+        "lab/research/R4-codebase-harness-map.md 1.4"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "4ec86083819463ee4aba8eb635696492e7084473d87d5a58178531e8bb6f80c1",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-SPEC"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "PKT.full142",
+      "goals": [
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G9"
+      ],
+      "title": "Native packet: 142 named executions in the lane language",
+      "statement": "All 71 packet tasks run in current and reopened form (142 named executions) on the lane's native surface; every read substep is traced with the lane's language and only that language (a hybrid task counts for neither XTDB language); host post-processing is allowed only as a declared normalization step with no data access, recorded in the trace; answers equal expected_rows and O-EVT.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PKT71",
+        "select": "all",
+        "executions": 142
+      },
+      "oracles": [
+        "O-EVT"
+      ],
+      "entrypoints": [
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ],
+          "languagePurity": true
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:20-23",
+        "lab/reviews/plan-review-r1.codex.md finding 4",
+        "lab/reviews/plan-review-r1.response.md decision 4",
+        "lab/research/R6-xtdb-gap-analysis.md 2.2"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "f5edf74e002bbf025636fc527eada9743f114e1a2930a7de0e25e7a783655b0e",
+      "needsNewOracle": [],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "G2.arith.int64-overflow",
+      "goals": [
+        "G2"
+      ],
+      "title": "int64 arithmetic is exact or a typed overflow",
+      "statement": "On the repository and on supported native fragments, int64 +, -, *, unary minus, ABS and CAST from text are exact inside [-2^63, 2^63-1] and raise the specified typed overflow error outside it; no result wraps. Cases include values near 2^53, 2^59, 2^62 and 2^63.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-NUMERIC",
+        "select": "int64-scalar"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-INT64-ROUND"
+      ],
+      "sources": [
+        "wiki/goals.md:10",
+        "lab/research/R6-xtdb-gap-analysis.md goal 2 (scalar + and * use addExact)",
+        "lab/research/R2-qlever-capabilities.md 4.1 (60-bit integers wrap)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "3c085e35a8c3df362e7e66290d1059ec4da75f388a1c5985ebbdd313f7cf75bf",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G2.arith.binary64",
+      "goals": [
+        "G2"
+      ],
+      "title": "binary64 arithmetic and comparison are IEEE exact",
+      "statement": "On the repository and supported native fragments, binary64 values and the results of +, -, *, / and comparisons are bit-exact IEEE 754 (including -0.0 and subnormals); NaN and infinities are never stored; division by zero and invalid casts follow O-ERR.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-NUMERIC",
+        "select": "binary64"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-NEGZERO"
+      ],
+      "sources": [
+        "wiki/goals.md:10",
+        "lab/research/R2-qlever-capabilities.md 4.1 (49-bit mantissa, 13 digits)"
+      ],
+      "grounding": "derived",
+      "notes": "Division-by-zero and invalid-cast semantics need a frozen rule in O-ERR; Triplex does not state one in the sources read.",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "c0a9330b67fcb428b7f5689169f57f3b0e74495bf816aa6e14f6b42b6c29d901",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G2.expr.cross-family-comparison",
+      "goals": [
+        "G2"
+      ],
+      "title": "Comparisons across numeric families follow the specified rule",
+      "statement": "Equality and order between int64 and binary64 values follow the specified exact rule (2^53+1 is not equal to 2^53 as binary64), and typed identities stay distinct (boolean true vs int64 1, text '1' vs int64 1) on the repository and supported native fragments.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-NUMERIC",
+        "select": "cross-family"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "testkit 'datalog equality predicates compare numeric values as numbers', 'datalog equality keeps identity bindings string-typed'",
+        "lab/research/R2-qlever-capabilities.md 4.1 (comparison converts to double)"
+      ],
+      "grounding": "derived",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "24078fdeb5d243ea7ab7c8dd6deb98bf2a4bb3f7550da730b9d8232734bd1bdf",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G2.errors.typed-taxonomy",
+      "goals": [
+        "G2"
+      ],
+      "title": "Errors surface as the specified typed errors",
+      "statement": "Every case of CS-ERRORS (invalid query text, unbound variable, contract decode mismatch, row limit exceeded, timeout, cancellation, unsupported-shape refusal, read-only refusal, unavailable cut, unknown scope) yields the specified typed error with the original cause retained, and never a success with partial rows.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-ERRORS",
+        "select": "all"
+      },
+      "oracles": [
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:10",
+        "lab/research/R6-xtdb-gap-analysis.md goal 2 (no error taxonomy)",
+        "lab/research/R4-codebase-harness-map.md 3.8"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "7d1861c129a104822a1f049824b5951295dcc6da151c8cec1593c49c3d360e08",
+      "needsNewOracle": [
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G2.strings.codepoint-supported",
+      "goals": [
+        "G2",
+        "G10"
+      ],
+      "title": "Codepoint string order on the supported surfaces",
+      "statement": "Repository queries and supported native fragments order, range-filter and page text in Unicode codepoint order: the frozen string-order-v1 arrays (ASCII A,E,c,z; original-cut continuation c,z; Unicode codepoint order; > U+E000) and the tiny collation control pass unchanged, current and reopen.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-STR",
+        "select": "supported"
+      },
+      "oracles": [
+        "O-STR",
+        "O-COLL"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-COUNTEREXAMPLE",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-ICU-ORDER"
+      ],
+      "sources": [
+        "wiki/goals.md:47-64",
+        "wiki/problems/qlever-native-string-order.md",
+        "lab/research/R5-qlever-semantic-blockers.md 3",
+        "lab/research/R6-xtdb-gap-analysis.md goal 10"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "c441a4dc10d150c00774fe45a8f638940f3eaf01baac43cc5576baee70e03c4b",
+      "needsNewOracle": [],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "G2.strings.codepoint-raw",
+      "goals": [
+        "G2",
+        "G10"
+      ],
+      "title": "Codepoint string order on the unrestricted raw surface",
+      "statement": "The original raw counterexamples (tiny control `ORDER BY STR(?l) STR(?e)`, its two ranges, and the IRI page-sample class), and their SQL and XTQL ports over the documented raw dataset, return the codepoint answers of O-STR and O-COLL.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-STR",
+        "select": "raw"
+      },
+      "oracles": [
+        "O-STR",
+        "O-COLL"
+      ],
+      "entrypoints": [
+        "EP-RAW-HATCH",
+        "EP-RAW-WIRE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-COUNTEREXAMPLE"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:47-64",
+        "lab/research/R5-qlever-semantic-blockers.md 1 and 5.5 (needs NoICU build or engine repair)",
+        "handoffs/claude-native/START-HERE.md:28-34"
+      ],
+      "grounding": "grounded",
+      "notes": "For qlever-sparql this is expected to need engine repair (R5 S2 NoICU build). Whether raw STR order is inside the done condition is open question Q1 in REPORT.md; this contract keeps it required.",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "e51f968aefcd667b63e1e7ee303b6837b39283cb5b7d816fa53d6e8fc4d5b827",
+      "needsNewOracle": [],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "G3.plan.explain",
+      "goals": [
+        "G3"
+      ],
+      "title": "Plans are captured for every query",
+      "statement": "Every repository query and native read can return its engine plan and the Triplex route chosen (for example projection versus exact ledger path); the acceptance receipts for CS-QMIX record the plan of every executed query.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-QMIX",
+        "select": "all"
+      },
+      "oracles": [
+        "O-SPEC"
+      ],
+      "entrypoints": [
+        "EP-EXPLAIN",
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:11",
+        "lab/research/R6-xtdb-gap-analysis.md goal 3 (no plan or cost capture)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "05e6f2526857b9984aeffe25ca4cee8f91539230fb47a0dfea7b8a4b94669b6d",
+      "needsNewOracle": [
+        "O-SPEC"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G3.plan.access-path-at-scale",
+      "goals": [
+        "G3"
+      ],
+      "title": "Point and selective reads use key-bounded access at 10m",
+      "statement": "At P-SCALE-10M the point, getMany, selective equality and reverse-reference classes, on the repository and in the lane language, resolve through a key-bounded access path named in the captured plan, and their latency does not grow with dataset size beyond the calibrated ratio between the 1m rung and 10m.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-QMIX",
+        "select": "point,getMany,selective-filter,reverse-ref"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-EXPLAIN"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-SCALE",
+          "CR-PERF"
+        ],
+        "params": {
+          "thresholds": {
+            "p99LatencyMsPerClass": "CALIBRATE",
+            "latencyRatio10mOver1m": "CALIBRATE"
+          }
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:11",
+        "lab/research/R1-xtdb-capabilities.md Q7 (only _id indexed)",
+        "lab/reviews/plan-review-r1.codex.md finding 11"
+      ],
+      "grounding": "derived",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "11e94c219b1c1373929209c060d5b9097120228edac61776c5bbe67ffce3ab18",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G3.admission.preconstruction",
+      "goals": [
+        "G3"
+      ],
+      "title": "Expensive queries are refused before construction",
+      "statement": "Every case of CS-ADMIT (reachability over its row or round budget, a SPARQL group with more EXISTS clauses than the planner budget allows, an unbounded cross product, a result beyond maxRows) is refused with the typed admission error before the engine builds the expensive structure: zero scratch rows or graphs created, no planner memory above the calibrated bound, and the engine stays available.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-ADMIT",
+        "select": "all"
+      },
+      "oracles": [
+        "O-ERR",
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-HEAVY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-OBSERVE"
+        ],
+        "params": {
+          "thresholds": {
+            "plannerMemoryBytes": "CALIBRATE"
+          }
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:11",
+        "lab/reviews/plan-review-r1.codex.md finding 1",
+        "lab/research/R6-xtdb-gap-analysis.md goal 3",
+        "lab/research/R2-qlever-capabilities.md 3.3, 6.5"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "5b2f1c51a56166d092d0bb66abcaca78592a4c0d4e868cdf98981d2b579b9433",
+      "needsNewOracle": [
+        "O-ERR",
+        "O-OBS"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G3.cost.budget-honored",
+      "goals": [
+        "G3"
+      ],
+      "title": "Admitted queries stay inside their declared budget",
+      "statement": "Every admitted query records its estimated cost and its actual rows, memory and time; on CS-QMIX at P-SCALE-10M no admitted query exceeds its declared budget, and a query whose actual cost crosses the budget is stopped at the budget with a typed error rather than run to completion.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-QMIX",
+        "select": "all"
+      },
+      "oracles": [
+        "O-OBS",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-EXPLAIN"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-OBSERVE"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:11 (costing)"
+      ],
+      "grounding": "derived",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "30a51cff8b92fa5f3586d31421d37a06f30872ef72406e3123f045b577ce4486",
+      "needsNewOracle": [
+        "O-OBS",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G3.recursion.scalable",
+      "goals": [
+        "G3"
+      ],
+      "title": "Recursion is correct and bounded on every topology at scale",
+      "statement": "Recursive reads over chain, tree, diamond, cycle, high-fanout and skewed-hotset topologies (including a 100k-edge chain of depth 50) return O-REPLAY answers in the lane language (XTQL authors its own rounds, no SQL), record rounds and engine transactions per read, leave zero scratch residue, and meet the calibrated latency at the 1m rung and at P-SCALE-10M.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-RECURSION-TOPO",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-PERF"
+        ],
+        "params": {
+          "thresholds": {
+            "p99LatencyMsPerTopology": "CALIBRATE"
+          }
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:11",
+        "qualification/benchmark-contract.json topologies",
+        "lab/research/R6-xtdb-gap-analysis.md goal 3"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "c2920b131d96d475dba3e3a91ef38d34f8c2c48689fd9295140dbd0c30b65b4f",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G4.neg.correlated-not-exists",
+      "goals": [
+        "G4"
+      ],
+      "title": "Correlated negation is correct on the supported surfaces",
+      "statement": "The flat and nested correlated NOT EXISTS controls (two revision rows and a later-order relation, expected only `two`), and their EXISTS, MINUS and OPTIONAL plus !BOUND variants and the latest-revision case, return the O-SHAPE answers through the repository and supported native fragments in the lane language.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SHAPE",
+        "select": "negation"
+      },
+      "oracles": [
+        "O-SHAPE",
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-COUNTEREXAMPLE",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-DECORRELATE"
+      ],
+      "sources": [
+        "wiki/problems/native-correlation.md",
+        "lab/research/R5-qlever-semantic-blockers.md 1, 5.4",
+        "lab/research/R6-xtdb-gap-analysis.md experiment 5"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "89f1f2583b2ad74dd5c38e55eb176c445cc34b511d7945cd19e33e008f2100f3",
+      "needsNewOracle": [
+        "O-SHAPE",
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G4.neg.correlated-not-exists-raw",
+      "goals": [
+        "G4"
+      ],
+      "title": "Correlated negation is correct on the unrestricted raw surface",
+      "statement": "The original raw correlated NOT EXISTS controls (flat and nested, unedited text) and their SQL and XTQL ports over the documented raw dataset return only `two`.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SHAPE",
+        "select": "negation-raw"
+      },
+      "oracles": [
+        "O-SHAPE"
+      ],
+      "entrypoints": [
+        "EP-RAW-HATCH",
+        "EP-RAW-WIRE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-COUNTEREXAMPLE"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/problems/native-correlation.md",
+        "lab/research/R5-qlever-semantic-blockers.md 5.5 (C5 engine patch)",
+        "lab/reviews/plan-review-r1.codex.md finding 14"
+      ],
+      "grounding": "grounded",
+      "notes": "For qlever-sparql this needs an engine repair (R5 C5). Open question Q1 in REPORT.md.",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "95165eba06b61f46605433d99a7717e22e0e8f6f28997b916d9d02629a9702a0",
+      "needsNewOracle": [
+        "O-SHAPE"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G4.cut.task-wide-fixed",
+      "goals": [
+        "G4",
+        "G9"
+      ],
+      "title": "One cut per multi-call task under a concurrent writer",
+      "statement": "Each multi-call task pins one captured position for all its calls; a writer committed between two calls of a task does not change that task's answer; the next task sees the writer; explicit earlier cuts inside a task never exceed the task position.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PKT-MULTICALL",
+        "select": "all"
+      },
+      "oracles": [
+        "O-EVT",
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-CUT-OFF-BY-ONE"
+      ],
+      "sources": [
+        "lab/research/R6-xtdb-gap-analysis.md finding 1, 2.6, experiment 2",
+        "packages/qualification/experiments/qlever-task-basis.ts"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "49dbbba58cff85fe38070a93d332d06691ac1a1ccb6d8b0bbe236780a2ebea00",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G4.neg.conflict-not-false-absence",
+      "goals": [
+        "G4",
+        "G5"
+      ],
+      "title": "Conflicts never read as absence",
+      "statement": "With enforcement off, for every case of CS-CONFLICT (equal duplicates, unequal duplicates, overlapping intervals, partial repair, retirement of the last remaining support) the repository raises the typed conflict outcome on read; repository filters, joins, aggregates and negation never report a definite absence or a single value for a conflicted attribute; the documented native and raw recipes return the conflict indicator or the full value set.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CONFLICT",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-CONFLICT-PICK",
+        "M-DROPPED-SUPPORT"
+      ],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 13",
+        "lab/reviews/plan-review-r1.response.md B4"
+      ],
+      "grounding": "derived",
+      "notes": "The raw half depends on the B4 representation still under review round 2.",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "59ba36d6d21fe568baa3976adf119fa0cd60833377624cb4490e77143b5cc2a3",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G5.agg.shape-controls",
+      "goals": [
+        "G5"
+      ],
+      "title": "Aggregate edge shapes keep their specified answers",
+      "statement": "An empty maximum group stays absent, a grouped empty SUM produces no row, an ungrouped empty sum follows the packet rule (COALESCE to 0 where the task says so), and tied int64-maximum winners are all kept, on the repository and supported native fragments.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SHAPE",
+        "select": "aggregate"
+      },
+      "oracles": [
+        "O-SHAPE",
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-COUNTEREXAMPLE"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/problems/native-correlation.md (three passing edge controls)",
+        "lab/research/R6-xtdb-gap-analysis.md goal 5"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "9c332e388bfd01a502f52eec711dbc34a43ec5cf010ef6875efd86710a74ee21",
+      "needsNewOracle": [
+        "O-SHAPE",
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G5.agg.full-support",
+      "goals": [
+        "G5"
+      ],
+      "title": "Aggregates count supports, not deduplicated values",
+      "statement": "Aggregates over duplicate-valued assertions follow the specified set, pair and witness semantics (equal values on two assertions, the same value on two entities, RDF plain-triple deduplication): counts and sums equal O-REPLAY on the repository and supported native fragments.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SUPPORT",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-DROPPED-SUPPORT",
+        "M-IDENTITY-COLLAPSE"
+      ],
+      "sources": [
+        "wiki/goals.md:13",
+        "testkit 'datalog aggregates preserve duplicate rows and define empty and distinct results'",
+        "lab/reviews/plan-review-r1.codex.md finding 13"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "3f43f38d3e46cfccf50e91db12e0607f88619901afa4ae971d0a312b45c7a760",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G5.agg.typed-groups",
+      "goals": [
+        "G5"
+      ],
+      "title": "Group keys keep typed identity",
+      "statement": "Group keys and HAVING comparisons keep typed identity (boolean true, int64 1, binary64 1.0 per the specified rule, text '1' are distinct groups) on the repository and supported native fragments.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-NUMERIC",
+        "select": "groups"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:13",
+        "testkit 'datalog having preserves typed group and aggregate equality'"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "c874d4f2e22c02455c1b9e1723a6a308c44499084f98c80603c1704191442eaa",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G5.agg.exact-overflow",
+      "goals": [
+        "G5"
+      ],
+      "title": "Aggregate overflow is exact or a typed error",
+      "statement": "SUM and AVG over int64 inputs whose exact total leaves [-2^63, 2^63-1], and totals that cross +/-2^59, return the exact value or the specified typed overflow error on the repository and supported native fragments; never a wrapped value.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-NUMERIC",
+        "select": "int64-aggregate"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-INT64-ROUND"
+      ],
+      "sources": [
+        "wiki/goals.md:13",
+        "lab/research/R6-xtdb-gap-analysis.md finding 2 (LongVector SUM wraps)",
+        "lab/research/R2-qlever-capabilities.md 4.1"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "b79ad95dcd7ef4b3a254bf324a4b077e9adc9f35600b1417a4ae0be2e9466cf3",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G6.cancel.observed-drain",
+      "goals": [
+        "G6"
+      ],
+      "title": "Native cancellation is observed down to drained engine work",
+      "statement": "Cancelling a genuinely long read in the lane language produces evidence for every O-OBS level joined to one request: caller settlement, transport cancellation sent and acknowledged, the engine no longer running that statement within the calibrated bound, and healthy reuse of the same connection.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CANCEL",
+        "select": "read"
+      },
+      "oracles": [
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-NATIVE",
+        "EP-REPO",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-HEAVY",
+      "closure": {
+        "rules": [
+          "CR-OBSERVE"
+        ],
+        "params": {
+          "thresholds": {
+            "drainBoundMs": "CALIBRATE"
+          }
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:14",
+        "wiki/problems/cancellation-observation-levels.md",
+        "lab/research/R6-xtdb-gap-analysis.md goal 6",
+        "lab/research/R2-qlever-capabilities.md 6.4"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "e515adca9dfebecd4a26f2be176636e4c91b46d90231372d9a370ea0439147d3",
+      "needsNewOracle": [
+        "O-OBS"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G6.deadline.enforced",
+      "goals": [
+        "G6"
+      ],
+      "title": "Deadlines are enforced end to end",
+      "statement": "A read that exceeds its timeoutMs returns the typed timeout within the deadline plus the calibrated grace, and the engine work drains as in G6.cancel.observed-drain; a non-interruptible engine operation (for example a QLever sort) is either prevented by admission or drained within the bound.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CANCEL",
+        "select": "deadline"
+      },
+      "oracles": [
+        "O-OBS",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-NATIVE",
+        "EP-REPO",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-HEAVY",
+      "closure": {
+        "rules": [
+          "CR-OBSERVE"
+        ],
+        "params": {
+          "thresholds": {
+            "deadlineGraceMs": "CALIBRATE",
+            "drainBoundMs": "CALIBRATE"
+          }
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:14",
+        "lab/research/R2-qlever-capabilities.md 6.4"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "1f26aad40761e974d469337f26f90f3124214daea41b3f3c537e5542c6918361",
+      "needsNewOracle": [
+        "O-OBS",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G6.cancel.preaborted-no-work",
+      "goals": [
+        "G6"
+      ],
+      "title": "A pre-aborted request does no engine work",
+      "statement": "A request cancelled before dispatch issues zero engine statements, observed engine-side, and returns the typed cancellation.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CANCEL",
+        "select": "preaborted"
+      },
+      "oracles": [
+        "O-OBS",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-NATIVE",
+        "EP-REPO",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-OBSERVE"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/research/R6-xtdb-gap-analysis.md goal 6 (native-query.test.ts)",
+        "packages/qlever/experiments/native-entry.ts unavailable-cut-and-preaborted-query-reject"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "a79977e65583c93d04f320dc211d4f77c368fd2d12cc4e7979c29f6833134b48",
+      "needsNewOracle": [
+        "O-OBS",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G6.cleanup.scratch-zero",
+      "goals": [
+        "G6"
+      ],
+      "title": "No scratch residue after reads, cancels and crashes",
+      "statement": "After normal reads, after cancellation in the middle of a recursion round, and after engine crash, restart and documented recovery, every scratch relation of the lane (XTDB tx_native_relations, tx_native_relation_attempts, tx_query_relations, constraint scratch; QLever native scratch and receipt graphs and derived nodes) holds zero rows for finished work, and every working-outcome-unknown is resolved.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SCRATCH",
+        "select": "all"
+      },
+      "oracles": [
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-NATIVE",
+        "EP-REPO",
+        "EP-RESOLVE",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-FAULT",
+      "closure": {
+        "rules": [
+          "CR-FAULT"
+        ],
+        "params": {
+          "repetitionsPerFaultPoint": 3
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/research/R6-xtdb-gap-analysis.md finding 4, goal 6",
+        "lab/research/R4-codebase-harness-map.md 3.1, 4.1"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "5fd7d3629ad489426905a57e60814ab522f1e8c81e01f2283add199e8e83924c",
+      "needsNewOracle": [
+        "O-OBS"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G6.ownership.bounded-connections",
+      "goals": [
+        "G6"
+      ],
+      "title": "Connections and engine work are bounded and released",
+      "statement": "Engine connections per process never exceed the declared pool caps, across 100 open-use-close cycles and under 1024 logical clients; after close the engine-side connection count returns to its baseline and no background work continues.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-LIFECYCLE",
+        "select": "bounds"
+      },
+      "oracles": [
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-OBSERVE"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:14",
+        "wiki/problems/load-liveness.md (separate pools, default 20 connections)",
+        "lab/reviews/plan-review-r1.codex.md finding 2 (logical clients versus connections)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "53d2303015685ce0b0cece0abba8037ff97eb7356dfe1bf3a1be21567fa9c9a0",
+      "needsNewOracle": [
+        "O-OBS"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G6.resource.memory-failure-contained",
+      "goals": [
+        "G6"
+      ],
+      "title": "A resource failure does not take the engine down",
+      "statement": "A read that would exceed the engine's memory budget is refused or fails with a typed error; writes and other reads keep working within the calibrated window without a manual restart; any restart the design needs is the documented recovery path and is counted in the receipt.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-ADMIT",
+        "select": "memory"
+      },
+      "oracles": [
+        "O-OBS",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-HEAVY",
+      "closure": {
+        "rules": [
+          "CR-OBSERVE"
+        ],
+        "params": {
+          "thresholds": {
+            "availabilityWindowMs": "CALIBRATE"
+          }
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/problems/recovery.md (2GiB read OOM, ingestion unavailable)",
+        "wiki/problems/qlever-planner-memory.md",
+        "lab/research/R2-qlever-capabilities.md 6.5"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "e2dc8b8564b4d4764e79091e2e999bfa151ea356432a78cceadcdfaed6c5df4e",
+      "needsNewOracle": [
+        "O-OBS",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.write.atomic",
+      "goals": [
+        "G7"
+      ],
+      "title": "Commands are all-or-nothing on every access path",
+      "statement": "Every multi-operation command in CS-WRITE and every fault point in CS-FAULT that targets a write leaves either the complete command or nothing, as seen through every listed access path (XTDB _id lookup and column predicate; QLever subject, predicate-object and object scans); a later successful write never publishes a partial earlier one.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-WRITE",
+        "select": "atomic"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER",
+        "EP-RAW-WIRE"
+      ],
+      "profile": "P-FAULT",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-FAULT"
+        ],
+        "params": {
+          "repetitionsPerFaultPoint": 3
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:15",
+        "lab/reviews/plan-review-r1.codex.md finding 7",
+        "lab/research/R2-qlever-capabilities.md 1.8 probes A and B"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "524e8478d8cbfec6d26c1211af3b12c201d073abdc14f9ffb22dde81fe4e71f6",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.write.command-idempotency",
+      "goals": [
+        "G7"
+      ],
+      "title": "A command id commits at most once",
+      "statement": "A duplicate commandId, sequentially and in a 16-way concurrent race, commits exactly once; every other attempt gets CommandAlreadyCommitted with the original transaction id; transactionByCommand returns that transaction.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-WRITE",
+        "select": "idempotency"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-CLAIM-IGNORED"
+      ],
+      "sources": [
+        "handoffs/claude-native/README.md:41",
+        "lab/research/R4-codebase-harness-map.md 3.4, 4.4",
+        "packages/qlever/test/storage.test.ts (16-way command test)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "08e826df905f4f3e0b3838cdc0a83839db9c0834965664df5c962c3e95ee6d69",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.write.preconditions-cas",
+      "goals": [
+        "G7"
+      ],
+      "title": "Preconditions and concurrency never lose an update",
+      "statement": "TripleLive and EntityState preconditions reject stale commands with TransactionConflictError; under concurrent conflicting writers no acknowledged update is lost and replay-safe retries produce the O-REPLAY final state.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-WRITE",
+        "select": "preconditions"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/research/R4-codebase-harness-map.md 2.3, 3.5"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "030289908e45b7b5bcfb938863abb416a464c9caf3b4c60e25de4e0b260c6d64",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.receipt.journal-complete",
+      "goals": [
+        "G7"
+      ],
+      "title": "Receipts and journal are complete and ordered",
+      "statement": "Every acknowledged command has a transaction record whose position, instant, actor, commandId, correlationId, causationId, configSnapshot and ordered changes equal O-REPLAY; journal entries cannot be retracted through ordinary writes; reserved namespaces reject ordinary writes atomically; every ACK has a durable operation receipt.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-WRITE",
+        "select": "receipts"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER",
+        "EP-RESOLVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-JOURNAL-ORDER"
+      ],
+      "sources": [
+        "handoffs/claude-native/README.md:41",
+        "lab/research/R9-core-plumbing.md (journal tier)",
+        "lab/reviews/plan-review-r1.codex.md finding 10",
+        "testkit cases 29-32, 34, 36, 39"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "5bd20e38047ed8b99ee08be102283b6567a90f2670ed38020a1a813e7ee2ac57",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.write.unknown-outcome",
+      "goals": [
+        "G7"
+      ],
+      "title": "Unknown write outcomes resolve before any retry",
+      "statement": "When the client is killed after submit, the connection drops during commit, or the engine times out the request, the caller gets the typed unknown-outcome error with its operation id; resolution through the operation id returns a definitive committed or absent outcome; no retry happens before resolution; the final state holds the command exactly once or not at all.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-FAULT",
+        "select": "lost-ack"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER",
+        "EP-RESOLVE"
+      ],
+      "profile": "P-FAULT",
+      "closure": {
+        "rules": [
+          "CR-FAULT"
+        ],
+        "params": {
+          "repetitionsPerFaultPoint": 3
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "handoffs/claude-native/START-HERE.md:35-43",
+        "lab/research/R4-codebase-harness-map.md 3.7, 4.4",
+        "lab/research/R2-qlever-capabilities.md 1.8 probe C"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "eb84b6146a7199582715d39d9aa642ddca370e6658699c0f2bce5b0bb62f55d7",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.recovery.crash-restart",
+      "goals": [
+        "G7"
+      ],
+      "title": "Crash, restart and re-read of every old cut",
+      "statement": "For every engine fault point in CS-FAULT (XTDB during COMMIT SYNC, after commit before ACK, mid recursion round; QLever between permutation mutations, after persistence before snapshot publication, during index rebuild, during projection maintenance), after restart and the documented recovery: every ACKed command is present, every unACKed command is resolved, every frozen cut re-reads identically through the repository, the native surface in every language of the engine, and the raw recipe, and all access paths agree.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-FAULT",
+        "select": "engine-crash"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-WIRE",
+        "EP-RESOLVE"
+      ],
+      "profile": "P-FAULT",
+      "closure": {
+        "rules": [
+          "CR-FAULT"
+        ],
+        "params": {
+          "repetitionsPerFaultPoint": 3,
+          "ackedCommandsLostMax": 0
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:15",
+        "lab/reviews/plan-review-r1.codex.md finding 7",
+        "lab/reviews/plan-review-r1.response.md B1",
+        "lab/research/R6-xtdb-gap-analysis.md experiment 10"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "9d729d9c9111348c587c560f27e4021d83fd08f7c76e5ea709729c59a2623b0e",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.recovery.backup-restore",
+      "goals": [
+        "G7"
+      ],
+      "title": "Backup and restore reproduce every read",
+      "statement": "A stopped backup and a restore into a fresh engine reproduce every frozen cut on every surface, and the restored engine accepts new writes at the next position.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-FAULT",
+        "select": "backup-restore"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-FAULT",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "qualification/benchmark-contract.json separatePhases (backup, restore)",
+        "lab/research/R6-xtdb-gap-analysis.md goal 7 (recovery.mjs)"
+      ],
+      "grounding": "derived",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "5a77ad369dc970b2d17a9f7b910de65dffbd98b14d6d58f184a0512a939cfb34",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.migration.schema-evolution",
+      "goals": [
+        "G7",
+        "G10"
+      ],
+      "title": "Schema evolution with live data, concurrent clients and resumable backfill",
+      "statement": "For each case of CS-MIGRATION (add an optional attribute, add a constraint over existing data, change an attribute's type-version, move an attribute to a new physical mapping), with old and new clients running concurrently: reads at bases before the release use the old mapping and after it the new one, a backfill killed midway resumes to the O-REPLAY final state, old cursors continue or fail with the typed cursor error, and history is preserved.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-MIGRATION",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-WRITER",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:15",
+        "lab/reviews/plan-review-r1.codex.md finding 12",
+        "lab/reviews/plan-review-r1.response.md decision 12"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "8c6ad973d652bfb12f45d277dd103ced19f9c7e4fc5343d22aa40b795c471ee7",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G7.migration.valid-writes-never-rejected",
+      "goals": [
+        "G7"
+      ],
+      "title": "Valid Triplex writes are never rejected for the physical design",
+      "statement": "Every write that O-REPLAY classifies as valid Triplex (untyped facts, facts without entityType, values that violate a projection column type, writes during a migration) is accepted, and every surface still reads it correctly.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-MIGRATION",
+        "select": "valid-writes"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-WRITER",
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 12",
+        "lab/reviews/plan-review-r1.response.md decision 12",
+        "lab/NOTEBOOK.md R9 decisions (never reject a valid write)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "b725c973d610e91cf679333cfa99addf43dba1699dd9aaa72d569e8e1a34df63",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G8.publish.coherent",
+      "goals": [
+        "G8"
+      ],
+      "title": "Every read sees one coherent publication",
+      "statement": "Under concurrent commit groups, every read's answer equals O-REPLAY at the basis the read returned; no read mixes two publications of ledger, projection, schema or index state; delayed maintenance never yields an answer inconsistent with the returned basis.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PUBLISH",
+        "select": "coherence"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {}
+      },
+      "mutationControls": [
+        "M-STALE-PROJECTION"
+      ],
+      "sources": [
+        "wiki/goals.md:16",
+        "lab/reviews/plan-review-r1.codex.md finding 8",
+        "lab/reviews/plan-review-r1.response.md B2"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "30e860c31f51b6aa9f1d4514774f6d9325ae15f2da1efaa8d7f84cbe7ac8abb5",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G8.publish.basis-honesty",
+      "goals": [
+        "G8"
+      ],
+      "title": "Requested bases are honored and returned bases are true",
+      "statement": "A read at a requested basis is answered at exactly that basis or fails with a typed error, never silently at another; the returned basis is the basis used; after a command is ACKed at position P, the writing client's next latest-basis read returns a basis at or after P.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PUBLISH",
+        "select": "basis"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-TRIPLES"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {}
+      },
+      "mutationControls": [
+        "M-STALE-PROJECTION",
+        "M-CUT-OFF-BY-ONE"
+      ],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 8 (ACK and read-your-writes)",
+        "handoffs/claude-native/README.md:43-48"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "fc74826615cf373c439a786f5c84ab458d929c2c3fe92d03490e04ef17aa1e03",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G8.publish.valid-boundary",
+      "goals": [
+        "G8",
+        "G9"
+      ],
+      "title": "Valid-time boundaries take effect without new writes",
+      "statement": "When a fact's validFrom or validTo boundary passes with no new command, reads at valid instants beyond the boundary reflect it on every surface, both before and after any maintenance the design runs.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PUBLISH",
+        "select": "boundary"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {}
+      },
+      "mutationControls": [
+        "M-HALF-OPEN",
+        "M-STALE-PROJECTION"
+      ],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 8 (valid-time boundaries without commands)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "7ecec61ecd2a55cd4e59e0499f485892028a2e4e43d0ca5797434c0b1fc4c179",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G8.reuse.bounded-keyed",
+      "goals": [
+        "G8"
+      ],
+      "title": "Reuse is bounded, correctly keyed and invalidated",
+      "statement": "Every reused derived result (closures, maintained queries, projection segments, caches) is keyed by scope, position, recorded and valid time, definition hash and schema release; its size stays within the declared cap; answers equal a run with reuse disabled; an affecting write invalidates it for later bases; hit rate and rebuild cost are recorded.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-REUSE",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {}
+      },
+      "mutationControls": [
+        "M-STALE-REUSE"
+      ],
+      "sources": [
+        "wiki/goals.md:16",
+        "lab/research/R6-xtdb-gap-analysis.md goal 8 (nothing proven for native)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "75bdac8d098dfacc5e494b2024a4634f9a4951a9d0c479d8ace07f936db54b08",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G8.support.alternate-maintained",
+      "goals": [
+        "G8"
+      ],
+      "title": "Maintained supports survive partial retraction",
+      "statement": "Removing one of two supports keeps a derived fact; removing the last support removes it; this holds for packet workload 20 and for CS-SUPPORT-DAG (depth beyond 3, at least 1,000 nodes, incremental deletions), and for two identical assertions where one is retracted.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SUPPORT-DAG",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-DROPPED-SUPPORT"
+      ],
+      "sources": [
+        "wiki/goals.md:16",
+        "lab/research/R6-xtdb-gap-analysis.md 2.2 (workload 20 length-3 bound)",
+        "lab/reviews/plan-review-r1.codex.md finding 13"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "04b4f208285968db6a04c7b8a85c43f4661f3711571a94fb3d5542230f56f0ea",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G8.support.maintenance-cost",
+      "goals": [
+        "G8",
+        "S"
+      ],
+      "title": "Maintenance cost and lag are measured and bounded",
+      "statement": "At the 1m rung and at P-SCALE-10M, engine rows or triples written per domain fact (ledger, projection, journal, indexes separately), maintenance work per valid-time boundary and maintenance lag are recorded, and lag stays within the load contract's freshness bound.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SCALE-SAMPLE",
+        "select": "maintenance"
+      },
+      "oracles": [
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-ENGINE-OBS",
+        "EP-REPO"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-METRICS",
+          "CR-PERF"
+        ],
+        "params": {
+          "thresholds": {
+            "maintenanceLagMs": "load-contract.freshnessBoundMs"
+          }
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:16",
+        "handoffs/claude-native/README.md:123-127 (write amplification separately)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "178eddcfffac1031d1736ffdb5821ae8a5552c68505c9e95767e061cb82fddad",
+      "needsNewOracle": [
+        "O-OBS"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G9.temporal.half-open-intervals",
+      "goals": [
+        "G9"
+      ],
+      "title": "Half-open valid intervals on every surface",
+      "statement": "Valid intervals are [validFrom, validTo) with null meaning open-ended, exact at fractional-millisecond boundaries and at the boundary instants themselves, for every surface, current, reopen and engine restart.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-TEMPORAL",
+        "select": "valid"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-HALF-OPEN"
+      ],
+      "sources": [
+        "handoffs/claude-native/README.md:46-48",
+        "lab/research/R6-xtdb-gap-analysis.md 2.5 (half-open boundary checks)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "21d273bcd075668e3a2e5863315727ea8b7e9a45e730b492a739b7a6065eb87a",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G9.temporal.recorded-cuts",
+      "goals": [
+        "G9"
+      ],
+      "title": "Recorded-time and position cuts are exact",
+      "statement": "Reads by recordedAt between commits, at an instant shared by two distinct commits, at interior positions of a nested multi-position transaction, after corrections, and around aborted transactions (before and after) equal O-REPLAY; ordinary reads take R and V only, exact P appears only in native contracts and pagination; any mapping to engine time is proven by these cases before use.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-TEMPORAL",
+        "select": "recorded"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-CUT-OFF-BY-ONE"
+      ],
+      "sources": [
+        "handoffs/claude-native/README.md:43-48",
+        "lab/reviews/plan-review-r1.codex.md finding 6",
+        "lab/reviews/plan-review-r1.response.md decision 6",
+        "lab/research/R1-xtdb-capabilities.md Q1"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "29ebc1ae6cef6f4549545f9a4fd7a3245f707957ca69a73c4fbde18ec14bf01d",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G9.history.raw-lifetime-compat",
+      "goals": [
+        "G9"
+      ],
+      "title": "Ordinary history keeps the raw lifetime contract",
+      "statement": "Ordinary Triples.history, match, entity and entities keep their raw assertion-lifetime contract (complete retractedAt, retractedPosition and retractTxId) exactly as O-REPLAY computes it; no global mask is applied.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-HAM9",
+        "select": "raw-lifetime"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-HAM"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-MASK-RAW"
+      ],
+      "sources": [
+        "handoffs/claude-native/README.md:46-48",
+        "qualification/capacity/historical-assertion-metadata-v1/reproducers.json resultContract.rawLifetimeCompatibility"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "4ed0d61ad718012af37db95f18269fa1e8fee56b70152f9c37561d9ff9c3ef09",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "G9.history.snapshot-metadata",
+      "goals": [
+        "G9"
+      ],
+      "title": "As-of snapshots hide retirements not yet known",
+      "statement": "The five failing tiny-v4 checks, the finite-nine fixture and the same-R control pass through the repository timeline and as-of reads and through the native history helpers in the lane language: retirement fields are null until the retirement is known at the cut (R and P) and equal O-REPLAY after.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CFG8",
+        "select": "retirement-metadata-target",
+        "also": "CS-HAM9"
+      },
+      "oracles": [
+        "O-CFG8",
+        "O-HAM",
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-COUNTEREXAMPLE",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-FUTURE-RETIREMENT"
+      ],
+      "sources": [
+        "wiki/goals.md:17",
+        "lab/research/R6-xtdb-gap-analysis.md 3.1",
+        "qualification/reviews/configured-entity-xtdb-tiny-v4-terminal-independent.json"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "63cfb2961ce96f95a95ab278fe5cf45c858d1e75b139ee5efc4ecedf8968d9cf",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "G9.corrections.preserve",
+      "goals": [
+        "G9"
+      ],
+      "title": "Corrections preserve what was previously recorded",
+      "statement": "A correction (retract plus assert) keeps the earlier value visible at earlier recorded cuts and both versions in history, on every surface, current, reopen and restart.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-TEMPORAL",
+        "select": "corrections"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:17",
+        "testkit 'historical corrections preserve what was previously recorded'"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "cba972da2b3d89e90e05aefbf9384a1bf6c7c258838ccef475bd9fd800cf2a2e",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G9.lineage.supporting-assertions",
+      "goals": [
+        "G9"
+      ],
+      "title": "Answers trace to their supporting assertions",
+      "statement": "Every repository read and native helper row can return the ids and transaction ids of the assertions that support it, and they equal O-REPLAY's supports; packet lineage tasks (workload 16) are covered by PKT.full142.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-ENTITY",
+        "select": "lineage"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:17 (proof lineage)",
+        "handoffs/claude-native/README.md:34 (assertion identity)"
+      ],
+      "grounding": "derived",
+      "notes": "'Proof lineage' is read here as assertion-level provenance; confirm (open question Q6).",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "8ba1b9f319aa7ec38d62ee36787d96030c22264f1692fbec4a47da40585d33fe",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G9.presence.explicit",
+      "goals": [
+        "G9"
+      ],
+      "title": "Presence follows a frozen policy",
+      "statement": "Explicit presence facts toggled true -> false -> true preserve domain facts and reference targets; configured-entity membership at a cut follows the frozen presence policy on every surface.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PRESENCE-DELETE",
+        "select": "presence",
+        "also": "CS-CFG8"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-CFG8"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/research/presence-reference-deletion-requirements-v1.md",
+        "qualification/capacity/configured-entities-v1/CONTRACT.md"
+      ],
+      "grounding": "policy-pending",
+      "notes": "Triplex has no presence policy; the convention part is grounded in configured-eight, the policy is not.",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "77b9a6ace02a9c78a19034cccd02caed0c6a6c451d877119d19fd298ccef4085",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "POLICY-PENDING"
+    },
+    {
+      "id": "G9.deletion.entity",
+      "goals": [
+        "G9"
+      ],
+      "title": "Entity deletion keeps its contract and history",
+      "statement": "The existing delete contract holds (retract the entity's current facts in one command, reject scheduled facts, retain history), and interval-local deletion follows the frozen deletion policy with preserved history and replay and reopen evidence.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PRESENCE-DELETE",
+        "select": "deletion"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-WRITER",
+        "EP-TRIPLES"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/research/presence-reference-deletion-requirements-v1.md (Entity deletion row)"
+      ],
+      "grounding": "policy-pending",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "717b8a1d189ffdb4b06a6c6724f2b67680f056fcbeada05d86d241ce0ba6a26c",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "POLICY-PENDING"
+    },
+    {
+      "id": "G9.cascade.restrict-detach-cascade",
+      "goals": [
+        "G9"
+      ],
+      "title": "Restrict, detach and bounded cascade",
+      "statement": "Restrict, detach and bounded reverse cascade follow the frozen cascade policy: deterministic receipts, bounded newly removed endpoints, legal cycles that do not seed deletion, alternate supports, and atomic refusal when a cascade exceeds its budget.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PRESENCE-DELETE",
+        "select": "cascade"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-WRITER"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/research/presence-reference-deletion-requirements-v1.md (Restrict, detach and cascade row)",
+        "wiki/goals.md:17"
+      ],
+      "grounding": "policy-pending",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "99b10da7748945ae3db28d1a74b0bd7cfaeeb02c5a026e99c484859ef14f8fef",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "POLICY-PENDING"
+    },
+    {
+      "id": "G10.pkg.clean-consumer-slice",
+      "goals": [
+        "G10"
+      ],
+      "title": "Packaged vertical slice in a clean consumer",
+      "statement": "From packed tarballs in a clean consumer outside the workspace: a write, a repository read, an authored native read in the lane language, history, a receipt, a cursor continuation and a reopen all equal O-REPLAY against the lane engine; the CLI inspects the same database and reports the same data.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SLICE",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-PKG",
+        "EP-CLI"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:18",
+        "lab/reviews/plan-review-r1.response.md B5 step 6",
+        "wiki/status.md:127"
+      ],
+      "grounding": "grounded",
+      "notes": "Whether the CLI must support XTDB and QLever is open question Q7.",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "ce14b569a3bae60c63355ab7eea569b9edd13584f684b1f0a108309e8f3ba3c9",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G10.pkg.type-witnesses",
+      "goals": [
+        "G10",
+        "R"
+      ],
+      "title": "Public types are derived from the schema",
+      "statement": "Against the packed public declarations: Repository<Model> types derive from EntityType (unknown attribute key is a compile error, cardinality-many is an array, absent optional is a missing property, int64 is the tagged integer type, refs carry their target type), and native contract types derive from schema handles; every positive witness compiles and every negative witness fails.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-TYPEWITNESS",
+        "select": "all"
+      },
+      "oracles": [
+        "O-SPEC"
+      ],
+      "entrypoints": [
+        "EP-PKG"
+      ],
+      "profile": "P-STATIC",
+      "closure": {
+        "rules": [
+          "CR-STATIC"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/NOTEBOOK.md decision D5",
+        "lab/research/R3-artifacts/api-sketch.ts",
+        "wiki/status.md:30-37 (public type witnesses)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "7f3e7e5ad7b7c4898a3d46081cbe771fc2d1f9ce102245e10d047416f22037c4",
+      "needsNewOracle": [
+        "O-SPEC"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G10.scope.isolation",
+      "goals": [
+        "G10"
+      ],
+      "title": "Scopes never leak",
+      "statement": "Two scopes on one engine with identical entity ids: the repository, the native helpers and the documented raw recipe for each scope return only that scope's data, current and reopen.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SCOPE",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-RAW-HATCH",
+        "EP-RAW-WIRE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-MUTANT-KILL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [
+        "M-SCOPE-LEAK"
+      ],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 9",
+        "lab/reviews/plan-review-r1.response.md B3",
+        "packages/qlever/experiments/native-entry.ts scope-isolation"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "1a2a3d3e9a4d6dc9d272918cb63323175c27f0b73f807684b799ecb1febff9f2",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G10.cursor.stable",
+      "goals": [
+        "G10"
+      ],
+      "title": "Cursors are complete, snapshot-stable and cheap",
+      "statement": "Cursor pages are deterministic and traverse the complete snapshot with no duplicate or skipped row under concurrent writes; a cursor issued at P1 continues at P1 after the publication advances; historical cursors intersect recorded time; at P-SCALE-10M page 10,000 costs no more than the calibrated multiple of page 1.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CURSOR",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-TRIPLES"
+      ],
+      "profile": "P-TINY-CONC",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-PERF"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ],
+          "thresholds": {
+            "deepPageCostRatio": "CALIBRATE"
+          }
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "testkit cursor cases",
+        "lab/reviews/plan-review-r1.codex.md finding 8",
+        "lab/research/R6-xtdb-gap-analysis.md goal 10 (OFFSET is O(offset))"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "fe2f1c60717a53c6f86c549300243c52dcb1cc04dca97b76abeb276098af2278",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G10.cursor.compatibility",
+      "goals": [
+        "G10"
+      ],
+      "title": "Cursors survive restarts, releases and rebuilds",
+      "statement": "A cursor issued before an engine restart, a client reopen, a schema release change or a projection rebuild either continues correctly or fails with the typed cursor error naming the reason; it never returns rows from another basis.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CURSOR",
+        "select": "compatibility"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 1 (cursor compatibility)",
+        "lab/reviews/plan-review-r1.response.md decision 12 (old cursors route to the ledger)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "e3021dd7b56f5ed618de95fe53ddbdc7de44d636ec6a57c8fefca6150e2939ae",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G10.capabilities.truthful",
+      "goals": [
+        "G10"
+      ],
+      "title": "Advertised capabilities are true",
+      "statement": "Every capability the runtime advertises has a passing case and every capability it does not advertise is refused with a typed error; the advertised set equals the lane's EXACT rows of the capability matrix.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CAPS",
+        "select": "all"
+      },
+      "oracles": [
+        "O-ERR",
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:18",
+        "lab/research/R6-xtdb-gap-analysis.md goal 10 (Capabilities.none)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "55b2409c3ad95cb26acd10d9a290ef4f00fb1559eb2731403cfe1fcb7cf5f1de",
+      "needsNewOracle": [
+        "O-ERR",
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G10.lifecycle.open-close",
+      "goals": [
+        "G10"
+      ],
+      "title": "Open, close and reopen are clean",
+      "statement": "initialize is idempotent across restarts, close releases every connection and background task (engine-side observed), the native provider shares or declares its pool, and reopen after close works.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-LIFECYCLE",
+        "select": "lifecycle"
+      },
+      "oracles": [
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-TRIPLES",
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-OBSERVE"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:18",
+        "wiki/problems/load-liveness.md",
+        "lab/research/R4-codebase-harness-map.md 2.1 (initialize on every start)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "2baf2a278a3fd2606cae525d6856e137f8e5e55b1f0a47de767a19e5a822dbf1",
+      "needsNewOracle": [
+        "O-OBS"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "G10.native.entry-checks",
+      "goals": [
+        "G10"
+      ],
+      "title": "Native entry checks in the lane language",
+      "statement": "The native entry checks pass fresh, current and reopen, with every read check executed in the lane's language (XTQL versions of the SQL-only checks for xtdb-xtql, SQL versions of the XTQL-only checks for xtdb-sql, the 11 SPARQL checks for qlever-sparql).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-ENTRY",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ],
+          "languagePurity": true
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/research/R6-xtdb-gap-analysis.md 2.5",
+        "lab/research/R4-codebase-harness-map.md 5.4"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "c27e70b951d98beb930ae03df1ad55edb2b98297d257b052fc0522b949b7b2db",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "G10.native.read-only-and-safe-params",
+      "goals": [
+        "G10"
+      ],
+      "title": "Native reads cannot write and parameters cannot inject",
+      "statement": "Native read surfaces refuse every write form (multi-statement, modifying CTE, SPARQL UPDATE, comment-boundary escapes) with a typed error and no engine mutation, including recursion helpers under a read-only role; bound parameters containing quote, $$, ; and newlines are data.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-ENTRY",
+        "select": "read-only,safe-parameters"
+      },
+      "oracles": [
+        "O-ERR",
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-NATIVE",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/research/R6-xtdb-gap-analysis.md finding 4, 2.5",
+        "packages/xtdb/src/native/ReadOnlySql.ts"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "987fc0ad18a32eb4eb945b93f4d6d437f8624bd60b25acca43ae55b5e552af20",
+      "needsNewOracle": [
+        "O-ERR",
+        "O-OBS"
+      ],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "R.repo.entity-suite",
+      "goals": [
+        "R"
+      ],
+      "title": "Entity suite against the independent oracle",
+      "statement": "Every case of CS-ENTITY (section 6.4) passes through the repository and writer on the lane: all eight types, cardinality one and many, optional, refs and includes, history and timeline, corrections, conflicts with enforcement off, presence, at current and past bases, current, reopen and engine restart; expected answers come only from O-REPLAY.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-ENTITY",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-WRITER"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen",
+            "engine-restart"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/PLAN.md 1 (done condition item 4)",
+        "lab/reviews/plan-review-r1.codex.md finding 5",
+        "lab/reviews/plan-review-r1.response.md decision 5"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "dc34b3e3c5ac80aee9f09e2d39b54019498eae5b665957bc2dea1d9d3e533205",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "R.repo.mutation-controls",
+      "goals": [
+        "R"
+      ],
+      "title": "The entity and history suites kill every mutant",
+      "statement": "Each mutation control in the catalog makes at least one case of CS-ENTITY, CS-TEMPORAL or CS-HAM9 fail on the lane, with oracle and case files unchanged.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-ENTITY",
+        "select": "all",
+        "also": "CS-TEMPORAL,CS-HAM9"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-WRITER",
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-MUTANT-KILL"
+        ],
+        "params": {}
+      },
+      "mutationControls": [
+        "M-HALF-OPEN",
+        "M-DROPPED-SUPPORT",
+        "M-FUTURE-RETIREMENT",
+        "M-INT64-ROUND",
+        "M-ENTITY-TYPE-SWAP",
+        "M-STALE-PROJECTION",
+        "M-CUT-OFF-BY-ONE",
+        "M-NEGZERO",
+        "M-ICU-ORDER",
+        "M-SCOPE-LEAK",
+        "M-MASK-RAW",
+        "M-CONFLICT-PICK",
+        "M-IDENTITY-COLLAPSE",
+        "M-JOURNAL-ORDER",
+        "M-CLAIM-IGNORED",
+        "M-DECORRELATE",
+        "M-STALE-REUSE",
+        "M-CARD-MANY-DROP"
+      ],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 5",
+        "lab/reviews/plan-review-r1.response.md decision 5",
+        "lab/experiments/EXP-A01-acceptance-contract/BRIEF.md (mutation controls)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "84e2636b903cd9a993a63f48c376fe69da9e0e4f9a39b248a3a38df656ff0052",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "R.raw.parity",
+      "goals": [
+        "R"
+      ],
+      "title": "Raw queries return what the entity API returns",
+      "statement": "For every query class of CS-RAW-RECIPES (point by id, attribute equality, range, order and page, ref join, reverse ref, anti-join, aggregate, history at a basis, interval at a valid instant, journal and receipt lookup), a raw query written only from the published raw-query guide returns the same answer as the repository at the same basis and as O-REPLAY, in the lane language, through both the raw hatch and direct wire access.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-RAW-RECIPES",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-RAW-HATCH",
+        "EP-RAW-WIRE",
+        "EP-REPO"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/PLAN.md 1 (raw queries must make sense)",
+        "lab/reviews/plan-review-r1.response.md B3 (raw-query dataset and scope contract)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "ce93fb40de0e554b9a727783ffb91274b336123e7af338745c8d2b38fae108ff",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "R.raw.guide-only-authoring",
+      "goals": [
+        "R"
+      ],
+      "title": "Raw recipes are authored from the guide alone",
+      "statement": "The raw recipes used by R.raw.parity were authored by an author whose inputs were only the raw-query guide and the engine's own documentation, recorded in an authoring manifest with input hashes.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-RAW-RECIPES",
+        "select": "all"
+      },
+      "oracles": [],
+      "entrypoints": [
+        "EP-RAW-WIRE"
+      ],
+      "profile": "P-STATIC",
+      "closure": {
+        "rules": [
+          "CR-PROVENANCE"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/PLAN.md 1 ('has never read Triplex source')"
+      ],
+      "grounding": "derived",
+      "notes": "Only partly machine-checkable: the manifest is checkable, the author's prior knowledge is not. Open question Q5.",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "e2521260b6f87af3a233e96d1950d219448810d6b6c8584658ea5c47d345c836",
+      "needsNewOracle": [],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "R.raw.capability-required-cells",
+      "goals": [
+        "R",
+        "G2",
+        "G10"
+      ],
+      "title": "Required capability cells are exact on the raw surface",
+      "statement": "Every capability-matrix cell whose required-by list is non-empty is EXACT for the lane with a passing receipt; every KNOWN-LIMIT cell has an empty required-by list, keeps its original counterexample receipt and is documented in the raw-query guide.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-CAPS",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-SHAPE",
+        "O-STR"
+      ],
+      "entrypoints": [
+        "EP-RAW-HATCH",
+        "EP-RAW-WIRE",
+        "EP-NATIVE",
+        "EP-REPO"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-MATRIX"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 14",
+        "lab/reviews/plan-review-r1.response.md decision 14"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "499b54566127f9f4cea6c643dc3dce3fe99ba84fefe7856f9d55aae2d8c7549b",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-SHAPE"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "R.native.fragment-equivalence",
+      "goals": [
+        "R",
+        "G4"
+      ],
+      "title": "Helper fragments state and enforce their equivalence conditions",
+      "statement": "Each supported native helper (correlation re-binding, order keys, conflict-aware fragments, recursion helpers) states its equivalence conditions; a static check refuses an authored query outside them with a typed error naming the condition; generated cases inside the conditions agree with O-REPLAY; a refusal never closes an obligation that requires the refused shape.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-FRAGMENT-EQUIV",
+        "select": "all"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "entrypoints": [
+        "EP-NATIVE"
+      ],
+      "profile": "P-TINY",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ]
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/research/R5-qlever-semantic-blockers.md 5.4",
+        "lab/reviews/plan-review-r1.codex.md finding 14"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "832cc00553c2181eff7f316375ac4b82cb3770a73d5cb7f6c9f27a89161a1053",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-ERR"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "S.dataset.target-population",
+      "goals": [
+        "S"
+      ],
+      "title": "The target dataset exists and is counted",
+      "statement": "One database scope holds 10,000,000 distinct application entities and 100,000,000 active representative domain facts written through public writes (representative profile, 10 facts per entity), and a second dataset holds 10,000,000 entities at 1 fact each (sparse profile); counts of configured entities, domain facts, structural facts, assertion versions and retirements, config facts, journal, claim and receipt metadata, maintenance relations and engine rows or triples are reported separately and match independent count queries and O-REPLAY analytic counts; every command is ACKed with a receipt and no outcome is unresolved.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-SCALE-SAMPLE",
+        "select": "counts"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-WRITER",
+        "EP-TRIPLES",
+        "EP-NATIVE"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-SCALE"
+        ],
+        "params": {
+          "distinctEntities": 10000000,
+          "activeDomainFacts": 100000000,
+          "profiles": [
+            "representative-10",
+            "sparse-1"
+          ],
+          "singleScope": true
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:40-46",
+        "handoffs/claude-native/README.md:123-127",
+        "qualification/benchmark-contract.json",
+        "qualification/capacity/configured-entities-v1/CONTRACT.md",
+        "qualification/load-waves/five-surface-point-rate16-v1/plan.json fixture.countMeaning"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "7c3e111e7d8a9a522199c69a62038e2585d3ce16d867605eef3ea3af836908d0",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "S.rungs.ladder",
+      "goals": [
+        "S"
+      ],
+      "title": "Each rung passes before the next opens",
+      "statement": "Rungs 10k, 100k, 1m and 10m are climbed in order; each rung is admitted by capacity forecast and passes S.correctness.query-families before the next rung is admitted; a failing or blocked rung keeps S open.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SCALE-SAMPLE",
+        "select": "per-rung"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-RUNG",
+      "closure": {
+        "rules": [
+          "CR-SCALE"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/PLAN.md 3.5",
+        "qualification/capacity/configured-entities-v1/CONTRACT.md (admission stages)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "defefd1be53ec472e7a7ccab864a44ac8270317f2019aa051b809f6aec7ceaeb",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "S.correctness.query-families",
+      "goals": [
+        "S"
+      ],
+      "title": "All query families are correct at 10m",
+      "statement": "At P-SCALE-10M, for both profiles, the nine query families (point, selective filter, join, anti-join, recursion, aggregate, historical, interval, pagination) run on deterministic sampled parameters and on complete-count queries, on the repository and in the lane language, and every answer equals O-REPLAY with zero tolerance.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SCALE-SAMPLE",
+        "select": "families"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-SCALE"
+        ],
+        "params": {
+          "samplesPerFamily": "CALIBRATE"
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "qualification/benchmark-contract.json queryFamilies",
+        "qualification/capacity/configured-entities-v1/CONTRACT.md"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "0087424ac34ce29b9499200d095849c5d02b8492a1bb5bdd6508ba0211a5b046",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "S.capacity.admitted",
+      "goals": [
+        "S"
+      ],
+      "title": "Scale runs fit the admitted envelope",
+      "statement": "Before each rung the run is admitted with a forecast of peak memory and disk that includes rebuild or compaction overlap, delta growth during rebuild, pre-GC growth, WAL, backups, replay peaks and host-side clients; observed peaks stay within the envelope; an over-budget rung is BLOCKED_CAPACITY and S stays open; no deletion of evidence or budget increase converts a failure into a pass.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-SCALE-SAMPLE",
+        "select": "capacity"
+      },
+      "oracles": [
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-SCALE"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "qualification/benchmark-contract.json capacityRule",
+        "lab/reviews/plan-review-r1.codex.md finding 15",
+        "lab/reviews/plan-review-r1.response.md decision 15"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "6b6beb210149fe6c063490ec92a81588f63adc1bdadc2e437425a7ff937846ad",
+      "needsNewOracle": [
+        "O-OBS"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "S.metrics.reported",
+      "goals": [
+        "S"
+      ],
+      "title": "Scale metrics are measured and reported separately",
+      "statement": "At each rung and at 10m: bytes per entity and per fact, write amplification (ledger, projection, journal, indexes separately), history separately, ingest rate, cold and warm latency p50, p90, p95 and p99 per family (at least 10,000 observations per qualified population), rebuild or compaction time, restart time, peak RSS per resource owner and peak disk.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-SCALE-SAMPLE",
+        "select": "metrics"
+      },
+      "oracles": [
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-ENGINE-OBS",
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-METRICS"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "qualification/benchmark-contract.json measurements",
+        "handoffs/claude-native/README.md:123-127",
+        "lab/PLAN.md 3.5"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "0f8d93c8e8ab1ee92a932c4d4b1a8418c5de53732b5fd5feabe12c2638984ffc",
+      "needsNewOracle": [
+        "O-OBS"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "S.maintenance.correct-during",
+      "goals": [
+        "S",
+        "G8"
+      ],
+      "title": "Maintenance at 10m keeps reads correct",
+      "statement": "Compaction, index rebuild and projection maintenance at P-SCALE-10M complete, and reads during and after them equal O-REPLAY; their duration is recorded.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-SCALE-SAMPLE",
+        "select": "maintenance"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-SCALE"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "qualification/benchmark-contract.json separatePhases (maintenance)",
+        "lab/research/R2-qlever-capabilities.md 1.7"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "1e614fd0cc21dfaa1ce4eabce27a19a8f4544db14884da02027c6189ea3ac1c8",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "S.restart.at-scale",
+      "goals": [
+        "S",
+        "G7"
+      ],
+      "title": "Restart at 10m",
+      "statement": "An engine restart at P-SCALE-10M becomes available within the recorded time and every sampled old cut re-reads identically.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": {
+        "set": "CS-SCALE-SAMPLE",
+        "select": "restart"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-SCALE",
+          "CR-METRICS"
+        ],
+        "params": {}
+      },
+      "mutationControls": [],
+      "sources": [
+        "qualification/benchmark-contract.json separatePhases (restart)"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "d6257be5cda73f379e8ae3f8f26ce8e3d561e640fe1f1909770366614dfdb9c6",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "TO-AUTHOR"
+    },
+    {
+      "id": "S.packet.coresident",
+      "goals": [
+        "S",
+        "G3"
+      ],
+      "title": "The packet passes with the target dataset resident",
+      "statement": "PKT.full142 passes in a separate scope on the engine that holds the P-SCALE-10M dataset, so the packet's plans are qualified at target scale.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-PKT71",
+        "select": "all",
+        "executions": 142
+      },
+      "oracles": [
+        "O-EVT"
+      ],
+      "entrypoints": [
+        "EP-NATIVE"
+      ],
+      "profile": "P-SCALE-10M",
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL"
+        ],
+        "params": {
+          "modes": [
+            "current",
+            "reopen"
+          ],
+          "languagePurity": true
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:11 (no target-scale plan qualification)"
+      ],
+      "grounding": "derived",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "d3f6c9ff0c3758e5305d143a9e0c0fe3b004d354178b0aabf29810194b0a911c",
+      "needsNewOracle": [],
+      "caseSetStatus": "EXISTS"
+    },
+    {
+      "id": "L.calibration.frozen",
+      "goals": [
+        "L"
+      ],
+      "title": "The load contract is calibrated and frozen before acceptance",
+      "statement": "A create-only calibration receipt freezes the load-contract version hash and every CALIBRATE value, respecting every hard floor and ceiling, before any acceptance run; calibration runs never count as acceptance.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-LOAD",
+        "select": "calibration"
+      },
+      "oracles": [
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-WRITER"
+      ],
+      "profile": "P-LOAD",
+      "closure": {
+        "rules": [
+          "CR-LOAD"
+        ],
+        "params": {
+          "level": "calibration"
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "qualification/benchmark-contract.json calibration",
+        "lab/reviews/plan-review-r1.codex.md finding 2",
+        "lab/reviews/plan-review-r1.response.md decision 2"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "8c98484e1323b063b067a5a8071ec474b1ff43d6a0ff9c0c90ddc7abc85fe32b",
+      "needsNewOracle": [
+        "O-OBS"
+      ],
+      "caseSetStatus": "DRAFT"
+    },
+    {
+      "id": "L.accept.256",
+      "goals": [
+        "L"
+      ],
+      "title": "256 logical clients with steady writes at 10m",
+      "statement": "At 256 logical clients on the representative P-SCALE-10M dataset, with the writer floor, the frozen query mix and maintenance overlapping the window, three independent runs per lane each meet every threshold and invariant of load-contract.json.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-LOAD",
+        "select": "256"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-WRITER"
+      ],
+      "profile": "P-LOAD",
+      "closure": {
+        "rules": [
+          "CR-LOAD"
+        ],
+        "params": {
+          "level": 256,
+          "runs": 3
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:40-46",
+        "lab/PLAN.md 1 (done condition item 3)",
+        "lab/reviews/plan-review-r1.codex.md finding 2"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "7aceb549ee2b9a82618694dacd8d76ff1325b2f65ae791c72603f474dd183797",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "DRAFT"
+    },
+    {
+      "id": "L.stress.512",
+      "goals": [
+        "L"
+      ],
+      "title": "512-client stress under the frozen overload policy",
+      "statement": "At 512 logical clients the overload policy holds in three runs per lane: zero wrong answers, rejections typed and counted, the writer floor met, admitted correct goodput at or above the calibrated fraction of the 256 goodput, outstanding work within the pending limit.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-LOAD",
+        "select": "512"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-WRITER"
+      ],
+      "profile": "P-LOAD",
+      "closure": {
+        "rules": [
+          "CR-LOAD"
+        ],
+        "params": {
+          "level": 512,
+          "runs": 3
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:40-46",
+        "lab/PLAN.md 1"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "5670fa48836adede469c27fb2a6729e3c1d836f6172a6bc6af534b8a09a5f350",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "DRAFT"
+    },
+    {
+      "id": "L.stress.1024",
+      "goals": [
+        "L"
+      ],
+      "title": "1024-client stress under the frozen overload policy",
+      "statement": "The L.stress.512 conditions hold at 1024 logical clients in three runs per lane.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-LOAD",
+        "select": "1024"
+      },
+      "oracles": [
+        "O-REPLAY"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-WRITER"
+      ],
+      "profile": "P-LOAD",
+      "closure": {
+        "rules": [
+          "CR-LOAD"
+        ],
+        "params": {
+          "level": 1024,
+          "runs": 3
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "wiki/goals.md:40-46",
+        "lab/PLAN.md 1"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "c989387e1045f0011cf630d666f7ee3c3f99f475b92cff902dc30f96eed443b6",
+      "needsNewOracle": [
+        "O-REPLAY"
+      ],
+      "caseSetStatus": "DRAFT"
+    },
+    {
+      "id": "L.recovery.after-stress",
+      "goals": [
+        "L"
+      ],
+      "title": "The system recovers after stress",
+      "statement": "After each 1024 stress window, a 256 acceptance window that starts within the calibrated recovery window passes every L.accept.256 threshold, with zero outstanding work and connection counts and engine memory back within the calibrated band of their pre-stress baseline.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "lane",
+      "cases": {
+        "set": "CS-LOAD",
+        "select": "recovery"
+      },
+      "oracles": [
+        "O-REPLAY",
+        "O-OBS"
+      ],
+      "entrypoints": [
+        "EP-REPO",
+        "EP-NATIVE",
+        "EP-WRITER",
+        "EP-ENGINE-OBS"
+      ],
+      "profile": "P-LOAD",
+      "closure": {
+        "rules": [
+          "CR-LOAD"
+        ],
+        "params": {
+          "level": "recovery",
+          "runs": 3
+        }
+      },
+      "mutationControls": [],
+      "sources": [
+        "lab/reviews/plan-review-r1.codex.md finding 2 (recovery after stress)",
+        "lab/reviews/plan-review-r1.response.md decision 2"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "definitionSha256": "0e86a7a797a2dea6a6d3a4e28743aee987e25ee3e8009160c37d30174da66214",
+      "needsNewOracle": [
+        "O-REPLAY",
+        "O-OBS"
+      ],
+      "caseSetStatus": "DRAFT"
+    }
+  ]
+}

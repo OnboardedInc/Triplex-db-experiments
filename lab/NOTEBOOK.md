@@ -163,3 +163,19 @@ Result: PROGRESSED (knowledge). Nothing promoted; no lane gate has run.
 - EXP-R01 narrowed (skeleton, spec compiler, codec move); planner/repository behavior moved to EXP-R02 behind reviewed
   acceptance and golden vectors. Message sent to the running R01 agent.
 - Result: PROGRESSED. Plan phase complete; Codex round 4 diff check running in the background (non-blocking).
+
+## EXP-A01 acceptance contract (Opus high) — PROGRESSED (0.1.0-draft)
+- 88 obligations across G1-G10, R, S, L; all apply to all three surfaces (xtdb-xtql, xtdb-sql, qlever-sparql);
+  19 engine-scoped, 69 per lane; 3 policy-pending (G9 presence, deletion, cascade); 10 derived.
+- Only 6 obligations can close with oracles that exist today. O-REPLAY (independent Python event replay) is the
+  critical path for 33 case sets; O-SHAPE, O-ERR, O-OBS, O-SPEC still to author.
+- Surprises: the inherited rate16 writer floor is 0.2 commands/s total ("6/6 writers" = six commands); unchanged44
+  is Datalog-shaped and cannot stand in for native obligations; QLever has no conformance driver in this checkout;
+  xtdb-xtql needs 60 new XTQL packet recipes.
+- Orchestrator rulings (lab/acceptance/RULINGS.md): raw unrestricted exactness NOT required (handoff: raw SPARQL is
+  narrower; declared mapping + retained unsupported cases), but repository and supported fragments must be exact over
+  the full domain; a fixed load bar IS part of done (256 logical clients, 256 req/s offered, 25.6 commands/s,
+  goodput ≥ 0.99, p99 ≤ 1 s point / ≤ 5 s analytic, visibility p99 ≤ 2 s; stress retention ≥ 0.9, recovery ≤ 60 s);
+  sum overflow follows core (`compiler.ts:572`: exact DECIMAL sum, error only on final out-of-range).
+- Next: Codex acceptance review (running), EXP-O01 oracle and EXP-G01 golden vectors dispatched in parallel as two
+  independent derivations to cross-check each other.
