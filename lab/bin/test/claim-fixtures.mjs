@@ -1,13 +1,14 @@
-// One fixture set for claim admission, judged by two implementations (EXP-E01; Q42a "Counterexample fixtures"; Q47a to Q47c
-// "add each of Codex's counterexamples as a fixture"; Q41d: the generator's admit_claim is the reference model and
-// lab/bin/claim.mjs implements it as a minimum).
+// One fixture set for claim admission (EXP-E01), in the contract 0.3.7 receipt and record formats (EVIDENCE_SCHEMAS,
+// WORKLOAD_IDENTITY, A0_REGISTRY), plus the lab's run ledger and build provenance records.
 //
-// buildFixtures(root) writes small git repositories and one content-addressed object store under root and returns every
-// fixture: a claim plus the expected verdict. Each fixture is a complete positive claim with exactly one named defect, so a
-// DIAGNOSTIC can only come from that defect. Runs are simulated the way the harness must write them: the run binding is
-// computed when the run starts and written into every object the run produces.
+// buildFixtures(root) writes small git repositories and one content-addressed object store under root and returns:
+//   fixtures     document claims (each a complete positive claim with exactly one named defect), judged by the lab
+//                evaluator (claim.mjs admit) and by the contract's admit_claim (claim_ref.py)
+//   runFixtures  claims for claim.mjs qualify (RULINGS Q55a): the repositories hold a tiny buildable system under test
+//                (packages/xtdb), its build (lab/config/build.json), case inputs and manifests, and a pinned oracle, so the
+//                evaluator's own build, case resolution, oracle runs and comparator are exercised offline
 //
-//   node lab/bin/test/claim-fixtures.mjs [--keep DIR]   prints the fixture table (expected, proposed reference, lab) as Markdown
+//   node lab/bin/test/claim-fixtures.mjs [--keep DIR]   prints the document fixture table as Markdown
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -22,23 +23,32 @@ const REAL_LOAD = JSON.parse(real('lab/acceptance/load-contract.json'));
 const REAL_SLOTS = JSON.parse(real('lab/config/slots.json'));
 const OBL = new Map(REAL_CONTRACT.obligations.map(o => [o.id, o]));
 const SEED = 20261108;
-const T = { c1: '2026-11-07T12:00:00Z', c2: '2026-11-07T13:00:00Z', c3: '2026-11-07T13:30:00Z', run: '2026-11-07T14:00:00Z', end: '2026-11-07T14:20:00Z', beforeC2: '2026-11-07T12:30:00Z' };
+const T = { c1: '2026-11-07T12:00:00Z', c2: '2026-11-07T13:00:00Z', c3: '2026-11-07T13:30:00Z', c4: '2026-11-07T13:45:00Z' };
+const RUN_AT = Date.parse('2026-11-07T14:00:00Z') / 1000, BEFORE_C2 = Date.parse('2026-11-07T12:30:00Z') / 1000;
 const h = text => sha256(Buffer.from(text));
-const REGISTRY_PATH = 'lab/config/a0-registry.json';
 
-// ---------------------------------------------------------------- source files of the fixture repositories
+// ---------------------------------------------------------------- the fixture repositories' files
 
+const ORACLE_PY = `import json, sys
+case = json.loads(open(sys.argv[1], encoding="utf-8").read())
+if case.get("redeclareDecimal"):
+    sys.stderr.write("o-replay: malformed case: X-NOT-MODELED: redeclares a decimal (5,2) to (6,3)\\n")
+    sys.exit(2)
+sys.stdout.write(json.dumps({"next": case["p"] + 1}, sort_keys=True, separators=(",", ":")) + "\\n")
+`;
 const SRC = {
   'packages/xtdb/package.json': '{ "name": "@fixture/xtdb", "version": "0.0.0" }\n',
-  'packages/xtdb/src/index.ts': "export { nextCommitPosition } from './alloc.js';\n",
-  'packages/xtdb/src/alloc.ts': 'export const nextCommitPosition = (p: number) => p + 1; // v1 (A0)\n',
+  'packages/xtdb/src/index.ts': "export { nextCommitPosition } from './alloc.mjs';\n",
+  'packages/xtdb/src/alloc.ts': 'export const nextCommitPosition = p => p + 1; // v1 (A0)\n',
+  'packages/xtdb/src/run.ts': "import fs from 'node:fs';\nimport { nextCommitPosition } from './alloc.mjs';\nconst c = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));\nprocess.stdout.write(JSON.stringify({ next: nextCommitPosition(c.p) }) + '\\n');\n",
+  'test/helper/package.json': '{ "name": "@fixture/helper", "version": "0.0.0" }\n',
+  'build.mjs': "import fs from 'node:fs';\nfs.mkdirSync('packages/xtdb/dist', { recursive: true });\nfor (const f of fs.readdirSync('packages/xtdb/src')) fs.writeFileSync(`packages/xtdb/dist/${f.replace(/\\.ts$/, '.mjs')}`, fs.readFileSync(`packages/xtdb/src/${f}`));\n",
+  'lab/config/build.json': JSON.stringify({ argv: ['node', 'build.mjs'], outputs: ['packages/xtdb/dist'], run: ['node', 'packages/xtdb/dist/run.mjs', '{case}'] }, null, 2) + '\n',
   'lab/bin/position.mjs': '// position falsifier driver (fixture)\n',
   'lab/bin/ns.mjs': '// north-star driver (fixture)\n',
-  'lab/bin/verify.mjs': '// verifier (fixture)\n',
-  'lab/bench/trace.mjs': '// frozen writer-trace generator (fixture)\n',
   'pnpm-lock.yaml': "lockfileVersion: '9.0'\npackages:\n  effect@3.10.0:\n    resolution: {integrity: sha512-fixture}\n",
-  'test/helper/package.json': '{ "name": "@fixture/helper", "version": "0.0.0" }\n',
-  'lab/oracles/replay/replay.py': '# O-REPLAY (fixture)\n',
+  'lab/oracles/replay/cli.py': ORACLE_PY,
+  'lab/oracles/contract/cli.py': ORACLE_PY,
   'lab/oracles/obs/obs.py': '# O-OBS (fixture)\n',
   'lab/oracles/domain/domain.py': '# O-DOMAIN (fixture)\n',
   'lab/oracles/hand/hand.json': '{}\n',
@@ -49,46 +59,47 @@ const SRC = {
   'lab/world/W0/schema.json': '{}\n',
   'lab/world/W0/cases/c1.json': '{"case":1}\n',
 };
-const ALLOC_V2 = 'export const nextCommitPosition = (p: number) => p + 1; // v2 candidate: nested transacts share one offset\n';
+const ALLOC_V2 = 'export const nextCommitPosition = p => p + 1; // v2 candidate: nested transacts share one offset\n';
+const ALLOC_WRONG = 'export const nextCommitPosition = p => p + 2; // a candidate that skips a position\n';
 
-// ---------------------------------------------------------------- pinned case manifests (Q47c)
+// ---------------------------------------------------------------- pinned case manifests with inputs (Q47c, Q55a)
 
 const EXTRA_CASES = { 'CS-GS': ['GS-05-SCENARIO'], 'CS-MIGRATION': ['MIG-ADD-ATTRIBUTE', 'MIG-DECIMAL-5-2-TO-6-3'] };
 const tagsFor = (set, id) => set === 'CS-POSITION' ? (id.startsWith('FX-') ? ['falsifiers'] : id === 'PO-NESTED-CUTS-DENSE' ? ['ordering', 'dense'] : ['ordering'])
   : set === 'CS-COMPOSITION' ? (['CO-RECEIPT-BINDS-ALL', 'CO-SCOPE-KEY-FROM-ASSIGNMENT'].includes(id) ? ['identity'] : ['watermark'])
     : set === 'CS-NS' ? [`p${id[4]}`] : set === 'CS-GS' ? [id.slice(0, 5)] : set === 'CS-MIGRATION' ? ['valid-writes'] : [];
 export const MANIFEST_SETS = ['CS-POSITION', 'CS-COMPOSITION', 'CS-W0-COVERAGE', 'CS-NS', 'CS-GS', 'CS-MIGRATION'];
+const inputText = (set, id, i) => JSON.stringify({ case: `${set}/${id}`, p: 40 + i, ...(id === 'MIG-DECIMAL-5-2-TO-6-3' ? { redeclareDecimal: true } : {}) }) + '\n';
 export function caseManifest(set) {
   const ids = [...REAL_CONTRACT.caseSets[set].requiredCases, ...(EXTRA_CASES[set] ?? [])];
-  return { format: FORMATS.caseManifest, set, cases: ids.map(id => ({ id, tags: tagsFor(set, id), contentSha256: h(`case ${set}/${id}`), comparator: set === 'CS-POSITION' ? 'CMP-ORDERED-ROWS' : 'CMP-EXACT-VALUE', ...(id === 'FX-CRASH-APPEND-RESOLUTION' ? { faultPoint: true } : {}) })) };
+  return { format: 'triplex-db-2/case-manifest/1', set, cases: ids.map((id, i) => ({ id, tags: tagsFor(set, id), input: `lab/acceptance/cases/inputs/${set}/${id}.json`, contentSha256: h(inputText(set, id, i)),
+    comparator: 'CMP-EXACT-VALUE', ...(set === 'CS-COMPOSITION' ? { oracle: 'O-CONTRACT' } : {}), ...(id === 'FX-CRASH-APPEND-RESOLUTION' ? { faultPoint: true } : {}) })) };
 }
 const manifestText = set => JSON.stringify(caseManifest(set), null, 2) + '\n';
 
-function contractVariant(variant, registrySha) {
+function contractVariant(variant, { a0Commit, a0Label, verified } = {}) {
   const c = structuredClone(REAL_CONTRACT);
-  if (variant === 'real') return c; // contract 0.3.6 exactly as compiled on main
+  if (variant === 'real') return c; // contract 0.3.7 exactly as compiled on main
   const filePin = (dir, file) => ({ files: `${dir}/`, sha256: { [file]: h(SRC[file]) }, acceptReceipt: 'FIXTURE-ACCEPT', acceptedAfter: 'fixture', rule: 'fixture pin' });
-  c.oraclePins['O-REPLAY'] = { ...c.oraclePins['O-REPLAY'], sha256: listingHash([['lab/oracles/replay/replay.py', h(SRC['lab/oracles/replay/replay.py'])]]), acceptReceipt: variant === 'null' ? null : 'FIXTURE-V-O03' };
-  if (variant === 'null') c.oraclePins['O-REPLAY'].sha256 = null;
+  c.oraclePins['O-REPLAY'] = { ...c.oraclePins['O-REPLAY'], sha256: { 'lab/oracles/replay/cli.py': h(ORACLE_PY) }, acceptReceipt: variant === 'null' ? null : 'FIXTURE-V-O03' };
   c.oraclePins['O-OBS'] = filePin('lab/oracles/obs', 'lab/oracles/obs/obs.py');
   c.oraclePins['O-DOMAIN'] = filePin('lab/oracles/domain', 'lab/oracles/domain/domain.py');
   c.oraclePins['O-HAND'] = filePin('lab/oracles/hand', 'lab/oracles/hand/hand.json');
   for (const set of MANIFEST_SETS) c.caseSets[set] = { ...c.caseSets[set], manifestSha256: h(manifestText(set)) };
-  // Proposed field (question to the orchestrator): the frozen A0 registry the contract pins (Q46b, Q47b).
-  if (registrySha && variant !== 'noreg') c.a0Registry = { path: REGISTRY_PATH, sha256: registrySha };
-  if (variant === 'w0') {
-    const w = f => h(SRC[f]);
-    c.w0Pin = { ...c.w0Pin, reviewReceipt: 'FIXTURE-V-D01', deltaCheck: 'FIXTURE-DELTA', oDomainFingerprint: 'f'.repeat(64), files: {
-      'lab/world/W0/SPEC.md': w('lab/world/W0/SPEC.md'), 'lab/world/W0/releases/R1.json': w('lab/world/W0/releases/R1.json'), 'lab/world/W0/releases/R2.json': w('lab/world/W0/releases/R2.json'),
-      'lab/world/W0/releases/R3.json': w('lab/world/W0/releases/R3.json'), 'lab/world/W0/schema.json': w('lab/world/W0/schema.json'),
-      'lab/world/W0/cases/': listingHash([['lab/world/W0/cases/c1.json', w('lab/world/W0/cases/c1.json')]]) } };
-  }
+  // Proposed fields (questions to the orchestrator): how each oracle is invoked, and the verifier registry (Q55a).
+  c.oracleRunners = { 'O-CONTRACT': { argv: ['python3', '-I', 'lab/oracles/contract/cli.py', '{case}'], files: ['lab/oracles/contract/cli.py'] } };
+  c.verifierRegistry = { entries: (verified ?? []).map(commit => ({ verifier: 'V-FIXTURE', briefSha256: h(`brief ${commit}`), branch: 'verify/fixture', commit, verdict: 'ACCEPT' })) };
+  if (a0Commit && variant !== 'noreg') c.a0Registry = { ...c.a0Registry, entries: { ...c.a0Registry.entries, 'A0-XTDB': { commit: a0Commit, sourceTreeSha256: a0Label, composition: A0, measuredBy: 'FIXTURE-N01' } } };
+  if (variant === 'w0') c.w0Pin = { ...c.w0Pin, reviewReceipt: 'FIXTURE-V-D01', deltaCheck: 'FIXTURE-DELTA', oDomainFingerprint: 'f'.repeat(64),
+    // The fixture's own W0 files (the real pin lists W0-1.1.1's 95 files), plus a directory pin of its cases.
+    files: { ...Object.fromEntries(Object.keys(SRC).filter(f => f.startsWith('lab/world/W0/') && !f.startsWith('lab/world/W0/cases/')).map(f => [f, h(SRC[f])])),
+      'lab/world/W0/cases/': listingHash([['lab/world/W0/cases/c1.json', h(SRC['lab/world/W0/cases/c1.json'])]]) } };
   return c;
 }
 function loadVariant(variant) {
   // Proposed field (question to the orchestrator): load-contract.json pins no frozen generator, seed or offer schedule yet.
   const l = structuredClone(REAL_LOAD);
-  if (variant !== 'real') l.writerTrace.generator.frozen = { path: 'lab/bench/trace.mjs', sha256: h(SRC['lab/bench/trace.mjs']), seed: SEED, offerScheduleSha256: h(`schedule ${SEED}`) };
+  if (variant !== 'real') l.writerTrace.generator.frozen = { sha256: WORKLOAD.generatorSourceSha256, seed: SEED, offerScheduleSha256: WORKLOAD.offerScheduleSha256 };
   return l;
 }
 
@@ -98,6 +109,7 @@ export const composition = (sourceEngine, currentEngine, slot = 'dev') => {
 };
 export const CANDIDATE = composition('xtdb', 'qlever');
 export const A0 = composition('xtdb', 'xtdb');
+const WORKLOAD = { generatorSourceSha256: h('frozen trace generator'), seed: SEED, offerScheduleSha256: h(`schedule ${SEED}`), window: [120, 720], slot: 'dev' };
 
 function makeRepo(dir, variant) {
   fs.mkdirSync(dir, { recursive: true });
@@ -106,31 +118,31 @@ function makeRepo(dir, variant) {
     { cwd: dir, env: date ? { ...env, GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date } : env, encoding: 'utf8' }).trim();
   const write = (file, text) => { fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true }); fs.writeFileSync(path.join(dir, file), text); };
   const snapshot = () => Object.fromEntries(git(['ls-files']).split('\n').filter(Boolean).map(f => [f, fs.readFileSync(path.join(dir, f), 'utf8')]));
-  const commit = (message, date) => { git(['add', '-A']); git(['commit', '-q', '-m', message], date); const tree = git(['rev-parse', 'HEAD^{tree}']); return { commit: git(['rev-parse', 'HEAD']), tree, label: sourceTreeIdOf(tree), date, files: snapshot() }; };
-  const writeContract = registrySha => {
-    write('lab/acceptance/obligations.json', JSON.stringify(contractVariant(variant, registrySha), null, 2) + '\n');
-    write('lab/acceptance/load-contract.json', JSON.stringify(loadVariant(variant), null, 2) + '\n');
-  };
+  const commit = (message, date) => { git(['add', '-A']); git(['commit', '-q', '-m', message], date); const tree = git(['rev-parse', 'HEAD^{tree}']); return { commit: git(['rev-parse', 'HEAD']), tree, label: sourceTreeIdOf(tree), date, time: Date.parse(date) / 1000, files: snapshot() }; };
+  const writeContract = opts => { write('lab/acceptance/obligations.json', JSON.stringify(contractVariant(variant, opts), null, 2) + '\n'); write('lab/acceptance/load-contract.json', JSON.stringify(loadVariant(variant), null, 2) + '\n'); };
   git(['init', '-q', '-b', 'main']);
   for (const [f, t] of Object.entries(SRC)) write(f, t);
-  for (const set of MANIFEST_SETS) write(`lab/acceptance/cases/${set}.json`, manifestText(set));
+  for (const set of MANIFEST_SETS) { write(`lab/acceptance/cases/${set}.json`, manifestText(set)); caseManifest(set).cases.forEach((c, i) => write(c.input, inputText(set, c.id, i))); }
   write('lab/config/slots.json', JSON.stringify(REAL_SLOTS, null, 2) + '\n');
-  writeContract(null);
+  writeContract({});
   const C1 = commit('C1: A0 (allocator v1)', T.c1);
-  // The frozen A0 registry names C1; the contract at C2 pins the registry file.
-  const registry = JSON.stringify({ format: FORMATS.a0Registry, controls: { 'A0-XTDB': { commit: C1.commit, tree: C1.tree, composition: A0 } } }, null, 2) + '\n';
-  write(REGISTRY_PATH, registry);
   write('packages/xtdb/src/alloc.ts', ALLOC_V2);
-  writeContract(h(registry));
-  const C2 = commit('C2: candidate (allocator v2), A0 registry pinned', T.c2);
+  writeContract({ a0Commit: C1.commit, a0Label: C1.label });
+  const C2 = commit('C2: candidate (allocator v2); A0 registered', T.c2);
   const out = { dir, variant, C1, C2 };
-  const branch = (name, edit) => { git(['checkout', '-q', '-b', name]); edit(); out[name.toUpperCase()] = commit(name, T.c3); git(['checkout', '-q', 'main']); };
-  if (variant === 'null') branch('rogue', () => write('lab/acceptance/obligations.json', JSON.stringify(contractVariant('pinned', h(registry)), null, 2) + '\n'));
+  const branch = (name, edit, date = T.c3) => { git(['checkout', '-q', '-b', name]); edit(); out[name.toUpperCase()] = commit(name, date); git(['checkout', '-q', 'main']); };
+  if (variant === 'null') branch('rogue', () => write('lab/acceptance/obligations.json', JSON.stringify(contractVariant('pinned', { a0Commit: C1.commit, a0Label: C1.label }), null, 2) + '\n'));
   if (variant === 'pinned') branch('drift', () => write('lab/oracles/obs/obs.py', '# O-OBS (fixture), edited after the pin\n'));
+  if (variant === 'run') {
+    // A wrong candidate on a branch, then a reviewed contract version on main that registers both verifications (Q55a).
+    branch('wrong', () => write('packages/xtdb/src/alloc.ts', ALLOC_WRONG));
+    writeContract({ a0Commit: C1.commit, a0Label: C1.label, verified: [C2.commit, out.WRONG.commit] });
+    out.C3 = commit('C3: contract registers verifications of C2 and wrong', T.c4);
+  }
   return out;
 }
 
-// ---------------------------------------------------------------- object store and simulated runs
+// ---------------------------------------------------------------- object store and simulated documents
 
 function store(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -144,85 +156,59 @@ function store(dir) {
   return { dir, put, corrupt: digest => { const f = path.join(dir, digest); fs.writeFileSync(f, Buffer.concat([fs.readFileSync(f), Buffer.from(' ')])); } };
 }
 
-const answer = (comparator, caseId) => comparator === 'CMP-ORDERED-ROWS' ? JSON.stringify([{ case: caseId, ordinal: 1 }, { case: caseId, ordinal: 2 }]) : JSON.stringify({ t: 'text', v: `ok ${caseId}` });
-
 /**
- * Simulate one run and return its receipt. o.at is the commit the run really happened at; o.label the source label it
- * claims; o.edit(receipt) mutates the receipt after the run (a relabelling attack: the objects keep the original binding).
+ * Simulate one run's document. o.at is the commit the code came from; o.tree the source label recorded (default the code's);
+ * o.edit(receipt) mutates the receipt after its run (a relabelling attack: ledger and provenance keep the original binding).
  */
-function run(S, o) {
+function run(S, o, homes) {
   const ob = OBL.get(o.obligation), at = o.at, id = o.id;
-  const verifier = !!o.verifies;
-  const entry = verifier ? 'lab/bin/verify.mjs' : o.ns ? 'lab/bin/ns.mjs' : 'lab/bin/position.mjs';
-  const modes = o.modes ?? ob.closure.modes;
+  const side = o.side ?? 'candidate';
+  const code = side === 'A0' ? homes.a0 : at; // the code the run executed (A0 runs execute the registry's commit)
+  const tree = o.tree ?? code.label;
   const r = {
-    format: FORMATS.receipt, receiptId: id, runKind: o.runKind ?? 'acceptance', profile: o.profile ?? ob.profiles[0],
-    contract: o.contract ?? { version: REAL_CONTRACT.version, transitiveSha256: REAL_CONTRACT.transitiveContractSha256 },
-    obligations: [{ id: ob.id, definitionSha256: ob.definitionSha256 }],
-    composition: structuredClone(o.composition), git: { commit: at.commit, tree: at.tree },
-    profileIdentity: { sourceTreeSha256: (o.label ?? at).label, lockfileSha256: h(at.files['pnpm-lock.yaml']), node: 'v22.23.2', pnpm: '10.0.0' },
-    endpoint: { contacted: [o.endpoint ?? 'http://127.0.0.1:18123'], expected: [o.endpoint ?? 'http://127.0.0.1:18123'] },
-    admission: { reservationId: `res-${id}`, status: o.admission ?? 'ADMITTED' }, coRunners: [], timing: { start: o.start ?? T.run, end: T.end },
-    producer: { tool: 'lab/bin/gate.mjs', agentRole: verifier ? 'verifier' : 'coding', agentId: o.agentId ?? (verifier ? 'agent-verifier' : 'agent-harness'), ...(o.noAuthors ? {} : { authorsOfCodeUnderTest: ['agent-candidate-author'] }) },
+    format: FORMATS.receipt, receiptId: id, runKind: o.runKind ?? 'acceptance', profile: o.profile ?? ob.profiles[0], role: o.role ?? 'prerequisite',
+    obligation: ob.id, definitionSha256: ob.definitionSha256, sourceTreeSha256: tree, composition: structuredClone(o.composition), commit: o.commit ?? homes.claim.commit,
+    producedAt: o.producedAt ?? RUN_AT, contract: o.contract ?? { version: REAL_CONTRACT.version, transitiveSha256: REAL_CONTRACT.transitiveContractSha256 },
+    endpoint: { contacted: [o.endpoint ?? 'http://127.0.0.1:18123'], expected: [o.endpoint ?? 'http://127.0.0.1:18123'] }, admission: { reservationId: `res-${id}`, status: o.admission ?? 'ADMITTED' },
+    producer: { tool: 'lab/bin/gate.mjs', agentId: 'agent-harness', ...(o.noAuthors ? {} : { authorsOfCodeUnderTest: ['agent-candidate-author'] }) },
+    profileIdentity: { lockfileSha256: h(code.files['pnpm-lock.yaml']), node: 'v22.23.2', pnpm: '10.0.0' },
+    modes: o.modes ?? ob.closure.modes, faultReps: o.faultReps ?? 3,
   };
-  const binding = bindingOf(r);
-  const evidence = [];
-  const resolved = ob.cases.flatMap(sel => { const m = caseManifest(sel.set); return m.cases.filter(c => sel.select.some(t => t === 'all' || t === c.id || c.tags.includes(t))).map(c => ({ set: sel.set, ...c })); })
-    .filter((c, i, all) => all.findIndex(x => x.set === c.set && x.id === c.id) === i);
-  // A verifier shows its own work (VV3): a full rerun in rerun mode, one spot case in re-evaluate-and-spot mode.
-  const toRun = !verifier ? resolved : o.noRerun ? [] : ob.verifierMode === 'rerun' ? resolved : resolved.slice(0, 1);
-  for (const c of toRun) {
-    if ((o.omitCases ?? []).includes(c.id)) continue;
-    S.put(`case ${c.set}/${c.id}`);
-    const attempts = (o.failFirst ?? []).includes(c.id) ? [true, false] : [false];
-    for (const mode of modes) for (const failed of attempts) {
-      const refused = (o.refuse ?? []).includes(c.id);
-      const raw = (o.answers ?? {})[c.id];
-      const bytes = x => Buffer.isBuffer(x) ? x : Buffer.from(x);
-      const expected = S.put(raw ? bytes(raw[0]) : answer(c.comparator, c.id));
-      const observed = raw ? S.put(bytes(raw[1])) : (o.wrong ?? {})[c.id] || failed ? S.put(JSON.stringify({ t: 'text', v: `wrong ${c.id}` })) : expected;
-      const verdict = failed ? 'FAIL' : (o.wrong ?? {})[c.id] ?? 'PASS';
-      const oracleRun = S.put({ format: FORMATS.oracleRun, binding, oracleId: ob.oracles[0], caseSet: c.set, caseId: c.id, caseSha256: c.contentSha256, exit: refused ? 2 : 0, refusal: refused ? 'X-NOT-MODELED' : null, expectedObject: expected });
-      const obj = S.put({ format: FORMATS.caseResult, binding, caseSet: c.set, caseId: c.id, caseSha256: c.contentSha256, mode, verdict, comparator: c.comparator, rawResultObject: observed, oracleRunObject: oracleRun });
-      evidence.push({ kind: 'case-result', caseSet: c.set, caseId: c.id, mode, verdict, objectSha256: obj });
-    }
-    if (c.faultPoint && !verifier) {
-      const n = o.faultReps ?? 3;
-      const injections = Array.from({ length: n }, (_, i) => ({ t: i, durableEvidenceObject: S.put(`durable ${id} ${o.repeatInjection ? 0 : i}`) }));
-      evidence.push({ kind: 'fault-witness', objectSha256: S.put({ format: FORMATS.faultWitness, binding, caseSet: c.set, caseId: c.id, injections }) });
-    }
-  }
-  if (o.ns) {
-    const seed = o.ns.seed ?? SEED;
-    const trace = o.ns.noWorkload ? undefined : { generatorPath: 'lab/bench/trace.mjs', generatorSourceSha256: h(SRC['lab/bench/trace.mjs']), seed, offerScheduleSha256: S.put(`schedule ${seed}`) };
-    const windows = o.ns.noWorkload ? undefined : o.ns.windows ?? [{ from: 120, to: 720, burstPhase: 'steady-and-burst' }];
-    evidence.push({ kind: 'ns-run', objectSha256: S.put({ format: FORMATS.nsRun, binding, measurement: o.ns.measurement, slot: { name: o.composition.source.slot, host: 'colima-triplex2' }, ...(trace ? { trace } : {}), ...(windows ? { windows } : {}), rawEventsObject: S.put(`events ${id}`) }) });
-    if (o.ns.secondWindow) evidence.push({ kind: 'ns-run', objectSha256: S.put({ format: FORMATS.nsRun, binding, measurement: o.ns.measurement, slot: { name: o.composition.source.slot, host: 'colima-triplex2' }, trace, windows: [o.ns.secondWindow], rawEventsObject: S.put(`events ${id} 2`) }) });
-  }
-  if (verifier) {
-    const verdicts = o.verifies.flatMap(v => v.evidence.filter(e => e.kind === 'case-result').map(e => ({ receiptId: v.receiptId, caseSet: e.caseSet, caseId: e.caseId, mode: e.mode, verdict: 'PASS' })));
-    const record = o.notAVerifierRecord ? { notAVerifierRecord: true } : { format: FORMATS.verifierRecord, binding, verifies: o.verifies.map(v => ({ receiptId: v.receiptId, binding: bindingOf(v) })), mode: ob.verifierMode, mismatches: [], spotRerunReceiptIds: o.spotIds ?? [id],
-      recomputedVerdictsObject: S.put({ format: FORMATS.recomputedVerdicts, binding, verdicts }) };
-    evidence.push({ kind: 'verifier-record', objectSha256: S.put(record) });
-  }
-  // The build/import manifest of this run: every executed module retained (Q47a) unless the fixture says otherwise.
-  const from = o.builtFrom ?? at;
+  if (r.role !== 'prerequisite') r.workload = o.workload === undefined ? structuredClone(WORKLOAD) : o.workload;
+  if (r.workload === null) delete r.workload;
+  // The build manifest (build-manifest/1, exactly) and the lab's provenance record.
+  const from = o.builtFrom ?? code;
   const pkgFiles = Object.keys(from.files).filter(f => f.startsWith('packages/xtdb/')).sort();
-  const outputs = pkgFiles.filter(f => f.endsWith('.ts')).map(f => ({ path: f.replace('/src/', '/dist/').replace(/\.ts$/, '.js'), bytes: `compiled ${from.files[f]}` }));
-  const modules = [{ path: entry, bytes: at.files[entry], origin: 'tree' }, ...outputs.map(x => ({ ...x, origin: 'build', build: 'xtdb' })), { path: 'node_modules/effect/dist/index.js', bytes: 'effect', origin: 'dependency' }, ...(o.extraModules ?? [])]
-    .map(x => ({ path: x.path, sha256: x.retain === false ? h(x.bytes) : S.put(x.bytes), origin: x.origin, ...(x.build ? { build: x.build } : {}) }));
-  const narrow = o.narrowRoots;
-  const build = { id: 'xtdb', package: 'packages/xtdb', sourceRoots: narrow ? ['packages/xtdb/package.json'] : ['packages/xtdb'],
-    inputs: (narrow ? ['packages/xtdb/package.json'] : pkgFiles.filter(f => !(o.dropInput && f.endsWith('alloc.ts')))).map(f => ({ path: f, sha256: h(from.files[f]) })),
+  const outputs = pkgFiles.filter(f => f.endsWith('.ts')).map(f => ({ path: f.replace('/src/', '/dist/').replace(/\.ts$/, '.mjs'), bytes: from.files[f] }));
+  const harness = side === 'A0' ? 'lab/bin/ns.mjs' : 'lab/bin/position.mjs';
+  const mods = [{ path: harness, bytes: homes.claim.files[harness], origin: 'harness' }, ...outputs.map(x => ({ ...x, origin: 'build', build: 'xtdb' })),
+    { path: 'node_modules/effect/dist/index.js', bytes: 'effect', origin: 'dependency' }, ...(o.extraModules ?? [])]
+    .map(x => ({ ...x, sha256: x.retain === false ? h(x.bytes) : S.put(x.bytes) }));
+  const modules = mods.map(x => ({ path: x.path, sha256: x.sha256 }));
+  const binary = o.binaryNotRetained ? h(`unretained ${id}`) : S.put(listingHash(modules.map(x => [x.path, x.sha256])) + ` ${id}`);
+  r.buildManifestSha256 = S.put({ schema: 'build-manifest/1', sourceTreeSha256: tree, binarySha256: binary, modules });
+  r.executedBinarySha256 = binary;
+  const build = { id: 'xtdb', package: 'packages/xtdb', sourceRoots: o.narrowRoots ? ['packages/xtdb/package.json'] : ['packages/xtdb'],
+    inputs: (o.narrowRoots ? ['packages/xtdb/package.json'] : pkgFiles.filter(f => !(o.dropInput && f.endsWith('alloc.ts')))).map(f => ({ path: f, sha256: h(from.files[f]) })),
     outputs: outputs.map(x => ({ path: x.path, sha256: h(x.bytes) })) };
-  const binarySha256 = listingHash(modules.map(x => [x.path, x.sha256]));
-  r.profileIdentity.buildManifestSha256 = S.put({ format: FORMATS.manifest, binding, commit: at.commit, tree: at.tree, sourceTreeSha256: (o.label ?? at).label, entrypoints: [entry], modules, builds: [build], lockfileSha256: h(at.files['pnpm-lock.yaml']), binarySha256 });
-  r.profileIdentity.executedBinarySha256 = binarySha256;
-  const cases = evidence.filter(e => e.kind === 'case-result').length;
-  r.counts = { declared: verifier ? cases : resolved.length * ob.closure.modes.length, executed: cases, skipped: o.skipped ?? 0, unsupported: 0, notImplemented: 0, unexpectedErrors: o.unexpectedErrors ?? 0 };
-  r.evidence = evidence;
-  // The run ledger, written when the run ends: every evidence object, the counts and the end time.
-  r.ledgerSha256 = S.put({ format: FORMATS.runLedger, binding, evidence: evidence.map(e => ({ kind: e.kind, objectSha256: e.objectSha256 })), counts: r.counts, end: r.timing.end });
+  // Case records (case-result/1, exactly): one per resolved case and select entry it covers.
+  const resolved = ob.cases.flatMap(sel => sel.select.flatMap(t => { const m = caseManifest(sel.set); const hits = m.cases.filter(c => t === 'all' || c.id === t || c.tags.includes(t)); return ob.id === 'G7.position.coordinates' || !hits.length ? [{ id: t, selection: t }] : hits.map(c => ({ id: c.id, selection: t })); }));
+  const caseResults = [];
+  for (const c of [...resolved, ...(o.extraCases ?? [])]) {
+    if ((o.omitCases ?? []).includes(c.id)) continue;
+    const expected = S.put(`expected ${id} ${c.id}`);
+    const observed = (o.wrong ?? []).includes(c.id) ? S.put(`wrong ${id} ${c.id}`) : expected;
+    const refused = (o.refuse ?? []).includes(c.id);
+    const rec = { schema: 'case-result/1', obligation: ob.id, case: c.id, selection: c.selection, oracle: c.oracle ?? (ob.oracles[0] ?? 'none'), oracleExit: refused ? 2 : 0, oracleCode: refused ? 'X-NOT-MODELED' : null, expectedSha256: expected, observedSha256: observed };
+    caseResults.push({ case: c.id, selection: c.selection, verdict: (o.label ?? {})[c.id] ?? 'PASS', objectSha256: S.put(rec) });
+    if ((o.failFirst ?? []).includes(c.id)) caseResults.push({ case: c.id, selection: c.selection, verdict: 'FAIL', objectSha256: S.put({ ...rec, observedSha256: S.put(`wrong ${id} ${c.id}`) }) });
+  }
+  r.caseResults = caseResults;
+  r.verifierObjectSha256 = o.notAVerifierRecord ? S.put({ notAVerifierRecord: true }) : S.put({ schema: 'verifier-record/1', obligation: o.verifierFor ?? ob.id, definitionSha256: OBL.get(o.verifierFor ?? ob.id).definitionSha256, verifier: o.verifier ?? 'V-FIXTURE', verdict: 'ACCEPT' });
+  r.counts = { declared: caseResults.length, executed: caseResults.length, skipped: o.skipped ?? 0, unsupported: 0, notImplemented: 0, unexpectedErrors: o.unexpectedErrors ?? 0 };
+  const binding = bindingOf(r);
+  r.profileIdentity.buildProvenanceSha256 = S.put({ schema: FORMATS.provenance, binding, manifestSha256: r.buildManifestSha256, origins: mods.map(x => ({ path: x.path, origin: x.origin, ...(x.build ? { build: x.build } : {}) })), builds: [build] });
+  r.ledgerSha256 = S.put({ schema: FORMATS.ledger, binding, caseResults, counts: r.counts, modes: r.modes, faultReps: r.faultReps, objects: [...new Set([r.buildManifestSha256, binary, r.profileIdentity.buildProvenanceSha256, ...caseResults.map(x => x.objectSha256)])] });
   if (o.edit) o.edit(r);
   return r;
 }
@@ -231,176 +217,148 @@ function run(S, o) {
 
 export function buildFixtures(root) {
   fs.mkdirSync(root, { recursive: true });
-  const repos = Object.fromEntries(['real', 'null', 'noreg', 'pinned', 'w0'].map(v => [v, makeRepo(path.join(root, `repo-${v}`), v)]));
+  const repos = Object.fromEntries(['real', 'null', 'noreg', 'pinned', 'w0', 'run'].map(v => [v, makeRepo(path.join(root, `repo-${v}`), v)]));
   const S = store(path.join(root, 'objects'));
   const fixtures = [];
 
-  /**
-   * The complete positive claim: prerequisites for the candidate (at C2) and the registry's A0 (at C1), the claimed
-   * obligation's measurement and its A0 control, and an independent verifier receipt for every one of them.
-   */
-  function complete(fx, { variant = 'pinned', at, obligation = 'NS.P2', kind = 'comparative', tweak = {}, candidate = CANDIDATE, a0 = A0, a0At, drop = [], refuseAll } = {}) {
+  /** The complete positive document: prerequisites for the candidate and for the registry's A0, the claimed obligation's
+   * measurement and its A0 control (both run at the claimed commit; A0 runs the registry's code), workload identity on both. */
+  function complete(fx, { variant = 'pinned', at, obligation = 'NS.P2', kind = 'comparative', tweak = {}, candidate = CANDIDATE, a0 = A0, drop = [], refuseAll } = {}) {
     const R = repos[variant];
-    at ??= R.C2; a0At ??= R.C1;
+    at ??= R.C2;
+    const homes = { claim: at, a0: R.C1 };
     const ob = OBL.get(obligation);
     const measured = ob.closure.rules.some(x => x === 'CR-NS' || x === 'CR-GS');
-    const ns = measured ? { measurement: ob.closure.params.evidenceMeasurement ?? obligation.replace(/^NS\./, '') } : undefined;
     const promo = kind === 'promotion';
-    const mk = (key, o) => run(S, { ...o, ...(tweak[key] ?? {}), id: `${fx}:${key}` });
+    const mk = (key, o) => run(S, { at, ...o, ...(tweak[key] ?? {}), id: `${fx}:${key}` }, homes);
     const plan = [
-      ['pos-cand', { obligation: 'G7.position.coordinates', composition: candidate, at }],
-      ['id-cand', { obligation: 'G10.composition.identity-bound', composition: candidate, at }],
-      ...(ob.oracles.includes('O-DOMAIN') ? [['w0-cand', { obligation: 'W0.coverage-floors', composition: candidate, at }]] : []),
-      ['meas', { obligation, composition: candidate, at, runKind: promo ? 'acceptance' : 'candidate', profile: promo ? ob.profiles.at(-1) : measured ? 'P-SCREEN' : ob.profiles[0], ns, refuse: refuseAll }],
-      ['pos-a0', { obligation: 'G7.position.coordinates', composition: a0, at: a0At }],
-      ['id-a0', { obligation: 'G10.composition.identity-bound', composition: a0, at: a0At }],
-      ['ctrl', { obligation, composition: a0, at: a0At, runKind: promo ? 'acceptance' : 'control', profile: promo ? ob.profiles.at(-1) : measured ? 'P-SCREEN' : ob.profiles[0], ns, refuse: refuseAll }],
+      ['pos-cand', { obligation: 'G7.position.coordinates', composition: candidate }],
+      ['id-cand', { obligation: 'G10.composition.identity-bound', composition: candidate }],
+      ...(ob.oracles.includes('O-DOMAIN') ? [['w0-cand', { obligation: 'W0.coverage-floors', composition: candidate }]] : []),
+      ['meas', { obligation, composition: candidate, role: 'measurement', runKind: promo ? 'acceptance' : 'candidate', profile: promo ? ob.profiles.at(-1) : measured ? 'P-SCREEN' : ob.profiles[0], refuse: refuseAll }],
+      ['pos-a0', { obligation: 'G7.position.coordinates', composition: a0, side: 'A0' }],
+      ['id-a0', { obligation: 'G10.composition.identity-bound', composition: a0, side: 'A0' }],
+      ['ctrl', { obligation, composition: a0, side: 'A0', role: 'control', runKind: promo ? 'acceptance' : 'control', profile: promo ? ob.profiles.at(-1) : measured ? 'P-SCREEN' : ob.profiles[0], refuse: refuseAll }],
     ].filter(([k]) => !drop.includes(k));
-    const receipts = plan.map(([k, o]) => mk(k, o));
-    for (const [k, o] of plan) {
-      if (drop.includes(`v-${k}`)) continue;
-      const verified = receipts.find(r => r.receiptId === `${fx}:${k}`);
-      // The verifier runs at the side's home on the verified run's profile and composition (VV2).
-      receipts.push(mk(`v-${k}`, { obligation: o.obligation, composition: verified.composition, at: o.at, runKind: 'verifier', profile: verified.profile, verifies: [verified] }));
-    }
-    return { format: FORMATS.claim, claimId: fx, kind, obligations: [obligation], commit: at.commit, sourceTreeSha256: at.label, composition: structuredClone(candidate), control: { id: 'A0-XTDB' }, receipts };
+    return { format: FORMATS.claim, claimId: fx, kind, obligations: [obligation], commit: at.commit, sourceTreeSha256: at.label, composition: structuredClone(candidate), receipts: plan.map(([k, o]) => mk(k, o)) };
   }
-  const add = (id, source, expected, defect, variant, claim, { labOnly = false } = {}) => fixtures.push({ id, source, expected, defect, labOnly, repo: repos[variant].dir, authorityRef: 'main', claim });
+  const add = (id, source, expected, defect, variant, claim, { labOnly = false } = {}) => fixtures.push({ id, source, expected, defect, labOnly, repo: repos[variant].dir, claim });
   const rc = (claim, key) => claim.receipts.find(r => r.receiptId.endsWith(`:${key}`));
   const lab = { labOnly: true };
   const zero = '0'.repeat(64);
+  const P = repos.pinned;
 
-  // -- positives
-  add('POSITIVE-NS-SCREENING', 'Q38b positive control, completed for Q42a and Q47', 'QUALIFIED', 'none: NS.P2 screening comparison, prerequisites for both compositions, matched registry A0 control, verifiers on every receipt', 'pinned', complete('POSITIVE-NS-SCREENING'));
-  add('POSITIVE-GS-DOMAIN', 'Q38b domain positive control', 'QUALIFIED', 'none: GS.05 with W0 pinned (review, delta check, fingerprint) and a W0.coverage-floors receipt', 'w0', complete('POSITIVE-GS-DOMAIN', { variant: 'w0', obligation: 'GS.05' }));
-  add('POSITIVE-PROMOTION', 'Q42a verifier evidence', 'QUALIFIED', 'none: promotion on P-NS acceptance receipts', 'pinned', complete('POSITIVE-PROMOTION', { kind: 'promotion' }));
+  // -- positives: the document passes every check, and is still only DIAGNOSTIC evidence (RULINGS Q55a)
+  add('POSITIVE-NS-SCREENING', 'Q38b positive control (0.3.7 format)', 'QUALIFIED', 'none: NS.P2 screening comparison, prerequisites for both compositions, registry A0 control, workload identity', 'pinned', complete('POSITIVE-NS-SCREENING'));
+  add('POSITIVE-GS-DOMAIN', 'Q38b domain positive control', 'QUALIFIED', 'none: GS.05 with W0 pinned and a W0.coverage-floors receipt', 'w0', complete('POSITIVE-GS-DOMAIN', { variant: 'w0', obligation: 'GS.05' }));
+  add('POSITIVE-PROMOTION', 'promotion', 'QUALIFIED', 'none: promotion on P-NS acceptance receipts', 'pinned', complete('POSITIVE-PROMOTION', { kind: 'promotion' }));
 
-  // -- ported from the generator's self-check (0.3.5 Q38b block and 0.3.6 Q42a block)
-  add('GEN-PREREQS-ONLY', 'Q42a "prerequisites but no measurement"', 'DIAGNOSTIC', 'NS.P2 claim carrying only prerequisite receipts', 'pinned', complete('GEN-PREREQS-ONLY', { drop: ['meas', 'ctrl', 'v-meas', 'v-ctrl'] }));
-  add('GEN-NULL-OREPLAY-PIN', 'Q37b, Q38b / CX-CLAIM-NULL-ORACLE-PIN', 'DIAGNOSTIC', 'complete claim while O-REPLAY\'s pin is null', 'null', complete('GEN-NULL-OREPLAY-PIN', { variant: 'null' }));
-  add('GEN-SUPPLIED-NAMES', 'Q38b / CX-CLAIM-SUPPLIED-NAMES', 'DIAGNOSTIC', 'no receipts; positionCasesClosed and compositionBound supplied', 'pinned',
-    { ...complete('GEN-SUPPLIED-NAMES'), receipts: [], positionCasesClosed: [...REAL_CONTRACT.positionRequiredCases], compositionBound: true });
-  add('GEN-OTHER-TREE', 'Q38b; Q42a "falsifier receipt from an earlier commit"', 'DIAGNOSTIC', 'candidate position receipt produced and labelled at C1', 'pinned', complete('GEN-OTHER-TREE', { tweak: { 'pos-cand': { at: repos.pinned.C1 } } }));
-  add('GEN-MISSING-FALSIFIERS', 'Q38b / CX-SCREENING-CLAIM-PREREQ', 'DIAGNOSTIC', 'candidate position receipt without the four falsifier cases', 'pinned',
-    complete('GEN-MISSING-FALSIFIERS', { tweak: { 'pos-cand': { omitCases: ['FX-NESTED-CUTS', 'FX-ABORT-GAP', 'FX-CRASH-APPEND-RESOLUTION', 'FX-RESUME-AT-ABORT-GAP'] } } }));
-  { const c = composition('xtdb', 'qlever'); delete c.history.slot;
-    add('GEN-COMPOSITION-UNBOUND', 'Q38b / CX-COMPOSITION-UNBOUND', 'DIAGNOSTIC', 'candidate history assignment has no slot', 'pinned', complete('GEN-COMPOSITION-UNBOUND', { candidate: c })); }
-  add('GEN-W0-NULL', 'Q38b / CX-W0-UNPINNED', 'DIAGNOSTIC', 'complete GS.05 claim while the W0 pin is null', 'pinned', complete('GEN-W0-NULL', { obligation: 'GS.05' }));
-  add('GEN-NO-W0-RECEIPT', 'Q38b', 'DIAGNOSTIC', 'GS.05 claim without the W0.coverage-floors receipt', 'w0', complete('GEN-NO-W0-RECEIPT', { variant: 'w0', obligation: 'GS.05', drop: ['w0-cand', 'v-w0-cand'] }));
-  add('GEN036-EXCLUDED', 'Q45a (0.3.6 self-check)', 'DIAGNOSTIC', 'a claim on G1.decimal.channel-routing, excluded from O-REPLAY\'s pin', 'pinned', complete('GEN036-EXCLUDED', { obligation: 'G1.decimal.channel-routing', drop: ['meas', 'ctrl', 'v-meas', 'v-ctrl'] }));
-  add('GEN036-REFUSED-SET', 'Q45b (0.3.6 self-check)', 'DIAGNOSTIC', 'a claim on G9.erasure.visibility-boundary, whose CS-ERASURE O-REPLAY refuses', 'pinned', complete('GEN036-REFUSED-SET', { obligation: 'G9.erasure.visibility-boundary', drop: ['meas', 'ctrl', 'v-meas', 'v-ctrl'] }));
-
-  // -- Q42a counterexamples (Codex rounds 4 and 5)
-  add('CODEX-R4-FABRICATED', 'Codex round 4 finding 4', 'DIAGNOSTIC', 'all position cases PASS on all-zero object hashes, built from C1 under C2\'s label', 'pinned',
-    complete('CODEX-R4-FABRICATED', { tweak: { 'pos-cand': { builtFrom: repos.pinned.C1, edit: r => { for (const e of r.evidence) e.objectSha256 = zero; } } } }));
-  add('Q42A-ZERO-HASHES', 'Q42a "all-zero object hashes"', 'DIAGNOSTIC', 'candidate position case objects are all-zero hashes', 'pinned',
-    complete('Q42A-ZERO-HASHES', { tweak: { 'pos-cand': { edit: r => { for (const e of r.evidence) if (e.kind === 'case-result') e.objectSha256 = zero; } } } }));
-  add('Q42A-STALE-BINARY', 'Q42a "stale binary under the same source label"', 'DIAGNOSTIC', 'candidate position run executed a build of C1\'s alloc.ts; receipt and manifest say C2', 'pinned', complete('Q42A-STALE-BINARY', { tweak: { 'pos-cand': { builtFrom: repos.pinned.C1 } } }));
-  add('Q42A-BUILD-INPUT-OMITTED', 'Q42a manifest binding', 'DIAGNOSTIC', 'the build manifest omits alloc.ts from its inputs', 'pinned', complete('Q42A-BUILD-INPUT-OMITTED', { tweak: { 'pos-cand': { dropInput: true } } }));
-  add('Q42A-EARLIER-COMMIT-RELABELLED', 'Q42a "falsifier receipt from an earlier commit"', 'DIAGNOSTIC', 'candidate position receipt produced at C1, labelled with C2\'s source label', 'pinned',
-    complete('Q42A-EARLIER-COMMIT-RELABELLED', { tweak: { 'pos-cand': { at: repos.pinned.C1, label: repos.pinned.C2 } } }));
-  add('Q42A-STARTED-BEFORE-COMMIT', 'Q42a freshness', 'DIAGNOSTIC', 'candidate position receipt says C2 but started before C2 existed', 'pinned', complete('Q42A-STARTED-BEFORE-COMMIT', { tweak: { 'pos-cand': { start: T.beforeC2 } } }));
-  add('Q42A-OBJECT-CORRUPT', 'Q42a "bytes hash to the recorded value"', 'DIAGNOSTIC', 'one stored case object no longer hashes to its name', 'pinned',
-    (() => { const c = complete('Q42A-OBJECT-CORRUPT'); S.corrupt(rc(c, 'pos-cand').evidence[0].objectSha256); return c; })());
-  add('Q42A-OBJECT-OF-OTHER-CASE', 'Q42a "opens and verifies the evidence"', 'DIAGNOSTIC', 'FX-ABORT-GAP points at FX-NESTED-CUTS\'s real, intact object', 'pinned',
-    complete('Q42A-OBJECT-OF-OTHER-CASE', { tweak: { 'pos-cand': { edit: r => { const ev = r.evidence; ev.find(e => e.caseId === 'FX-ABORT-GAP' && e.mode === 'current').objectSha256 = ev.find(e => e.caseId === 'FX-NESTED-CUTS' && e.mode === 'current').objectSha256; } } } }));
-  add('Q42A-MODES-SHORT', 'Q42a "modes required by the obligation"', 'DIAGNOSTIC', 'candidate position run covered mode current only', 'pinned', complete('Q42A-MODES-SHORT', { tweak: { 'pos-cand': { modes: ['current'] } } }));
-  add('Q42A-FAULT-REPS-SHORT', 'Q42a "fault repetitions" / CX-FAULT-REPS-SHORT', 'DIAGNOSTIC', 'FX-CRASH-APPEND-RESOLUTION injected twice', 'pinned', complete('Q42A-FAULT-REPS-SHORT', { tweak: { 'pos-cand': { faultReps: 2 } } }));
-  add('Q42A-UNKNOWN-ID', 'Q42a "unknown ids rejected, never dropped"', 'DIAGNOSTIC', 'obligations [NS.P2, NS.P9] with complete NS.P2 evidence', 'pinned', { ...complete('Q42A-UNKNOWN-ID'), obligations: ['NS.P2', 'NS.P9'] });
-  add('Q42A-UNKNOWN-ID-ONLY', 'Q42a', 'DIAGNOSTIC', 'obligations [NS.P9] only', 'pinned', { ...complete('Q42A-UNKNOWN-ID-ONLY'), obligations: ['NS.P9'] });
-  add('Q42A-NO-CONTROL', 'Q42a "matched control"', 'DIAGNOSTIC', 'NS.P2 measurement without an A0 control receipt', 'pinned', complete('Q42A-NO-CONTROL', { drop: ['ctrl', 'v-ctrl'] }));
-  add('Q42A-CONTROL-OTHER-SEED', 'Q42a, Q47b', 'DIAGNOSTIC', 'the A0 control ran seed 7', 'pinned', complete('Q42A-CONTROL-OTHER-SEED', { tweak: { ctrl: { ns: { measurement: 'P2', seed: 7 } } } }));
-  add('Q42A-CONTROL-OTHER-WINDOW', 'Q42a "same window"', 'DIAGNOSTIC', 'the A0 control measured another window', 'pinned', complete('Q42A-CONTROL-OTHER-WINDOW', { tweak: { ctrl: { ns: { measurement: 'P2', windows: [{ from: 720, to: 1320, burstPhase: 'steady-and-burst' }] } } } }));
-  add('Q42A-CORRECTNESS-FAIL', 'Q42a "with their correctness checks"', 'DIAGNOSTIC', 'NS.P2 measurement with NS-P2-PROGRESS answered wrong and labelled FAIL', 'pinned', complete('Q42A-CORRECTNESS-FAIL', { tweak: { meas: { wrong: { 'NS-P2-PROGRESS': 'FAIL' } } } }));
-  add('Q42A-WRONG-MEASUREMENT', 'CX-GS-WRONG-SCENARIO', 'DIAGNOSTIC', 'the NS.P2 receipts carry a P1 ns-run', 'pinned', complete('Q42A-WRONG-MEASUREMENT', { tweak: { meas: { ns: { measurement: 'P1' } }, ctrl: { ns: { measurement: 'P1' } } } }));
-  add('Q42A-UNFROZEN-TRACE', 'CX-NS-UNFROZEN-TRACE (VA15)', 'DIAGNOSTIC', 'candidate and control matched on seed 7, not the frozen seed', 'pinned', complete('Q42A-UNFROZEN-TRACE', { tweak: { meas: { ns: { measurement: 'P2', seed: 7 } }, ctrl: { ns: { measurement: 'P2', seed: 7 } } } }));
-  add('Q42A-CONTROL-NO-PREREQ', 'GATE-POSITION "A0 included" (Q38a)', 'DIAGNOSTIC', 'the A0 composition has no position receipt', 'pinned', complete('Q42A-CONTROL-NO-PREREQ', { drop: ['pos-a0', 'v-pos-a0'] }));
-  add('Q34D-SCREENING-PREREQ', 'CX-SCREENING-CLAIM-PREREQ, VA16', 'DIAGNOSTIC', 'the candidate position receipt is a P-SCREEN run', 'pinned', complete('Q34D-SCREENING-PREREQ', { tweak: { 'pos-cand': { profile: 'P-SCREEN' } } }));
-  add('Q42A-DIAGNOSTIC-RUN', 'B7', 'DIAGNOSTIC', 'the NS.P2 measurement is a diagnostic run', 'pinned', complete('Q42A-DIAGNOSTIC-RUN', { tweak: { meas: { runKind: 'diagnostic' } } }));
-  add('Q42A-NO-VERIFIER', 'Q42a "verifier evidence" (0.3.6: on every receipt)', 'DIAGNOSTIC', 'the NS.P2 measurement has no verifier receipt', 'pinned', complete('Q42A-NO-VERIFIER', { drop: ['v-meas'] }));
-  add('Q42A-PROMOTION-ON-SCREENING', 'ACCEPTANCE 5.7, VA16', 'DIAGNOSTIC', 'promotion whose measurement is a P-SCREEN candidate run', 'pinned', complete('Q42A-PROMOTION-ON-SCREENING', { kind: 'promotion', tweak: { meas: { profile: 'P-SCREEN', runKind: 'candidate' } } }));
-  add('Q42A-VERIFIER-IS-AUTHOR', 'VV1', 'DIAGNOSTIC', 'the measurement\'s verifier is an author of the code under test', 'pinned', complete('Q42A-VERIFIER-IS-AUTHOR', { tweak: { 'v-meas': { agentId: 'agent-candidate-author' } } }));
-
-  // -- Codex round 6 (Q47a to Q47c): each counterexample qualified through the 0.3.6 reference with the real accepted pins
-  add('CODEX-R6-MODULES-NOT-RETAINED', 'Codex round 6 finding 1 / Q47a', 'DIAGNOSTIC', 'an executed module (node_modules/fixture-dep) is listed with a hash but its bytes were never retained', 'pinned',
-    complete('CODEX-R6-MODULES-NOT-RETAINED', { tweak: { 'pos-cand': { extraModules: [{ path: 'node_modules/fixture-dep/index.js', bytes: 'never stored CODEX-R6', origin: 'dependency', retain: false }] } } }));
-  add('CODEX-R6-NOT-A-VERIFIER-RECORD', 'Codex round 6 finding 1 / Q47a', 'DIAGNOSTIC', 'the measurement\'s verifier object is {"notAVerifierRecord":true}', 'pinned', complete('CODEX-R6-NOT-A-VERIFIER-RECORD', { tweak: { 'v-meas': { notAVerifierRecord: true } } }));
-  add('CODEX-R6-REFUSAL-LABELLED-PASS', 'Codex round 6 finding 1 / Q47a', 'DIAGNOSTIC', 'NS-P2-PROGRESS: oracle exit 2 with X-NOT-MODELED, case labelled PASS', 'pinned', complete('CODEX-R6-REFUSAL-LABELLED-PASS', { tweak: { meas: { refuse: ['NS-P2-PROGRESS'] } } }));
-  add('Q47A-WRONG-LABELLED-PASS', 'Q47a "recompute every case verdict"', 'DIAGNOSTIC', 'NS-P2-PROGRESS answered wrong but labelled PASS', 'pinned', complete('Q47A-WRONG-LABELLED-PASS', { tweak: { meas: { wrong: { 'NS-P2-PROGRESS': 'PASS' } } } }));
-  add('CODEX-R6-CONTROL-NO-WORKLOAD', 'Codex round 6 finding 5 / Q47b', 'DIAGNOSTIC', 'measurement and control both lack trace and windows (None == None)', 'pinned',
-    complete('CODEX-R6-CONTROL-NO-WORKLOAD', { tweak: { meas: { ns: { measurement: 'P2', noWorkload: true } }, ctrl: { ns: { measurement: 'P2', noWorkload: true } } } }));
+  // -- the generator's self-check, in this format
+  add('GEN-PREREQS-ONLY', 'Q42a "prerequisites but no measurement"', 'DIAGNOSTIC', 'only prerequisite receipts', 'pinned', complete('GEN-PREREQS-ONLY', { drop: ['meas', 'ctrl'] }));
+  add('GEN-NULL-OREPLAY-PIN', 'Q37b, Q38b', 'DIAGNOSTIC', 'complete document while O-REPLAY\'s pin is null', 'null', complete('GEN-NULL-OREPLAY-PIN', { variant: 'null' }));
+  add('GEN-SUPPLIED-NAMES', 'Q38b', 'DIAGNOSTIC', 'no receipts; positionCasesClosed and compositionBound supplied', 'pinned', { ...complete('GEN-SUPPLIED-NAMES'), receipts: [], positionCasesClosed: [...REAL_CONTRACT.positionRequiredCases], compositionBound: true });
+  add('GEN-OTHER-TREE', 'Q38b, Q42a', 'DIAGNOSTIC', 'candidate position receipt labelled with C1\'s tree', 'pinned', complete('GEN-OTHER-TREE', { tweak: { 'pos-cand': { tree: P.C1.label } } }));
+  add('GEN-MISSING-FALSIFIERS', 'Q38b', 'DIAGNOSTIC', 'candidate position receipt without the four falsifiers', 'pinned', complete('GEN-MISSING-FALSIFIERS', { tweak: { 'pos-cand': { omitCases: ['FX-NESTED-CUTS', 'FX-ABORT-GAP', 'FX-CRASH-APPEND-RESOLUTION', 'FX-RESUME-AT-ABORT-GAP'] } } }));
+  { const c = composition('xtdb', 'qlever'); delete c.history.slot; add('GEN-COMPOSITION-UNBOUND', 'Q38b', 'DIAGNOSTIC', 'candidate history assignment has no slot', 'pinned', complete('GEN-COMPOSITION-UNBOUND', { candidate: c })); }
+  add('GEN-W0-NULL', 'Q38b, Q48a', 'DIAGNOSTIC', 'GS.05 while the W0 pin is null', 'pinned', complete('GEN-W0-NULL', { obligation: 'GS.05' }));
+  add('GEN-NO-W0-RECEIPT', 'Q38b', 'DIAGNOSTIC', 'GS.05 without the W0.coverage-floors receipt', 'w0', complete('GEN-NO-W0-RECEIPT', { variant: 'w0', obligation: 'GS.05', drop: ['w0-cand'] }));
+  add('GEN-EXCLUDED', 'Q45a', 'DIAGNOSTIC', 'G1.decimal.channel-routing, excluded from O-REPLAY\'s pin', 'pinned', complete('GEN-EXCLUDED', { obligation: 'G1.decimal.channel-routing' }));
+  add('GEN-REFUSED-SET', 'Q45b', 'DIAGNOSTIC', 'G9.erasure.visibility-boundary, whose CS-ERASURE O-REPLAY refuses', 'pinned', complete('GEN-REFUSED-SET', { obligation: 'G9.erasure.visibility-boundary' }));
+  add('GEN-STALE-DEFINITION', 'CX-STALE-DEFINITION', 'DIAGNOSTIC', 'the measurement names an older definition hash of NS.P2', 'pinned', complete('GEN-STALE-DEFINITION', { tweak: { meas: { edit: r => { r.definitionSha256 = 'a'.repeat(64); } } } }));
+  add('CODEX-R4-FABRICATED', 'Codex round 4 finding 4', 'DIAGNOSTIC', 'all-zero case object hashes, built from C1 under C2\'s label', 'pinned',
+    complete('CODEX-R4-FABRICATED', { tweak: { 'pos-cand': { builtFrom: P.C1, edit: r => { for (const x of r.caseResults) x.objectSha256 = zero; } } } }));
+  add('Q42A-STALE-BINARY', 'Q42a (lab: provenance)', 'DIAGNOSTIC', 'the candidate position run executed a build of C1\'s alloc.ts under C2\'s label', 'pinned', complete('Q42A-STALE-BINARY', { tweak: { 'pos-cand': { builtFrom: P.C1 } } }), lab);
+  add('Q42A-EARLIER-COMMIT', 'Q42a', 'DIAGNOSTIC', 'candidate position receipt from commit C1', 'pinned', complete('Q42A-EARLIER-COMMIT', { tweak: { 'pos-cand': { commit: P.C1.commit } } }));
+  add('Q42A-BEFORE-CLOSURE', 'Q42a', 'DIAGNOSTIC', 'candidate position receipt produced before C2 existed', 'pinned', complete('Q42A-BEFORE-CLOSURE', { tweak: { 'pos-cand': { producedAt: BEFORE_C2 } } }));
+  add('Q42A-OBJECT-CORRUPT', 'Q42a', 'DIAGNOSTIC', 'one stored case record no longer hashes to its name', 'pinned', (() => { const c = complete('Q42A-OBJECT-CORRUPT'); S.corrupt(rc(c, 'pos-cand').caseResults[0].objectSha256); return c; })());
+  add('Q42A-OBJECT-OF-OTHER-CASE', 'Q47a', 'DIAGNOSTIC', 'FX-ABORT-GAP points at FX-NESTED-CUTS\'s record', 'pinned',
+    complete('Q42A-OBJECT-OF-OTHER-CASE', { tweak: { 'pos-cand': { edit: r => { r.caseResults.find(x => x.case === 'FX-ABORT-GAP').objectSha256 = r.caseResults.find(x => x.case === 'FX-NESTED-CUTS').objectSha256; } } } }));
+  add('Q42A-MODES-SHORT', 'Q42a', 'DIAGNOSTIC', 'candidate position receipt lists mode current only', 'pinned', complete('Q42A-MODES-SHORT', { tweak: { 'pos-cand': { modes: ['current'] } } }));
+  add('Q42A-FAULT-REPS-SHORT', 'Q42a', 'DIAGNOSTIC', 'faultReps 2', 'pinned', complete('Q42A-FAULT-REPS-SHORT', { tweak: { 'pos-cand': { faultReps: 2 } } }));
+  add('Q42A-UNKNOWN-ID', 'Q42a', 'DIAGNOSTIC', 'obligations [NS.P2, NS.P9]', 'pinned', { ...complete('Q42A-UNKNOWN-ID'), obligations: ['NS.P2', 'NS.P9'] });
+  add('Q42A-NO-CONTROL', 'Q42a', 'DIAGNOSTIC', 'no control receipt', 'pinned', complete('Q42A-NO-CONTROL', { drop: ['ctrl'] }));
+  add('Q42A-CONTROL-OTHER-SEED', 'Q47b', 'DIAGNOSTIC', 'the control ran seed 7', 'pinned', complete('Q42A-CONTROL-OTHER-SEED', { tweak: { ctrl: { workload: { ...WORKLOAD, seed: 7 } } } }));
+  add('Q42A-CONTROL-OTHER-WINDOW', 'Q47b', 'DIAGNOSTIC', 'the control measured window [0, 300]', 'pinned', complete('Q42A-CONTROL-OTHER-WINDOW', { tweak: { ctrl: { workload: { ...WORKLOAD, window: [0, 300] } } } }));
+  add('Q42A-CORRECTNESS-FAIL', 'Q47a', 'DIAGNOSTIC', 'NS-P2-PROGRESS observed differs from expected, labelled FAIL', 'pinned', complete('Q42A-CORRECTNESS-FAIL', { tweak: { meas: { wrong: ['NS-P2-PROGRESS'], label: { 'NS-P2-PROGRESS': 'FAIL' } } } }));
+  add('Q42A-NO-VERIFIER', 'Q47a', 'DIAGNOSTIC', 'the measurement\'s verifier record is for another obligation', 'pinned', complete('Q42A-NO-VERIFIER', { tweak: { meas: { verifierFor: 'G10.composition.identity-bound' } } }));
+  add('CODEX-R6-MODULES-NOT-RETAINED', 'Codex round 6 finding 1 / Q47a', 'DIAGNOSTIC', 'an executed module is listed but its bytes were never retained', 'pinned',
+    complete('CODEX-R6-MODULES-NOT-RETAINED', { tweak: { 'pos-cand': { extraModules: [{ path: 'node_modules/fixture-dep/index.js', bytes: 'never stored', origin: 'dependency', retain: false }] } } }));
+  add('CODEX-R6-BINARY-NOT-RETAINED', 'Q47a', 'DIAGNOSTIC', 'the executed binary is not retained', 'pinned', complete('CODEX-R6-BINARY-NOT-RETAINED', { tweak: { 'pos-cand': { binaryNotRetained: true } } }));
+  add('CODEX-R6-NOT-A-VERIFIER-RECORD', 'Codex round 6 finding 1 / Q47a', 'DIAGNOSTIC', 'the verifier object is {"notAVerifierRecord":true}', 'pinned', complete('CODEX-R6-NOT-A-VERIFIER-RECORD', { tweak: { 'pos-cand': { notAVerifierRecord: true } } }));
+  add('CODEX-R6-REFUSAL-LABELLED-PASS', 'Codex round 6 finding 1 / Q47a', 'DIAGNOSTIC', 'NS-P2-PROGRESS oracleExit 2 with X-NOT-MODELED, labelled PASS', 'pinned', complete('CODEX-R6-REFUSAL-LABELLED-PASS', { tweak: { meas: { refuse: ['NS-P2-PROGRESS'] } } }));
+  add('Q47A-WRONG-LABELLED-PASS', 'Q47a', 'DIAGNOSTIC', 'NS-P2-PROGRESS observed differs from expected, labelled PASS', 'pinned', complete('Q47A-WRONG-LABELLED-PASS', { tweak: { meas: { wrong: ['NS-P2-PROGRESS'] } } }));
+  add('CODEX-R6-CONTROL-NO-WORKLOAD', 'Codex round 6 finding 5 / Q47b', 'DIAGNOSTIC', 'measurement and control without workload identity', 'pinned', complete('CODEX-R6-CONTROL-NO-WORKLOAD', { tweak: { meas: { workload: null }, ctrl: { workload: null } } }));
   { const lookalike = composition('xtdb', 'qlever'); lookalike.analytics.configSha256 = h('a different config');
-    const c = complete('CODEX-R6-CANDIDATE-SELECTED-CONTROL', { a0: lookalike });
-    c.control = { id: 'A0-XTDB', composition: lookalike };
-    add('CODEX-R6-CANDIDATE-SELECTED-CONTROL', 'Codex round 6 finding 5 / Q47b; red-team A2', 'DIAGNOSTIC', 'the claim picks its own control (the candidate with one config hash changed) instead of the registry\'s A0', 'pinned', c); }
-  add('CODEX-R6-NO-A0-REGISTRY', 'Q46b, Q47b', 'DIAGNOSTIC', 'complete claim under a contract that pins no A0 registry', 'noreg', complete('CODEX-R6-NO-A0-REGISTRY', { variant: 'noreg' }));
-  add('CODEX-R6-MIGRATION-INDIRECT-REFUSAL', 'Codex round 6 finding 6 / Q47c', 'DIAGNOSTIC', 'G7.migration.schema-evolution selects CS-MIGRATION all, reaching MIG-DECIMAL-5-2-TO-6-3; its retained O-REPLAY run refused (X-NOT-MODELED) and is labelled PASS', 'pinned',
+    add('CODEX-R6-CANDIDATE-SELECTED-CONTROL', 'Codex round 6 finding 5 / Q47b', 'DIAGNOSTIC', 'the control is a composition the claimant picked, not the registry\'s A0', 'pinned', complete('CODEX-R6-CANDIDATE-SELECTED-CONTROL', { a0: lookalike })); }
+  add('CODEX-R6-NO-A0-REGISTRY', 'Q46b, Q47b', 'DIAGNOSTIC', 'the contract registers no A0', 'noreg', complete('CODEX-R6-NO-A0-REGISTRY', { variant: 'noreg' }));
+  add('CODEX-R6-MIGRATION-INDIRECT-REFUSAL', 'Codex round 6 finding 6 / Q47c', 'DIAGNOSTIC', 'G7.migration.schema-evolution with MIG-DECIMAL-5-2-TO-6-3 retained as a refusal labelled PASS', 'pinned',
     complete('CODEX-R6-MIGRATION-INDIRECT-REFUSAL', { obligation: 'G7.migration.schema-evolution', refuseAll: ['MIG-DECIMAL-5-2-TO-6-3'] }));
-  add('Q47C-MIGRATION-REFUSED-CASE-OMITTED', 'Q47c', 'DIAGNOSTIC', 'the same migration claim with the refused case simply left out', 'pinned',
-    complete('Q47C-MIGRATION-REFUSED-CASE-OMITTED', { obligation: 'G7.migration.schema-evolution', tweak: { meas: { omitCases: ['MIG-DECIMAL-5-2-TO-6-3'] }, ctrl: { omitCases: ['MIG-DECIMAL-5-2-TO-6-3'] } } }));
-  add('Q47C-MANIFESTS-UNPINNED', 'Q47c, ACCEPTANCE 5.3', 'DIAGNOSTIC', 'complete claim under contract 0.3.6 as compiled (no pinned case manifests, no A0 registry, O-OBS to build)', 'real', complete('Q47C-MANIFESTS-UNPINNED', { variant: 'real' }));
+  add('Q47C-MANIFESTS-UNPINNED', 'Q47c, ACCEPTANCE 5.3', 'DIAGNOSTIC', 'contract 0.3.7 as compiled (A0 registry null, manifests unpinned, O-OBS to build)', 'real', complete('Q47C-MANIFESTS-UNPINNED', { variant: 'real' }));
+  // -- Codex round 7 (Q55a): well-formed invented evidence, and a candidate binary labelled as A0
+  add('CODEX-R7-INVENTED-CASES', 'Codex round 7 finding 1 / Q55a', 'DIAGNOSTIC', 'invented case ids, each with selection "all"-style cover of every select entry, oracleExit 0 and identical expected/observed objects', 'pinned',
+    complete('CODEX-R7-INVENTED-CASES', { tweak: { ...Object.fromEntries(['pos-cand', 'id-cand', 'meas', 'pos-a0', 'id-a0', 'ctrl'].map(k => [k, { omitCases: [...new Set(MANIFEST_SETS.flatMap(s => caseManifest(s).cases.map(c => c.id)).concat(REAL_CONTRACT.positionRequiredCases))], extraCases: inventedFor(k) }])) } }), lab);
+  add('CODEX-R7-CANDIDATE-AS-A0', 'Codex round 7 finding 2 / Q55a', 'DIAGNOSTIC', 'the control receipt runs the candidate\'s build (C2) under the A0 registry\'s tree label', 'pinned', complete('CODEX-R7-CANDIDATE-AS-A0', { tweak: { ctrl: { builtFrom: P.C2 } } }), lab);
 
-  // -- red-team findings on the first version (receipt fields not bound to evidence, profiles, authors, build tricks)
-  add('RT-SWAP-ROLES', 'red-team A1', 'DIAGNOSTIC', 'measurement and control composition labels swapped after the runs', 'pinned',
-    (() => { const c = complete('RT-SWAP-ROLES'); const m = rc(c, 'meas'), k = rc(c, 'ctrl'); [m.composition, k.composition] = [k.composition, m.composition]; return c; })());
-  add('RT-RELABEL-PROFILE', 'red-team A4', 'DIAGNOSTIC', 'a P-SCREEN position run relabelled P-FAULT after the run', 'pinned', complete('RT-RELABEL-PROFILE', { tweak: { 'pos-cand': { profile: 'P-SCREEN', edit: r => { r.profile = 'P-FAULT'; } } } }));
-  add('RT-RELABEL-START', 'red-team A4', 'DIAGNOSTIC', 'a position run that started before C2, its start time edited afterwards', 'pinned', complete('RT-RELABEL-START', { tweak: { 'pos-cand': { start: T.beforeC2, edit: r => { r.timing.start = T.run; } } } }));
-  { const c = composition('xtdb', 'qlever'); c.history.slot = ['dev'];
-    add('RT-SLOT-ARRAY', 'red-team A2b', 'DIAGNOSTIC', 'candidate history slot is the array ["dev"]', 'pinned', complete('RT-SLOT-ARRAY', { candidate: c })); }
-  add('RT-PROFILE-TRAILING-SPACE', 'red-team A3a', 'DIAGNOSTIC', 'candidate position run on profile "P-FAULT " (trailing space)', 'pinned', complete('RT-PROFILE-TRAILING-SPACE', { tweak: { 'pos-cand': { profile: 'P-FAULT ' } } }));
-  add('RT-PROFILE-UNDECLARED', 'red-team A3c', 'DIAGNOSTIC', 'promotion measurements on P-TINY, which NS.P2 does not declare', 'pinned', complete('RT-PROFILE-UNDECLARED', { kind: 'promotion', tweak: { meas: { profile: 'P-TINY' }, ctrl: { profile: 'P-TINY' } } }));
-  add('RT-AUTHORS-MISSING', 'red-team A5 (VV1)', 'DIAGNOSTIC', 'no authorsOfCodeUnderTest on the measurement; its verifier is the author', 'pinned', complete('RT-AUTHORS-MISSING', { tweak: { meas: { noAuthors: true }, 'v-meas': { agentId: 'agent-candidate-author' } } }));
-  add('RT-DEPENDENCY-WORKSPACE', 'red-team (dependency hypothesis)', 'DIAGNOSTIC', 'a stale first-party build executed from node_modules/@fixture/xtdb, declared as a dependency', 'pinned',
-    complete('RT-DEPENDENCY-WORKSPACE', { tweak: { 'pos-cand': { extraModules: [{ path: 'node_modules/@fixture/xtdb/dist/alloc.js', bytes: `compiled ${SRC['packages/xtdb/src/alloc.ts']}`, origin: 'dependency' }] } } }));
-  add('RT-NARROW-ROOTS', 'red-team (narrowed roots hypothesis)', 'DIAGNOSTIC', 'the build declares only package.json as its source root, hiding a stale alloc.ts', 'pinned', complete('RT-NARROW-ROOTS', { tweak: { 'pos-cand': { builtFrom: repos.pinned.C1, narrowRoots: true } } }));
-  add('RT-REPEATED-INJECTION', 'red-team (fault witness hypothesis)', 'DIAGNOSTIC', 'three injections that retain the same durable evidence object', 'pinned', complete('RT-REPEATED-INJECTION', { tweak: { 'pos-cand': { repeatInjection: true } } }));
+  // -- lab-only checks (Q41d): run ledger, provenance, profiles, VA rules
+  add('RT-SWAP-ROLES', 'red-team pass 1 A1', 'DIAGNOSTIC', 'measurement and control role fields swapped after the runs', 'pinned', (() => { const c = complete('RT-SWAP-ROLES'); rc(c, 'meas').role = 'control'; rc(c, 'ctrl').role = 'measurement'; return c; })());
+  add('RT-RELABEL-PROFILE', 'red-team pass 1 A4', 'DIAGNOSTIC', 'a P-SCREEN prerequisite relabelled P-FAULT after its run', 'pinned', complete('RT-RELABEL-PROFILE', { tweak: { 'pos-cand': { profile: 'P-SCREEN', edit: r => { r.profile = 'P-FAULT'; } } } }), lab);
+  add('RT-SCREENING-PREREQ', 'VA16, Q34d', 'DIAGNOSTIC', 'the candidate position receipt is a P-SCREEN run', 'pinned', complete('RT-SCREENING-PREREQ', { tweak: { 'pos-cand': { profile: 'P-SCREEN' } } }), lab);
+  add('RT-RUNKIND-SWAP', 'red-team pass 2 finding 8', 'DIAGNOSTIC', 'measurement run kind control, control run kind candidate', 'pinned', complete('RT-RUNKIND-SWAP', { tweak: { meas: { runKind: 'control' }, ctrl: { runKind: 'candidate' } } }), lab);
+  add('RT-CONTROL-OTHER-PROFILE', 'red-team pass 2 finding 6', 'DIAGNOSTIC', 'P-SCREEN measurement against a P-NS control', 'pinned', complete('RT-CONTROL-OTHER-PROFILE', { tweak: { ctrl: { profile: 'P-NS' } } }), lab);
+  { const c = composition('xtdb', 'qlever'); c.history.slot = ['dev']; add('RT-SLOT-ARRAY', 'red-team pass 1 A2b', 'DIAGNOSTIC', 'candidate history slot is the array ["dev"]', 'pinned', complete('RT-SLOT-ARRAY', { candidate: c }), lab); }
+  add('RT-VERIFIER-IS-AUTHOR', 'VV1', 'DIAGNOSTIC', 'the verifier named in the record is the author (other case)', 'pinned', complete('RT-VERIFIER-IS-AUTHOR', { tweak: { meas: { verifier: 'Agent-Candidate-Author' } } }), lab);
+  add('RT-DROP-FAIL-ATTEMPT', 'red-team pass 2 finding 2 (B11)', 'DIAGNOSTIC', 'a FAIL attempt the run recorded is deleted from the receipt', 'pinned',
+    complete('RT-DROP-FAIL-ATTEMPT', { tweak: { meas: { failFirst: ['NS-P2-PROGRESS'], edit: r => { r.caseResults = r.caseResults.filter(x => x.verdict !== 'FAIL'); r.counts.executed = r.counts.declared = r.caseResults.length; } } } }), lab);
+  add('RT-COUNTS-EDITED', 'red-team pass 2 finding 3', 'DIAGNOSTIC', 'unexpectedErrors 2 edited to 0 after the run', 'pinned', complete('RT-COUNTS-EDITED', { tweak: { meas: { unexpectedErrors: 2, edit: r => { r.counts.unexpectedErrors = 0; } } } }), lab);
+  add('RT-CONTRACT-RELABEL', 'red-team pass 2 finding 4', 'DIAGNOSTIC', 'a run under contract 0.3.5 relabelled 0.3.7', 'pinned',
+    complete('RT-CONTRACT-RELABEL', { tweak: { meas: { contract: { version: '0.3.5', transitiveSha256: 'a'.repeat(64) }, edit: r => { r.contract = { version: REAL_CONTRACT.version, transitiveSha256: REAL_CONTRACT.transitiveContractSha256 }; } } } }), lab);
+  add('RT-FAULTREPS-RELABEL', 'Q42a (ledger)', 'DIAGNOSTIC', 'faultReps 2 edited to 3 after the run', 'pinned', complete('RT-FAULTREPS-RELABEL', { tweak: { 'pos-cand': { faultReps: 2, edit: r => { r.faultReps = 3; } } } }), lab);
+  const dep = p => ({ tweak: { 'pos-cand': { extraModules: [{ path: p, bytes: SRC['packages/xtdb/src/alloc.ts'], origin: 'dependency' }] } } });
+  add('RT-DEP-UPPERCASE', 'red-team pass 2 finding 1', 'DIAGNOSTIC', 'stale first-party build as node_modules/@FIXTURE/xtdb', 'pinned', complete('RT-DEP-UPPERCASE', dep('node_modules/@FIXTURE/xtdb/dist/alloc.mjs')), lab);
+  add('RT-DEP-UNLISTED', 'red-team pass 2 finding 1', 'DIAGNOSTIC', 'stale code as an unlisted package node_modules/xtdb-alloc-v1', 'pinned', complete('RT-DEP-UNLISTED', dep('node_modules/xtdb-alloc-v1/index.js')), lab);
+  add('RT-DEP-OTHER-WORKSPACE', 'red-team pass 2 finding 1', 'DIAGNOSTIC', 'first-party test/helper executed from node_modules', 'pinned', complete('RT-DEP-OTHER-WORKSPACE', dep('node_modules/@fixture/helper/index.js')), lab);
+  add('RT-NARROW-ROOTS', 'red-team pass 1', 'DIAGNOSTIC', 'a build declaring only package.json as its root, hiding a stale alloc.ts', 'pinned', complete('RT-NARROW-ROOTS', { tweak: { 'pos-cand': { builtFrom: P.C1, narrowRoots: true } } }), lab);
+  add('LAB-BRANCH-PINS-OWN-ORACLE', 'VA6', 'DIAGNOSTIC', 'a branch commit whose obligations.json pins O-REPLAY; main has it null', 'null', complete('LAB-BRANCH-PINS-OWN-ORACLE', { variant: 'null', at: repos.null.ROGUE }), lab);
+  add('LAB-ORACLE-FILE-DRIFT', 'VA6', 'DIAGNOSTIC', 'O-OBS edited after its pin', 'pinned', complete('LAB-ORACLE-FILE-DRIFT', { at: P.DRIFT }), lab);
+  { const c = composition('xtdb', 'qlever'); c.current.imageDigest = 'sha256:' + 'e'.repeat(64); add('LAB-IMAGE-NOT-PINNED', 'VA4', 'DIAGNOSTIC', 'an unpinned QLever image', 'pinned', complete('LAB-IMAGE-NOT-PINNED', { candidate: c }), lab); }
+  add('LAB-FORBIDDEN-ENDPOINT', 'VA5', 'DIAGNOSTIC', 'contacted http://127.0.0.1:015442', 'pinned', complete('LAB-FORBIDDEN-ENDPOINT', { tweak: { 'pos-cand': { endpoint: 'http://127.0.0.1:015442' } } }), lab);
+  add('LAB-ADMISSION-BLOCKED', 'VA10', 'DIAGNOSTIC', 'BLOCKED_CAPACITY', 'pinned', complete('LAB-ADMISSION-BLOCKED', { tweak: { 'pos-cand': { admission: 'BLOCKED_CAPACITY' } } }), lab);
+  add('LAB-CONTROL-NO-PREREQ', 'GATE-POSITION "A0 included"', 'DIAGNOSTIC', 'the A0 composition has no position receipt', 'pinned', complete('LAB-CONTROL-NO-PREREQ', { drop: ['pos-a0'] }), lab);
 
-  // -- red-team, second pass (the binding, ledger, canonical answers, matched profiles, verifier work, dependencies)
-  const staleAlloc = `compiled ${SRC['packages/xtdb/src/alloc.ts']}`;
-  const dep = (key, p) => ({ tweak: { 'pos-cand': { extraModules: [{ path: p, bytes: staleAlloc, origin: 'dependency' }] } } });
-  add('RT2-DEP-DOT-SEGMENT', 'red-team v2 finding 1', 'DIAGNOSTIC', 'stale first-party build as node_modules/./@fixture/xtdb/dist/alloc.js', 'pinned', complete('RT2-DEP-DOT-SEGMENT', dep('pos-cand', 'node_modules/./@fixture/xtdb/dist/alloc.js')));
-  add('RT2-DEP-UPPERCASE', 'red-team v2 finding 1', 'DIAGNOSTIC', 'stale first-party build as node_modules/@FIXTURE/xtdb/dist/alloc.js', 'pinned', complete('RT2-DEP-UPPERCASE', dep('pos-cand', 'node_modules/@FIXTURE/xtdb/dist/alloc.js')));
-  add('RT2-DEP-UNLISTED', 'red-team v2 finding 1', 'DIAGNOSTIC', 'stale code as node_modules/xtdb-alloc-v1, a package the lockfile does not list', 'pinned', complete('RT2-DEP-UNLISTED', dep('pos-cand', 'node_modules/xtdb-alloc-v1/index.js')));
-  add('RT2-DEP-OTHER-WORKSPACE', 'red-team v2 finding 1', 'DIAGNOSTIC', 'first-party test/helper (@fixture/helper) executed from node_modules', 'pinned', complete('RT2-DEP-OTHER-WORKSPACE', dep('pos-cand', 'node_modules/@fixture/helper/dist/index.js')));
-  add('RT2-DROP-FAIL-ATTEMPT', 'red-team v2 finding 2 (B11)', 'DIAGNOSTIC', 'the run recorded a FAIL attempt of NS-P2-PROGRESS before its PASS; the FAIL entry is deleted from the receipt', 'pinned',
-    complete('RT2-DROP-FAIL-ATTEMPT', { tweak: { meas: { failFirst: ['NS-P2-PROGRESS'], edit: r => { const i = r.evidence.findIndex(e => e.caseId === 'NS-P2-PROGRESS' && e.verdict === 'FAIL'); r.evidence.splice(i, 1); r.counts.executed--; } } } }));
-  add('RT2-DROP-NSRUN', 'red-team v2 finding 2', 'DIAGNOSTIC', 'the run recorded a second ns-run with no matched control; it is deleted from the receipt', 'pinned',
-    complete('RT2-DROP-NSRUN', { tweak: { meas: { ns: { measurement: 'P2', secondWindow: { from: 720, to: 1320, burstPhase: 'steady-and-burst' } }, edit: r => { r.evidence.splice(r.evidence.findLastIndex(e => e.kind === 'ns-run'), 1); } } } }));
-  add('RT2-COUNTS-EDITED', 'red-team v2 finding 3', 'DIAGNOSTIC', 'the run reported 2 unexpected errors; counts edited to 0 afterwards', 'pinned', complete('RT2-COUNTS-EDITED', { tweak: { meas: { unexpectedErrors: 2, edit: r => { r.counts.unexpectedErrors = 0; } } } }));
-  add('RT2-CONTRACT-RELABEL', 'red-team v2 finding 4', 'DIAGNOSTIC', 'the measurement ran under contract 0.3.5; its receipt is relabelled 0.3.6', 'pinned',
-    complete('RT2-CONTRACT-RELABEL', { tweak: { meas: { contract: { version: '0.3.5', transitiveSha256: 'a'.repeat(64) }, edit: r => { r.contract = { version: REAL_CONTRACT.version, transitiveSha256: REAL_CONTRACT.transitiveContractSha256 }; } } } }));
-  const lossy = (fx, e, o) => complete(fx, { tweak: { meas: { answers: { 'NS-P2-PROGRESS': [e, o] } } } });
-  add('RT2-LOSSY-BIGINT', 'red-team v2 finding 5', 'DIAGNOSTIC', 'expected {"v":9007199254740993}, observed {"v":9007199254740992}, labelled PASS', 'pinned', lossy('RT2-LOSSY-BIGINT', '{"v":9007199254740993}', '{"v":9007199254740992}'));
-  add('RT2-LOSSY-SCALE', 'red-team v2 finding 5', 'DIAGNOSTIC', 'expected {"v":12.30}, observed {"v":12.3}, labelled PASS', 'pinned', lossy('RT2-LOSSY-SCALE', '{"v":12.30}', '{"v":12.3}'));
-  add('RT2-LOSSY-DUPKEY', 'red-team v2 finding 5', 'DIAGNOSTIC', 'expected {"v":"WRONG","v":"ok"}, observed {"v":"ok"}, labelled PASS', 'pinned', lossy('RT2-LOSSY-DUPKEY', '{"v":"WRONG","v":"ok"}', '{"v":"ok"}'));
-  add('RT2-INVALID-UTF8', 'red-team v2 finding 5', 'DIAGNOSTIC', 'expected and observed are different invalid UTF-8 bytes that decode alike, labelled PASS', 'pinned', lossy('RT2-INVALID-UTF8', Buffer.from([...Buffer.from('{"v":"'), 0xff, ...Buffer.from('"}')]), Buffer.from([...Buffer.from('{"v":"'), 0xfe, ...Buffer.from('"}')])));
-  add('RT2-CONTROL-OTHER-PROFILE', 'red-team v2 finding 6', 'DIAGNOSTIC', 'P-SCREEN measurement matched against a P-NS control', 'pinned', complete('RT2-CONTROL-OTHER-PROFILE', { tweak: { ctrl: { profile: 'P-NS' } } }));
-  add('RT2-RUNKIND-SWAP', 'red-team v2 finding 8', 'DIAGNOSTIC', 'measurement run kind control, control run kind candidate', 'pinned', complete('RT2-RUNKIND-SWAP', { tweak: { meas: { runKind: 'control' }, ctrl: { runKind: 'candidate' } } }));
-  add('RT2-VERIFIER-AGENT-CASE', 'red-team v2 finding 9', 'DIAGNOSTIC', 'the verifier is "Agent-Candidate-Author", the author in other case', 'pinned', complete('RT2-VERIFIER-AGENT-CASE', { tweak: { 'v-meas': { agentId: 'Agent-Candidate-Author' } } }));
-  add('RT2-VERIFIER-NO-RERUN', 'red-team v2 finding 7 (VV3)', 'DIAGNOSTIC', 'the position verifier (rerun mode) carries a record but no rerun evidence', 'pinned', complete('RT2-VERIFIER-NO-RERUN', { tweak: { 'v-pos-cand': { noRerun: true } } }));
-  add('RT2-SPOT-UNNAMED', 'red-team v2 finding 7', 'DIAGNOSTIC', 'the measurement verifier names a spot-rerun receipt the claim does not carry', 'pinned', complete('RT2-SPOT-UNNAMED', { tweak: { 'v-meas': { spotIds: ['spot-elsewhere'] } } }));
+  // -- qualification runs (RULINGS Q55a): what the evaluator builds, resolves and runs itself
+  const Rr = repos.run;
+  const runClaim = (id, at, obligations = ['NS.P2'], extra = {}) => ({ id, repo: Rr.dir, claim: { format: FORMATS.claim, claimId: id, kind: 'comparative', obligations, commit: at.commit, sourceTreeSha256: at.label, composition: structuredClone(CANDIDATE), ...extra } });
+  // Codex round 7 against a run: the wrong candidate carries a complete set of well-formed documents claiming every case passed,
+  // plus a selection, a verifier record and an O-DOMAIN fingerprint of its own (Q55a, Q55e). qualify must read none of it.
+  const forged = runClaim('RUN-FORGED-RECORDS', Rr.WRONG, ['NS.P2'], { receipts: complete('RUN-FORGED-RECORDS', { variant: 'run', at: Rr.WRONG }).receipts, selection: 'all', caseList: ['INVENTED-0'], oDomainFingerprint: 'f'.repeat(64) });
+  const runFixtures = [
+    runClaim('RUN-CANDIDATE', Rr.C2),
+    runClaim('RUN-WRONG-CANDIDATE', Rr.WRONG),
+    forged,
+    runClaim('RUN-REFUSED-CASE', Rr.C2, ['G7.migration.schema-evolution']),
+    runClaim('RUN-UNREGISTERED-VERIFICATION', Rr.C1),
+    runClaim('RUN-UNREGISTERED-SLOT', Rr.C2, ['NS.P2'], { composition: composition('xtdb', 'qlever', 's9') }),
+    runClaim('RUN-SUPPLIED-FINGERPRINT', Rr.C2, ['GS.05'], { oDomainFingerprint: 'f'.repeat(64), w0Pin: contractVariant('w0').w0Pin }),
+  ];
+  return { root, repos, objects: S.dir, fixtures, runFixtures };
 
-  // -- lab-only VA checks (Q41d: the lab adds full receipt validity; the structural reference does not model these)
-  add('RT2-PORT-LEADING-ZERO', 'red-team v2 finding 10 (VA5)', 'DIAGNOSTIC', 'the candidate position run contacted http://127.0.0.1:015442', 'pinned', complete('RT2-PORT-LEADING-ZERO', { tweak: { 'pos-cand': { endpoint: 'http://127.0.0.1:015442' } } }), lab);
-  add('LAB-BRANCH-PINS-OWN-ORACLE', 'VA6 (contract from the authority ref)', 'DIAGNOSTIC', 'claim at a branch commit whose obligations.json pins O-REPLAY; main has it null', 'null', complete('LAB-BRANCH-PINS-OWN-ORACLE', { variant: 'null', at: repos.null.ROGUE }), lab);
-  add('LAB-ORACLE-FILE-DRIFT', 'VA6 (oracle files equal the pin)', 'DIAGNOSTIC', 'O-OBS file edited after its pin; contract unchanged', 'pinned', complete('LAB-ORACLE-FILE-DRIFT', { at: repos.pinned.DRIFT }), lab);
-  { const c = composition('xtdb', 'qlever'); c.current.imageDigest = 'sha256:' + 'e'.repeat(64);
-    add('LAB-IMAGE-NOT-PINNED', 'VA4', 'DIAGNOSTIC', 'the candidate current index runs an unpinned QLever image', 'pinned', complete('LAB-IMAGE-NOT-PINNED', { candidate: c }), lab); }
-  add('LAB-FORBIDDEN-ENDPOINT', 'VA5', 'DIAGNOSTIC', 'the candidate position run contacted port 15442', 'pinned', complete('LAB-FORBIDDEN-ENDPOINT', { tweak: { 'pos-cand': { endpoint: 'http://127.0.0.1:15442' } } }), lab);
-  add('LAB-ADMISSION-BLOCKED', 'VA10', 'DIAGNOSTIC', 'the candidate position run was BLOCKED_CAPACITY', 'pinned', complete('LAB-ADMISSION-BLOCKED', { tweak: { 'pos-cand': { admission: 'BLOCKED_CAPACITY' } } }), lab);
-  add('LAB-SKIPPED-CASE', 'VA8', 'DIAGNOSTIC', 'the candidate position run reports one skipped execution', 'pinned', complete('LAB-SKIPPED-CASE', { tweak: { 'pos-cand': { skipped: 1 } } }), lab);
-  return { root, repos, objects: S.dir, fixtures };
+  // Codex round 7: a few invented case ids, each claiming to cover one of the obligation's select entries.
+  function inventedFor(key) {
+    const ob = OBL.get({ 'pos-cand': 'G7.position.coordinates', 'pos-a0': 'G7.position.coordinates', 'id-cand': 'G10.composition.identity-bound', 'id-a0': 'G10.composition.identity-bound', meas: 'NS.P2', ctrl: 'NS.P2' }[key]);
+    const need = ob.id === 'G7.position.coordinates' ? REAL_CONTRACT.positionRequiredCases : ob.cases.flatMap(c => c.select);
+    return need.map((t, i) => ({ id: `INVENTED-${i}`, selection: t }));
+  }
 }
 
-// ---------------------------------------------------------------- run both implementations
+// ---------------------------------------------------------------- run the implementations
 
 const gitSources = new Map();
 export function evaluateLab(fx, objectsDir) {
   if (!gitSources.has(fx.repo)) gitSources.set(fx.repo, gitSource(fx.repo));
-  return admitClaim(fx.claim, { git: gitSources.get(fx.repo), objects: objectStore(objectsDir), authorityRef: fx.authorityRef });
+  return admitClaim(fx.claim, { git: gitSources.get(fx.repo), objects: objectStore(objectsDir), authorityRef: 'main' });
 }
 
-/** Runs the proposed reference model (Q42a and Q47) over every fixture in one python process. */
+/** The contract's admit_claim on every document fixture, and the contract's own admission fixtures (claim_ref.py). */
 export function evaluateReference(built) {
   const input = path.join(built.root, 'reference-input.json');
   fs.writeFileSync(input, JSON.stringify({ objects: built.objects, fixtures: built.fixtures.map(f => ({ id: f.id, repo: f.repo, claim: f.claim })) }));
@@ -414,12 +372,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   const root = keep > 0 ? path.resolve(process.argv[keep + 1]) : fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-claim-fixtures-'));
   const built = buildFixtures(root);
   const ref = evaluateReference(built);
-  console.log('| Fixture | Source | Defect | Expected | Reference (proposed) | Lab | Lab reasons |');
+  // Expected and the two document columns are document verdicts; claim.mjs admit's own verdict is DIAGNOSTIC for every row (Q55a).
+  console.log('| Fixture | Source | Defect | Expected document verdict | Contract admit_claim 0.3.7 | Lab documentVerdict | Lab reasons (besides DOCUMENT-ONLY) |');
   console.log('| --- | --- | --- | --- | --- | --- | --- |');
   for (const f of built.fixtures) {
     const lab = evaluateLab(f, built.objects);
-    const codes = [...new Set(lab.reasons.map(r => r.code))].join(', ');
-    console.log(`| ${f.id}${f.labOnly ? ' (lab-only VA)' : ''} | ${f.source} | ${f.defect} | ${f.expected} | ${ref[f.id].verdict} | ${lab.verdict} | ${codes || '-'} |`);
+    const codes = [...new Set(lab.reasons.map(r => r.code))].filter(c => c !== 'DOCUMENT-ONLY').join(', ');
+    console.log(`| ${f.id}${f.labOnly ? ' (lab-only)' : ''} | ${f.source} | ${f.defect} | ${f.expected} | ${ref.documents[f.id].verdict} | ${lab.documentVerdict} | ${codes} |`);
   }
   if (keep < 0) fs.rmSync(root, { recursive: true, force: true });
 }

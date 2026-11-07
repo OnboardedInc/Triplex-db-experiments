@@ -606,6 +606,16 @@ async function gateG4(run, config) {
 main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const gate = positional[0];
+  // [EXP-E01] --dry-run (RULINGS Q55a step 3): validate the gate, lane and registered slot and print the plan claim.mjs
+  // qualify would execute, without locks, builds or engines. OBL (run an obligation's pinned case manifest on a slot) exists
+  // only as a plan: no executable case manifests are pinned yet, so it never runs.
+  if (options['dry-run']) {
+    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'OBL'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|OBL --lane xtdb|qlever --slot S --dry-run [--plan FILE]');
+    const info = slotInfo(loadSlots(), options.lane, options.slot ?? 'dev');
+    console.log(JSON.stringify({ dryRun: true, gate, lane: options.lane, slot: info.slot, endpoint: info.endpoint, container: info.container, mode: info.mode ?? null,
+      plan: options.plan ? readJson(path.resolve(options.plan)) : null, executes: gate !== 'OBL', missing: gate === 'OBL' ? 'the OBL gate (run pinned case manifests on a slot) is not implemented' : null }));
+    return;
+  }
   if (!['G0', 'G1', 'G2', 'G4', 'NS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
     fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]');
   const config = loadSlots();
