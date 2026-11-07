@@ -59,7 +59,35 @@ const output = path.resolve(
     path.join(root, "qualification/evidence", backend.name, `public-workloads-${runId}.json`),
   ),
 );
-const resourceBefore = (() => {
+// [EXP-000] Why: a third admission path for the triplex-db-2 lab. TRIPLEX_LAB_SLOT_OWNER names
+// a lab slot lock (lab/locks/<lane>-<slot>/owner.json, written by lab/bin/engine.mjs). It must be
+// a held lock for this backend whose endpoint equals the URL the loader will contact, and output
+// must go under <repo>/runs/ (gitignored raw output; lab/bin/gate.mjs writes the receipt).
+// The homebase branches below (devloop admission file, scripts/triplex-resources.mjs) are kept
+// unchanged so archived receipts stay reproducible as provenance.
+// Rejected: TRIPLEX_ADMISSION=off (R4 suggestion), because an unchecked run could reach an
+// engine nobody owns; reusing the homebase controller (built for another machine).
+const labAdmission = (() => {
+  const file = process.env["TRIPLEX_LAB_SLOT_OWNER"];
+  if (!file) return undefined;
+  const actualPath = realpathSync(file);
+  assert.ok(
+    /\/lab\/locks\/(xtdb|qlever)-(dev|s[1-9])\/owner\.json$/.test(actualPath),
+    "TRIPLEX_LAB_SLOT_OWNER must be a lab slot lock owner.json",
+  );
+  const bytes = readFileSync(actualPath);
+  const owner = JSON.parse(bytes.toString("utf8"));
+  assert.equal(owner.format, "tx2-slot-owner/1");
+  assert.equal(owner.lane, backend.name, "Slot lane differs from the selected backend");
+  assert.equal(owner.endpoint, backend.url, "Backend URL differs from the held slot's endpoint");
+  return {
+    policy: "triplex-db-2-lab-slot/1",
+    path: actualPath,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    owner,
+  };
+})();
+const resourceBefore = labAdmission ?? (() => {
   const file = process.env["TRIPLEX_RESOURCE_ADMISSION"];
   if (file) {
     const actualPath = realpathSync(file);
@@ -106,8 +134,9 @@ const resourceBefore = (() => {
 })();
 // The portable controller owns an explicit artifacts directory. The archived
 // qualification directory remains the only destination without that admission.
-const outputRoot =
-  resourceBefore.policy === "portable-export-devloop-v1"
+const outputRoot = labAdmission
+  ? path.join(root, "runs")
+  : resourceBefore.policy === "portable-export-devloop-v1"
     ? path.join(path.resolve(root, resourceBefore.admission.directory), "artifacts")
     : path.join(root, "qualification");
 assert.ok(

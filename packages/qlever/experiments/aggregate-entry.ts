@@ -7,15 +7,13 @@ import { Effect } from "effect";
 import { EntityId, Triples, number, ref } from "@triplex-build/triplex";
 import { Capabilities, DatabaseScope } from "@triplex-build/triplex/runtime";
 import { makeQleverRuntime } from "@triplex-build/triplex-qlever";
+import { labQleverAccessToken, labQleverUrl } from "./lab-endpoint.ts";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const runId = randomUUID();
 const scope = DatabaseScope.test(`aggregate-entry-${runId}`);
 const output = path.join(root, "qualification/evidence", `qlever-aggregate-entry-${runId}.json`);
-const accessToken = readFileSync(
-  path.join(root, ".runtime/engines/qlever-main/access-token"),
-  "utf8",
-).trim();
+const accessToken = labQleverAccessToken();
 const report: Record<string, any> = {
   format: "triplex-bounded-aggregate-entry/1",
   runId,
@@ -39,7 +37,7 @@ const run = <A>(
     program.pipe(
       Effect.provide(
         makeQleverRuntime({
-          url: "http://127.0.0.1:17019",
+          url: labQleverUrl(),
           accessToken,
           queryLimits: { aggregateAnswerPlan: plan, maxAggregateAnswerRows: cap },
         }).layer({ scope, capabilities: Capabilities.none }),

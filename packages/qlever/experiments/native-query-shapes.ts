@@ -16,17 +16,15 @@ import {
   makeQleverNativeQueries,
   makeQleverRuntime,
 } from "@triplex-build/triplex-qlever";
+import { labQleverAccessToken, labQleverUrl } from "./lab-endpoint.ts";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const output = process.argv[process.argv.indexOf("--output") + 1];
 assert(output && path.resolve(output).startsWith(root + path.sep));
 const runId = randomUUID(),
   scope = DatabaseScope.test(`native-query-shapes-${runId}`);
-const url = "http://127.0.0.1:17019";
-const accessToken = readFileSync(
-  path.join(root, ".runtime/engines/qlever-main/access-token"),
-  "utf8",
-).trim();
+const url = labQleverUrl();
+const accessToken = labQleverAccessToken();
 const native = makeQleverNativeQueries(makeQleverClient(url, { accessToken }), scope);
 const ObjectField = Attribute.text(":native-shape/object"),
   Revision = Attribute.int64(":native-shape/revision"),

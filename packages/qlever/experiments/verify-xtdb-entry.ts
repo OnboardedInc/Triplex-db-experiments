@@ -14,7 +14,9 @@ const manifest = JSON.parse(readFileSync(path.join(root, "packages/xtdb/package.
 const target = manifest.exports["."].import;
 assert.ok(target.startsWith("./dist/"));
 const api = await import(pathToFileURL(path.join(root, "packages/xtdb", target)).href);
-const url = "postgresql://xtdb:xtdb@127.0.0.1:15442/xtdb";
+// [EXP-000] Why: read the lab slot endpoint (lab/bin/engine.mjs prints XTDB_URL) instead of
+// the homebase tunnel 15442. Rejected: a default (it would silently reach the other checkout).
+const url = process.env["XTDB_URL"] ?? (() => { throw new Error("XTDB_URL is required"); })();
 const id = randomUUID(), scope = DatabaseScope.test(`independent-native-x-${id}`), otherScope = DatabaseScope.test(`independent-native-x-other-${id}`);
 const entity = EntityId.make("?literal ' ; independent"), Counter = Attribute.int64(":independent/counter"), Ratio = Attribute.number(":independent/ratio");
 const fields = (values: Record<string, any>) => TypeExpr.struct(Object.fromEntries(Object.entries(values).map(([key, value]) => [key, TypeExpr.required(value)])));

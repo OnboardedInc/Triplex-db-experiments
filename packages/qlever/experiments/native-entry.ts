@@ -16,26 +16,32 @@ import {
   makeQleverNativeQueries,
   makeQleverRuntime,
 } from "@triplex-build/triplex-qlever";
+import { labQleverAccessToken, labQleverUrl } from "./lab-endpoint.ts";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const runId = randomUUID();
-const url = process.env["QLEVER_URL"];
-assert.equal(
-  url,
-  "http://127.0.0.1:17019",
-  "This fixture requires the commissioned owned QLever endpoint",
-);
-const accessToken = readFileSync(
-  path.join(root, ".runtime/engines/qlever-main/access-token"),
-  "utf8",
-).trim();
-const admissionFile = process.env["TRIPLEX_RESOURCE_ADMISSION"];
-assert(admissionFile, "Fresh entry checks require canonical resource admission");
+// [EXP-000] Why: the endpoint comes from the lab slot (lab/config/slots.json), not the
+// homebase tunnel 17019. Rejected: asserting a fixed port (it pinned the other checkout).
+const url = labQleverUrl();
+const accessToken = labQleverAccessToken();
+// [EXP-000] Why: two admission paths. The lab path (TRIPLEX_LAB_SLOT_OWNER) points at a held
+// lab slot lock written by lab/bin/engine.mjs; its endpoint must equal QLEVER_URL. The homebase
+// devloop path is kept unchanged for provenance of the archived receipts.
+// Rejected: dropping admission entirely (an entry could then run against an unowned server).
+const labOwnerFile = process.env["TRIPLEX_LAB_SLOT_OWNER"];
+const admissionFile = labOwnerFile ?? process.env["TRIPLEX_RESOURCE_ADMISSION"];
+assert(admissionFile, "Fresh entry checks require a lab slot owner or canonical resource admission");
 const admission = JSON.parse(readFileSync(admissionFile, "utf8"));
-const owner = admission.requiredOwnerChecks?.find(
-  (entry: { ownerId: string }) => entry.ownerId === "foundation-qlever",
-)?.observation;
-assert(owner?.running && owner.memoryBytes === 2 * 1024 ** 3);
+if (labOwnerFile) {
+  assert.equal(admission.format, "tx2-slot-owner/1");
+  assert.equal(admission.lane, "qlever");
+  assert.equal(admission.endpoint, url, "QLEVER_URL differs from the held slot's endpoint");
+} else {
+  const owner = admission.requiredOwnerChecks?.find(
+    (entry: { ownerId: string }) => entry.ownerId === "foundation-qlever",
+  )?.observation;
+  assert(owner?.running && owner.memoryBytes === 2 * 1024 ** 3);
+}
 const args = process.argv.slice(2);
 const output = path.resolve(args[args.indexOf("--output") + 1]!);
 const artifactRoot = process.env["TRIPLEX_RUN_ARTIFACTS"];

@@ -7,20 +7,18 @@ import { Effect } from "effect";
 import { Capabilities, DatabaseScope } from "@triplex-build/triplex/runtime";
 import { triplesConformanceCases } from "@triplex-build/triplex-testkit";
 import { makeQleverRuntime } from "@triplex-build/triplex-qlever";
+import { labQleverAccessToken, labQleverUrl } from "./lab-endpoint.ts";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const artifacts = process.env["TRIPLEX_RUN_ARTIFACTS"];
 assert.ok(artifacts?.startsWith(root + path.sep), "Requires an owned devloop execution");
 assert.equal(triplesConformanceCases.length, 44);
-const accessToken = readFileSync(
-  path.join(root, ".runtime/engines/qlever-main/access-token"),
-  "utf8",
-).trim();
+const accessToken = labQleverAccessToken();
 const runId = randomUUID();
 const answerPlan = process.env["QLEVER_AGGREGATE_ANSWER_PLAN"] ?? "native";
 assert.ok(answerPlan === "native" || answerPlan === "bounded");
 const runtime = makeQleverRuntime({
-  url: "http://127.0.0.1:17019",
+  url: labQleverUrl(),
   accessToken,
   queryLimits: { aggregateAnswerPlan: answerPlan },
 });

@@ -11,17 +11,15 @@ import { EntityId, Triples, integer, number, ref, string } from "@triplex-build/
 import { Capabilities, DatabaseScope, type QueryContext } from "@triplex-build/triplex/runtime";
 import type { DatalogQuery } from "@triplex-build/triplex/datalog";
 import { makeQleverRuntime } from "@triplex-build/triplex-qlever";
+import { labQleverAccessToken, labQleverUrl } from "./lab-endpoint.ts";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const output = process.argv[process.argv.indexOf("--output") + 1];
 assert(output && path.resolve(output).startsWith(root + path.sep));
 const runId = randomUUID(),
   scope = DatabaseScope.test(`scalar-order-liveness-${runId}`),
-  url = "http://127.0.0.1:17019",
-  accessToken = readFileSync(
-    path.join(root, ".runtime/engines/qlever-main/access-token"),
-    "utf8",
-  ).trim();
+  url = labQleverUrl(),
+  accessToken = labQleverAccessToken();
 const report: Record<string, any> = {
   format: "triplex-scalar-order-liveness-entry/1",
   scope,
