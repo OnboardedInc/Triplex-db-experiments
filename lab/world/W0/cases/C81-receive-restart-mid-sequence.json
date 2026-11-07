@@ -1,0 +1,43 @@
+{
+  "id": "C81",
+  "slug": "receive-restart-mid-sequence",
+  "title": "Restart mid-sequence: C80's receiver state is carried across; the missing seq 2 releases the waiting seq 3",
+  "op": "receive",
+  "checks": [],
+  "notes": [
+    "The input state is C80's output, persisted before a receiver restart.",
+    "seq 1 arrives again: a duplicate of (id, 1), ignored by both the projection and the effects.",
+    "seq 2 arrives: the projection ignores it (2 < 3); the effects process seq 2 and then the waiting seq 3, ending at done 3."
+  ],
+  "input": {
+    "deliveries": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"}
+    ],
+    "state": {
+      "effects": [
+        {"done": 1, "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "waiting": [{"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}]}
+      ],
+      "projection": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1650, "payRateCents": 1600}, "seq": 3}
+      ]
+    }
+  },
+  "expected": {
+    "applied": {
+      "effects": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}
+      ],
+      "projection": []
+    },
+    "state": {
+      "effects": [
+        {"done": 3, "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "waiting": []}
+      ],
+      "projection": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1650, "payRateCents": 1600}, "seq": 3}
+      ]
+    }
+  }
+}

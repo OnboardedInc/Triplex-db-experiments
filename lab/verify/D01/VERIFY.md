@@ -32,3 +32,36 @@ sha256:8e121547...c5c4; R1 outputs sha256:ba6df5eb...760d; R2 outputs sha256:9b3
 | F10 | note | Population facts all valid from 2000-01-01; no runtime-outcome attribute; R2's diff reaches every subject, so P5 never exercises "re-run only the affected subjects" | Q40i |
 
 The EXP-D01 REPORT.md coverage numbers (61.7%, s = 1.0) are stale; the measured values above supersede them.
+
+# Re-review of W0-1.1.0 (50d92ef), 2026-11-08: FIX-FIRST on small fixes only (a delta check suffices after them)
+- The reviewer's independent evaluator matches all 82 cases byte for byte; all three release hashes recompute; the C01-C45 migration
+  changed only what it should (44 of 45 expected outputs identical; C24 drops a dependency by SPEC 6.3's intended rule); every 1.0.0 finding
+  is addressed; all six 1.0.0 surviving mutants are now killed.
+- Floors measured on the 100k population (44,537,987 facts; 0 invalid worlds): R2 changes 62.293%; lowest firing 7.810% (R1 MINWAGE);
+  Zipf largest 1,100, mean 49.54; 3+ work items 1.567% (R1) / 2.459% (R2, R3), margin 0.57 points; R3 changes 4.291% of subjects. World
+  sizes match P4's buckets (50.10 / 34.89 / 15.01%; means 124.0 / 499.6 / 1,392.1; hops 3/4/6 at 40.14 / 35.01 / 24.85%); ballast is
+  neutral (1,031 sampled worlds, identical bytes with and without ballast under all three releases).
+- Must fix: G1 C68 holds `1650.0` not `1.65e3` (exponent mutant survives); G2 C76 carries `wi:TBD`; G3 receive dedup unpinned (projection
+  re-applying an equal seq and a duplicated waiting seq both survive; GS.19b depends on them); G4 fingerprint recipe missing from SPEC 12.7;
+  G5 SPEC self-contradictions (section 15 item 1, invariant 13.4, 12.2 item 2 numbers, the section 0 title, row 40's citation).
+- Decide: G8 R3 narrows by rule, not by subject (OT's read pair is in every placement's static dependencies, so the index reaches all
+  100,000 while 4,291 change). Low: G6 K multiple-of-4 claim false at 10k; G7 some worlds 1-2 facts under their bucket; G9 publish and
+  receive shape validation underspecified; G10 publish wording (delivery subject source; only live reconciles are published).
+- Candidate fingerprint (pin after O-DOMAIN reproduces it with the G4 recipe): basis.tx 4,338,757; worlds sha256:fec1d7ce...c760; R1
+  sha256:c1b2d410...1a79; R2 sha256:551bbbc4...b562; R3 sha256:948ba617...698a. Hash table at 50d92ef in W0-1.1.0-50d92ef-SHA256SUMS
+  (not for pinning).
+
+# Delta check of W0-1.1.1 (ada2e90), 2026-11-08: ACCEPT
+- The reviewer's independent evaluator (updated from SPEC for the scoped entry and the publish/receive kind rules) matches all 87 cases byte
+  for byte; R1 and R2 hashes unchanged, R3 sha256:f345d9fe...312e recomputes; the validator rejected all seven planted mutations; the author's
+  three decisions (scope test in OT's read set and trace inputs; jurisdiction ids padded; the SPEC 5.3 skip rule) are correct for every W0
+  transition (0 subjects changed without being reached at 100k and 10k).
+- Floors unchanged (62.293%; 7.810%; largest location 1,100; 1.567% / 2.459%); OT under R3 fires for 16.538%; scoped R3 against R2: 9,497
+  reached (9.497%), 418 changed (0.418%), 0 changed but not reached.
+- **Final fingerprint (pin once O-DOMAIN's independent generator reproduces it):** basis.tx 4,338,757; 44,537,987 facts; worlds
+  sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760; R1 sha256:c1b2d410244121d64b476c2f99c32830ea1b1f536928c9d12b0e886132351a79;
+  R2 sha256:551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562; R3 sha256:a595092272c16343b0dfe9c9db57fbcdd7556fbf8be40afbaed014710fceee2f.
+- Hash table of all 95 files: lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS (verified on main after merge e7c1346: 95/95 OK).
+- Low notes for the next W0 edit: N1 add an R3 case with a listed jurisdiction that has no facts; N2 the 5.3 skip rule also needs "and A's
+  entry for that rule is unscoped"; N3 R3 is vacuous above 100k, so bind the narrow-release measurement to the 100k rung; N4 the P5 receipt
+  for a scoped sweep binds the reached-subject list (9,497 at 100k); N5 record measured R3 counts next to expected ones.

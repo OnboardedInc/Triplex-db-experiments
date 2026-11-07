@@ -1,0 +1,63 @@
+{
+  "id": "C87",
+  "slug": "affected-r3-scope-reach",
+  "title": "The subjects R3 reaches: the placements at locations whose jurisdiction R3's scope lists",
+  "op": "affected",
+  "checks": [],
+  "notes": [
+    "The writes are one (J, stateMinWageCents) pair per jurisdiction in R3's OT scope: section 10 item 7 defines the subjects R3 reaches as affected(R3, worlds, those pairs).",
+    "pl:a is at loc:nyc and pl:b at loc:buf; both locations reference jur:j010, which is listed, so both have [jur:j010, stateMinWageCents] in their dependencies (two hops).",
+    "pl:b's world has no jur:j010 facts: the pair is instantiated from the (loc:buf, jurisdiction) reference (6.3), and the scope tests the id, not the jurisdiction's facts.",
+    "pl:c is at loc:sfo (jur:ca, not listed); pl:d has no location. Neither is reached. Expected: [pl:a, pl:b]."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R3",
+    "worlds": [
+      {
+        "subject": "pl:a",
+        "facts": [
+          {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:j010", "tx": 1},
+          {"e": "jur:j010", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+          {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+          {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+          {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2}
+        ]
+      },
+      {
+        "subject": "pl:b",
+        "facts": [
+          {"e": "loc:buf", "a": "jurisdiction", "v": "jur:j010", "tx": 3},
+          {"e": "pl:b", "a": "startDate", "v": "2026-11-09", "tx": 4},
+          {"e": "pl:b", "a": "payRateCents", "v": 1700, "tx": 4},
+          {"e": "pl:b", "a": "location", "v": "loc:buf", "tx": 4}
+        ]
+      },
+      {
+        "subject": "pl:c",
+        "facts": [
+          {"e": "loc:sfo", "a": "jurisdiction", "v": "jur:ca", "tx": 5},
+          {"e": "jur:ca", "a": "stateMinWageCents", "v": 1800, "tx": 5},
+          {"e": "pl:c", "a": "payRateCents", "v": 1800, "tx": 6},
+          {"e": "pl:c", "a": "location", "v": "loc:sfo", "tx": 6}
+        ]
+      },
+      {"subject": "pl:d", "facts": [{"e": "pl:d", "a": "startDate", "v": "2026-11-02", "tx": 7}, {"e": "pl:d", "a": "payRateCents", "v": 1650, "tx": 7}]}
+    ],
+    "writes": [
+      ["jur:j010", "stateMinWageCents"],
+      ["jur:j020", "stateMinWageCents"],
+      ["jur:j030", "stateMinWageCents"],
+      ["jur:j040", "stateMinWageCents"],
+      ["jur:j050", "stateMinWageCents"],
+      ["jur:j060", "stateMinWageCents"],
+      ["jur:j070", "stateMinWageCents"],
+      ["jur:j080", "stateMinWageCents"],
+      ["jur:j090", "stateMinWageCents"],
+      ["jur:j100", "stateMinWageCents"]
+    ]
+  },
+  "expected": {
+    "affected": ["pl:a", "pl:b"]
+  }
+}

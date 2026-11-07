@@ -1,0 +1,106 @@
+{
+  "id": "C19",
+  "slug": "docs-before-expiry-r1",
+  "title": "An ead and a visa expiring 2027-01-15, no background check yet, pay below the state floor: the R1 half of the release pair",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "DOCEXP", "polarity": "positive"},
+    {"rule": "BGC", "polarity": "positive"},
+    {"rule": "MINWAGE", "polarity": "positive"}
+  ],
+  "notes": [
+    "R1 leadDays: ead 0, visa 0. For both: B = endOfDay(2027-01-15) = 2027-01-16T00; W = startOf(addDays(2027-01-15, 1 - 0)) = 2027-01-16T00 = B.",
+    "v 2026-11-04T12 < W, so each document gives row 4: obligation doc.window at 2027-01-16T00. Each item's inputs are [8].",
+    "BGC row 1: no bgcStatus fact; work item bgc.order, payload {}, inputs [].",
+    "MINWAGE under R1 reads only jur:ny's stateMinWageCents (two hops: pl:a -> loc:nyc -> jur:ny): floor 1650 > pay 1600, row 5. Task pay.below-minimum due 2026-11-02T00 (overdue);",
+    "work item notify.pay-below-minimum, payload floorCents 1650 and payRateCents 1600, inputs [1, 2]. The local floor fact is not read under R1.",
+    "Basis tx 20 leaves room for the activation facts of C31 and C32, which reuse this world."
+  ],
+  "input": {
+    "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 1},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1650, "tx": 1},
+        {"e": "loc:nyc", "a": "localMinWageCents", "v": 1700, "tx": 1},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1600, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7},
+        {"e": "pl:a", "a": "documents", "v": "pl:a/doc:1", "tx": 8},
+        {"e": "pl:a/doc:1", "a": "docType", "v": "ead", "tx": 8},
+        {"e": "pl:a/doc:1", "a": "expiresOn", "v": "2027-01-15", "tx": 8},
+        {"e": "pl:a", "a": "documents", "v": "pl:a/doc:2", "tx": 8},
+        {"e": "pl:a/doc:2", "a": "docType", "v": "visa", "tx": 8},
+        {"e": "pl:a/doc:2", "a": "expiresOn", "v": "2027-01-15", "tx": 8}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"],
+      ["pl:a/doc:1", "docType"],
+      ["pl:a/doc:1", "expiresOn"],
+      ["pl:a/doc:1", "reverified"],
+      ["pl:a/doc:2", "docType"],
+      ["pl:a/doc:2", "expiresOn"],
+      ["pl:a/doc:2", "reverified"]
+    ],
+    "flags": [],
+    "obligations": [
+      {"boundary": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.window#pl:a/doc:1", "kind": "doc.window", "rule": "DOCEXP"},
+      {"boundary": "2027-01-16T00:00:00.000000Z", "id": "pl:a#doc.window#pl:a/doc:2", "kind": "doc.window", "rule": "DOCEXP"}
+    ],
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.below-minimum", "kind": "pay.below-minimum", "overdue": true, "rule": "MINWAGE"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [], "key": "", "row": 1, "rule": "BGC"},
+      {"inputs": [8], "key": "pl:a/doc:1", "row": 4, "rule": "DOCEXP"},
+      {"inputs": [8], "key": "pl:a/doc:2", "row": 4, "rule": "DOCEXP"},
+      {"inputs": [1, 2], "key": "", "row": 5, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [1, 2], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+      {"id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e", "inputs": [], "key": "", "kind": "bgc.order", "payload": {}, "rule": "BGC", "version": "wv:edc2adc27d37abaf16d093e47ef08bc2235081f482c6c9164fe06a8dd1c92900"}
+    ]
+  }
+}

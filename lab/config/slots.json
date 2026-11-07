@@ -39,7 +39,7 @@
       "s3": { "port": 5473, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" }
     },
     "qlever": {
-      "dev": { "port": 7070, "memBytes": 2684354560, "cpus": 2, "qleverMemory": "1500M", "diskForecastBytes": 4294967296, "mode": "resident" },
+      "dev": { "port": 7070, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2000M", "diskForecastBytes": 4294967296, "mode": "resident", "note": "Raised from 2.5 GiB / 1500M on 2026-11-08: OOM-killed three times (20:57Z, 22:02Z and earlier) under several agents' shared load while its persisted delta grew; recreated with --fresh to drop the delta." },
       "s1": { "port": 7071, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" },
       "s2": { "port": 7072, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" },
       "s3": { "port": 7073, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" }

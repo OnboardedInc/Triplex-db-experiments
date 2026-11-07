@@ -1,0 +1,22 @@
+{
+  "id": "C40",
+  "slug": "err-cardinality",
+  "title": "Two startDate facts for one placement: a one-cardinality violation",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "startDate has cardinality one; the world holds two facts for (pl:a, startDate): W0.E_CARDINALITY (section 4.4 step 3.3)."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-09", "tx": 3}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_CARDINALITY"}
+}

@@ -1,0 +1,637 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "NS",
+  "lane": "xtdb",
+  "slot": "dev",
+  "runId": "NS-xtdb-20261107T205334Z-dce529",
+  "experiment": "EXP-N01",
+  "note": "functional smoke 2 on shared dev slot, public-queued",
+  "previous": null,
+  "startedAt": "2026-11-07T20:53:34.366Z",
+  "endedAt": "2026-11-07T20:55:45.808Z",
+  "durationMs": 131442,
+  "scope": "dev:subjects,max-readers,burst-multiplier,level-s,history-sample,sweep-max,reader-threads",
+  "runKind": "smoke",
+  "mutation": null,
+  "contractVersion": "0.3.2",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.3.2",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "d66839fc1d9c922e1c64af0a487154660f8095f0357d3867bb03576d0d7568f0"
+  },
+  "obligations": [],
+  "engineName": "xtdb",
+  "git": {
+    "head": "7f180c0d076513b774a4bfb110a858646e8e3309",
+    "headTree": "ac238e76b12386f8805602e28cc3161cd54a54a8",
+    "branch": "exp/N01-northstar-bench",
+    "dirty": true,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/runs/NS/"
+    ],
+    "sourceTreeId": "84f119e0daf529d19a4e53f1c71142dc0a7f748e85beec61aade25a8226e4e79"
+  },
+  "lockfileSha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "6fc1b0fc6182bc5505b4abf0d12d36e363238b1aeaa30039650a015ceacaa561",
+    "lab/bin/lib.mjs": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/bin/engine.mjs": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+  },
+  "build": {
+    "manifestSha256": "55662602ac7aa95eae97e07edd8ae5e5b1d63e807492a551c7424cae7fb669a4",
+    "manifest": "runs/NS/NS-xtdb-20261107T205334Z-dce529/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 412,
+        "bytes": 2619654,
+        "sha256": "b8cea6197cdc3b5186e768373b2f3517d4a2c2ec1b52cf02af953a8fdc529bba"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "xtdb": {
+        "files": 76,
+        "bytes": 387271,
+        "sha256": "773d6a386201bb3ca7c432db7ed9f0e3158d1f7e7986c9453732aae22aa56e21"
+      },
+      "qualification": {
+        "files": 16,
+        "bytes": 212702,
+        "sha256": "19c1dd683a7e04a53b87902c6c2c2a304771a1000db8caff989778035de4da5c"
+      }
+    }
+  },
+  "engine": {
+    "container": "tx2-xtdb-dev",
+    "containerId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+    "startedAt": "2026-11-07T19:39:01.589983918Z",
+    "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "repoDigests": [
+      "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+    ],
+    "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+    "effectiveConfig": {
+      "lane": "xtdb",
+      "slot": "dev",
+      "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "env": {
+        "JDK_JAVA_OPTIONS": "-Xmx1500m -XX:MaxDirectMemorySize=1g"
+      },
+      "memBytes": 3221225472,
+      "cpus": 2,
+      "publish": "127.0.0.1:5470:5432",
+      "volume": "tx2-xtdb-dev-data:/var/lib/xtdb",
+      "cmd": [
+        "-f",
+        "/etc/xtdb/config.yaml"
+      ],
+      "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+    },
+    "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+    "port": 5470,
+    "memCapBytes": 3221225472,
+    "nanoCpus": 2000000000,
+    "ownerSha256": "a1ae3fbcd98bb1de559f5ad0d4b18ea159902e58a64c313db391eb771fcec2a6",
+    "holder": "worktree:/Users/sam/projects/triplex-db-2"
+  },
+  "profile": {
+    "name": "default",
+    "env": {}
+  },
+  "queryPath": "xtdb-datalog",
+  "diskBefore": {
+    "totalBytes": 63088406528,
+    "usedBytes": 15395581952,
+    "availableBytes": 44454928384
+  },
+  "containers": {
+    "tx2-qlever-dev": {
+      "samples": 38,
+      "peakMemBytes": 2294586278,
+      "peakCpuPercent": 169.75,
+      "memLimitBytes": 2684354560
+    },
+    "tx2-xtdb-s1": {
+      "samples": 38,
+      "peakMemBytes": 1974611214,
+      "peakCpuPercent": 200.02,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-probe-r17": {
+      "samples": 38,
+      "peakMemBytes": 321598259,
+      "peakCpuPercent": 211.35,
+      "memLimitBytes": 1991791084
+    },
+    "tx2-xtdb-dev": {
+      "samples": 38,
+      "peakMemBytes": 2356863304,
+      "peakCpuPercent": 214.66,
+      "memLimitBytes": 3221225472
+    }
+  },
+  "coRunning": [
+    {
+      "name": "tx2-qlever-dev",
+      "memCapBytes": 2684354560,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-s1",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-probe-r17",
+      "memCapBytes": 1992294400,
+      "nanoCpus": 2000000000,
+      "health": null
+    },
+    {
+      "name": "tx2-xtdb-dev",
+      "memCapBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    }
+  ],
+  "volumeBytes": 1052131328,
+  "diskAfter": {
+    "totalBytes": 63088406528,
+    "usedBytes": 15476436992,
+    "availableBytes": 44374073344
+  },
+  "fixtures": {
+    "lab/bench/driver.ts": "b453bc99e5480257c1eb7dc9e0b03899bc7926d0a22915536a16153c027a4c3d",
+    "lab/bench/reader-worker.ts": "302f78ea05522aeb65d02d75ec0cd7044b68a70d66238b3f046a28550a5f0a55",
+    "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+    "lab/bench/lib/composition.ts": "d9aeebc8323c13749998ff4c92d54a8bbc714116de16c2495684fb927e36f737",
+    "lab/bench/lib/evaluate.ts": "948e511af9a11040378316073386828600ca2ec3d47b37c71bb02d1d562ac6d4",
+    "lab/bench/lib/feed.ts": "94d4d484eb0ef4ca1942e4f50c119931ba43ab0fe8c1eded6299597532bac9f5",
+    "lab/bench/lib/hist.ts": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a",
+    "lab/bench/lib/model.ts": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691",
+    "lab/bench/lib/observe.ts": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e",
+    "lab/bench/lib/oracle.ts": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693",
+    "lab/bench/lib/phases.ts": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281",
+    "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+    "lab/bench/lib/scheduler.ts": "d9352af83e4d617dbb779669950fa70560704711e421cec11384b81e8fff306c",
+    "lab/bench/lib/seed.ts": "5b028528fda36a1718094869002b0a7cdde398d41ca2fe60ae993d6500f306a5",
+    "lab/bench/lib/trace.ts": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+    "lab/bench/lib/triplex.ts": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60",
+    "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+    "lab/bench/test/bench.test.ts": "8f6941eb2b134a1382f69957c11ee3845ea3a58f55641b6377a78a9cf260901c",
+    "lab/bench/README.md": "1be93060daae23bd1f51e65a97848cdd0f0c87f3e07775fcb1583a0ed9d38262"
+  },
+  "oracle": {
+    "id": "O-REPLAY",
+    "ref": "exp/O01-replay-oracle",
+    "commit": "03d86f3346cccd6794487b77293fb56077dd020e",
+    "tarSha256": "a37eb7b6b351eef126d43868d71d0e8ec1eac40143b022ce1a4797cb78fa4c67"
+  },
+  "contactedEndpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "counts": {
+    "executed": 0,
+    "pass": 0,
+    "fail": 0,
+    "violations": 0,
+    "errors": 0,
+    "skip": 0
+  },
+  "compositionIdentity": {
+    "name": "public-queued",
+    "scopeKey": "composition:public-queued/source:xtdb/scope:ns-xtdb-dev400-nsmw6vsdlse281",
+    "assignments": {
+      "source": {
+        "role": "source",
+        "lane": "xtdb",
+        "slot": "dev",
+        "container": "tx2-xtdb-dev",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "repoDigests": [
+          "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+        ],
+        "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+        "cpuQuota": 2,
+        "memCapBytes": 3221225472,
+        "declared": {
+          "lane": "xtdb",
+          "role": "triplex public Triples service on one engine slot (XTDB adapter admissionQueue: true)"
+        }
+      },
+      "current": {
+        "role": "current",
+        "lane": "xtdb",
+        "slot": "dev",
+        "container": "tx2-xtdb-dev",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "repoDigests": [
+          "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+        ],
+        "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+        "cpuQuota": 2,
+        "memCapBytes": 3221225472,
+        "declared": {
+          "lane": "xtdb",
+          "role": "triplex public Triples service on one engine slot (XTDB adapter admissionQueue: true)"
+        }
+      },
+      "history": {
+        "role": "history",
+        "lane": "xtdb",
+        "slot": "dev",
+        "container": "tx2-xtdb-dev",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "repoDigests": [
+          "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+        ],
+        "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+        "cpuQuota": 2,
+        "memCapBytes": 3221225472,
+        "declared": {
+          "lane": "xtdb",
+          "role": "triplex public Triples service on one engine slot (XTDB adapter admissionQueue: true)"
+        }
+      },
+      "analytics": {
+        "role": "analytics",
+        "lane": "xtdb",
+        "slot": "dev",
+        "container": "tx2-xtdb-dev",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "repoDigests": [
+          "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+        ],
+        "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+        "cpuQuota": 2,
+        "memCapBytes": 3221225472,
+        "declared": {
+          "lane": "xtdb",
+          "role": "triplex public Triples service on one engine slot (XTDB adapter admissionQueue: true)"
+        }
+      }
+    },
+    "replicationEdges": [],
+    "watermarksAtRead": []
+  },
+  "ns": {
+    "format": "tx2-ns-report/2",
+    "semantics": "TARGETS v2 sections 1.1, 2.1, 4.1",
+    "config": {
+      "lane": "xtdb",
+      "rung": "dev:400",
+      "rungSubjects": 400,
+      "profile": "smoke",
+      "zeroReaders": false,
+      "matchDurationS": null,
+      "baselineWrites": null,
+      "devOverrides": [
+        "subjects",
+        "max-readers",
+        "burst-multiplier",
+        "level-s"
+      ],
+      "composition": "public-queued",
+      "seed": "ns-v2",
+      "readerThreads": 2,
+      "seedBudgetS": 3600,
+      "seedBatchFacts": 400,
+      "writerMaxInFlight": 32,
+      "writerDeadlineMs": 30000,
+      "sweepConcurrency": 16,
+      "sweepMax": 200,
+      "maxReaders": 8,
+      "burstMultiplier": 1,
+      "levelS": 10,
+      "oracleSampleSubjects": 12,
+      "oracleRate": 0.01,
+      "oracleMaxReads": 24,
+      "splitShare": 0.1,
+      "probe10PerS": 1,
+      "historySample": 30,
+      "p5Mutations": 10,
+      "oracleRoot": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261107T205334Z-dce529/oracle",
+      "settleS": 2
+    },
+    "generator": {
+      "traceSha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+      "worldSha256": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+      "seed": "ns-v2"
+    },
+    "trace": {},
+    "correctness": {
+      "violationSample": []
+    },
+    "bars": {},
+    "baseline": null,
+    "invalid": [
+      "development overrides: subjects, max-readers, burst-multiplier, level-s, history-sample, sweep-max, reader-threads",
+      "no matched zero-reader baseline (--baseline RUN-ID): writer attribution is unmatched"
+    ],
+    "positionCoordinates": null,
+    "reportSha256": "b5ba3d5ef42fba44a0975eae89636bc6b9c04e18eb899bcb4dbe5436c06edf25"
+  },
+  "nsVerdict": "INVALID",
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 550,
+      "cwd": ".",
+      "stdout": "runs/NS/NS-xtdb-20261107T205334Z-dce529/pnpm-version.stdout.txt",
+      "stderr": "runs/NS/NS-xtdb-20261107T205334Z-dce529/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "oracle-extract",
+      "command": "tar -xf /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261107T205334Z-dce529/oracle.tar -C /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261107T205334Z-dce529/oracle",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 12,
+      "cwd": ".",
+      "stdout": "runs/NS/NS-xtdb-20261107T205334Z-dce529/oracle-extract.stdout.txt",
+      "stderr": "runs/NS/NS-xtdb-20261107T205334Z-dce529/oracle-extract.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 16285,
+      "cwd": ".",
+      "stdout": "runs/NS/NS-xtdb-20261107T205334Z-dce529/build.stdout.txt",
+      "stderr": "runs/NS/NS-xtdb-20261107T205334Z-dce529/build.stderr.txt"
+    },
+    {
+      "name": "ns-driver",
+      "command": "node lab/bench/driver.ts --lane xtdb --rung 10k --profile smoke --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261107T205334Z-dce529/ns-report.json --oracle-root /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261107T205334Z-dce529/oracle --composition public-queued --subjects 400 --max-readers 8 --burst-multiplier 1 --level-s 10 --history-sample 30 --sweep-max 200 --reader-threads 2",
+      "code": 1,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 110159,
+      "cwd": ".",
+      "stdout": "runs/NS/NS-xtdb-20261107T205334Z-dce529/ns-driver.stdout.txt",
+      "stderr": "runs/NS/NS-xtdb-20261107T205334Z-dce529/ns-driver.stderr.txt"
+    }
+  ],
+  "firstFailures": [
+    {
+      "step": "ns-driver",
+      "tail": "[ns 20:53:54] seed: rung dev:400, 22865 live facts planned (20 accounts, mean world 427 facts)\n[ns 20:55:43] fatal: Error: seed command nsmw6vsdlse281:seed:acct5.0 failed 5 times: Unknown \n    at commit (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/lab/bench/lib/seed.ts:99:31)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async seedRung (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/lab/bench/lib/seed.ts:109:7)\n    at async run (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/lab/bench/driver.ts:223:16)",
+      "error": "Error: seed command nsmw6vsdlse281:seed:acct5.0 failed 5 times: Unknown \n    at commit (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/lab/bench/lib/seed.ts:99:31)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async seedRung (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/lab/bench/lib/seed.ts:109:7)\n    at async run (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/lab/bench/driver.ts:223:16)"
+    }
+  ],
+  "rawDir": "runs/NS/NS-xtdb-20261107T205334Z-dce529",
+  "reasons": [
+    "driver status ERROR: Error: seed command nsmw6vsdlse281:seed:acct5.0 failed 5 times: Unknown \n    at commit (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/lab/bench/lib/seed.ts:99:31)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async seedRung (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/lab/bench/lib",
+    "missing identity field ns.trace.digest",
+    "missing identity field ns.trace.seed",
+    "zero executed cases"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 289866,
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 49832,
+      "sha256": "6fc1b0fc6182bc5505b4abf0d12d36e363238b1aeaa30039650a015ceacaa561"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 19956,
+      "sha256": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5363,
+      "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 17892,
+      "sha256": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 3434,
+      "sha256": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261107T205334Z-dce529/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 100989,
+      "sha256": "55662602ac7aa95eae97e07edd8ae5e5b1d63e807492a551c7424cae7fb669a4"
+    },
+    {
+      "path": "xtdb-dev effective config",
+      "role": "engine-effective-config",
+      "bytes": 565,
+      "sha256": "5c4691cd927710c522b1f20e0d2100a994a0383bf5f0190a8fc7abba9f90fe9c"
+    },
+    {
+      "path": "config.yaml",
+      "role": "engine-config-file",
+      "bytes": 198,
+      "sha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261107T205334Z-dce529/build-manifest-after.json",
+      "role": "build-manifest",
+      "bytes": 100989,
+      "sha256": "55662602ac7aa95eae97e07edd8ae5e5b1d63e807492a551c7424cae7fb669a4"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261107T205334Z-dce529/ns-driver.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261107T205334Z-dce529/ns-driver.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 660,
+      "sha256": "ee5d460ca428c9b45b727ca1246bb578499e43ae039eeef237f9df9663b5f005"
+    },
+    {
+      "path": "lab/bench/driver.ts",
+      "role": "bench-source",
+      "bytes": 71853,
+      "sha256": "b453bc99e5480257c1eb7dc9e0b03899bc7926d0a22915536a16153c027a4c3d"
+    },
+    {
+      "path": "lab/bench/reader-worker.ts",
+      "role": "bench-source",
+      "bytes": 9809,
+      "sha256": "302f78ea05522aeb65d02d75ec0cd7044b68a70d66238b3f046a28550a5f0a55"
+    },
+    {
+      "path": "lab/bench/lib/commands.ts",
+      "role": "bench-source",
+      "bytes": 6259,
+      "sha256": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8"
+    },
+    {
+      "path": "lab/bench/lib/composition.ts",
+      "role": "bench-source",
+      "bytes": 8006,
+      "sha256": "d9aeebc8323c13749998ff4c92d54a8bbc714116de16c2495684fb927e36f737"
+    },
+    {
+      "path": "lab/bench/lib/evaluate.ts",
+      "role": "bench-source",
+      "bytes": 2313,
+      "sha256": "948e511af9a11040378316073386828600ca2ec3d47b37c71bb02d1d562ac6d4"
+    },
+    {
+      "path": "lab/bench/lib/feed.ts",
+      "role": "bench-source",
+      "bytes": 12296,
+      "sha256": "94d4d484eb0ef4ca1942e4f50c119931ba43ab0fe8c1eded6299597532bac9f5"
+    },
+    {
+      "path": "lab/bench/lib/hist.ts",
+      "role": "bench-source",
+      "bytes": 4305,
+      "sha256": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a"
+    },
+    {
+      "path": "lab/bench/lib/model.ts",
+      "role": "bench-source",
+      "bytes": 4460,
+      "sha256": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691"
+    },
+    {
+      "path": "lab/bench/lib/observe.ts",
+      "role": "bench-source",
+      "bytes": 1875,
+      "sha256": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e"
+    },
+    {
+      "path": "lab/bench/lib/oracle.ts",
+      "role": "bench-source",
+      "bytes": 6003,
+      "sha256": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693"
+    },
+    {
+      "path": "lab/bench/lib/phases.ts",
+      "role": "bench-source",
+      "bytes": 2675,
+      "sha256": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281"
+    },
+    {
+      "path": "lab/bench/lib/rng.ts",
+      "role": "bench-source",
+      "bytes": 2427,
+      "sha256": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50"
+    },
+    {
+      "path": "lab/bench/lib/scheduler.ts",
+      "role": "bench-source",
+      "bytes": 4817,
+      "sha256": "d9352af83e4d617dbb779669950fa70560704711e421cec11384b81e8fff306c"
+    },
+    {
+      "path": "lab/bench/lib/seed.ts",
+      "role": "bench-source",
+      "bytes": 7745,
+      "sha256": "5b028528fda36a1718094869002b0a7cdde398d41ca2fe60ae993d6500f306a5"
+    },
+    {
+      "path": "lab/bench/lib/trace.ts",
+      "role": "bench-source",
+      "bytes": 10349,
+      "sha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4"
+    },
+    {
+      "path": "lab/bench/lib/triplex.ts",
+      "role": "bench-source",
+      "bytes": 2796,
+      "sha256": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60"
+    },
+    {
+      "path": "lab/bench/lib/world.ts",
+      "role": "bench-source",
+      "bytes": 13649,
+      "sha256": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3"
+    },
+    {
+      "path": "lab/bench/test/bench.test.ts",
+      "role": "bench-source",
+      "bytes": 14783,
+      "sha256": "8f6941eb2b134a1382f69957c11ee3845ea3a58f55641b6377a78a9cf260901c"
+    },
+    {
+      "path": "lab/bench/README.md",
+      "role": "bench-source",
+      "bytes": 9090,
+      "sha256": "1be93060daae23bd1f51e65a97848cdd0f0c87f3e07775fcb1583a0ed9d38262"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261107T205334Z-dce529/ns-report.json",
+      "role": "raw-outcome",
+      "bytes": 4741,
+      "sha256": "b5ba3d5ef42fba44a0975eae89636bc6b9c04e18eb899bcb4dbe5436c06edf25"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 544570,
+      "sha256": "d66839fc1d9c922e1c64af0a487154660f8095f0357d3867bb03576d0d7568f0"
+    }
+  ]
+}

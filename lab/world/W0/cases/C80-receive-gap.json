@@ -1,0 +1,41 @@
+{
+  "id": "C80",
+  "slug": "receive-gap",
+  "title": "A gap: seq 1 then seq 3; effects stop at seq 1 and wait for seq 2",
+  "op": "receive",
+  "checks": [],
+  "notes": [
+    "Deliveries arrive as seq 1 then seq 3; seq 2 is missing.",
+    "Projection: seq 1, then seq 3 (higher) are applied; the projection holds seq 3's payload.",
+    "Effects: seq 1 is processed; seq 3 waits, because an effect that needs every transition applies nothing past a gap."
+  ],
+  "input": {
+    "deliveries": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}
+    ],
+    "state": {
+      "effects": [],
+      "projection": []
+    }
+  },
+  "expected": {
+    "applied": {
+      "effects": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}
+      ],
+      "projection": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}
+      ]
+    },
+    "state": {
+      "effects": [
+        {"done": 1, "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "waiting": [{"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"}]}
+      ],
+      "projection": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1650, "payRateCents": 1600}, "seq": 3}
+      ]
+    }
+  }
+}

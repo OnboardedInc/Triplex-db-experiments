@@ -51,3 +51,33 @@ EXP-W01's golden scenarios were generated with O-REPLAY 0.1 (`lab/scenarios/lib/
 the oracle is pinned.
 
 The verified 29-file hash table at 03519ae is in the verifier's hand-back and on branch verify/O02 (`tools/hash_table.py`).
+
+# V-O03: re-check of O-REPLAY 0.3.1 (8cc2c26) against contract 0.3.5 + Q43 (2026-11-08): ACCEPT with a scoped pin
+Branch verify/O02 commit 8f631ab; evidence in that branch's lab/verify/O02/v-o03/results/ (pin_scope.json and hashes.8cc2c26.json copied
+here). Merged to main as 4591715.
+
+| Check | Verifier | Author | Same |
+| --- | --- | --- | --- |
+| Unit tests | 300/300 | 300/300 | yes |
+| --self-check | 61/61 | 61/61 | yes |
+| Patched converter core / qlever | identical to EXP-O02 item by item | identical | yes |
+| Raw answers 0.2.0 vs 0.3.1 | 0 differences in all 87 golden runs per lane | none | none |
+| judge_changed / planted / mutants | 47/47; 22/22; 8/8 | 8/8 | yes |
+| probe_delta_033 | 19 MATCH, 1 REFUSES (erasure), 0 WRONG | same | yes |
+| New 0.3.5 probe (119 probes from the contract; checker self-test 11/11) | 116 MATCH, 3 WRONG (all DR-JSON-CONVERT), 0 unexpected refusals | not run | no |
+| Refusals | 8/8 exit 2 with X-NOT-MODELED and no output | none | yes |
+| Reverse check | no dropped id survives; table equals the contract's | none | yes |
+| Independence and hashes | stdlib, no subprocess, no packages/; 29/29 hashes match four ways | none | yes |
+
+## Pin scope
+- Pin `lab/oracles/replay/**` at 8cc2c26 (29 files, hashes.8cc2c26.json) against contract 0.3.5 + Q43.
+- May close: 106 of the 119 obligations that use O-REPLAY (their other gates still apply: position, W0, O-TDK1, composition identity).
+- Blocked, 13: the 11 erasure-dependent obligations (G9.erasure.*, REQ.pii-erasure, GS.16, G7.journal.logical-contract,
+  G10.cursor.stable, NS.SEC.retro-and-audit, R.repo.mutation-controls, G8.composition.watermark-routing) fail closed through the oracle's
+  erasure refusal; G1.types.decimal (refused scale-evolution cases; key-byte cases need O-TDK1); G1.decimal.channel-routing (wrong answer
+  F2) must be excluded explicitly in the pin, because pins are per oracle.
+- Findings: F2 DR-JSON-CONVERT wrong (E-INVALID-CONVERSION where the contract says 1.5 / E-DECIMAL-FRACTION / E-INVALID-VALUE; the drift
+  guard missed it because `decimalRouting` is absent from RULES.md's table list and Coverage.TABLES). N1 Q43 not yet compiled (DO-ROUND
+  precision). N2 refusals refuse the whole case (exit 2); only `erase`/`erasure` refuse, other unknown ops are E-INVALID-VALUE, so outbox
+  steps must never be O-REPLAY ops. N3 G1.types.decimal lists only O-REPLAY and O-ERR but selects three key-byte cases that need O-TDK1.
+  N4 resuming at an abort gap maps the gap coordinate to its ordinal through a coordinate cut.

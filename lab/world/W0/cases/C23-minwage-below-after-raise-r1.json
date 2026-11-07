@@ -1,0 +1,84 @@
+{
+  "id": "C23",
+  "slug": "minwage-below-after-raise-r1",
+  "title": "The jurisdiction's state floor rises to 1651, one cent above the pay rate",
+  "op": "evaluate",
+  "checks": [
+    {"rule": "MINWAGE", "polarity": "positive"}
+  ],
+  "notes": [
+    "jur:ny stateMinWageCents is 1651 at tx 9 (the shared jurisdiction changed, two hops away; GS.06b). 1650 < 1651: row 5.",
+    "Task pay.below-minimum due startOf(2026-11-02) = 2026-11-02T00, overdue at 2026-11-04T12; work item notify.pay-below-minimum.",
+    "Inputs [2, 9]: startDate, payRateCents and location at tx 2; loc:nyc's jurisdiction and jur:ny's floor at tx 9."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 1650, "tx": 2},
+        {"e": "pl:a", "a": "location", "v": "loc:nyc", "tx": 2},
+        {"e": "pl:a", "a": "section1AttestedAt", "v": "2026-10-30T15:00:00.000000Z", "tx": 3},
+        {"e": "pl:a", "a": "ssn", "v": "123456789", "tx": 3},
+        {"e": "pl:a", "a": "bgcStatus", "v": "clear", "tx": 4},
+        {"e": "pl:a", "a": "everifyStatus", "v": "pending", "tx": 5},
+        {"e": "pl:a", "a": "everifyStatusAt", "v": "2026-11-03T10:00:00.000000Z", "tx": 5},
+        {"e": "pl:a", "a": "decisions", "v": "pl:a/dec:1", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "target", "v": "i9.section2", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "verdict", "v": "approve", "tx": 6},
+        {"e": "pl:a/dec:1", "a": "author", "v": "person", "tx": 6},
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 2400, "tx": 7},
+        {"e": "loc:nyc", "a": "jurisdiction", "v": "jur:ny", "tx": 9},
+        {"e": "jur:ny", "a": "stateMinWageCents", "v": 1651, "tx": 9}
+      ]
+    }
+  },
+  "expected": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "dependencies": [
+      ["jur:ny", "stateMinWageCents"],
+      ["loc:nyc", "jurisdiction"],
+      ["pl:a", "baselinePayRateCents"],
+      ["pl:a", "bgcStatus"],
+      ["pl:a", "decisions"],
+      ["pl:a", "documents"],
+      ["pl:a", "everifyStatus"],
+      ["pl:a", "everifyStatusAt"],
+      ["pl:a", "everifySubmitResult"],
+      ["pl:a", "location"],
+      ["pl:a", "payRateCents"],
+      ["pl:a", "section1AttestedAt"],
+      ["pl:a", "ssn"],
+      ["pl:a", "startDate"],
+      ["pl:a", "weeklyMinutes"],
+      ["pl:a/dec:1", "author"],
+      ["pl:a/dec:1", "target"],
+      ["pl:a/dec:1", "verdict"]
+    ],
+    "flags": [],
+    "obligations": [],
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "tasks": [
+      {"dueAt": "2026-11-02T00:00:00.000000Z", "id": "pl:a#pay.below-minimum", "kind": "pay.below-minimum", "overdue": true, "rule": "MINWAGE"}
+    ],
+    "trace": [
+      {"inputs": [2], "key": "", "row": 3, "rule": "LIFE"},
+      {"inputs": [2, 3], "key": "", "row": 1, "rule": "I9S1"},
+      {"inputs": [2, 6], "key": "", "row": 1, "rule": "I9S2"},
+      {"inputs": [2, 3, 5], "key": "", "row": 1, "rule": "EVSUB"},
+      {"inputs": [5], "key": "", "row": 1, "rule": "EVSTAT"},
+      {"inputs": [4], "key": "", "row": 2, "rule": "BGC"},
+      {"inputs": [], "key": "", "row": 0, "rule": "DOCEXP"},
+      {"inputs": [2, 9], "key": "", "row": 5, "rule": "MINWAGE"},
+      {"inputs": [7], "key": "", "row": 3, "rule": "OT"},
+      {"inputs": [2], "key": "", "row": 1, "rule": "PAYCHG"},
+      {"inputs": [6], "key": "", "row": 0, "rule": "PROP"}
+    ],
+    "workItems": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [2, 9], "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1651, "payRateCents": 1650}, "rule": "MINWAGE", "version": "wv:a4699ce333c2a85e18668f089bc974290d906831edddc8858953ed66cfd85f65"}
+    ]
+  }
+}

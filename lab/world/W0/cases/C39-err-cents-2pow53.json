@@ -1,0 +1,22 @@
+{
+  "id": "C39",
+  "slug": "err-cents-2pow53",
+  "title": "payRateCents 9007199254740992 (2^53) is outside the exact range: a hard error",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "cents allows 0 to 9007199254740991. 2^53 is out of range: W0.E_VALUE, never a silent conversion. C27 shows 2^53 - 1 is valid."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 2},
+        {"e": "pl:a", "a": "payRateCents", "v": 9007199254740992, "tx": 2}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}
