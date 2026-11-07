@@ -1,0 +1,19 @@
+{
+  "before": 2048,
+  "burned": 3,
+  "inside": 3089,
+  "kinds": [
+    "epoch:1",
+    "commit:2",
+    "aborted:3",
+    "epoch:4",
+    "commit:5",
+    "commit:6",
+    "commit:7"
+  ],
+  "laterPositions": [
+    5120,
+    6144,
+    7168
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "position": 2048,
+  "oracleRows": 1,
+  "inTransaction": {
+    "datalog": [],
+    "pull": 1,
+    "sourceK": 2048
+  },
+  "outsideTransaction": {
+    "error": "ReadError",
+    "message": "QLever Datalog execution failed: Error: QLever replica has not reached position 2048; no eligible surface for a Datalog query",
+    "cause": "Error: QLever replica has not reached position 2048; no eligible surface for a Datalog query",
+    "ms": 2003
+  },
+  "inTransactionAfterPublication": [
+    {
+      "?v": "a-0"
+    }
+  ]
+}
