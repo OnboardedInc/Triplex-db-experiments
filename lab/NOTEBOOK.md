@@ -989,3 +989,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - V-O04c: 85/85 probes match, 15/15 planted wrong rulings caught. The 11 erasure obligations can close on the oracle side once 0.3.8 pins it.
 - Learning: the oracle pin and the oracle files must move in one commit; merging the oracle first breaks --verify (Q45a), so 0.3.8 is
   built on its own branch that merges the oracle, compiles Q50-Q56 and moves the pin together.
+
+## 2026-11-07 23:49Z: MILESTONE: three independent W0 implementations agree; the kernel prices the P5 sweep
+- EXP-D01b (TypeScript kernel, from SPEC.md alone): 87/87 cases and 6/6 fingerprint values on the first run; merged (02424ff).
+- **P5 learning: the sweep's CPU is cheap, and most of it is validation.** About 158 µs per subject (6,300 subjects per second per
+  core), 15.8 s of one core for 100k subjects, inside P5's 100 s bar, but 80% of it re-validates facts (96% ballast) that the store
+  already validated at write time. A trusted typed entry point for facts read from Triplex would cut the per-subject cost to roughly 30
+  µs; that is a P5 design choice to measure, not a W0 change.
+- **P5 learning: the kernel must not share a core with the pull path.** At the reconciler reference (1,100 pulls per second per core)
+  the combined sweep is about 106 s and misses the bar; pipelined on its own core it fits.
+- **P5 learning: hand the kernel typed facts, not JSON** (the JSON path costs 3.2x), and scope releases through the dependency index:
+  R3's 9,497 reached subjects cost 1.49 s against 15.9 s for all 100k.
+- The brief's cost predictions were falsified (p50 85 µs against < 50 µs), which is the point of writing them down.
+- Five more SPEC readings (A11-A15) join W0-1.1.2 with A01-A10 (Q53b, Q57).
