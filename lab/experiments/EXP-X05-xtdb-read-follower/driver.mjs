@@ -524,23 +524,29 @@ async function tokenCheck() {
 async function seed() {
   const c = connect(W_URL);
   const t0 = absNow();
-  const rowsPerStmt = 1000, stmtsPerTx = 5;
+  // One constant parameterised statement text, 200 rows each, 5 per transaction. The first full run's 1,000-row
+  // literal INSERTs (a distinct ~200 KB SQL text each) filled the writer's 2 GiB old generation at about 50k rows
+  // and it never came back (jvm_memory_used_bytes G1 Old Gen 2.13e9 of 2.15e9), so the seed must not plan new text.
+  const rowsPerStmt = 200, stmtsPerTx = 5;
+  const cols = ['_id', ...Array.from({ length: 16 }, (_, k) => `a${k}`), 'r0', 'r1', 'r2', 'r3', 'pos'];
+  const stmt = `INSERT INTO ${T.ent} (${cols.join(', ')}) VALUES ${Array.from({ length: rowsPerStmt }, (_, r) => `(${cols.map((_, k) => `$${r * cols.length + k + 1}`).join(', ')})`).join(', ')}`;
+  if (P.subjects % rowsPerStmt) throw new Error(`--subjects must be a multiple of ${rowsPerStmt}`);
   try {
     for (let s = 0; s < P.subjects; s += rowsPerStmt * stmtsPerTx) {
       await c.unsafe('BEGIN READ WRITE');
       for (let b = s; b < Math.min(P.subjects, s + rowsPerStmt * stmtsPerTx); b += rowsPerStmt) {
-        const values = [];
-        for (let i = b; i < Math.min(P.subjects, b + rowsPerStmt); i++) {
-          const ints = Array.from({ length: 8 }, (_, k) => intVal(i, 0, k));
-          const strs = Array.from({ length: 8 }, (_, k) => `'${strVal(i, 0, k + 8)}'`);
-          const refs = Array.from({ length: REFS }, (_, k) => `'${sid(ref(i, k, P.subjects))}'`);
-          values.push(`('${sid(i)}', ${ints.join(', ')}, ${strs.join(', ')}, ${refs.join(', ')}, 0)`);
+        const ps = [];
+        for (let i = b; i < b + rowsPerStmt; i++) {
+          ps.push(txt(c, sid(i)));
+          for (let k = 0; k < 8; k++) ps.push(i8(c, intVal(i, 0, k)));
+          for (let k = 0; k < 8; k++) ps.push(txt(c, strVal(i, 0, k + 8)));
+          for (let k = 0; k < REFS; k++) ps.push(txt(c, sid(ref(i, k, P.subjects))));
+          ps.push(i8(c, 0));
         }
-        const cols = ['_id', ...Array.from({ length: 16 }, (_, k) => `a${k}`), 'r0', 'r1', 'r2', 'r3', 'pos'];
-        await c.unsafe(`INSERT INTO ${T.ent} (${cols.join(', ')}) VALUES ${values.join(', ')}`);
+        await c.unsafe(stmt, ps);
       }
       await c.unsafe('COMMIT SYNC');
-      if (((s / (rowsPerStmt * stmtsPerTx)) % 4) === 0) log(`seed ${s + rowsPerStmt * stmtsPerTx}/${P.subjects} in ${Math.round(absNow() - t0)} ms`);
+      if (((s / (rowsPerStmt * stmtsPerTx)) % 20) === 0) log(`seed ${s + rowsPerStmt * stmtsPerTx}/${P.subjects} in ${Math.round(absNow() - t0)} ms`);
     }
     await c.unsafe('BEGIN READ WRITE');
     await c.unsafe(`INSERT INTO ${T.claim} (_id, subj, pos) VALUES ('init', 'none', 0)`);
@@ -549,7 +555,9 @@ async function seed() {
     const [r] = await c.unsafe('SHOW LATEST_SUBMITTED_TX');
     const micros = parseMicros(r.system_time);
     lastMicros = micros;
-    return { rid: -1, t: micros.toString(), snapshotToken: encodeSnapshotToken(micros), awaitToken: r.await_token, clock: microsIso(micros), ms: Math.round(absNow() - t0) };
+    // Flush the seed out of the live index before the first window, so no window carries it.
+    const cut = await finishBlock();
+    return { rid: -1, t: micros.toString(), snapshotToken: encodeSnapshotToken(micros), awaitToken: r.await_token, clock: microsIso(micros), ms: Math.round(absNow() - t0), blockCut: cut };
   } finally { await c.end({ timeout: 5 }); }
 }
 
