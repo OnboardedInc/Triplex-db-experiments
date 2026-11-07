@@ -563,3 +563,29 @@ Where each priority stands, from evidence so far (research probes and baselines;
   QLever delta lifecycle and group commit (its probe outputs include latency at delta sizes 0 to 1M), so that is not queued twice.
 - **Watch item:** EXP-X02 has waited on its own live-check rerun for over an hour; its worktree shows a G2 run at 20:12Z and the
   workload process alive, so it is progressing, not stuck.
+
+## 2026-11-07 ~23:00Z: R19 landed; EXP-X05 (read-only follower) dispatched
+- **P1 learning: XTDB read nodes need no Kafka and no object store on our pinned image.** A second container on the same named
+  volume with `readOnlyDatabases: true` follows the writer through the replica log (inotify) and shared storage, never claims
+  leadership, never compacts, and applies already-resolved rows only (ReadOnlyLocalLog.kt, LogProcessor.kt:280, Database.kt:279,328;
+  upstream read_only_node_test.clj, same JVM only). This corrects R16 ("horizontal reads need Kafka") and saves 1.5-2.5 GiB of pool.
+  Risks to test: cross-container inotify; a half-written last record throws and kills the follower (no catch); a second read-write
+  process would corrupt the log silently (no file locks), so the harness must refuse it. EXP-X05 is the top-priority experiment now.
+- **P1 learning, token protocol:** a snapshot token on a lagging follower raises `0B000` (does not wait); an await token waits up to a
+  hard-coded 60 s; a default basis silently reads whatever the follower has. Every follower read sends AWAIT_TOKEN and SNAPSHOT_TOKEN
+  together. Tokens are node-wide across attached databases, so one lagging tenant database can fail a pinned read on another.
+- **P1 learning, connections:** `server.numThreads` is one virtual thread per connection plus an equal queue: connections 43-84 hang,
+  the 85th is refused. Raise it (about 300 for 256 readers) and cap in-flight queries in the client; no pgbouncer (session-state tokens).
+- **P2 learning: the ~15 ms commit floor is mostly not fsync.** Two sequential durable appends (source log, replica log) at 0.4-0.9 ms
+  each explain 1-2 ms; group commit is fixed at 10 messages per fsync. Levers are pipelining BEGIN, statements and COMMIT in one write,
+  fewer statements per command, CPU pinning for the writer, and LOG on its own filesystem (p99). COMMIT ASYNC does not help the ACK
+  (no outcome). These go to EXP-P2X's follow-up (R19 E2) after its A0 comparison.
+- **Tenancy learning: silo-per-tenant has an idle cost.** Each attached database's leader appends a heartbeat every idle 100 ms
+  (hard-coded): about 10 fsyncs a second and 27 MB a day of never-trimmed log per database, so 1,000 attached databases would need about
+  10,000 fsyncs a second against a ceiling near 1,700. Every query resolves all attached databases. XTDB 2.2.0 has no per-database
+  authorization and no encryption. Provisional design: large tenant siloed; small tenants pooled in about 10 cell databases with a
+  constant table set, tenant-prefixed ids and per-tenant envelope encryption. QLever: large tenant in its own index; small tenants in
+  1-10 cell indexes, one named graph each, one log of record per tenant (a server per tenant would need 31 GB idle).
+- **Decisions for Sam (from R19), provisional rulings in force:** (1) pooled cells with per-tenant encryption count as storage-layer
+  isolation for small tenants (R19 found no standard that accepts crypto isolation alone, so this is Sam's call); (2) assume 10% of small
+  tenants (100) are active in any 15-minute window until Sam gives a number.

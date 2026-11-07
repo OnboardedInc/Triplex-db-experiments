@@ -36,7 +36,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-O02 oracle conformance (opus, exp/O02-oracle-conformance) | correctness floor for GS and P2 | lab/oracles/replay |
 | EXP-X02 XTQL parity (opus, exp/X02-xtql-parity) | read priorities on XTDB, floor | branch; waiting on own live-check rerun |
 | EXP-F02b wire exactness fixes (opus, exp/F02b-wire-exactness-fixes, dev residents) | numeric rule floor | branch |
-| R19 XTDB read nodes, commit floor, tenancy (sonnet xhigh) | P1, P2, tenant isolation | lab/research/R19-*.md |
+| EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |
 | EXP-A01 contract 0.3.3 (opus, main, no commit) | Q29 + Q31 into the contract | lab/acceptance/ |
 | R17 QLever north-star fit (sonnet) | P1-P5 per layer | lab/research/R17-qlever-northstar-fit.md |
 | EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
@@ -52,5 +52,7 @@ lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 
 - Q21 AMB-17: `find` fails with ConflictingValuesError when a returned document has a conflicted attribute (a projection omitting it succeeds).
 - Q21 AMB-04: a -0.0 assertion keeps bit-exact -0.0 in the journal; the numeric rule overrides C6's old byte-identity promise.
 - Q24 erasure: after the erasure commit publishes, reads at every basis (even before it) show a typed ErasedValue marker, not the value.
+- R19 tenancy: do pooled cell databases with per-tenant envelope encryption count as storage-layer isolation for the 1,000 small tenants
+  (provisional yes; large tenants siloed)? And how many small tenants are active in 15 minutes (provisional 10%)?
 - R18: Datomic-style `noHistory` for high-churn attributes? Default kept: history for everything (audit is a must-have).
 - GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
