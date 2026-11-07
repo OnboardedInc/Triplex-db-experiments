@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -133,7 +133,12 @@
       "offers": "open loop: a seeded Poisson process at the steady rate",
       "burstPhase": "bursts start at 120 s + k x 600 s from the start of the measured window, identical for baselines and candidates",
       "scenarioOverlay": "a golden scenario's commands are added on top of the background trace, never instead of it; both streams accounted separately in the receipt",
-      "freeze": "the generator source hash and the seed are bound in every receipt; a change to either starts a new comparison series"
+      "freeze": "the generator source hash and the seed are bound in every receipt; a change to either starts a new comparison series",
+      "invalidCommands": {
+        "share": 0.001,
+        "rule": "0.1% of trace commands are deliberately invalid (values no engine may hold) and marked in the frozen trace; only those may end in a typed rejection",
+        "source": "RULINGS Q31a, Q32c"
+      }
     }
   },
   "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
@@ -157,7 +162,8 @@
       },
       "splitReads": {
         "share": 0.1,
-        "rule": "10% of subgraph reads are issued as two or more queries at the same named basis; the driver commits a mutation to those same subjects between the steps; the answer must equal the oracle at the requested basis, never the latest state"
+        "rule": "10% of subgraph reads are issued as two or more queries at the same named basis, scheduled to straddle a command the frozen trace already holds for that subject: step 1 before that command's ACK, step 2 after it; the answer must equal the oracle at the requested basis, never the latest state",
+        "driverWrites": "none: the driver adds no writes of its own, so faster readers never change the write load (RULINGS Q31b)"
       },
       "maintenance": "every P1 window contains at least one maintenance event (XTDB compaction; QLever index rebuild or delta merge; index-layer catch-up)",
       "requestedBasis": "the driver records the basis it requested (from the receipts it observed) independently of anything the engine echoes; the verifier checks every sampled answer at the driver-recorded basis",
@@ -219,6 +225,12 @@
       ],
       "commands": "the trace's own commands; the 10-fact probe is a diagnostic only",
       "accounting": "every offered command is committed with a receipt, rejected with a typed error, or a typed conflict; zero unaccounted (NS-P2-UNACCOUNTED-MAX)",
+      "progress": {
+        "rule": "every oracle-valid trace command publishes; typed rejections count only for commands the frozen trace marks deliberately invalid, typed conflicts only where the oracle independently finds a compare-and-set race (NS-P2-UNJUSTIFIED-OUTCOMES-MAX)",
+        "queueBound": "queued commands never exceed NS-P2-QUEUE-MAX-S of the offered rate at steady state",
+        "burstDrain": "the queue drains within NS-P2-BURST-DRAIN-S after each burst",
+        "source": "RULINGS Q31a; lab/TARGETS.md 1.1 P2 item 4"
+      },
       "ryow": "the next pull at the returned tx",
       "idempotency": "the trace's duplicates and lost ACKs",
       "readers": 256,
@@ -227,6 +239,9 @@
         "NS-P2-COMMIT-P99-MS",
         "NS-P2-COMMIT-P99-26-50-MS",
         "NS-P2-UNACCOUNTED-MAX",
+        "NS-P2-UNJUSTIFIED-OUTCOMES-MAX",
+        "NS-P2-QUEUE-MAX-S",
+        "NS-P2-BURST-DRAIN-S",
         "NS-P2-RYOW-FRACTION",
         "NS-P2-DUP-RECEIPT-FRACTION"
       ]
@@ -443,6 +458,27 @@
       "unit": "offered commands with no receipt, typed error or typed conflict",
       "bound": "max",
       "source": "lab/TARGETS.md 1.1 P2 item 3"
+    },
+    "NS-P2-UNJUSTIFIED-OUTCOMES-MAX": {
+      "kind": "ns",
+      "value": 0,
+      "unit": "oracle-valid trace commands that did not publish: typed rejections of commands the trace did not mark invalid, plus typed conflicts where the oracle finds no compare-and-set race",
+      "bound": "max",
+      "source": "RULINGS Q31a; lab/TARGETS.md 1.1 P2 item 4"
+    },
+    "NS-P2-QUEUE-MAX-S": {
+      "kind": "ns",
+      "value": 2,
+      "unit": "s of the offered rate: queued (offered, not yet published) commands at any steady-state instant, divided by the steady offered rate",
+      "bound": "max",
+      "source": "RULINGS Q31a; lab/TARGETS.md 1.1 P2 item 4"
+    },
+    "NS-P2-BURST-DRAIN-S": {
+      "kind": "ns",
+      "value": 60,
+      "unit": "s after each burst ends until the queue is back within NS-P2-QUEUE-MAX-S",
+      "bound": "max",
+      "source": "RULINGS Q31a; lab/TARGETS.md 1.1 P2 item 4"
     },
     "NS-P2-RYOW-FRACTION": {
       "kind": "ns",
