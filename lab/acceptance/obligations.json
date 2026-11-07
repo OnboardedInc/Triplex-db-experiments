@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-07",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
@@ -10,13 +10,16 @@
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "7b460e0ad40bc805ef2c3b3c23d5f9878cd55c3373e08ace118fa709b577f3a1",
-    "lab/acceptance/build_contract.py": "4ac8746cbf87104dadd3f452cc87cc2b6e53dddfb53ee9dd3f658bc762ab012f"
+    "lab/acceptance/RULINGS.md": "ee2cd0add5c0d2313f466d51624b8631dc560041abf54c53e99edfb70f01026d",
+    "lab/acceptance/RULINGS-PENDING.md": "83e0307a637551d705fa9e0d09bc187c8ef8abda87e4962f419797ab9706d19a",
+    "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
+    "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
+    "lab/acceptance/build_contract.py": "cdca65fca6cf921ad3711c1d6b662622f11d7dd6e6dd32a889f13479172dc851"
   },
   "artifacts": {
-    "load-contract.json": "075df2f931e2e9a9b0388288fc1fce16cf9ad29c1904b5c897eabe1fab6705fa",
-    "budgets.json": "7ea592a1c8fdef577ed3c48278f743a6f1e4fe5d3477fb1ab048d4f69181cc9e",
-    "capability-matrix.md": "42a93edb873d2c3740c320ef5882ef02c72939e05fad2795e2f5d968e4e1c763"
+    "load-contract.json": "a7870192dd5472ef4b1d3b4c1b694b3d26e2eb9a67925ba9eba0a995ec3e3dac",
+    "budgets.json": "64323194f4648c7e2342d766d865bd33120c1484023cf70a02f4f1a5754a3d11",
+    "capability-matrix.md": "9d37723f63e506b3b4e8d2d732780089e8c2def82506793ec6091e79d567e305"
   },
   "lanes": [
     "xtdb-xtql",
@@ -717,6 +720,94 @@
         "STATUS_ALGORITHM",
         "keyByNativeLanguage"
       ]
+    },
+    {
+      "id": "Q40",
+      "topic": "V-D01 W0 review (Q40a to Q40i)",
+      "ruling": "W0-1.1.x: ballast sizes worlds from P4's buckets (a); two-hop wage floor (b); outbox per Q38f with a pure publish operation and the rollback, correction-revert, crash and unchanged-activation cases (c); per-subject basis-ordered publication (d); V-D01's must-add and should-add cases (e); 1-based dense position ordinal (f); named draw fields and the fingerprint pin (g); retirement and new-sequence reappearance (h); a narrow release R3 (i, scoped by Q44b).",
+      "compiledInto": [
+        "WORLD_W0",
+        "OUTBOX",
+        "CS-OUTBOX",
+        "G7.outbox.publication-sequence",
+        "CS-W0-COVERAGE",
+        "W0.coverage-floors",
+        "W0_PIN"
+      ]
+    },
+    {
+      "id": "Q41",
+      "topic": "contract 0.3.5 questions (Q41a to Q41e)",
+      "ruling": "Q41a Q40 compiled in 0.3.6. Q41b Q37c's tdk1_reference.py hash 923f7577... is superseded; the pinned hash is 73467589...bf33. Q41c the 19 engine-scope XTDB native or raw obligations are keyed by native language. Q41d admit_claim is a reference model; lab/bin implements it as a minimum and adds the full VA rules. Q41e TDK1 and decimal-routing obligations fail closed until O-TDK1's acceptance and the V5 pin are set.",
+      "compiledInto": [
+        "Q40",
+        "O_TDK1_FILES",
+        "keyByNativeLanguage",
+        "CLAIM_ADMISSION",
+        "ORACLE_PINS O-TDK1",
+        "TDK1_VECTOR_PIN"
+      ]
+    },
+    {
+      "id": "Q42",
+      "topic": "Codex plan-v2 round 5 (Q42a to Q42c)",
+      "ruling": "Q42a evidence-backed admission: objects opened and hashed, build/import manifest binding, freshness, modes, fault repetitions and verifier evidence, the claim's own measurement receipts with a matched control, unknown ids rejected; counterexample fixtures. Q42b receivers apply deliveries by publication sequence, never regress, recover gaps, persist dedup atomically; W0's receive operation. Q42c per subject one atomic unit (basis guard, retirement, sequence, latest payload, outbox records) with crash cases between every pair.",
+      "compiledInto": [
+        "evidence_ok",
+        "admit_claim",
+        "CLAIM_ADMISSION",
+        "CX-ZERO-OBJECT-HASHES",
+        "CX-STALE-BINARY",
+        "CX-EARLIER-COMMIT-FALSIFIER",
+        "CX-NO-MEASUREMENT",
+        "CX-UNKNOWN-OBLIGATION",
+        "OUTBOX receivers",
+        "G7.outbox.receiver-ordering",
+        "OUTBOX atomicUnit",
+        "G7.outbox.atomic-unit"
+      ]
+    },
+    {
+      "id": "Q43",
+      "topic": "EXP-O03 decisions (Q43a to Q43h, Q43f-detail)",
+      "ruling": "Decimal error ids E-DECIMAL-OVERFLOW and E-DECIMAL-FRACTION (a); AVG over decimals E-DECIMAL-AVG (b); undeclared literal scale and precision (c); rounding modes (d); 38-digit expression limit (e); round to a larger scale exact, precision p + (s - s_x) capped at 38 (f, f-detail); toInteger overflow E-INTEGER-OVERFLOW (g); a -0 read basis E-NEGATIVE-ZERO-INSTANT (h).",
+      "compiledInto": [
+        "Q43_RULES",
+        "DO-ROUND",
+        "DC-D2I",
+        "CS-DECIMAL",
+        "CS-ERRORS"
+      ]
+    },
+    {
+      "id": "Q44",
+      "topic": "W0-1.1.0 re-review (Q44a to Q44d)",
+      "ruling": "Q44a the reviewer's fixes (raw token checks, delivery id and version recomputation, the 1, 1, 3, 3, 2 receive case, the fingerprint recipe, K = 4 x ceil(L / 80), worlds up to 2 facts below their bucket, shape validation). Q44b R3 scoped by jurisdiction set through the reverse two-hop index. Q44c only live reconciles at the current basis are published. Q44d receivers exist from the first publication or are seeded with a snapshot.",
+      "compiledInto": [
+        "WORLD_W0",
+        "OUTBOX liveOnly",
+        "OUTBOX receivers",
+        "RX-DEDUP-1-1-3-3-2",
+        "RX-LATE-START",
+        "OB-PREVIEW-NOT-PUBLISHED",
+        "W0_PIN"
+      ]
+    },
+    {
+      "id": "Q45",
+      "topic": "O-REPLAY pin and V-O03 findings (Q45a to Q45e)",
+      "ruling": "Q45a O-REPLAY ACCEPTED at 8cc2c26 with 29 pinned hashes and acceptance receipt V-O03; per-oracle excludes (G1.decimal.channel-routing). Q45b an exit 2 with X-NOT-MODELED fails the obligation closed, never a case-authoring error; erasure cases spell erase; outbox steps are never O-REPLAY ops. Q45c the three key-byte cases move to the O-TDK1 obligations. Q45d DO-ROUND precision for a larger scale. Q45e follow-up EXP-O04 (F2 and erasure modeling), then an independent re-check before the pin moves.",
+      "compiledInto": [
+        "O_REPLAY_FILES",
+        "ORACLE_PINS O-REPLAY",
+        "oracle_scope",
+        "ORACLE_REFUSALS",
+        "ORACLE_REFUSAL_RULE",
+        "PIN_SCOPE_EXPECTED_DIFF",
+        "TDK1_KEY_BYTE_CASES",
+        "DO-ROUND",
+        "CX-REFUSAL-AS-AUTHORING"
+      ]
     }
   ],
   "languageRules": {
@@ -853,8 +944,8 @@
       "id": "DO-ROUND",
       "op": "round(x, s, rounding)",
       "resultScale": "s",
-      "resultPrecision": "p - (s_x - s) when s < s_x, else p",
-      "error": "E-DECIMAL-OVERFLOW only when a carry exceeds the precision",
+      "resultPrecision": "p - (s_x - s) when s < s_x; p + (s - s_x), capped at 38, when s > s_x (exact: appends zeros, never refused); p when s = s_x",
+      "error": "E-DECIMAL-OVERFLOW only when a carry exceeds the precision or the 38-digit cap",
       "case": "DEC-OP-ROUND"
     },
     {
@@ -882,7 +973,7 @@
     },
     {
       "id": "DC-D2I",
-      "rule": "decimal to integer: only when the fraction is zero, else E-DECIMAL-FRACTION unless the caller writes round(x, 0, rounding) first",
+      "rule": "decimal to integer (toInteger): only when the fraction is zero, else E-DECIMAL-FRACTION unless the caller writes round(x, 0, rounding) first; a whole decimal outside the integer range is E-INTEGER-OVERFLOW (RULINGS Q43g)",
       "case": "DEC-CV-DEC-TO-INT"
     },
     {
@@ -1341,6 +1432,13 @@
     "witnesses": "every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not)",
     "workItemIdentity": "a work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; its content version hashes (release hash, input positions, payload) and is not the delivery identity; each id carries a durable publication sequence that increments whenever the payload to publish differs from the latest published payload for that id, and the outbox delivery key is (id, publication sequence); an activation that leaves the payload equal to the latest published one publishes nothing (early cutoff); duplicate-effect checks count by delivery key (RULINGS Q36a, Q38f)",
     "affectedSet": "the expected affected set of a transaction is the subjects whose static read set contains a changed fact; static read sets over-approximate and never miss (RULINGS Q36e)",
+    "version": "W0-1.1.x (W0-1.1.1 in progress on exp/D01-world-definition, not merged); the W0 pin stays null until the W0 delta check and O-DOMAIN's fingerprint reproduction (RULINGS Q40, Q44)",
+    "ballast": "rule-neutral ballast (owned answer entities <S>/ans:k with field and value text no rule reads, and a reference chain deep enough for 3 to 6 hops) sizes each world from P4's frozen buckets (50% 50-200 facts, 35% 201-800, 15% 801-2,000; a world may fall up to 2 facts below its bucket); trace commands use W0 and ballast attributes only, other attributes stay E_UNKNOWN; a ballast write affects nobody (RULINGS Q40a, Q44a)",
+    "twoHopFloor": "the wage floor is S.location -> L.jurisdiction -> J.stateMinWageCents (R2's local floor stays on L), so the dependency index follows two references; cases: a jurisdiction wage write, re-pointing (L, jurisdiction), and the R1/R2 split at that depth (RULINGS Q40b)",
+    "positionOrdinal": "positions in W0 are the 1-based dense ordinal of committed Triplex transacts in the tenant's source-of-truth stream, in coordinate order, supplied identically to the kernel and to O-DOMAIN (RULINGS Q40f)",
+    "generator": "every draw field is named (including the passport expiry draw); the population fingerprint is pinned once O-DOMAIN's independent generator reproduces V-D01's, using SPEC 12.7's exact recipe (RULINGS Q40g, Q44a)",
+    "releaseR3": "R3 is a scoped release: OT threshold 2,700 minutes only for placements whose location's jurisdiction is in a listed set (about 10% of jurisdictions), reached through the reverse two-hop dependency index; the scope is part of the release's content hash; expected affected subjects and changed subjects are stated separately; plus a runtime-outcome attribute and population facts with later valid-from dates (RULINGS Q40i, Q44b)",
+    "misreadingCases": "every case V-D01 lists as must-add and should-add is in W0's case set (RULINGS Q40e, Q44a)",
     "fanout": "work-location fanout is a seeded Zipf with s = 0.5 over 2,000 locations at the 100k rung (largest location about 1,100 workers, mean 50); other rungs keep N / 50 locations with the same s; only the 100k numbers are frozen floors (RULINGS Q36g, Q36h)"
   },
   "goldenFailureSchedules": {
@@ -1686,6 +1784,62 @@
       "why": "CLAIM_ADMISSION: prerequisites are checked on every comparative claim, screening included; the claim is a diagnostic (RULINGS Q34d)"
     },
     {
+      "id": "CX-ZERO-OBJECT-HASHES",
+      "defeats": [
+        "CR-NS",
+        "CR-GS",
+        "CR-PASS-ALL"
+      ],
+      "receipts": "a claim whose case results cite all-zero object hashes",
+      "why": "RULINGS Q42a: objects are opened and hashed"
+    },
+    {
+      "id": "CX-STALE-BINARY",
+      "defeats": [
+        "CR-NS",
+        "CR-GS",
+        "CR-PASS-ALL"
+      ],
+      "receipts": "a receipt whose executed binary differs from its build manifest under the same source label",
+      "why": "RULINGS Q42a: the binary is bound to the source tree through the manifest"
+    },
+    {
+      "id": "CX-EARLIER-COMMIT-FALSIFIER",
+      "defeats": [
+        "CR-FAULT",
+        "CR-NS"
+      ],
+      "receipts": "a falsifier receipt produced at an earlier commit",
+      "why": "RULINGS Q42a: receipts are fresh"
+    },
+    {
+      "id": "CX-NO-MEASUREMENT",
+      "defeats": [
+        "CR-NS",
+        "CR-GS"
+      ],
+      "receipts": "a claim with every prerequisite but no measurement receipt for the claimed obligation",
+      "why": "RULINGS Q42a"
+    },
+    {
+      "id": "CX-UNKNOWN-OBLIGATION",
+      "defeats": [
+        "CR-NS",
+        "CR-GS",
+        "CR-PASS-ALL"
+      ],
+      "receipts": "a claim naming an obligation id the contract does not define",
+      "why": "RULINGS Q42a: unknown ids are rejected, never dropped"
+    },
+    {
+      "id": "CX-REFUSAL-AS-AUTHORING",
+      "defeats": [
+        "CR-PASS-ALL"
+      ],
+      "receipts": "a receipt that treats an oracle exit 2 with X-NOT-MODELED as a case-authoring error and skips the case",
+      "why": "RULINGS Q45b: the obligation fails closed"
+    },
+    {
       "id": "CX-POSITION-GATE",
       "defeats": [
         "CR-NS",
@@ -1861,7 +2015,7 @@
     "PO-ABORTED-LISTED"
   ],
   "claimAdmission": {
-    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator derives every prerequisite from validated, source-bound receipt evidence, never from supplied case names or Booleans: a VA-valid G7.position.coordinates receipt for the claim's own source tree and composition covering all of POSITION_REQUIRED_CASES; composition identity bound on every receipt (four assignments with image digest, configuration hash and slot); where any claimed obligation uses O-DOMAIN, the W0 pin and a W0.coverage-floors receipt; and a non-null, accepted ORACLE_PINS entry for every oracle the claim depends on, including the oracles of its prerequisite obligations. A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
+    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) receipt, the evaluator derives every prerequisite from validated, source-bound receipt evidence, never from supplied case names or Booleans: a VA-valid G7.position.coordinates receipt for the claim's own source tree and composition covering all of POSITION_REQUIRED_CASES; composition identity bound on every receipt (four assignments with image digest, configuration hash and slot); where any claimed obligation uses O-DOMAIN, the W0 pin and a W0.coverage-floors receipt; and a non-null, accepted ORACLE_PINS entry for every oracle the claim depends on, including the oracles of its prerequisite obligations, with the claimed obligation outside that pin's excludes and the oracle's refusals. Evidence is opened, never trusted by shape (RULINGS Q42a): every referenced object exists in the content-addressed store and hashes to its recorded value; the executed binary is bound to the claimed source tree through a build/import manifest object; receipts are fresh (produced at the claim's commit, after the last change to any file in their dependency closure); modes, fault repetitions and verifier evidence are present; the claimed obligation's own measurement receipts exist with a matched control (A0 on the same slot, trace, seed and window); unknown obligation ids are rejected, never dropped. lab/bin implements this (EXP-E01) with these functions as the reference model and adds the full VA rules (RULINGS Q41d). A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
     "verdicts": [
       "QUALIFIED",
       "DIAGNOSTIC"
@@ -1880,11 +2034,479 @@
     },
     "O-REPLAY": {
       "files": "lab/oracles/replay/**",
-      "sha256": null,
-      "acceptReceipt": null,
-      "acceptedAfter": "EXP-O03 and its independent verification",
-      "rule": "null until the oracle is accepted; every obligation O-REPLAY would close fails closed until then; pinning needs a contract version bump"
+      "commit": "8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b",
+      "oracleVersion": "0.3.1",
+      "sha256": {
+        "lab/oracles/replay/RULES.md": "60e745ee8733271cede926a6f55e1f473d2b3c7a9a721500f9d277438971d54c",
+        "lab/oracles/replay/SCHEMA.md": "052587750dea7f59495dfc9475a2bb69bc2bf6a80581944b57180241b2b06a26",
+        "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+        "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+        "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+        "lab/oracles/replay/constraints.py": "e93fcba3ca36be607b05f522dd779869ced816e2834f629130ecdd2408527571",
+        "lab/oracles/replay/entities.py": "7b423d235cdc39871bd885ea46d0c4d3280c8d2879f4926c6afeb78191b9e365",
+        "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+        "lab/oracles/replay/exact.py": "3574703eb821b94b18144d3461d5ccacecaad5665f5308308db2b69f76fde0b8",
+        "lab/oracles/replay/examples/entity-mini.case.json": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+        "lab/oracles/replay/examples/entity-mini.expected.json": "0ba2dbce664a84849eb79cdd2aa09ceb503a2ac12c219c49eb4e3fcc9b0484dc",
+        "lab/oracles/replay/replay.py": "f8e4980591fa6e4056f0945fbc8ac2864d51d47672858904cd352f76ae0c8caa",
+        "lab/oracles/replay/run.py": "8ad651b255ed2ce5c9d015011d5f047fff33e9d3d6d57590797513b297a21183",
+        "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+        "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+        "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+        "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+        "lab/oracles/replay/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "lab/oracles/replay/tests/helpers.py": "b334a38527256ebb6fa6c34c7d4e9dd82d335ae6bcd9eb839778fd654fac8183",
+        "lab/oracles/replay/tests/test_contract_section4.py": "9095f470deeeee8ba6cf64b9323106be5319adb84aa019fe00c4e47f720e60a8",
+        "lab/oracles/replay/tests/test_entities.py": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+        "lab/oracles/replay/tests/test_exact.py": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+        "lab/oracles/replay/tests/test_replay.py": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+        "lab/oracles/replay/tests/test_rulings.py": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+        "lab/oracles/replay/tests/test_scale_and_selfcheck.py": "6afcddbfa91b8ea593f524f885390b01f425c907aa103415f026ba5d1f5a432e",
+        "lab/oracles/replay/tests/test_values.py": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+        "lab/oracles/replay/tests/test_views.py": "614658e9e679391ba901d20a6ba84f5609d1fd0d4d3c81a6cf30efbb3ee81d7e",
+        "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+        "lab/oracles/replay/views.py": "4d23472c85ac559f8d1bad7257fe219e7dc5fa7b0827c2595e7ff072d1816f28"
+      },
+      "acceptReceipt": "V-O03 (lab/verify/O02/VERIFY.md; verify/O02 8f631ab; merged 4591715)",
+      "excludes": [
+        "G1.decimal.channel-routing"
+      ],
+      "excludesWhy": {
+        "G1.decimal.channel-routing": "V-O03 F2: DR-JSON-CONVERT answered wrong; excluded until EXP-O04 fixes it and an independent re-check moves the pin (RULINGS Q45a, Q45e)"
+      },
+      "ruledAgainst": "contract 0.3.5 + Q43",
+      "rule": "accepted with a scoped pin; obligations in excludes, and cases the oracle refuses (ORACLE_REFUSALS), fail closed; moving the pin needs an independent re-check and a contract version bump (RULINGS Q45a, Q45e)"
     }
+  },
+  "oracleRefusals": {
+    "O-REPLAY": {
+      "erasure": {
+        "sets": [
+          "CS-ERASURE"
+        ],
+        "cases": [
+          [
+            "CS-GS",
+            "GS-16"
+          ],
+          [
+            "CS-GS",
+            "GS-16-WITNESS-POS"
+          ],
+          [
+            "CS-GS",
+            "GS-16-WITNESS-NEG"
+          ],
+          [
+            "CS-REQ",
+            "pii-erasure"
+          ],
+          [
+            "CS-COMPOSITION",
+            "CO-ERASURE-FRONTIER"
+          ]
+        ],
+        "until": "EXP-O04 models erasure (Q24, Q31f) and an independent re-check"
+      },
+      "scale-evolution": {
+        "sets": [],
+        "cases": [
+          [
+            "CS-DECIMAL",
+            "DEC-SCALE-WIDEN"
+          ],
+          [
+            "CS-DECIMAL",
+            "DEC-SCALE-WIDEN-MIGRATE"
+          ],
+          [
+            "CS-DECIMAL",
+            "DEC-SCALE-NARROW"
+          ]
+        ],
+        "until": "the oracle models decimal redeclaration (R-DEC-15)"
+      }
+    }
+  },
+  "oracleRefusalRule": "an oracle that exits 2 with X-NOT-MODELED for a case has not modeled it: every obligation selecting that case fails closed (stays OPEN); the refusal is never treated as a case-authoring error and never skipped. Erasure cases spell the op erase; outbox steps are never encoded as O-REPLAY ops, because O-DOMAIN owns them (RULINGS Q45b)",
+  "oracleScope": {
+    "O-TDK1": {
+      "uses": [
+        "G1.decimal.tdk1-admission",
+        "G1.decimal.tdk1-ranges",
+        "G1.decimal.tdk1-differential",
+        "G1.decimal.tdk1-serialization",
+        "G1.decimal.tdk1-writer-negative",
+        "G1.decimal.channel-routing"
+      ],
+      "mayClose": [
+        "G1.decimal.tdk1-admission",
+        "G1.decimal.tdk1-ranges",
+        "G1.decimal.tdk1-differential",
+        "G1.decimal.tdk1-serialization",
+        "G1.decimal.tdk1-writer-negative",
+        "G1.decimal.channel-routing"
+      ],
+      "blocked": {}
+    },
+    "O-REPLAY": {
+      "uses": [
+        "G1.types.value-kinds-roundtrip",
+        "G1.types.out-of-range-rejected",
+        "G1.types.decimal",
+        "G1.wire.write-guards",
+        "G1.wire.xtdb-encodings",
+        "G1.wire.qlever-shadow",
+        "G1.decimal.channel-routing",
+        "G7.outbox.publication-sequence",
+        "G1.types.invalid-rejected",
+        "G1.types.storage-widening-safe",
+        "G1.types.native-parameters",
+        "G1.schema.required",
+        "G1.schema.cardinality",
+        "G1.schema.unique",
+        "G1.schema.reference-target",
+        "G1.schema.release-derived-contracts",
+        "G2.arith.integer-exact",
+        "G2.arith.binary64",
+        "G2.expr.cross-family-comparison",
+        "G2.errors.typed-taxonomy",
+        "G3.plan.access-path-at-scale",
+        "G3.recursion.scalable",
+        "G3.recursion.read-only-frontier",
+        "G4.neg.correlated-not-exists",
+        "G4.cut.task-wide-fixed",
+        "G4.neg.conflict-semantics",
+        "G5.agg.shape-controls",
+        "G5.agg.full-support",
+        "G5.agg.typed-groups",
+        "G5.agg.projection-sums",
+        "G7.write.atomic",
+        "G7.write.command-idempotency",
+        "G7.write.preconditions-cas",
+        "G7.receipt.journal-complete",
+        "G7.journal.logical-contract",
+        "G7.commit.protocol-transitions",
+        "G7.recovery.backup-restore",
+        "G7.migration.schema-evolution",
+        "G7.migration.valid-writes-never-rejected",
+        "G8.eligibility.c1-routing",
+        "G8.publish.coherent",
+        "G8.publish.basis-honesty",
+        "G8.publish.valid-boundary",
+        "G8.maintenance.bounded-boundaries",
+        "G8.reuse.positive-witness",
+        "G8.support.incremental-witness",
+        "G8.support.alternate-maintained",
+        "G9.temporal.half-open-intervals",
+        "G9.temporal.recorded-cuts",
+        "G9.history.raw-lifetime-compat",
+        "G9.history.snapshot-metadata",
+        "G9.corrections.preserve",
+        "G9.lineage.supporting-assertions",
+        "G9.presence.explicit",
+        "G9.deletion.entity",
+        "G9.cascade.restrict-detach-cascade",
+        "G10.pkg.clean-consumer-slice",
+        "G10.scope.ownership-refusal",
+        "G10.scope.shared-collision",
+        "G10.cursor.stable",
+        "G10.cursor.deep-page-cost",
+        "G10.cursor.continuation-transitions",
+        "G10.capabilities.truthful",
+        "G10.native.entry-checks",
+        "R.repo.entity-suite",
+        "R.repo.mutation-controls",
+        "R.raw.parity",
+        "R.raw.mapped-recipes",
+        "R.raw.capability-matrix",
+        "R.native.fragment-equivalence",
+        "NS.P1",
+        "NS.P2",
+        "NS.P3",
+        "NS.P4",
+        "NS.P5",
+        "NS.SEC.bulk-lane",
+        "NS.SEC.retro-and-audit",
+        "GS.01",
+        "GS.02",
+        "GS.03",
+        "GS.04",
+        "GS.05",
+        "GS.06",
+        "GS.07",
+        "GS.08",
+        "GS.09",
+        "GS.10",
+        "GS.11",
+        "GS.12",
+        "GS.13",
+        "GS.14",
+        "GS.15",
+        "GS.16",
+        "GS.17",
+        "GS.18",
+        "GS.19",
+        "GS.20",
+        "REQ.commit-idempotent",
+        "REQ.snapshot-reads",
+        "REQ.change-feed",
+        "REQ.no-silent-precision-loss",
+        "REQ.pii-erasure",
+        "REQ.tenant-isolation",
+        "REQ.outbox-atomic",
+        "REQ.read-your-write",
+        "REQ.sweep-pins-position",
+        "REQ.retro-corrections",
+        "G9.erasure.visibility-boundary",
+        "G9.erasure.protected-copies",
+        "G9.erasure.restore-reapplies",
+        "G8.composition.watermark-routing",
+        "G7.composition.ack-and-routed-ryow",
+        "G7.position.coordinates",
+        "G9.erasure.reproduction-modulo",
+        "S.population.year-one",
+        "S.rungs.ladder",
+        "S.correctness.query-families",
+        "S.maintenance.correct-during",
+        "S.restart.at-scale"
+      ],
+      "mayClose": [
+        "G1.types.value-kinds-roundtrip",
+        "G1.types.out-of-range-rejected",
+        "G1.wire.write-guards",
+        "G1.wire.xtdb-encodings",
+        "G1.wire.qlever-shadow",
+        "G7.outbox.publication-sequence",
+        "G1.types.invalid-rejected",
+        "G1.types.storage-widening-safe",
+        "G1.types.native-parameters",
+        "G1.schema.required",
+        "G1.schema.cardinality",
+        "G1.schema.unique",
+        "G1.schema.reference-target",
+        "G1.schema.release-derived-contracts",
+        "G2.arith.integer-exact",
+        "G2.arith.binary64",
+        "G2.expr.cross-family-comparison",
+        "G2.errors.typed-taxonomy",
+        "G3.plan.access-path-at-scale",
+        "G3.recursion.scalable",
+        "G3.recursion.read-only-frontier",
+        "G4.neg.correlated-not-exists",
+        "G4.cut.task-wide-fixed",
+        "G4.neg.conflict-semantics",
+        "G5.agg.shape-controls",
+        "G5.agg.full-support",
+        "G5.agg.typed-groups",
+        "G5.agg.projection-sums",
+        "G7.write.atomic",
+        "G7.write.command-idempotency",
+        "G7.write.preconditions-cas",
+        "G7.receipt.journal-complete",
+        "G7.commit.protocol-transitions",
+        "G7.recovery.backup-restore",
+        "G7.migration.schema-evolution",
+        "G7.migration.valid-writes-never-rejected",
+        "G8.eligibility.c1-routing",
+        "G8.publish.coherent",
+        "G8.publish.basis-honesty",
+        "G8.publish.valid-boundary",
+        "G8.maintenance.bounded-boundaries",
+        "G8.reuse.positive-witness",
+        "G8.support.incremental-witness",
+        "G8.support.alternate-maintained",
+        "G9.temporal.half-open-intervals",
+        "G9.temporal.recorded-cuts",
+        "G9.history.raw-lifetime-compat",
+        "G9.history.snapshot-metadata",
+        "G9.corrections.preserve",
+        "G9.lineage.supporting-assertions",
+        "G9.presence.explicit",
+        "G9.deletion.entity",
+        "G9.cascade.restrict-detach-cascade",
+        "G10.pkg.clean-consumer-slice",
+        "G10.scope.ownership-refusal",
+        "G10.scope.shared-collision",
+        "G10.cursor.deep-page-cost",
+        "G10.cursor.continuation-transitions",
+        "G10.capabilities.truthful",
+        "G10.native.entry-checks",
+        "R.repo.entity-suite",
+        "R.raw.parity",
+        "R.raw.mapped-recipes",
+        "R.raw.capability-matrix",
+        "R.native.fragment-equivalence",
+        "NS.P1",
+        "NS.P2",
+        "NS.P3",
+        "NS.P4",
+        "NS.P5",
+        "NS.SEC.bulk-lane",
+        "GS.01",
+        "GS.02",
+        "GS.03",
+        "GS.04",
+        "GS.05",
+        "GS.06",
+        "GS.07",
+        "GS.08",
+        "GS.09",
+        "GS.10",
+        "GS.11",
+        "GS.12",
+        "GS.13",
+        "GS.14",
+        "GS.15",
+        "GS.17",
+        "GS.18",
+        "GS.19",
+        "GS.20",
+        "REQ.commit-idempotent",
+        "REQ.snapshot-reads",
+        "REQ.change-feed",
+        "REQ.no-silent-precision-loss",
+        "REQ.tenant-isolation",
+        "REQ.outbox-atomic",
+        "REQ.read-your-write",
+        "REQ.sweep-pins-position",
+        "REQ.retro-corrections",
+        "G7.composition.ack-and-routed-ryow",
+        "G7.position.coordinates",
+        "S.population.year-one",
+        "S.rungs.ladder",
+        "S.correctness.query-families",
+        "S.maintenance.correct-during",
+        "S.restart.at-scale"
+      ],
+      "blocked": {
+        "G1.types.decimal": [
+          "scale-evolution"
+        ],
+        "G1.decimal.channel-routing": [
+          "excluded"
+        ],
+        "G7.journal.logical-contract": [
+          "erasure"
+        ],
+        "G10.cursor.stable": [
+          "erasure"
+        ],
+        "R.repo.mutation-controls": [
+          "erasure",
+          "scale-evolution"
+        ],
+        "NS.SEC.retro-and-audit": [
+          "erasure"
+        ],
+        "GS.16": [
+          "erasure"
+        ],
+        "REQ.pii-erasure": [
+          "erasure"
+        ],
+        "G9.erasure.visibility-boundary": [
+          "erasure"
+        ],
+        "G9.erasure.protected-copies": [
+          "erasure"
+        ],
+        "G9.erasure.restore-reapplies": [
+          "erasure"
+        ],
+        "G8.composition.watermark-routing": [
+          "erasure"
+        ],
+        "G9.erasure.reproduction-modulo": [
+          "erasure"
+        ]
+      }
+    }
+  },
+  "pinScopeExpectedDiff": {
+    "onlyGeneratorBlocked": [],
+    "onlyVerifierBlocked": [],
+    "onlyGeneratorUses": [],
+    "onlyVerifierUses": []
+  },
+  "q43Rules": [
+    {
+      "id": "R-DEC-13/16",
+      "rule": "a decimal beyond its declared or 38-digit precision, including number-to-decimal overflow, is E-DECIMAL-OVERFLOW; excess fraction digits are E-DECIMAL-FRACTION; the earlier unrepresentable error no longer exists",
+      "error": "E-DECIMAL-OVERFLOW",
+      "case": "DEC-Q43-OVERFLOW-IDS",
+      "ruling": "Q43a"
+    },
+    {
+      "id": "R-DEC-14",
+      "rule": "AVG over decimals is E-DECIMAL-AVG, not E-DECIMAL-BARE-DIVIDE",
+      "error": "E-DECIMAL-AVG",
+      "case": "DEC-AVG-PREFLIGHT",
+      "ruling": "Q43b"
+    },
+    {
+      "id": "R-DEC-8",
+      "rule": "an undeclared decimal literal has scale = written fraction digits and precision = max(1, integer digits + scale)",
+      "error": "-",
+      "case": "DEC-Q43-LITERAL-TYPE",
+      "ruling": "Q43c"
+    },
+    {
+      "id": "R-DEC-9",
+      "rule": "half-up rounds ties away from zero, including negative ties; half-even rounds ties to the even digit; down truncates toward zero",
+      "error": "-",
+      "case": "DEC-Q43-ROUNDING-MODES",
+      "ruling": "Q43d"
+    },
+    {
+      "id": "R-DEC-10",
+      "rule": "inside an expression with no target column the precision limit is 38",
+      "error": "E-DECIMAL-OVERFLOW",
+      "case": "DEC-Q43-EXPR-LIMIT",
+      "ruling": "Q43e"
+    },
+    {
+      "id": "R-DEC-11",
+      "rule": "round(x, s) with s greater than x's scale is exact: x at scale s by appending zeros, never refused; result precision p + (s - s_x) capped at 38 (Q43f-detail, DO-ROUND)",
+      "error": "-",
+      "case": "DEC-Q43-ROUND-UP-SCALE",
+      "ruling": "Q43f"
+    },
+    {
+      "id": "R-DEC-12",
+      "rule": "toInteger of a whole decimal outside the integer range",
+      "error": "E-INTEGER-OVERFLOW",
+      "case": "DEC-Q43-TOINTEGER-OVERFLOW",
+      "ruling": "Q43g"
+    },
+    {
+      "id": "R-CUT-4",
+      "rule": "a read basis given as -0",
+      "error": "E-NEGATIVE-ZERO-INSTANT",
+      "case": "Q43-CUT-NEGZERO",
+      "ruling": "Q43h"
+    }
+  ],
+  "receiverCases": {
+    "RX-REVERSED-ARRIVAL": "seq 2 arrives before seq 1: a state projection ends on seq 2's payload",
+    "RX-GAP-RECOVERY": "an effect that needs every transition sees seq 3 before seq 2: it recovers seq 2 from the outbox before applying seq 3",
+    "RX-RESTART-MID-SEQUENCE": "the receiver restarts between sequences and resumes without regression or duplicate effect",
+    "RX-DEDUP-1-1-3-3-2": "arrivals 1, 1, 3, 3, 2 pin both dedup rules (RULINGS Q44a)",
+    "RX-LATE-START": "a receiver started after acknowledged deliveries were pruned must be seeded with a state snapshot, never wait for seq 1 (RULINGS Q44d)"
+  },
+  "atomicUnitCases": {
+    "AU-CRASH-BASIS-GUARD-RETIREMENT-STATE": "crash injected between the basis-guard and retirement-state transitions: after recovery either both or neither are visible",
+    "AU-CRASH-BASIS-GUARD-PUBLICATION-SEQUENCE": "crash injected between the basis-guard and publication-sequence transitions: after recovery either both or neither are visible",
+    "AU-CRASH-BASIS-GUARD-LATEST-PUBLISHED-PAYLOAD": "crash injected between the basis-guard and latest-published-payload transitions: after recovery either both or neither are visible",
+    "AU-CRASH-BASIS-GUARD-OUTBOX-RECORDS": "crash injected between the basis-guard and outbox-records transitions: after recovery either both or neither are visible",
+    "AU-CRASH-RETIREMENT-STATE-PUBLICATION-SEQUENCE": "crash injected between the retirement-state and publication-sequence transitions: after recovery either both or neither are visible",
+    "AU-CRASH-RETIREMENT-STATE-LATEST-PUBLISHED-PAYLOAD": "crash injected between the retirement-state and latest-published-payload transitions: after recovery either both or neither are visible",
+    "AU-CRASH-RETIREMENT-STATE-OUTBOX-RECORDS": "crash injected between the retirement-state and outbox-records transitions: after recovery either both or neither are visible",
+    "AU-CRASH-PUBLICATION-SEQUENCE-LATEST-PUBLISHED-PAYLOAD": "crash injected between the publication-sequence and latest-published-payload transitions: after recovery either both or neither are visible",
+    "AU-CRASH-PUBLICATION-SEQUENCE-OUTBOX-RECORDS": "crash injected between the publication-sequence and outbox-records transitions: after recovery either both or neither are visible",
+    "AU-CRASH-LATEST-PUBLISHED-PAYLOAD-OUTBOX-RECORDS": "crash injected between the latest-published-payload and outbox-records transitions: after recovery either both or neither are visible",
+    "AU-GUARD-ADVANCES-EMPTY": "an empty evaluation advances the basis guard",
+    "AU-GUARD-ADVANCES-UNCHANGED": "an unchanged evaluation advances the basis guard"
   },
   "oTdk1Files": {
     "lab/oracles/decimal/tdk1_reference.py": "73467589480deb93fb700cdaf856cccb8f67b9a24d1963e26744a0ac4754bf33",
@@ -1896,7 +2518,18 @@
     "contentVersion": "hashes (release, inputs, payload); recorded, never the delivery identity",
     "atomicity": "publication state (sequence and latest published payload) is persisted atomically with its outbox record",
     "recovery": "unacknowledged deliveries survive crashes and replay with their original identity",
+    "publishRule": "per id the sequence starts at 1; publish (id, seq + 1) when the id was never published, when the payload's canonical bytes differ from the latest published payload, or when the id reappears after a recorded retirement (even with an unchanged payload); version is content identity only (RULINGS Q40c, Q40h)",
+    "basisOrder": "per subject the outbox applies an evaluation only if its basis is newer than the last applied one: greater basis.tx, or equal tx with a valid time not earlier; an older-basis evaluation publishes nothing (RULINGS Q40d)",
+    "retirement": "when a work item id disappears from a subject's outputs, the outbox records its retirement; a later reappearance publishes a new sequence even if the payload equals the last published one (RULINGS Q40h)",
+    "liveOnly": "a delivery's subject comes from the evaluation record; only live reconciles at the current basis are passed to publish; previews (GS.11) and past-valid-time audit evaluations never are (RULINGS Q44c)",
+    "atomicUnit": "per subject, the basis guard, retirement state, publication sequence, latest published payload and the outbox records are persisted in one atomic write under the subject's compare-and-set; the guard advances on empty and unchanged evaluations too (RULINGS Q42c)",
+    "receivers": "receivers apply deliveries per id by publication sequence: a state projection records the highest sequence applied and ignores any lower one (never regresses); an effect that needs every transition processes sequences in order and recovers gaps from the outbox before applying a later one; receiver deduplication is persisted atomically with the receiver's state or effect, or the recipient is idempotent by (id, seq); receivers exist from the first publication or are seeded with a state snapshot (RULINGS Q42b, Q44d)",
+    "operations": "W0 defines publish(state, evaluations) -> {deliveries, state} and receive(state, deliveries) -> state as pure operations so O-DOMAIN gives the expected outbox and receiver state (RULINGS Q40c, Q42b)",
     "cases": {
+      "OB-CORRECTION-REVERT": "a correction that reverts a payload to its previous value publishes a new sequence (RULINGS Q40c)",
+      "OB-OLDER-BASIS-NO-DELIVERY": "a newer-basis R2 evaluation followed by an older-basis R1 evaluation yields no delivery (RULINGS Q40d)",
+      "OB-RETIREMENT-REAPPEAR": "a work item that disappears and later reappears with the same payload publishes a new sequence (a second FNC notice is delivered, RULINGS Q40h)",
+      "OB-PREVIEW-NOT-PUBLISHED": "preview (GS.11) and past-valid-time audit evaluations are never passed to publish (RULINGS Q44c)",
       "OB-RELEASE-ROLLBACK": "activate R1, R2, R1 over unchanged business facts: three deliveries with sequences 1, 2, 3 and payloads 1650, 1700, 1650",
       "OB-CRASH-BEFORE-DELIVERY": "crash after the outbox record and publication state commit but before delivery: replay delivers the same (id, publication sequence) exactly once",
       "OB-UNCHANGED-ACTIVATION-RECOVERY": "an activation that leaves the payload unchanged while an earlier delivery is still unacknowledged after a crash: nothing new is published and the pending delivery replays with its original identity",
@@ -2065,9 +2698,7 @@
       "Q38e",
       "Q38f",
       "Q39a",
-      "Q39b"
-    ],
-    "recordedNotCompiled": [
+      "Q39b",
       "Q40a",
       "Q40b",
       "Q40c",
@@ -2076,8 +2707,34 @@
       "Q40f",
       "Q40g",
       "Q40h",
-      "Q40i"
-    ]
+      "Q40i",
+      "Q41a",
+      "Q41b",
+      "Q41c",
+      "Q41d",
+      "Q41e",
+      "Q42a",
+      "Q42b",
+      "Q42c",
+      "Q43a",
+      "Q43b",
+      "Q43c",
+      "Q43d",
+      "Q43e",
+      "Q43f",
+      "Q43g",
+      "Q43h",
+      "Q44a",
+      "Q44b",
+      "Q44c",
+      "Q44d",
+      "Q45a",
+      "Q45b",
+      "Q45c",
+      "Q45d",
+      "Q45e"
+    ],
+    "recordedNotCompiled": []
   },
   "tdk1": {
     "name": "TDK1 (Triplex decimal key, version 1)",
@@ -2250,7 +2907,7 @@
       "id": "R-DEC-1",
       "rule": "decimal wire shape {\"type\": \"decimal\", \"value\": \"16.50\"}",
       "error": "-",
-      "case": "DEC-SMALL-PRECISION-TDK1",
+      "case": "DEC-WIRE-SHAPE",
       "ruling": "Q33b"
     },
     {
@@ -2431,7 +3088,7 @@
       "appliesTo": "every obligation whose oracles include O-DOMAIN"
     },
     "GATE-ORACLE-PIN": {
-      "rule": "an obligation whose expected answers come from an oracle closes only once ORACLE_PINS pins that oracle's files with an acceptance receipt; a null pin fails closed (V-O02 C1)",
+      "rule": "an obligation whose expected answers come from an oracle closes only once ORACLE_PINS pins that oracle's files with an acceptance receipt, the obligation is not in the pin's excludes, and the oracle does not refuse any case it selects (oracle_scope); a null pin fails closed (V-O02 C1, RULINGS Q45a, Q45b)",
       "requires": [
         "ORACLE_PINS complete for every oracle the obligation uses"
       ],
@@ -2509,9 +3166,13 @@
       "lab/world/W0/SPEC.md": null,
       "lab/world/W0/releases/R1.json": null,
       "lab/world/W0/releases/R2.json": null,
+      "lab/world/W0/releases/R3.json": null,
       "lab/world/W0/schema.json": null,
       "lab/world/W0/cases/": null
-    }
+    },
+    "deltaCheck": null,
+    "oDomainFingerprint": null,
+    "requires": "V-D01's delta check of W0-1.1.x and O-DOMAIN's independent reproduction of the population fingerprint (RULINGS Q40g, Q44a); every field null fails closed"
   },
   "legacyLaneOutcomes": {
     "G1-I64-01": {
@@ -4165,7 +4826,7 @@
       "independence": "Python, imports no Triplex code"
     },
     "O-REPLAY": {
-      "status": "BUILT-PENDING-PIN",
+      "status": "BUILT-ACCEPTED",
       "files": [
         "lab/oracles/replay/"
       ],
@@ -7717,6 +8378,28 @@
         "CS-WIRE:WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP"
       ]
     },
+    "M-RECEIVER-REGRESS": {
+      "fault": "a receiver applies a lower publication sequence after a higher one, regressing its state",
+      "reachProbe": "receiver.apply",
+      "targets": [
+        "CS-RECEIVER:RX-REVERSED-ARRIVAL",
+        "CS-RECEIVER:RX-DEDUP-1-1-3-3-2"
+      ]
+    },
+    "M-OUTBOX-NONATOMIC": {
+      "fault": "the outbox record and its publication state are written in separate transactions",
+      "reachProbe": "outbox.persist",
+      "targets": [
+        "CS-ATOMIC-UNIT:AU-CRASH-PUBLICATION-SEQUENCE-OUTBOX-RECORDS"
+      ]
+    },
+    "M-OUTBOX-RETIREMENT-IGNORED": {
+      "fault": "a reappearing work item with an unchanged payload is suppressed instead of publishing a new sequence",
+      "reachProbe": "outbox.retirement",
+      "targets": [
+        "CS-OUTBOX:OB-RETIREMENT-REAPPEAR"
+      ]
+    },
     "M-OUTBOX-VERSION-DEDUP": {
       "fault": "the receiver or publisher deduplicates by content version, so a return to an earlier payload (R1, R2, R1) is suppressed",
       "reachProbe": "outbox.publish",
@@ -8018,8 +8701,6 @@
         "paths"
       ],
       "requiredCases": [
-        "DEC-SMALL-PRECISION-TDK1",
-        "DEC-LARGE-PRECISION-TDK1",
         "DEC-CROSS-SCALE-COMPARE",
         "DEC-UNDECLARED-ATTRIBUTE",
         "DEC-NEGZERO-REFUSED",
@@ -8051,8 +8732,14 @@
         "DEC-SCALE-BOUNDARY",
         "DEC-INTERMEDIATE",
         "DEC-EVERY-PATH",
-        "DEC-ORDER-KEY-INDEPENDENT",
-        "DEC-INPUT-CAPTURE"
+        "DEC-INPUT-CAPTURE",
+        "DEC-WIRE-SHAPE",
+        "DEC-Q43-OVERFLOW-IDS",
+        "DEC-Q43-LITERAL-TYPE",
+        "DEC-Q43-ROUNDING-MODES",
+        "DEC-Q43-EXPR-LIMIT",
+        "DEC-Q43-ROUND-UP-SCALE",
+        "DEC-Q43-TOINTEGER-OVERFLOW"
       ],
       "manifest": "lab/acceptance/cases/CS-DECIMAL.json",
       "manifestSha256": null,
@@ -8098,17 +8785,64 @@
     },
     "CS-OUTBOX": {
       "status": "TO-AUTHOR",
-      "source": "OUTBOX (RULINGS Q38f)",
+      "source": "OUTBOX (RULINGS Q38f, Q40c, Q40d, Q40h, Q44c)",
       "requiredTags": [
         "all"
       ],
       "requiredCases": [
+        "OB-CORRECTION-REVERT",
+        "OB-OLDER-BASIS-NO-DELIVERY",
+        "OB-RETIREMENT-REAPPEAR",
+        "OB-PREVIEW-NOT-PUBLISHED",
         "OB-RELEASE-ROLLBACK",
         "OB-CRASH-BEFORE-DELIVERY",
         "OB-UNCHANGED-ACTIVATION-RECOVERY",
         "OB-ATOMIC-STATE"
       ],
       "manifest": "lab/acceptance/cases/CS-OUTBOX.json",
+      "manifestSha256": null,
+      "pinnedSourceFiles": [],
+      "note": null
+    },
+    "CS-RECEIVER": {
+      "status": "TO-AUTHOR",
+      "source": "OUTBOX receivers (RULINGS Q42b, Q44a, Q44d)",
+      "requiredTags": [
+        "all"
+      ],
+      "requiredCases": [
+        "RX-REVERSED-ARRIVAL",
+        "RX-GAP-RECOVERY",
+        "RX-RESTART-MID-SEQUENCE",
+        "RX-DEDUP-1-1-3-3-2",
+        "RX-LATE-START"
+      ],
+      "manifest": "lab/acceptance/cases/CS-RECEIVER.json",
+      "manifestSha256": null,
+      "pinnedSourceFiles": [],
+      "note": null
+    },
+    "CS-ATOMIC-UNIT": {
+      "status": "TO-AUTHOR",
+      "source": "OUTBOX atomicUnit (RULINGS Q42c): crash between every pair of the five transitions",
+      "requiredTags": [
+        "all"
+      ],
+      "requiredCases": [
+        "AU-CRASH-BASIS-GUARD-RETIREMENT-STATE",
+        "AU-CRASH-BASIS-GUARD-PUBLICATION-SEQUENCE",
+        "AU-CRASH-BASIS-GUARD-LATEST-PUBLISHED-PAYLOAD",
+        "AU-CRASH-BASIS-GUARD-OUTBOX-RECORDS",
+        "AU-CRASH-RETIREMENT-STATE-PUBLICATION-SEQUENCE",
+        "AU-CRASH-RETIREMENT-STATE-LATEST-PUBLISHED-PAYLOAD",
+        "AU-CRASH-RETIREMENT-STATE-OUTBOX-RECORDS",
+        "AU-CRASH-PUBLICATION-SEQUENCE-LATEST-PUBLISHED-PAYLOAD",
+        "AU-CRASH-PUBLICATION-SEQUENCE-OUTBOX-RECORDS",
+        "AU-CRASH-LATEST-PUBLISHED-PAYLOAD-OUTBOX-RECORDS",
+        "AU-GUARD-ADVANCES-EMPTY",
+        "AU-GUARD-ADVANCES-UNCHANGED"
+      ],
+      "manifest": "lab/acceptance/cases/CS-ATOMIC-UNIT.json",
       "manifestSha256": null,
       "pinnedSourceFiles": [],
       "note": null
@@ -8142,7 +8876,7 @@
     },
     "CS-TDK1": {
       "status": "TO-AUTHOR",
-      "source": "TDK1_TESTS (R20 section 5.3 V3 to V7, RULINGS Q35)",
+      "source": "TDK1_TESTS (R20 section 5.3 V3 to V7, RULINGS Q35) and the key-byte cases moved from CS-DECIMAL (RULINGS Q45c)",
       "requiredTags": [
         "all",
         "engine-order",
@@ -8156,7 +8890,10 @@
         "TDK1-V4-RANGES",
         "TDK1-V5-DIFFERENTIAL",
         "TDK1-V6-SERIALIZATION",
-        "TDK1-V7-WRITER-NEGATIVE"
+        "TDK1-V7-WRITER-NEGATIVE",
+        "DEC-SMALL-PRECISION-TDK1",
+        "DEC-LARGE-PRECISION-TDK1",
+        "DEC-ORDER-KEY-INDEPENDENT"
       ],
       "manifest": "lab/acceptance/cases/CS-TDK1.json",
       "manifestSha256": null,
@@ -8277,7 +9014,8 @@
         "Q33-AGG-NONNUMERIC",
         "Q33-CMD-UNMAPPED-FAULT",
         "Q33-CMD-RETRACT-TX-ENTITY",
-        "Q33-CUT-INVALID-BASIS"
+        "Q33-CUT-INVALID-BASIS",
+        "Q43-CUT-NEGZERO"
       ],
       "manifest": "lab/acceptance/cases/CS-ERRORS.json",
       "manifestSha256": null,
@@ -9141,7 +9879,7 @@
     },
     "CS-W0-COVERAGE": {
       "status": "TO-AUTHOR",
-      "source": "W0 coverage floors over the frozen trace and releases (TARGETS 6.1 items 6 and 7, RULINGS Q31i)",
+      "source": "W0 coverage floors over the frozen trace and releases (TARGETS 6.1 items 6 and 7, RULINGS Q31i, Q40, Q44)",
       "requiredTags": [
         "all"
       ],
@@ -9150,7 +9888,11 @@
         "W0-COV-RULE-FIRES",
         "W0-COV-LOCATION-FANOUT",
         "W0-COV-MULTI-WORK-ITEMS",
-        "W0-COV-REVIEW-PINNED"
+        "W0-COV-REVIEW-PINNED",
+        "W0-COV-BALLAST-BUCKETS",
+        "W0-COV-TWO-HOP",
+        "W0-COV-R3-SCOPED",
+        "W0-COV-FINGERPRINT"
       ],
       "manifest": "lab/acceptance/cases/CS-W0-COVERAGE.json",
       "manifestSha256": null,
@@ -9201,6 +9943,12 @@
         "CX-CLAIM-SUPPLIED-NAMES",
         "CX-XTDB-SHARED-LANGUAGE",
         "CX-SCREENING-CLAIM-PREREQ",
+        "CX-ZERO-OBJECT-HASHES",
+        "CX-STALE-BINARY",
+        "CX-EARLIER-COMMIT-FALSIFIER",
+        "CX-NO-MEASUREMENT",
+        "CX-UNKNOWN-OBLIGATION",
+        "CX-REFUSAL-AS-AUTHORING",
         "CX-POSITION-GATE",
         "PX-PASS-ALL",
         "PX-COUNTEREXAMPLE",
@@ -10370,11 +11118,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "7ea592a1c8fdef577ed3c48278f743a6f1e4fe5d3477fb1ab048d4f69181cc9e"
+    "sha256": "64323194f4648c7e2342d766d865bd33120c1484023cf70a02f4f1a5754a3d11"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "075df2f931e2e9a9b0388288fc1fce16cf9ad29c1904b5c897eabe1fab6705fa"
+    "sha256": "a7870192dd5472ef4b1d3b4c1b694b3d26e2eb9a67925ba9eba0a995ec3e3dac"
   },
   "obligations": [
     {
@@ -10612,7 +11360,7 @@
         "G5"
       ],
       "title": "Decimal value kind for money and business decimals",
-      "statement": "Every CS-DECIMAL case, per DECIMAL_RULES (RULINGS Q18) and the operation, conversion and scale tables DECIMAL_OPS, DECIMAL_CONVERSIONS and DECIMAL_SCALE_EVOLUTION (RULINGS Q22), one named case per row, plus DECIMAL_TESTS (adjacent large decimals, negatives, zero, scale boundaries, arithmetic intermediates, every query and serialization path, an independent order-key check, and input capture before normalization): each decimal attribute declares precision and scale; every precision is stored as the TDK1 key plus derived canonical text (DEC-SMALL-PRECISION-TDK1, DEC-LARGE-PRECISION-TDK1; RULINGS Q35b), compared exactly across attributes of different declared scale (DEC-CROSS-SCALE-COMPARE), and round-trips exactly on every surface; a decimal on an undeclared attribute (DEC-UNDECLARED-ATTRIBUTE) and -0.00 (DEC-NEGZERO-REFUSED) fail with E-INVALID-VALUE; 16.500 fits scale 2 and reads back as 16.50 (DEC-TRAILING-ZERO-FITS); toDecimal starts from the exact binary expansion (DEC-TODECIMAL-EXACT-EXPANSION); AVG over decimal fails with E-DECIMAL-AVG unless written with divide (DEC-AVG-PREFLIGHT) (RULINGS Q33b); every comparison with integer or number, equality included, is preflight E-MIXED-FAMILY (DEC-CROSS-FAMILY-PREFLIGHT) and exact after explicit conversion (DEC-CONVERTED-COMPARE); results beyond the precision fail with E-DECIMAL-OVERFLOW, bare / with E-DECIMAL-BARE-DIVIDE, decimal to integer with a fraction with E-DECIMAL-FRACTION, and a narrowing migration that would lose digits with E-DECIMAL-NARROWING, atomically; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value with more fractional digits than the scale fails with E-DECIMAL-FRACTION (DEC-SCALE-EXCESS) and one outside the precision with E-DECIMAL-OVERFLOW (DEC-PRECISION-EXCESS), never rounded; kernel arithmetic over decimals is exact.",
+      "statement": "Every CS-DECIMAL case, per DECIMAL_RULES (RULINGS Q18) and the operation, conversion and scale tables DECIMAL_OPS, DECIMAL_CONVERSIONS and DECIMAL_SCALE_EVOLUTION (RULINGS Q22), one named case per row, plus DECIMAL_TESTS (adjacent large decimals, negatives, zero, scale boundaries, arithmetic intermediates, every query and serialization path, an independent order-key check, and input capture before normalization): each decimal attribute declares precision and scale; every precision is stored as the TDK1 key plus derived canonical text (RULINGS Q35b; the key bytes themselves are checked by G1.decimal.tdk1-admission and G1.decimal.tdk1-serialization under O-TDK1, RULINGS Q45c), compared exactly across attributes of different declared scale (DEC-CROSS-SCALE-COMPARE), and round-trips exactly on every surface; a decimal on an undeclared attribute (DEC-UNDECLARED-ATTRIBUTE) and -0.00 (DEC-NEGZERO-REFUSED) fail with E-INVALID-VALUE; 16.500 fits scale 2 and reads back as 16.50 (DEC-TRAILING-ZERO-FITS); toDecimal starts from the exact binary expansion (DEC-TODECIMAL-EXACT-EXPANSION); AVG over decimal fails with E-DECIMAL-AVG unless written with divide (DEC-AVG-PREFLIGHT) (RULINGS Q33b); every comparison with integer or number, equality included, is preflight E-MIXED-FAMILY (DEC-CROSS-FAMILY-PREFLIGHT) and exact after explicit conversion (DEC-CONVERTED-COMPARE); results beyond the precision fail with E-DECIMAL-OVERFLOW, bare / with E-DECIMAL-BARE-DIVIDE, decimal to integer with a fraction with E-DECIMAL-FRACTION, and a narrowing migration that would lose digits with E-DECIMAL-NARROWING, atomically; range rules (for example 'pay rate at or above 16.50') compare in exact numeric order on the repository, fragments and documented raw channel; a value with more fractional digits than the scale fails with E-DECIMAL-FRACTION (DEC-SCALE-EXCESS) and one outside the precision with E-DECIMAL-OVERFLOW (DEC-PRECISION-EXCESS), never rounded; kernel arithmetic over decimals is exact.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -10629,8 +11377,6 @@
         {
           "set": "CS-DECIMAL",
           "select": [
-            "DEC-SMALL-PRECISION-TDK1",
-            "DEC-LARGE-PRECISION-TDK1",
             "DEC-CROSS-SCALE-COMPARE",
             "DEC-UNDECLARED-ATTRIBUTE",
             "DEC-NEGZERO-REFUSED",
@@ -10662,8 +11408,49 @@
             "DEC-SCALE-BOUNDARY",
             "DEC-INTERMEDIATE",
             "DEC-EVERY-PATH",
-            "DEC-ORDER-KEY-INDEPENDENT",
             "DEC-INPUT-CAPTURE"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL",
+          "select": [
+            "DEC-WIRE-SHAPE"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL",
+          "select": [
+            "DEC-Q43-OVERFLOW-IDS"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL",
+          "select": [
+            "DEC-Q43-LITERAL-TYPE"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL",
+          "select": [
+            "DEC-Q43-ROUNDING-MODES"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL",
+          "select": [
+            "DEC-Q43-EXPR-LIMIT"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL",
+          "select": [
+            "DEC-Q43-ROUND-UP-SCALE"
+          ]
+        },
+        {
+          "set": "CS-DECIMAL",
+          "select": [
+            "DEC-Q43-TOINTEGER-OVERFLOW"
           ]
         }
       ],
@@ -10716,7 +11503,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "af9683afb5893eeecf55697848e0f57f52cb669ffb5202113e043d5df76cb6c6",
+      "definitionSha256": "761d26aaa20a421ef2a964543cc67a997ea788e62839a01e10bd52c47a0bfbae",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -10994,6 +11781,12 @@
           "select": [
             "TDK1-V3-ORDER-PROBE"
           ]
+        },
+        {
+          "set": "CS-TDK1",
+          "select": [
+            "DEC-ORDER-KEY-INDEPENDENT"
+          ]
         }
       ],
       "oracles": [
@@ -11033,7 +11826,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "2b892957adb8653dd7f04b240c33b0a20354b95ce26afb16f8bc7cfc795ddb6d",
+      "definitionSha256": "11642b501d57132698d0613148d4870b56af92f824e5bf16c4b2781addeeac3d",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11200,6 +11993,13 @@
           "select": [
             "TDK1-V6-SERIALIZATION"
           ]
+        },
+        {
+          "set": "CS-TDK1",
+          "select": [
+            "DEC-SMALL-PRECISION-TDK1",
+            "DEC-LARGE-PRECISION-TDK1"
+          ]
         }
       ],
       "oracles": [
@@ -11240,7 +12040,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "db3e9b4fdccfdd49570e69b66ae2ca666ada9680bb28e9254bc456d211f35562",
+      "definitionSha256": "c347718712df7fc6240ec1c13216313148e794c1fc8a5bbe82f7f88e4c448fed",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11414,7 +12214,7 @@
         "GS"
       ],
       "title": "Outbox deliveries are keyed by (id, publication sequence)",
-      "statement": "Per OUTBOX (RULINGS Q38f): the delivery key is (id, publication sequence); the sequence increments whenever the payload to publish differs from the latest published payload for that id, so a release rollback R1, R2, R1 publishes three deliveries 1650, 1700, 1650 (OB-RELEASE-ROLLBACK); publication state is persisted atomically with its outbox record (OB-ATOMIC-STATE); a crash before delivery replays the same identity exactly once (OB-CRASH-BEFORE-DELIVERY); an unchanged activation during recovery publishes nothing new while the pending delivery keeps its identity (OB-UNCHANGED-ACTIVATION-RECOVERY).",
+      "statement": "Per OUTBOX (RULINGS Q38f): the delivery key is (id, publication sequence); the sequence increments whenever the payload to publish differs from the latest published payload for that id, so a release rollback R1, R2, R1 publishes three deliveries 1650, 1700, 1650 (OB-RELEASE-ROLLBACK); publication state is persisted atomically with its outbox record (OB-ATOMIC-STATE); a crash before delivery replays the same identity exactly once (OB-CRASH-BEFORE-DELIVERY); an unchanged activation during recovery publishes nothing new while the pending delivery keeps its identity (OB-UNCHANGED-ACTIVATION-RECOVERY); a correction revert publishes a new sequence (OB-CORRECTION-REVERT); an older-basis evaluation publishes nothing (OB-OLDER-BASIS-NO-DELIVERY, RULINGS Q40d); a retired id that reappears publishes a new sequence even with an unchanged payload (OB-RETIREMENT-REAPPEAR, RULINGS Q40h); only live reconciles at the current basis are published (OB-PREVIEW-NOT-PUBLISHED, RULINGS Q44c).",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -11431,6 +12231,10 @@
         {
           "set": "CS-OUTBOX",
           "select": [
+            "OB-CORRECTION-REVERT",
+            "OB-OLDER-BASIS-NO-DELIVERY",
+            "OB-RETIREMENT-REAPPEAR",
+            "OB-PREVIEW-NOT-PUBLISHED",
             "OB-RELEASE-ROLLBACK",
             "OB-CRASH-BEFORE-DELIVERY",
             "OB-UNCHANGED-ACTIVATION-RECOVERY",
@@ -11472,18 +12276,23 @@
         "T-FAULT-REPS"
       ],
       "mutationControls": [
-        "M-OUTBOX-VERSION-DEDUP"
+        "M-OUTBOX-VERSION-DEDUP",
+        "M-OUTBOX-RETIREMENT-IGNORED"
       ],
       "contracts": [],
       "sources": [
         "RULINGS Q38f",
+        "RULINGS Q40c",
+        "RULINGS Q40d",
+        "RULINGS Q40h",
+        "RULINGS Q44c",
         "lab/reviews/plan-v2-round4.codex.md finding 8"
       ],
       "grounding": "grounded",
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "bf5c7f4b05280f55df11916ce8cb0f89a7a3c088a50927565ac03bdcf6a9b6de",
+      "definitionSha256": "62daadbdfa4892897440a7fbb1bf27d50b9288e4fdbb3f7525fd51284a827b65",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -11492,6 +12301,183 @@
       "needsNewOracle": [
         "O-DOMAIN",
         "O-REPLAY"
+      ]
+    },
+    {
+      "id": "G7.outbox.receiver-ordering",
+      "goals": [
+        "G7",
+        "GS"
+      ],
+      "title": "Receivers apply deliveries by publication sequence",
+      "statement": "Per OUTBOX receivers (RULINGS Q42b, Q44d): a state projection records the highest sequence applied and never regresses (RX-REVERSED-ARRIVAL); an effect needing every transition recovers gaps from the outbox first (RX-GAP-RECOVERY); deduplication is persisted atomically with the receiver's state or effect (RX-RESTART-MID-SEQUENCE, RX-DEDUP-1-1-3-3-2); a receiver started after pruning is seeded from a snapshot (RX-LATE-START); O-DOMAIN's receive operation gives the expected receiver state.",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": [
+        {
+          "set": "CS-RECEIVER",
+          "select": [
+            "all"
+          ]
+        },
+        {
+          "set": "CS-RECEIVER",
+          "select": [
+            "RX-REVERSED-ARRIVAL",
+            "RX-GAP-RECOVERY",
+            "RX-RESTART-MID-SEQUENCE",
+            "RX-DEDUP-1-1-3-3-2",
+            "RX-LATE-START"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-DOMAIN"
+      ],
+      "entrypoints": [
+        "EP-OUTBOX",
+        "EP-KERNEL"
+      ],
+      "profiles": [
+        "P-FAULT"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-FAULT",
+          "CR-MUTANT-KILL"
+        ],
+        "modes": [
+          "current",
+          "reopen",
+          "engine-restart"
+        ],
+        "params": {
+          "gates": [
+            "GATE-W0"
+          ]
+        }
+      },
+      "thresholds": [
+        "T-FAULT-REPS"
+      ],
+      "mutationControls": [
+        "M-RECEIVER-REGRESS"
+      ],
+      "contracts": [],
+      "sources": [
+        "RULINGS Q42b",
+        "RULINGS Q44d",
+        "lab/reviews/plan-v2-round5.codex.md finding 9"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": "source",
+      "verifierMode": "rerun",
+      "definitionSha256": "0d8ff6e14aa20b5053d1cab04fd798fbbc4a5c031115ca647b53bda042c2bf6e",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-DOMAIN"
+      ]
+    },
+    {
+      "id": "G7.outbox.atomic-unit",
+      "goals": [
+        "G7",
+        "GS"
+      ],
+      "title": "Outbox state is one atomic unit per subject",
+      "statement": "Per OUTBOX atomicUnit (RULINGS Q42c): the basis guard, retirement state, publication sequence, latest published payload and outbox records are written in one atomic write under the subject's compare-and-set; a crash injected between every pair of these transitions leaves both or neither visible (AU-CRASH-*); the guard advances on empty and unchanged evaluations (AU-GUARD-ADVANCES-EMPTY, AU-GUARD-ADVANCES-UNCHANGED).",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql",
+        "qlever-sparql"
+      ],
+      "receiptScope": "engine",
+      "cases": [
+        {
+          "set": "CS-ATOMIC-UNIT",
+          "select": [
+            "all"
+          ]
+        },
+        {
+          "set": "CS-ATOMIC-UNIT",
+          "select": [
+            "AU-CRASH-BASIS-GUARD-RETIREMENT-STATE",
+            "AU-CRASH-BASIS-GUARD-PUBLICATION-SEQUENCE",
+            "AU-CRASH-BASIS-GUARD-LATEST-PUBLISHED-PAYLOAD",
+            "AU-CRASH-BASIS-GUARD-OUTBOX-RECORDS",
+            "AU-CRASH-RETIREMENT-STATE-PUBLICATION-SEQUENCE",
+            "AU-CRASH-RETIREMENT-STATE-LATEST-PUBLISHED-PAYLOAD",
+            "AU-CRASH-RETIREMENT-STATE-OUTBOX-RECORDS",
+            "AU-CRASH-PUBLICATION-SEQUENCE-LATEST-PUBLISHED-PAYLOAD",
+            "AU-CRASH-PUBLICATION-SEQUENCE-OUTBOX-RECORDS",
+            "AU-CRASH-LATEST-PUBLISHED-PAYLOAD-OUTBOX-RECORDS",
+            "AU-GUARD-ADVANCES-EMPTY",
+            "AU-GUARD-ADVANCES-UNCHANGED"
+          ]
+        }
+      ],
+      "oracles": [
+        "O-DOMAIN"
+      ],
+      "entrypoints": [
+        "EP-OUTBOX",
+        "EP-WRITER",
+        "EP-KERNEL"
+      ],
+      "profiles": [
+        "P-FAULT"
+      ],
+      "closure": {
+        "rules": [
+          "CR-PASS-ALL",
+          "CR-FAULT",
+          "CR-MUTANT-KILL"
+        ],
+        "modes": [
+          "current",
+          "reopen",
+          "engine-restart"
+        ],
+        "params": {
+          "gates": [
+            "GATE-W0"
+          ]
+        }
+      },
+      "thresholds": [
+        "T-FAULT-REPS"
+      ],
+      "mutationControls": [
+        "M-OUTBOX-NONATOMIC"
+      ],
+      "contracts": [],
+      "sources": [
+        "RULINGS Q42c",
+        "lab/reviews/plan-v2-round5.codex.md finding 10"
+      ],
+      "grounding": "grounded",
+      "notes": null,
+      "layer": "source",
+      "verifierMode": "rerun",
+      "definitionSha256": "5ecabe482fb5e435225e5e0727f497a6af3db2fec3027264e05716b7bb3e3bb3",
+      "status": {
+        "xtdb-xtql": "OPEN",
+        "xtdb-sql": "OPEN",
+        "qlever-sparql": "OPEN"
+      },
+      "needsNewOracle": [
+        "O-DOMAIN"
       ]
     },
     {
@@ -12381,6 +13367,12 @@
           "select": [
             "Q33-CUT-INVALID-BASIS"
           ]
+        },
+        {
+          "set": "CS-ERRORS",
+          "select": [
+            "Q43-CUT-NEGZERO"
+          ]
         }
       ],
       "oracles": [
@@ -12418,7 +13410,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "0f71dab30467539e242beafaa804d5181556f6c8d735539eb11f2f01cbf29e2b",
+      "definitionSha256": "dbfa53f2f749f794861b1eafe3a118dc3b4ca68a93650bb8818959a838e73ed8",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -16858,6 +17850,9 @@
         "M-ERASURE-FRONTIER-SKIP",
         "M-JSON-NEGZERO-NORMALIZE",
         "M-JSON-GUARD-ON-JOURNAL",
+        "M-RECEIVER-REGRESS",
+        "M-OUTBOX-NONATOMIC",
+        "M-OUTBOX-RETIREMENT-IGNORED",
         "M-OUTBOX-VERSION-DEDUP",
         "M-DECIMAL-LEXICAL-ORDER",
         "M-X-DECIMAL-SUM-BIGINT",
@@ -16893,7 +17888,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "b9130cc7c151175fda8c34c636e417b38f5a356007c7fd55763979b80066a9ce",
+      "definitionSha256": "d0dd76fee7f17cdb387f8f7fcdd677df92d2773a3cee8eecb7d7413f988773ea",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18776,7 +19771,7 @@
         "GS"
       ],
       "title": "Release activation (P5, P1)",
-      "statement": "Story and load: a new release changes 3 requirements; activation is a fact; the sweep re-reconciles 100k subjects at one pinned basis with live traffic. Checked beyond exact answers: P5 bars hold; in-flight reconciles finish on the old release. Activation is compared with GS.11's preview at one common input basis (GS-10-11-COMMON-BASIS); work items publish under the delivery key (id, publication sequence) with early cutoff (OUTBOX, RULINGS Q38f). Positive and negative witnesses: GS-10-WITNESS-POS, GS-10-WITNESS-NEG. Bars: NS-P5-SWEEP-S, NS-P5-LIVE-READ-P99-RATIO, NS-P5-WRITER-P99-RATIO. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
+      "statement": "Story and load: a new release changes 3 requirements; activation is a fact; the sweep re-reconciles 100k subjects at one pinned basis with live traffic. Checked beyond exact answers: P5 bars hold; in-flight reconciles finish on the old release. Activation is compared with GS.11's preview at one common input basis (GS-10-11-COMMON-BASIS); work items publish under the delivery key (id, publication sequence) with early cutoff (OUTBOX, RULINGS Q38f); only live reconciles at the current basis are published, in basis order (RULINGS Q40d, Q44c). Positive and negative witnesses: GS-10-WITNESS-POS, GS-10-WITNESS-NEG. Bars: NS-P5-SWEEP-S, NS-P5-LIVE-READ-P99-RATIO, NS-P5-WRITER-P99-RATIO. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -18852,7 +19847,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "1819a4847be66b1a96f5fba83d3e76f1346fb45d5edb9822c83dcf1551603cb9",
+      "definitionSha256": "6c6385e24b72b5482a3fb16f01c6e88930acbb381fc67619d9e51e01faa5d3a6",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -18871,7 +19866,7 @@
         "GS"
       ],
       "title": "Plan impact preview (P5, P1)",
-      "statement": "Story and load: 'who gains work' for a candidate release over 100k subjects, without applying it, during live traffic. Checked beyond exact answers: identical answer to the post-activation sweep; never blocks writers. The preview is compared with GS.10's activation at one common input basis (GS-10-11-COMMON-BASIS); preview publishes nothing to the outbox. Positive and negative witnesses: GS-11-WITNESS-POS, GS-11-WITNESS-NEG. Bars: NS-P1-WRITER-WAIT-MAX-MS, NS-P5-LIVE-READ-P99-RATIO. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
+      "statement": "Story and load: 'who gains work' for a candidate release over 100k subjects, without applying it, during live traffic. Checked beyond exact answers: identical answer to the post-activation sweep; never blocks writers. The preview is compared with GS.10's activation at one common input basis (GS-10-11-COMMON-BASIS); preview publishes nothing to the outbox (OUTBOX liveOnly, RULINGS Q44c). Positive and negative witnesses: GS-11-WITNESS-POS, GS-11-WITNESS-NEG. Bars: NS-P1-WRITER-WAIT-MAX-MS, NS-P5-LIVE-READ-P99-RATIO. Expected answers from O-REPLAY (state), O-DOMAIN (domain outputs under WORLD_W0) or O-HAND. The scenario fails on any wrong answer, lost or duplicated commit, feed gap or order violation, or missed bar.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -18946,7 +19941,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "0174af87f54351b0a4529be6589afd2c14b53f538bd41d40eed39a98d63f121f",
+      "definitionSha256": "69317eaa13d25408d3b6a9bab389ed4258f73ba760135aa7734fe9f19366c19c",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -21046,7 +22041,7 @@
         "NS"
       ],
       "title": "W0 is reviewed, pinned and meets its frozen coverage floors",
-      "statement": "V-D01 has independently reviewed W0's SPEC.md, releases and golden cases and every W0_PIN hash is pinned in this contract (W0-COV-REVIEW-PINNED; a null pin fails closed, GATE-W0); over the frozen trace at the 100k rung O-DOMAIN finds that R2 changes the outputs of at least W0-R2-CHANGED-SHARE of in-scope subjects (W0-COV-R2-CHANGED), every rule fires for at least W0-RULE-FIRE-SHARE of subjects (W0-COV-RULE-FIRES), worker-to-location fanout follows Zipf s = W0-LOCATION-ZIPF-S over W0-LOCATIONS-100K locations (W0-COV-LOCATION-FANOUT), and at least W0-MULTI-WORK-ITEM-SHARE of evaluations produce three or more work items (W0-COV-MULTI-WORK-ITEMS).",
+      "statement": "V-D01 has independently reviewed W0's SPEC.md, releases and golden cases and every W0_PIN hash is pinned in this contract (W0-COV-REVIEW-PINNED; a null pin fails closed, GATE-W0); over the frozen trace at the 100k rung O-DOMAIN finds that R2 changes the outputs of at least W0-R2-CHANGED-SHARE of in-scope subjects (W0-COV-R2-CHANGED), every rule fires for at least W0-RULE-FIRE-SHARE of subjects (W0-COV-RULE-FIRES), worker-to-location fanout follows Zipf s = W0-LOCATION-ZIPF-S over W0-LOCATIONS-100K locations (W0-COV-LOCATION-FANOUT), and at least W0-MULTI-WORK-ITEM-SHARE of evaluations produce three or more work items (W0-COV-MULTI-WORK-ITEMS); world sizes follow P4's buckets through ballast (W0-COV-BALLAST-BUCKETS), the wage floor is two hops deep (W0-COV-TWO-HOP), R3 reaches its subjects through the reverse two-hop index with affected and changed subjects stated separately (W0-COV-R3-SCOPED), and O-DOMAIN reproduces the population fingerprint (W0-COV-FINGERPRINT) (RULINGS Q40, Q44).",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -21067,7 +22062,11 @@
             "W0-COV-RULE-FIRES",
             "W0-COV-LOCATION-FANOUT",
             "W0-COV-MULTI-WORK-ITEMS",
-            "W0-COV-REVIEW-PINNED"
+            "W0-COV-REVIEW-PINNED",
+            "W0-COV-BALLAST-BUCKETS",
+            "W0-COV-TWO-HOP",
+            "W0-COV-R3-SCOPED",
+            "W0-COV-FINGERPRINT"
           ]
         }
       ],
@@ -21108,7 +22107,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "33c75d18f6e1d15ea4959ec01d790f61afa9ec87addbf2e143bf51a57cb360ef",
+      "definitionSha256": "57295b4be47e7af76926d97f4e05ae7f72c688c304c964a06b92bd98b25006ff",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -21327,6 +22326,12 @@
             "CX-CLAIM-SUPPLIED-NAMES",
             "CX-XTDB-SHARED-LANGUAGE",
             "CX-SCREENING-CLAIM-PREREQ",
+            "CX-ZERO-OBJECT-HASHES",
+            "CX-STALE-BINARY",
+            "CX-EARLIER-COMMIT-FALSIFIER",
+            "CX-NO-MEASUREMENT",
+            "CX-UNKNOWN-OBLIGATION",
+            "CX-REFUSAL-AS-AUTHORING",
             "CX-POSITION-GATE",
             "PX-PASS-ALL",
             "PX-COUNTEREXAMPLE",
@@ -21379,7 +22384,7 @@
       "notes": null,
       "layer": "current",
       "verifierMode": "rerun",
-      "definitionSha256": "64f8637f25234a9a3cbb1a7956db2eb91563a83653b9d0ac169ad9cb1653b153",
+      "definitionSha256": "40a9592578a387690743d900c60b0e2dfb189e3c3208b0d6dc0cfa41ea5a4677",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -21917,5 +22922,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "4d5c23196100e6d5c0ca1be735f65cf0957e6c54422fae5c3a73492dc300f76e"
+  "transitiveContractSha256": "bb11ea0efcaf94c0b906c54a344af538cbfaf6f192e415109369364902f5368a"
 }
