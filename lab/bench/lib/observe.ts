@@ -40,5 +40,8 @@ export const R = {
   split: 15,
   forcedPosition: 16,
   hotPick: 17,
+  route: 18,
+  language: 19,
+  waitedMs: 20,
 } as const;
-export type ReadRecord = [number, number, number, number, number, number, number, number, string, number, number, number, string | null, number, number, number, number, number];
+export type ReadRecord = [number, number, number, number, number, number, number, number, string, number, number, number, string | null, number, number, number, number, number, string, string, number];

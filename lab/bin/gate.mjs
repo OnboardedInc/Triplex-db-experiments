@@ -15,6 +15,7 @@
 // never PASS.
 // Rejected: vitest JSON only (no engine identity); the homebase devloop receipts (format bound
 // to its controller); overwriting a receipt on rerun (a rerun is a new run id with --previous).
+import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -239,7 +240,10 @@ async function gateG0(run) {
   tapOutcome(run, 'node-test-qualification', path.join(REPO, nodeQual.stdout), counts);
   const engineCases = await run.step('node-test-engine-cases', 'node', ['--test', '--test-reporter=tap', 'qualification/workloads/test_engine_cases.mjs']);
   tapOutcome(run, 'node-test-engine-cases', path.join(REPO, engineCases.stdout), counts);
-  for (const step of [nodeQual, engineCases]) if (step.code !== 0) run.reason(`${step.name} exited ${step.code}`);
+  // [EXP-N01] NS driver unit tests: trace determinism and frozen schedule, histogram accuracy, scheduled-time latency, world counts, feed consumer.
+  const bench = await run.step('node-test-ns-bench', 'node', ['--test', '--test-reporter=tap', 'lab/bench/test/bench.test.ts']);
+  tapOutcome(run, 'node-test-ns-bench', path.join(REPO, bench.stdout), counts);
+  for (const step of [nodeQual, engineCases, bench]) if (step.code !== 0) run.reason(`${step.name} exited ${step.code}`);
   const validate = await run.step('oracle-validate-workloads', 'python3', ['-B', 'qualification/workloads/validate_workloads.py']);
   const verdict = (() => { try { return JSON.parse(fs.readFileSync(path.join(REPO, validate.stdout), 'utf8')); } catch { return null; } })();
   if (validate.code !== 0 || verdict?.result !== 'PASS' || verdict.checked_cases !== 71 || verdict.unchecked_case_ids?.length) {
@@ -357,6 +361,7 @@ async function engineGate(run, config, entry) {
     TRIPLEX_LAB_SLOT_OWNER: bound.info.ownerFile,
     TRIPLEX_QUERY_PATH: entry.queryPath,
     ...profile,
+    ...(entry.extraEnv ?? {}),
   });
   result.queryPath = entry.queryPath;
   result.diskBefore = vmDisk(config);
@@ -455,6 +460,104 @@ async function gateG2(run, config) {
   return result;
 }
 
+// ---------------------------------------------------------------- NS (north-star bench, EXP-N01)
+
+// [EXP-N01] Why: NS is the hill-climb fitness function (lab/NORTH-STAR.md, TARGETS v2 sections 1.1,
+// 2.1, 4.1). It runs lab/bench/driver.ts against one composition on one slot and binds the driver's
+// report: every number, the bar it is judged against, a correctness verdict for every read, and the
+// identity of every layer (source, current, history, analytics) with image digest, config hash and slot.
+// Gate verdicts: FAIL (harness problem or any correctness violation), INVALID (client saturated, rung
+// not seeded, a development override, or a reduced profile), MEASURED (numbers stand; each bar carries
+// its own pass/miss, and a missed bar is a fitness result, not a gate failure).
+// The independent oracle O-REPLAY is read from its branch at a recorded commit (not yet on main).
+// Rejected: a separate script outside gate.mjs (receipts must share identity binding with G0-G4).
+const NS_DEV_FLAGS = ['subjects', 'max-readers', 'burst-multiplier', 'level-s', 'history-sample', 'sweep-max', 'reader-threads', 'seed-budget-s', 'writer-max-inflight', 'sweep-concurrency', 'probe10-per-s'];
+async function gateNS(run, config) {
+  run.options.slot ??= 's1';
+  const rung = run.options.rung ?? '10k';
+  const nsProfile = run.options['ns-profile'] ?? 'smoke';
+  const output = run.raw('ns-report.json');
+  const oracleRef = run.options['oracle-ref'] ?? 'exp/O01-replay-oracle';
+  const oracleDir = run.raw('oracle');
+  fs.mkdirSync(oracleDir, { recursive: true });
+  const oracleCommit = runGit(['rev-parse', oracleRef]).trim();
+  const tar = runGit(['archive', '--format=tar', oracleCommit, 'lab/oracles/replay'], 'buffer');
+  const tarFile = run.raw('oracle.tar');
+  fs.writeFileSync(tarFile, tar);
+  const untar = await run.step('oracle-extract', 'tar', ['-xf', tarFile, '-C', oracleDir]);
+  if (untar.code !== 0) run.reason('could not extract O-REPLAY');
+  const args = ['lab/bench/driver.ts', '--lane', run.lane, '--rung', rung, '--profile', nsProfile, '--output', output, '--oracle-root', oracleDir];
+  if (run.options.composition) args.push('--composition', String(run.options.composition));
+  if (run.options['zero-readers']) args.push('--zero-readers');
+  if (run.options['match-duration-s']) args.push('--match-duration-s', String(run.options['match-duration-s']));
+  let baseline = null;
+  if (run.options.baseline) {
+    const receiptFile = path.join(REPO, 'lab/runs/NS', `${run.options.baseline}.json`);
+    const base = readJson(receiptFile, null);
+    if (!base) fail('USAGE', `--baseline ${run.options.baseline}: no receipt at ${path.relative(REPO, receiptFile)}`);
+    const writesFile = path.join(REPO, base.rawDir, 'ns-writes.jsonl');
+    if (!fs.existsSync(writesFile)) fail('USAGE', `--baseline ${run.options.baseline}: raw writes ${path.relative(REPO, writesFile)} are gone`);
+    baseline = { runId: base.runId, verdict: base.verdict, zeroReaders: base.ns?.config?.zeroReaders ?? null, traceDigest: base.ns?.trace?.digest ?? null, writes: run.store(writesFile, 'ns-baseline-writes') };
+    args.push('--baseline-writes', writesFile);
+  }
+  const dev = NS_DEV_FLAGS.filter(f => run.options[f] !== undefined);
+  for (const f of dev) args.push(`--${f}`, String(run.options[f]));
+  const slotName = run.options.slot ?? 's1';
+  const info = slotInfo(config, run.lane, slotName);
+  process.env.TX2_ENGINE_CONTAINER = info.container;
+  process.env.TX2_ENGINE_CPUS = String(info.cpus);
+  const { result, step, bound } = await engineGate(run, config, { name: 'ns-driver', queryPath: `${run.lane}-datalog`, args, timeoutMs: 8 * 3600_000, extraEnv: { TX2_ENGINE_CONTAINER: info.container, TX2_ENGINE_CPUS: String(info.cpus) } });
+  if (!bound) return result;
+  result.fixtures = fileHashes(run, nsBenchFiles(), 'bench-source');
+  result.oracle = { id: 'O-REPLAY', ref: oracleRef, commit: oracleCommit, tarSha256: sha256(tar) };
+  const report = readJson(output, null);
+  if (!report) { run.reason('no NS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  run.store(output, 'raw-outcome');
+  for (const extra of ['ns-writes.jsonl', 'ns-log.txt', 'feed-checkpoints.jsonl', 'feed-effects.jsonl', 'oracle-case.json', 'oracle-expected.json'])
+    if (fs.existsSync(run.raw(extra))) run.store(run.raw(extra), 'raw-outcome');
+  if (report.status !== 'DONE') { run.reason(`driver status ${report.status}: ${String(report.error ?? '').slice(0, 400)}`); run.failure({ step: step.name, tail: step.tail, error: report.error }); }
+  result.contactedEndpoint = report.composition?.backend?.url ?? null;
+  if (result.contactedEndpoint !== bound.info.endpoint) run.reason(`NS contacted ${result.contactedEndpoint}, slot is ${bound.info.endpoint}`);
+  const c = report.correctness ?? {};
+  result.counts = { executed: c.reads ?? 0, pass: c.correct ?? 0, fail: (c.violations ?? 0) + (c.errors ?? 0), violations: c.violations ?? 0, errors: c.errors ?? 0, skip: 0 };
+  if ((c.violations ?? 0) > 0) run.reason(`${c.violations} correctness violations (${JSON.stringify(c.violationKinds)})`);
+  if (report.oracle?.status === 'FAIL' || report.oracle?.status === 'ORACLE-ERROR') run.reason(`O-REPLAY sample check ${report.oracle.status}: ${report.oracle.mismatchCount ?? ''} mismatches`);
+  const invalid = [];
+  if (report.client?.invalid) invalid.push(`client saturated in ${report.client.saturatedPhases.join(', ')}`);
+  if (report.seed && !report.seed.complete) invalid.push(`rung not achieved: ${report.seed.seededSubjects} of ${report.seed.plannedSubjects} subjects seeded`);
+  if (dev.length) invalid.push(`development overrides: ${dev.join(', ')}`);
+  if (baseline === null && !run.options['zero-readers']) invalid.push('no matched zero-reader baseline (--baseline RUN-ID): writer attribution is unmatched');
+  result.scope = dev.length ? `dev:${dev.join(',')}` : `rung:${rung}/profile:${nsProfile}`;
+  const engine = result.engine;
+  const layer = role => ({ role, lane: run.lane, slot: slotName, container: engine.container, imageId: engine.imageId, repoDigests: engine.repoDigests, configSha256: engine.configSha256, endpoint: engine.endpoint, cpuQuota: engine.nanoCpus / 1e9, memCapBytes: engine.memCapBytes });
+  const assignments = report.composition?.assignments ?? {};
+  result.compositionIdentity = {
+    name: report.composition?.name ?? null,
+    scopeKey: report.composition?.scopeKey ?? null,
+    assignments: Object.fromEntries(['source', 'current', 'history', 'analytics'].map(role => [role, { ...layer(role), declared: assignments[role] ?? null }])),
+    replicationEdges: assignments.replicationEdges ?? [],
+    watermarksAtRead: (report.phases ?? []).filter(p => p.stats?.watermarks).map(p => ({ phase: p.name, ...p.stats.watermarks })),
+  };
+  result.ns = {
+    format: report.format, semantics: report.semantics, config: report.config, generator: report.generator, trace: { digest: report.trace?.digest, seed: report.trace?.seed, generatorSha256: report.trace?.generatorSha256, generated: report.trace?.generated },
+    seed: report.seed, writer: report.writer, correctness: { ...c, violationSample: (c.violationSample ?? []).slice(0, 5) }, client: report.client, oracle: report.oracle,
+    bars: Object.fromEntries(Object.entries(report.priorities ?? {}).map(([k, v]) => [k, v?.bars ?? []])),
+    baseline, invalid, positionCoordinates: report.positionCoordinates ?? null,
+    reportSha256: sha256(fs.readFileSync(output)),
+  };
+  result.nsVerdict = invalid.length ? 'INVALID' : 'MEASURED';
+  return result;
+}
+function nsBenchFiles() {
+  const lib = fs.readdirSync(path.join(REPO, 'lab/bench/lib')).filter(f => f.endsWith('.ts')).sort().map(f => `lab/bench/lib/${f}`);
+  return ['lab/bench/driver.ts', 'lab/bench/reader-worker.ts', ...lib, 'lab/bench/test/bench.test.ts', 'lab/bench/README.md'];
+}
+function runGit(args, encoding = 'utf8') {
+  const out = spawnSync('git', ['-C', REPO, ...args], { maxBuffer: 256 << 20 });
+  if (out.status !== 0) fail('GIT', `git ${args.join(' ')}: ${String(out.stderr).slice(0, 300)}`);
+  return encoding === 'buffer' ? out.stdout : out.stdout.toString('utf8');
+}
+
 // ---------------------------------------------------------------- G4
 
 // [EXP-002] Why: G4 (PLAN 7.5) is "semantic counterexamples with original expected answers". The
@@ -503,8 +606,8 @@ async function gateG4(run, config) {
 main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const gate = positional[0];
-  if (!['G0', 'G1', 'G2', 'G4'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
-    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4 --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]');
+  if (!['G0', 'G1', 'G2', 'G4', 'NS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
+    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).
   const runKind = options['run-kind'] ?? 'diagnostic';
@@ -526,7 +629,7 @@ main(async () => {
     lockfileSha256 = run.store(path.join(REPO, 'pnpm-lock.yaml'), 'lockfile').sha256;
     gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json']
       .map(file => [file, run.store(path.join(REPO, file), 'gate-script').sha256]));
-    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : await gateG4(run, config);
+    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'NS' ? await gateNS(run, config) : await gateG4(run, config);
   } catch (error) {
     run.reason(`harness error: ${error.message}`);
     run.failure({ harnessError: String(error.stack ?? error).slice(0, 3000) });
@@ -535,7 +638,7 @@ main(async () => {
   if (claims.contract) run.store(path.join(REPO, 'lab/acceptance/obligations.json'), 'acceptance-contract');
   for (const reason of claims.reasons) run.reason(reason);
   const receipt = {
-    format: 'tx2-gate-receipt/1', gate, lane: options.lane, slot: gate === 'G0' ? null : (options.slot ?? 'dev'), runId: run.runId,
+    format: 'tx2-gate-receipt/1', gate, lane: options.lane, slot: gate === 'G0' ? null : (options.slot ?? (gate === 'NS' ? 's1' : 'dev')), runId: run.runId,
     experiment: options.exp ?? null, note: options.note ?? null, previous: options.previous ?? null,
     startedAt: run.startedAt, endedAt: now(), durationMs: Date.now() - run.t0, scope: result.scope ?? 'unknown',
     runKind, mutation, contractVersion: claims.contract?.version ?? null, contract: claims.contract, obligations: claims.obligations,
@@ -547,6 +650,7 @@ main(async () => {
   if (receipt.git) { receipt.git.modifiedFiles = receipt.git.modifiedFiles.map(({ secretLike, ...f }) => f); receipt.git.untrackedFiles = receipt.git.untrackedFiles.map(({ secretLike, ...f }) => f); }
   const { verdict, reasons } = verdictOf(receipt);
   receipt.verdict = verdict; receipt.reasons = reasons;
+  if (gate === 'NS' && verdict !== 'FAIL') receipt.verdict = result.nsVerdict ?? 'INVALID';
   receipt.objects = run.objects;
   const fd = fs.openSync((fs.mkdirSync(path.dirname(run.receiptPath), { recursive: true }), run.receiptPath), 'wx', 0o444);
   fs.writeSync(fd, JSON.stringify(receipt, null, 2) + '\n'); fs.fsyncSync(fd); fs.closeSync(fd);
@@ -558,6 +662,10 @@ main(async () => {
   for (const reason of reasons.slice(0, 10)) console.log(`  reason: ${reason}`);
   console.log(`receipt: ${run.rel(run.receiptPath)}`);
   releaseWorktree();
+  if (gate === 'NS' && result.ns) {
+    console.log(`NS ${receipt.verdict}${result.ns.invalid?.length ? ` (${result.ns.invalid.join('; ')})` : ''}`);
+    for (const [p, bars] of Object.entries(result.ns.bars)) for (const b of bars) console.log(`  ${p} ${b.pass === true ? 'PASS' : b.pass === false ? 'MISS' : 'n/a '} ${b.id}: ${JSON.stringify(b.value)} (bar ${b.bar})`);
+  }
   if (verdict === 'FAIL') process.exitCode = 1;
 });
 

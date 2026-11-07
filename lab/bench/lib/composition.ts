@@ -31,6 +31,20 @@ export interface PullResult {
   readonly entities: number;
   readonly roundTrips: number;
   readonly depth: number;
+  /** TARGETS 4.1 item 5: which layer served the read, and in which surface language. */
+  readonly route: string;
+  readonly language: string;
+  /** Time spent waiting for an eligible index before serving or falling back (at most WATERMARK_WAIT_MS). */
+  readonly waitedMs: number;
+}
+/** TARGETS 4.1 item 5 / RULINGS Q31d: wait at most this long for an eligible index, then fall back. */
+export const WATERMARK_WAIT_MS = 10;
+/** TARGETS 4.1 item 3 / RULINGS Q31c: a position as (stream, epoch, offset, ordinal). */
+export interface Coordinate {
+  readonly stream: string;
+  readonly epoch: number;
+  readonly offset: number;
+  readonly ordinal: number;
 }
 export interface Receipt {
   readonly txId: string;
@@ -72,6 +86,8 @@ export interface CompositionHandle {
   pull(rootEntityId: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult>;
   sweepPull(rootEntityId: string, basis: Basis): Promise<PullResult>;
   feedPage(after: number, limit: number): Promise<{ transactions: readonly any[]; next?: number }>;
+  /** Map a Triplex commit position to the composition's coordinate (stream, epoch, offset, ordinal). */
+  coordinate(position: number): Coordinate;
   currentPosition(): Promise<number>;
   close(): Promise<void>;
 }
@@ -110,13 +126,19 @@ async function publicComposition(lane: Lane, scope: string): Promise<Composition
         }
       frontier = next;
     }
-    return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1 };
+    // One-engine composition: the source of truth's own query surface is the only index, eligible for
+    // every basis it has published, so no wait and no fallback are possible here.
+    return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: "source", language, waitedMs: 0 };
   };
   const one = { lane, role: "triplex public Triples service on one engine slot" };
+  const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : "triplex-entities(sparql)";
   return {
     name: "public",
     assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
     watermarks: async () => ({ source: await h.run(T.currentPosition()) }),
+    // Triplex exposes one dense position per scope; every transact is its own engine transaction, so
+    // offset = position and ordinal = 0. Epoch 0: the scope has had no epoch change.
+    coordinate: (position) => ({ stream: `triplex-journal:${scope}`, epoch: 0, offset: position, ordinal: 0 }),
     backend: h.backend,
     transact: (operations, meta) => outcome<Receipt>(T.transact(operations, meta)),
     transactionByCommand: (id) => outcome(T.transactionByCommand(id)),

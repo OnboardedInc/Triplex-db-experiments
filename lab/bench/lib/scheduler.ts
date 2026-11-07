@@ -31,6 +31,8 @@ export interface SchedulerOptions<J> {
   now: () => number;
   exec: (job: J) => Promise<void>;
   onDone: (result: JobResult<J>) => void;
+  /** Called when a job is offered (enters its subject's queue). */
+  onOffer?: (job: J) => void;
   /** Stop offering jobs scheduled at or after this time. */
   until?: number;
 }
@@ -95,6 +97,7 @@ export class OpenLoopScheduler<J extends Job> {
 
   private offer(job: J) {
     this.offered++;
+    this.opts.onOffer?.(job);
     const q = this.queues.get(job.key);
     if (q) q.push(job);
     else this.queues.set(job.key, [job]);

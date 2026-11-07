@@ -12,13 +12,15 @@
  * Subjects (TARGETS 1.1 P1 item 1), mode "mixed": 60% from subjects acknowledged in the last 60 s (the
  * hot set the main thread broadcasts), 40% uniform. Mode "weighted": the frozen P4 bucket x hop mix.
  * Mode "sample": uniform over the matched history sample.
- * Split reads (P1 item 2): `splitShare` of reads ask the main thread to commit to the same subject after
- * the first query, then finish the pull at the same basis.
+ * Split reads (P1 item 2, RULINGS Q31b): `splitShare` of reads ask the main thread for a subject that has a
+ * frozen-trace command queued or in flight, run the first query, wait for that command's ACK, then finish the
+ * pull at the same basis. The driver adds no writes of its own for them.
  *
  * Messages in:  {type:'level', phase, readers, mode} | {type:'basis', acked[], hot[]} |
- *               {type:'forced', token, position} | {type:'sweep', phase, subjects[], basis, concurrency} | {type:'stop'}
+ *               {type:'split', token, subject, seq} | {type:'acked', token, position, ackAt} |
+ *               {type:'sweep', phase, subjects[], basis, concurrency} | {type:'stop'}
  * Messages out: {type:'ready'} | {type:'reads', records[], samples[]} | {type:'elu', t, elu} |
- *               {type:'force', token, subject} | {type:'sweep-done', phase, wallMs} | {type:'error', message}
+ *               {type:'split-request', token} | {type:'straddle', token, seq} | {type:'sweep-done', phase, wallMs} | {type:'error', message}
  */
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
@@ -55,7 +57,13 @@ let records: ReadRecord[] = [];
 let samples: any[] = [];
 let stopping = false;
 let tokenSeq = 0;
-const waiting = new Map<number, (position: number) => void>();
+const waiting = new Map<number, (msg: any) => void>();
+const ask = (msg: any, timeoutMs: number) => {
+  const token = ++tokenSeq;
+  const p = new Promise<any>((resolve) => waiting.set(token, resolve));
+  port.postMessage({ ...msg, token });
+  return Promise.race([p, new Promise<any>((r) => setTimeout(() => r(null), timeoutMs))]).finally(() => waiting.delete(token));
+};
 
 function pickSubject(rng: Rng): { subject: number; hotPick: boolean } {
   if (mode === "sample" && cfg.historySample.length) return { subject: cfg.historySample[rng.int(cfg.historySample.length)]!, hotPick: false };
@@ -87,30 +95,27 @@ function pickBasis(rng: Rng): [Basis, number, number, string] {
   return [{ recordedAt: latest.instant, validAt: now - Math.floor(rng.next() * 90 * DAY) }, 2, latest.position, latest.txId];
 }
 
-async function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; split?: boolean; hotPick?: boolean }) {
+async function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; hotPick?: boolean }) {
   const start = nowAbs();
   const t0 = performance.now();
   let split = 0, forcedPosition = -1;
-  const between = opts.split
+  const between = opts.straddleSeq !== undefined
     ? async () => {
         split = 1;
-        const token = ++tokenSeq;
-        const p = new Promise<number>((resolve) => waiting.set(token, resolve));
-        port.postMessage({ type: "force", token, subject });
-        forcedPosition = await Promise.race([p, new Promise<number>((r) => setTimeout(() => r(-1), 10_000))]);
-        waiting.delete(token);
-        if (forcedPosition >= 0) split = 2;
+        const step1End = nowAbs();
+        const reply = await ask({ type: "straddle", seq: opts.straddleSeq }, 10_000);
+        if (reply && reply.position >= 0 && reply.ackAt > step1End) { split = 2; forcedPosition = reply.position; }
       }
     : undefined;
   try {
     const pr = await (opts.sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis, between));
     const latency = performance.now() - t0;
     const o = observe(pr);
-    records.push([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0]);
+    records.push([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, pr.route, pr.language, pr.waitedMs]);
     if (opts.keepRows)
       samples.push({ phase: ph, subject, basis, position, start, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo ?? null, t.id]) });
   } catch (error: any) {
-    records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0]);
+    records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, "error", "", 0]);
   }
 }
 
@@ -120,10 +125,14 @@ async function loop(id: number) {
   try {
     while (!stopping && id < wanted && acked.length > 0) {
       const oracle = cfg.sampleSubjects.length > 0 && rng.next() < cfg.oracleRate;
-      const picked = oracle ? { subject: cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]!, hotPick: false } : pickSubject(rng);
+      let picked = oracle ? { subject: cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]!, hotPick: false } : pickSubject(rng);
       const [basis, kind, position] = pickBasis(rng);
-      const split = mode === "mixed" && rng.next() < cfg.splitShare;
-      await readOnce(picked.subject, basis, kind, position, phase, { keepRows: oracle, split, hotPick: picked.hotPick });
+      let straddleSeq: number | undefined;
+      if (!oracle && mode === "mixed" && rng.next() < cfg.splitShare) {
+        const assignment = await ask({ type: "split-request" }, 2_000);
+        if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; }
+      }
+      await readOnce(picked.subject, basis, kind, position, phase, { keepRows: oracle, straddleSeq, hotPick: picked.hotPick });
     }
   } finally {
     running--;
@@ -161,8 +170,8 @@ port.on("message", async (msg: any) => {
     acked = msg.acked;
     hot = msg.hot;
     if (wanted > loops.size) setLevel(wanted);
-  } else if (msg.type === "forced") {
-    waiting.get(msg.token)?.(msg.position);
+  } else if (msg.type === "split" || msg.type === "acked") {
+    waiting.get(msg.token)?.(msg);
   } else if (msg.type === "sweep") {
     const started = performance.now();
     let next = 0;
@@ -179,7 +188,7 @@ port.on("message", async (msg: any) => {
   } else if (msg.type === "stop") {
     stopping = true;
     wanted = 0;
-    for (const resolve of waiting.values()) resolve(-1);
+    for (const resolve of waiting.values()) resolve(null);
     const deadline = Date.now() + 30_000;
     while (running > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
     clearInterval(flush);

@@ -83,7 +83,6 @@ const config = {
   oracleRate: Number(opt("oracle-rate", "0.01")),
   oracleMaxReads: Number(opt("oracle-max-reads", "24")),
   splitShare: 0.1,
-  splitCommitsPerS: Number(opt("split-commits-per-s", "2")),
   probe10PerS: Number(opt("probe10-per-s", "1")),
   historySample: Number(opt("history-sample", "1000")),
   p5Mutations: 10,
@@ -178,9 +177,24 @@ const ryowPending = new Set<Promise<void>>();
 let latestInstant = 0;
 const PHASE_RYOW = -2;
 const SWEEP_PHASE_OFFSET = 1000;
-const OVERLAY_SEQ: Record<string, number> = { probe10: 3_000_000_000, "p1-split": 4_000_000_000, "p5-mutation": 5_000_000_000 };
+const OVERLAY_SEQ: Record<string, number> = { probe10: 3_000_000_000, "p5-mutation": 5_000_000_000 };
+/** Background trace commands offered and not yet finished, per subject (split reads straddle these). */
+const pendingBySubject = new Map<number, number[]>();
+const ackWaiters = new Map<number, ((r: { position: number; ackAt: number }) => void)[]>();
+const ackedBySeq = new Map<number, { position: number; ackAt: number }>();
+const queueSamples: { t: number; background: number; all: number }[] = [];
+const straddleRng = new Rng(seedOf(`straddle:${config.seed}`));
+/** A subject with a frozen-trace command offered and not yet acknowledged, and that command's seq; -1 when none. */
+function straddleCandidate(): { subject: number; seq: number } {
+  if (!pendingBySubject.size) return { subject: -1, seq: -1 };
+  const keys = [...pendingBySubject.keys()];
+  const subject = keys[straddleRng.int(keys.length)]!;
+  const list = pendingBySubject.get(subject)!;
+  return { subject, seq: list[list.length - 1]! };
+}
 const overlayCount: Record<string, number> = {};
 let feed: FeedConsumer | null = null;
+let coordinate: (position: number) => any = (position) => ({ stream: "unknown", epoch: 0, offset: position, ordinal: 0 });
 
 function main() {
   return run().catch((error) => {
@@ -198,6 +212,7 @@ async function run() {
   const writer = await openComposition(config.composition, lane, scopeName);
   const aux = await openComposition(config.composition, lane, scopeName);
   report.composition = { name: writer.name, assignments: writer.assignments, backend: writer.backend, scopeKey: `composition:${writer.name}/source:${lane}/scope:${scopeName}` };
+  coordinate = writer.coordinate;
   void engineSampler();
 
   // ---------------------------------------------------------------- seed (bulk lane)
@@ -216,7 +231,7 @@ async function run() {
     plannedSubjects: rungSubjects, seededSubjects: N, complete: seed.complete, commands: seed.commands, assertions: seed.assertions,
     expectedAssertions: popN.seedAssertions, assertionsMatchClosedForm: popN.seedAssertions === seed.assertions,
     wallS: seed.wallMs / 1000, factsPerS: seed.factsPerS, commitMs: seed.commitMs, failureCount: seed.failures.length, failures: seed.failures.slice(0, 10),
-    firstPosition: seed.firstPosition, lastPosition: seed.lastPosition, lastInstant: seed.lastInstant, population: { planned: pop, seeded: popN },
+    firstPosition: coordinate(seed.firstPosition), lastPosition: coordinate(seed.lastPosition), lastInstant: seed.lastInstant, population: { planned: pop, seeded: popN },
   };
   save();
   const state: Map<number, SubjectState> = seed.state;
@@ -244,7 +259,12 @@ async function run() {
     if (msg.type === "reads") { for (const r of msg.records) records.push(r); for (const s of msg.samples) oracleSamples.push(s); }
     else if (msg.type === "elu") workerElu.push({ worker: w, t: msg.t, elu: msg.elu });
     else if (msg.type === "sweep-done") sweepDone.get(msg.phase)?.(msg);
-    else if (msg.type === "force") void forceCommit(msg.subject).then((position) => worker.postMessage({ type: "forced", token: msg.token, position }));
+    else if (msg.type === "split-request") worker.postMessage({ type: "split", token: msg.token, ...straddleCandidate() });
+    else if (msg.type === "straddle") {
+      const done = ackedBySeq.get(msg.seq);
+      if (done) worker.postMessage({ type: "acked", token: msg.token, ...done });
+      else (ackWaiters.get(msg.seq) ?? ackWaiters.set(msg.seq, []).get(msg.seq)!).push((r) => worker.postMessage({ type: "acked", token: msg.token, ...r }));
+    }
   };
   const startWorker = async (w: number, cfg: any) => {
     const worker = new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
@@ -336,6 +356,12 @@ async function run() {
       st.addressValidFrom = cmd.validRange.from;
     }
     const at = noteAck(receipt, ev.subject, { seq: ev.seq, stream: ev.stream, correction: ev.correction, correctionValidFrom: ev.correction ? cmd.validRange.from : null, stamp: cmd.newStamp });
+    if (ev.stream === "background") {
+      const result = { position: receipt.position, ackAt: at };
+      ackedBySeq.set(ev.seq, result);
+      for (const w of ackWaiters.get(ev.seq) ?? []) w(result);
+      ackWaiters.delete(ev.seq);
+    }
     model.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream });
     if (ev.stream === "background") original.set(ev.seq, { operations: cmd.operations, meta, receipt });
     out.position = receipt.position;
@@ -362,8 +388,20 @@ async function run() {
   };
   const scheduler = new OpenLoopScheduler<Job>(jobs, {
     maxInFlight: config.writerMaxInFlight, deadlineMs: config.writerDeadlineMs, now, exec: execute,
+    onOffer: (job: Job) => {
+      if (job.ev.stream !== "background" || job.ev.resend) return;
+      (pendingBySubject.get(job.key) ?? pendingBySubject.set(job.key, []).get(job.key)!).push(job.ev.seq);
+    },
     onDone: (r: JobResult<Job>) => {
       const ev = r.job.ev;
+      if (ev.stream === "background" && !ev.resend) {
+        const list = pendingBySubject.get(ev.subject);
+        if (list) { const k = list.indexOf(ev.seq); if (k >= 0) list.splice(k, 1); if (!list.length) pendingBySubject.delete(ev.subject); }
+        const result = ackedBySeq.get(ev.seq) ?? { position: -1, ackAt: now() };
+        if (!ackedBySeq.has(ev.seq)) ackedBySeq.set(ev.seq, result);
+        for (const w of ackWaiters.get(ev.seq) ?? []) w(result);
+        ackWaiters.delete(ev.seq);
+      }
       const out = outcomes.get(okey(ev)) ?? {};
       if (r.expired) { out.outcome = "unaccounted"; out.reason = "not sent: writer deadline passed"; r.job.onDone?.(-1); }
       writes.push({ stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
@@ -377,15 +415,11 @@ async function run() {
       const ev: TraceEvent = { seq, atMs: now() - traceStart, kind: "runtime", subject, facts, correction: false, ackLoss: false, resend: false, burst: false, active: false, stream };
       scheduler.inject({ key: subject, scheduledAt: now(), ev, onDone: resolve });
     });
-  let splitTokens = config.splitCommitsPerS, splitLast = now();
-  const forceCommit = async (subject: number): Promise<number> => {
-    const t = now();
-    splitTokens = Math.min(config.splitCommitsPerS, splitTokens + ((t - splitLast) / 1000) * config.splitCommitsPerS);
-    splitLast = t;
-    if (splitTokens < 1) return -1;
-    splitTokens -= 1;
-    return overlay("p1-split", subject, 5);
-  };
+  const queueTimer = setInterval(() => {
+    let background = 0;
+    for (const list of pendingBySubject.values()) background += list.length;
+    queueSamples.push({ t: now(), background, all: scheduler.pending });
+  }, 1000);
 
   // ---------------------------------------------------------------- feed consumer (P3)
   const lvl = (config.levelS ?? PROFILES[profile].levelS) * 1000;
@@ -440,6 +474,7 @@ async function run() {
   // ---------------------------------------------------------------- wind down
   const endAt = now();
   if (probeTimer) clearInterval(probeTimer);
+  clearInterval(queueTimer);
   scheduler.setUntil(endAt);
   scheduler.stop();
   setReaders(-1, 0, "mixed");
@@ -471,7 +506,8 @@ async function run() {
 
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
-  report.finalPosition = finalPosition;
+  report.finalPosition = coordinate(finalPosition);
+  report.positionCoordinates = "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0";
   report.maintenance = maintenance;
   analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
   report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : runOracle(finalPosition, lastAcked);
@@ -526,7 +562,7 @@ async function run() {
     const release = stubRelease();
     const mutRng = new Rng(seedOf(`p5mut:${config.seed}`));
     const mutated = [...new Set(Array.from({ length: Math.min(config.p5Mutations, list.length) }, () => list[mutRng.int(list.length)]!))];
-    const out: any = { subjects: list.length, coverageSha256: coverageHash(list), basis: { ...basis, position: last.position, txId: last.txId }, release: { id: release.id, sha256: release.sha256 }, concurrency: config.sweepConcurrency, mutatedAfterCapture: mutated, evaluate: EVALUATE_SEAM, publish: PUBLISH_SEAM, throttledVariant: { status: "not-run", reason: "needs evaluate and an observable compaction or rebuild to overlap (seam)" } };
+    const out: any = { subjects: list.length, coverageSha256: coverageHash(list), basis: { ...basis, position: coordinate(last.position), txId: last.txId }, release: { id: release.id, sha256: release.sha256 }, concurrency: config.sweepConcurrency, mutatedAfterCapture: mutated, evaluate: EVALUATE_SEAM, publish: PUBLISH_SEAM, throttledVariant: { status: "not-run", reason: "needs evaluate and an observable compaction or rebuild to overlap (seam)" } };
     out.mutationPositions = await Promise.all(mutated.map((s) => overlay("p5-mutation", s, 6)));
     const { worker: sweeper, stopped: sweeperStopped } = await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 });
     const done = new Promise<any>((resolve) => sweepDone.set(idx + SWEEP_PHASE_OFFSET, resolve));
@@ -588,9 +624,9 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) 
   try {
     const pr = await comp.pull(ids.placement(subject), basis);
     const o = observe(pr);
-    records.push([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, receipt.position, 0, -1, 0]);
+    records.push([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, receipt.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
   } catch (error: any) {
-    records.push([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, receipt.position, 0, -1, 0]);
+    records.push([PHASE_RYOW, subject, basis.recordedAt, basis.validAt, start, performance.now() - t, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, receipt.position, 0, -1, 0, "error", "", 0]);
   }
 }
 /** Maintenance evidence (TARGETS 1.1 P1 item 3): engine log lines naming compaction, merge or rebuild. */
@@ -653,6 +689,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const read = new Histogram();
     let reads = 0, correct = 0, violations = 0, errors = 0, hotReads = 0, splitReads = 0, splitForced = 0, splitCorrect = 0;
     const byBasis = [0, 0, 0];
+    const routes: Record<string, number> = {};
+    const languages: Record<string, number> = {};
+    let waited = 0;
     const buckets: Record<string, Histogram> = {};
     const bytesBy: Record<string, number[]> = {};
     records.forEach((r, k) => {
@@ -663,6 +702,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       const lw = lastAckBefore(r[R.subject], r[R.start]);
       if (lw !== null && r[R.start] - lw <= 60_000) hotReads++;
       byBasis[r[R.basisKind]]!++;
+      routes[r[R.route]] = (routes[r[R.route]] ?? 0) + 1;
+      languages[r[R.language]] = (languages[r[R.language]] ?? 0) + 1;
+      if (r[R.waitedMs] > 0) waited++;
       if (r[R.split] > 0) { splitReads++; if (r[R.split] === 2) { splitForced++; if (v.ok) splitCorrect++; } }
       if (v.ok) {
         const facts = worldFactsOf(r[R.subject], accounts);
@@ -691,12 +733,13 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       phase: phase.name, readers: phase.readers, mode: phase.mode, windowS: Math.round(secs * 10) / 10, overlapsBurst: phase.overlapsBurst,
       reads, correct, violations, errors, goodputPerS: correct / secs, read: read.summary(),
       hotShare: reads ? hotReads / reads : null, basisMix: { latest: byBasis[0], lastHour: byBasis[1], pastValidTime: byBasis[2] },
-      split: { reads: splitReads, withCommitBetween: splitForced, withCommitBetweenCorrect: splitCorrect },
+      split: { reads: splitReads, straddledATraceCommand: splitForced, straddledCorrect: splitCorrect },
+      routing: { routes, languages, fallbackShare: reads ? (routes["fallback"] ?? 0) / reads : null, waitedReads: waited, watermarkWaitMs: 10 },
       buckets: Object.fromEntries(Object.entries(buckets).map(([k, h]) => [k, { ...h.summary(), meanBytes: mean(bytesBy[k]!) }])),
       writer: { commits: commits.length, commit: commit.summary(), maxLatencyMs: commits.length ? Math.max(...commits.map((c) => c.latencyMs)) : null, matchedZeroReader: matched },
       feedLag: lag.summary(),
       maintenanceEvents: maint,
-      watermarks: marks.length ? { source: { min: Math.min(...marks), max: Math.max(...marks) } } : null,
+      watermarks: marks.length ? { source: { min: coordinate(Math.min(...marks)), max: coordinate(Math.max(...marks)) } } : null,
       client: { workerEluMean, maxWorkerElu, mainElu: mainEluMean, saturated: (maxWorkerElu ?? 0) > 0.9 || (mainEluMean ?? 0) > 0.9 },
       engine: { cpuPercentMean: mean(eng.map((e) => e.cpuPercent)), samples: eng.length, peakMemBytes: eng.length ? Math.max(...eng.map((e) => e.memBytes)) : null },
       _read: read,
@@ -734,7 +777,8 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("NS-P1-WRITER-P99-RATIO-1024", r1024?.value ?? null, "<= 2.0", unmatched(r1024) ?? (r1024?.value != null ? r1024.value <= 2 : null), r1024?.basis),
       bar("NS-P1-RECOVERY-MS", recovery?.recoveredAfterMs ?? null, "<= 60000", recovery ? recovery.recoveredAfterMs !== null && recovery.recoveredAfterMs <= 60_000 : null, recovery?.note ?? undefined),
       bar("1.1 P1.1 hot-set share of reads (min over ladder levels)", ladder.length ? Math.min(...ladder.map((s) => s.hotShare ?? 0)) : null, ">= 0.5", ladder.length ? ladder.every((s) => (s.hotShare ?? 0) >= 0.5) : null),
-      bar("1.1 P1.2 split reads with a commit between steps, all correct", ladder.reduce((s, x) => s + x.split.withCommitBetween, 0), "> 0 and all correct", ladder.length ? ladder.some((s) => s.split.withCommitBetween > 0) && ladder.every((s) => s.split.withCommitBetween === s.split.withCommitBetweenCorrect) : null, `forced commits are rate-limited to ${config.splitCommitsPerS}/s (overlay stream p1-split); other split reads run both steps without one`),
+      bar("1.1 P1.2 split reads straddling a frozen-trace command, all correct", ladder.reduce((s, x) => s + x.split.straddledATraceCommand, 0), "> 0 and all correct", ladder.length ? ladder.some((s) => s.split.straddledATraceCommand > 0) && ladder.every((s) => s.split.straddledATraceCommand === s.split.straddledCorrect) : null, "step 1 before the trace command's ACK, step 2 after; the driver adds no writes (RULINGS Q31b)"),
+      bar("4.1.5 fallback share per window (reported)", ladder.map((s) => s.routing.fallbackShare), "reported", null, "one-engine composition: every read is served by the source of truth's own surface"),
       bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
     ],
   };
@@ -754,6 +798,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const dupConsidered = resends.filter((r) => r.result !== "original-not-committed");
   const dupOk = dupConsidered.filter((r) => r.result === "already-committed-original" || r.result === "resolved-by-command").length;
   const lostOk = lostAck.filter((r) => r.resolvedOriginal && r.retryTag !== "COMMITTED-AGAIN").length;
+  const progress = p2Progress(background, ctx.traceStart);
   const probeHist = new Histogram();
   for (const w of writes) if (w.stream === "probe10" && w.outcome === "committed") probeHist.recordMs(w.latencyMs);
   const p2 = {
@@ -763,6 +808,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     duplicates: { resends: resends.length, considered: dupConsidered.length, returnedOriginal: dupOk },
     lostAck: { simulated: lostAck.length, returnedOriginal: lostOk, retryTags: countBy(lostAck.map((r) => r.retryTag)) },
     probe10Diagnostic: { note: "diagnostic only (TARGETS 1.1 P2 item 2); overlay stream, not part of any bar", commit: probeHist.summary() },
+    progress,
     bars: [
       bar("NS-P2 5-10 band p50 ms (L256)", b256["5-10"].p50Ms, "<= 10", b256["5-10"].p50Ms != null ? b256["5-10"].p50Ms <= 10 : null),
       bar("NS-P2 5-10 band p99 ms (L256)", b256["5-10"].p99Ms, "<= 50", b256["5-10"].p99Ms != null ? b256["5-10"].p99Ms <= 50 : null),
@@ -770,6 +816,11 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("NS-P2 11-25 band p99 ms (L256)", b256["11-25"].p99Ms, "<= 50", b256["11-25"].p99Ms != null ? b256["11-25"].p99Ms <= 50 : null),
       bar("NS-P2 26-50 band p99 ms (L256, provisional)", b256["26-50"].p99Ms, "<= 100", b256["26-50"].p99Ms != null ? b256["26-50"].p99Ms <= 100 : null),
       bar("NS-P2 every offered command accounted", unaccounted, "= 0", unaccounted === 0),
+      bar("NS-P2 every oracle-valid trace command published", `${progress.validPublished}/${progress.validOffered}`, "all", progress.validOffered > 0 && progress.validPublished === progress.validOffered),
+      bar("NS-P2 typed rejections only for deliberately invalid commands", progress.typedRejections, "= 0 (the trace holds no invalid commands yet)", progress.typedRejections === 0),
+      bar("NS-P2 typed conflicts only where the oracle finds a CAS race", progress.typedConflicts, "= 0 (serial per subject: the trace has no CAS race)", progress.typedConflicts === 0),
+      bar("NS-P2 steady-state queue <= 2 s of offered rate", progress.queue.steadyMax, `<= ${progress.queue.steadyBound.toFixed(2)} commands`, progress.queue.steadyMax !== null ? progress.queue.steadyMax <= progress.queue.steadyBound : null),
+      bar("NS-P2 queue drains within 60 s after each burst", progress.queue.drains.map((d: any) => d.drainS), "every burst <= 60 s", progress.queue.drains.length ? progress.queue.drains.every((d: any) => d.drainS !== null && d.drainS <= 60) : null),
       bar("NS-P2 read-your-own-write at the returned tx", ryowRows.length ? ryowOk / ryowRows.length : null, "= 1.0", ryowRows.length ? ryowOk === ryowRows.length : null),
       bar("NS-P2 duplicates return the original receipt", dupConsidered.length ? dupOk / dupConsidered.length : null, "= 1.0", dupConsidered.length ? dupOk === dupConsidered.length : null),
       bar("NS-P2 lost ACKs return the original receipt", lostAck.length ? lostOk / lostAck.length : null, "= 1.0", lostAck.length ? lostOk === lostAck.length : null),
@@ -788,7 +839,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const crashes = f.crashReport();
   const replayOk = ctx.replay.exact && f.counts.redeliveryMismatches === 0;
   const p3 = {
-    consumer: f.name, cursor: { epoch: f.epoch, position: f.checkpoint }, counts: f.counts, gaps, gapSample, visibleDuplicateEffects: visibleDup, crashes, replay: ctx.replay,
+    consumer: f.name, cursor: { epoch: f.epoch, position: coordinate(f.checkpoint) }, counts: f.counts, gaps, gapSample, visibleDuplicateEffects: visibleDup, crashes, replay: ctx.replay,
     lag: { fromCommitInstant: lagAll.summary(), fromDriverAck: lagAck.summary(), atL256: lag256, commitTime: "receipt instant (Triplex runtime publication stamp, host clock); 'known' = durable affected-set + checkpoint write" },
     expectedAffected: "direct subjects from command intent; dependency-rule subjects (O-DOMAIN) are a seam: the trace writes only own entities, so expected = {subject}",
     bars: [
@@ -862,6 +913,37 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };
   report.secondary = { bulkLane: "not measured (seed uses the bulk lane without live reads)", retroactiveCorrections: p3.bars[7], explainAtOldBasis: "past-valid-time reads are 5% of the P1 mix; bit-for-bit audit repeats are not measured" };
   report.histograms = Object.fromEntries(Object.entries(stats).flatMap(([name, s]: any) => [[`${name}.read`, s._read.toJSON()], [`${name}.commit`, s._commit.toJSON()]]));
+}
+/** TARGETS 1.1 P2 item 4 (RULINGS Q31a): progress and bounded outstanding work. */
+function p2Progress(background: any[], traceStart: number) {
+  const p = { ...TRACE_DEFAULTS, burstMultiplier: config.burstMultiplier };
+  const steadyRate = p.steadyFactsPerS / (p.sizeClasses.reduce((s, c) => s + c.share * ((c.min + c.max) / 2), 0));
+  const steadyBound = 2 * steadyRate;
+  const traceS = (t: number) => (t - traceStart) / 1000;
+  const afterBurst = (s: number) => { for (let b = p.firstBurstAtS; b <= s; b += p.burstPeriodS) if (s < b + p.burstDurationS + 60) return true; return false; };
+  const steady = queueSamples.filter((q) => !afterBurst(traceS(q.t)));
+  const drains: any[] = [];
+  const lastS = queueSamples.length ? traceS(queueSamples.at(-1)!.t) : 0;
+  for (let b = p.firstBurstAtS; b + p.burstDurationS < lastS; b += p.burstPeriodS) {
+    const end = b + p.burstDurationS;
+    const back = queueSamples.find((q) => traceS(q.t) >= end && q.background <= steadyBound);
+    const peak = Math.max(0, ...queueSamples.filter((q) => traceS(q.t) >= b && traceS(q.t) < end + 60).map((q) => q.background));
+    drains.push({ burstAtS: b, peakQueued: peak, drainS: back ? traceS(back.t) - end : null });
+  }
+  const valid = background; // every frozen-trace command is oracle-valid by construction (no deliberately invalid commands yet)
+  return {
+    validOffered: valid.length,
+    validPublished: valid.filter((w) => w.outcome === "committed").length,
+    typedRejections: valid.filter((w) => w.outcome === "typed-rejection").length,
+    typedConflicts: valid.filter((w) => w.outcome === "typed-conflict").length,
+    invalidCommandsInTrace: 0,
+    queue: {
+      steadyRateCommandsPerS: steadyRate, steadyBound, steadySamples: steady.length, steadyMax: steady.length ? Math.max(...steady.map((q) => q.background)) : null,
+      drains,
+      series: queueSamples.map((q) => [Math.round(traceS(q.t) * 10) / 10, q.background, q.all]),
+      seriesFields: ["traceS", "backgroundQueuedOrInFlight", "allStreamsQueuedOrInFlight"],
+    },
+  };
 }
 function loadBaselineWrites(): any[] | null {
   if (!config.baselineWrites) return null;
