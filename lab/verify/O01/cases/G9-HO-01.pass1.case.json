@@ -1,0 +1,61 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G9-HO-01",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "iv:1",
+     "attribute": ":iv/x",
+     "value": {
+      "type": "string",
+      "value": "bounded"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "iv:2",
+     "attribute": ":iv/x",
+     "value": {
+      "type": "string",
+      "value": "open"
+     },
+     "validFrom": 10.125
+    },
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "iv:3",
+     "attribute": ":iv/x",
+     "value": {
+      "type": "string",
+      "value": "tiny"
+     },
+     "validFrom": 0,
+     "validTo": 5e-324
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9ho01:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

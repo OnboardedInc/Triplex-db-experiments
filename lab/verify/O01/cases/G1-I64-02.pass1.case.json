@@ -1,0 +1,265 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G1-I64-02",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "OK-above-max",
+     "entityId": "n:ok-above-max",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "BAD-above-max",
+     "entityId": "n:bad-above-max",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "9223372036854775808"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-02:above-max"
+   }
+  },
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "OK-below-min",
+     "entityId": "n:ok-below-min",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "BAD-below-min",
+     "entityId": "n:bad-below-min",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "-9223372036854775809"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-02:below-min"
+   }
+  },
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "OK-leading-zero",
+     "entityId": "n:ok-leading-zero",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "BAD-leading-zero",
+     "entityId": "n:bad-leading-zero",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "01"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-02:leading-zero"
+   }
+  },
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "OK-plus-sign",
+     "entityId": "n:ok-plus-sign",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "BAD-plus-sign",
+     "entityId": "n:bad-plus-sign",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "+1"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-02:plus-sign"
+   }
+  },
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "OK-decimal-point",
+     "entityId": "n:ok-decimal-point",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "BAD-decimal-point",
+     "entityId": "n:bad-decimal-point",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1.0"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-02:decimal-point"
+   }
+  },
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "OK-negative-zero-text",
+     "entityId": "n:ok-negative-zero-text",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "BAD-negative-zero-text",
+     "entityId": "n:bad-negative-zero-text",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "-0"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-02:negative-zero-text"
+   }
+  },
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "OK-empty",
+     "entityId": "n:ok-empty",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "BAD-empty",
+     "entityId": "n:bad-empty",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": ""
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-02:empty"
+   }
+  },
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "OK-min-exact",
+     "entityId": "n:ok-min-exact",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "BAD-min-exact",
+     "entityId": "n:bad-min-exact",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "-9223372036854775808"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-02:min-exact"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

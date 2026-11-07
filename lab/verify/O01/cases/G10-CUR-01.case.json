@@ -1,0 +1,194 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G10-CUR-01",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "Pa",
+     "entityId": "page:a",
+     "attribute": ":page/label",
+     "value": {
+      "type": "string",
+      "value": "A"
+     },
+     "entityType": "Page",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "Pb",
+     "entityId": "page:b",
+     "attribute": ":page/label",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "Page",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "Pc",
+     "entityId": "page:c",
+     "attribute": ":page/label",
+     "value": {
+      "type": "string",
+      "value": "C"
+     },
+     "entityType": "Page",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "Pd",
+     "entityId": "page:d",
+     "attribute": ":page/label",
+     "value": {
+      "type": "string",
+      "value": "D"
+     },
+     "entityType": "Page",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "Pe",
+     "entityId": "page:e",
+     "attribute": ":page/label",
+     "value": {
+      "type": "string",
+      "value": "E"
+     },
+     "entityType": "Page",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g10cur01:C1"
+   }
+  },
+  {
+   "clock": 200,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "Pbb",
+     "entityId": "page:bb",
+     "attribute": ":page/label",
+     "value": {
+      "type": "string",
+      "value": "BB"
+     },
+     "entityType": "Page",
+     "validFrom": 0
+    },
+    {
+     "op": "retract",
+     "target": "Pd"
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g10cur01:C2"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "entityPage",
+   "entityType": "Page",
+   "limit": 2,
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "recordedAt": 1000,
+    "validAt": 50
+   },
+   "id": "S1#0"
+  },
+  {
+   "kind": "entityPage",
+   "entityType": "Page",
+   "limit": 2,
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "recordedAt": 1000,
+    "validAt": 50
+   },
+   "id": "S2#0"
+  },
+  {
+   "kind": "entityPage",
+   "entityType": "Page",
+   "limit": 2,
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "recordedAt": 1000,
+    "validAt": 50
+   },
+   "id": "S3#0"
+  },
+  {
+   "kind": "entityPage",
+   "entityType": "Page",
+   "limit": 2,
+   "cut": {
+    "position": {
+     "afterCommand": 1
+    },
+    "recordedAt": 1000,
+    "validAt": 50
+   },
+   "id": "F1#0"
+  },
+  {
+   "kind": "entityPage",
+   "entityType": "Page",
+   "limit": 2,
+   "cut": {
+    "position": {
+     "afterCommand": 1
+    },
+    "recordedAt": 150,
+    "validAt": 50
+   },
+   "id": "H1#0"
+  },
+  {
+   "kind": "entityPage",
+   "entityType": "Page",
+   "limit": 0,
+   "cut": {
+    "validAt": 50
+   },
+   "id": "E3#0"
+  },
+  {
+   "kind": "entityPage",
+   "entityType": "Page",
+   "limit": 201,
+   "cut": {
+    "validAt": 50
+   },
+   "id": "E3#1"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

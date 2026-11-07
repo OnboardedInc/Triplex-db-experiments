@@ -1,0 +1,23 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [],
+ "queries": [
+  {
+   "kind": "expr",
+   "expr": [
+    "div",
+    {
+     "type": "integer",
+     "value": "-9223372036854775808"
+    },
+    {
+     "type": "integer",
+     "value": "-1"
+    }
+   ],
+   "id": "N-I-DIV -2^63/-1"
+  }
+ ]
+}

@@ -1,0 +1,154 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G9-CUT-02",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 500,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "B1",
+     "entityId": "s:1",
+     "attribute": ":s/v",
+     "value": {
+      "type": "string",
+      "value": "x"
+     },
+     "entityType": "SameR",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9cut02:D1"
+   }
+  },
+  {
+   "clock": 500,
+   "operations": [
+    {
+     "op": "retract",
+     "target": "B1"
+    },
+    {
+     "op": "assert",
+     "ref": "B2",
+     "entityId": "s:1",
+     "attribute": ":s/v",
+     "value": {
+      "type": "string",
+      "value": "y"
+     },
+     "entityType": "SameR",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9cut02:D2"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 500,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "s:1"
+   },
+   "id": "Q1#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 499.99999999999994,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "s:1"
+   },
+   "id": "Q2#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "s:1",
+   "id": "Q3#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 500,
+    "validAt": 10
+   },
+   "pattern": {
+    "attribute": ":s/v",
+    "entityId": "s:1"
+   },
+   "id": "Q4#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "s:1",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "recordedAt": 500,
+    "validAt": 10
+   },
+   "id": "N1#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "s:1",
+   "cut": {
+    "position": {
+     "afterCommand": 1
+    },
+    "recordedAt": 500,
+    "validAt": 10
+   },
+   "id": "N2#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "recordedAt": 500,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "s:1"
+   },
+   "id": "F1#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "position": {
+     "afterCommand": 1
+    },
+    "recordedAt": 500,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "s:1"
+   },
+   "id": "F2#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

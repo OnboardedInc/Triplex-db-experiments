@@ -1,0 +1,19 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [],
+ "queries": [
+  {
+   "kind": "expr",
+   "expr": [
+    "cast-int64",
+    {
+     "type": "string",
+     "value": "-0"
+    }
+   ],
+   "id": "CV-T2I '-0'"
+  }
+ ]
+}

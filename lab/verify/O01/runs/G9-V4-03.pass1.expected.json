@@ -1,0 +1,5892 @@
+{
+ "format": "triplex-db-2/o-replay-expected/1",
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.1.0",
+  "sourceSha256": {
+   "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "cli.py": "268f89e17509c8c043a1a309bfbb6dd7aa8b83e5bff49c8da391c83ddcab4495",
+   "values.py": "4e7881592c2041ac3f1ed58aee58d42aa56677767680b0010fa65d59e9629cd3",
+   "exact.py": "8d3cdc340a0b4aae4f400bf4942b1ba586d6e35dcc77ebdfb01c204b1e9a7d31",
+   "replay.py": "ffb3d71857021b85cfe663c1879d28bfc031a80fda82bce1eb44562f3e4dce65",
+   "constraints.py": "fec68280688517be36854ba10fb7a784d8db0d1c3c8e7a27ebc3a7fcab50af15",
+   "views.py": "3e4093b18308dfb6827de40eb507d77e4bb2230d6def8571aa59ef35491f25cd",
+   "entities.py": "a0ee0cf69f0ffce50e094a31354ad1d48de8872fe944bcfb4c1f6bc5b9f7bb8f",
+   "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "run.py": "df47415034bdda041f3bf7e3efd550d35e20ad2387902a8608a02c514368a0d5",
+   "selfcheck.py": "450a1fd8e8dea572a5e71a9e8c4966c56c993f54107943b9838f6b9e87a28911"
+  }
+ },
+ "caseId": "golden/G9-V4-03",
+ "caseSha256": "de3e39b8db0e391882c8c36e412605f72f1fabdf6764616e7c3fa4c5c8aed478",
+ "verdict": "EXPECTED-ONLY",
+ "divergedAtCommand": null,
+ "receiptConsistency": {
+  "status": "NOT-APPLICABLE",
+  "reason": "no receipts supplied"
+ },
+ "commandOutcomes": [
+  {
+   "command": 0,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 1,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 2,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 3,
+   "expected": {
+    "outcome": "rejected",
+    "category": "constraint-violation",
+    "errorTag": "ConstraintViolationError",
+    "message": "new or worsened constraint violation",
+    "codes": [
+     "required"
+    ],
+    "violations": [
+     {
+      "code": "required",
+      "entityType": "CapacityEntity",
+      "attribute": ":capacity/label",
+      "validAt": 10.125,
+      "actual": 0,
+      "subject": "capacity:e00000000"
+     }
+    ]
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 4,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 5,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 6,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 7,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "state": [
+  {
+   "scope": "fresh",
+   "lastPosition": 7,
+   "assertions": [
+    {
+     "id": "0/present/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": 1005.25,
+     "retractedPosition": 6,
+     "retractTxId": "tx:6"
+    },
+    {
+     "id": "0/type-version/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": 1004.25,
+     "retractedPosition": 5,
+     "retractTxId": "tx:5"
+    },
+    {
+     "id": "0/label/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": 1004.25,
+     "retractedPosition": 5,
+     "retractTxId": "tx:5"
+    },
+    {
+     "id": "1/present/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/type-version/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/label/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000001"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/present/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/type-version/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/label/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000002"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/present/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/type-version/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/label/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000003"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/present/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/type-version/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/label/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000004"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/present/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/type-version/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/label/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000005"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/present/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/type-version/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/label/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000006"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/present/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/type-version/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/label/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000007"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1001.25,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/score/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/score",
+     "value": {
+      "type": "number",
+      "value": 0.125,
+      "bits": "0x3fc0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/exact/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/exact",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740993"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/flag/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/flag",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/group/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/group",
+     "value": {
+      "type": "ref",
+      "value": "capacity:e00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/category/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/category",
+     "value": {
+      "type": "string",
+      "value": "category-0"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/amount/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/amount",
+     "value": {
+      "type": "number",
+      "value": 0.0625,
+      "bits": "0x3fb0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/instant/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/instant",
+     "value": {
+      "type": "datetime",
+      "value": 1700000000000,
+      "bits": "0x4278bcfe56800000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/date/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/date",
+     "value": {
+      "type": "string",
+      "value": "2024-01-01"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/rank/0",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/rank",
+     "value": {
+      "type": "number",
+      "value": 0,
+      "bits": "0x0000000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/score/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/score",
+     "value": {
+      "type": "number",
+      "value": 0.1259765625,
+      "bits": "0x3fc0200000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/exact/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/exact",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740994"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/flag/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/flag",
+     "value": {
+      "type": "boolean",
+      "value": false
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/group/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/group",
+     "value": {
+      "type": "ref",
+      "value": "capacity:e00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/category/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/category",
+     "value": {
+      "type": "string",
+      "value": "category-1"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/amount/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/amount",
+     "value": {
+      "type": "number",
+      "value": 0.1875,
+      "bits": "0x3fc8000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/instant/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/instant",
+     "value": {
+      "type": "datetime",
+      "value": 1700000000001,
+      "bits": "0x4278bcfe56801000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/date/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/date",
+     "value": {
+      "type": "string",
+      "value": "2024-01-02"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "1/rank/0",
+     "entityId": "capacity:e00000001",
+     "attribute": ":capacity/rank",
+     "value": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/score/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/score",
+     "value": {
+      "type": "number",
+      "value": 0.126953125,
+      "bits": "0x3fc0400000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/exact/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/exact",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740995"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/flag/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/flag",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/group/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/group",
+     "value": {
+      "type": "ref",
+      "value": "capacity:e00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/category/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/category",
+     "value": {
+      "type": "string",
+      "value": "category-2"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/amount/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/amount",
+     "value": {
+      "type": "number",
+      "value": 0.3125,
+      "bits": "0x3fd4000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/instant/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/instant",
+     "value": {
+      "type": "datetime",
+      "value": 1700000000002,
+      "bits": "0x4278bcfe56802000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/date/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/date",
+     "value": {
+      "type": "string",
+      "value": "2024-01-03"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "2/rank/0",
+     "entityId": "capacity:e00000002",
+     "attribute": ":capacity/rank",
+     "value": {
+      "type": "number",
+      "value": 2,
+      "bits": "0x4000000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/score/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/score",
+     "value": {
+      "type": "number",
+      "value": 0.1279296875,
+      "bits": "0x3fc0600000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/exact/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/exact",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740996"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/flag/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/flag",
+     "value": {
+      "type": "boolean",
+      "value": false
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/group/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/group",
+     "value": {
+      "type": "ref",
+      "value": "capacity:e00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/category/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/category",
+     "value": {
+      "type": "string",
+      "value": "category-3"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/amount/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/amount",
+     "value": {
+      "type": "number",
+      "value": 0.4375,
+      "bits": "0x3fdc000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/instant/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/instant",
+     "value": {
+      "type": "datetime",
+      "value": 1700000000003,
+      "bits": "0x4278bcfe56803000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/date/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/date",
+     "value": {
+      "type": "string",
+      "value": "2024-01-04"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "3/rank/0",
+     "entityId": "capacity:e00000003",
+     "attribute": ":capacity/rank",
+     "value": {
+      "type": "number",
+      "value": 3,
+      "bits": "0x4008000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/score/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/score",
+     "value": {
+      "type": "number",
+      "value": 0.12890625,
+      "bits": "0x3fc0800000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/exact/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/exact",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740997"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/flag/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/flag",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/group/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/group",
+     "value": {
+      "type": "ref",
+      "value": "capacity:e00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/category/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/category",
+     "value": {
+      "type": "string",
+      "value": "category-4"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/amount/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/amount",
+     "value": {
+      "type": "number",
+      "value": 0.5625,
+      "bits": "0x3fe2000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/instant/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/instant",
+     "value": {
+      "type": "datetime",
+      "value": 1700000000004,
+      "bits": "0x4278bcfe56804000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/date/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/date",
+     "value": {
+      "type": "string",
+      "value": "2024-01-05"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "4/rank/0",
+     "entityId": "capacity:e00000004",
+     "attribute": ":capacity/rank",
+     "value": {
+      "type": "number",
+      "value": 4,
+      "bits": "0x4010000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/score/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/score",
+     "value": {
+      "type": "number",
+      "value": 0.1298828125,
+      "bits": "0x3fc0a00000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/exact/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/exact",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740998"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/flag/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/flag",
+     "value": {
+      "type": "boolean",
+      "value": false
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/group/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/group",
+     "value": {
+      "type": "ref",
+      "value": "capacity:e00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/category/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/category",
+     "value": {
+      "type": "string",
+      "value": "category-5"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/amount/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/amount",
+     "value": {
+      "type": "number",
+      "value": 0.6875,
+      "bits": "0x3fe6000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/instant/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/instant",
+     "value": {
+      "type": "datetime",
+      "value": 1700000000005,
+      "bits": "0x4278bcfe56805000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/date/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/date",
+     "value": {
+      "type": "string",
+      "value": "2024-01-06"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "5/rank/0",
+     "entityId": "capacity:e00000005",
+     "attribute": ":capacity/rank",
+     "value": {
+      "type": "number",
+      "value": 5,
+      "bits": "0x4014000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/score/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/score",
+     "value": {
+      "type": "number",
+      "value": 0.130859375,
+      "bits": "0x3fc0c00000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/exact/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/exact",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740999"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/flag/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/flag",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/group/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/group",
+     "value": {
+      "type": "ref",
+      "value": "capacity:e00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/category/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/category",
+     "value": {
+      "type": "string",
+      "value": "category-6"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/amount/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/amount",
+     "value": {
+      "type": "number",
+      "value": 0.8125,
+      "bits": "0x3fea000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/instant/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/instant",
+     "value": {
+      "type": "datetime",
+      "value": 1700000000006,
+      "bits": "0x4278bcfe56806000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/date/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/date",
+     "value": {
+      "type": "string",
+      "value": "2024-01-07"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "6/rank/0",
+     "entityId": "capacity:e00000006",
+     "attribute": ":capacity/rank",
+     "value": {
+      "type": "number",
+      "value": 6,
+      "bits": "0x4018000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/score/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/score",
+     "value": {
+      "type": "number",
+      "value": 0.1318359375,
+      "bits": "0x3fc0e00000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/exact/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/exact",
+     "value": {
+      "type": "integer",
+      "value": "9007199254741000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/flag/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/flag",
+     "value": {
+      "type": "boolean",
+      "value": false
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/group/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/group",
+     "value": {
+      "type": "ref",
+      "value": "capacity:e00000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/category/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/category",
+     "value": {
+      "type": "string",
+      "value": "category-7"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/amount/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/amount",
+     "value": {
+      "type": "number",
+      "value": 0.9375,
+      "bits": "0x3fee000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/instant/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/instant",
+     "value": {
+      "type": "datetime",
+      "value": 1700000000007,
+      "bits": "0x4278bcfe56807000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/date/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/date",
+     "value": {
+      "type": "string",
+      "value": "2024-01-08"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "7/rank/0",
+     "entityId": "capacity:e00000007",
+     "attribute": ":capacity/rank",
+     "value": {
+      "type": "number",
+      "value": 7,
+      "bits": "0x401c000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1002.25,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:2",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/label/1",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/label",
+     "value": {
+      "type": "string",
+      "value": "entity-00000000-v2"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1004.25,
+     "recordedPosition": 5,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:5",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/type-version/1",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/type-version",
+     "value": {
+      "type": "number",
+      "value": 2,
+      "bits": "0x4000000000000000"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1004.25,
+     "recordedPosition": 5,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:5",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "0/present/2",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": false
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1005.25,
+     "recordedPosition": 6,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:6",
+     "retractedAt": 1006.25,
+     "retractedPosition": 7,
+     "retractTxId": "tx:7"
+    },
+    {
+     "id": "0/present/3",
+     "entityId": "capacity:e00000000",
+     "attribute": ":capacity/present",
+     "value": {
+      "type": "boolean",
+      "value": true
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5,
+     "recordedAt": 1006.25,
+     "recordedPosition": 7,
+     "createdBy": null,
+     "entityType": "CapacityEntity",
+     "schemaVersion": null,
+     "txId": "tx:7",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    }
+   ],
+   "transactions": [
+    {
+     "txId": "tx:0",
+     "position": 1,
+     "instant": 1000.25,
+     "internal": true,
+     "opaque": "changes of internal writes are not modeled"
+    },
+    {
+     "txId": "tx:1",
+     "position": 2,
+     "instant": 1001.25,
+     "actor": "capacity-fixture",
+     "commandId": "<runId>:sparse-seed",
+     "configSnapshot": "$snapshot:schema-v1",
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "0/present/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/type-version/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/label/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/present/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/type-version/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/label/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000001"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/present/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/type-version/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/label/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000002"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/present/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/type-version/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/label/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000003"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/present/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/type-version/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/label/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000004"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/present/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/type-version/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/label/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000005"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/present/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/type-version/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/label/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000006"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/present/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/type-version/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/label/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000007"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25
+      }
+     ],
+     "changedEntities": [
+      "capacity:e00000000",
+      "capacity:e00000001",
+      "capacity:e00000002",
+      "capacity:e00000003",
+      "capacity:e00000004",
+      "capacity:e00000005",
+      "capacity:e00000006",
+      "capacity:e00000007"
+     ]
+    },
+    {
+     "txId": "tx:2",
+     "position": 3,
+     "instant": 1002.25,
+     "actor": "capacity-fixture",
+     "commandId": "<runId>:dense-expand",
+     "configSnapshot": "$snapshot:schema-v1",
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "0/score/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/score",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.125,
+        "bits": "0x3fc0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/exact/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/exact",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "integer",
+        "value": "9007199254740993"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/flag/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/flag",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/group/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/group",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "ref",
+        "value": "capacity:e00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/category/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/category",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "category-0"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/amount/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/amount",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.0625,
+        "bits": "0x3fb0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/instant/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/instant",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "datetime",
+        "value": 1700000000000,
+        "bits": "0x4278bcfe56800000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/date/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/date",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "2024-01-01"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/rank/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/rank",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0,
+        "bits": "0x0000000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/score/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/score",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.1259765625,
+        "bits": "0x3fc0200000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/exact/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/exact",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "integer",
+        "value": "9007199254740994"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/flag/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/flag",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": false
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/group/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/group",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "ref",
+        "value": "capacity:e00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/category/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/category",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "category-1"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/amount/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/amount",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.1875,
+        "bits": "0x3fc8000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/instant/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/instant",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "datetime",
+        "value": 1700000000001,
+        "bits": "0x4278bcfe56801000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/date/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/date",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "2024-01-02"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "1/rank/0",
+       "entityId": "capacity:e00000001",
+       "attribute": ":capacity/rank",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/score/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/score",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.126953125,
+        "bits": "0x3fc0400000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/exact/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/exact",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "integer",
+        "value": "9007199254740995"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/flag/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/flag",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/group/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/group",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "ref",
+        "value": "capacity:e00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/category/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/category",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "category-2"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/amount/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/amount",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.3125,
+        "bits": "0x3fd4000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/instant/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/instant",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "datetime",
+        "value": 1700000000002,
+        "bits": "0x4278bcfe56802000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/date/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/date",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "2024-01-03"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "2/rank/0",
+       "entityId": "capacity:e00000002",
+       "attribute": ":capacity/rank",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 2,
+        "bits": "0x4000000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/score/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/score",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.1279296875,
+        "bits": "0x3fc0600000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/exact/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/exact",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "integer",
+        "value": "9007199254740996"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/flag/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/flag",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": false
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/group/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/group",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "ref",
+        "value": "capacity:e00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/category/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/category",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "category-3"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/amount/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/amount",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.4375,
+        "bits": "0x3fdc000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/instant/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/instant",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "datetime",
+        "value": 1700000000003,
+        "bits": "0x4278bcfe56803000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/date/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/date",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "2024-01-04"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "3/rank/0",
+       "entityId": "capacity:e00000003",
+       "attribute": ":capacity/rank",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 3,
+        "bits": "0x4008000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/score/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/score",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.12890625,
+        "bits": "0x3fc0800000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/exact/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/exact",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "integer",
+        "value": "9007199254740997"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/flag/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/flag",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/group/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/group",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "ref",
+        "value": "capacity:e00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/category/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/category",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "category-4"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/amount/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/amount",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.5625,
+        "bits": "0x3fe2000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/instant/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/instant",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "datetime",
+        "value": 1700000000004,
+        "bits": "0x4278bcfe56804000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/date/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/date",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "2024-01-05"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "4/rank/0",
+       "entityId": "capacity:e00000004",
+       "attribute": ":capacity/rank",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 4,
+        "bits": "0x4010000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/score/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/score",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.1298828125,
+        "bits": "0x3fc0a00000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/exact/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/exact",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "integer",
+        "value": "9007199254740998"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/flag/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/flag",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": false
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/group/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/group",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "ref",
+        "value": "capacity:e00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/category/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/category",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "category-5"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/amount/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/amount",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.6875,
+        "bits": "0x3fe6000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/instant/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/instant",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "datetime",
+        "value": 1700000000005,
+        "bits": "0x4278bcfe56805000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/date/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/date",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "2024-01-06"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "5/rank/0",
+       "entityId": "capacity:e00000005",
+       "attribute": ":capacity/rank",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 5,
+        "bits": "0x4014000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/score/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/score",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.130859375,
+        "bits": "0x3fc0c00000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/exact/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/exact",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "integer",
+        "value": "9007199254740999"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/flag/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/flag",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/group/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/group",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "ref",
+        "value": "capacity:e00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/category/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/category",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "category-6"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/amount/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/amount",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.8125,
+        "bits": "0x3fea000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/instant/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/instant",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "datetime",
+        "value": 1700000000006,
+        "bits": "0x4278bcfe56806000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/date/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/date",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "2024-01-07"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "6/rank/0",
+       "entityId": "capacity:e00000006",
+       "attribute": ":capacity/rank",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 6,
+        "bits": "0x4018000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/score/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/score",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.1318359375,
+        "bits": "0x3fc0e00000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/exact/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/exact",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "integer",
+        "value": "9007199254741000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/flag/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/flag",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": false
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/group/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/group",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "ref",
+        "value": "capacity:e00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/category/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/category",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "category-7"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/amount/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/amount",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 0.9375,
+        "bits": "0x3fee000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/instant/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/instant",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "datetime",
+        "value": 1700000000007,
+        "bits": "0x4278bcfe56807000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/date/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/date",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "2024-01-08"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "7/rank/0",
+       "entityId": "capacity:e00000007",
+       "attribute": ":capacity/rank",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 7,
+        "bits": "0x401c000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1002.25
+      }
+     ],
+     "changedEntities": [
+      "capacity:e00000000",
+      "capacity:e00000001",
+      "capacity:e00000002",
+      "capacity:e00000003",
+      "capacity:e00000004",
+      "capacity:e00000005",
+      "capacity:e00000006",
+      "capacity:e00000007"
+     ]
+    },
+    {
+     "txId": "tx:4",
+     "position": 4,
+     "instant": 1003.25,
+     "internal": true,
+     "opaque": "changes of internal writes are not modeled"
+    },
+    {
+     "txId": "tx:5",
+     "position": 5,
+     "instant": 1004.25,
+     "actor": "capacity-fixture",
+     "commandId": "<runId>:correction",
+     "configSnapshot": "$snapshot:schema-v2",
+     "changes": [
+      {
+       "op": "retract",
+       "tripleId": "0/label/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25,
+       "retractedAt": 1004.25,
+       "assertionTxId": "tx:1",
+       "retractionTxId": "tx:5"
+      },
+      {
+       "op": "retract",
+       "tripleId": "0/type-version/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 1,
+        "bits": "0x3ff0000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25,
+       "retractedAt": 1004.25,
+       "assertionTxId": "tx:1",
+       "retractionTxId": "tx:5"
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/label/1",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/label",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "string",
+        "value": "entity-00000000-v2"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1004.25
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/type-version/1",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/type-version",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "number",
+        "value": 2,
+        "bits": "0x4000000000000000"
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1004.25
+      }
+     ],
+     "changedEntities": [
+      "capacity:e00000000"
+     ]
+    },
+    {
+     "txId": "tx:6",
+     "position": 6,
+     "instant": 1005.25,
+     "actor": "capacity-fixture",
+     "commandId": "<runId>:presence-off",
+     "configSnapshot": "$snapshot:schema-v2",
+     "changes": [
+      {
+       "op": "retract",
+       "tripleId": "0/present/0",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1001.25,
+       "retractedAt": 1005.25,
+       "assertionTxId": "tx:1",
+       "retractionTxId": "tx:6"
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/present/2",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": false
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1005.25
+      }
+     ],
+     "changedEntities": [
+      "capacity:e00000000"
+     ]
+    },
+    {
+     "txId": "tx:7",
+     "position": 7,
+     "instant": 1006.25,
+     "actor": "capacity-fixture",
+     "commandId": "<runId>:presence-on",
+     "configSnapshot": "$snapshot:schema-v2",
+     "changes": [
+      {
+       "op": "retract",
+       "tripleId": "0/present/2",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": false
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1005.25,
+       "retractedAt": 1006.25,
+       "assertionTxId": "tx:6",
+       "retractionTxId": "tx:7"
+      },
+      {
+       "op": "assert",
+       "tripleId": "0/present/3",
+       "entityId": "capacity:e00000000",
+       "attribute": ":capacity/present",
+       "entityType": "CapacityEntity",
+       "value": {
+        "type": "boolean",
+        "value": true
+       },
+       "validFrom": 10.125,
+       "validTo": 30.5,
+       "recordedAt": 1006.25
+      }
+     ],
+     "changedEntities": [
+      "capacity:e00000000"
+     ]
+    }
+   ]
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog",
+   "result": [
+    {
+     "position": 1,
+     "instant": 1000.25,
+     "txId": "tx:0",
+     "command": 0,
+     "internal": true,
+     "physicalGroup": null
+    },
+    {
+     "position": 2,
+     "instant": 1001.25,
+     "txId": "tx:1",
+     "command": 1,
+     "internal": false,
+     "physicalGroup": null
+    },
+    {
+     "position": 3,
+     "instant": 1002.25,
+     "txId": "tx:2",
+     "command": 2,
+     "internal": false,
+     "physicalGroup": null
+    },
+    {
+     "position": 4,
+     "instant": 1003.25,
+     "txId": "tx:4",
+     "command": 4,
+     "internal": true,
+     "physicalGroup": null
+    },
+    {
+     "position": 5,
+     "instant": 1004.25,
+     "txId": "tx:5",
+     "command": 5,
+     "internal": false,
+     "physicalGroup": null
+    },
+    {
+     "position": 6,
+     "instant": 1005.25,
+     "txId": "tx:6",
+     "command": 6,
+     "internal": false,
+     "physicalGroup": null
+    },
+    {
+     "position": 7,
+     "instant": 1006.25,
+     "txId": "tx:7",
+     "command": 7,
+     "internal": false,
+     "physicalGroup": null
+    }
+   ]
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions",
+   "result": {
+    "scope": "fresh",
+    "assertions": [
+     {
+      "id": "0/present/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": 1005.25,
+      "retractedPosition": 6,
+      "retractTxId": "tx:6"
+     },
+     {
+      "id": "0/type-version/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": 1004.25,
+      "retractedPosition": 5,
+      "retractTxId": "tx:5"
+     },
+     {
+      "id": "0/label/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": 1004.25,
+      "retractedPosition": 5,
+      "retractTxId": "tx:5"
+     },
+     {
+      "id": "1/present/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/type-version/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/label/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000001"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/present/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/type-version/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/label/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000002"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/present/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/type-version/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/label/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000003"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/present/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/type-version/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/label/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000004"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/present/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/type-version/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/label/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000005"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/present/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/type-version/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/label/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000006"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/present/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/type-version/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/label/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000007"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1001.25,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/score/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/score",
+      "value": {
+       "type": "number",
+       "value": 0.125,
+       "bits": "0x3fc0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/exact/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/exact",
+      "value": {
+       "type": "integer",
+       "value": "9007199254740993"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/flag/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/flag",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/group/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/group",
+      "value": {
+       "type": "ref",
+       "value": "capacity:e00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/category/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/category",
+      "value": {
+       "type": "string",
+       "value": "category-0"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/amount/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/amount",
+      "value": {
+       "type": "number",
+       "value": 0.0625,
+       "bits": "0x3fb0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/instant/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/instant",
+      "value": {
+       "type": "datetime",
+       "value": 1700000000000,
+       "bits": "0x4278bcfe56800000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/date/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/date",
+      "value": {
+       "type": "string",
+       "value": "2024-01-01"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/rank/0",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/rank",
+      "value": {
+       "type": "number",
+       "value": 0,
+       "bits": "0x0000000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/score/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/score",
+      "value": {
+       "type": "number",
+       "value": 0.1259765625,
+       "bits": "0x3fc0200000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/exact/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/exact",
+      "value": {
+       "type": "integer",
+       "value": "9007199254740994"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/flag/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/flag",
+      "value": {
+       "type": "boolean",
+       "value": false
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/group/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/group",
+      "value": {
+       "type": "ref",
+       "value": "capacity:e00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/category/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/category",
+      "value": {
+       "type": "string",
+       "value": "category-1"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/amount/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/amount",
+      "value": {
+       "type": "number",
+       "value": 0.1875,
+       "bits": "0x3fc8000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/instant/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/instant",
+      "value": {
+       "type": "datetime",
+       "value": 1700000000001,
+       "bits": "0x4278bcfe56801000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/date/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/date",
+      "value": {
+       "type": "string",
+       "value": "2024-01-02"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "1/rank/0",
+      "entityId": "capacity:e00000001",
+      "attribute": ":capacity/rank",
+      "value": {
+       "type": "number",
+       "value": 1,
+       "bits": "0x3ff0000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/score/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/score",
+      "value": {
+       "type": "number",
+       "value": 0.126953125,
+       "bits": "0x3fc0400000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/exact/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/exact",
+      "value": {
+       "type": "integer",
+       "value": "9007199254740995"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/flag/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/flag",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/group/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/group",
+      "value": {
+       "type": "ref",
+       "value": "capacity:e00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/category/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/category",
+      "value": {
+       "type": "string",
+       "value": "category-2"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/amount/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/amount",
+      "value": {
+       "type": "number",
+       "value": 0.3125,
+       "bits": "0x3fd4000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/instant/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/instant",
+      "value": {
+       "type": "datetime",
+       "value": 1700000000002,
+       "bits": "0x4278bcfe56802000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/date/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/date",
+      "value": {
+       "type": "string",
+       "value": "2024-01-03"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "2/rank/0",
+      "entityId": "capacity:e00000002",
+      "attribute": ":capacity/rank",
+      "value": {
+       "type": "number",
+       "value": 2,
+       "bits": "0x4000000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/score/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/score",
+      "value": {
+       "type": "number",
+       "value": 0.1279296875,
+       "bits": "0x3fc0600000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/exact/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/exact",
+      "value": {
+       "type": "integer",
+       "value": "9007199254740996"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/flag/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/flag",
+      "value": {
+       "type": "boolean",
+       "value": false
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/group/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/group",
+      "value": {
+       "type": "ref",
+       "value": "capacity:e00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/category/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/category",
+      "value": {
+       "type": "string",
+       "value": "category-3"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/amount/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/amount",
+      "value": {
+       "type": "number",
+       "value": 0.4375,
+       "bits": "0x3fdc000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/instant/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/instant",
+      "value": {
+       "type": "datetime",
+       "value": 1700000000003,
+       "bits": "0x4278bcfe56803000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/date/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/date",
+      "value": {
+       "type": "string",
+       "value": "2024-01-04"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "3/rank/0",
+      "entityId": "capacity:e00000003",
+      "attribute": ":capacity/rank",
+      "value": {
+       "type": "number",
+       "value": 3,
+       "bits": "0x4008000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/score/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/score",
+      "value": {
+       "type": "number",
+       "value": 0.12890625,
+       "bits": "0x3fc0800000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/exact/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/exact",
+      "value": {
+       "type": "integer",
+       "value": "9007199254740997"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/flag/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/flag",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/group/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/group",
+      "value": {
+       "type": "ref",
+       "value": "capacity:e00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/category/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/category",
+      "value": {
+       "type": "string",
+       "value": "category-4"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/amount/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/amount",
+      "value": {
+       "type": "number",
+       "value": 0.5625,
+       "bits": "0x3fe2000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/instant/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/instant",
+      "value": {
+       "type": "datetime",
+       "value": 1700000000004,
+       "bits": "0x4278bcfe56804000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/date/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/date",
+      "value": {
+       "type": "string",
+       "value": "2024-01-05"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "4/rank/0",
+      "entityId": "capacity:e00000004",
+      "attribute": ":capacity/rank",
+      "value": {
+       "type": "number",
+       "value": 4,
+       "bits": "0x4010000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/score/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/score",
+      "value": {
+       "type": "number",
+       "value": 0.1298828125,
+       "bits": "0x3fc0a00000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/exact/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/exact",
+      "value": {
+       "type": "integer",
+       "value": "9007199254740998"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/flag/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/flag",
+      "value": {
+       "type": "boolean",
+       "value": false
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/group/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/group",
+      "value": {
+       "type": "ref",
+       "value": "capacity:e00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/category/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/category",
+      "value": {
+       "type": "string",
+       "value": "category-5"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/amount/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/amount",
+      "value": {
+       "type": "number",
+       "value": 0.6875,
+       "bits": "0x3fe6000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/instant/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/instant",
+      "value": {
+       "type": "datetime",
+       "value": 1700000000005,
+       "bits": "0x4278bcfe56805000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/date/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/date",
+      "value": {
+       "type": "string",
+       "value": "2024-01-06"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "5/rank/0",
+      "entityId": "capacity:e00000005",
+      "attribute": ":capacity/rank",
+      "value": {
+       "type": "number",
+       "value": 5,
+       "bits": "0x4014000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/score/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/score",
+      "value": {
+       "type": "number",
+       "value": 0.130859375,
+       "bits": "0x3fc0c00000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/exact/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/exact",
+      "value": {
+       "type": "integer",
+       "value": "9007199254740999"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/flag/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/flag",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/group/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/group",
+      "value": {
+       "type": "ref",
+       "value": "capacity:e00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/category/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/category",
+      "value": {
+       "type": "string",
+       "value": "category-6"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/amount/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/amount",
+      "value": {
+       "type": "number",
+       "value": 0.8125,
+       "bits": "0x3fea000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/instant/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/instant",
+      "value": {
+       "type": "datetime",
+       "value": 1700000000006,
+       "bits": "0x4278bcfe56806000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/date/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/date",
+      "value": {
+       "type": "string",
+       "value": "2024-01-07"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "6/rank/0",
+      "entityId": "capacity:e00000006",
+      "attribute": ":capacity/rank",
+      "value": {
+       "type": "number",
+       "value": 6,
+       "bits": "0x4018000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/score/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/score",
+      "value": {
+       "type": "number",
+       "value": 0.1318359375,
+       "bits": "0x3fc0e00000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/exact/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/exact",
+      "value": {
+       "type": "integer",
+       "value": "9007199254741000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/flag/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/flag",
+      "value": {
+       "type": "boolean",
+       "value": false
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/group/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/group",
+      "value": {
+       "type": "ref",
+       "value": "capacity:e00000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/category/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/category",
+      "value": {
+       "type": "string",
+       "value": "category-7"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/amount/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/amount",
+      "value": {
+       "type": "number",
+       "value": 0.9375,
+       "bits": "0x3fee000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/instant/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/instant",
+      "value": {
+       "type": "datetime",
+       "value": 1700000000007,
+       "bits": "0x4278bcfe56807000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/date/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/date",
+      "value": {
+       "type": "string",
+       "value": "2024-01-08"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "7/rank/0",
+      "entityId": "capacity:e00000007",
+      "attribute": ":capacity/rank",
+      "value": {
+       "type": "number",
+       "value": 7,
+       "bits": "0x401c000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1002.25,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:2",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/label/1",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/label",
+      "value": {
+       "type": "string",
+       "value": "entity-00000000-v2"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1004.25,
+      "recordedPosition": 5,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:5",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/type-version/1",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/type-version",
+      "value": {
+       "type": "number",
+       "value": 2,
+       "bits": "0x4000000000000000"
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1004.25,
+      "recordedPosition": 5,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:5",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "0/present/2",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": false
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1005.25,
+      "recordedPosition": 6,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:6",
+      "retractedAt": 1006.25,
+      "retractedPosition": 7,
+      "retractTxId": "tx:7"
+     },
+     {
+      "id": "0/present/3",
+      "entityId": "capacity:e00000000",
+      "attribute": ":capacity/present",
+      "value": {
+       "type": "boolean",
+       "value": true
+      },
+      "validFrom": 10.125,
+      "validTo": 30.5,
+      "recordedAt": 1006.25,
+      "recordedPosition": 7,
+      "createdBy": null,
+      "entityType": "CapacityEntity",
+      "schemaVersion": null,
+      "txId": "tx:7",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ]
+   }
+  }
+ ],
+ "rulesInEffect": {
+  "attributeSyntax": "any",
+  "createdByDefault": "null",
+  "datetimeRange": null,
+  "emptyIntervalRejected": true,
+  "journalChangeOrder": "operation-order",
+  "reservedAttributePrefix": ":_",
+  "reservedEntityTypePrefix": "_",
+  "retractNonLive": "transaction-conflict",
+  "retractPatternEmptyRejected": true,
+  "typeMembership": "valid-at-instant",
+  "validFromDefault": "transaction-instant"
+ }
+}

@@ -1,0 +1,301 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G1-I64-01",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "MAX",
+     "entityId": "n:max",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "9223372036854775807"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "MIN",
+     "entityId": "n:min",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "-9223372036854775808"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "NMAX",
+     "entityId": "n:negmax",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "-9223372036854775807"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "P59",
+     "entityId": "n:p59",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "576460752303423488"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "P59M1",
+     "entityId": "n:p59m1",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "576460752303423487"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "M59",
+     "entityId": "n:m59",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "-576460752303423488"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "M59M1",
+     "entityId": "n:m59m1",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "-576460752303423489"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "P53",
+     "entityId": "n:p53",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740992"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "P53P1",
+     "entityId": "n:p53p1",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740993"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "ZERO",
+     "entityId": "n:zero",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "0"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "F53",
+     "entityId": "n:f53",
+     "attribute": ":n/f",
+     "value": {
+      "type": "number",
+      "bits": "0x4340000000000000"
+     },
+     "entityType": "Num",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g1i64-01:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "get",
+   "entityType": "Num",
+   "entityId": "n:max",
+   "cut": {
+    "validAt": 10
+   },
+   "id": "Q2#0"
+  },
+  {
+   "kind": "get",
+   "entityType": "Num",
+   "entityId": "n:min",
+   "cut": {
+    "validAt": 10
+   },
+   "id": "Q2#1"
+  },
+  {
+   "kind": "get",
+   "entityType": "Num",
+   "entityId": "n:p53p1",
+   "cut": {
+    "validAt": 10
+   },
+   "id": "Q2#2"
+  },
+  {
+   "kind": "get",
+   "entityType": "Num",
+   "entityId": "n:f53",
+   "cut": {
+    "validAt": 10
+   },
+   "id": "Q2#3"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 1000000000000000.0
+   },
+   "pattern": {
+    "attribute": ":n/v",
+    "value": {
+     "type": "integer",
+     "value": "9007199254740993"
+    }
+   },
+   "id": "Q3#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 1000000000000000.0
+   },
+   "pattern": {
+    "attribute": ":n/v",
+    "value": {
+     "type": "integer",
+     "value": "9007199254740992"
+    }
+   },
+   "id": "Q4#0"
+  },
+  {
+   "kind": "find",
+   "entityType": "Num",
+   "where": [
+    {
+     "prop": "v",
+     "op": "eq",
+     "value": {
+      "type": "integer",
+      "value": "576460752303423488"
+     }
+    }
+   ],
+   "cut": {
+    "validAt": 10
+   },
+   "id": "Q5#0"
+  },
+  {
+   "kind": "find",
+   "entityType": "Num",
+   "where": [
+    {
+     "prop": "v",
+     "op": "exists"
+    }
+   ],
+   "cut": {
+    "validAt": 10
+   },
+   "orderBy": [
+    {
+     "prop": "v",
+     "direction": "asc"
+    }
+   ],
+   "id": "Q6#0"
+  },
+  {
+   "kind": "find",
+   "entityType": "Num",
+   "where": [
+    {
+     "prop": "v",
+     "op": "gt",
+     "value": {
+      "type": "integer",
+      "value": "576460752303423487"
+     }
+    }
+   ],
+   "cut": {
+    "validAt": 10
+   },
+   "id": "Q7#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Num": {
+     "attributes": {
+      "v": {
+       "attribute": ":n/v",
+       "type": "integer",
+       "cardinality": "one",
+       "required": false
+      },
+      "f": {
+       "attribute": ":n/f",
+       "type": "number",
+       "cardinality": "one",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

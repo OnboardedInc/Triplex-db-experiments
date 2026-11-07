@@ -1,0 +1,159 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C5-06",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "item:7",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c5-06:C1",
+    "enforce": {
+     "constraints": [
+      {
+       "_tag": "Cardinality",
+       "v": 1,
+       "entityType": "Item",
+       "attribute": ":item/color",
+       "max": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "clock": 200,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "item:7",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c5-06:C2",
+    "enforce": {
+     "constraints": [
+      {
+       "_tag": "Cardinality",
+       "v": 1,
+       "entityType": "Item",
+       "attribute": ":item/color",
+       "max": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "clock": 300,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "item:7",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c5-06:C3"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 250,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "item:7",
+    "attribute": ":item/color"
+   },
+   "id": "Q1#0"
+  },
+  {
+   "kind": "get",
+   "entityType": "Item",
+   "entityId": "item:7",
+   "cut": {
+    "validAt": 10
+   },
+   "id": "Q2#0"
+  },
+  {
+   "kind": "valueSupports",
+   "cut": {
+    "position": {
+     "afterCommand": 2
+    },
+    "validAt": 10
+   },
+   "pattern": {
+    "attribute": ":item/color"
+   },
+   "id": "Q3#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Item": {
+     "attributes": {
+      "color": {
+       "attribute": ":item/color",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      },
+      "name": {
+       "attribute": ":item/name",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

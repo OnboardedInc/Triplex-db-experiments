@@ -1,0 +1,284 @@
+[
+ {
+  "probe": "N-I-DIV 7/2",
+  "contractRow": "4.1 N-I-DIV",
+  "contract": "3",
+  "oracle": {
+   "type": "integer",
+   "value": "3"
+  }
+ },
+ {
+  "probe": "N-I-DIV -7/2",
+  "contractRow": "4.1 N-I-DIV",
+  "contract": "-3",
+  "oracle": {
+   "type": "integer",
+   "value": "-3"
+  }
+ },
+ {
+  "probe": "N-I-DIV -2^63/-1",
+  "contractRow": "4.1 N-I-DIV",
+  "contract": "E-INTEGER-OVERFLOW (QueryError/integer-overflow)",
+  "oracle": {
+   "error": "integer-overflow",
+   "message": "result outside int64",
+   "result": "9223372036854775808"
+  }
+ },
+ {
+  "probe": "N-I-REM 7%3",
+  "contractRow": "4.1 N-I-REM",
+  "contract": "1",
+  "oracle": {
+   "malformed": "o-replay: malformed case: bad expression ['rem', Value(integer, 7), Value(integer, 3)]"
+  }
+ },
+ {
+  "probe": "N-MIXED int+number",
+  "contractRow": "4.1 N-MIXED",
+  "contract": "E-MIXED-FAMILY (DatalogValidationError/mixed-family, preflight)",
+  "oracle": {
+   "error": "type-mismatch",
+   "message": "add needs two integer or two number operands",
+   "left": "integer",
+   "right": "number"
+  }
+ },
+ {
+  "probe": "N-F-ARITH 0.1+0.2",
+  "contractRow": "4.1 N-F-ARITH",
+  "contract": "0.30000000000000004",
+  "oracle": {
+   "type": "number",
+   "value": 0.30000000000000004,
+   "bits": "0x3fd3333333333334"
+  }
+ },
+ {
+  "probe": "N-F-ARITH max*2",
+  "contractRow": "4.1 N-F-ARITH",
+  "contract": "E-NUMBER-OVERFLOW",
+  "oracle": {
+   "error": "number-overflow",
+   "message": "binary64 result is not finite"
+  }
+ },
+ {
+  "probe": "N-F-ARITH 1/-0",
+  "contractRow": "4.1 N-F-ARITH",
+  "contract": "E-DIVISION-BY-ZERO",
+  "oracle": {
+   "error": "division-by-zero"
+  }
+ },
+ {
+  "probe": "N-F-NEGZERO -0+0",
+  "contractRow": "4.1 N-F-NEGZERO",
+  "contract": "+0.0",
+  "oracle": {
+   "type": "number",
+   "value": 0,
+   "bits": "0x0000000000000000"
+  }
+ },
+ {
+  "probe": "N-F-NEGZERO -0-0",
+  "contractRow": "4.1 N-F-NEGZERO",
+  "contract": "-0.0",
+  "oracle": {
+   "type": "number",
+   "value": 0,
+   "bits": "0x8000000000000000"
+  }
+ },
+ {
+  "probe": "N-F-NEGZERO 0*-1",
+  "contractRow": "4.1 N-F-NEGZERO",
+  "contract": "-0.0",
+  "oracle": {
+   "type": "number",
+   "value": 0,
+   "bits": "0x8000000000000000"
+  }
+ },
+ {
+  "probe": "CV-I2F toNumber(2^53+1)",
+  "contractRow": "4.2 CV-I2F",
+  "contract": "9007199254740992.0",
+  "oracle": {
+   "malformed": "o-replay: malformed case: bad expression ['to-number', Value(integer, 9007199254740993)]"
+  }
+ },
+ {
+  "probe": "CV-F2I toInt64(3.5)",
+  "contractRow": "4.2 CV-F2I",
+  "contract": "E-INVALID-CONVERSION",
+  "oracle": {
+   "malformed": "o-replay: malformed case: bad expression ['to-int64', Value(number, 4615063718147915776)]"
+  }
+ },
+ {
+  "probe": "CV-T2I '01'",
+  "contractRow": "4.2 CV-T2I",
+  "contract": "E-INVALID-CONVERSION",
+  "oracle": {
+   "type": "integer",
+   "value": "1"
+  }
+ },
+ {
+  "probe": "CV-T2I '+1'",
+  "contractRow": "4.2 CV-T2I",
+  "contract": "E-INVALID-CONVERSION",
+  "oracle": {
+   "type": "integer",
+   "value": "1"
+  }
+ },
+ {
+  "probe": "CV-T2I '-0'",
+  "contractRow": "4.2 CV-T2I",
+  "contract": "E-INVALID-CONVERSION",
+  "oracle": {
+   "type": "integer",
+   "value": "0"
+  }
+ },
+ {
+  "probe": "CV-T2I 'abc'",
+  "contractRow": "4.2 CV-T2I",
+  "contract": "E-INVALID-CONVERSION (QueryError/invalid-conversion)",
+  "oracle": {
+   "error": "invalid-cast",
+   "message": "not decimal integer text",
+   "text": "abc"
+  }
+ },
+ {
+  "probe": "CMP-NEGZERO -0 vs +0",
+  "contractRow": "4.3 CMP-NEGZERO; Q14b",
+  "contract": "eq true and sameGroup true",
+  "oracle": {
+   "comparable": true,
+   "identical": false,
+   "eq": true,
+   "ne": false,
+   "lt": false,
+   "gt": false,
+   "sameGroup": false
+  }
+ },
+ {
+  "probe": "CMP-INT-FLOAT int 1 < number 2",
+  "contractRow": "4.3 CMP-INT-FLOAT; Q14d",
+  "contract": "preflight E-MIXED-FAMILY for lt/gt; eq false; never one group",
+  "oracle": {
+   "comparable": false,
+   "identical": false,
+   "eq": false,
+   "ne": true,
+   "lt": false,
+   "gt": false,
+   "sameGroup": false
+  }
+ },
+ {
+  "probe": "4.5 family order",
+  "contractRow": "4.5; Q14a",
+  "contract": "boolean < integer < number < string",
+  "oracle": [
+   {
+    "type": "integer",
+    "value": "1"
+   },
+   {
+    "type": "number",
+    "value": 0.5,
+    "bits": "0x3fe0000000000000"
+   },
+   {
+    "type": "boolean",
+    "value": true
+   },
+   {
+    "type": "string",
+    "value": "a"
+   }
+  ]
+ },
+ {
+  "probe": "AG-SUM-F [1e16,1,-1e16]",
+  "contractRow": "4.4 AG-SUM-F",
+  "contract": "1.0",
+  "oracle": {
+   "cut": {
+    "scope": "s",
+    "position": 1,
+    "recordedAt": null,
+    "validAt": 1
+   },
+   "rows": [
+    {
+     "s": {
+      "type": "number",
+      "value": 1,
+      "bits": "0x3ff0000000000000"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "probe": "CMP-NEGZERO card-one {-0,+0}",
+  "contractRow": "4.3 CMP-NEGZERO; Q14b; C5",
+  "contract": "one value (not ConflictingValuesError); reported representation per Q14b/CMP-NEGZERO",
+  "oracle": {
+   "error": "ConflictingValuesError",
+   "conflicts": [
+    {
+     "entityId": "t:1",
+     "attribute": ":t/n"
+    }
+   ]
+  }
+ },
+ {
+  "probe": "CMP-NEGZERO group by",
+  "contractRow": "4.3 CMP-NEGZERO",
+  "contract": "one group",
+  "oracle": {
+   "cut": {
+    "scope": "s",
+    "position": 1,
+    "recordedAt": null,
+    "validAt": 1
+   },
+   "rows": [
+    {
+     "n": {
+      "type": "number",
+      "value": 0,
+      "bits": "0x8000000000000000"
+     },
+     "c": {
+      "type": "integer",
+      "value": "1"
+     }
+    },
+    {
+     "n": {
+      "type": "number",
+      "value": 0,
+      "bits": "0x0000000000000000"
+     },
+     "c": {
+      "type": "integer",
+      "value": "1"
+     }
+    }
+   ]
+  }
+ }
+]

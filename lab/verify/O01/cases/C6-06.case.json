@@ -1,0 +1,103 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C6-06",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "req:1",
+     "attribute": ":req/name",
+     "value": {
+      "type": "string",
+      "value": "n"
+     },
+     "entityType": "Req",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "req:1",
+     "attribute": ":req/other",
+     "value": {
+      "type": "string",
+      "value": "o"
+     },
+     "entityType": "Req",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c6-06:C1",
+    "enforce": {
+     "constraints": [
+      {
+       "_tag": "Required",
+       "v": 1,
+       "entityType": "Req",
+       "attribute": ":req/name"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "clock": 200,
+   "operations": [
+    {
+     "op": "retract",
+     "target": "A1"
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c6-06:C2",
+    "enforce": {
+     "constraints": [
+      {
+       "_tag": "Required",
+       "v": 1,
+       "entityType": "Req",
+       "attribute": ":req/name"
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "transactions",
+   "after": 1,
+   "id": "Q1#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "req:1"
+   },
+   "id": "Q2#0"
+  },
+  {
+   "kind": "transactionByCommand",
+   "commandId": "c6-06:C2",
+   "id": "Q3#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

@@ -1,0 +1,23 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [],
+ "queries": [
+  {
+   "kind": "expr",
+   "expr": [
+    "mul",
+    {
+     "type": "number",
+     "value": 1.7976931348623157e+308
+    },
+    {
+     "type": "number",
+     "value": 2.0
+    }
+   ],
+   "id": "N-F-ARITH max*2"
+  }
+ ]
+}

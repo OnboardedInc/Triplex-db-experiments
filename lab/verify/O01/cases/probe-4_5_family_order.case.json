@@ -1,0 +1,30 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [],
+ "queries": [
+  {
+   "kind": "sortValues",
+   "values": [
+    {
+     "type": "integer",
+     "value": "1"
+    },
+    {
+     "type": "boolean",
+     "value": true
+    },
+    {
+     "type": "number",
+     "value": 0.5
+    },
+    {
+     "type": "string",
+     "value": "a"
+    }
+   ],
+   "id": "4.5 family order"
+  }
+ ]
+}

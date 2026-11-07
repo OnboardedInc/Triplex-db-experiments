@@ -1,0 +1,78 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C6-04",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "q:1",
+     "attribute": ":q/a",
+     "value": {
+      "type": "string",
+      "value": "x"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "q:1",
+     "attribute": ":q/a",
+     "value": {
+      "type": "string",
+      "value": "y"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c6-04:C1"
+   }
+  },
+  {
+   "clock": 200,
+   "operations": [
+    {
+     "op": "retract-pattern",
+     "pattern": {
+      "entityId": "q:1"
+     }
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c6-04:C2"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "transaction",
+   "txId": "tx:1",
+   "id": "Q1#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 1000000000000000.0
+   },
+   "pattern": {
+    "entityId": "q:1"
+   },
+   "id": "Q2#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

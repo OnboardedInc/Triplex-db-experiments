@@ -1,0 +1,619 @@
+{
+ "format": "triplex-db-2/o-replay-expected/1",
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.1.0",
+  "sourceSha256": {
+   "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "cli.py": "268f89e17509c8c043a1a309bfbb6dd7aa8b83e5bff49c8da391c83ddcab4495",
+   "values.py": "4e7881592c2041ac3f1ed58aee58d42aa56677767680b0010fa65d59e9629cd3",
+   "exact.py": "8d3cdc340a0b4aae4f400bf4942b1ba586d6e35dcc77ebdfb01c204b1e9a7d31",
+   "replay.py": "ffb3d71857021b85cfe663c1879d28bfc031a80fda82bce1eb44562f3e4dce65",
+   "constraints.py": "fec68280688517be36854ba10fb7a784d8db0d1c3c8e7a27ebc3a7fcab50af15",
+   "views.py": "3e4093b18308dfb6827de40eb507d77e4bb2230d6def8571aa59ef35491f25cd",
+   "entities.py": "a0ee0cf69f0ffce50e094a31354ad1d48de8872fe944bcfb4c1f6bc5b9f7bb8f",
+   "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "run.py": "df47415034bdda041f3bf7e3efd550d35e20ad2387902a8608a02c514368a0d5",
+   "selfcheck.py": "450a1fd8e8dea572a5e71a9e8c4966c56c993f54107943b9838f6b9e87a28911"
+  }
+ },
+ "caseId": "golden/G1-I64-02",
+ "caseSha256": "2a50b06a17414c00e650cdd76cab7a382dfa72c6fa3f53c18b99f594cb2b665b",
+ "verdict": "EXPECTED-ONLY",
+ "divergedAtCommand": null,
+ "receiptConsistency": {
+  "status": "NOT-APPLICABLE",
+  "reason": "no receipts supplied"
+ },
+ "commandOutcomes": [
+  {
+   "command": 0,
+   "expected": {
+    "outcome": "rejected",
+    "category": "invalid-value",
+    "errorTag": null,
+    "errorTagRuling": "ORCHESTRATOR-RULING-NEEDED",
+    "message": "integer: outside int64",
+    "family": "integer"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 1,
+   "expected": {
+    "outcome": "rejected",
+    "category": "invalid-value",
+    "errorTag": null,
+    "errorTagRuling": "ORCHESTRATOR-RULING-NEEDED",
+    "message": "integer: outside int64",
+    "family": "integer"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 2,
+   "expected": {
+    "outcome": "rejected",
+    "category": "invalid-value",
+    "errorTag": null,
+    "errorTagRuling": "ORCHESTRATOR-RULING-NEEDED",
+    "message": "integer: non-canonical int64 text",
+    "family": "integer"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 3,
+   "expected": {
+    "outcome": "rejected",
+    "category": "invalid-value",
+    "errorTag": null,
+    "errorTagRuling": "ORCHESTRATOR-RULING-NEEDED",
+    "message": "integer: non-canonical int64 text",
+    "family": "integer"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 4,
+   "expected": {
+    "outcome": "rejected",
+    "category": "invalid-value",
+    "errorTag": null,
+    "errorTagRuling": "ORCHESTRATOR-RULING-NEEDED",
+    "message": "integer: non-canonical int64 text",
+    "family": "integer"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 5,
+   "expected": {
+    "outcome": "rejected",
+    "category": "invalid-value",
+    "errorTag": null,
+    "errorTagRuling": "ORCHESTRATOR-RULING-NEEDED",
+    "message": "integer: non-canonical int64 text",
+    "family": "integer"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 6,
+   "expected": {
+    "outcome": "rejected",
+    "category": "invalid-value",
+    "errorTag": null,
+    "errorTagRuling": "ORCHESTRATOR-RULING-NEEDED",
+    "message": "integer: non-canonical int64 text",
+    "family": "integer"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 7,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "state": [
+  {
+   "scope": "fresh",
+   "lastPosition": 1,
+   "assertions": [
+    {
+     "id": "OK-min-exact",
+     "entityId": "n:ok-min-exact",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": null,
+     "schemaVersion": null,
+     "txId": "tx:7",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "BAD-min-exact",
+     "entityId": "n:bad-min-exact",
+     "attribute": ":n/v",
+     "value": {
+      "type": "integer",
+      "value": "-9223372036854775808"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": null,
+     "schemaVersion": null,
+     "txId": "tx:7",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    }
+   ],
+   "transactions": [
+    {
+     "txId": "tx:7",
+     "position": 1,
+     "instant": 100,
+     "actor": "golden",
+     "commandId": "g1i64-02:min-exact",
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "OK-min-exact",
+       "entityId": "n:ok-min-exact",
+       "attribute": ":n/v",
+       "value": {
+        "type": "integer",
+        "value": "1"
+       },
+       "validFrom": 0,
+       "recordedAt": 100
+      },
+      {
+       "op": "assert",
+       "tripleId": "BAD-min-exact",
+       "entityId": "n:bad-min-exact",
+       "attribute": ":n/v",
+       "value": {
+        "type": "integer",
+        "value": "-9223372036854775808"
+       },
+       "validFrom": 0,
+       "recordedAt": 100
+      }
+     ],
+     "changedEntities": [
+      "n:bad-min-exact",
+      "n:ok-min-exact"
+     ]
+    }
+   ]
+  }
+ ],
+ "queries": [
+  {
+   "id": "post:above-max:ok#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:above-max:bad#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:below-min:ok#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:below-min:bad#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:leading-zero:ok#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:leading-zero:bad#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:plus-sign:ok#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:plus-sign:bad#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:decimal-point:ok#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:decimal-point:bad#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:negative-zero-text:ok#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:negative-zero-text:bad#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:empty:ok#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:empty:bad#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 0,
+    "raw": [],
+    "snapshot": []
+   }
+  },
+  {
+   "id": "post:min-exact:ok#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 1,
+    "raw": [
+     {
+      "id": "OK-min-exact",
+      "entityId": "n:ok-min-exact",
+      "attribute": ":n/v",
+      "value": {
+       "type": "integer",
+       "value": "1"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": null,
+      "schemaVersion": null,
+      "txId": "tx:7",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ],
+    "snapshot": [
+     {
+      "id": "OK-min-exact",
+      "entityId": "n:ok-min-exact",
+      "attribute": ":n/v",
+      "value": {
+       "type": "integer",
+       "value": "1"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": null,
+      "schemaVersion": null,
+      "txId": "tx:7",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "post:min-exact:bad#0",
+   "kind": "match",
+   "result": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1000000000000000
+    },
+    "count": 1,
+    "raw": [
+     {
+      "id": "BAD-min-exact",
+      "entityId": "n:bad-min-exact",
+      "attribute": ":n/v",
+      "value": {
+       "type": "integer",
+       "value": "-9223372036854775808"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": null,
+      "schemaVersion": null,
+      "txId": "tx:7",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ],
+    "snapshot": [
+     {
+      "id": "BAD-min-exact",
+      "entityId": "n:bad-min-exact",
+      "attribute": ":n/v",
+      "value": {
+       "type": "integer",
+       "value": "-9223372036854775808"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": null,
+      "schemaVersion": null,
+      "txId": "tx:7",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog",
+   "result": [
+    {
+     "position": 1,
+     "instant": 100,
+     "txId": "tx:7",
+     "command": 7,
+     "internal": false,
+     "physicalGroup": null
+    }
+   ]
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions",
+   "result": {
+    "scope": "fresh",
+    "assertions": [
+     {
+      "id": "OK-min-exact",
+      "entityId": "n:ok-min-exact",
+      "attribute": ":n/v",
+      "value": {
+       "type": "integer",
+       "value": "1"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": null,
+      "schemaVersion": null,
+      "txId": "tx:7",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "BAD-min-exact",
+      "entityId": "n:bad-min-exact",
+      "attribute": ":n/v",
+      "value": {
+       "type": "integer",
+       "value": "-9223372036854775808"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": null,
+      "schemaVersion": null,
+      "txId": "tx:7",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ]
+   }
+  }
+ ],
+ "rulesInEffect": {
+  "attributeSyntax": "any",
+  "createdByDefault": "null",
+  "datetimeRange": null,
+  "emptyIntervalRejected": true,
+  "journalChangeOrder": "operation-order",
+  "reservedAttributePrefix": ":_",
+  "reservedEntityTypePrefix": "_",
+  "retractNonLive": "transaction-conflict",
+  "retractPatternEmptyRejected": true,
+  "typeMembership": "valid-at-instant",
+  "validFromDefault": "transaction-instant"
+ }
+}

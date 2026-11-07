@@ -1,0 +1,183 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C5-02",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "item:2",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "item:2",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "item:2",
+     "attribute": ":item/name",
+     "value": {
+      "type": "string",
+      "value": "two"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c5-02:C1"
+   }
+  },
+  {
+   "clock": 200,
+   "operations": [
+    {
+     "op": "retract",
+     "target": "A1"
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c5-02:C2"
+   }
+  },
+  {
+   "clock": 300,
+   "operations": [
+    {
+     "op": "retract",
+     "target": "A2"
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c5-02:C3"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "get",
+   "entityType": "Item",
+   "entityId": "item:2",
+   "cut": {
+    "recordedAt": 150,
+    "validAt": 10
+   },
+   "id": "Q1#0"
+  },
+  {
+   "kind": "get",
+   "entityType": "Item",
+   "entityId": "item:2",
+   "cut": {
+    "recordedAt": 200,
+    "validAt": 10
+   },
+   "id": "Q2#0"
+  },
+  {
+   "kind": "get",
+   "entityType": "Item",
+   "entityId": "item:2",
+   "cut": {
+    "recordedAt": 300,
+    "validAt": 10
+   },
+   "id": "Q3#0"
+  },
+  {
+   "kind": "valueSupports",
+   "cut": {
+    "position": {
+     "afterCommand": 1
+    },
+    "validAt": 10
+   },
+   "pattern": {
+    "attribute": ":item/color"
+   },
+   "id": "Q4#0"
+  },
+  {
+   "kind": "valueSupports",
+   "cut": {
+    "position": {
+     "afterCommand": 2
+    },
+    "validAt": 10
+   },
+   "pattern": {
+    "attribute": ":item/color"
+   },
+   "id": "Q5#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 200,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "item:2"
+   },
+   "id": "Q6#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "item:2",
+   "id": "Q7#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Item": {
+     "attributes": {
+      "color": {
+       "attribute": ":item/color",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      },
+      "name": {
+       "attribute": ":item/name",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

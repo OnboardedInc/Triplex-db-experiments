@@ -1,0 +1,64 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C6-03",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "p:1",
+     "attribute": ":p/a",
+     "value": {
+      "type": "string",
+      "value": "temp"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "retract-pattern",
+     "pattern": {
+      "entityId": "p:1",
+      "attribute": ":p/a"
+     }
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c6-03:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 1000000000000000.0
+   },
+   "pattern": {
+    "entityId": "p:1"
+   },
+   "id": "Q1#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "p:1",
+   "id": "Q1#1"
+  },
+  {
+   "kind": "transaction",
+   "txId": "tx:0",
+   "id": "Q1#2"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

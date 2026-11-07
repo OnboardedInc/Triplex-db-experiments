@@ -1,0 +1,48 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G9-HO-03",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "iv:5",
+     "attribute": ":iv/z",
+     "value": {
+      "type": "string",
+      "value": "empty"
+     },
+     "validFrom": 10,
+     "validTo": 10
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9ho03:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 10
+   },
+   "pattern": {
+    "attribute": ":iv/z"
+   },
+   "id": "Q1#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

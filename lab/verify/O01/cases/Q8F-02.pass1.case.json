@@ -1,0 +1,157 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/Q8F-02",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "I1",
+     "entityId": "card:2",
+     "attribute": ":card/ints",
+     "value": {
+      "type": "integer",
+      "value": "10"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "I2",
+     "entityId": "card:2",
+     "attribute": ":card/ints",
+     "value": {
+      "type": "integer",
+      "value": "9"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "I3",
+     "entityId": "card:2",
+     "attribute": ":card/ints",
+     "value": {
+      "type": "integer",
+      "value": "-1"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "I4",
+     "entityId": "card:2",
+     "attribute": ":card/ints",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740993"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "I5",
+     "entityId": "card:2",
+     "attribute": ":card/ints",
+     "value": {
+      "type": "integer",
+      "value": "9007199254740992"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "I6",
+     "entityId": "card:2",
+     "attribute": ":card/ints",
+     "value": {
+      "type": "integer",
+      "value": "9"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "I7",
+     "entityId": "card:2",
+     "attribute": ":card/ints",
+     "value": {
+      "type": "integer",
+      "value": "-9223372036854775808"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "I8",
+     "entityId": "card:2",
+     "attribute": ":card/ints",
+     "value": {
+      "type": "integer",
+      "value": "9223372036854775807"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "q8f-02:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Card": {
+     "attributes": {
+      "name": {
+       "attribute": ":card/name",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      },
+      "tags": {
+       "attribute": ":card/tags",
+       "type": "string",
+       "cardinality": "many",
+       "required": false
+      },
+      "ints": {
+       "attribute": ":card/ints",
+       "type": "integer",
+       "cardinality": "many",
+       "required": false
+      },
+      "nums": {
+       "attribute": ":card/nums",
+       "type": "number",
+       "cardinality": "many",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

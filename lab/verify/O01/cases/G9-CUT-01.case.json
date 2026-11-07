@@ -1,0 +1,399 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G9-CUT-01",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "h:1",
+     "attribute": ":h/status",
+     "value": {
+      "type": "string",
+      "value": "open"
+     },
+     "entityType": "Hist",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9cut01:C1"
+   }
+  },
+  {
+   "clock": 200,
+   "operations": [
+    {
+     "op": "retract",
+     "target": "A1"
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "h:1",
+     "attribute": ":h/status",
+     "value": {
+      "type": "string",
+      "value": "closed"
+     },
+     "entityType": "Hist",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9cut01:C2"
+   }
+  },
+  {
+   "clock": 300,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "h:2",
+     "attribute": ":h/status",
+     "value": {
+      "type": "string",
+      "value": "other"
+     },
+     "entityType": "Hist",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9cut01:C3"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "id": "Q1#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 150,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "Q2#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 199.99999999999997,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "Q3#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 200,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "Q4#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 250,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "Q5#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "Q6#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "recordedAt": 150,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "Q7#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "validAt": 10
+   },
+   "id": "N1#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "cut": {
+    "position": {
+     "afterCommand": 1
+    },
+    "validAt": 10
+   },
+   "id": "N2#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "cut": {
+    "position": {
+     "afterCommand": 2
+    },
+    "validAt": 10
+   },
+   "id": "N3#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "cut": {
+    "position": {
+     "afterCommand": 2
+    },
+    "recordedAt": 150,
+    "validAt": 10
+   },
+   "id": "N4#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "cut": {
+    "position": {
+     "afterCommand": 2
+    },
+    "recordedAt": 200,
+    "validAt": 10
+   },
+   "id": "N5#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "recordedAt": 250,
+    "validAt": 10
+   },
+   "id": "N6#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "cut": {
+    "position": {
+     "afterCommand": 1
+    },
+    "recordedAt": 150,
+    "validAt": 10
+   },
+   "id": "N7#0"
+  },
+  {
+   "kind": "history",
+   "entityId": "h:1",
+   "cut": {
+    "position": {
+     "afterCommand": 2
+    },
+    "recordedAt": 199.99999999999997,
+    "validAt": 10
+   },
+   "id": "N8#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "F1#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "position": {
+     "afterCommand": 1
+    },
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "F2#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "position": {
+     "afterCommand": 2
+    },
+    "recordedAt": 150,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "F3#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "recordedAt": 250,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "F4#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "position": {
+     "afterCommand": 2
+    },
+    "recordedAt": 200,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1"
+   },
+   "id": "F5#0"
+  },
+  {
+   "kind": "assertionSnapshot",
+   "mode": "known-at-valid",
+   "cut": {
+    "recordedAt": 150,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1",
+    "attribute": ":h/status"
+   },
+   "id": "T1#0"
+  },
+  {
+   "kind": "assertionSnapshot",
+   "mode": "known-at-valid",
+   "cut": {
+    "recordedAt": 200,
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1",
+    "attribute": ":h/status"
+   },
+   "id": "T2#0"
+  },
+  {
+   "kind": "assertionSnapshot",
+   "mode": "known-at-valid",
+   "cut": {
+    "validAt": 10
+   },
+   "pattern": {
+    "entityId": "h:1",
+    "attribute": ":h/status"
+   },
+   "id": "T3#0"
+  },
+  {
+   "kind": "get",
+   "entityType": "Hist",
+   "entityId": "h:1",
+   "cut": {
+    "recordedAt": 150,
+    "validAt": 10
+   },
+   "id": "G1#0"
+  },
+  {
+   "kind": "get",
+   "entityType": "Hist",
+   "entityId": "h:1",
+   "cut": {
+    "recordedAt": 200,
+    "validAt": 10
+   },
+   "id": "G2#0"
+  },
+  {
+   "kind": "get",
+   "entityType": "Hist",
+   "entityId": "h:1",
+   "cut": {
+    "validAt": 10
+   },
+   "id": "G3#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Hist": {
+     "attributes": {
+      "status": {
+       "attribute": ":h/status",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

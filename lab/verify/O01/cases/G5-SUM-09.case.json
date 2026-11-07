@@ -1,0 +1,55 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G5-SUM-09",
+ "defaultScope": "fresh",
+ "commands": [],
+ "queries": [
+  {
+   "id": "Q1",
+   "kind": "aggregate",
+   "cut": {
+    "validAt": 10
+   },
+   "match": {
+    "attributes": {
+     "v": ":s/v"
+    }
+   },
+   "aggregates": [
+    {
+     "op": "sum",
+     "var": "v",
+     "as": "?total"
+    },
+    {
+     "op": "count",
+     "var": "v",
+     "as": "?count"
+    }
+   ]
+  },
+  {
+   "id": "Q2",
+   "kind": "aggregate",
+   "cut": {
+    "validAt": 10
+   },
+   "match": {
+    "attributes": {
+     "g": ":s/g",
+     "v": ":s/v"
+    }
+   },
+   "groupBy": [
+    "g"
+   ],
+   "aggregates": [
+    {
+     "op": "sum",
+     "var": "v",
+     "as": "?total"
+    }
+   ]
+  }
+ ]
+}

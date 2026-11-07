@@ -1,0 +1,141 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G9-HO-01",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "iv:1",
+     "attribute": ":iv/x",
+     "value": {
+      "type": "string",
+      "value": "bounded"
+     },
+     "validFrom": 10.125,
+     "validTo": 30.5
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "iv:2",
+     "attribute": ":iv/x",
+     "value": {
+      "type": "string",
+      "value": "open"
+     },
+     "validFrom": 10.125
+    },
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "iv:3",
+     "attribute": ":iv/x",
+     "value": {
+      "type": "string",
+      "value": "tiny"
+     },
+     "validFrom": 0,
+     "validTo": 5e-324
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9ho01:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 0
+   },
+   "pattern": {
+    "attribute": ":iv/x"
+   },
+   "id": "V0#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 5e-324
+   },
+   "pattern": {
+    "attribute": ":iv/x"
+   },
+   "id": "V5e-324#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 10.124999999999998
+   },
+   "pattern": {
+    "attribute": ":iv/x"
+   },
+   "id": "V10.124999999999998#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 10.125
+   },
+   "pattern": {
+    "attribute": ":iv/x"
+   },
+   "id": "V10.125#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 20.25
+   },
+   "pattern": {
+    "attribute": ":iv/x"
+   },
+   "id": "V20.25#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 30.499999999999996
+   },
+   "pattern": {
+    "attribute": ":iv/x"
+   },
+   "id": "V30.499999999999996#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 30.5
+   },
+   "pattern": {
+    "attribute": ":iv/x"
+   },
+   "id": "V30.5#0"
+  },
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 1000000000000000.0
+   },
+   "pattern": {
+    "attribute": ":iv/x"
+   },
+   "id": "V1e15#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

@@ -1,0 +1,150 @@
+{
+ "format": "triplex-db-2/o-replay-expected/1",
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.1.0",
+  "sourceSha256": {
+   "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "cli.py": "268f89e17509c8c043a1a309bfbb6dd7aa8b83e5bff49c8da391c83ddcab4495",
+   "values.py": "4e7881592c2041ac3f1ed58aee58d42aa56677767680b0010fa65d59e9629cd3",
+   "exact.py": "8d3cdc340a0b4aae4f400bf4942b1ba586d6e35dcc77ebdfb01c204b1e9a7d31",
+   "replay.py": "ffb3d71857021b85cfe663c1879d28bfc031a80fda82bce1eb44562f3e4dce65",
+   "constraints.py": "fec68280688517be36854ba10fb7a784d8db0d1c3c8e7a27ebc3a7fcab50af15",
+   "views.py": "3e4093b18308dfb6827de40eb507d77e4bb2230d6def8571aa59ef35491f25cd",
+   "entities.py": "a0ee0cf69f0ffce50e094a31354ad1d48de8872fe944bcfb4c1f6bc5b9f7bb8f",
+   "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "run.py": "df47415034bdda041f3bf7e3efd550d35e20ad2387902a8608a02c514368a0d5",
+   "selfcheck.py": "450a1fd8e8dea572a5e71a9e8c4966c56c993f54107943b9838f6b9e87a28911"
+  }
+ },
+ "caseId": "golden/G5-SUM-01",
+ "caseSha256": "a3be89802108e56652c6fad5ffd9f1c42e4df44f447c4d3e02043a0a042f8fc8",
+ "verdict": "EXPECTED-ONLY",
+ "divergedAtCommand": null,
+ "receiptConsistency": {
+  "status": "NOT-APPLICABLE",
+  "reason": "no receipts supplied"
+ },
+ "commandOutcomes": [
+  {
+   "command": 0,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "state": [
+  {
+   "scope": "fresh",
+   "lastPosition": 1,
+   "assertions": [
+    {
+     "id": "v1",
+     "entityId": "s:1",
+     "attribute": ":s/v",
+     "value": {
+      "type": "integer",
+      "value": "4611686018427387904"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": null,
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "v2",
+     "entityId": "s:2",
+     "attribute": ":s/v",
+     "value": {
+      "type": "integer",
+      "value": "4611686018427387904"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": null,
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    }
+   ],
+   "transactions": [
+    {
+     "txId": "tx:0",
+     "position": 1,
+     "instant": 100,
+     "actor": "golden",
+     "commandId": "G5-SUM-01:C1",
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "v1",
+       "entityId": "s:1",
+       "attribute": ":s/v",
+       "value": {
+        "type": "integer",
+        "value": "4611686018427387904"
+       },
+       "validFrom": 0,
+       "recordedAt": 100
+      },
+      {
+       "op": "assert",
+       "tripleId": "v2",
+       "entityId": "s:2",
+       "attribute": ":s/v",
+       "value": {
+        "type": "integer",
+        "value": "4611686018427387904"
+       },
+       "validFrom": 0,
+       "recordedAt": 100
+      }
+     ],
+     "changedEntities": [
+      "s:1",
+      "s:2"
+     ]
+    }
+   ]
+  }
+ ],
+ "queries": [
+  {
+   "id": "Q",
+   "kind": "aggregate",
+   "error": {
+    "error": "integer-overflow",
+    "message": "result outside int64",
+    "result": "9223372036854775808"
+   }
+  }
+ ],
+ "rulesInEffect": {
+  "attributeSyntax": "any",
+  "createdByDefault": "null",
+  "datetimeRange": null,
+  "emptyIntervalRejected": true,
+  "journalChangeOrder": "operation-order",
+  "reservedAttributePrefix": ":_",
+  "reservedEntityTypePrefix": "_",
+  "retractNonLive": "transaction-conflict",
+  "retractPatternEmptyRejected": true,
+  "typeMembership": "valid-at-instant",
+  "validFromDefault": "transaction-instant"
+ }
+}

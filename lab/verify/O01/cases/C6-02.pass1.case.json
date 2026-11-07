@@ -1,0 +1,37 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C6-02",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "z:1",
+     "attribute": ":z/n",
+     "value": {
+      "type": "number",
+      "bits": "0x8000000000000000"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c6-02:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

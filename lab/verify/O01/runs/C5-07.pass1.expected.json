@@ -1,0 +1,475 @@
+{
+ "format": "triplex-db-2/o-replay-expected/1",
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.1.0",
+  "sourceSha256": {
+   "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "cli.py": "268f89e17509c8c043a1a309bfbb6dd7aa8b83e5bff49c8da391c83ddcab4495",
+   "values.py": "4e7881592c2041ac3f1ed58aee58d42aa56677767680b0010fa65d59e9629cd3",
+   "exact.py": "8d3cdc340a0b4aae4f400bf4942b1ba586d6e35dcc77ebdfb01c204b1e9a7d31",
+   "replay.py": "ffb3d71857021b85cfe663c1879d28bfc031a80fda82bce1eb44562f3e4dce65",
+   "constraints.py": "fec68280688517be36854ba10fb7a784d8db0d1c3c8e7a27ebc3a7fcab50af15",
+   "views.py": "3e4093b18308dfb6827de40eb507d77e4bb2230d6def8571aa59ef35491f25cd",
+   "entities.py": "a0ee0cf69f0ffce50e094a31354ad1d48de8872fe944bcfb4c1f6bc5b9f7bb8f",
+   "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "run.py": "df47415034bdda041f3bf7e3efd550d35e20ad2387902a8608a02c514368a0d5",
+   "selfcheck.py": "450a1fd8e8dea572a5e71a9e8c4966c56c993f54107943b9838f6b9e87a28911"
+  }
+ },
+ "caseId": "golden/C5-07",
+ "caseSha256": "a0c5a97ca08752b7381897233e1687be88d83a96f4c6033d1876bdfafa467a24",
+ "verdict": "EXPECTED-ONLY",
+ "divergedAtCommand": null,
+ "receiptConsistency": {
+  "status": "NOT-APPLICABLE",
+  "reason": "no receipts supplied"
+ },
+ "commandOutcomes": [
+  {
+   "command": 0,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 1,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 2,
+   "expected": {
+    "outcome": "rejected",
+    "category": "constraint-violation",
+    "errorTag": "ConstraintViolationError",
+    "message": "new or worsened constraint violation",
+    "codes": [
+     "cardinality"
+    ],
+    "violations": [
+     {
+      "code": "cardinality",
+      "entityType": "Item",
+      "attribute": ":item/color",
+      "validAt": 0,
+      "actual": 3,
+      "subject": "item:8"
+     }
+    ]
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 3,
+   "expected": {
+    "outcome": "rejected",
+    "category": "constraint-violation",
+    "errorTag": "ConstraintViolationError",
+    "message": "new or worsened constraint violation",
+    "codes": [
+     "cardinality"
+    ],
+    "violations": [
+     {
+      "code": "cardinality",
+      "entityType": "Item",
+      "attribute": ":item/color",
+      "validAt": 0,
+      "actual": 3,
+      "subject": "item:8"
+     }
+    ]
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 4,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "command": 5,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "state": [
+  {
+   "scope": "fresh",
+   "lastPosition": 4,
+   "assertions": [
+    {
+     "id": "A1",
+     "entityId": "item:8",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "Item",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": 500,
+     "retractedPosition": 3,
+     "retractTxId": "tx:4"
+    },
+    {
+     "id": "A2",
+     "entityId": "item:8",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "blue"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "Item",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "A3",
+     "entityId": "item:8",
+     "attribute": ":item/name",
+     "value": {
+      "type": "string",
+      "value": "eight"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 200,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "Item",
+     "schemaVersion": null,
+     "txId": "tx:1",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "A6",
+     "entityId": "item:8",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "green"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 500,
+     "recordedPosition": 3,
+     "createdBy": null,
+     "entityType": "Item",
+     "schemaVersion": null,
+     "txId": "tx:4",
+     "retractedAt": 600,
+     "retractedPosition": 4,
+     "retractTxId": "tx:5"
+    }
+   ],
+   "transactions": [
+    {
+     "txId": "tx:0",
+     "position": 1,
+     "instant": 100,
+     "actor": "golden",
+     "commandId": "c5-07:C1",
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "A1",
+       "entityId": "item:8",
+       "attribute": ":item/color",
+       "entityType": "Item",
+       "value": {
+        "type": "string",
+        "value": "red"
+       },
+       "validFrom": 0,
+       "recordedAt": 100
+      },
+      {
+       "op": "assert",
+       "tripleId": "A2",
+       "entityId": "item:8",
+       "attribute": ":item/color",
+       "entityType": "Item",
+       "value": {
+        "type": "string",
+        "value": "blue"
+       },
+       "validFrom": 0,
+       "recordedAt": 100
+      }
+     ],
+     "changedEntities": [
+      "item:8"
+     ]
+    },
+    {
+     "txId": "tx:1",
+     "position": 2,
+     "instant": 200,
+     "actor": "golden",
+     "commandId": "c5-07:C2",
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "A3",
+       "entityId": "item:8",
+       "attribute": ":item/name",
+       "entityType": "Item",
+       "value": {
+        "type": "string",
+        "value": "eight"
+       },
+       "validFrom": 0,
+       "recordedAt": 200
+      }
+     ],
+     "changedEntities": [
+      "item:8"
+     ]
+    },
+    {
+     "txId": "tx:4",
+     "position": 3,
+     "instant": 500,
+     "actor": "golden",
+     "commandId": "c5-07:C5",
+     "changes": [
+      {
+       "op": "retract",
+       "tripleId": "A1",
+       "entityId": "item:8",
+       "attribute": ":item/color",
+       "entityType": "Item",
+       "value": {
+        "type": "string",
+        "value": "red"
+       },
+       "validFrom": 0,
+       "recordedAt": 100,
+       "retractedAt": 500,
+       "assertionTxId": "tx:0",
+       "retractionTxId": "tx:4"
+      },
+      {
+       "op": "assert",
+       "tripleId": "A6",
+       "entityId": "item:8",
+       "attribute": ":item/color",
+       "entityType": "Item",
+       "value": {
+        "type": "string",
+        "value": "green"
+       },
+       "validFrom": 0,
+       "recordedAt": 500
+      }
+     ],
+     "changedEntities": [
+      "item:8"
+     ]
+    },
+    {
+     "txId": "tx:5",
+     "position": 4,
+     "instant": 600,
+     "actor": "golden",
+     "commandId": "c5-07:C6",
+     "changes": [
+      {
+       "op": "retract",
+       "tripleId": "A6",
+       "entityId": "item:8",
+       "attribute": ":item/color",
+       "entityType": "Item",
+       "value": {
+        "type": "string",
+        "value": "green"
+       },
+       "validFrom": 0,
+       "recordedAt": 500,
+       "retractedAt": 600,
+       "assertionTxId": "tx:4",
+       "retractionTxId": "tx:5"
+      }
+     ],
+     "changedEntities": [
+      "item:8"
+     ]
+    }
+   ]
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog",
+   "result": [
+    {
+     "position": 1,
+     "instant": 100,
+     "txId": "tx:0",
+     "command": 0,
+     "internal": false,
+     "physicalGroup": null
+    },
+    {
+     "position": 2,
+     "instant": 200,
+     "txId": "tx:1",
+     "command": 1,
+     "internal": false,
+     "physicalGroup": null
+    },
+    {
+     "position": 3,
+     "instant": 500,
+     "txId": "tx:4",
+     "command": 4,
+     "internal": false,
+     "physicalGroup": null
+    },
+    {
+     "position": 4,
+     "instant": 600,
+     "txId": "tx:5",
+     "command": 5,
+     "internal": false,
+     "physicalGroup": null
+    }
+   ]
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions",
+   "result": {
+    "scope": "fresh",
+    "assertions": [
+     {
+      "id": "A1",
+      "entityId": "item:8",
+      "attribute": ":item/color",
+      "value": {
+       "type": "string",
+       "value": "red"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "Item",
+      "schemaVersion": null,
+      "txId": "tx:0",
+      "retractedAt": 500,
+      "retractedPosition": 3,
+      "retractTxId": "tx:4"
+     },
+     {
+      "id": "A2",
+      "entityId": "item:8",
+      "attribute": ":item/color",
+      "value": {
+       "type": "string",
+       "value": "blue"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "Item",
+      "schemaVersion": null,
+      "txId": "tx:0",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "A3",
+      "entityId": "item:8",
+      "attribute": ":item/name",
+      "value": {
+       "type": "string",
+       "value": "eight"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 200,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "Item",
+      "schemaVersion": null,
+      "txId": "tx:1",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "A6",
+      "entityId": "item:8",
+      "attribute": ":item/color",
+      "value": {
+       "type": "string",
+       "value": "green"
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 500,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "Item",
+      "schemaVersion": null,
+      "txId": "tx:4",
+      "retractedAt": 600,
+      "retractedPosition": 4,
+      "retractTxId": "tx:5"
+     }
+    ]
+   }
+  }
+ ],
+ "rulesInEffect": {
+  "attributeSyntax": "any",
+  "createdByDefault": "null",
+  "datetimeRange": null,
+  "emptyIntervalRejected": true,
+  "journalChangeOrder": "operation-order",
+  "reservedAttributePrefix": ":_",
+  "reservedEntityTypePrefix": "_",
+  "retractNonLive": "transaction-conflict",
+  "retractPatternEmptyRejected": true,
+  "typeMembership": "valid-at-instant",
+  "validFromDefault": "transaction-instant"
+ }
+}

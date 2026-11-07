@@ -1,0 +1,181 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/Q8F-01",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "T1",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": "b"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "T2",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": "a"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "T3",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": "B"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "T4",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": "\u00e9"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "T5",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": "e\u0301"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "T6",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": "a"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "T7",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": "\ue000"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "T8",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": "\ud800\udc00"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "T9",
+     "entityId": "card:1",
+     "attribute": ":card/tags",
+     "value": {
+      "type": "string",
+      "value": ""
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "N1",
+     "entityId": "card:1",
+     "attribute": ":card/name",
+     "value": {
+      "type": "string",
+      "value": "one"
+     },
+     "entityType": "Card",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "q8f-01:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Card": {
+     "attributes": {
+      "name": {
+       "attribute": ":card/name",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      },
+      "tags": {
+       "attribute": ":card/tags",
+       "type": "string",
+       "cardinality": "many",
+       "required": false
+      },
+      "ints": {
+       "attribute": ":card/ints",
+       "type": "integer",
+       "cardinality": "many",
+       "required": false
+      },
+      "nums": {
+       "attribute": ":card/nums",
+       "type": "number",
+       "cardinality": "many",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

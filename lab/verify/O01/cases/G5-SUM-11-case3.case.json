@@ -1,0 +1,60 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G5-SUM-11-case3",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "meta": {
+    "actor": "golden",
+    "commandId": "G5-SUM-11:C1"
+   },
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "v1",
+     "entityId": "s:1",
+     "attribute": ":s/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "v2",
+     "entityId": "s:2",
+     "attribute": ":s/v",
+     "value": {
+      "type": "integer",
+      "value": "2"
+     },
+     "validFrom": 0
+    }
+   ]
+  }
+ ],
+ "queries": [
+  {
+   "id": "Q",
+   "kind": "aggregate",
+   "cut": {
+    "validAt": 10
+   },
+   "match": {
+    "attributes": {
+     "v": ":s/v"
+    }
+   },
+   "integerAvg": "convert",
+   "aggregates": [
+    {
+     "op": "avg",
+     "var": "v",
+     "as": "?avg"
+    }
+   ]
+  }
+ ]
+}

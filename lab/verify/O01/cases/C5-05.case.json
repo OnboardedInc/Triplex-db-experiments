@@ -1,0 +1,170 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C5-05",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "item:6",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 0,
+     "validTo": 20
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "item:6",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 10,
+     "validTo": 30
+    },
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "item:6",
+     "attribute": ":item/name",
+     "value": {
+      "type": "string",
+      "value": "six"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c5-05:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "get",
+   "entityType": "Item",
+   "entityId": "item:6",
+   "cut": {
+    "validAt": 15
+   },
+   "id": "G15#0"
+  },
+  {
+   "kind": "valueSupports",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "validAt": 5
+   },
+   "pattern": {
+    "attribute": ":item/color"
+   },
+   "id": "N5#0"
+  },
+  {
+   "kind": "valueSupports",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "validAt": 10
+   },
+   "pattern": {
+    "attribute": ":item/color"
+   },
+   "id": "N10#0"
+  },
+  {
+   "kind": "valueSupports",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "validAt": 19.999999999999996
+   },
+   "pattern": {
+    "attribute": ":item/color"
+   },
+   "id": "N19.999999999999996#0"
+  },
+  {
+   "kind": "valueSupports",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "validAt": 20
+   },
+   "pattern": {
+    "attribute": ":item/color"
+   },
+   "id": "N20#0"
+  },
+  {
+   "kind": "valueSupports",
+   "cut": {
+    "position": {
+     "afterCommand": 0
+    },
+    "validAt": 30
+   },
+   "pattern": {
+    "attribute": ":item/color"
+   },
+   "id": "N30#0"
+  },
+  {
+   "kind": "get",
+   "entityType": "Item",
+   "entityId": "item:6",
+   "cut": {
+    "validAt": 30
+   },
+   "id": "G30#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Item": {
+     "attributes": {
+      "color": {
+       "attribute": ":item/color",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      },
+      "name": {
+       "attribute": ":item/name",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,20 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [],
+ "queries": [
+  {
+   "kind": "compare",
+   "left": {
+    "type": "integer",
+    "value": "1"
+   },
+   "right": {
+    "type": "number",
+    "value": 2.0
+   },
+   "id": "CMP-INT-FLOAT int 1 < number 2"
+  }
+ ]
+}

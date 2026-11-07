@@ -1,0 +1,85 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C5-01",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "item:1",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "item:1",
+     "attribute": ":item/color",
+     "value": {
+      "type": "string",
+      "value": "red"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "item:1",
+     "attribute": ":item/name",
+     "value": {
+      "type": "string",
+      "value": "one"
+     },
+     "entityType": "Item",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c5-01:C1"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Item": {
+     "attributes": {
+      "color": {
+       "attribute": ":item/color",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      },
+      "name": {
+       "attribute": ":item/name",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

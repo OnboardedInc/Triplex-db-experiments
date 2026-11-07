@@ -1,0 +1,19 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [],
+ "queries": [
+  {
+   "kind": "expr",
+   "expr": [
+    "to-number",
+    {
+     "type": "integer",
+     "value": "9007199254740993"
+    }
+   ],
+   "id": "CV-I2F toNumber(2^53+1)"
+  }
+ ]
+}

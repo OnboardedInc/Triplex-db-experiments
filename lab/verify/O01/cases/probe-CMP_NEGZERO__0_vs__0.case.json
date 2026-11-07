@@ -1,0 +1,20 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [],
+ "queries": [
+  {
+   "kind": "compare",
+   "left": {
+    "type": "number",
+    "bits": "0x8000000000000000"
+   },
+   "right": {
+    "type": "number",
+    "value": 0.0
+   },
+   "id": "CMP-NEGZERO -0 vs +0"
+  }
+ ]
+}

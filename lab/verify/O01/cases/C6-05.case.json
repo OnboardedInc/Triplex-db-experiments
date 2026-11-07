@@ -1,0 +1,90 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/C6-05",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "r:1",
+     "attribute": ":name",
+     "value": {
+      "type": "string",
+      "value": "journalled"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c6-05:C1"
+   }
+  },
+  {
+   "clock": 300,
+   "operations": [
+    {
+     "op": "retract-pattern",
+     "pattern": {
+      "entityType": "_Transaction"
+     }
+    }
+   ],
+   "meta": {}
+  },
+  {
+   "clock": 400,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "r:2",
+     "attribute": ":name",
+     "value": {
+      "type": "string",
+      "value": "must roll back"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "_triplex/application/forbidden",
+     "attribute": ":name",
+     "value": {
+      "type": "string",
+      "value": "reserved"
+     },
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "c6-05:C4"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "kind": "match",
+   "cut": {
+    "validAt": 1000000000000000.0
+   },
+   "pattern": {
+    "entityId": "r:2"
+   },
+   "id": "Q2#0"
+  },
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ]
+}

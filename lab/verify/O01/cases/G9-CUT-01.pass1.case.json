@@ -1,0 +1,101 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "golden/G9-CUT-01",
+ "defaultScope": "fresh",
+ "commands": [
+  {
+   "clock": 100,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A1",
+     "entityId": "h:1",
+     "attribute": ":h/status",
+     "value": {
+      "type": "string",
+      "value": "open"
+     },
+     "entityType": "Hist",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9cut01:C1"
+   }
+  },
+  {
+   "clock": 200,
+   "operations": [
+    {
+     "op": "retract",
+     "target": "A1"
+    },
+    {
+     "op": "assert",
+     "ref": "A2",
+     "entityId": "h:1",
+     "attribute": ":h/status",
+     "value": {
+      "type": "string",
+      "value": "closed"
+     },
+     "entityType": "Hist",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9cut01:C2"
+   }
+  },
+  {
+   "clock": 300,
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "A3",
+     "entityId": "h:2",
+     "attribute": ":h/status",
+     "value": {
+      "type": "string",
+      "value": "other"
+     },
+     "entityType": "Hist",
+     "validFrom": 0
+    }
+   ],
+   "meta": {
+    "actor": "golden",
+    "commandId": "g9cut01:C3"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "id": "__catalog",
+   "kind": "cutCatalog"
+  },
+  {
+   "id": "__assertions",
+   "kind": "assertions"
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "Hist": {
+     "attributes": {
+      "status": {
+       "attribute": ":h/status",
+       "type": "string",
+       "cardinality": "one",
+       "required": false
+      }
+     }
+    }
+   }
+  }
+ ]
+}

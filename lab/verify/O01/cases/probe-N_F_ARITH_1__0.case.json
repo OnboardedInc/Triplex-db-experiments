@@ -1,0 +1,23 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [],
+ "queries": [
+  {
+   "kind": "expr",
+   "expr": [
+    "div",
+    {
+     "type": "number",
+     "value": 1.0
+    },
+    {
+     "type": "number",
+     "bits": "0x8000000000000000"
+    }
+   ],
+   "id": "N-F-ARITH 1/-0"
+  }
+ ]
+}

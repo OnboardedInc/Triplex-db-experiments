@@ -1,0 +1,100 @@
+{
+ "format": "triplex-db-2/o-replay-case/1",
+ "caseId": "probe/section4",
+ "defaultScope": "s",
+ "commands": [
+  {
+   "clock": 100,
+   "meta": {
+    "commandId": "c"
+   },
+   "operations": [
+    {
+     "op": "assert",
+     "ref": "z1",
+     "entityId": "t:1",
+     "entityType": "T",
+     "attribute": ":t/n",
+     "value": {
+      "type": "number",
+      "bits": "0x8000000000000000"
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "z2",
+     "entityId": "t:1",
+     "entityType": "T",
+     "attribute": ":t/n",
+     "value": {
+      "type": "number",
+      "value": 0.0
+     },
+     "validFrom": 0
+    },
+    {
+     "op": "assert",
+     "ref": "g1",
+     "entityId": "t:1",
+     "attribute": ":t/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0
+    }
+   ]
+  }
+ ],
+ "schemas": [
+  {
+   "version": 1,
+   "entityTypes": {
+    "T": {
+     "attributes": {
+      "n": {
+       "attribute": ":t/n",
+       "type": "number",
+       "cardinality": "one"
+      }
+     }
+    }
+   }
+  }
+ ],
+ "queries": [
+  {
+   "id": "get",
+   "kind": "get",
+   "entityType": "T",
+   "entityId": "t:1",
+   "cut": {
+    "validAt": 1
+   }
+  },
+  {
+   "id": "grp",
+   "kind": "aggregate",
+   "cut": {
+    "validAt": 1
+   },
+   "match": {
+    "attributes": {
+     "n": ":t/n",
+     "v": ":t/v"
+    }
+   },
+   "groupBy": [
+    "n"
+   ],
+   "aggregates": [
+    {
+     "op": "count",
+     "var": "v",
+     "as": "c"
+    }
+   ]
+  }
+ ]
+}
