@@ -271,6 +271,11 @@ const preload = async () => {
   // journal, heads, feed) while dividing the engine transaction count by N. Replay-safe: the batch is
   // pure re-execution and every command carries its own commandId.
   const batch = Number(opt('batch', 1));
+  // --spread uniform: history only needs volume, so subjects are spread deterministically over the
+  // whole rung (multiplicative hash of the command number); the trace's hot set would make concurrent
+  // preload writers collide on the same subjects and retry. Sizes still follow the trace's bands.
+  const spread = opt('spread', 'trace');
+  if (spread === 'uniform') events.forEach((event, i) => { event.subject = Number((BigInt(i + 1) * 2654435761n) % BigInt(subjects)); });
   await Promise.all(Array.from({ length: concurrency }, async () => {
     while (next < events.length) {
       const group = events.slice(next, next + batch).map((event, i) => ({ event, n: next + i + 1 }));
@@ -291,7 +296,7 @@ const preload = async () => {
   const consumed = await feed.stop();
   const audit = await auditFeed({ scope, consumer, committed, processed: consumed.processed });
   const result = {
-    arm, scope, commits, subjects, concurrency, batch, seed, generatorSha256: GENERATOR_SHA256, outcomes: tally(outcomes),
+    arm, scope, commits, subjects, concurrency, batch, spread, seed, generatorSha256: GENERATOR_SHA256, outcomes: tally(outcomes),
     commitsPerS: round(committed.length / (elapsed / 1000), 1), elapsedS: round(elapsed / 1000), latencyMs: summary(lat), counts: rt.counts, timings: timingSummary(rt.timings),
     feed: { lagMs: summary(consumed.lags), ...audit, polls: consumed.stats.polls, writes: consumed.stats.writes, abortedListed: consumed.stats.aborted ?? 0, blockedPolls: consumed.stats.blockedPolls ?? 0, missingPublication: consumed.stats.missingPublication, pollMs: summary(consumed.stats.pollMs), writeMs: summary(consumed.stats.writeMs) },
     raw: { lags: consumed.lags },
