@@ -4,7 +4,7 @@ import { TypeExpr } from "@triplex-build/triplex/config";
 import type { QleverClient } from "../src/QleverClient.js";
 import { numericOrderKey } from "../src/rdf.js";
 import { makeQleverNativeContext } from "../src/native/NativeContext.js";
-import { materializeQleverNativeRelations } from "../src/native/BasisRelations.js";
+import { resolveQleverNativeRelations } from "../src/native/BasisRelations.js";
 
 const basis = {
   scope: DatabaseScope.test("native-basis-relations"),
@@ -29,50 +29,83 @@ describe("native QLever basis relations", () => {
     expect(recorded).toContain("OPTIONAL {");
   });
 
-  it("reconciles a lost working update without replay, computes paths in the backend and records cleanup", async () => {
-    const updates: string[] = [],
-      queries: string[] = [];
-    let lost = false;
+  it("[EXP-C8] answers with read-only frontier rounds and an inline VALUES relation", async () => {
+    const queries: string[] = [];
+    // WL15 dependency-set: cycle Y<->Z plus a diamond (R10 3.2).
+    const graph: Record<string, string[]> = { X: ["Y", "W"], W: ["Z"], Y: ["Z"], Z: ["Y"] };
     const client: QleverClient = {
       query: async (query) => {
         queries.push(query);
-        if (query.startsWith("SELECT ?phase"))
-          return [{ phase: { type: "literal", value: "acknowledged" } }];
-        return [{ total: { type: "literal", value: query.includes("isLiteral") ? "0" : "2" } }];
+        const frontier = [...(/VALUES \?source \{ ([^}]*) \}/.exec(query)?.[1] ?? "").matchAll(/"([^"]*)"/g)].map(
+          (match) => match[1]!,
+        );
+        return frontier.flatMap((source) =>
+          (graph[source] ?? []).map((target) => ({
+            source: { type: "literal", value: source },
+            target: { type: "literal", value: target },
+          })),
+        );
       },
-      update: async (query) => {
-        updates.push(query);
-        if (!lost) {
-          lost = true;
-          throw new Error("lost commit acknowledgement");
-        }
+      update: async () => {
+        throw new Error("C8: a read path attempted an update");
       },
       command: async () => {},
       cancel: async () => {},
       close: async () => {},
     };
     const steps: NativeQueryStep[] = [];
-    const working = await materializeQleverNativeRelations(
+    const working = await resolveQleverNativeRelations(
       client,
       basis,
-      [{ name: "edge", edges: () => 'SELECT ("a" AS ?source) ("b" AS ?target) WHERE {}' }],
+      [{ name: "edge", edges: () => "SELECT ?source ?target WHERE { ?source <urn:e> ?target }", seeds: () => ["X"] }],
       {},
       new AbortController().signal,
       steps,
       { timeoutMs: 1000 },
-      3,
     );
-    expect(updates).toHaveLength(1);
-    expect(queries.some((query) => query.includes("<urn:triplex:native:edge:edge>+"))).toBe(true);
+    expect(queries).toHaveLength(3);
+    for (const query of queries) {
+      expect(query).toMatch(/^SELECT DISTINCT \?source \?target WHERE \{ VALUES \?source \{/);
+      expect(query).not.toMatch(/\+|\*|GRAPH <urn:triplex:native/);
+    }
+    expect(steps.map((step) => step.phase)).toEqual(["frontier-round", "frontier-round", "frontier-round"]);
+    expect(working.relation("edge", "?s", "?t")).toBe(
+      'VALUES (?s ?t) { ("X" "W") ("X" "Y") ("X" "Z") }',
+    );
+    expect(working.relation("edge", "X", "?t")).toBe('VALUES (?t) { ("W") ("Y") ("Z") }');
     expect(
       working.relation("edge", "?source", makeQleverNativeContext(basis).entity("?target")),
-    ).toContain('"?target"');
+    ).toBe("VALUES (?source) {  }");
+    expect(working.relation("edge", "X", "Z")).toBe("{ }");
+    expect(working.relation("edge", "Y", "Z")).toBe("{ FILTER(false) }");
     expect(() => working.relation("other", "?source", "?target")).toThrow();
-    await working.cleanup();
-    expect(updates).toHaveLength(2);
-    expect(updates[1]).toContain("DELETE { GRAPH <urn:triplex:native:");
-    expect(updates[1]).not.toContain("urn:triplex:scope:");
-    expect(steps.some((step) => step.phase === "working-reconcile")).toBe(true);
-    expect(steps.some((step) => step.phase === "working-cleanup")).toBe(true);
+  });
+
+  it("[EXP-C8] rejects non-string endpoints and budget overruns with no partial answer", async () => {
+    const client = (rows: unknown[]): QleverClient => ({
+      query: async () => rows as never,
+      update: async () => {
+        throw new Error("C8: a read path attempted an update");
+      },
+      command: async () => {},
+      cancel: async () => {},
+      close: async () => {},
+    });
+    const definitions = [{ name: "edge", edges: () => "SELECT ?source ?target WHERE { }", seeds: () => ["a"] }];
+    await expect(
+      resolveQleverNativeRelations(
+        client([{ source: { type: "literal", value: "a" }, target: { type: "uri", value: "urn:b" } }]),
+        basis, definitions, {}, new AbortController().signal, [], {},
+      ),
+    ).rejects.toThrow(/plain string identity/);
+    await expect(
+      resolveQleverNativeRelations(
+        client([
+          { source: { type: "literal", value: "a" }, target: { type: "literal", value: "b" } },
+          { source: { type: "literal", value: "a" }, target: { type: "literal", value: "c" } },
+        ]),
+        basis, definitions, {}, new AbortController().signal, [], {}, 1,
+      ),
+    ).rejects.toThrow(/budget/);
   });
 });

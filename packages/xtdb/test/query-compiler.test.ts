@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compileXtdb, lowerSource } from "../src/query/compiler.js";
-import { compileRuleRound } from "../src/query/recursion.js";
+import { compileRuleSelection } from "../src/query/recursion.js";
 
 describe("XTDB compiler", () => {
   it("lowers shared scalar-family, negation and keyset semantics into scoped native SQL", () => {
@@ -31,7 +31,11 @@ describe("XTDB compiler", () => {
     expect(result.params).toContain("scope");
   });
 
-  it("replaces recursive CTEs with server-side completed relations", () => {
+  it("[EXP-C8] replaces recursive CTEs with the evaluated relation as one inline parameter", () => {
+    const pairs = [
+      ["a", "b"],
+      ["a", "c"],
+    ] as const;
     const result = compileXtdb(
       {
         find: ["?y"],
@@ -48,34 +52,35 @@ describe("XTDB compiler", () => {
         ],
       },
       "s",
-      { runId: "run", basis: { validAt: 1, recordedPosition: 2 } },
+      { ruleRelations: new Map([["ancestor", pairs]]), basis: { validAt: 1, recordedPosition: 2 } },
     );
     expect(result.sql).not.toContain("RECURSIVE");
-    expect(result.sql).toContain("tx_query_relations");
-    expect(result.params).toContain("run");
+    expect(result.sql).not.toContain("tx_query_relations");
+    expect(result.sql).toMatch(/"ancestor" AS \(SELECT p\[1\] AS arg1, p\[2\] AS arg2, 0 AS depth FROM UNNEST\(\$\d+\) AS u\(p\)\)/);
+    expect(result.params).toContainEqual([
+      ["a", "b"],
+      ["a", "c"],
+    ]);
     expect(result.params).not.toContain(100);
+    expect(() =>
+      compileXtdb({ find: ["?y"], where: [["ancestor", "a", "?y"]], rules: [{ name: "ancestor", body: [["?x", ":parent", "?y"]] }] }, "s", {}),
+    ).toThrow(/evaluated rule relations/);
   });
 
-  it("keeps all fixed-point joins and duplicate elimination in XTDB", () => {
-    const result = compileRuleRound(
-      {
-        name: "ancestor",
-        body: [
-          ["?x", ":parent", "?z"],
-          ["ancestor", "?z", "?y"],
-        ],
-      },
-      new Set(["ancestor"]),
+  it("[EXP-C8] rule selections are reads: no INSERT, frontier as one UNNEST parameter", () => {
+    const result = compileRuleSelection(
+      [["?x", ":parent", "?z"]],
       "s",
-      "run",
       { validAt: 1, recordedPosition: 2 },
-      1,
+      ["b", "c"],
     );
-    expect(result.sql).toContain("INSERT INTO tx_query_relations");
-    expect(result.sql).toContain("NOT EXISTS");
-    expect(result.sql).toContain("CROSS JOIN");
+    expect(result.sql.startsWith("SELECT DISTINCT")).toBe(true);
+    expect(result.sql).not.toMatch(/\b(INSERT|ERASE|DELETE|UPDATE)\b/);
+    expect(result.sql).toMatch(/IN \(SELECT x FROM UNNEST\(\$\d+\) AS u\(x\)\)/);
+    expect(result.sql).not.toMatch(/\bANY\s*\(/);
     expect(result.sql).toContain("retracted_position");
     expect(result.sql).not.toMatch(/\b(?:FROM|JOIN) triples\b/);
+    expect(result.params).toContainEqual(["b", "c"]);
   });
 
   it("lowers comma-separated negation sources without changing quoted SQL", () => {

@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { readOnlyQleverClient } from "../ReadOnlyClient.js";
 import type { TypeExpr } from "@triplex-build/triplex/config";
 import {
   ReadError,
@@ -22,7 +23,7 @@ import {
   type QleverNativeContext,
   type QleverNativeEntity,
 } from "./NativeContext.js";
-import { materializeQleverNativeRelations, type QleverNativeRelation } from "./BasisRelations.js";
+import { resolveQleverNativeRelations, type QleverNativeRelation } from "./BasisRelations.js";
 
 const scalar = (type: TypeExpr.TypeExpr, term: SparqlTerm): unknown => {
   if (type._tag === "Constrained") return scalar(type.base, term);
@@ -83,7 +84,7 @@ export interface QleverNativeRelationOptions extends NativeReadOptions {
 }
 
 /** Public schema-aware native SPARQL. No Datalog AST or compiler is invoked. */
-export const makeQleverNativeQueries = (
+const nativeQueries = (
   client: QleverClient,
   scope: DatabaseScope,
   defaults: QleverNativeQueryOptions = {},
@@ -139,8 +140,9 @@ export const makeQleverNativeQueries = (
             currentPosition: Number(text),
             now: Date.now(),
           });
+          // [EXP-C8] Read-only: frontier rounds at this one basis, closure inlined as VALUES.
           const working = relations
-            ? await materializeQleverNativeRelations(
+            ? await resolveQleverNativeRelations(
                 client,
                 basis,
                 relations,
@@ -151,7 +153,7 @@ export const makeQleverNativeQueries = (
                 (options as QleverNativeRelationOptions).maxRelationRows,
               )
             : undefined;
-          try {
+          {
             const baseContext = makeQleverNativeContext(basis);
             const context = working ? { ...baseContext, relation: working.relation } : baseContext;
             const query = build(context, parameters);
@@ -169,8 +171,6 @@ export const makeQleverNativeQueries = (
             if (rawRows.length > maxRows)
               throw new RangeError(`Native SELECT exceeds maxRows=${maxRows}; no partial result`);
             return { basis, query, rawRows, steps };
-          } finally {
-            if (working) await working.cleanup();
           }
         },
         catch: (cause) =>
@@ -227,3 +227,11 @@ export const makeQleverNativeQueries = (
 };
 
 export type QleverNativeQueries = ReturnType<typeof makeQleverNativeQueries>;
+
+// [EXP-C8] Read entry point: the shared client is handed over as a write-refusing view
+// (ReadOnlyClient.ts), so no read path can reach the engine with a write.
+export const makeQleverNativeQueries = (
+  client: QleverClient,
+  scope: DatabaseScope,
+  defaults: QleverNativeQueryOptions = {},
+) => nativeQueries(readOnlyQleverClient(client), scope, defaults);

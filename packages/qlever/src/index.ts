@@ -104,4 +104,5 @@ export {
   type QleverNativeFactOptions,
   type QleverNativeEntity,
 } from "./native/NativeContext.js";
-export { type QleverNativeRelation, QleverNativeWorkingOutcomeUnknown } from "./native/BasisRelations.js";
+// [EXP-C8] QleverNativeWorkingOutcomeUnknown is gone with the scratch-graph updates it reported on.
+export { type QleverNativeRelation } from "./native/BasisRelations.js";

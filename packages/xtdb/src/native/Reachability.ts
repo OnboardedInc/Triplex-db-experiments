@@ -1,46 +1,84 @@
-import { randomUUID } from "node:crypto";
 import {
+  FRONTIER_DEFAULTS,
+  closurePairs,
+  frontierClosure,
   nativeEvidenceValue,
+  type FrontierEdge,
   type NativeQueryStep,
   type NativeReadBasis,
 } from "@triplex-build/triplex/runtime";
-import { XtdbTransactionRejected, type XtdbClient, type XtdbStatement } from "../XtdbClient.js";
-import { makeNativeContext, type XtdbNativeContext } from "./Sources.js";
+import type { XtdbClient } from "../XtdbClient.js";
+import {
+  boundedXtqlStatement,
+  makeNativeContext,
+  type XtdbNativeContext,
+} from "./Sources.js";
 import { readOnlyNativeSql } from "./ReadOnlySql.js";
+
+export type XtdbNativeLanguage = "xtql" | "xtdb-sql";
 
 export interface XtdbNativeReachability {
   readonly name: string;
-  /** Authored native SELECT yielding string columns source and target. */
+  /**
+   * Authored native query, in the call's language, yielding text columns `source` and `target`
+   * (XTQL: a relation with `source` and `target` bindings). It reads the basis relations of the
+   * context it is given, so every round of the task reads the same basis.
+   */
   readonly edges: (context: XtdbNativeContext, parameters: unknown) => string;
+  /**
+   * The bound starts: entity ids, or a native query in the call's language yielding a text
+   * column `seed`. The relation then holds only pairs whose source is a seed. Omit for the
+   * closure of every source of the edge relation (all pairs, bounded by `maxRecursiveRows`).
+   */
+  readonly seeds?: (
+    context: XtdbNativeContext,
+    parameters: unknown,
+  ) => readonly string[] | { readonly query: string };
 }
 
-export class NativeWorkingOutcomeUnknown extends Error {
-  constructor(
-    readonly runId: string,
-    readonly attemptId: string,
-    readonly phase: string,
-  ) {
-    super(
-      `Native working write outcome is unresolved; run=${runId}, attempt=${attemptId}, phase=${phase}; scratch retained, no blind cleanup or replay`,
-    );
-  }
+export interface XtdbNativeReachabilityBudgets {
+  /** Closure pairs per relation (and reached nodes); the old helper's `maxRecursiveRows`. */
+  readonly maxRecursiveRows?: number;
+  readonly maxRounds?: number;
 }
 
 /**
- * Server-resident relational rounds, not host graph evaluation or Datalog
- * lowering. XTDB v2.2.0 rejects recursive CTEs in sql.clj/visitWithClause:
- * https://github.com/xtdb/xtdb/blob/v2.2.0/core/src/main/clojure/xtdb/sql.clj
- * Owned scratch is erased after consumption; canonical Triplex history is untouched.
+ * Read-only reachability for native XTDB reads (contract C8).
+ *
+ * [EXP-C8] Why: the previous helper created `tx_native_relations`, then ran one
+ * `INSERT ... SELECT` + `COMMIT SYNC` per round and an `ERASE` at the end: every round was a
+ * durable transaction (205 to 410 ms each on any graph size, R10 1.5 and 3.6) competing with
+ * the writer commits P1/P2 measure. Now each round is one read, `edges` restricted to the
+ * frontier, and the closure is computed by the shared frontierClosure (R10 6.2, 6.4). The answer
+ * query receives the closure inline as ONE structured parameter, so nothing is written.
+ *
+ * Round shapes (both measured or probed on XTDB 2.2.0):
+ * - SQL: `e.source IN (SELECT x FROM UNNEST($n) AS u(x))` with the frontier as one array
+ *   parameter. Never `e.source = ANY($n) AND ...`: 2.2.0 parses the trailing predicate into the
+ *   ANY operand and returns zero or wrong rows silently (R10 finding 7, R14 H05); the IN form was
+ *   correct in every probe and is a semi-join that prunes pages for small frontiers (R10 3.4).
+ *   It is uncorrelated and sits in WHERE, so neither #6313 (R14 H02) nor the projected/OR mark
+ *   join of #6345 (R14 H03) applies.
+ * - XTQL: the frontier is one `rel` parameter joined in `unify` (R10 3.5: a scalar `_id`
+ *   OR-chain fails to compile at about 20 parameters, so the frontier must be one structured
+ *   parameter). The rel join scans the edge relation, 17 to 120 ms per round on 20k to 111k
+ *   entities (R10 3.5); exact, and still far below one commit per round.
+ * The answer relation is `UNNEST` of a JSON array of pairs (SQL, `p[1]`/`p[2]`) or a `rel` of
+ * `{source, target}` maps (XTQL); both were probed on the dev engine, including the empty case
+ * (an empty XTQL `rel` cannot be typed, so an empty relation is a filtered literal row).
+ * Rejected: `WITH RECURSIVE` (rejected by 2.2.0, sql.clj:264-265, R10 3.6); the interim XTQL
+ * depth unrolling of EXP-X02 (D <= 8, D^2 statement growth, R12 5.3); any scratch fallback
+ * (R10 6.10).
  */
-export const materializeNativeReachability = async (
+export const resolveNativeReachability = async (
   client: XtdbClient,
+  language: XtdbNativeLanguage,
   basis: NativeReadBasis,
   definitions: readonly XtdbNativeReachability[],
   input: unknown,
   signal: AbortSignal,
   steps: NativeQueryStep[],
-  maxRows = 100_000,
-  maxRounds = 100,
+  budgets: XtdbNativeReachabilityBudgets = {},
 ) => {
   if (
     !definitions.length ||
@@ -50,191 +88,131 @@ export const materializeNativeReachability = async (
   for (const definition of definitions)
     if (!/^[A-Za-z_][A-Za-z0-9_-]{0,127}$/.test(definition.name))
       throw new TypeError("Invalid native reachability relation name");
-  if (![maxRows, maxRounds].every((value) => Number.isSafeInteger(value) && value > 0))
+  const maxPairs = budgets.maxRecursiveRows ?? 100_000;
+  const maxRounds = budgets.maxRounds ?? FRONTIER_DEFAULTS.maxRounds;
+  if (![maxPairs, maxRounds].every((value) => Number.isSafeInteger(value) && value > 0))
     throw new RangeError("Native reachability budgets must be positive safe integers");
-  const runId = randomUUID();
-  let initialized = false;
-  let uncertain = false;
-  const submit = async (phase: string, statements: readonly XtdbStatement[]) => {
-    const attemptId = randomUUID();
-    const markerId = JSON.stringify([basis.scope, runId, attemptId]);
-    const tracked: readonly XtdbStatement[] = initialized
-      ? [
-          {
-            sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_native_relation_attempts FOR ALL VALID_TIME WHERE _id = $1), 'triplex-native-attempt-duplicate'",
-            params: [markerId],
-            parameterSyntax: "postgresql",
-          },
-          ...statements,
-          {
-            sql: "INSERT INTO tx_native_relation_attempts (_id, _valid_from, scope_key, run_id, attempt_id, phase) VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', $2, $3, $4, $5)",
-            params: [markerId, basis.scope, runId, attemptId, phase],
-            parameterSyntax: "postgresql",
-          },
-        ]
-      : statements;
+  // [EXP-C8] Why: 10,000 ids per XTDB round. A single 111,000-id array parameter ran in 409 ms
+  // while 1,000-id batches cost 47 ms each, so large batches are cheaper (R10 3.4 "Batch size").
+  const maxBatch = 10_000;
+
+  /** One read-only native statement at the task's basis, recorded as a step. */
+  const read = async <T extends Record<string, unknown>>(
+    phase: string,
+    build: (context: XtdbNativeContext) => string,
+    limit: number,
+  ): Promise<T[]> => {
+    signal.throwIfAborted();
+    const native = makeNativeContext(language, basis);
+    const body = build(native.context);
+    const query =
+      language === "xtql"
+        ? boundedXtqlStatement(body, native.parameters.length, limit)
+        : `${readOnlyNativeSql(body)}\nLIMIT ${limit}`;
     const started = performance.now();
     try {
-      await client.submit(tracked);
-    } catch (cause) {
-      if (cause instanceof XtdbTransactionRejected || !initialized) throw cause;
-      // A transport timeout is not rollback. Resolve the atomically written
-      // marker before any ERASE could race a later successful round commit.
-      const until = Date.now() + 30_000;
-      let resolved = false;
-      do {
-        try {
-          const receipts = await client.query(
-            "SELECT attempt_id FROM tx_native_relation_attempts FOR ALL VALID_TIME WHERE _id = $1",
-            [markerId],
-            undefined,
-            { parameterSyntax: "postgresql", timeoutMs: Math.max(1, until - Date.now()) },
-          );
-          if (receipts.length) {
-            resolved = true;
-            break;
-          }
-        } catch {
-          /* retry receipt observation, never the possibly committed write */
-        }
-        if (Date.now() < until) await new Promise((resolve) => setTimeout(resolve, 25));
-      } while (Date.now() < until);
-      if (!resolved) {
-        uncertain = true;
-        throw new NativeWorkingOutcomeUnknown(runId, attemptId, phase);
-      }
-    }
-    const elapsedMs = performance.now() - started;
-    for (const [index, statement] of tracked.entries())
+      return await client.query<T>(query, native.parameters, undefined, {
+        signal,
+        parameterSyntax: "postgresql",
+      });
+    } finally {
       steps.push({
         phase,
-        language: "xtdb-sql",
-        query: statement.sql,
-        parameters: (statement.params ?? []).map(nativeEvidenceValue),
-        elapsedMs: index === 0 ? elapsedMs : 0,
+        language,
+        query,
+        parameters: native.parameters.map(nativeEvidenceValue),
+        elapsedMs: performance.now() - started,
       });
-  };
-  const count = async (name: string) => {
-    signal.throwIfAborted();
-    const query =
-      "SELECT COUNT(*) AS count FROM tx_native_relations FOR ALL VALID_TIME WHERE scope_key = $1 AND run_id = $2 AND relation_name = $3";
-    const params = [basis.scope, runId, name];
-    const started = performance.now();
-    const rows = await client.query<{ count: unknown }>(query, params, undefined, {
-      signal,
-      parameterSyntax: "postgresql",
-    });
-    steps.push({
-      phase: "working-count",
-      language: "xtdb-sql",
-      query,
-      parameters: params,
-      elapsedMs: performance.now() - started,
-    });
-    const result = Number(rows[0]?.count ?? 0);
-    if (!Number.isSafeInteger(result) || result > maxRows)
-      throw new RangeError("Native reachability exceeds its complete relation row budget");
-    return result;
-  };
-  const cleanup = async () => {
-    if (uncertain) throw new Error(`Working cleanup is blocked by an unresolved write in ${runId}`);
-    if (initialized)
-      await submit("working-cleanup", [
-        {
-          sql: "ERASE FROM tx_native_relations WHERE scope_key = $1 AND run_id = $2",
-          params: [basis.scope, runId],
-          parameterSyntax: "postgresql",
-        },
-        {
-          // Retain this cleanup's new receipt after removing prior round markers.
-          // The remaining small receipt is accounted owned state, not free history.
-          sql: "ERASE FROM tx_native_relation_attempts WHERE scope_key = $1 AND run_id = $2",
-          params: [basis.scope, runId],
-          parameterSyntax: "postgresql",
-        },
-      ]);
-  };
-  try {
-    signal.throwIfAborted();
-    await submit("working-initialize", [
-      {
-        sql: "CREATE TABLE tx_native_relations (_id, scope_key, run_id, relation_name, source, target, depth)",
-      },
-      {
-        sql: "CREATE TABLE tx_native_relation_attempts (_id, scope_key, run_id, attempt_id, phase)",
-      },
-    ]);
-    initialized = true;
-    for (const definition of definitions) {
-      signal.throwIfAborted();
-      const native = makeNativeContext("xtdb-sql", basis);
-      const edges = readOnlyNativeSql(definition.edges(native.context, input));
-      const scope = native.context.bind(basis.scope),
-        run = native.context.bind(runId),
-        name = native.context.bind(definition.name),
-        prefix = native.context.bind(`${runId}/${definition.name}/`);
-      const guard: XtdbStatement = {
-        sql: "ASSERT (SELECT COUNT(*) FROM tx_native_relations FOR ALL VALID_TIME WHERE scope_key = $1 AND run_id = $2 AND relation_name = $3) <= $4, 'triplex-native-reachability-limit'",
-        params: [basis.scope, runId, definition.name, maxRows],
-        parameterSyntax: "postgresql",
-      };
-      await submit("working-seed", [
-        {
-          sql: `INSERT INTO tx_native_relations (_id, _valid_from, scope_key, run_id, relation_name, source, target, depth) SELECT ${prefix} || CAST(CHARACTER_LENGTH(e.source) AS TEXT) || ':' || e.source || e.target, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', ${scope}, ${run}, ${name}, e.source, e.target, 0 FROM (SELECT DISTINCT source, target FROM (${edges}\n) native_edges) e LIMIT ${maxRows + 1}`,
-          params: native.parameters,
-          parameterSyntax: "postgresql",
-        },
-        guard,
-      ]);
-      let previous = await count(definition.name),
-        complete = false;
-      for (let round = 1; round <= maxRounds; round++) {
-        signal.throwIfAborted();
-        const params = [basis.scope, runId, definition.name, `${runId}/${definition.name}/`, round];
-        // [EXP-X02] Why: the correlated predicate is written `(p) IS TRUE`. XTDB 2.2.0 moves a
-        // subquery WHERE into a three-valued mark, so one NULL endpoint drops the candidate and the
-        // closure silently under-reaches (upstream #6313; R14 H02). // [EXP-X02] interim, replaced by EXP-X03
-        await submit("working-round", [
-          {
-            sql: `INSERT INTO tx_native_relations (_id, _valid_from, scope_key, run_id, relation_name, source, target, depth) SELECT $4 || CAST(CHARACTER_LENGTH(c.source) AS TEXT) || ':' || c.source || c.target, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', $1, $2, $3, c.source, c.target, $5 FROM (SELECT DISTINCT prior.source AS source, edge.target AS target FROM tx_native_relations FOR ALL VALID_TIME prior JOIN tx_native_relations FOR ALL VALID_TIME edge ON prior.target = edge.source WHERE prior.scope_key = $1 AND prior.run_id = $2 AND prior.relation_name = $3 AND prior.depth < $5 AND edge.scope_key = $1 AND edge.run_id = $2 AND edge.relation_name = $3 AND edge.depth = 0) c WHERE NOT EXISTS (SELECT 1 FROM tx_native_relations FOR ALL VALID_TIME seen WHERE seen.scope_key = $1 AND seen.run_id = $2 AND seen.relation_name = $3 AND (seen.source = c.source) IS TRUE AND (seen.target = c.target) IS TRUE) LIMIT ${maxRows + 1}`,
-            params,
-            parameterSyntax: "postgresql",
-          },
-          {
-            sql: "ASSERT (SELECT COUNT(*) FROM tx_native_relations FOR ALL VALID_TIME WHERE scope_key = $1 AND run_id = $2 AND relation_name = $3) <= $4, 'triplex-native-reachability-limit'",
-            params: [basis.scope, runId, definition.name, maxRows],
-            parameterSyntax: "postgresql",
-          },
-        ]);
-        const current = await count(definition.name);
-        if (current === previous) {
-          complete = true;
-          break;
-        }
-        previous = current;
-      }
-      if (!complete)
-        throw new RangeError(
-          "Native reachability did not complete within maxRounds; no partial result returned",
-        );
     }
-    return {
-      relation: (name: string, context: XtdbNativeContext) => {
-        if (!definitions.some((definition) => definition.name === name))
-          throw new TypeError("Undeclared native reachability relation");
-        return `(SELECT source, target FROM tx_native_relations FOR ALL VALID_TIME WHERE scope_key = ${context.bind(basis.scope)} AND run_id = ${context.bind(runId)} AND relation_name = ${context.bind(name)})`;
-      },
-      cleanup,
-    };
-  } catch (cause) {
-    try {
-      await cleanup();
-    } catch (cleanupFailure) {
-      throw new AggregateError(
-        [cause, cleanupFailure],
-        "Native working relation failed and cleanup is unresolved",
+  };
+  const text = (value: unknown, role: string): string => {
+    if (typeof value !== "string")
+      throw new TypeError(`Native reachability ${role} must be text, got ${typeof value}`);
+    return value;
+  };
+  const edgesOf = (definition: XtdbNativeReachability, context: XtdbNativeContext) => {
+    const edges = definition.edges(context, input);
+    if (typeof edges !== "string" || !edges.trim())
+      throw new TypeError("A native reachability edge builder must return native query text");
+    return language === "xtql" ? edges : readOnlyNativeSql(edges);
+  };
+
+  const relations = new Map<string, readonly FrontierEdge[]>();
+  for (const definition of definitions) {
+    signal.throwIfAborted();
+    let seeds: readonly string[] | undefined;
+    let fetch: (batch: readonly string[], limit: number) => Promise<FrontierEdge[]>;
+    const declared = definition.seeds
+      ? definition.seeds(makeNativeContext(language, basis).context, input)
+      : undefined;
+    if (declared && "query" in declared) {
+      const rows = await read<{ seed: unknown }>(
+        "frontier-seeds",
+        (context) => {
+          const seedQuery = definition.seeds!(context, input) as { readonly query: string };
+          return language === "xtql"
+            ? `(-> ${seedQuery.query} (aggregate seed))`
+            : `SELECT DISTINCT s.seed AS seed FROM (${readOnlyNativeSql(seedQuery.query)}\n) s`;
+        },
+        maxPairs + 1,
       );
+      if (rows.length > maxPairs)
+        throw new RangeError("Native reachability seeds exceed maxRecursiveRows");
+      seeds = rows.map((row) => text(row.seed, "seed"));
+    } else if (declared) seeds = declared.map((seed) => text(seed, "seed"));
+
+    if (seeds) {
+      fetch = async (batch, limit) =>
+        (
+          await read<{ source: unknown; target: unknown }>(
+            "frontier-round",
+            (context) =>
+              language === "xtql"
+                ? `(-> (unify (rel ${context.bind(batch.map((source) => ({ source })))} [source]) (join ${edgesOf(definition, context)} [source target])) (aggregate source target))`
+                : `SELECT DISTINCT e.source AS source, e.target AS target FROM (${edgesOf(definition, context)}\n) e WHERE e.source IN (SELECT x FROM UNNEST(${context.bind([...batch])}) AS u(x))`,
+            limit,
+          )
+        ).map((row) => [text(row.source, "source"), text(row.target, "target")] as const);
+    } else {
+      // All-pairs mode keeps the old public contract (closure of every source) without its
+      // writes: one bounded read of the whole edge relation, then the same loop in memory.
+      const rows = await read<{ source: unknown; target: unknown }>(
+        "frontier-edges",
+        (context) =>
+          language === "xtql"
+            ? `(-> ${edgesOf(definition, context)} (aggregate source target))`
+            : `SELECT DISTINCT e.source AS source, e.target AS target FROM (${edgesOf(definition, context)}\n) e`,
+        FRONTIER_DEFAULTS.maxRoundRows + 1,
+      );
+      if (rows.length > FRONTIER_DEFAULTS.maxRoundRows)
+        throw new RangeError("Native reachability edge relation exceeds its row budget");
+      const out = new Map<string, FrontierEdge[]>();
+      for (const row of rows) {
+        const edge = [text(row.source, "source"), text(row.target, "target")] as const;
+        out.set(edge[0], [...(out.get(edge[0]) ?? []), edge]);
+      }
+      seeds = [...out.keys()];
+      fetch = async (batch, limit) => batch.flatMap((source) => out.get(source) ?? []).slice(0, limit);
     }
-    throw cause;
+    const closure = await frontierClosure({
+      seeds,
+      edges: fetch,
+      budgets: { maxRounds, maxVisited: maxPairs, maxBatch },
+      signal,
+    });
+    relations.set(definition.name, closurePairs(closure, maxPairs));
   }
+
+  return {
+    /** The closure as an inline relation of text pairs `(source, target)`; no table is read. */
+    relation: (name: string, context: XtdbNativeContext) => {
+      const pairs = relations.get(name);
+      if (!pairs) throw new TypeError("Undeclared native reachability relation");
+      if (language === "xtdb-sql")
+        return `(SELECT p[1] AS source, p[2] AS target FROM UNNEST(${context.bind(pairs.map(([s, t]) => [s, t]))}) AS u(p))`;
+      return pairs.length
+        ? `(rel ${context.bind(pairs.map(([source, target]) => ({ source, target })))} [source target])`
+        : `(-> (rel [{:source "" :target ""}] [source target]) (where false))`;
+    },
+  };
 };

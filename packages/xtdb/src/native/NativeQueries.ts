@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { readOnlyXtdbClient } from "../ReadOnlyClient.js";
 import {
   ReadError,
   decodeNativeParameters,
@@ -20,7 +21,7 @@ import {
   type XtdbNativeContext,
 } from "./Sources.js";
 import { readOnlyNativeSql } from "./ReadOnlySql.js";
-import { materializeNativeReachability, type XtdbNativeReachability } from "./Reachability.js";
+import { resolveNativeReachability, type XtdbNativeReachability } from "./Reachability.js";
 
 export type XtdbNativeBuilder = (context: XtdbNativeContext, parameters: unknown) => string;
 export interface XtdbNativeReachabilityContext extends XtdbNativeContext {
@@ -37,7 +38,7 @@ export const XTDB_NATIVE_MAPPING_ID = "triplex-xtdb/assertion-native-basis/1";
  * A trusted authored query receives closed basis relations; arbitrary table reads
  * do not acquire an automatic Triplex temporal or authorization guarantee.
  */
-export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) => {
+const nativeQueries = (client: XtdbClient, scope: DatabaseScope) => {
   const run = (
     language: "xtql" | "xtdb-sql",
     contract: NativeQueryContract,
@@ -71,8 +72,9 @@ export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) 
           const steps: NativeQueryStep[] = [];
           const sourceStarted = performance.now();
           // [EXP-X02] Why: the cut is read in the answer's language (Sources.ts sourceCutQuery).
-          // A reachability read keeps its SQL working-relation shell, so it stays SQL throughout.
-          const cut = sourceCutQuery(relations ? "xtdb-sql" : language);
+          // [EXP-C8] Reachability reads are read-only frontier rounds in the call's own language
+          // (Reachability.ts), so they no longer force an SQL working-relation shell.
+          const cut = sourceCutQuery(language);
           const current = await client.query<{ position: unknown }>(
             cut.query,
             [scope],
@@ -92,19 +94,21 @@ export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) 
             currentPosition: Number(current[0]?.position ?? 0),
             now: Date.now(),
           });
+          // [EXP-C8] Why: the basis above is resolved once and every frontier round reads it,
+          // so commits between rounds cannot change the closure (R10 3.8). No write is issued.
           const working = relations
-            ? await materializeNativeReachability(
+            ? await resolveNativeReachability(
                 client,
+                language,
                 basis,
                 relations,
                 parameters,
                 signal,
                 steps,
-                (options as XtdbNativeReachabilityOptions).maxRecursiveRows,
-                (options as XtdbNativeReachabilityOptions).maxRounds,
+                options as XtdbNativeReachabilityOptions,
               )
             : undefined;
-          try {
+          {
             const native = makeNativeContext(language, basis);
             const context = working
               ? {
@@ -139,8 +143,6 @@ export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) 
                 `Native query exceeds maxRows=${maxRows}; no partial answer returned`,
               );
             return { rawRows, basis, query, bindings: native.parameters, steps };
-          } finally {
-            if (working) await working.cleanup();
           }
         },
         catch: (cause) =>
@@ -197,7 +199,33 @@ export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) 
         options,
         relations,
       ),
+    /**
+     * [EXP-C8] The XTQL twin of selectSqlWithReachability: edges, seeds, every frontier round,
+     * the source cut and the answer are XTQL, so a closure task stays in one language (PLAN 7.5).
+     * `relation(name)` is an XTQL relation with `source` and `target`; use it in `unify` as
+     * `(join ${relation(name)} [{:source s} {:target t}])`.
+     */
+    selectWithReachability: (
+      contract: NativeQueryContract,
+      input: unknown,
+      relations: readonly XtdbNativeReachability[],
+      build: (context: XtdbNativeReachabilityContext, parameters: unknown) => string,
+      options?: XtdbNativeReachabilityOptions,
+    ) =>
+      run(
+        "xtql",
+        contract,
+        input,
+        (context, parameters) => build(context as XtdbNativeReachabilityContext, parameters),
+        options,
+        relations,
+      ),
   };
 };
 
 export type XtdbNativeQueries = ReturnType<typeof makeXtdbNativeQueries>;
+
+// [EXP-C8] Read entry point: the shared client is handed over as a write-refusing view
+// (ReadOnlyClient.ts), so no read path can reach the engine with a write.
+export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) =>
+  nativeQueries(readOnlyXtdbClient(client), scope);

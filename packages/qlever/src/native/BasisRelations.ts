@@ -1,6 +1,12 @@
-import { randomUUID } from "node:crypto";
-import type { NativeQueryStep, NativeReadBasis } from "@triplex-build/triplex/runtime";
-import type { QleverClient, QleverRequestOptions } from "../QleverClient.js";
+import {
+  FRONTIER_DEFAULTS,
+  closurePairs,
+  frontierClosure,
+  type FrontierEdge,
+  type NativeQueryStep,
+  type NativeReadBasis,
+} from "@triplex-build/triplex/runtime";
+import type { QleverClient, QleverRequestOptions, SparqlTerm } from "../QleverClient.js";
 import { literal } from "../rdf.js";
 import {
   makeQleverNativeContext,
@@ -12,18 +18,15 @@ export interface QleverNativeRelation {
   readonly name: string;
   /** Trusted native SELECT projecting plain string variables ?source/?target. */
   readonly edges: (context: QleverNativeContext, parameters: unknown) => string;
-}
-
-export class QleverNativeWorkingOutcomeUnknown extends Error {
-  constructor(
-    readonly runId: string,
-    readonly attemptId: string,
-    readonly phase: string,
-  ) {
-    super(
-      `Native working update is unresolved; run=${runId}, attempt=${attemptId}, phase=${phase}; graph retained, no blind cleanup or replay`,
-    );
-  }
+  /**
+   * The bound starts: plain string identities, or a query-only SELECT projecting a plain string
+   * `?seed`. The relation then holds only pairs whose source is a seed. Omit for the closure of
+   * every source of the edge relation (all pairs, bounded by `maxRelationRows`).
+   */
+  readonly seeds?: (
+    context: QleverNativeContext,
+    parameters: unknown,
+  ) => readonly string[] | { readonly query: string };
 }
 
 /** A restricted SELECT fragment guard, not a general SPARQL AST or sandbox. */
@@ -83,14 +86,39 @@ const selectFragment = (text: string): string => {
   return text;
 };
 
+const XSD_STRING = "http://www.w3.org/2001/XMLSchema#string";
+/** The old working-domain check, per fetched row: endpoints are complete plain string identities. */
+const identity = (term: SparqlTerm | undefined, role: string): string => {
+  if (
+    !term ||
+    (term.type !== "literal" && term.type !== "typed-literal") ||
+    term["xml:lang"] !== undefined ||
+    (term.datatype !== undefined && term.datatype !== XSD_STRING)
+  )
+    throw new TypeError(`Native edge ${role} must be a complete plain string identity`);
+  return term.value;
+};
+
 /**
- * Materialize only basis-filtered direct edges in a fresh owned native graph.
- * QLever's native TransitivePath computes closure over that graph, including
- * cycles, rather than translating Datalog or evaluating a host-loaded graph.
- * Mechanism: https://github.com/ad-freiburg/qlever/blob/v0.6.0/src/engine/TransitivePathBase.h
- * The commissioned v0.6.0/6c5861a binary still needs its own live qualification.
+ * Read-only basis relations for native QLever reads (contract C8).
+ *
+ * [EXP-C8] Why: the previous helper copied the basis-filtered edges into a fresh scratch graph
+ * with a SPARQL update, counted `p+` over it, and deleted it afterwards: three or more updates
+ * per call (about 62 per G2 run, EXP-002), each of which empties QLever's whole result cache
+ * (R17 finding 2) and grows the delta that slows every later update (EXP-002: 7 ms to 1.3 s). Now
+ * each round is one SELECT: the authored edge fragment joined with the frontier as ONE `VALUES`
+ * block, and the shared frontierClosure computes the closure (R10 3.3, 6.3 Tier 2). The answer
+ * query receives the closure inline as a `VALUES` block in place of the old graph pattern.
+ *
+ * Tier 1 of R10 6.3 (one property path over a current graph) does not apply yet: the assertion
+ * mapping in rdf.ts has no plain-IRI current graph, and a path over the ledger graph is
+ * forbidden (R10 2.5, 6.3). So no `?s p+ ?o` with both ends unbound and no `p*` with a constant
+ * start are ever issued; the only recursion is the host loop.
+ * Known cost (R10 finding 5): entity ids are plain string literals in this mapping, and QLever
+ * plans a `VALUES` literal in about 0.23 ms against under 0.01 ms for an IRI. Batches stay at
+ * 1,000 (the measured knee, R10 3.3); IRI ids belong to the compact ledger work (EXP-Q01).
  */
-export const materializeQleverNativeRelations = async (
+export const resolveQleverNativeRelations = async (
   client: QleverClient,
   basis: NativeReadBasis,
   definitions: readonly QleverNativeRelation[],
@@ -110,15 +138,6 @@ export const materializeQleverNativeRelations = async (
   for (const definition of definitions)
     if (!/^[A-Za-z_][A-Za-z0-9_-]{0,127}$/.test(definition.name))
       throw new TypeError("Invalid native relation name");
-  const runId = randomUUID();
-  const graph = `<urn:triplex:native:${Buffer.from(basis.scope).toString("base64url")}:${runId}>`;
-  const receipts = `<urn:triplex:native-receipts:${Buffer.from(basis.scope).toString("base64url")}>`;
-  const completed = "<urn:triplex:native:completed>";
-  const lexical = "<urn:triplex:native:entity>";
-  const predicate = (name: string) => `<urn:triplex:native:edge:${name}>`;
-  let touched = false,
-    uncertain = false,
-    sequence = 0;
   const read = async (phase: string, query: string) => {
     signal.throwIfAborted();
     const started = performance.now();
@@ -134,186 +153,108 @@ export const materializeQleverNativeRelations = async (
       });
     }
   };
-  const submit = async (
-    phase: string,
-    update: (marker: string, completion: string) => string,
-    completionGraph = graph,
-  ) => {
+  const relations = new Map<string, readonly FrontierEdge[]>();
+  for (const definition of definitions) {
     signal.throwIfAborted();
-    const attemptId = randomUUID(),
-      marker = `<urn:triplex:native-attempt:${runId}:${attemptId}>`;
-    const query = update(marker, completed);
-    const started = performance.now();
-    touched = true;
-    try {
-      await client.update(query, request);
-    } catch {
-      // Updates are never blindly replayed. The same atomic MODIFY carries a
-      // receipt even for an empty edge relation; observe it before any erase.
-      const until = Date.now() + 30_000;
-      let resolved = false;
-      do {
-        const observation = `SELECT ?phase WHERE { GRAPH ${completionGraph} { ${marker} ${completed} ?phase } }`;
-        const observedAt = performance.now();
-        try {
-          if (
-            (
-              await client.query(observation, {
-                ...request,
-                timeoutMs: Math.max(1, until - Date.now()),
-              })
-            ).length
-          ) {
-            resolved = true;
-            break;
-          }
-        } catch {
-          /* receipt observation may retry; the write never does */
-        } finally {
-          steps.push({
-            phase: "working-reconcile",
-            language: "sparql-1.1",
-            query: observation,
-            parameters: [],
-            elapsedMs: performance.now() - observedAt,
-          });
-        }
-        if (Date.now() < until) await new Promise((resolve) => setTimeout(resolve, 25));
-      } while (Date.now() < until);
-      if (!resolved) {
-        uncertain = true;
-        throw new QleverNativeWorkingOutcomeUnknown(runId, attemptId, phase);
-      }
-    } finally {
-      steps.push({
-        phase,
-        language: "sparql-1.1",
-        query,
-        parameters: [],
-        elapsedMs: performance.now() - started,
-      });
-    }
-  };
-  const cleanup = async () => {
-    if (uncertain)
-      throw new Error(`Native working cleanup blocked by unresolved update in ${runId}`);
-    if (!touched) return;
-    // Cleanup ignores caller cancellation so acknowledged writes can settle.
-    // One small cleanup receipt remains charged owned state, not free history.
-    const attemptId = randomUUID(),
-      marker = `<urn:triplex:native-attempt:${runId}:${attemptId}>`;
-    const query = `DELETE { GRAPH ${graph} { ?s ?p ?o } } INSERT { GRAPH ${receipts} { ${marker} ${completed} ${literal("working-cleanup")} } } WHERE { OPTIONAL { GRAPH ${graph} { ?s ?p ?o } } }`;
-    const started = performance.now();
-    try {
-      await client.update(query, request);
-    } catch {
-      const until = Date.now() + 30_000;
-      let resolved = false;
-      do {
-        const observation = `SELECT ?phase WHERE { GRAPH ${receipts} { ${marker} ${completed} ?phase } }`;
-        const observedAt = performance.now();
-        try {
-          if (
-            (
-              await client.query(observation, {
-                ...request,
-                timeoutMs: Math.max(1, until - Date.now()),
-              })
-            ).length
-          ) {
-            resolved = true;
-            break;
-          }
-        } catch {
-          /* no replay */
-        } finally {
-          steps.push({
-            phase: "working-reconcile",
-            language: "sparql-1.1",
-            query: observation,
-            parameters: [],
-            elapsedMs: performance.now() - observedAt,
-          });
-        }
-        if (Date.now() < until) await new Promise((resolve) => setTimeout(resolve, 25));
-      } while (Date.now() < until);
-      if (!resolved) {
-        uncertain = true;
-        throw new QleverNativeWorkingOutcomeUnknown(runId, attemptId, "working-cleanup");
-      }
-    } finally {
-      steps.push({
-        phase: "working-cleanup",
-        language: "sparql-1.1",
-        query,
-        parameters: [],
-        elapsedMs: performance.now() - started,
-      });
-    }
-    touched = false;
-  };
-  try {
-    for (const definition of definitions) {
-      signal.throwIfAborted();
-      const source = selectFragment(definition.edges(makeQleverNativeContext(basis), input));
-      const invalid = await read(
-        "working-domain-check",
-        `SELECT (COUNT(*) AS ?total) WHERE { { ${source} } FILTER(!isLiteral(?source) || !isLiteral(?target) || DATATYPE(?source) != <http://www.w3.org/2001/XMLSchema#string> || DATATYPE(?target) != <http://www.w3.org/2001/XMLSchema#string>) }`,
+    const context = makeQleverNativeContext(basis);
+    const source = selectFragment(definition.edges(context, input));
+    const declared = definition.seeds?.(context, input);
+    let seeds: readonly string[];
+    let fetch: (batch: readonly string[], limit: number) => Promise<FrontierEdge[]>;
+    const edgeRows = (rows: Awaited<ReturnType<QleverClient["query"]>>) =>
+      rows.map(
+        (row) => [identity(row["source"], "source"), identity(row["target"], "target")] as const,
       );
-      if (Number(invalid[0]?.["total"]?.value ?? 0) !== 0)
-        throw new TypeError("Native edge endpoints must be complete plain string identities");
-      const prefix = literal(`urn:triplex:native-node:${runId}:${definition.name}:`);
-      await submit(
-        "working-seed",
-        (marker, completion) =>
-          `INSERT { GRAPH ${graph} { ${marker} ${completion} ${literal(definition.name)} . ?sourceNode ${predicate(definition.name)} ?targetNode . ?sourceNode ${lexical} ?source . ?targetNode ${lexical} ?target } } WHERE { OPTIONAL { { SELECT DISTINCT ?source ?target WHERE { { ${source} } } LIMIT ${maxRows + 1} } BIND(IRI(CONCAT(${prefix}, ENCODE_FOR_URI(?source))) AS ?sourceNode) BIND(IRI(CONCAT(${prefix}, ENCODE_FOR_URI(?target))) AS ?targetNode) } }`,
-      );
-      for (const [phase, path] of [
-        ["working-edge-count", predicate(definition.name)],
-        ["working-closure-count", `${predicate(definition.name)}+`],
-      ] as const) {
+    if (declared) {
+      if ("query" in declared) {
         const rows = await read(
-          phase,
-          `SELECT (COUNT(*) AS ?total) WHERE { { SELECT DISTINCT ?source ?target WHERE { GRAPH ${graph} { ?source ${path} ?target } } LIMIT ${maxRows + 1} } }`,
+          "frontier-seeds",
+          `SELECT DISTINCT ?seed WHERE { { ${selectFragment(declared.query)} } } LIMIT ${maxRows + 1}`,
         );
-        const total = Number(rows[0]?.["total"]?.value ?? 0);
-        if (!Number.isSafeInteger(total) || total > maxRows)
-          throw new RangeError("Native relation exceeds complete row budget; no partial answer");
-      }
-    }
-    return {
-      relation: (
-        name: string,
-        source: string | QleverNativeEntity,
-        target: string | QleverNativeEntity,
-      ) => {
-        if (!definitions.some((definition) => definition.name === name))
-          throw new TypeError("Undeclared native relation");
-        const atom = (term: string | QleverNativeEntity) => {
-          if (typeof term !== "string") {
-            if (term._tag !== "QleverNativeEntity")
-              throw new TypeError("Invalid native entity literal");
-            return literal(term.value);
-          }
-          if (!term.startsWith("?")) return literal(term);
-          if (!/^\?[A-Za-z_][A-Za-z0-9_]*$/.test(term))
-            throw new TypeError("Invalid native relation variable");
-          return term;
-        };
-        const prefix = `__triplex_relation_${sequence++}`;
-        return `GRAPH ${graph} { ?${prefix}_source ${predicate(name)}+ ?${prefix}_target . ?${prefix}_source ${lexical} ${atom(source)} . ?${prefix}_target ${lexical} ${atom(target)} }`;
-      },
-      cleanup,
-    };
-  } catch (cause) {
-    try {
-      await cleanup();
-    } catch (cleanupFailure) {
-      throw new AggregateError(
-        [cause, cleanupFailure],
-        "Native relation failed and cleanup is unresolved",
+        if (rows.length > maxRows)
+          throw new RangeError("Native relation seeds exceed the row budget; no partial answer");
+        seeds = rows.map((row) => identity(row["seed"], "seed"));
+      } else
+        seeds = declared.map((seed) => {
+          if (typeof seed !== "string") throw new TypeError("Native relation seeds must be text");
+          return seed;
+        });
+      // One read per round: the frontier is one VALUES block joined to the authored edges.
+      fetch = async (batch, limit) =>
+        edgeRows(
+          await read(
+            "frontier-round",
+            `SELECT DISTINCT ?source ?target WHERE { VALUES ?source { ${batch.map(literal).join(" ")} } { ${source} } } LIMIT ${limit}`,
+          ),
+        );
+    } else {
+      // All pairs keeps the old public contract without its writes: one bounded read of the edge
+      // relation, then the same loop in memory.
+      const rows = edgeRows(
+        await read(
+          "frontier-edges",
+          `SELECT DISTINCT ?source ?target WHERE { { ${source} } } LIMIT ${maxRows + 1}`,
+        ),
       );
+      if (rows.length > maxRows)
+        throw new RangeError("Native relation exceeds complete row budget; no partial answer");
+      const out = new Map<string, FrontierEdge[]>();
+      for (const edge of rows) out.set(edge[0], [...(out.get(edge[0]) ?? []), edge]);
+      seeds = [...out.keys()];
+      fetch = async (batch, limit) => batch.flatMap((node) => out.get(node) ?? []).slice(0, limit);
     }
-    throw cause;
+    const closure = await frontierClosure({
+      seeds,
+      edges: fetch,
+      budgets: { maxVisited: maxRows, maxRounds: FRONTIER_DEFAULTS.maxRounds, maxBatch: 1_000 },
+      signal,
+    });
+    relations.set(definition.name, closurePairs(closure, maxRows));
   }
+  return {
+    /**
+     * The closure as an inline `VALUES` pattern over `source` and `target`, each a variable or a
+     * plain string (or QleverNativeEntity) constant. No graph is read or written.
+     */
+    relation: (
+      name: string,
+      source: string | QleverNativeEntity,
+      target: string | QleverNativeEntity,
+    ) => {
+      const pairs = relations.get(name);
+      if (!pairs) throw new TypeError("Undeclared native relation");
+      const term = (value: string | QleverNativeEntity) => {
+        if (typeof value !== "string") {
+          if (value._tag !== "QleverNativeEntity")
+            throw new TypeError("Invalid native entity literal");
+          return { constant: value.value };
+        }
+        if (!value.startsWith("?")) return { constant: value };
+        if (!/^\?[A-Za-z_][A-Za-z0-9_]*$/.test(value))
+          throw new TypeError("Invalid native relation variable");
+        return { variable: value };
+      };
+      const s = term(source),
+        t = term(target);
+      const rows = pairs.filter(
+        ([a, b]) =>
+          (s.constant === undefined || a === s.constant) &&
+          (t.constant === undefined || b === t.constant) &&
+          (s.variable === undefined || s.variable !== t.variable || a === b),
+      );
+      const columns: ((pair: FrontierEdge) => string)[] = [];
+      const heads: string[] = [];
+      if (s.variable) {
+        heads.push(s.variable);
+        columns.push(([a]) => literal(a));
+      }
+      if (t.variable && t.variable !== s.variable) {
+        heads.push(t.variable);
+        columns.push(([, b]) => literal(b));
+      }
+      if (!heads.length) return rows.length ? "{ }" : "{ FILTER(false) }";
+      const distinct = [...new Set(rows.map((row) => columns.map((column) => column(row)).join(" ")))];
+      return `VALUES (${heads.join(" ")}) { ${distinct.map((row) => `(${row})`).join(" ")} }`;
+    },
+  };
 };

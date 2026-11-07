@@ -19,7 +19,6 @@ import {
   checkedInt64,
   typedSumOverflow,
 } from "../src/native/xtdb-native-errors.js";
-import { XTQL_REACH_MAX_DEPTH } from "../src/native/xtdb-xtql-reach.js";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const packet = JSON.parse(
@@ -28,11 +27,17 @@ const packet = JSON.parse(
 const PIN = 7;
 
 interface Call {
-  readonly method: "select" | "selectSql" | "selectSqlWithReachability";
+  readonly method: "select" | "selectSql" | "selectSqlWithReachability" | "selectWithReachability";
   readonly name: string;
   readonly text: string;
   readonly recordedPosition: number | undefined;
+  /** [EXP-C8] Relation edge and seed texts, built against the same placeholder context. */
+  readonly relations?: readonly { name: string; edges: string; seeds: unknown }[];
 }
+const withRelations = (method: Call["method"]) =>
+  method === "selectSqlWithReachability" || method === "selectWithReachability";
+const xtqlMethod = (method: Call["method"]) =>
+  method === "select" || method === "selectWithReachability";
 /** A session that runs every builder against placeholder relations and returns canned rows. */
 const mockSession = (
   entry: Record<string, any>,
@@ -42,26 +47,40 @@ const mockSession = (
   const make =
     (method: Call["method"]) =>
     (contract: any, input: unknown, ...rest: any[]) => {
-      const build = method === "selectSqlWithReachability" ? rest[1] : rest[0];
-      const options = method === "selectSqlWithReachability" ? rest[2] : rest[1];
+      const build = withRelations(method) ? rest[1] : rest[0];
+      const options = withRelations(method) ? rest[2] : rest[1];
+      const xtql = xtqlMethod(method);
       let n = 0;
       const ctx = {
         basis: {},
-        bind: () => (method === "select" ? `triplex_param_${++n}` : `$${++n}`),
-        attribute: () => (method === "select" ? `triplex_param_${++n}` : `$${++n}`),
+        bind: () => (xtql ? `triplex_param_${++n}` : `$${++n}`),
+        attribute: () => (xtql ? `triplex_param_${++n}` : `$${++n}`),
         identifier: (name: string) => name,
-        facts: () => (method === "select" ? "(-> FACTS)" : "(SELECT * FROM FACTS)"),
-        recordedFacts: () => (method === "select" ? "(-> RECORDED)" : "(SELECT * FROM RECORDED)"),
+        facts: () => (xtql ? "(-> FACTS)" : "(SELECT * FROM FACTS)"),
+        recordedFacts: () => (xtql ? "(-> RECORDED)" : "(SELECT * FROM RECORDED)"),
         history: () => "HISTORY",
-        relation: () => "(SELECT source, target FROM WORKING)",
+        relation: () => (xtql ? "(rel WORKING [source target])" : "(SELECT source, target FROM WORKING)"),
       };
       const name = String(contract.name).split("/").slice(2).join("/");
+      const relations = withRelations(method)
+        ? (rest[0] as any[]).map((relation) => ({
+            name: relation.name,
+            edges: relation.edges(ctx, input),
+            seeds: relation.seeds?.(ctx, input),
+          }))
+        : undefined;
       const text = build(ctx, input);
-      calls.push({ method, name, text, recordedPosition: options?.basis?.recordedPosition });
+      calls.push({
+        method,
+        name,
+        text,
+        recordedPosition: options?.basis?.recordedPosition,
+        ...(relations ? { relations } : {}),
+      });
       return Effect.succeed({
         rows: rowsFor(name),
         basis: { recordedPosition: options?.basis?.recordedPosition ?? PIN },
-        trace: { language: method === "select" ? "xtql" : "xtdb-sql", steps: [] },
+        trace: { language: xtql ? "xtql" : "xtdb-sql", steps: [] },
       } as any);
     };
   void entry;
@@ -71,6 +90,7 @@ const mockSession = (
       select: make("select"),
       selectSql: make("selectSql"),
       selectSqlWithReachability: make("selectSqlWithReachability"),
+      selectWithReachability: make("selectWithReachability"),
     } as unknown as XtdbNativeTaskSession,
   };
 };
@@ -105,21 +125,39 @@ describe("XTDB native task library: one language and one cut per task (EXP-X02)"
         expect(Exit.isSuccess(exit), `${workload.id}/${entry.id}: ${String(exit)}`).toBe(true);
         expect(calls.length).toBeGreaterThan(0);
         const methods = new Set(calls.map((call) => call.method));
+        // [EXP-C8] Closure tasks use the language's read-only reachability call; every edge and
+        // seed text a relation declares must be in the same language as the answer.
         if (language === "xtql") {
-          expect([...methods]).toEqual(["select"]);
+          for (const method of methods) expect(xtqlMethod(method)).toBe(true);
           for (const call of calls) {
-            expect(call.text.startsWith("(")).toBe(true);
-            expect(call.text).not.toMatch(/\bSELECT\b/);
+            for (const text of [
+              call.text,
+              ...(call.relations ?? []).flatMap((r) => [r.edges, (r.seeds as any)?.query ?? "("]),
+            ]) {
+              expect(text.startsWith("(")).toBe(true);
+              expect(text).not.toMatch(/\bSELECT\b/);
+            }
           }
         } else {
-          expect(methods.has("select")).toBe(false);
-          for (const call of calls) expect(call.text).toMatch(/\bSELECT\b/);
+          for (const method of methods) expect(xtqlMethod(method)).toBe(false);
+          for (const call of calls) {
+            expect(call.text).toMatch(/\bSELECT\b/);
+            for (const relation of call.relations ?? []) {
+              expect(relation.edges).toMatch(/\bSELECT\b/);
+              const query = (relation.seeds as any)?.query;
+              if (query !== undefined) expect(query).toMatch(/\bSELECT\b/);
+            }
+          }
         }
+        for (const call of calls)
+          for (const relation of call.relations ?? []) expect(relation.seeds).toBeDefined();
         expect(calls[0]!.recordedPosition).toBeUndefined();
         for (const call of calls.slice(1)) expect(call.recordedPosition).toBe(PIN);
         if (calls.length > 1) multiCall++;
       }
-      expect(multiCall).toBeGreaterThanOrEqual(language === "xtql" ? 25 : 10);
+      // [EXP-C8] XTQL closure tasks are now one call each (the depth-unrolled completeness
+      // checks are gone), so fewer XTQL tasks are multi-call than under EXP-X02's 25.
+      expect(multiCall).toBeGreaterThanOrEqual(language === "xtql" ? 20 : 10);
     });
   it("rejects an unknown language", async () => {
     const { workload, entry } = cases[0];
@@ -130,18 +168,42 @@ describe("XTDB native task library: one language and one cut per task (EXP-X02)"
       ),
     ).rejects.toThrow();
   });
-  it("fails typed, with no partial closure, when the XTQL fixpoint is not reached", async () => {
-    const workload = packet.workloads.find((w: any) => w.id === "20");
-    const entry = workload.cases.find((c: any) => c.operation === "reachability_closure");
+  it("[EXP-C8] answers each closure task with one read-only closure call that names its seeds", async () => {
+    const closures = cases.filter(
+      ({ workload, entry }: any) =>
+        ["11", "13", "14", "15"].includes(workload.id) ||
+        (workload.id === "20" && entry.operation === "reachability_closure"),
+    );
+    expect(closures).toHaveLength(14);
+    for (const language of ["xtql", "xtdb-sql"] as XtdbNativeLanguage[])
+      for (const { workload, entry } of closures) {
+        const { session, calls } = mockSession(entry, canned(entry));
+        const exit = await Effect.runPromiseExit(
+          evaluateXtdbNativeWorkload(session, workload, entry, new Map(), [], language),
+        );
+        expect(Exit.isSuccess(exit), String(exit)).toBe(true);
+        const closureCalls = calls.filter((call) => call.relations);
+        expect(closureCalls).toHaveLength(1);
+        expect(closureCalls[0]!.method).toBe(
+          language === "xtql" ? "selectWithReachability" : "selectSqlWithReachability",
+        );
+        // Workload 13's XTQL leaf test keeps the #6345 mark-join build-size refusal (R14 H03).
+        const guards = calls.filter((call) => call.name.startsWith("mark-join-build-count"));
+        expect(guards).toHaveLength(workload.id === "13" && language === "xtql" ? 1 : 0);
+      }
+  });
+  it("[EXP-C8] refuses the XTQL leaf test, typed, above the mark-join build limit", async () => {
+    const workload = packet.workloads.find((w: any) => w.id === "13");
+    const entry = workload.cases[0];
     const { session, calls } = mockSession(entry, (name) =>
-      name.startsWith("reach-complete") ? [{ incomplete: true }] : [{ target: "x" }],
+      name.startsWith("mark-join-build-count") ? [{ edges: "100001" }] : [],
     );
     const exit = await Effect.runPromiseExit(
       evaluateXtdbNativeWorkload(session, workload, entry, new Map(), [], "xtql"),
     );
-    expect(String(exit)).toContain("NativeRecursionDepthError");
-    expect(calls.filter((call) => call.name === "reachability-closure")).toHaveLength(0);
-    expect(calls).toHaveLength(XTQL_REACH_MAX_DEPTH + 1); // edge-count guard + one check per depth
+    expect(String(exit)).toContain("NativeEngineHazardError");
+    expect(String(exit)).toContain("#6345");
+    expect(calls.filter((call) => call.relations)).toHaveLength(0);
   });
 });
 
