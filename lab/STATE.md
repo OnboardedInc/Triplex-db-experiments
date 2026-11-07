@@ -24,6 +24,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | exp/O02-oracle-conformance (03519ae) | V-O02 FIX-FIRST (answers correct; F1 test fix; 11 wrong answers on 0.3.3 rules) | EXP-O03 on same branch; then re-verify (resume V-O02 verifier) -> ACCEPT -> merge, pin |
 | exp/002-qlever-baseline | MERGED 85aba57 (G0/G1/G2 PASS, G4 FAIL as expected) | QLever dev resident recreated from main config (holder EXP-000) |
 | exp/F02-wire-exactness | MERGED 7247c82 (lab only; partly falsified) | fixes in EXP-F02b |
+| exp/X02-xtql-parity (bf1ad4d) | PROGRESSED: G0/G1 PASS, G2 SQL 142/142, XTQL diagnostic 142/142, XTQL candidate timeouts under load | V-X02, then promote; EXP-C8 builds on it |
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
 | contract 0.3.3 (main 89376e1) | Q29-Q32 compiled; 142 obligations, 50 thresholds; W0 pin null until V-D01 | Codex round 3 |
@@ -34,14 +35,14 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-N01 north-star benchmark driver (opus, exp/N01-northstar-bench) | P1-P5 measurement (NS gate) | lab/bench/, receipts |
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
 | EXP-O03 oracle F1 + 0.3.3 deltas (opus, O02 author, exp/O02-oracle-conformance) | correctness floor | lab/oracles/replay |
-| EXP-X02 XTQL parity (opus, exp/X02-xtql-parity) | read priorities on XTDB, floor | branch; waiting on own live-check rerun |
+| EXP-A01 contract 0.3.5 (opus, main, no commit) | Q37-Q39 into the contract | lab/acceptance/ |
 | EXP-F02b wire exactness fixes (opus, exp/F02b-wire-exactness-fixes, dev residents) | numeric rule floor | branch |
 | EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |
 | EXP-P2Q QLever log of record + broker (opus, exp/P2Q-qlever-log-broker) | P2, P3 | packages/qlever/src/broker |
 | EXP-C8 reads never write (opus, exp/C8-read-only-frontier) | P1, C8 floor | both lanes |
 | EXP-P2X XTDB per-subject commit + feed (opus, exp/P2X-xtdb-commit-feed, slot s1) | P2, P3 | branch, receipts |
 | V-D01 independent W0 review (opus, verify/D01; W0 at exp/D01-world-definition a10cd1e) | P5, P3 deps, GS domain expectations | lab/verify/D01; on ACCEPT: merge W0, pin hashes, then two independent implementers (TS kernel, O-DOMAIN) |
-Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). NEXT FREE SLOT: resume A01 for contract 0.3.5 (Q37 + Q38; compile and --verify), then Codex round 5.
+Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). A01 compiling 0.3.5 (Q37-Q39); then Codex round 5. NEXT FREE SLOT: V-X02 (verify exp/X02-xtql-parity bf1ad4d; XTQL candidate rerun on an exclusive slot).
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 

@@ -696,3 +696,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - Process fix (Q38c): I appended Q37 to RULINGS after the contract was generated, so `--verify` failed. From now on every RULINGS change
   is compiled and verified before commit, or listed as recorded-not-compiled.
 - Contract 0.3.5 (Q37, Q38) waits for a free agent slot (all 10 busy).
+
+## 2026-11-08 ~01:30Z: EXP-X02 PROGRESSED; A01 compiling 0.3.5
+- **XTQL parity learning: both languages give the same exact answers; XTQL is slower under load.** Pure XTQL 142/142 (diagnostic) and
+  pure SQL 142/142 (candidate) on G2; the XTQL candidate run timed out on 8 and 16 tasks while the shared dev XTDB sat at 200% CPU (no
+  wrong or impure answer). XTQL recursion by depth unrolling took 22.5 s at depth 6 against 0.6 s in SQL, which EXP-C8's frontier loop
+  replaces. Re-run the XTQL candidate on an exclusive slot before judging it.
+- **New XTDB hazard (Q39a): DECIMAL to BIGINT rounds through a double** (1e18 + 4 reads back as 1e18). Exact engine-side sums read the
+  DECIMAL result as text. Also fixed in X02: R12's split-sum recombination overflowed on totals that fit in int64.
+- X02's live checks are the pattern to copy: hand-derived controls in both languages (100/100), 21/21 mutants killed, and a writer
+  between calls that must stay invisible at the pinned cut.
+- Queued for the next free slot: V-X02 independent verification (promotion gate), including the XTQL candidate rerun on an exclusive slot.
