@@ -26,8 +26,10 @@ The bars above only count when measured under these definitions. A run that depa
 
 **P1 pinned reads that never block writers.**
 1. Readers and writers share one hot set: at least 50% of reads target subjects written in the previous 60 s (section 2.1 active set).
-2. 10% of subgraph reads are issued as two or more queries at the same named basis, and the driver commits a mutation to those same
-   subjects between the steps. The answer must equal the oracle's answer at the requested basis, never the latest state.
+2. 10% of subgraph reads are issued as two or more queries at the same named basis and are scheduled to straddle a command the frozen
+   trace already holds for that subject: step 1 before that command's ACK, step 2 after it. The driver adds no writes of its own, so
+   faster readers never change the write load (Codex round 2, finding 19). The answer must equal the oracle's answer at the requested
+   basis, never the latest state.
 3. Every P1 window contains at least one maintenance event (XTDB compaction; QLever index rebuild or delta merge; index-layer catch-up).
 4. The driver records the basis it requested (from the receipts it observed) independently of anything the engine echoes; the verifier
    checks every sampled answer at the driver-recorded basis.
@@ -42,6 +44,10 @@ The bars above only count when measured under these definitions. A run that depa
    bars apply to the 5-to-10 band and the 11-to-25 band, and the 26-to-50 band reports p99 against a provisional 100 ms. The 10-fact
    probe stays as a diagnostic only.
 3. Every offered command is accounted for: committed with a receipt, rejected with a typed error, or a typed conflict. Zero unaccounted.
+4. Progress, not just accounting (Codex round 2, finding 2): every oracle-valid command in the trace must publish. Typed rejections count
+   only for the trace's deliberately invalid commands (for example unrepresentable values), and typed conflicts only where the oracle
+   independently finds a compare-and-set race. Outstanding work stays bounded: queued commands never exceed 2 s of the offered rate at
+   steady state, and the queue drains within 60 s after each burst.
 
 **P3 change feed.**
 1. Commit time is the source of truth's publication instant for that transaction (the moment it becomes readable and the ACK may be
@@ -161,14 +167,26 @@ XTDB source of truth with QLever read indexes; QLever source of truth with XTDB 
 1. **A composition names four assignments:** source of truth, current index, history index, analytical copy, each XTDB or QLever.
 2. **Receipts bind every component:** engine image digest, configuration hash and slot per assignment, plus every replication edge (feed
    consumer source hash, translation generation) and each index's watermark at read time.
-3. **A basis is a source-of-truth position** (epoch, position) plus a valid time. Each read index publishes a watermark w. A read at basis
-   B is served by index I only if w(I) ≥ B.position; otherwise it waits up to 250 ms (the P3 lag bar) and then routes to a fallback that
-   has the position (the source of truth's own query surface, or another index), and the receipt records the route. No index ever
-   answers for a basis it has not reached.
-4. **ACK ownership:** the source of truth sends the ACK, and only after the current index's watermark has reached the commit's position
-   (the current index is synchronous with the ACK, which is what makes read-your-own-write hold); history and analytics are asynchronous
-   behind watermarks.
-5. **Layers are swapped one at a time** under matched workloads at small rungs (current-index candidates fed the same feed and measured on
+3. **Coordinates.** A position is (stream, epoch, offset, ordinal): the source of truth's log stream and epoch, the engine's log offset (or
+   the broker's log frame for QLever) and the ordinal of a Triplex transact inside that engine transaction, ordered lexicographically.
+   Positions need not be dense. A watermark is a fully resolved prefix: every position at or below it is either applied or known aborted,
+   which is stronger than "the greatest position seen". Epoch changes are explicit: a watermark from one epoch never satisfies a basis in
+   another without the mapping C1 defines.
+4. **Eligibility to serve a basis B** needs all of: the index's watermark has reached B; C1's eligibility for the query (mapping,
+   valid time, exact cut); and the index can actually reconstruct B. A current-only index can reconstruct B only when B is at or after the
+   last change to every attribute the read touches (the validity interval of R18), otherwise it is not eligible however far its watermark
+   has advanced. Erasure adds a second frontier: the index must also have applied every erasure published so far, independently of B
+   (section 7 item 7).
+5. **Fallback is deadline-aware.** A read that finds no eligible index waits at most 10 ms for one, then routes to a fallback that is
+   eligible (the source of truth's own query surface or another index). The fallback's latency counts in the read's own latency, the
+   receipt records the route and the surface language (a cross-language fallback is counted per surface), and fallbacks are reported as a
+   share of reads per window. No index ever answers for a basis it is not eligible for.
+6. **ACK ownership (revised after Codex round 2, finding 16).** The source of truth sends the ACK after its own publication. Read-your-own-
+   write holds by routing: the pull at the returned position is served by an index eligible for it, else by the fallback. The current
+   index is kept synchronous with commits in normal operation, so the fast path serves that pull; when the current index is down or behind
+   (GS.04b), commits and ACKs continue, pulls fall back, the current index catches up from the feed through a bounded queue, and the
+   receipt measures fallback share and recovery time. History and analytics stay asynchronous behind watermarks.
+7. **Layers are swapped one at a time** under matched workloads at small rungs (current-index candidates fed the same feed and measured on
    P1 and P4; history candidates on past-basis reads and GS.12; source candidates on P2 and P3). Only the two or three best compositions
    go on to end-to-end validation with the golden scenarios.
 
@@ -234,6 +252,12 @@ for Onboarded's real world definition; it is not a product feature of Triplex.
    gives the expected next tasks, obligations with due times, work items and effect traces from the same command stream.
 4. Plan-impact preview (GS.11) and activation (GS.10) are compared at one common input basis, never at different bases.
 5. Every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not).
+6. **Workload coverage is frozen before any comparison and reviewed independently (Codex round 2, finding 18),** so a sweep of mostly
+   no-op evaluations cannot pass P5. Provisional floors: R2 changes the outputs of at least 20% of in-scope subjects; every rule fires
+   for at least 5% of subjects; work-location fanout follows a seeded Zipf (s = 0.5, RULINGS Q36g) over 2,000 locations at the 100k rung,
+   so the largest location holds about 1,100 workers; at least 1% of evaluations each produce three or more work items.
+7. **Domain-dependent comparisons are blocked** until W0's SPEC.md, releases and golden cases have passed an independent review
+   (V-D01) and their hashes are pinned in the contract.
 
 **Failure combinations added to existing scenarios.**
 | Scenario | Added schedule | Expected outcome |
@@ -260,3 +284,10 @@ for Onboarded's real world definition; it is not a product feature of Triplex.
 5. **Restore re-applies erasure.** The erasure ledger is kept apart from the data and replayed after any restore or rebuild.
 6. **Tests:** a reader already pinned when the erasure lands; a rebuild after erasure; a restore from a pre-erasure backup; independent
    post-erasure expected answers from the oracle.
+7. **A current erasure frontier, independent of the requested basis (Codex round 2, finding 17).** An index or cache may serve any basis
+   only after it has applied every erasure published so far; an old-basis read never passes on the strength of its basis alone. Erasure
+   invalidates every old-basis cache entry that holds the erased value.
+8. **"Modulo erasure" applies to every reproduction contract:** the C6 whole-journal comparison, raw and native query results, SDK
+   results, cursors and explain. Both sides of a comparison replace erased values with their markers before comparing.
+9. **Key-destruction evidence:** for crypto-shredding, the lane's inventory must show that every surviving copy of a protected value
+   (and of anything derived from it) is encrypted only under the destroyed key; deleting some key is not evidence.

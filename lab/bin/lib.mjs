@@ -21,7 +21,13 @@ export const MAIN = (() => {
 export const LOCKS = process.env.TX2_LOCKS_DIR ?? path.join(MAIN, 'lab/locks');
 export const ENGINE_DIR = process.env.TX2_ENGINE_DIR ?? path.join(MAIN, 'runs/engines');
 export const OBJECTS = path.join(REPO, 'runs/objects');
-export const SLOTS_FILE = path.join(MAIN, 'lab/config/slots.json');
+// [EXP-002] Why: engine configuration (slots.json, qlever-start.sh, xtdb-config.yaml) is read from the
+// main checkout so every worktree agrees on one shared resident config. A branch that changes the
+// engine config must be able to run its own config before merge; TX2_CONFIG_DIR names that checkout.
+// Other worktrees then see a config-hash mismatch on the slot and fail closed, which is intended.
+// Rejected: always reading the worktree (each worktree would recreate the shared residents).
+export const CONFIG_DIR = process.env.TX2_CONFIG_DIR ? path.resolve(process.env.TX2_CONFIG_DIR) : MAIN;
+export const SLOTS_FILE = path.join(CONFIG_DIR, 'lab/config/slots.json');
 
 export const now = () => new Date().toISOString();
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
