@@ -1,0 +1,97 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "contention-A0-20261107T213730Z-69b800",
+  "kind": "contention-A0",
+  "writtenAt": "2026-11-07T21:37:30.224Z",
+  "mode": "contention",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T21:36:50.613Z",
+  "identity": {
+    "gitHead": "8a897ede443d85ddc5af91111b9536f0542241ec",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "71ee2ce12a9a080e45b22ecc427176bfbb9b91c29f0f3cc1cfdb86eb8c7710c6",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        11.06,
+        10.97,
+        11.91
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    10.58,
+    10.86,
+    11.83
+  ],
+  "arm": "A0",
+  "scope": "p2x-contention-A0-143c5562-eabb-480b-946b-4311068ff806",
+  "writers": 16,
+  "per": 30,
+  "facts": 10,
+  "distinctSubjects": 16,
+  "outcomes": {
+    "committed": 258,
+    "conflict": 222
+  },
+  "crossSubjectCasConflicts": 3376,
+  "counts": {
+    "submits": 3635,
+    "casConflicts": 3376,
+    "commandConflicts": 0,
+    "otherRejections": 0,
+    "transportErrors": 0
+  },
+  "latencyMs": {
+    "n": 258,
+    "p50": 297,
+    "p90": 1027.4,
+    "p99": 2118.2,
+    "max": 2867,
+    "mean": 448.3
+  },
+  "commitsPerS": 6.6,
+  "elapsedS": 39.3,
+  "timings": {
+    "submitMs": {
+      "n": 259,
+      "p50": 100.3,
+      "p90": 190,
+      "p99": 451.2,
+      "max": 578.2,
+      "mean": 118.5
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 3634,
+        "p50": 10.2,
+        "p90": 30.9,
+        "p99": 61.8,
+        "max": 117.3,
+        "mean": 14.3
+      },
+      "claim": {
+        "n": 3634,
+        "p50": 9.5,
+        "p90": 26.5,
+        "p99": 54.2,
+        "max": 229.2,
+        "mean": 13
+      },
+      "receipt": {
+        "n": 258,
+        "p50": 9.3,
+        "p90": 24.1,
+        "p99": 72.3,
+        "max": 130.4,
+        "mean": 13.6
+      }
+    }
+  },
+  "rawPath": null,
+  "rawSha256": null
+}

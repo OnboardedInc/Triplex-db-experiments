@@ -1,0 +1,96 @@
+{
+  "format": "p2x-receipt/1",
+  "id": "contention-C-20261107T213650Z-e0f3d8",
+  "kind": "contention-C",
+  "writtenAt": "2026-11-07T21:36:50.358Z",
+  "mode": "contention",
+  "slot": "s1",
+  "endpoint": "postgres://127.0.0.1:5471/xtdb",
+  "startedAt": "2026-11-07T21:36:35.287Z",
+  "identity": {
+    "gitHead": "8a897ede443d85ddc5af91111b9536f0542241ec",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "71ee2ce12a9a080e45b22ecc427176bfbb9b91c29f0f3cc1cfdb86eb8c7710c6",
+    "engineImage": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        10.96,
+        10.94,
+        11.92
+      ]
+    }
+  },
+  "hostLoadAfter": [
+    11.06,
+    10.97,
+    11.91
+  ],
+  "arm": "C",
+  "scope": "p2x-contention-C-f0f73ef3-af6c-4c38-a476-574836a9eeee",
+  "writers": 16,
+  "per": 30,
+  "facts": 10,
+  "distinctSubjects": 16,
+  "outcomes": {
+    "committed": 480
+  },
+  "crossSubjectCasConflicts": 0,
+  "counts": {
+    "submits": 481,
+    "casConflicts": 0,
+    "commandConflicts": 0,
+    "otherRejections": 0,
+    "transportErrors": 0
+  },
+  "latencyMs": {
+    "n": 480,
+    "p50": 400.8,
+    "p90": 899.5,
+    "p99": 1040.5,
+    "max": 1055.2,
+    "mean": 487.2
+  },
+  "commitsPerS": 32.6,
+  "elapsedS": 14.7,
+  "timings": {
+    "submitMs": {
+      "n": 481,
+      "p50": 355.2,
+      "p90": 761,
+      "p99": 964.3,
+      "max": 971.6,
+      "mean": 420.5
+    },
+    "readMs": {
+      "sourceCut": {
+        "n": 480,
+        "p50": 16.3,
+        "p90": 48.2,
+        "p99": 94,
+        "max": 108.1,
+        "mean": 21.9
+      },
+      "claim": {
+        "n": 480,
+        "p50": 18.4,
+        "p90": 44.4,
+        "p99": 111.4,
+        "max": 132.1,
+        "mean": 24.1
+      },
+      "receipt": {
+        "n": 480,
+        "p50": 14.5,
+        "p90": 39,
+        "p99": 48.7,
+        "max": 93.4,
+        "mean": 19
+      }
+    }
+  },
+  "rawPath": null,
+  "rawSha256": null
+}
