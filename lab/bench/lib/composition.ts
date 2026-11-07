@@ -95,7 +95,9 @@ export interface CompositionHandle {
 function failureOf(exit: any): StoreFailure {
   const failure = exit?.cause?.failures?.[0];
   const error = failure?.error ?? failure?.defect ?? exit?.cause;
-  return { ok: false, tag: String(error?._tag ?? failure?._tag ?? "Unknown"), error };
+  // A defect (Die) has no typed tag: name it by its constructor so receipts say what failed.
+  const tag = error?._tag ?? (failure?._tag === "Die" ? `Defect:${error?.name ?? error?.constructor?.name ?? "Unknown"}` : failure?._tag);
+  return { ok: false, tag: String(tag ?? "Unknown"), error };
 }
 
 async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" = "public"): Promise<CompositionHandle> {

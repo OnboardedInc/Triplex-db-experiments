@@ -29,7 +29,7 @@ export interface SeedResult {
   wallMs: number;
   factsPerS: number;
   commitMs: { p50: number; max: number };
-  failures: { tag: string; commandId: string }[];
+  failures: { tag: string; commandId: string; message: string }[];
   firstPosition: number;
   lastPosition: number;
   lastInstant: number;
@@ -71,7 +71,7 @@ export async function seedRung(opts: {
   const recorded: RecordedCommand[] = [];
   const positions: number[] = [];
   const latencies: number[] = [];
-  const failures: { tag: string; commandId: string }[] = [];
+  const failures: { tag: string; commandId: string; message: string }[] = [];
   let commands = 0, assertions = 0, retractions = 0, lastInstant = 0;
   let n = 0;
 
@@ -95,9 +95,9 @@ export async function seedRung(opts: {
         if (record) recorded.push({ commandId, operations, preconditions, actor: "bulk-seed", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignIds(operations, receipt) } });
         return receipt;
       }
-      failures.push({ tag: out.tag, commandId });
-      if (attempt >= 5) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${String(out.error?.message ?? "").slice(0, 300)}`);
-      await new Promise((r) => setTimeout(r, 200 * attempt));
+      failures.push({ tag: out.tag, commandId, message: String(out.error?.message ?? out.error ?? "").slice(0, 300) });
+      if (attempt >= 8) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${String(out.error?.message ?? out.error ?? "").slice(0, 300)}`);
+      await new Promise((r) => setTimeout(r, 500 * attempt));
     }
   };
   const idOf = (receipt: Receipt, e: string, a: string) => receipt.triples.find((t) => t.entityId === e && t.attribute === a)?.id;
