@@ -1,6 +1,6 @@
 {
-  "format": "triplex-db-2/load-contract/2",
-  "version": "0.3.1",
+  "format": "triplex-db-2/load-contract/3",
+  "version": "0.3.3",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -114,7 +114,32 @@
     },
     "conflicts": "optimistic compare-and-set on the subject's last position; serial per subject, parallel across subjects",
     "bulkLane": "separate and throttled; used only by the bulk measurements",
-    "seeded": "a recorded seed fixes the whole trace; the same seed gives the same bytes"
+    "seeded": "a recorded seed fixes the whole trace; the same seed gives the same bytes",
+    "generator": {
+      "source": "lab/TARGETS.md section 2.1 (frozen before any comparison)",
+      "activeSet": {
+        "share": 0.02,
+        "examples": "200 subjects at the 10k rung, 200k at 10m",
+        "residencyS": 2000,
+        "replacement": "seeded draws"
+      },
+      "subjectChoice": {
+        "fromActiveSet": 0.95,
+        "activeSetDistribution": "Zipf s = 1.1 over a seeded ranking",
+        "uniformAllSubjects": 0.05,
+        "uniformWhy": "corrections and late signals"
+      },
+      "commandSize": "uniform within each band of the 60/30/10 mix",
+      "offers": "open loop: a seeded Poisson process at the steady rate",
+      "burstPhase": "bursts start at 120 s + k x 600 s from the start of the measured window, identical for baselines and candidates",
+      "scenarioOverlay": "a golden scenario's commands are added on top of the background trace, never instead of it; both streams accounted separately in the receipt",
+      "freeze": "the generator source hash and the seed are bound in every receipt; a change to either starts a new comparison series",
+      "invalidCommands": {
+        "share": 0.001,
+        "rule": "0.1% of trace commands are deliberately invalid (values no engine may hold) and marked in the frozen trace; only those may end in a typed rejection",
+        "source": "RULINGS Q31a, Q32c"
+      }
+    }
   },
   "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
   "measurements": {
@@ -129,8 +154,23 @@
         256
       ],
       "stress": 1024,
-      "zeroReaderBaseline": "level 0 = writer trace alone, same run",
+      "zeroReaderBaseline": "level 0 = writer trace alone, same trace segment and burst phase",
       "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 80% at the latest committed tx (named exactly), 15% at a tx within the last hour, 5% at a past basis up to 90 days back (RULINGS Q16, TARGETS section 2)",
+      "hotSet": {
+        "minShare": 0.5,
+        "rule": "at least 50% of reads target subjects written in the previous 60 s (the writer trace's active set)"
+      },
+      "splitReads": {
+        "share": 0.1,
+        "rule": "10% of subgraph reads are issued as two or more queries at the same named basis, scheduled to straddle a command the frozen trace already holds for that subject: step 1 before that command's ACK, step 2 after it; the answer must equal the oracle at the requested basis, never the latest state",
+        "driverWrites": "none: the driver adds no writes of its own, so faster readers never change the write load (RULINGS Q31b)"
+      },
+      "maintenance": "every P1 window contains at least one maintenance event (XTDB compaction; QLever index rebuild or delta merge; index-layer catch-up)",
+      "requestedBasis": "the driver records the basis it requested (from the receipts it observed) independently of anything the engine echoes; the verifier checks every sampled answer at the driver-recorded basis",
+      "writerWaitAttribution": [
+        "writer latency at each reader level against the zero-reader run on the same trace segment and burst phase",
+        "engine-side wait evidence where exposed (QLever broker queue wait); XTDB has no read-path locks, so its evidence is the matched-phase comparison"
+      ],
       "record": [
         "correctness-qualified read goodput per level",
         "read p50, p99 per level",
@@ -149,38 +189,139 @@
       "recovery": "after the 1,024 window, readers return to 256; 30 s evaluation windows sliding by 5 s; recovery time = end of the first window meeting every 256-level bar; must be within NS-P1-RECOVERY-MS"
     },
     "P2": {
-      "probe": "one command of 10 facts about one subject (also 5 and 50, reported) issued at 1 per second on top of the writer trace, with 256 P1 readers running",
-      "ryow": "the probe's next pull at the returned tx",
+      "loop": "open loop on the frozen offer schedule (WRITER_TRACE generator)",
+      "latency": "from the scheduled offer time to the published ACK (sent only after the commit is durable and readable), so queueing behind other writers counts",
+      "sizeBands": [
+        {
+          "facts": [
+            5,
+            10
+          ],
+          "bars": [
+            "NS-P2-COMMIT-P50-MS",
+            "NS-P2-COMMIT-P99-MS"
+          ]
+        },
+        {
+          "facts": [
+            11,
+            25
+          ],
+          "bars": [
+            "NS-P2-COMMIT-P50-MS",
+            "NS-P2-COMMIT-P99-MS"
+          ]
+        },
+        {
+          "facts": [
+            26,
+            50
+          ],
+          "bars": [
+            "NS-P2-COMMIT-P99-26-50-MS"
+          ],
+          "note": "provisional"
+        }
+      ],
+      "commands": "the trace's own commands; the 10-fact probe is a diagnostic only",
+      "accounting": "every offered command is committed with a receipt, rejected with a typed error, or a typed conflict; zero unaccounted (NS-P2-UNACCOUNTED-MAX)",
+      "progress": {
+        "rule": "every oracle-valid trace command publishes; typed rejections count only for commands the frozen trace marks deliberately invalid, typed conflicts only where the oracle independently finds a compare-and-set race (NS-P2-UNJUSTIFIED-OUTCOMES-MAX)",
+        "queueBound": "queued commands never exceed NS-P2-QUEUE-MAX-S of the offered rate at steady state",
+        "burstDrain": "the queue drains within NS-P2-BURST-DRAIN-S after each burst",
+        "source": "RULINGS Q31a; lab/TARGETS.md 1.1 P2 item 4"
+      },
+      "ryow": "the next pull at the returned tx",
       "idempotency": "the trace's duplicates and lost ACKs",
+      "readers": 256,
       "bars": [
         "NS-P2-COMMIT-P50-MS",
         "NS-P2-COMMIT-P99-MS",
+        "NS-P2-COMMIT-P99-26-50-MS",
+        "NS-P2-UNACCOUNTED-MAX",
+        "NS-P2-UNJUSTIFIED-OUTCOMES-MAX",
+        "NS-P2-QUEUE-MAX-S",
+        "NS-P2-BURST-DRAIN-S",
         "NS-P2-RYOW-FRACTION",
         "NS-P2-DUP-RECEIPT-FRACTION"
       ]
     },
     "P3": {
-      "consumer": "one feed consumer computing affected subjects; one restart from checkpoint per run",
-      "lag": "commit ACK to affected subjects known",
+      "commitTime": "the source of truth's publication instant for the transaction, stamped by the source on the host monotonic clock the driver also reads",
+      "cursor": "(epoch, position), a total order over transactions; per-subject order follows from it",
+      "expectedAffected": "subjects written directly (O-REPLAY) plus subjects affected through referenced entities under WORLD_W0's dependency rules (O-DOMAIN)",
+      "milestone": "the consumer durably records the affected-subject set and its checkpoint in one durable write; lag runs from commit time to that record",
+      "delivery": "at-least-once from the last checkpoint; effects keyed by (consumer, position, subject), so replay is idempotent; visible duplicate effects must be zero (NS-P3-VISIBLE-DUP-EFFECTS-MAX); replay attempts allowed and counted separately",
+      "crashPoints": [
+        "before the effect",
+        "after the effect, before the checkpoint",
+        "after the checkpoint"
+      ],
+      "readers": 256,
       "bars": [
         "NS-P3-GAPS-MAX",
         "NS-P3-ORDER-VIOLATIONS-MAX",
-        "NS-P3-LAG-P99-MS"
+        "NS-P3-LAG-P99-MS",
+        "NS-P3-VISIBLE-DUP-EFFECTS-MAX"
       ]
     },
     "P4": {
-      "probe": "single client, subject pulls at the current basis over subjects in TP-PULL (3 to 6 hops, 50 to 2,000 facts)",
-      "throughput": "closed-loop pulls with the engine pinned to a recorded core count; pulls/s divided by cores",
-      "history": "repeat on subjects in history strata H1, H3, H10; compare p50 latency and bytes read",
+      "probe": "single client, subject pulls at the current basis",
+      "buckets": [
+        {
+          "facts": [
+            50,
+            200
+          ],
+          "weight": 0.5
+        },
+        {
+          "facts": [
+            201,
+            800
+          ],
+          "weight": 0.35
+        },
+        {
+          "facts": [
+            801,
+            2000
+          ],
+          "weight": 0.15
+        }
+      ],
+      "hops": [
+        {
+          "hops": 3,
+          "weight": 0.4
+        },
+        {
+          "hops": 4,
+          "weight": 0.35
+        },
+        {
+          "hops": 6,
+          "weight": 0.25
+        }
+      ],
+      "tails": "the p50 and p99 bars apply to the weighted mix; each bucket reports its own p50 and p99; the largest bucket has NS-P4-PULL-P99-LARGEST-MS",
+      "throughput": "closed-loop pulls; cores = the CPU quota bound in the receipt; host broker and kernel CPU reported beside engine-core throughput",
+      "history": "one matched sample of 1,000 subjects: measure at history depth 1, add corrections to the same subjects to depth 3 and then 10, measure again; compare p99 latency and bytes read (RULINGS Q16, Q27)",
       "bars": [
         "NS-P4-PULL-P50-MS",
         "NS-P4-PULL-P99-MS",
+        "NS-P4-PULL-P99-LARGEST-MS",
         "NS-P4-PULLS-PER-CORE",
         "NS-P4-HISTORY-FLATNESS"
       ]
     },
     "P5": {
-      "sweep": "100k subjects pulled at one pinned basis",
+      "sweep": "evaluate release R against WORLD_W0 for every subject in R's scope (100k) at one shared basis; the receipt binds the basis and R's content hash",
+      "coverage": "every in-scope subject evaluated exactly once; the receipt carries the hash of the subject list",
+      "publication": "results published as work items through the atomic outbox path (EP-OUTBOX); expected outputs from O-DOMAIN, independently",
+      "postCaptureMutations": "after the basis is captured the driver mutates selected subjects; their outputs must reflect the captured basis",
+      "wallTime": "includes evaluation and publication",
+      "throttledVariant": "about 10 minutes, overlapping a real compaction or index rebuild; keeps its basis and never blocks writers",
       "concurrent": "the writer trace and 64 live readers",
       "noSweepBaseline": "same run, same 64 readers and writer trace, before the sweep",
       "bars": [
@@ -224,8 +365,10 @@
     }
   ],
   "runs": 3,
+  "semantics": "lab/TARGETS.md section 1.1 (frozen before any comparison): a run that departs from these definitions cannot close an NS obligation",
   "invariants": [
-    "every read names its basis and its answer is compared with O-REPLAY at that basis; a wrong answer scores zero",
+    "every read names its basis and its answer is compared with the oracle at the driver-recorded requested basis; a wrong answer scores zero",
+    "receipts bind the composition, the trace generator hash and seed, and the serving index's watermark at every read (VA14, VA15)",
     "every command gets one receipt; duplicates and lost ACKs return the original receipt (COMMIT_OUTCOMES)",
     "success receipts only after publication",
     "no engine restart, crash or OOM inside a measurement window unless the scenario injects it",
@@ -291,16 +434,51 @@
     "NS-P2-COMMIT-P50-MS": {
       "kind": "ns",
       "value": 10,
-      "unit": "ms commit p50, 10-fact command, 256 readers running",
+      "unit": "ms commit p50 from scheduled offer to published ACK, applied separately to the trace commands of the 5-to-10 and 11-to-25 fact bands, 256 readers running",
       "bound": "max",
-      "source": "lab/TARGETS.md section 1 P2"
+      "source": "lab/TARGETS.md section 1 P2; TARGETS 1.1 P2 items 1 and 2"
     },
     "NS-P2-COMMIT-P99-MS": {
       "kind": "ns",
       "value": 50,
-      "unit": "ms commit p99, 10-fact command, 256 readers running",
+      "unit": "ms commit p99 from scheduled offer to published ACK, applied separately to the 5-to-10 and 11-to-25 fact bands, 256 readers running",
       "bound": "max",
-      "source": "lab/TARGETS.md section 1 P2"
+      "source": "lab/TARGETS.md section 1 P2; TARGETS 1.1 P2 items 1 and 2"
+    },
+    "NS-P2-COMMIT-P99-26-50-MS": {
+      "kind": "ns",
+      "value": 100,
+      "unit": "ms commit p99 from scheduled offer to published ACK for the 26-to-50 fact band (provisional)",
+      "bound": "max",
+      "source": "lab/TARGETS.md 1.1 P2 item 2 (provisional)"
+    },
+    "NS-P2-UNACCOUNTED-MAX": {
+      "kind": "ns",
+      "value": 0,
+      "unit": "offered commands with no receipt, typed error or typed conflict",
+      "bound": "max",
+      "source": "lab/TARGETS.md 1.1 P2 item 3"
+    },
+    "NS-P2-UNJUSTIFIED-OUTCOMES-MAX": {
+      "kind": "ns",
+      "value": 0,
+      "unit": "oracle-valid trace commands that did not publish: typed rejections of commands the trace did not mark invalid, plus typed conflicts where the oracle finds no compare-and-set race",
+      "bound": "max",
+      "source": "RULINGS Q31a; lab/TARGETS.md 1.1 P2 item 4"
+    },
+    "NS-P2-QUEUE-MAX-S": {
+      "kind": "ns",
+      "value": 2,
+      "unit": "s of the offered rate: queued (offered, not yet published) commands at any steady-state instant, divided by the steady offered rate",
+      "bound": "max",
+      "source": "RULINGS Q31a; lab/TARGETS.md 1.1 P2 item 4"
+    },
+    "NS-P2-BURST-DRAIN-S": {
+      "kind": "ns",
+      "value": 60,
+      "unit": "s after each burst ends until the queue is back within NS-P2-QUEUE-MAX-S",
+      "bound": "max",
+      "source": "RULINGS Q31a; lab/TARGETS.md 1.1 P2 item 4"
     },
     "NS-P2-RYOW-FRACTION": {
       "kind": "ns",
@@ -333,44 +511,58 @@
     "NS-P3-LAG-P99-MS": {
       "kind": "ns",
       "value": 250,
-      "unit": "ms commit to affected subjects known, p99, 256 readers running",
+      "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
       "bound": "max",
-      "source": "lab/TARGETS.md section 1 P3"
+      "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4"
+    },
+    "NS-P3-VISIBLE-DUP-EFFECTS-MAX": {
+      "kind": "ns",
+      "value": 0,
+      "unit": "externally visible duplicate consumer effects per run (replay attempts are counted separately and allowed)",
+      "bound": "max",
+      "source": "lab/TARGETS.md 1.1 P3 item 5"
     },
     "NS-P4-PULL-P50-MS": {
       "kind": "ns",
       "value": 5,
-      "unit": "ms single-client subject pull p50 at the current basis",
+      "unit": "ms single-client subject pull p50 at the current basis over the frozen weighted bucket mix",
       "bound": "max",
-      "source": "lab/TARGETS.md section 1 P4"
+      "source": "lab/TARGETS.md section 1 P4; TARGETS 1.1 P4 item 1"
     },
     "NS-P4-PULL-P99-MS": {
       "kind": "ns",
       "value": 25,
-      "unit": "ms single-client subject pull p99",
+      "unit": "ms single-client subject pull p99 over the frozen weighted bucket mix",
       "bound": "max",
-      "source": "lab/TARGETS.md section 1 P4"
+      "source": "lab/TARGETS.md section 1 P4; TARGETS 1.1 P4 item 1"
+    },
+    "NS-P4-PULL-P99-LARGEST-MS": {
+      "kind": "ns",
+      "value": 50,
+      "unit": "ms pull p99 of the largest bucket (801 to 2,000 facts), provisional",
+      "bound": "max",
+      "source": "lab/TARGETS.md 1.1 P4 item 1 (provisional)"
     },
     "NS-P4-PULLS-PER-CORE": {
       "kind": "ns",
       "value": 1100,
-      "unit": "pulls/s per engine core",
+      "unit": "pulls/s per engine core, cores = the CPU quota bound in the receipt; host broker and kernel CPU reported beside it",
       "bound": "min",
-      "source": "lab/TARGETS.md section 1 P4"
+      "source": "lab/TARGETS.md section 1 P4; TARGETS 1.1 P4 item 3"
     },
     "NS-P4-HISTORY-FLATNESS": {
       "kind": "ns",
       "value": 1.1,
-      "unit": "current-pull p50 latency and bytes read at history depth 10 divided by depth 1",
+      "unit": "current-pull p99 latency and bytes read at history depth 10 divided by depth 1, on one matched sample of 1,000 subjects grown from depth 1 to 3 to 10",
       "bound": "max",
-      "source": "derived from lab/TARGETS.md section 1 P4 ('stay flat'; no number given)"
+      "source": "RULINGS Q16, Q27; lab/TARGETS.md 1.1 P4 item 2"
     },
     "NS-P5-SWEEP-S": {
       "kind": "ns",
       "value": 100,
-      "unit": "s wall time to sweep 100k subjects at one pinned basis",
+      "unit": "s wall time for the release sweep: W0 evaluation of release R for 100k in-scope subjects at one shared basis, including outbox publication",
       "bound": "max",
-      "source": "lab/TARGETS.md section 1 P5"
+      "source": "lab/TARGETS.md section 1 P5; TARGETS 1.1 P5 items 1 and 5"
     },
     "NS-P5-LIVE-READ-P99-RATIO": {
       "kind": "ns",
