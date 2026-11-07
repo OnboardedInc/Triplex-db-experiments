@@ -31,12 +31,14 @@ class Int64(unittest.TestCase):
 
 
 class Binary64(unittest.TestCase):
-    def test_negative_zero_bits_survive(self):
+    def test_negative_zero_bits_survive_but_identity_is_one_value(self):
+        """N-F-NEGZERO 'stored -0.0 read back = -0.0'; Q14b / R-VAL-3: one value for identity."""
         v = val('{"type":"number","value":-0.0}')
         self.assertEqual(v.payload, 0x8000000000000000)
         self.assertEqual(v.to_output().get("bits"), "0x8000000000000000")
         self.assertEqual(str(v.to_output().get("value")), "-0")
-        self.assertNotEqual(v, val('{"type":"number","value":0.0}'))
+        self.assertEqual(v, val('{"type":"number","value":0.0}'))
+        self.assertEqual(len({v, val('{"type":"number","value":0.0}')}), 1)
 
     def test_bits_input_and_subnormal(self):
         v = val('{"type":"number","bits":"0x0000000000000001"}')
@@ -98,9 +100,25 @@ class JsonAndBlob(unittest.TestCase):
     def test_json_numbers_are_binary64(self):
         self.assertEqual(val('{"type":"json","value":1e300}').payload, "1e+300")
         self.assertEqual(val('{"type":"json","value":-0}').payload, "0")
-        self.assertEqual(val('{"type":"json","value":9007199254740993}').payload, "9007199254740992")
         with self.assertRaises(V.InvalidValue):
             val('{"type":"json","value":1e400}')
+
+    def test_R_VAL_7_inexact_json_number_is_a_case_error(self):
+        """R-VAL-7 (brief: a JSON number that is not exactly binary64 is an input error):
+        JSON.parse would silently read 9007199254740993 as ...992."""
+        with self.assertRaises(V.OracleInputError):
+            val('{"type":"json","value":9007199254740993}')
+        with self.assertRaises(V.OracleInputError):
+            val('{"type":"json","value":{"a":[1e-400]}}')
+        self.assertEqual(val('{"type":"json","value":0.1}').payload, "0.1")   # reads back as written
+
+    def test_R_VAL_7_applies_to_numbers_and_coordinates(self):
+        with self.assertRaises(V.OracleInputError):
+            val('{"type":"number","value":9007199254740993}')
+        with self.assertRaises(V.OracleInputError):
+            V.Num.parse(V.Lex("1.00000000000000001"), "validFrom")
+        self.assertEqual(V.Num.parse(V.Lex("10.125"), "validFrom").lexeme(), "10.125")
+        self.assertEqual(val('{"type":"number","value":0.1}').to_output().get("bits"), "0x3fb999999999999a")
 
     def test_canonical_keys_sort_by_utf16_code_units(self):
         v = val('{"type":"json","value":{"\\ud83d\\ude00":1,"\\uffff":2}}')
@@ -127,11 +145,13 @@ class DatetimeAndOrder(unittest.TestCase):
                                  '{"type":"number","value":-1.5}', '{"type":"boolean","value":true}',
                                  '{"type":"integer","value":"-3"}', '{"type":"string","value":"a"}']]
         ordered = sorted(vals, key=lambda v: v.order_key())
-        self.assertEqual([v.family for v in ordered], ["integer", "integer", "number", "boolean", "string", "string"])
+        # ACC 4.5 / Q14a: boolean < integer < number < decimal < datetime < string < ref < json < blob
+        self.assertEqual([v.family for v in ordered], ["boolean", "integer", "integer", "number", "string", "string"])
 
-    def test_negative_zero_orders_before_positive_zero(self):
+    def test_negative_zero_and_positive_zero_tie_in_order(self):
+        """ACC 4.5 'number: numeric IEEE (-0.0 and +0.0 collapse, CMP-NEGZERO)'."""
         z, nz = val('{"type":"number","value":0}'), val('{"type":"number","value":-0.0}')
-        self.assertLess(nz.order_key(), z.order_key())
+        self.assertEqual(nz.order_key(), z.order_key())
 
 
 class Comparison(unittest.TestCase):
@@ -144,8 +164,13 @@ class Comparison(unittest.TestCase):
             a, b = val(left), val(right)
             self.assertFalse(V.predicate("eq", a, b))
             self.assertTrue(V.predicate("ne", a, b))
-            self.assertFalse(V.predicate("lt", a, b))
-            self.assertFalse(V.predicate("gt", a, b))
+            if {a.family, b.family} == {"integer", "number"}:
+                # Q14d / CMP-INT-FLOAT: an ordered comparison is preflight E-MIXED-FAMILY, not false
+                with self.assertRaises(V.MixedFamily):
+                    V.predicate("lt", a, b)
+            else:
+                self.assertFalse(V.predicate("lt", a, b))
+                self.assertFalse(V.predicate("gt", a, b))
 
     def test_numeric_predicate_equality_of_signed_zero(self):
         self.assertTrue(V.predicate("eq", val('{"type":"number","value":-0.0}'), val('{"type":"number","value":0}')))

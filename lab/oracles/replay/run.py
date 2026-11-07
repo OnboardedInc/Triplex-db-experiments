@@ -15,9 +15,9 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.1.0"
-SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "values.py", "exact.py", "replay.py", "constraints.py",
-                "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
+ORACLE_VERSION = "0.2.0"   # EXP-O02: conformance to ACCEPTANCE 0.3.1 section 4 and RULINGS Q1-Q21
+SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
+                "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
 
 def source_hashes():
@@ -33,8 +33,9 @@ QUERIES = {
     "transactionByCommand": W.q_transaction_by_command, "transactionsForEntity": W.q_transactions_for_entity,
     "cutCatalog": W.q_cut_catalog, "entityPage": W.q_entity_page, "valueSupports": W.q_value_supports,
     "reachability": W.q_reachability, "aggregate": W.q_aggregate, "expr": W.q_expr, "compare": W.q_compare,
-    "sortValues": W.q_sort_values, "get": E.q_get, "getMany": E.q_get, "find": E.q_find,
-    "timeline": E.q_timeline, "validTimeline": E.q_valid_timeline,
+    "sortValues": W.q_sort_values, "get": E.q_get, "getMany": E.q_get, "find": E.q_find, "count": E.q_count,
+    "timeline": E.q_timeline, "modelTimeline": E.q_model_timeline, "validTimeline": E.q_valid_timeline,
+    "journalFacts": W.q_journal_facts,
 }
 
 
@@ -46,13 +47,17 @@ QUERIES["analyticCounts"] = _analytic
 
 
 class Run:
-    def __init__(self, case):
+    def __init__(self, case, lane=None):
         if case.get("format") != CASE_FORMAT:
             raise V.OracleInputError(f"case format must be {CASE_FORMAT}")
         self.case = case
         self.schemas = E.load_schemas(case.get("schemas"))
+        # R-LANE-1: the lane the expected answers are for (CLI --lane overrides the case's `lane`)
         self.engine = R.Engine(case.get("rules"), case.get("adapter"), self.schemas, case.get("enforcement"),
-                               case.get("defaultScope", "default"))
+                               case.get("defaultScope", "default"), lane=lane or case.get("lane"),
+                               lane_ranges=case.get("laneIntegerRanges"),
+                               declarations=E.decimal_declarations(self.schemas, case.get("attributeDeclarations")))
+        self.results = {}
         self.commands = list(case.get("commands") or [])
         for i, command in enumerate(self.commands):
             command["_index"] = i
@@ -250,31 +255,41 @@ class Run:
 
     @staticmethod
     def _compare(expected, rec):
+        """ACC 4.7 errorComparison: an expected error matches when the observed _tag equals
+        the pinned tag and the observed reason equals the pinned reason (or one of the
+        listed alternatives). A receipt may also name the error id or a 0.1 category."""
         want = expected.get("outcome")
         got = rec.get("outcome")
         if want != got:
             return "FAIL"
         if want == "committed":
             return "PASS"
-        tag = expected.get("errorTag")
-        got_tag = (rec.get("error") or {}).get("_tag")
+        error = rec.get("error") or {}
+        got_cat = R.normalize_category(rec.get("category"))
         possible = expected.get("possibleCategories")
-        got_cat = rec.get("category")
         if possible and got_cat is not None:
             return "PASS" if got_cat in possible else "FAIL"
-        if tag is None:
-            if got_cat is not None:
-                return "PASS" if got_cat == expected.get("category") else "FAIL"
-            return "PASS-OUTCOME-ONLY"
-        if got_tag != tag:
-            return "FAIL"
-        if tag == "CommandAlreadyCommittedError":
-            original = (rec.get("error") or {}).get("transactionId")
-            return "PASS" if original is None or original == expected.get("transactionId") else "FAIL"
-        if tag == "ConstraintViolationError":
-            codes = (rec.get("error") or {}).get("codes")
-            return "PASS" if codes is None or sorted(codes) == expected.get("codes") else "FAIL"
-        return "PASS"
+        checked = False
+        if got_cat is not None:
+            if got_cat != expected.get("error"):
+                return "FAIL"
+            checked = True
+        tag = expected.get("errorTag")
+        if error.get("_tag") is not None and tag is not None:
+            if error["_tag"] != tag:
+                return "FAIL"
+            checked = True
+        if error.get("reason") is not None and tag is not None:
+            allowed = expected.get("reasonAlternatives") or [expected.get("reason")]
+            if error["reason"] not in allowed:
+                return "FAIL"
+        if tag == "CommandAlreadyCommittedError" and error.get("transactionId") is not None:
+            if error["transactionId"] != expected.get("transactionId"):
+                return "FAIL"
+        if tag == "ConstraintViolationError" and error.get("codes") is not None:
+            if sorted(error["codes"]) != expected.get("codes"):
+                return "FAIL"
+        return "PASS" if checked else "PASS-OUTCOME-ONLY"
 
     # ------------------------------------------------------------------ receipt consistency
 
@@ -371,19 +386,21 @@ class Run:
                 raise V.OracleInputError(f"unknown query kind {kind!r}")
             entry = [("id", qid), ("kind", kind)]
             try:
-                entry.append(("result", QUERIES[kind](self, query)))
+                result = QUERIES[kind](self, query)
+                entry.append(("result", result))
+                self.results[qid] = result
             except X.TypedError as error:
                 entry.append(("error", error.to_output()))
             except E.Conflicts as error:
                 entry.append(("error", error.to_output()))
             except V.InvalidValue as error:
-                entry.append(("error", V.OrderedOut([("error", "invalid-value"), ("message", str(error))])))
+                entry.append(("error", X.TypedError(error.error_id, str(error)).to_output()))
             out.append(V.OrderedOut(entry))
         return out
 
 
-def evaluate_case(case, case_sha256=None):
-    run = Run(case)
+def evaluate_case(case, case_sha256=None, lane=None):
+    run = Run(case, lane)
     run.process()
     consistency = run.receipt_consistency()
     queries = run.run_queries()
@@ -401,15 +418,25 @@ def evaluate_case(case, case_sha256=None):
         ("format", OUTPUT_FORMAT),
         ("oracle", V.OrderedOut([("id", "O-REPLAY"), ("version", ORACLE_VERSION), ("sourceSha256", source_hashes())])),
         ("caseId", case.get("caseId")), ("caseSha256", case_sha256),
+        ("lane", V.OrderedOut([("name", run.engine.lane),
+                               ("integerRange", [str(run.engine.lane_range[0]), str(run.engine.lane_range[1])])])),
         ("verdict", verdict), ("divergedAtCommand", run.diverged_at),
         ("receiptConsistency", consistency), ("commandOutcomes", outcomes),
         ("state", scopes), ("queries", queries),
-        ("rulesInEffect", V.OrderedOut((k, v if not isinstance(v, list) else list(v))
-                                       for k, v in sorted(run.engine.rules.items()))),
+        ("rulesInEffect", V.OrderedOut((k, _plain_rule(v)) for k, v in sorted(run.engine.rules.items()))),
+        ("reservedNamespaces", V.OrderedOut((k, list(v)) for k, v in sorted(run.engine.reserved.items()))),
     ])
 
 
-def evaluate_text(text: bytes):
+def _plain_rule(v):
+    if isinstance(v, dict):
+        return V.OrderedOut((k, _plain_rule(x)) for k, x in v.items())
+    if isinstance(v, list):
+        return [_plain_rule(x) for x in v]
+    return v
+
+
+def evaluate_text(text: bytes, lane=None):
     digest = hashlib.sha256(text).hexdigest()
     case = V.loads(text.decode("utf-8"))
-    return evaluate_case(case, digest)
+    return evaluate_case(case, digest, lane)

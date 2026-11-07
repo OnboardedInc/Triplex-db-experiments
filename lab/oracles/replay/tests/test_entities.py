@@ -55,7 +55,8 @@ class Models(unittest.TestCase):
                       "cut": cut()},
                      {"id": "g3", "kind": "getMany", "entityType": "Person", "entityIds": ["p3", "nobody"], "cut": cut()}])
         err = result(rep, "g")
-        self.assertEqual(err["error"], "ConflictingValuesError")
+        self.assertEqual((err["error"], err["_tag"], err["reason"]),
+                         ("E-CONFLICTING-VALUES", "ConflictingValuesError", "conflicting-values"))
         self.assertEqual(err["conflicts"], [{"entityId": "p1", "attribute": ":person/name"},
                                             {"entityId": "p2", "attribute": ":person/age"}])
         many = result(rep, "g3")
@@ -65,7 +66,7 @@ class Models(unittest.TestCase):
     def test_int64_and_binary64_one_are_distinct_values(self):
         rep = build([P("ax", "p3", ":person/age", i64(1)), P("ay", "p3", ":person/age", {"type": "number", "value": 1.0})],
                     [{"id": "g", "kind": "get", "entityType": "Person", "entityId": "p3", "cut": cut()}])
-        self.assertEqual(result(rep, "g")["error"], "ConflictingValuesError")
+        self.assertEqual(result(rep, "g")["_tag"], "ConflictingValuesError")
 
     def test_includes_and_reverse_refs(self):
         rep = build(queries=[{"id": "g", "kind": "get", "entityType": "Person", "entityId": "p1", "cut": cut(),
@@ -111,11 +112,19 @@ class Find(unittest.TestCase):
     def test_conflict_only_fails_queries_that_reference_it(self):
         extra = [P("n2x", "p2", ":person/name", s("Robert"))]
         rep = build(extra, [
-            {"id": "by-age", "kind": "find", "entityType": "Person", "cut": cut(),
+            {"id": "by-age", "kind": "count", "entityType": "Person", "cut": cut(),
+             "where": [{"prop": "age", "op": "gt", "value": i64(0)}]},
+            {"id": "docs", "kind": "find", "entityType": "Person", "cut": cut(),
+             "where": [{"prop": "age", "op": "gt", "value": i64(0)}]},
+            {"id": "projected", "kind": "find", "entityType": "Person", "cut": cut(), "select": ["age"],
              "where": [{"prop": "age", "op": "gt", "value": i64(0)}]},
             {"id": "by-name", "kind": "find", "entityType": "Person", "cut": cut(),
              "where": [{"prop": "age", "op": "eq", "value": i64(30)}], "orderBy": [{"prop": "name"}]}])
-        self.assertEqual(result(rep, "by-age")["total"], 2)
+        self.assertEqual(result(rep, "by-age")["total"], 2)     # count returns no documents (C5.3)
+        # Q21 AMB-17 A: a returned document containing the conflicted attribute fails the find ...
+        self.assertEqual(result(rep, "docs")["conflicts"], [{"entityId": "p2", "attribute": ":person/name"}])
+        # ... and a projection that omits it succeeds
+        self.assertEqual(result(rep, "projected")["pages"][0]["ids"], ["p1", "p2"])
         self.assertEqual(result(rep, "by-name")["conflicts"], [{"entityId": "p2", "attribute": ":person/name"}])
 
 
@@ -126,7 +135,7 @@ class Timelines(unittest.TestCase):
                 {"clock": 2, "operations": [{"op": "retract", "target": "b"},
                                             P("c", "p1", ":person/name", s("C"), valid_from=10)]},
                 {"clock": 3, "operations": [assert_op("z", "other", ":x/y", s("z"))]}]
-        q = [{"id": "tl", "kind": "timeline", "entityType": "Person", "entityId": "p1", "cut": {"validAt": 15}},
+        q = [{"id": "tl", "kind": "modelTimeline", "entityType": "Person", "entityId": "p1", "cut": {"validAt": 15}},
              {"id": "vt", "kind": "validTimeline", "entityType": "Person", "entityId": "p1", "cut": {"position": 1}}]
         rep = evaluate(case(cmds, q, schemas=SCHEMA))
         tl = result(rep, "tl")
