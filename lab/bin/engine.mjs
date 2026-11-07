@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 // lab/bin/engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh]
 //   [--holder NAME] [--exp EXP-NNN] [--remove-volume] [--note TEXT] [--force] [--tail N]
+//   [--follower] [--cpuset-cpus LIST]
+//
+// [EXP-X05] --follower acts on the slot's read-only XTDB follower tx2-xtdb-<slot>-ro (R19 1.1, 1.7):
+// same image and named volume, lab/config/xtdb-follower-config.yaml (readOnlyDatabases: true), its own
+// pool reservation, held under the slot's lock by the slot's holder. --cpuset-cpus pins a writer or a
+// follower to VM CPUs (R19 1.6: --cpus is a quota, not a pinning); the cpuset is part of the effective
+// config, so a container started with one is recreated (--fresh) to drop it. Every XTDB start passes
+// volumeGuard first: no second read-write container on a slot volume.
 //
 // [EXP-000] Why: one command per slot with an explicit reservation ledger, so two agents cannot
 // both observe free capacity and both start (review r2 finding 12). The pool ledger
@@ -15,15 +23,60 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import {
-  CONFIG_DIR, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, defaultHolder, docker, dockerStats,
-  fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now, parseArgs, readJson, readOwner, reconcile, sha256,
-  sleep, slotInfo, vmDisk, volumeBytes, withPool,
+  CONFIG_DIR, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
+  containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now,
+  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool,
 } from './lib.mjs';
+
+/**
+ * The read-only follower of an XTDB slot (EXP-X05): its own container, port and memory cap; the slot's
+ * volume, lock and holder. Port is the slot port + portOffset (5471-5473 -> 5481-5483), checked like a slot port.
+ */
+export function followerInfo(config, info, opts = {}) {
+  const conf = config.lanes.xtdb?.follower;
+  if (info.lane !== 'xtdb' || !conf) fail('USAGE', 'followers exist only for the xtdb lane (slots.json lanes.xtdb.follower)');
+  const port = info.port + conf.portOffset;
+  if (config.forbiddenPorts.includes(port)) fail('CONFIG', `Port ${port} is forbidden`);
+  for (const range of config.reservedPortRanges) if (port >= range.from && port <= range.to) fail('CONFIG', `Port ${port} belongs to ${range.owner}`);
+  return {
+    ...info, role: 'follower', writer: info.container, container: `${info.container}-ro`, port,
+    endpoint: info.laneConf.urlTemplate.replace('{port}', String(port)), memBytes: conf.memBytes, cpus: conf.cpus, javaOpts: conf.javaOpts,
+    volumeMode: conf.volumeMode, configFile: path.join(CONFIG_DIR, conf.configFile), configSource: conf.configFile, diskForecastBytes: 0,
+    cpusetCpus: opts['cpuset-cpus'] ? parseCpuset(opts['cpuset-cpus'], config.vm.cpus).join(',') : null,
+  };
+}
+
+/**
+ * Refuse unless volumeGuard passes on the config bytes this container will mount (R19 1.1: no second
+ * read-write process on a Local log). Run before any destructive step and again right before docker
+ * run/start, so a container that appeared in between is still seen. XTDB lane only: the hazard is the
+ * XTDB Local log, and the QLever start path (chown init container) is left exactly as it was.
+ */
+export function assertSingleWriter(info, eff) {
+  if (info.lane !== 'xtdb') return null;
+  const verdict = volumeGuard({ volume: info.volume, container: info.container, configText: fs.readFileSync(eff.files.config, 'utf8'), mountedBy: containersOnVolume(info.volume) });
+  if (!verdict.ok) fail('REFUSED', verdict.reason);
+  return verdict;
+}
 
 /** Effective engine configuration: the bytes the container actually runs with. */
 export function effectiveConfig(config, info) {
-  const dir = path.join(ENGINE_DIR, `${info.lane}-${info.slot}`);
+  const dir = path.join(ENGINE_DIR, `${info.lane}-${info.slot}${info.role === 'follower' ? '-ro' : ''}`);
   fs.mkdirSync(dir, { recursive: true });
+  // [EXP-X05] A cpuset joins the effective config only when given, so every existing slot keeps its hash.
+  const pin = info.cpusetCpus ? { cpusetCpus: info.cpusetCpus } : {};
+  if (info.role === 'follower') {
+    const yaml = fs.readFileSync(info.configFile);
+    const file = path.join(dir, 'config.yaml');
+    fs.writeFileSync(file, yaml);
+    const effective = {
+      lane: 'xtdb', slot: info.slot, role: 'follower', follows: info.writer, image: info.laneConf.image, configSource: info.configSource,
+      configYamlSha256: sha256(yaml), env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus, ...pin,
+      publish: `127.0.0.1:${info.port}:5432`, volume: `${info.volume}:/var/lib/xtdb${info.volumeMode === 'ro' ? ':ro' : ''}`, cmd: ['-f', '/etc/xtdb/config.yaml'],
+      health: 'wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive',
+    };
+    return { effective, sha256: sha256(JSON.stringify(effective)), files: { config: file } };
+  }
   if (info.lane === 'xtdb') {
     // Unchanged repo xtdb-config.yaml (pgwire 5432, healthz 8080, local log and storage under
     // /var/lib/xtdb, 512 MiB memory cache). Heap and direct memory come from the slot.
@@ -32,7 +85,7 @@ export function effectiveConfig(config, info) {
     fs.writeFileSync(file, yaml);
     const effective = {
       lane: 'xtdb', slot: info.slot, image: info.laneConf.image, configYamlSha256: sha256(yaml),
-      env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus,
+      env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus, ...pin,
       publish: `127.0.0.1:${info.port}:5432`, volume: `${info.volume}:/var/lib/xtdb`, cmd: ['-f', '/etc/xtdb/config.yaml'],
       health: 'wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive',
     };
@@ -59,7 +112,9 @@ function runArgs(info, eff, holder) {
     'run', '-d', '--name', info.container, '--restart', 'no',
     '--label', `tx2.lane=${info.lane}`, '--label', `tx2.slot=${info.slot}`, '--label', `tx2.config-sha256=${eff.sha256}`,
     '--label', `tx2.holder=${holder}`, '--label', 'tx2.managed-by=lab/bin/engine.mjs',
+    ...(info.role === 'follower' ? ['--label', 'tx2.role=follower', '--label', `tx2.follows=${info.writer}`] : []),
     '--memory', String(info.memBytes), '--memory-swap', String(info.memBytes), '--cpus', String(info.cpus),
+    ...(e.cpusetCpus ? ['--cpuset-cpus', e.cpusetCpus] : []),
     '-p', e.publish, '-v', e.volume,
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
@@ -106,6 +161,7 @@ async function waitReady(info, timeoutMs = 240_000) {
 }
 
 function exportsFor(info) {
+  if (info.role === 'follower') return `export XTDB_FOLLOWER_URL='${info.endpoint}'\nexport TX2_FOLLOWER_CONTAINER='${info.container}'`;
   const lines = [
     `export ${info.laneConf.envVar}='${info.endpoint}'`,
     ...Object.entries(info.laneConf.integrationEnv).map(([k, v]) => `export ${k}=${v}`),
@@ -157,6 +213,9 @@ async function up(config, info, opts) {
       process.stdout.write(exportsFor(info) + '\n');
       return;
     }
+    // [EXP-X05] Before --fresh removes anything: a follower (or any other container) on this volume
+    // makes this start a second container, and the writer config is read-write, so refuse now.
+    assertSingleWriter(info, eff);
     // Reserve atomically before any docker run/start.
     await withPool(async ledger => {
       const all = listTx2Containers({ all: true });
@@ -180,6 +239,7 @@ async function up(config, info, opts) {
         docker(['volume', 'rm', info.volume], { allowFail: true });
         if (docker(['volume', 'inspect', info.volume], { allowFail: true })) fail('ENGINE', `volume ${info.volume} still exists after --fresh removal`);
       }
+      assertSingleWriter(info, eff);
       if (existing && !opts.fresh) docker(['start', info.container]);
       else {
         if (info.lane === 'qlever') {
@@ -217,6 +277,10 @@ async function down(config, info, opts) {
   const owner = readOwner(info);
   if (owner && owner.holder !== holder && !opts.force)
     fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
+  // [EXP-X05] A follower outliving its writer would block the next writer start (volumeGuard) and keep
+  // its pool reservation; take it down first, explicitly.
+  if (info.lane === 'xtdb' && config.lanes.xtdb.follower && inspect(`${info.container}-ro`))
+    fail('REFUSED', `${info.container}-ro still exists; run: node lab/bin/engine.mjs down --lane xtdb --slot ${info.slot} --follower`);
   const existing = inspect(info.container);
   if (existing) {
     if (!existing.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs; not stopping it`);
@@ -242,6 +306,92 @@ async function down(config, info, opts) {
   process.stderr.write(`[lab] ${info.container} removed; volume ${info.volume} ${volumeNote}; reservation and slot lock released\n`);
 }
 
+/**
+ * [EXP-X05] Start the slot's read-only follower (R19 1.7). Preconditions, each a refusal:
+ * the slot is exclusive and held by this holder (a follower is part of that slot's reservation, never of
+ * the shared dev resident); the writer is ready (R19 1.7: LOG and REPLICA_LOG must exist first); the
+ * follower config is read-only with the writer's log and storage paths; writer and follower cpusets do
+ * not overlap when either is pinned (R19 1.6); volumeGuard passes; the pool admits its memory cap.
+ * A follower holds no state of its own (the volume is the writer's and it never writes), so a stopped or
+ * differently configured follower container is removed and recreated rather than restarted.
+ */
+async function followerUp(config, info, fol, opts) {
+  const holder = defaultHolder(opts);
+  if (info.mode !== 'exclusive') fail('REFUSED', `followers attach only to exclusive slots, not ${info.lane}-${info.slot} (${info.mode})`);
+  const owner = readOwner(info);
+  if (!owner) fail('REFUSED', `${info.lane}-${info.slot} has no slot lock; start its writer first`);
+  if (owner.holder !== holder) fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; a follower belongs to the slot's holder`);
+  const writer = inspect(info.container);
+  const ready = writer?.State.Running ? await probe(info) : null;
+  if (!ready?.ok) fail('REFUSED', `writer ${info.container} is not ready (${ready?.why ?? 'not running'}); R19 1.7: start the follower after the writer has created its logs`);
+  const eff = effectiveConfig(config, fol);
+  const writerConfig = writer.Mounts.find(mount => mount.Destination === '/etc/xtdb/config.yaml')?.Source;
+  if (!writerConfig || !fs.existsSync(writerConfig)) fail('REFUSED', `cannot read the config file ${info.container} runs (${writerConfig ?? 'no /etc/xtdb/config.yaml mount'})`);
+  const check = checkFollowerConfig(fs.readFileSync(writerConfig, 'utf8'), fs.readFileSync(eff.files.config, 'utf8'));
+  if (!check.ok) fail('REFUSED', `follower config ${fol.configSource}: ${check.reasons.join('; ')}`);
+  const writerCpuset = writer.HostConfig.CpusetCpus || null;
+  if (writerCpuset || fol.cpusetCpus) {
+    const shared = cpusetOverlap(writerCpuset, fol.cpusetCpus, config.vm.cpus);
+    if (shared.length) fail('REFUSED', `follower cpuset ${fol.cpusetCpus ?? '(unpinned)'} shares CPUs ${shared.join(',')} with writer cpuset ${writerCpuset ?? '(unpinned)'}`);
+  }
+  const existing = inspect(fol.container);
+  if (existing?.State.Running && existing.Config.Labels?.['tx2.config-sha256'] === eff.sha256) {
+    const again = await waitReady(fol, 60_000);
+    process.stderr.write(`[lab] ${fol.container} already running (${again.why})\n`);
+    process.stdout.write(exportsFor(fol) + '\n');
+    return;
+  }
+  assertSingleWriter(fol, eff);
+  await withPool(async ledger => {
+    const all = listTx2Containers({ all: true });
+    reconcile(ledger, all);
+    const request = { container: fol.container, memBytes: fol.memBytes, diskForecastBytes: 0 };
+    const verdict = admission({ config, reservations: ledger.reservations, running: all, request, diskUsedBytes: vmDisk(config).usedBytes });
+    ledger.external = verdict.external;
+    if (!verdict.ok) throw new LabError('REFUSED', `pool refuses ${fol.container}: ${verdict.reasons.join('; ')}. Holding: ${verdict.holders.join(', ') || 'nothing'}`);
+    ledger.reservations = ledger.reservations.filter(entry => entry.container !== fol.container);
+    ledger.reservations.push({
+      container: fol.container, lane: 'xtdb', slot: info.slot, role: 'follower', follows: info.container, memBytes: fol.memBytes, cpus: fol.cpus,
+      diskForecastBytes: 0, holder, experiment: opts.exp ?? owner.experiment ?? null, pid: process.pid, state: 'starting', reservedAt: now(),
+    });
+    appendEvent({ event: 'reserved', container: fol.container, memAfter: verdict.memAfter, diskAfter: verdict.diskAfter });
+  });
+  try {
+    if (existing) docker(['rm', '-f', fol.container]);
+    assertSingleWriter(fol, eff);
+    docker(runArgs(fol, eff, holder));
+    const up = await waitReady(fol);
+    await withPool(async ledger => {
+      const entry = ledger.reservations.find(item => item.container === fol.container);
+      if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now() });
+    });
+    process.stderr.write(`[lab] ${fol.container} ready (${up.why}); follows ${info.container} on ${eff.effective.volume}; cap ${fmtBytes(fol.memBytes)}, ${fol.cpus} CPU${fol.cpusetCpus ? ` on ${fol.cpusetCpus}` : ''}, config ${eff.sha256.slice(0, 12)}\n`);
+    process.stdout.write(exportsFor(fol) + '\n');
+  } catch (error) {
+    if (!inspect(fol.container)) await withPool(async ledger => { ledger.reservations = ledger.reservations.filter(e => e.container !== fol.container); });
+    else await withPool(async ledger => { const e = ledger.reservations.find(item => item.container === fol.container); if (e) Object.assign(e, { state: 'failed', pid: null }); });
+    throw error;
+  }
+}
+
+/** [EXP-X05] Remove the follower and its reservation. The slot lock and the volume stay with the writer. */
+async function followerDown(config, info, fol, opts) {
+  const holder = defaultHolder(opts);
+  const owner = readOwner(info);
+  if (owner && owner.holder !== holder && !opts.force)
+    fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
+  const existing = inspect(fol.container);
+  if (existing) {
+    if (existing.Config.Labels?.['tx2.role'] !== 'follower') fail('REFUSED', `${fol.container} is not a harness follower; not stopping it`);
+    docker(['stop', '-t', '30', fol.container], { allowFail: true });
+    docker(['rm', '-f', fol.container]);
+  }
+  if (inspect(fol.container)) fail('ENGINE', `${fol.container} still exists; reservation kept`);
+  await withPool(async ledger => { ledger.reservations = ledger.reservations.filter(entry => entry.container !== fol.container); });
+  appendEvent({ event: 'down', container: fol.container, role: 'follower' });
+  process.stderr.write(`[lab] ${fol.container} removed; reservation released; ${info.container} and ${info.volume} untouched\n`);
+}
+
 async function status(config) {
   const all = listTx2Containers({ all: true });
   const stats = Object.fromEntries(dockerStats().map(row => [row.name, row]));
@@ -257,6 +407,17 @@ async function status(config) {
       state: c ? `${c.status}${c.health ? '/' + c.health : ''}` : '-', ready: ready ? (ready.ok ? 'READY' : 'NOT-READY ' + ready.why) : '-',
       mem: stats[info.container] ? fmtBytes(stats[info.container].memBytes) : '-', holder: owner ? `${owner.holder}${owner.experiment ? ' ' + owner.experiment : ''}` : '-',
     });
+    // [EXP-X05] A follower shows as its own row under its slot when its container exists.
+    const f = lane === 'xtdb' && config.lanes.xtdb.follower ? all.find(item => item.name === `${info.container}-ro`) : null;
+    if (f) {
+      const fol = followerInfo(config, info);
+      const fready = f.running ? await probe(fol) : null;
+      rows.push({
+        slot: `${lane}-${slot}-ro`, port: fol.port, cap: `${fmtBytes(fol.memBytes)}/${fol.cpus}cpu`, state: `${f.status}${f.health ? '/' + f.health : ''}`,
+        ready: fready ? (fready.ok ? 'READY' : 'NOT-READY ' + fready.why) : '-', mem: stats[fol.container] ? fmtBytes(stats[fol.container].memBytes) : '-',
+        holder: owner ? `${owner.holder} (follower)` : '-',
+      });
+    }
   }
   const widths = Object.keys(rows[0]).map(key => Math.max(key.length, ...rows.map(row => String(row[key]).length)));
   const line = values => values.map((value, i) => String(value).padEnd(widths[i])).join('  ');
@@ -275,9 +436,17 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
-  if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh]');
+  if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot);
+  if (options.follower) {
+    const fol = followerInfo(config, info, options);
+    if (command === 'up') return followerUp(config, info, fol, options);
+    if (command === 'down') return followerDown(config, info, fol, options);
+    spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), fol.container]), { stdio: 'inherit' });
+    return;
+  }
+  if (options['cpuset-cpus']) info.cpusetCpus = parseCpuset(options['cpuset-cpus'], config.vm.cpus).join(',');
   if (command === 'up') return up(config, info, options);
   if (command === 'down') return down(config, info, options);
   spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), info.container]), { stdio: 'inherit' });

@@ -9,6 +9,9 @@ import { test } from 'node:test';
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-lab-test-'));
 process.env.TX2_LOCKS_DIR = path.join(temp, 'locks');
 process.env.TX2_HEAVY_SLOTS = '2';
+// [EXP-X05] engine.mjs tests write effective configs here and read engine config from this checkout.
+process.env.TX2_ENGINE_DIR = path.join(temp, 'engines');
+process.env.TX2_CONFIG_DIR = path.resolve(import.meta.dirname, '../../..');
 const lib = await import('../lib.mjs');
 const { classifyLanguages, tallyLanguages, verdictOf } = await import('../receipt.mjs');
 const { acquireHeavy } = await import('../heavy-lock.mjs');
@@ -227,6 +230,26 @@ test("follower config must be read-only and read the writer's own log and storag
   assert.match(lib.checkFollowerConfig(writerYaml, followerYaml.replace('storage: !Local', 'storage: !InMemory')).reasons[0], /storage/);
   assert.match(lib.checkFollowerConfig(writerYaml, followerYaml.replace('port: 8080', 'port: 8081')).reasons[0], /healthz/);
   assert.match(lib.checkFollowerConfig(followerYaml, followerYaml).reasons.join(' '), /writer config is read-only/);
+});
+
+test('follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared', async () => {
+  const { effectiveConfig, followerInfo } = await import('../engine.mjs');
+  const s2 = lib.slotInfo(config, 'xtdb', 's2');
+  const fol = followerInfo(config, s2, { 'cpuset-cpus': '3,2' });
+  assert.equal(fol.container, 'tx2-xtdb-s2-ro');
+  assert.equal(fol.port, 5482);
+  assert.equal(fol.volume, s2.volume);
+  assert.equal(fol.lockDir, s2.lockDir);
+  assert.equal(fol.cpusetCpus, '2,3');
+  const eff = effectiveConfig(config, fol);
+  assert.equal(eff.effective.volume, 'tx2-xtdb-s2-data:/var/lib/xtdb:ro');
+  assert.equal(lib.xtdbConfigReadOnly(fs.readFileSync(eff.files.config, 'utf8')), true);
+  // The writer's effective config, and so its hash, is unchanged unless a cpuset is given.
+  assert.equal('cpusetCpus' in effectiveConfig(config, s2).effective, false);
+  assert.notEqual(effectiveConfig(config, { ...s2, cpusetCpus: '0,1' }).sha256, effectiveConfig(config, s2).sha256);
+  const bad = structuredClone(config); bad.lanes.xtdb.follower.portOffset = -7; // 5472 - 7 = 5465, a research-probe port
+  assert.throws(() => followerInfo(bad, s2), /research probes/);
+  assert.throws(() => followerInfo(config, lib.slotInfo(config, 'qlever', 's2')), /only for the xtdb lane/);
 });
 
 test('cpusets parse against the VM and unpinned containers overlap everything', () => {
