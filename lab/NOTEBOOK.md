@@ -346,3 +346,29 @@ Report lab/research/R8-qlever-write-lifecycle.md; probes ~/Claude/Projects/tripl
    (lab/research/SAM-pasted-targets-2026-11-07.md). Sam: do not rule out QLever; build both to the fullest and work around
    impossibilities; keep the ten-goal plan but re-tune performance targets and requirements. Orchestrator restated its
    understanding to Sam and is waiting for confirmation before rewriting PLAN/TARGETS/contract targets.
+
+## R10 read-only recursion (Sonnet xhigh) — PROGRESSED (knowledge); C8 design chosen
+Report lab/research/R10-read-only-recursion.md; probes ~/Claude/Projects/triplex-db-2/R10-recursion-probes (1 CPU, synthetic graphs).
+- Design: shared TS `frontierClosure` (semi-naive, one read per round, frontier as ONE structured parameter, expanded-set cycle guard,
+  budgets with typed errors: rounds 64, visited 100k, edges 1M, task 30 s). Lane Q Tier 1 = one property-path read over the current
+  graph for C1-eligible bases (bound start; `BIND UNION p+` for zero length; never `p*` with a constant start; never both ends unbound);
+  Tier 2 = frontier over the ledger. Lane X Tier 1 = frontier over entity-keyed `_id` tables with native `FOR VALID_TIME AS OF`;
+  Tier 2 = frontier over the raw ledger (small scopes only; at scale needs a write-path edge index). Supports counted on the extracted
+  subgraph (simple paths, as the oracle).
+- Evidence: all 17 recursive fixture cases (workloads 11, 13, 14, 15, 20) pass both ways; today's closure is all-pairs (a 111k-node tree
+  breaks the 100k-pair limit; each XTDB scratch round 205-410 ms). Property path 4-15 ms to reach 11k, ~130 ms to 111k, but needs IRI refs
+  and cannot filter edges by time; QLever returns no row for `p*` from a constant absent from the graph (differs from W3C).
+- QLever ledger ids must be IRIs: VALUES of literals costs ~0.25 ms planning per literal (frontier to 8.6k: 3.2 s literal vs 0.28 s IRI).
+  Affects EXP-Q01 compact ledger. QLever `PathSearch` over a ledger edge subquery gives exact reach and simple-path counts in one read
+  (71,074 paths in 1.66 s) but needs a cycle guard: rival, not default.
+- XTDB ledger frontier = a column scan per round (235-330 ms at 333k rows, linear); entity-keyed tables 3-7 ms for frontier 10, ~100 ms
+  for 1,000. XTQL `rel` join 17-120 ms per round (scans); `_id` OR-chain fails to compile at ~100 scalar params.
+- NEW XTDB 2.2.0 WRONG-RESULT BUG: `col = ANY($1) AND <other predicate>` silently returns zero or wrong rows; use
+  `IN (SELECT x FROM UNNEST($1) AS u(x))`. Forwarded to EXP-X02 and R14.
+### Orchestrator decisions on R10's questions
+1. QLever Tier 1 (property paths) ships after the frontier loop passes G2, as an optimization that must match the frontier results
+   differentially; the frontier loop is the exact default.
+2. IRI entity ids and refs in the QLever compact ledger: yes (10x frontier cost difference; matches the R3/R01 naming).
+3. XTDB Tier 2 at scale: a write-path edge index (forward and reverse ref tables, paged per R7); an early-refusal scan budget is the
+   interim guard.
+4. C8 covers every read API: the Datalog `rules` path and `makeXtdbMaintainedQueries` must stop writing scratch state from read calls.

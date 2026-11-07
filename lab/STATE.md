@@ -32,7 +32,6 @@ Updated: 2026-11-07 (gen-0, planning)
 | EXP-G01 (opus high, main checkout, no commit) | hand-derived golden vectors | lab/acceptance/golden/ |
 | EXP-A01 resumed (opus high) | acceptance contract 0.2.0 | lab/acceptance/ |
 | V-R01 (opus high, worktree verify/R01) | verify exp/R01-entity-core | lab/experiments/EXP-R01-entity-core/VERIFY.md |
-| R10 (sonnet xhigh) | read-only recursion (C8); probe tx2-probe-r10 | lab/research/R10-read-only-recursion.md |
 | R14 (sonnet xhigh) | XTDB wrong-result hazards | lab/research/R14-xtdb-correctness-hazards.md |
 | R15 (sonnet xhigh) | presence/deletion/cascade policy options | lab/research/R15-presence-deletion-cascade.md |
 | DONE | R1-R9, R12, R13; EXP-000 harness (stopped after report) | |
