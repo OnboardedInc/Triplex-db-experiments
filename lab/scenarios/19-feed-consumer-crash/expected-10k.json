@@ -5,10 +5,10 @@
  "rung": "10k",
  "seed": 20261119,
  "genVersion": "w01-gen/1",
- "streamSha256": "d74adbef63382d3a53c67309d56adff284c19f20261271082645e9f7b1a4dbf4",
- "commands": 61,
+ "streamSha256": "03e26dbf9ad2167c9e09da9a33fc96c6156399b867fa6ade92ac55009f3198af",
+ "commands": 62,
  "setupCommands": 4,
- "facts": 975,
+ "facts": 980,
  "oracle": {
   "id": "O-REPLAY",
   "version": "0.2.0",
@@ -35,7 +35,7 @@
  "oracleCases": [
   {
    "caseId": "GS/19/10k/chunk-0000",
-   "caseSha256": "a490d4fc7701a117e67dc5d35812e94b932bf32d824abddff979c6bb8ccc8dc1",
+   "caseSha256": "cf2a045041b6d3683910eb8053db364b1cfe9fc493e72aa7ea99c29b8a7f27e0",
    "verdict": "EXPECTED-ONLY"
   },
   {
@@ -56,7 +56,9 @@
    "errorTag": "CommandAlreadyCommittedError"
   }
  },
- "hand": null,
+ "hand": {
+  "unchangedSubject": "q0000"
+ },
  "gaps": [
   "the outbox is the Triplex journal itself; an atomic outbox table in the source transaction (TARGETS section 3) is not in the triplex-public composition"
  ],
@@ -76,6 +78,9 @@
      "1794052800000": "987bc1244ed7f48e1a13f1e9"
     },
     "40": {
+     "1794052800000": "c738fc6ee118048e99709e7a"
+    },
+    "61": {
      "1794052800000": "c738fc6ee118048e99709e7a"
     }
    }

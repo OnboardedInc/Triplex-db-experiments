@@ -21,6 +21,9 @@ export function generate(spec, p) {
   const releaseSids = {};
   const events = [
     { at: activateAt, emit: s => T.activate(s, ACCOUNT, releaseSids.R2, { at: activateAt }) },
+    // Rollback (RULINGS Q38f): R1, then R2, then R1 again. The changed notice must be delivered three times,
+    // with publication sequences 1, 2, 3 and payloads R1, R2, R1 (O-DOMAIN owns the payloads).
+    { at: Math.round(p.liveMs * p.rollbackAtFraction), emit: s => { T.activate(s, ACCOUNT, releaseSids.R1, { at: Math.round(p.liveMs * p.rollbackAtFraction) }).tags.rollback = true; } },
     // Mutations after the basis is captured: sent by during(), not by the timeline (tags.manual).
     ...mutated.map(sid => ({ at: activateAt + 1, emit: s => { const c = s.command({ subject: sid, writer: 'runtime', at: activateAt + 1, tags: { template: 'postBasisMutation', manual: true } });
       c.set(ents(sid).placement, ':placement/status', VALUE.str('active'), 'Placement', { validFrom: BT.NOW - 1000 }); c.done(); } })),
@@ -90,4 +93,14 @@ export async function during(ctx) {
   ctx.check('sweep-answers-at-captured-basis', wrong === 0 && failed === 0, { wrong, failed, first });
   expectDomain(ctx, { id: 'sweep-work-items-R2', kind: 'work-items', subjects: scope, basis: ctx.extra.sweep.basis, release: ctx.gen.hand.releases.R2 });
   expectDomain(ctx, { id: 'inflight-reconciles-evaluate-R1', kind: 'next-task', basis: { recordedAt: Rpre }, release: ctx.gen.hand.releases.R1 });
+}
+
+export async function check(ctx) {
+  // Rollback R1 -> R2 -> R1 (Q38f): the database part is the account's activation history; the three deliveries
+  // keyed (id, publication sequence) with payloads R1, R2, R1 are W0 work items, so O-DOMAIN owns them.
+  const acts = ctx.gen.stream.commands.filter(c => c.tags?.template === 'activate').map(c => ctx.ex.byIndex.get(c.index));
+  const order = acts.map(a => a?.status === 'committed' ? a.receipt.position : null);
+  ctx.check('rollback-activations-committed-in-order', order.every(x => x !== null) && order.every((x, i) => i === 0 || x > order[i - 1]) && order.length === 3, { order });
+  expectDomain(ctx, { id: 'rollback-three-deliveries', kind: 'work-items', release: [ctx.gen.hand.releases.R1, ctx.gen.hand.releases.R2, ctx.gen.hand.releases.R1],
+    observed: 'deliveries keyed (id, publication sequence): expected sequences 1, 2, 3 with payloads R1, R2, R1 (RULINGS Q38f)' });
 }

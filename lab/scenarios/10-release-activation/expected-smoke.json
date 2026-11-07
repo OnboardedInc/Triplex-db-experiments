@@ -5,10 +5,10 @@
  "rung": "smoke",
  "seed": 20261110,
  "genVersion": "w01-gen/1",
- "streamSha256": "ebb32788f314ff83ab437c849039524bcd4422eaf22e1c3f3cba774a0b27b7c7",
- "commands": 19,
+ "streamSha256": "4b948ffdeb00b9dc8924548c8459899b821cc0b6c4e2f366b064c2ae75e35fd1",
+ "commands": 20,
  "setupCommands": 5,
- "facts": 361,
+ "facts": 362,
  "oracle": {
   "id": "O-REPLAY",
   "version": "0.2.0",
@@ -35,7 +35,7 @@
  "oracleCases": [
   {
    "caseId": "GS/10/smoke/chunk-0000",
-   "caseSha256": "eae3e647795513f57155602f026ca9af3f30a6638c3b8c2063c24dacee1c3bff",
+   "caseSha256": "0a303a71f5b15c55385da4d43a39efadb11048a37a7b809295984ff9dbf5defc",
    "verdict": "EXPECTED-ONLY"
   }
  ],
@@ -175,6 +175,9 @@
     },
     "9": {
      "1794052800000": "762f386476a7825988c7a310"
+    },
+    "18": {
+     "1794052800000": "3842b406217e4421346323bc"
     }
    }
   },
@@ -209,7 +212,7 @@
     "5": {
      "1794052800000": "ecd30d77d488cea1e61caff3"
     },
-    "18": {
+    "19": {
      "1794052800000": "9c83d924aaec017ce84c0de6"
     }
    }

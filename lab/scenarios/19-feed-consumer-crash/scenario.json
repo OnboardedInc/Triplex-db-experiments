@@ -7,9 +7,9 @@
     "P3"
   ],
   "status": "runnable",
-  "source": "lab/TARGETS.md section 6 row 19, section 6.1 (GS.19b), section 1.1 P3 items 4 to 6",
-  "story": "The dependency-index consumer crashes mid-stream and resumes from its checkpoint. Added schedule GS.19b: the consumer crashes after delivering an outbox item but before recording completion.",
-  "checked": "No gap, no duplicate processing, per-subject order kept; catch-up lag measured. Crash points: before the effect, after the effect before the checkpoint (GS.19b), after the checkpoint. GS.19b: the receiver deduplicates by the delivery key, so exactly one externally visible effect.",
+  "source": "lab/TARGETS.md section 6 row 19, section 6.1 (GS.19b), section 1.1 P3 items 4 to 6; RULINGS Q38f",
+  "story": "The dependency-index consumer crashes mid-stream and resumes from its checkpoint. Added schedule GS.19b: the consumer crashes after delivering an outbox item but before recording completion. Q38f cases: a crash before delivery, and an unchanged activation (same payload) during recovery.",
+  "checked": "No gap, no duplicate processing, per-subject order kept; catch-up lag measured. Crash points: A before the effect, D after the durable outbox write but before delivery (Q38f), B after delivery before completion is recorded (GS.19b), C after the checkpoint. Deliveries are keyed (id, publication sequence); the set delivered equals the set implied by the committed stream (a new sequence only when the payload changes); the receiver shows exactly one visible effect per key while replays happen; the unchanged activation publishes nothing.",
   "seed": 20261119,
   "yearOne": {
     "consumer": "dependency index"
@@ -44,7 +44,8 @@
     "negative": "idle onboarded subjects (never in a live-phase transaction, so never delivered)"
   },
   "domain": [
-    "the dependency-index affected-subject set including subjects reached through referenced entities (O-DOMAIN)"
+    "the dependency-index affected-subject set including subjects reached through referenced entities (O-DOMAIN)",
+    "work-item payloads and their publication sequences under W0 (O-DOMAIN); the harness payload is the asserted (attribute, value) set per subject"
   ],
   "bars": [
     {
@@ -65,9 +66,11 @@
     }
   ],
   "faults": [
-    "consumer crash before the effect",
-    "after the effect before the checkpoint (GS.19b)",
-    "after the checkpoint"
+    "crash before the effect (A)",
+    "crash after the outbox write, before delivery (D, Q38f)",
+    "crash after delivery, before completion is recorded (B, GS.19b)",
+    "crash after the checkpoint (C)",
+    "unchanged activation during recovery (Q38f)"
   ],
   "oracle": {
     "source": "O-REPLAY (directly written subjects per transaction, receipts); O-DOMAIN (referenced-entity dependencies)",
@@ -75,5 +78,6 @@
       "the outbox is the Triplex journal itself; an atomic outbox table in the source transaction (TARGETS section 3) is not in the triplex-public composition"
     ]
   },
-  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6.",
+  "deliveryIdentity": "RULINGS Q38f (main baeb9fd): work-item delivery identity is (id, publication sequence); the sequence increments whenever the payload to publish differs from the latest published payload for that id; publication state is persisted atomically with the outbox record; unacknowledged deliveries survive crashes and replay with their original identity; duplicate-visible-effect checks count by (id, publication sequence)."
 }

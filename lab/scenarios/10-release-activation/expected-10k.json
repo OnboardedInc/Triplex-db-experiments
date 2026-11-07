@@ -5,10 +5,10 @@
  "rung": "10k",
  "seed": 20261110,
  "genVersion": "w01-gen/1",
- "streamSha256": "37acd4cb2ae808dfc9c7eaa6d3d094b58dd54929357d3de23712414eacf6d1ef",
- "commands": 33,
+ "streamSha256": "4bd7310314657aa879c1421d28b9f91e3cc20b68d7ed9fd5285f6126bfdcc0f7",
+ "commands": 34,
  "setupCommands": 8,
- "facts": 803,
+ "facts": 804,
  "oracle": {
   "id": "O-REPLAY",
   "version": "0.2.0",
@@ -40,12 +40,12 @@
   },
   {
    "caseId": "GS/10/10k/chunk-0001",
-   "caseSha256": "e9c781b72cad604af62e845c5e032cef63d05a6d7fe4d983ffb59627eb28563b",
+   "caseSha256": "0fe0c6f486ed4d2411a18da341335e7d0f78bac185d47d526879384f5bbcee32",
    "verdict": "EXPECTED-ONLY"
   },
   {
    "caseId": "GS/10/10k/chunk-0002",
-   "caseSha256": "5eca934ea5d86c806447fbf2a52419958350ce869f81472c7971d90d5480bfec",
+   "caseSha256": "f3e0006c0c42abafff53ca1a595a3abf62ca55efc5fdd46a76b4d0c92fb73f74",
    "verdict": "EXPECTED-ONLY"
   }
  ],
@@ -391,6 +391,9 @@
     },
     "16": {
      "1794052800000": "762f386476a7825988c7a310"
+    },
+    "30": {
+     "1794052800000": "3842b406217e4421346323bc"
     }
    }
   },
@@ -513,7 +516,7 @@
     "3": {
      "1794052800000": "608e1516b865ea962c4acf5a"
     },
-    "31": {
+    "32": {
      "1794052800000": "dde155b4794a0f78e18e7eb4"
     }
    }
@@ -561,7 +564,7 @@
     "22": {
      "1794052800000": "7602a8955cfd90c6c6908a26"
     },
-    "30": {
+    "31": {
      "1794052800000": "2281a08a9ee339fe13f93634"
     }
    }
@@ -606,7 +609,7 @@
     "29": {
      "1794052800000": "4653d7a99feed5482748b7fb"
     },
-    "32": {
+    "33": {
      "1794052800000": "d5ab0d0f034ca3f5f2be3b31"
     }
    }

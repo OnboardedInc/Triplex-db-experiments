@@ -8,16 +8,17 @@
     "P1"
   ],
   "status": "runnable",
-  "source": "lab/TARGETS.md section 6 row 10; P5 semantics in section 1.1; common basis with GS.11 in section 6.1 item 4",
-  "story": "A new release changes 3 requirements; activation is a fact; the sweep re-reconciles 100k subjects at one pinned basis with live traffic.",
-  "checked": "P5 bars (sweep <= 100 s, live p99 <= 1.5x); in-flight reconciles finish on the old release; every in-scope subject evaluated exactly once at the captured basis; subjects mutated after the basis was captured are swept as of the basis.",
+  "source": "lab/TARGETS.md section 6 row 10; P5 semantics in section 1.1; common basis with GS.11 in section 6.1 item 4; RULINGS Q38f",
+  "story": "A new release changes 3 requirements; activation is a fact; the sweep re-reconciles 100k subjects at one pinned basis with live traffic. Added schedule (Q38f): release rollback R1, then R2, then R1 again.",
+  "checked": "P5 bars (sweep <= 100 s, live p99 <= 1.5x); in-flight reconciles finish on the old release; every in-scope subject evaluated exactly once at the captured basis; subjects mutated after the basis was captured are swept as of the basis. Rollback: three activations commit in order; the changed notice is delivered three times, keyed (id, publication sequence) = 1, 2, 3 with payloads R1, R2, R1.",
   "seed": 20261110,
   "yearOne": {
     "sweepSubjects": 100000
   },
   "params": {
     "activateAtFraction": 0.3,
-    "inflightReconciles": 8
+    "inflightReconciles": 8,
+    "rollbackAtFraction": 0.85
   },
   "rungs": {
     "10k": {
@@ -47,7 +48,8 @@
   },
   "domain": [
     "R2 evaluated for every in-scope subject at R_act and published as work items through the outbox (O-DOMAIN)",
-    "in-flight reconciles evaluate R1 (O-DOMAIN)"
+    "in-flight reconciles evaluate R1 (O-DOMAIN)",
+    "rollback R1 -> R2 -> R1 publishes three deliveries for a changed notice (O-DOMAIN payloads; delivery identity per Q38f)"
   ],
   "bars": [
     {
@@ -91,5 +93,6 @@
     "gaps": [
       "work-item publication through the atomic outbox path is not built in the triplex-public composition (TARGETS 1.1 P5 item 3)"
     ]
-  }
+  },
+  "deliveryIdentity": "RULINGS Q38f (main baeb9fd): work-item delivery identity is (id, publication sequence); the sequence increments whenever the payload to publish differs from the latest published payload for that id; publication state is persisted atomically with the outbox record; unacknowledged deliveries survive crashes and replay with their original identity; duplicate-visible-effect checks count by (id, publication sequence)."
 }
