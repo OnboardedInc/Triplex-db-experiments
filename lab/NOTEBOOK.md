@@ -768,3 +768,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
   one 2.5 GiB QLever at once is the likely cause; measurements belong on exclusive slots.
   **Stall:** EXP-X05 had stopped with no background work, waiting for 5.1 GiB of pool while 2.0 GiB is free; told it to finish
   engine-free work, wait in a background loop, and fall back to a provisional smaller run after 90 minutes.
+
+## 2026-11-08 ~03:10Z: R21 engine-upgrade survey: stay pinned on both engines
+- **QLever:** no release after 0.6.0 (404 commits on master). #3607 (part 2 of 4 of the update-cost umbrella) is merged; parts 3/4 are
+  unused or open, so the quoted "700 ms to 60 ms at 500k delta" exists in no merged state. Even fully merged, update p50 at 500k delta
+  stays near 25-60 ms, above P2's bars, so EXP-P2Q's ACK-at-host-log design stays. Two cheap levers on 0.6.0 today: `--persist-updates`
+  off (the host log already replays; persisting rewrites the whole delta per update, about 45 of 129 ms at 500k) and
+  `--rebuild-keep-previous-index-dirs none` (no pre-erasure `previous.*` copies). Unchanged on master: whole-cache clear per update, no
+  TCP_NODELAY, vocabulary never drops words on rebuild, 60-bit integers. Master cannot load 0.6.0 indexes without `qlever-upgrade-index`.
+- **XTDB:** no release after 2.2.0; 2.2.1 milestone closed (fixes #6345 mark join, #6174 slow plans after restart, #6358 erased rows
+  leaking through system-time windows). Still open: #6313, #6151, the token issues; no change stream (#2454); no per-database auth or
+  encryption; the idle heartbeat, read-only log reader, LocalLog and numThreads are byte-identical to 2.2.0, so R16/R19 hazards stand.
+- **Decisions:** stay pinned on both; QLever side-by-side E1 (0.6.0 vs #3607 vs master, persistence on/off) queued as EXP-Q07 when an
+  exclusive QLever slot frees; XTDB re-qualification on 2.2.1 the day it is tagged (a rehearsal on nightly-20261106 can run earlier).
+  P2's p50 bar stays at 10 ms (only Sam can loosen a bar). Filing the DECIMAL-cast and `= ANY` findings upstream would publish lab
+  findings, so that is Sam's call, flagged in STATE.
