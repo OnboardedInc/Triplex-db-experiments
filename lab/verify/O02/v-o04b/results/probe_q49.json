@@ -1,9 +1,8 @@
 {
  "counts": {
-  "MATCH": 74,
-  "DERIVED-NOTE": 7
+  "MATCH": 85
  },
- "probes": 81,
+ "probes": 85,
  "rows": [
   {
    "ruling": "Q49a",
@@ -1187,24 +1186,70 @@
    }
   },
   {
-   "ruling": "Q49c (derived)",
+   "ruling": "Q56b",
    "probe": "card-one: readable value plus an erased value",
-   "expected": "conflict or the readable value?",
-   "verdict": "DERIVED-NOTE",
-   "oracle": "E-CONFLICTING-VALUES"
+   "expected": "get is E-CONFLICTING-VALUES",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "p8",
+      "attribute": ":person/ssn"
+     }
+    ]
+   }
   },
   {
-   "ruling": "Q49c (derived)",
+   "ruling": "Q56c",
    "probe": "card-one: equal values, one support erased",
-   "expected": "before: one value, two supports; after?",
-   "verdict": "DERIVED-NOTE",
-   "oracle": "E-CONFLICTING-VALUES"
+   "expected": "get is E-CONFLICTING-VALUES (answers never depend on the erased value)",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "p9",
+      "attribute": ":person/ssn"
+     }
+    ]
+   }
   },
   {
-   "ruling": "Q49b (derived)",
-   "probe": "erase by an unknown assertion id",
-   "expected": "commit (matches nothing) or E-INVALID-VALUE?",
-   "verdict": "DERIVED-NOTE",
+   "ruling": "Q56c",
+   "probe": "control: the same history without the erase",
+   "expected": "one value SAME with supports [e1, e2], no error",
+   "verdict": "MATCH",
+   "oracle": {
+    "entityId": "p9",
+    "entityType": "Person",
+    "properties": {
+     "ssn": {
+      "value": {
+       "type": "string",
+       "value": "SAME"
+      },
+      "supports": [
+       "e1",
+       "e2"
+      ]
+     }
+    },
+    "missingRequired": [],
+    "undeclaredAttributes": []
+   }
+  },
+  {
+   "ruling": "Q56a",
+   "probe": "erase by an unknown assertion id (target)",
+   "expected": "rejected E-INVALID-VALUE, as for retract (Q33f)",
+   "verdict": "MATCH",
    "oracle": {
     "outcome": "rejected",
     "error": "E-INVALID-VALUE",
@@ -1215,32 +1260,131 @@
    }
   },
   {
-   "ruling": "Q49c (derived)",
-   "probe": "card-many: where the marker sits among readable elements",
-   "expected": "Q49c orders ORDER BY only; card-many order?",
-   "verdict": "DERIVED-NOTE",
+   "ruling": "Q56d",
+   "probe": "card-many: markers after the readable elements",
+   "expected": "[alpha, zeta, marker(200)]; the marker group's supports are {ka, kz}",
+   "verdict": "MATCH",
    "oracle": [
     {
-     "type": "string",
-     "value": "alpha"
+     "value": {
+      "type": "string",
+      "value": "alpha"
+     },
+     "supports": [
+      "k3"
+     ]
     },
     {
-     "type": "string",
-     "value": "zeta"
+     "value": {
+      "type": "string",
+      "value": "zeta"
+     },
+     "supports": [
+      "k1"
+     ]
     },
     {
-     "_tag": "ErasedValue",
-     "erasedAt": 200
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "supports": [
+      "kz",
+      "ka"
+     ]
     }
    ]
   },
   {
-   "ruling": "Q49c (derived)",
-   "probe": "Required over an erased value",
-   "expected": "present with no readable value: does it satisfy Required?",
-   "verdict": "DERIVED-NOTE",
+   "ruling": "Q56e",
+   "probe": "Required satisfied by an erased value",
+   "expected": "the enforced command commits; get shows missingRequired []",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    {
+     "entityId": "p1",
+     "entityType": "Person",
+     "properties": {
+      "name": {
+       "value": {
+        "type": "string",
+        "value": "Q"
+       },
+       "supports": [
+        "q2"
+       ]
+      },
+      "ssn": {
+       "value": {
+        "_tag": "ErasedValue",
+        "erasedAt": 200
+       },
+       "supports": [
+        "q1"
+       ]
+      }
+     },
+     "missingRequired": [],
+     "undeclaredAttributes": []
+    }
+   ]
+  },
+  {
+   "ruling": "Q56e",
+   "probe": "control: no ssn at all",
+   "expected": "the enforced command is rejected E-CONSTRAINT (required)",
+   "verdict": "MATCH",
    "oracle": {
-    "outcome": "committed"
+    "outcome": "rejected",
+    "error": "E-CONSTRAINT",
+    "errorTag": "ConstraintViolationError",
+    "reason": "required",
+    "phase": "commit",
+    "reasonAlternatives": [
+     "required"
+    ],
+    "message": "new or worsened constraint violation",
+    "codes": [
+     "required"
+    ],
+    "violations": [
+     {
+      "code": "required",
+      "entityType": "Person",
+      "attribute": ":person/ssn",
+      "validAt": 0,
+      "actual": 0,
+      "subject": "p1"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "Q56e",
+   "probe": "control: read side with no ssn",
+   "expected": "get lists missingRequired [ssn]",
+   "verdict": "MATCH",
+   "oracle": {
+    "entityId": "p1",
+    "entityType": "Person",
+    "properties": {
+     "name": {
+      "value": {
+       "type": "string",
+       "value": "Q"
+      },
+      "supports": [
+       "q2"
+      ]
+     }
+    },
+    "missingRequired": [
+     "ssn"
+    ],
+    "undeclaredAttributes": []
    }
   },
   {
@@ -1289,10 +1433,10 @@
    ]
   },
   {
-   "ruling": "Q49b (derived)",
+   "ruling": "Q56a",
    "probe": "erase by an unknown actual id ({id: ...})",
-   "expected": "commit (matches nothing) or E-INVALID-VALUE?",
-   "verdict": "DERIVED-NOTE",
+   "expected": "rejected E-INVALID-VALUE, as for retract (Q33f)",
+   "verdict": "MATCH",
    "oracle": {
     "outcome": "rejected",
     "error": "E-INVALID-VALUE",
@@ -1301,6 +1445,49 @@
     "phase": "preflight",
     "message": "retract id no-such-id is unknown in scope s"
    }
+  },
+  {
+   "ruling": "Q56f",
+   "probe": "erase by a known actual id ({id: x1})",
+   "expected": "commits; x1 reads as marker(200); the change names x1 only",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    [
+     {
+      "id": "x1",
+      "entityId": "p1",
+      "attribute": ":person/ssn",
+      "value": {
+       "_tag": "ErasedValue",
+       "erasedAt": 200
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": null,
+      "txId": "tx:0",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ],
+    [
+     {
+      "op": "erase",
+      "entityId": "p1",
+      "attribute": ":person/ssn",
+      "assertionIds": [
+       "x1"
+      ]
+     }
+    ]
+   ]
   },
   {
    "ruling": "R-CMD-9",
@@ -1345,10 +1532,10 @@
    ]
   },
   {
-   "ruling": "Q49 (derived)",
+   "ruling": "Q56g",
    "probe": "retract by target of an already erased assertion",
-   "expected": "commit (identity-only) or a typed error?",
-   "verdict": "DERIVED-NOTE",
+   "expected": "commits; history shows marker(200) with retractedAt 250",
+   "verdict": "MATCH",
    "oracle": [
     {
      "outcome": "committed"

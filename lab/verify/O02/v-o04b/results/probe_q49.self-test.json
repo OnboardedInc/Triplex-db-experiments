@@ -1,8 +1,8 @@
 {
  "counts": {
-  "WRONG-ANSWER": 7
+  "WRONG-ANSWER": 15
  },
- "probes": 7,
+ "probes": 15,
  "rows": [
   {
    "ruling": "ST",
@@ -135,6 +135,152 @@
      }
     ]
    }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56b readable value wins",
+   "expected": "VISIBLE-H2 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "p8",
+      "attribute": ":person/ssn"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56c remaining support still reads SAME",
+   "expected": "SAME (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "p9",
+      "attribute": ":person/ssn"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56a unknown target commits empty",
+   "expected": "committed, [] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "retract target no-such-id is not a committed assertion"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56d marker first",
+   "expected": "[marker, alpha, zeta] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "value": {
+      "type": "string",
+      "value": "alpha"
+     },
+     "supports": [
+      "k3"
+     ]
+    },
+    {
+     "value": {
+      "type": "string",
+      "value": "zeta"
+     },
+     "supports": [
+      "k1"
+     ]
+    },
+    {
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "supports": [
+      "kz",
+      "ka"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56e erased value fails Required",
+   "expected": "rejected E-CONSTRAINT (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56a unknown id commits empty",
+   "expected": "committed (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "retract id no-such-id is unknown in scope s"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56f id selector rejected",
+   "expected": "rejected E-INVALID-VALUE (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56g retractedAt is the erase instant",
+   "expected": "retractedAt 200 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "id": "x1",
+     "entityId": "p1",
+     "attribute": ":person/ssn",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": 250,
+     "retractedPosition": 3,
+     "retractTxId": "tx:2"
+    }
+   ]
   }
  ]
 }

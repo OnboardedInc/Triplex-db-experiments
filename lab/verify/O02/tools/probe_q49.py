@@ -3,7 +3,9 @@ section Q49) and on the residual refusals the author lists (ruled later as Q52).
 verifier from the ruling text and the contract, not from the oracle's tests or RULES.md.
 
 Verdicts: MATCH, WRONG-ANSWER, REFUSES (declined where the ruling decides), DERIVED-NOTE (the oracle answers a case the
-ruling does not decide explicitly: recorded, not scored as wrong).
+ruling does not decide explicitly: recorded, not scored as wrong). V-O04c: the seven V-O04b DERIVED-NOTE rows are now
+checked rows with the Q56a-g expected answers (main lab/acceptance/RULINGS-PENDING.md, 0abc5ff), each with a planted
+wrong expectation in --self-test.
 
 Also: a plaintext-leak scan over the whole output of the erasure case (every surface queried), and a whole-journal
 comparison against the same command stream without the erase commands (Q49a, ER-JOURNAL-MODULO).
@@ -493,29 +495,57 @@ for js, p, s, eid in (("1.5", 2, 1, "E-INVALID-VALUE"), (1.55, 2, 1, "E-DECIMAL-
     single("Q49e", f"toDecimal(json {js!r}, {p}, {s})", eid, case(queries=[{"id": "q", "kind": "expr", "expr": ["toDecimal", J(js), p, s]}]),
            lambda r, eid=eid: (err_is(q(r, "q").get("error"), eid), q(r, "q").get("error") or res(r, "q")))
 
-# derived consequences the ruling does not state in words (recorded)
-note("Q49c (derived)", "card-one: readable value plus an erased value", "conflict or the readable value?",
-     case([cmd([asrt("h1", "p8", SSN, S("SECRET-H1")), asrt("h2", "p8", SSN, S("VISIBLE-H2"))], 100), cmd([erase(target="h1")], 200)],
-          [{"id": "g", "kind": "get", "entityType": "Person", "entityId": "p8", "cut": V}], schemas=SCHEMA),
-     lambda r: q(r, "g").get("error", {}).get("error") or res(r, "g"))
-note("Q49c (derived)", "card-one: equal values, one support erased", "before: one value, two supports; after?",
-     case([cmd([asrt("e1", "p9", SSN, S("SAME")), asrt("e2", "p9", SSN, S("SAME"))], 100), cmd([erase(target="e1")], 200)],
-          [{"id": "g", "kind": "get", "entityType": "Person", "entityId": "p9", "cut": V}], schemas=SCHEMA),
-     lambda r: q(r, "g").get("error", {}).get("error") or res(r, "g"))
-note("Q49b (derived)", "erase by an unknown assertion id", "commit (matches nothing) or E-INVALID-VALUE?",
-     case(base + [cmd([erase(target="no-such-id")], 200)], [], schemas=SCHEMA), lambda r: outc(r, 1))
+# V-O04b DERIVED-NOTE rows, ruled as Q56 (main lab/acceptance/RULINGS-PENDING.md, 0abc5ff): now checked rows
+GET_P8 = [{"id": "g", "kind": "get", "entityType": "Person", "entityId": "p8", "cut": V}]
+GET_P9 = [{"id": "g", "kind": "get", "entityType": "Person", "entityId": "p9", "cut": V}]
+Q56B = case([cmd([asrt("h1", "p8", SSN, S("SECRET-H1")), asrt("h2", "p8", SSN, S("VISIBLE-H2"))], 100), cmd([erase(target="h1")], 200)],
+            GET_P8, schemas=SCHEMA)
+single("Q56b", "card-one: readable value plus an erased value", "get is E-CONFLICTING-VALUES", Q56B,
+       lambda r: (err_is(q(r, "g").get("error"), "E-CONFLICTING-VALUES"), q(r, "g").get("error") or res(r, "g")))
+Q56C_CMDS = [cmd([asrt("e1", "p9", SSN, S("SAME")), asrt("e2", "p9", SSN, S("SAME"))], 100)]
+Q56C = case(Q56C_CMDS + [cmd([erase(target="e1")], 200)], GET_P9, schemas=SCHEMA)
+single("Q56c", "card-one: equal values, one support erased", "get is E-CONFLICTING-VALUES (answers never depend on the erased value)", Q56C,
+       lambda r: (err_is(q(r, "g").get("error"), "E-CONFLICTING-VALUES"), q(r, "g").get("error") or res(r, "g")))
+single("Q56c", "control: the same history without the erase", "one value SAME with supports [e1, e2], no error",
+       case(Q56C_CMDS, GET_P9, schemas=SCHEMA),
+       lambda r: (res(r, "g")["properties"]["ssn"] == {"value": S("SAME"), "supports": ["e1", "e2"]}, q(r, "g").get("error") or res(r, "g")))
+Q56A_T = case(base + [cmd([erase(target="no-such-id")], 200)], [], schemas=SCHEMA)
+single("Q56a", "erase by an unknown assertion id (target)", "rejected E-INVALID-VALUE, as for retract (Q33f)", Q56A_T,
+       lambda r: (err_is(outc(r, 1), "E-INVALID-VALUE"), outc(r, 1)))
 
-note("Q49c (derived)", "card-many: where the marker sits among readable elements", "Q49c orders ORDER BY only; card-many order?",
-     case([cmd([asrt("k1", "p1", TAGS, S("zeta")), asrt("k2", "p1", TAGS, S("SECRET-TAG")), asrt("k3", "p1", TAGS, S("alpha"))], 100),
-           cmd([erase(target="k2")], 200)],
-          [{"id": "g", "kind": "get", "entityType": "Person", "entityId": "p1", "cut": V}], schemas=SCHEMA),
-     lambda r: [v["value"] for v in res(r, "g")["properties"]["tags"]["values"]])
+# two erased tags (kz asserted before ka) between readable ones; one marker group per attribute (Q49c grouping)
+GET_P1 = [{"id": "g", "kind": "get", "entityType": "Person", "entityId": "p1", "cut": V}]
+Q56D = case([cmd([asrt("kz", "p1", TAGS, S("SECRET-Z")), asrt("k1", "p1", TAGS, S("zeta")), asrt("ka", "p1", TAGS, S("SECRET-A")),
+                  asrt("k3", "p1", TAGS, S("alpha"))], 100), cmd([erase(target="kz"), erase(target="ka")], 200)], GET_P1, schemas=SCHEMA)
+single("Q56d", "card-many: markers after the readable elements", "[alpha, zeta, marker(200)]; the marker group's supports are {ka, kz}", Q56D,
+       lambda r: ([v["value"] for v in res(r, "g")["properties"]["tags"]["values"]] == [S("alpha"), S("zeta"), marker(200)]
+                  and sorted(res(r, "g")["properties"]["tags"]["values"][2]["supports"]) == ["ka", "kz"],
+                  res(r, "g")["properties"]["tags"]["values"]))
+# Required: enforcement rejects only new violations, so p1 becomes a Person in the enforced command (its ssn is untyped)
 REQ_SCHEMA = copy.deepcopy(SCHEMA)
 REQ_SCHEMA[0]["entityTypes"]["Person"]["attributes"]["ssn"]["required"] = True
-note("Q49c (derived)", "Required over an erased value", "present with no readable value: does it satisfy Required?",
-     case([cmd([asrt("q1", "p1", SSN, S("SECRET-Q1")), asrt("q2", "p1", ":person/name", S("Q"))], 100), cmd([erase("p1", SSN)], 200),
-           dict(cmd([asrt("q3", "p1", ":person/email", S("q@x"))], 300), meta={"commandId": "rq", "enforce": {"fromSchema": 1}})],
-          [], schemas=REQ_SCHEMA), lambda r: outc(r, 2))
+
+
+def untyped(ref, e, a, v):
+    o = asrt(ref, e, a, v)
+    o.pop("entityType")
+    return o
+
+
+def req_case(pre):
+    rq = dict(cmd([asrt("q2", "p1", ":person/name", S("Q"))], 300), meta={"commandId": "rq", "enforce": {"fromSchema": 1}})
+    return case(pre + [rq], GET_P1, schemas=REQ_SCHEMA)
+
+
+Q56E = req_case([cmd([untyped("q1", "p1", SSN, S("SECRET-Q1"))], 100), cmd([erase("p1", SSN)], 200)])
+single("Q56e", "Required satisfied by an erased value", "the enforced command commits; get shows missingRequired []", Q56E,
+       lambda r: (outc(r, 2)["outcome"] == "committed" and res(r, "g")["missingRequired"] == [], [outc(r, 2), res(r, "g")]))
+single("Q56e", "control: no ssn at all", "the enforced command is rejected E-CONSTRAINT (required)",
+       req_case([cmd([untyped("q0", "p1", ":person/email", S("e@x"))], 100)]),
+       lambda r: (err_is(outc(r, 1), "E-CONSTRAINT") and outc(r, 1).get("codes") == ["required"], outc(r, 1)))
+single("Q56e", "control: read side with no ssn", "get lists missingRequired [ssn]",
+       case([cmd([asrt("q2", "p1", ":person/name", S("Q"))], 100)], GET_P1, schemas=REQ_SCHEMA),
+       lambda r: (res(r, "g")["missingRequired"] == ["ssn"], res(r, "g")))
 single("Q24", "pre-erasure cursor continues with markers", "page 2 of a cursor issued before the erase shows the marker",
        case([cmd([asrt(f"pg{i}", f"p{i}", SSN, S(f"SECRET-PG{i}")) for i in range(3)], 100), cmd([erase("p2", SSN)], 200)],
             [{"id": "a", "kind": "entityPage", "entityType": "Person", "limit": 2, "cut": {"position": 1, "validAt": 1}},
@@ -528,8 +558,16 @@ single("R-CMD-6", "erase of a transaction entity is E-RESERVED", "E-RESERVED (re
 single("Q49b", "erase by entity only, entity never existed", "commits with an empty change list (matches nothing)",
        case(base + [cmd([erase("nobody:9")], 200)], [{"id": "t", "kind": "transaction", "txId": "tx:1"}], schemas=SCHEMA),
        lambda r: (outc(r, 1)["outcome"] == "committed" and res(r, "t")["changes"] == [], [outc(r, 1), res(r, "t")]))
-note("Q49b (derived)", "erase by an unknown actual id ({id: ...})", "commit (matches nothing) or E-INVALID-VALUE?",
-     case(base + [cmd([{"op": "erase", "id": "no-such-id"}], 200)], [], schemas=SCHEMA), lambda r: outc(r, 1))
+Q56A_ID = case(base + [cmd([{"op": "erase", "id": "no-such-id"}], 200)], [], schemas=SCHEMA)
+single("Q56a", "erase by an unknown actual id ({id: ...})", "rejected E-INVALID-VALUE, as for retract (Q33f)", Q56A_ID,
+       lambda r: (err_is(outc(r, 1), "E-INVALID-VALUE"), outc(r, 1)))
+Q56F = case([cmd([asrt("x1", "p1", SSN, S("SECRET-F"))], 100), cmd([{"op": "erase", "id": "x1"}], 200)],
+            [{"id": "m", "kind": "match", "cut": V, "pattern": {"entityId": "p1"}}, {"id": "t", "kind": "transaction", "txId": "tx:1"}],
+            schemas=SCHEMA)
+single("Q56f", "erase by a known actual id ({id: x1})", "commits; x1 reads as marker(200); the change names x1 only", Q56F,
+       lambda r: (outc(r, 1)["outcome"] == "committed" and [x["value"] for x in res(r, "m")["raw"]] == [marker(200)]
+                  and res(r, "t")["changes"] == [{"op": "erase", "entityId": "p1", "attribute": SSN, "assertionIds": ["x1"]}],
+                  [outc(r, 1), res(r, "m")["raw"], res(r, "t")["changes"]]))
 single("R-CMD-9", "erase with no selector", "malformed erase op: E-INVALID-VALUE (operation fault, Q33f)",
        case(base + [cmd([{"op": "erase"}], 200)], [], schemas=SCHEMA), lambda r: (err_is(outc(r, 1), "E-INVALID-VALUE"), outc(r, 1)))
 single("Q24", "erase of an already retracted assertion by target", "commits; the retracted row shows the marker with its retirement",
@@ -538,10 +576,12 @@ single("Q24", "erase of an already retracted assertion by target", "commits; the
        lambda r: (outc(r, 2)["outcome"] == "committed" and res(r, "h")["rawLifetime"][0]["value"] == marker(200)
                   and res(r, "h")["rawLifetime"][0]["retractedAt"] == 150, res(r, "h")["rawLifetime"]))
 
-note("Q49 (derived)", "retract by target of an already erased assertion", "commit (identity-only) or a typed error?",
-     case([cmd([asrt("x1", "p1", SSN, S("SECRET-RX"))], 100), cmd([erase(target="x1")], 200), cmd([{"op": "retract", "target": "x1"}], 250)],
-          [{"id": "h", "kind": "history", "entityId": "p1"}], schemas=SCHEMA),
-     lambda r: [outc(r, 2), res(r, "h")["rawLifetime"]])
+Q56G = case([cmd([asrt("x1", "p1", SSN, S("SECRET-RX"))], 100), cmd([erase(target="x1")], 200), cmd([{"op": "retract", "target": "x1"}], 250)],
+            [{"id": "h", "kind": "history", "entityId": "p1"}], schemas=SCHEMA)
+single("Q56g", "retract by target of an already erased assertion", "commits; history shows marker(200) with retractedAt 250", Q56G,
+       lambda r: (outc(r, 2)["outcome"] == "committed" and len(res(r, "h")["rawLifetime"]) == 1
+                  and res(r, "h")["rawLifetime"][0]["value"] == marker(200) and res(r, "h")["rawLifetime"][0]["retractedAt"] == 250,
+                  [outc(r, 2), res(r, "h")["rawLifetime"]]))
 
 # ------------------------------------------------------------------ residual refusals (author's list; ruled later as Q52)
 
@@ -601,6 +641,24 @@ if SELF_TEST:
            case([cmd([asrt("c1", "p1", SAL, I(111)), asrt("c2", "p2", SAL, I(50))], 100), cmd([erase("p1", SAL)], 200)],
                 [{"id": "q", "kind": "aggregate", "cut": V, "match": {"attributes": {"v": SAL}}, "aggregates": [{"op": "count", "var": "v", "as": "c"}]}],
                 schemas=SCHEMA), lambda r: is_xnm(q(r, "q").get("error")), refusal=True)
+    # Q56 rows: each planted wrong expectation is a plausible alternative ruling
+    single("ST", "ST Q56b readable value wins", "VISIBLE-H2 (wrong)", Q56B,
+           lambda r: ((res(r, "g") or {}).get("properties", {}).get("ssn", {}).get("value") == S("VISIBLE-H2"), q(r, "g").get("error") or res(r, "g")))
+    single("ST", "ST Q56c remaining support still reads SAME", "SAME (wrong)", Q56C,
+           lambda r: ((res(r, "g") or {}).get("properties", {}).get("ssn", {}).get("value") == S("SAME"), q(r, "g").get("error") or res(r, "g")))
+    single("ST", "ST Q56a unknown target commits empty", "committed, [] (wrong)", Q56A_T,
+           lambda r: (outc(r, 1)["outcome"] == "committed", outc(r, 1)))
+    single("ST", "ST Q56d marker first", "[marker, alpha, zeta] (wrong)", Q56D,
+           lambda r: ([v["value"] for v in res(r, "g")["properties"]["tags"]["values"]] == [marker(200), S("alpha"), S("zeta")],
+                      res(r, "g")["properties"]["tags"]["values"]))
+    single("ST", "ST Q56e erased value fails Required", "rejected E-CONSTRAINT (wrong)", Q56E,
+           lambda r: (err_is(outc(r, 2), "E-CONSTRAINT"), outc(r, 2)))
+    single("ST", "ST Q56a unknown id commits empty", "committed (wrong)", Q56A_ID,
+           lambda r: (outc(r, 1)["outcome"] == "committed", outc(r, 1)))
+    single("ST", "ST Q56f id selector rejected", "rejected E-INVALID-VALUE (wrong)", Q56F,
+           lambda r: (err_is(outc(r, 1), "E-INVALID-VALUE"), outc(r, 1)))
+    single("ST", "ST Q56g retractedAt is the erase instant", "retractedAt 200 (wrong)", Q56G,
+           lambda r: (res(r, "h")["rawLifetime"][0]["retractedAt"] == 200, res(r, "h")["rawLifetime"]))
 
 counts = {}
 for r in ROWS:
