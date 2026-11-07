@@ -474,7 +474,8 @@ async function postRunOracle(ctx) {
     for (const sid of set) for (const entityId of subjectEntities(sid)) queries.push({ id: `${sid}|${entityId}`, kind: 'entityTriples', entityId, cut: { position: 'latest', validAt: BT.NOW } });
     const caseJson = { format: 'triplex-db-2/o-replay-case/1', caseId: `GS/${ctx.spec.id}/post-run/${ctx.opts.lane}/chunk-${i / chunkSize}`, defaultScope: 's1',
       adapter: { schemaVersion: 1 }, rules: {}, schemas: [], enforcement: { mode: 'off' }, initialPositions: { s1: setupFloor(ctx, ordered) }, commands: caseCommands, receipts, queries };
-    const { caseSha256, result } = await runOracle(caseJson, workDir);
+    const { caseSha256, result, notModeled } = await runOracle(caseJson, workDir);
+    if (notModeled) { verdicts.push({ caseId: caseJson.caseId, caseSha256, verdict: "NOT-MODELED", reason: notModeled }); continue; }
     verdicts.push({ caseId: caseJson.caseId, caseSha256, verdict: result.verdict, receiptConsistency: result.receiptConsistency?.status, violations: result.receiptConsistency?.violations?.slice(0, 3),
       failedCommands: result.commandOutcomes.filter(o => o.verdict === 'FAIL').slice(0, 3).map(o => ({ command: o.command, expected: o.expected, observed: o.observed })) });
     const grouped = new Map();

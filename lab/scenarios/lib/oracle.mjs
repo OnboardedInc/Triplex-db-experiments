@@ -58,6 +58,10 @@ export function runOracle(caseJson, workDir) {
     const out = [], err = [];
     child.stdout.on('data', d => out.push(d)); child.stderr.on('data', d => err.push(d));
     child.on('close', code => {
+      // Exit 2 with X-NOT-MODELED means the oracle declines to model the case (e.g. erasure before a later
+      // oracle version): the expectation is "not modeled", never a case error (verifier note, O-REPLAY 0.3.1).
+      if (code === 2 && /X-NOT-MODELED/.test(Buffer.concat(err).toString() + Buffer.concat(out).toString()))
+        return resolve({ caseSha256: digest, notModeled: (Buffer.concat(err).toString().match(/X-NOT-MODELED[^\n]*/) ?? ['X-NOT-MODELED'])[0], exitCode: code });
       if (code === 2) return reject(new Error(`O-REPLAY refused case ${caseJson.caseId}: ${Buffer.concat(err).toString().slice(0, 2000)}`));
       try { resolve({ caseSha256: digest, result: JSON.parse(Buffer.concat(out).toString()), exitCode: code }); }
       catch (error) { reject(new Error(`O-REPLAY output for ${caseJson.caseId} is not JSON (exit ${code}): ${Buffer.concat(err).toString().slice(0, 2000)}`)); }
@@ -108,11 +112,14 @@ export async function goldenStates({ caseIdPrefix, commands, subjects, validAts,
     });
     const caseJson = { format: 'triplex-db-2/o-replay-case/1', caseId: `${caseIdPrefix}/chunk-${String(chunkIndex).padStart(4, '0')}`, defaultScope: 's1',
       adapter: { schemaVersion: 1 }, rules: {}, schemas: [], enforcement: { mode: 'off' }, commands: caseCommands, queries };
-    const { caseSha256, result } = await runOracle(caseJson, workDir);
-    return { chunk, origin, caseId: caseJson.caseId, caseSha256, result };
+    const { caseSha256, result, notModeled } = await runOracle(caseJson, workDir);
+    return { chunk, origin, caseId: caseJson.caseId, caseSha256, result, notModeled };
+
   });
   const digests = {}, outcomes = {}, rows = {}, cases = [];
-  for (const { origin, caseId, caseSha256, result } of results) {
+  const notModeled = [];
+  for (const { chunk, origin, caseId, caseSha256, result, notModeled: nm } of results) {
+    if (nm) { cases.push({ caseId, caseSha256, verdict: "NOT-MODELED", reason: nm }); notModeled.push({ caseId, subjects: chunk, reason: nm }); continue; }
     cases.push({ caseId, caseSha256, verdict: result.verdict });
     for (const o of result.commandOutcomes) {
       const index = origin[o.command];
@@ -148,5 +155,5 @@ export async function goldenStates({ caseIdPrefix, commands, subjects, validAts,
     }
   }
   cases.sort((a, b) => a.caseId < b.caseId ? -1 : 1);
-  return { digests, outcomes, cases, rows };
+  return { digests, outcomes, cases, rows, notModeled };
 }

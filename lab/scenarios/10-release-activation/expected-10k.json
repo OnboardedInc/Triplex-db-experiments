@@ -11,25 +11,25 @@
  "facts": 804,
  "oracle": {
   "id": "O-REPLAY",
-  "version": "0.2.0",
-  "commit": "03519ae5208790f669b5011b22af8a5658dab83c",
-  "sourceBranch": "exp/O02-oracle-conformance",
+  "version": "0.3.1",
+  "commit": "8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b",
+  "sourceBranch": "main (O-REPLAY 0.3.1 accepted by independent verification, merge 4591715)",
   "files": {
-   "lab/oracles/replay/RULES.md": "802bf92b0a44fcb1988ca9f33f54417242bee4bae517436ee4d0b1dbf146ae62",
-   "lab/oracles/replay/SCHEMA.md": "51a2801dbccd947b7938dbf52286d8a805f0e1fad8c064e865261e03af6c167e",
+   "lab/oracles/replay/RULES.md": "60e745ee8733271cede926a6f55e1f473d2b3c7a9a721500f9d277438971d54c",
+   "lab/oracles/replay/SCHEMA.md": "052587750dea7f59495dfc9475a2bb69bc2bf6a80581944b57180241b2b06a26",
    "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
    "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
    "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
    "lab/oracles/replay/constraints.py": "e93fcba3ca36be607b05f522dd779869ced816e2834f629130ecdd2408527571",
-   "lab/oracles/replay/entities.py": "e1a9cabe316acaae7a84aaec41289600d6fc9217ff6a18372ab73d5115ae7dc8",
-   "lab/oracles/replay/errors.py": "315cb92ac1d886ae208f0c2c98d8f28f307dcd443d4bdae9810e6918bda36fcb",
-   "lab/oracles/replay/exact.py": "12ab8f5e94106ebfd5f46af664c441bab28538dcc2feb3354d2c73e37914ef45",
-   "lab/oracles/replay/replay.py": "5c80dba491f99ee7984571cd3f8549acc548d789bfd329175f29d0f62ae4758d",
-   "lab/oracles/replay/run.py": "76ad66f9b93e181dcc5b85b80d89c98b6dd89c4e05cdbc276b6a492547ca37cb",
+   "lab/oracles/replay/entities.py": "7b423d235cdc39871bd885ea46d0c4d3280c8d2879f4926c6afeb78191b9e365",
+   "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+   "lab/oracles/replay/exact.py": "3574703eb821b94b18144d3461d5ccacecaad5665f5308308db2b69f76fde0b8",
+   "lab/oracles/replay/replay.py": "f8e4980591fa6e4056f0945fbc8ac2864d51d47672858904cd352f76ae0c8caa",
+   "lab/oracles/replay/run.py": "8ad651b255ed2ce5c9d015011d5f047fff33e9d3d6d57590797513b297a21183",
    "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
    "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
-   "lab/oracles/replay/values.py": "3b770e78318f26288adf3a48bc36ceff221d681f3cb6de55b135b620f5da31a0",
-   "lab/oracles/replay/views.py": "5c9118df0cf2648b54c408d111fea584bdaabc1423565e23cbfffc2754fe6da2"
+   "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+   "lab/oracles/replay/views.py": "4d23472c85ac559f8d1bad7257fe219e7dc5fa7b0827c2595e7ff072d1816f28"
   }
  },
  "oracleCases": [
@@ -55,6 +55,7 @@
  "digestSubjects": 48,
  "noDigestSubjects": [],
  "outcomes": {},
+ "notModeled": [],
  "hand": {
   "releases": {
    "R1": "rela88efb15782a",

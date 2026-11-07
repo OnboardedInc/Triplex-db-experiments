@@ -27,7 +27,7 @@ export async function loadScenario(dir) {
 }
 // The oracle identity bound into every golden: version, the last commit that touched lab/oracles/replay, the
 // branch it came from, and every source file's sha256, so regenerating against a pinned oracle is mechanical.
-export const ORACLE_SOURCE_BRANCH = 'exp/O02-oracle-conformance';
+export const ORACLE_SOURCE_BRANCH = 'main (O-REPLAY 0.3.1 accepted by independent verification, merge 4591715)';
 const oracleIdentity = () => ({
   id: 'O-REPLAY',
   version: (/ORACLE_VERSION = "([^"]+)"/.exec(fs.readFileSync(path.join(REPO, 'lab/oracles/replay/run.py'), 'utf8')) ?? [])[1] ?? null,
@@ -48,7 +48,7 @@ export async function scenarioExpected({ spec, hooks }, rung, workDir) {
     facts: commands.reduce((s, c) => s + c.operations.filter(o => o.op === 'assert').length, 0),
     oracle: oracleIdentity(), oracleCases: golden.cases, validAts: gen.validAts ?? [BT.NOW],
     digestSubjects: gen.digestSubjects.length, noDigestSubjects: gen.noDigestSubjects ?? [],
-    outcomes: golden.outcomes, hand: gen.hand ?? null, gaps: spec.oracle?.gaps ?? [], digests: golden.digests,
+    outcomes: golden.outcomes, notModeled: golden.notModeled, hand: gen.hand ?? null, gaps: spec.oracle?.gaps ?? [], digests: golden.digests,
   };
 }
 
