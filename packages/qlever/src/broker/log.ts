@@ -106,13 +106,25 @@ class Connection {
     if (this.dead) throw new BrokerLogError(this.dead);
     const { port1, port2 } = new MessageChannel();
     return new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        port1.close();
-        reject(new BrokerLogError(`SQLite ${op} timed out; outcome unknown`));
-      }, 30_000);
-      port1.once("message", (data: { result: T; error?: string }) => {
+      const cleanup = () => {
         clearTimeout(timer);
         port1.close();
+        this.worker.off("error", onError);
+        this.worker.off("exit", onExit);
+      };
+      const onError = (error: Error) => {
+        cleanup();
+        reject(new BrokerLogError(`SQLite worker failed; outcome unknown: ${String(error)}`));
+      };
+      const onExit = (code: number) => onError(new Error(`worker exited ${code}`));
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new BrokerLogError(`SQLite ${op} timed out; outcome unknown`));
+      }, 30_000);
+      this.worker.once("error", onError);
+      this.worker.once("exit", onExit);
+      port1.once("message", (data: { result: T; error?: string }) => {
+        cleanup();
         if (data.error) reject(new BrokerLogError(data.error));
         else resolve(data.result);
       });
@@ -136,6 +148,14 @@ const connect = (
   new Connection(
     new Worker(sqliteWorker, {
       eval: true,
+      // [EXP-SQL01] Why: eval workers contain CommonJS; an ESM CLI parent's --input-type changes eval parsing.
+      // Rejected: inheriting that flag (require is undefined), or stripping all flags (loses resource settings).
+      execArgv: process.execArgv.filter(
+        (arg, i, args) =>
+          arg !== "--input-type" &&
+          !arg.startsWith("--input-type=") &&
+          args[i - 1] !== "--input-type",
+      ),
       workerData: { file, role, seed, driver, gateBuffer, requireFullFsync },
     }),
   );

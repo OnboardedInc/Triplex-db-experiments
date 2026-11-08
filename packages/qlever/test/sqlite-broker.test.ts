@@ -1,6 +1,8 @@
 // [EXP-SQL01] Why: verify atomic SQLite storage and exact H1 cuts independently from retained frame payloads.
 // Rejected: checking only commit exit codes (does not establish what readers or recovery see).
 import fs from "node:fs";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
@@ -71,6 +73,18 @@ const replay = (dir: string, basis: number) => {
 const ids = (rows: readonly TripleRow[]) => rows.map((r) => r.id).sort();
 
 describe("SQLite broker / R25", () => {
+  it("boots worker threads from an ESM CLI parent", async () => {
+    const dir = fresh();
+    const source = new URL("../src/broker/log.ts", import.meta.url).href;
+    const code = `const {HostLog}=await import(${JSON.stringify(source)});const {log}=await HostLog.open(${JSON.stringify(dir)},{minFreeBytes:0});await log.close();console.log("opened-and-closed");`;
+    const result = await promisify(execFile)(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "-e", code],
+      { timeout: 15_000 },
+    );
+    expect(result.stdout).toContain("opened-and-closed");
+  });
+
   it("H1 equals frame replay at ordinal cuts, retains pins, and falls back below H", async () => {
     const dir = fresh(),
       b = await HostBroker.open({ dir, scopeKey: "sql01", minFreeBytes: 0 });
