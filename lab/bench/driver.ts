@@ -36,6 +36,8 @@ import { receiptOfRecord, seedRung, type RecordedCommand } from "./lib/seed.ts";
 import { TRACE_DEFAULTS, generateTrace, traceDigest, traceStats, type TraceEvent, type TraceParams } from "./lib/trace.ts";
 import { BUCKETS, HOP_SHARE, RUNGS, SEED_VALID_FROM, accountsFor, accountOfSubject, hopOf, ids, populationCounts, subjectInCell, worldFactsOf, type Bucket } from "./lib/world.ts";
 import { REPO } from "./lib/triplex.ts";
+import { chooseHistorySample, chooseSamples } from "./lib/samples.ts";
+import { seedFromManifest } from "./lib/bulk.ts";
 
 // ---------------------------------------------------------------- arguments
 
@@ -88,10 +90,15 @@ const config = {
   historySample: Number(opt("history-sample", "1000")),
   p5Mutations: 10,
   oracleRoot: opt("oracle-root") ?? null,
+  /** A bulk-seeded scope (lab/bench/qlever-bulk-seed.ts): skip seeding and continue from its manifest. */
+  seedManifest: opt("seed-manifest") ?? null,
   settleS: 2,
 };
 const runTag = `ns${Date.now().toString(36)}${randomBytes(2).toString("hex")}`;
-const scopeName = `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`;
+const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resolve(config.seedManifest), "utf8")) : null;
+if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
+  throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
+const scopeName = bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`;
 const now = () => performance.timeOrigin + performance.now();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const logLines: string[] = [];
@@ -232,12 +239,15 @@ async function run() {
   // ---------------------------------------------------------------- seed (bulk lane)
   const pop = populationCounts(rungSubjects);
   const oracleSubjects = chooseSamples(rungSubjects, config.oracleSampleSubjects);
-  const historySample = chooseHistorySample(rungSubjects, Math.min(config.historySample, Math.floor(rungSubjects / 10)));
+  const historySample = chooseHistorySample(rungSubjects, Math.min(config.historySample, Math.floor(rungSubjects / 10)), config.seed, accounts);
   log(`seed: rung ${config.rung}, ${pop.liveFactsAtSeedEnd} live facts planned (${pop.accounts} accounts, mean world ${pop.worldFacts.mean.toFixed(0)} facts)`);
-  const seed = await seedRung({
-    comp: writer, subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
-    recordSubjects: new Set(oracleSubjects), recordAccounts: new Set(oracleSubjects.map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
-  });
+  const seed = bulkManifest
+    ? await seedFromManifest(bulkManifest, writer, log)
+    : await seedRung({
+        comp: writer, subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
+        recordSubjects: new Set(oracleSubjects), recordAccounts: new Set(oracleSubjects.map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
+      });
+  report.seedPath = bulkManifest ? { kind: "bulk-index", manifest: config.seedManifest, nqSha256: bulkManifest.nq.sha256, quads: bulkManifest.nq.quads } : { kind: "transact" };
   const N = seed.seededSubjects;
   const popN = populationCounts(N, accounts);
   recordedCommands.push(...seed.recorded);
@@ -624,26 +634,6 @@ async function inThreadReader(cfg: any) {
   side.terminate = async () => { channel.port1.close(); channel.port2.close(); };
   void startReader(channel.port2, cfg);
   return side;
-}
-function chooseSamples(n: number, k: number): number[] {
-  const out = new Set<number>();
-  for (const i of [0, 8, 15]) if (i < n) out.add(i); // one subject per hop class
-  for (let j = 0; out.size < Math.min(k, n) && j < 10 * k; j++) out.add(Math.floor(((j + 0.5) * n) / k) % n);
-  return [...out].sort((a, b) => a - b);
-}
-/** The matched history sample: stratified by the frozen bucket x hop weights, distinct, seeded. */
-function chooseHistorySample(n: number, k: number): number[] {
-  const rng = new Rng(seedOf(`history-sample:${config.seed}`));
-  const out = new Set<number>();
-  for (let tries = 0; out.size < k && tries < k * 50; tries++) {
-    const u = rng.next();
-    const bucket: Bucket = u < BUCKETS.small.share ? "small" : u < BUCKETS.small.share + BUCKETS.medium.share ? "medium" : "large";
-    const w = rng.next();
-    const hop = w < HOP_SHARE[3] ? 3 : w < HOP_SHARE[3] + HOP_SHARE[4] ? 4 : 6;
-    const i = subjectInCell(n, accounts, bucket, hop, rng.next(), rng.next(), rng.next());
-    if (i !== null) out.add(i);
-  }
-  return [...out].sort((a, b) => a - b);
 }
 function sweepList(n: number, max: number): number[] {
   const count = Math.min(n, max);

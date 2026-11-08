@@ -490,6 +490,13 @@ async function gateNS(run, config) {
   if (run.options.composition) args.push('--composition', String(run.options.composition));
   if (run.options['zero-readers']) args.push('--zero-readers');
   if (run.options['match-duration-s']) args.push('--match-duration-s', String(run.options['match-duration-s']));
+  // [EXP-N01] A bulk-seeded scope (lab/bench/qlever-bulk-seed.ts): the slot must already hold the index built from its seed.nq.
+  let bulkSeed = null;
+  if (run.options['seed-manifest']) {
+    const manifestFile = path.resolve(String(run.options['seed-manifest']));
+    bulkSeed = { manifest: run.store(manifestFile, 'ns-bulk-seed-manifest'), nqSha256: readJson(manifestFile, {}).nq?.sha256 ?? null };
+    args.push('--seed-manifest', manifestFile);
+  }
   let baseline = null;
   if (run.options.baseline) {
     const receiptFile = path.join(REPO, 'lab/runs/NS', `${run.options.baseline}.json`);
@@ -542,7 +549,7 @@ async function gateNS(run, config) {
     format: report.format, semantics: report.semantics, config: report.config, generator: report.generator, trace: { digest: report.trace?.digest, seed: report.trace?.seed, generatorSha256: report.trace?.generatorSha256, generated: report.trace?.generated },
     seed: report.seed, writer: report.writer, correctness: { ...c, violationSample: (c.violationSample ?? []).slice(0, 5) }, client: report.client, oracle: report.oracle,
     bars: Object.fromEntries(Object.entries(report.priorities ?? {}).map(([k, v]) => [k, v?.bars ?? []])),
-    baseline, invalid, positionCoordinates: report.positionCoordinates ?? null,
+    baseline, bulkSeed, seedPath: report.seedPath ?? null, invalid, positionCoordinates: report.positionCoordinates ?? null,
     reportSha256: sha256(fs.readFileSync(output)),
   };
   result.nsVerdict = invalid.length ? 'INVALID' : 'MEASURED';
