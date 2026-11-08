@@ -76,3 +76,14 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q68e expired facts | Facts whose valid_to has passed retire from the current structure through a valid-time horizon; EXP-P4 measures the 20% expired path. | R24 open question 5 |
 | Q68f erasure of current copies | Every current copy (broker store, `tx_current`, `cur` graph) is covered by Q58e's per-subject keys; a QLever `cur` graph holds no personal-data literals (keys and references only, values from the encrypted host store) unless EXP-P4 shows a reindex-free erasure path. | TARGETS 7 item 3; R24 open question 4 |
 | Q68g read-path change first | `FOR ALL VALID_TIME` on XTDB current reads forfeits the engine's current/historical split (R24 section 1); EXP-P4 measures X1 (default temporal bounds) in both a fresh and an aged regime before any write-path change. | R24 section 1 |
+
+## Q69: EXP-M01 PAIR-0 decisions and the measurement window
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q69a measurement window | The pool cannot hold two 3.5 GiB slots beside both dev residents, so a measurement window stops one dev resident for its duration (qlever-dev by default, recreated fresh after; xtdb-dev when the window is QLever's) once no running agent depends on it. The orchestrator announces the window in STATE; no agent starts engine work during it; the lease (Q60h) enforces it. | EXP-M01 section 1 |
+| Q69b INVALID verdict | Accepted: INVALID for protocol departures (development overrides, wrong regime, no lease, an unregistered round count), separate from INVALID_NOISE. | EXP-M01 |
+| Q69c A/A in A/B mode | Accepted provisionally: A/B windows grade from the all-round s_d (conservative); acceptance-level claims add a second pair of container lifetimes with roles swapped (R22 open question 12). | R22 1.3 |
+| Q69d continuous trace | Accepted for duets (both arms see the same content at the same time); ABBA fallback runs keep per-round window randomization. | R22 1.3 |
+| Q69e live composition | The live A/A uses `public-queued`, matching EXP-N01's A0. | EXP-N01 |
+| Q69f fallback series | `screening-r4` (4x the steady rate, no bursts) is pre-registered now as the fallback screening series, used only if the burst series makes commitAll p50 NOT_ESTIMABLE in the A/A run. | Q60g |
+| Q69g calibration thresholds | Thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them (R22 4.1), started after EXP-M01 merges. | R22 4.1 |
