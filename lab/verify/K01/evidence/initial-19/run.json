@@ -1,0 +1,36 @@
+{
+  "at": "2026-11-08T22:50:06.105Z",
+  "head": "05a23dd90fde0d7c1df5f8ecff2ef417fa436e20",
+  "node": "v22.23.2",
+  "reviewedHead": "05a23dd90fde0d7c1df5f8ecff2ef417fa436e20",
+  "runs": [
+    {
+      "name": "baseline",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/clone.test.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "wallMs": 1071,
+      "tapSha256": "5e68417ea9d2b874db318d38742087bb2f3209679463d4acefdb76753e9cee4a"
+    },
+    {
+      "name": "regressions",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "--test",
+        "lab/verify/K01/offline.test.mjs"
+      ],
+      "status": 1,
+      "signal": null,
+      "error": null,
+      "wallMs": 175,
+      "tapSha256": "f354d782af48415622e6515b95f91bea2487836ca15c6078fc3046b7aced244a"
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+TAP version 13
+# (node:88466) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Q83d: two settled cuts accept already compacted L1 coverage without consulting stale live_tables
+ok 1 - Q83d: two settled cuts accept already compacted L1 coverage without consulting stale live_tables
+  ---
+  duration_ms: 3.664834
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (busy)
+ok 2 - Q83d: refuse a pre-settle clone source (busy)
+  ---
+  duration_ms: 1.209166
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (missing-table)
+ok 3 - Q83d: refuse a pre-settle clone source (missing-table)
+  ---
+  duration_ms: 0.679666
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (garbage)
+ok 4 - Q83d: refuse a pre-settle clone source (garbage)
+  ---
+  duration_ms: 0.690583
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (wrong-block)
+ok 5 - Q83d: refuse a pre-settle clone source (wrong-block)
+  ---
+  duration_ms: 0.686666
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (missing-gauge)
+ok 6 - Q83d: refuse a pre-settle clone source (missing-gauge)
+  ---
+  duration_ms: 0.613625
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (changing-catalog)
+ok 7 - Q83d: refuse a pre-settle clone source (changing-catalog)
+  ---
+  duration_ms: 0.7725
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (no-upload)
+ok 8 - Q83d: refuse a pre-settle clone source (no-upload)
+  ---
+  duration_ms: 1.016916
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (lag)
+ok 9 - Q83d: refuse a pre-settle clone source (lag)
+  ---
+  duration_ms: 1.668541
+  type: 'test'
+  ...
+# Subtest: Q83d: busy observations reset the three-reading streak
+ok 10 - Q83d: busy observations reset the three-reading streak
+  ---
+  duration_ms: 1.5495
+  type: 'test'
+  ...
+# Subtest: Q83d: a superseded immutable watermark explicitly refuses instead of silently retrying a cut
+ok 11 - Q83d: a superseded immutable watermark explicitly refuses instead of silently retrying a cut
+  ---
+  duration_ms: 1.520542
+  type: 'test'
+  ...
+# Subtest: R30: the second checkpoint must preserve the settled trie digest
+ok 12 - R30: the second checkpoint must preserve the settled trie digest
+  ---
+  duration_ms: 2.013667
+  type: 'test'
+  ...
+# Subtest: F3: Q83d block tx_id must equal the current node completed-tx gauge
+not ok 13 - F3: Q83d block tx_id must equal the current node completed-tx gauge
+  ---
+  duration_ms: 1.283375
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:113:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    block tx 100 is not the currently observed node tx 101
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:116:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R30: reference start rejects live rows, wrong resume, catalog drift, or busy compaction
+ok 14 - R30: reference start rejects live rows, wrong resume, catalog drift, or busy compaction
+  ---
+  duration_ms: 3.451042
+  type: 'test'
+  ...
+# Subtest: R30: Log4j race and slow/forced stops refuse; a flagged clean stop accepts
+ok 15 - R30: Log4j race and slow/forced stops refuse; a flagged clean stop accepts
+  ---
+  duration_ms: 0.251291
+  type: 'test'
+  ...
+# Subtest: clone: an exact copy accepts and a one-byte storage change refuses C1 before starting
+ok 16 - clone: an exact copy accepts and a one-byte storage change refuses C1 before starting
+  ---
+  duration_ms: 2.73375
+  type: 'test'
+  ...
+# Subtest: verify: sampled content, layout, history, and position changes each refuse
+ok 17 - verify: sampled content, layout, history, and position changes each refuse
+  ---
+  duration_ms: 1.146334
+  type: 'test'
+  ...
+# Subtest: F1: an exceptional re-verification must revoke the previous PASS before the driver can consume it
+not ok 18 - F1: an exceptional re-verification must revoke the previous PASS before the driver can consume it
+  ---
+  duration_ms: 2.548625
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:184:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    failed verification left a consumable PASS
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:204:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: F2: the live runner must stop after T1 returns an unclean-stop verdict even with process exit 0
+not ok 19 - F2: the live runner must stop after T1 returns an unclean-stop verdict even with process exit 0
+  ---
+  duration_ms: 1.91175
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:207:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    T1 refusal was ignored and T1-up was entered
+    
+    2 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:224:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 16
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 142.64875

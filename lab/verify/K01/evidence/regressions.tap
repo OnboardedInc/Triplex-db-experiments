@@ -1,0 +1,186 @@
+TAP version 13
+# (node:3416) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Q83d: two settled cuts accept already compacted L1 coverage without consulting stale live_tables
+ok 1 - Q83d: two settled cuts accept already compacted L1 coverage without consulting stale live_tables
+  ---
+  duration_ms: 3.2785
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (busy)
+ok 2 - Q83d: refuse a pre-settle clone source (busy)
+  ---
+  duration_ms: 0.992417
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (missing-table)
+ok 3 - Q83d: refuse a pre-settle clone source (missing-table)
+  ---
+  duration_ms: 0.645542
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (garbage)
+ok 4 - Q83d: refuse a pre-settle clone source (garbage)
+  ---
+  duration_ms: 0.688959
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (wrong-block)
+ok 5 - Q83d: refuse a pre-settle clone source (wrong-block)
+  ---
+  duration_ms: 0.89275
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (missing-gauge)
+ok 6 - Q83d: refuse a pre-settle clone source (missing-gauge)
+  ---
+  duration_ms: 0.958
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (changing-catalog)
+ok 7 - Q83d: refuse a pre-settle clone source (changing-catalog)
+  ---
+  duration_ms: 0.765292
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (no-upload)
+ok 8 - Q83d: refuse a pre-settle clone source (no-upload)
+  ---
+  duration_ms: 0.706709
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (lag)
+ok 9 - Q83d: refuse a pre-settle clone source (lag)
+  ---
+  duration_ms: 0.954125
+  type: 'test'
+  ...
+# Subtest: Q83d: busy observations reset the three-reading streak
+ok 10 - Q83d: busy observations reset the three-reading streak
+  ---
+  duration_ms: 1.245542
+  type: 'test'
+  ...
+# Subtest: Q83d: a superseded immutable watermark explicitly refuses instead of silently retrying a cut
+ok 11 - Q83d: a superseded immutable watermark explicitly refuses instead of silently retrying a cut
+  ---
+  duration_ms: 1.721333
+  type: 'test'
+  ...
+# Subtest: settle: a failed block cut reports failure without a silent second attempt
+ok 12 - settle: a failed block cut reports failure without a silent second attempt
+  ---
+  duration_ms: 0.634291
+  type: 'test'
+  ...
+# Subtest: settle: a failed snapshot propagates once without retry
+ok 13 - settle: a failed snapshot propagates once without retry
+  ---
+  duration_ms: 0.663959
+  type: 'test'
+  ...
+# Subtest: R30: the second checkpoint must preserve the settled trie digest
+ok 14 - R30: the second checkpoint must preserve the settled trie digest
+  ---
+  duration_ms: 2.264
+  type: 'test'
+  ...
+# Subtest: F3: Q83d block tx_id must equal the current node completed-tx gauge
+not ok 15 - F3: Q83d block tx_id must equal the current node completed-tx gauge
+  ---
+  duration_ms: 1.500125
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:129:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    block tx 100 is not the currently observed node tx 101
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:132:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R30: reference start rejects live rows, wrong resume, catalog drift, or busy compaction
+ok 16 - R30: reference start rejects live rows, wrong resume, catalog drift, or busy compaction
+  ---
+  duration_ms: 2.387083
+  type: 'test'
+  ...
+# Subtest: R30: Log4j race and slow/forced stops refuse; a flagged clean stop accepts
+ok 17 - R30: Log4j race and slow/forced stops refuse; a flagged clean stop accepts
+  ---
+  duration_ms: 0.235167
+  type: 'test'
+  ...
+# Subtest: clone: an exact copy accepts and a one-byte storage change refuses C1 before starting
+ok 18 - clone: an exact copy accepts and a one-byte storage change refuses C1 before starting
+  ---
+  duration_ms: 3.628542
+  type: 'test'
+  ...
+# Subtest: verify: sampled content, layout, history, and position changes each refuse
+ok 19 - verify: sampled content, layout, history, and position changes each refuse
+  ---
+  duration_ms: 0.3905
+  type: 'test'
+  ...
+# Subtest: F1: an exceptional re-verification must revoke the previous PASS before the driver can consume it
+not ok 20 - F1: an exceptional re-verification must revoke the previous PASS before the driver can consume it
+  ---
+  duration_ms: 1.6135
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:200:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    failed verification left a consumable PASS
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:220:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: F2: the live runner must stop after T1 returns an unclean-stop verdict even with process exit 0
+not ok 21 - F2: the live runner must stop after T1 returns an unclean-stop verdict even with process exit 0
+  ---
+  duration_ms: 0.924708
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:223:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    T1 refusal was ignored and T1-up was entered
+    
+    2 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/offline.test.mjs:240:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 18
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 137.055833
