@@ -66,7 +66,7 @@ fs.mkdirSync(outDir, { recursive: true });
 const cfg = {
   lane, source, subjects: N, regime: opt("regime", "fresh") as "fresh" | "aged",
   container: opt("container") ?? null, quotaCpus: Number(opt("quota-cpus", "2")),
-  gateSample: Number(opt("gate-sample", "300")), gatePulls: Number(opt("gate-pulls", "25000")), gateConcurrency: Number(opt("gate-concurrency", "8")),
+  gateSample: Number(opt("gate-sample", "300")), gatePulls: Number(opt("gate-pulls", "25000")), gateEnginePulls: Number(opt("gate-engine-pulls", "1000000000")), gateConcurrency: Number(opt("gate-concurrency", "8")),
   timingPulls: Number(opt("timing-pulls", "1500")), explainSample: Number(opt("explain-sample", "150")),
   closedLevels: opt("closed-levels", "1,2,4,8,16")!.split(",").map(Number).filter((x) => x > 0), closedS: Number(opt("closed-s", "15")),
   stages: opt("stages", "d1,d3,d10,d10x")!.split(","), leanSeed: flag("lean-seed"), qleverRebuild: flag("qlever-rebuild"),
@@ -120,6 +120,7 @@ const cgDelta = (a: ReturnType<typeof cgroup>, b: ReturnType<typeof cgroup>) =>
 
 type Arm = { name: "a0" | "x1" | "h1"; comp: CompositionHandle };
 let capture: { sql: string; params: readonly unknown[] }[] | null = null;
+let fastRetractLookup = false;
 let submitTransform: ((statements: any[]) => any[]) | null = null;
 let rawXtdb: any = null;
 
@@ -130,6 +131,13 @@ async function xtdbArm(scope: string, adapterOptions: Record<string, unknown>, l
   const hooked = {
     query: (sql: string, params?: readonly unknown[], basis?: unknown, o?: unknown) => {
       if (capture && sql.startsWith("SELECT ") && sql.includes("FROM tx_assertions")) capture.push({ sql, params: params ?? [] });
+      // History growth only (--fast-retract-lookup): core reads each retraction target twice by `id = ?`, a scan of
+      // the whole table (about 150 ms per retract at 400 subjects on the slot). The adapter writes every row with
+      // `_id = JSON.stringify([scope_key, id])`, so adding that `_id` equality returns the same row by IID pruning.
+      // The original predicates stay; what is stored is unchanged. Never active while anything is measured.
+      if (fastRetractLookup && params && params.length >= 2 && sql.includes("FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND id = ? AND")) {
+        return rawXtdb.query(sql.replace("WHERE scope_key = ? AND id = ? AND", "WHERE _id = ? AND scope_key = ? AND id = ? AND"), [JSON.stringify([params[0], params[1]]), ...params], basis, o);
+      }
       return rawXtdb.query(sql, params, basis, o);
     },
     submit: (statements: any[]) => rawXtdb.submit(submitTransform ? submitTransform(statements) : statements),
@@ -408,10 +416,11 @@ async function pullOn(arm: Arm, subject: number, basis: Basis) {
 }
 
 /** One (subject, basis) on every arm, in rotated order; digests must agree across arms. */
-async function pullAll(subject: number, basis: Basis, rotation: number, onEach: (arm: Arm, r: Awaited<ReturnType<typeof pullOn>>) => void) {
+async function pullAll(subject: number, basis: Basis, rotation: number, onEach: (arm: Arm, r: Awaited<ReturnType<typeof pullOn>>) => void, only?: ReadonlySet<string>) {
   const digests: string[] = [];
   for (let k = 0; k < arms.length; k++) {
     const arm = arms[(k + rotation) % arms.length]!;
+    if (only && !only.has(arm.name)) continue;
     try {
       const r = await pullOn(arm, subject, basis);
       digests[arms.indexOf(arm)] = r.digest;
@@ -437,20 +446,28 @@ async function runGate(stage: string, picks: { b: BasisRec; w: number }[], pulls
   let issued = 0;
   const t0 = now();
   const work = Array.from({ length: pulls }, () => ({ subject: gateSample[rng.int(gateSample.length)]!, b: pickWeighted(picks, rng.next()).b, rot: rng.int(arms.length) }));
+  // Engine arms pull the first `gateEnginePulls` items (with H1 at the same key, digests compared); in-process arms
+  // pull every item. Why: an engine pull costs 0.17-0.25 engine CPU-seconds on XTDB's 2-CPU slot (smoke, 400
+  // subjects), so 100k engine pulls per arm would hold the slot for many hours; O-REPLAY cost is per key, not per pull.
+  const enginePulls = Math.min(pulls, cfg.gateEnginePulls);
+  const inProcess = new Set(arms.filter((a) => a.name === "h1").map((a) => a.name));
+  const perArm: Record<string, number> = Object.fromEntries(armNames.map((a) => [a, 0]));
   let next = 0;
   await Promise.all(Array.from({ length: cfg.gateConcurrency }, async () => {
     while (next < work.length) {
-      const w = work[next++]!;
+      const k = next++;
+      const w = work[k]!;
       await pullAll(w.subject, { recordedAt: w.b.recordedAt, validAt: w.b.validAt }, w.rot, (arm, r) => {
         noteGate(arm.name, w.subject, w.b.id, r.digest);
         gateRoutes[arm.name]![r.route] = (gateRoutes[arm.name]![r.route] ?? 0) + 1;
         hist[arm.name]!.recordMs(r.ms);
-      });
+        perArm[arm.name]!++;
+      }, k < enginePulls ? undefined : inProcess);
       issued++;
       if (issued % 2500 === 0) log(`gate ${stage}: ${issued}/${pulls} (${((now() - t0) / 1000).toFixed(0)} s)`);
     }
   }));
-  return { pulls: issued, wallS: (now() - t0) / 1000, concurrency: cfg.gateConcurrency, latencyAtConcurrency: Object.fromEntries(armNames.map((a) => [a, summary(hist[a]!)])), bases: picks.map((p) => ({ id: p.b.id, kind: p.b.kind, w: p.w, position: p.b.position })) };
+  return { pulls: issued, pullsPerArm: perArm, enginePulls, wallS: (now() - t0) / 1000, concurrency: cfg.gateConcurrency, latencyAtConcurrency: Object.fromEntries(armNames.map((a) => [a, summary(hist[a]!)])), bases: picks.map((p) => ({ id: p.b.id, kind: p.b.kind, w: p.w, position: p.b.position })) };
 }
 
 function weightedSubject(rng: Rng): number {
@@ -551,37 +568,47 @@ async function runBytes(stage: string) {
 
 async function runClosedLoop(stage: string) {
   const latest = receipts.at(-1)!;
-  const out: Record<string, any[]> = {};
-  for (const arm of arms) {
-    out[arm.name] = [];
-    for (const level of cfg.closedLevels) {
-      const rng = new Rng(seedOf(`closed:${stage}:${arm.name}:${level}`));
-      const h = new Histogram();
-      let done = 0, errors = 0, stop = false;
-      const c0 = cgroup();
-      const cpu0 = process.cpuUsage();
-      const t0 = now();
-      setTimeout(() => { stop = true; }, cfg.closedS * 1000);
-      await Promise.all(Array.from({ length: level }, async () => {
-        while (!stop) {
-          const s = weightedSubject(rng);
-          const t = performance.now();
-          try { await arm.comp.pull(ids.placement(s), { recordedAt: latest.instant, validAt: Math.floor(now()) }); h.recordMs(performance.now() - t); done++; } catch { errors++; }
-          // In-process pulls (H1, memory) never yield to timers; give them a turn so the level ends on time.
-          await new Promise((r) => setImmediate(r));
-        }
-      }));
-      const wallS = (now() - t0) / 1000;
-      const cpu = process.cpuUsage(cpu0);
-      const d = cgDelta(c0, cgroup());
-      const hostCpuS = (cpu.user + cpu.system) / 1e6;
+  const out: Record<string, any[]> = Object.fromEntries(armNames.map((a) => [a, []]));
+  // Arms alternate in short windows inside each level (3 rounds, rotated order), so host noise lands on every arm
+  // alike; a window's engine CPU and host CPU are summed per arm.
+  const rounds = 3;
+  for (const level of cfg.closedLevels) {
+    const acc: Record<string, { h: Histogram; done: number; errors: number; wallS: number; engineS: number; engineWallS: number; hostS: number; rng: Rng }> =
+      Object.fromEntries(armNames.map((a) => [a, { h: new Histogram(), done: 0, errors: 0, wallS: 0, engineS: 0, engineWallS: 0, hostS: 0, rng: new Rng(seedOf(`closed:${stage}:${a}:${level}`)) }]));
+    for (let round = 0; round < rounds; round++) {
+      for (let k = 0; k < arms.length; k++) {
+        const arm = arms[(k + round) % arms.length]!;
+        const a = acc[arm.name]!;
+        let stop = false;
+        const c0 = cgroup();
+        const cpu0 = process.cpuUsage();
+        const t0 = now();
+        setTimeout(() => { stop = true; }, (cfg.closedS * 1000) / rounds);
+        await Promise.all(Array.from({ length: level }, async () => {
+          while (!stop) {
+            const s = weightedSubject(a.rng);
+            const t = performance.now();
+            try { await arm.comp.pull(ids.placement(s), { recordedAt: latest.instant, validAt: Math.floor(now()) }); a.h.recordMs(performance.now() - t); a.done++; } catch { a.errors++; }
+            // In-process pulls (H1, memory) never yield to timers; give them a turn so the window ends on time.
+            await new Promise((r) => setImmediate(r));
+          }
+        }));
+        a.wallS += (now() - t0) / 1000;
+        const cpu = process.cpuUsage(cpu0);
+        a.hostS += (cpu.user + cpu.system) / 1e6;
+        const d = cgDelta(c0, cgroup());
+        if (d) { a.engineS += d.cpuS; a.engineWallS += d.wallS; }
+      }
+    }
+    for (const name of armNames) {
+      const a = acc[name]!;
       const row = {
-        level, pulls: done, errors, wallS, pullsPerS: done / wallS, latency: summary(h),
-        engineCpuCores: d ? d.cpuS / d.wallS : null, pullsPerEngineCpuS: d && d.cpuS > 0 ? done / d.cpuS : null,
-        pullsPerSPerQuotaCore: done / wallS / cfg.quotaCpus, hostProcessCpuCores: hostCpuS / wallS, pullsPerHostCpuS: hostCpuS > 0 ? done / hostCpuS : null,
+        level, pulls: a.done, errors: a.errors, wallS: a.wallS, pullsPerS: a.done / a.wallS, latency: summary(a.h),
+        engineCpuCores: a.engineWallS > 0 ? a.engineS / a.engineWallS : null, pullsPerEngineCpuS: a.engineS > 0 ? a.done / a.engineS : null,
+        pullsPerSPerQuotaCore: a.done / a.wallS / cfg.quotaCpus, hostProcessCpuCores: a.hostS / a.wallS, pullsPerHostCpuS: a.hostS > 0 ? a.done / a.hostS : null,
       };
-      out[arm.name]!.push(row);
-      log(`closed ${stage} ${arm.name} x${level}: ${row.pullsPerS.toFixed(1)} pulls/s, p50 ${row.latency?.p50Ms?.toFixed(2)} ms, engine ${row.engineCpuCores?.toFixed(2)} cores, host ${row.hostProcessCpuCores.toFixed(2)} cores`);
+      out[name]!.push(row);
+      log(`closed ${stage} ${name} x${level}: ${row.pullsPerS.toFixed(1)} pulls/s, p50 ${row.latency?.p50Ms?.toFixed(2)} ms, engine ${row.engineCpuCores?.toFixed(2)} cores, host ${row.hostProcessCpuCores.toFixed(2)} cores`);
     }
   }
   return out;
@@ -591,6 +618,7 @@ async function grow(depth: number) {
   const perCommand = 50;
   const t0 = now();
   let commands = 0;
+  fastRetractLookup = flag("fast-retract-lookup");
   for (let v = version + 1; v < depth; v++) {
     for (const [k, group] of growthGroups(perCommand).entries()) {
       const cmd = buildHistoryGrowth({ runTag, label: `${v}.${k}`, subjects: group, version: v, ids: versionIds });
@@ -600,7 +628,8 @@ async function grow(depth: number) {
     }
     version = v;
   }
-  return { depth, commands, wallS: (now() - t0) / 1000 };
+  fastRetractLookup = false;
+  return { depth, commands, wallS: (now() - t0) / 1000, fastRetractLookup: flag("fast-retract-lookup") };
 }
 
 /** RULINGS Q68e / R24 6 step 6: facts whose valid_to has passed, 20% of each matched subject's own rows. */
@@ -629,8 +658,9 @@ async function eligibilityTests() {
   const subjects = gateSample.slice(0, 4);
   const cmp = async (h: CompositionHandle, subject: number, b: BasisRec, tag: string) => {
     const basis = { recordedAt: b.recordedAt, validAt: b.validAt };
-    const a = await pullOn(arms[0]!, subject, basis);
+    // H1 first: the A0 pull takes hundreds of ms on XTDB, which would hand a lagging follower time to catch up.
     const x = await pullOn({ name: "h1", comp: h }, subject, basis);
+    const a = await pullOn(arms[0]!, subject, basis);
     noteGate("a0", subject, b.id, a.digest);
     noteGate(`h1`, subject, b.id, x.digest);
     if (a.digest !== x.digest) { crossArmMismatchCount++; if (crossArmMismatches.length < 20) crossArmMismatches.push({ tag, subject, basis, a0: a.digest, h1: x.digest }); }
