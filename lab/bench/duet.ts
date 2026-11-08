@@ -244,7 +244,7 @@ async function run(argv: string[]) {
   if (report.status !== "ERROR") {
     // A fixed-size A/A run is one analysis at 95%; an A/B run's final analysis is its last registered look (Pocock 98.2%).
     const level = mode === "ab" ? cfg.rounds.lookLevel : cfg.rounds.level;
-    const input = { ...analysisInput(stoppedAfter === null ? plan : { ...plan, rounds: plan.rounds.slice(0, stoppedAfter) }, driverReports, host, vm, calibs, arms, regime, claim, mode, composition, calibRef), level, ...(placement !== undefined ? { placement } : {}) };
+    const input = { ...analysisInput(stoppedAfter === null ? plan : { ...plan, rounds: plan.rounds.slice(0, stoppedAfter) }, driverReports, host, vm, calibs, arms, regime, claim, mode, composition, calibRef), level, placement: placement ?? null };
     const result = analysePair({ ...input, config: cfg });
     report.trace = { digest: driverReports["A"].trace.digest, seed, generatorSha256: driverReports["A"].generator.traceSha256, params: driverReports["A"].trace.params, digestB: driverReports["B"].trace.digest };
     report.roundsRun = input.rounds.length;
@@ -351,7 +351,7 @@ export function recompute(doc: any, cfgFile?: string) {
   const config = JSON.parse(cfgText) as NoiseConfig;
   const J = (k: string) => JSON.parse(ev[k].json);
   const analysis = J("analysis"), signals = J("signals"), placement = J("placement");
-  const input: PairInput = { ...analysis, rounds: J("rounds"), histograms: J("histograms"), noise: signals.rounds, calibration: J("calibration"), accounting: J("accounting"), ...(placement !== null ? { placement } : {}), config };
+  const input: PairInput = { ...analysis, rounds: J("rounds"), histograms: J("histograms"), noise: signals.rounds, calibration: J("calibration"), accounting: J("accounting"), placement, config };
   const result = analysePair(input);
   const stored = { stats: doc.stats, noise: { ...doc.noise, calibration: undefined }, checks: doc.checks, exclusions: signals.exclusions, rules: signals.rules };
   const fresh = { stats: result.stats, noise: { ...result.noise, calibration: undefined }, checks: result.checks, exclusions: result.noise.exclusions, rules: result.noise.rules };
