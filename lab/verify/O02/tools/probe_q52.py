@@ -6,6 +6,9 @@ Verdicts: MATCH, WRONG-ANSWER, REFUSES (exit 2 where the ruling decides), OBSERV
 about, not scored). V-O04e: Q66b is a checked section (two-page, three-page and chained continuations, the author's two
 choices: a continuation's own readStart, and a literal cursor token). V-O04f: Q70a-e rows (literal tokens from plain and
 in-flight reads, equal tokens issued last by either), plus two recorded page sequences the rulings do not name directly.
+V-O04g: Q70f-k rows (ambiguous tokens and journal `after` fail closed, journal pagination, identical views with different
+bodies, read scope for scope-field kinds); the V-O04f F9/F10 rows are checked; new OBSERVED rows record the page
+continuations Q70a-k still does not name (transactionsForEntity pages, a string or decimal `after`).
 
   python3 -I lab/verify/O02/tools/probe_q52.py WORKDIR [--self-test] [--results=DIR]
       -> DIR/probe_q52[.self-test].json (default lab/verify/O02/V-O04d/results)
@@ -81,8 +84,8 @@ def run(name, the_case):
     proc = subprocess.run([sys.executable, "-I", str(CLI), str(p), "-o", str(o)], capture_output=True, text=True)
     if proc.returncode == 2:
         return {"refused": proc.stderr.strip(), "outputWritten": o.exists()}
-    if proc.returncode not in (0, 1):
-        return {"crashed": proc.returncode, "stderr": proc.stderr[-1500:]}
+    if proc.returncode not in (0, 1) or not o.exists():   # an uncaught exception also exits 1, with no output
+        return {"crashed": proc.returncode, "stderr": proc.stderr[-600:]}
     return {"report": json.loads(o.read_text())}
 
 
@@ -375,37 +378,120 @@ if LIT_TOKENS:
     Q70C = case(LIT_CMDS, [ep("B"), ep("x", cursor=T, readStart={"afterCommand": 0})])
     single("Q70c", "literal token from a plain read, used with an earlier readStart", "continues B: plain [p2 M, p3 3, p4 4]", Q70C,
            lambda r: (entry(r, "x") == [("plain", PLAIN_TAIL)], entry(r, "x")))
+    # V-O04g: A and B issue the same token with different views (start, prefixes), so Q70f fails the continuation closed
+    # whichever was issued last (the two Q70d rows written for 0.4.5 now expect the typed refusal)
+    def ambiguous(r, qid, what):
+        node = q(r, qid)
+        err = node.get("error") or {}
+        return err.get("error") == "X-NOT-MODELED" and f"ambiguous {what}" in (err.get("message") or "") and "inFlight" not in node
+
     Q70D_A_LAST = case(LIT_CMDS, [ep("B"), ep("A", readStart={"afterCommand": 0}), ep("x", cursor=T)])
-    single("Q70d", "equal tokens, plain B then in-flight A (A issued last)", "follows A: per A's prefixes", Q70D_A_LAST,
-           lambda r: (tokens_equal(r, "A", "B") and entry(r, "x") == LIT_ALTS, entry(r, "x")))
+    single("Q70f", "equal tokens, plain B then in-flight A (A issued last)", "typed X-NOT-MODELED 'ambiguous literal token'", Q70D_A_LAST,
+           lambda r: (tokens_equal(r, "A", "B") and ambiguous(r, "x", "literal token"), q(r, "x")))
     Q70D_B_LAST = case(LIT_CMDS, [ep("A", readStart={"afterCommand": 0}), ep("B"), ep("x", cursor=T)])
-    single("Q70d", "equal tokens, in-flight A then plain B (B issued last)", "follows B: plain [p2 M, p3 3, p4 4]", Q70D_B_LAST,
-           lambda r: (tokens_equal(r, "A", "B") and entry(r, "x") == [("plain", PLAIN_TAIL)], entry(r, "x")))
-    # the same Q70d case seen as a page sequence: A's all-old page 1 (p1 1) continued by x, whose only answer has p2 erased
-    # by the same commit tx:1 that page 1 did not see (one commit half seen across the sequence; Q52e, commander's intent)
-    observe("Q70d", "page sequence A (all-old prefix) -> literal token also issued later by plain B",
-            "recorded: A[] page 1 and x's acceptable answers", Q70D_B_LAST,
-            lambda r: {"A_allOld_page1": entry(r, "A")[0][1][:1], "x": entry(r, "x")})
+    single("Q70f", "equal tokens, in-flight A then plain B (B issued last)", "typed X-NOT-MODELED 'ambiguous literal token'", Q70D_B_LAST,
+           lambda r: (tokens_equal(r, "A", "B") and ambiguous(r, "x", "literal token"), q(r, "x")))
+    # V-O04f F9 as a checked row: A's all-old page 1 is unchanged and x gives no answer that half-applies tx:1
+    single("Q70f", "page sequence A (all-old prefix) -> literal token also issued later by plain B (V-O04f F9)",
+           "A[] page 1 is p1 1 and x is refused (no forced mixed answer)", Q70D_B_LAST,
+           lambda r: (entry(r, "A")[0] == ([], [row("p1", "1"), row("p2", "2"), row("p3", "3"), row("p4", "4")])
+                      and ambiguous(r, "x", "literal token"), {"A": entry(r, "A")[0], "x": q(r, "x")}))
+# Q70h: identical views (same start, scope, issuing prefixes) and different page bodies continue rather than refuse.
+# A (limit 1) and B (limit 2) read with the same readStart; A's page 1 and B's page 0 both issue the token "after p2".
+H_CMDS = P4 + [cmd([erase("p1", SAL), erase("p3", SAL)], 200)]
+_h = run("q70h_source", case(H_CMDS, [ep("A", 1, readStart={"afterCommand": 0}), ep("B", 2, readStart={"afterCommand": 0})])).get("report")
+H_TOKEN = None
+if _h:
+    _ta = {alt["result"]["pages"][1]["nextCursor"] for alt in q(_h, "A")["inFlight"]["acceptable"]}
+    _tb = {alt["result"]["pages"][0]["nextCursor"] for alt in q(_h, "B")["inFlight"]["acceptable"]}
+    H_TOKEN = next(iter(_ta)) if len(_ta) == 1 and _ta == _tb else None
+score("Q70h", "A (limit 1) page 1 and B (limit 2) page 0 issue one token", "recorded precondition", "OBSERVED", {"sharedToken": H_TOKEN is not None})
+if H_TOKEN:
+    Q70H = case(H_CMDS, [ep("A", 1, readStart={"afterCommand": 0}), ep("B", 2, readStart={"afterCommand": 0}), ep("x", 1, cursor=H_TOKEN)])
+    single("Q70h", "identical views, different limits reaching the same token", "continues: [([], p3 3, p4 4), ([tx:1], p3 M, p4 4)]", Q70H,
+           lambda r: (entry(r, "x") == [([], [row("p3", "3"), row("p4", "4")]), (["tx:1"], [row("p3", "M"), row("p4", "4")])], entry(r, "x")))
 # Q70a: cursorFrom from a later page of the source, per prefix
 CM2 = P4 + [cmd([erase("p1", SAL)], 200), cmd([erase("p2", SAL)], 210)]
 Q70A_PAGE1 = case(CM2, [ep("A", readStart={"afterCommand": 0}), ep("x", cursorFrom={"query": "A", "page": 1})])
 single("Q70a", "cursorFrom page 1 of an in-flight read (pages 3-4 unaffected)", "plain [p3 3, p4 4] (every prefix agrees)", Q70A_PAGE1,
        lambda r: (entry(r, "x") == [("plain", [row("p3", "3"), row("p4", "4")])], entry(r, "x")))
-# one more way to continue a page that Q70a-e does not name: journal pagination with transactions(after = next)
+# ------------------------------------------------------------------ Q70g, Q70i: journal pagination
+def ambiguous_any(r, qid, what):
+    err = q(r, qid).get("error") or {}
+    return err.get("error") == "X-NOT-MODELED" and f"ambiguous {what}" in (err.get("message") or "")
+
 TXP = [cmd([asrt("s1", "p1", SAL, I(1))], 100), cmd([asrt("s2", "p2", SAL, I(2))], 110), cmd([erase("p1", SAL), erase("p2", SAL)], 200)]
 
 
 def tx_entry(r, qid):
     node = q(r, qid)
+    if "error" in node:
+        return [("error", node["error"].get("error"))]
     alts = [(a["erasuresSeen"], a["result"]) for a in node["inFlight"]["acceptable"]] if "inFlight" in node else [("plain", node["result"])]
     return [(s, [(t["txId"], [c.get("value") for c in t["changes"]]) for t in res["transactions"]], res.get("next")) for s, res in alts]
 
 
-observe("beyond Q70", "transactions page 2 by after = page 1's next (no readStart), page 1 in flight",
+TQ = lambda qid, after, **kw: {"id": qid, "kind": "transactions", "after": after, "limit": 1, **kw}  # noqa: E731
+Q70G = case(TXP, [TQ("t1", 0, readStart={"afterCommand": 1}), TQ("t2", 1)])
+single("Q70g", "transactions page 2 by after = page 1's next, page 1 in flight (V-O04f F10)",
+       "per page 1's prefixes: [([], tx:1 2), ([tx:2], tx:1 M)], next 2", Q70G,
+       lambda r: (tx_entry(r, "t2") == [([], [("tx:1", [I(2)])], 2), (["tx:2"], [("tx:1", [marker(200)])], 2)], tx_entry(r, "t2")))
+Q70G_OWN = case(TXP, [TQ("t1", 0), TQ("t2", 1, readStart={"afterCommand": 1})])
+single("Q70g", "journal continuation of a plain page, own readStart before the erasure", "continues page 1's view: plain [tx:1 M]", Q70G_OWN,
+       lambda r: (tx_entry(r, "t2") == [("plain", [("tx:1", [marker(200)])], 2)], tx_entry(r, "t2")))
+Q70I = case(TXP, [TQ("t1", 0, readStart={"afterCommand": 1}), TQ("t1b", 0), TQ("t2", 1)])
+single("Q70i", "journal after issued by disagreeing pages", "typed X-NOT-MODELED 'ambiguous journal after'", Q70I,
+       lambda r: (ambiguous_any(r, "t2", "journal after"), q(r, "t2")))
+# Q70i: matching needs the same journal scope. Scope t's page issues next 1; a scope s call with after 1 reads its own view.
+JS = [cmd([asrt("s1", "p1", SAL, I(1))], 100), cmd([asrt("f1", "q1", SAL, I(5))], 110, scope="t"), cmd([asrt("f2", "q2", SAL, I(6))], 120, scope="t"),
+      cmd([asrt("s2", "p2", SAL, I(2))], 130), cmd([erase("p1", SAL), erase("p2", SAL)], 200)]
+Q70I_SCOPE = case(JS, [TQ("tt", 0, scope="t"), TQ("ts", 1, readStart={"afterCommand": 3})])
+single("Q70i", "after equal to another journal scope's next", "own view of scope s: [([], tx:3 2), ([tx:4], tx:3 M)]", Q70I_SCOPE,
+       lambda r: (tx_entry(r, "ts") == [([], [("tx:3", [I(2)])], 2), (["tx:4"], [("tx:3", [marker(200)])], 2)], tx_entry(r, "ts")))
+# ------------------------------------------------------------------ Q70j, Q70k: a read's in-flight scope is the scope it reads
+# s: p1 1 (tx:0), erase p1 (tx:2); t: q1 5 (tx:1), erase q1 (tx:3). readStart afterCommand 1 resolves in the read's scope.
+SCP = [cmd([asrt("s1", "p1", SAL, I(1))], 100), cmd([asrt("f1", "q1", SAL, I(5))], 110, scope="t"), cmd([erase("p1", SAL)], 200),
+       cmd([erase("q1", SAL)], 210, scope="t")]
+RS1 = {"afterCommand": 1}
+Q70J = case(SCP, [{"id": "tx", "kind": "transactions", "scope": "t", "after": 0, "limit": 10, "readStart": RS1},
+                  {"id": "as", "kind": "assertions", "scope": "t", "readStart": RS1},
+                  {"id": "hi", "kind": "history", "entityId": "q1", "scope": "t", "readStart": RS1},
+                  {"id": "fe", "kind": "transactionsForEntity", "entityId": "q1", "scope": "t", "limit": 10, "readStart": RS1},
+                  {"id": "t1", "kind": "transaction", "txId": "tx:1", "scope": "t", "readStart": RS1},
+                  {"id": "m", "kind": "match", "cut": {"scope": "t", "validAt": 1}, "pattern": {"entityId": "q1"}, "readStart": RS1}])
+
+
+def seen_and(r, qid, value_of):
+    node = q(r, qid)
+    alts = [(a["erasuresSeen"], a["result"]) for a in node["inFlight"]["acceptable"]] if "inFlight" in node else [("plain", node.get("result"))]
+    return [(s, value_of(res)) for s, res in alts]
+
+
+Q1_ALTS = [([], I(5)), (["tx:3"], marker(210))]
+single("Q70j", "transactions on scope t: only t's erasure in flight", "[([], q1 5), ([tx:3], marker)] for tx:1's change", Q70J,
+       lambda r: (seen_and(r, "tx", lambda res: res["transactions"][0]["changes"][0]["value"]) == Q1_ALTS, seen_and(r, "tx", lambda res: res)))
+single("Q70k", "assertions on scope t", "[([], q1 5), ([tx:3], marker)]", Q70J,
+       lambda r: (seen_and(r, "as", lambda res: res["assertions"][0]["value"]) == Q1_ALTS, seen_and(r, "as", lambda res: res)))
+single("Q70k", "history (no cut) on scope t", "[([], q1 5), ([tx:3], marker)]", Q70J,
+       lambda r: (seen_and(r, "hi", lambda res: res["rawLifetime"][0]["value"]) == Q1_ALTS, seen_and(r, "hi", lambda res: res)))
+single("Q70k", "transactionsForEntity on scope t", "[([], q1 5), ([tx:3], marker)] for tx:1's change", Q70J,
+       lambda r: (seen_and(r, "fe", lambda res: [t for t in res["transactions"] if t["txId"] == "tx:1"][0]["changes"][0]["value"]) == Q1_ALTS,
+                  seen_and(r, "fe", lambda res: res)))
+single("Q70k", "transaction tx:1 on scope t", "[([], q1 5), ([tx:3], marker)]", Q70J,
+       lambda r: (seen_and(r, "t1", lambda res: res["changes"][0]["value"]) == Q1_ALTS, seen_and(r, "t1", lambda res: res)))
+single("Q70k", "control: match with cut scope t (a cut-scoped kind)", "[([], q1 5), ([tx:3], marker)]", Q70J,
+       lambda r: (seen_and(r, "m", lambda res: res["raw"][0]["value"]) == Q1_ALTS, seen_and(r, "m", lambda res: res)))
+# ------------------------------------------------------------------ V-O04g: page continuations Q70a-k does not name (recorded)
+FE = [cmd([asrt("s1", "p1", SAL, I(1))], 100), cmd([asrt("n1", "p1", NAME, S("N"))], 110), cmd([erase("p1")], 200)]
+observe("beyond Q70", "transactionsForEntity page 2 by beforePosition = page 1's nextBeforePosition (no readStart)",
         "recorded: page 1 alternatives and page 2's answer",
-        case(TXP, [{"id": "t1", "kind": "transactions", "after": 0, "limit": 1, "readStart": {"afterCommand": 1}},
-                   {"id": "t2", "kind": "transactions", "after": 1, "limit": 1}]),
-        lambda r: {"page1": tx_entry(r, "t1"), "page2": tx_entry(r, "t2")})
+        case(FE, [{"id": "e1", "kind": "transactionsForEntity", "entityId": "p1", "limit": 1, "snapshotPosition": 2, "readStart": {"afterCommand": 1}},
+                  {"id": "e2", "kind": "transactionsForEntity", "entityId": "p1", "limit": 1, "snapshotPosition": 2, "beforePosition": 2}]),
+        lambda r: {"page1": tx_entry(r, "e1"), "page2": tx_entry(r, "e2")})
+observe("beyond Q70", "transactions page 2 with after given as the string \"1\"", "recorded: page 2's answer",
+        case(TXP, [TQ("t1", 0, readStart={"afterCommand": 1}), TQ("t2", "1")]), lambda r: {"page1": tx_entry(r, "t1"), "page2": tx_entry(r, "t2")})
+observe("beyond Q70", "transactions page 2 with after given as 1.0", "recorded: exit status",
+        case(TXP, [TQ("t1", 0, readStart={"afterCommand": 1}), TQ("t2", 1.0)]), lambda r: {"page2": tx_entry(r, "t2")})
 
 # ------------------------------------------------------------------ Q52f: toDecimal(json, p, s, rounding)
 DEC = [  # (json, p, s, mode, expected decimal text or error id): the as-written reading rounded once (Q52f, Q22, Q43d)
@@ -481,10 +567,24 @@ if SELF_TEST:
                lambda r: (entry(r, "b") == [("plain", PLAIN_TAIL)], entry(r, "b")))
         single("ST", "ST Q70c own readStart reopens the old value", "x lists ([], p2 2) (wrong)", Q70C,
                lambda r: (any(s == [] for s, _ in entry(r, "x")), entry(r, "x")))
-        single("ST", "ST Q70d earliest issuer wins (A last)", "plain markers (wrong: A issued last)", Q70D_A_LAST,
-               lambda r: (entry(r, "x") == [("plain", PLAIN_TAIL)], entry(r, "x")))
-        single("ST", "ST Q70d earliest issuer wins (B last)", "per A's prefixes (wrong: B issued last)", Q70D_B_LAST,
+        single("ST", "ST Q70f latest issuer followed (A last)", "per A's prefixes (wrong: views disagree, refuse)", Q70D_A_LAST,
                lambda r: (entry(r, "x") == LIT_ALTS, entry(r, "x")))
+        single("ST", "ST Q70f latest issuer followed (B last)", "plain markers (wrong: views disagree, refuse)", Q70D_B_LAST,
+               lambda r: (entry(r, "x") == [("plain", PLAIN_TAIL)], entry(r, "x")))
+    if H_TOKEN:
+        single("ST", "ST Q70h identical views refused", "refused (wrong: identical views continue)", Q70H,
+               lambda r: (ambiguous(r, "x", "literal token"), entry(r, "x")))
+    single("ST", "ST Q70g page 2 own view", "plain [tx:1 M] (wrong: continues page 1)", Q70G,
+           lambda r: (tx_entry(r, "t2") == [("plain", [("tx:1", [marker(200)])], 2)], tx_entry(r, "t2")))
+    single("ST", "ST Q70g own readStart consulted", "page 2 in flight (wrong)", Q70G_OWN, lambda r: ("inFlight" in q(r, "t2"), tx_entry(r, "t2")))
+    single("ST", "ST Q70i ambiguous after continues t1", "page 2 per t1's prefixes (wrong: refuse)", Q70I,
+           lambda r: (tx_entry(r, "t2") == [([], [("tx:1", [I(2)])], 2), (["tx:2"], [("tx:1", [marker(200)])], 2)], tx_entry(r, "t2")))
+    single("ST", "ST Q70i other journal scope matched", "plain [tx:3 M] (wrong: own view)", Q70I_SCOPE,
+           lambda r: (tx_entry(r, "ts") == [("plain", [("tx:3", [marker(200)])], 2)], tx_entry(r, "ts")))
+    single("ST", "ST Q70j default scope in flight", "erasuresSeen [tx:2] (wrong: scope t's tx:3)", Q70J,
+           lambda r: (any(s == ["tx:2"] for s, _ in seen_and(r, "tx", lambda res: None)), seen_and(r, "tx", lambda res: None)))
+    single("ST", "ST Q70k assertions plain", "plain (wrong: t's erasure is in flight)", Q70J,
+           lambda r: ("inFlight" not in q(r, "as"), q(r, "as").keys() and list(q(r, "as").keys())))
     single("ST", "ST Q70a page 1 continuation in flight", "x has inFlight (wrong)", Q70A_PAGE1,
            lambda r: ("inFlight" in q(r, "x"), entry(r, "x")))
     single("ST", "ST Q52f binary64 expansion", "json 2.675 half-up = 2.67 (wrong)",

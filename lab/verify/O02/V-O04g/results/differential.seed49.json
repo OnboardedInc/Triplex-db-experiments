@@ -1,0 +1,1014 @@
+{
+ "old": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/atacf9fce",
+ "new": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/at91ba352",
+ "cases": 801,
+ "random": 400,
+ "seed": 49,
+ "identical": 783,
+ "bothRefused": 5,
+ "different": 13,
+ "differentByFeature": {
+  "Q52e in flight + Q66b cursor": 3,
+  "Q52e in flight": 4,
+  "Q52e in flight + Q66a in flight, 2+ erasure commits": 6
+ },
+ "rows": [
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/032_equal_tokens_plain_B_then_in_flight_A_A_issued_last_.case.json",
+   "path": "$.queries[2].error",
+   "old": "<absent>",
+   "new": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+    "message": "ambiguous literal token: 2 earlier reads issued it with different read views"
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/033_equal_tokens_in_flight_A_then_plain_B_B_issued_last_.case.json",
+   "path": "$.queries[2].error",
+   "old": "<absent>",
+   "new": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+    "message": "ambiguous literal token: 2 earlier reads issued it with different read views"
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/034_page_sequence_A_all_old_prefix_literal_token_also_issued_later_by_plain_B_V_O04f_F9_.case.json",
+   "path": "$.queries[2].error",
+   "old": "<absent>",
+   "new": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+    "message": "ambiguous literal token: 2 earlier reads issued it with different read views"
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/038_transactions_page_2_by_after_page_1_s_next_page_1_in_flight_V_O04f_F10_.case.json",
+   "path": "$.queries[1].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s2",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "2"
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p2"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:2"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s2",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p2"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/039_journal_continuation_of_a_plain_page_own_readStart_before_the_erasure.case.json",
+   "path": "$.queries[1].inFlight",
+   "old": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s2",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "2"
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p2"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:2"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s2",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p2"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     }
+    ]
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/040_journal_after_issued_by_disagreeing_pages.case.json",
+   "path": "$.queries[2].error",
+   "old": "<absent>",
+   "new": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+    "message": "ambiguous journal after: 2 earlier reads issued it with different read views"
+   },
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/042_transactions_on_scope_t_only_t_s_erasure_in_flight.case.json",
+   "path": "$.queries[0].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "5"
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:3"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 210
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/043_assertions_on_scope_t.case.json",
+   "path": "$.queries[0].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "5"
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:3"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 210
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/044_history_no_cut_on_scope_t.case.json",
+   "path": "$.queries[0].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "5"
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:3"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 210
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/045_transactionsForEntity_on_scope_t.case.json",
+   "path": "$.queries[0].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "5"
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:3"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 210
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/046_transaction_tx_1_on_scope_t.case.json",
+   "path": "$.queries[0].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "5"
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:3"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 210
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/047_control_match_with_cut_scope_t_a_cut_scoped_kind_.case.json",
+   "path": "$.queries[0].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "5"
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:3"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:1",
+         "position": 1,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "f1",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 210
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        },
+        {
+         "txId": "tx:3",
+         "position": 2,
+         "instant": 210,
+         "commandId": "c210",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "q1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "f1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "q1"
+         ]
+        }
+       ],
+       "next": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52g47/050_transactions_page_2_with_after_given_as_1_0.case.json",
+   "path": "$.stderr",
+   "old": "c-068fe085c763/scratchpad/atacf9fce/lab/oracles/replay/views.py\", line 280, in q_transactions\n    after = int(query.get(\"after\", V.Lex(\"0\")))\nValueError: invalid literal for int() with base 10: '1.0'\n",
+   "new": "c-068fe085c763/scratchpad/at91ba352/lab/oracles/replay/views.py\", line 280, in q_transactions\n    after = int(query.get(\"after\", V.Lex(\"0\")))\nValueError: invalid literal for int() with base 10: '1.0'\n",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  }
+ ]
+}

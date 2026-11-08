@@ -1,0 +1,370 @@
+{
+ "counts": {
+  "MATCH": 20
+ },
+ "rows": [
+  {
+   "probe": "Q30a json -0",
+   "rule": "WR-JSON / E-INEXACT-JSON-NUMBER",
+   "contract": "command rejected: InvalidTripleError / invalid-value, detail inexact-json-number",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INEXACT-JSON-NUMBER",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "json: json.a: -0",
+    "family": "json",
+    "detail": "inexact-json-number"
+   }
+  },
+  {
+   "probe": "Q30a json nested list -0",
+   "rule": "WR-JSON (recursive in List)",
+   "contract": "command rejected: E-INEXACT-JSON-NUMBER",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INEXACT-JSON-NUMBER",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "json: json[1][0]: -0",
+    "family": "json",
+    "detail": "inexact-json-number"
+   }
+  },
+  {
+   "probe": "Q30a json inexact number",
+   "rule": "WR-JSON / Q33a",
+   "contract": "command rejected: E-INEXACT-JSON-NUMBER (9007199254740993 does not read back)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INEXACT-JSON-NUMBER",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "json: json.a: 9007199254740993 reads back as 9007199254740992",
+    "family": "json",
+    "detail": "inexact-json-number"
+   }
+  },
+  {
+   "probe": "Q30b datetime -0",
+   "rule": "WR-INSTANT / E-NEGATIVE-ZERO-INSTANT",
+   "contract": "command rejected: InvalidTripleError / invalid-value, detail no-negative-zero",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-NEGATIVE-ZERO-INSTANT",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "datetime: an instant given as -0 (Q30b)",
+    "family": "datetime",
+    "detail": "no-negative-zero"
+   }
+  },
+  {
+   "probe": "Q22 DO-ADD beyond 38 digits",
+   "rule": "DO-ADD / E-DECIMAL-OVERFLOW",
+   "contract": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "add: the result has more than 38 integer digits (precision 38, scale 0)",
+    "result": "199999999999999999999999999999999999998"
+   }
+  },
+  {
+   "probe": "Q22 DO-MUL beyond 38 digits",
+   "rule": "DO-MUL / E-DECIMAL-OVERFLOW",
+   "contract": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "mul: the result has more than 38 integer digits (precision 38, scale 0)",
+    "result": "999999999999999999999999999999999999990"
+   }
+  },
+  {
+   "probe": "Q22 DO-BARE-DIV",
+   "rule": "DO-BARE-DIV / E-DECIMAL-BARE-DIVIDE",
+   "contract": "preflight E-DECIMAL-BARE-DIVIDE",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-BARE-DIVIDE",
+    "_tag": "DatalogValidationError",
+    "reason": "decimal-divide-requires-scale",
+    "phase": "preflight",
+    "message": "bare / on decimals; use divide(a, b, scale, rounding)"
+   }
+  },
+  {
+   "probe": "Q22 DC-D2I fraction",
+   "rule": "DC-D2I / E-DECIMAL-FRACTION",
+   "contract": "E-DECIMAL-FRACTION",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-FRACTION",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-fraction",
+    "phase": "preflight",
+    "message": "decimal to integer with a non-zero fraction; use round(x, 0, rounding) first",
+    "operand": "1.50"
+   }
+  },
+  {
+   "probe": "Q22 DO-SUM beyond 38 digits",
+   "rule": "DO-SUM / E-DECIMAL-OVERFLOW",
+   "contract": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "sum: the result has more than 38 integer digits (precision 38, scale 0)",
+    "result": "199999999999999999999999999999999999998"
+   }
+  },
+  {
+   "probe": "Q22 DO-CMP 1.50 = 1.5",
+   "rule": "DO-CMP",
+   "contract": "eq true",
+   "verdict": "MATCH",
+   "oracle": {
+    "comparable": true,
+    "identical": true,
+    "eq": true,
+    "ne": false,
+    "lt": false,
+    "gt": false,
+    "sameGroup": true
+   }
+  },
+  {
+   "probe": "Q22 CMP-DECIMAL-CROSS eq",
+   "rule": "CMP-DECIMAL-CROSS",
+   "contract": "preflight E-MIXED-FAMILY, equality included",
+   "verdict": "MATCH",
+   "oracle": {
+    "comparable": false,
+    "identical": false,
+    "eq": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "eq between decimal and integer needs an explicit conversion",
+     "left": "decimal",
+     "right": "integer",
+     "op": "eq"
+    },
+    "ne": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "ne between decimal and integer needs an explicit conversion",
+     "left": "decimal",
+     "right": "integer",
+     "op": "ne"
+    },
+    "lt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "lt between decimal and integer needs an explicit conversion",
+     "left": "decimal",
+     "right": "integer",
+     "op": "lt"
+    },
+    "gt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "gt between decimal and integer needs an explicit conversion",
+     "left": "decimal",
+     "right": "integer",
+     "op": "gt"
+    },
+    "sameGroup": false
+   }
+  },
+  {
+   "probe": "Q33d string < integer",
+   "rule": "Q33d R-CMP-3",
+   "contract": "lt is preflight E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "comparable": false,
+    "identical": false,
+    "eq": false,
+    "ne": true,
+    "lt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "lt between string and integer needs an explicit conversion",
+     "left": "string",
+     "right": "integer",
+     "op": "lt"
+    },
+    "gt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "gt between string and integer needs an explicit conversion",
+     "left": "string",
+     "right": "integer",
+     "op": "gt"
+    },
+    "sameGroup": false
+   }
+  },
+  {
+   "probe": "Q33d boolean < integer",
+   "rule": "Q33d R-CMP-3",
+   "contract": "lt is preflight E-MIXED-FAMILY",
+   "verdict": "MATCH",
+   "oracle": {
+    "comparable": false,
+    "identical": false,
+    "eq": false,
+    "ne": true,
+    "lt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "lt between boolean and integer needs an explicit conversion",
+     "left": "boolean",
+     "right": "integer",
+     "op": "lt"
+    },
+    "gt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "gt between boolean and integer needs an explicit conversion",
+     "left": "boolean",
+     "right": "integer",
+     "op": "gt"
+    },
+    "sameGroup": false
+   }
+  },
+  {
+   "probe": "Q33e rem binary64",
+   "rule": "Q33e R-NUM-8",
+   "contract": "a binary64 operand of rem is a preflight error",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-MIXED-FAMILY",
+    "_tag": "DatalogValidationError",
+    "reason": "mixed-family",
+    "phase": "preflight",
+    "message": "rem is defined for integers only (Q33e)",
+    "left": "number",
+    "right": "number"
+   }
+  },
+  {
+   "probe": "Q33g transactions limit 0",
+   "rule": "Q33g R-JNL-7",
+   "contract": "PaginationCursorError / malformed",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "malformed",
+    "phase": "preflight",
+    "message": "limit must be 1..1000"
+   }
+  },
+  {
+   "probe": "Q33h negative validAt",
+   "rule": "Q33h R-CUT-3",
+   "contract": "E-INVALID-VALUE (InvalidTripleError / invalid-value)",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-INVALID-VALUE",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "validAt must be a non-negative instant"
+   }
+  },
+  {
+   "probe": "Q31c non-dense receipt positions",
+   "rule": "Q31c POSITION",
+   "contract": "receipts at positions 1 and 3 are consistent (coordinates need not be dense)",
+   "verdict": "MATCH",
+   "oracle": {
+    "status": "PASS",
+    "violations": [],
+    "positions": [
+     {
+      "scope": "s",
+      "coordinates": "integer",
+      "dense": false,
+      "aborted": []
+     }
+    ]
+   }
+  },
+  {
+   "probe": "Q33c retract-pattern out of qlever range",
+   "rule": "Q33c R-LANE-2",
+   "contract": "E-VALUE-OUT-OF-RANGE on qlever",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-VALUE-OUT-OF-RANGE",
+    "errorTag": "InvalidTripleError",
+    "reason": "value-out-of-range",
+    "phase": "preflight",
+    "message": "integer 576460752303423488 is outside the qlever lane range [-576460752303423488, 576460752303423487]",
+    "lane": "qlever"
+   }
+  },
+  {
+   "probe": "Q33i G1-I64-02 min-exact on qlever",
+   "rule": "Q31j / Q33i",
+   "contract": "E-VALUE-OUT-OF-RANGE on qlever, commit on xtdb",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-VALUE-OUT-OF-RANGE",
+    "errorTag": "InvalidTripleError",
+    "reason": "value-out-of-range",
+    "phase": "preflight",
+    "message": "integer -9223372036854775808 is outside the qlever lane range [-576460752303423488, 576460752303423487]",
+    "lane": "qlever"
+   }
+  },
+  {
+   "probe": "Q24 erasure command",
+   "rule": "Q24 ERASURE / TARGETS 7",
+   "contract": "the erasure commits; later reads return ErasedValue {erasedAt}",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "committed"
+   }
+  }
+ ]
+}

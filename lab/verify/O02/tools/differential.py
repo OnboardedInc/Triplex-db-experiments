@@ -61,8 +61,8 @@ def run(root, case_path, out_path):
                           capture_output=True, text=True)
     if proc.returncode == 2:
         return {"refused": True}
-    if proc.returncode not in (0, 1):
-        return {"crashed": proc.returncode, "stderr": proc.stderr[-400:]}
+    if proc.returncode not in (0, 1) or not out_path.exists():   # an uncaught exception also exits 1, with no output
+        return {"crashed": proc.returncode, "stderr": proc.stderr[-200:]}
     doc = json.loads(out_path.read_text())
     doc.pop("oracle", None)
     doc.pop("caseSha256", None)
