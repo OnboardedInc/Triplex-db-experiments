@@ -53,6 +53,7 @@
 // ones; carrying receipts forward from ancestor commits (ACCEPTANCE 5.7); trusting any inline receipt field that no retained
 // object repeats; extra fields in the contract's record schemas (Q47a fixes them exactly; proposals go to the next version);
 // any verifier record a claim carries as independent verification (Q55a: only the contract's VERIFIER_REGISTRY counts).
+import { authorityPolicy, bindStore, pairLayout } from './box-policy.mjs';
 import { BoxExecutor, ISOLATION_PROFILE } from './box.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -564,6 +565,7 @@ export function gitSource(repo) {
     });
   };
   const api = {
+    repo: path.resolve(repo),
     resolve(rev) { if (!str(rev) || rev.startsWith('-')) return null; try { return run(['rev-parse', '--verify', '--quiet', `${rev}^{commit}`]).toString().trim() || null; } catch { return null; } },
     treeOf(commit) { return run(['rev-parse', `${commit}^{tree}`]).toString().trim(); },
     commitTime(commit) { return Number(run(['show', '-s', '--format=%ct', commit]).toString().trim()); },
@@ -907,7 +909,7 @@ const removeDir = d => { try { if (fs.existsSync(d)) { fs.chmodSync(d, 0o755); s
 /** The files a run executes from the evaluator's working tree (claim.mjs, its import lib.mjs, gate.mjs for the plan) and the
  * reference model, each compared with its blob at the evaluator's commit (RULINGS Q75a). */
 // [EXP-E01] Why: gate imports execute too. Rejected: pinning only direct entrypoints (transitive code could be poisoned).
-export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/box.mjs', 'lab/bin/box-engine.mjs', 'lab/config/box/Dockerfile', 'lab/config/slots.json', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/bin/receipt.mjs', 'lab/acceptance/build_contract.py'];
+export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/box.mjs', 'lab/bin/box-policy.mjs', 'lab/bin/box-engine.mjs', 'lab/config/box/Dockerfile', 'lab/config/slots.json', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/bin/receipt.mjs', 'lab/acceptance/build_contract.py'];
 const EVALUATOR_ROOT = path.resolve(import.meta.dirname, '../..');
 const POISON_MARKER = 'triplex-evaluator-poisoned.json';
 const evaluatorBytes = () => Object.fromEntries(EVALUATOR_FILES.map(f => { try { return [f, sha256(fs.readFileSync(path.join(EVALUATOR_ROOT, f)))]; } catch { return [f, null]; } }));
@@ -1270,7 +1272,7 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
         toolchain: box.toolchain, runnerSha256: sha256(runtimeListing(walk.entries)), configSha256: null,
         imageId: box.config.imageId, imageBuildInputsSha256: box.config.buildInputsSha256, storeListingSha256: box.storeListingSha256,
         isolationProfileSha256: sha256(canonText({ ...ISOLATION_PROFILE, resultLimits: { stdoutMaxBytes: box.config.stdoutMaxBytes ?? 16777216, caseTimeoutMs: box.config.caseTimeoutMs ?? 120000, buildTimeoutMs: box.config.buildTimeoutMs ?? 1800000 } })),
-        runtime: box.runtime, kernel: box.kernel }));
+        runtime: box.runtime, kernel: box.kernel, gateway: box.config.gatewaySpec ?? null }));
       const identity = put(identityBytes);
       const runnerSha256 = put(runtimeListing(walk.entries));
       const manifest = put({ schema: 'build-manifest/2', sourceTreeSha256: tree, binarySha256: identity, modules,
@@ -1344,7 +1346,14 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       let seen;
       try {
         const arm = box.arm(comp, canaryPort);
-        seen = box.case(b, raw, mode, spec.run, arm.network, arm.env);
+        let gateway;
+        try {
+          if (comp.source.engine === 'datomic') {
+            gateway = box.gateway(b, arm, box.config.gatewaySpec, box.auxiliaryPlacement(comp.source.slot).cpuset);
+            if (!gateway.durableReadbackAllowed) why('DATOMIC-DEV-STORAGE', 'Datomic dev storage cannot qualify durable readback (Q86f); this run stays diagnostic');
+          }
+          seen = box.case(b, raw, mode, spec.run, arm.network, gateway?.env ?? arm.env);
+        } finally { if (gateway) box.remove(gateway.name); }
         last.configSha256 = arm.configSha256;
       } catch (error) { why('ISOLATION-NOT-IN-FORCE', String(error)); return null; }
       last.rawStdoutSha256 = put(seen.stdout); last.rawStderrSha256 = put(seen.stderr.subarray(0, 65536));
@@ -1543,7 +1552,8 @@ function runQualification(claim, env, why, run, state) {
   pre.labels = new Map([...pre.snapshots.keys()].map(c => [c, sourceTreeIdOf(git.treeOf(c))]));
   let box;
   try {
-    box = state.box = new BoxExecutor({ config: ctx.cfg.buildSpec?.boxSpec, workDir: env.workDir, holder: env.holder, put, why });
+    box = state.box = new BoxExecutor({ config: bindStore(authorityPolicy(git, authority), env.storeReceipt), authority:{commit:authority,repo:git.repo}, workDir: env.workDir, holder: env.holder, put, why });
+    if (env.pairSlots) { box.placement = pairLayout(authorityPolicy(git, authority), env.pairSlots); run.placement = box.placement; }
     box.attestStore();
     run.isolation = { candidate: 'hardened-container', imageId: box.config.imageId, oracleSandbox: run.isolation.sandbox, residual: ['R1: shared VM kernel', 'R4/N4: engine egress pending Q86g H2', 'D1: development runs on Mac', 'D2: shared Docker socket and writable HOME VM mount', 'D3: external writers of authority refs', 'Q86g retains L1 and N1-N4 on the unprotected list until VM hardening'] };
   } catch (error) { return why('ISOLATION-NOT-IN-FORCE', String(error)); }
@@ -1614,7 +1624,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
     const net = await import('node:net');
     const canary = net.createServer();
     await new Promise(resolve => canary.listen(0, '127.0.0.1', resolve));
-    try { result = qualifyClaim(claim, { git, authorityRef, workDir, holder: options.holder, canaryPort: canary.address().port, ...(sut ? { sut } : {}), ...(options['no-sandbox'] ? { sandbox: false } : {}),
+    try { result = qualifyClaim(claim, { git, authorityRef, workDir, holder: options.holder, pairSlots: options['pair-slots']?.split(','), storeReceipt: options['store-receipt'] ? JSON.parse(fs.readFileSync(path.resolve(options['store-receipt']))) : null, canaryPort: canary.address().port, ...(sut ? { sut } : {}), ...(options['no-sandbox'] ? { sandbox: false } : {}),
       evaluator: { repo: path.resolve(options['evaluator-repo'] ?? EVALUATOR_ROOT), rev: options['evaluator-commit'] } });
     } finally { canary.close(); }
   }

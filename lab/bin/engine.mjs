@@ -440,10 +440,18 @@ async function status(config) {
 if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const command = positional[0];
-  const config = loadSlots();
+  let policy, authorityGit;
+  if (command === 'box' && options.authority) {
+    const { gitSource } = await import('./claim.mjs');
+    const { authorityPolicy } = await import('./box-policy.mjs');
+    if (!options['authority-repo']) fail('USAGE', '--authority-repo is required with --authority');
+    authorityGit = gitSource(path.resolve(options['authority-repo']));
+    policy = authorityPolicy(authorityGit, options.authority);
+  }
+  const config = policy ? policy.slots : loadSlots();
   if (command === 'box') {
     const { boxCommand } = await import('./box-engine.mjs');
-    console.log(JSON.stringify(await boxCommand(config, positional[1], options)));
+    console.log(JSON.stringify(await boxCommand(config, positional[1], options, { policy, authorityGit })));
     return;
   }
   if (command === 'status') return status(config);

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
+import { gatewayPlan, preflightScript, checkPreflight } from './box-policy.mjs';
 import { docker, dockerArgs, inspect, REPO, sha256 } from './lib.mjs';
 
 export const BOX_ENV = ['HOME=/tmp/home', 'TMPDIR=/tmp', 'LANG=C.UTF-8', 'TZ=UTC', 'SOURCE_DATE_EPOCH=0', 'CI=1', 'NODE_OPTIONS=', 'npm_config_store_dir=/store', 'npm_config_offline=true'];
@@ -49,6 +50,7 @@ export function profileProblems(c, expected) {
   if (!h) return problems;
   if (h.Privileged || h.ReadonlyRootfs !== true || h.PidMode || h.IpcMode !== 'private' || h.NetworkMode !== expected.network) problems.push('namespaces/rootfs');
   if (JSON.stringify(h.CapDrop) !== '["ALL"]' || h.CapAdd?.length || !h.SecurityOpt?.includes('no-new-privileges=true') || h.Devices?.length || h.DeviceRequests?.length) problems.push('privileges');
+  if (expected.cpuset && h.CpusetCpus !== expected.cpuset) problems.push('cpuset');
   if (h.Memory !== expected.memory || h.MemorySwap !== expected.memory || h.PidsLimit !== expected.pids || h.OomScoreAdj !== 500 || h.NanoCpus !== (expected.cpus ?? 1) * 1e9) problems.push('limits');
   if (!h.Tmpfs?.['/tmp']?.includes('nosuid') || !h.Tmpfs['/tmp'].includes('nodev') || !h.Tmpfs['/tmp'].includes('size=1g')) problems.push('tmpfs');
   if (c.Config.Hostname !== 'tx2-box' || h.RestartPolicy?.Name !== 'no' || h.LogConfig?.Config?.['max-size'] !== '1m' || h.LogConfig?.Config?.['max-file'] !== '1') problems.push('hostname/restart/logs');
@@ -73,8 +75,9 @@ function visit(root,rel='') { for(const name of fs.readdirSync(path.join(root,re
 }} visit('/work'); console.log(JSON.stringify({entries,modules}));`;
 
 export class BoxExecutor {
-  constructor({ config, workDir, holder = 'CX-G03', put, why }) {
+  constructor({ config, workDir, holder = 'CX-G03', put, why, authority, placement }) {
     if (process.env.TX2_DOCKER_HOST && process.env.TX2_DOCKER_HOST !== 'unix:///Users/sam/.colima/triplex2/docker.sock') throw Error('wrong Docker daemon');
+    this.authority = authority; this.placement = placement;
     this.config = config; this.workDir = workDir; this.holder = holder; this.put = put; this.why = why;
     this.run = randomBytes(8).toString('hex'); this.prefix = `tx2-g03-${this.run}-`; this.resources = []; this.records = []; this.arms = new Map();
     if (!/^sha256:[0-9a-f]{64}$/.test(config?.imageId ?? '') || !/^[0-9a-f]{64}$/.test(config?.buildInputsSha256 ?? '') || !/^[0-9a-f]{64}$/.test(config?.storeListingSha256 ?? '')) throw Error('contract boxSpec image/build/store pins missing');
@@ -87,19 +90,19 @@ export class BoxExecutor {
     if (storeLabel.Labels?.['tx2.managed-by'] !== 'lab/bin/engine.mjs') throw Error('unmanaged Linux store');
   }
   engine(action, extra = []) {
-    const r = spawnSync(process.execPath, [path.join(REPO, 'lab/bin/engine.mjs'), 'box', action, '--run', this.run, '--holder', this.holder, ...extra], { encoding: 'utf8', timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
+    const r = spawnSync(process.execPath, [path.join(REPO, 'lab/bin/engine.mjs'), 'box', action, '--run', this.run, '--holder', this.holder, ...(this.authority ? ['--authority', this.authority.commit, '--authority-repo', this.authority.repo] : []), ...extra], { encoding: 'utf8', timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
     if (r.status !== 0) throw Error(`engine box ${action}: ${r.stderr || r.error || r.stdout}`);
     return JSON.parse(r.stdout);
   }
   volume(suffix) { const name = this.prefix + suffix; this.engine('volume', ['--name', name]); this.resources.push(['volume', name]); return name; }
-  create(suffix, { argv, mounts = [], network = 'none', memory = 268435456, cpus = 1, pids = 128, env = [], input, trusted = false, extra = [] }) {
+  create(suffix, { argv, mounts = [], network = 'none', memory = 268435456, cpus = 1, pids = 128, env = [], input, trusted = false, extra = [], image = this.config.imageId, cpuset, unlimitedCpu = false }) {
     const name = this.prefix + suffix;
-    const args = [...HARDEN, '--cpus', String(cpus), '--pids-limit', String(pids), '--network', network, ...BOX_ENV.flatMap(e => ['--env', e]), ...env.flatMap(e => ['--env', e]), ...mounts.flatMap(m => ['-v', `${m.name}:${m.target}:${m.rw ? 'rw' : 'ro'}`]), ...extra, '-w', '/work', ...(input ? ['-i'] : []), this.config.imageId, ...argv];
+    const args = [...HARDEN, ...(unlimitedCpu ? [] : ['--cpus', String(cpus)]), ...(cpuset ? ['--cpuset-cpus',cpuset] : []), '--pids-limit', String(pids), '--network', network, ...BOX_ENV.flatMap(e => ['--env', e]), ...env.flatMap(e => ['--env', e]), ...mounts.flatMap(m => ['-v', `${m.name}:${m.target}:${m.rw ? 'rw' : 'ro'}`]), ...extra, '-w', '/work', ...(input ? ['-i'] : []), image, ...argv];
     const request = path.join(this.workDir, `request-${suffix}.json`);
     fs.writeFileSync(request, JSON.stringify({ args, memory, disk: mounts.some(m => m.rw) ? 1073741824 : 0 }));
     this.engine('create', ['--name', name, '--request', request]);
     this.resources.push(['container', name]);
-    const actual = inspect(name), expected = { image: this.config.imageId, network, memory, cpus, pids, mounts, env };
+    const actual = inspect(name), expected = { image, network, memory, cpus:unlimitedCpu ? 0 : cpus, cpuset, pids, mounts, env };
     const problems = trusted ? [] : profileProblems(actual, expected);
     this.records.push({ name, inspectSha256: this.put(Buffer.from(JSON.stringify(actual))), trusted, profile: expected });
     if (problems.length) throw Error(`container profile mismatch: ${problems.join(', ')}`);
@@ -141,6 +144,12 @@ export class BoxExecutor {
     this.toolchain = JSON.parse(result.stdout);
     if (this.toolchain.node.version !== 'v22.23.2' || this.toolchain.pnpm.version !== '10.11.0') throw Error('unexpected image toolchain'); this.storeListingSha256 = digest;
   }
+  auxiliaryPlacement(slot) {
+    if (!this.placement) return {};
+    const arm = [this.placement.candidate,this.placement.A0].find(a => a.slot === slot);
+    if (!arm) throw Error('slot absent from validated PAIR-0 layout');
+    return {cpuset:arm.sut.join(','),unlimitedCpu:true};
+  }
   arm(comp, canaryPort) {
     if (!Number.isInteger(canaryPort) || canaryPort < 1024 || [15442,17019].includes(canaryPort)) throw Error('missing Mac canary listener');
     const armId = sha256(Buffer.from(JSON.stringify(comp))).slice(0, 8);
@@ -151,21 +160,35 @@ export class BoxExecutor {
     // Only a single physical foundation is supported in this round; mixed compositions fail closed.
     if (Object.values(comp).some(a => a && typeof a === 'object' && a.engine && (a.engine !== comp.source.engine || a.slot !== comp.source.slot || a.configSha256 !== comp.source.configSha256 || a.imageDigest !== comp.source.imageDigest))) throw Error('mixed-slot composition unsupported');
     const network = this.prefix + 'arm-' + armId; this.engine('network', ['--name', network]); this.resources.push(['network', network]);
-    const upstream = Object.values(slot.container.NetworkSettings.Networks).map(n => n.IPAddress).find(Boolean), port = slot.info.laneConf.containerPort;
+    const auxiliary = this.auxiliaryPlacement(comp.source.slot);
+    const datomic = comp.source.engine === 'datomic';
+    if (datomic && (slot.container.Config.Labels?.['tx2.mode'] !== 'transactor-only' || slot.container.Config.Labels?.['tx2.advertised-host'] !== 'engine')) throw Error('Datomic slot must advertise engine in transactor-only mode');
+    const upstream = Object.values(slot.container.NetworkSettings.Networks).map(n => n.IPAddress).find(Boolean), port = datomic ? 4334 : slot.info.laneConf.containerPort;
     if (!upstream) throw Error('slot has no upstream IP');
-    const relayScript = `const net=require('node:net');net.createServer(s=>{const u=net.connect({host:${JSON.stringify(upstream)},port:${port}});s.pipe(u);u.pipe(s);s.on('error',()=>u.destroy());u.on('error',()=>s.destroy());s.on('close',()=>u.destroy());u.on('close',()=>s.destroy())}).listen(${port},'0.0.0.0')`;
-    const relay = this.create('relay-' + armId, { argv: ['node', '-e', relayScript], network: 'bridge', memory: 67108864, trusted: true });
+    const ports = datomic ? [4334,4335] : [port];
+    const relayScript = ports.map(p => `const net=require('node:net');net.createServer(s=>{const u=net.connect({host:${JSON.stringify(upstream)},port:${p}});s.pipe(u);u.pipe(s);s.on('error',()=>u.destroy());u.on('error',()=>s.destroy());s.on('close',()=>u.destroy());u.on('close',()=>s.destroy())}).listen(${p},'0.0.0.0')`).map(s => '{'+s+'}').join(';');
+    const relay = this.create('relay-' + armId, { argv: ['node', '-e', relayScript], network: 'bridge', memory: 67108864, trusted: true, ...auxiliary });
     docker(['start', relay]); this.engine('connect', ['--name', relay, '--network', network]);
     const all = JSON.parse(docker(['ps', '-q', '--filter', 'name=^tx2-']) ? docker(['inspect', ...docker(['ps', '-q', '--filter', 'name=^tx2-']).split('\n')]) : '[]');
     const blocked = all.filter(c => c.Name !== '/'+relay).flatMap(c => Object.values(c.NetworkSettings.Networks).map(n => [n.IPAddress, c.Name.includes('qlever') ? 7019 : 5432])).filter(([ip]) => ip);
     blocked.push(['192.168.5.2',canaryPort], ['192.168.5.1',canaryPort], ['1.1.1.1',443]);
-    const script = `const net=require('node:net'),dns=require('node:dns').promises;function connect(host,port){return new Promise(r=>{let done=false;const s=net.connect({host,port});const end=v=>{if(done)return;done=true;s.destroy();r(v)};s.setTimeout(1000,()=>end(false));s.on('error',()=>end(false));s.on('connect',()=>end(true))})};(async()=>{let positive=false;for(let i=0;i<10&&!positive;i++){positive=await connect('engine',${port});if(!positive)await new Promise(r=>setTimeout(r,100))}const blocked=${JSON.stringify(blocked)};const checks=await Promise.all(blocked.map(async([h,p])=>[h,p,await connect(h,p)]));let publicDns=false;try{await Promise.race([dns.lookup('example.com'),new Promise((_,r)=>setTimeout(()=>r(Error('timeout')),1000))]);publicDns=true}catch{}console.log(JSON.stringify({positive,checks,publicDns}));process.exit(positive&&!publicDns&&checks.every(x=>!x[2])?0:2)})()`;
+    const script = preflightScript(blocked, port);
     const probe = this.create('preflight-' + armId, { argv: ['node', '-e', script], network, memory: 67108864, trusted: true });
     const result = this.start(probe); this.remove(probe);
     this.records.push({ preflight: this.put(result.stdout), slot: slot.info.container });
-    if (result.status !== 0) throw Error('network preflight failed: '+result.stdout);
-    const env = comp.source.engine === 'xtdb' ? ['XTDB_URL=postgres://xtdb:xtdb@engine:5432/xtdb','XTDB_INTEGRATION=1'] : ['QLEVER_URL=http://engine:7019','QLEVER_INTEGRATION=1'];
-    const arm = { network, env, slot: slot.info, configSha256: comp.source.configSha256 }; this.arms.set(armId, arm); return arm;
+    checkPreflight(result, blocked);
+    const env = datomic ? ['DATOMIC_GATEWAY_URL=http://gateway:8080','DATOMIC_INTEGRATION=1'] : comp.source.engine === 'xtdb' ? ['XTDB_URL=postgres://xtdb:xtdb@engine:5432/xtdb','XTDB_INTEGRATION=1'] : ['QLEVER_URL=http://engine:7019','QLEVER_INTEGRATION=1'];
+    const arm = { network, env, transactorOnly:datomic, slot: slot.info, configSha256: comp.source.configSha256 }; this.arms.set(armId, arm); return arm;
+  }
+  gateway(instance, arm, spec, cpuset) {
+    if (arm.slot.lane !== 'datomic' || !arm.transactorOnly) throw Error('Datomic qualification needs a transactor-only slot');
+    const plan = gatewayPlan(spec, { network:arm.network, volume:instance.volume, cpuset, sourcePath:'packages/datomic/gateway/src' });
+    const actual = JSON.parse(docker(['image','inspect',plan.image]))[0];
+    if (actual.Config.Labels?.['tx2.build-inputs-sha256'] !== spec.buildInputsSha256) throw Error('Datomic gateway image/build pin mismatch');
+    const name = this.create('gateway-'+instance.n, plan);
+    docker(['start',name]);
+    this.records.push({ gateway:name, durableReadbackAllowed:plan.durableReadbackAllowed });
+    return {name,env:['DATOMIC_GATEWAY_URL=http://gateway:8080'],durableReadbackAllowed:plan.durableReadbackAllowed};
   }
   build(snapshot, spec) {
     const files = selectBoxInputs(snapshot, spec.boxInputs);
@@ -182,7 +205,7 @@ export class BoxExecutor {
   case(instance, raw, mode, argv, network = 'none', env = []) {
     const inputs = this.volume(`in-${randomBytes(3).toString('hex')}`), hash = sha256(raw);
     this.seed(inputs, new Map([[`${hash}.json`, { bytes: raw, mode: '100644' }]]));
-    const name = this.create(`case-${randomBytes(3).toString('hex')}`, { argv: ['sleep', 'infinity'], mounts: [{ name: instance.volume, target: '/work', rw: false }, { name: inputs, target: '/in', rw: false }], network, memory: 805306368, pids: 256, env, extra: ['--init'] });
+    const name = this.create(`case-${randomBytes(3).toString('hex')}`, { argv: ['sleep', 'infinity'], mounts: [{ name: instance.volume, target: '/work', rw: false }, { name: inputs, target: '/in', rw: false }], network, memory: 805306368, pids: 256, env, extra: ['--init'], ...this.auxiliaryPlacement([...this.arms.values()].find(a=>a.network===network)?.slot.slot) });
     let answer;
     try {
       docker(['start', name]);

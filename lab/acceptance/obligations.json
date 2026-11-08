@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.10",
+  "version": "0.3.12",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-07",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
@@ -22,12 +22,12 @@
     "lab/verify/O02/v-o04b/results/hashes.a9c1327.json": "256465151a1018faf17432f3706aa34650448b587e52d256b80972de7d9df1f1",
     "lab/verify/O02/BRIEF.md": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4",
     "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",
-    "lab/acceptance/build_contract.py": "685b48066f7094d8e9c3cfc9c27840a9f3d2fb29fd4ae315da707e8346860a11"
+    "lab/acceptance/build_contract.py": "98effa8e21657cdadafb5e0ef3c213b7ecc8d2bbc03e6f859c24ec57938ef3ae"
   },
   "artifacts": {
-    "load-contract.json": "e90e97d6f1a6462fb87a05f8b9af924b4a44aa82c8e3f0adc357b8698c80e354",
-    "budgets.json": "3c567035c89161a61f0edc67836962d79073d82bf404a0506f31771ca9e38bfe",
-    "capability-matrix.md": "da543292952ff01ba139c57e868bf576d4cf49c4a49d408275709d6aae8b2e5b"
+    "load-contract.json": "677d27fd8a0599a75c1dc0357d4ad2f053a1be13b7d97f5cc1db8bdbda4af78c",
+    "budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",
+    "capability-matrix.md": "cbff0c1ccd973481f0a00de891e3b89c9138c5b17ca7706b9cc62c5b3d37da03"
   },
   "lanes": [
     "xtdb-xtql",
@@ -2572,7 +2572,8 @@
         "configSha256"
       ],
       "toolchain": "the node version, platform and arch, and the pnpm version when the build or run calls pnpm; the Python version that runs an oracle is not part of the build identity but is recorded in each oracle invocation's evidence (oracle-invocation/1), because an oracle's answer can depend on it (RULINGS Q71b)",
-      "installMetadata": "the post-build checkout is in the identity except the contract-owned install-metadata exclusion list BUILD_SPEC.installMetadataExclusions, found by diffing two clean installs of the same lockfile, never claimant-supplied (RULINGS Q71a)"
+      "installMetadata": "the post-build checkout is in the identity except the contract-owned install-metadata exclusion list BUILD_SPEC.installMetadataExclusions, found by diffing two clean installs of the same lockfile, never claimant-supplied (RULINGS Q71a)",
+      "schema": "execution-identity/2"
     },
     "isolation": "builds and both arms run isolated from evaluator, oracle, evidence and control storage; oracle bytes run from an evaluator-owned read-only copy re-hashed before every invocation; offline verdicts stay diagnostics (RULINGS Q67e)",
     "kinds": "a claim's kind is preserved; promotion prerequisites (GATE-BROKER-HARDENING and others) are enforced mechanically, and until that is supported promotion qualification is rejected explicitly (RULINGS Q67j)",
@@ -2610,7 +2611,8 @@
         "record",
         "retain builds, inputs, oracle outputs, observations, fault witnesses and verdicts as content-addressed records written by the evaluator: build-manifest/2, case-result/2 and fault-witness/1 (RULINGS Q61e, Q61f, Q61j; the /1 formats of RULINGS Q54e stay readable)"
       ]
-    ]
+    ],
+    "isolationAuthority": "explicit authority and evaluator commit ids; engine-side policy uses the same authority blobs, never main by name (Q86e)"
   },
   "oracleRunners": {
     "O-REPLAY": {
@@ -2710,7 +2712,10 @@
       "run": "the system under test's argv, with {case} and {mode}"
     },
     "inputs": "every tracked file of each built workspace package plus the lockfile and the root package.json, each listed with its sha256 in build-manifest/2 inputs and checked against the side's commit; each built package is the parent directory of a dist/ output (RULINGS Q65d)",
-    "installMetadataExclusions": null,
+    "installMetadataExclusions": [
+      "node_modules/.modules.yaml",
+      "node_modules/.pnpm-workspace-state.json"
+    ],
     "installMetadataRule": "a required input, null until two clean installs of the same lockfile are diffed; the starting candidates are node_modules/.modules.yaml and node_modules/.pnpm/lock.yaml; contract-owned, never claimant-supplied (RULINGS Q71a)",
     "specSha256Rule": "buildSpecSha256 is the sha256 of the canonical JSON (sorted keys, no whitespace) of {format, argv, outputs, run} (RULINGS Q65b)",
     "proposal": {
@@ -2727,7 +2732,67 @@
       ],
       "pinWhen": "packages/qualification/workloads/obl-case.ts exists (RULINGS Q64a, Q65e); it does not exist on main, so argv, outputs and run stay null"
     },
-    "rule": "a required input: null fields fail closed, so no run qualifies until a contract version specifies the build (RULINGS Q55a step 1, Q61f)"
+    "rule": "a required input: null fields fail closed, so no run qualifies until a contract version specifies the build (RULINGS Q55a step 1, Q61f)",
+    "boxSpec": {
+      "base": "node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9",
+      "buildInputsSha256": "60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334",
+      "buildTimeoutMs": 1800000,
+      "caseTimeoutMs": 120000,
+      "gatewaySpec": {
+        "buildInputsSha256": null,
+        "imageId": null,
+        "storage": "dev"
+      },
+      "imageId": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+      "pinEvidence": {
+        "commit": "f7f6c05d4cfcdeda4b11fef1821a2cc6bf35817d",
+        "metadata": "lab/experiments/EXP-G03/build-probes-1794178215198.json",
+        "store": "lab/experiments/EXP-G03/box.json"
+      },
+      "stderrKeepBytes": 65536,
+      "stdoutMaxBytes": 16777216,
+      "storeListingSha256": "c13cf21f64047faa85410506693d395759deb687084023bfd4d60027ce92cafd",
+      "storeLockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    },
+    "boxInputs": [
+      "packages/core/",
+      "packages/testkit/",
+      "packages/xtdb/",
+      "packages/qlever/",
+      "packages/qualification/",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "package.json",
+      "examples/compliance-host/package.json",
+      "examples/config-explorer/package.json",
+      "examples/demo/package.json",
+      "examples/http-api/package.json",
+      "examples/tenant-host-cloudflare/package.json",
+      "experiments/qlever-common/generated/56e246a9-cf9a-4249-9de0-129df5289a7f/source/packages/qlever/package.json",
+      "packages/cli/package.json",
+      "packages/cloudflare/package.json",
+      "packages/core/package.json",
+      "packages/dashboard/package.json",
+      "packages/duckdb/package.json",
+      "packages/foundationdb/package.json",
+      "packages/host/package.json",
+      "packages/http/package.json",
+      "packages/postgres/package.json",
+      "packages/qlever/package.json",
+      "packages/qualification/package.json",
+      "packages/sql/package.json",
+      "packages/sqlite/package.json",
+      "packages/testkit/package.json",
+      "packages/w0/package.json",
+      "packages/xtdb/package.json",
+      "test/integration/package.json",
+      "test/stress/package.json",
+      "tsconfig.alchemy.json",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "vendor/duckdb-temporal/runtime/adapter/build-deps/package.json",
+      "vendor/duckdb-temporal/runtime/package.json"
+    ]
   },
   "imagePins": {
     "xtdb": {
@@ -13252,11 +13317,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "3c567035c89161a61f0edc67836962d79073d82bf404a0506f31771ca9e38bfe"
+    "sha256": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "e90e97d6f1a6462fb87a05f8b9af924b4a44aa82c8e3f0adc357b8698c80e354"
+    "sha256": "677d27fd8a0599a75c1dc0357d4ad2f053a1be13b7d97f5cc1db8bdbda4af78c"
   },
   "obligations": [
     {
@@ -25631,5 +25696,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "cf3e887538bffcb8faa6e080c535de9c0c77ddec585dc6fe01fa6e13deb9cb32"
+  "transitiveContractSha256": "cf74a6a99c65f98606699c9925069c6738cf1715e4e656f417ab005fe8f1a01b"
 }

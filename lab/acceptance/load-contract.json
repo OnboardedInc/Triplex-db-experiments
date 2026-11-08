@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.10",
+  "version": "0.3.12",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -436,7 +436,42 @@
     "aaInAbMode": "provisional: A/B windows grade from the all-round s_d (conservative); acceptance-level claims add a second pair of container lifetimes with roles swapped (RULINGS Q69c)",
     "continuousTrace": "duets run one continuous trace, so both arms see the same content at the same time; ABBA fallback runs keep per-round window randomization (RULINGS Q69d)",
     "liveComposition": "the live A/A uses public-queued, matching EXP-N01's A0 (RULINGS Q69e)",
-    "calibration": "thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them, started after EXP-M01 merges (RULINGS Q69g)"
+    "calibration": "thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them, started after EXP-M01 merges (RULINGS Q69g)",
+    "isolationLayout": {
+      "format": "pair-layout/1",
+      "vmCpus": 6,
+      "cpuWeight": 100,
+      "candidate": {
+        "engine": [
+          0,
+          1
+        ],
+        "sut": [
+          4
+        ],
+        "relay": [
+          4
+        ],
+        "observer": [
+          4
+        ]
+      },
+      "A0": {
+        "engine": [
+          2,
+          3
+        ],
+        "sut": [
+          5
+        ],
+        "relay": [
+          5
+        ],
+        "observer": [
+          5
+        ]
+      }
+    }
   },
   "windows": {
     "judging": "absolute bars are judged only in GREEN windows (the pre-registered noise signals and the A/A gate of R22 section 4.2); outside them an absolute bar is reported unjudged, which never counts as met (RULINGS Q60e)",

@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.10"
+VERSION = "0.3.12"
 
 
 def contract_oracle_answer(case_bytes, contract):
@@ -1422,13 +1422,68 @@ BUILD_SPEC = {
     "format": "triplex-db-2/build-spec/1", "argv": None, "outputs": None, "run": None,
     "fields": {"argv": "the build command's argv, run in a clean checkout of the side's commit", "outputs": "repository-relative paths the build writes (each built package's dist/)", "run": "the system under test's argv, with {case} and {mode}"},
     "inputs": "every tracked file of each built workspace package plus the lockfile and the root package.json, each listed with its sha256 in build-manifest/2 inputs and checked against the side's commit; each built package is the parent directory of a dist/ output (RULINGS Q65d)",
-    "installMetadataExclusions": None,
+    "installMetadataExclusions": ['node_modules/.modules.yaml', 'node_modules/.pnpm-workspace-state.json'],
     "installMetadataRule": "a required input, null until two clean installs of the same lockfile are diffed; the starting candidates are node_modules/.modules.yaml and node_modules/.pnpm/lock.yaml; contract-owned, never claimant-supplied (RULINGS Q71a)",
     "specSha256Rule": "buildSpecSha256 is the sha256 of the canonical JSON (sorted keys, no whitespace) of {format, argv, outputs, run} (RULINGS Q65b)",
     "proposal": {"source": "EXP-E01 lab/config/build.json on exp/E01-claim-evaluator", "argv": "pnpm install --offline --frozen-lockfile --store-dir <repo>/.pnpm-store, then the five package builds in dependency order", "outputs": "the five dist/ directories", "run": ["node", "packages/qualification/workloads/obl-case.ts", "--case", "{case}", "--mode", "{mode}"],
                  "pinWhen": "packages/qualification/workloads/obl-case.ts exists (RULINGS Q64a, Q65e); it does not exist on main, so argv, outputs and run stay null"},
     "rule": "a required input: null fields fail closed, so no run qualifies until a contract version specifies the build (RULINGS Q55a step 1, Q61f)",
 }
+# [EXP-G03] Why: isolate runtime pins from the still-null semantic runner (Q65e).
+# Rejected: enabling qualification by filling missing semantic prerequisites with placeholders.
+BUILD_SPEC["boxSpec"] = {'base': 'node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9',
+ 'buildInputsSha256': '60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334',
+ 'buildTimeoutMs': 1800000,
+ 'caseTimeoutMs': 120000,
+ 'gatewaySpec': {'buildInputsSha256': None, 'imageId': None, 'storage': 'dev'},
+ 'imageId': 'sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506',
+ 'pinEvidence': {'commit': 'f7f6c05d4cfcdeda4b11fef1821a2cc6bf35817d',
+                 'metadata': 'lab/experiments/EXP-G03/build-probes-1794178215198.json',
+                 'store': 'lab/experiments/EXP-G03/box.json'},
+ 'stderrKeepBytes': 65536,
+ 'stdoutMaxBytes': 16777216,
+ 'storeListingSha256': 'c13cf21f64047faa85410506693d395759deb687084023bfd4d60027ce92cafd',
+ 'storeLockfileSha256': 'b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500'}
+BUILD_SPEC["boxInputs"] = ['packages/core/',
+ 'packages/testkit/',
+ 'packages/xtdb/',
+ 'packages/qlever/',
+ 'packages/qualification/',
+ 'pnpm-lock.yaml',
+ 'pnpm-workspace.yaml',
+ 'package.json',
+ 'examples/compliance-host/package.json',
+ 'examples/config-explorer/package.json',
+ 'examples/demo/package.json',
+ 'examples/http-api/package.json',
+ 'examples/tenant-host-cloudflare/package.json',
+ 'experiments/qlever-common/generated/56e246a9-cf9a-4249-9de0-129df5289a7f/source/packages/qlever/package.json',
+ 'packages/cli/package.json',
+ 'packages/cloudflare/package.json',
+ 'packages/core/package.json',
+ 'packages/dashboard/package.json',
+ 'packages/duckdb/package.json',
+ 'packages/foundationdb/package.json',
+ 'packages/host/package.json',
+ 'packages/http/package.json',
+ 'packages/postgres/package.json',
+ 'packages/qlever/package.json',
+ 'packages/qualification/package.json',
+ 'packages/sql/package.json',
+ 'packages/sqlite/package.json',
+ 'packages/testkit/package.json',
+ 'packages/w0/package.json',
+ 'packages/xtdb/package.json',
+ 'test/integration/package.json',
+ 'test/stress/package.json',
+ 'tsconfig.alchemy.json',
+ 'tsconfig.base.json',
+ 'tsconfig.node.json',
+ 'vendor/duckdb-temporal/runtime/adapter/build-deps/package.json',
+ 'vendor/duckdb-temporal/runtime/package.json']
+QUALIFICATION_RUN["executionIdentity"]["schema"] = "execution-identity/2"
+QUALIFICATION_RUN["isolationAuthority"] = "explicit authority and evaluator commit ids; engine-side policy uses the same authority blobs, never main by name (Q86e)"
+
 # RULINGS Q61i: engine image pins (moved from lab/config/slots.json; the contract is the authority, slots.json must agree).
 IMAGE_PINS = {
     "xtdb": {"image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77", "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"},
@@ -3320,6 +3375,12 @@ PAIR_0 = {
 }
 
 
+# [EXP-G03] Why: Q86f shares each arm's auxiliary core without sharing cores across arms.
+# Rejected: six dedicated engine/auxiliary roles per arm (the VM has only six cores total).
+PAIR_0["isolationLayout"] = {"format": "pair-layout/1", "vmCpus": 6, "cpuWeight": 100,
+    "candidate": {"engine": [0, 1], "sut": [4], "relay": [4], "observer": [4]},
+    "A0": {"engine": [2, 3], "sut": [5], "relay": [5], "observer": [5]}}
+
 def build_load_contract():
     T = THRESHOLDS
     doc = {
@@ -4316,7 +4377,7 @@ def ruling_checks():
     _er = QUALIFICATION_RUN
     if set(_er["executionIdentity"]["fields"]) != {"sourceTreeSha256", "buildSpecSha256", "lockfileSha256", "toolchain", "runnerSha256", "configSha256"} or "never by output hash" not in _er["executionIdentity"]["rule"] or "pnpm version" not in _er["executionIdentity"]["toolchain"] or "oracle-invocation/1" not in _er["executionIdentity"]["toolchain"] or "read-only copy re-hashed" not in _er["isolation"] or "rejected explicitly" not in _er["kinds"]:
         e.append("Q67b/e/j, Q71b: execution identity, toolchain, isolation and claim kinds")
-    if BUILD_SPEC.get("installMetadataExclusions") is not None or "two clean installs" not in BUILD_SPEC.get("installMetadataRule", "") or "installMetadataExclusions" not in _er["executionIdentity"]["installMetadata"]:
+    if BUILD_SPEC.get("installMetadataExclusions") != ["node_modules/.modules.yaml", "node_modules/.pnpm-workspace-state.json"] or "two clean installs" not in BUILD_SPEC.get("installMetadataRule", "") or "installMetadataExclusions" not in _er["executionIdentity"]["installMetadata"]:
         e.append("Q71a: the install-metadata exclusion list is a contract-owned rule, null until two clean installs are diffed")
     if "(incarnation, marker) is equal before and after" not in COMPOSITION.get("incarnationFencing", "") or Q67_CASES != ["CO-RESET-DURING-QUERY", "CO-TYPED-ERROR-SHAPE"] or not set(Q67_CASES) <= {t for c in obl["G7.composition.ack-and-routed-ryow"]["cases"] for t in c["select"]} or "NS-P3-SOURCE-PREFIX-ENUMERATED" not in {t for c in obl["NS.P3"]["cases"] for t in c["select"]} or "never a feed defect" not in build_load_contract()["measurements"]["P3"].get("publicationEnumeration", ""):
         e.append("Q67c/d: incarnation fencing and P3 source-prefix enumeration")

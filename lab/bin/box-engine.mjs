@@ -1,5 +1,6 @@
 // [EXP-G03] Why: candidate lifecycle must use the same atomic pool admission as engines.
 // Rejected: a second ledger (concurrent starts would over-admit the VM).
+import { cgroupProofScript } from './box-policy.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, admission, atomicJson, defaultHolder, docker, inspect, listTx2Containers, now, reconcile, sha256, slotInfo, readOwner, vmDisk, withPool, fail } from './lib.mjs';
@@ -29,7 +30,7 @@ function owned(name, holder, type = 'container') {
   return doc;
 }
 
-export async function boxCommand(config, action, opts) {
+export async function boxCommand(config, action, opts, { policy, authorityGit } = {}) {
   const holder = defaultHolder(opts), run = opts.run;
   if (!safeId(run)) fail('USAGE', 'box needs --run (safe id)');
   const prefix = `tx2-g03-${run}-`;
@@ -72,7 +73,7 @@ export async function boxCommand(config, action, opts) {
       try {
         const proofId = docker(['create', '--name', proof, ...labels, '--network', 'none', '--cgroupns', 'host', '--read-only', '--user', '10001:10001', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges=true', '--memory', '67108864', '--memory-swap', '67108864', '--cpus', '0.25', '--pids-limit', '64', '-v', '/sys/fs/cgroup:/sys/fs/cgroup:ro', image, 'sleep', 'infinity']);
         docker(['start', proof]);
-        const script = `const fs=require('node:fs');const id=${JSON.stringify(id)},self=${JSON.stringify(proofId)};let visible=false;function walk(p){for(const d of fs.readdirSync(p,{withFileTypes:true})){if(!d.isDirectory())continue;if(d.name.includes(id))throw Error('cgroup survives');if(d.name.includes(self))visible=true;walk(p+'/'+d.name)}}walk('/sys/fs/cgroup');if(!visible)throw Error('host cgroup visibility not proven');console.log('gone')`;
+        const script = cgroupProofScript(id, proofId);
         const output = docker(['exec', proof, 'node', '-e', script]);
         if (output !== 'gone') fail('ISOLATION-NOT-IN-FORCE', 'cgroup kill proof failed');
       } finally { if (inspect(proof)) docker(['rm', '-f', proof]); }
@@ -89,11 +90,11 @@ export async function boxCommand(config, action, opts) {
   if (action === 'prepare') {
     // [EXP-G03] Why: only authority lock bytes enter the networked fetch; never run candidate scripts here.
     // Rejected: fetching during a claim (makes network and dependency mutation part of candidate execution).
-    const commit = opts['lockfile-commit'];
+    const commit = policy?.commit ?? opts['lockfile-commit'];
     if (!/^[0-9a-f]{40}$/.test(commit ?? '')) fail('USAGE', 'prepare requires --lockfile-commit SHA');
     const { execFileSync } = await import('node:child_process');
-    const lock = execFileSync('git', ['show', `${commit}:pnpm-lock.yaml`], { cwd: REPO, env: { ...process.env, GIT_NO_REPLACE_OBJECTS: '1' } });
-    const base = opts.base;
+    const lock = authorityGit ? authorityGit.blob(commit, 'pnpm-lock.yaml') : execFileSync('git', ['show', `${commit}:pnpm-lock.yaml`], { cwd: REPO, env: { ...process.env, GIT_NO_REPLACE_OBJECTS: '1' } });
+    const base = policy?.box.base ?? opts.base;
     if (!/^node:[^@]+@sha256:[0-9a-f]{64}$/.test(base ?? '')) fail('USAGE', '--base must be digest-pinned node image');
     const dockerfile = fs.readFileSync(path.join(REPO, 'lab/config/box/Dockerfile'));
     const inputs = sha256(Buffer.concat([Buffer.from(base), dockerfile]));
@@ -120,6 +121,7 @@ export async function boxCommand(config, action, opts) {
         const listing = JSON.parse(docker(['start', '-a', '-i', name], { input: WALKER }));
         if (inspect(name).State.ExitCode !== 0) fail('BUILD-FAILED', 'store walker failed');
         const record = { storeListingSha256: sha256(Buffer.from(JSON.stringify(listing.entries))), format: 'tx2-box/1', image: tag, imageId: image.Id, buildInputsSha256: inputs, base, lockfileSha256: sha256(lock), store, authority: commit, fetchedContainer: fetch, at: now() };
+        if (policy && (record.imageId !== policy.box.imageId || record.storeListingSha256 !== policy.box.storeListingSha256 || record.buildInputsSha256 !== policy.box.buildInputsSha256)) fail('ISOLATION-NOT-IN-FORCE', 'prepared image/store differs from authority pins');
         atomicJson(path.resolve(opts.output ?? 'lab/experiments/EXP-G03/box.json'), record);
         prepared = true; return record;
       } finally { if (inspect(name)) docker(['rm', '-f', name]); if (!prepared) docker(['volume', 'rm', store]); }
