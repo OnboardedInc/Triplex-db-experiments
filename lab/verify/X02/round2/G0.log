@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 1535 "DA00-measure", pid 1980 "DA00-G0-final", pid 3771 "G0-xtdb-20261108T215107Z-984fc7 typecheck"
+[lab] G0-xtdb-20261108T215157Z-138fc7: raw output runs/G0/G0-xtdb-20261108T215157Z-138fc7
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4427 "CX-VX02-2-G0", pid 1980 "DA00-G0-final", pid 4871 "CX-VP2Q-3-variations"
+PASS G0 xtdb scope=full executed=949 pass=949 fail=0 skip=130
+receipt: lab/runs/G0/G0-xtdb-20261108T215157Z-138fc7.json

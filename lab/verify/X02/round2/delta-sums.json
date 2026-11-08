@@ -1,0 +1,1451 @@
+{
+  "startedAt": "2026-11-08T22:01:32.660Z",
+  "method": "real builders/providers, virtual facts relation; diagnostic, not persisted-fixture acceptance",
+  "controls": [
+    {
+      "name": "near1e18",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "1000000000000000004"
+        ]
+      ],
+      "rows": [
+        [
+          "1000000000000000004"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/near1e18",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"1000000000000000004\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"1000000000000000004\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"1000000000000000004\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+          "parameters": [
+            "A",
+            ":w06/a6163636f756e74",
+            "USD",
+            ":w06/a63757272656e6379",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 204.800791,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 190.57404200000002
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"1000000000000000004\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"1000000000000000004\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"1000000000000000004\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+              "parameters": [
+                "A",
+                ":w06/a6163636f756e74",
+                "USD",
+                ":w06/a63757272656e6379",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 11.148167000000058
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 206
+    },
+    {
+      "name": "near1e18",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "1000000000000000004"
+        ]
+      ],
+      "rows": [
+        [
+          "1000000000000000004"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/near1e18",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','1000000000000000004')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w06/a6163636f756e74",
+            "A",
+            ":w06/a63757272656e6379",
+            "USD",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 859.507709,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 14.688666000000012
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','1000000000000000004')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w06/a6163636f756e74",
+                "A",
+                ":w06/a63757272656e6379",
+                "USD",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 843.36925
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 860
+    },
+    {
+      "name": "max",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "9223372036854775807"
+        ]
+      ],
+      "rows": [
+        [
+          "9223372036854775807"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/max",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+          "parameters": [
+            "A",
+            ":w06/a6163636f756e74",
+            "USD",
+            ":w06/a63757272656e6379",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 26.68016700000021,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 15.770833999999923
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+              "parameters": [
+                "A",
+                ":w06/a6163636f756e74",
+                "USD",
+                ":w06/a63757272656e6379",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 9.681583000000046
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 27
+    },
+    {
+      "name": "max",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "9223372036854775807"
+        ]
+      ],
+      "rows": [
+        [
+          "9223372036854775807"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/max",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','9223372036854775807')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w06/a6163636f756e74",
+            "A",
+            ":w06/a63757272656e6379",
+            "USD",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 924.090334,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 9.624416999999994
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','9223372036854775807')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w06/a6163636f756e74",
+                "A",
+                ":w06/a63757272656e6379",
+                "USD",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 913.1529579999999
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 924
+    },
+    {
+      "name": "min",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "-9223372036854775808"
+        ]
+      ],
+      "rows": [
+        [
+          "-9223372036854775808"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/min",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775808\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775808\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775808\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+          "parameters": [
+            "A",
+            ":w06/a6163636f756e74",
+            "USD",
+            ":w06/a63757272656e6379",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 23.49429199999986,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 11.448249999999916
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775808\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775808\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775808\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+              "parameters": [
+                "A",
+                ":w06/a6163636f756e74",
+                "USD",
+                ":w06/a63757272656e6379",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 10.990333000000192
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 24
+    },
+    {
+      "name": "min",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "-9223372036854775808"
+        ]
+      ],
+      "rows": [
+        [
+          "-9223372036854775808"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/min",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','-9223372036854775808')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w06/a6163636f756e74",
+            "A",
+            ":w06/a63757272656e6379",
+            "USD",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 50.69520800000009,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 16.55987499999992
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','-9223372036854775808')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w06/a6163636f756e74",
+                "A",
+                ":w06/a63757272656e6379",
+                "USD",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 32.85462499999994
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 51
+    },
+    {
+      "recovered": "handled",
+      "name": "maxPlus1",
+      "id": "06",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 890
+    },
+    {
+      "recovered": "handled",
+      "name": "maxPlus1",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 854
+    },
+    {
+      "recovered": "handled",
+      "name": "minMinus1",
+      "id": "06",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 44
+    },
+    {
+      "recovered": "handled",
+      "name": "minMinus1",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 859
+    },
+    {
+      "recovered": "handled",
+      "name": "three2p62",
+      "id": "06",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 1716
+    },
+    {
+      "recovered": "handled",
+      "name": "three2p62",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 841
+    },
+    {
+      "name": "cancellation",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "5"
+        ]
+      ],
+      "rows": [
+        [
+          "5"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/cancellation",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p4\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p4\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p4\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"5\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p4\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p4\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p4\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"5\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p4\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p4\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p4\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"5\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+          "parameters": [
+            "A",
+            ":w06/a6163636f756e74",
+            "USD",
+            ":w06/a63757272656e6379",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 20.087499999999636,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 7.551166000000194
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p4\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p4\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p4\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"5\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p4\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p4\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p4\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"5\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-9223372036854775807\"} {:entity_id \"p4\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p4\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p4\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"5\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+              "parameters": [
+                "A",
+                ":w06/a6163636f756e74",
+                "USD",
+                ":w06/a63757272656e6379",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 11.950667000000067
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 20
+    },
+    {
+      "name": "cancellation",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "5"
+        ]
+      ],
+      "rows": [
+        [
+          "5"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/cancellation",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','9223372036854775807'),('p1',':w06/a6163636f756e74','string','A'),('p1',':w06/a63757272656e6379','string','USD'),('p1',':w06/a616d6f756e74','integer','9223372036854775807'),('p2',':w06/a6163636f756e74','string','A'),('p2',':w06/a63757272656e6379','string','USD'),('p2',':w06/a616d6f756e74','integer','-9223372036854775807'),('p3',':w06/a6163636f756e74','string','A'),('p3',':w06/a63757272656e6379','string','USD'),('p3',':w06/a616d6f756e74','integer','-9223372036854775807'),('p4',':w06/a6163636f756e74','string','A'),('p4',':w06/a63757272656e6379','string','USD'),('p4',':w06/a616d6f756e74','integer','5')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w06/a6163636f756e74",
+            "A",
+            ":w06/a63757272656e6379",
+            "USD",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 858.8446250000006,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 15.916165999999976
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','9223372036854775807'),('p1',':w06/a6163636f756e74','string','A'),('p1',':w06/a63757272656e6379','string','USD'),('p1',':w06/a616d6f756e74','integer','9223372036854775807'),('p2',':w06/a6163636f756e74','string','A'),('p2',':w06/a63757272656e6379','string','USD'),('p2',':w06/a616d6f756e74','integer','-9223372036854775807'),('p3',':w06/a6163636f756e74','string','A'),('p3',':w06/a63757272656e6379','string','USD'),('p3',':w06/a616d6f756e74','integer','-9223372036854775807'),('p4',':w06/a6163636f756e74','string','A'),('p4',':w06/a63757272656e6379','string','USD'),('p4',':w06/a616d6f756e74','integer','5')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w06/a6163636f756e74",
+                "A",
+                ":w06/a63757272656e6379",
+                "USD",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 842.3801669999993
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 859
+    },
+    {
+      "name": "carryCounterexample",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "9223372032559808513"
+        ]
+      ],
+      "rows": [
+        [
+          "9223372032559808513"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/carryCounterexample",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"4294967296\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"4294967296\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"4294967296\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+          "parameters": [
+            "A",
+            ":w06/a6163636f756e74",
+            "USD",
+            ":w06/a63757272656e6379",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 26.159458000000086,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 10.972208999999566
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5] (-> (-> (unify (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"4294967296\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"4294967296\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p0\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p0\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p0\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"p1\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p1\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p1\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"4294967296\"} {:entity_id \"p2\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p2\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p2\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"} {:entity_id \"p3\" :attribute \":w06/a6163636f756e74\" :value_type \"string\" :value_string \"A\"} {:entity_id \"p3\" :attribute \":w06/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"p3\" :attribute \":w06/a616d6f756e74\" :value_type \"integer\" :value_string \"-4294967295\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5)",
+              "parameters": [
+                "A",
+                ":w06/a6163636f756e74",
+                "USD",
+                ":w06/a63757272656e6379",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 14.415166000000681
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 26
+    },
+    {
+      "name": "carryCounterexample",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "9223372032559808513"
+        ]
+      ],
+      "rows": [
+        [
+          "9223372032559808513"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "06/carryCounterexample",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','9223372036854775807'),('p1',':w06/a6163636f756e74','string','A'),('p1',':w06/a63757272656e6379','string','USD'),('p1',':w06/a616d6f756e74','integer','4294967296'),('p2',':w06/a6163636f756e74','string','A'),('p2',':w06/a63757272656e6379','string','USD'),('p2',':w06/a616d6f756e74','integer','-4294967295'),('p3',':w06/a6163636f756e74','string','A'),('p3',':w06/a63757272656e6379','string','USD'),('p3',':w06/a616d6f756e74','integer','-4294967295')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w06/a6163636f756e74",
+            "A",
+            ":w06/a63757272656e6379",
+            "USD",
+            ":w06/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-4bd8ee3a581a38366cdc627fc83ef3b38b61a1cb6c4273db9d2653dc6f372f2d",
+          "elapsedMs": 891.3320409999997,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 876.7713750000003
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p0',':w06/a6163636f756e74','string','A'),('p0',':w06/a63757272656e6379','string','USD'),('p0',':w06/a616d6f756e74','integer','9223372036854775807'),('p1',':w06/a6163636f756e74','string','A'),('p1',':w06/a63757272656e6379','string','USD'),('p1',':w06/a616d6f756e74','integer','4294967296'),('p2',':w06/a6163636f756e74','string','A'),('p2',':w06/a63757272656e6379','string','USD'),('p2',':w06/a616d6f756e74','integer','-4294967295'),('p3',':w06/a6163636f756e74','string','A'),('p3',':w06/a63757272656e6379','string','USD'),('p3',':w06/a616d6f756e74','integer','-4294967295')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f account JOIN f currency ON account.entity_id = currency.entity_id JOIN f amount ON account.entity_id = amount.entity_id WHERE account.attribute = $1 AND account.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w06/a6163636f756e74",
+                "A",
+                ":w06/a63757272656e6379",
+                "USD",
+                ":w06/a616d6f756e74"
+              ],
+              "elapsedMs": 13.930875000000015
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 891
+    },
+    {
+      "recovered": "handled",
+      "name": "availableOverflow",
+      "id": "07",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "07/availableOverflow",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4] (-> (-> (unify (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_3))) [{:entity_id e} {:value_string ledger}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate ledger {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:ledger ledger :total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4)",
+          "parameters": [
+            "S",
+            ":w07/a736b75",
+            ":w07/a6c6564676572",
+            ":w07/a64656c7461"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-ccbbac5152c099cfb028ee95403e13df52534ca33a1d5569923fe523e7486977",
+          "elapsedMs": 26.54754199999843,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 7.118541999998342
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4] (-> (-> (unify (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_3))) [{:entity_id e} {:value_string ledger}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate ledger {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:ledger ledger :total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4)",
+              "parameters": [
+                "S",
+                ":w07/a736b75",
+                ":w07/a6c6564676572",
+                ":w07/a64656c7461"
+              ],
+              "elapsedMs": 18.818332999999257
+            }
+          ]
+        },
+        {
+          "normalization": "subtract final exact ledger totals; no source relation leaves XTDB"
+        },
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "07/availableOverflow",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4] (-> (-> (unify (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_3))) [{:entity_id e} {:value_string ledger}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate ledger {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:ledger ledger :total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4)",
+          "parameters": [
+            "S",
+            ":w07/a736b75",
+            ":w07/a6c6564676572",
+            ":w07/a64656c7461"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-ccbbac5152c099cfb028ee95403e13df52534ca33a1d5569923fe523e7486977",
+          "elapsedMs": 784.2777079999996,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 780.0348749999994
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4] (-> (-> (unify (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_3))) [{:entity_id e} {:value_string ledger}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate ledger {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:ledger ledger :total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4)",
+              "parameters": [
+                "S",
+                ":w07/a736b75",
+                ":w07/a6c6564676572",
+                ":w07/a64656c7461"
+              ],
+              "elapsedMs": 3.710000000000946
+            }
+          ]
+        },
+        {
+          "normalization": "subtract final exact ledger totals; no source relation leaves XTDB"
+        }
+      ],
+      "elapsedMs": 811
+    },
+    {
+      "recovered": "handled",
+      "name": "availableOverflow",
+      "id": "07",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "07/availableOverflow",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p',':w07/a736b75','string','S'),('p',':w07/a6c6564676572','string','physical'),('p',':w07/a64656c7461','integer','9223372036854775807'),('r',':w07/a736b75','string','S'),('r',':w07/a6c6564676572','string','reservation'),('r',':w07/a64656c7461','integer','-1')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT ledger.value_string AS ledger, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f sku JOIN f ledger ON sku.entity_id = ledger.entity_id JOIN f delta ON sku.entity_id = delta.entity_id WHERE sku.attribute = $1 AND sku.value_string = $2 AND ledger.attribute = $3 AND delta.attribute = $4 GROUP BY ledger.value_string), x02_quotient AS (SELECT ledger, x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT ledger, x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT ledger, CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w07/a736b75",
+            "S",
+            ":w07/a6c6564676572",
+            ":w07/a64656c7461"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-ccbbac5152c099cfb028ee95403e13df52534ca33a1d5569923fe523e7486977",
+          "elapsedMs": 22.499041999999463,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 7.98975000000064
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p',':w07/a736b75','string','S'),('p',':w07/a6c6564676572','string','physical'),('p',':w07/a64656c7461','integer','9223372036854775807'),('r',':w07/a736b75','string','S'),('r',':w07/a6c6564676572','string','reservation'),('r',':w07/a64656c7461','integer','-1')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT ledger.value_string AS ledger, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f sku JOIN f ledger ON sku.entity_id = ledger.entity_id JOIN f delta ON sku.entity_id = delta.entity_id WHERE sku.attribute = $1 AND sku.value_string = $2 AND ledger.attribute = $3 AND delta.attribute = $4 GROUP BY ledger.value_string), x02_quotient AS (SELECT ledger, x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT ledger, x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT ledger, CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w07/a736b75",
+                "S",
+                ":w07/a6c6564676572",
+                ":w07/a64656c7461"
+              ],
+              "elapsedMs": 13.879915999999866
+            }
+          ]
+        },
+        {
+          "normalization": "subtract final exact ledger totals; no source relation leaves XTDB"
+        },
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "07/availableOverflow",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p',':w07/a736b75','string','S'),('p',':w07/a6c6564676572','string','physical'),('p',':w07/a64656c7461','integer','9223372036854775807'),('r',':w07/a736b75','string','S'),('r',':w07/a6c6564676572','string','reservation'),('r',':w07/a64656c7461','integer','-1')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT ledger.value_string AS ledger, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f sku JOIN f ledger ON sku.entity_id = ledger.entity_id JOIN f delta ON sku.entity_id = delta.entity_id WHERE sku.attribute = $1 AND sku.value_string = $2 AND ledger.attribute = $3 AND delta.attribute = $4 GROUP BY ledger.value_string), x02_quotient AS (SELECT ledger, x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT ledger, x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT ledger, CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w07/a736b75",
+            "S",
+            ":w07/a6c6564676572",
+            ":w07/a64656c7461"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-ccbbac5152c099cfb028ee95403e13df52534ca33a1d5569923fe523e7486977",
+          "elapsedMs": 16.24920800000109,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 11.62012500000128
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p',':w07/a736b75','string','S'),('p',':w07/a6c6564676572','string','physical'),('p',':w07/a64656c7461','integer','9223372036854775807'),('r',':w07/a736b75','string','S'),('r',':w07/a6c6564676572','string','reservation'),('r',':w07/a64656c7461','integer','-1')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT ledger.value_string AS ledger, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f sku JOIN f ledger ON sku.entity_id = ledger.entity_id JOIN f delta ON sku.entity_id = delta.entity_id WHERE sku.attribute = $1 AND sku.value_string = $2 AND ledger.attribute = $3 AND delta.attribute = $4 GROUP BY ledger.value_string), x02_quotient AS (SELECT ledger, x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT ledger, x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT ledger, CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w07/a736b75",
+                "S",
+                ":w07/a6c6564676572",
+                ":w07/a64656c7461"
+              ],
+              "elapsedMs": 4.153249999999389
+            }
+          ]
+        },
+        {
+          "normalization": "subtract final exact ledger totals; no source relation leaves XTDB"
+        }
+      ],
+      "elapsedMs": 39
+    },
+    {
+      "name": "netCancelsOverflowingSides",
+      "id": "08",
+      "language": "xtql",
+      "expected": [
+        [
+          "5"
+        ]
+      ],
+      "rows": [
+        [
+          "5"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "08/netCancelsOverflowingSides",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5 triplex_param_6 triplex_param_7 triplex_param_8 triplex_param_9 triplex_param_10 triplex_param_11 triplex_param_12 triplex_param_13 triplex_param_14] (-> (-> (unify (join (-> (unify (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id capture} {:hi hi} {:lo lo}])) (aggregate {:chi (sum hi) :clo (sum lo)})) [chi clo]) (join (-> (unify (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_7) (= value_string triplex_param_6))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_9) (= value_string triplex_param_8))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_10))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_11))) [{:entity_id refund} {:value_string capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_13) (= value_string triplex_param_12))) [{:entity_id refund}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_14)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id refund} {:hi rh} {:lo rl}])) (aggregate {:rhi (sum rh) :rlo (sum rl)})) [rhi rlo])) (with {:x02_h (- (coalesce chi 0) (coalesce rhi 0)) :x02_l (- (coalesce clo 0) (coalesce rlo 0))}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+          "parameters": [
+            "C",
+            ":w08/a637573746f6d6572",
+            "USD",
+            ":w08/a63757272656e6379",
+            ":w08/a616d6f756e74",
+            "C",
+            ":w08/a637573746f6d6572",
+            "USD",
+            ":w08/a63757272656e6379",
+            ":w08/a616d6f756e74",
+            ":w08/a63617074757265",
+            "USD",
+            ":w08/a63757272656e6379",
+            ":w08/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-1f56268b6bea47a988141c8158a73b150b6cf47bedcf6beac740520419762219",
+          "elapsedMs": 903.4150829999999,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 34.19225000000006
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4 triplex_param_5 triplex_param_6 triplex_param_7 triplex_param_8 triplex_param_9 triplex_param_10 triplex_param_11 triplex_param_12 triplex_param_13 triplex_param_14] (-> (-> (unify (join (-> (unify (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4) (= value_string triplex_param_3))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_5)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id capture} {:hi hi} {:lo lo}])) (aggregate {:chi (sum hi) :clo (sum lo)})) [chi clo]) (join (-> (unify (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_7) (= value_string triplex_param_6))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_9) (= value_string triplex_param_8))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_10))) [{:entity_id capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_11))) [{:entity_id refund} {:value_string capture}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_13) (= value_string triplex_param_12))) [{:entity_id refund}]) (join (-> (rel [{:entity_id \"c1\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"c2\" :attribute \":w08/a637573746f6d6572\" :value_type \"string\" :value_string \"C\"} {:entity_id \"c2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"c2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r1\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c1\"} {:entity_id \"r1\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r1\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775807\"} {:entity_id \"r2\" :attribute \":w08/a63617074757265\" :value_type \"string\" :value_string \"c2\"} {:entity_id \"r2\" :attribute \":w08/a63757272656e6379\" :value_type \"string\" :value_string \"USD\"} {:entity_id \"r2\" :attribute \":w08/a616d6f756e74\" :value_type \"integer\" :value_string \"9223372036854775802\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_14)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id refund} {:hi rh} {:lo rl}])) (aggregate {:rhi (sum rh) :rlo (sum rl)})) [rhi rlo])) (with {:x02_h (- (coalesce chi 0) (coalesce rhi 0)) :x02_l (- (coalesce clo 0) (coalesce rlo 0))}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+              "parameters": [
+                "C",
+                ":w08/a637573746f6d6572",
+                "USD",
+                ":w08/a63757272656e6379",
+                ":w08/a616d6f756e74",
+                "C",
+                ":w08/a637573746f6d6572",
+                "USD",
+                ":w08/a63757272656e6379",
+                ":w08/a616d6f756e74",
+                ":w08/a63617074757265",
+                "USD",
+                ":w08/a63757272656e6379",
+                ":w08/a616d6f756e74"
+              ],
+              "elapsedMs": 868.6734579999993
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 903
+    },
+    {
+      "name": "netCancelsOverflowingSides",
+      "id": "08",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "5"
+        ]
+      ],
+      "rows": [
+        [
+          "5"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "08/netCancelsOverflowingSides",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('c1',':w08/a637573746f6d6572','string','C'),('c1',':w08/a63757272656e6379','string','USD'),('c1',':w08/a616d6f756e74','integer','9223372036854775807'),('c2',':w08/a637573746f6d6572','string','C'),('c2',':w08/a63757272656e6379','string','USD'),('c2',':w08/a616d6f756e74','integer','9223372036854775807'),('r1',':w08/a63617074757265','string','c1'),('r1',':w08/a63757272656e6379','string','USD'),('r1',':w08/a616d6f756e74','integer','9223372036854775807'),('r2',':w08/a63617074757265','string','c2'),('r2',':w08/a63757272656e6379','string','USD'),('r2',':w08/a616d6f756e74','integer','9223372036854775802')) virtual_facts (entity_id,attribute,value_type,value_string)), captures AS (SELECT customer.entity_id AS capture, ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) AS hi, ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT)) AS lo FROM f customer JOIN f currency ON customer.entity_id = currency.entity_id JOIN f amount ON customer.entity_id = amount.entity_id WHERE customer.attribute = $1 AND customer.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), refunds AS (SELECT ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) AS hi, ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT)) AS lo FROM captures c JOIN f reference ON reference.value_string = c.capture JOIN f currency ON reference.entity_id = currency.entity_id JOIN f amount ON reference.entity_id = amount.entity_id WHERE reference.attribute = $6 AND currency.attribute = $7 AND currency.value_string = $8 AND amount.attribute = $9), x02_sum AS (SELECT COALESCE((SELECT SUM(hi) FROM captures), 0) - COALESCE((SELECT SUM(hi) FROM refunds), 0) AS x02_h, COALESCE((SELECT SUM(lo) FROM captures), 0) - COALESCE((SELECT SUM(lo) FROM refunds), 0) AS x02_l), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w08/a637573746f6d6572",
+            "C",
+            ":w08/a63757272656e6379",
+            "USD",
+            ":w08/a616d6f756e74",
+            ":w08/a63617074757265",
+            ":w08/a63757272656e6379",
+            "USD",
+            ":w08/a616d6f756e74"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-1f56268b6bea47a988141c8158a73b150b6cf47bedcf6beac740520419762219",
+          "elapsedMs": 1917.621333000001,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 6.774457999999868
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('c1',':w08/a637573746f6d6572','string','C'),('c1',':w08/a63757272656e6379','string','USD'),('c1',':w08/a616d6f756e74','integer','9223372036854775807'),('c2',':w08/a637573746f6d6572','string','C'),('c2',':w08/a63757272656e6379','string','USD'),('c2',':w08/a616d6f756e74','integer','9223372036854775807'),('r1',':w08/a63617074757265','string','c1'),('r1',':w08/a63757272656e6379','string','USD'),('r1',':w08/a616d6f756e74','integer','9223372036854775807'),('r2',':w08/a63617074757265','string','c2'),('r2',':w08/a63757272656e6379','string','USD'),('r2',':w08/a616d6f756e74','integer','9223372036854775802')) virtual_facts (entity_id,attribute,value_type,value_string)), captures AS (SELECT customer.entity_id AS capture, ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) AS hi, ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT)) AS lo FROM f customer JOIN f currency ON customer.entity_id = currency.entity_id JOIN f amount ON customer.entity_id = amount.entity_id WHERE customer.attribute = $1 AND customer.value_string = $2 AND currency.attribute = $3 AND currency.value_string = $4 AND amount.attribute = $5), refunds AS (SELECT ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) AS hi, ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN amount.value_type = 'integer' THEN amount.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT)) AS lo FROM captures c JOIN f reference ON reference.value_string = c.capture JOIN f currency ON reference.entity_id = currency.entity_id JOIN f amount ON reference.entity_id = amount.entity_id WHERE reference.attribute = $6 AND currency.attribute = $7 AND currency.value_string = $8 AND amount.attribute = $9), x02_sum AS (SELECT COALESCE((SELECT SUM(hi) FROM captures), 0) - COALESCE((SELECT SUM(hi) FROM refunds), 0) AS x02_h, COALESCE((SELECT SUM(lo) FROM captures), 0) - COALESCE((SELECT SUM(lo) FROM refunds), 0) AS x02_l), x02_quotient AS (SELECT x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w08/a637573746f6d6572",
+                "C",
+                ":w08/a63757272656e6379",
+                "USD",
+                ":w08/a616d6f756e74",
+                ":w08/a63617074757265",
+                ":w08/a63757272656e6379",
+                "USD",
+                ":w08/a616d6f756e74"
+              ],
+              "elapsedMs": 1910.212042000001
+            }
+          ]
+        }
+      ],
+      "elapsedMs": 1918
+    },
+    {
+      "recovered": "handled",
+      "name": "availableUnderflow",
+      "id": "07",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: Native int64 result -9223372036854775809 is outside the signed 64-bit range)])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "07/availableUnderflow",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4] (-> (-> (unify (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_3))) [{:entity_id e} {:value_string ledger}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate ledger {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:ledger ledger :total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4)",
+          "parameters": [
+            "S",
+            ":w07/a736b75",
+            ":w07/a6c6564676572",
+            ":w07/a64656c7461"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-ccbbac5152c099cfb028ee95403e13df52534ca33a1d5569923fe523e7486977",
+          "elapsedMs": 22.389375000000655,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 10.252832999998645
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4] (-> (-> (unify (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_3))) [{:entity_id e} {:value_string ledger}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate ledger {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:ledger ledger :total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4)",
+              "parameters": [
+                "S",
+                ":w07/a736b75",
+                ":w07/a6c6564676572",
+                ":w07/a64656c7461"
+              ],
+              "elapsedMs": 11.684624999999869
+            }
+          ]
+        },
+        {
+          "normalization": "subtract final exact ledger totals; no source relation leaves XTDB"
+        },
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "07/availableUnderflow",
+          "language": "xtql",
+          "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4] (-> (-> (unify (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_3))) [{:entity_id e} {:value_string ledger}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate ledger {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:ledger ledger :total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4)",
+          "parameters": [
+            "S",
+            ":w07/a736b75",
+            ":w07/a6c6564676572",
+            ":w07/a64656c7461"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-ccbbac5152c099cfb028ee95403e13df52534ca33a1d5569923fe523e7486977",
+          "elapsedMs": 25.469458000001396,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1] (-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position})))', $1)",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 7.893167000000176
+            },
+            {
+              "phase": "answer",
+              "language": "xtql",
+              "query": "XTQL ('(fn [triplex_param_1 triplex_param_2 triplex_param_3 triplex_param_4] (-> (-> (unify (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_2) (= value_string triplex_param_1))) [{:entity_id e}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_3))) [{:entity_id e} {:value_string ledger}]) (join (-> (rel [{:entity_id \"p\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"p\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"physical\"} {:entity_id \"p\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"-9223372036854775808\"} {:entity_id \"r\" :attribute \":w07/a736b75\" :value_type \"string\" :value_string \"S\"} {:entity_id \"r\" :attribute \":w07/a6c6564676572\" :value_type \"string\" :value_string \"reservation\"} {:entity_id \"r\" :attribute \":w07/a64656c7461\" :value_type \"integer\" :value_string \"1\"}] [entity_id attribute value_type value_string]) (where (= attribute triplex_param_4)) (with {:n (cast (if (= value_type \"integer\") value_string nil) #xt/type :i64)}) (with {:hi (/ n 4294967296)}) (with {:lo (- n (* hi 4294967296))})) [{:entity_id e} {:hi hi} {:lo lo}])) (aggregate ledger {:shi (sum hi) :slo (sum lo)}) (with {:x02_h (coalesce shi 0) :x02_l (coalesce slo 0)}) (with {:x02_q (/ x02_l 4294967296)}) (with {:x02_r (- x02_l (* x02_q 4294967296))}) (return {:ledger ledger :total (cast (+ (* (+ x02_h (if (< x02_r 0) (- x02_q 1) x02_q)) 4294967296) (if (< x02_r 0) (+ x02_r 4294967296) x02_r)) #xt/type :utf8)})) (limit 1001)))', $1, $2, $3, $4)",
+              "parameters": [
+                "S",
+                ":w07/a736b75",
+                ":w07/a6c6564676572",
+                ":w07/a64656c7461"
+              ],
+              "elapsedMs": 17.078417000000627
+            }
+          ]
+        },
+        {
+          "normalization": "subtract final exact ledger totals; no source relation leaves XTDB"
+        }
+      ],
+      "elapsedMs": 48
+    },
+    {
+      "recovered": "handled",
+      "name": "availableUnderflow",
+      "id": "07",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: Native int64 result -9223372036854775809 is outside the signed 64-bit range)])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "07/availableUnderflow",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p',':w07/a736b75','string','S'),('p',':w07/a6c6564676572','string','physical'),('p',':w07/a64656c7461','integer','-9223372036854775808'),('r',':w07/a736b75','string','S'),('r',':w07/a6c6564676572','string','reservation'),('r',':w07/a64656c7461','integer','1')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT ledger.value_string AS ledger, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f sku JOIN f ledger ON sku.entity_id = ledger.entity_id JOIN f delta ON sku.entity_id = delta.entity_id WHERE sku.attribute = $1 AND sku.value_string = $2 AND ledger.attribute = $3 AND delta.attribute = $4 GROUP BY ledger.value_string), x02_quotient AS (SELECT ledger, x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT ledger, x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT ledger, CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w07/a736b75",
+            "S",
+            ":w07/a6c6564676572",
+            ":w07/a64656c7461"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-ccbbac5152c099cfb028ee95403e13df52534ca33a1d5569923fe523e7486977",
+          "elapsedMs": 871.5392080000001,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 854.2239160000008
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p',':w07/a736b75','string','S'),('p',':w07/a6c6564676572','string','physical'),('p',':w07/a64656c7461','integer','-9223372036854775808'),('r',':w07/a736b75','string','S'),('r',':w07/a6c6564676572','string','reservation'),('r',':w07/a64656c7461','integer','1')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT ledger.value_string AS ledger, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f sku JOIN f ledger ON sku.entity_id = ledger.entity_id JOIN f delta ON sku.entity_id = delta.entity_id WHERE sku.attribute = $1 AND sku.value_string = $2 AND ledger.attribute = $3 AND delta.attribute = $4 GROUP BY ledger.value_string), x02_quotient AS (SELECT ledger, x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT ledger, x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT ledger, CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w07/a736b75",
+                "S",
+                ":w07/a6c6564676572",
+                ":w07/a64656c7461"
+              ],
+              "elapsedMs": 16.5289159999993
+            }
+          ]
+        },
+        {
+          "normalization": "subtract final exact ledger totals; no source relation leaves XTDB"
+        },
+        {
+          "operation": "public-native-query",
+          "logicalTaskId": "07/availableUnderflow",
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p',':w07/a736b75','string','S'),('p',':w07/a6c6564676572','string','physical'),('p',':w07/a64656c7461','integer','-9223372036854775808'),('r',':w07/a736b75','string','S'),('r',':w07/a6c6564676572','string','reservation'),('r',':w07/a64656c7461','integer','1')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT ledger.value_string AS ledger, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f sku JOIN f ledger ON sku.entity_id = ledger.entity_id JOIN f delta ON sku.entity_id = delta.entity_id WHERE sku.attribute = $1 AND sku.value_string = $2 AND ledger.attribute = $3 AND delta.attribute = $4 GROUP BY ledger.value_string), x02_quotient AS (SELECT ledger, x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT ledger, x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT ledger, CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+          "parameters": [
+            ":w07/a736b75",
+            "S",
+            ":w07/a6c6564676572",
+            ":w07/a64656c7461"
+          ],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]",
+            "recordedPosition": 0,
+            "recordedAt": 1001,
+            "validAt": 1000000
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-ccbbac5152c099cfb028ee95403e13df52534ca33a1d5569923fe523e7486977",
+          "elapsedMs": 15.223167000000103,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-sum-probes\",0]"
+              ],
+              "elapsedMs": 7.559750000000349
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (WITH f AS (SELECT * FROM (VALUES ('p',':w07/a736b75','string','S'),('p',':w07/a6c6564676572','string','physical'),('p',':w07/a64656c7461','integer','-9223372036854775808'),('r',':w07/a736b75','string','S'),('r',':w07/a6c6564676572','string','reservation'),('r',':w07/a64656c7461','integer','1')) virtual_facts (entity_id,attribute,value_type,value_string)), x02_sum AS (SELECT ledger.value_string AS ledger, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT))), 0) AS x02_h, COALESCE(SUM(((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) - ((CAST(CASE WHEN delta.value_type = 'integer' THEN delta.value_string ELSE NULL END AS BIGINT)) / CAST(4294967296 AS BIGINT)) * CAST(4294967296 AS BIGINT))), 0) AS x02_l FROM f sku JOIN f ledger ON sku.entity_id = ledger.entity_id JOIN f delta ON sku.entity_id = delta.entity_id WHERE sku.attribute = $1 AND sku.value_string = $2 AND ledger.attribute = $3 AND delta.attribute = $4 GROUP BY ledger.value_string), x02_quotient AS (SELECT ledger, x02_h, x02_l, x02_l / CAST(4294967296 AS BIGINT) AS x02_q FROM x02_sum), x02_rest AS (SELECT ledger, x02_h, x02_q, x02_l - x02_q * CAST(4294967296 AS BIGINT) AS x02_r FROM x02_quotient) SELECT ledger, CAST((x02_h + CASE WHEN x02_r < 0 THEN x02_q - 1 ELSE x02_q END) * CAST(4294967296 AS BIGINT) + CASE WHEN x02_r < 0 THEN x02_r + CAST(4294967296 AS BIGINT) ELSE x02_r END AS TEXT) AS total FROM x02_rest\n) triplex_native_answer LIMIT 1001",
+              "parameters": [
+                ":w07/a736b75",
+                "S",
+                ":w07/a6c6564676572",
+                ":w07/a64656c7461"
+              ],
+              "elapsedMs": 6.999540999999226
+            }
+          ]
+        },
+        {
+          "normalization": "subtract final exact ledger totals; no source relation leaves XTDB"
+        }
+      ],
+      "elapsedMs": 887
+    },
+    {
+      "recovered": "handled",
+      "name": "ledgerOverflow-physical",
+      "id": "07",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 1024
+    },
+    {
+      "recovered": "handled",
+      "name": "ledgerOverflow-physical",
+      "id": "07",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 82
+    },
+    {
+      "recovered": "handled",
+      "name": "ledgerOverflow-reservation",
+      "id": "07",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 1061
+    },
+    {
+      "recovered": "handled",
+      "name": "ledgerOverflow-reservation",
+      "id": "07",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 889
+    },
+    {
+      "recovered": "handled",
+      "name": "netOverflow-positive",
+      "id": "08",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 853
+    },
+    {
+      "recovered": "handled",
+      "name": "netOverflow-positive",
+      "id": "08",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 1774
+    },
+    {
+      "recovered": "handled",
+      "name": "netOverflow-negative",
+      "id": "08",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 977
+    },
+    {
+      "recovered": "handled",
+      "name": "netOverflow-negative",
+      "id": "08",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true,
+      "trace": [],
+      "elapsedMs": 1749
+    }
+  ],
+  "endedAt": "2026-11-08T22:01:54.783Z"
+}

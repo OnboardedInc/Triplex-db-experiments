@@ -1,0 +1,99 @@
+[
+  {
+    "session_id": 41909,
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "2653be",
+      "wall_time_seconds": 0.000001542,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "session_id": 85289,
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "ccdfef",
+      "wall_time_seconds": 8.33e-7,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "session_id": 18429,
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "80aa0a",
+      "wall_time_seconds": 3.75e-7,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "session_id": 85363,
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "76f395",
+      "wall_time_seconds": 0.000001209,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "session_id": 90085,
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "567535",
+      "wall_time_seconds": 0.000001042,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "session_id": 67496,
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "3d9db4",
+      "wall_time_seconds": 6.67e-7,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "session_id": 2980,
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "db9c99",
+      "wall_time_seconds": 5.42e-7,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "session_id": 45160,
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "b0df32",
+      "wall_time_seconds": 5.42e-7,
+      "exit_code": 1,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "session_id": 3868,
+    "status": "fulfilled",
+    "value": {
+      "exit_code": 0,
+      "output": "",
+      "note": "completion observed in write_stdin result"
+    }
+  }
+]

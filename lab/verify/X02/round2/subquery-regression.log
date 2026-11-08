@@ -1,0 +1,21 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 73337 "CX-VJ01-2-arrays"
+
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/round2/subquery-regression.ts' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/round2/target/
+    at finalizeResolution (node:internal/modules/esm/resolve:275:11)
+    at moduleResolve (node:internal/modules/esm/resolve:861:10)
+    at defaultResolve (node:internal/modules/esm/resolve:985:11)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at resolveBase (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794175263858:2:3212)
+    at resolveDirectory (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794175263858:2:3584)
+    at resolveTsPaths (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794175263858:2:4073)
+    at resolve (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794175263858:2:4447)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at Hooks.resolve (node:internal/modules/esm/hooks:240:30) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/round2/subquery-regression.ts'
+}
+
+Node.js v22.23.2

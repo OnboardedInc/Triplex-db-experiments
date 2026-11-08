@@ -1,0 +1,44 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5291 "CX-VP2Q-3-live", pid 4241 "CX-E01-R3-tests", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 41588 "R25-sweepshort-a-r4", pid 5291 "CX-VP2Q-3-live", pid 4241 "CX-E01-R3-tests", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 41588 "R25-sweepshort-a-r4", pid 5291 "CX-VP2Q-3-live", pid 4241 "CX-E01-R3-tests", pid 49242 "DA00-final-measure"
+[lab] heavy: waiting for one of 4 slots; held by pid 41588 "R25-sweepshort-a-r4", pid 5291 "CX-VP2Q-3-live", pid 4241 "CX-E01-R3-tests", pid 49242 "DA00-final-measure"
+[lab] heavy: waiting for one of 4 slots; held by pid 41588 "R25-sweepshort-a-r4", pid 5291 "CX-VP2Q-3-live", pid 4241 "CX-E01-R3-tests", pid 49242 "DA00-final-measure"
+[lab] heavy: waiting for one of 4 slots; held by pid 67168 "R25-nosweep-b-r4", pid 5291 "CX-VP2Q-3-live", pid 4241 "CX-E01-R3-tests", pid 54453 "CX-A01-0311-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 67168 "R25-nosweep-b-r4", pid 5291 "CX-VP2Q-3-live", pid 4241 "CX-E01-R3-tests", pid 54453 "CX-A01-0311-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 67168 "R25-nosweep-b-r4", pid 5291 "CX-VP2Q-3-live", pid 35593 "CX-VX02-2-original-sums", pid 54453 "CX-A01-0311-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 67168 "R25-nosweep-b-r4", pid 70484 "G0-datomic-20261108T215822Z-205199 vitest-core", pid 50198 "DA00-G0-final-source", pid 54453 "CX-A01-0311-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 67168 "R25-nosweep-b-r4", pid 71271 "G0-xtdb-20261108T215858Z-977834 typecheck", pid 50198 "DA00-G0-final-source", pid 54453 "CX-A01-0311-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 71487 "CX-VP2Q-3-nonzero-retry", pid 50198 "DA00-G0-final-source", pid 54453 "CX-A01-0311-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 71487 "CX-VP2Q-3-nonzero-retry", pid 50198 "DA00-G0-final-source", pid 73337 "CX-VJ01-2-arrays"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 73337 "CX-VJ01-2-arrays"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 81859 "CX-VC8-3-offline"
+PASS near1e18 xtql {"rows":[["1000000000000000004"]],"error":null}
+PASS near1e18 xtdb-sql {"rows":[["1000000000000000004"]],"error":null}
+PASS max xtql {"rows":[["9223372036854775807"]],"error":null}
+PASS max xtdb-sql {"rows":[["9223372036854775807"]],"error":null}
+PASS min xtql {"rows":[["-9223372036854775808"]],"error":null}
+PASS min xtdb-sql {"rows":[["-9223372036854775808"]],"error":null}
+PASS maxPlus1 xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS maxPlus1 xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS minMinus1 xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS minMinus1 xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS three2p62 xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS three2p62 xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS cancellation xtql {"rows":[["5"]],"error":null}
+PASS cancellation xtdb-sql {"rows":[["5"]],"error":null}
+PASS carryCounterexample xtql {"rows":[["9223372032559808513"]],"error":null}
+PASS carryCounterexample xtdb-sql {"rows":[["9223372032559808513"]],"error":null}
+PASS availableOverflow xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])"}
+PASS availableOverflow xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])"}
+PASS netCancelsOverflowingSides xtql {"rows":[["5"]],"error":null}
+PASS netCancelsOverflowingSides xtdb-sql {"rows":[["5"]],"error":null}
+PASS availableUnderflow xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: Native int64 result -9223372036854775809 is outside the signed 64-bit range)])"}
+PASS availableUnderflow xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: Native int64 result -9223372036854775809 is outside the signed 64-bit range)])"}
+PASS ledgerOverflow-physical xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS ledgerOverflow-physical xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS ledgerOverflow-reservation xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS ledgerOverflow-reservation xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS netOverflow-positive xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS netOverflow-positive xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS netOverflow-negative xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS netOverflow-negative xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}

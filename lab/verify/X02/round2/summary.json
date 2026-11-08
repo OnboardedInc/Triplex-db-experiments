@@ -1,0 +1,354 @@
+{
+  "target": "6cd68dcad31039ceeaec943f0258e1c63a853d48",
+  "G0": {
+    "verdict": "PASS",
+    "counts": {
+      "executed": 949,
+      "pass": 949,
+      "fail": 0,
+      "skip": 130,
+      "expectedSkip": 130,
+      "unexpectedSkip": 0
+    },
+    "git": {
+      "head": "6cd68dcad31039ceeaec943f0258e1c63a853d48",
+      "headTree": "0bec2c6636fdd02990b885500d260b583cbc57ec",
+      "branch": "HEAD",
+      "dirty": false,
+      "stashCommit": null,
+      "stashTree": null,
+      "diffScope": [
+        "packages",
+        "qualification",
+        "lab/bin",
+        "lab/config",
+        "vitest.workspace-aliases.ts",
+        "tsconfig.base.json",
+        "tsconfig.node.json",
+        "package.json",
+        "pnpm-workspace.yaml",
+        "pnpm-lock.yaml",
+        "turbo.json"
+      ],
+      "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "diffBytes": 0,
+      "modifiedFiles": [],
+      "untrackedFiles": [],
+      "otherDirtyPaths": [],
+      "sourceTreeId": "6f1b3ff5127fb50df3dfda88b6857ffce60ab245934f9dccce01dadda9e3c47a"
+    },
+    "toolchain": {
+      "node": "v22.23.2",
+      "pnpm": "10.11.0",
+      "platform": "darwin-arm64"
+    }
+  },
+  "offline": {
+    "inventory": [
+      {
+        "language": "xtql",
+        "typedHandlerRecovered": true,
+        "hasDies": false
+      },
+      {
+        "language": "xtdb-sql",
+        "typedHandlerRecovered": true,
+        "hasDies": false
+      }
+    ],
+    "guards": [
+      {
+        "count": 100000,
+        "calls": [
+          "reach-edge-count-_support",
+          "reach-complete-_support-1",
+          "reachability-closure"
+        ],
+        "exit": "Success([])",
+        "modelOnly": true
+      },
+      {
+        "count": 100001,
+        "calls": [
+          "reach-edge-count-_support"
+        ],
+        "exit": "Failure(Cause([Fail(NativeEngineHazardError: XTQL reachability over 100001 _support edges exceeds 100000 (XTDB #6345); no answer returned)]))",
+        "modelOnly": true
+      }
+    ],
+    "depth": {
+      "modelOnly": true,
+      "calls": [
+        "reach-edge-count-_support",
+        "reach-complete-_support-1",
+        "reach-complete-_support-2",
+        "reach-complete-_support-3",
+        "reach-complete-_support-4",
+        "reach-complete-_support-5",
+        "reach-complete-_support-6",
+        "reach-complete-_support-7",
+        "reach-complete-_support-8"
+      ],
+      "exit": "Failure(Cause([Fail(NativeRecursionDepthError: XTQL reachability is not at its fixpoint within depth 8; no partial closure returned)]))"
+    },
+    "matchedSourceMaps": 13,
+    "unsetLanguage": "historical-mixed (undefined)"
+  },
+  "hazards": [
+    {
+      "name": "any-control-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY(ARRAY[1,2]) AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "any-control",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 109
+    },
+    {
+      "name": "any-comment-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY/**/(ARRAY[1,2]) AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "any-comment",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY/**/(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 36
+    },
+    {
+      "name": "any-bare-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ARRAY[1,2] AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "any-bare",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ARRAY[1,2] AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 42
+    },
+    {
+      "name": "some-comment-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = SOME/**/(ARRAY[1,2]) AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "some-comment",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = SOME/**/(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 32
+    },
+    {
+      "name": "decimal-bigint",
+      "sql": "SELECT CAST(CAST(CAST('1000000000000000004' AS DECIMAL(32,0)) AS BIGINT) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000000"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 49
+    },
+    {
+      "name": "decimal-text",
+      "sql": "SELECT CAST(CAST('1000000000000000004' AS DECIMAL(32,0)) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 13
+    },
+    {
+      "name": "text-bigint",
+      "sql": "SELECT CAST(CAST('1000000000000000004' AS BIGINT) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 11
+    },
+    {
+      "name": "compiler-+",
+      "query": {
+        "find": [
+          "?y"
+        ],
+        "where": [
+          [
+            "e",
+            ":x",
+            "?x"
+          ]
+        ],
+        "compute": [
+          [
+            "+",
+            "?x",
+            {
+              "type": "integer",
+              "value": "0"
+            },
+            "?y"
+          ]
+        ]
+      },
+      "error": "DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel",
+      "tag": "DatalogValidationError",
+      "expected": "typed refusal"
+    },
+    {
+      "name": "compiler-*",
+      "query": {
+        "find": [
+          "?y"
+        ],
+        "where": [
+          [
+            "e",
+            ":x",
+            "?x"
+          ]
+        ],
+        "compute": [
+          [
+            "*",
+            "?x",
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            "?y"
+          ]
+        ]
+      },
+      "error": "DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel",
+      "tag": "DatalogValidationError",
+      "expected": "typed refusal"
+    }
+  ],
+  "originalSums": {
+    "total": 20,
+    "pass": 20,
+    "failures": []
+  },
+  "deltaOffline": {
+    "overflow": 10,
+    "exact": 120,
+    "defaults": 213,
+    "ordinaryDefault": {
+      "queryPath": "xtdb-datalog",
+      "nativeWorkload": "undefined",
+      "pass": true
+    }
+  },
+  "deltaSums": {
+    "total": 30,
+    "pass": 30,
+    "failures": []
+  },
+  "subqueryRegression": {
+    "total": 6,
+    "confirmed": 6
+  },
+  "deltaLive": {
+    "total": 22,
+    "pass": 19,
+    "nonmatchingExpectations": [
+      {
+        "name": "parenthesized-any-operand",
+        "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = (ANY/**/(ARRAY[1,2]))",
+        "expected": "typed-refusal",
+        "raw": true,
+        "accepted": true,
+        "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:66 no viable alternative at input '(SELECT'x'ASvFROM(VALUES(1))t(k)WHEREk=(ANY' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:66 no viable alternative at input '(SELECT'x'ASvFROM(VALUES(1))t(k)WHEREk=(ANY'))]))",
+        "isDefect": false,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:66 no viable alternative at input '(SELECT'x'ASvFROM(VALUES(1))t(k)WHEREk=(ANY' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:66 no viable alternative at input '(SELECT'x'ASvFROM(VALUES(1))t(k)WHEREk=(ANY'))])",
+        "pass": false,
+        "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:51 no viable alternative at input '(ANY'",
+        "elapsedMs": 195
+      },
+      {
+        "name": "parenthesized-some-operand",
+        "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ((SOME ARRAY[1,2]))",
+        "expected": "typed-refusal",
+        "raw": true,
+        "accepted": true,
+        "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:67 no viable alternative at input '(SELECT'x'ASvFROM(VALUES(1))t(k)WHEREk=((SOME' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:67 no viable alternative at input '(SELECT'x'ASvFROM(VALUES(1))t(k)WHEREk=((SOME'))]))",
+        "isDefect": false,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:67 no viable alternative at input '(SELECT'x'ASvFROM(VALUES(1))t(k)WHEREk=((SOME' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:67 no viable alternative at input '(SELECT'x'ASvFROM(VALUES(1))t(k)WHEREk=((SOME'))])",
+        "pass": false,
+        "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:52 no viable alternative at input '((SOME'",
+        "elapsedMs": 86
+      },
+      {
+        "name": "subquery-parens",
+        "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ((SELECT 1))",
+        "expected": "x",
+        "raw": true,
+        "accepted": false,
+        "envelopeError": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
+        "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+        "isDefect": false,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+        "pass": false,
+        "rawRows": [
+          {
+            "v": "x"
+          }
+        ],
+        "elapsedMs": 43
+      }
+    ]
+  }
+}

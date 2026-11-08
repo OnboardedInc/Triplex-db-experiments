@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 5437 "CX-C8-R3-offline", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 4910 "CX-E01-R3-reference", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 4910 "CX-E01-R3-reference", pid 5696 "CX-C8-R3-checks"
+any-control {"error":"Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])","elapsedMs":109}
+any-comment {"error":"Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])","elapsedMs":36}
+any-bare {"error":"Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])","elapsedMs":42}
+some-comment {"error":"Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])","elapsedMs":32}
+decimal-bigint {"result":[{"v":"1000000000000000000"}],"error":null,"elapsedMs":49}
+decimal-text {"result":[{"v":"1000000000000000004"}],"error":null,"elapsedMs":13}
+text-bigint {"result":[{"v":"1000000000000000004"}],"error":null,"elapsedMs":11}
