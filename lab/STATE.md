@@ -152,3 +152,4 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - INT-XCJ: X02 merged on int/X02-C8-J01 (7fcf69e): G0 1,070/1,070, evaluator 108/108; contract --verify fails only because X02 changed
   pinned packages/qualification/src/native/xtdb-workloads.ts. Pinned sources change only with a contract version, so contract 0.3.12
   round 2 merges int/X02-C8-J01 and re-pins it after checking the diff does not change the measured workload. INT-XCJ continues with C8, J01.
+- Queued: EXP-DA04 (lane D on Postgres SQL storage, Q88b) after DA01 round 2 and the joint DA00+DA01 review merge; before DA03.

@@ -1555,3 +1555,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
     read route in all three lanes, what basis shapes each answers exactly, and specifies one route-equivalence harness for all lanes.
   - **R32, lane D durable storage:** lane D runs on Datomic dev storage, and Q86f bars its durable evidence until SQL storage. R32 sizes
     SQL storage in the pool, sets out the tenant-isolation options for Sam's Q78e, covers excision for PII erasure, and drafts the migration brief.
+
+## 2026-11-08 23:44Z: R32: Datomic dev storage can lose acknowledged commits; lane D moves to Postgres before DA03
+- **Finding (jar strings, H2 2.1.214 source):** dev storage is Datomic's SQL code on an H2 file inside the transactor with H2 defaults.
+  H2's 500 ms write delay acknowledges a commit while it is only in heap, so an abrupt transactor stop can lose about 0.5 s of ACKed
+  transactions. The peer role also has full rights on the storage table. **Q88a:** dev storage evidence is development only.
+- **Q88b:** EXP-DA04 (Postgres SQL storage, peers SELECT-only) runs before DA03, inside the existing 2.75 GiB resident budget; D0 measures
+  the dev-storage loss as a control. **Q88c:** crypto-shredding first, excision second, keys in their own schema.
+- **For Sam (Q78e):** tenant isolation on Datomic cannot use schemas or row security, because one transactor owns one table; tiered,
+  silo-all and pool-all are the options.
+- SQL01 round 2 (4863a8e) fixed F1 and F2; 50 abrupt stops kept all 163 ACKs; review round 2 is checking route equivalence.
