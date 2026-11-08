@@ -1,0 +1,402 @@
+{
+  "tools": {
+    "subquery-regression.ts": {
+      "originalGit": "7873fea:lab/verify/X02/round2/subquery-regression.ts",
+      "originalSha256": "01110e63ed0fa78fc05d6338d15729d5211cd9251fe3006a2eed4f4d3a28648f",
+      "adaptedSha256": "4f7ece5acfe041a83e49efcad0dc3a4457ae8104fe582d2ddca40eb2121904ec"
+    },
+    "baseline-ReadOnlySql.ts": {
+      "originalGit": "7873fea:lab/verify/X02/round2/baseline-ReadOnlySql.ts",
+      "originalSha256": "1282184005a63a423c0bce8c8a6964e7bcc4a60f1934724afb0ff042eae90612",
+      "adaptedSha256": "1282184005a63a423c0bce8c8a6964e7bcc4a60f1934724afb0ff042eae90612"
+    },
+    "delta-live.ts": {
+      "originalGit": "7873fea:lab/verify/X02/round2/delta-live.ts",
+      "originalSha256": "14d07e3132e39f2fd568fd1aa37f2d19a583414cefdb01b7d5bce42b31482c35",
+      "adaptedSha256": "3a10640a6112bd03c5bfec733894f7149eb7a3b5a3a0a9a6a118c5a089324793"
+    },
+    "delta-offline.ts": {
+      "originalGit": "7873fea:lab/verify/X02/round2/delta-offline.ts",
+      "originalSha256": "b8628db06c23235643d33f5b89b4904d000f5feeb61aed995d7481ba39a6e47b",
+      "adaptedSha256": "07096117a577415ac0fa83d91bbed87efebb3f5adf5c8227c640752f259dbfa6"
+    },
+    "delta-sums.ts": {
+      "originalGit": "7873fea:lab/verify/X02/round2/delta-sums.ts",
+      "originalSha256": "33616fce7399520cb4ee48c735e348d39805822b7a83ae2b6d9f828574b03f0d",
+      "adaptedSha256": "9ac5660e0f8616b71af49d8099f9f4dd5fa9492b68ec40c86456df08ff9a4063"
+    },
+    "offline-source.ts": {
+      "originalGit": "7873fea:lab/verify/X02/round2/offline-source.ts",
+      "originalSha256": "70e44cf26572e67f51e46a7143584ed52259f45ebdfaef2a7822a310b7e27cb4",
+      "adaptedSha256": "a4382c69c0650a3f90326fddb6f11fa9cb2fa406d40b4094334102ad913c8ad3"
+    },
+    "probe-source.ts": {
+      "originalGit": "7873fea:lab/verify/X02/round2/probe-source.ts",
+      "originalSha256": "aaca9b5e836469d124d6eb7e680a93392ea58b03ed3cad5303fd48fd3cd40136",
+      "adaptedSha256": "448df71c40f3452bf60fe7ccd34ec66897c3e19ec53b9d4ed4be70302cfe04d9"
+    },
+    "probe-sums.ts": {
+      "originalGit": "7873fea:lab/verify/X02/round2/probe-sums.ts",
+      "originalSha256": "dace348000534455cb007245a27a9c90290815a814633b5424ccc8e7f47cd710",
+      "adaptedSha256": "f8a244901757f6b46a60db43b3a49f40a7fa0b4ada97ea401ce1534a16be3657"
+    }
+  },
+  "files": {
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-final.log": {
+      "bytes": 239,
+      "sha256": "fa317b5244629d3bc0e7298edd354632d4ed06cfebb4ff8c4df0aad3cf094d57"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/build-manifest.json": {
+      "bytes": 98656,
+      "sha256": "966a0aaf2048758f4b6f77137211abb413f029cf81ea22fddd850639d1f6d29c"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/build.stderr.txt": {
+      "bytes": 235,
+      "sha256": "4a1f5e638e97ed96d3e587c8792284a964738064ddcdd04f29fff471fb5888b2"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/build.stdout.txt": {
+      "bytes": 40458,
+      "sha256": "3528bf411d3b2a5c890719f78d935975e9ce1aa974ca41d54d61c94249363ac5"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/node-test-engine-cases.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/node-test-engine-cases.stdout.txt": {
+      "bytes": 3139,
+      "sha256": "88e47c1485a8203c8200556751182aca065252ab9cb6a79d8525e109c364a0fc"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/node-test-qualification.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/node-test-qualification.stdout.txt": {
+      "bytes": 3971,
+      "sha256": "0a9d6668c80a68f67f7669ef61163cc36eb0b98f78cd9ef2b5b5027524f307d2"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/observed-skips.json": {
+      "bytes": 18420,
+      "sha256": "139560aa91f0e6b189362325787524fa863bfce300e4aa49f5170b146811a3d6"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/oracle-unittest.stderr.txt": {
+      "bytes": 1314,
+      "sha256": "ccabe89182dfad35de5d2c4ca968122c88af256bba0bf164ce084fffbb725a1a"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/oracle-unittest.stdout.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/oracle-validate-workloads.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/oracle-validate-workloads.stdout.txt": {
+      "bytes": 1218,
+      "sha256": "f2a7cd0a3133b70369859ba9a8636acd61a8b951837618be9dd0bbdd70e79ff0"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/pnpm-version.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/pnpm-version.stdout.txt": {
+      "bytes": 8,
+      "sha256": "029d525e1c271e57d2537627f7699f2a0c64d53900bafd3d7c530961c0306dbb"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/typecheck.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/typecheck.stdout.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-core.json": {
+      "bytes": 234584,
+      "sha256": "647fb6058b968da8585961ff4b9ee2396d726de9982c7436c0ab00b3085b458b"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-core.stderr.txt": {
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-core.stdout.txt": {
+      "bytes": 155,
+      "sha256": "72415a230565de0abb36d650311abaeeb23a4dab8821b6f6664c005fef03b28d"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-qualification.json": {
+      "bytes": 23586,
+      "sha256": "b9282da2a4f49640683cf60fa0daf999ed61772a3882f97412c8ee9ea4a0df9b"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-qualification.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-qualification.stdout.txt": {
+      "bytes": 164,
+      "sha256": "927448f7a21b9c952b34e262c6d16cec2549292ad5df591ed89321d9cb3cb583"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-testkit.json": {
+      "bytes": 18007,
+      "sha256": "3a95a19504242023cec6567597d5f1569b1d65717060bad5d0a35ae03464dee7"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-testkit.stderr.txt": {
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-testkit.stdout.txt": {
+      "bytes": 158,
+      "sha256": "9ee814360049f3ab3ef49c2c728a7f2018434066902ccb364be5e4603086e635"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-xtdb.json": {
+      "bytes": 47486,
+      "sha256": "50f00987730bfc4e0a5dc29fe12cc51604c6336ce0f3b807240429af56ccdb43"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-xtdb.stderr.txt": {
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-raw/vitest-xtdb.stdout.txt": {
+      "bytes": 155,
+      "sha256": "6ad0350c93bfca995a612a11ec24b3b7dd4cf5156d2b05fbe641e92f80ab4c2b"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0-receipt.json": {
+      "bytes": 21622,
+      "sha256": "5125cc199a1eed4b256e355b411b80430e95a7f75cc47c1b6fb219a2c0966aaf"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/G0.log": {
+      "bytes": 239,
+      "sha256": "6114fa6b8ee8595a853d07d835f45be2cb24201a36bba13254f12d16b1b3553f"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/Sql-v2.2.0.g4": {
+      "bytes": 33702,
+      "sha256": "46ac30b2a5b2cd94b60d4dba7f3e0e89e0bacdc05ab86f7d6367aed2d891840e"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/baseline-ReadOnlySql.ts": {
+      "bytes": 4373,
+      "sha256": "1282184005a63a423c0bce8c8a6964e7bcc4a60f1934724afb0ff042eae90612"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/collect.py": {
+      "bytes": 5250,
+      "sha256": "bd0c0446b65c603c24c40aae6543304f550f9bf1f66342187d27712751716b4b"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-live.json": {
+      "bytes": 25934,
+      "sha256": "d6b12a6decb64dccc3b91fe66c160f64ffaef5bffc9ede05beee6f877bce5655"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-live.json.jsonl": {
+      "bytes": 23686,
+      "sha256": "c65e02fe0925502faf24536d01fcff538f4aecae5fc8d73dd99ae315a2febee5"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-live.log": {
+      "bytes": 24196,
+      "sha256": "60f05f658ae782cadfa35ec74f059844d7c7619d0be030bbe05a27e88dd1caa6"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-live.ts": {
+      "bytes": 4914,
+      "sha256": "3a10640a6112bd03c5bfec733894f7149eb7a3b5a3a0a9a6a118c5a089324793"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-offline.json": {
+      "bytes": 297664,
+      "sha256": "9a938c08308b7bcdecf9dafa10927c3bfd58509c38060eaaf89f39ab241b5bb7"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-offline.log": {
+      "bytes": 55,
+      "sha256": "f449c788769f01a5bf4fb721edc795417adb1280519a460d9bad4b3051b9af96"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-offline.ts": {
+      "bytes": 7779,
+      "sha256": "07096117a577415ac0fa83d91bbed87efebb3f5adf5c8227c640752f259dbfa6"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-sums.json": {
+      "bytes": 166042,
+      "sha256": "654119e8aa4033ff22604f499f59194b7214f76d6a4213ea86f4c6faa0930b43"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-sums.json.jsonl": {
+      "bytes": 149042,
+      "sha256": "9dfd677748b7a953d0d65bb74742955392c0d165ecb8e656f92de7b496797725"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-sums.log": {
+      "bytes": 5730,
+      "sha256": "67ab69c24ae9e56000b784f2a3eedccccd406c2d83102ba0e7b25ce0147cbd61"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/delta-sums.ts": {
+      "bytes": 7709,
+      "sha256": "9ac5660e0f8616b71af49d8099f9f4dd5fa9492b68ec40c86456df08ff9a4063"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/disk-before.txt": {
+      "bytes": 190,
+      "sha256": "eb82d10895a3bab797883ec5410176e6a1c2ffed03347edff9a4488feeb33547"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/disk-final.txt": {
+      "bytes": 190,
+      "sha256": "757a9cea81b4b82b92f88f702f0a1aad44af40c89345290c07e5b5579f02063f"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/exec-outcomes.json": {
+      "bytes": 982,
+      "sha256": "7b87834436a49d56917871f9f041c08090cb653bf95eeb861ae698ee29a7f4fe"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/grammar-live.json": {
+      "bytes": 5387787,
+      "sha256": "e62a6ec9d81419d43b183b6e28501b473f0adc9b2d4cd6b2a5a7c464245dfa14"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/grammar-live.json.jsonl": {
+      "bytes": 5012370,
+      "sha256": "876a012e237b0f132bde33a82fe4a26e0c41ac30eaedfc479a880e2b4d1d0e9f"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/grammar-live.log": {
+      "bytes": 765,
+      "sha256": "17027ed2bd5e46fefbe53919654baa66a29c0c3eb271f4af751f9e5d90fb884a"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/grammar-live.ts": {
+      "bytes": 3819,
+      "sha256": "0d11e3eb492e2f3b696e74b5552021147fd55aaf4d085df6cf74dff966e8c397"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/grammar-source-provenance.json": {
+      "bytes": 510,
+      "sha256": "b428e375e2766ca86fd01a02ca92b05d502203367c3a205934ffa43021976448"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/lexer-live.json": {
+      "bytes": 8375988,
+      "sha256": "8b6c6df298bef8f9e3ebc392bc17e2d25286681164c9de6b74e05f1c529f9161"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/lexer-live.json.jsonl": {
+      "bytes": 7978071,
+      "sha256": "048fd4cd6b883887af4acb30da2d768a4c6e5b0671f8e9f240b74b5f5fe92283"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/lexer-live.log": {
+      "bytes": 847,
+      "sha256": "19e5c62cf55a215dc8c4ee13561a2e2a93ebf68d26698742c484873f65909cd1"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/lexer-live.ts": {
+      "bytes": 4341,
+      "sha256": "0753db9d6198ae15f17afa977ca32f54970580883f0de91647915f5dbfa9c588"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/offline-source.json": {
+      "bytes": 4828,
+      "sha256": "ec21739a548c66dddfd416160eaa17bbbca26277529c095d0b6cf10f3cae9b1c"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/offline-source.log": {
+      "bytes": 4828,
+      "sha256": "ec21739a548c66dddfd416160eaa17bbbca26277529c095d0b6cf10f3cae9b1c"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/offline-source.ts": {
+      "bytes": 5208,
+      "sha256": "a4382c69c0650a3f90326fddb6f11fa9cb2fa406d40b4094334102ad913c8ad3"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/probe-source.log": {
+      "bytes": 1421,
+      "sha256": "e5e2bf25e2c587ca589cd81208b89bf8390db5ac4226a422db5c942d50b97d5f"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/probe-source.ts": {
+      "bytes": 6578,
+      "sha256": "448df71c40f3452bf60fe7ccd34ec66897c3e19ec53b9d4ed4be70302cfe04d9"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/probe-sums.log": {
+      "bytes": 2916,
+      "sha256": "790c63a5590ae629d8ca0b46d4e229cb194411dfe19e59212243e4a11bd658ed"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/probe-sums.ts": {
+      "bytes": 6063,
+      "sha256": "f8a244901757f6b46a60db43b3a49f40a7fa0b4ada97ea401ce1534a16be3657"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/probes.log": {
+      "bytes": 940,
+      "sha256": "7b073bdcb815e7c2fee696e47513119587c78ed10e91dc95bd6049dcdae30af9"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/reviewer-cases.json": {
+      "bytes": 200235,
+      "sha256": "82f4ca7d26197e4376a1f459df40ae42f27891e29f43b7e090308458a0bb41a7"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/reviewer-origin.json": {
+      "bytes": 423,
+      "sha256": "dd1fbb6d3f052414dcaddaa7d00d9f18f30fe63b0eb5a71ca9beac61a38034dd"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/reviewer-report.md": {
+      "bytes": 17982,
+      "sha256": "e6f10a79159f7092726980b1b7fe03ede5e8565bdc6f9630c5418eb6f6f3e1f2"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/ruling-Q79f.txt": {
+      "bytes": 623,
+      "sha256": "1f8d5ad2af31b61cde135be449e4fa70453c41224a80e701f4507f1520a362c2"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/run-probes.mjs": {
+      "bytes": 1625,
+      "sha256": "775d731ef2abf3e0d92c7bd4679200db8cc71669884925cb5e10f7e78f6480da"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/source-hazards.json": {
+      "bytes": 6506,
+      "sha256": "2ab7addf40415bc5ac61deb855dce6beb6757fe7f7dc221ad12f0a9226cac062"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/source-hazards.json.jsonl": {
+      "bytes": 3847,
+      "sha256": "1b4234d5f0af4789de702eed3b700fb24d114eba9ca4ac66fa12e9cff164a4a5"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/source-sums.json": {
+      "bytes": 124056,
+      "sha256": "d693d4469f04ed43d04b74ac32f13b9f97faf99e7a6be8441bb975133455d9b3"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/source-sums.json.jsonl": {
+      "bytes": 111930,
+      "sha256": "aac198dbcf4d83792113d7d53d58149e3200075fb2befd3ebf1a60ddb0089af7"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/source.patch": {
+      "bytes": 14718,
+      "sha256": "5e20a9a34b9eb8f414198991077335848f04091a36913ed182e556bea2fb3999"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/subquery-regression.json": {
+      "bytes": 9876,
+      "sha256": "332afa275d0427a79199db7e3cca87b01824efa48051c142db15a611afad08f3"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/subquery-regression.log": {
+      "bytes": 8789,
+      "sha256": "1f5668eaaf079126e096bb302411644dce2cdb64c354d225baa43bd4f3ea5ece"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/subquery-regression.ts": {
+      "bytes": 3016,
+      "sha256": "4f7ece5acfe041a83e49efcad0dc3a4457ae8104fe582d2ddca40eb2121904ec"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round4/summary.json": {
+      "bytes": 1308,
+      "sha256": "9f386503e5e936789f61e6ff4c8700cd4d06ab18f01056f4e5b8a406d3edc18c"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/REPORT-round4.md": {
+      "bytes": 12351,
+      "sha256": "ac7d447d3f3863db62417d03f9ade782dc6c58272d3b715c9d4c4fbbc306b2df"
+    },
+    "scripts/generate-xtdb-lexer.mjs": {
+      "bytes": 4628,
+      "sha256": "3c49cfdcbcd06efd6cdfe4bcece8cb0fda99229a4f529d16b22d4cd3c541f109"
+    },
+    "packages/xtdb/test/fixtures/SqlLexer-v2.2.0.g4": {
+      "bytes": 9339,
+      "sha256": "3d7f01c3d638fea7765279da259112a805ca8061e374ec952ab253a8b1fd9c0a"
+    },
+    "packages/xtdb/src/native/SqlTokens.ts": {
+      "bytes": 2875,
+      "sha256": "817699b64bca60c3d1760e1e825dc8f86fbdcae5adb169cf057223ee51a4bb38"
+    },
+    "packages/xtdb/src/native/SqlLexerPatterns.ts": {
+      "bytes": 3740,
+      "sha256": "66b04e172323ba6ead7690335200852f96180095b611333c370f646e7ff9daac"
+    },
+    "packages/xtdb/src/native/ReadOnlySql.ts": {
+      "bytes": 6994,
+      "sha256": "ce207a95ed51e14afc5ed93f38d77f54d7826c5cecbcb3d60b414c9fdc08492a"
+    },
+    "packages/xtdb/test/native-query.test.ts": {
+      "bytes": 11584,
+      "sha256": "165da1f6041aed6f0917f1ce29cf3439904329808c8a23d8672aade6b8c92e9c"
+    },
+    "packages/xtdb/test/query-expression-corpus.ts": {
+      "bytes": 6779,
+      "sha256": "30a192759de6ed7dc162e65c3430b203c94530ffaf2612625e98b9b91d27fc23"
+    },
+    "packages/xtdb/dist/native/ReadOnlySql.js": {
+      "bytes": 5078,
+      "sha256": "79787dff9e3c7769cd8cd6097fc3e307d0ca249f6e9081fa6d846dea9e07a24e"
+    },
+    "lab/experiments/EXP-X02-xtql-parity/round2/bin/pnpm": {
+      "bytes": 2089,
+      "sha256": "82b9277168371756785c18546338608b5b4900ddfab52a51255806f971e2d99a"
+    }
+  }
+}

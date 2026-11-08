@@ -1,0 +1,13 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 38216 "CX-VO05-R3-general"
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 39445 "CX-VO05-R3-shipped-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 39445 "CX-VO05-R3-shipped-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 39445 "CX-VO05-R3-shipped-gates"
+grammar-live 0 null
+lexer-live 0 null
+subquery-regression 0 null
+delta-live 0 null
+offline-source 0 null
+probe-source 0 null
+probe-sums 0 null
+delta-offline 0 null
+delta-sums 0 null

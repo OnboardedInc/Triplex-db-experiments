@@ -5,7 +5,12 @@ import { TypeExpr } from "@triplex-build/triplex/config";
 import { DatabaseScope } from "@triplex-build/triplex/runtime";
 import type { XtdbBasis, XtdbClient, XtdbQueryOptions } from "../src/XtdbClient.js";
 import { makeXtdbNativeQueries } from "../src/native/NativeQueries.js";
-import { queryExpressionCorpus } from "./query-expression-corpus.js";
+import {
+  queryExpressionCorpus,
+  lexicalQueryCorpus,
+  lexicalUnsafeCorpus,
+  lexicalRefusedCorpus,
+} from "./query-expression-corpus.js";
 import { readOnlyNativeSql } from "../src/native/ReadOnlySql.js";
 
 const scope = DatabaseScope.test("native-unit");
@@ -89,6 +94,27 @@ describe("XTDB native read provider", () => {
     }
     expect(calls.some(({ sql }) => sql.includes("ARRAY[1,2]"))).toBe(false);
   });
+  // [EXP-X02-R4] Why: require dispatch for every generated lexer/suffix form,
+  // and typed pre-dispatch refusal for all boundary/mutation variations.
+  // Rejected: mock success as engine evidence (real comparisons are retained separately).
+  it("classifies pinned lexer and suffix productions", async () => {
+    for (const { sql } of lexicalQueryCorpus()) {
+      const { client, calls } = fixture();
+      await Effect.runPromise(
+        makeXtdbNativeQueries(client, scope).selectSql(contract, { owner: "o" }, () => sql),
+      );
+      expect(calls.some((call) => call.sql.includes(sql))).toBe(true);
+    }
+    for (const sql of [...lexicalUnsafeCorpus(), ...lexicalRefusedCorpus()]) {
+      const { client, calls } = fixture();
+      const exit = await Effect.runPromiseExit(
+        makeXtdbNativeQueries(client, scope).selectSql(contract, { owner: "o" }, () => sql),
+      );
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isFailure(exit)) expect(Cause.hasDies(exit.cause)).toBe(false);
+      expect(calls.some((call) => call.sql.includes(sql))).toBe(false);
+    }
+  }, 60_000);
   // [EXP-X02-Q79e] Why: check every generated expression and invalid productions
   // through the provider. Rejected: six more hand-selected UNION spellings.
   it("classifies the generated query-expression grammar", async () => {

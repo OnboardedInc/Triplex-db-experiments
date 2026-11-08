@@ -1,0 +1,56 @@
+[
+  {
+    "tool": "grammar-live",
+    "output": "grammar-live.json",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "tool": "lexer-live",
+    "output": "lexer-live.json",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "tool": "subquery-regression",
+    "output": "subquery-regression.json",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "tool": "delta-live",
+    "output": "delta-live.json",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "tool": "offline-source",
+    "output": "offline-source.json",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "tool": "probe-source",
+    "output": "source-hazards.json",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "tool": "probe-sums",
+    "output": "source-sums.json",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "tool": "delta-offline",
+    "output": "delta-offline.json",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "tool": "delta-sums",
+    "output": "delta-sums.json",
+    "status": 0,
+    "signal": null
+  }
+]
