@@ -48,3 +48,24 @@ streamed population generator. Effect boundary: evaluate, reconcile, affected re
 Changed only packages/w0/**, lab/experiments/EXP-D01b-w0-kernel/receipts/** and the pnpm-lock importer block for packages/w0 (unrelated
 lockfile drift, such as a missing packages/duckdb importer, was discarded). Did not read lab/oracles/domain, any D01c branch or report, or
 the V-D01 scratch folders. sha256 list: receipts/packages-w0-6d76f65-SHA256SUMS.
+
+## W0-1.1.2 update (exp/D01b-w0-kernel-112 8483c50: kernel a2ad1c4, receipts 8483c50, merge 2eaf6dc of fedfcda; saved 2026-11-08 01:43Z)
+**Bottom line:** the kernel passes all 136 golden cases, and the harness now compares only bytes against the frozen hashes, so a fault in
+the kernel's own writer or decoder can no longer cancel out. The old kernel already produced correct bytes for all 136 cases; only the old
+harness's id check and its missing `inputBase64` loader failed. Orchestrator rerun: vitest 174/174 (136 case tests, 3 case-list tests, 35
+unit tests).
+- Harness (packages/w0/test/cases.test.ts): input bytes cut straight from the case file (or decoded `inputBase64` for C91, C92, C128) and
+  checked against input-sha256.json; output SHA-256 compared with expected-sha256.json (`identicalTo` cases also against the other entry);
+  `expected` never re-serialized; no kernel scanner or writer in the harness; the id sets of file names, file ids, both hash files and SPEC
+  11.2's table must be equal; the synthetic flag must sit on exactly SPEC 11.1's seven cases.
+- Kernel change: `json.ts` `canonicalJV` is iterative (SPEC 4.4 A13, SPEC 9 item 7); a publish or receive payload about 20,000 deep used to
+  crash with RangeError, which no golden case caught; a unit test now writes a 200,000-deep payload. A01-A15 needed no other change (BigInt
+  seq/done/basis.tx in publish and receive, NaN as E_SHAPE, code-point order, snapshots as given, writer rules).
+- Fingerprint 100k through heavy.mjs equals 1.1.1 on every value (basis.tx 4,338,757; facts 44,537,987; worlds, R1, R2, R3), floors equal,
+  0 invalid worlds, wire path equal to typed path on 6,000 checks; 103 s wall at load 17-18. Cost not rerun: the hot path did not change.
+- Planted faults (all reverted): writer uppercase `\u` hex fails C100, C133, C134, C136 (old harness: 0 failures); UTF-16 key sort fails
+  C133, C134 (old: 0); lenient UTF-8 decoding fails C92 (old: 0); BOM stripped fails C91 (old: 0); MINWAGE `>=` to `>` fails 48 cases (old:
+  48). So the old harness hid every writer and decoder fault.
+- SPEC-AMBIGUITY, ruled Q73 (pending): deep writes, and a waiting entry at done + 1. Changed only packages/w0/** and receipts/**;
+  pnpm-lock.yaml unchanged; sha256 list receipts/packages-w0-a2ad1c4-SHA256SUMS.
+- Merge order: this branch carries the W0-1.1.2 merge, so it merges into main only after contract 0.3.10 lands W0-1.1.2 with its pin.
