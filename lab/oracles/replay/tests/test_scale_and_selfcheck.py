@@ -77,6 +77,53 @@ class SelfChecks(unittest.TestCase):
         self.assertIn(False, [r["pass"] for r in rows if r["check"] == "ham-case:" + case["id"]])
         self.assertTrue(real.exists())
 
+    def test_continuation_table_check_detects_a_missing_paged_kind(self):
+        """Q70l: dropping a paged kind from run.CONTINUATIONS, or adding a query kind whose
+        output carries a next* field, fails the self-check."""
+        self.assertTrue(all(r["pass"] for r in C.check_continuations()))
+        table = {k: v for k, v in C.RUN.CONTINUATIONS.items() if k != "transactionsForEntity"}
+        failed = [r["check"] for r in C.check_continuations(table=table) if not r["pass"]]
+        self.assertEqual(failed, ["continuation-runtime:transactionsForEntity"])
+        queries = dict(C.RUN.QUERIES, fakePaged=_fake_paged)
+        failed = [r["check"] for r in C.check_continuations(queries=queries) if not r["pass"]]
+        self.assertEqual(failed, ["continuation-runtime:fakePaged"])
+
+    def test_execution_detects_computed_cross_module_and_nested_plants(self):
+        from lab.oracles.replay.tests.helpers import planted_page_output
+        # [O-REPLAY-049] Why: each adversarial producer must execute and fail coverage.
+        # Rejected: source matching (computed names and cross-module/nested outputs evaded it).
+        def computed(run, query):
+            field = "next" + "Page"
+            return C.V.OrderedOut([("rows", []), (field, 1)])
+
+        def elsewhere(run, query):
+            return planted_page_output()
+
+        def nested(run, query):
+            return C.V.OrderedOut([("pages", [{"body": {"nextPage": 1}}])])
+
+        for handler in (computed, elsewhere, nested):
+            with self.subTest(handler=handler.__name__):
+                rows = C.check_continuations(queries=dict(C.RUN.QUERIES, fakePaged=handler))
+                row = next(r for r in rows if r["check"] == "continuation-runtime:fakePaged")
+                self.assertFalse(row["pass"])
+                self.assertEqual(row["exercised"], 4)
+                self.assertEqual(row["nextFields"], ["nextPage"])
+
+    def test_unexercisable_kind_fails_closed(self):
+        def needs_fixture(run, query):
+            return query["futureRequiredInput"]
+        rows = C.check_continuations(queries=dict(C.RUN.QUERIES, futureKind=needs_fixture))
+        row = next(r for r in rows if r["check"] == "continuation-runtime:futureKind")
+        self.assertFalse(row["pass"])
+        self.assertEqual(row["exercised"], 0)
+        self.assertEqual(len(row["errors"]), 4)
+
+
+def _fake_paged(run, query):
+    """A paged kind left off the continuation table (for the self-check test above)."""
+    return C.V.OrderedOut([("rows", []), ("nextPage", 1)])
+
 
 if __name__ == "__main__":
     unittest.main()

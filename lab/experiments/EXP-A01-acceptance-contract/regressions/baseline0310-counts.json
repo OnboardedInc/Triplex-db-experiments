@@ -1,0 +1,403 @@
+{
+  "version": "0.3.10",
+  "closability": {
+    "rule": "pin-level blockers per obligation (oracle pins, excludes, refusals, the W0 pin); every claim is also blocked by the evaluator-side blockers of QUALIFICATION_RUN until they clear (RULINGS Q67a)",
+    "total": 157,
+    "closable": [
+      "G1.schema.cardinality",
+      "G1.schema.reference-target",
+      "G1.schema.required",
+      "G1.schema.unique",
+      "G1.types.invalid-rejected",
+      "G1.types.native-parameters",
+      "G1.types.out-of-range-rejected",
+      "G1.types.value-kinds-roundtrip",
+      "G1.wire.qlever-shadow",
+      "G1.wire.write-guards",
+      "G1.wire.xtdb-encodings",
+      "G10.capabilities.truthful",
+      "G10.composition.identity-bound",
+      "G10.cursor.continuation-transitions",
+      "G10.cursor.deep-page-cost",
+      "G10.cursor.stable",
+      "G10.native.entry-checks",
+      "G10.pkg.clean-consumer-slice",
+      "G10.scope.ownership-refusal",
+      "G10.scope.shared-collision",
+      "G2.arith.binary64",
+      "G2.arith.integer-exact",
+      "G2.errors.typed-taxonomy",
+      "G2.expr.cross-family-comparison",
+      "G3.recursion.scalable",
+      "G4.neg.conflict-semantics",
+      "G5.agg.full-support",
+      "G5.agg.projection-sums",
+      "G5.agg.typed-groups",
+      "G7.journal.logical-contract",
+      "G7.outbox.atomic-unit",
+      "G7.outbox.publication-sequence",
+      "G7.outbox.receiver-ordering",
+      "G7.position.bound-after-publication",
+      "G7.position.coordinates",
+      "G7.receipt.journal-complete",
+      "G7.recovery.backup-restore",
+      "G7.write.atomic",
+      "G7.write.command-idempotency",
+      "G7.write.preconditions-cas",
+      "G8.publish.basis-honesty",
+      "G8.publish.coherent",
+      "G8.publish.valid-boundary",
+      "G8.support.alternate-maintained",
+      "G9.cascade.restrict-detach-cascade",
+      "G9.corrections.preserve",
+      "G9.deletion.entity",
+      "G9.erasure.commit-semantics",
+      "G9.erasure.query-semantics",
+      "G9.erasure.reproduction-modulo",
+      "G9.erasure.visibility-boundary",
+      "G9.lineage.supporting-assertions",
+      "G9.temporal.half-open-intervals",
+      "G9.temporal.recorded-cuts",
+      "NS.SEC.retro-and-audit",
+      "R.evaluator.incomplete-receipts",
+      "R.native.fragment-equivalence",
+      "R.raw.capability-matrix",
+      "R.raw.guide-only-authoring",
+      "R.repo.entity-suite",
+      "S.correctness.query-families",
+      "S.maintenance.correct-during",
+      "S.restart.at-scale",
+      "S.rungs.ladder",
+      "W0.coverage-floors"
+    ],
+    "blocked": {
+      "G1.decimal.channel-routing": [
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-admission": [
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-differential": [
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-ranges": [
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-serialization": [
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-writer-negative": [
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.found.unchanged44": [
+        "oracle-unpinned:O-TESTKIT"
+      ],
+      "G1.schema.release-derived-contracts": [
+        "oracle-unpinned:O-SPEC"
+      ],
+      "G1.types.decimal": [
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "G1.types.storage-widening-safe": [
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "G10.lifecycle.open-close": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G10.native.read-only-and-safe-params": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G10.pkg.type-witnesses": [
+        "oracle-unpinned:O-SPEC"
+      ],
+      "G2.strings.codepoint-supported": [
+        "oracle-unpinned:O-STR",
+        "oracle-unpinned:O-COLL"
+      ],
+      "G3.admission.preconstruction": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G3.cost.budget-honored": [
+        "oracle-unpinned:O-PLAN"
+      ],
+      "G3.plan.access-path-at-scale": [
+        "oracle-unpinned:O-PLAN"
+      ],
+      "G3.plan.explain": [
+        "oracle-unpinned:O-PLAN"
+      ],
+      "G3.recursion.read-only-frontier": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G4.cut.task-wide-fixed": [
+        "oracle-unpinned:O-EVT"
+      ],
+      "G4.neg.correlated-not-exists": [
+        "oracle-unpinned:O-SHAPE"
+      ],
+      "G4.neg.correlated-not-exists-raw": [
+        "oracle-unpinned:O-SHAPE"
+      ],
+      "G5.agg.shape-controls": [
+        "oracle-unpinned:O-SHAPE"
+      ],
+      "G6.cancel.observed-drain": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G6.cancel.preaborted-no-work": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G6.cleanup.scratch-zero": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G6.deadline.enforced": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G6.ownership.bounded-connections": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G6.resource.memory-failure-contained": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G7.broker.fence-and-epochs": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G7.broker.promotion-hardening": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G7.commit.protocol-transitions": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G7.composition.ack-and-routed-ryow": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G7.composition.overlay-rules": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G7.migration.schema-evolution": [
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "G7.migration.valid-writes-never-rejected": [
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "G8.composition.watermark-routing": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G8.eligibility.c1-routing": [
+        "oracle-unpinned:O-PLAN"
+      ],
+      "G8.maintenance.bounded-boundaries": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G8.reuse.positive-witness": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G8.support.incremental-witness": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G9.erasure.protected-copies": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G9.erasure.residual-shapes": [
+        "refused:O-REPLAY:q52-shapes"
+      ],
+      "G9.erasure.restore-reapplies": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "G9.history.raw-lifetime-compat": [
+        "oracle-unpinned:O-HAM"
+      ],
+      "G9.history.snapshot-metadata": [
+        "oracle-unpinned:O-CFG8",
+        "oracle-unpinned:O-HAM"
+      ],
+      "G9.presence.explicit": [
+        "oracle-unpinned:O-CFG8"
+      ],
+      "GS.01": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.02": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.03": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.04": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.05": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.06": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.07": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.08": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.09": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.10": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.11": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.12": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.13": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.14": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.15": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.16": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.17": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.18": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.19": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "GS.20": [
+        "oracle-unpinned:O-HAND",
+        "oracle-unpinned:O-OBS"
+      ],
+      "NS.P1": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "NS.P2": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "NS.P3": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "NS.P4": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "NS.P5": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "NS.SEC.bulk-lane": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "NS.calibration": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "PKT.full142": [
+        "oracle-unpinned:O-EVT"
+      ],
+      "R.raw.mapped-recipes": [
+        "oracle-unpinned:O-STR",
+        "oracle-unpinned:O-COLL",
+        "oracle-unpinned:O-SHAPE"
+      ],
+      "R.raw.parity": [
+        "oracle-unpinned:O-STR"
+      ],
+      "R.repo.mutation-controls": [
+        "refused:O-REPLAY:q52-shapes",
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "REQ.change-feed": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.commit-idempotent": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.no-silent-precision-loss": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.outbox-atomic": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.pii-erasure": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.read-your-write": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.retro-corrections": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.snapshot-reads": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.sweep-pins-position": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "REQ.tenant-isolation": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "S.budgets.cumulative": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "S.capacity.admitted": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "S.metrics.reported": [
+        "oracle-unpinned:O-OBS"
+      ],
+      "S.population.year-one": [
+        "oracle-unpinned:O-OBS"
+      ]
+    },
+    "counts": {
+      "total": 157,
+      "closable": 65,
+      "blocked": 92
+    },
+    "blockerCounts": {
+      "oracle-unaccepted:O-TDK1": 6,
+      "oracle-unpinned:O-CFG8": 2,
+      "oracle-unpinned:O-COLL": 2,
+      "oracle-unpinned:O-EVT": 2,
+      "oracle-unpinned:O-HAM": 2,
+      "oracle-unpinned:O-HAND": 20,
+      "oracle-unpinned:O-OBS": 62,
+      "oracle-unpinned:O-PLAN": 4,
+      "oracle-unpinned:O-SHAPE": 4,
+      "oracle-unpinned:O-SPEC": 2,
+      "oracle-unpinned:O-STR": 3,
+      "oracle-unpinned:O-TESTKIT": 1,
+      "refused:O-REPLAY:q52-shapes": 2,
+      "refused:O-REPLAY:scale-evolution": 5
+    }
+  },
+  "surfaces": {
+    "xtdb-xtql": 154,
+    "xtdb-sql": 154,
+    "qlever-sparql": 155
+  }
+}

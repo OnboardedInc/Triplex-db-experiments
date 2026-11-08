@@ -1,0 +1,77 @@
+{
+  "sourceHead": "da79107aa3be440ff38012962b0ea161198411df",
+  "mergedMain": "8f1722612b05ceeabbd36041e8bed2ad6459bf0a",
+  "reviewedHead": "36d74348df2dd224ec15e29856a04a4e8daa4a30",
+  "reviewerCommit": "ae3f09137e6216dfa2580ec1f00d7d6c06133c73",
+  "transitiveContractSha256": "68304280363e5c602a2b343f405448c0d3e218dc4ff5de24af7cd8b219aebca7",
+  "sha256": {
+    "build_contract.py": "60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf",
+    "RULINGS-PENDING.md": "53cf5267cf8e6f32f3ec139a79861ecf8de03da6f7d227ded95d0ebe03291c11",
+    "ACCEPTANCE.md": "a62e022e0547f442c21ac2cd8e346ca0e64f2e1141041dfcfb59f5a87dddd124",
+    "obligations.json": "14469dc55956828e5b31e688747769d3808d7f2cbfdd4782ed3adad5e2bc934e",
+    "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
+    "capability-matrix.md": "544acb56083db7c37ecfdcbe5f8e140b9999d368ee84632acd103b3b5069ac40",
+    "load-contract.json": "00169eedc83df0d7541f12c188aaec72f94c11f8ba70992e0411a4999d2adced",
+    "budgets.json": "91a85c688b876f767c25afa73d4a3080eb2831bc21ed1daaf48e7b5a701bda00"
+  },
+  "counts": {
+    "total": 157,
+    "closable": 40,
+    "blocked": 117
+  },
+  "perSurface": {
+    "xtdb-xtql": {
+      "total": 154,
+      "closable": 39,
+      "blocked": 115
+    },
+    "xtdb-sql": {
+      "total": 154,
+      "closable": 39,
+      "blocked": 115
+    },
+    "qlever-sparql": {
+      "total": 155,
+      "closable": 39,
+      "blocked": 116
+    },
+    "datomic-datalog": {
+      "total": 153,
+      "closable": 0,
+      "blocked": 153
+    }
+  },
+  "pendingIds": [
+    "Q51b",
+    "Q72a",
+    "Q72b",
+    "Q72c",
+    "Q72d",
+    "Q72e",
+    "Q72g",
+    "Q73a",
+    "Q73b",
+    "Q78e",
+    "Q80a",
+    "Q80b",
+    "Q80c",
+    "Q81b",
+    "Q81c",
+    "Q82a",
+    "Q82b",
+    "Q82c",
+    "Q82d",
+    "Q82e",
+    "Q83a",
+    "Q83b",
+    "Q83c",
+    "Q84a",
+    "Q84b",
+    "Q84c",
+    "Q84d",
+    "Q84e",
+    "Q83d"
+  ],
+  "all51PriorMatrixCellMapsUnchanged": true,
+  "reviewerScriptSha256": "9f258188b525cd512dc2a515e8acf5745593c4de97b1ff23ea2ca14b48c370aa"
+}

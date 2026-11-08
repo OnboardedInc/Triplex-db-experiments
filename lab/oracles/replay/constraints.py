@@ -41,7 +41,7 @@ class Fact:
     def __init__(self, id, entityId, attribute, value, entityType, lo, hi, erased=False):
         self.id, self.entityId, self.attribute, self.value = id, entityId, attribute, value
         self.entityType, self.lo, self.hi = entityType, lo, hi
-        self.erased = erased      # R-ERA-4 (Q49c): Unique ignores erased values
+        self.erased = erased      # R-ERA-4: Unique ignores erased values (Q49c), ReferenceTarget skips them (Q52d)
 
     def at(self, v):
         return self.lo <= v and (self.hi is None or v < self.hi)
@@ -103,6 +103,10 @@ def violations_at(facts, rules, v, membership="valid-at-instant"):
         elif tag == "ReferenceTarget":
             targets = members.get(rule["targetEntityType"], set())
             for f in rows:
+                if f.erased:
+                    # Q52d: an erased reference takes no part in reference constraints; checking
+                    # it would need the erased value (Q24), so ReferenceTarget skips it
+                    continue
                 ok = f.value.family == "ref" and f.value.payload in targets
                 if not ok:
                     key = ("reference-target", etype, attr, f.entityId, value_identity_text(f.value))
