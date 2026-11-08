@@ -909,7 +909,7 @@ const removeDir = d => { try { if (fs.existsSync(d)) { fs.chmodSync(d, 0o755); s
 /** The files a run executes from the evaluator's working tree (claim.mjs, its import lib.mjs, gate.mjs for the plan) and the
  * reference model, each compared with its blob at the evaluator's commit (RULINGS Q75a). */
 // [EXP-E01] Why: gate imports execute too. Rejected: pinning only direct entrypoints (transitive code could be poisoned).
-export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/box.mjs', 'lab/bin/box-policy.mjs', 'lab/bin/box-engine.mjs', 'lab/config/box/Dockerfile', 'lab/config/slots.json', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/bin/receipt.mjs', 'lab/acceptance/build_contract.py'];
+export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/box.mjs', 'lab/bin/box-policy.mjs', 'lab/experiments/EXP-G03/round2/window.mjs', 'lab/bin/box-engine.mjs', 'lab/config/box/Dockerfile', 'lab/config/slots.json', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/bin/receipt.mjs', 'lab/acceptance/build_contract.py'];
 const EVALUATOR_ROOT = path.resolve(import.meta.dirname, '../..');
 const POISON_MARKER = 'triplex-evaluator-poisoned.json';
 const evaluatorBytes = () => Object.fromEntries(EVALUATOR_FILES.map(f => { try { return [f, sha256(fs.readFileSync(path.join(EVALUATOR_ROOT, f)))]; } catch { return [f, null]; } }));

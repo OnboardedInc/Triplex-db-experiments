@@ -674,6 +674,8 @@ main(async () => {
     // Rejected: a second manifest resolver (selection and oracle checks would drift).
     if (!options.claim || !options.authority || !options['evaluator-commit']) fail('USAGE', 'gate.mjs OBL --claim FILE --repo SOURCE --authority SHA --evaluator-commit SHA [--holder NAME]');
     const args = ['lab/bin/claim.mjs', 'qualify', path.resolve(options.claim), '--repo', path.resolve(options.repo ?? REPO), '--authority', options.authority, '--evaluator-commit', options['evaluator-commit'], '--holder', options.holder ?? defaultHolder(options), '--json'];
+    if (options['store-receipt']) args.push('--store-receipt',path.resolve(options['store-receipt']));
+    if (options['pair-slots']) args.push('--pair-slots',options['pair-slots']);
     if (options.work) args.push('--work', path.resolve(options.work));
     const result = spawnSync(process.execPath, args, { cwd: REPO, stdio: 'inherit' });
     process.exitCode = result.status ?? 2;

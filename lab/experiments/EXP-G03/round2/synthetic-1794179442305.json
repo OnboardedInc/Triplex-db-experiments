@@ -1,0 +1,20 @@
+{
+  "source": {
+    "commit": "e64c2b9c1e91be685771e374a3244a0f5128dd1b",
+    "hashes": {
+      "contract": "52392864249326d1398f9ba20f5969b28ffe21a7577cfecf2c96b9eb0708e049",
+      "slots": "eb178fae5d3f18a6e1544f5b367d6039686ca003909e6f50711765eb24c47903",
+      "load": "677d27fd8a0599a75c1dc0357d4ad2f053a1be13b7d97f5cc1db8bdbda4af78c"
+    }
+  },
+  "stamp": 1794179442305,
+  "diagnostic": true,
+  "results": [
+    {
+      "id": "setup",
+      "status": "FAIL",
+      "error": "Error: docker image inspect sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506 failed: Error response from daemon: No such image: sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506"
+    }
+  ],
+  "rawDir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/g03/runs/g03-r2/1794179442305"
+}

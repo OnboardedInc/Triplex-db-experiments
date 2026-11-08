@@ -1,0 +1,32 @@
+| Section | xtdb-xtql | xtdb-sql | qlever-sparql | engine-scoped | policy-pending | derived |
+| --- | --- | --- | --- | --- | --- | --- |
+| G1 | 22 | 22 | 22 | 15 | 0 | 0 |
+| G2 | 11 | 11 | 11 | 2 | 0 | 0 |
+| G3 | 7 | 7 | 7 | 0 | 0 | 2 |
+| G4 | 8 | 8 | 7 | 0 | 0 | 0 |
+| G5 | 11 | 11 | 11 | 1 | 0 | 0 |
+| G6 | 8 | 8 | 8 | 0 | 0 | 0 |
+| G7 | 25 | 25 | 26 | 22 | 0 | 1 |
+| G8 | 12 | 12 | 13 | 3 | 0 | 0 |
+| G9 | 27 | 27 | 27 | 8 | 3 | 0 |
+| G10 | 17 | 17 | 17 | 2 | 0 | 1 |
+| R | 12 | 12 | 12 | 2 | 0 | 0 |
+| NS | 9 | 9 | 9 | 3 | 0 | 0 |
+| GS | 24 | 24 | 24 | 4 | 0 | 0 |
+| S | 8 | 8 | 8 | 4 | 0 | 0 |
+| distinct | 154 | 154 | 155 | 50 | 3 | 4 |
+obligations: 157; raw exceptions: 18; traced cases: 75; mutants: 44; thresholds: 50 (12 derived)
+rulings compiled: RESCOPE, NUMERIC, Q1, Q3, Q5, Q6, Q7, Q8a, Q8b, Q8c, Q8d, Q8e, Q8f, Q9, Q10, Q12, Q13, Q14a, Q14b, Q14c, Q14d, Q15, Q16, Q17, Q18, Q19, Q20, Q21, Q22, Q23, Q24, Q25, Q26, Q27, Q28, Q29, Q30, Q31, Q32, Q33, Q34, Q35, Q36, Q37, Q38, Q39, Q40, Q41, Q42, Q43, Q44, Q45, Q46, Q47, Q48, Q49, Q50, Q51, Q52, Q53, Q54, Q55, Q56, Q58, Q59, Q60, Q61, Q62, Q57, Q63, Q64, Q65, Q66, Q67, Q68, Q69, Q71, Q72f; superseded: Q2, Q4, Q11
+transitive hash: c336b4ada7b05511d327bb54439aaba2d930f4a84c5827bf275b1a2ffacceafe
+obligations.json: f6637c11b6472c5242c8128757aecc9bf7cd74522ee2466f256c886d0b70fd2d
+load-contract.json: 677d27fd8a0599a75c1dc0357d4ad2f053a1be13b7d97f5cc1db8bdbda4af78c
+budgets.json: c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159
+capability-matrix.md: cbff0c1ccd973481f0a00de891e3b89c9138c5b17ca7706b9cc62c5b3d37da03
+ACCEPTANCE.md: 64a77f661bf093f87c63f3f0d0634ca4947ad1f3eeada224001b9aa2e35191d0
+verify transitive hash: c336b4ada7b05511d327bb54439aaba2d930f4a84c5827bf275b1a2ffacceafe
+verify obligations.json: f6637c11b6472c5242c8128757aecc9bf7cd74522ee2466f256c886d0b70fd2d
+verify load-contract.json: 677d27fd8a0599a75c1dc0357d4ad2f053a1be13b7d97f5cc1db8bdbda4af78c
+verify budgets.json: c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159
+verify capability-matrix.md: cbff0c1ccd973481f0a00de891e3b89c9138c5b17ca7706b9cc62c5b3d37da03
+verify ACCEPTANCE.md: 64a77f661bf093f87c63f3f0d0634ca4947ad1f3eeada224001b9aa2e35191d0
+second regeneration byte-identical (RULINGS Q34e)

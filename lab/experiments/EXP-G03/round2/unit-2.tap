@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: contract pins load from explicit commit; missing or mismatched pins fail
+ok 1 - contract pins load from explicit commit; missing or mismatched pins fail
+  ---
+  duration_ms: 12.018875
+  type: 'test'
+  ...
+# Subtest: store receipt supplies placement only, never replacement pins
+ok 2 - store receipt supplies placement only, never replacement pins
+  ---
+  duration_ms: 5.480708
+  type: 'test'
+  ...
+# Subtest: PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+ok 3 - PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+  ---
+  duration_ms: 15.900833
+  type: 'test'
+  ...
+# Subtest: gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+ok 4 - gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+  ---
+  duration_ms: 0.269917
+  type: 'test'
+  ...
+# Subtest: preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+ok 5 - preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+  ---
+  duration_ms: 0.274333
+  type: 'test'
+  ...
+# Subtest: cgroup proof refuses invalid identities before constructing a reader
+ok 6 - cgroup proof refuses invalid identities before constructing a reader
+  ---
+  duration_ms: 0.076959
+  type: 'test'
+  ...
+# Subtest: input allowlist never includes lab, links or missing dependency roots
+ok 7 - input allowlist never includes lab, links or missing dependency roots
+  ---
+  duration_ms: 1.630209
+  type: 'test'
+  ...
+# Subtest: tar carries exact bytes, executable mode and long ustar path without extracting
+ok 8 - tar carries exact bytes, executable mode and long ustar path without extracting
+  ---
+  duration_ms: 10.298042
+  type: 'test'
+  ...
+# Subtest: inspect check refuses changed containment, limits, image, mounts and environment
+ok 9 - inspect check refuses changed containment, limits, image, mounts and environment
+  ---
+  duration_ms: 0.763542
+  type: 'test'
+  ...
+# Subtest: qualification refuses refs and never calls a supplied candidate callback
+ok 10 - qualification refuses refs and never calls a supplied candidate callback
+  ---
+  duration_ms: 0.323083
+  type: 'test'
+  ...
+# Subtest: failed cleanup reservations survive reconciliation
+ok 11 - failed cleanup reservations survive reconciliation
+  ---
+  duration_ms: 0.433792
+  type: 'test'
+  ...
+# Subtest: a separate clone in a shared writable root is still refused
+ok 12 - a separate clone in a shared writable root is still refused
+  ---
+  duration_ms: 0.43
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 80.489875

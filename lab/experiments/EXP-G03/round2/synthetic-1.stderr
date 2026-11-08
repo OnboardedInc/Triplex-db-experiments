@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 39477 "CX-X02-R4-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 39477 "CX-X02-R4-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 80196 "CX-G03-r2-regressions", pid 80950 "CX-G03-r2-store", pid 39477 "CX-X02-R4-live"

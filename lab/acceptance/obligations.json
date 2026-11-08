@@ -22,7 +22,7 @@
     "lab/verify/O02/v-o04b/results/hashes.a9c1327.json": "256465151a1018faf17432f3706aa34650448b587e52d256b80972de7d9df1f1",
     "lab/verify/O02/BRIEF.md": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4",
     "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",
-    "lab/acceptance/build_contract.py": "98effa8e21657cdadafb5e0ef3c213b7ecc8d2bbc03e6f859c24ec57938ef3ae"
+    "lab/acceptance/build_contract.py": "049d7b25dc5fb38e7a53c32adbd83bd1bd2119661f826d3a80495c0dd6faab29"
   },
   "artifacts": {
     "load-contract.json": "677d27fd8a0599a75c1dc0357d4ad2f053a1be13b7d97f5cc1db8bdbda4af78c",
@@ -2743,15 +2743,16 @@
         "imageId": null,
         "storage": "dev"
       },
-      "imageId": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+      "imageId": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
       "pinEvidence": {
         "commit": "f7f6c05d4cfcdeda4b11fef1821a2cc6bf35817d",
         "metadata": "lab/experiments/EXP-G03/build-probes-1794178215198.json",
-        "store": "lab/experiments/EXP-G03/box.json"
+        "store": "lab/experiments/EXP-G03/round2/store.json",
+        "receiptSha256": "94e328343dd2057c15e9970dc046b07e66c73936de82925e9ee0d23dd56e8a1a"
       },
       "stderrKeepBytes": 65536,
       "stdoutMaxBytes": 16777216,
-      "storeListingSha256": "c13cf21f64047faa85410506693d395759deb687084023bfd4d60027ce92cafd",
+      "storeListingSha256": "64bfed7194f5f8d852286cd923bd050f520f47562dd1937a86c3253d5bbc356e",
       "storeLockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
     },
     "boxInputs": [
@@ -25696,5 +25697,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "cf74a6a99c65f98606699c9925069c6738cf1715e4e656f417ab005fe8f1a01b"
+  "transitiveContractSha256": "c336b4ada7b05511d327bb54439aaba2d930f4a84c5827bf275b1a2ffacceafe"
 }

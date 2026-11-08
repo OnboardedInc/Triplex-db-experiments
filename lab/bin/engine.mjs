@@ -441,7 +441,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const command = positional[0];
   let policy, authorityGit;
-  if (command === 'box' && options.authority) {
+  if (options.authority) {
     const { gitSource } = await import('./claim.mjs');
     const { authorityPolicy } = await import('./box-policy.mjs');
     if (!options['authority-repo']) fail('USAGE', '--authority-repo is required with --authority');
