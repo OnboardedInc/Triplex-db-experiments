@@ -6,7 +6,9 @@ in dependencies, publish deliveries copied from their work items and appended to
 projection entry anywhere in the cases must name a work item some case's record carries: its id is recomputed from (key, kind,
 rule, subject) and its (id, version) must match a record. Every numeric-error case must hold its raw token text unchanged.
 Two case forms need care (SPEC 11.1): an `inputBase64` case carries its input as bytes, and a `synthetic` case holds records
-that evaluate never produces (readings A07 to A09, A14, A15), so only its shapes and output order are checked. Integer tokens of
+that evaluate never produces (readings A07 to A09, A14, A15), so only its shapes and output order are checked; the flag is
+allowed only on the seven cases SPEC 11.1 lists. expected-sha256.json, input-sha256.json and SHA256SUMS are recomputed and
+compared with the files. Integer tokens of
 any length and values nested to any depth are read without hitting Python's default limits (readings A12, A13).
 It holds no rule logic: it never decides which tasks, obligations, work items, flags or deliveries a world produces.
 """
@@ -45,6 +47,8 @@ NUMERIC_ERROR_TOKENS = {
 
 # Raw text that must stay in a case file as written (W0-1.1.2): tokens a JSON round trip would rewrite or that Python reads as
 # something else (-0 as 0, NaN as a float, 1.65e3 as 1650.0, raw UTF-8 as an escape, a long or deep token as anything shorter).
+SYNTHETIC_IDS = {"C100", "C101", "C102", "C133", "C134", "C135", "C136"}  # SPEC 11.1; the flag is rejected anywhere else
+
 RAW_TEXT = {
     "C90": ['"v": ' + "9" * 5000 + ","],
     "C93": ['"v": -0,'],
@@ -546,6 +550,63 @@ def emitted_rules(out):
     return rules
 
 
+INPUT_BYTES = {}  # case id -> the input bytes a harness hands over (SPEC 11.1)
+
+
+def top_level_value_text(text, key):
+    """The text of a top-level member's value exactly as written, from its first to its last character."""
+    dec, ws = json.JSONDecoder(), re.compile(r"[ \t\n\r]*")
+    i = ws.match(text, 0).end()
+    if text[i:i + 1] != "{":
+        return None
+    i += 1
+    while True:
+        i = ws.match(text, i).end()
+        if text[i:i + 1] == "}":
+            return None
+        name, i = dec.raw_decode(text, i)
+        i = ws.match(text, i).end() + 1  # the colon
+        start = ws.match(text, i).end()
+        _, i = dec.raw_decode(text, start)
+        if name == key:
+            return text[start:i]
+        i = ws.match(text, i).end() + 1  # the comma
+
+
+def check_hash_files(cases):
+    """expected-sha256.json, input-sha256.json (V-D01e N3) and SHA256SUMS (V-D01e N2)."""
+    for name, want_of in (("expected-sha256.json", lambda c: canon(c["expected"]).encode("utf-8")),
+                          ("input-sha256.json", lambda c: INPUT_BYTES[c["id"]])):
+        table = load(os.path.join(HERE, name))
+        if set(table) != set(cases):
+            err(name, "must list exactly the case ids")
+        for cid, c in cases.items():
+            want = hashlib.sha256(want_of(c)).hexdigest()
+            if table.get(cid) != want:
+                err(name, f"{cid} should be {want}")
+    listed = {}
+    with open(os.path.join(HERE, "SHA256SUMS"), encoding="utf-8") as fh:
+        for line in fh:
+            m = re.fullmatch(r"([0-9a-f]{64})  (lab/world/W0/\S+)\n", line)
+            if not m:
+                err("SHA256SUMS", f"bad line {line!r}")
+                continue
+            listed[m.group(2)[len("lab/world/W0/"):]] = m.group(1)
+    present = set()
+    for dirpath, dirnames, filenames in os.walk(HERE):
+        dirnames[:] = [d for d in dirnames if d != "__pycache__" and not d.startswith(".")]
+        for fn in filenames:
+            rel = os.path.relpath(os.path.join(dirpath, fn), HERE).replace(os.sep, "/")
+            if rel != "SHA256SUMS" and not fn.startswith("."):
+                present.add(rel)
+    for rel in sorted(present ^ set(listed)):
+        err("SHA256SUMS", f"{rel} is {'not listed' if rel in present else 'listed but missing'}")
+    for rel in sorted(present & set(listed)):
+        with open(os.path.join(HERE, rel), "rb") as fh:
+            if hashlib.sha256(fh.read()).hexdigest() != listed[rel]:
+                err("SHA256SUMS", f"{rel} does not match its hash")
+
+
 def check_case(path, releases, by_hash, cases):
     try:
         c = load(path)
@@ -555,6 +616,8 @@ def check_case(path, releases, by_hash, cases):
             return err(os.path.basename(path), "duplicate keys are allowed only in an E_SHAPE case's input")
     with open(path, encoding="utf-8") as fh:
         raw = fh.read()
+    INPUT_BYTES[c.get("id")] = base64.b64decode(c["inputBase64"]) if "inputBase64" in c else \
+        (top_level_value_text(raw, "input") or "").encode("utf-8")
     w = os.path.basename(path)
     need = {"id", "slug", "title", "op", "checks", "notes", "expected"} | ({"inputBase64"} if "inputBase64" in c else {"input"})
     if not need <= set(c) or not set(c) <= need | {"identicalTo", "synthetic"}:
@@ -570,6 +633,8 @@ def check_case(path, releases, by_hash, cases):
     exp, inp, op = c["expected"], c["input"], c["op"]
     is_error = isinstance(exp, dict) and set(exp) == {"error"}
     synthetic = c.get("synthetic", False)
+    if ("synthetic" in c) != (c["id"] in SYNTHETIC_IDS):
+        return err(w, f"synthetic: true is allowed exactly on the cases SPEC 11.1 lists ({', '.join(sorted(SYNTHETIC_IDS))})")
     if synthetic is not True and "synthetic" in c or synthetic and (is_error or op not in ("publish", "receive") or c["checks"]):
         return err(w, "synthetic is true only on a valid publish or receive case without checks")
     if has_float(c, (ConstToken,)):
@@ -645,13 +710,7 @@ def main():
     for cid in list(NUMERIC_ERROR_TOKENS) + list(RAW_TEXT):
         if cid not in cases:
             err("NUMERIC_ERROR_TOKENS or RAW_TEXT", f"{cid} is listed but missing")
-    manifest = load(os.path.join(HERE, "expected-sha256.json"))
-    if set(manifest) != set(cases):
-        err("expected-sha256.json", "must list exactly the case ids")
-    for cid, c in cases.items():
-        want = hashlib.sha256(canon(c["expected"]).encode("utf-8")).hexdigest()
-        if manifest.get(cid) != want:
-            err("expected-sha256.json", f"{cid} should be {want} (sha256 of canonicalJson(expected), SPEC 9)")
+    check_hash_files(cases)
     for c in cases.values():
         other = c.get("identicalTo")
         if other and (other not in cases or canon(cases[other]["expected"]) != canon(c["expected"])):

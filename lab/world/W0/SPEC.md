@@ -59,8 +59,9 @@ active. An activated sweep (GS.10, P5) is `reconcile` after the activation fact 
 | `releases/index.json` | release name to content hash |
 | `cases/*.json` | the 136 golden cases (section 11) |
 | `expected-sha256.json` | case id to the SHA-256 of `canonicalJson(expected)`, so a harness compares output bytes with frozen bytes (11.1) |
+| `input-sha256.json` | case id to the SHA-256 of the input bytes a harness hands over, so it can check them (11.1) |
 | `validate.py` | a stdlib-only shape validator (`python3 -I validate.py`); it holds no rule logic |
-| `SHA256SUMS` | the SHA-256 of every other file in this folder |
+| `SHA256SUMS` | the SHA-256 of every other file in this folder; `validate.py` checks it |
 | `README.md` | how to use the folder |
 
 ## 2. Value types
@@ -804,7 +805,7 @@ bytes are equal.
      `1.50` stay as written, and `1.65e3` and `1650` are different values;
    - in a string, `"` is written `\"` and `\` is written `\\`; U+0008, U+0009, U+000A, U+000C and U+000D are written `\b`, `\t`,
      `\n`, `\f` and `\r`; every other character outside U+0020 to U+007E, U+007F included, is written `\u` and four lowercase
-     hex digits, a character above U+FFFF as its UTF-16 surrogate pair (U+1F600 as `😀`) and a lone surrogate that
+     hex digits, a character above U+FFFF as its UTF-16 surrogate pair (U+1F600 as `\ud83d\ude00`) and a lone surrogate that
      arrived as an input escape as its own escape (`\ud800`); every other character, `/` included, is written as itself.
 
    Two payloads are equal for 8.8 step 2 when these bytes are equal (cases C100 and C136). Python's `json.dumps(x,
@@ -880,6 +881,14 @@ rewrite them. Three more case forms exist from W0-1.1.2 on:
 - **`expected-sha256.json`** gives, for every case, the SHA-256 of `canonicalJson(expected)` as this file defines it. A harness
   compares the SHA-256 of the implementation's output bytes with that entry instead of re-serializing `expected` with the
   implementation's own writer, so a writer defect shared by both cannot pass (V-D01c N1). `validate.py` recomputes every entry.
+- **`input-sha256.json`** gives, for every case, the SHA-256 of its input bytes: the `input` value exactly as it stands in the
+  case file, from its opening `{` to its closing `}` with the whitespace and line breaks between, or the decoded `inputBase64`
+  bytes. A harness checks the bytes it hands over against that entry, so a harness that re-serializes the input (and would turn
+  C93's `-0` into `0` without any case failing) is caught (V-D01e N3). `validate.py` recomputes every entry.
+
+`synthetic: true` is valid on exactly the seven cases listed above, and `validate.py` rejects it on any other case, because a
+synthetic case skips the id and version checks (V-D01e E2). `validate.py` also checks `SHA256SUMS` against the folder, the file
+itself excepted (V-D01e N2).
 
 ### 11.2 The 136 cases
 
