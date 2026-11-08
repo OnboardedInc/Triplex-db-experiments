@@ -416,7 +416,8 @@ const gateErrors: Record<string, number> = Object.fromEntries(armNames.map((a) =
 const crossArmMismatches: any[] = [];
 let crossArmMismatchCount = 0;
 const rawRecords: string[] = [];
-const noteGate = (arm: string, subject: number, basisId: number, digest: string) => {
+const noteGate = (arm: string, subject: number, basisId: number, digest: string, route: string) => {
+  rawRecords.push(JSON.stringify(["gate", arm, subject, basisId, digest, route]));
   const key = `${subject}|${basisId}`;
   const m = gate[arm]!.get(key) ?? new Map<string, number>();
   m.set(digest, (m.get(digest) ?? 0) + 1);
@@ -475,7 +476,7 @@ async function runGate(stage: string, picks: { b: BasisRec; w: number }[], pulls
       const k = next++;
       const w = work[k]!;
       await pullAll(w.subject, { recordedAt: w.b.recordedAt, validAt: w.b.validAt }, w.rot, (arm, r) => {
-        noteGate(arm.name, w.subject, w.b.id, r.digest);
+        noteGate(arm.name, w.subject, w.b.id, r.digest, r.route);
         gateRoutes[arm.name]![r.route] = (gateRoutes[arm.name]![r.route] ?? 0) + 1;
         hist[arm.name]!.recordMs(r.ms);
         perArm[arm.name]!++;
@@ -678,8 +679,8 @@ async function eligibilityTests() {
     // H1 first: the A0 pull takes hundreds of ms on XTDB, which would hand a lagging follower time to catch up.
     const x = await pullOn({ name: "h1", comp: h }, subject, basis);
     const a = await pullOn(arms[0]!, subject, basis);
-    noteGate("a0", subject, b.id, a.digest);
-    noteGate(`h1`, subject, b.id, x.digest);
+    noteGate("a0", subject, b.id, a.digest, a.route);
+    noteGate(`h1`, subject, b.id, x.digest, x.route);
     if (a.digest !== x.digest) { crossArmMismatchCount++; if (crossArmMismatches.length < 20) crossArmMismatches.push({ tag, subject, basis, a0: a.digest, h1: x.digest }); }
     return x;
   };
@@ -794,7 +795,7 @@ async function eligibilityTests() {
 
 // ---------------------------------------------------------------- O-REPLAY
 
-async function runOracle() {
+async function runOracle(label = "final") {
   const t0 = now();
   const last = receipts.reduce((m, r) => Math.max(m, r.position), 0);
   const byPosition = new Map(recorded.map((c) => [c.receipt.position, c]));
@@ -834,7 +835,7 @@ async function runOracle() {
   }
   const queries: any[] = [];
   for (const [b, set] of wanted) for (const e of [...set].sort()) queries.push({ id: `${b}|${e}`, kind: "entityTriples", entityId: e, cut: { scope: "s1", position: "latest", recordedAt: bases[b]!.recordedAt, validAt: bases[b]!.validAt } });
-  const dir = path.join(outDir, "oracle");
+  const dir = path.join(outDir, "oracle", label);
   fs.mkdirSync(dir, { recursive: true });
   // The same commands in every chunk, disjoint query sets: O-REPLAY's cost is per query, so chunks run in parallel.
   const chunks = Math.max(1, Math.min(cfg.oracleProcs, Math.ceil(queries.length / 2000)));
@@ -898,7 +899,7 @@ async function runOracle() {
     perArm[arm] = { pulls, keys, mismatchedPulls, mismatchedKeys, examples };
   }
   const result = {
-    status: exitCode === 0 && incomplete === 0 && Object.values(perArm).every((a: any) => a.mismatchedPulls === 0) ? "PASS" : "FAIL",
+    status: exitCode === 0 && verdicts.length === 1 && verdicts[0] === "PASS" && docs.every((d) => d.receiptConsistency?.status === "PASS") && incomplete === 0 && Object.values(perArm).every((a: any) => a.mismatchedPulls === 0) ? "PASS" : "FAIL",
     oracleVerdict: verdicts.join(","), oracleVersion: outDoc.oracle?.version, oracleSourceSha256: outDoc.oracle?.sourceSha256 ?? null,
     receiptConsistency: [...new Set(docs.map((d) => d.receiptConsistency?.status ?? null))].join(","),
     receiptViolations: (outDoc.receiptConsistency?.violations ?? []).slice(0, 5), exitCode, stderr: stderr || undefined,
@@ -908,6 +909,18 @@ async function runOracle() {
   // The case and the oracle output are regenerable from the run; keep the cases compressed, drop the outputs.
   for (const f of files) { fs.writeFileSync(`${f.caseFile}.gz`, zlib.gzipSync(fs.readFileSync(f.caseFile))); fs.unlinkSync(f.caseFile); fs.unlinkSync(f.outFile); }
   return result;
+}
+
+// [EXP-P4] Why: preserve the observed gate digests and their driver-recorded bases independently of
+// the final verdict, including rejected stages. Rejected: only saving latency samples (cannot replay a mismatch).
+function saveGateEvidence() {
+  fs.writeFileSync(path.join(outDir, "pulls.jsonl.gz"), zlib.gzipSync(rawRecords.join("\n") + "\n"));
+  const observations = Object.entries(gate).flatMap(([arm, keys]) => [...keys].map(([key, counts]) => ({ arm, key, digests: Object.fromEntries(counts) })));
+  fs.writeFileSync(path.join(outDir, "gate-observations.json.gz"), zlib.gzipSync(JSON.stringify({ bases, observations })));
+}
+async function closeArms() {
+  for (const a of arms) await a.comp.close().catch(() => {});
+  if (rawXtdb) await rawXtdb.close().catch(() => {});
 }
 
 // ---------------------------------------------------------------- main
@@ -999,6 +1012,21 @@ async function main() {
     const picks = stageBases(stage, new Rng(seedOf(`bases:${stage}:${runTag}`)));
     st.gate = await runGate(stage, picks, cfg.gatePulls);
     log(`gate ${stage}: ${JSON.stringify(st.gate.latencyAtConcurrency)}; cross-arm mismatches so far ${crossArmMismatchCount}`);
+    // [EXP-P4] Why: exactness must pass before timing an arm; cross-arm agreement alone can share a bug.
+    // Rejected: running O-REPLAY only at the end (allows timings of known-wrong arms).
+    saveGateEvidence();
+    st.oracle = cfg.skipOracle ? null : await runOracle(`stage-${stage}`);
+    if (st.oracle?.status !== "PASS" || crossArmMismatchCount > 0 || Object.values(gateErrors).some((n) => n > 0)) {
+      report.stages.push(st);
+      report.oracle = st.oracle;
+      report.status = cfg.skipOracle ? "NO-ORACLE" : "FAIL";
+      report.finishedAt = new Date().toISOString();
+      report.gateErrors = gateErrors;
+      report.crossArm = { mismatches: crossArmMismatchCount, examples: crossArmMismatches };
+      save();
+      await closeArms();
+      return;
+    }
     st.timing = await runTiming(stage);
     log(`timing ${stage}: mix ${JSON.stringify(st.timing.weightedMix)}; flat ${JSON.stringify(st.timing.flatness)}`);
     st.bytes = await runBytes(stage);
@@ -1016,17 +1044,27 @@ async function main() {
   report.bases = bases;
   save();
   fs.writeFileSync(path.join(outDir, "pulls.jsonl.gz"), zlib.gzipSync(rawRecords.join("\n") + "\n"));
+  saveGateEvidence();
   if (!cfg.skipOracle) report.oracle = await runOracle();
   report.status = report.oracle?.status === "PASS" && crossArmMismatchCount === 0 && Object.values(gateErrors).every((n) => n === 0) ? "PASS" : cfg.skipOracle ? "NO-ORACLE" : "FAIL";
+  // [EXP-P4] Why: a diagnostic PASS with a split gate is not the brief's 100k-per-arm gate.
+  // Rejected: inheriting H1's larger denominator for the engine arms.
+  report.sampleCoverage = {
+    requiredPullsPerArm: 100_000,
+    perArm: Object.fromEntries(armNames.map((a) => [a, {
+      checkedPulls: report.oracle?.perArm?.[a]?.pulls ?? 0,
+      meetsMinimum: (report.oracle?.perArm?.[a]?.pulls ?? 0) >= 100_000,
+    }])),
+  };
   report.finishedAt = new Date().toISOString();
   save();
   // --receipt NAME: a copy of the report in the experiment's receipts folder (raw samples stay in --out, compressed).
   const receiptName = opt("receipt");
   if (receiptName && /^[a-z0-9-]+$/.test(receiptName)) fs.copyFileSync(path.join(outDir, "p4-report.json"), path.join(REPO, "lab/experiments/EXP-P4-current-path/receipts", `${receiptName}.json`));
   log(`done: ${report.status}; oracle ${JSON.stringify(report.oracle ? { status: report.oracle.status, perArm: Object.fromEntries(Object.entries(report.oracle.perArm ?? {}).map(([k, v]: any) => [k, { pulls: v.pulls, mismatched: v.mismatchedPulls }])) } : null)}`);
-  for (const a of arms) await a.comp.close().catch(() => {});
-  if (rawXtdb) await rawXtdb.close().catch(() => {});
+  await closeArms();
 }
 
 await main();
-process.exit(0);
+// [EXP-P4] Why: command success must reflect semantic exactness. Rejected: exit zero for a FAIL report.
+process.exit(report.status === "PASS" ? 0 : 1);

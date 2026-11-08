@@ -1,0 +1,1331 @@
+{
+  "format": "tx2-p4-report/1",
+  "startedAt": "2026-11-08T21:17:43.913Z",
+  "runTag": "p4mw8c2vl53550",
+  "scope": "p4-xtdb-400-p4mw8c2vl53550",
+  "config": {
+    "lane": "xtdb",
+    "source": "memory",
+    "subjects": 400,
+    "regime": "fresh",
+    "container": null,
+    "quotaCpus": 2,
+    "gateSample": 40,
+    "gatePulls": 800,
+    "gateEnginePulls": 1000000000,
+    "gateConcurrency": 8,
+    "timingPulls": 150,
+    "explainSample": 150,
+    "closedLevels": [
+      1
+    ],
+    "closedS": 1,
+    "stages": [
+      "d1",
+      "d3"
+    ],
+    "leanSeed": false,
+    "qleverRebuild": false,
+    "eligibility": false,
+    "historySample": 1000,
+    "seedLabel": "ns-v2",
+    "oracleRoot": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ad8ca9cf9273c3ab5",
+    "oracleProcs": 3,
+    "skipOracle": false,
+    "cutS": 60
+  },
+  "sources": {
+    "lab/experiments/EXP-P4-current-path/p4.ts": "ef873aa839e9f6339335b420e7f0622d18d5922283581dfb6df8e16b390f22f9",
+    "lab/bench/lib/current-table.ts": "32eb510e696ebfc4fbd3aea3c28ba30cf95cf76f623da656e4732411ab10ec19",
+    "lab/bench/lib/composition.ts": "6a0b23df038061b800b31fc6a50e013a442f16befb9c8fdfa32bffe7707717d2",
+    "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+    "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "0cb7e3f7379884fe2f70a8cc139cdde3e4021cbf3d1d5da8754860bb004bcadc",
+    "packages/qlever/src/QleverStorageAdapter.ts": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b"
+  },
+  "host": {
+    "cpus": 12,
+    "loadavg": [
+      15.1123046875,
+      23.60888671875,
+      17.2294921875
+    ],
+    "node": "v22.23.2"
+  },
+  "stages": [
+    {
+      "stage": "d1",
+      "startedAt": "2026-11-08T21:17:43.952Z",
+      "settle": {
+        "label": "d1",
+        "skipped": "memory source"
+      },
+      "table": {
+        "watermark": 71,
+        "horizon": 0,
+        "entities": 6529,
+        "rows": 22865,
+        "live": 22865,
+        "retracted": 0,
+        "approxBytes": 2375244,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 71,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 4.93711899999974,
+          "applyMaxMs": 0.3177079999999819,
+          "appliedRows": 22865
+        }
+      },
+      "gate": {
+        "pulls": 800,
+        "pullsPerArm": {
+          "a0": 800,
+          "h1": 800
+        },
+        "enginePulls": 800,
+        "wallS": 0.199019287109375,
+        "concurrency": 8,
+        "latencyAtConcurrency": {
+          "a0": {
+            "count": 800,
+            "minMs": 0.029,
+            "maxMs": 3.611,
+            "meanMs": 1.04,
+            "p50Ms": 0.983,
+            "p90Ms": 1.703,
+            "p99Ms": 2.431,
+            "p999Ms": 3.611
+          },
+          "h1": {
+            "count": 800,
+            "minMs": 0.01,
+            "maxMs": 1.753,
+            "meanMs": 0.222,
+            "p50Ms": 0.187,
+            "p90Ms": 0.383,
+            "p99Ms": 0.835,
+            "p999Ms": 1.753
+          }
+        },
+        "bases": [
+          {
+            "id": 0,
+            "kind": "latest",
+            "w": 0.8,
+            "position": 71
+          },
+          {
+            "id": 1,
+            "kind": "hour",
+            "w": 0.0375,
+            "position": 44
+          },
+          {
+            "id": 2,
+            "kind": "hour",
+            "w": 0.0375,
+            "position": 15
+          },
+          {
+            "id": 3,
+            "kind": "hour",
+            "w": 0.0375,
+            "position": 22
+          },
+          {
+            "id": 4,
+            "kind": "hour",
+            "w": 0.0375,
+            "position": 54
+          },
+          {
+            "id": 5,
+            "kind": "pastV",
+            "w": 0.016666666666666666,
+            "position": 71
+          },
+          {
+            "id": 6,
+            "kind": "pastV",
+            "w": 0.016666666666666666,
+            "position": 71
+          },
+          {
+            "id": 7,
+            "kind": "pastV",
+            "w": 0.016666666666666666,
+            "position": 71
+          }
+        ]
+      },
+      "oracle": {
+        "status": "PASS",
+        "oracleVerdict": "PASS",
+        "oracleVersion": "0.4.1",
+        "oracleSourceSha256": {
+          "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+          "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+          "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+          "errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+          "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+          "exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+          "replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+          "constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+          "views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a",
+          "entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
+          "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+          "run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
+          "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+        },
+        "receiptConsistency": "PASS",
+        "receiptViolations": [],
+        "exitCode": 0,
+        "positions": 71,
+        "recordedCommands": 8,
+        "entityQueries": 3613,
+        "chunks": 2,
+        "pairs": 161,
+        "incomplete": 0,
+        "perArm": {
+          "a0": {
+            "pulls": 800,
+            "keys": 161,
+            "mismatchedPulls": 0,
+            "mismatchedKeys": 0,
+            "examples": []
+          },
+          "h1": {
+            "pulls": 800,
+            "keys": 161,
+            "mismatchedPulls": 0,
+            "mismatchedKeys": 0,
+            "examples": []
+          }
+        },
+        "caseSha256": [
+          "11bb171ceb779cf311c24854677ecdcbc6c7131ec4dc33e32160d3ae95976881",
+          "cbe3228ca171df3dfd4b593a3a516cf621823ad651fd50a055fc633e0bb11e8a"
+        ],
+        "wallS": 1.30835400390625
+      },
+      "timing": {
+        "wallS": 0.0420625,
+        "basisPosition": 71,
+        "weightedMix": {
+          "a0": {
+            "count": 150,
+            "minMs": 0.005,
+            "maxMs": 0.107,
+            "meanMs": 0.029,
+            "p50Ms": 0.019,
+            "p90Ms": 0.069,
+            "p99Ms": 0.099,
+            "p999Ms": 0.106
+          },
+          "h1": {
+            "count": 150,
+            "minMs": 0.005,
+            "maxMs": 0.244,
+            "meanMs": 0.038,
+            "p50Ms": 0.022,
+            "p90Ms": 0.087,
+            "p99Ms": 0.182,
+            "p999Ms": 0.243
+          }
+        },
+        "byBucket": {
+          "a0": {
+            "small": {
+              "count": 77,
+              "minMs": 0.005,
+              "maxMs": 0.061,
+              "meanMs": 0.013,
+              "p50Ms": 0.011,
+              "p90Ms": 0.02,
+              "p99Ms": 0.06,
+              "p999Ms": 0.06
+            },
+            "medium": {
+              "count": 55,
+              "minMs": 0.016,
+              "maxMs": 0.082,
+              "meanMs": 0.036,
+              "p50Ms": 0.032,
+              "p90Ms": 0.056,
+              "p99Ms": 0.081,
+              "p999Ms": 0.081
+            },
+            "large": {
+              "count": 18,
+              "minMs": 0.054,
+              "maxMs": 0.107,
+              "meanMs": 0.078,
+              "p50Ms": 0.076,
+              "p90Ms": 0.099,
+              "p99Ms": 0.106,
+              "p999Ms": 0.106
+            }
+          },
+          "h1": {
+            "small": {
+              "count": 77,
+              "minMs": 0.005,
+              "maxMs": 0.244,
+              "meanMs": 0.017,
+              "p50Ms": 0.012,
+              "p90Ms": 0.022,
+              "p99Ms": 0.243,
+              "p999Ms": 0.243
+            },
+            "medium": {
+              "count": 55,
+              "minMs": 0.02,
+              "maxMs": 0.09,
+              "meanMs": 0.047,
+              "p50Ms": 0.04,
+              "p90Ms": 0.079,
+              "p99Ms": 0.089,
+              "p999Ms": 0.089
+            },
+            "large": {
+              "count": 18,
+              "minMs": 0.069,
+              "maxMs": 0.183,
+              "meanMs": 0.106,
+              "p50Ms": 0.111,
+              "p90Ms": 0.127,
+              "p99Ms": 0.182,
+              "p999Ms": 0.182
+            }
+          }
+        },
+        "byHop": {
+          "a0": {
+            "3": {
+              "count": 66,
+              "minMs": 0.005,
+              "maxMs": 0.107,
+              "meanMs": 0.029,
+              "p50Ms": 0.018,
+              "p90Ms": 0.07,
+              "p99Ms": 0.106,
+              "p999Ms": 0.106
+            },
+            "4": {
+              "count": 59,
+              "minMs": 0.005,
+              "maxMs": 0.099,
+              "meanMs": 0.027,
+              "p50Ms": 0.02,
+              "p90Ms": 0.057,
+              "p99Ms": 0.099,
+              "p999Ms": 0.099
+            },
+            "6": {
+              "count": 25,
+              "minMs": 0.009,
+              "maxMs": 0.084,
+              "meanMs": 0.034,
+              "p50Ms": 0.026,
+              "p90Ms": 0.08,
+              "p99Ms": 0.084,
+              "p999Ms": 0.084
+            }
+          },
+          "h1": {
+            "3": {
+              "count": 66,
+              "minMs": 0.005,
+              "maxMs": 0.117,
+              "meanMs": 0.036,
+              "p50Ms": 0.021,
+              "p90Ms": 0.089,
+              "p99Ms": 0.117,
+              "p999Ms": 0.117
+            },
+            "4": {
+              "count": 59,
+              "minMs": 0.005,
+              "maxMs": 0.183,
+              "meanMs": 0.036,
+              "p50Ms": 0.022,
+              "p90Ms": 0.084,
+              "p99Ms": 0.182,
+              "p999Ms": 0.182
+            },
+            "6": {
+              "count": 25,
+              "minMs": 0.009,
+              "maxMs": 0.244,
+              "meanMs": 0.05,
+              "p50Ms": 0.026,
+              "p90Ms": 0.119,
+              "p99Ms": 0.243,
+              "p999Ms": 0.243
+            }
+          }
+        },
+        "routes": {
+          "a0": {
+            "source": 150
+          },
+          "h1": {
+            "current-h1": 150
+          }
+        },
+        "flatness": {
+          "a0": {
+            "count": 40,
+            "minMs": 0.006,
+            "maxMs": 0.44,
+            "meanMs": 0.037,
+            "p50Ms": 0.016,
+            "p90Ms": 0.06,
+            "p99Ms": 0.44,
+            "p999Ms": 0.44,
+            "meanFacts": 369.175
+          },
+          "h1": {
+            "count": 40,
+            "minMs": 0.006,
+            "maxMs": 0.13,
+            "meanMs": 0.036,
+            "p50Ms": 0.022,
+            "p90Ms": 0.079,
+            "p99Ms": 0.13,
+            "p999Ms": 0.13,
+            "meanFacts": 369.175
+          }
+        },
+        "h1Examined": {
+          "rowsPerPull": 369.175,
+          "bytesPerPull": 15820.675
+        }
+      },
+      "bytes": {
+        "a0": {
+          "pulls": 40,
+          "engine": null
+        },
+        "h1": {
+          "pulls": 40,
+          "engine": null,
+          "examined": {
+            "rowsPerPull": 369.175,
+            "bytesPerPull": 15820.675
+          }
+        }
+      },
+      "closedLoop": {
+        "a0": [
+          {
+            "level": 1,
+            "pulls": 24905,
+            "errors": 0,
+            "wallS": 0.9988720703125,
+            "pullsPerS": 24933.122809418826,
+            "latency": {
+              "count": 24905,
+              "minMs": 0.003,
+              "maxMs": 0.483,
+              "meanMs": 0.024,
+              "p50Ms": 0.016,
+              "p90Ms": 0.053,
+              "p99Ms": 0.093,
+              "p999Ms": 0.182
+            },
+            "engineCpuCores": null,
+            "pullsPerEngineCpuS": null,
+            "pullsPerSPerQuotaCore": 12466.561404709413,
+            "hostProcessCpuCores": 0.7283174909199341,
+            "pullsPerHostCpuS": 34233.86520338256
+          }
+        ],
+        "h1": [
+          {
+            "level": 1,
+            "pulls": 15924,
+            "errors": 0,
+            "wallS": 1.000802734375,
+            "pullsPerS": 15911.227510728693,
+            "latency": {
+              "count": 15924,
+              "minMs": 0.004,
+              "maxMs": 1.255,
+              "meanMs": 0.04,
+              "p50Ms": 0.025,
+              "p90Ms": 0.083,
+              "p99Ms": 0.216,
+              "p999Ms": 0.383
+            },
+            "engineCpuCores": null,
+            "pullsPerEngineCpuS": null,
+            "pullsPerSPerQuotaCore": 7955.613755364347,
+            "hostProcessCpuCores": 0.7386900281219568,
+            "pullsPerHostCpuS": 21539.789228211663
+          }
+        ]
+      },
+      "crossArmMismatchCount": 0
+    },
+    {
+      "stage": "d3",
+      "startedAt": "2026-11-08T21:17:47.524Z",
+      "growth": {
+        "depth": 3,
+        "commands": 4,
+        "wallS": 0.002317138671875,
+        "fastRetractLookup": false
+      },
+      "settle": {
+        "label": "d3",
+        "skipped": "memory source"
+      },
+      "table": {
+        "watermark": 75,
+        "horizon": 0,
+        "entities": 6529,
+        "rows": 23177,
+        "live": 23177,
+        "retracted": 0,
+        "approxBytes": 2406132,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 75,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 5.239368999999925,
+          "applyMaxMs": 0.3177079999999819,
+          "appliedRows": 23177
+        }
+      },
+      "gate": {
+        "pulls": 800,
+        "pullsPerArm": {
+          "a0": 800,
+          "h1": 800
+        },
+        "enginePulls": 800,
+        "wallS": 0.21510986328125,
+        "concurrency": 8,
+        "latencyAtConcurrency": {
+          "a0": {
+            "count": 800,
+            "minMs": 0.023,
+            "maxMs": 4.476,
+            "meanMs": 1.077,
+            "p50Ms": 1.015,
+            "p90Ms": 1.719,
+            "p99Ms": 3.055,
+            "p999Ms": 4.476
+          },
+          "h1": {
+            "count": 800,
+            "minMs": 0.008,
+            "maxMs": 2.079,
+            "meanMs": 0.257,
+            "p50Ms": 0.206,
+            "p90Ms": 0.459,
+            "p99Ms": 1.103,
+            "p999Ms": 2.079
+          }
+        },
+        "bases": [
+          {
+            "id": 8,
+            "kind": "latest",
+            "w": 0.8,
+            "position": 75
+          },
+          {
+            "id": 9,
+            "kind": "hour",
+            "w": 0.0375,
+            "position": 71
+          },
+          {
+            "id": 10,
+            "kind": "hour",
+            "w": 0.0375,
+            "position": 22
+          },
+          {
+            "id": 11,
+            "kind": "hour",
+            "w": 0.0375,
+            "position": 40
+          },
+          {
+            "id": 12,
+            "kind": "hour",
+            "w": 0.0375,
+            "position": 30
+          },
+          {
+            "id": 13,
+            "kind": "pastV",
+            "w": 0.016666666666666666,
+            "position": 75
+          },
+          {
+            "id": 14,
+            "kind": "pastV",
+            "w": 0.016666666666666666,
+            "position": 75
+          },
+          {
+            "id": 15,
+            "kind": "pastV",
+            "w": 0.016666666666666666,
+            "position": 75
+          }
+        ]
+      },
+      "oracle": {
+        "status": "FAIL",
+        "oracleVerdict": "PASS",
+        "oracleVersion": "0.4.1",
+        "oracleSourceSha256": {
+          "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+          "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+          "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+          "errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+          "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+          "exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+          "replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+          "constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+          "views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a",
+          "entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
+          "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+          "run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
+          "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+        },
+        "receiptConsistency": "PASS",
+        "receiptViolations": [],
+        "exitCode": 0,
+        "positions": 75,
+        "recordedCommands": 10,
+        "entityQueries": 7354,
+        "chunks": 3,
+        "pairs": 334,
+        "incomplete": 0,
+        "perArm": {
+          "a0": {
+            "pulls": 1600,
+            "keys": 334,
+            "mismatchedPulls": 0,
+            "mismatchedKeys": 0,
+            "examples": []
+          },
+          "h1": {
+            "pulls": 1600,
+            "keys": 334,
+            "mismatchedPulls": 659,
+            "mismatchedKeys": 73,
+            "examples": [
+              {
+                "key": "201|8",
+                "expected": "4138fbef336855d5:335",
+                "observed": {
+                  "a7d6b1726bd40f8e:339": 14
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "226|8",
+                "expected": "00bdafb837c6cb63:715",
+                "observed": {
+                  "fdf1d8a3426ba1d9:719": 21
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "225|8",
+                "expected": "825742bdf808deca:715",
+                "observed": {
+                  "b4d07955fd302738:719": 19
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "218|8",
+                "expected": "e50c07af05e7114f:357",
+                "observed": {
+                  "164e1687d10d4ece:361": 16
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "202|8",
+                "expected": "def26e0d9c6251ed:335",
+                "observed": {
+                  "2e1a08e399d7559a:339": 14
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "230|8",
+                "expected": "62405ee65d9a9f9f:727",
+                "observed": {
+                  "66d2acb56e22cf4f:731": 10
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "215|8",
+                "expected": "a105c5d7c3d2cbe3:357",
+                "observed": {
+                  "d3cdf59f772a6bbc:361": 16
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "227|8",
+                "expected": "f2b67c0894c73fae:715",
+                "observed": {
+                  "2a07bed0b1f47e85:719": 14
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "200|15",
+                "expected": "0fbc2c5686cf0721:335",
+                "observed": {
+                  "764e1f9481345e4e:339": 1
+                },
+                "basis": {
+                  "id": 15,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1786483067529,
+                  "kind": "pastV",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              },
+              {
+                "key": "234|8",
+                "expected": "93bfac533a8d9b49:727",
+                "observed": {
+                  "3641b0e95a36fe80:731": 14
+                },
+                "basis": {
+                  "id": 8,
+                  "recordedAt": 1794172667528,
+                  "validAt": 1794172667529,
+                  "kind": "latest",
+                  "position": 75,
+                  "stage": "d3"
+                }
+              }
+            ]
+          }
+        },
+        "caseSha256": [
+          "8b29e5d6b866803f7493766e62c34246820d9c71a5cdbefd91bc1c19ef9bee4d",
+          "bfca2fdc46902de7126add2ff5fee2ad3431e877c5ed22938f7612ea7c10b0fc",
+          "ff12e7e6b3996db4f03f137550c15a1670a4182458f963108860abd4b4393a94"
+        ],
+        "wallS": 1.898827880859375
+      }
+    }
+  ],
+  "mutant": "drop-retracts",
+  "arms": [
+    {
+      "name": "a0",
+      "assignments": {
+        "source": {
+          "lane": "xtdb",
+          "role": "in-process reference store (diagnostic)"
+        },
+        "current": {
+          "lane": "xtdb",
+          "role": "in-process reference store (diagnostic)"
+        },
+        "history": {
+          "lane": "xtdb",
+          "role": "in-process reference store (diagnostic)"
+        },
+        "analytics": {
+          "lane": "xtdb",
+          "role": "in-process reference store (diagnostic)"
+        },
+        "replicationEdges": []
+      }
+    },
+    {
+      "name": "h1",
+      "assignments": {
+        "source": {
+          "lane": "xtdb",
+          "role": "in-process reference store (diagnostic)"
+        },
+        "current": {
+          "lane": "xtdb",
+          "role": "H1 in-process current table (EXP-P4), fed by receipts and the source feed"
+        },
+        "history": {
+          "lane": "xtdb",
+          "role": "in-process reference store (diagnostic)"
+        },
+        "analytics": {
+          "lane": "xtdb",
+          "role": "in-process reference store (diagnostic)"
+        },
+        "replicationEdges": [
+          {
+            "from": "source",
+            "to": "current-h1",
+            "consumerSourceSha256": null,
+            "generation": "h1-in-process"
+          }
+        ]
+      }
+    }
+  ],
+  "matchedSample": {
+    "size": 40,
+    "sha256": "27dffcedebe3382cbe15476c1469c2c0db1b5091ba0e1aa9c2672fdce023a4c7"
+  },
+  "gateSample": {
+    "size": 40,
+    "sha256": "0821fa56f69b7c0e13e7315e5bf33ea113751d841cb9903aa258f5758ad3fab0"
+  },
+  "seed": {
+    "subjects": 400,
+    "commands": 71,
+    "assertions": 22865,
+    "wallS": 0.03377490234375,
+    "factsPerS": 682210.6261831268,
+    "commitMs": {
+      "p50": 0.21199999999998909,
+      "max": 3.2659170000000017
+    },
+    "failures": 0,
+    "lean": false,
+    "regime": "fresh",
+    "lastPosition": 71,
+    "table": {
+      "watermark": 71,
+      "horizon": 0,
+      "entities": 6529,
+      "rows": 22865,
+      "live": 22865,
+      "retracted": 0,
+      "approxBytes": 2375244,
+      "strictInstants": true,
+      "poisoned": null,
+      "pending": 0,
+      "counters": {
+        "applied": 71,
+        "buffered": 0,
+        "duplicates": 0,
+        "purgedRows": 0,
+        "instantOrderViolations": 0,
+        "applyMs": 4.93711899999974,
+        "applyMaxMs": 0.3177079999999819,
+        "appliedRows": 22865
+      }
+    }
+  },
+  "qleverRebuilds": [],
+  "oracle": {
+    "status": "FAIL",
+    "oracleVerdict": "PASS",
+    "oracleVersion": "0.4.1",
+    "oracleSourceSha256": {
+      "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+      "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+      "replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+      "constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+      "views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a",
+      "entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
+      "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
+      "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+    },
+    "receiptConsistency": "PASS",
+    "receiptViolations": [],
+    "exitCode": 0,
+    "positions": 75,
+    "recordedCommands": 10,
+    "entityQueries": 7354,
+    "chunks": 3,
+    "pairs": 334,
+    "incomplete": 0,
+    "perArm": {
+      "a0": {
+        "pulls": 1600,
+        "keys": 334,
+        "mismatchedPulls": 0,
+        "mismatchedKeys": 0,
+        "examples": []
+      },
+      "h1": {
+        "pulls": 1600,
+        "keys": 334,
+        "mismatchedPulls": 659,
+        "mismatchedKeys": 73,
+        "examples": [
+          {
+            "key": "201|8",
+            "expected": "4138fbef336855d5:335",
+            "observed": {
+              "a7d6b1726bd40f8e:339": 14
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "226|8",
+            "expected": "00bdafb837c6cb63:715",
+            "observed": {
+              "fdf1d8a3426ba1d9:719": 21
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "225|8",
+            "expected": "825742bdf808deca:715",
+            "observed": {
+              "b4d07955fd302738:719": 19
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "218|8",
+            "expected": "e50c07af05e7114f:357",
+            "observed": {
+              "164e1687d10d4ece:361": 16
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "202|8",
+            "expected": "def26e0d9c6251ed:335",
+            "observed": {
+              "2e1a08e399d7559a:339": 14
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "230|8",
+            "expected": "62405ee65d9a9f9f:727",
+            "observed": {
+              "66d2acb56e22cf4f:731": 10
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "215|8",
+            "expected": "a105c5d7c3d2cbe3:357",
+            "observed": {
+              "d3cdf59f772a6bbc:361": 16
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "227|8",
+            "expected": "f2b67c0894c73fae:715",
+            "observed": {
+              "2a07bed0b1f47e85:719": 14
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "200|15",
+            "expected": "0fbc2c5686cf0721:335",
+            "observed": {
+              "764e1f9481345e4e:339": 1
+            },
+            "basis": {
+              "id": 15,
+              "recordedAt": 1794172667528,
+              "validAt": 1786483067529,
+              "kind": "pastV",
+              "position": 75,
+              "stage": "d3"
+            }
+          },
+          {
+            "key": "234|8",
+            "expected": "93bfac533a8d9b49:727",
+            "observed": {
+              "3641b0e95a36fe80:731": 14
+            },
+            "basis": {
+              "id": 8,
+              "recordedAt": 1794172667528,
+              "validAt": 1794172667529,
+              "kind": "latest",
+              "position": 75,
+              "stage": "d3"
+            }
+          }
+        ]
+      }
+    },
+    "caseSha256": [
+      "8b29e5d6b866803f7493766e62c34246820d9c71a5cdbefd91bc1c19ef9bee4d",
+      "bfca2fdc46902de7126add2ff5fee2ad3431e877c5ed22938f7612ea7c10b0fc",
+      "ff12e7e6b3996db4f03f137550c15a1670a4182458f963108860abd4b4393a94"
+    ],
+    "wallS": 1.898827880859375
+  },
+  "status": "FAIL",
+  "finishedAt": "2026-11-08T21:17:49.667Z",
+  "gateErrors": {
+    "a0": 0,
+    "h1": 0
+  },
+  "crossArm": {
+    "mismatches": 659,
+    "examples": [
+      {
+        "subject": 202,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "def26e0d9c6251ed:335",
+          "h1": "2e1a08e399d7559a:339"
+        }
+      },
+      {
+        "subject": 201,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "4138fbef336855d5:335",
+          "h1": "a7d6b1726bd40f8e:339"
+        }
+      },
+      {
+        "subject": 226,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "00bdafb837c6cb63:715",
+          "h1": "fdf1d8a3426ba1d9:719"
+        }
+      },
+      {
+        "subject": 225,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "825742bdf808deca:715",
+          "h1": "b4d07955fd302738:719"
+        }
+      },
+      {
+        "subject": 226,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "00bdafb837c6cb63:715",
+          "h1": "fdf1d8a3426ba1d9:719"
+        }
+      },
+      {
+        "subject": 230,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "62405ee65d9a9f9f:727",
+          "h1": "66d2acb56e22cf4f:731"
+        }
+      },
+      {
+        "subject": 218,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "e50c07af05e7114f:357",
+          "h1": "164e1687d10d4ece:361"
+        }
+      },
+      {
+        "subject": 227,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "f2b67c0894c73fae:715",
+          "h1": "2a07bed0b1f47e85:719"
+        }
+      },
+      {
+        "subject": 200,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1786483067529
+        },
+        "digests": {
+          "a0": "0fbc2c5686cf0721:335",
+          "h1": "764e1f9481345e4e:339"
+        }
+      },
+      {
+        "subject": 234,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "93bfac533a8d9b49:727",
+          "h1": "3641b0e95a36fe80:731"
+        }
+      },
+      {
+        "subject": 239,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "34a2c693917eb7ca:737",
+          "h1": "0bb4ecd90e562710:741"
+        }
+      },
+      {
+        "subject": 215,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "a105c5d7c3d2cbe3:357",
+          "h1": "d3cdf59f772a6bbc:361"
+        }
+      },
+      {
+        "subject": 228,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "e9ba58895f32078e:727",
+          "h1": "f9cc8e69994fb167:731"
+        }
+      },
+      {
+        "subject": 217,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "cfcc935e3153b12f:357",
+          "h1": "7a8e5b5c345eec09:361"
+        }
+      },
+      {
+        "subject": 229,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "1b5ad4aa605929a5:727",
+          "h1": "ed6dab59248a446d:731"
+        }
+      },
+      {
+        "subject": 225,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "825742bdf808deca:715",
+          "h1": "b4d07955fd302738:719"
+        }
+      },
+      {
+        "subject": 233,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "586e2d5567f9218d:727",
+          "h1": "6ebadab5c441fd1f:731"
+        }
+      },
+      {
+        "subject": 218,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "e50c07af05e7114f:357",
+          "h1": "164e1687d10d4ece:361"
+        }
+      },
+      {
+        "subject": 226,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "00bdafb837c6cb63:715",
+          "h1": "fdf1d8a3426ba1d9:719"
+        }
+      },
+      {
+        "subject": 220,
+        "basis": {
+          "recordedAt": 1794172667528,
+          "validAt": 1794172667529
+        },
+        "digests": {
+          "a0": "93654c684a7b9e8a:715",
+          "h1": "d03f85656f9eeca2:719"
+        }
+      }
+    ]
+  }
+}
