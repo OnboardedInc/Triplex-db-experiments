@@ -211,6 +211,7 @@ function straddleCandidate(): { subject: number; seq: number } {
 }
 const overlayCount: Record<string, number> = {};
 let feed: FeedConsumer | null = null;
+let feedWind: { target: number; checkpointAtStop: number; inFlightAtFeedTarget: number } | null = null;
 const lateGrowth: { cmd: any; v: number; pending: Promise<any> }[] = [];
 let coordinate: (position: number) => any = (position) => ({ stream: "unknown", epoch: 0, offset: position, ordinal: 0 });
 
@@ -505,21 +506,17 @@ async function run() {
   setReaders(-1, 0, "mixed");
   const drainDeadline = now() + 90_000;
   while (scheduler.pending > 0 && now() < drainDeadline) await sleep(250);
+  // [EXP-N01 A0 finding] Commands already handed to the store keep committing after the queue empties (they can
+  // wait minutes in an adapter admission queue). Wait for them before fixing the feed target, so a late commit is
+  // never mistaken for a feed gap.
+  const inFlightDeadline = now() + 300_000;
+  while (scheduler.inFlightCount > 0 && now() < inFlightDeadline) await sleep(250);
+  const inFlightAtFeedTarget = scheduler.inFlightCount;
   await Promise.race([Promise.all([...ryowPending]), sleep(30_000)]);
   for (const w of workers) w.postMessage({ type: "stop" });
   await Promise.race([Promise.all(stopped), sleep(40_000)]);
   for (const w of workers) await w.terminate();
   clearInterval(basisTimer);
-  const lastAcked = acked.length ? Math.max(...acked.map((a) => a.position)) : seed.lastPosition;
-  const feedDeadline = now() + 60_000;
-  while (feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
-  feed.stop();
-  await feedDone;
-  clearInterval(feedTarget);
-  const replayHandle = await openComposition(config.composition, lane, scopeName);
-  const firstCrash = feed.crashReport().find((c) => c.checkpoint !== null);
-  const replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
-  await replayHandle.close().catch(() => {});
   // Growth commands that outlived their phase: wait for them, then fold any that committed into the model.
   for (const late of lateGrowth) {
     await Promise.race([late.pending, sleep(60_000)]);
@@ -528,6 +525,18 @@ async function run() {
     const at = noteAck(receipt, -1, { seq: -1, stream: "p4-history", correction: false, correctionValidFrom: null, stamp: -1, subjects: late.cmd.perSubject.map((x: any) => x.subject) });
     for (const s of late.cmd.perSubject) model.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
   }
+  lateGrowth.length = 0;
+  const lastAcked = Math.max(acked.length ? Math.max(...acked.map((a) => a.position)) : seed.lastPosition, await writer.currentPosition().catch(() => 0));
+  const feedDeadline = now() + 120_000;
+  while (feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
+  feedWind = { target: lastAcked, checkpointAtStop: feed.checkpoint, inFlightAtFeedTarget };
+  feed.stop();
+  await feedDone;
+  clearInterval(feedTarget);
+  const replayHandle = await openComposition(config.composition, lane, scopeName);
+  const firstCrash = feed.crashReport().find((c) => c.checkpoint !== null);
+  const replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
+  await replayHandle.close().catch(() => {});
   const finalPosition = await writer.currentPosition();
   samplersOn = false;
   clearInterval(eluTimer);
@@ -865,15 +874,23 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const f = feed!;
   const lagAll = new Histogram(), lagAck = new Histogram();
   for (const l of lagRows) { lagAll.recordMs(l.lagMs); lagAck.recordMs(l.lagFromAckMs); }
+  // A gap is a position the consumer passed (at or below its final checkpoint) without delivering it. Positions
+  // acknowledged after the consumer stopped are reported separately, never as gaps.
   let gaps = 0;
   const gapSample: number[] = [];
-  for (const [position] of ackOf) if (!f.firstSeen.has(position)) { gaps++; if (gapSample.length < 10) gapSample.push(position); }
+  const notReached: number[] = [];
+  for (const [position] of ackOf) {
+    if (f.firstSeen.has(position)) continue;
+    if (position > f.checkpoint) { notReached.push(position); continue; }
+    gaps++;
+    if (gapSample.length < 10) gapSample.push(position);
+  }
   const visibleDup = f.visibleDuplicateEffects();
   const lag256 = L("L256")?.feedLag ?? null;
   const crashes = f.crashReport();
   const replayOk = ctx.replay.exact && f.counts.redeliveryMismatches === 0;
   const p3 = {
-    consumer: f.name, cursor: { epoch: f.epoch, position: coordinate(f.checkpoint) }, counts: f.counts, gaps, gapSample, visibleDuplicateEffects: visibleDup, crashes, replay: ctx.replay,
+    consumer: f.name, cursor: { epoch: f.epoch, position: coordinate(f.checkpoint) }, counts: f.counts, gaps, gapSample, notReachedAtStop: { count: notReached.length, sample: notReached.sort((a, b) => a - b).slice(0, 10), wind: feedWind }, visibleDuplicateEffects: visibleDup, crashes, replay: ctx.replay,
     lag: { fromCommitInstant: lagAll.summary(), fromDriverAck: lagAck.summary(), atL256: lag256, commitTime: "receipt instant (Triplex runtime publication stamp, host clock); 'known' = durable affected-set + checkpoint write" },
     expectedAffected: "direct subjects from command intent; dependency-rule subjects (O-DOMAIN) are a seam: the trace writes only own entities, so expected = {subject}",
     bars: [
