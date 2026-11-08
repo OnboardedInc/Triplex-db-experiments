@@ -149,3 +149,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Contract 0.3.11 merged to main (Q87 gate: 108/108 evaluator, --verify byte-identical). O-REPLAY 0.4.9 pinned; lane D registered.
   Next contract: 0.3.12 compiles Q72, Q79e-f, Q80, Q82-Q87 plus G03's box pins. When CX-G03 round 3 ends, its next round starts by
   merging main (0.3.11 touched the same fixtures).
+- INT-XCJ: X02 merged on int/X02-C8-J01 (7fcf69e): G0 1,070/1,070, evaluator 108/108; contract --verify fails only because X02 changed
+  pinned packages/qualification/src/native/xtdb-workloads.ts. Pinned sources change only with a contract version, so contract 0.3.12
+  round 2 merges int/X02-C8-J01 and re-pins it after checking the diff does not change the measured workload. INT-XCJ continues with C8, J01.
