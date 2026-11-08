@@ -1,0 +1,15 @@
+{
+  "format": "tx2-slot-owner/1",
+  "lane": "datomic",
+  "slot": "dev",
+  "mode": "resident",
+  "container": "tx2-datomic-dev",
+  "volume": "tx2-datomic-dev-data",
+  "endpoint": "http://127.0.0.1:8470",
+  "port": 8470,
+  "holder": "CX-VDA00",
+  "experiment": null,
+  "pid": 97717,
+  "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da00",
+  "createdAt": "2026-11-08T22:23:10.223Z"
+}

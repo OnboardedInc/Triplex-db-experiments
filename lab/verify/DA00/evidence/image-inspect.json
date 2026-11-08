@@ -1,0 +1,55 @@
+{
+  "Architecture": "arm64",
+  "Config": {
+    "Entrypoint": [
+      "/bin/bash",
+      "/config/entrypoint.sh"
+    ],
+    "Env": [
+      "PATH=/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "JAVA_HOME=/opt/java/openjdk",
+      "LANG=en_US.UTF-8",
+      "LANGUAGE=en_US:en",
+      "LC_ALL=en_US.UTF-8",
+      "JAVA_VERSION=jdk-21.0.13+9",
+      "DATOMIC_EXT_CLASSPATH=/opt/gateway/src"
+    ],
+    "Labels": {
+      "org.opencontainers.image.version": "24.04",
+      "tx2.build-inputs-sha256": "c15195a2c2bffd4de222f55ea79c76266b321bc8b02f6451e9a157d386199256"
+    },
+    "WorkingDir": "/opt/datomic"
+  },
+  "Created": "2026-11-08T16:49:42.165436246-05:00",
+  "Descriptor": {
+    "digest": "sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d",
+    "mediaType": "application/vnd.oci.image.manifest.v1+json",
+    "size": 2067
+  },
+  "Id": "sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d",
+  "Metadata": {
+    "LastTagTime": "2026-11-08T21:49:42.933562106Z"
+  },
+  "Os": "linux",
+  "Parent": "sha256:7c2fe21d3a352c4bede934d40fbbda446e219095ab92b8390396accbf3b1e29e",
+  "RepoDigests": [
+    "tx2-datomic@sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d"
+  ],
+  "RepoTags": [
+    "tx2-datomic:1.0.7745-da00"
+  ],
+  "RootFS": {
+    "Layers": [
+      "sha256:107ffca6dcd3fc87a7bed8c062f5ddc0d6a4b107205c82c0b49efdb7c1aff967",
+      "sha256:d2d2be7e27da928754087278bf9b0f3944356a62e3d530b55b7c805242fc2f5f",
+      "sha256:0654e1f8ada2bdd3cca9a55e6e9caf8cbbd74e3c1da1feed5075261ca2e3ff1c",
+      "sha256:8e6eef616b4dc70cb53f0677b9f30f4b6ee3a0795adc5259667ea06504dc216d",
+      "sha256:9586a75cd339430639adbceb2560d74812abd1cd6b014da65879d21971223b3f",
+      "sha256:067f858bcfd181f698007c39d3d129cddd561d1b7559a480e770ad1c682d4299",
+      "sha256:20d5e12c17f250aa77430bb1c09bf94f5130fed35ffc832ea1a40ad8cc2952fd",
+      "sha256:8563211f91bbb84d77b4ff710f32ef493de463b65b456a4f9902ff12f2ffa77f"
+    ],
+    "Type": "layers"
+  },
+  "Size": 371251125
+}

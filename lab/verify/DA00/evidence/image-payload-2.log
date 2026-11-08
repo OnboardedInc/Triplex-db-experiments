@@ -1,0 +1,10 @@
+{
+  "imageId": "sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d",
+  "actualPayloadFiles": 805,
+  "payloadMatchesVerifiedDistributionAndSource": true,
+  "baseLayerPrefixMatchesPinnedBase": true,
+  "baseRepoDigests": [
+    "eclipse-temurin:21.0.13_9-jre-noble@sha256:0eda5830ed7b669abc246a8dc520ea8a23cab06f9a8d4b6964109e2f2394e46f"
+  ],
+  "layerCount": 8
+}

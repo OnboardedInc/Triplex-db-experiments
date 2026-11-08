@@ -1,0 +1,13 @@
+{
+  "startedAt": "2026-11-08T22:21:49.096Z",
+  "requests": [
+    {
+      "method": "GET",
+      "route": "/health",
+      "error": "fetch failed",
+      "cause": "ECONNREFUSED"
+    }
+  ],
+  "unavailableOrFailed": "fetch failed",
+  "finishedAt": "2026-11-08T22:21:49.115Z"
+}

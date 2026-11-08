@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 9101 "CX-VP2Q-4-typecheck", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 6152 "CX-VP2Q-4-package-retry"
+Execution error (NullPointerException) at clojure.main/main (main.java:40).
+Cannot invoke "clojure.lang.IFn.applyTo(clojure.lang.ISeq)" because "f" is null
+
+Full report at:
+/tmp/clojure-1307961222831195841.edn

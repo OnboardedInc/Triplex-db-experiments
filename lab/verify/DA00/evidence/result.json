@@ -1,0 +1,38 @@
+{
+  "reviewer": "CX-VDA00",
+  "verdict": "FIX-FIRST",
+  "reviewedHead": "702643f745ab5d9865635ddb3896d2faa9a56b36",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "P1",
+      "file": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "line": 25,
+      "summary": "Concurrent initialization resets scope position from 7 to 0"
+    },
+    {
+      "id": "F2",
+      "severity": "P1",
+      "file": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "line": 14,
+      "summary": "Public numeric-generation DatabaseScope rejected"
+    },
+    {
+      "id": "F3",
+      "severity": "P2",
+      "file": "lab/bin/engine.mjs",
+      "line": 112,
+      "summary": "Reused build context includes unmanifested extra files"
+    },
+    {
+      "id": "F4",
+      "severity": "P2",
+      "file": "packages/datomic/src/codec.ts",
+      "line": 38,
+      "summary": "TS bigdec validation accepts unrepresentable JVM decimal scale/exponents"
+    }
+  ],
+  "productChanges": false,
+  "liveParkRestartRerun": false,
+  "allReviewerScratchDeleted": true
+}

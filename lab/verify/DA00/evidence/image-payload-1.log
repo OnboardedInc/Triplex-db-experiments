@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da00/lab/verify/DA00/image.py", line 24, in <module>
+    with tarfile.open(fileobj=archive.extractfile(layer), mode='r|') as contents:
+         ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tarfile.py", line 1969, in open
+    t = cls(name, filemode, stream, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tarfile.py", line 1832, in __init__
+    self.firstmember = self.next()
+                       ~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tarfile.py", line 2886, in next
+    raise ReadError(str(e)) from None
+tarfile.ReadError: invalid header

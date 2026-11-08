@@ -1,0 +1,6 @@
+{"at":"2026-11-08T22:23:09.417Z","pid":97628,"event":"slot-acquired","slot":"datomic-dev","holder":"CX-VDA00"}
+{"at":"2026-11-08T22:23:09.584Z","pid":97628,"event":"reserved","container":"tx2-datomic-dev","memAfter":9932111872,"diskAfter":22884901888}
+{"at":"2026-11-08T22:23:10.140Z","pid":97687,"event":"slot-released","slot":"datomic-dev"}
+{"at":"2026-11-08T22:23:10.140Z","pid":97687,"event":"down","container":"tx2-datomic-dev","volume":"retained"}
+{"at":"2026-11-08T22:23:10.233Z","pid":97717,"event":"slot-acquired","slot":"datomic-dev","holder":"CX-VDA00"}
+{"at":"2026-11-08T22:23:10.399Z","pid":97717,"event":"reserved","container":"tx2-datomic-dev","memAfter":9932111872,"diskAfter":22884901888}

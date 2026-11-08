@@ -1,0 +1,30 @@
+{"at": "2026-11-08T22:15:26.838Z", "pid": 419, "event": "reserved", "container": "tx2-datomic-selftest", "holder": "CX-VDA00"}
+{"at": "2026-11-08T22:15:31.630Z", "pid": 419, "event": "released", "container": "tx2-datomic-selftest", "holder": "CX-VDA00"}
+{"at": "2026-11-08T22:16:48.260Z", "pid": 37577, "event": "reserved", "container": "tx2-datomic-selftest", "holder": "CX-VDA00"}
+{"at": "2026-11-08T22:16:50.375Z", "pid": 37577, "event": "released", "container": "tx2-datomic-selftest", "holder": "CX-VDA00"}
+{"at": "2026-11-08T22:17:23.388Z", "pid": 54916, "event": "slot-released", "slot": "datomic-dev"}
+{"at": "2026-11-08T22:17:23.388Z", "pid": 54916, "event": "down", "container": "tx2-datomic-dev", "volume": "retained"}
+{"at": "2026-11-08T22:17:40.848Z", "pid": 54988, "event": "datomic-build", "imageId": "sha256:535de9c352a1321aa70a2ecd4c85e75e42f545118083fd0a740f92cc5ce367c2", "buildInputsSha256": "321f0d96fb60b8c5117216ec20428c3569add2d3321ca0714b0ddd3e72abbd5d"}
+{"at": "2026-11-08T22:18:03.919Z", "pid": 72894, "event": "slot-acquired", "slot": "datomic-dev", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:18:04.194Z", "pid": 72894, "event": "slot-released", "slot": "datomic-dev"}
+{"at": "2026-11-08T22:20:21.422Z", "pid": 91359, "event": "datomic-build", "imageId": "sha256:26a29b852ec0880089a56acc212207756b1f480bc2027d4a1d1007ac23233bfd", "buildInputsSha256": "ea16e11f03e1ecf3e53177cfe77e520aa43b4944db9b4e7a490f6d18c5484286"}
+{"at": "2026-11-08T22:22:23.173Z", "pid": 95884, "event": "slot-acquired", "slot": "datomic-dev", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:22:23.359Z", "pid": 95884, "event": "reserved", "container": "tx2-datomic-dev", "memAfter": 9932111872, "diskAfter": 28655874048}
+{"at": "2026-11-08T22:22:24.556Z", "pid": 95973, "event": "reserved", "container": "tx2-datomic-selftest", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:22:28.435Z", "pid": 95973, "event": "released", "container": "tx2-datomic-selftest", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:23:22.421Z", "pid": 97579, "event": "datomic-build", "imageId": "sha256:812198b90dd5e7159c6bea4f453c8de31d52d6ad97fdf2afaffeb444081a8eec", "buildInputsSha256": "20fc46c840c44e95056acc3379ce86168b71a0e74589a264088fba98962e748a"}
+{"at": "2026-11-08T22:23:33.852Z", "pid": 98880, "event": "slot-released", "slot": "datomic-dev"}
+{"at": "2026-11-08T22:23:33.852Z", "pid": 98880, "event": "down", "container": "tx2-datomic-dev", "volume": "retained"}
+{"at": "2026-11-08T22:23:33.965Z", "pid": 98879, "event": "slot-acquired", "slot": "datomic-dev", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:23:34.228Z", "pid": 99242, "event": "reserved", "container": "tx2-datomic-selftest", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:23:34.906Z", "pid": 98879, "event": "reserved", "container": "tx2-datomic-dev", "memAfter": 11542724608, "diskAfter": 29236178944}
+{"at": "2026-11-08T22:23:40.094Z", "pid": 99242, "event": "released", "container": "tx2-datomic-selftest", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:26:11.462Z", "pid": 7654, "event": "reserved", "container": "tx2-datomic-selftest", "holder": "CX-VDA00"}
+{"at": "2026-11-08T22:26:16.628Z", "pid": 7654, "event": "released", "container": "tx2-datomic-selftest", "holder": "CX-VDA00"}
+{"at": "2026-11-08T22:26:31.438Z", "pid": 7712, "event": "datomic-build", "imageId": "sha256:36a38b9e01ec7b5d7ccaacc22f4ecc6711aa88555028c189bfa22961b9f975b2", "buildInputsSha256": "d59b45693917171bd13be3b53c8fb55c4b5572fd120732d01b6766d5e0c91b73"}
+{"at": "2026-11-08T22:26:48.393Z", "pid": 9318, "event": "slot-released", "slot": "datomic-dev"}
+{"at": "2026-11-08T22:26:48.393Z", "pid": 9318, "event": "down", "container": "tx2-datomic-dev", "volume": "retained"}
+{"at": "2026-11-08T22:26:48.548Z", "pid": 9453, "event": "slot-acquired", "slot": "datomic-dev", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:26:48.885Z", "pid": 9453, "event": "reserved", "container": "tx2-datomic-dev", "memAfter": 9932111872, "diskAfter": 29845303296}
+{"at": "2026-11-08T22:26:59.026Z", "pid": 9770, "event": "reserved", "container": "tx2-datomic-selftest", "holder": "EXP-DA01"}
+{"at": "2026-11-08T22:27:03.224Z", "pid": 9770, "event": "released", "container": "tx2-datomic-selftest", "holder": "EXP-DA01"}

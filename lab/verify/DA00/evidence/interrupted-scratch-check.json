@@ -1,0 +1,20 @@
+[
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"verifier\",\"cx-vda00\",\"1794176612427\"]",
+    "db": "s-c2312199550320531ae1414690a77e55",
+    "status": 400,
+    "body": "{\"code\":\"GatewayError\",\"message\":\"Could not find s-c2312199550320531ae1414690a77e55 in catalog\"}"
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"verifier\",\"cx-vda00\",\"1794176612428\"]",
+    "db": "s-d54db369de9cd51c023368f354e8e06e",
+    "status": 409,
+    "body": "{\"code\":\"ScopeUninitialized\",\"message\":\"Scope not initialized\"}"
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"verifier\",\"cx-vda00\",\"1794176612429\"]",
+    "db": "s-8fe720809565518d103425fcbc597b9a",
+    "status": 400,
+    "body": "{\"code\":\"GatewayError\",\"message\":\"Could not find s-8fe720809565518d103425fcbc597b9a in catalog\"}"
+  }
+]

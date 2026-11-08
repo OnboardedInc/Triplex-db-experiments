@@ -1,0 +1,67 @@
+{
+  "startedAt": "2026-11-08T22:26:05.197Z",
+  "requests": [
+    {
+      "method": "GET",
+      "route": "/health",
+      "status": 200,
+      "bytes": "{\"datomicVersion\":\"1.0.7745\",\"gatewaySourceHash\":\"89173b053a6a345fd7631ea5a5ea9aa6ca87882f8bfe17b703e4be0735837423\"}"
+    },
+    {
+      "method": "POST",
+      "route": "/v1/db/create",
+      "status": 200,
+      "bytes": "{\"db\":\"s-213b00bb890393770f79c8137423a841\",\"created\":true,\"schemaHash\":\"734b66c4df792020d7048cf61487a04ca99c4f0cffdf4a0461de80d09bd1f4f5\"}"
+    },
+    {
+      "method": "POST",
+      "route": "/v1/db/create",
+      "status": 200,
+      "bytes": "{\"db\":\"s-213b00bb890393770f79c8137423a841\",\"created\":false,\"schemaHash\":\"734b66c4df792020d7048cf61487a04ca99c4f0cffdf4a0461de80d09bd1f4f5\"}"
+    },
+    {
+      "method": "GET",
+      "route": "/v1/db/s-213b00bb890393770f79c8137423a841/basis",
+      "status": 200,
+      "bytes": "{\"t\":{\"t\":\"long\",\"v\":\"1001\"},\"position\":{\"t\":\"long\",\"v\":\"0\"},\"recordedAt\":null,\"schemaHash\":\"734b66c4df792020d7048cf61487a04ca99c4f0cffdf4a0461de80d09bd1f4f5\"}"
+    },
+    {
+      "method": "POST",
+      "route": "/v1/db/delete",
+      "status": 200,
+      "bytes": "{\"db\":\"s-213b00bb890393770f79c8137423a841\",\"deleted\":true}"
+    }
+  ],
+  "scope": "[\"triplex-scope-v1\",\"test\",\"verifier\",\"cx-vda00\",0]",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "89173b053a6a345fd7631ea5a5ea9aa6ca87882f8bfe17b703e4be0735837423"
+  },
+  "created": {
+    "db": "s-213b00bb890393770f79c8137423a841",
+    "created": true,
+    "schemaHash": "734b66c4df792020d7048cf61487a04ca99c4f0cffdf4a0461de80d09bd1f4f5"
+  },
+  "duplicate": {
+    "db": "s-213b00bb890393770f79c8137423a841",
+    "created": false,
+    "schemaHash": "734b66c4df792020d7048cf61487a04ca99c4f0cffdf4a0461de80d09bd1f4f5"
+  },
+  "basis": {
+    "t": {
+      "t": "long",
+      "v": "1001"
+    },
+    "position": {
+      "t": "long",
+      "v": "0"
+    },
+    "recordedAt": null,
+    "schemaHash": "734b66c4df792020d7048cf61487a04ca99c4f0cffdf4a0461de80d09bd1f4f5"
+  },
+  "deleted": {
+    "db": "s-213b00bb890393770f79c8137423a841",
+    "deleted": true
+  },
+  "finishedAt": "2026-11-08T22:26:05.460Z"
+}

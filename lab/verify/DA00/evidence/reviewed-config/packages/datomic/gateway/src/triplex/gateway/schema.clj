@@ -1,0 +1,31 @@
+(ns triplex.gateway.schema
+  (:import [java.security MessageDigest] [java.util HexFormat]))
+
+;; [EXP-DA00] Why: fixed R29 4.2 schema makes attributes data. Rejected: dynamic per-world Datomic schema (runtime migration coupling).
+(defn sha256 [text] (.formatHex (HexFormat/of) (.digest (MessageDigest/getInstance "SHA-256") (.getBytes text "UTF-8"))))
+(defn attr [ident type & [unique indexed]]
+  (cond-> {:db/ident ident :db/valueType type :db/cardinality :db.cardinality/one}
+    unique (assoc :db/unique unique) indexed (assoc :db/index true)))
+(def schema
+  [(attr :triplex.scope/key :db.type/string :db.unique/identity)
+   (attr :triplex.scope/position :db.type/long)
+   (attr :triplex.scope/schema-hash :db.type/string)
+   (attr :triplex.entity/id :db.type/string :db.unique/identity)
+   (attr :triplex.attr/key :db.type/string :db.unique/identity)
+   (attr :f/id :db.type/string :db.unique/value)
+   (attr :f/subject :db.type/ref) (attr :f/live :db.type/ref) (attr :f/attr :db.type/ref)
+   (attr :f/type :db.type/keyword)
+   (attr :f.v/string :db.type/string nil true) (attr :f.v/long :db.type/long nil true)
+   (attr :f.v/double :db.type/double nil true) (attr :f.v/boolean :db.type/boolean nil true)
+   (attr :f.v/ref :db.type/ref) (attr :f.v/json :db.type/string nil true)
+   (attr :f.v/blob :db.type/bytes) (attr :f.v/blob-meta :db.type/string)
+   (attr :f/valid-from :db.type/double) (attr :f/valid-to :db.type/double)
+   (attr :f/created-by :db.type/string) (attr :f/entity-type :db.type/string)
+   (attr :f/schema-version :db.type/long) (attr :f/retracted-in :db.type/ref) (attr :f/erased-in :db.type/ref)
+   (attr :triplex.tx/position :db.type/long :db.unique/value)
+   (attr :triplex.tx/id :db.type/string) (attr :triplex.tx/recorded-at :db.type/double)
+   (attr :triplex.tx/operation-id :db.type/string :db.unique/value)
+   (attr :triplex.claim/command-id :db.type/string :db.unique/value) (attr :triplex.claim/tx :db.type/ref)
+   (attr :triplex.outbox/key :db.type/string :db.unique/value) (attr :triplex.consumer/position :db.type/long)])
+;; Sorted maps make the schema identity independent of hash-map printing order.
+(def schema-hash (sha256 (pr-str (mapv #(into (sorted-map) %) schema))))

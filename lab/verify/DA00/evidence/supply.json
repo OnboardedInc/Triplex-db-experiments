@@ -1,0 +1,12 @@
+{
+  "zipSha256": "60ac6bc5f04fefb85a5aeef6a5e6c5369c5a880ca6b9f205e00a12719e7bd2dc",
+  "zipBytes": 272751248,
+  "peerSha1": "a976733ab47a8ed3f19c687995e09f406191f9b7",
+  "distributionFiles": 792,
+  "extractionMatchesZip": true,
+  "receiptMatchesExtraction": true,
+  "sourcesMatchReceipt": true,
+  "inputHashesRecomputed": true,
+  "imageId": "sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d",
+  "imageLabelMatches": true
+}

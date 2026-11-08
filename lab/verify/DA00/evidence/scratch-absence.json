@@ -1,0 +1,12 @@
+[
+  {
+    "database": "s-d54db369de9cd51c023368f354e8e06e",
+    "status": 400,
+    "body": "{\"code\":\"GatewayError\",\"message\":\"Could not find s-d54db369de9cd51c023368f354e8e06e in catalog\"}"
+  },
+  {
+    "database": "s-213b00bb890393770f79c8137423a841",
+    "status": 400,
+    "body": "{\"code\":\"GatewayError\",\"message\":\"Could not find s-213b00bb890393770f79c8137423a841 in catalog\"}"
+  }
+]

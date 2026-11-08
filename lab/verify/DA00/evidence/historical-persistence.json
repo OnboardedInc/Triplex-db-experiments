@@ -1,0 +1,19 @@
+{
+  "freshExecution": false,
+  "source": "lab/experiments/EXP-DA00-datomic-bringup/receipts/final/measurements-1.json",
+  "identicalBasisBeforeAfter": true,
+  "basis": {
+    "t": {
+      "t": "long",
+      "v": "1001"
+    },
+    "position": {
+      "t": "long",
+      "v": "0"
+    },
+    "recordedAt": null,
+    "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+  },
+  "volumeRetained": true,
+  "effectiveConfigSha256": "41160708b65bbc45ec2b56b835c0bd55adc641acd04887854f26afcef33055bd"
+}

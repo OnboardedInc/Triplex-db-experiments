@@ -1,0 +1,4 @@
+[lab] G0-datomic-20261108T221754Z-61c28b: raw output runs/G0/G0-datomic-20261108T221754Z-61c28b
+error: could not write index
+PASS G0 datomic scope=full executed=1017 pass=1017 fail=0 skip=46
+receipt: lab/runs/G0/G0-datomic-20261108T221754Z-61c28b.json

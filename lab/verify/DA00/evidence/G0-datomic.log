@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 66631 "CX-P2Q-R3-process-access-retry", pid 71356 "CX-VA01-0311-negtest", pid 37007 "CX-VDA00-codec-jvm", pid 36278 "CX-VDA00-supply"
+[lab] G0-datomic-20261108T221648Z-1093dd: raw output runs/G0/G0-datomic-20261108T221648Z-1093dd
+error: could not write index
+PASS G0 datomic scope=full executed=1017 pass=1017 fail=0 skip=46
+receipt: lab/runs/G0/G0-datomic-20261108T221648Z-1093dd.json

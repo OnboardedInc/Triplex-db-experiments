@@ -1,0 +1,6 @@
+gpg: keybox '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da00/lab/verify/DA00/evidence/gnupg/pubring.kbx' created
+gpg: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da00/lab/verify/DA00/evidence/gnupg/trustdb.gpg: trustdb created
+gpg: key F255D6EA3FD20B93: public key "Datomic Team <accounts@datomic.com>" imported
+gpg: can't connect to the gpg-agent: File name too long
+gpg: Total number processed: 1
+gpg:               imported: 1

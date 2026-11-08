@@ -1,0 +1,37 @@
+{
+  "cases": 62,
+  "jvmMatchesExpected": true,
+  "acceptedValuesExactAcrossJson": true,
+  "discrepancies": [
+    {
+      "wire": {
+        "t": "bigdec",
+        "v": "1E-2147483648"
+      },
+      "expected": "reject",
+      "ts": "accept",
+      "jvm": "reject",
+      "agrees": false
+    },
+    {
+      "wire": {
+        "t": "bigdec",
+        "v": "1.0E-2147483647"
+      },
+      "expected": "reject",
+      "ts": "accept",
+      "jvm": "reject",
+      "agrees": false
+    },
+    {
+      "wire": {
+        "t": "bigdec",
+        "v": "1E+999999999999999999999"
+      },
+      "expected": "reject",
+      "ts": "accept",
+      "jvm": "reject",
+      "agrees": false
+    }
+  ]
+}

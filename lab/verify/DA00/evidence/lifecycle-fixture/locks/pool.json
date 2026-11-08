@@ -1,0 +1,42 @@
+{
+  "reservations": [
+    {
+      "container": "tx2-xtdb-dev",
+      "memBytes": 3221225472,
+      "diskForecastBytes": 4294967296,
+      "holder": "fixture"
+    },
+    {
+      "container": "tx2-qlever-dev",
+      "memBytes": 3758096384,
+      "diskForecastBytes": 4294967296,
+      "holder": "fixture"
+    },
+    {
+      "container": "tx2-datomic-dev",
+      "lane": "datomic",
+      "slot": "dev",
+      "memBytes": 2952790016,
+      "cpus": 2,
+      "diskForecastBytes": 4294967296,
+      "holder": "CX-VDA00",
+      "experiment": null,
+      "pid": null,
+      "state": "running",
+      "reservedAt": "2026-11-08T22:23:10.399Z",
+      "configSha256": "41160708b65bbc45ec2b56b835c0bd55adc641acd04887854f26afcef33055bd",
+      "readyAt": "2026-11-08T22:23:10.482Z"
+    }
+  ],
+  "external": [],
+  "updatedAt": "2026-11-08T22:23:10.482Z",
+  "retainedVolumes": [
+    {
+      "volume": "tx2-datomic-dev-data",
+      "holder": "CX-VDA00",
+      "note": "retained by engine down (default)",
+      "at": "2026-11-08T22:23:10.071Z",
+      "bytes": 1048576
+    }
+  ]
+}

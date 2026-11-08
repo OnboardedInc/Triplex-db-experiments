@@ -1,0 +1,62 @@
+{"input":{"t":"long","v":"-9223372036854775808"},"result":"accept","output":"{\"t\":\"long\",\"v\":\"-9223372036854775808\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"long","v":"9223372036854775807"},"result":"accept","output":"{\"t\":\"long\",\"v\":\"9223372036854775807\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"long","v":"9007199254740993"},"result":"accept","output":"{\"t\":\"long\",\"v\":\"9007199254740993\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"long","v":"-9007199254740993"},"result":"accept","output":"{\"t\":\"long\",\"v\":\"-9007199254740993\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"long","v":"0"},"result":"accept","output":"{\"t\":\"long\",\"v\":\"0\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"long","v":"-0"},"result":"accept","output":"{\"t\":\"long\",\"v\":\"0\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"long","v":"-9223372036854775809"},"result":"reject","class":"java.lang.NumberFormatException","error":"For input string: \"-9223372036854775809\""}
+{"input":{"t":"long","v":"9223372036854775808"},"result":"reject","class":"java.lang.NumberFormatException","error":"For input string: \"9223372036854775808\""}
+{"input":{"t":"long","v":"01"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"long","v":"1.0"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"long","v":"1e0"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"long","v":"1\n"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"long","v":"1\r"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"ref","v":"-9223372036854775808"},"result":"accept","output":"{\"t\":\"ref\",\"v\":\"-9223372036854775808\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"ref","v":"9223372036854775807"},"result":"accept","output":"{\"t\":\"ref\",\"v\":\"9223372036854775807\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"ref","v":"9007199254740993"},"result":"accept","output":"{\"t\":\"ref\",\"v\":\"9007199254740993\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"ref","v":"-9007199254740993"},"result":"accept","output":"{\"t\":\"ref\",\"v\":\"-9007199254740993\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"ref","v":"0"},"result":"accept","output":"{\"t\":\"ref\",\"v\":\"0\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"ref","v":"-0"},"result":"accept","output":"{\"t\":\"ref\",\"v\":\"0\"}","class":"java.lang.Long","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"ref","v":"-9223372036854775809"},"result":"reject","class":"java.lang.NumberFormatException","error":"For input string: \"-9223372036854775809\""}
+{"input":{"t":"ref","v":"9223372036854775808"},"result":"reject","class":"java.lang.NumberFormatException","error":"For input string: \"9223372036854775808\""}
+{"input":{"t":"ref","v":"01"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"ref","v":"1.0"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"ref","v":"1e0"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"ref","v":"1\n"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"ref","v":"1\r"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"instant","v":"-9223372036854775808"},"result":"accept","output":"{\"t\":\"instant\",\"v\":\"-9223372036854775808\"}","class":"java.util.Date","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"instant","v":"9223372036854775807"},"result":"accept","output":"{\"t\":\"instant\",\"v\":\"9223372036854775807\"}","class":"java.util.Date","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"instant","v":"9007199254740993"},"result":"accept","output":"{\"t\":\"instant\",\"v\":\"9007199254740993\"}","class":"java.util.Date","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"instant","v":"-9007199254740993"},"result":"accept","output":"{\"t\":\"instant\",\"v\":\"-9007199254740993\"}","class":"java.util.Date","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"instant","v":"0"},"result":"accept","output":"{\"t\":\"instant\",\"v\":\"0\"}","class":"java.util.Date","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"instant","v":"-0"},"result":"accept","output":"{\"t\":\"instant\",\"v\":\"0\"}","class":"java.util.Date","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"instant","v":"-9223372036854775809"},"result":"reject","class":"java.lang.NumberFormatException","error":"For input string: \"-9223372036854775809\""}
+{"input":{"t":"instant","v":"9223372036854775808"},"result":"reject","class":"java.lang.NumberFormatException","error":"For input string: \"9223372036854775808\""}
+{"input":{"t":"instant","v":"01"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"instant","v":"1.0"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"instant","v":"1e0"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"instant","v":"1\n"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"instant","v":"1\r"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"bigint","v":"99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"},"result":"accept","output":"{\"t\":\"bigint\",\"v\":\"99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\"}","class":"java.math.BigInteger","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"bigint","v":"-99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"},"result":"accept","output":"{\"t\":\"bigint\",\"v\":\"-99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\"}","class":"java.math.BigInteger","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"bigint","v":"0"},"result":"accept","output":"{\"t\":\"bigint\",\"v\":\"0\"}","class":"java.math.BigInteger","doubleBits":null,"roundtrip":true,"scale":null}
+{"input":{"t":"bigint","v":"1\n"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Expected decimal integer text"}
+{"input":{"t":"bigdec","v":"16.5000"},"result":"accept","output":"{\"t\":\"bigdec\",\"v\":\"16.5000\"}","class":"java.math.BigDecimal","doubleBits":null,"roundtrip":true,"scale":4}
+{"input":{"t":"bigdec","v":"-0.0000"},"result":"accept","output":"{\"t\":\"bigdec\",\"v\":\"0.0000\"}","class":"java.math.BigDecimal","doubleBits":null,"roundtrip":true,"scale":4}
+{"input":{"t":"bigdec","v":"1.234567890123456789012345678901234567890"},"result":"accept","output":"{\"t\":\"bigdec\",\"v\":\"1.234567890123456789012345678901234567890\"}","class":"java.math.BigDecimal","doubleBits":null,"roundtrip":true,"scale":39}
+{"input":{"t":"bigdec","v":"1E+2147483647"},"result":"accept","output":"{\"t\":\"bigdec\",\"v\":\"1E+2147483647\"}","class":"java.math.BigDecimal","doubleBits":null,"roundtrip":true,"scale":-2147483647}
+{"input":{"t":"bigdec","v":"1E-2147483647"},"result":"accept","output":"{\"t\":\"bigdec\",\"v\":\"1E-2147483647\"}","class":"java.math.BigDecimal","doubleBits":null,"roundtrip":true,"scale":2147483647}
+{"input":{"t":"bigdec","v":"1.0E-2147483646"},"result":"accept","output":"{\"t\":\"bigdec\",\"v\":\"1.0E-2147483646\"}","class":"java.math.BigDecimal","doubleBits":null,"roundtrip":true,"scale":2147483647}
+{"input":{"t":"bigdec","v":"1E+2147483648"},"result":"accept","output":"{\"t\":\"bigdec\",\"v\":\"1E+2147483648\"}","class":"java.math.BigDecimal","doubleBits":null,"roundtrip":true,"scale":-2147483648}
+{"input":{"t":"bigdec","v":"1E-2147483648"},"result":"reject","class":"java.lang.NumberFormatException","error":"Exponent overflow."}
+{"input":{"t":"bigdec","v":"1.0E-2147483647"},"result":"reject","class":"java.lang.NumberFormatException","error":"Exponent overflow."}
+{"input":{"t":"bigdec","v":"1E+999999999999999999999"},"result":"reject","class":"java.lang.NumberFormatException","error":"Too many nonzero exponent digits."}
+{"input":{"t":"bigdec","v":"16.50\n"},"result":"reject","class":"clojure.lang.ExceptionInfo","error":"Invalid bigdec"}
+{"input":{"t":"double","v":-0.0},"result":"accept","output":"{\"t\":\"double\",\"v\":-0.0}","class":"java.lang.Double","doubleBits":"-9223372036854775808","roundtrip":true,"scale":null}
+{"input":{"t":"double","v":4.9E-324},"result":"accept","output":"{\"t\":\"double\",\"v\":4.9E-324}","class":"java.lang.Double","doubleBits":"1","roundtrip":true,"scale":null}
+{"input":{"t":"double","v":-4.9E-324},"result":"accept","output":"{\"t\":\"double\",\"v\":-4.9E-324}","class":"java.lang.Double","doubleBits":"-9223372036854775807","roundtrip":true,"scale":null}
+{"input":{"t":"double","v":1.7976931348623157E308},"result":"accept","output":"{\"t\":\"double\",\"v\":1.7976931348623157E308}","class":"java.lang.Double","doubleBits":"9218868437227405311","roundtrip":true,"scale":null}
+{"input":{"t":"double","v":-1.7976931348623157E308},"result":"accept","output":"{\"t\":\"double\",\"v\":-1.7976931348623157E308}","class":"java.lang.Double","doubleBits":"-4503599627370497","roundtrip":true,"scale":null}
+{"input":{"t":"double","v":100000000000000000000},"result":"accept","output":"{\"t\":\"double\",\"v\":1.0E20}","class":"java.lang.Double","doubleBits":"4906019910204099648","roundtrip":true,"scale":null}
+{"input":{"t":"double","v":9007199254740992},"result":"accept","output":"{\"t\":\"double\",\"v\":9.007199254740992E15}","class":"java.lang.Double","doubleBits":"4845873199050653696","roundtrip":true,"scale":null}
+{"input":{"t":"double","v":0.10000000000000002},"result":"accept","output":"{\"t\":\"double\",\"v\":0.10000000000000002}","class":"java.lang.Double","doubleBits":"4591870180066957723","roundtrip":true,"scale":null}

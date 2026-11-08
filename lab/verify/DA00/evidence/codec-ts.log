@@ -1,0 +1,35 @@
+{
+  "cases": 62,
+  "unexpected": [
+    {
+      "wire": {
+        "t": "bigdec",
+        "v": "1E-2147483648"
+      },
+      "expected": "reject",
+      "ts": "accept",
+      "json": "{\"t\":\"bigdec\",\"v\":\"1E-2147483648\"}",
+      "matchesExpected": false
+    },
+    {
+      "wire": {
+        "t": "bigdec",
+        "v": "1.0E-2147483647"
+      },
+      "expected": "reject",
+      "ts": "accept",
+      "json": "{\"t\":\"bigdec\",\"v\":\"1.0E-2147483647\"}",
+      "matchesExpected": false
+    },
+    {
+      "wire": {
+        "t": "bigdec",
+        "v": "1E+999999999999999999999"
+      },
+      "expected": "reject",
+      "ts": "accept",
+      "json": "{\"t\":\"bigdec\",\"v\":\"1E+999999999999999999999\"}",
+      "matchesExpected": false
+    }
+  ]
+}

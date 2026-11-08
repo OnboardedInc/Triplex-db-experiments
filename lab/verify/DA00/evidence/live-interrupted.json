@@ -1,0 +1,23 @@
+{
+  "startedAt": "2026-11-08T22:23:32.427Z",
+  "requests": [
+    {
+      "method": "GET",
+      "route": "/health",
+      "status": 200,
+      "bytes": "{\"datomicVersion\":\"1.0.7745\",\"gatewaySourceHash\":\"7cf9f6e3289a007a62549115627a30fe6bd9a3af1a2252ae4af268cdaf6925de\"}"
+    },
+    {
+      "method": "POST",
+      "route": "/v1/db/create",
+      "error": "fetch failed",
+      "cause": "UND_ERR_SOCKET"
+    }
+  ],
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "7cf9f6e3289a007a62549115627a30fe6bd9a3af1a2252ae4af268cdaf6925de"
+  },
+  "unavailableOrFailed": "fetch failed",
+  "finishedAt": "2026-11-08T22:23:33.354Z"
+}

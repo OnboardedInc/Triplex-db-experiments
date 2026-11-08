@@ -1,0 +1,622 @@
+[
+  {
+    "wire": {
+      "t": "long",
+      "v": "-9223372036854775808"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"long\",\"v\":\"-9223372036854775808\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "9223372036854775807"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"long\",\"v\":\"9223372036854775807\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "9007199254740993"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"long\",\"v\":\"9007199254740993\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "-9007199254740993"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"long\",\"v\":\"-9007199254740993\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "0"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"long\",\"v\":\"0\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "-0"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"long\",\"v\":\"-0\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "-9223372036854775809"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Long out of range",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "9223372036854775808"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Long out of range",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "01"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "1.0"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "1e0"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "1\n"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "long",
+      "v": "1\r"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "-9223372036854775808"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"ref\",\"v\":\"-9223372036854775808\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "9223372036854775807"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"ref\",\"v\":\"9223372036854775807\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "9007199254740993"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"ref\",\"v\":\"9007199254740993\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "-9007199254740993"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"ref\",\"v\":\"-9007199254740993\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "0"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"ref\",\"v\":\"0\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "-0"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"ref\",\"v\":\"-0\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "-9223372036854775809"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Long out of range",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "9223372036854775808"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Long out of range",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "01"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "1.0"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "1e0"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "1\n"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "ref",
+      "v": "1\r"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "-9223372036854775808"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"instant\",\"v\":\"-9223372036854775808\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "9223372036854775807"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"instant\",\"v\":\"9223372036854775807\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "9007199254740993"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"instant\",\"v\":\"9007199254740993\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "-9007199254740993"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"instant\",\"v\":\"-9007199254740993\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "0"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"instant\",\"v\":\"0\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "-0"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"instant\",\"v\":\"-0\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "-9223372036854775809"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Long out of range",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "9223372036854775808"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Long out of range",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "01"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "1.0"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "1e0"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "1\n"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "instant",
+      "v": "1\r"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigint",
+      "v": "99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigint\",\"v\":\"99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigint",
+      "v": "-99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigint\",\"v\":\"-99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigint",
+      "v": "0"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigint\",\"v\":\"0\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigint",
+      "v": "1\n"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Expected decimal integer text",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "16.5000"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"16.5000\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "-0.0000"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"-0.0000\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "1.234567890123456789012345678901234567890"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"1.234567890123456789012345678901234567890\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "1E+2147483647"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"1E+2147483647\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "1E-2147483647"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"1E-2147483647\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "1.0E-2147483646"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"1.0E-2147483646\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "1E+2147483648"
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"1E+2147483648\"}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "1E-2147483648"
+    },
+    "expected": "reject",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"1E-2147483648\"}",
+    "matchesExpected": false
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "1.0E-2147483647"
+    },
+    "expected": "reject",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"1.0E-2147483647\"}",
+    "matchesExpected": false
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "1E+999999999999999999999"
+    },
+    "expected": "reject",
+    "ts": "accept",
+    "json": "{\"t\":\"bigdec\",\"v\":\"1E+999999999999999999999\"}",
+    "matchesExpected": false
+  },
+  {
+    "wire": {
+      "t": "bigdec",
+      "v": "16.50\n"
+    },
+    "expected": "reject",
+    "ts": "reject",
+    "error": "Invalid bigdec",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "double",
+      "v": 0
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"double\",\"v\":-0.0}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "double",
+      "v": 5e-324
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"double\",\"v\":5e-324}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "double",
+      "v": -5e-324
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"double\",\"v\":-5e-324}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "double",
+      "v": 1.7976931348623157e+308
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"double\",\"v\":1.7976931348623157e+308}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "double",
+      "v": -1.7976931348623157e+308
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"double\",\"v\":-1.7976931348623157e+308}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "double",
+      "v": 100000000000000000000
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"double\",\"v\":100000000000000000000}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "double",
+      "v": 9007199254740992
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"double\",\"v\":9007199254740992}",
+    "matchesExpected": true
+  },
+  {
+    "wire": {
+      "t": "double",
+      "v": 0.10000000000000002
+    },
+    "expected": "accept",
+    "ts": "accept",
+    "json": "{\"t\":\"double\",\"v\":0.10000000000000002}",
+    "matchesExpected": true
+  }
+]

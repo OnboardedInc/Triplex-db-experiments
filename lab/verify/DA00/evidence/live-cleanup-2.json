@@ -1,0 +1,41 @@
+{
+  "startedAt": "2026-11-08T22:24:23.907Z",
+  "requests": [
+    {
+      "method": "GET",
+      "route": "/health",
+      "status": 200,
+      "bytes": "{\"datomicVersion\":\"1.0.7745\",\"gatewaySourceHash\":\"89173b053a6a345fd7631ea5a5ea9aa6ca87882f8bfe17b703e4be0735837423\"}"
+    },
+    {
+      "method": "POST",
+      "route": "/v1/db/delete",
+      "status": 400,
+      "bytes": "{\"code\":\"InvalidValue\",\"message\":\"Only test scope tuples may be created or deleted\"}"
+    },
+    {
+      "method": "POST",
+      "route": "/v1/db/delete",
+      "error": "HTTP 400"
+    },
+    {
+      "method": "POST",
+      "route": "/v1/db/delete",
+      "status": 400,
+      "bytes": "{\"code\":\"InvalidValue\",\"message\":\"Only test scope tuples may be created or deleted\"}"
+    },
+    {
+      "method": "POST",
+      "route": "/v1/db/delete",
+      "error": "HTTP 400"
+    }
+  ],
+  "scope": "[\"triplex-scope-v1\",\"test\",\"verifier\",\"cx-vda00\",\"1794176612429\"]",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "89173b053a6a345fd7631ea5a5ea9aa6ca87882f8bfe17b703e4be0735837423"
+  },
+  "unavailableOrFailed": "HTTP 400",
+  "cleanupFailed": "HTTP 400",
+  "finishedAt": "2026-11-08T22:24:23.955Z"
+}
