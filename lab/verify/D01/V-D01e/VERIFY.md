@@ -29,3 +29,13 @@ case written for it; control 136/136.
 - N2 (note): validate.py does not check SHA256SUMS; pin its digest and have harnesses run `shasum -a 256 -c`.
 - N3 (optional): freeze an input sha256 per case so a harness can verify the bytes it hands over (only C93 and C94 would pass silently under a
   re-serializing harness today).
+
+## Orchestrator diff check of the fix (fedfcda, one commit on 242bb40): ACCEPT (2026-11-08 01:22Z)
+- `git diff --stat 242bb40 fedfcda`: SHA256SUMS, SPEC.md, input-sha256.json (new), validate.py only; cases/, releases/, expected-sha256.json,
+  README.md and schema.json byte-identical (git diff --quiet), so no case, release or fingerprint input changed.
+- E1: SPEC section 9 item 7 now reads "U+1F600 as `😀`"; SPEC.md holds no 4-byte UTF-8 character. E2: synthetic allowed only on
+  C100-C102 and C133-C136, a listed case missing the flag is flagged. N2: validate.py checks SHA256SUMS. N3: input-sha256.json per case,
+  recomputed by validate.py.
+- From a clean `git archive fedfcda`: `python3 -I lab/world/W0/validate.py` prints 136 cases, R1 fd57551a...b031, R2 7d2f4008...07a9, R3
+  f345d9fe...312e, OK; `shasum -a 256 -c lab/world/W0/SHA256SUMS` 146/146 OK (digest b5941569...b051c per the author). Author's 6/6 planted
+  mutations caught. W0-1.1.2 is accepted at fedfcda; it merges together with the W0 pin move in contract 0.3.10.
