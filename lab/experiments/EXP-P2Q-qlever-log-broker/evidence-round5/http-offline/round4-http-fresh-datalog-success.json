@@ -1,0 +1,12 @@
+{
+  "timing": "success",
+  "kind": "fresh",
+  "surface": "datalog",
+  "events": [
+    "answer-acquired"
+  ],
+  "answers": 1,
+  "forwarded": 0,
+  "ok": true,
+  "error": null
+}
