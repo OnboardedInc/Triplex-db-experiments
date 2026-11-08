@@ -1,0 +1,26 @@
+{
+  "position": 2048,
+  "gate": {
+    "ok": true,
+    "b": {
+      "basis": 2048,
+      "marker": {
+        "position": 3071,
+        "epoch": 1,
+        "incarnation": "1.39aa32c6-1037-40b5-a24a-ffe8dee35ede"
+      },
+      "fencedIncarnation": "1.39aa32c6-1037-40b5-a24a-ffe8dee35ede",
+      "surface": "datalog",
+      "started": 2290.66075
+    },
+    "markerAtReturn": 3071
+  },
+  "waitedMs": 26,
+  "dependencyState": "ReadError:",
+  "dependencyStateArrivedAt": [
+    3071
+  ],
+  "regressionsDetected": 2,
+  "pullRoute": "replica",
+  "pullEqual": true
+}
