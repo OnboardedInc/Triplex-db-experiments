@@ -1029,7 +1029,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
   3.0 / 6.9 ms) and survived 30 SIGKILLs over 8,959 commits, but its macOS default is not durable and it misses mid-WAL corruption, so the
   marker cross-checks stay (Q58c). XTDB fits behind the broker with an ASSERT-guarded marker row (Q58b).
 - **R22 learnings:** on this host only simultaneous pairing shares the noise (5 s window medians of two concurrent processes correlate
-  0.985; 60 s apart in one process 0.08); the  quota throttled the busiest slot in 77% of its periods; VM steal is always 0; a p99
+  0.985; 60 s apart in one process 0.08); the `--cpus 2` quota throttled the busiest slot in 77% of its periods; VM steal is always 0; a p99
   claim needs about 25,000 commands per arm, so P2/P3 rounds need bursts. Adopted as PAIR-0 (Q60, provisional).
 - **Contract 0.3.8 merged (445bc45):** O-REPLAY 0.4.1 pinned with the oracle in one commit; 117 obligations closable, 6 blocked; qualification
   is a run. **E01:** claim.mjs `qualify` builds both sides itself and ignores supplied records; no path to QUALIFIED until an executing gate
