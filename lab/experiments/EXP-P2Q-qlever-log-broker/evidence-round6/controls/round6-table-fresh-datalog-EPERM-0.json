@@ -1,0 +1,31 @@
+{
+  "code": "EPERM",
+  "transport": true,
+  "depth": 0,
+  "kind": "fresh",
+  "surface": "datalog",
+  "endpoint": "http://127.0.0.1:51088",
+  "injected": 1,
+  "uv": [
+    -1,
+    [
+      "EPERM",
+      "operation not permitted"
+    ]
+  ],
+  "injection": "synthetic errno on the real client-owned net.Socket; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: opaque",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "Error",
+      "code": "EPERM",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

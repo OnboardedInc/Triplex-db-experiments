@@ -1,0 +1,702 @@
+{
+  "rows": [
+    {
+      "code": "ECONNREFUSED",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ECONNRESET",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ECONNABORTED",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EPIPE",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ENOTCONN",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ETIMEDOUT",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EHOSTUNREACH",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EHOSTDOWN",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ENETUNREACH",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ENETDOWN",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ENETRESET",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EADDRNOTAVAIL",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EADDRINUSE",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EAFNOSUPPORT",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EPROTONOSUPPORT",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ESOCKTNOSUPPORT",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ENONET",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ESHUTDOWN",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EACCES",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EPERM",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EMFILE",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ENFILE",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ENOBUFS",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ENOMEM",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EAGAIN",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EINTR",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EIO",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "ECANCELED",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EOF",
+      "transport": true,
+      "source": "node-socket"
+    },
+    {
+      "code": "EAI_ADDRFAMILY",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_AGAIN",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_BADFLAGS",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_BADHINTS",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_CANCELED",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_FAIL",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_FAMILY",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_MEMORY",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_NODATA",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_NONAME",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_OVERFLOW",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_PROTOCOL",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_SERVICE",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "EAI_SOCKTYPE",
+      "transport": true,
+      "source": "node-lookup"
+    },
+    {
+      "code": "ENODATA",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EFORMERR",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ESERVFAIL",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ENOTFOUND",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ENOTIMP",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EREFUSED",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EBADQUERY",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EBADNAME",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EBADFAMILY",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EBADRESP",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ETIMEOUT",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EFILE",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EDESTRUCTION",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EBADSTR",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EBADFLAGS",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ENONAME",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EBADHINTS",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ENOTINITIALIZED",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ELOADIPHLPAPI",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "EADDRGETNETWORKPARAMS",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ECANCELLED",
+      "transport": true,
+      "source": "node-dns"
+    },
+    {
+      "code": "ABORT_ERR",
+      "transport": true,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_SOCKET_CLOSED",
+      "transport": true,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_SOCKET_CLOSED_BEFORE_CONNECTION",
+      "transport": true,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_SOCKET_CONNECTION_TIMEOUT",
+      "transport": true,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_STREAM_DESTROYED",
+      "transport": true,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_STREAM_PREMATURE_CLOSE",
+      "transport": true,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_HTTP_REQUEST_TIMEOUT",
+      "transport": true,
+      "source": "node-errors"
+    },
+    {
+      "code": "EBADF",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "EINVAL",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ENOTSOCK",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "EISCONN",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "EALREADY",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ENOPROTOOPT",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "EPROTOTYPE",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_INVALID_ARG_TYPE",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_INVALID_CALLBACK",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_INVALID_HANDLE_TYPE",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_INVALID_ADDRESS",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_INVALID_ADDRESS_FAMILY",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_INVALID_IP_ADDRESS",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_SOCKET_BAD_PORT",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_SOCKET_BAD_TYPE",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_SERVER_ALREADY_LISTEN",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_HTTP_INVALID_CHAR",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_HTTP_INVALID_HEADER_VALUE",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_HTTP_CONTENT_LENGTH_MISMATCH",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "ERR_STREAM_WRITE_AFTER_END",
+      "transport": false,
+      "source": "node-errors"
+    },
+    {
+      "code": "UND_ERR_CONNECT_TIMEOUT",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_HEADERS_TIMEOUT",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_BODY_TIMEOUT",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_ABORT",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_ABORTED",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_DESTROYED",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_CLOSED",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_SOCKET",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_PRX_TLS",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_PRX_CONN",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_SOCKS5",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+      "transport": true,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_BPL_MISSING_UPSTREAM",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_HEADERS_OVERFLOW",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_HTTP_PARSER",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_INFO",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_INVALID_ARG",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_INVALID_RETURN_VALUE",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_MAX_ORIGINS_REACHED",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_NOT_SUPPORTED",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_REQ_RETRY",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_RESPONSE",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_RESPONSE_STATUS_CODE",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+      "transport": false,
+      "source": "undici-errors"
+    },
+    {
+      "code": "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED",
+      "transport": false,
+      "source": "undici-errors"
+    }
+  ],
+  "counts": {
+    "all": 118,
+    "transport": 83,
+    "nonTransport": 35
+  },
+  "bySource": {
+    "node-socket": 29,
+    "node-lookup": 14,
+    "node-dns": 21,
+    "node-errors": 27,
+    "undici-errors": 27
+  },
+  "installedModules": [
+    {
+      "file": "node_modules/.pnpm/undici@7.29.0/node_modules/undici/lib/core/errors.js",
+      "sha256": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481",
+      "codes": [
+        "UND_ERR",
+        "UND_ERR_ABORT",
+        "UND_ERR_ABORTED",
+        "UND_ERR_BODY_TIMEOUT",
+        "UND_ERR_BPL_MISSING_UPSTREAM",
+        "UND_ERR_CLOSED",
+        "UND_ERR_CONNECT_TIMEOUT",
+        "UND_ERR_DESTROYED",
+        "UND_ERR_HEADERS_OVERFLOW",
+        "UND_ERR_HEADERS_TIMEOUT",
+        "UND_ERR_HTTP_PARSER",
+        "UND_ERR_INFO",
+        "UND_ERR_INVALID_ARG",
+        "UND_ERR_INVALID_RETURN_VALUE",
+        "UND_ERR_MAX_ORIGINS_REACHED",
+        "UND_ERR_NOT_SUPPORTED",
+        "UND_ERR_PRX_TLS",
+        "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_REQ_RETRY",
+        "UND_ERR_RESPONSE",
+        "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+        "UND_ERR_SOCKET",
+        "UND_ERR_SOCKS5",
+        "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED"
+      ]
+    },
+    {
+      "file": "node_modules/.pnpm/undici@7.29.1/node_modules/undici/lib/core/errors.js",
+      "sha256": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481",
+      "codes": [
+        "UND_ERR",
+        "UND_ERR_ABORT",
+        "UND_ERR_ABORTED",
+        "UND_ERR_BODY_TIMEOUT",
+        "UND_ERR_BPL_MISSING_UPSTREAM",
+        "UND_ERR_CLOSED",
+        "UND_ERR_CONNECT_TIMEOUT",
+        "UND_ERR_DESTROYED",
+        "UND_ERR_HEADERS_OVERFLOW",
+        "UND_ERR_HEADERS_TIMEOUT",
+        "UND_ERR_HTTP_PARSER",
+        "UND_ERR_INFO",
+        "UND_ERR_INVALID_ARG",
+        "UND_ERR_INVALID_RETURN_VALUE",
+        "UND_ERR_MAX_ORIGINS_REACHED",
+        "UND_ERR_NOT_SUPPORTED",
+        "UND_ERR_PRX_TLS",
+        "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_REQ_RETRY",
+        "UND_ERR_RESPONSE",
+        "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+        "UND_ERR_SOCKET",
+        "UND_ERR_SOCKS5",
+        "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED"
+      ]
+    },
+    {
+      "file": "node_modules/.pnpm/undici@8.11.2/node_modules/undici/lib/core/errors.js",
+      "sha256": "47c1e438402a802f5132da4a2084e1294ad3fd1496f8f7b47117292165c17fd9",
+      "codes": [
+        "UND_ERR",
+        "UND_ERR_ABORT",
+        "UND_ERR_ABORTED",
+        "UND_ERR_BODY_TIMEOUT",
+        "UND_ERR_BPL_MISSING_UPSTREAM",
+        "UND_ERR_CLOSED",
+        "UND_ERR_CONNECT_TIMEOUT",
+        "UND_ERR_DESTROYED",
+        "UND_ERR_HEADERS_OVERFLOW",
+        "UND_ERR_HEADERS_TIMEOUT",
+        "UND_ERR_HTTP_PARSER",
+        "UND_ERR_INFO",
+        "UND_ERR_INVALID_ARG",
+        "UND_ERR_INVALID_RETURN_VALUE",
+        "UND_ERR_MAX_ORIGINS_REACHED",
+        "UND_ERR_NOT_SUPPORTED",
+        "UND_ERR_PRX_CONN",
+        "UND_ERR_PRX_TLS",
+        "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_REQ_RETRY",
+        "UND_ERR_RESPONSE",
+        "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+        "UND_ERR_SOCKET",
+        "UND_ERR_SOCKS5",
+        "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED"
+      ]
+    }
+  ]
+}

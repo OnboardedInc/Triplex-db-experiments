@@ -1,0 +1,12 @@
+{
+  "expectedUnreachable": false,
+  "error": {
+    "tag": "ReadError",
+    "reason": null,
+    "message": "QLever Datalog execution failed: TypeError: QLever did not return a SPARQL SELECT result",
+    "required": null,
+    "observed": null,
+    "replica": null
+  },
+  "preservesCause": true
+}

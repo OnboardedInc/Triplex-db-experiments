@@ -1,0 +1,34 @@
+{
+  "timing": "malformed",
+  "kind": "standard",
+  "surface": "native",
+  "events": [
+    "marker",
+    "answer-acquired"
+  ],
+  "answers": 1,
+  "forwarded": 0,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": null,
+    "required": null,
+    "observed": null,
+    "replica": null,
+    "surface": null,
+    "code": null,
+    "message": "QLever native SELECT failed: TypeError: QLever did not return a SPARQL SELECT result",
+    "cause": {
+      "name": "TypeError",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": null,
+      "message": "QLever did not return a SPARQL SELECT result",
+      "cause": null
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "code": "EBADNAME",
+  "transport": true,
+  "depth": 1,
+  "kind": "standard",
+  "surface": "native",
+  "endpoint": "http://127.0.0.1:55037",
+  "injected": 1,
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "fetch failed",
+      "reason": null
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "opaque",
+      "reason": null
+    },
+    {
+      "name": "Error",
+      "code": "EBADNAME",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

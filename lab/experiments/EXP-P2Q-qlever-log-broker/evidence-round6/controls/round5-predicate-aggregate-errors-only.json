@@ -1,0 +1,8 @@
+{
+  "expected": false,
+  "observed": false,
+  "elapsedMs": 0.006750000000010914,
+  "boundary": ".errors is not a cause edge",
+  "name": "AggregateError",
+  "message": "all candidates failed"
+}
