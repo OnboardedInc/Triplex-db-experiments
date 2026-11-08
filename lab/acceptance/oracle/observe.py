@@ -778,13 +778,16 @@ def check(protocol, evidence, contract, context=None, bundle_dir=None, key_file=
         except Failed as error:
             raise Refused('UNTRUSTED-BUNDLE: ' + str(error)) from error
         require(CASE_FIELDS[key] <= set(context['bindings']), 'evaluator case bindings incomplete')
-        require(context['protocol'] == protocol and digest(contract) == context['contractSha256'], 'contract/protocol context mismatch')
+        require(digest(contract) == context['contractSha256'], 'contract context mismatch')
         if key == 'CANCEL' and evidence.get('expectedError') == 'E-TIMEOUT':
             require('tDeadline' in context['bindings'], 'timeout deadline missing from evaluator case')
         for field in ('obligation', 'case', 'witnessKind', 'runId'):
             name(context[field])
         obligations = [o for o in contract['obligations'] if o['id'] == context['obligation']]
-        require(len(obligations) == 1, 'unknown evaluator obligation')
+        # [EXP-O05-R4] Why: every protocol needs the obligation's actual O-OBS delegation. Rejected: WORK-only authority checks (R3-F1).
+        if (len(obligations) != 1 or 'O-OBS' not in array(obligations[0]['oracles'], False)
+                or context['protocol'] != protocol or protocol not in need(contract['obsProtocols'])):
+            raise Refused('CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol')
         selected_work = work_selection(obligations[0], context) if key == 'WORK' else None
         if not set(obligations[0]['thresholds']) <= set(context['thresholdIds']):
             raise Refused('CONTEXT-CONTRADICTION: context omitted obligation thresholds')
@@ -795,8 +798,6 @@ def check(protocol, evidence, contract, context=None, bundle_dir=None, key_file=
         judge = Judge(contract, context)
         judge.authenticated, judge.clock = authenticated, ClockBounds(uncertainty)
         judge.workThreshold = selected_work
-        if protocol not in contract['obsProtocols']:
-            raise Refused('protocol missing from selected contract')
         need(evidence, *FIELDS[key].split())
         strength = source(evidence, key, authenticated, context['engine'])
         getattr(judge, key.lower().replace('-', '_'))(evidence)

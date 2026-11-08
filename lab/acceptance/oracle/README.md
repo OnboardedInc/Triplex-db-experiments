@@ -143,3 +143,29 @@ It retains new attempt artifacts, source hashes and process exits. `test_round3.
 timing regressions. `replay_review_round2.py` extracts the pinned read-only review commit into a temporary snapshot and
 reruns all 306 retained CLI inputs. Only the normalizer's absolute path is relocated; parser bytes, raw chunks, HMACs,
 expected facts, contract, and witness heads remain unchanged. The stricter coverage result above is identified explicitly.
+
+## Round 4: common delegation guard and corrected coverage control
+
+The common `check()` path now refuses every observation protocol unless exactly one bound obligation exists, that
+obligation's actual `oracles` selection contains `O-OBS`, the context names the requested protocol, and the protocol is
+registered in the pinned contract's `obsProtocols`. `needsNewOracle`, a global oracle registry entry, or valid measurement
+bytes do not substitute for the obligation's delegation. The same guard applies before every handler, including WORK;
+its additional obligation/bar/witness consistency rules remain in place. This checks the contract representation that
+exists: oracle selection on the obligation and protocol registration/context identity. It does not invent a separate
+per-case/per-protocol selection relation absent from the contract.
+
+`test_round4.py` exercises all fourteen legitimate positive bundles, all fourteen O-TESTKIT-only contradictory contexts,
+and missing/mismatched protocol selection for every family. It also repairs the disputed supplemental control by varying
+only `engineActiveSamples`: 500 ms nominal gaps and a final sample at 7600. The caller request, caller settlement,
+transport ACK, drain, connection and reuse observations remain identical to the original. With u=1, both repairs together
+pass; the original, cadence-only and final-edge-only controls still fail their intended coverage guards. No clock policy
+or timing threshold is loosened. The original retained insufficient evidence remains unchanged.
+
+```sh
+node lab/bin/heavy.mjs --label CX-O05-R4 -- python3 -I -B lab/acceptance/oracle/gates_round4.py ATTEMPT
+```
+
+The round-four cohort includes the previous 306-case replay and all 480 additional round-three reviewer CLI inputs from
+pinned commit `a036359`: 462 generalized cases, fourteen contradictory contexts, and four isolated coverage controls.
+`replay_review_round3.py` changes only local path prefixes in temporary context aliases, retains original input hashes,
+and checks input stability. Its coverage `both` control is the review's complete authenticated corrected positive.
