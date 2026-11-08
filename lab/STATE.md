@@ -39,10 +39,9 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | contract 0.3.7 (main ca42e06) | Q46-Q49 compiled; 153 obligations; W0-1.1.1 pinned ACCEPTED; O-DOMAIN fingerprint null; Q50-Q54 pending rows (no authority) | Codex round 7 DONE: NOT READY, 5 open (2 partial, 3 new), all accepted as Q55; 0.3.8 compiles Q50-Q55 |
 | contract 0.3.3 (main 89376e1) | Q29-Q32 compiled; 142 obligations, 50 thresholds; W0 pin null until V-D01 | Codex round 3 |
 
-## Running agents (9 active; N01, C8 and J01 resume on their own when their runs finish; dispatch nothing new until a slot frees)
+## Running agents (9 active, C8 and J01 waiting on runs; N01, C8 and J01 resume on their own when their runs finish; dispatch nothing new until a slot frees)
 | Agent | Priority | Output |
 | --- | --- | --- |
-| EXP-N01 A0 XTDB zero-reader baseline on s1 (opus; run NS-xtdb-20261108T001701Z-6f67e0, then the ladder) | P1-P5 measurement (NS gate) | A0 receipts |
 | EXP-J01 bytes per commit, both lanes (opus; fresh-scope service-time runs) | P2 (and delta growth for P3/P5) | per-source tables, candidate encoding |
 | EXP-C8 reads never write (opus; SQL G2 run) | P1, C8 floor | both lanes |
 | EXP-W01b remaining XTDB scenarios (opus, W01 author resumed) | GS correctness on XTDB | 12 scenarios, GS.04 rerun, GS.12 patch |
@@ -62,6 +61,9 @@ Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan
 ## Queue (NEXT FREE SLOTS, in order; restored 2026-11-08 after a table rewrite dropped it)
 1. Merge contract 0.3.10 (A01 running) into main after checking its report and `--verify`.
 1b. Then merge exp/D01b-w0-kernel-112 (8483c50; 174/174, fingerprint equal) into main; it carries the W0-1.1.2 merge, so never before 0.3.10.
+1d. A0 XTDB P1 ladder at an informative rung (`--subjects 500 --probe10-per-s 0`, N01 estimate +-2x) on s1 after V-X02 releases it;
+    resume N01 a4d931a315c6b5664. Use R26's clone procedure if it is faithful.
+1e. engine.mjs build-index-from-seed step for QLever (N01's 10k bulk seed at runs/qlever-seed/ns-v2-10k/), then the QLever A0 NS run.
 1c. W0-1.1.3 when a W0 author slot frees: Q73a, Q73b cases; O-DOMAIN and the kernel must pass them.
 2. V-O04f: re-check O-REPLAY 0.4.5 (Q70a-e) when its fix round reports (resume V-O04e a24def81f188f0df6); pin 0.4.5 in contract 0.3.11.
 3. V-P2Q delta re-verify after fix round 2 (resume aea2afc01cf3f010f); then merge P2Q behind its default-off option and re-freeze the A0
