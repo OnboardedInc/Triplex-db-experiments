@@ -49,8 +49,10 @@ const loop = async () => {
 };
 const running = loop();
 if (mode === "exit") setTimeout(() => process.exit(0), 300);
-if (mode === "graceful")
-  process.on("SIGINT", () => {
+if (mode === "graceful" || mode === "graceful-term")
+  // [CX-VP2Q-3] Why: vary the terminal interrupt with a service termination while draining.
+  // Rejected: killing only the helper (does not exercise process-group isolation).
+  process.on(mode === "graceful-term" ? "SIGTERM" : "SIGINT", () => {
     console.log(JSON.stringify({ event: "sigint", pid: process.pid }));
     setTimeout(() => {
       stopping = true;

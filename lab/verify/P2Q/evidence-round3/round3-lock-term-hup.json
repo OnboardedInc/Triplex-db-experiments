@@ -1,0 +1,14 @@
+{
+  "second": {
+    "event": "refused",
+    "pid": 42932,
+    "error": "Error: Broker log lock /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round3/lock-term-hup-e4ea47fb-b612-4d45-a601-83af89383caf/LOCK is held by another"
+  },
+  "acked": 83,
+  "recovery": {
+    "outcome": "opened:clean-end",
+    "lost": 0,
+    "lostSample": [],
+    "broken": []
+  }
+}

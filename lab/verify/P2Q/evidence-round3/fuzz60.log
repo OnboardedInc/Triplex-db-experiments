@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4427 "CX-VX02-2-G0", pid 1980 "DA00-G0-final", pid 5185 "G0-xtdb-20261108T215157Z-138fc7 build"
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4427 "CX-VX02-2-G0", pid 1980 "DA00-G0-final", pid 5185 "G0-xtdb-20261108T215157Z-138fc7 vitest-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 4998 "G0-qlever-20261108T215153Z-3524cf typecheck", pid 1980 "DA00-G0-final", pid 5696 "CX-C8-R3-checks"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  16:53:14
+   Duration  79.13s (tests 99%)
+

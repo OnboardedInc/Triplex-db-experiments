@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "tag": "ReadError",
+  "reason": null,
+  "message": "QLever Datalog execution failed: Error: ECONNRESET after successful basis probe"
+}

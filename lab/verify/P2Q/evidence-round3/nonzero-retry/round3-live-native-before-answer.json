@@ -1,0 +1,37 @@
+{
+  "first": 2048,
+  "target": 3072,
+  "rewinds": 0,
+  "markerBefore": {
+    "brokerPosition": {
+      "type": "literal",
+      "value": "4095"
+    },
+    "brokerEpoch": {
+      "type": "literal",
+      "value": "1"
+    },
+    "brokerIncarnation": {
+      "type": "literal",
+      "value": "1.184b62d7-7c53-4714-8faa-5d6776966d07"
+    }
+  },
+  "markerAfter": {
+    "brokerPosition": {
+      "type": "literal",
+      "value": "4095"
+    },
+    "brokerEpoch": {
+      "type": "literal",
+      "value": "1"
+    },
+    "brokerIncarnation": {
+      "type": "literal",
+      "value": "1.184b62d7-7c53-4714-8faa-5d6776966d07"
+    }
+  },
+  "outcome": {
+    "tag": "ReadError",
+    "message": "QLever native SELECT failed: TypeError: Cannot read properties of undefined (reading 'map')"
+  }
+}

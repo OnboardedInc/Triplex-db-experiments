@@ -9,6 +9,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { Effect, Layer, ManagedRuntime } from "effect";
+import { TypeExpr } from "@triplex-build/triplex/config";
+import { makeQleverNativeQueries } from "../../../../../packages/qlever/src/native/NativeQueries.js";
 import { describe, expect, it } from "vitest";
 import { EntityId, Triples } from "@triplex-build/triplex";
 import {
@@ -433,4 +435,77 @@ describe.skipIf(!live)("live: triples per 10-fact command (brief check 8)", () =
     writeJson("check8-amplification.json", out);
     expect(out.A0.perCommandInserted.length).toBe(5);
   }, 300_000);
+});
+
+// [CX-VP2Q-3] Why: land a rewind at a nonzero prefix and vary which request observes it.
+// Rejected: another zero-prefix rewind before every Datalog request (the original test already covers it).
+describe.skipIf(!live)("round3 live nonzero rewinds", () => {
+  it.each(["native-before-answer", "native-after-answer", "dependency-in-request"])("N2 %s", async (schedule) => {
+    const scope = DatabaseScope.test(`v-p2q-round3:${randomUUID()}`);
+    const client = makeFreshConnectionClient(url);
+    const rt = await openRt(freshDir("nonzero-rewind"), scope, client, { idleProbeMs: 25 });
+    let armed = false, rewinds = 0;
+    let first = 0, target = 0;
+    const repair = async () => {
+      const all = rt.broker.fromLog(0, {}, () => true);
+      const subjects = [...new Set(all.filter((row: any) => row.recorded_position > first).map((row: any) => assertionIri(row.id)))];
+      await client.update(`DELETE { GRAPH ${graphIri(scope)} { ?s ?p ?o } } WHERE { GRAPH ${graphIri(scope)} { ?s ?p ?o } VALUES ?s { ${subjects.join(" ")} } }`);
+      const m = (await client.query(markerQuery(scope)))[0]!;
+      await client.update(buildPublication(scope,
+        { position: Number(m.brokerPosition!.value), epoch: Number(m.brokerEpoch!.value) },
+        { position: first, epoch: rt.broker.epoch }, []).sparql);
+      rewinds++;
+    };
+    const waitRepaired = async () => {
+      for (let i = 0; i < 600 && (await realMarker(client, scope)) < target; i++) await sleep(25);
+      expect(await realMarker(client, scope)).toBeGreaterThanOrEqual(target);
+    };
+    const intercepted: QleverClient = {
+      ...client,
+      query: async (sparql, options) => {
+        const trigger = schedule === "dependency-in-request"
+          ? sparql.startsWith("SELECT ?sourcePosition ?nextBoundary ?brokerPosition")
+          : sparql === "SELECT ?s WHERE { ?s ?p ?o } LIMIT 0";
+        if (!armed || !trigger) return client.query(sparql, options);
+        armed = false;
+        const before = schedule === "native-after-answer";
+        const answer = before ? await client.query(sparql, options) : undefined;
+        await repair();
+        const result = before ? answer! : await client.query(sparql, options);
+        await waitRepaired();
+        return result;
+      },
+    };
+    try {
+      const a = await rt.run(rt.triples.transact(ops("s:old", 1, "old")));
+      expect(await rt.broker.drain(60_000)).toBe(true);
+      first = a.position;
+      const b = await rt.run(rt.triples.transact(ops("s:new", 1, "new")));
+      expect(await rt.broker.drain(60_000)).toBe(true);
+      target = b.position;
+      const markerBefore = (await client.query(markerQuery(scope)))[0]!;
+      armed = true;
+      let res: any;
+      if (schedule === "dependency-in-request") {
+        const adapter: any = makeQleverStorageAdapter(intercepted, scope, { broker: rt.broker, brokerOptions: { basisWaitMs: 2000 } });
+        res = await attempt(rt, adapter.dependencyState([":v/f0"], at(target)));
+
+      } else {
+        const native = makeQleverNativeQueries(intercepted, scope, { awaitBasisMs: 2000 });
+        res = await attempt(rt, native.select({ name: "round3-reset", parameters: TypeExpr.any, row: TypeExpr.any }, {},
+          () => "SELECT ?s WHERE { ?s ?p ?o } LIMIT 0", { basis: { recordedPosition: target } }));
+
+      }
+      const markerAfter = (await client.query(markerQuery(scope)))[0]!;
+      writeJson(`round3-live-${schedule}.json`, { first, target, rewinds, markerBefore, markerAfter, outcome: res.ok ? res.value : { tag: res.error?._tag, reason: res.error?.reason, message: res.error?.message } });
+      if (schedule === "dependency-in-request")
+        expect(res.ok ? res.value.sourcePosition === target : res.error.reason === "basis-not-reached").toBe(true);
+      else {
+        expect(res.ok).toBe(false);
+        expect(res.error?.reason).toBe("basis-not-reached");
+      }
+      expect(rewinds).toBe(1);
+      expect(markerBefore.brokerIncarnation!.value).not.toBe(markerAfter.brokerIncarnation!.value);
+    } finally { armed = false; await rt.dispose(); await rt.broker.close(); }
+  }, 120_000);
 });

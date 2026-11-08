@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "tag": "ReadError",
+  "reason": null,
+  "message": "QLever native SELECT failed: Error: ECONNRESET after initial basis probe"
+}

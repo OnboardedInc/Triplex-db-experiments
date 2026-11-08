@@ -1,0 +1,18 @@
+{
+  "position": 2048,
+  "markerAfterRewind": 0,
+  "datalogAfter": {
+    "error": "ReadError:basis-not-reached",
+    "message": "Basis 2048 is not available on the QLever replica for datalog reads (observed 0 after 3529 ms)",
+    "ms": 3532
+  },
+  "dependencyStateAfter": {
+    "error": "ReadError:basis-not-reached"
+  },
+  "regressionsDetected": 1,
+  "repositoryPullAfter": {
+    "rows": 3,
+    "route": "log",
+    "oracle": 3
+  }
+}

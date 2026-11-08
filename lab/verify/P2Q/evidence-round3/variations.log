@@ -1,0 +1,38 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 1535 "DA00-measure", pid 1980 "DA00-G0-final", pid 3771 "G0-xtdb-20261108T215107Z-984fc7 vitest-qualification"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round3.test.ts (5 tests | 1 failed) 2300ms
+   ❯ round3 probe, native and error variations (4)
+     × reason variation: native socket reset in the answer request is replica-unreachable 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round3.test.ts > round3 probe, native and error variations > reason variation: native socket reset in the answer request is replica-unreachable
+AssertionError: expected undefined to be 'replica-unreachable' // Object.is equality
+
+- Expected:
+"replica-unreachable"
+
++ Received:
+undefined
+
+ ❯ tests/round3.test.ts:81:34
+     79|     writeJson("round3-native-mid-answer-outage.json", { ok: result.ok,…
+     80|     expect(result.ok).toBe(false);
+     81|     expect(result.error?.reason).toBe("replica-unreachable");
+       |                                  ^
+     82|   });
+     83|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  16:51:55
+   Duration  3.18s (tests 75%, transform 15%, import 10%)
+

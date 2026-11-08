@@ -1,0 +1,37 @@
+{
+  "first": 2048,
+  "target": 3072,
+  "rewinds": 0,
+  "markerBefore": {
+    "brokerPosition": {
+      "type": "literal",
+      "value": "4095"
+    },
+    "brokerEpoch": {
+      "type": "literal",
+      "value": "1"
+    },
+    "brokerIncarnation": {
+      "type": "literal",
+      "value": "1.fb68e069-d698-4228-873a-6fab0bcbf522"
+    }
+  },
+  "markerAfter": {
+    "brokerPosition": {
+      "type": "literal",
+      "value": "4095"
+    },
+    "brokerEpoch": {
+      "type": "literal",
+      "value": "1"
+    },
+    "brokerIncarnation": {
+      "type": "literal",
+      "value": "1.fb68e069-d698-4228-873a-6fab0bcbf522"
+    }
+  },
+  "outcome": {
+    "tag": "ReadError",
+    "message": "QLever read failed"
+  }
+}

@@ -32,9 +32,9 @@ import { decodeRow } from "../../../../packages/qlever/src/rdf.js";
 import { crc32c as crc32cRef } from "../../../../packages/qlever/src/broker/crc32c.js";
 
 export const REPO = path.resolve(import.meta.dirname, "../../../..");
-export const RUNS = path.join(REPO, "runs/broker/V-P2Q");
+export const RUNS = process.env["V_P2Q_RUNS"] ?? path.join(REPO, "runs/broker/V-P2Q");
 // Evidence for the head under test (the d7c6086 round's evidence is committed in lab/verify/P2Q/evidence/).
-export const OUT = path.join("/Users/sam/Claude/Projects/triplex-db-2/V-P2Q", process.env["V_P2Q_HEAD"] ?? "f711193");
+export const OUT = process.env["V_P2Q_OUT"] ?? path.join("/Users/sam/Claude/Projects/triplex-db-2/V-P2Q", process.env["V_P2Q_HEAD"] ?? "f711193");
 fs.mkdirSync(OUT, { recursive: true });
 export const freshDir = (tag: string) => {
   const dir = path.join(RUNS, `${tag}-${randomUUID()}`);

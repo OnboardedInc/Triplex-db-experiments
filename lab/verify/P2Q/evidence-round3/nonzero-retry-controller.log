@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 67168 "R25-nosweep-b-r4", pid 71271 "G0-xtdb-20261108T215858Z-977834 build", pid 50198 "DA00-G0-final-source", pid 54453 "CX-A01-0311-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 71271 "G0-xtdb-20261108T215858Z-977834 vitest-qualification", pid 50198 "DA00-G0-final-source", pid 54453 "CX-A01-0311-regressions"
+{"name":"nonzero-retry","code":1,"signal":null,"sourceStillMatches":true}

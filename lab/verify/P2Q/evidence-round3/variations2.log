@@ -1,0 +1,57 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round3.test.ts (7 tests | 2 failed) 2476ms
+   ❯ round3 probe, native and error variations (6)
+     × reason variation: native socket reset in the answer request is replica-unreachable 3ms
+     × reason variation: datalog reset after successful marker probe 117ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round3.test.ts > round3 probe, native and error variations > reason variation: native socket reset in the answer request is replica-unreachable
+AssertionError: expected undefined to be 'replica-unreachable' // Object.is equality
+
+- Expected:
+"replica-unreachable"
+
++ Received:
+undefined
+
+ ❯ tests/round3.test.ts:82:34
+     80|     writeJson("round3-native-mid-answer-outage.json", { ok: result.ok,…
+     81|     expect(result.ok).toBe(false);
+     82|     expect(result.error?.reason).toBe("replica-unreachable");
+       |                                  ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/round3.test.ts > round3 probe, native and error variations > reason variation: datalog reset after successful marker probe
+AssertionError: expected undefined to be 'replica-unreachable' // Object.is equality
+
+- Expected:
+"replica-unreachable"
+
++ Received:
+undefined
+
+ ❯ tests/round3.test.ts:103:36
+    101|       writeJson(`round3-${surface}-mid-answer-outage.json`, { ok: resu…
+    102|       expect(result.ok).toBe(false);
+    103|       expect(result.error?.reason).toBe("replica-unreachable");
+       |                                    ^
+    104|     } finally { await rt.dispose(); await rt.broker.close(); }
+    105|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  16:55:24
+   Duration  3.32s (tests 77%, import 12%, transform 11%)
+

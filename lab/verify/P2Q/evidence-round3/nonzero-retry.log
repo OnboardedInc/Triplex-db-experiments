@@ -1,0 +1,54 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/live/live.test.ts (8 tests | 3 failed | 5 skipped) 57231ms
+   ❯ round3 live nonzero rewinds (3)
+     × N2 native-before-answer 18191ms
+     × N2 native-after-answer 17922ms
+     × N2 dependency-in-request 21116ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/live/live.test.ts > round3 live nonzero rewinds > N2 native-before-answer
+ FAIL  tests/live/live.test.ts > round3 live nonzero rewinds > N2 native-after-answer
+AssertionError: expected undefined to be 'basis-not-reached' // Object.is equality
+
+- Expected:
+"basis-not-reached"
+
++ Received:
+undefined
+
+ ❯ tests/live/live.test.ts:506:35
+    504|       else {
+    505|         expect(res.ok).toBe(false);
+    506|         expect(res.error?.reason).toBe("basis-not-reached");
+       |                                   ^
+    507|       }
+    508|       expect(rewinds).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/live/live.test.ts > round3 live nonzero rewinds > N2 dependency-in-request
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/live/live.test.ts:503:105
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 skipped (8)
+   Start at  16:59:40
+   Duration  58.02s (tests 99%, import 1%, transform 1%)
+
