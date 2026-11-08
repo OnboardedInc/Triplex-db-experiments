@@ -41,3 +41,62 @@ The unchanged X02 round2 pnpm shim executes declared package build/typecheck scr
 ## Handoff and limits
 
 Resolve and review the workload source-pin regeneration on a subsequent authorized round, rerun all three first-merge gates, and only then resume C8 followed by default-off J01. The failure and original contract bytes remain intact. No full root check, live XTDB parity suite, G1/G2, performance/golden scenarios or package publication was attempted. No other agent was spawned. A sandboxed process-list diagnostic was unavailable; it was not needed for gate results.
+
+## Continuation — authorized source-pin exception
+
+The follow-up dispatch explicitly recognizes X02's two workload hash entries and derived transitive hash as an expected contract 0.3.11 mismatch, to be re-pinned with contract **0.3.12**. It authorizes continuing C8 and default-off J01, reporting additional pin changes without regeneration. The earlier stop/report above is retained as the first attempt's history; this continuation supersedes its next-step instruction.
+
+### C8 integration and pin audit
+
+C8 `514c3b6` merged without conflicts as **`0157eda12daaf21741e5894fcca18b2162d163c0`**, preserving main/X02 intent alongside C8 read-only frontier traversal. No contract artifact was modified. Source/build identity stays fixed during each gate round.
+
+`evidence/C8-pins/audit.json` records every generated-contract JSON difference and every discovered pinned file whose actual SHA-256 differs from contract 0.3.11. In addition to X02's already-known entries, C8 changes:
+
+| Pinned source | Contract 0.3.11 SHA-256 | After X02 | After C8 |
+| --- | --- | --- | --- |
+| `packages/qualification/src/native/xtdb-workloads.ts` | `22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3` | `4d9ad73e8f42c30aacd538e0986c1d9052bd603517db01bc4db00a1174700acd` | `ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0` |
+| `packages/qualification/src/native/qlever-workloads.ts` | `410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3` | unchanged | `9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da` |
+
+Each file occurs twice: `caseSets.CS-PKT71.pinnedSourceFiles` and `caseSourcesPinned.CS-PKT71`. The generated obligations diff contains exactly those four source-hash replacements plus the transitive hash replacement, now `e88e4a0aee04539c5fb14d6a9b34360640765e7adcbbf8cc753facf29fd843f4`. ACCEPTANCE.md changes only its transitive hash. `oracle-contract.json`, load-contract.json, budgets.json and capability-matrix.md still regenerate identically. This additional QLever pin mismatch and C8's further XTDB hash change are **reported, not regenerated or treated as contract acceptance**.
+
+### Meaning of each pinned-source diff
+
+**XTDB workload library, X02 portion (`e4864683` → `7fcf69ea`).** Adds explicit pure-XTQL and SQL implementations for the same logical packet tasks, retaining unset routing (XTQL state-at, SQL otherwise). It pins the first returned source position across later calls of one task, provides exact integer aggregate reconstruction/overflow errors, and adds engine-hazard refusals and SQL three-valued-predicate safeguards. The packet's logical operations, fixture data, parameters, requested cuts, oracle answers, writer trace and external schedule are not changed by this file. Candidate query text, physical query sequence, arithmetic normalization, routing and admitted/refused cases do change; this is a correctness/code-path change with a real measurement cost, not a whitespace-only repin.
+
+**XTDB workload library, C8 portion (`c3ff807f` → `0157eda1`).** Changes closure tasks 11, 13, 14, 15 and 20 to seeded read-only frontier traversal in the selected language, replacing SQL scratch-table materialization and XTQL depth unrolling; retains the leaf-test mark-join guard. Operation 20 `reachability_supports` now reads distinct support edges at the pinned basis and counts general simple paths in the TypeScript helper, with a 99,999-edge bound and limit-plus-one completeness witness, instead of summing native witnesses of lengths 1–3. Logical operation names and requested meaning, fixture inputs and schedule remain unchanged; physical engine reads, absence of scratch writes, recursion coverage, normalization work and refusal limits change. In particular, support counting is generalized beyond the original fixture-specific implementation; its cost belongs in the candidate's complete measured call.
+
+**QLever workload library, C8 portion.** Only `reachability_supports` and the query helper's optional maxRows parameter change. It replaces three fixed-length native SPARQL witness counts with a distinct support-edge read (limit 100,000), followed by the same bounded general simple-path helper. Logical operation, input graph/parameters, basis, expected answer and external schedule remain unchanged; physical query count, intermediate data volume, client work and overflow/refusal behavior change. This is candidate implementation generalization, not a change to the fixture dataset or offered workload schedule.
+
+The full baseline-to-current diffs for both files are retained under `evidence/C8-pins/`; `evidence/C8-workload-delta.diff` isolates the incremental C8 changes. These classifications are source-diff assessments; the requested G0/evaluator gates do not establish live parity or performance equivalence.
+
+### C8 fresh gates — STOP before J01
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| G0 XTDB | **FAIL, exit 1: 1,163 executed / 1,163 pass / 0 failed tests; 134 skips, of which 130 expected and four unexpected** | `evidence/C8-G0-receipt.json`, `evidence/C8-G0-raw/`, `evidence/C8-G0.log`; canonical `lab/runs/G0/G0-xtdb-20261108T234100Z-b718fc.json` |
+| Evaluator | **PASS, exit 0: 108/108, zero failures/skips** | `evidence/C8-evaluator.log` |
+| Contract verify | **FAIL, exit 1: source-pin differences described above; no regeneration** | `evidence/C8-contract.log`, `evidence/C8-pins/audit.json`, generated-output diffs in the same directory |
+
+The four G0 unexpected skips are new live controls from C8, missing from the unchanged `lab/config/g0-expected-skips.json` manifest:
+
+1. `packages/qualification/test/c8-reads-never-write.test.ts :: C8 on XTDB: reads never write (engine boundary) counts zero writes across rule queries, maintained reads, native closures and a load run`
+2. `packages/qualification/test/c8-reads-never-write.test.ts :: C8 on QLever: reads never write (engine boundary) counts zero updates across rule queries, native closures and a load run`
+3. `packages/qualification/test/engine-write-counter.test.ts :: XTDB write counter (live) reads count zero writes; one submit counts one commit`
+4. `packages/qualification/test/engine-write-counter.test.ts :: QLever write counter (live) queries count zero writes; one update counts one write`
+
+The XTDB controls require `XTDB_INTEGRATION=1`; the QLever controls require `QLEVER_INTEGRATION=1` (the standalone counter additionally checks `/ping`). These flags were unset, as recorded in `evidence/continuation-outcomes.json`. The requested offline G0 command therefore skips them, and the strict gate rejects their absence from its expected-skip manifest. No assertion failed, but **G0 did not pass**. I did not edit the manifest, enable extra engine gates, or relabel the receipt to bypass this failure. This is independent of the authorized source-pin exception, so the dispatch's stop-on-failure rule applies.
+
+Commands used (logs contain heavy-admission waits):
+
+```sh
+PATH="$PWD/lab/experiments/EXP-X02-xtql-parity/round2/bin:$PATH" node lab/bin/heavy.mjs --label CX-INT-XCJ-C8-G0 -- node lab/bin/gate.mjs G0 --lane xtdb --exp INT-XCJ-C8
+node lab/bin/heavy.mjs --label CX-INT-XCJ-C8-evaluator -- node --test lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs
+python3 -B lab/acceptance/build_contract.py --verify
+python3 -B lab/experiments/INT-XCJ/evidence/audit-pins.py C8-pins
+```
+
+The pin-audit script invokes verification and retains generated comparison diffs in its evidence directory, without modifying authoritative contract bytes. Both verification commands exit 1 for the documented source-pin mismatch. G0 binds `0157eda1`; its executed-source diff is empty and its dirty paths are integration report/evidence only. Optional stash capture again reported `error: could not write index`; source hashes/build manifest remain in the receipt. The G0 wrapper waited for heavy admission, then its individual build/test steps respected the shared semaphore. Host disk remained above 13 GiB during this continuation. Dependencies and lockfile were unchanged. No resident lifecycle or live engine operation was performed.
+
+**Current result:** X02 and C8 are merged on `int/X02-C8-J01`; **J01 `0d9a860` is not merged** because C8 G0 failed. J01's default-off behavior has not been verified on the integrated branch. Source inspection of its accepted commit shows `options.commitEncoding ?? "a0"` with compact explicit/opt-in; this is a preview only, not an integrated gate result. No J01 post-merge pin audit is possible without making the prohibited next merge.
+
+**Open handoff:** resolve the four live-control/expected-skip classifications under the lab's gate policy and rerun C8 G0. Contract 0.3.12 must explicitly review/re-pin both workload files at the hashes above. Once C8 passes its required gates, resume default-off J01 and audit its pins. No main merge, push, live XTDB/QLever parity, G1/G2, performance/golden scenarios, publication or independent verification was performed in this continuation. The first attempt's report and checksums remain unchanged; continuation evidence has its own `SHA256SUMS-continuation`.
