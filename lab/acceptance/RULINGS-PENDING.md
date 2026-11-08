@@ -112,3 +112,10 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q79b typed overflow | Checked int64 arithmetic yields a typed failure in the Effect error channel, never a defect; tests assert Fail (not Die) and recovery with catchTag in both languages. | V-X02 F2 |
 | Q79c no silent rounding | Exact Datalog arithmetic (the five exact compute operators and anything downstream) never lowers through DECIMAL to BIGINT; it keeps the exact result as text through range checks and decoding, or refuses with a typed error until exact lowering exists. This is Sam's "no silent precision loss" rule and applies to core's compiler for every lane that uses it. | V-X02 F3; Q39a; SCOPE 2.4 |
 | Q79d unset means unchanged | With the language switch unset, behaviour is main's; changing the default needs its own qualification and a ruling. | V-X02 F4 |
+
+## Q80: V-O05 findings (O-OBS round 2, after R27)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q80a trusted context | O-OBS judges evidence only inside an evaluator-owned, contract-bound case and run context (obligation, case, witness kind, threshold ids, run id) and against collector objects the evaluator retained itself; evidence that only hashes itself is REFUSED. The collector and context format comes from R27. | V-O05 F1, F2 |
+| Q80b witnesses prove, labels do not | Each fault transition and each wait bound has a witness schema of source-bound events (start, end, readback) checked against retained objects; a label naming the transition or the duration is never evidence of it. | V-O05 F3, F5 |
+| Q80c exact ratios | Work ratios compare integer counters exactly against rational contract thresholds (cross-multiplication), never binary64. | V-O05 F4 |

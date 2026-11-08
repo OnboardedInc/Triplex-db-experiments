@@ -1382,3 +1382,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   R18's claim that Datomic does not separate current from history conflicts with an internals guide, and DA03 settles it. No Datomic source
   exists, so lane D has workarounds only. Pool: the 2.75 GiB resident is parkable, so lane D resident work and lane X/Q exclusive slots do
   not overlap (Q78b). Two calls are Sam's (Q78e: tenancy on shared dev storage; dev storage for final acceptance).
+
+## 2026-11-08 21:41Z: O-OBS review FIX-FIRST (trust has to come from the evaluator); K01 refused its own golden safely; R25 and R30 dispatched
+- **V-O05 (Codex reviewer):** 177 independent cases found 23 acceptance discrepancies; the blocker is that an invented log carrying its own
+  hashes earns PASS everywhere, and the evidence chooses its own threshold. Learning, again: an oracle that judges only what it is handed
+  cannot tell real evidence from a well-formed invention; the case context and collector objects must be the evaluator's own (Q80a), which is
+  R27's design question. Round 2 waits for R27; exact integer ratios (Q80c) go in with it.
+- **K01 (Codex builder):** the 500-subject seed took 90.9 s (26,635 assertions); golden creation refused because `docker stop -t 60` never
+  logged `Node stopped.`, and finish-block with compactor jobs 0 left 61,709 rows in the live index of the open read view (zero only after a
+  restart). Both R26 assumptions failed on the real image, and the gate failed closed as designed. R30 (Opus high) reads XTDB source for a
+  provable freeze protocol. Also: probing a nonexistent block id hangs; enumerate published files instead.
+- **R25 finish** (Opus high) completes the SQLite pinned-readers design from the retained measurements and now must also serve H1's
+  current_rows.
