@@ -2,7 +2,7 @@
  "format": "triplex-db-2/o-replay-expected/1",
  "oracle": {
   "id": "O-REPLAY",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "sourceSha256": {
    "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
    "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
@@ -15,7 +15,7 @@
    "views.py": "3989f7d6e9b3bcac526eb35dd8246c0a27d6ee5cde370ba5900c0285cb4969e4",
    "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
    "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
-   "run.py": "f0add140b4e493bc88ea151d1ba06fe14825b5ab29a81aef8a76d919e8648d3b",
+   "run.py": "ef228cb836fa62365b1d87be5f4ad42abc4f29cf98eb000767a9630bce384509",
    "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
   }
  },

@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.4"   # EXP-O04b: Q52a-g, Q56f; Q66a-b (V-O04d F5/F6); Q70a-b (V-O04e F7/F8); ACCEPTANCE 0.3.9
+ORACLE_VERSION = "0.4.5"   # EXP-O04b: Q52a-g, Q56f; Q66a-b (V-O04d F5/F6); Q70a-e (V-O04e F7/F8); ACCEPTANCE 0.3.9
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -554,7 +554,7 @@ class Run:
                 # with, so every continuation is answered from the read it continues: that read's
                 # start, scope and prefixes, one answer per prefix, from that prefix's page; its own
                 # readStart is never consulted. A prefix whose page failed or has no next cursor has
-                # no continuation. Q70b: a literal token continues the prefixes whose pages issued it.
+                # no continuation. Q70b, Q70e: a literal token continues the prefixes whose pages issued it.
                 start, scope = source["start"], source["scope"]
                 ref = query["cursorFrom"]["query"] if query.get("cursorFrom") is not None else None
                 answers, missing = [], None
@@ -607,17 +607,17 @@ class Run:
     def continued_read(self, query):
         """The read record a continuation continues, or None for a read of its own.
         Q70a: a `cursorFrom` continues the read of the query it names, whether or not that read
-        had commits in flight (an unknown query is left to the page, which reports it). Q70b: a
-        literal `cursor` token equal to a `nextCursor` issued earlier in the case by a read with
-        commits in flight continues that read (the latest such read); any other literal token
-        is answered with the query's own read view."""
+        had commits in flight (an unknown query is left to the page, which reports it). Q70b,
+        Q70c: a literal `cursor` token equal to a `nextCursor` issued earlier in the case by any
+        read, in flight or not, continues that read; Q70d: the latest such read in case order.
+        Only a token no earlier read issued is answered with the query's own read view."""
         ref = query.get("cursorFrom")
         if ref is not None:
             return self.reads.get(ref.get("query")) if isinstance(ref, dict) else None
         token = query.get("cursor")
         if isinstance(token, str) and not isinstance(token, V.Lex):
             for record in reversed(self.read_log):
-                if record["inFlight"] and any(token in issued_cursors(answer) for _, answer in record["answers"]):
+                if any(token in issued_cursors(answer) for _, answer in record["answers"]):
                     return record
         return None
 

@@ -2197,6 +2197,27 @@ class Erasure(unittest.TestCase):
         self.assertEqual(result(rep, "a")["pages"][0]["nextCursor"], token)
         self.assertEqual(result(rep, "b")["pages"][0]["entities"][0]["triples"][0]["value"], marker(300))
 
+    def test_Q70c_literal_token_from_a_plain_read(self):
+        """Q70c: a literal token issued by any earlier read continues that read, in flight or
+        not, so a page with an earlier readStart cannot reopen a value the issuing read saw
+        erased; Q70d: equal tokens follow the latest issuing read in case order."""
+        cmds = erasure_commands()
+        cmds[2]["operations"] = [{"op": "erase", "target": "name2"}]
+        page = lambda qid, **kw: dict({"id": qid, "kind": "entityPage", "entityType": "Person", "limit": 1}, **kw)
+        plain = page("a", cut={"position": 2, "validAt": 1e15})
+        token = result(evaluate(case(cmds, [plain], schemas=PERSON_SCHEMA)), "a")["pages"][0]["nextCursor"]
+        rep = evaluate(case(cmds, [plain, page("b", cursor=token, readStart={"afterCommand": 1})], schemas=PERSON_SCHEMA))
+        b = result(rep, "b")
+        self.assertNotIn("acceptable", b)                                   # the plain read's one view
+        self.assertEqual(b["pages"][0]["entities"][0]["triples"][0]["value"], marker(300))
+        self.assertNotIn('"Bo"', json.dumps(b))
+        in_flight = page("f", cut={"position": 2, "validAt": 1e15}, readStart={"afterCommand": 1})
+        cont = page("b", cursor=token)
+        latest_plain = evaluate(case(cmds, [in_flight, plain, cont], schemas=PERSON_SCHEMA))
+        latest_in_flight = evaluate(case(cmds, [plain, in_flight, cont], schemas=PERSON_SCHEMA))
+        self.assertNotIn("acceptable", result(latest_plain, "b"))
+        self.assertEqual([alt["erasuresSeen"] for alt in result(latest_in_flight, "b")["acceptable"]], [[], ["tx:2"]])
+
     def test_erase_receipts(self):
         c = case(erasure_commands(), [match_q("m")], schemas=PERSON_SCHEMA)
         c["receipts"] = committed_receipts(c)

@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.4.4)
+# O-REPLAY case and output schema (v1; oracle 0.4.5)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -203,9 +203,9 @@ published when the read started; erasure commits of its scope published after it
 prefix of the commits in position order (Q66a: none, the first, the first two, ...), the all-old answer first;
 otherwise it is the plain `result` or `error`. An `entityPage` with `cursorFrom` is answered from the read it names,
 whether or not that read had commits in flight: per prefix of that read, from that prefix's page, in the same form,
-never with its own `readStart` (Q66b, Q70a). A literal `cursor` token equal to a `nextCursor` that a read with commits
-in flight issued earlier in the case continues that read the same way (Q70b); any other token uses the query's own
-read view.
+never with its own `readStart` (Q66b, Q70a). A literal `cursor` token equal to a `nextCursor` that any earlier read of the
+case issued continues that read the same way, the latest such read if several issued it, for the prefixes whose pages
+issued it (Q70b to Q70e); only a token no earlier read issued uses the query's own read view.
 
 `where` items: `{"prop"|"var": ..., "op": "eq|ne|lt|lte|gt|gte|in|exists|missing", "value": ...}` (`values` for
 `in`); `value` is a typed value object or an untyped bare JSON string/number. `orderBy`:
@@ -224,7 +224,7 @@ select unmodeled transaction envelope facts is a typed `X-NOT-MODELED` answer (R
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.4.4", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.4.5", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",
