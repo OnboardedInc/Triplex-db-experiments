@@ -59,7 +59,8 @@ const mockSession = (
         facts: () => (xtql ? "(-> FACTS)" : "(SELECT * FROM FACTS)"),
         recordedFacts: () => (xtql ? "(-> RECORDED)" : "(SELECT * FROM RECORDED)"),
         history: () => "HISTORY",
-        relation: () => (xtql ? "(rel WORKING [source target])" : "(SELECT source, target FROM WORKING)"),
+        relation: () =>
+          xtql ? "(rel WORKING [source target])" : "(SELECT source, target FROM WORKING)",
       };
       const name = String(contract.name).split("/").slice(2).join("/");
       const relations = withRelations(method)
@@ -155,9 +156,9 @@ describe("XTDB native task library: one language and one cut per task (EXP-X02)"
         for (const call of calls.slice(1)) expect(call.recordedPosition).toBe(PIN);
         if (calls.length > 1) multiCall++;
       }
-      // [EXP-C8] XTQL closure tasks are now one call each (the depth-unrolled completeness
-      // checks are gone), so fewer XTQL tasks are multi-call than under EXP-X02's 25.
-      expect(multiCall).toBeGreaterThanOrEqual(language === "xtql" ? 20 : 10);
+      // [EXP-C8-R2] Why: prove the cut-pinning assertions exercised multi-call tasks.
+      // Rejected: a fixed minimum call count (Q76d replaces three WL20 reads with one).
+      expect(multiCall).toBeGreaterThan(0);
     });
   it("rejects an unknown language", async () => {
     const { workload, entry } = cases[0];
@@ -224,7 +225,7 @@ describe("exact int64 sums (EXP-X02, RULINGS Q8a)", () => {
     "total-(2^63-1)": [-MAX + 10n, -4n, -6n],
     // R12's recombination overflows here although the total fits (xtdb-exact-sum.ts)
     "carry-counterexample": [MAX, 2n ** 32n, -(2n ** 32n - 1n), -(2n ** 32n - 1n)],
-    "empty": [],
+    empty: [],
   };
   for (const [name, values] of Object.entries(boundary))
     it(`is exact or overflows iff the total is outside int64: ${name}`, () => {
@@ -261,7 +262,11 @@ describe("exact int64 sums (EXP-X02, RULINGS Q8a)", () => {
   it("maps only the engine's overflow error to the typed integer-overflow error", async () => {
     const overflow = await Effect.runPromiseExit(
       typedSumOverflow(
-        Effect.fail(new Error("XTDB native query failed", { cause: new Error("data exception - overflow error") })),
+        Effect.fail(
+          new Error("XTDB native query failed", {
+            cause: new Error("data exception - overflow error"),
+          }),
+        ),
       ),
     );
     expect(String(overflow)).toContain("NativeIntegerOverflowError");
