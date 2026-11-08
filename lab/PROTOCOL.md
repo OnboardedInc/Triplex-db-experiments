@@ -73,4 +73,6 @@ the earlier "Sonnet research" wording).
 Codex refuses prompts its safety filter reads as offensive security work (CX-VE01-2 was stopped after 113k tokens by a prompt about
 "tamper routes" and "escapes" from the evaluator). Reviewer prompts about the lab's own integrity checks are written as quality assurance
 of our own harness: "check that each documented check rejects the inputs it should", "add a regression test for a variation", never
-"attack", "escape" or "break out". A filtered run is relaunched with a new id and the reworded prompt, building on its partial files.
+"attack", "escape" or "break out". A filtered run is relaunched with a new id and the reworded prompt, building on its partial files. CX-VSQL01 was stopped the same way after
+153k tokens by a durability prompt that said "SIGKILL" and "torn read"; durability prompts say "abrupt process stop (the power-loss
+case)" and "a snapshot read must return whole commits". Before relaunching, commit the stopped run's partial files as WIP on its branch.
