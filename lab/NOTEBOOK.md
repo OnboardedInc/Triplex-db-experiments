@@ -1036,3 +1036,12 @@ Where each priority stands, from evidence so far (research probes and baselines;
   exists (and none should exist).
 - Disk: 14 GiB free on the host data volume (97%). Removing nine finished worktrees freed little because pnpm hard-links node_modules;
   their runs and untracked files are archived in /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/.
+
+## 2026-11-08 00:12Z: V-D01c: O-DOMAIN's rules are right; the golden cases are too weak to judge a kernel
+- O-DOMAIN follows SPEC everywhere, reproduces the fingerprint and shares no code with anyone; it fails only on robustness (F1 array dates,
+  F2 4,300+ digit integers, F3 deep nesting), which are fixed before the pin.
+- **Learning: 20 of 70 single-point mutants survive the 87 golden cases, the unit tests and the fingerprint** (19 real gaps), and 13 more are
+  caught only by O-DOMAIN's own unit tests, which do not judge the TypeScript kernel. The golden set never puts a fact or an activation at
+  basis.tx, never publishes for two subjects, never has an incomplete record or a local floor below the state floor. Mutation testing of an
+  oracle is the cheapest way to find what a test set cannot see; it becomes part of every oracle verification.
+- W0-1.1.2 folds in V-D01c's 40 proposed cases (P01-P40) with the Q53 and Q57 readings; both implementations must then pass them.
