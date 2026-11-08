@@ -374,3 +374,42 @@ Full source/pin/pending identities: [source-and-hashes.json](evidence-0.3.11-rou
 Receipts: [negtest.txt](evidence-0.3.11-round2/negtest.txt), [reviewer-regressions.txt](evidence-0.3.11-round2/reviewer-regressions.txt), [real-payloads.txt](evidence-0.3.11-round2/real-payloads.txt), [q47d.txt](evidence-0.3.11-round2/q47d.txt), [verify.txt](evidence-0.3.11-round2/verify.txt), [validation-summary.json](evidence-0.3.11-round2/validation-summary.json). Actual CLI inputs/answers are retained under `lab/verify/A01/replay-aggregate-*` and `lab/verify/A01/round2-real-*`. The raw Q47d transcript retains one emitted trailing space; it is preserved verbatim and excluded from the authored source/report whitespace claim.
 
 No engine/container lifecycle, package installation, benchmark, package build or full root pnpm check was performed. The core compiler defect is recorded, not fixed in production code. This is builder validation of the contract fix; an independent delta review remains required before contract acceptance. Nothing was pushed or merged into main, and the main checkout was not edited.
+
+## Round 3 — evaluator compatibility and merged-main gate
+
+North star: correctness floor for P1/P3; contract and evaluator must agree before a contract merge. Source head `b5af03398573080e178475952f03e57b8686bf17`; fix `54ba9ebedc025f78b71ead9812c0a71aadc605c6`; merged current main `982350e24c93fd91682f0d083f207a251a79a680` in `ab3eafc`. Main was read/merged into this worktree only; nothing was pushed or merged into main.
+
+### Reproduction and decisions
+
+The unchanged round-2 branch reproduced exactly **8 failures / 108 tests** (100 passes), recorded in [evaluator-baseline.tap](evidence-0.3.11-round3/evaluator-baseline.tap). Both evaluator test assertion files remain byte-for-byte identical to round 2. No assertion was loosened, removed, skipped, relabelled as an expected failure, or replaced by a weaker denominator.
+
+| Failing tests | Decision | Correction |
+| --- | --- | --- |
+| 5 — fresh HOME/TMPDIR; 15/16 — final input deletion/rewrite; 101 — build-helper cleanup; 106 — offline qualification; 107 — CLI exit codes | Q75c is correct. Fixtures pin one-file O-REPLAY bytes while inheriting the real oracle's 29-file runner list, causing an unrelated ORACLE-RUNNER-UNPINNED error. HOME/TMPDIR, cleanup, input-integrity and exit-code assertions stay intact. | Declare each fixture runner from its own pinned files/argv, including its distinct O-CONTRACT stub. Comments explain why production identities cannot be borrowed. Observer/domain/hand stubs remain document-only test stubs, without any production oracle-qualification claim. |
+| 17 — admitCore/reference call replay | Q75c and the partial-runner-pin negative control are correct. JavaScript lacked the reference's complete-file predicate, returning QUALIFIED after the same 313 calls where the reference returned DIAGNOSTIC. This is an evaluator implementation gap, not a reason to discard a reference fixture. | Share the complete-runner-pin predicate through contractBlockers, admitCore and common preflight; check all declared runner and repository argv files, including contract-output hashes for COMPILED runners. Remove the duplicate pin-only preflight implementation. When COMPILED runner hashes are declared, check copied trusted bytes against them. |
+| 31 — GEN-REFUSED-SET must cite ORACLE-REFUSES | O-REPLAY 0.4.9 correctly models Q52 erasure shapes; the fixture's old refusal assumption is stale. Unresolved selections do not prove oracle refusal. | Select decimal schema evolution, which is still explicitly refused through scale-evolution. Preserve both DIAGNOSTIC and the mandatory ORACLE-REFUSES cause assertion; record the reason and rejected weaker alternative in the fixture comment. |
+
+The first corrected merged attempt passed 107/108 and is retained as `evaluator-attempt1.tap`. It exposed the document-only GS positive fixture's additional dependency on O-ERR: that fixture now has its own explicit error-oracle stub pin and runner in `b5af033`; its positive assertion remains unchanged. Production O-ERR is still unpinned/blocked.
+
+No contract rule was rolled back. Counts remain **157 total / 40 pin-level closable / 117 blocked**; per-surface counts are unchanged. Datomic stays **153/0/153**, blocked by its null image pin. No oracle/world/image/A0 pin was promoted.
+
+### Main merge and pending authority
+
+Q79f and Q87 are retained with all other newer pending rows. Q87's evaluator merge gate is executed under this dispatch while its row remains pending with authority none. No new row is compiled. Generated conflicts were resolved by regeneration. The pending ID set exactly equals the immutable merged main parent's pending set minus the same 50 already compiled rows.
+
+All **43 pending rows** remain non-authoritative: Q51b, Q72a, Q72b, Q72c, Q72d, Q72e, Q72g, Q73a, Q73b, Q78e, Q80a, Q80b, Q80c, Q81b, Q81c, Q82a, Q82b, Q82c, Q82d, Q82e, Q83a, Q83b, Q83c, Q84a, Q84b, Q84c, Q84d, Q84e, Q83d, Q79e, Q85a, Q85b, Q85c, Q85d, Q86a, Q86b, Q86c, Q86d, Q86e, Q86f, Q86g, Q79f, Q87.
+
+### Round-3 validation
+
+- Required evaluator merge gate: **108/108 PASS**, zero failures, skips, cancellations or todo tests, using `node --test lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs` through `lab/bin/heavy.mjs` at final source `b5af033`. Every original assertion file is byte-for-byte unchanged from `3b46c8a`.
+- Contract negative suite: **344/344 runnable mutations caught, zero misses** (425 catalog entries, 81 retired anchors, one separately superseded legacy entry), run through heavy.mjs on merged contract source `ab3eafc`. The only subsequent source change was the fixture-only O-ERR pin in `b5af033`; every generator, ruling input and generated contract artifact remains byte-for-byte identical to that successful mutation run.
+- `q47d_test0311.py`: **PASS**, including both prohibited pending-authority mutants and restoration of all six generated outputs byte-for-byte.
+- `build_contract.py --verify`: **PASS**, byte-identical.
+- Prior independent regression code: **35/35 PASS**; additional real-payload controls: **5/5 PASS**.
+- Working source/report whitespace check: **PASS**. Raw TAP/Q47d transcripts remain verbatim; any emitted trailing space is evidence, not normalized source.
+
+Receipts: [evaluator-final.tap](evidence-0.3.11-round3/evaluator-final.tap), [negtest.txt](evidence-0.3.11-round3/negtest.txt), [q47d.txt](evidence-0.3.11-round3/q47d.txt), [verify.txt](evidence-0.3.11-round3/verify.txt), [reviewer-regressions.txt](evidence-0.3.11-round3/reviewer-regressions.txt), [real-payloads.txt](evidence-0.3.11-round3/real-payloads.txt), [validation-summary.json](evidence-0.3.11-round3/validation-summary.json). The 100/108 baseline and 107/108 first corrected attempt are retained under their separate filenames; neither is counted as passing evidence.
+
+Source/pin identities: [source-and-hashes.json](evidence-0.3.11-round3/source-and-hashes.json). Current transitive contract hash: `cdd267d3b28fb5a121788731dc0ccaf54488324e3d2296dd97ffee8affca0405`. The receipt records matching round-2 assertion-file hashes plus generator, evaluator, fixture and generated-output hashes. Round-1/2 receipts and the failing round-3 baseline remain unchanged.
+
+No engine/container lifecycle, package installation, benchmark, root pnpm check, production gate execution or independent delta acceptance was performed. The 108-test merge gate is a local evaluator suite, not qualification of a database lane. A separate reviewer still adjudicates the final contract/evaluator delta.

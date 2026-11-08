@@ -1,0 +1,95 @@
+{
+  "sourceHead": "b5af03398573080e178475952f03e57b8686bf17",
+  "mergedMain": "982350e24c93fd91682f0d083f207a251a79a680",
+  "fixCommit": "54ba9ebedc025f78b71ead9812c0a71aadc605c6",
+  "sha256": {
+    "lab/acceptance/build_contract.py": "60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf",
+    "lab/acceptance/RULINGS-PENDING.md": "0a3151636a3acbbb6755bf2e043524df29e795ef07952219fc3a2121f645354e",
+    "lab/acceptance/obligations.json": "ede0adf4bfe00c36482366b62c46c9d3680eace3d43a24c291008a5632f4078f",
+    "lab/acceptance/ACCEPTANCE.md": "521456fb347f8b91b8d00ffc7a23c7512b4b56eff45f8a6d1b5ffba2107c703b",
+    "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
+    "lab/bin/claim.mjs": "100076cab193f6f616d64adde0faac10fb0c769f467868df8cf2e19c013fbd29",
+    "lab/bin/test/claim-fixtures.mjs": "5cf4c1d8583135d34269e62b3a1a2585373d113c4ddd263cb52124c76fe8aa07",
+    "lab/bin/test/claim.test.mjs": "4192957b45d94093b96cfb00d757f429618d57cf53012c6f88416da4030cf3a1",
+    "lab/bin/test/claim-round2.test.mjs": "9fafb1773290d36ff6253299c702841658289ddb8c163a0f85f995f99ab7f144"
+  },
+  "testAssertionsFilesByteIdenticalToRound2": true,
+  "baseline": {
+    "tests": 108,
+    "pass": 100,
+    "fail": 8
+  },
+  "counts": {
+    "total": 157,
+    "closable": 40,
+    "blocked": 117
+  },
+  "perSurface": {
+    "xtdb-xtql": {
+      "total": 154,
+      "closable": 39,
+      "blocked": 115
+    },
+    "xtdb-sql": {
+      "total": 154,
+      "closable": 39,
+      "blocked": 115
+    },
+    "qlever-sparql": {
+      "total": 155,
+      "closable": 39,
+      "blocked": 116
+    },
+    "datomic-datalog": {
+      "total": 153,
+      "closable": 0,
+      "blocked": 153
+    }
+  },
+  "pendingIds": [
+    "Q51b",
+    "Q72a",
+    "Q72b",
+    "Q72c",
+    "Q72d",
+    "Q72e",
+    "Q72g",
+    "Q73a",
+    "Q73b",
+    "Q78e",
+    "Q80a",
+    "Q80b",
+    "Q80c",
+    "Q81b",
+    "Q81c",
+    "Q82a",
+    "Q82b",
+    "Q82c",
+    "Q82d",
+    "Q82e",
+    "Q83a",
+    "Q83b",
+    "Q83c",
+    "Q84a",
+    "Q84b",
+    "Q84c",
+    "Q84d",
+    "Q84e",
+    "Q83d",
+    "Q79e",
+    "Q85a",
+    "Q85b",
+    "Q85c",
+    "Q85d",
+    "Q86a",
+    "Q86b",
+    "Q86c",
+    "Q86d",
+    "Q86e",
+    "Q86f",
+    "Q86g",
+    "Q79f",
+    "Q87"
+  ],
+  "transitiveContractSha256": "cdd267d3b28fb5a121788731dc0ccaf54488324e3d2296dd97ffee8affca0405"
+}
