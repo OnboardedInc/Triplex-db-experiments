@@ -1,0 +1,8 @@
+{
+  "all29Match": true,
+  "rulings": 50,
+  "allRulesMatchSource": true,
+  "datomicApplicable": 153,
+  "missingNullImageBlocker": [],
+  "oldMatrixCellDelta": []
+}

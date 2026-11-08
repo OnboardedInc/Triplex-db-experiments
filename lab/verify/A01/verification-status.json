@@ -1,0 +1,32 @@
+{
+  "reviewedCommit": "36d74348df2dd224ec15e29856a04a4e8daa4a30",
+  "verdict": "FIX-FIRST",
+  "generatorVerifyExit": 0,
+  "suppliedNegtest": {
+    "exit": 0,
+    "catalog": 419,
+    "run": 338,
+    "caught": 338,
+    "missed": 0,
+    "retired": 81
+  },
+  "suppliedQ47d": {
+    "exit": 0,
+    "result": "PASS"
+  },
+  "ownRegressions": {
+    "exit": 1,
+    "tests": 35,
+    "passed": 29,
+    "failures": 6,
+    "findings": [
+      "F1",
+      "F2",
+      "F3",
+      "F4"
+    ]
+  },
+  "contractModified": false,
+  "scratchRemoved": true,
+  "firstAttemptsRetained": true
+}

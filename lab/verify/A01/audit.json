@@ -1,0 +1,1169 @@
+{
+  "reviewedHead": "36d74348df2dd224ec15e29856a04a4e8daa4a30",
+  "externalHashTable": {
+    "path": "/Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/hashes.0.4.9.txt",
+    "sha256": "357d747af267eee5863033288143d5f18952e21a43d2038b68258384a3aab322"
+  },
+  "oraclePin": {
+    "commit": "f195f30af618d3f9b0525a864e913824a315cc8c",
+    "oracleVersion": "0.4.9",
+    "verifierEntry": "V-O04i"
+  },
+  "oracleFiles": [
+    {
+      "path": "lab/oracles/replay/RULES.md",
+      "expected": "5e9de540e26e0c370c10a904a625a96ba67f279172aa5000aea043b73cfa4241",
+      "contract": "5e9de540e26e0c370c10a904a625a96ba67f279172aa5000aea043b73cfa4241",
+      "worktree": "5e9de540e26e0c370c10a904a625a96ba67f279172aa5000aea043b73cfa4241",
+      "pinnedCommitBlob": "5e9de540e26e0c370c10a904a625a96ba67f279172aa5000aea043b73cfa4241",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/SCHEMA.md",
+      "expected": "baf2c949c6c59538914340dd0b2da5d3556b150f6908be68b2a6741138f459d3",
+      "contract": "baf2c949c6c59538914340dd0b2da5d3556b150f6908be68b2a6741138f459d3",
+      "worktree": "baf2c949c6c59538914340dd0b2da5d3556b150f6908be68b2a6741138f459d3",
+      "pinnedCommitBlob": "baf2c949c6c59538914340dd0b2da5d3556b150f6908be68b2a6741138f459d3",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/__init__.py",
+      "expected": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "contract": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "worktree": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "pinnedCommitBlob": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/__main__.py",
+      "expected": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "contract": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "worktree": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "pinnedCommitBlob": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/cli.py",
+      "expected": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "contract": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "worktree": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "pinnedCommitBlob": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/constraints.py",
+      "expected": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+      "contract": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+      "worktree": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+      "pinnedCommitBlob": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/entities.py",
+      "expected": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+      "contract": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+      "worktree": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+      "pinnedCommitBlob": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/errors.py",
+      "expected": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+      "contract": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+      "worktree": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+      "pinnedCommitBlob": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/exact.py",
+      "expected": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+      "contract": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+      "worktree": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+      "pinnedCommitBlob": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/examples/entity-mini.case.json",
+      "expected": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+      "contract": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+      "worktree": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+      "pinnedCommitBlob": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/examples/entity-mini.expected.json",
+      "expected": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f",
+      "contract": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f",
+      "worktree": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f",
+      "pinnedCommitBlob": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/replay.py",
+      "expected": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+      "contract": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+      "worktree": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+      "pinnedCommitBlob": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/run.py",
+      "expected": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+      "contract": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+      "worktree": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+      "pinnedCommitBlob": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/scale.py",
+      "expected": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "contract": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "worktree": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "pinnedCommitBlob": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/selfcheck.py",
+      "expected": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+      "contract": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+      "worktree": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+      "pinnedCommitBlob": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+      "expected": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "contract": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "worktree": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "pinnedCommitBlob": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json",
+      "expected": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+      "contract": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+      "worktree": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+      "pinnedCommitBlob": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contract": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "worktree": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pinnedCommitBlob": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/helpers.py",
+      "expected": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+      "contract": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+      "worktree": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+      "pinnedCommitBlob": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_contract_section4.py",
+      "expected": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e",
+      "contract": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e",
+      "worktree": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e",
+      "pinnedCommitBlob": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_entities.py",
+      "expected": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+      "contract": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+      "worktree": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+      "pinnedCommitBlob": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_exact.py",
+      "expected": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+      "contract": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+      "worktree": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+      "pinnedCommitBlob": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_replay.py",
+      "expected": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+      "contract": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+      "worktree": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+      "pinnedCommitBlob": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_rulings.py",
+      "expected": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+      "contract": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+      "worktree": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+      "pinnedCommitBlob": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+      "expected": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+      "contract": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+      "worktree": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+      "pinnedCommitBlob": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_values.py",
+      "expected": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+      "contract": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+      "worktree": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+      "pinnedCommitBlob": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_views.py",
+      "expected": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+      "contract": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+      "worktree": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+      "pinnedCommitBlob": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/values.py",
+      "expected": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "contract": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "worktree": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "pinnedCommitBlob": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "match": true
+    },
+    {
+      "path": "lab/oracles/replay/views.py",
+      "expected": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+      "contract": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+      "worktree": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+      "pinnedCommitBlob": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+      "match": true
+    }
+  ],
+  "all29Match": true,
+  "rulingMapping": [
+    {
+      "id": "Q70a",
+      "generatedPath": "continuationRules.Q70a",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Every `cursorFrom` continuation is answered from the source read's start, scope and prefixes, whether or not the source had commits in flight; a continuation's own readStart is never consulted."
+    },
+    {
+      "id": "Q70b",
+      "generatedPath": "continuationRules.Q70b",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "A literal cursor token equal to a `nextCursor` that a read with commits in flight issued earlier in the same case continues that read per prefix; token bytes and the cursor vectors stay unchanged. Any other literal token keeps today's rule (the query's own read view)."
+    },
+    {
+      "id": "Q70c",
+      "generatedPath": "continuationRules.Q70c",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Q70b extends to every read: a literal cursor token equal to a `nextCursor` issued earlier in the same case by any read, in flight or not, continues that read (its start, scope and prefixes). Only a token no earlier read issued uses the query's own read view. This closes the F7 hole reached through a literal token."
+    },
+    {
+      "id": "Q70d",
+      "generatedPath": "continuationRules.Q70d",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "When several earlier reads issued the same token, the continuation follows the latest of them in case order."
+    },
+    {
+      "id": "Q70e",
+      "generatedPath": "continuationRules.Q70e",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Prefixes whose pages did not issue the token are left out, the same as a prefix with no next cursor under `cursorFrom`."
+    },
+    {
+      "id": "Q70f",
+      "generatedPath": "continuationRules.Q70f",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "When the earlier reads that issued a literal token disagree in start, scope or per-prefix answers, the continuation fails closed with a typed X-NOT-MODELED \"ambiguous literal token\" (a fourth listed refusal site). Issuers with identical views continue as Q70d says."
+    },
+    {
+      "id": "Q70g",
+      "generatedPath": "continuationRules.Q70g",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Q70c extends to the journal: a `transactions` call whose `after` equals a `next` that an earlier transactions page issued in the same case continues that read (its start and prefixes), one answer per prefix; an `after` no earlier page issued uses the call's own read view."
+    },
+    {
+      "id": "Q70h",
+      "generatedPath": "continuationRules.Q70h",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Issuers are compared by view: start, scope, and the prefixes whose pages issued the token. Issuers with identical views and different page bodies (for example different limits reaching the same token) continue rather than refuse, because the continuation depends only on the view."
+    },
+    {
+      "id": "Q70i",
+      "generatedPath": "continuationRules.Q70i",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Q70f's fail-closed rule applies to a journal `after` issued by disagreeing pages too (\"ambiguous journal after\"); Q70g matching requires the same journal scope."
+    },
+    {
+      "id": "Q70j",
+      "generatedPath": "continuationRules.Q70j",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "A `transactions` read decides which erasures are in flight from its own `scope` field, not from `cut.scope` or the default scope."
+    },
+    {
+      "id": "Q70k",
+      "generatedPath": "continuationRules.Q70k",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Q70j applies to every read kind that takes a `scope` field (`transactions`, `transaction`, `transactionByCommand`, `transactionsForEntity`, `journalFacts`, `assertions`, `cutCatalog`, `history` with no cut): in-flight erasures come from the scope the read reads. Other kinds use their cut's scope."
+    },
+    {
+      "id": "Q70l",
+      "generatedPath": "continuationRules.Q70l",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Every paged read kind continues by one rule. The oracle keeps a table of paged kinds and their continuation parameter and issued value (entityPage: `cursor`/`cursorFrom` and `nextCursor`; `transactions`: `after` and `next`; `transactionsForEntity`: `beforePosition` and `nextBeforePosition`, matched on the same entity, scope and `snapshotPosition`). A continuation value equal to one an earlier page of the same kind and key issued continues that read's view (Q70a-c, Q70g); disagreeing issuers refuse (Q70f, Q70i); identical views continue (Q70d, Q70h). A self-check fails if any query kind whose output carries a `next*` field is missing from the table, so a new paged kind cannot be left on the old rule."
+    },
+    {
+      "id": "Q70m",
+      "generatedPath": "continuationRules.Q70m",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "`after`, `beforePosition` and any other integer continuation parameter must be a JSON integer; a string, a float or a negative value makes the case malformed (exit 2), never a crash or a FAIL exit. Matching uses the parsed integer."
+    },
+    {
+      "id": "Q70n",
+      "generatedPath": "continuationRules.Q70n",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "The Q70l completeness check runs every query kind registered in `run.QUERIES` on generated cases and inspects the actual output (top level, pages and nested objects) for any `next*` key; a kind whose output carries one and is not in `CONTINUATIONS` fails, and a kind that cannot be exercised fails conservatively. Static source matching may stay as an extra check, never as the only one. Negative controls: a computed key, a helper in another module, a nested dictionary."
+    },
+    {
+      "id": "Q70o",
+      "generatedPath": "continuationRules.Q70o",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "`cursorFrom.page` is an integer continuation parameter under Q70m: a JSON integer from 0 to the last page index, otherwise the case is malformed (exit 2); invalid reference shapes raise the oracle's input error, never an uncaught exception."
+    },
+    {
+      "id": "Q74a",
+      "generatedPath": "seedRules.Q74a",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": [
+        "R26 open question 2",
+        "R26 design item 2"
+      ],
+      "rulingsIndexMatches": true,
+      "rule": "Screening and development receipts may be seeded by clone of a golden; the receipt records `seededBy: clone` with the golden key (adapter commit, world and seed-generator hash, driver seed options, image digest, engine config hash) and the golden's freeze fingerprint. Acceptance runs seed fresh (TARGETS 6)."
+    },
+    {
+      "id": "Q74b",
+      "generatedPath": "seedRules.Q74b",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": [
+        "R26 open question 1",
+        "R26 design item 1"
+      ],
+      "rulingsIndexMatches": true,
+      "rule": "The canonical freeze state is settled: `POST /system/finish-block`, compactor jobs 0, live index empty. A fresh-seeded arm compared with a cloned arm settles the same way before its window. Older unsettled A0 receipts are not compared with settled ones."
+    },
+    {
+      "id": "Q74c",
+      "generatedPath": "seedRules.Q74c",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked."
+    },
+    {
+      "id": "Q74d",
+      "generatedPath": "seedRules.Q74d",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "A cloned slot is ready only after `/healthz/started` (read with `docker exec`) and the R26 C1-C8 checks pass, then the same warm-up on every arm."
+    },
+    {
+      "id": "Q74e",
+      "generatedPath": "seedRules.Q74e",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Runs that measure P1 force one `finish-block` at a fixed trace time in every window, on every arm, so a settled clone still has a maintenance event."
+    },
+    {
+      "id": "Q74f",
+      "generatedPath": "seedRules.Q74f",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "A golden or clone is made only when host free disk after the copy stays at or above 5 GiB; clone volumes are removed after each run. At the 10k rung (3.41 GiB per XTDB volume) that allows one clone at a time today."
+    },
+    {
+      "id": "Q74g",
+      "generatedPath": "seedRules.Q74g",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": [
+        "R26 open question 3",
+        "R26 design item 3"
+      ],
+      "rulingsIndexMatches": true,
+      "rule": "A broker composition clones the engine volume and the broker directory together, from one stopped moment."
+    },
+    {
+      "id": "Q75a",
+      "generatedPath": "qualificationRun.integrity.Q75a",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "At the start of every run, every evaluator-side file the run executes (claim.mjs, lib.mjs, gate.mjs, the reference and oracle runner files) is compared with its git blob at the evaluator's commit, read with `GIT_NO_REPLACE_OBJECTS=1`; a mismatch refuses the run and marks the checkout poisoned (EVALUATOR-TAMPERED) until restored from git. An edit made and restored inside one run stays on the named unprotected list until EXP-G03 isolates builds."
+    },
+    {
+      "id": "Q75b",
+      "generatedPath": "qualificationRun.integrity.Q75b",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Every oracle copy and every other trusted byte is read, hashed and copied before the first candidate process runs; the evaluator's git runs with `GIT_NO_REPLACE_OBJECTS=1` and checks each blob against its tree entry's object id."
+    },
+    {
+      "id": "Q75c",
+      "generatedPath": "qualificationRun.integrity.Q75c",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "An oracle is pinned only when the contract lists sha256 for every runner file; COMPILED oracles (O-CONTRACT) are pinned that way through the contract's own outputs. A claim that depends on any oracle without such a list is DIAGNOSTIC (Q59e literally). build_contract.py's contractBlockers and claim.mjs's follow the same rule in contract 0.3.11."
+    },
+    {
+      "id": "Q75d",
+      "generatedPath": "qualificationRun.integrity.Q75d",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "The identity records each resolved binary children run (node, pnpm, python3): path, sha256 and version; children run with PATH pinned to the recorded toolchain directory."
+    },
+    {
+      "id": "Q75e",
+      "generatedPath": "qualificationRun.integrity.Q75e",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "The identity walk uses lstat, refuses any symlink that resolves outside the checkout, and hashes file modes; configuration the evaluator does not apply is recorded as unbound, not hashed as if applied."
+    },
+    {
+      "id": "Q75f",
+      "generatedPath": "qualificationRun.integrity.Q75f",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Every child process gets a fresh HOME and TMPDIR."
+    },
+    {
+      "id": "Q75g",
+      "generatedPath": "qualificationRun.integrity.Q75g",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "A row comparator applies to each `queries[i]` entry's `result` (or its `inFlight.acceptable[j].result`) inside an O-REPLAY answer; `commandOutcomes` and `state` compare exactly. Contract 0.3.11 states this; until then those cases stay UNCOMPARABLE (fail closed)."
+    },
+    {
+      "id": "Q75h",
+      "generatedPath": "qualificationRun.integrity.Q75h",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Following compiled Q67h, `cause` is optional; when present it must be a structured object with `_tag` or `message`."
+    },
+    {
+      "id": "Q75i",
+      "generatedPath": "qualificationRun.integrity.Q75i",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "The run keeps the set of evidence hashes it wrote and requires every one at the end (deletion detected); every return path carries GATE-NOT-RUN from the run's start; end checks run inside the try. admitCore returns DIAGNOSTIC for `kind: \"promotion\"`, and admit_claim in the reference does the same in 0.3.11."
+    },
+    {
+      "id": "Q75j",
+      "generatedPath": "qualificationRun.integrity.Q75j",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "The unprotected list names F1's in-run restore, setsid, TOCTOU, no filesystem or network isolation; \"double fork escapes\" is corrected (it is killed). Q67i's \"CMP-EXACT\" reads as CMP-EXACT-VALUE; no comparator is plain byte equality, and hash equality applies only to case-result/1 documents."
+    },
+    {
+      "id": "Q76a",
+      "generatedPath": "recursionRules.Q76a",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "The single-read default's typed refusal above 1M edge rows (XTDB) or 100k (QLever) stands. Cheaper per-round reads (XTDB entity-keyed projection tables, a QLever IRI ledger, R10 6.4) belong to a later experiment on the P4 current structure (Q68a), since both need an id-keyed current copy."
+    },
+    {
+      "id": "Q76b",
+      "generatedPath": "recursionRules.Q76b",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "`XtdbStorageAdapter.initialize` stops creating `tx_query_relations`; the C8 follow-up removes it after V-C8, so no read-path artefact remains in the schema."
+    },
+    {
+      "id": "Q76c",
+      "generatedPath": "recursionRules.Q76c",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "A recursive rule shape a lane cannot answer is refused typed, never answered without its constraint. Core's SQL `compileRecursiveCTE` ignoring tail constraints is a correctness defect for the SQL adapters outside the two lanes; it is recorded in the capability matrix and fixed when a lane uses it."
+    },
+    {
+      "id": "Q76d",
+      "generatedPath": "recursionRules.Q76d",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "The C8 follow-up wires `countSimplePaths` into WL20 supports on both lanes, so supports are general rather than path lengths 1-3."
+    },
+    {
+      "id": "Q76e",
+      "generatedPath": "recursionRules.Q76e",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Maintained queries publish only from the change feed consumer (P3), never from a read; until that consumer exists, `query()` answers directly."
+    },
+    {
+      "id": "Q76f",
+      "generatedPath": "recursionRules.Q76f",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "XTDB G1/G2 receipts for C8 are rerun on an exclusive slot after V-X02's; the overloaded-dev receipts stay as diagnostic."
+    },
+    {
+      "id": "Q77a",
+      "generatedPath": "recursionRules.Q77a",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Every accepted recursion budget is enforced with a typed refusal and never a partial or over-budget success: a confirmation read may not extend the answer past maxRounds; ruleClosure enforces maxRounds and maxVisited (or rejects budget fields it does not support). maxDepth keeps its Datalog meaning."
+    },
+    {
+      "id": "Q77b",
+      "generatedPath": "recursionRules.Q77b",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Path counting uses iterative DP over DAGs and an explicit stack for bounded cyclic enumeration; pathSteps refusal stays typed."
+    },
+    {
+      "id": "Q77c",
+      "generatedPath": "recursionRules.Q77c",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "The write counter positively classifies every operation it forwards; any multipart, prepared, portal or other operation it cannot classify counts as a write (or is refused). Classifications of prepared statements and portals survive tally resets, and Execute operations are what is counted."
+    },
+    {
+      "id": "Q78a",
+      "generatedPath": "datomicRules.Q78a",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Datomic Pro 1.0.7745 (Apache 2.0 binaries, Java 17+), dev storage inside the transactor for DA00-DA02; SQL storage is a later arm only if io-stats show peer cache misses loading the transactor. The zip's sha256 is pinned by the lab, the bundled peer jar is cross-checked against Maven Central's sha1 and PGP signature. No Datomic source exists, so lane D has no engine-repair track; gaps get workarounds."
+    },
+    {
+      "id": "Q78b",
+      "generatedPath": "datomicRules.Q78b",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "`tx2-datomic-dev` (2.75 GiB: transactor heap 640m, gateway heap 1g) is a parkable resident: only the orchestrator parks it (`engine.mjs down`, volume kept). Lane D slot runs and lane X/Q exclusive-slot runs do not overlap with it running."
+    },
+    {
+      "id": "Q78c",
+      "generatedPath": "datomicRules.Q78c",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "A thin Clojure gateway on the official Peer API speaking HTTP/1.1 + JSON with every value tagged (longs and entity ids as decimal strings); the gateway rejects query functions outside an allowlist (C8 floor). Rejected: peer-server with the undocumented Client wire protocol; the legacy REST server."
+    },
+    {
+      "id": "Q78d",
+      "generatedPath": "datomicRules.Q78d",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "One Datomic database per Triplex scope; each assertion is a fact entity (`:f/id`, `:f/subject`, `:f/live`, `:f/attr`, one typed value attribute, valid-time bounds); commit metadata on the transaction entity; retraction retracts `:f/live`; a latest-basis read uses the current db, a past basis `as-of`, reads in a transaction `d/with`. One `:db/cas` per entity per transaction (Jepsen: operations inside one transaction apply as if concurrent)."
+    },
+    {
+      "id": "Q79a",
+      "generatedPath": "exactQueryRules.Q79a",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Every SQL hazard guard runs on the same comment-aware token stream as the envelope, recognises quantified comparisons including the bare-expression operand, and keeps `UNION ALL` / `SELECT ALL` and supported subqueries; public-provider regression cases for the comment and bare forms."
+    },
+    {
+      "id": "Q79b",
+      "generatedPath": "exactQueryRules.Q79b",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Checked int64 arithmetic yields a typed failure in the Effect error channel, never a defect; tests assert Fail (not Die) and recovery with catchTag in both languages."
+    },
+    {
+      "id": "Q79c",
+      "generatedPath": "exactQueryRules.Q79c",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "Exact Datalog arithmetic (the five exact compute operators and anything downstream) never lowers through DECIMAL to BIGINT; it keeps the exact result as text through range checks and decoding, or refuses with a typed error until exact lowering exists. This is Sam's \"no silent precision loss\" rule and applies to core's compiler for every lane that uses it."
+    },
+    {
+      "id": "Q79d",
+      "generatedPath": "exactQueryRules.Q79d",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "With the language switch unset, behaviour is main's; changing the default needs its own qualification and a ruling."
+    },
+    {
+      "id": "Q81a",
+      "generatedPath": "qualificationRun.integrity.Q81a",
+      "sameAsAuthoritativeRow": true,
+      "sameRuleAsOriginalPendingSource": true,
+      "basisOnlyDifference": null,
+      "rulingsIndexMatches": true,
+      "rule": "At the end of a run the evaluator re-checks every case input it handed out (present, same bytes) along with the evidence set; a deleted or rewritten input after its last use refuses the run (INPUT-TAMPERED). The guarantee is kept, not narrowed."
+    }
+  ],
+  "oldSurfaceObligationDelta": [
+    {
+      "id": "G3.recursion.read-only-frontier",
+      "oldSurfaceApplicabilitySame": true,
+      "changedFields": {
+        "cases": {
+          "before": [
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "c8"
+              ]
+            }
+          ],
+          "after": [
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "c8"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q76A"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q76B"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q76C"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q76D"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q76E"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q76F"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q77A"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q77B"
+              ]
+            },
+            {
+              "set": "CS-RECURSION-TOPO",
+              "select": [
+                "CONTRACT-Q77C"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "G4.neg.correlated-not-exists-raw",
+      "oldSurfaceApplicabilitySame": true,
+      "changedFields": {
+        "statement": {
+          "before": "The correlated NOT EXISTS controls written in raw SQL and raw XTQL over the documented raw dataset return only `two` (the QLever raw cell is exception RX-Q29, qualified by R.raw.mapped-recipes).",
+          "after": "The correlated absence controls written in raw SQL, raw XTQL and raw Datomic Datalog over the documented raw dataset return only `two` (the QLever raw cell is exception RX-Q29, qualified by R.raw.mapped-recipes)."
+        },
+        "title": {
+          "before": "Correlated negation on the XTDB raw surface",
+          "after": "Correlated negation on every non-exempt raw surface"
+        }
+      }
+    },
+    {
+      "id": "G10.cursor.continuation-transitions",
+      "oldSurfaceApplicabilitySame": true,
+      "changedFields": {
+        "cases": {
+          "before": [
+            {
+              "set": "CS-CURSOR",
+              "select": [
+                "transitions"
+              ]
+            }
+          ],
+          "after": [
+            {
+              "set": "CS-CURSOR",
+              "select": [
+                "transitions"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70A"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70B"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70C"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70D"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70E"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70F"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70G"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70H"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70I"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70J"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70K"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70L"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70M"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70N"
+              ]
+            },
+            {
+              "set": "CS-ERASURE",
+              "select": [
+                "CONTRACT-Q70O"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "G10.native.read-only-and-safe-params",
+      "oldSurfaceApplicabilitySame": true,
+      "changedFields": {
+        "cases": {
+          "before": [
+            {
+              "set": "CS-ENTRY",
+              "select": [
+                "read-only",
+                "safe-parameters"
+              ]
+            }
+          ],
+          "after": [
+            {
+              "set": "CS-ENTRY",
+              "select": [
+                "read-only",
+                "safe-parameters"
+              ]
+            },
+            {
+              "set": "CS-ENTRY",
+              "select": [
+                "CONTRACT-Q79A"
+              ]
+            },
+            {
+              "set": "CS-ENTRY",
+              "select": [
+                "CONTRACT-Q79B"
+              ]
+            },
+            {
+              "set": "CS-ENTRY",
+              "select": [
+                "CONTRACT-Q79C"
+              ]
+            },
+            {
+              "set": "CS-ENTRY",
+              "select": [
+                "CONTRACT-Q79D"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "oldMatrixCellDelta": [],
+  "datomic": {
+    "applicable": [
+      "G1.found.unchanged44",
+      "G1.types.value-kinds-roundtrip",
+      "G1.types.out-of-range-rejected",
+      "G1.types.decimal",
+      "G1.wire.write-guards",
+      "G1.decimal.tdk1-admission",
+      "G1.decimal.tdk1-ranges",
+      "G1.decimal.tdk1-differential",
+      "G1.decimal.tdk1-serialization",
+      "G1.decimal.tdk1-writer-negative",
+      "G1.decimal.channel-routing",
+      "G7.outbox.publication-sequence",
+      "G7.outbox.receiver-ordering",
+      "G7.outbox.atomic-unit",
+      "G1.types.invalid-rejected",
+      "G1.types.storage-widening-safe",
+      "G1.types.native-parameters",
+      "G1.schema.required",
+      "G1.schema.cardinality",
+      "G1.schema.unique",
+      "G1.schema.reference-target",
+      "G1.schema.release-derived-contracts",
+      "PKT.full142",
+      "G2.arith.integer-exact",
+      "G2.arith.binary64",
+      "G2.expr.cross-family-comparison",
+      "G2.errors.typed-taxonomy",
+      "G2.strings.codepoint-supported",
+      "G3.plan.explain",
+      "G3.plan.access-path-at-scale",
+      "G3.admission.preconstruction",
+      "G3.cost.budget-honored",
+      "G3.recursion.scalable",
+      "G3.recursion.read-only-frontier",
+      "G4.neg.correlated-not-exists",
+      "G4.neg.correlated-not-exists-raw",
+      "G4.cut.task-wide-fixed",
+      "G4.neg.conflict-semantics",
+      "G5.agg.shape-controls",
+      "G5.agg.full-support",
+      "G5.agg.typed-groups",
+      "G5.agg.projection-sums",
+      "G6.cancel.observed-drain",
+      "G6.deadline.enforced",
+      "G6.cancel.preaborted-no-work",
+      "G6.cleanup.scratch-zero",
+      "G6.ownership.bounded-connections",
+      "G6.resource.memory-failure-contained",
+      "G7.write.atomic",
+      "G7.write.command-idempotency",
+      "G7.write.preconditions-cas",
+      "G7.receipt.journal-complete",
+      "G7.journal.logical-contract",
+      "G7.commit.protocol-transitions",
+      "G7.composition.overlay-rules",
+      "G7.broker.promotion-hardening",
+      "G7.recovery.backup-restore",
+      "G7.migration.schema-evolution",
+      "G7.migration.valid-writes-never-rejected",
+      "G8.eligibility.c1-routing",
+      "G8.publish.coherent",
+      "G8.publish.basis-honesty",
+      "G8.publish.valid-boundary",
+      "G8.reuse.positive-witness",
+      "G8.support.incremental-witness",
+      "G8.support.alternate-maintained",
+      "G9.temporal.half-open-intervals",
+      "G9.temporal.recorded-cuts",
+      "G9.history.raw-lifetime-compat",
+      "G9.history.snapshot-metadata",
+      "G9.corrections.preserve",
+      "G9.lineage.supporting-assertions",
+      "G9.presence.explicit",
+      "G9.deletion.entity",
+      "G9.cascade.restrict-detach-cascade",
+      "G10.pkg.clean-consumer-slice",
+      "G10.pkg.type-witnesses",
+      "G10.scope.ownership-refusal",
+      "G10.scope.shared-collision",
+      "G10.cursor.stable",
+      "G10.cursor.deep-page-cost",
+      "G10.cursor.continuation-transitions",
+      "G10.capabilities.truthful",
+      "G10.lifecycle.open-close",
+      "G10.native.entry-checks",
+      "G10.native.read-only-and-safe-params",
+      "R.repo.entity-suite",
+      "R.repo.mutation-controls",
+      "R.raw.parity",
+      "R.raw.mapped-recipes",
+      "R.raw.guide-only-authoring",
+      "R.raw.capability-matrix",
+      "R.native.fragment-equivalence",
+      "NS.P1",
+      "NS.P2",
+      "NS.P3",
+      "NS.P4",
+      "NS.P5",
+      "NS.SEC.bulk-lane",
+      "NS.SEC.retro-and-audit",
+      "NS.calibration",
+      "GS.01",
+      "GS.02",
+      "GS.03",
+      "GS.04",
+      "GS.05",
+      "GS.06",
+      "GS.07",
+      "GS.08",
+      "GS.09",
+      "GS.10",
+      "GS.11",
+      "GS.12",
+      "GS.13",
+      "GS.14",
+      "GS.15",
+      "GS.16",
+      "GS.17",
+      "GS.18",
+      "GS.19",
+      "GS.20",
+      "REQ.commit-idempotent",
+      "REQ.snapshot-reads",
+      "REQ.change-feed",
+      "REQ.no-silent-precision-loss",
+      "REQ.pii-erasure",
+      "REQ.tenant-isolation",
+      "REQ.outbox-atomic",
+      "REQ.read-your-write",
+      "REQ.sweep-pins-position",
+      "REQ.retro-corrections",
+      "G9.erasure.visibility-boundary",
+      "G9.erasure.protected-copies",
+      "G9.erasure.restore-reapplies",
+      "G8.composition.watermark-routing",
+      "G7.composition.ack-and-routed-ryow",
+      "G7.position.coordinates",
+      "G7.position.bound-after-publication",
+      "W0.coverage-floors",
+      "G9.erasure.commit-semantics",
+      "G9.erasure.query-semantics",
+      "G9.erasure.residual-shapes",
+      "G9.erasure.reproduction-modulo",
+      "G10.composition.identity-bound",
+      "R.evaluator.incomplete-receipts",
+      "S.population.year-one",
+      "S.rungs.ladder",
+      "S.correctness.query-families",
+      "S.capacity.admitted",
+      "S.metrics.reported",
+      "S.maintenance.correct-during",
+      "S.restart.at-scale",
+      "S.budgets.cumulative"
+    ],
+    "notApplicable": [
+      "G1.wire.xtdb-encodings",
+      "G1.wire.qlever-shadow",
+      "G7.broker.fence-and-epochs",
+      "G8.maintenance.bounded-boundaries"
+    ],
+    "missingNullImageBlocker": [],
+    "counts": {
+      "total": 153,
+      "closable": 0,
+      "blocked": 153
+    }
+  },
+  "pendingInReviewedContract": {
+    "file": "lab/acceptance/RULINGS-PENDING.md",
+    "sha256": "9ef264b3f3ac449c97e107546e15e919df94cdfe81559594210c83e766182664",
+    "ids": [
+      "Q51b",
+      "Q72a",
+      "Q72b",
+      "Q72c",
+      "Q72d",
+      "Q72e",
+      "Q72g",
+      "Q73a",
+      "Q73b",
+      "Q78e",
+      "Q80a",
+      "Q80b",
+      "Q80c"
+    ],
+    "authority": "none",
+    "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
+  },
+  "additionalPendingInLiveSource": [
+    "Q81b",
+    "Q81c",
+    "Q82a",
+    "Q82b",
+    "Q82c",
+    "Q82d",
+    "Q82e",
+    "Q83a",
+    "Q83b",
+    "Q83c"
+  ]
+}
