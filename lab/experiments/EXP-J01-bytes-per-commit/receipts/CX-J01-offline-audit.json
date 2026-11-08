@@ -1,0 +1,197 @@
+{
+  "kind": "CX-J01 offline receipt audit",
+  "checkedAt": "2026-11-08T21:14:00.440276+00:00",
+  "rawChecks": [
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/journal-equivalence-qlever-20261108T011518Z-015a94.json",
+      "receiptSha256": "8b0ecc0a2e97ef16be415ec7efccfcbb1166be57c1c74272256d222c6d1c5b95",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/journal-equivalence-qlever-20261108T011518Z-015a94.raw.json",
+      "exists": true,
+      "actualSha256": "a924a5442249b7ac80a4bac675e516938fcbdf99caf15d85e142f9747de74b84",
+      "matches": true
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/journal-equivalence-xtdb-20261108T011253Z-73717d.json",
+      "receiptSha256": "c2f4a8a58c84cbaf458bfb1355048f02779e4402473dff558a02fefd12ea2fcc",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/journal-equivalence-xtdb-20261108T011253Z-73717d.raw.json",
+      "exists": true,
+      "actualSha256": "551f941fa86facf3cf93dbebcaf7aa5995c0181b10906c5df628c464e528b597",
+      "matches": true
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/qlever-attribution-A0-20261108T001038Z-5ab295.json",
+      "receiptSha256": "904c5b3d5ec003a58dddd556deb50e73bb3687cac60ffffe87b26fa5e4c7174c",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/qlever-attribution-A0-20261108T001038Z-5ab295.raw.json",
+      "exists": true,
+      "actualSha256": "858ff07a07f7eca79dfaf9d269465b198d3432a20e4fe87bf8c85d1367a81abf",
+      "matches": true
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/qlever-attribution-compact-20261108T003457Z-d4d93b.json",
+      "receiptSha256": "25fdf7a9b82c530172617679e4222a0f802c08facd18f9da0812e938217c01c1",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/qlever-attribution-compact-20261108T003457Z-d4d93b.raw.json",
+      "exists": true,
+      "actualSha256": "799427d8a969d2b382e6e4f0db86c9f30c99aa9d152f4b9c971d789fca793651",
+      "matches": true
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/service-qlever-fresh-scope-20261108T013148Z-6ca7a2.json",
+      "receiptSha256": "671617c75ca0b663d02cf7d6c0b5d6348379cc2cbdcd500f39029f9923b4497f",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/service-qlever-fresh-scope-20261108T013148Z-6ca7a2.raw.json",
+      "exists": true,
+      "actualSha256": "c9bdd9f71b2c537252338b405ca0f005c1dff27d00c65953470ec98b02f66daa",
+      "matches": true
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/service-xtdb-fresh-scope-20261108T013134Z-49520f.json",
+      "receiptSha256": "63aac573f9c9fee8e9b6bba678853ea7c9e90904a2c35fbea597114a1f0cd96f",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/service-xtdb-fresh-scope-20261108T013134Z-49520f.raw.json",
+      "exists": true,
+      "actualSha256": "9111a3e1df1958ae8bf34f4800bc392de2371117173e817a942178906a23c595",
+      "matches": true
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-A0-20261108T000845Z-6da838.json",
+      "receiptSha256": "e8d69b056891457ae8705a0df69d5927fefeeb69bd1fa142211e15ddbc648a8e",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/xtdb-attribution-A0-20261108T000845Z-6da838.raw.json",
+      "exists": true,
+      "actualSha256": "af1b4beab185a587fb0edfe5a00aa5a951b66f5a14e059ddbc5dcf1ddeced998",
+      "matches": true
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-A0-20261108T003105Z-3e2a1d.json",
+      "receiptSha256": "8accdb8709d687f2b40a4886e98d72b0ff11953f170f9cdf726002c89f712709",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/xtdb-attribution-A0-20261108T003105Z-3e2a1d.raw.json",
+      "exists": true,
+      "actualSha256": "9d6f5d6b700bb85f6566a9910ee072a486a72be8a0e2021929a0342d35d816d1",
+      "matches": true
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-compact-20261108T003136Z-cc319d.json",
+      "receiptSha256": "24c259e239501f40f5bfa3d3b3e9437ec2fa4e8541b458a4c58223296407a948",
+      "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/xtdb-attribution-compact-20261108T003136Z-cc319d.raw.json",
+      "exists": true,
+      "actualSha256": "2a4cf1ae6548bf064dfc1a8667423e222b9210aaa817d2d4bc4de33153e73472",
+      "matches": true
+    }
+  ],
+  "g1": [
+    {
+      "receipt": "lab/runs/G1/G1-qlever-20261108T021919Z-c834f9.json",
+      "receiptSha256": "d9f6a57b7d935f990951b0b2dadf4790c2e16ce147c45271ee305df36dc9025e",
+      "rawSha256": "87fc1cc1a120b3351eed4a8897904a01c0e1afebd34941c7d7c4f448599c4bc2",
+      "rawMatches": true,
+      "counts": {
+        "executed": 78,
+        "expected": 88,
+        "pass": 69,
+        "fail": 9,
+        "skip": 10,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 40,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 29,
+            "total": 34
+          }
+        }
+      },
+      "deadlineFailures": 9,
+      "nonDeadlineFailures": [],
+      "retryDecision": "rerun only non-deadline failures; preserve overload/deadline failures without rerunning"
+    },
+    {
+      "receipt": "lab/runs/G1/G1-qlever-20261108T030804Z-e1de94.json",
+      "receiptSha256": "45bf4fb16c666fd7ca9110f5564e6f452a8d7887f1abcbd9d8b5183ee9bd7782",
+      "rawSha256": "f1b0e06e8a3092aac6429bad4d3350a58004cb074e978923cc9cb09145ebb27f",
+      "rawMatches": true,
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 84,
+        "fail": 4,
+        "skip": 0,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 42,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 42,
+            "total": 44
+          }
+        }
+      },
+      "deadlineFailures": 4,
+      "nonDeadlineFailures": [],
+      "retryDecision": "rerun only non-deadline failures; preserve overload/deadline failures without rerunning"
+    },
+    {
+      "receipt": "lab/runs/G1/G1-xtdb-20261108T013218Z-7e7e23.json",
+      "receiptSha256": "03bfbb870120564a5566a7cb0981f69c05194f42d1fa131d25288bf4a1aea030",
+      "rawSha256": "cf03f0a61a3dd035af10f8bb6c9a3a938e1bddd940e8687d8f2d1f1147c422c4",
+      "rawMatches": true,
+      "counts": {
+        "executed": 50,
+        "expected": 88,
+        "pass": 25,
+        "fail": 25,
+        "skip": 38,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 23,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 2,
+            "total": 6
+          }
+        }
+      },
+      "deadlineFailures": 24,
+      "nonDeadlineFailures": [
+        {
+          "name": "graph constraints reject invalid post-states across valid time",
+          "phase": "current",
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-62b8c296-f5a4-4806-9cb9-77c1db176b07\",0]",
+          "status": "FAIL",
+          "error": "Cause([Fail(ConformanceError: a missing required fact should produce ConstraintViolationError)])",
+          "elapsedMs": 41194.042625
+        }
+      ],
+      "retryDecision": "rerun only non-deadline failures; preserve overload/deadline failures without rerunning"
+    }
+  ],
+  "attribution": [
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/qlever-attribution-A0-20261108T001038Z-5ab295.json",
+      "commands": 5,
+      "closure": 0
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/qlever-attribution-compact-20261108T003457Z-d4d93b.json",
+      "commands": 5,
+      "closure": 0
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-A0-20261108T000845Z-6da838.json",
+      "sum": 30061,
+      "closure": 0
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-A0-20261108T003105Z-3e2a1d.json",
+      "sum": 30061,
+      "closure": 0
+    },
+    {
+      "receipt": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-compact-20261108T003136Z-cc319d.json",
+      "sum": 26397,
+      "closure": 0
+    }
+  ]
+}
