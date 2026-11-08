@@ -26,7 +26,11 @@ const LEDGER = join(REPO, 'lab', 'agents', 'ledger.jsonl');
 const DURABLE = '/Users/sam/Claude/Projects/triplex-db-2/agents';
 const MODEL = 'gpt-6.1-sol';
 const EFFORT = { builder: 'medium', reviewer: 'high' }; // the only allowed pairs; nothing above high
-const ALWAYS_WRITABLE = [join(REPO, '.pnpm-store'), '/Users/sam/Claude/Projects/triplex-db-2'];
+// Shared state every agent must be able to write: the pnpm store, the durable project folder, git objects and worktree metadata
+// (commits from a worktree write into the main .git), and the main checkout's lock and engine ledgers (lab/bin/lib.mjs LOCKS,
+// ENGINE_DIR), so heavy.mjs and engine.mjs reservations work from inside the sandbox.
+const ALWAYS_WRITABLE = [join(REPO, '.pnpm-store'), '/Users/sam/Claude/Projects/triplex-db-2', join(REPO, '.git'),
+  join(REPO, 'lab', 'locks'), join(REPO, 'runs', 'engines')];
 
 function fail(msg) { process.stderr.write(`agent.mjs: ${msg}\n`); process.exit(2); }
 function now() { return new Date().toISOString(); }
