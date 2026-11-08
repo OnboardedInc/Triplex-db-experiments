@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 1535 "DA00-measure", pid 1980 "DA00-G0-final", pid 3771 "G0-xtdb-20261108T215107Z-984fc7 typecheck"
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 1535 "DA00-measure", pid 1980 "DA00-G0-final", pid 3771 "G0-xtdb-20261108T215107Z-984fc7 vitest-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4427 "CX-VX02-2-G0", pid 1980 "DA00-G0-final", pid 5185 "G0-xtdb-20261108T215157Z-138fc7 typecheck"
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4998 "G0-qlever-20261108T215153Z-3524cf typecheck", pid 1980 "DA00-G0-final", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 5437 "CX-C8-R3-offline", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 7587 "CX-C8-R3-bind", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 4910 "CX-E01-R3-reference", pid 5696 "CX-C8-R3-checks"
