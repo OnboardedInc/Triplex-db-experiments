@@ -1,0 +1,48 @@
+{
+  "dir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/SQL01/data/write-intent-d7f36f88-e14a-4f77-b282-6a3401bd5de2",
+  "held": {
+    "counts": {
+      "busy": 1
+    },
+    "events": [
+      {
+        "at": 1794180674716,
+        "mode": "RESTART",
+        "outcome": "busy",
+        "ms": 5.246500000000083,
+        "busy": 1,
+        "log": 1,
+        "checkpointed": 1
+      }
+    ]
+  },
+  "released": {
+    "counts": {
+      "busy": 1,
+      "complete": 1
+    },
+    "events": [
+      {
+        "at": 1794180674716,
+        "mode": "RESTART",
+        "outcome": "busy",
+        "ms": 5.246500000000083,
+        "busy": 1,
+        "log": 1,
+        "checkpointed": 1
+      },
+      {
+        "at": 1794180674722,
+        "mode": "RESTART",
+        "outcome": "complete",
+        "ms": 3.6220840000000862,
+        "busy": 0,
+        "log": 3,
+        "checkpointed": 3
+      }
+    ]
+  },
+  "originalWorkerSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+  "instrumentedWorkerSha256": "4105c40a8c2d5cc9507fc3728f879e6a9c4c125847b9192b1f74485289cc6c6c",
+  "instrumentation": "const m=marker(); if(a.lsn"
+}

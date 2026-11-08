@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/SQL01
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 3 skipped (4)
+   Start at  18:31:40
+   Duration  1.69s (import 38%, tests 34%, transform 28%)
+
