@@ -87,3 +87,9 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q69e live composition | The live A/A uses `public-queued`, matching EXP-N01's A0. | EXP-N01 |
 | Q69f fallback series | `screening-r4` (4x the steady rate, no bursts) is pre-registered now as the fallback screening series, used only if the burst series makes commitAll p50 NOT_ESTIMABLE in the A/A run. | Q60g |
 | Q69g calibration thresholds | Thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them (R22 4.1), started after EXP-M01 merges. | R22 4.1 |
+
+## Q70: V-O04e cursor continuations of in-flight reads (O-REPLAY 0.4.4)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q70a continuation view | Every `cursorFrom` continuation is answered from the source read's start, scope and prefixes, whether or not the source had commits in flight; a continuation's own readStart is never consulted. | V-O04e F7 |
+| Q70b literal token | A literal cursor token equal to a `nextCursor` that a read with commits in flight issued earlier in the same case continues that read per prefix; token bytes and the cursor vectors stay unchanged. Any other literal token keeps today's rule (the query's own read view). | V-O04e F8, fix (b) |
