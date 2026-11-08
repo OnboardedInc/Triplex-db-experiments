@@ -146,3 +146,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - DA01 round 1 delivered (4a540cc): G0 1,024 tests, G1 88/88 plus the full suite twice; resident READY, volume kept. Round 2 (Q85a-d
   fixes from V-DA00) dispatched; then a joint DA00+DA01 review. The Datomic resident stays up for DA01 round 2, so the scale window
   opens when K01 (offline review), X02 (review) and G03 (fixture migration) are ready for slot runs, not before.
+- Contract 0.3.11 merged to main (Q87 gate: 108/108 evaluator, --verify byte-identical). O-REPLAY 0.4.9 pinned; lane D registered.
+  Next contract: 0.3.12 compiles Q72, Q79e-f, Q80, Q82-Q87 plus G03's box pins. When CX-G03 round 3 ends, its next round starts by
+  merging main (0.3.11 touched the same fixtures).
