@@ -1,0 +1,47 @@
+{
+  "review": "V-D01e delta review of W0-1.1.2 (exp/D01-w0-1.1.2 242bb40) against W0-1.1.1 (ada2e90)",
+  "verdict": "FIX-FIRST: one-line SPEC erratum (9 item 7 example), no case, release or fingerprint change; everything else accepted",
+  "checks": {
+    "1_hash_tables": {
+      "w0_1_1_1_files": "91 of 95 byte-identical to lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS; the 4 that differ are README.md, SPEC.md, schema.json, validate.py (allowed)",
+      "new_SHA256SUMS": "145 of 145 OK; covers every tracked W0 file except itself; sha256 951ee3d55095be08273f5e490ee41517b39d27a0057c264c47b710d2e6107fc5",
+      "this_review_table": "W0-1.1.2-242bb40-SHA256SUMS, 146 files (SHA256SUMS included), all OK"
+    },
+    "2_rederivation": "all 49 cases C88-C136 derived by hand from SPEC.md from inputs only, then compared: 49 of 49 match expected and expected-sha256.json",
+    "3_exact_rules": {
+      "string_escaping": "stated precisely in 9 item 7 and equal to json.dumps(ensure_ascii=True); its one example (line 807) holds the raw UTF-8 bytes F0 9F 98 80 instead of the text \\ud83d\\ude00 (finding E1)",
+      "array_index_keys": "stated precisely (9 item 2 code point order; 8.7; the closing paragraph names \"10\" before \"9\"); C136 and C133 pin it"
+    },
+    "4_case_forms": "inputBase64 covers non-JSON bytes (C91, C92, C128); expected-sha256.json exposes a shared writer defect; synthetic needs a validator restriction (finding E2); a JSON.parse/JSON.stringify harness makes a correct implementation fail 11 cases, so the suite exposes it",
+    "5_validate_and_fingerprint": "validate.py: 136 cases OK; fingerprint recomputed independently through lab/bin/heavy.mjs: all six values equal W0-1.1.1 and SPEC 12.7"
+  },
+  "all_cases": "136 of 136 match expected and expected-sha256.json with an independent evaluator (C01-C87 unchanged); R1, R2, R3 hashes recompute",
+  "fingerprint_100k": {
+    "basis_tx": 4338757,
+    "facts": 44537987,
+    "worlds": "sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760",
+    "R1": "sha256:c1b2d410244121d64b476c2f99c32830ea1b1f536928c9d12b0e886132351a79",
+    "R2": "sha256:551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562",
+    "R3": "sha256:a595092272c16343b0dfe9c9db57fbcdd7556fbf8be40afbaed014710fceee2f",
+    "R3_reached": 9497, "R3_changed": 418, "R3_changed_not_reached": 0,
+    "floors": {"R2_changes": "62.293%", "min_fire_R1": "MINWAGE 7.810%", "largest_location": 1100, "wi3_R1": "1.567%", "wi3_R2_R3": "2.459%"}
+  },
+  "mutants": {
+    "note": "reviewer's own versions written from V-D01c VERIFY.md one-line descriptions (V-D01c mutant sources and O-DOMAIN not read); run against frozen expected-sha256.json bytes; control passes 136/136",
+    "table_A": {"M04": ["C103"], "M06": ["C105"], "M07": ["C106"], "M09": ["C108"], "M10": ["C109"], "M10b": ["C110"], "M11": ["C112"], "M16": ["C98"], "M18": ["C113"], "M23": ["C114"], "M25": ["C115"], "M26": ["C116"], "M28": ["C117"], "M35": ["C118"], "M41": ["C121"], "M43": ["C122", "C133"], "M44": ["C123"], "M45": ["C124", "C133"], "M54": ["C100", "C133", "C134", "C136"]},
+    "table_B_kernel": {"M03": ["C126"], "M05": ["C104"], "M08": ["C107"], "M13": ["C95"], "M14": ["C96"], "M15": ["C97"], "M17": ["C99"], "M31": ["C119"], "M37": ["C120"], "M40": ["C127"], "M47": ["C125"], "M53": ["C93", "C94", "C100", "C136"], "M55": ["C100", "C136"]},
+    "readings": {"A01_bom_ignored": ["C91"], "A01_utf8_replaced": ["C92"], "A08_first_wins": ["C101", "C135"], "A09_compare_with_old_state": ["C102"], "A11_nan_accepted": ["C128"], "A12_seq_capped": ["C130"], "A14_writer_utf16_keys": ["C133", "C134"], "A14_guard_utf16": ["C133"], "A15_snapshot_repaired": ["C135"]},
+    "survivors": 0, "total": 41
+  },
+  "validator_mutations": {
+    "rejected": ["frozen hash changed", "expected changed with frozen hash kept", "C130 expected seq changed", "C91 BOM removed", "C92 0xFF replaced", "C128 NaN replaced", "C133 output order reversed", "C93 raw -0 rewritten", "C132 nesting cut", "non-synthetic id forged"],
+    "accepted": ["synthetic flag added to C73 with a forged id and recomputed frozen hash (E2)", "SPEC.md edited (validate.py does not check SHA256SUMS; shasum -c does)", "expected and frozen hash edited together (no rule logic by design; SHA256SUMS covers it)"]
+  },
+  "findings": {
+    "E1": "SPEC.md line 807 (9 item 7): the example 'U+1F600 as `<raw U+1F600>`' shows the character itself instead of the escape text \\ud83d\\ude00, contradicting the rule it illustrates; fix: write the ASCII text \\ud83d\\ude00 there and regenerate SHA256SUMS",
+    "E2": "validate.py accepts synthetic: true on any case and then skips id and version recomputation; fix: allow it only on the ids 11.1 lists (C100-C102, C133-C136)",
+    "N1": "the A12 extension 'publish and receive integers have no upper bound' is not in Q57b's text (which covers range-checked fields); it matches W0-1.1.1, which stated no upper bound, so no meaning changed; record it beside Q57b when Q57 compiles",
+    "N2": "validate.py does not check SHA256SUMS; the pin should name SHA256SUMS's digest and harnesses run shasum -c",
+    "N3": "optional: freeze input bytes too (an input sha256 per case), so a harness can self-check the bytes it hands over; today a JSON.parse/JSON.stringify harness is exposed indirectly by 11 failing cases, while C93 and C94 alone would pass silently"
+  }
+}
