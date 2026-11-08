@@ -24,7 +24,8 @@ process.on('exit', () => { try { execFileSync('chmod', ['-R', 'u+rwX', root]); }
 
 const genv = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
 const git = (args, opts = {}) => execFileSync('git', ['-c', 'user.name=v-e01', '-c', 'user.email=v-e01@lab.invalid', '-c', 'commit.gpgsign=false', ...args], { cwd: R.dir, env: genv, encoding: 'utf8', ...opts }).trim();
-const show = p => execFileSync('git', ['show', `main:${p}`], { cwd: R.dir, env: genv, encoding: 'utf8' }); // exact bytes (git() trims)
+// [EXP-A01-0312] Why: the complete contract exceeds Node's default 1 MiB stdout buffer. Rejected: truncating the fixture contract or changing assertions.
+const show = p => execFileSync('git', ['show', `main:${p}`], { cwd: R.dir, env: genv, encoding: 'utf8', maxBuffer: 8 << 20 }); // exact bytes (git() trims)
 const BUILD = show('build.mjs'), RUN_TS = show('packages/xtdb/src/run.ts'), CONTRACT_PY = show('lab/oracles/contract/cli.py');
 const spec = JSON.parse(show('lab/acceptance/obligations.json')).buildSpec;
 const CONTRACT = JSON.parse(show('lab/acceptance/obligations.json'));

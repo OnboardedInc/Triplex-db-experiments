@@ -229,7 +229,8 @@ test('gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, ta
 // ---------------------------------------------------------------- 3. runs (RULINGS Q55a)
 
 const R = built.repos.run;
-const spec = JSON.parse(execFileSync('git', ['show', 'main:lab/acceptance/obligations.json'], { cwd: R.dir })).buildSpec;
+// [EXP-A01-0312] Why: read the full contract beyond Node's default 1 MiB buffer. Rejected: truncation or weaker assertions.
+const spec = JSON.parse(execFileSync('git', ['show', 'main:lab/acceptance/obligations.json'], { cwd: R.dir, maxBuffer: 8 << 20 })).buildSpec;
 const runFx = id => built.runFixtures.find(x => x.id === id);
 // Every run's isolation directories (checkouts, HOME, inputs, oracle copies) go under one directory of the test's own (Q67e).
 const ISO = path.join(root, 'iso');
