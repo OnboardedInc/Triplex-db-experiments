@@ -18,7 +18,7 @@ export class DatomicCodecError extends Error {
 const invalid = (message: string): never => {
   throw new DatomicCodecError(message);
 };
-const integer = /^-?(0|[1-9][0-9]*)$/;
+const integer = /^(0|-?[1-9][0-9]*)$/;
 export function validateTagged(value: unknown): TaggedValue {
   if (typeof value !== "object" || value === null || !("t" in value) || !("v" in value))
     return invalid("Expected tagged value");

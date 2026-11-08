@@ -1,6 +1,6 @@
 (ns triplex.gateway.main
   (:require [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+            [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
@@ -11,7 +11,7 @@
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
 (defn scope-name [scope]
   (let [tuple (json/read-str scope)]
-    (when-not (and (vector? tuple) (= 5 (count tuple)) (every? string? tuple)
+    (when-not (and (vector? tuple) (= 5 (count tuple)) (every? string? (take 4 tuple)) (integer? (nth tuple 4)) (<= 0 (nth tuple 4) 9007199254740991)
                    (= "triplex-scope-v1" (first tuple)) (= "test" (second tuple)))
       (codec/invalid "Only test scope tuples may be created or deleted"))
     (str "s-" (subs (schema/sha256 scope) 0 32))))
@@ -26,6 +26,10 @@
       @(d/transact conn schema/schema)
       (assert-scope (sync-db uri) scope)
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/schema-hash schema/schema-hash}]))
+    (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
+      @(d/transact conn schema/schema)
+      @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
+    (storage/forget! scope)
     {:db name :created created :schemaHash schema/schema-hash}))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (str base name)]
@@ -33,6 +37,7 @@
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
       (when-let [conn (@connections uri)] (d/release conn) (swap! connections dissoc uri))
+      (storage/forget! scope)
       {:db name :deleted deleted})))
 (defn basis [base name]
   (when-not (re-matches #"s-[0-9a-f]{32}" name) (codec/invalid "Invalid database name"))
@@ -45,8 +50,8 @@
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 (defn request-json [body]
   (when-not body (codec/invalid "Missing JSON body"))
-  (let [bytes (.readNBytes ^java.io.InputStream body 65537)]
-    (when (> (alength bytes) 65536) (codec/invalid "Request too large"))
+  (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
+    (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (json/read-str (String. bytes "UTF-8"))))
 (defn handler [{:keys [request-method uri body]}]
   (try
@@ -60,6 +65,21 @@
       (response 200 (delete-scope! base-uri (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/s-[0-9a-f]{32}/basis" uri))
       (response 200 (basis base-uri (nth (clojure.string/split uri #"/") 3)))
+      (re-matches #"/v1/db/s-[0-9a-f]{32}/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
+      (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (str base-uri name)
+            conn (connection db-uri) db (sync-db db-uri)
+            input (when (= request-method :post) (request-json body))]
+        (response 200
+          (case action
+            "snapshot" (storage/begin! name db)
+            "release" (storage/release! name (get input "handle"))
+            "transact" (storage/commit! conn db input)
+            "read" (storage/read-rows name db input)
+            "q" (query/run name db input)
+            "operation" (storage/operation db id)
+            "claim" (let [cut (storage/at-position db (get input "position"))
+                          claim (d/entity cut [:triplex.claim/command-id (get input "commandId")])]
+                      {:txId (:triplex.claim/tx-id claim)}))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e)}))))

@@ -4,7 +4,7 @@
 ;; [EXP-DA00] Why: tagged exact values cross JSON without JS integer rounding. Rejected: bare JSON longs (precision loss).
 (defn invalid [message] (throw (ex-info message {:status 400 :code "InvalidValue"})))
 (defn decimal-text [v]
-  (when-not (and (string? v) (re-matches #"-?(0|[1-9][0-9]*)" v)) (invalid "Expected decimal integer text")) v)
+  (when-not (and (string? v) (re-matches #"(0|-?[1-9][0-9]*)" v)) (invalid "Expected decimal integer text")) v)
 (defn decode-value [{:strs [t v]}]
   (case t
     ("long" "ref" "instant") (let [n (Long/parseLong (decimal-text v))] (if (= t "instant") (Date. n) n))

@@ -1,23 +1,37 @@
-# Experimental Datomic lane skeleton
+# Experimental Datomic runtime
 
-Private lab package for Datomic Pro 1.0.7745. This provides the HTTP client and exact tagged codec;
-EXP-DA01 will add storage integration. It does not yet implement a Triplex storage adapter.
+`makeDatomicRuntime({ url })` composes Triplex storage and Datalog over the lab's
+Datomic Pro Peer gateway. Bind a scope and explicitly pass `Capabilities.none`:
 
-The gateway uses distribution-provided Ring/Jetty and data.json. Their hashes, the independently
-checked peer JAR, signing fingerprint and base image identity are in `lab/config/datomic/verification.json`.
-No new Maven or npm runtime dependencies are introduced. Build and test tools come from the pinned
-workspace root. `engine.mjs build --lane datomic` uses the verified host extraction, binds the complete
-input tree into an image label, and records its local image ID in slots.json. Set `TX2_CONFIG_DIR`
-to this checkout before running an unmerged engine configuration.
+```ts
+import { makeDatomicRuntime } from "@triplex-build/triplex-datomic";
+import { Capabilities, DatabaseScope } from "@triplex-build/triplex/runtime";
 
-Create/delete accept only a serialized five-string `triplex-scope-v1` tuple with environment `test`.
-Database names derive from the full serialized tuple; initialization stores that exact string.
-`recordedAt` is null at this skeleton stage because no Triplex commits exist yet.
+const runtime = makeDatomicRuntime({ url: "http://127.0.0.1:8470" });
+const layer = runtime.layer({
+  scope: DatabaseScope.test("isolated-fixture"),
+  capabilities: Capabilities.none,
+});
+```
 
-Wire doubles are JSON numbers. Use `encodeTagged` or `stringifyExact` to preserve negative zero;
-plain `JSON.stringify` erases its sign. Long, reference, instant, bigint and bigdec values use strings.
-Bigdec text preserves scale, including scientific notation. NaN and infinities fail at both ends.
+The gateway provisions test scopes only. Each scope has its own database. Writes
+stage in a fiber-local callback and publish through one scope-CAS transaction;
+only explicitly replay-safe callbacks retry conflicts. Operation IDs resolve
+lost acknowledgements. An unresolved outcome returns `TransactionOutcomeUnknown`.
 
-Run `engine.mjs selftest --lane datomic --holder EXP-DA00` through the heavy wrapper. It reserves
-1.5 GiB against the common pool and runs the Clojure tests on real `datomic:mem://` databases with
-network disabled. Only the orchestrator parks the resident after builder handoff.
+Datalog patterns, predicates and existence filters execute in the Peer with an
+allowlist and timeout. Fact witnesses preserve support multiplicity before the
+bounded TypeScript aggregation and pagination kernel. Binary rules use bounded
+frontier rounds, rather than native recursive Datomic rules. Callback reads use
+held immutable databases and `d/with`; snapshot handles expire after two minutes.
+
+Integer payloads remain canonical int64 text in TypeScript and Datomic longs in
+storage. Binary64 values use doubles; sign metadata preserves negative zero when
+the durable transactor normalizes it. Arithmetic never silently converts exact
+integers to doubles.
+
+This private package is a lab candidate. See `lab/experiments/EXP-DA01/REPORT.md`
+for measured coverage and limitations. Native Datalog/pull, erasure, tenant
+certification, production provisioning and P1-P5 performance qualification belong
+to later experiments. Source and image versions must be deployed together through
+`lab/bin/engine.mjs`; do not use a default Docker daemon.

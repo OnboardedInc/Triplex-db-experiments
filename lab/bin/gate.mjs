@@ -23,7 +23,7 @@ import { effectiveConfig, probe } from './engine.mjs';
 import { acquireHeavy } from './heavy-lock.mjs';
 import { RUN_KINDS, caseLanguages, contractClaims, tallyLanguages, verdictOf } from './receipt.mjs';
 import {
-  REPO, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
+  REPO, LOCKS, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
   readJson, readOwner, runLogged, withDirLock, sha256, sha256File, slotInfo, sourceIdentity, storeFile, storeObject, treeFiles, volumeBytes,
 } from './lib.mjs';
 
@@ -42,8 +42,8 @@ const FULL_G2_EXECUTIONS = 142;
 const FULL_G1_CASES = 44;
 
 // Environment flags that turn live tests on; G0 removes them so its skip list is deterministic.
-const LIVE_FLAGS = ['XTDB_INTEGRATION', 'QLEVER_INTEGRATION', 'TRIPLEX_INTEGRATION', 'TRIPLEX_CONFORMANCE_CASES', 'XTDB_CONFORMANCE_CASES', 'TRIPLEX_DUCKDB'];
-const ENGINE_ENV = ['XTDB_URL', 'QLEVER_URL', 'QLEVER_ACCESS_TOKEN', 'QLEVER_ACCESS_TOKEN_FILE', 'TRIPLEX_BACKEND', 'TRIPLEX_QUERY_PATH',
+const LIVE_FLAGS = ['DATOMIC_INTEGRATION', 'XTDB_INTEGRATION', 'QLEVER_INTEGRATION', 'TRIPLEX_INTEGRATION', 'TRIPLEX_CONFORMANCE_CASES', 'XTDB_CONFORMANCE_CASES', 'TRIPLEX_DUCKDB'];
+const ENGINE_ENV = ['DATOMIC_URL', 'DATOMIC_GATEWAY_URL', 'XTDB_URL', 'QLEVER_URL', 'QLEVER_ACCESS_TOKEN', 'QLEVER_ACCESS_TOKEN_FILE', 'TRIPLEX_BACKEND', 'TRIPLEX_QUERY_PATH',
   'TRIPLEX_RESOURCE_ADMISSION', 'TRIPLEX_RESOURCE_ADMISSION_SHA256', 'TRIPLEX_RUN_ARTIFACTS', 'TRIPLEX_RUN_DIRECTORY', 'TRIPLEX_LAB_SLOT_OWNER'];
 const cleanEnv = extra => {
   const env = { ...process.env };
@@ -74,11 +74,20 @@ class Run {
   async step(name, command, args, { cwd = REPO, env, heavy = false, timeoutMs } = {}) {
     const safe = name.replace(/[^a-z0-9.-]+/gi, '-');
     const stdoutFile = this.raw(`${safe}.stdout.txt`), stderrFile = this.raw(`${safe}.stderr.txt`);
-    const release = heavy ? await acquireHeavy(`${this.runId} ${name}`) : () => {};
+    // [EXP-DA01] Why: the required heavy.mjs wrapper already owns the whole Datomic gate; a second permit can starve its build. Rejected: raising the pool limit.
+    let parentGrant;
+    if (heavy && this.lane === 'datomic') {
+      for (let slot = 1; slot <= 4; slot++) {
+        const file = path.join(LOCKS, 'heavy', String(slot), 'owner.json');
+        const owner = readJson(file, null);
+        if (owner?.pid === process.ppid) { parentGrant = { slot, owner, proof: this.store(file, 'heavy-parent-grant') }; break; }
+      }
+    }
+    const release = heavy && !parentGrant ? await acquireHeavy(`${this.runId} ${name}`) : () => {};
     let result;
     try { result = await runLogged(command, args, { cwd, env: env ?? cleanEnv(), stdoutFile, stderrFile, timeoutMs }); }
     finally { release(); }
-    const record = { name, ...result, cwd: this.rel(cwd) || '.', stdout: this.rel(stdoutFile), stderr: this.rel(stderrFile) };
+    const record = { name, ...(parentGrant ? { parentGrant } : {}), ...result, cwd: this.rel(cwd) || '.', stdout: this.rel(stdoutFile), stderr: this.rel(stderrFile) };
     this.steps.push(record);
     if (result.code !== 0) {
       const tail = (fs.readFileSync(stderrFile, 'utf8') + fs.readFileSync(stdoutFile, 'utf8')).trim().split('\n').slice(-15).join('\n');
@@ -395,6 +404,21 @@ async function gateG1(run, config) {
   const report = readJson(output, null);
   if (!report) { run.reason('no G1 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
   run.store(output, 'raw-outcome');
+  // [EXP-DA01] Why: each G1 scope owns a separate database and peer resources. Rejected: leaving 89 live databases per run.
+  if (run.lane === 'datomic') {
+    const cleanup = [];
+    for (const scope of new Set([report.suite?.scope, ...(report.executions ?? []).map(e => e.scope)].filter(Boolean))) {
+      try {
+        const response = await fetch(`${bound.info.endpoint}/v1/db/delete`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scope }), signal: AbortSignal.timeout(5000) });
+        const body = await response.json();
+        cleanup.push({ scope, status: response.status, body });
+        if (!response.ok || body.deleted !== true) run.reason(`Datomic test database cleanup failed: ${scope}`);
+      } catch (error) { cleanup.push({ scope, error: String(error) }); run.reason(`Datomic cleanup transport failure: ${scope}`); }
+    }
+    run.storeBytes(Buffer.from(JSON.stringify(cleanup, null, 2) + '\n'), 'test-database-cleanup', 'datomic G1 cleanup');
+    fs.writeFileSync(run.raw('datomic-cleanup.json'), JSON.stringify(cleanup, null, 2) + '\n');
+  }
+
   result.contactedEndpoint = report.endpoint;
   if (report.endpoint !== bound.info.endpoint) run.reason(`G1 contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);
   if (report.caseCount !== FULL_G1_CASES) run.reason(`suite has ${report.caseCount} cases, expected ${FULL_G1_CASES}`);
@@ -667,7 +691,7 @@ async function gateG4(run, config) {
 main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const gate = positional[0];
-  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !['xtdb', 'qlever', ...(gate === 'G0' ? ['datomic'] : [])].includes(options.lane))
+  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !['xtdb', 'qlever', ...(['G0', 'G1'].includes(gate) ? ['datomic'] : [])].includes(options.lane))
     fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]\n  GS: [--scenario 2,3] [--rung 10k] [--readers 16]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).

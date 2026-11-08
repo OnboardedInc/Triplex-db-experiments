@@ -1,3 +1,5 @@
+import type { TripleRow } from "@triplex-build/triplex/runtime";
+import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
 import http from "node:http";
 import { stringifyExact, validateTagged, type TaggedValue } from "./codec.js";
 
@@ -116,6 +118,50 @@ export class DatomicClient {
   }
   delete(scope: string): Promise<{ db: string; deleted: boolean }> {
     return this.request("POST", "/v1/db/delete", { scope });
+  }
+  async begin(db: string): Promise<{ handle: string; position: number }> {
+    const response = await this.request<{ handle: string; position: TaggedValue }>(
+      "POST",
+      `/v1/db/${db}/snapshot`,
+      {},
+    );
+    const position = Number(validateTagged(response.position).v);
+    if (!Number.isSafeInteger(position) || position < 0) throw new RangeError("Unsafe position");
+    return { handle: response.handle, position };
+  }
+  release(db: string, handle: string): Promise<unknown> {
+    return this.request("POST", `/v1/db/${db}/release`, { handle });
+  }
+  async rows(db: string, input: Record<string, unknown>): Promise<readonly TripleRow[]> {
+    const response = await this.request<{ rows: WireRow[] }>("POST", `/v1/db/${db}/read`, input);
+    return response.rows.map(decodeRow);
+  }
+  transact(
+    db: string,
+    input: {
+      sourceK: number;
+      position: number;
+      operationId: string;
+      attemptId: string;
+      rows: readonly TripleRow[];
+      newIds: readonly string[];
+      claims: readonly { commandId: string; txId: string; timestamp: number }[];
+    },
+  ): Promise<unknown> {
+    return this.request("POST", `/v1/db/${db}/transact`, {
+      ...input,
+      rows: input.rows.map(encodeRow),
+    });
+  }
+  operation(db: string, operationId: string): Promise<{ status: "committed" | "absent" }> {
+    return this.request("GET", `/v1/db/${db}/operation/${encodeURIComponent(operationId)}`);
+  }
+  async claim(db: string, commandId: string, position: number): Promise<string | null> {
+    const result = await this.request<{ txId: string | null }>("POST", `/v1/db/${db}/claim`, {
+      commandId,
+      position,
+    });
+    return result.txId;
   }
   async basis(db: string): Promise<DatomicBasis> {
     if (!/^s-[a-f0-9]{32}$/.test(db)) throw new TypeError("Invalid Datomic database name");

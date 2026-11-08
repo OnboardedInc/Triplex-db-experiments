@@ -22,6 +22,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@triplex-build/triplex": "workspace:^"
+  },
+  "peerDependencies": {
+    "effect": "catalog:"
+  },
   "engines": {
     "node": ">=22"
   }
