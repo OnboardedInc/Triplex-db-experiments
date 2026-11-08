@@ -57,6 +57,18 @@ export interface StoreSnapshot extends Watermark {
   readonly crc: number;
   readonly size: number;
 }
+export interface CheckpointStatus {
+  readonly counts: Readonly<Record<string, number>>;
+  readonly events: readonly {
+    readonly at: number;
+    readonly mode: string;
+    readonly outcome: string;
+    readonly ms: number;
+    readonly busy?: number;
+    readonly log?: number;
+    readonly checkpointed?: number;
+  }[];
+}
 export interface PinnedPull {
   readonly snapshot: StoreSnapshot;
   readonly basis: number;
@@ -216,7 +228,7 @@ export class HostLog {
     if (stats.bavail * stats.bsize < (options.minFreeBytes ?? 2 * 1024 ** 3))
       throw new BrokerLogError("Broker log volume below free-space floor");
     const file = path.join(dir, "broker.db"),
-      gate = new SharedArrayBuffer(8),
+      gate = new SharedArrayBuffer(12),
       writer = connect(file, "writer", gate, options.requireFullFsync);
     const connections = [writer];
     try {
@@ -423,6 +435,12 @@ export class HostLog {
   async pull(basis: number, selection: Selection): Promise<PinnedPull> {
     if (this.closed) throw new BrokerLogError("Broker log is closed");
     return this.pool[this.readerIndex++ % this.pool.length]!.request("pull", { basis, selection });
+  }
+  checkpoint() {
+    return this.checkpointer.request<CheckpointStatus>("checkpoint");
+  }
+  checkpointStatus() {
+    return this.checkpointer.request<CheckpointStatus>("checkpointStatus");
   }
   pinBasis(basis: number, owner: string) {
     const token = randomUUID();

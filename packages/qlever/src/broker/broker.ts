@@ -710,6 +710,12 @@ export class HostBroker {
   ) {
     return this.log.pull(basis, selection);
   }
+  checkpoint() {
+    return this.log.checkpoint();
+  }
+  checkpointStatus() {
+    return this.log.checkpointStatus();
+  }
   pinBasis(basis: number, owner: string) {
     return this.log.pinBasis(basis, owner);
   }

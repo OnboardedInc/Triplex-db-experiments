@@ -321,12 +321,15 @@ export const makeQleverBrokerStorageAdapter = (
       const byId = new Map<string, TripleRow>();
       if (replica === undefined) {
         route = "log";
-        const pinned = history
-          ? undefined
-          : yield* Effect.tryPromise({
-              try: () => broker.pullAt(b, scoped),
-              catch: (cause) => new ReadError({ message: "QLever source pull failed", cause }),
-            });
+        // [EXP-SQL01] Why: H1 retires by position only; a record-time cut can still see purged retractions.
+        // Rejected: filtering H1 by recordedAt afterward (cannot restore rows H1 already discarded).
+        const pinned =
+          history || basis?.recordedAt !== undefined
+            ? undefined
+            : yield* Effect.tryPromise({
+                try: () => broker.pullAt(b, scoped),
+                catch: (cause) => new ReadError({ message: "QLever source pull failed", cause }),
+              });
         const source = pinned?.eligible
           ? pinned.rows.filter(select)
           : yield* storeRead(() => broker.fromLogAsync(0, scoped, select));

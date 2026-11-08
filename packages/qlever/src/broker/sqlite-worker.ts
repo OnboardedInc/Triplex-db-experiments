@@ -8,7 +8,14 @@ const path = require('node:path');
 const D = require(workerData.driver);
 const { file, role, seed, gateBuffer } = workerData;
 const gate = new Int32Array(gateBuffer);
-let db, lock, fatal, timer;
+let db, lock, fatal, timer, passiveTimer;
+const checkpointEvents=[], checkpointCounts={};
+const checkpointStatus=()=>({counts:{...checkpointCounts},events:[...checkpointEvents]});
+const recordCheckpoint=(mode,outcome,start,result={})=>{
+ checkpointCounts[outcome]=(checkpointCounts[outcome]??0)+1;
+ checkpointEvents.push({at:Date.now(),mode,outcome,ms:performance.now()-start,...result});
+ if(checkpointEvents.length>128)checkpointEvents.shift();
+};
 const statements = new Map();
 const q = sql => { let s=statements.get(sql); if(!s) statements.set(sql,s=db.prepare(sql)); return s; };
 const marker = () => q('SELECT lsn,epoch,h,position,crc,size FROM marker WHERE id=1').get();
@@ -66,7 +73,13 @@ try {
   db.pragma('wal_checkpoint(PASSIVE)'); ackRead();
   db.exec('DELETE FROM pins');
  }
- if(role==='checkpointer') timer=setInterval(()=>{try{db.pragma('wal_checkpoint(PASSIVE)');}catch(e){fatal=String(e);}},4000);
+ if(role==='checkpointer') {
+  // [EXP-SQL01] Why: even a separate RESTART connection can hold the writer lock while waiting on a reader.
+  // Rejected: a 100 ms busy handler on either ACK or checkpoint connection (reader-dependent commit delay).
+  db.pragma('busy_timeout=0');
+  timer=setInterval(()=>{if(Atomics.exchange(gate,2,0))checkpoint(true);},100);
+  passiveTimer=setInterval(()=>checkpoint(walLarge()),4000);
+ }
 } catch(e) { fatal=String(e); }
 const frames = (from,upto,maxBytes,maxFrames=Number.MAX_SAFE_INTEGER) => {
  let bytes=0,out=[],prev=from.seed,next=from.nextLsn,offset=from.offset;
@@ -78,13 +91,27 @@ const frames = (from,upto,maxBytes,maxFrames=Number.MAX_SAFE_INTEGER) => {
  }
  return {frames:out,next:{offset,seed:prev,nextLsn:next}};
 };
-const gateCheckpoint = () => {
- if(!fs.existsSync(file+'-wal') || fs.statSync(file+'-wal').size<=64*1024*1024)return;
- Atomics.store(gate,0,1);
- const deadline=performance.now()+100;
- while(Atomics.load(gate,1)>0 && performance.now()<deadline) Atomics.wait(gate,1,Atomics.load(gate,1),1);
- try { db.pragma('busy_timeout=100');db.pragma('wal_checkpoint(RESTART)'); }
- finally {db.pragma('busy_timeout=5000');Atomics.store(gate,0,0);Atomics.notify(gate,0);}
+const walLarge = () => fs.existsSync(file+'-wal') && fs.statSync(file+'-wal').size>64*1024*1024;
+const checkpoint = restart => {
+ const start=performance.now(), mode=restart?'RESTART':'PASSIVE';
+ try {
+  if(restart) {
+   Atomics.store(gate,0,1);
+   // [EXP-SQL01] Why: wait only on this maintenance thread, before acquiring SQLite locks.
+   // Rejected: calling RESTART with active readers (can wait holding the writer lock, R25 finding 6).
+   const deadline=performance.now()+20;
+   while(Atomics.load(gate,1)>0 && performance.now()<deadline)Atomics.wait(gate,1,Atomics.load(gate,1),1);
+   if(Atomics.load(gate,1)>0){recordCheckpoint(mode,'readers-busy',start);return checkpointStatus();}
+  }
+  const passive=db.pragma('wal_checkpoint(PASSIVE)')[0];
+  if(passive.busy || passive.log!==passive.checkpointed) {
+   recordCheckpoint(mode,'incomplete',start,passive);return checkpointStatus();
+  }
+  const result=restart?db.pragma('wal_checkpoint(RESTART)')[0]:passive;
+  recordCheckpoint(mode,result.busy?'busy':'complete',start,result);
+ }catch(e){recordCheckpoint(mode,'error',start,{error:String(e)});}
+ finally{if(restart){Atomics.store(gate,0,0);Atomics.notify(gate,0);}}
+ return checkpointStatus();
 };
 const append = a => {
  try {
@@ -110,7 +137,9 @@ const append = a => {
   q('UPDATE marker SET lsn=?,epoch=?,position=?,crc=?,size=? WHERE id=1').run(a.lsn,a.epoch,position,a.crc,m.size+a.length);
   return {lsn:a.lsn,epoch:a.epoch,kind:a.kind,offset:m.size,end:m.size+a.length,crc:a.crc,payload:Buffer.from(a.payload)};
  })();
- if(a.lsn%25===0)gateCheckpoint();return result;
+ // [EXP-SQL01] Why: ACK only signals maintenance; it never waits for readers or runs a checkpoint.
+ // Rejected: synchronous gateCheckpoint after commit (the pinned-reader regression adds 100 ms).
+ if(a.lsn%25===0 && walLarge())Atomics.store(gate,2,1);return result;
  }catch(e){fatal='Write failed; fail-stop: '+String(e);throw e;}
 };
 const rows = (table,selection,extra='',args=[]) => {
@@ -128,8 +157,12 @@ const pull = a => {
  return {snapshot:m,basis:b,eligible:true,rows:out};
 };
 const handle = (op,a) => {
- if(op==='close'){clearInterval(timer);db?.close();lock?.close();return;}
+ if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}
  if(fatal)throw Error(fatal);
+ if(op==='checkpoint' || op==='checkpointStatus'){
+  if(role!=='checkpointer')throw Error('Maintenance requires checkpointer connection');
+  return op==='checkpoint'?checkpoint(true):checkpointStatus();
+ }
  if(op==='init')return {marker:marker(),calibrationMs};
  if(op==='append')return append(a);
  if(op==='ack'){
@@ -175,7 +208,8 @@ parentPort.on('message',message=>{
   if(role==='reader') {
    while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);
    Atomics.add(gate,1,1);
-   // Recheck after entry so the writer cannot miss a reader entering at the gate boundary.
+   // [EXP-SQL01] Why: recheck entry so maintenance cannot miss a reader at the gate boundary.
+   // Rejected: a single pre-entry check (races the checkpointer closing the gate).
    if(Atomics.load(gate,0)===1){Atomics.sub(gate,1,1);while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);Atomics.add(gate,1,1);}
    try {
     if(fatal)throw Error(fatal);
