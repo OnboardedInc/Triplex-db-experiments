@@ -115,14 +115,14 @@ export const valuesRows = (sparql) => {
  * A Triplex runtime for one lane, one journal encoding and one scope, over a measuring client.
  * `commitEncoding` is passed to the lane adapter (the option under test, default "copy" = A0).
  */
-export const laneRuntime = async (lane, { scope, commitEncoding, measure = true, url = URLS[lane], deterministic } = {}) => {
+export const laneRuntime = async (lane, { scope, commitEncoding, measure = true, url = URLS[lane], deterministic, queryTimeoutMs } = {}) => {
   const scopeKey = runtimeApi.DatabaseScope.test(scope);
   let measuring, adapter, executor;
   const encoding = commitEncoding === undefined ? {} : { commitEncoding };
   if (lane === 'xtdb') {
     measuring = measuringXtdbClient(url, { measure });
     adapter = xtdb.makeXtdbStorageAdapter(measuring.client, scopeKey, encoding);
-    executor = xtdb.makeXtdbQueryExecutor(measuring.client, scopeKey);
+    executor = xtdb.makeXtdbQueryExecutor(measuring.client, scopeKey, queryTimeoutMs ? { timeoutMs: queryTimeoutMs } : {});
   } else {
     measuring = measuringQleverClient(url);
     adapter = qlever.makeQleverStorageAdapter(measuring.client, scopeKey, encoding);
