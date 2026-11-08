@@ -51,7 +51,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | V-X02 XTQL lane verification (opus) | XTQL primary lane | verdict on exp/X02-xtql-parity bf1ad4d |
 | EXP-P4 current-value path (opus) | P4 | read-path arms X1, X2, H1, Q1 |
 | EXP-A01 contract 0.3.10 (opus, resumed; contract/0.3.10) | floor for every claim | W0-1.1.2 + O-DOMAIN 5d1fd1a pins; Q57, Q63-Q69 compiled; Q70 pending |
-| O-REPLAY 0.4.5 (opus, O04b author resumed; exp/O04b-oracle-0.4.2; 0.4.4 at 00703e6) | correctness floor | Q70c any issuing read; then V-O04f |
+| V-O04f re-check of O-REPLAY 0.4.5 acf9fce (opus, V-O04e resumed) | correctness floor | ACCEPT -> pin 0.4.5 in contract 0.3.11 |
 | R25 SQLite pinned readers beside one durable writer (sonnet xhigh; /Users/sam/Claude/Projects/triplex-db-2/R25/) | P1, P2, P4, P5 | one design for the broker's SQLite file |
 | R26 seed once, clone faithfully (sonnet xhigh; /Users/sam/Claude/Projects/triplex-db-2/R26/) | measurement speed, all five | clone procedure and faithfulness checks |
 | EXP-M01 PARKED (handed back clean; no process running) | measurement floor | resumes in the Q69a measurement window |
