@@ -1,0 +1,15 @@
+[
+  {
+    "id": "G9.erasure.residual-shapes",
+    "refusals": []
+  },
+  {
+    "id": "G7.migration.schema-evolution",
+    "refusals": [
+      {
+        "code": "ORACLE-REFUSES",
+        "detail": "G7.migration.schema-evolution selects cases oracle O-REPLAY refuses, directly or through a broader set (scale-evolution; RULINGS Q45b, Q47c)"
+      }
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "reviewedCommit": "b3af37514d48c68e481d301276a4b818cc10872b",
+  "baseline": "3b46c8a07ff3c6285252736cc10e04267f7dbe1d",
+  "reviewerHeadBeforeReview": "2c5d102cd3e1af3e06c5dd69527819520e254109",
+  "freeDiskBeforeSnapshot": 19982327808,
+  "clone": "local shared clone; source checkout unmodified; no network"
+}

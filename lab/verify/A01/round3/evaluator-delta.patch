@@ -1,0 +1,51 @@
+diff --git a/lab/bin/claim.mjs b/lab/bin/claim.mjs
+index 3ebd7dfc..6a7db5b9 100644
+--- a/lab/bin/claim.mjs
++++ b/lab/bin/claim.mjs
+@@ -374,12 +374,23 @@ export function registeredAcceptance(entryId, kind, subjectId, commit, registry)
+ /** admit_claim's contract-level conditions, in its order (no executor call): W0 accepted and fingerprinted (GATE-W0, Q55e),
+  * every oracle pinned and accepted through VERIFIER_REGISTRY, or unpinned and COMPILED into the contract (Q37b, Q55a, Q59e),
+  * excludes (Q45a), refusals reached directly or through a broader set (Q45b, Q47c). All are returned; admit_claim stops at the first. */
++// [EXP-A01-R3] Why: match build_contract.runner_pinned for both accepted and COMPILED oracles. Rejected: a valid entrypoint hash standing in for missing imported runner files (Q75c).
++function oracleRunnerPinned(id, ctx) {
++  const runner = own(ctx.cfg.oracleRunners, id);
++  if (!isObj(runner) || !strList(runner.argv)) return false;
++  const pinHashes = own(own(ctx.pins, id) ?? {}, 'sha256');
++  const hashes = pyFalsy(pinHashes) ? own(runner, 'sha256') : pinHashes;
++  if (!isObj(hashes) || !Object.keys(hashes).length || !Object.values(hashes).every(sha) || !strList(runner.files)) return false;
++  return runner.files.every(file => has(hashes, file)) && runner.argv.filter(arg => arg.startsWith('lab/')).every(file => has(hashes, file));
++}
++
+ export function contractBlockers(claimed, prereq, domain, ctx) {
+   const out = [];
+   const w0 = ctx.w0 ?? {};
+   if (domain && (Object.values(own(w0, 'files') ?? {}).some(v => v == null) || !registeredAcceptance(own(w0, 'verifierEntry'), 'world', 'W0', own(w0, 'commit'), ctx.verifiers) || own(w0, 'deltaCheck') == null || own(w0, 'oDomainFingerprint') == null))
+     out.push({ code: 'W0-UNPINNED', detail: 'a W0 file hash, the W0 pin\'s VERIFIER_REGISTRY acceptance, the delta check or the O-DOMAIN fingerprint is missing; the fingerprint comes only from a reviewed contract version (GATE-W0, RULINGS Q55a, Q55e)' });
+   for (const x of new Set([...claimed, ...prereq].flatMap(o => o.oracles))) {
++    if (!oracleRunnerPinned(x, ctx)) out.push({ code: 'ORACLE-RUNNER-UNPINNED', detail: `oracle ${x} lacks a SHA-256 for every declared runner file or argv file (Q75c)` });
+     if (has(ctx.pins, x)) {
+       const pin = isObj(ctx.pins[x]) ? ctx.pins[x] : {}, h = own(pin, 'sha256');
+       if (own(pin, 'acceptReceipt') == null || h == null || (isObj(h) && Object.values(h).some(v => v == null)) || !registeredAcceptance(own(pin, 'verifierEntry'), 'oracle', x, own(pin, 'commit'), ctx.verifiers))
+@@ -1192,7 +1203,7 @@ function prepareTrusted({ git, commit, authority, authorityRef, contract, ctx, o
+       else { const problems = snapshotPinProblems(snap, pin.sha256); for (const p of problems) why('ORACLE-FILES', `${x} at ${commit}: ${p} (VA6)`); if (!problems.length) { files = Object.keys(pin.sha256).map(p => [p, snap.files.get(p).bytes, pin.sha256[p]]); pinCommit = str(pin.commit) ? pin.commit : commit; from = commit; } }
+     } else if (!pin && ctx.oracles[x]?.status === 'COMPILED' && strList(runner.files) && runner.files.every(safePath)) {
+       const read = runner.files.map(p => [p, git.blob(authority, p)]);
+-      if (read.some(([, b]) => !b)) why('ORACLE-FILES', `${x}: a runner file is missing at ${authorityRef}, or its blob does not match its object id (RULINGS Q75b)`);
++      if (read.some(([p, b]) => !b || (isObj(runner.sha256) && sha256(b) !== runner.sha256[p]))) why('ORACLE-FILES', `${x}: a runner file is missing at ${authorityRef}, or its blob differs from its declared hash/object identity (RULINGS Q75b, Q75c)`);
+       else { files = read.map(([p, b]) => [p, b, sha256(b)]); pinCommit = authority; from = authority; }
+     } else why('ORACLE-UNPINNED', `${x} is ${ctx.oracles[x]?.status ?? 'unknown'}, has no per-file pin, and its runner names no files to run from ${authorityRef} (RULINGS Q59e, Q61c)`);
+     let out = null;
+@@ -1552,12 +1563,7 @@ function runQualification(claim, env, why, run, state) {
+     if (!isObj(entry)) why('A0-REGISTRY-NULL', `A0_REGISTRY has no entry for source engine ${comp.source.engine}; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)`);
+     for (const o of claimed) if (!Object.keys(ctx.verifiers ?? {}).some(v => registeredAcceptance(v, 'obligation', o.id, commit, ctx.verifiers))) why('VERIFIER-UNREGISTERED', `no VERIFIER_REGISTRY entry accepts ${o.id} at ${commit} (RULINGS Q55a)`);
+     for (const b of contractBlockers(claimed, prereq, domain, ctx)) why(b.code, b.detail);
+-    // Q75c (V-E01 F2, Q59e literally): an oracle is pinned only when the contract lists sha256 for every file it runs; a COMPILED
+-    // oracle run from the authority's runner files without such a list leaves every claim that depends on it DIAGNOSTIC.
+-    for (const x of new Set([...prereq, ...claimed].flatMap(o => o.oracles))) {
+-      const pin = own(ctx.pins, x);
+-      if (!(isObj(pin?.sha256) && Object.keys(pin.sha256).length && Object.values(pin.sha256).every(sha) && (ctx.cfg.oracleRunners[x]?.files ?? []).every(f => sha(pin.sha256[f])))) why('ORACLE-RUNNER-UNPINNED', `oracle ${x} has no sha256 for every runner file in the contract${own(own(ctx.cfg.oracleRunners, x), 'files') ? ` (its runner files ${own(own(ctx.cfg.oracleRunners, x), 'files').join(', ')} are run from ${authorityRef} unhashed)` : ''}, so a claim depending on it is DIAGNOSTIC (RULINGS Q59e, Q75c)`);
+-    }
++    // [EXP-A01-R3] Why: common preflight and admitCore now share the reference's complete runner-pin predicate through contractBlockers. Rejected: a second pin-only implementation that disagrees for contract-output-pinned COMPILED runners.
+   }
+ }
+ 

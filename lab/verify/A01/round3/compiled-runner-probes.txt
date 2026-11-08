@@ -1,0 +1,35 @@
+[
+  {
+    "mode": "complete",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "QUALIFIED",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE"
+    ],
+    "cases": 64
+  },
+  {
+    "mode": "wrong-byte-hash",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "ORACLE-FILES",
+      "PREREQ-FAILED"
+    ],
+    "cases": 24
+  },
+  {
+    "mode": "missing-map",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "ORACLE-RUNNER-UNPINNED"
+    ],
+    "cases": 38
+  }
+]

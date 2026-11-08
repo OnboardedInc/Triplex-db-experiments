@@ -1,0 +1,23 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 77517 "CX-VX02-5-regressions", pid 61857 "CX-VA01-0311-R3-evaluator", pid 61931 "CX-VA01-0311-R3-mutations", pid 76046 "CX-VP2Q-4-r6-live"
+retained failed fixture tree: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/compiled-fixtures-82EGNC
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(fixture)
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/compiled_runner_probes.mjs:14:10
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

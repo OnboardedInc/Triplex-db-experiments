@@ -1,0 +1,32 @@
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/scratch/lab/bin/claim.mjs:228
+  for (const c of o.cases) for (const t of c.select) {
+                    ^
+
+TypeError: o.cases is not iterable
+    at selectedPairs (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/scratch/lab/bin/claim.mjs:228:21)
+    at refusedBy (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/scratch/lab/bin/claim.mjs:237:17)
+    at contractBlockers (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/scratch/lab/bin/claim.mjs:402:9)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/pin_predicate_probe.mjs:8:19
+    at Array.map (<anonymous>)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/pin_predicate_probe.mjs:6:25
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/runner_pin_vectors.py", line 50, in <module>
+    main()
+    ~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/round3/runner_pin_vectors.py", line 44, in main
+    results = json.loads(proc.stdout)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)

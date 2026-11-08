@@ -1,0 +1,84 @@
+{
+  "baseline": "3b46c8a07ff3c6285252736cc10e04267f7dbe1d",
+  "reviewedCommit": "b3af37514d48c68e481d301276a4b818cc10872b",
+  "assertionFiles": [
+    {
+      "path": "lab/bin/test/claim.test.mjs",
+      "baselineSha256": "4192957b45d94093b96cfb00d757f429618d57cf53012c6f88416da4030cf3a1",
+      "reviewedSha256": "4192957b45d94093b96cfb00d757f429618d57cf53012c6f88416da4030cf3a1",
+      "byteIdentical": true
+    },
+    {
+      "path": "lab/bin/test/claim-round2.test.mjs",
+      "baselineSha256": "9fafb1773290d36ff6253299c702841658289ddb8c163a0f85f995f99ab7f144",
+      "reviewedSha256": "9fafb1773290d36ff6253299c702841658289ddb8c163a0f85f995f99ab7f144",
+      "byteIdentical": true
+    },
+    {
+      "path": "lab/bin/test/claim_ref.py",
+      "baselineSha256": "34c3c40e76085a4b40d853843d0d8470d423ad87790215f480d8dcf6db56c5ab",
+      "reviewedSha256": "34c3c40e76085a4b40d853843d0d8470d423ad87790215f480d8dcf6db56c5ab",
+      "byteIdentical": true
+    }
+  ],
+  "originalEightFailures": [
+    {
+      "number": 5,
+      "name": "V-E01 F4/T6: each build and execution gets a fresh HOME and TMPDIR"
+    },
+    {
+      "number": 15,
+      "name": "V-E01 F11/Q81a: input delete after final use refuses the run"
+    },
+    {
+      "number": 16,
+      "name": "V-E01 F11/Q81a: input rewrite after final use refuses the run"
+    },
+    {
+      "number": 17,
+      "name": "admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check"
+    },
+    {
+      "number": 31,
+      "name": "admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+    },
+    {
+      "number": 101,
+      "name": "qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group"
+    },
+    {
+      "number": 106,
+      "name": "qualify: no path to QUALIFIED without a gate run; an offline run that passes everything reports offlineVerdict only"
+    },
+    {
+      "number": 107,
+      "name": "CLI qualify: --offline-sut runs offline and exits 2 with the offline verdict; usage errors exit 1"
+    }
+  ],
+  "generatorUnchanged": true,
+  "generatorSha256": "60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf",
+  "allObligationRecordsUnchanged": true,
+  "allCompiledRulingsUnchanged": true,
+  "oracleWorldImageA0PinsUnchanged": true,
+  "oracleRunnerDeclarationsUnchanged": true,
+  "changedContractTopLevelFields": [
+    "inputs",
+    "pendingRulings",
+    "transitiveContractSha256"
+  ],
+  "pendingEqualsMainMinus50": true,
+  "pendingCompiledIntersection": [],
+  "productionOErrHasRunner": false,
+  "productionOErrPin": null,
+  "transitiveContractSha256": "cdd267d3b28fb5a121788731dc0ccaf54488324e3d2296dd97ffee8affca0405",
+  "counts": {
+    "total": 157,
+    "closable": 40,
+    "blocked": 117
+  },
+  "datomic": {
+    "total": 153,
+    "closable": 0,
+    "blocked": 153
+  }
+}

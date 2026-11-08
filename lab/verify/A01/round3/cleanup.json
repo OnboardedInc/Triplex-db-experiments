@@ -1,0 +1,14 @@
+{
+  "cloneHeadBeforeRemoval": "b3af37514d48c68e481d301276a4b818cc10872b",
+  "cloneGitStatusBeforeRemoval": "",
+  "removed": [
+    {
+      "path": "lab/verify/A01/round3/scratch",
+      "reason": "owned disposable source/fixture tree; all associated command sessions exited; raw first-error logs and source identity retained"
+    },
+    {
+      "path": "lab/verify/A01/round3/compiled-fixtures-82EGNC",
+      "reason": "owned disposable source/fixture tree; all associated command sessions exited; raw first-error logs and source identity retained"
+    }
+  ]
+}

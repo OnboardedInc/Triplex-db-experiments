@@ -1,0 +1,180 @@
+[
+  {
+    "label": "accepted replay full 29-file map",
+    "oracle": "O-REPLAY",
+    "expected": true,
+    "actual": true,
+    "match": true,
+    "codes": []
+  },
+  {
+    "label": "compiled contract output maps",
+    "oracle": "O-CONTRACT",
+    "expected": true,
+    "actual": true,
+    "match": true,
+    "codes": []
+  },
+  {
+    "label": "production O-ERR remains unpinned",
+    "oracle": "O-ERR",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "entrypoint alone is insufficient",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "one imported file loses hash",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "empty accepted map without fallback",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "null accepted map without fallback",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED",
+      "ORACLE-UNPINNED"
+    ]
+  },
+  {
+    "label": "invalid accepted hash",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "undeclared argv dependency",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "declared dependency missing hash",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "runner entry missing",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "empty runner argv",
+    "oracle": "O-REPLAY",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "compiled projection hash missing",
+    "oracle": "O-CONTRACT",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "compiled map empty",
+    "oracle": "O-CONTRACT",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "compiled malformed hash",
+    "oracle": "O-CONTRACT",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "compiled undeclared argv file",
+    "oracle": "O-CONTRACT",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED"
+    ]
+  },
+  {
+    "label": "empty pin map falls back to complete compiled map",
+    "oracle": "O-CONTRACT",
+    "expected": true,
+    "actual": true,
+    "match": true,
+    "codes": [
+      "ORACLE-UNPINNED"
+    ]
+  },
+  {
+    "label": "nonempty partial pin cannot borrow compiled fallback",
+    "oracle": "O-CONTRACT",
+    "expected": false,
+    "actual": false,
+    "match": true,
+    "codes": [
+      "ORACLE-RUNNER-UNPINNED",
+      "ORACLE-UNPINNED"
+    ]
+  }
+]

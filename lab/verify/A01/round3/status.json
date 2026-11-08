@@ -1,0 +1,40 @@
+{
+  "verdict": "ACCEPT",
+  "reviewedCommit": "b3af37514d48c68e481d301276a4b818cc10872b",
+  "assertionFilesByteIdentical": true,
+  "evaluator": {
+    "tests": 108,
+    "pass": 108,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0,
+    "exit": 0
+  },
+  "mutation": {
+    "runnable": 344,
+    "caught": 344,
+    "missed": 0,
+    "catalog": 425,
+    "retired": 81,
+    "exit": 0
+  },
+  "contractTests": {
+    "original": 35,
+    "priorVariations": 23,
+    "builderRealPayload": 5,
+    "allPassed": true
+  },
+  "pinPredicateVectors": 18,
+  "pinPredicateMatches": 18,
+  "compiledRunnerExecutionProbes": {
+    "completeMap": "offline QUALIFIED, overall DIAGNOSTIC",
+    "wrongBytes": "ORACLE-FILES, offline DIAGNOSTIC",
+    "missingMap": "ORACLE-RUNNER-UNPINNED, offline DIAGNOSTIC"
+  },
+  "q47dExit": 0,
+  "generatorVerifyStartExit": 0,
+  "generatorVerifyFinalExit": 0,
+  "codeUnderReviewEdited": false,
+  "newBlockingFindings": []
+}

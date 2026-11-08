@@ -1,0 +1,62 @@
+diff --git a/lab/bin/test/claim-fixtures.mjs b/lab/bin/test/claim-fixtures.mjs
+index 4e152518..56120820 100644
+--- a/lab/bin/test/claim-fixtures.mjs
++++ b/lab/bin/test/claim-fixtures.mjs
+@@ -39,7 +39,7 @@ if case.get("redeclareDecimal"):
+ report = {"format": "o-replay/report", "caseId": case["case"], "verdict": "EXPECTED-ONLY", "commandOutcomes": [], "queries": {"next": case["p"] + 1}, "state": {}}
+ sys.stdout.write(json.dumps(report, sort_keys=True, separators=(",", ":")) + "\\n")
+ `;
+-// The fixture O-CONTRACT (compiled into the contract, so unpinned; run from the authority's files) prints the answer itself.
++// [EXP-A01-R3] Why: the fixture O-CONTRACT is a distinct pinned runner, not the production generator/projection pair. Rejected: borrowing production runner identities for fixture bytes (Q75c).
+ const CONTRACT_PY = `import json, sys
+ case = json.loads(open(sys.argv[1], encoding="utf-8").read())
+ answer = case["rows"] if "rows" in case else {"commandOutcomes": [], "queries": {"next": case["p"] + 1}, "state": {}}
+@@ -60,6 +60,8 @@ const SRC = {
+   'pnpm-lock.yaml': "lockfileVersion: '9.0'\npackages:\n  effect@3.10.0:\n    resolution: {integrity: sha512-fixture}\n",
+   'lab/oracles/replay/cli.py': ORACLE_PY,
+   'lab/oracles/contract/cli.py': CONTRACT_PY,
++  // [EXP-A01-R3] Why: the document-only GS positive fixture also names O-ERR, which Q75c can no longer infer from COMPILED. Rejected: weakening its positive assertion or granting the unpinned production O-ERR acceptance.
++  'lab/oracles/errors/errors.py': CONTRACT_PY,
+   'lab/oracles/obs/obs.py': '# O-OBS (fixture)\n',
+   'lab/oracles/domain/domain.py': '# O-DOMAIN (fixture)\n',
+   'lab/oracles/hand/hand.json': '{}\n',
+@@ -129,6 +131,8 @@ export const identityOf = c => {
+ const VERIFIED_OBLIGATIONS = ['NS.P2', 'GS.05', 'G1.decimal.channel-routing', 'G9.erasure.residual-shapes', 'G7.migration.schema-evolution', 'G10.scope.shared-collision'];
+ const FIX_ORACLE_COMMIT = 'f1'.repeat(20);
+ 
++const isFixturePin = pin => pin?.sha256 && Object.keys(pin.sha256).length > 0 && Object.keys(pin.sha256).every(file => Object.hasOwn(SRC, file));
++
+ function contractVariant(variant, { a0Commit, a0Label, a0Binary, verified } = {}) {
+   const c = structuredClone(REAL_CONTRACT);
+   if (variant === 'real') return c; // contract 0.3.9 exactly as compiled on main
+@@ -140,13 +144,17 @@ function contractVariant(variant, { a0Commit, a0Label, a0Binary, verified } = {}
+   // The pinned fixture still scopes G1.decimal.channel-routing out, as 0.3.7's pin did, so GEN-EXCLUDED keeps a pin with excludes.
+   c.oraclePins['O-REPLAY'] = { ...c.oraclePins['O-REPLAY'], sha256: { 'lab/oracles/replay/cli.py': h(ORACLE_PY) }, acceptReceipt: variant === 'null' ? null : 'FIXTURE-V-O04c', excludes: ['G1.decimal.channel-routing'] };
+   c.oraclePins['O-CONTRACT'] = filePin('O-CONTRACT', 'lab/oracles/contract', 'lab/oracles/contract/cli.py');
++  c.oraclePins['O-ERR'] = filePin('O-ERR', 'lab/oracles/errors', 'lab/oracles/errors/errors.py');
+   c.oraclePins['O-OBS'] = filePin('O-OBS', 'lab/oracles/obs', 'lab/oracles/obs/obs.py');
+   c.oraclePins['O-DOMAIN'] = filePin('O-DOMAIN', 'lab/oracles/domain', 'lab/oracles/domain/domain.py');
+   c.oraclePins['O-HAND'] = filePin('O-HAND', 'lab/oracles/hand', 'lab/oracles/hand/hand.json');
+   for (const set of MANIFEST_SETS) c.caseSets[set] = { ...c.caseSets[set], manifestSha256: h(manifestText(set)) };
+-  // oracleRunners (0.3.9, Q61c): the real O-REPLAY runner, plus O-CONTRACT, which is COMPILED and unpinned, so its runner names
+-  // the files to run from the authority (filesRule, RULINGS Q59e). buildSpec (Q61f) is the fixture's build.
+-  c.oracleRunners = { ...c.oracleRunners, 'O-CONTRACT': { argv: ['python3', '-I', 'lab/oracles/contract/cli.py', '{case}'], files: ['lab/oracles/contract/cli.py'] } };
++  // [EXP-A01-R3] Why: Q75c requires every fixture runner file to match its own per-file pin; O-REPLAY here is one file, not the real oracle's 29 files. Rejected: weakening fresh-HOME, final-input, cleanup or offline-verdict assertions to tolerate an unrelated pin error.
++  // Document-only observer/domain/hand oracles remain fixture stubs, as before; these identities do not qualify their production implementations.
++  c.oracleRunners = Object.fromEntries(Object.entries(c.oraclePins).filter(([, pin]) => isFixturePin(pin)).map(([id, pin]) => {
++    const files = Object.keys(pin.sha256), file = files[0];
++    return [id, { argv: file.endsWith('.py') ? ['python3', '-I', file, '{case}'] : ['cat', file], files }];
++  }));
+   c.buildSpec = { ...c.buildSpec, ...FIXTURE_BUILD_SPEC };
+   // A reviewed later contract version accepts the claimed obligations at the verified commits (0.3.8 VERIFIER_REGISTRY shape, Q61b).
+   for (const commit of verified ?? []) for (const id of VERIFIED_OBLIGATIONS)
+@@ -349,7 +357,8 @@ export function buildFixtures(root) {
+   add('GEN-W0-NULL', 'Q38b, Q48a', 'DIAGNOSTIC', 'GS.05 while the W0 pin is null', 'pinned', complete('GEN-W0-NULL', { obligation: 'GS.05' }));
+   add('GEN-NO-W0-RECEIPT', 'Q38b', 'DIAGNOSTIC', 'GS.05 without the W0.coverage-floors receipt', 'w0', complete('GEN-NO-W0-RECEIPT', { variant: 'w0', obligation: 'GS.05', drop: ['w0-cand'] }));
+   add('GEN-EXCLUDED', 'Q45a', 'DIAGNOSTIC', 'G1.decimal.channel-routing, excluded from O-REPLAY\'s pin', 'pinned', complete('GEN-EXCLUDED', { obligation: 'G1.decimal.channel-routing' }));
+-  add('GEN-REFUSED-SET', 'Q45b, Q56i', 'DIAGNOSTIC', 'G9.erasure.residual-shapes, whose Q52 shapes O-REPLAY 0.4.1 refuses', 'pinned', complete('GEN-REFUSED-SET', { obligation: 'G9.erasure.residual-shapes' }));
++  // [EXP-A01-R3] Why: O-REPLAY 0.4.9 models Q52 erasure shapes; decimal redeclaration remains refused. Rejected: preserving the stale Q52 refusal or dropping the required ORACLE-REFUSES cause assertion.
++  add('GEN-REFUSED-SET', 'Q45b, Q47c, Q54a', 'DIAGNOSTIC', 'G7.migration.schema-evolution selects decimal redeclaration, still refused by O-REPLAY 0.4.9', 'pinned', complete('GEN-REFUSED-SET', { obligation: 'G7.migration.schema-evolution' }));
+   add('GEN-STALE-DEFINITION', 'CX-STALE-DEFINITION', 'DIAGNOSTIC', 'the measurement names an older definition hash of NS.P2', 'pinned', complete('GEN-STALE-DEFINITION', { tweak: { meas: { edit: r => { r.definitionSha256 = 'a'.repeat(64); } } } }));
+   add('CODEX-R4-FABRICATED', 'Codex round 4 finding 4', 'DIAGNOSTIC', 'all-zero case object hashes, built from C1 under C2\'s label', 'pinned',
+     complete('CODEX-R4-FABRICATED', { tweak: { 'pos-cand': { builtFrom: P.C1, edit: r => { for (const x of r.caseResults) x.objectSha256 = zero; } } } }));
