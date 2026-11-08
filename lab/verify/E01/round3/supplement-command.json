@@ -1,0 +1,18 @@
+{
+  "label": "supplement",
+  "command": [
+    "/Users/sam/.local/bin/node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-VE01-4-supplement",
+    "--",
+    "/Users/sam/.local/bin/node",
+    "--test",
+    "lab/verify/E01/round2/supplement.test.mjs"
+  ],
+  "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+  "startedUtc": "2026-11-08T22:07:22.992990+00:00",
+  "finishedUtc": "2026-11-08T22:08:05.279126+00:00",
+  "secondsIncludingQueue": 42.286,
+  "exitCode": 0
+}

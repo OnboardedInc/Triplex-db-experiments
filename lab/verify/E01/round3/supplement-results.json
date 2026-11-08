@@ -1,0 +1,70 @@
+[
+  {
+    "id": "strict-input-delete",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "INPUT-TAMPERED",
+      "INPUT-TAMPERED",
+      "INPUT-TAMPERED",
+      "INPUT-TAMPERED"
+    ],
+    "changed": "/private/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-ve01-r2-QGd021/iso-0/tx2-inputs-qbgZ70/a69ea305cf23827a30d081ffd42a9f6960f7799ae161bc8b98a7535bb5073211.json",
+    "present": false,
+    "bytes": null,
+    "allCasesPassed": true,
+    "isolation": {
+      "root": "/private/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-ve01-r2-QGd021/iso-0",
+      "sandbox": "none (disabled by the caller): detection only",
+      "perChildHome": true,
+      "pathPinned": "/private/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-ve01-r2-QGd021/iso-0/tx2-toolchain-LhNHpC:/usr/bin:/bin:/usr/sbin:/sbin"
+    }
+  },
+  {
+    "id": "strict-input-rewrite",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "INPUT-TAMPERED",
+      "INPUT-TAMPERED",
+      "INPUT-TAMPERED",
+      "INPUT-TAMPERED"
+    ],
+    "changed": "/private/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-ve01-r2-QGd021/iso-1/tx2-inputs-RJZZmN/a69ea305cf23827a30d081ffd42a9f6960f7799ae161bc8b98a7535bb5073211.json",
+    "present": true,
+    "bytes": "{\"case\":\"CS-SCOPE/C7-XTDB-TABLE-NAMES\",\"p\":1045}",
+    "allCasesPassed": true,
+    "isolation": {
+      "root": "/private/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-ve01-r2-QGd021/iso-1",
+      "sandbox": "none (disabled by the caller): detection only",
+      "perChildHome": true,
+      "pathPinned": "/private/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-ve01-r2-QGd021/iso-1/tx2-toolchain-ircSeO:/usr/bin:/bin:/usr/sbin:/sbin"
+    }
+  },
+  {
+    "id": "F1-T3-during-build",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "GATE-SLOT",
+      "EVALUATOR-TAMPERED"
+    ]
+  },
+  {
+    "id": "F1-T3-next-process",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "EVALUATOR-TAMPERED",
+      "EVALUATOR-TAMPERED"
+    ]
+  }
+]

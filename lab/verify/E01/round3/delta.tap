@@ -1,0 +1,110 @@
+TAP version 13
+# Subtest: control: honest fixture qualifies offline
+ok 1 - control: honest fixture qualifies offline
+  ---
+  duration_ms: 10849.760209
+  type: 'test'
+  ...
+# Subtest: F1 new route: each transitive JS import is checked, poison persists after bytes restored
+ok 2 - F1 new route: each transitive JS import is checked, poison persists after bytes restored
+  ---
+  duration_ms: 756.049042
+  type: 'test'
+  ...
+# Subtest: F2 new route: loose object substitution without replace refs fails the blob OID check
+ok 3 - F2 new route: loose object substitution without replace refs fails the blob OID check
+  ---
+  duration_ms: 112.251
+  type: 'test'
+  ...
+# Subtest: F2/F7 GAP: deleting the completed claimed-case input persists without refusal
+not ok 4 - F2/F7 GAP: deleting the completed claimed-case input persists without refusal
+  ---
+  duration_ms: 10996.591709
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-388209d-CX-VE01-4/lab/verify/E01/round2/delta.test.mjs:65:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [{"code":"GATE-NOT-RUN","detail":"step 3: gate.mjs OBL is plan-only (--dry-run); no executing gate runs pinned case manifests on a registered slot yet, so no run is QUALIFIED (RULINGS Q55a, Q75i)"},{"code":"RUN-NOT-ON-GATE","detail":"the system under test ran locally from the evaluator's own build (offline stand-in for step 3), not through the gate on a registered slot"},{"code":"INPUT-TAMPERED","detail":"the evaluator's copy of case input 20513c6b7695b267b927c899f16d72fc0d33dcd9ed8b198b56ee8a74d2b78dca is missing, unreadable or changed after it was written (RULINGS Q67e, Q81a)"},{"code":"INPUT-TAMPERED","detail":"the evaluator's copy of case input 38b652f66e462f4b274c232a7892fb9781111520b1704846c8276e6545f5340f is missing, unreadable or changed after it was written (RULINGS Q67e, Q81a)"},{"code":"INPUT-TAMPERED","detail":"the evaluator's copy of case input ee81e4a58efc7dc1a1b4efb2a397592bd7739a03ac57f41264cf9d99939d4f09 is missing, unreadable or changed after it was written (RULINGS Q67e, Q81a)"},{"code":"INPUT-TAMPERED","detail":"3 more INPUT-TAMPERED reasons like the above"}]
+    + actual - expected
+    
+    + 'DIAGNOSTIC'
+    - 'QUALIFIED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'QUALIFIED'
+  actual: 'DIAGNOSTIC'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-388209d-CX-VE01-4/lab/verify/E01/round2/delta.test.mjs:69:135)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: F3 new route: a child changing the resolved node entrypoint is refused
+ok 5 - F3 new route: a child changing the resolved node entrypoint is refused
+  ---
+  duration_ms: 2993.227958
+  type: 'test'
+  ...
+# Subtest: F3/F10 new route: a two-link external chain and a cycle refuse safely
+ok 6 - F3/F10 new route: a two-link external chain and a cycle refuse safely
+  ---
+  duration_ms: 11931.286833
+  type: 'test'
+  ...
+# Subtest: F4 new route: gate child HOME/TMPDIR cannot see preceding version probes
+ok 7 - F4 new route: gate child HOME/TMPDIR cannot see preceding version probes
+  ---
+  duration_ms: 16957.970792
+  type: 'test'
+  ...
+# Subtest: F5 new route: inFlight alternatives cannot accidentally turn object comparators green
+ok 8 - F5 new route: inFlight alternatives cannot accidentally turn object comparators green
+  ---
+  duration_ms: 0.459083
+  type: 'test'
+  ...
+# Subtest: F6 new route: structured cause must contain a nonempty string, not a tag-shaped number
+ok 9 - F6 new route: structured cause must contain a nonempty string, not a tag-shaped number
+  ---
+  duration_ms: 0.124084
+  type: 'test'
+  ...
+# Subtest: F7 new route: extra content-addressed object written by the child refuses
+ok 10 - F7 new route: extra content-addressed object written by the child refuses
+  ---
+  duration_ms: 10922.554
+  type: 'test'
+  ...
+# Subtest: F8 new route: core refuses promotion before touching even an adversarial executor
+ok 11 - F8 new route: core refuses promotion before touching even an adversarial executor
+  ---
+  duration_ms: 12.341709
+  type: 'test'
+  ...
+# Subtest: F9 new route: deleting the whole objects directory never throws or loses gate blocker
+ok 12 - F9 new route: deleting the whole objects directory never throws or loses gate blocker
+  ---
+  duration_ms: 2971.105334
+  type: 'test'
+  ...
+# Subtest: Q67g: 0.3.10 workload fields exclude slot, duet placement rejects overlap and unequal capacity
+ok 13 - Q67g: 0.3.10 workload fields exclude slot, duet placement rejects overlap and unequal capacity
+  ---
+  duration_ms: 12.188167
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 12
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 77072.540083

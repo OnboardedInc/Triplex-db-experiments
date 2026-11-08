@@ -1,0 +1,20 @@
+{
+  "label": "all",
+  "command": [
+    "/Users/sam/.local/bin/node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-VE01-4-all",
+    "--",
+    "/Users/sam/.local/bin/node",
+    "--test",
+    "lab/bin/test/claim-round2.test.mjs",
+    "lab/bin/test/claim.test.mjs",
+    "lab/bin/test/lab.test.mjs"
+  ],
+  "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+  "startedUtc": "2026-11-08T22:01:47.633778+00:00",
+  "finishedUtc": "2026-11-08T22:07:04.329580+00:00",
+  "secondsIncludingQueue": 316.693,
+  "exitCode": 0
+}

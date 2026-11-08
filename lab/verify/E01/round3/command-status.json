@@ -1,0 +1,134 @@
+{
+  "startedUtc": "2026-11-08T22:01:46.391247+00:00",
+  "finishedUtc": "2026-11-08T22:11:33.265026+00:00",
+  "commands": [
+    {
+      "label": "all",
+      "command": [
+        "/Users/sam/.local/bin/node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VE01-4-all",
+        "--",
+        "/Users/sam/.local/bin/node",
+        "--test",
+        "lab/bin/test/claim-round2.test.mjs",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/lab.test.mjs"
+      ],
+      "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+      "startedUtc": "2026-11-08T22:01:47.633778+00:00",
+      "finishedUtc": "2026-11-08T22:07:04.329580+00:00",
+      "secondsIncludingQueue": 316.693,
+      "exitCode": 0
+    },
+    {
+      "label": "prior",
+      "command": [
+        "/Users/sam/.local/bin/node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VE01-4-prior",
+        "--",
+        "/Users/sam/.local/bin/node",
+        "--test",
+        "lab/verify/E01/v-e01.test.mjs"
+      ],
+      "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+      "startedUtc": "2026-11-08T22:01:47.633823+00:00",
+      "finishedUtc": "2026-11-08T22:07:22.992573+00:00",
+      "secondsIncludingQueue": 335.356,
+      "exitCode": 1
+    },
+    {
+      "label": "delta",
+      "command": [
+        "/Users/sam/.local/bin/node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VE01-4-delta",
+        "--",
+        "/Users/sam/.local/bin/node",
+        "--test",
+        "lab/verify/E01/round2/delta.test.mjs"
+      ],
+      "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+      "startedUtc": "2026-11-08T22:07:04.332175+00:00",
+      "finishedUtc": "2026-11-08T22:08:21.485912+00:00",
+      "secondsIncludingQueue": 77.153,
+      "exitCode": 1
+    },
+    {
+      "label": "supplement",
+      "command": [
+        "/Users/sam/.local/bin/node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VE01-4-supplement",
+        "--",
+        "/Users/sam/.local/bin/node",
+        "--test",
+        "lab/verify/E01/round2/supplement.test.mjs"
+      ],
+      "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+      "startedUtc": "2026-11-08T22:07:22.992990+00:00",
+      "finishedUtc": "2026-11-08T22:08:05.279126+00:00",
+      "secondsIncludingQueue": 42.286,
+      "exitCode": 0
+    },
+    {
+      "label": "fallback-routes",
+      "command": [
+        "/Users/sam/.local/bin/node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VE01-4-fallback-routes",
+        "--",
+        "/Users/sam/.local/bin/node",
+        "--test",
+        "--test-name-pattern=check 3 T[124] ",
+        "lab/verify/E01/round2/fallback-routes.test.mjs"
+      ],
+      "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+      "startedUtc": "2026-11-08T22:08:05.280024+00:00",
+      "finishedUtc": "2026-11-08T22:08:41.208156+00:00",
+      "secondsIncludingQueue": 35.928,
+      "exitCode": 0
+    },
+    {
+      "label": "reference",
+      "command": [
+        "/Users/sam/.local/bin/node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VE01-4-reference",
+        "--",
+        "/Users/sam/.local/bin/node",
+        "lab/verify/E01/reference-replay.mjs"
+      ],
+      "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+      "startedUtc": "2026-11-08T22:08:21.490304+00:00",
+      "finishedUtc": "2026-11-08T22:11:33.264067+00:00",
+      "secondsIncludingQueue": 191.772,
+      "exitCode": 0
+    },
+    {
+      "label": "input-variations",
+      "command": [
+        "/Users/sam/.local/bin/node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VE01-4-input-variations",
+        "--",
+        "/Users/sam/.local/bin/node",
+        "--test",
+        "lab/verify/E01/round3/input-variations.test.mjs"
+      ],
+      "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+      "startedUtc": "2026-11-08T22:08:41.208591+00:00",
+      "finishedUtc": "2026-11-08T22:10:16.668874+00:00",
+      "secondsIncludingQueue": 95.46,
+      "exitCode": 0
+    }
+  ]
+}

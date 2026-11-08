@@ -1,0 +1,970 @@
+{
+  "all": {
+    "totals": {
+      "tests": 128,
+      "suites": 0,
+      "pass": 128,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "tests": [
+      {
+        "number": 1,
+        "result": "PASS",
+        "name": "V-E01 F1/T3: a persistently rewritten evaluator refuses the next run against its Git blobs"
+      },
+      {
+        "number": 2,
+        "result": "PASS",
+        "name": "V-E01 F2/T5c: replace refs cannot substitute the oracle or qualify a wrong candidate"
+      },
+      {
+        "number": 3,
+        "result": "PASS",
+        "name": "V-E01 F2/Q75c: an unpinned COMPILED runner leaves an otherwise honest run diagnostic"
+      },
+      {
+        "number": 4,
+        "result": "PASS",
+        "name": "V-E01 F3/F10: outside file and directory links are refused, never followed"
+      },
+      {
+        "number": 5,
+        "result": "PASS",
+        "name": "V-E01 F4/T6: each build and execution gets a fresh HOME and TMPDIR"
+      },
+      {
+        "number": 6,
+        "result": "PASS",
+        "name": "V-E01 F7/T7: deleting a retained evidence object fails closed"
+      },
+      {
+        "number": 7,
+        "result": "PASS",
+        "name": "V-E01 F8: admitCore refuses promotion before executing candidate code"
+      },
+      {
+        "number": 8,
+        "result": "PASS",
+        "name": "V-E01 F9: every early return and caught exception carries GATE-NOT-RUN"
+      },
+      {
+        "number": 9,
+        "result": "PASS",
+        "name": "V-E01 F5/Q75g: O-REPLAY-shaped row comparisons stay UNCOMPARABLE on contract 0.3.10"
+      },
+      {
+        "number": 10,
+        "result": "PASS",
+        "name": "V-E01 F6/Q75h: cause is optional but must be structured when present"
+      },
+      {
+        "number": 11,
+        "result": "PASS",
+        "name": "V-E01 F9: unreadable evidence becomes a diagnostic instead of an uncaught EACCES"
+      },
+      {
+        "number": 12,
+        "result": "PASS",
+        "name": "V-E01 F3: modes and internal symlink target bytes are identity-bound"
+      },
+      {
+        "number": 13,
+        "result": "PASS",
+        "name": "V-E01 F3: recorded PATH node is the binary a child actually runs"
+      },
+      {
+        "number": 14,
+        "result": "PASS",
+        "name": "Q75b: edits within one build instance fail closed without an instance switch"
+      },
+      {
+        "number": 15,
+        "result": "PASS",
+        "name": "V-E01 F11/Q81a: input delete after final use refuses the run"
+      },
+      {
+        "number": 16,
+        "result": "PASS",
+        "name": "V-E01 F11/Q81a: input rewrite after final use refuses the run"
+      },
+      {
+        "number": 17,
+        "result": "PASS",
+        "name": "admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check"
+      },
+      {
+        "number": 18,
+        "result": "PASS",
+        "name": "documents: the contract's admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture"
+      },
+      {
+        "number": 19,
+        "result": "PASS",
+        "name": "admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 20,
+        "result": "PASS",
+        "name": "admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 21,
+        "result": "PASS",
+        "name": "admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 22,
+        "result": "PASS",
+        "name": "admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 23,
+        "result": "PASS",
+        "name": "admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 24,
+        "result": "PASS",
+        "name": "admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 25,
+        "result": "PASS",
+        "name": "admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 26,
+        "result": "PASS",
+        "name": "admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 27,
+        "result": "PASS",
+        "name": "admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 28,
+        "result": "PASS",
+        "name": "admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 29,
+        "result": "PASS",
+        "name": "admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 30,
+        "result": "PASS",
+        "name": "admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 31,
+        "result": "PASS",
+        "name": "admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 32,
+        "result": "PASS",
+        "name": "admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 33,
+        "result": "PASS",
+        "name": "admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 34,
+        "result": "PASS",
+        "name": "admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 35,
+        "result": "PASS",
+        "name": "admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 36,
+        "result": "PASS",
+        "name": "admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 37,
+        "result": "PASS",
+        "name": "admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 38,
+        "result": "PASS",
+        "name": "admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 39,
+        "result": "PASS",
+        "name": "admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 40,
+        "result": "PASS",
+        "name": "admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 41,
+        "result": "PASS",
+        "name": "admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 42,
+        "result": "PASS",
+        "name": "admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 43,
+        "result": "PASS",
+        "name": "admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 44,
+        "result": "PASS",
+        "name": "admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 45,
+        "result": "PASS",
+        "name": "admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 46,
+        "result": "PASS",
+        "name": "admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 47,
+        "result": "PASS",
+        "name": "admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 48,
+        "result": "PASS",
+        "name": "admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 49,
+        "result": "PASS",
+        "name": "admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 50,
+        "result": "PASS",
+        "name": "admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 51,
+        "result": "PASS",
+        "name": "admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 52,
+        "result": "PASS",
+        "name": "admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 53,
+        "result": "PASS",
+        "name": "admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 54,
+        "result": "PASS",
+        "name": "admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 55,
+        "result": "PASS",
+        "name": "admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 56,
+        "result": "PASS",
+        "name": "admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 57,
+        "result": "PASS",
+        "name": "admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 58,
+        "result": "PASS",
+        "name": "admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 59,
+        "result": "PASS",
+        "name": "admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 60,
+        "result": "PASS",
+        "name": "admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 61,
+        "result": "PASS",
+        "name": "admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 62,
+        "result": "PASS",
+        "name": "admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 63,
+        "result": "PASS",
+        "name": "admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 64,
+        "result": "PASS",
+        "name": "admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 65,
+        "result": "PASS",
+        "name": "admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 66,
+        "result": "PASS",
+        "name": "admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 67,
+        "result": "PASS",
+        "name": "admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 68,
+        "result": "PASS",
+        "name": "admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 69,
+        "result": "PASS",
+        "name": "admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 70,
+        "result": "PASS",
+        "name": "admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 71,
+        "result": "PASS",
+        "name": "admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 72,
+        "result": "PASS",
+        "name": "admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 73,
+        "result": "PASS",
+        "name": "admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 74,
+        "result": "PASS",
+        "name": "admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 75,
+        "result": "PASS",
+        "name": "admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 76,
+        "result": "PASS",
+        "name": "admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 77,
+        "result": "PASS",
+        "name": "admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 78,
+        "result": "PASS",
+        "name": "admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 79,
+        "result": "PASS",
+        "name": "admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 80,
+        "result": "PASS",
+        "name": "admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 81,
+        "result": "PASS",
+        "name": "admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC"
+      },
+      {
+        "number": 82,
+        "result": "PASS",
+        "name": "every DIAGNOSTIC fixture names its cause; ids are distinct; Codex rounds 4, 6 and 7 are present"
+      },
+      {
+        "number": 83,
+        "result": "PASS",
+        "name": "CLI admit: always exit 2 with DOCUMENT-ONLY, the document verdict shown, --json, usage exits 1"
+      },
+      {
+        "number": 84,
+        "result": "PASS",
+        "name": "uncommitted pins in the working tree have no effect: the contract is read from the claimed commit and the authority ref"
+      },
+      {
+        "number": 85,
+        "result": "PASS",
+        "name": "malformed inputs are DIAGNOSTIC, never an exception (red-team pass 1 finding 5)"
+      },
+      {
+        "number": 86,
+        "result": "PASS",
+        "name": "comparators judge canonical answers; unknown comparators and non-canonical answers never pass"
+      },
+      {
+        "number": 87,
+        "result": "PASS",
+        "name": "gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, tabs, missing paths, directories and pathspec magic"
+      },
+      {
+        "number": 88,
+        "result": "PASS",
+        "name": "qualify build: the evaluator builds the claimed tree and rebuilds A0, which reproduces the registry's binarySha256"
+      },
+      {
+        "number": 89,
+        "result": "PASS",
+        "name": "qualify Q67b (Codex round 8 finding 2): a candidate with A0's dist bytes and another source runner runs its own instance"
+      },
+      {
+        "number": 90,
+        "result": "PASS",
+        "name": "qualify build: CX-R7-RELABELLED-CONTROL as a run, an A0 entry recording another binary than its tree rebuilds to"
+      },
+      {
+        "number": 91,
+        "result": "PASS",
+        "name": "qualify resolve, execute and record: every case of the pinned manifests in every mode, each as a case-result/2"
+      },
+      {
+        "number": 92,
+        "result": "PASS",
+        "name": "qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with its declared comparator on the retained raw objects"
+      },
+      {
+        "number": 93,
+        "result": "PASS",
+        "name": "qualify expect: the oracle answer follows oracleAnswerRule (O-REPLAY answerMembers of one canonical JSON document)"
+      },
+      {
+        "number": 94,
+        "result": "PASS",
+        "name": "qualify compare: a candidate whose answer differs from the pinned oracle's fails at its first case"
+      },
+      {
+        "number": 95,
+        "result": "PASS",
+        "name": "qualify: an oracle refusal (exit 2, X-NOT-MODELED) fails closed, and the static refusal also blocks (Q45b, Q47c)"
+      },
+      {
+        "number": 96,
+        "result": "PASS",
+        "name": "qualify control: a CR-NS claim needs a PAIR_0 paired-rounds measurement, which no runner here produces"
+      },
+      {
+        "number": 97,
+        "result": "PASS",
+        "name": "qualify: Codex round 7 forged records, selections, case lists and fingerprints in the claim are ignored"
+      },
+      {
+        "number": 98,
+        "result": "PASS",
+        "name": "qualify builds exact blobs despite git archive export-ignore attributes"
+      },
+      {
+        "number": 99,
+        "result": "PASS",
+        "name": "qualify re-hashes a build before running it after another: a candidate that edits the A0 build is caught"
+      },
+      {
+        "number": 100,
+        "result": "PASS",
+        "name": "qualify Q67e (Codex round 8 finding 6): an edited oracle copy is never run again, and edited evidence is reported"
+      },
+      {
+        "number": 101,
+        "result": "PASS",
+        "name": "qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group"
+      },
+      {
+        "number": 102,
+        "result": "PASS",
+        "name": "qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason"
+      },
+      {
+        "number": 103,
+        "result": "PASS",
+        "name": "qualify verify: only the authority contract's VERIFIER_REGISTRY counts; supplied verifier records count for nothing"
+      },
+      {
+        "number": 104,
+        "result": "PASS",
+        "name": "qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint"
+      },
+      {
+        "number": 105,
+        "result": "PASS",
+        "name": "qualify execute: the plan goes through gate.mjs --dry-run, which checks the registered slot"
+      },
+      {
+        "number": 106,
+        "result": "PASS",
+        "name": "qualify: no path to QUALIFIED without a gate run; an offline run that passes everything reports offlineVerdict only"
+      },
+      {
+        "number": 107,
+        "result": "PASS",
+        "name": "CLI qualify: --offline-sut runs offline and exits 2 with the offline verdict; usage errors exit 1"
+      },
+      {
+        "number": 108,
+        "result": "PASS",
+        "name": "RULINGS Q64a: the proposed real build spec (lab/config/build.json) is a complete build-spec/1"
+      },
+      {
+        "number": 109,
+        "result": "PASS",
+        "name": "pool admits the two dev engines when only they run"
+      },
+      {
+        "number": 110,
+        "result": "PASS",
+        "name": "pool counts external research probes and refuses with their names"
+      },
+      {
+        "number": 111,
+        "result": "PASS",
+        "name": "an uncapped external container counts as the whole VM (fail closed)"
+      },
+      {
+        "number": 112,
+        "result": "PASS",
+        "name": "a reserved container counts once even while it also runs"
+      },
+      {
+        "number": 113,
+        "result": "PASS",
+        "name": "disk forecast refuses past the 50 GiB used limit"
+      },
+      {
+        "number": 114,
+        "result": "PASS",
+        "name": "slotInfo rejects forbidden and probe ports and names containers and volumes"
+      },
+      {
+        "number": 115,
+        "result": "PASS",
+        "name": "withDirLock serializes and breaks a lock whose owner pid is dead"
+      },
+      {
+        "number": 116,
+        "result": "PASS",
+        "name": "withPool read-modify-writes the ledger atomically across processes"
+      },
+      {
+        "number": 117,
+        "result": "PASS",
+        "name": "reconcile drops only reservations with no container and a dead reserving pid"
+      },
+      {
+        "number": 118,
+        "result": "PASS",
+        "name": "heavy semaphore admits at most TX2_HEAVY_SLOTS holders"
+      },
+      {
+        "number": 119,
+        "result": "PASS",
+        "name": "object store is content addressed and refuses dependency caches and secret-like names"
+      },
+      {
+        "number": 120,
+        "result": "PASS",
+        "name": "language classification: pure XTQL, pure SQL, hybrid, strict substeps"
+      },
+      {
+        "number": 121,
+        "result": "PASS",
+        "name": "verdict fails closed on missing identity, zero executions, skips; subsets never PASS"
+      },
+      {
+        "number": 122,
+        "result": "PASS",
+        "name": "caseLanguages lists every substep language in order"
+      },
+      {
+        "number": 123,
+        "result": "PASS",
+        "name": "contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing"
+      },
+      {
+        "number": 124,
+        "result": "PASS",
+        "name": "second-writer guard refuses a second container on a slot volume unless its config is read-only"
+      },
+      {
+        "number": 125,
+        "result": "PASS",
+        "name": "second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true"
+      },
+      {
+        "number": 126,
+        "result": "PASS",
+        "name": "follower config must be read-only and read the writer's own log and storage paths"
+      },
+      {
+        "number": 127,
+        "result": "PASS",
+        "name": "follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared"
+      },
+      {
+        "number": 128,
+        "result": "PASS",
+        "name": "cpusets parse against the VM and unpinned containers overlap everything"
+      }
+    ]
+  },
+  "delta": {
+    "totals": {
+      "tests": 13,
+      "suites": 0,
+      "pass": 12,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "tests": [
+      {
+        "number": 1,
+        "result": "PASS",
+        "name": "control: honest fixture qualifies offline"
+      },
+      {
+        "number": 2,
+        "result": "PASS",
+        "name": "F1 new route: each transitive JS import is checked, poison persists after bytes restored"
+      },
+      {
+        "number": 3,
+        "result": "PASS",
+        "name": "F2 new route: loose object substitution without replace refs fails the blob OID check"
+      },
+      {
+        "number": 4,
+        "result": "FAIL",
+        "name": "F2/F7 GAP: deleting the completed claimed-case input persists without refusal"
+      },
+      {
+        "number": 5,
+        "result": "PASS",
+        "name": "F3 new route: a child changing the resolved node entrypoint is refused"
+      },
+      {
+        "number": 6,
+        "result": "PASS",
+        "name": "F3/F10 new route: a two-link external chain and a cycle refuse safely"
+      },
+      {
+        "number": 7,
+        "result": "PASS",
+        "name": "F4 new route: gate child HOME/TMPDIR cannot see preceding version probes"
+      },
+      {
+        "number": 8,
+        "result": "PASS",
+        "name": "F5 new route: inFlight alternatives cannot accidentally turn object comparators green"
+      },
+      {
+        "number": 9,
+        "result": "PASS",
+        "name": "F6 new route: structured cause must contain a nonempty string, not a tag-shaped number"
+      },
+      {
+        "number": 10,
+        "result": "PASS",
+        "name": "F7 new route: extra content-addressed object written by the child refuses"
+      },
+      {
+        "number": 11,
+        "result": "PASS",
+        "name": "F8 new route: core refuses promotion before touching even an adversarial executor"
+      },
+      {
+        "number": 12,
+        "result": "PASS",
+        "name": "F9 new route: deleting the whole objects directory never throws or loses gate blocker"
+      },
+      {
+        "number": 13,
+        "result": "PASS",
+        "name": "Q67g: 0.3.10 workload fields exclude slot, duet placement rejects overlap and unequal capacity"
+      }
+    ]
+  },
+  "fallback-routes": {
+    "totals": {
+      "tests": 3,
+      "suites": 0,
+      "pass": 3,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "tests": [
+      {
+        "number": 1,
+        "result": "PASS",
+        "name": "check 3 T1 (Q67e): a system under test inside its own process group edits the oracle copy (no escape needed); the re-hash refuses the oracle"
+      },
+      {
+        "number": 2,
+        "result": "PASS",
+        "name": "check 3 T4 (Q67e): the same edit through a symlink the system under test makes in its own checkout is caught the same way"
+      },
+      {
+        "number": 3,
+        "result": "PASS",
+        "name": "check 3 T2 (Q67e): a double fork stays in the build's group and is killed; a helper that starts its own session (setsid) survives"
+      }
+    ]
+  },
+  "input-variations": {
+    "totals": {
+      "tests": 8,
+      "suites": 0,
+      "pass": 8,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "tests": [
+      {
+        "number": 1,
+        "result": "PASS",
+        "name": "Q81a final input: rename => INPUT-TAMPERED"
+      },
+      {
+        "number": 2,
+        "result": "PASS",
+        "name": "Q81a final input: truncate => INPUT-TAMPERED"
+      },
+      {
+        "number": 3,
+        "result": "PASS",
+        "name": "Q81a final input: symlink-different-bytes => INPUT-TAMPERED"
+      },
+      {
+        "number": 4,
+        "result": "PASS",
+        "name": "Q81a final input: rewrite-identical-length => INPUT-TAMPERED"
+      },
+      {
+        "number": 5,
+        "result": "PASS",
+        "name": "Q81a final input: symlink-identical-bytes => same-byte control"
+      },
+      {
+        "number": 6,
+        "result": "PASS",
+        "name": "Q81a final input: symlink-dangling => INPUT-TAMPERED"
+      },
+      {
+        "number": 7,
+        "result": "PASS",
+        "name": "Q81a final input: rewrite-then-restore => same-byte control"
+      },
+      {
+        "number": 8,
+        "result": "PASS",
+        "name": "Q81a final input: honest-control => same-byte control"
+      }
+    ]
+  },
+  "prior": {
+    "totals": {
+      "tests": 23,
+      "suites": 0,
+      "pass": 8,
+      "fail": 15,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "tests": [
+      {
+        "number": 1,
+        "result": "FAIL",
+        "name": "check 2 (Q67b): with the tree label fixed, the identity changes with the source runner, a dependency, a symlink's text, an external directory, the lockfile and the buildSpec; the dist does not"
+      },
+      {
+        "number": 2,
+        "result": "FAIL",
+        "name": "check 2 GAP (Q67b): a file symlink to a path outside the checkout binds only its text; the target's bytes decide the answer and the identity is the same"
+      },
+      {
+        "number": 3,
+        "result": "FAIL",
+        "name": "check 2 GAP (Q67b): the toolchain is the evaluator's process.version, not the node on PATH that builds and runs the system under test"
+      },
+      {
+        "number": 4,
+        "result": "PASS",
+        "name": "check 2: two instances with one identity share the first instance (a candidate commit with A0's tree runs A0's cases on its own checkout)"
+      },
+      {
+        "number": 5,
+        "result": "PASS",
+        "name": "check 3 T1 (Q67e): a system under test inside its own process group edits the oracle copy (no escape needed); the re-hash refuses the oracle"
+      },
+      {
+        "number": 6,
+        "result": "PASS",
+        "name": "check 3 T4 (Q67e): the same edit through a symlink the system under test makes in its own checkout is caught the same way"
+      },
+      {
+        "number": 7,
+        "result": "PASS",
+        "name": "check 3 T2 (Q67e): a double fork stays in the build's group and is killed; a helper that starts its own session (setsid) survives"
+      },
+      {
+        "number": 8,
+        "result": "FAIL",
+        "name": "check 3 T5-blob (Q67e): substituting the O-CONTRACT runner's blob everywhere also changes A0's checkout, so the whole-checkout identity (Q67b) fails it closed"
+      },
+      {
+        "number": 9,
+        "result": "FAIL",
+        "name": "check 3 T5a GAP (Q67e): an unpinned COMPILED oracle's bytes are read from the repository after the candidate's build ran; `git replace` makes the evaluator run the candidate's bytes as the oracle"
+      },
+      {
+        "number": 10,
+        "result": "FAIL",
+        "name": "check 3 T5b GAP (Q67e): with a lying O-CONTRACT on the identity cases, the reference model qualifies a wrong candidate; only the lab's A0 re-run of the prerequisites catches it"
+      },
+      {
+        "number": 11,
+        "result": "FAIL",
+        "name": "check 3 T5c GAP (Q67e): on a claimed obligation A0 is never re-run on (R.evaluator.incomplete-receipts, O-CONTRACT), a wrong candidate that substitutes the oracle reaches offlineVerdict QUALIFIED"
+      },
+      {
+        "number": 12,
+        "result": "FAIL",
+        "name": "check 3 T8 (Q67e): `git replace` on A0's source makes the A0 rebuild differ from the registry, so it fails closed"
+      },
+      {
+        "number": 13,
+        "result": "FAIL",
+        "name": "check 3 T6 GAP (Q67e): one HOME and TMPDIR serve the candidate's build, its runs, A0's build, A0's runs and every oracle run"
+      },
+      {
+        "number": 14,
+        "result": "FAIL",
+        "name": "check 3 T7 GAP (Q67e): deleting an evidence object is not EVIDENCE-TAMPERED (only objects still present are re-hashed), and a read-only object needs no chmod to delete"
+      },
+      {
+        "number": 15,
+        "result": "FAIL",
+        "name": "check 3 T3 GAP (Q67e): a build that rewrites the evaluator is reported in its own run, but every later run uses the rewritten evaluator, which can drop GATE-NOT-RUN"
+      },
+      {
+        "number": 16,
+        "result": "PASS",
+        "name": "check 4 (Q67i): for every declared comparator, a pass pair passes and a fail pair fails, and compare (recompute) and caseResultVerdict agree"
+      },
+      {
+        "number": 17,
+        "result": "PASS",
+        "name": "check 4 GAP (Q67i): an O-REPLAY answer is an object {commandOutcomes, queries, state}, so every row, page and error comparator is UNCOMPARABLE on it, even on identical bytes"
+      },
+      {
+        "number": 18,
+        "result": "FAIL",
+        "name": "check 4 (CMP-ERROR cause, Codex finding 9): a missing cause fails, as the compiled 0.3.9 rule says (Q67h, pending, would make it optional); any non-null value counts as \"the original cause retained\""
+      },
+      {
+        "number": 19,
+        "result": "PASS",
+        "name": "check 4: on a run with no observation, compare says FAIL and caseResultVerdict UNCOMPARABLE for the same record (both never PASS)"
+      },
+      {
+        "number": 20,
+        "result": "PASS",
+        "name": "check 5 (Q67j): no promotion reaches QUALIFIED through qualify (offline or plan-only, engine-source or log-source) or admit"
+      },
+      {
+        "number": 21,
+        "result": "FAIL",
+        "name": "check 5 GAP (Q67j): admitCore never reads the kind it is now passed, so the reference model and run.core say QUALIFIED for a promotion; the same log-source claim labelled comparative qualifies offline"
+      },
+      {
+        "number": 22,
+        "result": "FAIL",
+        "name": "check 6: qualify is DIAGNOSTIC on every early return and on every exception; only paths that reach the gate step carry GATE-NOT-RUN"
+      },
+      {
+        "number": 23,
+        "result": "FAIL",
+        "name": "check 6 GAP: a system under test that makes the evidence directory unreadable makes qualifyClaim throw instead of returning a verdict"
+      }
+    ]
+  },
+  "supplement": {
+    "totals": {
+      "tests": 3,
+      "suites": 0,
+      "pass": 3,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "tests": [
+      {
+        "number": 1,
+        "result": "PASS",
+        "name": "STRICT input integrity: delete after the final claimed-case use must be rejected"
+      },
+      {
+        "number": 2,
+        "result": "PASS",
+        "name": "STRICT input integrity: rewrite after the final claimed-case use must be rejected"
+      },
+      {
+        "number": 3,
+        "result": "PASS",
+        "name": "F1 source-bound T3: a candidate edit to a transitive evaluator file is detected and blocks the next fresh process"
+      }
+    ]
+  }
+}

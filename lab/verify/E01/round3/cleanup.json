@@ -1,0 +1,29 @@
+{
+  "atUtc": "2026-11-08T22:13:21.190971+00:00",
+  "target": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+  "allCommandsCompleted": true,
+  "reviewerHeavyHolders": [],
+  "knownFixtureRoots": [
+    {
+      "path": "/private/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-ve01-r2-QGd021",
+      "existsAfterTests": false
+    },
+    {
+      "path": "/private/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-ve01-r3-cA09Pl",
+      "existsAfterTests": false
+    }
+  ],
+  "retained": "All verifier tools, raw stdout/stderr, summaries and integrity receipts under lab/verify/E01/round3; earlier evidence retained unchanged.",
+  "command": [
+    "git",
+    "worktree",
+    "remove",
+    "--force",
+    "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": "",
+  "targetWorktreeRemoved": true,
+  "diskFreeBytesAfter": 29673840640
+}

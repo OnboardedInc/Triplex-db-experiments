@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 35592 "CX-VX02-2-delta-sums", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 73458 "G0-qlever-20261108T215940Z-c6686e build", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 79027 "CX-A01-0311-regressions-host", pid 81982 "CX-VJ01-2-frontier", pid 82672 "R25-h1smoke", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 79027 "CX-A01-0311-regressions-host", pid 81982 "CX-VJ01-2-frontier", pid 82131 "CX-VP2Q-3-nonzero-final", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 79027 "CX-A01-0311-regressions-host", pid 81982 "CX-VJ01-2-frontier", pid 82131 "CX-VP2Q-3-nonzero-final", pid 81860 "CX-VC8-3-live"

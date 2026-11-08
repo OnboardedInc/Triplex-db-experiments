@@ -1,0 +1,18 @@
+{
+  "label": "delta",
+  "command": [
+    "/Users/sam/.local/bin/node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-VE01-4-delta",
+    "--",
+    "/Users/sam/.local/bin/node",
+    "--test",
+    "lab/verify/E01/round2/delta.test.mjs"
+  ],
+  "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+  "startedUtc": "2026-11-08T22:07:04.332175+00:00",
+  "finishedUtc": "2026-11-08T22:08:21.485912+00:00",
+  "secondsIncludingQueue": 77.153,
+  "exitCode": 1
+}

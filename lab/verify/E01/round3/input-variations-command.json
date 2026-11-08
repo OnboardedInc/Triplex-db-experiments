@@ -1,0 +1,18 @@
+{
+  "label": "input-variations",
+  "command": [
+    "/Users/sam/.local/bin/node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-VE01-4-input-variations",
+    "--",
+    "/Users/sam/.local/bin/node",
+    "--test",
+    "lab/verify/E01/round3/input-variations.test.mjs"
+  ],
+  "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+  "startedUtc": "2026-11-08T22:08:41.208591+00:00",
+  "finishedUtc": "2026-11-08T22:10:16.668874+00:00",
+  "secondsIncludingQueue": 95.46,
+  "exitCode": 0
+}

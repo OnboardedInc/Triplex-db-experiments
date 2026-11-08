@@ -1,0 +1,19 @@
+{
+  "label": "fallback-routes",
+  "command": [
+    "/Users/sam/.local/bin/node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-VE01-4-fallback-routes",
+    "--",
+    "/Users/sam/.local/bin/node",
+    "--test",
+    "--test-name-pattern=check 3 T[124] ",
+    "lab/verify/E01/round2/fallback-routes.test.mjs"
+  ],
+  "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+  "startedUtc": "2026-11-08T22:08:05.280024+00:00",
+  "finishedUtc": "2026-11-08T22:08:41.208156+00:00",
+  "secondsIncludingQueue": 35.928,
+  "exitCode": 0
+}

@@ -1,0 +1,17 @@
+{
+  "label": "reference",
+  "command": [
+    "/Users/sam/.local/bin/node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-VE01-4-reference",
+    "--",
+    "/Users/sam/.local/bin/node",
+    "lab/verify/E01/reference-replay.mjs"
+  ],
+  "cwd": "/private/tmp/tx2-ve01-target-388209d-CX-VE01-4",
+  "startedUtc": "2026-11-08T22:08:21.490304+00:00",
+  "finishedUtc": "2026-11-08T22:11:33.264067+00:00",
+  "secondsIncludingQueue": 191.772,
+  "exitCode": 0
+}

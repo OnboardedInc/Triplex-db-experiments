@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 43503 "CX-VE01-4-fallback-routes", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 83145 "CX-VC8-3-build-qualification"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 16851 "CX-VJ01-2-finalize", pid 49141 "CX-P2Q-R3-suites"

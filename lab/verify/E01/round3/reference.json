@@ -1,0 +1,23 @@
+{
+  "contractVersion": "0.3.10",
+  "selfCheckErrors": [],
+  "fixtures": 70,
+  "byVerdict": {
+    "QUALIFIED": 8,
+    "DIAGNOSTIC": 62
+  },
+  "executorCalls": 13840,
+  "agree": 70,
+  "disagree": [],
+  "withKind": [
+    {
+      "line": 4012,
+      "kind": "promotion",
+      "verdict": "DIAGNOSTIC"
+    }
+  ],
+  "documents": {
+    "n": 63,
+    "diagnostic": 63
+  }
+}
