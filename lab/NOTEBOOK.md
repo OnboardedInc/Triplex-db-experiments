@@ -1436,3 +1436,17 @@ Where each priority stands, from evidence so far (research probes and baselines;
   gateway assertions pass; data survived park and restart. Review pending; EXP-DA01 (adapter, G1) builds on it now.
 - Pool consequence (Q78b): with the 2.75 GiB lane D resident up, no 3.5 GiB exclusive slot fits, so K01's live check, the W01b GS rerun,
   J01's compact-on G1 and the X02/C8 exclusive reruns wait for a scale window in which the orchestrator parks tx2-datomic-dev.
+
+## 2026-11-08 22:13Z: C8 ACCEPTED; contract 0.3.11 built; X02 guard over-refuses; DA01 unblocked; agent.mjs resume fixed
+- **C8 round 3 ACCEPTED** (CX-VC8-3: 34 probes, 1,024 offline): reads never write, budgets enforced, the counter fails closed on every
+  unclassified request. It merges right after X02 is accepted, since it carries X02.
+- **X02 delta (CX-VX02-2):** F2-F4 hold, but the token-aware guard now refuses six supported parenthesized subquery forms that XTDB answers
+  correctly (F1-R2). Learning: a fix that closes a bypass by refusing more needs a list of supported shapes that must still pass, next to
+  the shapes that must fail; X02 round 3 keeps both.
+- **Contract 0.3.11 built** (36d7434: O-REPLAY 0.4.9 pinned; 50 newly compiled rulings, 338/338 regressions caught; lane D's 153
+  obligations registered and blocked on its image pin). Under independent Codex review before merge.
+- **J01 delta:** default-off is now byte-identical to main (F1, F3 pass); the compact-on qualification recipe still lacks an executable
+  launch envelope (F2), which only matters before compact-on is used. J01 merges default-off after C8 and X02.
+- **DA01** was correctly blocked (its gateway routes need the resident recreated, which my prompt forbade); authorized and resumed. That
+  exposed a tool bug: `codex exec resume` takes no -s or --add-dir, so agent.mjs now passes sandbox and writable roots as config keys.
+- R28 (Opus high) designs build and run isolation for EXP-G03.
