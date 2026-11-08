@@ -1045,3 +1045,17 @@ Where each priority stands, from evidence so far (research probes and baselines;
   basis.tx, never publishes for two subjects, never has an incomplete record or a local floor below the state floor. Mutation testing of an
   oracle is the cheapest way to find what a test set cannot see; it becomes part of every oracle verification.
 - W0-1.1.2 folds in V-D01c's 40 proposed cases (P01-P40) with the Q53 and Q57 readings; both implementations must then pass them.
+
+## 2026-11-08 00:18Z: W01 and X05 landed; P1's direction moves to broker-fed replicas
+- **EXP-W01:** all 20 golden scenarios exist with goldens from the pinned oracle and a GS gate (merged 4989c7a). On XTDB at 10k, 6 of 8
+  run scenarios pass their database checks; GS.12 found a real typed-error bug (an int64 overflow returns WriteError instead of
+  InvalidTripleError); every bar is missed by orders of magnitude (commit p99 285-400 s) because A0 serializes every writer in a scope on
+  its scope-wide position CAS, the same finding as P2X.
+- **EXP-X05:** the read-only follower on the writer's volume takes reads off the writer (writer CPU 42-89% against 110-151%) and never
+  answered wrongly in 570,821 rows, but XTDB 2.2.0's ReadOnlyLocalLog reads half-written records and dies for good, 9 times in 30 minutes.
+- **Learning (Q63b): read scaling should come from the broker, not from XTDB's shared log.** The broker composition already gives each
+  replica its own applier and marker; a second XTDB replica is a second applier, with no shared-log reader and no Kafka. P1, P2 and P3 then
+  rest on one mechanism on both lanes.
+- **Learning (Q63d): parameterise every XTDB statement;** literal multi-row INSERTs exhausted a 2 GiB heap (X05), as per-cell expressions did
+  in P2X.
+- Dispatched V-X02 (the XTQL native lane, waiting since bf1ad4d) and W0-1.1.2 (readings A01-A15 plus V-D01c's 40 cases).
