@@ -3996,7 +3996,7 @@ def ruling_checks():
             full_pins[k] = {"sha256": {f: "d" * 64 for f in ORACLE_RUNNERS.get(k, {}).get("files", ["fixture-runner"])}, "acceptReceipt": "R", "verifierEntry": f"VT-{k}", "commit": "d" * 40}
     runners_t = dict(ORACLE_RUNNERS, **{k: {"argv": ["true", "{case}"], "files": None} for k in ORACLES if k not in ORACLE_RUNNERS})
     for k, v in full_pins.items():
-        runners_t[k] = dict(runners_t[k], files=list(v["sha256"]))
+        runners_t[k] = dict(runners_t.get(k, {"argv": ["true", "{case}"]}), files=list(v["sha256"]))
         if k != "O-REPLAY":
             vreg[f"VT-{k}"] = {"subject": {"kind": "oracle", "id": k, "commit": v["commit"]}, "verdict": "ACCEPT (test)"}
     for oid in ("G1.found.unchanged44", "NS.P2", "GS.05", "G7.migration.schema-evolution", "G9.erasure.residual-shapes", "G9.erasure.query-semantics", "G1.decimal.channel-routing"):
@@ -4009,6 +4009,8 @@ def ruling_checks():
     def _adm(claim, ev="default", pins=None, a0=None, w0=None, verifiers=None, pinned_=None, over=None):
         cfg_ = dict({"buildSpec": spec_t, "frozenTrace": frozen_t, "oracleRunners": runners_t}, **(over or {}))
         return admit_claim(claim, ev=_ev() if ev == "default" else ev, pins=full_pins if pins is None else pins, a0=a0_full if a0 is None else a0, w0=w0, verifiers=vreg if verifiers is None else verifiers, pinned=pinned if pinned_ is None else pinned_, overrides=cfg_)
+    if qualification_run(obl["G7.position.coordinates"], BIN["t1"], _comp(), _ev(), full_pins, pinned, {}) is not None:
+        e.append("Q61c: qualification_run refuses a missing oracle runner before invoking it")
     if _adm(good) != "QUALIFIED":
         e.append("Q55a: a claim the evaluator's own run passes, with every oracle pinned and accepted, A0 registered and the obligation verified, must be admitted (positive control)")
     dom = dict(good, obligations=["GS.05"])
@@ -5744,7 +5746,7 @@ def checks_0311():
     dc = closability()["perSurface"].get("datomic-datalog", {})
     if dc.get("total") != 153 or dc.get("closable") != 0 or dc.get("total") != dc.get("blocked"):
         e.append("Q78: every lane D obligation must stay blocked by its null image")
-    if ORACLE_RUNNERS["O-CONTRACT"].get("files") != ["lab/acceptance/build_contract.py", "lab/acceptance/oracle-contract.json"]:
+    if ORACLE_RUNNERS.get("O-CONTRACT", {}).get("files") != ["lab/acceptance/build_contract.py", "lab/acceptance/oracle-contract.json"]:
         e.append("Q75c: O-CONTRACT runner retains both source and generated projection")
     # [EXP-A01] Why: missing or partial runner maps must fail closed for compiled and accepted oracles. Rejected: checking only status labels.
     if not runner_pinned("O-CONTRACT") or not runner_pinned("O-REPLAY") or runner_pinned("O-ERR"):
@@ -5783,7 +5785,8 @@ def checks_0311():
 
 for x in ("O-REPLAY", "O-DOMAIN"):
     ORACLE_RUNNERS[x]["files"] = list(ORACLE_PINS[x]["sha256"])
-ORACLE_RUNNERS["O-CONTRACT"]["sha256"] = {"lab/acceptance/build_contract.py": sha_file("lab/acceptance/build_contract.py"), "lab/acceptance/oracle-contract.json": sha_text(projection_text())}
+if "O-CONTRACT" in ORACLE_RUNNERS:
+    ORACLE_RUNNERS["O-CONTRACT"]["sha256"] = {"lab/acceptance/build_contract.py": sha_file("lab/acceptance/build_contract.py"), "lab/acceptance/oracle-contract.json": sha_text(projection_text())}
 
 
 def main():
