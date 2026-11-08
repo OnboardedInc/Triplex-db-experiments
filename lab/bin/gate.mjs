@@ -368,7 +368,7 @@ async function engineGate(run, config, entry) {
   const restoreTo = await plannerBefore(run, result, bound);
   const stop = startSampler();
   let step;
-  try { step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs }); }
+  try { step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs, heavy: !!entry.heavy }); }
   finally { result.containers = stop(); await plannerAfter(run, result, bound, restoreTo); }
   result.coRunning = listTx2Containers().map(c => ({ name: c.name, memCapBytes: c.memBytes, nanoCpus: c.nanoCpus, health: c.health }));
   result.volumeBytes = volumeBytes(config, bound.info.volume);
@@ -580,7 +580,7 @@ async function gateGS(run, config) {
     '--scenarios', String(run.options.scenario ?? 'all'), '--readers', String(run.options.readers ?? 16)];
   for (const key of ['sweep-cap', 'sweep-concurrency', 'faults', 'drain-timeout-ms']) if (run.options[key]) args.push(`--${key}`, String(run.options[key]));
   if (run.options['fresh-world']) args.push('--fresh-world');
-  const { result, step, bound } = await engineGate(run, config, { name: 'gs-scenarios', queryPath: `${run.lane}-datalog`, args, timeoutMs: 8 * 3600_000 });
+  const { result, step, bound } = await engineGate(run, config, { name: 'gs-scenarios', queryPath: `${run.lane}-datalog`, args, timeoutMs: 8 * 3600_000, heavy: true });
   if (!bound) return result;
   const scen = path.join(REPO, 'lab/scenarios');
   const fixtureFiles = [];
